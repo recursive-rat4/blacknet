@@ -40,7 +40,11 @@ object Ed25519 {
                         true))
     }
 
-    class PublicKey(val bytes: ByteArray)
+    class PublicKey(val bytes: ByteArray) {
+        companion object {
+            const val SIZE = 32
+        }
+    }
     class PrivateKey(val bytes: ByteArray)
     class Signature(val bytes: ByteArray)
 

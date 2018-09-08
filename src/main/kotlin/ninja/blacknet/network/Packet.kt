@@ -7,13 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.network
 
-import ninja.blacknet.network.Server
-
-object Main {
-    @JvmStatic
-    fun main(args : Array<String>) {
-        Server.start()
-    }
+interface Packet {
+    suspend fun process(connection: Connection)
 }
