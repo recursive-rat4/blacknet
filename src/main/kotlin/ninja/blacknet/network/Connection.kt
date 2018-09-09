@@ -10,11 +10,24 @@
 package ninja.blacknet.network
 
 import io.ktor.network.sockets.Socket
+import io.ktor.network.sockets.openReadChannel
+import io.ktor.network.sockets.openWriteChannel
+import io.ktor.util.error
+import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.experimental.channels.LinkedListChannel
+import kotlinx.coroutines.experimental.io.readPacket
+import kotlinx.coroutines.experimental.launch
+import kotlinx.io.core.BytePacketBuilder
+import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
+import ninja.blacknet.core.BlacknetInput
 
 private val logger = KotlinLogging.logger {}
 
 class Connection(private val socket: Socket, var state: State) {
+    private val readChannel = socket.openReadChannel()
+    private val writeChannel = socket.openWriteChannel(true)
+    private val sendChannel = LinkedListChannel<ByteReadPacket>()
     val remoteAddress = socket.remoteAddress
 
     var timeOffset: Long = 0
@@ -22,8 +35,60 @@ class Connection(private val socket: Socket, var state: State) {
     var ping: Long? = null
     private var dosScore: Int = 0
 
-    suspend fun loop() {
-        //TODO
+    init {
+        launch { recvLoop() }
+        launch { sendLoop() }
+    }
+
+    private suspend fun recvLoop() {
+        try {
+            while (true) {
+                val len = readChannel.readInt()
+                val bytes = readChannel.readPacket(len)
+                val type = bytes.readInt()
+
+                if ((state.isWaiting() && type != 0) || (state.isConnected() && type == 0))
+                    break
+
+                val serializer = PacketType.getSerializer(type)
+                if (serializer == null) {
+                    logger.info("unknown packet type $type")
+                    continue
+                }
+                val packet = BlacknetInput(bytes).read(serializer)
+                if (bytes.remaining > 0) {
+                    bytes.release()
+                    dos(1, "trailing data in packet")
+                    continue
+                }
+                packet.process(this)
+            }
+        } catch (e: ClosedReceiveChannelException) {
+        } catch (e: Throwable) {
+            logger.error(e)
+        } finally {
+            close()
+        }
+    }
+
+    private suspend fun sendLoop() {
+        try {
+            for (packet in sendChannel)
+                writeChannel.writePacket(packet)
+        } catch (e: Throwable) {
+            logger.error(e)
+        } finally {
+            close()
+        }
+    }
+
+    fun sendPacket(p: Packet) {
+        val s = p.serialize()
+        val b = BytePacketBuilder()
+        b.writeInt(s.remaining.toInt() + 4)
+        b.writeInt(p.getType())
+        b.writePacket(s)
+        sendChannel.offer(b.build())
     }
 
     fun dos(score: Int, reason: String) {
@@ -44,5 +109,13 @@ class Connection(private val socket: Socket, var state: State) {
         INCOMING_CONNECTED,
         OUTGOING_WAITING,
         OUTGOING_CONNECTED;
+
+        fun isConnected(): Boolean {
+            return this == INCOMING_CONNECTED || this == OUTGOING_CONNECTED
+        }
+
+        fun isWaiting(): Boolean {
+            return this == INCOMING_WAITING || this == OUTGOING_WAITING
+        }
     }
 }

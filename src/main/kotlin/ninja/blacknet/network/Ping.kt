@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.core.BlacknetOutput
 
 @Serializable
-class Pong(private val id: Int) : Packet {
+class Ping(private val id: Int) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -22,20 +22,11 @@ class Pong(private val id: Int) : Packet {
     }
 
     override fun getType(): Int {
-        return PacketType.Pong.ordinal
+        return PacketType.Ping.ordinal
     }
 
     override fun process(connection: Connection) {
-        val request = connection.pingRequest
-        if (request == null) {
-            connection.dos(1, "unexpected pong")
-            return
-        }
-        if (request.id != id) {
-            connection.dos(1, "invalid pong id")
-            return
-        }
-        connection.ping = Node.time() - request.time
-        connection.pingRequest = null
+        val pong = Pong(id)
+        connection.sendPacket(pong)
     }
 }

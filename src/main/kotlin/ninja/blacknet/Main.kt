@@ -9,11 +9,11 @@
 
 package ninja.blacknet
 
-import ninja.blacknet.network.Server
+import ninja.blacknet.network.Node
 
 object Main {
     @JvmStatic
     fun main(args : Array<String>) {
-        Server.start()
+        Node.listen()
     }
 }

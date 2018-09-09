@@ -9,6 +9,10 @@
 
 package ninja.blacknet.network
 
+import kotlinx.io.core.ByteReadPacket
+
 interface Packet {
-    suspend fun process(connection: Connection)
+    fun serialize(): ByteReadPacket
+    fun getType(): Int
+    fun process(connection: Connection)
 }

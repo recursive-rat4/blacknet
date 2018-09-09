@@ -20,11 +20,15 @@ object Blake2b {
         Security.addProvider(Blake2bProvider())
     }
 
-    class Hash(val bytes: ByteArray)
+    class Hash(val bytes: ByteArray) {
+        companion object {
+            const val SIZE = 32
+        }
+    }
 
     fun hash(message: ByteArray): Hash {
-        val bytes = ByteArray(32)
-        val b = Blake2b(256)
+        val bytes = ByteArray(Hash.SIZE)
+        val b = Blake2b(Hash.SIZE * 8)
         b.update(message, 0, message.size)
         b.digest(bytes, 0)
         return Hash(bytes)

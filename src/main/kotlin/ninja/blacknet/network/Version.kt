@@ -9,8 +9,10 @@
 
 package ninja.blacknet.network
 
+import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
+import ninja.blacknet.core.BlacknetOutput
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,17 +24,26 @@ class Version(
         private val nonce: Long,
         private val agent: String
 ) : Packet {
-    override suspend fun process(connection: Connection) {
-        connection.timeOffset = Server.time() - time
+    override fun serialize(): ByteReadPacket {
+        val out = BlacknetOutput()
+        out.write(this)
+        return out.build()
+    }
 
-        if (magic != Server.magic || version < Server.minVersion || nonce == Server.nonce) {
+    override fun getType(): Int {
+        return PacketType.Version.ordinal
+    }
+
+    override fun process(connection: Connection) {
+        connection.timeOffset = Node.time() - time
+
+        if (magic != Node.magic || version < Node.minVersion || nonce == Node.nonce) {
             connection.close()
             return
         }
 
         if (connection.state == Connection.State.INCOMING_WAITING) {
-            val myVersion = Version(Server.magic, Server.version, Server.time(), Server.nonce, Server.agent)
-            //TODO send
+            Node.sendVersion(connection)
             connection.state = Connection.State.INCOMING_CONNECTED
             logger.info("Accepted connection from ${connection.remoteAddress}")
         } else {
