@@ -14,7 +14,8 @@ import kotlinx.serialization.KSerializer
 enum class PacketType {
     Version,
     Ping,
-    Pong;
+    Pong,
+    ;
 
     companion object {
         fun getSerializer(type: Int): KSerializer<out Packet>? {

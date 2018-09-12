@@ -14,6 +14,7 @@ import kotlinx.io.core.readBytes
 import kotlinx.serialization.ElementValueInput
 
 class BlacknetInput(private val bytes: ByteReadPacket) : ElementValueInput() {
+    override fun readByteValue(): Byte = bytes.readByte()
     override fun readIntValue(): Int = bytes.readInt()
     override fun readLongValue(): Long = bytes.readLong()
 

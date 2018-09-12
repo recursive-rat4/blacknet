@@ -29,6 +29,7 @@ class Connection(private val socket: Socket, var state: State) {
     private val writeChannel = socket.openWriteChannel(true)
     private val sendChannel = LinkedListChannel<ByteReadPacket>()
     val remoteAddress = socket.remoteAddress
+    val connectedAt = Node.time()
 
     var timeOffset: Long = 0
     var pingRequest: PingRequest? = null
@@ -36,11 +37,11 @@ class Connection(private val socket: Socket, var state: State) {
     private var dosScore: Int = 0
 
     init {
-        launch { recvLoop() }
-        launch { sendLoop() }
+        launch { receiver() }
+        launch { sender() }
     }
 
-    private suspend fun recvLoop() {
+    private suspend fun receiver() {
         try {
             while (true) {
                 val len = readChannel.readInt()
@@ -68,10 +69,11 @@ class Connection(private val socket: Socket, var state: State) {
             logger.error(e)
         } finally {
             close()
+            Node.disconnected(this)
         }
     }
 
-    private suspend fun sendLoop() {
+    private suspend fun sender() {
         try {
             for (packet in sendChannel)
                 writeChannel.writePacket(packet)

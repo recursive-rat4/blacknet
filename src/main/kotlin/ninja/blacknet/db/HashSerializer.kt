@@ -9,17 +9,17 @@
 
 package ninja.blacknet.db
 
-import ninja.blacknet.crypto.Blake2b
+import ninja.blacknet.crypto.Hash
 import org.mapdb.DataInput2
 import org.mapdb.DataOutput2
 import org.mapdb.Serializer
 
-object HashSerializer : Serializer<Blake2b.Hash> {
-    override fun hashCode(o: Blake2b.Hash, seed: Int): Int {
+object HashSerializer : Serializer<Hash> {
+    override fun hashCode(o: Hash, seed: Int): Int {
         return o.bytes.contentHashCode() xor seed
     }
 
-    override fun equals(first: Blake2b.Hash?, second: Blake2b.Hash?): Boolean {
+    override fun equals(first: Hash?, second: Hash?): Boolean {
         return first == second || (first != null && second != null && first.bytes.contentEquals(second.bytes))
     }
 
@@ -28,16 +28,16 @@ object HashSerializer : Serializer<Blake2b.Hash> {
     }
 
     override fun fixedSize(): Int {
-        return Blake2b.Hash.SIZE
+        return Hash.SIZE
     }
 
-    override fun serialize(out: DataOutput2, value: Blake2b.Hash) {
+    override fun serialize(out: DataOutput2, value: Hash) {
         out.write(value.bytes)
     }
 
-    override fun deserialize(input: DataInput2, available: Int): Blake2b.Hash {
-        val b = ByteArray(Blake2b.Hash.SIZE)
+    override fun deserialize(input: DataInput2, available: Int): Hash {
+        val b = ByteArray(Hash.SIZE)
         input.readFully(b)
-        return Blake2b.Hash(b)
+        return Hash(b)
     }
 }

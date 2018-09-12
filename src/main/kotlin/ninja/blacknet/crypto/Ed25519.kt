@@ -40,11 +40,6 @@ object Ed25519 {
                         true))
     }
 
-    class PublicKey(val bytes: ByteArray) {
-        companion object {
-            const val SIZE = 32
-        }
-    }
     class PrivateKey(val bytes: ByteArray)
     class Signature(val bytes: ByteArray)
 
@@ -53,7 +48,7 @@ object Ed25519 {
         return PublicKey(key.getA().toByteArray())
     }
 
-    fun sign(hash: Blake2b.Hash, privateKey: PrivateKey): Signature {
+    fun sign(hash: Hash, privateKey: PrivateKey): Signature {
         val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(Blake2b.BLAKE2_B_512))
         val edDSAPrivateKeySpec = EdDSAPrivateKeySpec(privateKey.bytes, spec)
         val edDSAPrivateKey = EdDSAPrivateKey(edDSAPrivateKeySpec)
@@ -63,7 +58,7 @@ object Ed25519 {
         return Signature(edDSAEngine.sign())
     }
 
-    fun verify(signature: Signature, hash: Blake2b.Hash, publicKey: PublicKey): Boolean {
+    fun verify(signature: Signature, hash: Hash, publicKey: PublicKey): Boolean {
         val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(Blake2b.BLAKE2_B_512))
         val edDSAPublicKeySpec = EdDSAPublicKeySpec(publicKey.bytes, spec)
         val edDSAPublicKey = EdDSAPublicKey(edDSAPublicKeySpec)

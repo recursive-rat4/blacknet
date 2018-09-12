@@ -20,6 +20,7 @@ class BlacknetOutput : ElementValueOutput() {
         return out.build()
     }
 
+    override fun writeByteValue(value: Byte) = out.writeByte(value)
     override fun writeIntValue(value: Int) = out.writeInt(value)
     override fun writeLongValue(value: Long) = out.writeLong(value)
 
