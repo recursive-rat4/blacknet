@@ -15,6 +15,8 @@ enum class PacketType {
     Version,
     Ping,
     Pong,
+    GetPeers,
+    Peers,
     ;
 
     companion object {
@@ -23,6 +25,8 @@ enum class PacketType {
                 Version.ordinal -> ninja.blacknet.network.Version.serializer()
                 Ping.ordinal -> ninja.blacknet.network.Ping.serializer()
                 Pong.ordinal -> ninja.blacknet.network.Pong.serializer()
+                GetPeers.ordinal -> ninja.blacknet.network.GetPeers.serializer()
+                Peers.ordinal -> ninja.blacknet.network.Peers.serializer()
                 else -> null
             }
         }

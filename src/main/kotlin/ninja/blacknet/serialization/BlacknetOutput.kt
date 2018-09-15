@@ -7,11 +7,12 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.serialization
 
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.ElementValueOutput
+import kotlin.reflect.KClass
 
 class BlacknetOutput : ElementValueOutput() {
     private val out = BytePacketBuilder()
@@ -28,6 +29,13 @@ class BlacknetOutput : ElementValueOutput() {
         val bytes = value.toByteArray()
         out.packInt(bytes.size)
         out.writeFully(bytes, 0, bytes.size)
+    }
+
+    override fun <T : Enum<T>> writeEnumValue(enumClass: KClass<T>, value: T) = out.packInt(value.ordinal)
+
+    fun writeSerializableByteArrayValue(value: SerializableByteArray) {
+        out.packInt(value.size())
+        out.writeFully(value.array, 0, value.size())
     }
 }
 

@@ -41,7 +41,6 @@ object Ed25519 {
     }
 
     class PrivateKey(val bytes: ByteArray)
-    class Signature(val bytes: ByteArray)
 
     fun publicKey(privateKey: PrivateKey): PublicKey {
         val key = EdDSAPrivateKeySpec(privateKey.bytes, spec)

@@ -10,12 +10,15 @@
 package ninja.blacknet.network
 
 import io.ktor.network.selector.ActorSelectorManager
+import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import mu.KotlinLogging
+import java.net.Inet6Address
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
 import java.util.*
@@ -39,22 +42,25 @@ object Node {
         return Instant.now().getEpochSecond()
     }
 
-    fun listen() {
+    fun listenOn(address: Address) {
+        val addr = when (address.network) {
+            Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
+            else -> throw Exception("not implemented for " + address.network)
+        }
         runBlocking {
-            val server = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().bind(InetSocketAddress("127.0.0.1", 28453))
-            logger.info("Listening at ${server.localAddress}")
-
-            while (true) {
-                val socket = server.accept()
-                val connection = Connection(socket, Connection.State.INCOMING_WAITING)
-                connections.add(connection)
-            }
+            val server = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().bind(addr)
+            logger.info("Listening on $address")
+            listener(server)
         }
     }
 
-    suspend fun connectTo(addr: InetSocketAddress): Connection {
+    suspend fun connectTo(address: Address): Connection {
+        val addr = when (address.network) {
+            Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
+            else -> throw Exception("not implemented for " + address.network)
+        }
         val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(addr)
-        val connection = Connection(socket, Connection.State.OUTGOING_WAITING)
+        val connection = Connection(socket, address, Connection.State.OUTGOING_WAITING)
         Node.connections.add(connection)
         Node.sendVersion(connection)
         return connection
@@ -63,6 +69,18 @@ object Node {
     fun sendVersion(connection: Connection) {
         val v = Version(magic, version, time(), nonce, agent)
         connection.sendPacket(v)
+    }
+
+    private suspend fun listener(server: ServerSocket) {
+        while (true) {
+            val socket = server.accept()
+            val inet = socket.remoteAddress as InetSocketAddress
+            val addr = inet.getAddress()
+            val network = if (addr is Inet6Address) Network.IPv6 else Network.IPv4
+            val address = Address(network, inet.port, addr.getAddress())
+            val connection = Connection(socket, address, Connection.State.INCOMING_WAITING)
+            connections.add(connection)
+        }
     }
 
     private suspend fun pinger() {

@@ -12,9 +12,10 @@ package ninja.blacknet.network
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.serialization.BlacknetOutput
+import ninja.blacknet.db.PeerDB
 
 @Serializable
-class Pong(private val id: Int) : Packet {
+class GetPeers : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -22,20 +23,20 @@ class Pong(private val id: Int) : Packet {
     }
 
     override fun getType(): Int {
-        return PacketType.Pong.ordinal
+        return PacketType.GetPeers.ordinal
     }
 
     override fun process(connection: Connection) {
-        val request = connection.pingRequest
-        if (request == null) {
-            connection.dos(1, "unexpected pong")
+        if (connection.state == Connection.State.OUTGOING_CONNECTED) {
+            connection.dos(1, "GetPeers from outgoing connection")
             return
         }
-        if (request.id != id) {
-            connection.dos(1, "invalid pong id")
+
+        val randomPeers = PeerDB.getRandom(Peers.MAX)
+        if (randomPeers.size == 0)
             return
-        }
-        connection.ping = Node.time() - request.time
-        connection.pingRequest = null
+
+        val peers = Peers(randomPeers)
+        connection.sendPacket(peers)
     }
 }

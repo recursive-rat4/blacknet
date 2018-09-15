@@ -12,11 +12,7 @@ package ninja.blacknet.db
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
 
-class BlockDB {
-    private val db = DBMaker.fileDB("block.db").transactionEnable().fileMmapEnableIfSupported().make()
+object BlockDB {
+    private val db = DBMaker.fileDB("block.db").transactionEnable().fileMmapEnableIfSupported().closeOnJvmShutdown().make()
     private val map = db.hashMap("blocks", HashSerializer, Serializer.BYTE_ARRAY).createOrOpen()
-
-    fun close() {
-        db.close()
-    }
 }

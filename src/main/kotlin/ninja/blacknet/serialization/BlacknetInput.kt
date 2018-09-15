@@ -7,11 +7,12 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.serialization
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.ElementValueInput
+import kotlin.reflect.KClass
 
 class BlacknetInput(private val bytes: ByteReadPacket) : ElementValueInput() {
     override fun readByteValue(): Byte = bytes.readByte()
@@ -21,6 +22,14 @@ class BlacknetInput(private val bytes: ByteReadPacket) : ElementValueInput() {
     override fun readStringValue(): String {
         val size = bytes.unpackInt()
         return String(bytes.readBytes(size))
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Enum<T>> readEnumValue(enumClass: KClass<T>): T = enumClass.java.enumConstants[bytes.unpackInt()]
+
+    fun readSerializableByteArrayValue(): SerializableByteArray {
+        val size = bytes.unpackInt()
+        return SerializableByteArray(bytes.readBytes(size))
     }
 }
 

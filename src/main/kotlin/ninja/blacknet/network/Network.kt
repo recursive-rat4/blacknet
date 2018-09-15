@@ -7,11 +7,12 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.crypto
+package ninja.blacknet.network
 
-class Hash(val bytes: ByteArray) {
-    companion object {
-        const val SIZE = 32
-        val ZERO = Hash(ByteArray(SIZE))
-    }
+enum class Network(val addrSize: Int) {
+    IPv4(4),
+    IPv6(16),
+    TORv3(32),
+    I2P(32),
+    ;
 }

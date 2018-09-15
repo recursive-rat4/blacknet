@@ -11,7 +11,7 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetOutput
 
 @Serializable
 class Ping(private val id: Int) : Packet {

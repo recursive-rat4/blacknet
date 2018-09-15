@@ -12,7 +12,7 @@ package ninja.blacknet.network
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.core.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetOutput
 
 private val logger = KotlinLogging.logger {}
 

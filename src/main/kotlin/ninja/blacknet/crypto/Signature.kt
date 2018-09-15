@@ -9,9 +9,5 @@
 
 package ninja.blacknet.crypto
 
-class Hash(val bytes: ByteArray) {
-    companion object {
-        const val SIZE = 32
-        val ZERO = Hash(ByteArray(SIZE))
-    }
+class Signature(val bytes: ByteArray) {
 }

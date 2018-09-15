@@ -20,15 +20,14 @@ import kotlinx.coroutines.experimental.launch
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
-import ninja.blacknet.core.BlacknetInput
+import ninja.blacknet.serialization.BlacknetInput
 
 private val logger = KotlinLogging.logger {}
 
-class Connection(private val socket: Socket, var state: State) {
+class Connection(private val socket: Socket, val remoteAddress: Address, var state: State) {
     private val readChannel = socket.openReadChannel()
     private val writeChannel = socket.openWriteChannel(true)
     private val sendChannel = LinkedListChannel<ByteReadPacket>()
-    val remoteAddress = socket.remoteAddress
     val connectedAt = Node.time()
 
     var timeOffset: Long = 0

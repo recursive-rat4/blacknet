@@ -7,14 +7,19 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.db
 
 import ninja.blacknet.network.Address
-import ninja.blacknet.network.Node
+import org.mapdb.DBMaker
 
-object Main {
-    @JvmStatic
-    fun main(args : Array<String>) {
-        Node.listenOn(Address.IPv4_ANY(28453))
+object PeerDB {
+    private val db = DBMaker.fileDB("peer.db").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
+
+    fun getRandom(n: Int): ArrayList<Address> {
+        return ArrayList() //TODO
+    }
+
+    fun add(peers: ArrayList<Address>, from: Address) {
+        //TODO
     }
 }
