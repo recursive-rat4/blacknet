@@ -9,10 +9,15 @@
 
 package ninja.blacknet.db
 
+import ninja.blacknet.crypto.Hash
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
 
 object BlockDB {
     private val db = DBMaker.fileDB("block.db").transactionEnable().fileMmapEnableIfSupported().closeOnJvmShutdown().make()
     private val map = db.hashMap("blocks", HashSerializer, Serializer.BYTE_ARRAY).createOrOpen()
+
+    fun contains(hash: Hash): Boolean {
+        return map.contains(hash)
+    }
 }

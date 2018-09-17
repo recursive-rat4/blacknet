@@ -16,11 +16,11 @@ import org.mapdb.Serializer
 
 object HashSerializer : Serializer<Hash> {
     override fun hashCode(o: Hash, seed: Int): Int {
-        return o.bytes.contentHashCode() xor seed
+        return o.bytes.array.contentHashCode() xor seed
     }
 
     override fun equals(first: Hash?, second: Hash?): Boolean {
-        return first == second || (first != null && second != null && first.bytes.contentEquals(second.bytes))
+        return first == second || (first != null && second != null && first.bytes.array.contentEquals(second.bytes.array))
     }
 
     override fun isTrusted(): Boolean {
@@ -32,7 +32,7 @@ object HashSerializer : Serializer<Hash> {
     }
 
     override fun serialize(out: DataOutput2, value: Hash) {
-        out.write(value.bytes)
+        out.write(value.bytes.array)
     }
 
     override fun deserialize(input: DataInput2, available: Int): Hash {

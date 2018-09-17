@@ -30,10 +30,12 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
     private val sendChannel = LinkedListChannel<ByteReadPacket>()
     val connectedAt = Node.time()
 
+    var version: Int = 0
+    var agent: String = ""
     var timeOffset: Long = 0
     var pingRequest: PingRequest? = null
-    var ping: Long? = null
-    private var dosScore: Int = 0
+    var ping: Long = 0
+    var dosScore: Int = 0
 
     init {
         launch { receiver() }

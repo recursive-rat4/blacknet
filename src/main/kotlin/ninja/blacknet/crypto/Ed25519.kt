@@ -53,18 +53,18 @@ object Ed25519 {
         val edDSAPrivateKey = EdDSAPrivateKey(edDSAPrivateKeySpec)
         edDSAEngine.initSign(edDSAPrivateKey)
         edDSAEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE)
-        edDSAEngine.update(hash.bytes)
+        edDSAEngine.update(hash.bytes.array)
         return Signature(edDSAEngine.sign())
     }
 
     fun verify(signature: Signature, hash: Hash, publicKey: PublicKey): Boolean {
         val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(Blake2b.BLAKE2_B_512))
-        val edDSAPublicKeySpec = EdDSAPublicKeySpec(publicKey.bytes, spec)
+        val edDSAPublicKeySpec = EdDSAPublicKeySpec(publicKey.bytes.array, spec)
         val edDSAPublicKey = EdDSAPublicKey(edDSAPublicKeySpec)
         edDSAEngine.initVerify(edDSAPublicKey)
         edDSAEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE)
-        edDSAEngine.update(hash.bytes)
-        return edDSAEngine.verify(signature.bytes)
+        edDSAEngine.update(hash.bytes.array)
+        return edDSAEngine.verify(signature.bytes.array)
     }
 
     private fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { pos -> ints[pos].toByte() }

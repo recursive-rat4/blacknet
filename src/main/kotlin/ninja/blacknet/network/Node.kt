@@ -15,14 +15,14 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
 import mu.KotlinLogging
+import ninja.blacknet.core.SynchronizedArrayList
+import ninja.blacknet.db.PeerDB
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
 import java.util.*
-import kotlin.collections.ArrayList
 
 private val logger = KotlinLogging.logger {}
 
@@ -32,14 +32,19 @@ object Node {
     const val minVersion = 5
     const val agent = "Blacknet"
     val nonce = Random().nextLong()
-    private val connections = ArrayList<Connection>()
+    val connections = SynchronizedArrayList<Connection>()
 
     init {
         launch { pinger() }
+        launch { peerAnnouncer() }
     }
 
     fun time(): Long {
         return Instant.now().getEpochSecond()
+    }
+
+    fun timeMilli(): Long {
+        return Instant.now().toEpochMilli()
     }
 
     fun listenOn(address: Address) {
@@ -47,11 +52,10 @@ object Node {
             Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
             else -> throw Exception("not implemented for " + address.network)
         }
-        runBlocking {
-            val server = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().bind(addr)
-            logger.info("Listening on $address")
-            listener(server)
-        }
+
+        val server = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().bind(addr)
+        logger.info("Listening on $address")
+        launch { listener(server) }
     }
 
     suspend fun connectTo(address: Address): Connection {
@@ -87,27 +91,45 @@ object Node {
         val timeout = 60
         val random = Random()
         while (true) {
-            for (connection in connections) {
-                if (connection.state.isWaiting()) {
-                    if (time() > connection.connectedAt + timeout)
-                        connection.close()
-                    continue
-                }
-                if (connection.pingRequest == null) {
-                    val id = random.nextInt()
-                    val ping = Ping(id)
-                    connection.pingRequest = Connection.PingRequest(id, time())
-                    connection.sendPacket(ping)
+            delay(timeout * 1000)
+
+            connections.forEach {
+                if (it.state.isWaiting()) {
+                    if (time() > it.connectedAt + timeout)
+                        it.close()
                 } else {
-                    logger.info("Disconnecting ${connection.remoteAddress} on ping timeout")
-                    connection.close()
+                    if (it.pingRequest == null) {
+                        val id = random.nextInt()
+                        val ping = Ping(id)
+                        it.pingRequest = Connection.PingRequest(id, Node.timeMilli())
+                        it.sendPacket(ping)
+                    } else {
+                        logger.info("Disconnecting ${it.remoteAddress} on ping timeout")
+                        it.close()
+                    }
                 }
             }
-            delay(timeout * 1000)
         }
     }
 
-    fun disconnected(connection: Connection) {
+    private suspend fun peerAnnouncer() {
+        while (true) {
+            delay(5 * 60 * 1000)
+
+            val randomPeers = PeerDB.getRandom(Peers.MAX)
+            if (randomPeers.size == 0)
+                continue
+
+            val peers = Peers(randomPeers)
+
+            connections.forEach {
+                if (it.state.isConnected())
+                    it.sendPacket(peers)
+            }
+        }
+    }
+
+    suspend fun disconnected(connection: Connection) {
         connections.remove(connection)
     }
 }

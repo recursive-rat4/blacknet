@@ -9,9 +9,20 @@
 
 package ninja.blacknet.crypto
 
-class Hash(val bytes: ByteArray) {
+import kotlinx.serialization.Serializable
+import ninja.blacknet.core.toHex
+import ninja.blacknet.serialization.SerializableByteArray32
+
+@Serializable
+class Hash(val bytes: SerializableByteArray32) {
+    constructor(bytes: ByteArray) : this(SerializableByteArray32(bytes))
+
+    override fun toString(): String {
+        return bytes.array.toHex()
+    }
+
     companion object {
         const val SIZE = 32
-        val ZERO = Hash(ByteArray(SIZE))
+        val ZERO = Hash(SerializableByteArray32())
     }
 }

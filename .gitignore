@@ -7,5 +7,4 @@
 /out
 
 # db
-block.db
-peer.db
+*.db*

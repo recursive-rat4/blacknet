@@ -37,6 +37,10 @@ class BlacknetOutput : ElementValueOutput() {
         out.packInt(value.size())
         out.writeFully(value.array, 0, value.size())
     }
+
+    fun writeByteArrayValue(value: ByteArray, size: Int) {
+        out.writeFully(value, 0, size)
+    }
 }
 
 private fun BytePacketBuilder.packInt(value: Int) {

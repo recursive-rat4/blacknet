@@ -31,6 +31,10 @@ class BlacknetInput(private val bytes: ByteReadPacket) : ElementValueInput() {
         val size = bytes.unpackInt()
         return SerializableByteArray(bytes.readBytes(size))
     }
+
+    fun readByteArrayValue(size: Int): ByteArray {
+        return bytes.readBytes(size)
+    }
 }
 
 private fun ByteReadPacket.unpackInt(): Int {

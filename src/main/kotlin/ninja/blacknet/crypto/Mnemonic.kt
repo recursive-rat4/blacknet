@@ -15,8 +15,8 @@ import ninja.blacknet.crypto.Ed25519.PrivateKey
 object Mnemonic {
     fun fromString(string: String): PrivateKey? {
         val hash = Blake2b.hash(string.toUtf8Bytes())
-        if (checkVersion(hash.bytes))
-            return PrivateKey(hash.bytes)
+        if (checkVersion(hash.bytes.array))
+            return PrivateKey(hash.bytes.array)
         return null
     }
 

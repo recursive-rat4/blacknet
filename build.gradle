@@ -1,6 +1,7 @@
 buildscript {
     ext.kotlin_version = '1.2.70'
     ext.serialization_version = '0.6.2'
+    ext.ktor_version = '0.9.4'
 
     repositories {
         jcenter()
@@ -30,7 +31,8 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    compile "io.ktor:ktor-network:0.9.4"
+    compile "io.ktor:ktor-network:$ktor_version"
+    compile "io.ktor:ktor-server-jetty:$ktor_version"
     compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
     compile "net.i2p.crypto:eddsa:0.3.0"
     compile "com.rfksystems:blake2b:1.0.0"

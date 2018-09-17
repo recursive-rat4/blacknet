@@ -10,6 +10,7 @@
 package ninja.blacknet.network
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.core.toHex
 import ninja.blacknet.serialization.SerializableByteArray
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -30,12 +31,12 @@ class Address(
         return when (network) {
             Network.IPv4 -> InetSocketAddress(InetAddress.getByAddress(bytes.array), port).getHostString()
             Network.IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(bytes.array), port).getHostString() + ']'
-            else -> bytes.toString()
+            else -> network.name + ' ' + bytes.array.toHex()
         }
     }
 
     override fun toString(): String {
-        return network.name + ' ' + getAddressString() + ':' + port
+        return getAddressString() + ':' + port
     }
 
     companion object {

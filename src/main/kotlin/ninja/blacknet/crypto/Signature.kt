@@ -9,5 +9,19 @@
 
 package ninja.blacknet.crypto
 
-class Signature(val bytes: ByteArray) {
+import kotlinx.serialization.Serializable
+import ninja.blacknet.core.toHex
+import ninja.blacknet.serialization.SerializableByteArray64
+
+@Serializable
+class Signature(val bytes: SerializableByteArray64) {
+    constructor(bytes: ByteArray) : this(SerializableByteArray64(bytes))
+
+    override fun toString(): String {
+        return bytes.array.toHex()
+    }
+
+    companion object {
+        const val SIZE = 64
+    }
 }

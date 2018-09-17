@@ -28,13 +28,13 @@ class Peers(private val peers: ArrayList<Address>) : Packet {
 
     override fun process(connection: Connection) {
         if (peers.size > MAX) {
-            connection.dos(1, "invalid peers addrSize")
+            connection.dos(1, "invalid peers size")
             return
         }
 
         for (i in peers) {
             if (!i.checkSize()) {
-                connection.dos(1, "invalid address addrSize")
+                connection.dos(1, "invalid address size")
                 return
             }
         }

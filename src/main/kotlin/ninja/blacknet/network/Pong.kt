@@ -35,7 +35,7 @@ class Pong(private val id: Int) : Packet {
             connection.dos(1, "invalid pong id")
             return
         }
-        connection.ping = Node.time() - request.time
+        connection.ping = Node.timeMilli() - request.time
         connection.pingRequest = null
     }
 }

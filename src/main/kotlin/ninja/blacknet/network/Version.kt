@@ -36,6 +36,8 @@ class Version(
 
     override fun process(connection: Connection) {
         connection.timeOffset = Node.time() - time
+        connection.version = version
+        connection.agent = agent
 
         if (magic != Node.magic || version < Node.minVersion || nonce == Node.nonce) {
             connection.close()
