@@ -19,6 +19,22 @@ object Main {
     fun main(args: Array<String>) {
         Node.listenOn(Address.IPv4_ANY(28453))
 
+        /* Launch Blacknet API web-server on port 8283
+         * using Ktor.
+         * http://localhost:8283
+         *
+         * Blacknet API web-server logic is implemented in
+         * ninja.blacknet.api.APIServerKt.main
+         *
+         * Ktor is a framework for building asynchronous servers and clients
+         * in connected systems using the powerful Kotlin programming language.
+         * https://ktor.io/
+         *
+         * Ktor configuration is stored in
+         * resources/application.conf
+         * https://ktor.io/servers/engine.html
+         *
+         */
         embeddedServer(Jetty, commandLineEnvironment(args)).start(wait = true)
     }
 }
