@@ -11,11 +11,11 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetOutput
-import ninja.blacknet.db.PeerDB
 
 @Serializable
-class Peers(private val list: ArrayList<Address>) : Packet {
+class Inventory(private val list: ArrayList<Pair<DataType, Hash>>) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -23,26 +23,35 @@ class Peers(private val list: ArrayList<Address>) : Packet {
     }
 
     override fun getType(): Int {
-        return PacketType.Peers.ordinal
+        return PacketType.Inventory.ordinal
     }
 
     override fun process(connection: Connection) {
-        if (list.size > MAX) {
-            connection.dos("invalid Peers size")
+        if (list.size > DataType.MAX_INVENTORY) {
+            connection.dos("invalid Inventory size")
             return
         }
 
+        val request = ArrayList<Pair<DataType, Hash>>()
+
         for (i in list) {
-            if (!i.checkSize()) {
-                connection.dos("invalid Address size")
-                return
+            val type = i.first
+            val hash = i.second
+
+            if (type.getDB().isInteresting(hash))
+                request.add(Pair(type, hash))
+
+            if (request.size == DataType.MAX_DATA) {
+                val getData = GetData(request)
+                connection.sendPacket(getData)
+                request.clear()
             }
         }
 
-        PeerDB.add(list, connection.remoteAddress)
-    }
+        if (request.size == 0)
+            return
 
-    companion object {
-        const val MAX = 1000
+        val getData = GetData(request)
+        connection.sendPacket(getData)
     }
 }

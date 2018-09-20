@@ -60,7 +60,7 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
                 val packet = BlacknetInput(bytes).read(serializer)
                 if (bytes.remaining > 0) {
                     bytes.release()
-                    dos(1, "trailing data in packet")
+                    dos("trailing data in packet")
                     continue
                 }
                 packet.process(this)
@@ -94,8 +94,8 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
         sendChannel.offer(b.build())
     }
 
-    fun dos(score: Int, reason: String) {
-        dosScore += score
+    fun dos(reason: String) {
+        dosScore++
         logger.warn("DoS: $dosScore $reason ${socket.remoteAddress}")
         if (dosScore >= 100)
             close()

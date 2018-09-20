@@ -7,19 +7,19 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.db
+package ninja.blacknet.core
 
-import ninja.blacknet.core.DataDB
 import ninja.blacknet.crypto.Hash
-import org.mapdb.DBMaker
-import org.mapdb.Serializer
 
-object BlockDB : DataDB() {
-    private val db = DBMaker.fileDB("block.db").transactionEnable().fileMmapEnableIfSupported().closeOnJvmShutdown().make()
-    private val map = db.hashMap("blocks", HashSerializer, Serializer.BYTE_ARRAY).createOrOpen()
+abstract class MemPool : DataDB() {
+    private val map = HashMap<Hash, ByteArray>()
+
+    protected fun add(hash: Hash, bytes: ByteArray) {
+        map[hash] = bytes
+    }
 
     override fun contains(hash: Hash): Boolean {
-        return map.contains(hash)
+        return map.containsKey(hash)
     }
 
     override fun get(hash: Hash): ByteArray? {
@@ -28,9 +28,5 @@ object BlockDB : DataDB() {
 
     override fun remove(hash: Hash): ByteArray? {
         return map.remove(hash)
-    }
-
-    override fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        return false //TODO
     }
 }

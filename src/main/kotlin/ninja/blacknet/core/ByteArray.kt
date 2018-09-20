@@ -24,3 +24,5 @@ fun ByteArray.toHex(): String {
 
     return result.toString()
 }
+
+fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { pos -> ints[pos].toByte() }

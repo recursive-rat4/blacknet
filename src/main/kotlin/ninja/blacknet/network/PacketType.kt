@@ -17,6 +17,9 @@ enum class PacketType {
     Pong,
     GetPeers,
     Peers,
+    Inventory,
+    GetData,
+    Data
     ;
 
     companion object {
@@ -27,6 +30,9 @@ enum class PacketType {
                 Pong.ordinal -> ninja.blacknet.network.Pong.serializer()
                 GetPeers.ordinal -> ninja.blacknet.network.GetPeers.serializer()
                 Peers.ordinal -> ninja.blacknet.network.Peers.serializer()
+                Inventory.ordinal -> ninja.blacknet.network.Inventory.serializer()
+                GetData.ordinal -> ninja.blacknet.network.GetData.serializer()
+                Data.ordinal -> ninja.blacknet.network.Data.serializer()
                 else -> null
             }
         }

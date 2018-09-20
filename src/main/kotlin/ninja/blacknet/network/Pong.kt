@@ -28,11 +28,11 @@ class Pong(private val id: Int) : Packet {
     override fun process(connection: Connection) {
         val request = connection.pingRequest
         if (request == null) {
-            connection.dos(1, "unexpected pong")
+            connection.dos("unexpected Pong")
             return
         }
         if (request.id != id) {
-            connection.dos(1, "invalid pong id")
+            connection.dos("invalid Pong id")
             return
         }
         connection.ping = Node.timeMilli() - request.time

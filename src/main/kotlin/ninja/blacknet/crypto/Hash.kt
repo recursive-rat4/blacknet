@@ -10,15 +10,22 @@
 package ninja.blacknet.crypto
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.toHex
 import ninja.blacknet.serialization.SerializableByteArray32
 
 @Serializable
 class Hash(val bytes: SerializableByteArray32) {
     constructor(bytes: ByteArray) : this(SerializableByteArray32(bytes))
 
+    override fun equals(other: Any?): Boolean {
+        return (other is Hash) && bytes == other.bytes
+    }
+
+    override fun hashCode(): Int {
+        return bytes.hashCode()
+    }
+
     override fun toString(): String {
-        return bytes.array.toHex()
+        return bytes.toString()
     }
 
     companion object {

@@ -11,11 +11,12 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.serialization.BlacknetOutput
-import ninja.blacknet.db.PeerDB
+import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class GetPeers : Packet {
+class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -23,20 +24,22 @@ class GetPeers : Packet {
     }
 
     override fun getType(): Int {
-        return PacketType.GetPeers.ordinal
+        return PacketType.Data.ordinal
     }
 
     override fun process(connection: Connection) {
-        if (connection.state == Connection.State.OUTGOING_CONNECTED) {
-            connection.dos("GetPeers from outgoing connection")
+        if (list.size > DataType.MAX_DATA) {
+            connection.dos("invalid Data size")
             return
         }
 
-        val randomPeers = PeerDB.getRandom(Peers.MAX)
-        if (randomPeers.size == 0)
-            return
+        for (i in list) {
+            val type = i.first
+            val bytes = i.second
 
-        val peers = Peers(randomPeers)
-        connection.sendPacket(peers)
+            val hash = Blake2b.hash(bytes.array)
+            if (!type.getDB().process(hash, bytes.array))
+                connection.dos("invalid " + type.name + " " + hash)
+        }
     }
 }

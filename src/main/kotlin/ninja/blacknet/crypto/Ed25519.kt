@@ -20,6 +20,7 @@ import net.i2p.crypto.eddsa.EdDSAEngine
 import net.i2p.crypto.eddsa.EdDSAPrivateKey
 import net.i2p.crypto.eddsa.EdDSAPublicKey
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec
+import ninja.blacknet.core.byteArrayOfInts
 import java.security.MessageDigest
 
 object Ed25519 {
@@ -66,6 +67,4 @@ object Ed25519 {
         edDSAEngine.update(hash.bytes.array)
         return edDSAEngine.verify(signature.bytes.array)
     }
-
-    private fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { pos -> ints[pos].toByte() }
 }
