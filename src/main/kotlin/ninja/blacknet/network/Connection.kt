@@ -17,6 +17,7 @@ import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
 import kotlinx.coroutines.experimental.io.readPacket
 import kotlinx.coroutines.experimental.launch
+import kotlinx.io.IOException
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
@@ -66,6 +67,7 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
                 packet.process(this)
             }
         } catch (e: ClosedReceiveChannelException) {
+        } catch (e: IOException) {
         } catch (e: Throwable) {
             logger.error(e)
         } finally {

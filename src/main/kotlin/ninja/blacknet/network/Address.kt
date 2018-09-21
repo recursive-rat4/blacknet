@@ -10,10 +10,7 @@
 package ninja.blacknet.network
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.toHex
 import ninja.blacknet.serialization.SerializableByteArray
-import java.net.InetAddress
-import java.net.InetSocketAddress
 
 @Serializable
 class Address(
@@ -27,20 +24,17 @@ class Address(
         return bytes.size() == network.addrSize
     }
 
-    private fun getAddressString(): String {
-        return when (network) {
-            Network.IPv4 -> InetSocketAddress(InetAddress.getByAddress(bytes.array), port).getHostString()
-            Network.IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(bytes.array), port).getHostString() + ']'
-            else -> network.name + ' ' + bytes.array.toHex()
-        }
+    fun isLocal(): Boolean {
+        return network.isLocal(this)
     }
 
     override fun toString(): String {
-        return getAddressString() + ':' + port
+        return network.getAddressString(this) + ':' + port
     }
 
     companion object {
-        fun IPv4_ANY(port: Int) = Address(Network.IPv4, port, SerializableByteArray(Network.IPv4.addrSize))
-        fun IPv6_ANY(port: Int) = Address(Network.IPv6, port, SerializableByteArray(Network.IPv6.addrSize))
+        fun IPv4_ANY(port: Int) = Address(Network.IPv4, port, ByteArray(Network.IPv4.addrSize))
+        fun IPv6_ANY(port: Int) = Address(Network.IPv6, port, Network.IPv6_ANY_BYTES)
+        fun IPv6_LOOPBACK(port: Int) = Address(Network.IPv6, port, Network.IPv6_LOOPBACK_BYTES)
     }
 }

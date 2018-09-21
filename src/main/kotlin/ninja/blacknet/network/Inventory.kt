@@ -15,7 +15,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetOutput
 
 @Serializable
-class Inventory(private val list: ArrayList<Pair<DataType, Hash>>) : Packet {
+class Inventory(private val list: InvList) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -32,26 +32,8 @@ class Inventory(private val list: ArrayList<Pair<DataType, Hash>>) : Packet {
             return
         }
 
-        val request = ArrayList<Pair<DataType, Hash>>()
-
-        for (i in list) {
-            val type = i.first
-            val hash = i.second
-
-            if (type.getDB().isInteresting(hash))
-                request.add(Pair(type, hash))
-
-            if (request.size == DataType.MAX_DATA) {
-                val getData = GetData(request)
-                connection.sendPacket(getData)
-                request.clear()
-            }
-        }
-
-        if (request.size == 0)
-            return
-
-        val getData = GetData(request)
-        connection.sendPacket(getData)
+        DataFetcher.offer(connection, list)
     }
 }
+
+typealias InvList = ArrayList<Pair<DataType, Hash>>

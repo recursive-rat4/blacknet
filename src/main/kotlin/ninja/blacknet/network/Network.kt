@@ -9,10 +9,44 @@
 
 package ninja.blacknet.network
 
+import ninja.blacknet.core.toHex
+import java.net.InetAddress
+import java.net.InetSocketAddress
+
 enum class Network(val addrSize: Int) {
     IPv4(4),
     IPv6(16),
     TORv3(32),
     I2P(32),
     ;
+
+    fun getAddressString(address: Address): String {
+        return when (this) {
+            IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString()
+            IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString() + ']'
+            else -> name + ' ' + address.bytes.array.toHex()
+        }
+    }
+
+    fun isLocal(address: Address): Boolean {
+        return when (this) {
+            IPv4 -> isLocalIPv4(address.bytes.array)
+            IPv6 -> isLocalIPv6(address.bytes.array)
+            TORv3 -> false
+            I2P -> false
+        }
+    }
+
+    private fun isLocalIPv4(bytes: ByteArray): Boolean {
+        return bytes[0] == 0.toByte() || bytes[0] == 127.toByte()
+    }
+
+    private fun isLocalIPv6(bytes: ByteArray): Boolean {
+        return bytes.contentEquals(Network.IPv6_ANY_BYTES) || bytes.contentEquals(Network.IPv6_LOOPBACK_BYTES)
+    }
+
+    companion object {
+        val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
+        val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+    }
 }

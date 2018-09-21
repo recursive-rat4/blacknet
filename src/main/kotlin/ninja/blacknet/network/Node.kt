@@ -23,16 +23,20 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
 import java.util.*
+import kotlin.collections.ArrayList
 
 private val logger = KotlinLogging.logger {}
 
 object Node {
+    const val NETWORK_TIMEOUT = 60
     const val magic = 0x17895E7D
     const val version = 5
     const val minVersion = 5
     const val agent = "Blacknet"
-    val nonce = Random().nextLong()
+    private val random = Random()
+    val nonce = random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
+    private val listenAddress = ArrayList<Address>()
 
     init {
         launch { pinger() }
@@ -54,6 +58,8 @@ object Node {
         }
 
         val server = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().bind(addr)
+        if (!address.isLocal())
+            listenAddress.add(address)
         logger.info("Listening on $address")
         launch { listener(server) }
     }
@@ -88,14 +94,13 @@ object Node {
     }
 
     private suspend fun pinger() {
-        val timeout = 60
-        val random = Random()
         while (true) {
-            delay(timeout * 1000)
+            delay(NETWORK_TIMEOUT * 1000)
 
+            val currTime = time()
             connections.forEach {
                 if (it.state.isWaiting()) {
-                    if (time() > it.connectedAt + timeout)
+                    if (currTime > it.connectedAt + NETWORK_TIMEOUT)
                         it.close()
                 } else {
                     if (it.pingRequest == null) {
@@ -119,6 +124,14 @@ object Node {
             val randomPeers = PeerDB.getRandom(Peers.MAX)
             if (randomPeers.size == 0)
                 continue
+
+            if (listenAddress.size > 0) {
+                val i = random.nextInt(randomPeers.size * 500)
+                if (i < randomPeers.size) {
+                    val address = listenAddress[random.nextInt(listenAddress.size)]
+                    randomPeers[i] = address
+                }
+            }
 
             val peers = Peers(randomPeers)
 

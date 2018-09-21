@@ -14,19 +14,11 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.core.DataDB
 
-enum class DataType {
-    Block,
-    Transaction,
-    Bundle,
+enum class DataType(val db: DataDB) {
+    Block(BlockDB),
+    Transaction(TxPool),
+    Bundle(BundlePool),
     ;
-
-    fun getDB(): DataDB {
-        return when (this) {
-            Block -> BlockDB
-            Transaction -> TxPool
-            Bundle -> BundlePool
-        }
-    }
 
     companion object {
         const val MAX_INVENTORY = 50000

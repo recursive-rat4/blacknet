@@ -38,7 +38,10 @@ class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) :
             val bytes = i.second
 
             val hash = Blake2b.hash(bytes.array)
-            if (!type.getDB().process(hash, bytes.array))
+
+            DataFetcher.fetched(hash)
+
+            if (!type.db.process(hash, bytes.array))
                 connection.dos("invalid " + type.name + " " + hash)
         }
     }

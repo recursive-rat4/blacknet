@@ -11,12 +11,11 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class GetData(private val list: ArrayList<Pair<DataType, Hash>>) : Packet {
+class GetData(private val list: InvList) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -39,7 +38,7 @@ class GetData(private val list: ArrayList<Pair<DataType, Hash>>) : Packet {
             val type = i.first
             val hash = i.second
 
-            val value = type.getDB().get(hash) ?: continue
+            val value = type.db.get(hash) ?: continue
             response.add(Pair(type, SerializableByteArray(value)))
         }
 

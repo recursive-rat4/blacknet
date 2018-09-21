@@ -9,7 +9,8 @@
 
 package ninja.blacknet
 
-import io.ktor.server.engine.*
+import io.ktor.server.engine.commandLineEnvironment
+import io.ktor.server.engine.embeddedServer
 import io.ktor.server.jetty.Jetty
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.Node
@@ -17,7 +18,7 @@ import ninja.blacknet.network.Node
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        Node.listenOn(Address.IPv4_ANY(28453))
+        Node.listenOn(Address.IPv6_ANY(28453))
 
         embeddedServer(Jetty, commandLineEnvironment(args)).start(wait = true)
     }
