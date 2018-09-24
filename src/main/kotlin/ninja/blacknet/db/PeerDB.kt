@@ -55,8 +55,8 @@ object PeerDB {
     }
 
     fun getRandom(n: Int): MutableList<Address> {
-        val n = min(size(), n)
-        return map.keys.shuffled().take(n) as MutableList<Address>
+        val x = min(size(), n)
+        return map.keys.shuffled().take(x).toMutableList() as MutableList<Address>
     }
 
     fun add(peers: List<Address>, from: Address) {
