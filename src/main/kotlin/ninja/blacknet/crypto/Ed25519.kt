@@ -9,6 +9,9 @@
 
 package ninja.blacknet.crypto
 
+import net.i2p.crypto.eddsa.EdDSAEngine
+import net.i2p.crypto.eddsa.EdDSAPrivateKey
+import net.i2p.crypto.eddsa.EdDSAPublicKey
 import net.i2p.crypto.eddsa.math.Curve
 import net.i2p.crypto.eddsa.math.Field
 import net.i2p.crypto.eddsa.math.ed25519.Ed25519LittleEndianEncoding
@@ -16,9 +19,6 @@ import net.i2p.crypto.eddsa.math.ed25519.Ed25519ScalarOps
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
 import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec
-import net.i2p.crypto.eddsa.EdDSAEngine
-import net.i2p.crypto.eddsa.EdDSAPrivateKey
-import net.i2p.crypto.eddsa.EdDSAPublicKey
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec
 import ninja.blacknet.core.byteArrayOfInts
 import java.security.MessageDigest

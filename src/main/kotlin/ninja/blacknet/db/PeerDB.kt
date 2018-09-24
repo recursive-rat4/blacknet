@@ -10,16 +10,61 @@
 package ninja.blacknet.db
 
 import ninja.blacknet.network.Address
+import ninja.blacknet.network.Node
 import org.mapdb.DBMaker
+import org.mapdb.Serializer
+import kotlin.math.min
 
 object PeerDB {
+    const val NETWORK_TIMEOUT = 30 * 60
     private val db = DBMaker.fileDB("peer.db").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
+    private val map = db.hashMap("peers", Serializer.ELSA, Serializer.ELSA).createOrOpen()
 
-    fun getRandom(n: Int): ArrayList<Address> {
-        return ArrayList() //TODO
+    fun commit() {
+        db.commit()
     }
 
-    fun add(peers: ArrayList<Address>, from: Address) {
-        //TODO
+    fun size(): Int {
+        return map.size
     }
+
+    fun connected(address: Address) {
+        if (address.isLocal()) return
+        val entry = map[address] as Entry?
+        if (entry != null)
+            map[address] = Entry(entry.from, 0, 0, Node.time())
+        else
+            map[address] = Entry(Node.localAddress, 0, 0, Node.time())
+    }
+
+    fun failed(address: Address) {
+        if (address.isLocal()) return
+        val entry = map[address] as Entry?
+        if (entry != null)
+            map[address] = Entry(entry.from, entry.attempts + 1, Node.time(), entry.lastConnected)
+        else
+            map[address] = Entry(Node.localAddress, 0, Node.time(), 0)
+    }
+
+    fun getAll(): List<Address> {
+        return map.keys.toList() as List<Address>
+    }
+
+    fun getCandidate(): Address? {
+        return getRandom(1).firstOrNull() //TODO
+    }
+
+    fun getRandom(n: Int): MutableList<Address> {
+        val n = min(size(), n)
+        return map.keys.shuffled().take(n) as MutableList<Address>
+    }
+
+    fun add(peers: List<Address>, from: Address) {
+        peers.forEach {
+            if (!map.contains(it))
+                map[it] = Entry(from, 0, 0, 0)
+        }
+    }
+
+    class Entry(val from: Address, val attempts: Int, val lastTry: Long, val lastConnected: Long) : java.io.Serializable
 }

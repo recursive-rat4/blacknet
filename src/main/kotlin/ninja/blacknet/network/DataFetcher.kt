@@ -10,8 +10,8 @@
 package ninja.blacknet.network
 
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
+import ninja.blacknet.core.delay
 import ninja.blacknet.crypto.Hash
 
 object DataFetcher {
@@ -68,7 +68,7 @@ object DataFetcher {
 
     private suspend fun watchdog() {
         while (true) {
-            delay(Node.NETWORK_TIMEOUT * 1000)
+            delay(Node.NETWORK_TIMEOUT)
 
             val currTime = Node.time()
             val timeouted = requested.filterValues { currTime > it + Node.NETWORK_TIMEOUT }

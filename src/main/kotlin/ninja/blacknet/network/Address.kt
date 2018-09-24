@@ -17,7 +17,7 @@ class Address(
         val network: Network,
         val port: Int,
         val bytes: SerializableByteArray
-) {
+) : java.io.Serializable {
     constructor(network: Network, port: Int, bytes: ByteArray) : this(network, port, SerializableByteArray(bytes))
 
     fun checkSize(): Boolean {
@@ -26,6 +26,14 @@ class Address(
 
     fun isLocal(): Boolean {
         return network.isLocal(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return (other is Address) && network == other.network && port == other.port && bytes == other.bytes
+    }
+
+    override fun hashCode(): Int {
+        return network.ordinal xor port xor bytes.hashCode()
     }
 
     override fun toString(): String {

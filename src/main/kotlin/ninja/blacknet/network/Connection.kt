@@ -12,7 +12,9 @@ package ninja.blacknet.network
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import io.ktor.util.error
+import kotlinx.coroutines.experimental.CompletionHandler
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.JobCancellationException
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
 import kotlinx.coroutines.experimental.io.readPacket
@@ -26,6 +28,7 @@ import ninja.blacknet.serialization.BlacknetInput
 private val logger = KotlinLogging.logger {}
 
 class Connection(private val socket: Socket, val remoteAddress: Address, var state: State) {
+    private val job: Job
     private val readChannel = socket.openReadChannel()
     private val writeChannel = socket.openWriteChannel(true)
     private val sendChannel = LinkedListChannel<ByteReadPacket>()
@@ -39,15 +42,18 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
     var dosScore: Int = 0
 
     init {
-        launch { receiver() }
+        job = launch { receiver() }
         launch { sender() }
+    }
+
+    fun invokeOnDisconnect(handler: CompletionHandler) {
+        job.invokeOnCompletion(true, true,  handler)
     }
 
     private suspend fun receiver() {
         try {
             while (true) {
-                val len = readChannel.readInt()
-                val bytes = readChannel.readPacket(len)
+                val bytes = recvPacket()
                 val type = bytes.readInt()
 
                 if ((state.isWaiting() && type != 0) || (state.isConnected() && type == 0))
@@ -67,12 +73,20 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
                 packet.process(this)
             }
         } catch (e: ClosedReceiveChannelException) {
-        } catch (e: IOException) {
+        } catch (e: JobCancellationException) {
         } catch (e: Throwable) {
-            logger.error(e)
+            logger.error("Exception in receiver $remoteAddress", e)
         } finally {
             close()
-            Node.disconnected(this)
+        }
+    }
+
+    private suspend fun recvPacket(): ByteReadPacket {
+        try {
+            val len = readChannel.readInt()
+            return readChannel.readPacket(len)
+        } catch (e: IOException) {
+            throw ClosedReceiveChannelException(e.message)
         }
     }
 
@@ -81,7 +95,7 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
             for (packet in sendChannel)
                 writeChannel.writePacket(packet)
         } catch (e: Throwable) {
-            logger.error(e)
+            logger.error("Exception in sender $remoteAddress",e)
         } finally {
             close()
         }
@@ -98,7 +112,7 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
 
     fun dos(reason: String) {
         dosScore++
-        logger.warn("DoS: $dosScore $reason ${socket.remoteAddress}")
+        logger.warn("DoS: $dosScore $reason $remoteAddress")
         if (dosScore >= 100)
             close()
     }

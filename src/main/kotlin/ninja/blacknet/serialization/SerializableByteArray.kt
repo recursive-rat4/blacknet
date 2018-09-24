@@ -13,12 +13,27 @@ import kotlinx.serialization.KInput
 import kotlinx.serialization.KOutput
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
+import ninja.blacknet.core.toHex
 
 @Serializable
-class SerializableByteArray(val array: ByteArray) {
+class SerializableByteArray(
+        val array: ByteArray
+) : java.io.Serializable {
     constructor(size: Int) : this(ByteArray(size))
 
     fun size(): Int = array.size
+
+    override fun equals(other: Any?): Boolean {
+        return (other is SerializableByteArray) && array.contentEquals(other.array)
+    }
+
+    override fun hashCode(): Int {
+        return array.contentHashCode()
+    }
+
+    override fun toString(): String {
+        return array.toHex()
+    }
 
     @Serializer(forClass = SerializableByteArray::class)
     companion object {

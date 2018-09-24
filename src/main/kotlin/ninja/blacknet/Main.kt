@@ -18,7 +18,7 @@ import ninja.blacknet.network.Node
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        Node.listenOn(Address.IPv6_ANY(28453))
+        Node.listenOn(Address.IPv6_ANY(Node.P2P_PORT))
 
         /* Launch Blacknet API web-server on port 8283
          * using Ktor.

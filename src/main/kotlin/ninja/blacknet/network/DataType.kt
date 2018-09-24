@@ -10,9 +10,9 @@
 package ninja.blacknet.network
 
 import ninja.blacknet.core.BundlePool
+import ninja.blacknet.core.DataDB
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.db.BlockDB
-import ninja.blacknet.core.DataDB
 
 enum class DataType(val db: DataDB) {
     Block(BlockDB),

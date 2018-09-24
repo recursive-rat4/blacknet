@@ -18,6 +18,7 @@ import io.ktor.routing.get
 import io.ktor.routing.routing
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
+import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Node
 
 fun Application.main() {
@@ -32,6 +33,18 @@ fun Application.main() {
             val ret = ArrayList<PeerInfo>()
             Node.connections.forEach { ret.add(PeerInfo(it)) }
             call.respond(JSON.indented.stringify(PeerInfo.serializer().list, ret))
+        }
+
+        get("/nodeinfo") {
+            val listening = Node.listenAddress.clone().map { it.toString() }
+            val ret = NodeInfo(Node.agent, Node.version, Node.outgoing(), Node.incoming(), listening)
+            call.respond(JSON.indented.stringify(ret))
+        }
+
+        get("/peerdb") {
+            val peers = PeerDB.getAll().map { it.toString() }
+            val ret = PeerDBInfo(peers.size, peers)
+            call.respond(JSON.indented.stringify(ret))
         }
     }
 }

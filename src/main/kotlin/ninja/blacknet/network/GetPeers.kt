@@ -11,8 +11,8 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.serialization.BlacknetOutput
 
 @Serializable
 class GetPeers : Packet {

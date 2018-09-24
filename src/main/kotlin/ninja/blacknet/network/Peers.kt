@@ -11,11 +11,11 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.serialization.BlacknetOutput
 
 @Serializable
-class Peers(private val list: ArrayList<Address>) : Packet {
+class Peers(private val list: List<Address>) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -33,13 +33,14 @@ class Peers(private val list: ArrayList<Address>) : Packet {
         }
 
         for (i in list) {
-            if (!i.checkSize()) {
-                connection.dos("invalid Address size")
+            if (!i.checkSize() || i.isLocal()) {
+                connection.dos("invalid Address")
                 return
             }
         }
 
         PeerDB.add(list, connection.remoteAddress)
+        PeerDB.commit()
     }
 
     companion object {

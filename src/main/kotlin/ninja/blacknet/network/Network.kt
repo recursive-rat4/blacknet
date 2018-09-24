@@ -10,6 +10,7 @@
 package ninja.blacknet.network
 
 import ninja.blacknet.core.toHex
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
@@ -48,5 +49,14 @@ enum class Network(val addrSize: Int) {
     companion object {
         val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
         val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+
+        fun address(inet: InetSocketAddress): Address {
+            return address(inet.getAddress(), inet.port)
+        }
+
+        fun address(inet: InetAddress, port: Int): Address {
+            val network = if (inet is Inet6Address) Network.IPv6 else Network.IPv4
+            return Address(network, port, inet.getAddress())
+        }
     }
 }

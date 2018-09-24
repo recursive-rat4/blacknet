@@ -17,11 +17,17 @@ class SynchronizedArrayList<T>(private val list: ArrayList<T>) {
 
     private val mutex = Mutex()
 
-    suspend fun getSize(): Int = mutex.withLock { list.size }
+    suspend fun clone() = mutex.withLock { list.clone() as ArrayList<T> }
+
+    suspend fun size() = mutex.withLock { list.size }
 
     suspend fun add(element: T) = mutex.withLock { list.add(element) }
 
     suspend fun remove(element: T) = mutex.withLock { list.remove(element) }
 
     suspend fun forEach(action: (T) -> Unit) = mutex.withLock { list.forEach(action) }
+
+    suspend fun sumBy(selector: (T) -> Int) = mutex.withLock { list.sumBy(selector) }
+
+    suspend fun filter(predicate: (T) -> Boolean) = mutex.withLock { list.filter(predicate) }
 }
