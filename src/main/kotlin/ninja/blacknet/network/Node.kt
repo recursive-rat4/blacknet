@@ -72,6 +72,16 @@ object Node {
         }
     }
 
+    suspend fun connected(): Int {
+        return connections.sumBy {
+            when (it.state) {
+                Connection.State.OUTGOING_CONNECTED -> 1
+                Connection.State.INCOMING_CONNECTED -> 1
+                else -> 0
+            }
+        }
+    }
+
     fun listenOn(address: Address) {
         val addr = when (address.network) {
             Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
@@ -191,15 +201,19 @@ object Node {
     private suspend fun dnsSeeder() {
         if (PeerDB.size() > 0) {
             delay(11)
-            if (connections.size() >= 2) {
+            if (connected() >= 2) {
                 logger.info("P2P peers available. Skipped DNS seeding.")
                 return
             }
         }
 
-        val seed = "dnsseed.blacknet.ninja"
-        val response = InetAddress.getAllByName(seed).map { Network.address(it, P2P_PORT) }
-        val peers = response.filter { !it.isLocal() }
-        PeerDB.add(peers, localAddress)
+        val seeds = "dnsseed.blacknet.ninja"
+        try {
+            val response = InetAddress.getAllByName(seeds)
+            val peers = response.map { Network.address(it, P2P_PORT) }.filter { !it.isLocal() }
+            PeerDB.add(peers, localAddress)
+            PeerDB.commit()
+        } catch (e: Throwable) {
+        }
     }
 }
