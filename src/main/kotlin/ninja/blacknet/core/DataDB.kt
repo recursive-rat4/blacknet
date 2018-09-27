@@ -18,11 +18,11 @@ abstract class DataDB {
         rejects.clear()
     }
 
-    fun isInteresting(hash: Hash): Boolean {
+    suspend fun isInteresting(hash: Hash): Boolean {
         return !rejects.contains(hash) && !contains(hash)
     }
 
-    fun process(hash: Hash, bytes: ByteArray): Boolean {
+    suspend fun process(hash: Hash, bytes: ByteArray): Boolean {
         if (!isInteresting(hash))
             return false
         if (!processImpl(hash, bytes)) {
@@ -32,8 +32,8 @@ abstract class DataDB {
         return true
     }
 
-    abstract fun contains(hash: Hash): Boolean
-    abstract fun get(hash: Hash): ByteArray?
-    abstract fun remove(hash: Hash): ByteArray?
+    abstract suspend fun contains(hash: Hash): Boolean
+    abstract suspend fun get(hash: Hash): ByteArray?
+    abstract suspend fun remove(hash: Hash): ByteArray?
     abstract fun processImpl(hash: Hash, bytes: ByteArray): Boolean
 }

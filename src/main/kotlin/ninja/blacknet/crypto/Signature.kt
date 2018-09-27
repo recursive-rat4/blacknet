@@ -10,8 +10,8 @@
 package ninja.blacknet.crypto
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.toHex
 import ninja.blacknet.serialization.SerializableByteArray64
+import ninja.blacknet.util.toHex
 
 @Serializable
 class Signature(val bytes: SerializableByteArray64) {

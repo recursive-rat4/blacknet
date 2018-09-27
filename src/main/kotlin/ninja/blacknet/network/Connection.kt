@@ -83,8 +83,12 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
 
     private suspend fun recvPacket(): ByteReadPacket {
         try {
-            val len = readChannel.readInt()
-            return readChannel.readPacket(len)
+            val size = readChannel.readInt()
+            if (size > Node.DEFAULT_MAX_PACKET_SIZE) {
+                logger.info("Too long packet $size max ${Node.DEFAULT_MAX_PACKET_SIZE} Disconnecting $remoteAddress")
+                close()
+            }
+            return readChannel.readPacket(size)
         } catch (e: IOException) {
             throw ClosedReceiveChannelException(e.message)
         }
@@ -112,7 +116,7 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
 
     fun dos(reason: String) {
         dosScore++
-        logger.warn("DoS: $dosScore $reason $remoteAddress")
+        logger.info("DoS: $dosScore $reason $remoteAddress")
         if (dosScore >= 100)
             close()
     }

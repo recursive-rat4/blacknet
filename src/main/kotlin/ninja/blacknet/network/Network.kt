@@ -9,7 +9,7 @@
 
 package ninja.blacknet.network
 
-import ninja.blacknet.core.toHex
+import ninja.blacknet.util.toHex
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.InetSocketAddress

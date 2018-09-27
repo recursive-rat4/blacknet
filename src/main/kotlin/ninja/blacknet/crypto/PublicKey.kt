@@ -10,8 +10,8 @@
 package ninja.blacknet.crypto
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.toHex
 import ninja.blacknet.serialization.SerializableByteArray32
+import ninja.blacknet.util.toHex
 
 @Serializable
 class PublicKey(val bytes: SerializableByteArray32) {

@@ -11,6 +11,7 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import ninja.blacknet.core.DataType
 import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.serialization.SerializableByteArray
 
@@ -26,7 +27,7 @@ class GetData(private val list: InvList) : Packet {
         return PacketType.GetData.ordinal
     }
 
-    override fun process(connection: Connection) {
+    override suspend fun process(connection: Connection) {
         if (list.size > DataType.MAX_DATA) {
             connection.dos("invalid GetData size")
             return

@@ -34,7 +34,7 @@ class Version(
         return PacketType.Version.ordinal
     }
 
-    override fun process(connection: Connection) {
+    override suspend fun process(connection: Connection) {
         connection.timeOffset = Node.time() - time
         connection.version = version
         connection.agent = agent

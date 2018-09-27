@@ -11,8 +11,9 @@ package ninja.blacknet.network
 
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
 import kotlinx.coroutines.experimental.launch
-import ninja.blacknet.core.delay
+import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.util.delay
 
 object DataFetcher {
     private val inventoryChannel = LinkedListChannel<Pair<Connection, InvList>>()

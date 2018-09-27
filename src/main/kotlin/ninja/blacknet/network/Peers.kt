@@ -26,7 +26,7 @@ class Peers(private val list: List<Address>) : Packet {
         return PacketType.Peers.ordinal
     }
 
-    override fun process(connection: Connection) {
+    override suspend fun process(connection: Connection) {
         if (list.size > MAX) {
             connection.dos("invalid Peers size")
             return

@@ -11,7 +11,7 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.Blake2b
+import ninja.blacknet.core.DataType
 import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.serialization.SerializableByteArray
 
@@ -27,7 +27,7 @@ class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) :
         return PacketType.Data.ordinal
     }
 
-    override fun process(connection: Connection) {
+    override suspend fun process(connection: Connection) {
         if (list.size > DataType.MAX_DATA) {
             connection.dos("invalid Data size")
             return
@@ -37,7 +37,7 @@ class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) :
             val type = i.first
             val bytes = i.second
 
-            val hash = Blake2b.hash(bytes.array)
+            val hash = type.hash(bytes.array)
 
             DataFetcher.fetched(hash)
 

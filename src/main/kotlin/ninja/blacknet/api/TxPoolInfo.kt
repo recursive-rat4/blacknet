@@ -7,12 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.api
 
-import kotlinx.io.core.ByteReadPacket
+import kotlinx.serialization.Serializable
 
-interface Packet {
-    fun serialize(): ByteReadPacket
-    fun getType(): Int
-    suspend fun process(connection: Connection)
-}
+@Serializable
+class TxPoolInfo(
+        val size: Int,
+        val dataSize: Int,
+        val tx: List<String>
+)

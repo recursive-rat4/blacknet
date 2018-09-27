@@ -7,12 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.util
 
-import kotlinx.io.core.ByteReadPacket
+import kotlinx.coroutines.experimental.timeunit.TimeUnit
 
-interface Packet {
-    fun serialize(): ByteReadPacket
-    fun getType(): Int
-    suspend fun process(connection: Connection)
-}
+suspend fun delay(seconds: Int) = kotlinx.coroutines.experimental.delay(seconds.toLong(), TimeUnit.SECONDS)

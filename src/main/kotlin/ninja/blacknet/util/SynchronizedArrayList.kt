@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.util
 
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
@@ -30,4 +30,10 @@ class SynchronizedArrayList<T>(private val list: ArrayList<T>) {
     suspend fun sumBy(selector: (T) -> Int) = mutex.withLock { list.sumBy(selector) }
 
     suspend fun filter(predicate: (T) -> Boolean) = mutex.withLock { list.filter(predicate) }
+
+    suspend fun <R> map(transform: (T) -> R): ArrayList<R> = mutex.withLock {
+        val ret = ArrayList<R>(list.size)
+        list.forEach { ret.add(transform(it)) }
+        ret
+    }
 }

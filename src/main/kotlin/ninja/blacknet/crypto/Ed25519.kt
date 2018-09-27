@@ -20,7 +20,7 @@ import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
 import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec
-import ninja.blacknet.core.byteArrayOfInts
+import ninja.blacknet.util.byteArrayOfInts
 import java.security.MessageDigest
 
 object Ed25519 {

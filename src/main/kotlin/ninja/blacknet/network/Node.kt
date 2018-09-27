@@ -15,9 +15,9 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.launch
 import mu.KotlinLogging
-import ninja.blacknet.core.SynchronizedArrayList
-import ninja.blacknet.core.delay
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.util.SynchronizedArrayList
+import ninja.blacknet.util.delay
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
@@ -27,6 +27,7 @@ private val logger = KotlinLogging.logger {}
 
 object Node {
     const val P2P_PORT = 28453
+    const val DEFAULT_MAX_PACKET_SIZE = 640000
     const val MIN_CONNECTIONS = 8
     const val NETWORK_TIMEOUT = 60
     const val magic = 0x17895E7D
@@ -43,7 +44,7 @@ object Node {
         launch { connector() }
         launch { pinger() }
         launch { peerAnnouncer() }
-        launch { dnsSeeder() }
+        launch { dnsSeeder(true) }
     }
 
     fun time(): Long {
@@ -52,6 +53,10 @@ object Node {
 
     fun timeMilli(): Long {
         return Instant.now().toEpochMilli()
+    }
+
+    fun isTooFarInFuture(time: Long): Boolean {
+        return time > Node.time() + 15
     }
 
     suspend fun outgoing(): Int {
@@ -127,13 +132,22 @@ object Node {
     }
 
     private suspend fun connector() {
+        if (PeerDB.isEmpty()) {
+            logger.info("PeerDB is empty. Waiting for dns seeder.")
+            delay(DNS_TIMEOUT)
+        }
+
         while (true) {
             if (outgoing() >= MIN_CONNECTIONS)
                 delay(NETWORK_TIMEOUT)
 
-            val address = PeerDB.getCandidate()
+            val filter = connections.map { it.remoteAddress }.plus(listenAddress.clone())
+
+            val address = PeerDB.getCandidate(filter)
             if (address == null) {
+                logger.info("Don't have candidates in PeerDB")
                 delay(PeerDB.NETWORK_TIMEOUT)
+                dnsSeeder(false)
                 continue
             }
 
@@ -146,7 +160,7 @@ object Node {
                 PeerDB.commit()
             }
 
-            delay(NETWORK_TIMEOUT)
+            delay(NETWORK_TIMEOUT) //TODO
         }
     }
 
@@ -198,14 +212,18 @@ object Node {
         }
     }
 
-    private suspend fun dnsSeeder() {
-        if (PeerDB.size() > 0) {
-            delay(11)
+    private val DNS_TIMEOUT = 5
+    private val DNS_SEEDER_DELAY = 11
+    private suspend fun dnsSeeder(delay: Boolean) {
+        if (delay && !PeerDB.isEmpty()) {
+            delay(DNS_SEEDER_DELAY)
             if (connected() >= 2) {
                 logger.info("P2P peers available. Skipped DNS seeding.")
                 return
             }
         }
+
+        logger.info("Requesting DNS seeds.")
 
         val seeds = "dnsseed.blacknet.ninja"
         try {

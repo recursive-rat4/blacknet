@@ -25,7 +25,7 @@ class Pong(private val id: Int) : Packet {
         return PacketType.Pong.ordinal
     }
 
-    override fun process(connection: Connection) {
+    override suspend fun process(connection: Connection) {
         val request = connection.pingRequest
         if (request == null) {
             connection.dos("unexpected Pong")

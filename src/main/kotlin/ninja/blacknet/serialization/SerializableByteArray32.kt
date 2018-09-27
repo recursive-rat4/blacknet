@@ -13,7 +13,7 @@ import kotlinx.serialization.KInput
 import kotlinx.serialization.KOutput
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
-import ninja.blacknet.core.toHex
+import ninja.blacknet.util.toHex
 
 @Serializable
 class SerializableByteArray32(val array: ByteArray) {

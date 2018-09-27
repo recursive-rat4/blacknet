@@ -11,6 +11,7 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetOutput
 
@@ -26,7 +27,7 @@ class Inventory(private val list: InvList) : Packet {
         return PacketType.Inventory.ordinal
     }
 
-    override fun process(connection: Connection) {
+    override suspend fun process(connection: Connection) {
         if (list.size > DataType.MAX_INVENTORY) {
             connection.dos("invalid Inventory size")
             return

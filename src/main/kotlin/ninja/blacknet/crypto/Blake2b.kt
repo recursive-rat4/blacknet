@@ -27,4 +27,12 @@ object Blake2b {
         b.digest(bytes, 0)
         return Hash(bytes)
     }
+
+    fun hash(message: ByteArray, offset: Int, len: Int): Hash {
+        val bytes = ByteArray(Hash.SIZE)
+        val b = Blake2b(Hash.SIZE * 8)
+        b.update(message, offset, len)
+        b.digest(bytes, 0)
+        return Hash(bytes)
+    }
 }

@@ -11,6 +11,7 @@ package ninja.blacknet.crypto
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.serialization.SerializableByteArray32
+import ninja.blacknet.util.fromHex
 
 @Serializable
 class Hash(val bytes: SerializableByteArray32) {
@@ -31,5 +32,12 @@ class Hash(val bytes: SerializableByteArray32) {
     companion object {
         const val SIZE = 32
         val ZERO = Hash(SerializableByteArray32())
+
+        fun fromString(hex: String): Hash? {
+            if (hex.length != SIZE * 2)
+                return null
+            val bytes = fromHex(hex) ?: return null
+            return Hash(bytes)
+        }
     }
 }

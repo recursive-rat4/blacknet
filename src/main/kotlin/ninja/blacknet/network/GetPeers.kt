@@ -26,7 +26,7 @@ class GetPeers : Packet {
         return PacketType.GetPeers.ordinal
     }
 
-    override fun process(connection: Connection) {
+    override suspend fun process(connection: Connection) {
         if (connection.state == Connection.State.OUTGOING_CONNECTED) {
             connection.dos("GetPeers from outgoing connection")
             return

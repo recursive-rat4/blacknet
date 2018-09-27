@@ -10,23 +10,36 @@
 package ninja.blacknet.core
 
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.util.SynchronizedHashMap
 
 abstract class MemPool : DataDB() {
-    private val map = HashMap<Hash, ByteArray>()
+    private val map = SynchronizedHashMap<Hash, ByteArray>()
 
-    protected fun add(hash: Hash, bytes: ByteArray) {
-        map[hash] = bytes
+    suspend fun size(): Int {
+        return map.size()
     }
 
-    override fun contains(hash: Hash): Boolean {
+    suspend fun dataSize(): Int {
+        return map.sumValuesBy { it.size }
+    }
+
+    suspend fun <T> mapHashes(transform: (Hash) -> T): List<T> {
+        return map.mapKeys(transform)
+    }
+
+    protected suspend fun add(hash: Hash, bytes: ByteArray) {
+        map.set(hash, bytes)
+    }
+
+    override suspend fun contains(hash: Hash): Boolean {
         return map.containsKey(hash)
     }
 
-    override fun get(hash: Hash): ByteArray? {
-        return map[hash]
+    override suspend fun get(hash: Hash): ByteArray? {
+        return map.get(hash)
     }
 
-    override fun remove(hash: Hash): ByteArray? {
+    override suspend fun remove(hash: Hash): ByteArray? {
         return map.remove(hash)
     }
 }

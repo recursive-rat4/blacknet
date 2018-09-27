@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import io.ktor.util.random
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.Node
 import org.mapdb.DBMaker
@@ -26,6 +27,10 @@ object PeerDB {
 
     fun size(): Int {
         return map.size
+    }
+
+    fun isEmpty(): Boolean {
+        return map.isEmpty()
     }
 
     fun connected(address: Address) {
@@ -50,8 +55,11 @@ object PeerDB {
         return map.keys.toList() as List<Address>
     }
 
-    fun getCandidate(): Address? {
-        return getRandom(1).firstOrNull() //TODO
+    fun getCandidate(filter: List<Address>): Address? {
+        val candidates = map.keys.filter { !filter.contains(it) } as List<Address>
+        if (candidates.isEmpty())
+            return null
+        return candidates[random(candidates.size)]
     }
 
     fun getRandom(n: Int): MutableList<Address> {

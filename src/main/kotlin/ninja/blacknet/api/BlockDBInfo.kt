@@ -7,8 +7,11 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.api
 
-import kotlinx.coroutines.experimental.timeunit.TimeUnit
+import kotlinx.serialization.Serializable
 
-suspend fun delay(seconds: Int) = kotlinx.coroutines.experimental.delay(seconds.toLong(), TimeUnit.SECONDS)
+@Serializable
+class BlockDBInfo(
+        val size: Int
+)
