@@ -7,14 +7,12 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api
+package ninja.blacknet.util
 
-import kotlinx.serialization.Serializable
-
-@Serializable
-class LedgerInfo(
-        val height: Int,
-        val blockHash: String,
-        val supply: Long,
-        val accounts: Int
-)
+inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
+    var sum: Long = 0
+    for (element in this) {
+        sum += selector(element)
+    }
+    return sum
+}

@@ -22,6 +22,7 @@ import kotlinx.serialization.list
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.Ledger
 import ninja.blacknet.db.PeerDB
@@ -79,8 +80,28 @@ fun Application.main() {
         }
 
         get("/ledger") {
-            val ret = LedgerInfo(Ledger.height(), Ledger.blockHash().toString())
+            val ret = LedgerInfo(Ledger.height(), Ledger.blockHash().toString(), Ledger.supply(), Ledger.accounts())
             call.respond(JSON.indented.stringify(ret))
+        }
+
+        get("/ledger/get/{pubkey}") {
+            val string = call.parameters["pubkey"]
+            if (string != null) {
+                val pubkey = PublicKey.fromString(string)
+                if (pubkey != null) {
+                    val state = Ledger.get(pubkey)
+                    if (state != null) {
+                        val ret = AccountInfo(state.seq, state.balance(), state.stakingBalance(Ledger.height()))
+                        call.respond(JSON.indented.stringify(ret))
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "account not found")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "invalid pubkey")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "pubkey is not specified")
+            }
         }
 
         get("/txpool") {

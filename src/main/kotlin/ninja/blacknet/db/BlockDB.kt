@@ -68,7 +68,9 @@ object BlockDB : DataDB() {
             commit()
             logger.info("Accepted block $hash")
             return true
+        } else {
+            Ledger.rollback()
+            return false
         }
-        return false
     }
 }

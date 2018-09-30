@@ -31,7 +31,7 @@ enum class DataType(
 
     object TxHash : (ByteArray) -> Hash {
         override fun invoke(bytes: ByteArray): Hash {
-            return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
+            return Blake2b.hash(bytes, Signature.SIZE, bytes.size - Signature.SIZE)
         }
     }
 

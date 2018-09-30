@@ -10,30 +10,51 @@
 package ninja.blacknet.serialization
 
 import kotlinx.io.core.ByteReadPacket
+import kotlinx.io.core.IoBuffer
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.ElementValueInput
+import kotlinx.serialization.KSerialLoader
+import java.nio.ByteBuffer
 import kotlin.reflect.KClass
 
-class BlacknetInput(private val bytes: ByteReadPacket) : ElementValueInput() {
-    override fun readByteValue(): Byte = bytes.readByte()
-    override fun readIntValue(): Int = bytes.readInt()
-    override fun readLongValue(): Long = bytes.readLong()
+class BlacknetInput(private val input: ByteReadPacket) : ElementValueInput() {
+    fun <T : Any?> deserialize(loader: KSerialLoader<T>): T? {
+        val v = loader.load(this)
+        if (input.remaining > 0) {
+            input.release()
+            return null
+        }
+        return v
+    }
+
+    override fun readByteValue(): Byte = input.readByte()
+    override fun readIntValue(): Int = input.readInt()
+    override fun readLongValue(): Long = input.readLong()
 
     override fun readStringValue(): String {
-        val size = bytes.unpackInt()
-        return String(bytes.readBytes(size))
+        val size = input.unpackInt()
+        return String(input.readBytes(size))
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Enum<T>> readEnumValue(enumClass: KClass<T>): T = enumClass.java.enumConstants[bytes.unpackInt()]
+    override fun <T : Enum<T>> readEnumValue(enumClass: KClass<T>): T = enumClass.java.enumConstants[input.unpackInt()]
 
     fun readSerializableByteArrayValue(): SerializableByteArray {
-        val size = bytes.unpackInt()
-        return SerializableByteArray(bytes.readBytes(size))
+        val size = input.unpackInt()
+        return SerializableByteArray(input.readBytes(size))
     }
 
     fun readByteArrayValue(size: Int): ByteArray {
-        return bytes.readBytes(size)
+        return input.readBytes(size)
+    }
+
+    companion object {
+        fun fromBytes(bytes: ByteArray): BlacknetInput {
+            val buf = IoBuffer(ByteBuffer.wrap(bytes))
+            buf.resetForRead()
+            val input = ByteReadPacket(buf, IoBuffer.NoPool)
+            return BlacknetInput(input)
+        }
     }
 }
 

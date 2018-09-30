@@ -7,14 +7,12 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api
+package ninja.blacknet.core
 
-import kotlinx.serialization.Serializable
+import kotlinx.io.core.ByteReadPacket
 
-@Serializable
-class LedgerInfo(
-        val height: Int,
-        val blockHash: String,
-        val supply: Long,
-        val accounts: Int
-)
+interface TxData {
+    fun serialize(): ByteReadPacket
+    fun getType(): Byte
+    fun process(tx: Transaction): Boolean
+}

@@ -64,10 +64,9 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
                     logger.info("unknown packet type $type")
                     continue
                 }
-                val packet = BlacknetInput(bytes).read(serializer)
-                if (bytes.remaining > 0) {
-                    bytes.release()
-                    dos("trailing data in packet")
+                val packet = BlacknetInput(bytes).deserialize(serializer)
+                if (packet == null) {
+                    dos("deserialization failed")
                     continue
                 }
                 packet.process(this)

@@ -87,6 +87,10 @@ object Node {
         }
     }
 
+    suspend fun isOffline(): Boolean {
+        return connected() == 0
+    }
+
     fun listenOn(address: Address) {
         val addr = when (address.network) {
             Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
@@ -146,7 +150,7 @@ object Node {
             val address = PeerDB.getCandidate(filter)
             if (address == null) {
                 logger.info("Don't have candidates in PeerDB")
-                delay(PeerDB.NETWORK_TIMEOUT)
+                delay(PeerDB.DELAY)
                 dnsSeeder(false)
                 continue
             }

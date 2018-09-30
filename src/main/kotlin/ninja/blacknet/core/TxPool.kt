@@ -9,10 +9,37 @@
 
 package ninja.blacknet.core
 
+import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.db.Ledger
+
+private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool() {
+    private fun checkSequence(publicKey: PublicKey, seq: Int): Boolean {
+        return Ledger.checkSequence(publicKey, seq)
+    }
+
     override fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        return false //TODO
+        val tx = Transaction.deserialize(bytes)
+        if (tx == null) {
+            logger.info("deserialization failed")
+            return false
+        }
+        if (!checkSequence(tx.from, tx.seq)) {
+            logger.info("invalid sequence number")
+            return false
+        }
+        if (!tx.verifySignature(hash)) {
+            logger.info("invalid signature")
+            return false
+        }
+        if (tx.fee < 0) {
+            logger.info("negative fee")
+            return false
+        }
+        //TODO
+        return false
     }
 }

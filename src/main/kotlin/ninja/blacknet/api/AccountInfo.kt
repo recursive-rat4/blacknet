@@ -12,9 +12,8 @@ package ninja.blacknet.api
 import kotlinx.serialization.Serializable
 
 @Serializable
-class LedgerInfo(
-        val height: Int,
-        val blockHash: String,
-        val supply: Long,
-        val accounts: Int
+class AccountInfo(
+        val seq: Int,
+        val balance: Long,
+        val stakingBalance: Long
 )

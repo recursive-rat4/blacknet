@@ -10,16 +10,26 @@
 package ninja.blacknet.db
 
 import io.ktor.util.random
+import kotlinx.coroutines.experimental.launch
+import mu.KotlinLogging
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.Node
+import ninja.blacknet.util.delay
 import org.mapdb.DBMaker
+import org.mapdb.HTreeMap
 import org.mapdb.Serializer
 import kotlin.math.min
 
+private val logger = KotlinLogging.logger {}
+
 object PeerDB {
-    const val NETWORK_TIMEOUT = 30 * 60
+    const val DELAY = 60 * 60
     private val db = DBMaker.fileDB("peer.db").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
-    private val map = db.hashMap("peers", Serializer.ELSA, Serializer.ELSA).createOrOpen()
+    private val map = db.hashMap("peers", Serializer.ELSA, Serializer.ELSA).createOrOpen() as HTreeMap<Address, Entry>
+
+    init {
+        launch { oldEntriesRemover() }
+    }
 
     fun commit() {
         db.commit()
@@ -52,11 +62,11 @@ object PeerDB {
     }
 
     fun getAll(): List<Address> {
-        return map.keys.toList() as List<Address>
+        return map.keys.toList()
     }
 
     fun getCandidate(filter: List<Address>): Address? {
-        val candidates = map.keys.filter { !filter.contains(it) } as List<Address>
+        val candidates = map.keys.filter { !filter.contains(it) }
         if (candidates.isEmpty())
             return null
         return candidates[random(candidates.size)]
@@ -64,7 +74,7 @@ object PeerDB {
 
     fun getRandom(n: Int): MutableList<Address> {
         val x = min(size(), n)
-        return map.keys.shuffled().take(x).toMutableList() as MutableList<Address>
+        return map.keys.shuffled().take(x).toMutableList()
     }
 
     fun add(peers: List<Address>, from: Address) {
@@ -74,5 +84,32 @@ object PeerDB {
         }
     }
 
-    class Entry(val from: Address, val attempts: Int, val lastTry: Long, val lastConnected: Long) : java.io.Serializable
+    private suspend fun oldEntriesRemover() {
+        while (true) {
+            delay(DELAY)
+            if (Node.isOffline()) continue
+
+            val toRemove = ArrayList<Address>()
+            val currTime = Node.time()
+            map.forEach { k, v ->
+                if (v.isOld(currTime))
+                    toRemove.add(k)
+            }
+            if (!toRemove.isEmpty()) {
+                toRemove.forEach { map.remove(it) }
+                commit()
+                logger.info("Removed ${toRemove.size} old entries from peer db")
+            }
+        }
+    }
+
+    class Entry(val from: Address, val attempts: Int, val lastTry: Long, val lastConnected: Long) : java.io.Serializable {
+        fun isOld(currTime: Long): Boolean {
+            if (lastConnected == 0L && attempts > 15)
+                return true
+            if (lastConnected != 0L && currTime - lastConnected > 15 * 24 * 60 * 60)
+                return true
+            return false
+        }
+    }
 }

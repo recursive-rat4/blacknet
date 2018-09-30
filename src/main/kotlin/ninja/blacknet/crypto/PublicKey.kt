@@ -11,17 +11,24 @@ package ninja.blacknet.crypto
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.serialization.SerializableByteArray32
-import ninja.blacknet.util.toHex
+import ninja.blacknet.util.fromHex
 
 @Serializable
 class PublicKey(val bytes: SerializableByteArray32) {
     constructor(bytes: ByteArray) : this(SerializableByteArray32(bytes))
 
     override fun toString(): String {
-        return bytes.array.toHex()
+        return bytes.toString()
     }
 
     companion object {
         const val SIZE = 32
+
+        fun fromString(hex: String): PublicKey? {
+            if (hex.length != SIZE * 2)
+                return null
+            val bytes = fromHex(hex) ?: return null
+            return PublicKey(bytes)
+        }
     }
 }

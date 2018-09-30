@@ -20,14 +20,13 @@ import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class Block(
-        val version: Int,
-        val previous: Hash,
-        val time: Long,
-        val generator: PublicKey,
-        val sizeVote: Int,
-        val transactions: ArrayList<SerializableByteArray>,
-        val signature: Signature
+class Transaction(
+        val signature: Signature,
+        val from: PublicKey,
+        val seq: Int,
+        val fee: Long,
+        val type: Byte,
+        val data: SerializableByteArray
 ) {
     fun serialize(): ByteArray {
         val out = BlacknetOutput()
@@ -36,12 +35,12 @@ class Block(
     }
 
     fun verifySignature(hash: Hash): Boolean {
-        return Ed25519.verify(signature, hash, generator)
+        return Ed25519.verify(signature, hash, from)
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): Block? {
-            return BlacknetInput.fromBytes(bytes).deserialize(Block.serializer())
+        fun deserialize(bytes: ByteArray): Transaction? {
+            return BlacknetInput.fromBytes(bytes).deserialize(Transaction.serializer())
         }
     }
 }
