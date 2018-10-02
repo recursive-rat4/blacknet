@@ -11,8 +11,11 @@ package ninja.blacknet.core
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import mu.KotlinLogging
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetOutput
+
+private val logger = KotlinLogging.logger {}
 
 @Serializable
 class CancelLease(
@@ -30,7 +33,17 @@ class CancelLease(
         return TxType.CancelLease.ordinal.toByte()
     }
 
-    override fun process(tx: Transaction): Boolean {
-        return false //TODO
+    override fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+        val toAccount = ledger.get(to)
+        if (toAccount == null) {
+            logger.info("account not found")
+            return false
+        }
+        if (toAccount.leases.remove(AccountState.Input(height, amount))) {
+            ledger.set(to, toAccount)
+            return true
+        }
+        logger.info("lease not found")
+        return false
     }
 }

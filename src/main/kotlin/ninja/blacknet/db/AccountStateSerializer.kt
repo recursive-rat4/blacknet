@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import ninja.blacknet.core.AccountState
 import org.mapdb.DataInput2
 import org.mapdb.DataOutput2
 import org.mapdb.Serializer
@@ -47,12 +48,14 @@ object AccountStateSerializer : Serializer<AccountState> {
         val stake = input.unpackLong()
         val immatureSize = input.unpackInt()
         val immature = ArrayList<AccountState.Input>(immatureSize)
-        for (i in 0..immatureSize)
-            immature.add(AccountState.Input(input.unpackInt(), input.unpackLong()))
+        if (immatureSize > 0)
+            for (i in 0..immatureSize)
+                immature.add(AccountState.Input(input.unpackInt(), input.unpackLong()))
         val leasesSize = input.unpackInt()
         val leases = ArrayList<AccountState.Input>(leasesSize)
-        for (i in 0..leasesSize)
-            leases.add(AccountState.Input(input.unpackInt(), input.unpackLong()))
+        if (leasesSize > 0)
+            for (i in 0..leasesSize)
+                leases.add(AccountState.Input(input.unpackInt(), input.unpackLong()))
         return AccountState(seq, stake, immature, leases)
     }
 }

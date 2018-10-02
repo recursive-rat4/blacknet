@@ -11,14 +11,17 @@ package ninja.blacknet.core
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import mu.KotlinLogging
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetOutput
+
+private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Lease(
         val amount: Long,
         val to: PublicKey
-) :TxData{
+) : TxData {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -29,7 +32,16 @@ class Lease(
         return TxType.Lease.ordinal.toByte()
     }
 
-    override fun process(tx: Transaction): Boolean {
-        return false //TODO
+    override fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+        if (amount < PoS.MIN_LEASE) {
+            logger.info("$amount less than minimal ${PoS.MIN_LEASE}")
+            return false
+        }
+        if (!account.credit(amount))
+            return false
+        val toAccount = ledger.get(to) ?: AccountState.create()
+        toAccount.leases.add(AccountState.Input(ledger.height(), amount))
+        ledger.set(to, toAccount)
+        return true
     }
 }

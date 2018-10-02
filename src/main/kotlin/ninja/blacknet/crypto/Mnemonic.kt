@@ -10,7 +10,6 @@
 package ninja.blacknet.crypto
 
 import kotlinx.serialization.toUtf8Bytes
-import ninja.blacknet.crypto.Ed25519.PrivateKey
 
 object Mnemonic {
     fun fromString(string: String): PrivateKey? {

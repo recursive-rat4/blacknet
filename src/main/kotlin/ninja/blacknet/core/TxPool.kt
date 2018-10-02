@@ -9,37 +9,41 @@
 
 package ninja.blacknet.core
 
-import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.Ledger
+import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.network.Node
 
-private val logger = KotlinLogging.logger {}
+object TxPool : MemPool(), Ledger {
+    private val accounts = HashMap<PublicKey, AccountState>()
 
-object TxPool : MemPool() {
-    private fun checkSequence(publicKey: PublicKey, seq: Int): Boolean {
-        return Ledger.checkSequence(publicKey, seq)
+    override fun checkFee(size: Int, amount: Long): Boolean {
+        //TODO
+        return amount >= Node.MIN_FEE
+    }
+
+    override fun checkSequence(key: PublicKey, seq: Int): Boolean {
+        val account = accounts[key]
+        if (account != null)
+            return account.seq == seq
+        return LedgerDB.checkSequence(key, seq)
+    }
+
+    override fun get(key: PublicKey): AccountState? {
+        val account = accounts[key]
+        if (account != null)
+            return account
+        return LedgerDB.get(key)
+    }
+
+    override fun set(key: PublicKey, state: AccountState) {
+        accounts[key] = state
     }
 
     override fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        val tx = Transaction.deserialize(bytes)
-        if (tx == null) {
-            logger.info("deserialization failed")
-            return false
-        }
-        if (!checkSequence(tx.from, tx.seq)) {
-            logger.info("invalid sequence number")
-            return false
-        }
-        if (!tx.verifySignature(hash)) {
-            logger.info("invalid signature")
-            return false
-        }
-        if (tx.fee < 0) {
-            logger.info("negative fee")
-            return false
-        }
-        //TODO
-        return false
+        return processTransaction(hash, bytes)
     }
+
+    override fun addSupply(amount: Long) {}
+    override fun height() = -1
 }

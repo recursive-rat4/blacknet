@@ -27,9 +27,10 @@ private val logger = KotlinLogging.logger {}
 
 object Node {
     const val P2P_PORT = 28453
-    const val DEFAULT_MAX_PACKET_SIZE = 640000
+    const val DEFAULT_MAX_PACKET_SIZE = 1000000
     const val MIN_CONNECTIONS = 8
     const val NETWORK_TIMEOUT = 60
+    const val MIN_FEE = 100000
     const val magic = 0x17895E7D
     const val version = 5
     const val minVersion = 5

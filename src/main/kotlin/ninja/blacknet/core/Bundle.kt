@@ -15,9 +15,8 @@ import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class Burn(
-        val amount: Long,
-        val message: SerializableByteArray
+class Bundle(
+        val data: SerializableByteArray
 ) : TxData {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
@@ -26,14 +25,10 @@ class Burn(
     }
 
     override fun getType(): Byte {
-        return TxType.Burn.ordinal.toByte()
+        return TxType.Bundle.ordinal.toByte()
     }
 
     override fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
-        if (!account.credit(amount)) {
-            return false
-        }
-        ledger.addSupply(-amount)
-        return true
+        return false //TODO
     }
 }

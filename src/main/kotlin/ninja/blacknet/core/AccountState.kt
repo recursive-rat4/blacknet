@@ -7,9 +7,12 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.db
+package ninja.blacknet.core
 
+import mu.KotlinLogging
 import ninja.blacknet.util.sumByLong
+
+private val logger = KotlinLogging.logger {}
 
 class AccountState(
         var seq: Int,
@@ -25,9 +28,36 @@ class AccountState(
         return stake + immature.sumByLong { it.matureBalance(height) } + leases.sumByLong { it.matureBalance(height) }
     }
 
+    fun credit(amount: Long): Boolean {
+        if (amount < 0) {
+            logger.info("negative amount")
+            return false
+        }
+        if (balance() < amount) {
+            logger.info("insufficient funds")
+            return false
+        }
+        return false //TODO
+    }
+
+    fun debit(height: Int, amount: Long) {
+        immature.add(Input(height, amount))
+    }
+
+    fun prune(height: Int) {
+        if (height < 0) return
+        //TODO
+    }
+
     class Input(val height: Int, val amount: Long) {
         fun matureBalance(height: Int): Long {
-            return if (height > this.height + 500) amount else 0
+            return if (height > this.height + PoS.MATURITY) amount else 0
+        }
+    }
+
+    companion object {
+        fun create(stake: Long = 0): AccountState {
+            return AccountState(0, stake, ArrayList(), ArrayList())
         }
     }
 }

@@ -31,7 +31,12 @@ class Transfer(
         return TxType.Transfer.ordinal.toByte()
     }
 
-    override fun process(tx: Transaction): Boolean {
-        return false //TODO
+    override fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+        if (!account.credit(amount))
+            return false
+        val toAccount = ledger.get(to) ?: AccountState.create()
+        toAccount.debit(ledger.height(), amount)
+        ledger.set(to, toAccount)
+        return true
     }
 }

@@ -62,14 +62,14 @@ object BlockDB : DataDB() {
         }
         //TODO sizeVote
         //TODO pos
-        if (Ledger.processBlock(block)) {
-            Ledger.commit()
+        if (LedgerDB.processBlock(hash, block)) {
+            LedgerDB.commit()
             map[hash] = bytes
             commit()
             logger.info("Accepted block $hash")
             return true
         } else {
-            Ledger.rollback()
+            LedgerDB.rollback()
             return false
         }
     }

@@ -41,8 +41,6 @@ object Ed25519 {
                         true))
     }
 
-    class PrivateKey(val bytes: ByteArray)
-
     fun publicKey(privateKey: PrivateKey): PublicKey {
         val key = EdDSAPrivateKeySpec(privateKey.bytes, spec)
         return PublicKey(key.getA().toByteArray())

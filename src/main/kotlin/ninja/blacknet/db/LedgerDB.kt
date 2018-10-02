@@ -10,23 +10,33 @@
 package ninja.blacknet.db
 
 import mu.KotlinLogging
-import ninja.blacknet.core.Block
-import ninja.blacknet.core.DataType
-import ninja.blacknet.core.Transaction
-import ninja.blacknet.core.TxType
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.Mnemonic
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BlacknetInput
 import org.mapdb.DBMaker
 
 private val logger = KotlinLogging.logger {}
 
-object Ledger {
+object LedgerDB : Ledger {
     private val db = DBMaker.fileDB("ledger.db").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
     private val accounts = db.hashMap("accounts", PublicKeySerializer, AccountStateSerializer).createOrOpen()
     private val height = db.atomicInteger("height").createOrOpen()
     private val blockHash = db.atomicVar("blockHash", HashSerializer, Hash.ZERO).createOrOpen()
     private val supply = db.atomicLong("supply").createOrOpen()
+
+    init {
+        if (accounts.isEmpty()) {
+            val supply = 1000000000L * PoS.COIN
+            val mnemonic = "unit visual denial donor twice sure trim blast sniff topple december pill"
+            // publicKey a11188d9e5087156c3e7f2deeccfb9879a46d8fc49579c8fc3205319a4e31f0f
+            val publicKey = Mnemonic.fromString(mnemonic)!!.toPublicKey()
+            val account = AccountState.create(supply)
+            set(publicKey, account)
+            addSupply(supply)
+            commit()
+        }
+    }
 
     fun commit() {
         db.commit()
@@ -36,7 +46,7 @@ object Ledger {
         db.rollback()
     }
 
-    fun height(): Int {
+    override fun height(): Int {
         return height.get()
     }
 
@@ -48,71 +58,62 @@ object Ledger {
         return supply.get()
     }
 
-    fun addSupply(amount: Long) {
-        supply.set(supply.get() + amount)
-    }
-
     fun accounts(): Int {
         return accounts.size
     }
 
-    fun get(key: PublicKey): AccountState? {
+    override fun get(key: PublicKey): AccountState? {
         return accounts[key]
     }
 
-    fun set(key: PublicKey, state: AccountState) {
+    override fun set(key: PublicKey, state: AccountState) {
         accounts[key] = state
     }
 
-    fun checkSequence(key: PublicKey, seq: Int): Boolean {
+    override fun addSupply(amount: Long) {
+        supply.set(supply.get() + amount)
+    }
+
+    override fun checkFee(size: Int, amount: Long) = amount >= 0
+
+    override fun checkSequence(key: PublicKey, seq: Int): Boolean {
         val account = get(key) ?: return false
         return account.seq == seq
     }
 
-    fun processBlock(block: Block): Boolean {
+    fun processBlock(hash: Hash, block: Block): Boolean {
         if (block.previous != blockHash()) {
             logger.error("not on current chain")
             return false
         }
+
+        height.set(height.get() + 1)
+        blockHash.set(hash)
+
+        var fees = 0L
         for (bytes in block.transactions) {
             val tx = Transaction.deserialize(bytes.array)
             if (tx == null) {
                 logger.info("deserialization failed")
                 return false
             }
-            if (!checkSequence(tx.from, tx.seq)) {
-                logger.info("invalid sequence number")
-                return false
-            }
-            val hash = DataType.Transaction.hash(bytes.array)
-            if (!tx.verifySignature(hash)) {
-                logger.info("invalid signature")
-                return false
-            }
-            if (tx.fee < 0) {
-                logger.info("negative fee")
-                return false
-            }
-            if (!processTransaction(tx)) {
+            if (!processTransaction(tx, hash, bytes.array.size)) {
                 logger.info("invalid transaction")
                 return false
             }
+            fees += tx.fee
         }
-        //TODO pos
-        return true
-    }
 
-    private fun processTransaction(tx: Transaction): Boolean {
-        val serializer = TxType.getSerializer(tx.type)
-        if (serializer == null) {
-            logger.info("unknown transaction type ${tx.type}")
+        val generator = get(block.generator)
+        if (generator == null) {
+            logger.error("block generator not found")
             return false
         }
-        val data = BlacknetInput.fromBytes(tx.data.array).deserialize(serializer)
-        if (data == null) {
-            logger.info("deserialization failed")
-            return false
-        }
-        return data.process(tx)
+        val reward = PoS.reward(supply())
+        addSupply(reward)
+        generator.debit(height(), reward + fees)
+        set(block.generator, generator)
+
+        return true
     }
 }

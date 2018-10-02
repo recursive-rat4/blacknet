@@ -26,6 +26,7 @@ enum class TxType {
                 Burn.ordinal.toByte() -> ninja.blacknet.core.Burn.serializer()
                 Lease.ordinal.toByte() -> ninja.blacknet.core.Lease.serializer()
                 CancelLease.ordinal.toByte() -> ninja.blacknet.core.CancelLease.serializer()
+                Bundle.ordinal.toByte() -> ninja.blacknet.core.Bundle.serializer()
                 else -> null
             }
         }

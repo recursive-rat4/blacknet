@@ -10,9 +10,35 @@
 package ninja.blacknet.core
 
 import kotlinx.io.core.ByteReadPacket
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 interface TxData {
     fun serialize(): ByteReadPacket
     fun getType(): Byte
-    fun process(tx: Transaction): Boolean
+    fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean
+
+    fun process(tx: Transaction, ledger: Ledger): Boolean {
+        val account = ledger.get(tx.from)
+        if (account == null) {
+            logger.info("account not found")
+            return false
+        }
+        if (tx.seq != account.seq) {
+            logger.info("invalid sequence number")
+            return false
+        }
+        if (!account.credit(tx.fee)) {
+            logger.info("insufficient funds for tx fee")
+            return false
+        }
+        if (processImpl(tx, account, ledger)) {
+            account.prune(ledger.height())
+            account.seq++
+            ledger.set(tx.from, account)
+            return true
+        }
+        return false
+    }
 }

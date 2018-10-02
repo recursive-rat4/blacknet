@@ -24,7 +24,7 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.BlockDB
-import ninja.blacknet.db.Ledger
+import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Node
 
@@ -80,7 +80,7 @@ fun Application.main() {
         }
 
         get("/ledger") {
-            val ret = LedgerInfo(Ledger.height(), Ledger.blockHash().toString(), Ledger.supply(), Ledger.accounts())
+            val ret = LedgerInfo(LedgerDB.height(), LedgerDB.blockHash().toString(), LedgerDB.supply(), LedgerDB.accounts())
             call.respond(JSON.indented.stringify(ret))
         }
 
@@ -89,9 +89,9 @@ fun Application.main() {
             if (string != null) {
                 val pubkey = PublicKey.fromString(string)
                 if (pubkey != null) {
-                    val state = Ledger.get(pubkey)
+                    val state = LedgerDB.get(pubkey)
                     if (state != null) {
-                        val ret = AccountInfo(state.seq, state.balance(), state.stakingBalance(Ledger.height()))
+                        val ret = AccountInfo(state.seq, state.balance(), state.stakingBalance(LedgerDB.height()))
                         call.respond(JSON.indented.stringify(ret))
                     } else {
                         call.respond(HttpStatusCode.NotFound, "account not found")
