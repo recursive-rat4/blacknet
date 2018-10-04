@@ -26,7 +26,6 @@ class Ping(private val id: Int) : Packet {
     }
 
     override suspend fun process(connection: Connection) {
-        val pong = Pong(id)
-        connection.sendPacket(pong)
+        connection.sendPacket(Pong(id))
     }
 }

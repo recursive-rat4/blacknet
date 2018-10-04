@@ -53,8 +53,7 @@ object DataFetcher {
                 }
 
                 if (request.size == DataType.MAX_DATA) {
-                    val getData = GetData(request)
-                    connection.sendPacket(getData)
+                    connection.sendPacket(GetData(request))
                     request.clear()
                 }
             }
@@ -62,8 +61,7 @@ object DataFetcher {
             if (request.size == 0)
                 return
 
-            val getData = GetData(request)
-            connection.sendPacket(getData)
+            connection.sendPacket(GetData(request))
         }
     }
 

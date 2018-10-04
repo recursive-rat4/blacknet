@@ -17,6 +17,13 @@ import ninja.blacknet.network.Node
 object TxPool : MemPool(), Ledger {
     private val accounts = HashMap<PublicKey, AccountState>()
 
+    fun getSequence(key: PublicKey): Int {
+        val account = accounts[key]
+        if (account != null)
+            return account.seq
+        return LedgerDB.get(key)?.seq ?: 0
+    }
+
     override fun checkFee(size: Int, amount: Long): Boolean {
         //TODO
         return amount >= Node.MIN_FEE
@@ -40,8 +47,12 @@ object TxPool : MemPool(), Ledger {
         accounts[key] = state
     }
 
-    override fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        return processTransaction(hash, bytes)
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
+        if (processTransaction(hash, bytes)) {
+            add(hash, bytes)
+            return true
+        }
+        return false
     }
 
     override fun addSupply(amount: Long) {}

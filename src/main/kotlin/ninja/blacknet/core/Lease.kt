@@ -9,7 +9,7 @@
 
 package ninja.blacknet.core
 
-import kotlinx.io.core.ByteReadPacket
+import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.crypto.PublicKey
@@ -22,10 +22,10 @@ class Lease(
         val amount: Long,
         val to: PublicKey
 ) : TxData {
-    override fun serialize(): ByteReadPacket {
+    override fun serialize(): ByteArray {
         val out = BlacknetOutput()
         out.write(this)
-        return out.build()
+        return out.build().readBytes()
     }
 
     override fun getType(): Byte {

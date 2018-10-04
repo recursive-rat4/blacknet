@@ -32,8 +32,8 @@ class PublicKey(val bytes: SerializableByteArray32) {
     companion object {
         const val SIZE = 32
 
-        fun fromString(hex: String): PublicKey? {
-            if (hex.length != SIZE * 2)
+        fun fromString(hex: String?): PublicKey? {
+            if (hex == null || hex.length != SIZE * 2)
                 return null
             val bytes = fromHex(hex) ?: return null
             return PublicKey(bytes)

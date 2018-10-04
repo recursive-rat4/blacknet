@@ -45,7 +45,7 @@ object PeerDB {
 
     fun connected(address: Address) {
         if (address.isLocal()) return
-        val entry = map[address] as Entry?
+        val entry = map[address]
         if (entry != null)
             map[address] = Entry(entry.from, 0, 0, Node.time())
         else
@@ -54,7 +54,7 @@ object PeerDB {
 
     fun failed(address: Address) {
         if (address.isLocal()) return
-        val entry = map[address] as Entry?
+        val entry = map[address]
         if (entry != null)
             map[address] = Entry(entry.from, entry.attempts + 1, Node.time(), entry.lastConnected)
         else
@@ -74,7 +74,7 @@ object PeerDB {
 
     fun getRandom(n: Int): MutableList<Address> {
         val x = min(size(), n)
-        return map.keys.shuffled().take(x).toMutableList()
+        return map.keys.shuffled().asSequence().take(x).toMutableList()
     }
 
     fun add(peers: List<Address>, from: Address) {

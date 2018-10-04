@@ -15,6 +15,9 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.launch
 import mu.KotlinLogging
+import ninja.blacknet.core.DataType
+import ninja.blacknet.core.TxPool
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.delay
@@ -127,6 +130,22 @@ object Node {
         connection.sendPacket(v)
     }
 
+    suspend fun broadcastData(type: DataType, hash: Hash, bytes: ByteArray) {
+        if (type.db.process(hash, bytes)) {
+            val inv = InvList()
+            inv.add(Pair(type, hash))
+            broadcastPacket(Inventory(inv))
+        }
+    }
+
+    private suspend fun broadcastPacket(packet: Packet) {
+        val bytes = packet.build()
+        connections.forEach {
+            if (it.state.isConnected())
+                it.sendPacket(bytes)
+        }
+    }
+
     private suspend fun listener(server: ServerSocket) {
         while (true) {
             val socket = server.accept()
@@ -181,9 +200,8 @@ object Node {
                 } else {
                     if (it.pingRequest == null) {
                         val id = random.nextInt()
-                        val ping = Ping(id)
                         it.pingRequest = Connection.PingRequest(id, timeMilli())
-                        it.sendPacket(ping)
+                        it.sendPacket(Ping(id))
                     } else {
                         logger.info("Disconnecting ${it.remoteAddress} on ping timeout")
                         it.close()
@@ -208,17 +226,12 @@ object Node {
                     randomPeers[i] = myAddress[random.nextInt(myAddress.size)]
             }
 
-            val peers = Peers(randomPeers)
-
-            connections.forEach {
-                if (it.state.isConnected())
-                    it.sendPacket(peers)
-            }
+            broadcastPacket(Peers(randomPeers))
         }
     }
 
-    private val DNS_TIMEOUT = 5
-    private val DNS_SEEDER_DELAY = 11
+    private const val DNS_TIMEOUT = 5
+    private const val DNS_SEEDER_DELAY = 11
     private suspend fun dnsSeeder(delay: Boolean) {
         if (delay && !PeerDB.isEmpty()) {
             delay(DNS_SEEDER_DELAY)

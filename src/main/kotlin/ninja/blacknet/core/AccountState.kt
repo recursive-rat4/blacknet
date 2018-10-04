@@ -33,6 +33,12 @@ class AccountState(
             logger.info("negative amount")
             return false
         }
+
+        if (amount <= stake) {
+            stake -= amount
+            return true
+        }
+
         if (balance() < amount) {
             logger.info("insufficient funds")
             return false
@@ -46,13 +52,17 @@ class AccountState(
 
     fun prune(height: Int) {
         if (height < 0) return
-        //TODO
+
+        val mature = immature.sumByLong { it.matureBalance(height) }
+        if (mature == 0L) return
+
+        stake += mature
+        immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
     }
 
     class Input(val height: Int, val amount: Long) {
-        fun matureBalance(height: Int): Long {
-            return if (height > this.height + PoS.MATURITY) amount else 0
-        }
+        fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
+        fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }
 
     companion object {

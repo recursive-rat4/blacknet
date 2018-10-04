@@ -9,13 +9,12 @@
 
 package ninja.blacknet.core
 
-import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
 interface TxData {
-    fun serialize(): ByteReadPacket
+    fun serialize(): ByteArray
     fun getType(): Byte
     fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean
 

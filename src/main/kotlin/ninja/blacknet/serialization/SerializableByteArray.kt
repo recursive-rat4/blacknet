@@ -13,13 +13,14 @@ import kotlinx.serialization.KInput
 import kotlinx.serialization.KOutput
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
+import ninja.blacknet.util.fromHex
 import ninja.blacknet.util.toHex
 
 @Serializable
 class SerializableByteArray(
         val array: ByteArray
 ) : java.io.Serializable {
-    constructor(size: Int) : this(ByteArray(size))
+    constructor() : this (ByteArray(0))
 
     fun size(): Int = array.size
 
@@ -37,6 +38,12 @@ class SerializableByteArray(
 
     @Serializer(forClass = SerializableByteArray::class)
     companion object {
+        fun fromString(hex: String?): SerializableByteArray? {
+            if (hex == null) return null
+            val bytes = fromHex(hex) ?: return null
+            return SerializableByteArray(bytes)
+        }
+
         override fun save(output: KOutput, obj: SerializableByteArray) {
             (output as BlacknetOutput).writeSerializableByteArrayValue(obj)
         }

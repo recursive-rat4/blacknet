@@ -9,10 +9,20 @@
 
 package ninja.blacknet.network
 
+import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
 
 interface Packet {
     fun serialize(): ByteReadPacket
     fun getType(): Int
     suspend fun process(connection: Connection)
+
+    fun build(): ByteReadPacket {
+        val s = serialize()
+        val b = BytePacketBuilder()
+        b.writeInt(s.remaining.toInt() + 4)
+        b.writeInt(getType())
+        b.writePacket(s)
+        return b.build()
+    }
 }

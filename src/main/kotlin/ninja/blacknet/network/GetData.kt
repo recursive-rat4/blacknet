@@ -46,7 +46,6 @@ class GetData(private val list: InvList) : Packet {
         if (response.size == 0)
             return
 
-        val data = Data(response)
-        connection.sendPacket(data)
+        connection.sendPacket(Data(response))
     }
 }

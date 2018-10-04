@@ -40,8 +40,8 @@ fun fromHex(string: String) : ByteArray? {
     val result = ByteArray(string.length / 2)
 
     for (i in 0 until string.length step 2) {
-        val firstIndex = hexIndex(string[i]);
-        val secondIndex = hexIndex(string[i + 1]);
+        val firstIndex = hexIndex(string[i])
+        val secondIndex = hexIndex(string[i + 1])
 
         if (firstIndex == -1 || secondIndex == -1)
             return null

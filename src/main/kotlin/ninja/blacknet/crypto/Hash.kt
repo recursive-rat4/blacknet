@@ -33,8 +33,8 @@ class Hash(val bytes: SerializableByteArray32) {
         const val SIZE = 32
         val ZERO = Hash(SerializableByteArray32())
 
-        fun fromString(hex: String): Hash? {
-            if (hex.length != SIZE * 2)
+        fun fromString(hex: String?): Hash? {
+            if (hex == null || hex.length != SIZE * 2)
                 return null
             val bytes = fromHex(hex) ?: return null
             return Hash(bytes)

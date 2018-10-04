@@ -22,5 +22,6 @@ class Signature(val bytes: SerializableByteArray64) {
 
     companion object {
         const val SIZE = 64
+        val EMPTY = Signature(SerializableByteArray64())
     }
 }

@@ -43,7 +43,7 @@ object BlockDB : DataDB() {
         return map.remove(hash)
     }
 
-    override fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
         val block = Block.deserialize(bytes)
         if (block == null) {
             logger.info("deserialization failed")

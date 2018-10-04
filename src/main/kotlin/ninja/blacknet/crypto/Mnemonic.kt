@@ -12,7 +12,9 @@ package ninja.blacknet.crypto
 import kotlinx.serialization.toUtf8Bytes
 
 object Mnemonic {
-    fun fromString(string: String): PrivateKey? {
+    fun fromString(string: String?): PrivateKey? {
+        if (string == null)
+            return null
         val hash = Blake2b.hash(string.toUtf8Bytes())
         if (checkVersion(hash.bytes.array))
             return PrivateKey(hash.bytes.array)

@@ -19,6 +19,8 @@ enum class TxType {
     Bundle
     ;
 
+    fun getType(): Byte = ordinal.toByte()
+
     companion object {
         fun getSerializer(type: Byte): KSerializer<out TxData>? {
             return when (type) {

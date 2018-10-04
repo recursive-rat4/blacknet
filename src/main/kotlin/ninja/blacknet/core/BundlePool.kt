@@ -12,7 +12,7 @@ package ninja.blacknet.core
 import ninja.blacknet.crypto.Hash
 
 object BundlePool : MemPool() {
-    override fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
         return false //TODO
     }
 }

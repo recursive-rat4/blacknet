@@ -16,17 +16,20 @@ import io.ktor.features.DefaultHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.get
+import io.ktor.routing.post
 import io.ktor.routing.routing
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
-import ninja.blacknet.core.Block
-import ninja.blacknet.core.TxPool
+import ninja.blacknet.core.*
+import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.Message
+import ninja.blacknet.crypto.Mnemonic
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Node
+import ninja.blacknet.serialization.SerializableByteArray
 
 fun Application.main() {
     install(DefaultHeaders)
@@ -59,23 +62,14 @@ fun Application.main() {
         }
 
         get("/blockdb/get/{hash}") {
-            val string = call.parameters["hash"]
-            if (string != null) {
-                val hash = Hash.fromString(string)
-                if (hash != null) {
-                    val bytes = BlockDB.get(hash)
-                    if (bytes != null) {
-                        val block = Block.deserialize(bytes) ?: throw RuntimeException("invalid block in db")
-                        val ret = BlockInfo(block)
-                        call.respond(JSON.indented.stringify(ret))
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "block not found")
-                    }
-                } else {
-                    call.respond(HttpStatusCode.BadRequest, "invalid hash")
-                }
+            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+            val bytes = BlockDB.get(hash)
+            if (bytes != null) {
+                val block = Block.deserialize(bytes)
+                val ret = BlockInfo(block!!)
+                call.respond(JSON.indented.stringify(ret))
             } else {
-                call.respond(HttpStatusCode.BadRequest, "hash is not specified")
+                call.respond(HttpStatusCode.NotFound, "block not found")
             }
         }
 
@@ -84,30 +78,91 @@ fun Application.main() {
             call.respond(JSON.indented.stringify(ret))
         }
 
-        get("/ledger/get/{pubkey}") {
-            val string = call.parameters["pubkey"]
-            if (string != null) {
-                val pubkey = PublicKey.fromString(string)
-                if (pubkey != null) {
-                    val state = LedgerDB.get(pubkey)
-                    if (state != null) {
-                        val ret = AccountInfo(state.seq, state.balance(), state.stakingBalance(LedgerDB.height()))
-                        call.respond(JSON.indented.stringify(ret))
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "account not found")
-                    }
-                } else {
-                    call.respond(HttpStatusCode.BadRequest, "invalid pubkey")
-                }
+        get("/ledger/get/{account}") {
+            val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
+            val state = LedgerDB.get(pubkey)
+            if (state != null) {
+                val ret = AccountInfo(state.seq, state.balance(), state.stakingBalance(LedgerDB.height()))
+                call.respond(JSON.indented.stringify(ret))
             } else {
-                call.respond(HttpStatusCode.BadRequest, "pubkey is not specified")
+                call.respond(HttpStatusCode.NotFound, "account not found")
             }
         }
 
         get("/txpool") {
-            val tx = TxPool.mapHashes { toString() }
+            val tx = TxPool.mapHashes { it.toString() }
             val ret = TxPoolInfo(TxPool.size(), TxPool.dataSize(), tx)
             call.respond(JSON.indented.stringify(ret))
+        }
+
+        post("/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val from = privateKey.toPublicKey()
+            val seq = TxPool.getSequence(from)
+            val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
+            val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
+            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
+            val message = Message.create(call.parameters["message"], call.parameters["encrypted"]?.toByte())
+
+            val data = Transfer(amount, to, message).serialize()
+            val tx = Transaction.create(from, seq, fee, TxType.Transfer.getType(), data)
+            val signed = tx.sign(privateKey)
+
+            Node.broadcastData(DataType.Transaction, signed.first, signed.second)
+
+            call.respond(signed.first.toString())
+        }
+
+        post("/burn/{mnemonic}/{fee}/{amount}/{message?}/") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val from = privateKey.toPublicKey()
+            val seq = TxPool.getSequence(from)
+            val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
+            val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
+            val message = SerializableByteArray.fromString(call.parameters["message"].orEmpty()) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
+
+            val data = Burn(amount, message).serialize()
+            val tx = Transaction.create(from, seq, fee, TxType.Burn.getType(), data)
+            val signed = tx.sign(privateKey)
+
+            Node.broadcastData(DataType.Transaction, signed.first, signed.second)
+
+            call.respond(signed.first.toString())
+        }
+
+        post("/lease/{mnemonic}/{fee}/{amount}/{to}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val from = privateKey.toPublicKey()
+            val seq = TxPool.getSequence(from)
+            val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
+            val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
+            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
+
+            val data = Lease(amount, to).serialize()
+            val tx = Transaction.create(from, seq, fee, TxType.Lease.getType(), data)
+            val signed = tx.sign(privateKey)
+
+            Node.broadcastData(DataType.Transaction, signed.first, signed.second)
+
+            call.respond(signed.first.toString())
+        }
+
+        post("/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val from = privateKey.toPublicKey()
+            val seq = TxPool.getSequence(from)
+            val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
+            val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
+            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
+            val height = call.parameters["height"]?.toInt() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
+
+            val data = CancelLease(amount, to, height).serialize()
+            val tx = Transaction.create(from, seq, fee, TxType.CancelLease.getType(), data)
+            val signed = tx.sign(privateKey)
+
+            Node.broadcastData(DataType.Transaction, signed.first, signed.second)
+
+            call.respond(signed.first.toString())
         }
     }
 }

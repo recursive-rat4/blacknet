@@ -20,7 +20,6 @@ import kotlinx.coroutines.experimental.channels.LinkedListChannel
 import kotlinx.coroutines.experimental.io.readPacket
 import kotlinx.coroutines.experimental.launch
 import kotlinx.io.IOException
-import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.serialization.BlacknetInput
@@ -105,12 +104,11 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
     }
 
     fun sendPacket(p: Packet) {
-        val s = p.serialize()
-        val b = BytePacketBuilder()
-        b.writeInt(s.remaining.toInt() + 4)
-        b.writeInt(p.getType())
-        b.writePacket(s)
-        sendChannel.offer(b.build())
+        sendChannel.offer(p.build())
+    }
+
+    fun sendPacket(bytes: ByteReadPacket) {
+        sendChannel.offer(bytes)
     }
 
     fun dos(reason: String) {

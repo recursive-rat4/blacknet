@@ -36,7 +36,6 @@ class GetPeers : Packet {
         if (randomPeers.size == 0)
             return
 
-        val peers = Peers(randomPeers)
-        connection.sendPacket(peers)
+        connection.sendPacket(Peers(randomPeers))
     }
 }

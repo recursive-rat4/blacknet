@@ -81,7 +81,7 @@ object LedgerDB : Ledger {
         return account.seq == seq
     }
 
-    fun processBlock(hash: Hash, block: Block): Boolean {
+    suspend fun processBlock(hash: Hash, block: Block): Boolean {
         if (block.previous != blockHash()) {
             logger.error("not on current chain")
             return false

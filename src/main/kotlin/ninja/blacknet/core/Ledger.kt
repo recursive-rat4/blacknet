@@ -12,6 +12,7 @@ package ninja.blacknet.core
 import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.db.BlockDB
 import ninja.blacknet.serialization.BlacknetInput
 
 private val logger = KotlinLogging.logger {}
@@ -24,7 +25,7 @@ interface Ledger {
     fun get(key: PublicKey): AccountState?
     fun set(key: PublicKey, state: AccountState)
 
-    fun processTransaction(hash: Hash, bytes: ByteArray): Boolean {
+    suspend fun processTransaction(hash: Hash, bytes: ByteArray): Boolean {
         val tx = Transaction.deserialize(bytes)
         if (tx == null) {
             logger.info("deserialization failed")
@@ -33,9 +34,13 @@ interface Ledger {
         return processTransaction(tx, hash, bytes.size)
     }
 
-    fun processTransaction(tx: Transaction, hash: Hash, size: Int): Boolean {
+    suspend fun processTransaction(tx: Transaction, hash: Hash, size: Int): Boolean {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
+            return false
+        }
+        if (tx.blochHash != Hash.ZERO && !BlockDB.contains(tx.blochHash)) {
+            logger.info("not valid on this chain")
             return false
         }
         if (!checkFee(size, tx.fee)) {

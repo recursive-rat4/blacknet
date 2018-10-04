@@ -35,5 +35,5 @@ abstract class DataDB {
     abstract suspend fun contains(hash: Hash): Boolean
     abstract suspend fun get(hash: Hash): ByteArray?
     abstract suspend fun remove(hash: Hash): ByteArray?
-    abstract fun processImpl(hash: Hash, bytes: ByteArray): Boolean
+    abstract suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean
 }
