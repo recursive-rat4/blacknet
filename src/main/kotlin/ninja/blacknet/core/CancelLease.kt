@@ -40,6 +40,7 @@ class CancelLease(
             return false
         }
         if (toAccount.leases.remove(AccountState.Input(height, amount))) {
+            account.debit(ledger.height(), amount)
             ledger.set(to, toAccount)
             return true
         }

@@ -39,6 +39,7 @@ dependencies {
     compile "org.mapdb:mapdb:3.0.7"
     compile "org.slf4j:slf4j-jdk14:1.7.25"
     compile 'io.github.microutils:kotlin-logging:1.6.10'
+    compile 'org.briarproject:jtorctl:0.3'
 }
 
 distributions {

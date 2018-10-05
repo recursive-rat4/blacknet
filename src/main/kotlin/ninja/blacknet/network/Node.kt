@@ -12,11 +12,12 @@ package ninja.blacknet.network
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
+import io.ktor.network.sockets.openReadChannel
+import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.launch
 import mu.KotlinLogging
 import ninja.blacknet.core.DataType
-import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.util.SynchronizedArrayList
@@ -98,7 +99,7 @@ object Node {
     fun listenOn(address: Address) {
         val addr = when (address.network) {
             Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
-            else -> throw Exception("not implemented for " + address.network)
+            else -> throw NotImplementedError("not implemented for " + address.network)
         }
         val server = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().bind(addr)
         logger.info("Listening on $address")
@@ -108,18 +109,24 @@ object Node {
         }
     }
 
+    fun listenOnTor() {
+        launch {
+            val address = Network.listenOnTor()
+            if (address != null) {
+                logger.info("Listening on $address")
+                Node.listenAddress.add(address)
+            }
+        }
+    }
+
     private suspend fun addConnection(connection: Connection) {
         connections.add(connection)
         connection.invokeOnDisconnect { launch { connections.remove(connection) } }
     }
 
     suspend fun connectTo(address: Address): Connection {
-        val addr = when (address.network) {
-            Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
-            else -> throw Exception("not implemented for " + address.network)
-        }
-        val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(addr)
-        val connection = Connection(socket, address, Connection.State.OUTGOING_WAITING)
+        val s = Network.connect(address)
+        val connection = Connection(s.first, s.second, address, Connection.State.OUTGOING_WAITING)
         addConnection(connection)
         sendVersion(connection)
         return connection
@@ -150,7 +157,7 @@ object Node {
         while (true) {
             val socket = server.accept()
             val address = Network.address(socket.remoteAddress as InetSocketAddress)
-            val connection = Connection(socket, address, Connection.State.INCOMING_WAITING)
+            val connection = Connection(socket.openReadChannel(), socket.openWriteChannel(true), address, Connection.State.INCOMING_WAITING)
             addConnection(connection)
         }
     }

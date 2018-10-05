@@ -11,10 +11,7 @@ package ninja.blacknet.core
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.Ed25519
-import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.crypto.Signature
+import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BlacknetInput
 import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.serialization.SerializableByteArray
@@ -27,12 +24,20 @@ class Block(
         val generator: PublicKey,
         val sizeVote: Int,
         val transactions: ArrayList<SerializableByteArray>,
-        val signature: Signature
+        var signature: Signature
 ) {
     fun serialize(): ByteArray {
         val out = BlacknetOutput()
         out.write(this)
         return out.build().readBytes()
+    }
+
+    fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
+        val bytes = serialize()
+        val hash = DataType.Block.hash(bytes)
+        signature = Ed25519.sign(hash, privateKey)
+        System.arraycopy(signature.bytes.array, 0, bytes, bytes.size - Signature.SIZE, Signature.SIZE)
+        return Pair(hash, bytes)
     }
 
     fun verifySignature(hash: Hash): Boolean {

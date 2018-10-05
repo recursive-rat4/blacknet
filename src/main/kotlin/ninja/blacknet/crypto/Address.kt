@@ -13,19 +13,17 @@ object Address {
     private val HRP = "blacknet".toByteArray(Charsets.US_ASCII)
 
     fun encode(publicKey: PublicKey): String {
-        val converted = Bech32.convertBits(publicKey.bytes.array, 8, 5, true)
-        return Bech32.encode(Bech32.Data(HRP, converted!!))
+        return Bech32.encode(Bech32.Data(HRP, publicKey.bytes.array))
     }
 
     fun decode(string: String?): PublicKey? {
         if (string == null)
             return null
-        val data = Bech32.decode(string)
-        if (data == null || !HRP.contentEquals(data.hrp))
+        val bech = Bech32.decode(string)
+        if (bech == null || !HRP.contentEquals(bech.hrp))
             return null
-        val converted = Bech32.convertBits(data.data, 5, 8, false)
-        if (converted == null || converted.size != PublicKey.SIZE)
+        if (bech.data.size != PublicKey.SIZE)
             return null
-        return PublicKey(converted)
+        return PublicKey(bech.data)
     }
 }

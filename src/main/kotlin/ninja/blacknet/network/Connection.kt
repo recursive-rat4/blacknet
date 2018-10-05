@@ -9,15 +9,12 @@
 
 package ninja.blacknet.network
 
-import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.experimental.CompletionHandler
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.JobCancellationException
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.io.readPacket
+import kotlinx.coroutines.experimental.io.*
 import kotlinx.coroutines.experimental.launch
 import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
@@ -26,10 +23,13 @@ import ninja.blacknet.serialization.BlacknetInput
 
 private val logger = KotlinLogging.logger {}
 
-class Connection(private val socket: Socket, val remoteAddress: Address, var state: State) {
+class Connection(
+        private val readChannel: ByteReadChannel,
+        private val writeChannel: ByteWriteChannel,
+        val remoteAddress: Address,
+        var state: State
+) {
     private val job: Job
-    private val readChannel = socket.openReadChannel()
-    private val writeChannel = socket.openWriteChannel(true)
     private val sendChannel = LinkedListChannel<ByteReadPacket>()
     val connectedAt = Node.time()
 
@@ -119,7 +119,8 @@ class Connection(private val socket: Socket, val remoteAddress: Address, var sta
     }
 
     fun close() {
-        socket.close()
+        writeChannel.close()
+        readChannel.cancel()
     }
 
     class PingRequest(val id: Int, val time: Long)

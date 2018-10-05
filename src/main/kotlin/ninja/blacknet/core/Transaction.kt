@@ -18,7 +18,7 @@ import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class Transaction(
-        private var signature: Signature,
+        var signature: Signature,
         val from: PublicKey,
         val seq: Int,
         val blochHash: Hash,

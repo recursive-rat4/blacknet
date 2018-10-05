@@ -19,6 +19,7 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         Node.listenOn(Address.IPv6_ANY(Node.P2P_PORT))
+        Node.listenOnTor()
 
         /* Launch Blacknet API web-server on port 8283
          * using Ktor.

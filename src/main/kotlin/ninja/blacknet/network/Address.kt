@@ -28,6 +28,10 @@ class Address(
         return network.isLocal(this)
     }
 
+    fun getAddressString(): String {
+        return network.getAddressString(this)
+    }
+
     override fun equals(other: Any?): Boolean {
         return (other is Address) && network == other.network && port == other.port && bytes == other.bytes
     }
@@ -37,7 +41,7 @@ class Address(
     }
 
     override fun toString(): String {
-        return network.getAddressString(this) + ':' + port
+        return getAddressString() + ':' + port
     }
 
     companion object {
