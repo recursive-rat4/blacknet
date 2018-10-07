@@ -17,6 +17,11 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.launch
 import mu.KotlinLogging
+import ninja.blacknet.Config
+import ninja.blacknet.Config.dnsseed
+import ninja.blacknet.Config.incomingconnections
+import ninja.blacknet.Config.outgoingconnections
+import ninja.blacknet.Config.p2pport
 import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
@@ -30,16 +35,15 @@ import java.util.*
 private val logger = KotlinLogging.logger {}
 
 object Node {
-    const val P2P_PORT = 28453
+    const val DEFAULT_P2P_PORT = 28453
     const val DEFAULT_MAX_PACKET_SIZE = 1000000
-    const val MIN_CONNECTIONS = 8
     const val NETWORK_TIMEOUT = 60
     const val MIN_FEE = 100000
     const val magic = 0x17895E7D
     const val version = 5
     const val minVersion = 5
     const val agent = "Blacknet"
-    val localAddress = Address.IPv6_LOOPBACK(Node.P2P_PORT)
+    val localAddress = Address.IPv6_LOOPBACK(Config[p2pport])
     private val random = Random()
     val nonce = random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
@@ -156,6 +160,10 @@ object Node {
     private suspend fun listener(server: ServerSocket) {
         while (true) {
             val socket = server.accept()
+            if (incoming() >= Config[incomingconnections]) {
+                socket.close()
+                continue
+            }
             val address = Network.address(socket.remoteAddress as InetSocketAddress)
             val connection = Connection(socket.openReadChannel(), socket.openWriteChannel(true), address, Connection.State.INCOMING_WAITING)
             addConnection(connection)
@@ -164,13 +172,15 @@ object Node {
 
     private suspend fun connector() {
         if (PeerDB.isEmpty()) {
-            logger.info("PeerDB is empty. Waiting for dns seeder.")
+            logger.info("PeerDB is empty.")
             delay(DNS_TIMEOUT)
         }
 
         while (true) {
-            if (outgoing() >= MIN_CONNECTIONS)
+            if (outgoing() >= Config[outgoingconnections]) {
                 delay(NETWORK_TIMEOUT)
+                continue
+            }
 
             val filter = connections.map { it.remoteAddress }.plus(listenAddress.clone())
 
@@ -240,6 +250,9 @@ object Node {
     private const val DNS_TIMEOUT = 5
     private const val DNS_SEEDER_DELAY = 11
     private suspend fun dnsSeeder(delay: Boolean) {
+        if (!Config[dnsseed])
+            return
+
         if (delay && !PeerDB.isEmpty()) {
             delay(DNS_SEEDER_DELAY)
             if (connected() >= 2) {
@@ -253,7 +266,7 @@ object Node {
         val seeds = "dnsseed.blacknet.ninja"
         try {
             val response = InetAddress.getAllByName(seeds)
-            val peers = response.map { Network.address(it, P2P_PORT) }.filter { !it.isLocal() }
+            val peers = response.map { Network.address(it, DEFAULT_P2P_PORT) }.filter { !it.isLocal() }
             PeerDB.add(peers, localAddress)
             PeerDB.commit()
         } catch (e: Throwable) {

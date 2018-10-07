@@ -20,6 +20,13 @@ import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands.HS_ADDRESS
 import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
+import ninja.blacknet.Config
+import ninja.blacknet.Config.p2pport
+import ninja.blacknet.Config.proxyhost
+import ninja.blacknet.Config.proxyport
+import ninja.blacknet.Config.torcontrol
+import ninja.blacknet.Config.torhost
+import ninja.blacknet.Config.torport
 import ninja.blacknet.crypto.Base32
 import ninja.blacknet.util.toHex
 import java.net.ConnectException
@@ -79,12 +86,17 @@ enum class Network(val addrSize: Int) {
         suspend fun connect(address: Address): Pair<ByteReadChannel, ByteWriteChannel> {
             when (address.network) {
                 IPv4, IPv6 -> {
-                    val addr = InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
-                    val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(addr)
-                    return Pair(socket.openReadChannel(), socket.openWriteChannel())
+                    if (Config.contains(proxyhost) && Config.contains(proxyport)) {
+                        val proxy = InetSocketAddress(Config[proxyhost], Config[proxyport])
+                        return Socks5(proxy).connect(address)
+                    } else {
+                        val addr = InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
+                        val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(addr)
+                        return Pair(socket.openReadChannel(), socket.openWriteChannel())
+                    }
                 }
                 TORv2, TORv3 -> {
-                    val proxy = InetSocketAddress("localhost", 9050)
+                    val proxy = InetSocketAddress(Config[torhost], Config[torport])
                     return Socks5(proxy).connect(address)
                 }
                 else -> throw NotImplementedError("not implemented for " + address.network)
@@ -93,15 +105,15 @@ enum class Network(val addrSize: Int) {
 
         fun listenOnTor(): Address? {
             try {
-                val s = java.net.Socket("localhost", 9051)
+                val s = java.net.Socket("localhost", Config[torcontrol])
                 val tor = TorControlConnection(s)
                 tor.launchThread(true)
                 tor.authenticate(ByteArray(0));
 
-                val port = HashMap<Int, String?>()
-                port[Node.P2P_PORT] = null
+                val request = HashMap<Int, String?>()
+                request[Config[p2pport]] = null
 
-                val response = tor.addOnion(port)
+                val response = tor.addOnion(request)
                 val string = response[HS_ADDRESS]!!
                 val bytes = Base32.decode(string)!!
 
@@ -110,12 +122,12 @@ enum class Network(val addrSize: Int) {
                     TORv3.addrSize -> TORv3
                     else -> throw TorControlError("Unknown KeyType")
                 }
-                return Address(type, Node.P2P_PORT, bytes)
+                return Address(type, Config[p2pport], bytes)
             } catch (e: ConnectException) {
                 logger.info("Can't connect to tor controller")
             } catch (e: TorControlError) {
                 logger.info("Tor " + e.message)
-            } finally {
+            } catch (e: Throwable) {
             }
             return null
         }
