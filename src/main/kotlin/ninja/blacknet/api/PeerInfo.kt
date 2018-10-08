@@ -14,7 +14,8 @@ import ninja.blacknet.network.Connection
 
 @Serializable
 class PeerInfo(
-        val address: String,
+        val remoteAddress: String,
+        val localAddress: String,
         val connectedat: Long,
         val timeoffset: Long,
         val ping: Long,
@@ -25,6 +26,7 @@ class PeerInfo(
 ) {
     constructor(connection: Connection) : this(
             connection.remoteAddress.toString(),
+            connection.localAddress.toString(),
             connection.connectedAt,
             connection.timeOffset,
             connection.ping,

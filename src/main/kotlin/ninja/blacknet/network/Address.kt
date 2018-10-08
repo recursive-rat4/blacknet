@@ -10,7 +10,12 @@
 package ninja.blacknet.network
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Config
+import ninja.blacknet.Config.p2pport
 import ninja.blacknet.serialization.SerializableByteArray
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.SocketAddress
 
 @Serializable
 class Address(
@@ -32,6 +37,10 @@ class Address(
         return network.getAddressString(this)
     }
 
+    fun getSocketAddress(): SocketAddress {
+        return InetSocketAddress(InetAddress.getByAddress(bytes.array), port)
+    }
+
     override fun equals(other: Any?): Boolean {
         return (other is Address) && network == other.network && port == other.port && bytes == other.bytes
     }
@@ -45,7 +54,10 @@ class Address(
     }
 
     companion object {
+        val LOOPBACK = Address.IPv4_LOOPBACK(Config[p2pport])
+
         fun IPv4_ANY(port: Int) = Address(Network.IPv4, port, ByteArray(Network.IPv4.addrSize))
+        fun IPv4_LOOPBACK(port: Int) = Address(Network.IPv4, port, Network.IPv4_LOOPBACK_BYTES)
         fun IPv6_ANY(port: Int) = Address(Network.IPv6, port, Network.IPv6_ANY_BYTES)
         fun IPv6_LOOPBACK(port: Int) = Address(Network.IPv6, port, Network.IPv6_LOOPBACK_BYTES)
     }

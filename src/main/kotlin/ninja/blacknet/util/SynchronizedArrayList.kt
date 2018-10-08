@@ -17,8 +17,6 @@ class SynchronizedArrayList<T>(private val list: ArrayList<T>) {
 
     private val mutex = Mutex()
 
-    suspend fun clone() = mutex.withLock { list.clone() as ArrayList<T> }
-
     suspend fun size() = mutex.withLock { list.size }
 
     suspend fun add(element: T) = mutex.withLock { list.add(element) }

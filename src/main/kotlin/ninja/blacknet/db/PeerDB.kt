@@ -49,7 +49,7 @@ object PeerDB {
         if (entry != null)
             map[address] = Entry(entry.from, 0, 0, Node.time())
         else
-            map[address] = Entry(Node.localAddress, 0, 0, Node.time())
+            map[address] = Entry(Address.LOOPBACK, 0, 0, Node.time())
     }
 
     fun failed(address: Address) {
@@ -58,7 +58,7 @@ object PeerDB {
         if (entry != null)
             map[address] = Entry(entry.from, entry.attempts + 1, Node.time(), entry.lastConnected)
         else
-            map[address] = Entry(Node.localAddress, 0, Node.time(), 0)
+            map[address] = Entry(Address.LOOPBACK, 0, Node.time(), 0)
     }
 
     fun getAll(): List<Address> {

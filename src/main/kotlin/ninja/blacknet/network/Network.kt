@@ -9,18 +9,18 @@
 
 package ninja.blacknet.network
 
+import com.google.common.net.InetAddresses
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.util.ioCoroutineDispatcher
-import kotlinx.coroutines.experimental.io.ByteReadChannel
-import kotlinx.coroutines.experimental.io.ByteWriteChannel
 import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands.HS_ADDRESS
 import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
 import ninja.blacknet.Config
+import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.p2pport
 import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
@@ -28,9 +28,7 @@ import ninja.blacknet.Config.torcontrol
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
 import ninja.blacknet.crypto.Base32
-import ninja.blacknet.util.toHex
 import java.net.ConnectException
-import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
@@ -48,8 +46,8 @@ enum class Network(val addrSize: Int) {
         return when (this) {
             IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString()
             IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString() + ']'
-            TORv2, TORv3 -> Base32.encode(address.bytes.array) + ".onion"
-            else -> name + ' ' + address.bytes.array.toHex()
+            TORv2, TORv3 -> Base32.encode(address.bytes.array) + TOR_SUFFIX
+            I2P -> Base32.encode(address.bytes.array) + I2P_SUFFIX
         }
     }
 
@@ -71,33 +69,58 @@ enum class Network(val addrSize: Int) {
     }
 
     companion object {
+        const val TOR_SUFFIX = ".onion"
+        const val I2P_SUFFIX = ".b32.i2p"
+        val IPv4_LOOPBACK_BYTES = byteArrayOf(127, 0, 0, 1)
         val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
         val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+
+        private val socksProxy: Address?
+        private val torProxy: Address?
+
+        init {
+            if (Config.contains(proxyhost) && Config.contains(proxyport))
+                socksProxy = Network.resolve(Config[proxyhost], Config[proxyport])
+            else
+                socksProxy = null
+
+            if (Config.contains(torhost) && Config.contains(torport))
+                torProxy = Network.resolve(Config[torhost], Config[torport])
+            else
+                torProxy = null
+        }
 
         fun address(inet: InetSocketAddress): Address {
             return address(inet.getAddress(), inet.port)
         }
 
         fun address(inet: InetAddress, port: Int): Address {
-            val network = if (inet is Inet6Address) Network.IPv6 else Network.IPv4
-            return Address(network, port, inet.getAddress())
+            val bytes = inet.getAddress()
+            return when (bytes.size) {
+                IPv6.addrSize -> Address(IPv6, port, bytes)
+                IPv4.addrSize -> Address(IPv4, port, bytes)
+                else -> throw RuntimeException("unknown ip address type")
+            }
         }
 
-        suspend fun connect(address: Address): Pair<ByteReadChannel, ByteWriteChannel> {
+        suspend fun connect(address: Address): Connection {
             when (address.network) {
                 IPv4, IPv6 -> {
-                    if (Config.contains(proxyhost) && Config.contains(proxyport)) {
-                        val proxy = InetSocketAddress(Config[proxyhost], Config[proxyport])
-                        return Socks5(proxy).connect(address)
+                    if (socksProxy != null) {
+                        val chan = Socks5(socksProxy).connect(address)
+                        return Connection(chan.first, chan.second, address, socksProxy, Connection.State.OUTGOING_WAITING)
                     } else {
-                        val addr = InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
-                        val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(addr)
-                        return Pair(socket.openReadChannel(), socket.openWriteChannel())
+                        val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(address.getSocketAddress())
+                        val localAddress = Network.address(socket.localAddress as InetSocketAddress)
+                        if (Config[listen] && !localAddress.isLocal())
+                            Node.listenAddress.add(Address(localAddress.network, Config[p2pport], localAddress.bytes))
+                        return Connection(socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
                     }
                 }
                 TORv2, TORv3 -> {
-                    val proxy = InetSocketAddress(Config[torhost], Config[torport])
-                    return Socks5(proxy).connect(address)
+                    if (torProxy == null) throw RuntimeException("tor proxy is not set")
+                    val chan = Socks5(torProxy).connect(address)
+                    return Connection(chan.first, chan.second, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
                 else -> throw NotImplementedError("not implemented for " + address.network)
             }
@@ -130,6 +153,58 @@ enum class Network(val addrSize: Int) {
             } catch (e: Throwable) {
             }
             return null
+        }
+
+        fun parse(string: String?, port: Int): Address? {
+            if (string == null) return null
+            val host = string.toLowerCase()
+
+            if (host.endsWith(TOR_SUFFIX)) {
+                if (host.length == 16 + TOR_SUFFIX.length) {
+                    val decoded = Base32.decode(host.substring(0, 16))
+                    if (decoded != null)
+                        return Address(TORv2, port, decoded)
+                } else if (host.length == 52 + TOR_SUFFIX.length) {
+                    val decoded = Base32.decode(host.substring(0, 52))
+                    if (decoded != null)
+                        return Address(TORv3, port, decoded)
+                }
+                return null
+            }
+
+            if (host.endsWith(I2P_SUFFIX)) {
+                if (host.length == 52 + I2P_SUFFIX.length) {
+                    val decoded = Base32.decode(host.substring(0, 52))
+                    if (decoded != null)
+                        return Address(I2P, port, decoded)
+                }
+                return null
+            }
+
+            var parsed: InetAddress? = null
+            try {
+                parsed = InetAddresses.forString(host)
+            } catch (e: Throwable) {
+            }
+            if (parsed != null)
+                return address(parsed, port)
+            return null
+        }
+
+        fun resolve(string: String, port: Int): Address? {
+            return resolveAll(string, port).firstOrNull()
+        }
+
+        fun resolveAll(string: String, port: Int): List<Address> {
+            val parsed = parse(string, port)
+            if (parsed != null)
+                return listOf(parsed)
+
+            try {
+                return InetAddress.getAllByName(string).map { Network.address(it, port) }
+            } catch (e: Throwable) {
+                return emptyList()
+            }
         }
     }
 }

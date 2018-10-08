@@ -21,11 +21,11 @@ import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
 import ninja.blacknet.Config.incomingconnections
 import ninja.blacknet.Config.outgoingconnections
-import ninja.blacknet.Config.p2pport
 import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.util.SynchronizedArrayList
+import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.delay
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -43,11 +43,10 @@ object Node {
     const val version = 5
     const val minVersion = 5
     const val agent = "Blacknet"
-    val localAddress = Address.IPv6_LOOPBACK(Config[p2pport])
     private val random = Random()
     val nonce = random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
-    val listenAddress = SynchronizedArrayList<Address>()
+    val listenAddress = SynchronizedHashSet<Address>()
 
     init {
         launch { connector() }
@@ -128,12 +127,10 @@ object Node {
         connection.invokeOnDisconnect { launch { connections.remove(connection) } }
     }
 
-    suspend fun connectTo(address: Address): Connection {
-        val s = Network.connect(address)
-        val connection = Connection(s.first, s.second, address, Connection.State.OUTGOING_WAITING)
+    suspend fun connectTo(address: Address) {
+        val connection = Network.connect(address)
         addConnection(connection)
         sendVersion(connection)
-        return connection
     }
 
     fun sendVersion(connection: Connection) {
@@ -164,8 +161,11 @@ object Node {
                 socket.close()
                 continue
             }
-            val address = Network.address(socket.remoteAddress as InetSocketAddress)
-            val connection = Connection(socket.openReadChannel(), socket.openWriteChannel(true), address, Connection.State.INCOMING_WAITING)
+            val remoteAddress = Network.address(socket.remoteAddress as InetSocketAddress)
+            val localAddress = Network.address(socket.localAddress as InetSocketAddress)
+            if (!localAddress.isLocal())
+                listenAddress.add(localAddress)
+            val connection = Connection(socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
             addConnection(connection)
         }
     }
@@ -182,7 +182,7 @@ object Node {
                 continue
             }
 
-            val filter = connections.map { it.remoteAddress }.plus(listenAddress.clone())
+            val filter = connections.map { it.remoteAddress }.plus(listenAddress.toList())
 
             val address = PeerDB.getCandidate(filter)
             if (address == null) {
@@ -265,9 +265,8 @@ object Node {
 
         val seeds = "dnsseed.blacknet.ninja"
         try {
-            val response = InetAddress.getAllByName(seeds)
-            val peers = response.map { Network.address(it, DEFAULT_P2P_PORT) }.filter { !it.isLocal() }
-            PeerDB.add(peers, localAddress)
+            val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT).filter { !it.isLocal() }
+            PeerDB.add(peers, Address.LOOPBACK)
             PeerDB.commit()
         } catch (e: Throwable) {
         }

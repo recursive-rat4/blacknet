@@ -12,14 +12,24 @@ package ninja.blacknet
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.jetty.Jetty
+import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.p2pport
+import ninja.blacknet.Config.upnp
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.UPnP
 
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        Node.listenOn(Address.IPv6_ANY(Config[p2pport]))
+        if (Config[listen]) {
+            try {
+                Node.listenOn(Address.IPv4_ANY(Config[p2pport]))
+                if (Config[upnp])
+                    UPnP.forwardAsync()
+            } catch (e: Throwable) {
+            }
+        }
         Node.listenOnTor()
 
         /* Launch Blacknet API web-server on port 8283

@@ -27,3 +27,9 @@ jtorctl https://github.com/akwizgran/jtorctl is licensed under the
 
 Konfig https://github.com/npryce/konfig is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
+Guava https://github.com/google/guava is licensed under the
+Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
+weupnp https://bitletorg.github.io/weupnp/ is licensed under the
+GNU LGPL 2.1 or later: https://www.gnu.org/licenses/lgpl-2.1.html

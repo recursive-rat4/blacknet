@@ -41,6 +41,8 @@ dependencies {
     compile 'io.github.microutils:kotlin-logging:1.6.10'
     compile 'org.briarproject:jtorctl:0.3'
     compile 'com.natpryce:konfig:1.6.10.0'
+    compile 'com.google.guava:guava:26.0-jre'
+    compile 'org.bitlet:weupnp:0.1.4'
 }
 
 distributions {

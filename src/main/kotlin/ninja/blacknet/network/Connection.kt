@@ -27,6 +27,7 @@ class Connection(
         private val readChannel: ByteReadChannel,
         private val writeChannel: ByteWriteChannel,
         val remoteAddress: Address,
+        val localAddress: Address,
         var state: State
 ) {
     private val job: Job

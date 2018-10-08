@@ -16,6 +16,8 @@ object Config {
 
     val dnsseed by booleanType
     val p2pport by intType
+    val listen by booleanType
+    val upnp by booleanType
     val incomingconnections by intType
     val outgoingconnections by intType
     val proxyhost by stringType

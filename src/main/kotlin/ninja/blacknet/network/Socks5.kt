@@ -14,14 +14,15 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.util.ioCoroutineDispatcher
-import kotlinx.coroutines.experimental.io.*
+import kotlinx.coroutines.experimental.io.ByteReadChannel
+import kotlinx.coroutines.experimental.io.ByteWriteChannel
+import kotlinx.coroutines.experimental.io.readFully
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.writeFully
-import java.net.SocketAddress
 
-class Socks5(private val proxy: SocketAddress) {
+class Socks5(private val proxy: Address) {
     suspend fun connect(address: Address): Pair<ByteReadChannel, ByteWriteChannel> {
-        val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(proxy)
+        val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(proxy.getSocketAddress())
         val readChannel = socket.openReadChannel()
         val writeChannel = socket.openWriteChannel(true)
         val builder = BytePacketBuilder()
