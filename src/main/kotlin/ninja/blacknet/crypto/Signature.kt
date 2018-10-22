@@ -16,9 +16,7 @@ import ninja.blacknet.serialization.SerializableByteArray64
 class Signature(val bytes: SerializableByteArray64) {
     constructor(bytes: ByteArray) : this(SerializableByteArray64(bytes))
 
-    override fun toString(): String {
-        return bytes.toString()
-    }
+    override fun toString(): String = bytes.toString()
 
     companion object {
         const val SIZE = 64

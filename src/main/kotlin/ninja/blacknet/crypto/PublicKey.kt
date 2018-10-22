@@ -17,17 +17,9 @@ import ninja.blacknet.util.fromHex
 class PublicKey(val bytes: SerializableByteArray32) {
     constructor(bytes: ByteArray) : this(SerializableByteArray32(bytes))
 
-    override fun equals(other: Any?): Boolean {
-        return (other is PublicKey) && bytes == other.bytes
-    }
-
-    override fun hashCode(): Int {
-        return bytes.hashCode()
-    }
-
-    override fun toString(): String {
-        return bytes.toString()
-    }
+    override fun equals(other: Any?): Boolean = (other is PublicKey) && bytes == other.bytes
+    override fun hashCode(): Int = bytes.hashCode()
+    override fun toString(): String = bytes.toString()
 
     companion object {
         const val SIZE = 32

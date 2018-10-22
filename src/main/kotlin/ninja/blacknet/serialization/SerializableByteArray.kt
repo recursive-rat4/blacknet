@@ -20,8 +20,6 @@ import ninja.blacknet.util.toHex
 class SerializableByteArray(
         val array: ByteArray
 ) : java.io.Serializable {
-    constructor() : this (ByteArray(0))
-
     fun size(): Int = array.size
 
     override fun equals(other: Any?): Boolean {
@@ -38,6 +36,8 @@ class SerializableByteArray(
 
     @Serializer(forClass = SerializableByteArray::class)
     companion object {
+        val EMPTY = SerializableByteArray(ByteArray(0))
+
         fun fromString(hex: String?): SerializableByteArray? {
             if (hex == null) return null
             val bytes = fromHex(hex) ?: return null

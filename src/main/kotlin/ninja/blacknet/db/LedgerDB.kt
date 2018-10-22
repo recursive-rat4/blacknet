@@ -9,10 +9,13 @@
 
 package ninja.blacknet.db
 
+import com.google.common.io.Resources
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JSON
+import kotlinx.serialization.list
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.Mnemonic
 import ninja.blacknet.crypto.PublicKey
 import org.mapdb.DBMaker
 
@@ -26,15 +29,25 @@ object LedgerDB : Ledger {
     private val supply = db.atomicLong("supply").createOrOpen()
 
     init {
+        @Serializable
+        class Entry(val publicKey: String, val balance: Long)
+
         if (accounts.isEmpty()) {
-            val supply = 1000000000L * PoS.COIN
-            val mnemonic = "unit visual denial donor twice sure trim blast sniff topple december pill"
-            // publicKey a11188d9e5087156c3e7f2deeccfb9879a46d8fc49579c8fc3205319a4e31f0f
-            val publicKey = Mnemonic.fromString(mnemonic)!!.toPublicKey()
-            val account = AccountState.create(supply)
-            set(publicKey, account)
+            val url = Resources.getResource("genesis.json")
+            val genesis = Resources.toString(url, Charsets.UTF_8)
+            val list = JSON.parse(Entry.serializer().list, genesis)
+
+            var supply = 0L
+            for (i in list) {
+                val publicKey = PublicKey.fromString(i.publicKey)!!
+                val account = AccountState.create(i.balance)
+                set(publicKey, account)
+                supply += i.balance
+            }
+
             addSupply(supply)
             commit()
+            logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
         }
     }
 

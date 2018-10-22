@@ -20,7 +20,7 @@ object PublicKeySerializer : Serializer<PublicKey> {
     }
 
     override fun equals(first: PublicKey?, second: PublicKey?): Boolean {
-        return first == second || (first != null && second != null && first.bytes.array.contentEquals(second.bytes.array))
+        return first === second || first == second
     }
 
     override fun isTrusted(): Boolean {

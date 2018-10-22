@@ -29,7 +29,7 @@ object UPnP {
 
         val gateway = discover.getValidGateway()
         if (gateway == null) {
-            logger.info("No valid gateway found")
+            logger.info("No valid UPnP Gateway found")
             return
         }
 

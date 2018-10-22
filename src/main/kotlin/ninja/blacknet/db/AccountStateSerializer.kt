@@ -20,7 +20,7 @@ object AccountStateSerializer : Serializer<AccountState> {
     }
 
     override fun equals(first: AccountState?, second: AccountState?): Boolean {
-        return first == second || (first != null && second != null &&
+        return first === second || (first != null && second != null &&
                 first.seq == second.seq && first.stake == second.stake && first.immature == second.immature)
     }
 

@@ -29,6 +29,6 @@ class Message(
             TODO("ENCRYPTED")
         }
 
-        fun empty() = Message(PLAIN, SerializableByteArray())
+        fun empty() = Message(PLAIN, SerializableByteArray.EMPTY)
     }
 }

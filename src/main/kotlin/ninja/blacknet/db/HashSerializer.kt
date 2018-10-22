@@ -20,7 +20,7 @@ object HashSerializer : Serializer<Hash> {
     }
 
     override fun equals(first: Hash?, second: Hash?): Boolean {
-        return first == second || (first != null && second != null && first.bytes.array.contentEquals(second.bytes.array))
+        return first === second || first == second
     }
 
     override fun isTrusted(): Boolean {
