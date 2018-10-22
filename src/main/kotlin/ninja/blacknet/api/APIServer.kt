@@ -95,6 +95,13 @@ fun Application.main() {
             call.respond(JSON.indented.stringify(ret))
         }
 
+        get("/account/generate") {
+            val pair = Mnemonic.generate()
+            val publicKey = pair.second.toPublicKey()
+            val ret = MnemonicInfo(pair.first, Address.encode(publicKey), publicKey.toString())
+            call.respond(JSON.indented.stringify(ret))
+        }
+
         post("/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()

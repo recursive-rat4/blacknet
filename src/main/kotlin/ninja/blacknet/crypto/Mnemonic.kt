@@ -10,12 +10,35 @@
 package ninja.blacknet.crypto
 
 import kotlinx.serialization.toUtf8Bytes
+import java.security.SecureRandom
 
 object Mnemonic {
+    private const val WORDS = 12
+    private val random = SecureRandom()
+
+    fun generate(): Pair<String, PrivateKey> {
+        val builder = StringBuilder(108)
+
+        while (true) {
+            for (i in 1..WORDS) {
+                val rnd = random.nextInt(Bip39.ENGLISH.size)
+                builder.append(Bip39.ENGLISH[rnd])
+                if (i < WORDS) builder.append(' ')
+            }
+
+            val mnemonic = builder.toString()
+            val hash = hash(mnemonic)
+            if (checkVersion(hash.bytes.array))
+                return Pair(mnemonic, PrivateKey(hash.bytes.array))
+
+            builder.setLength(0)
+        }
+    }
+
     fun fromString(string: String?): PrivateKey? {
         if (string == null)
             return null
-        val hash = Blake2b.hash(string.toUtf8Bytes())
+        val hash = hash(string)
         if (checkVersion(hash.bytes.array))
             return PrivateKey(hash.bytes.array)
         return null
@@ -23,5 +46,9 @@ object Mnemonic {
 
     private fun checkVersion(bytes: ByteArray): Boolean {
         return bytes[0].toInt() and 0xF0 == 0x10
+    }
+
+    private fun hash(string: String): Hash {
+        return Blake2b.hash(string.toUtf8Bytes())
     }
 }
