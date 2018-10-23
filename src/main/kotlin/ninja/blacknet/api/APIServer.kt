@@ -115,9 +115,10 @@ fun Application.main() {
             val tx = Transaction.create(from, seq, fee, TxType.Transfer.getType(), data)
             val signed = tx.sign(privateKey)
 
-            Node.broadcastData(DataType.Transaction, signed.first, signed.second)
-
-            call.respond(signed.first.toString())
+            if (Node.broadcastTx(signed.first, signed.second, fee))
+                call.respond(signed.first.toString())
+            else
+                call.respond("Transaction rejected")
         }
 
         post("/burn/{mnemonic}/{fee}/{amount}/{message?}/") {
@@ -132,9 +133,10 @@ fun Application.main() {
             val tx = Transaction.create(from, seq, fee, TxType.Burn.getType(), data)
             val signed = tx.sign(privateKey)
 
-            Node.broadcastData(DataType.Transaction, signed.first, signed.second)
-
-            call.respond(signed.first.toString())
+            if (Node.broadcastTx(signed.first, signed.second, fee))
+                call.respond(signed.first.toString())
+            else
+                call.respond("Transaction rejected")
         }
 
         post("/lease/{mnemonic}/{fee}/{amount}/{to}") {
@@ -149,9 +151,10 @@ fun Application.main() {
             val tx = Transaction.create(from, seq, fee, TxType.Lease.getType(), data)
             val signed = tx.sign(privateKey)
 
-            Node.broadcastData(DataType.Transaction, signed.first, signed.second)
-
-            call.respond(signed.first.toString())
+            if (Node.broadcastTx(signed.first, signed.second, fee))
+                call.respond(signed.first.toString())
+            else
+                call.respond("Transaction rejected")
         }
 
         post("/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}") {
@@ -167,9 +170,10 @@ fun Application.main() {
             val tx = Transaction.create(from, seq, fee, TxType.CancelLease.getType(), data)
             val signed = tx.sign(privateKey)
 
-            Node.broadcastData(DataType.Transaction, signed.first, signed.second)
-
-            call.respond(signed.first.toString())
+            if (Node.broadcastTx(signed.first, signed.second, fee))
+                call.respond(signed.first.toString())
+            else
+                call.respond("Transaction rejected")
         }
     }
 }

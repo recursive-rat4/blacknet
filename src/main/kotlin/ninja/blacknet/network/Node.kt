@@ -20,13 +20,17 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
 import ninja.blacknet.Config.incomingconnections
+import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.outgoingconnections
 import ninja.blacknet.core.DataType
+import ninja.blacknet.core.PoS
+import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.delay
+import java.math.BigDecimal
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
@@ -38,7 +42,6 @@ object Node {
     const val DEFAULT_P2P_PORT = 28453
     const val DEFAULT_MAX_PACKET_SIZE = 1000000
     const val NETWORK_TIMEOUT = 60
-    const val MIN_FEE = 100000
     const val magic = 0x17895E7D
     const val version = 5
     const val minVersion = 5
@@ -47,6 +50,7 @@ object Node {
     val nonce = random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
+    var minTxFee = parseAmount(Config[mintxfee])
 
     init {
         launch { connector() }
@@ -134,16 +138,22 @@ object Node {
     }
 
     fun sendVersion(connection: Connection) {
-        val v = Version(magic, version, time(), nonce, agent)
+        val v = Version(magic, version, time(), nonce, agent, minTxFee)
         connection.sendPacket(v)
     }
 
-    suspend fun broadcastData(type: DataType, hash: Hash, bytes: ByteArray) {
-        if (type.db.process(hash, bytes)) {
+    suspend fun broadcastTx(hash: Hash, bytes: ByteArray, fee: Long): Boolean {
+        if (TxPool.process(hash, bytes)) {
             val inv = InvList()
-            inv.add(Pair(type, hash))
-            broadcastPacket(Inventory(inv))
+            inv.add(Pair(DataType.Transaction, hash))
+            val packet = Inventory(inv).build()
+            connections.forEach {
+                if (it.state.isConnected() && it.feeFilter <= fee)
+                    it.sendPacket(packet)
+            }
+            return true
         }
+        return false
     }
 
     private suspend fun broadcastPacket(packet: Packet) {
@@ -270,5 +280,11 @@ object Node {
             PeerDB.commit()
         } catch (e: Throwable) {
         }
+    }
+
+    private fun parseAmount(string: String): Long {
+        val n = (BigDecimal(string) * BigDecimal(PoS.COIN)).longValueExact()
+        if (n < 0) throw RuntimeException("Negative amount")
+        return n
     }
 }

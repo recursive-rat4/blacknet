@@ -14,6 +14,7 @@ import com.natpryce.konfig.*
 object Config {
     private val config = ConfigurationProperties.fromResource("blacknet.conf")
 
+    val mintxfee by stringType
     val dnsseed by booleanType
     val p2pport by intType
     val listen by booleanType

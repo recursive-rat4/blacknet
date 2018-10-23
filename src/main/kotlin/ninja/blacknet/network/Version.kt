@@ -22,7 +22,8 @@ class Version(
         private val version: Int,
         private val time: Long,
         private val nonce: Long,
-        private val agent: String
+        private val agent: String,
+        private val feeFilter: Long
 ) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
@@ -38,6 +39,7 @@ class Version(
         connection.timeOffset = Node.time() - time
         connection.version = version
         connection.agent = agent
+        connection.feeFilter = feeFilter
 
         if (magic != Node.magic || version < Node.minVersion || nonce == Node.nonce) {
             connection.close()

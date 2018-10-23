@@ -36,6 +36,7 @@ class Connection(
 
     var version: Int = 0
     var agent: String = ""
+    var feeFilter: Long = 0
     var timeOffset: Long = 0
     var pingRequest: PingRequest? = null
     var ping: Long = 0
@@ -47,7 +48,7 @@ class Connection(
     }
 
     fun invokeOnDisconnect(handler: CompletionHandler) {
-        job.invokeOnCompletion(true, true,  handler)
+        job.invokeOnCompletion(true, true, handler)
     }
 
     private suspend fun receiver() {
@@ -98,7 +99,7 @@ class Connection(
             for (packet in sendChannel)
                 writeChannel.writePacket(packet)
         } catch (e: Throwable) {
-            logger.error("Exception in sender $remoteAddress",e)
+            logger.error("Exception in sender $remoteAddress", e)
         } finally {
             close()
         }
