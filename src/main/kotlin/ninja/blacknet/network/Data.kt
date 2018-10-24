@@ -16,7 +16,7 @@ import ninja.blacknet.serialization.BlacknetOutput
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) : Packet {
+class Data(private val list: DataList) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetOutput()
         out.write(this)
@@ -46,3 +46,5 @@ class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) :
         }
     }
 }
+
+typealias DataList = ArrayList<Pair<DataType, SerializableByteArray>>

@@ -33,7 +33,7 @@ class GetData(private val list: InvList) : Packet {
             return
         }
 
-        val response = ArrayList<Pair<DataType, SerializableByteArray>>()
+        val response = DataList()
 
         for (i in list) {
             val type = i.first

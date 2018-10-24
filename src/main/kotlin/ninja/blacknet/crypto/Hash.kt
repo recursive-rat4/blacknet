@@ -12,6 +12,7 @@ package ninja.blacknet.crypto
 import kotlinx.serialization.Serializable
 import ninja.blacknet.serialization.SerializableByteArray32
 import ninja.blacknet.util.fromHex
+import java.math.BigInteger
 
 @Serializable
 class Hash(val bytes: SerializableByteArray32) {
@@ -20,6 +21,8 @@ class Hash(val bytes: SerializableByteArray32) {
     override fun equals(other: Any?): Boolean = (other is Hash) && bytes == other.bytes
     override fun hashCode(): Int = bytes.hashCode()
     override fun toString(): String = bytes.toString()
+
+    fun toBigInt(): BigInt = BigInt(BigInteger(1, bytes.array))
 
     companion object {
         const val SIZE = 32
