@@ -66,7 +66,7 @@ fun Application.main() {
             val bytes = BlockDB.get(hash)
             if (bytes != null) {
                 val block = Block.deserialize(bytes)
-                val ret = BlockInfo(block!!)
+                val ret = BlockInfo(block!!, bytes.size)
                 call.respond(JSON.indented.stringify(ret))
             } else {
                 call.respond(HttpStatusCode.NotFound, "block not found")
@@ -74,7 +74,7 @@ fun Application.main() {
         }
 
         get("/ledger") {
-            val ret = LedgerInfo(LedgerDB.height(), LedgerDB.blockHash().toString(), LedgerDB.supply(), LedgerDB.accounts())
+            val ret = LedgerInfo(LedgerDB.height(), LedgerDB.blockHash().toString(), LedgerDB.supply(), LedgerDB.accounts(), LedgerDB.getMaxBlockSize())
             call.respond(JSON.indented.stringify(ret))
         }
 

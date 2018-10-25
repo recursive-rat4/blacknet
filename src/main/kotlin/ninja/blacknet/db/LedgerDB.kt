@@ -18,6 +18,8 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import org.mapdb.DBMaker
+import org.mapdb.Serializer
+import kotlin.math.max
 
 private val logger = KotlinLogging.logger {}
 
@@ -27,8 +29,13 @@ object LedgerDB : Ledger {
     private val height = db.atomicInteger("height").createOrOpen()
     private val blockHash = db.atomicVar("blockHash", HashSerializer, Hash.ZERO).createOrOpen()
     private val supply = db.atomicLong("supply").createOrOpen()
+    private val blockSizes = db.indexTreeList("blockSizes", Serializer.INTEGER).createOrOpen()
+
+    private var maxBlockSize: Int
 
     init {
+        maxBlockSize = calcMaxBlockSize()
+
         @Serializable
         class Entry(val publicKey: String, val balance: Long)
 
@@ -46,6 +53,7 @@ object LedgerDB : Ledger {
             }
 
             addSupply(supply)
+            blockSizes.add(0)
             commit()
             logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
         }
@@ -94,7 +102,22 @@ object LedgerDB : Ledger {
         return account.seq == seq
     }
 
-    suspend fun processBlock(hash: Hash, block: Block): Boolean {
+    fun getMaxBlockSize(): Int {
+        return maxBlockSize
+    }
+
+    private fun calcMaxBlockSize(): Int {
+        val default = 100000
+        val height = height()
+        if (height < PoS.BLOCK_SIZE_SPAN)
+            return default
+        val sizes = Array(PoS.BLOCK_SIZE_SPAN) { blockSizes[height - it]!! }
+        sizes.sort()
+        val median = sizes[PoS.BLOCK_SIZE_SPAN / 2]
+        return max(default, median * 2)
+    }
+
+    suspend fun processBlock(hash: Hash, block: Block, size: Int): Boolean {
         if (block.previous != blockHash()) {
             logger.error("not on current chain")
             return false
@@ -102,6 +125,7 @@ object LedgerDB : Ledger {
 
         height.set(height.get() + 1)
         blockHash.set(hash)
+        blockSizes.add(size)
 
         var fees = 0L
         for (bytes in block.transactions) {
@@ -126,6 +150,7 @@ object LedgerDB : Ledger {
         addSupply(reward)
         generator.debit(height(), reward + fees)
         set(block.generator, generator)
+        maxBlockSize = calcMaxBlockSize()
 
         return true
     }

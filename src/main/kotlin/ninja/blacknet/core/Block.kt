@@ -22,7 +22,6 @@ class Block(
         val previous: Hash,
         val time: Long,
         val generator: PublicKey,
-        val sizeVote: Int,
         val transactions: ArrayList<SerializableByteArray>,
         var signature: Signature
 ) {

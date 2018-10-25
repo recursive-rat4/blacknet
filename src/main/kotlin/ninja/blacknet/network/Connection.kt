@@ -84,8 +84,8 @@ class Connection(
     private suspend fun recvPacket(): ByteReadPacket {
         try {
             val size = readChannel.readInt()
-            if (size > Node.DEFAULT_MAX_PACKET_SIZE) {
-                logger.info("Too long packet $size max ${Node.DEFAULT_MAX_PACKET_SIZE} Disconnecting $remoteAddress")
+            if (size > Node.getMaxPacketSize()) {
+                logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting $remoteAddress")
                 close()
             }
             return readChannel.readPacket(size)

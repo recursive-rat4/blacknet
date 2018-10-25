@@ -26,6 +26,7 @@ import ninja.blacknet.core.DataType
 import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
@@ -40,7 +41,6 @@ private val logger = KotlinLogging.logger {}
 
 object Node {
     const val DEFAULT_P2P_PORT = 28453
-    const val DEFAULT_MAX_PACKET_SIZE = 1000000
     const val NETWORK_TIMEOUT = 60
     const val magic = 0x17895E7D
     const val version = 5
@@ -101,6 +101,10 @@ object Node {
 
     suspend fun isOffline(): Boolean {
         return connected() == 0
+    }
+
+    fun getMaxPacketSize(): Int {
+        return LedgerDB.getMaxBlockSize() + 100
     }
 
     fun listenOn(address: Address) {

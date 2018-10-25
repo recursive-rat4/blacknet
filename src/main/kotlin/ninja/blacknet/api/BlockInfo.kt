@@ -15,20 +15,20 @@ import ninja.blacknet.core.DataType
 
 @Serializable
 class BlockInfo(
+        val size: Int,
         val version: Int,
         val previous: String,
         val time: Long,
         val generator: String,
-        val sizeVote: Int,
         val transactions: List<String>,
         val signature: String
 ) {
-    constructor(block: Block) : this(
+    constructor(block: Block, size: Int) : this(
+            size,
             block.version,
             block.previous.toString(),
             block.time,
             block.generator.toString(),
-            block.sizeVote,
             block.transactions.map { DataType.Transaction.hash(it.array).toString() },
             block.signature.toString()
     )

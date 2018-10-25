@@ -44,6 +44,10 @@ object BlockDB : DataDB() {
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
+        if (bytes.size > LedgerDB.getMaxBlockSize()) {
+            logger.info("too large block ${bytes.size} bytes, maximum ${LedgerDB.getMaxBlockSize()}")
+            return false
+        }
         val block = Block.deserialize(bytes)
         if (block == null) {
             logger.info("deserialization failed")
@@ -60,9 +64,8 @@ object BlockDB : DataDB() {
             logger.info("invalid signature")
             return false
         }
-        //TODO sizeVote
         //TODO pos
-        if (LedgerDB.processBlock(hash, block)) {
+        if (LedgerDB.processBlock(hash, block, bytes.size)) {
             LedgerDB.commit()
             map[hash] = bytes
             commit()

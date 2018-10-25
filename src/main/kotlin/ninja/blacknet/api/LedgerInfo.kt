@@ -16,5 +16,6 @@ class LedgerInfo(
         val height: Int,
         val blockHash: String,
         val supply: Long,
-        val accounts: Int
+        val accounts: Int,
+        val maxBlockSize: Int
 )
