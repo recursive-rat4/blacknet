@@ -11,7 +11,8 @@ package ninja.blacknet.core
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
-import ninja.blacknet.serialization.BlacknetOutput
+import kotlinx.serialization.encode
+import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
@@ -19,8 +20,8 @@ class Bundle(
         val data: SerializableByteArray
 ) : TxData {
     override fun serialize(): ByteArray {
-        val out = BlacknetOutput()
-        out.write(this)
+        val out = BlacknetEncoder()
+        out.encode(serializer(), this)
         return out.build().readBytes()
     }
 
@@ -28,7 +29,7 @@ class Bundle(
         return TxType.Bundle.ordinal.toByte()
     }
 
-    override fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
         return false //TODO
     }
 }

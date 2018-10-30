@@ -14,8 +14,9 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import io.ktor.network.util.ioCoroutineDispatcher
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
@@ -35,19 +36,20 @@ import java.math.BigDecimal
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
-import java.util.*
+import kotlin.coroutines.CoroutineContext
+import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
-object Node {
+object Node : CoroutineScope {
     const val DEFAULT_P2P_PORT = 28453
     const val NETWORK_TIMEOUT = 60
     const val magic = 0x17895E7D
     const val version = 5
     const val minVersion = 5
     const val agent = "Blacknet"
-    private val random = Random()
-    val nonce = random.nextLong()
+    override val coroutineContext: CoroutineContext = Dispatchers.Default
+    val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
     var minTxFee = parseAmount(Config[mintxfee])
@@ -112,7 +114,7 @@ object Node {
             Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
             else -> throw NotImplementedError("not implemented for " + address.network)
         }
-        val server = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().bind(addr)
+        val server = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().bind(addr)
         logger.info("Listening on $address")
         launch {
             listenAddress.add(address)
@@ -130,14 +132,13 @@ object Node {
         }
     }
 
-    private suspend fun addConnection(connection: Connection) {
-        connections.add(connection)
-        connection.invokeOnDisconnect { launch { connections.remove(connection) } }
+    suspend fun disconnected(connection: Connection) {
+        connections.remove(connection)
     }
 
     suspend fun connectTo(address: Address) {
         val connection = Network.connect(address)
-        addConnection(connection)
+        connections.add(connection)
         sendVersion(connection)
     }
 
@@ -180,7 +181,7 @@ object Node {
             if (!localAddress.isLocal())
                 listenAddress.add(localAddress)
             val connection = Connection(socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
-            addConnection(connection)
+            connections.add(connection)
         }
     }
 
@@ -230,7 +231,7 @@ object Node {
                         it.close()
                 } else {
                     if (it.pingRequest == null) {
-                        val id = random.nextInt()
+                        val id = Random.nextInt()
                         it.pingRequest = Connection.PingRequest(id, timeMilli())
                         it.sendPacket(Ping(id))
                     } else {
@@ -251,10 +252,10 @@ object Node {
                 continue
 
             val myAddress = listenAddress.filter { !it.isLocal() }
-            if (myAddress.size > 0) {
-                val i = random.nextInt(randomPeers.size * 500)
+            if (myAddress.isNotEmpty()) {
+                val i = Random.nextInt(randomPeers.size * 500)
                 if (i < randomPeers.size)
-                    randomPeers[i] = myAddress[random.nextInt(myAddress.size)]
+                    randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
             }
 
             broadcastPacket(Peers(randomPeers))

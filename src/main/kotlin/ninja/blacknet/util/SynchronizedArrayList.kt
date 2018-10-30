@@ -9,8 +9,8 @@
 
 package ninja.blacknet.util
 
-import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.withLock
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class SynchronizedArrayList<T>(private val list: ArrayList<T>) {
     constructor() : this(ArrayList())

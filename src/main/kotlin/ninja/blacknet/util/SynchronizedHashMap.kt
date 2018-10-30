@@ -9,8 +9,8 @@
 
 package ninja.blacknet.util
 
-import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.withLock
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class SynchronizedHashMap<K, V>(private val map: HashMap<K, V>) {
     constructor() : this(HashMap())
@@ -29,9 +29,23 @@ class SynchronizedHashMap<K, V>(private val map: HashMap<K, V>) {
 
     suspend fun sumValuesBy(selector: (V) -> Int) = mutex.withLock { map.values.sumBy(selector) }
 
-    suspend fun <R> mapKeys(transform: (K) -> R): ArrayList<R> = mutex.withLock {
-        val ret = ArrayList<R>(map.size)
-        map.keys.forEach { ret.add(transform(it)) }
-        ret
+    suspend fun <R> mapKeys(transform: (K) -> R): ArrayList<R> {
+        mutex.withLock {
+            val ret = ArrayList<R>(map.size)
+            map.keys.forEach { ret.add(transform(it)) }
+            return ret
+        }
+    }
+
+    suspend fun filterValues(predicate: (V) -> Boolean): Map<K, V> {
+        mutex.withLock {
+            val result = HashMap<K, V>()
+            for (entry in map) {
+                if (predicate(entry.value)) {
+                    result.put(entry.key, entry.value)
+                }
+            }
+            return result
+        }
     }
 }

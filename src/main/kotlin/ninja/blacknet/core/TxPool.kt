@@ -13,12 +13,13 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Node
+import ninja.blacknet.util.SynchronizedHashMap
 
 object TxPool : MemPool(), Ledger {
-    private val accounts = HashMap<PublicKey, AccountState>()
+    private val accounts = SynchronizedHashMap<PublicKey, AccountState>()
 
-    fun getSequence(key: PublicKey): Int {
-        val account = accounts[key]
+    suspend fun getSequence(key: PublicKey): Int {
+        val account = accounts.get(key)
         if (account != null)
             return account.seq
         return LedgerDB.get(key)?.seq ?: 0
@@ -29,22 +30,22 @@ object TxPool : MemPool(), Ledger {
         return amount >= Node.minTxFee
     }
 
-    override fun checkSequence(key: PublicKey, seq: Int): Boolean {
-        val account = accounts[key]
+    override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {
+        val account = accounts.get(key)
         if (account != null)
             return account.seq == seq
         return LedgerDB.checkSequence(key, seq)
     }
 
-    override fun get(key: PublicKey): AccountState? {
-        val account = accounts[key]
+    override suspend fun get(key: PublicKey): AccountState? {
+        val account = accounts.get(key)
         if (account != null)
             return account
         return LedgerDB.get(key)
     }
 
-    override fun set(key: PublicKey, state: AccountState) {
-        accounts[key] = state
+    override suspend fun set(key: PublicKey, state: AccountState) {
+        accounts.set(key, state)
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {

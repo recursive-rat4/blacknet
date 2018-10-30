@@ -9,17 +9,18 @@
 
 package ninja.blacknet.network
 
-import kotlinx.coroutines.experimental.CompletionHandler
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.JobCancellationException
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.io.*
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.io.*
+import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
-import ninja.blacknet.serialization.BlacknetInput
+import ninja.blacknet.serialization.BlacknetDecoder
+import kotlin.coroutines.CoroutineContext
 
 private val logger = KotlinLogging.logger {}
 
@@ -29,9 +30,9 @@ class Connection(
         val remoteAddress: Address,
         val localAddress: Address,
         var state: State
-) {
-    private val job: Job
-    private val sendChannel = LinkedListChannel<ByteReadPacket>()
+) : CoroutineScope {
+    override val coroutineContext: CoroutineContext = Dispatchers.Default
+    private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     val connectedAt = Node.time()
 
     var version: Int = 0
@@ -43,12 +44,8 @@ class Connection(
     var dosScore: Int = 0
 
     init {
-        job = launch { receiver() }
+        launch { receiver() }
         launch { sender() }
-    }
-
-    fun invokeOnDisconnect(handler: CompletionHandler) {
-        job.invokeOnCompletion(true, true, handler)
     }
 
     private suspend fun receiver() {
@@ -65,7 +62,7 @@ class Connection(
                     logger.info("unknown packet type $type")
                     continue
                 }
-                val packet = BlacknetInput(bytes).deserialize(serializer)
+                val packet = BlacknetDecoder(bytes).decode(serializer)
                 if (packet == null) {
                     dos("deserialization failed")
                     continue
@@ -73,11 +70,12 @@ class Connection(
                 packet.process(this)
             }
         } catch (e: ClosedReceiveChannelException) {
-        } catch (e: JobCancellationException) {
+        } catch (e: CancellationException) {
         } catch (e: Throwable) {
             logger.error("Exception in receiver $remoteAddress", e)
         } finally {
             close()
+            Node.disconnected(this)
         }
     }
 

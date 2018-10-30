@@ -47,18 +47,18 @@ fun Application.main() {
         get("/nodeinfo") {
             val listening = Node.listenAddress.map { it.toString() }
             val ret = NodeInfo(Node.agent, Node.version, Node.outgoing(), Node.incoming(), listening)
-            call.respond(JSON.indented.stringify(ret))
+            call.respond(JSON.indented.stringify(NodeInfo.serializer(), ret))
         }
 
         get("/peerdb") {
             val peers = PeerDB.getAll().map { it.toString() }
             val ret = PeerDBInfo(peers.size, peers)
-            call.respond(JSON.indented.stringify(ret))
+            call.respond(JSON.indented.stringify(PeerDBInfo.serializer(), ret))
         }
 
         get("/blockdb") {
             val ret = BlockDBInfo(BlockDB.size())
-            call.respond(JSON.indented.stringify(ret))
+            call.respond(JSON.indented.stringify(BlockDBInfo.serializer(), ret))
         }
 
         get("/blockdb/get/{hash}") {
@@ -67,7 +67,7 @@ fun Application.main() {
             if (bytes != null) {
                 val block = Block.deserialize(bytes)
                 val ret = BlockInfo(block!!, bytes.size)
-                call.respond(JSON.indented.stringify(ret))
+                call.respond(JSON.indented.stringify(BlockInfo.serializer(), ret))
             } else {
                 call.respond(HttpStatusCode.NotFound, "block not found")
             }
@@ -75,7 +75,7 @@ fun Application.main() {
 
         get("/ledger") {
             val ret = LedgerInfo(LedgerDB.height(), LedgerDB.blockHash().toString(), LedgerDB.supply(), LedgerDB.accounts(), LedgerDB.getMaxBlockSize())
-            call.respond(JSON.indented.stringify(ret))
+            call.respond(JSON.indented.stringify(LedgerInfo.serializer(), ret))
         }
 
         get("/ledger/get/{account}") {
@@ -83,7 +83,7 @@ fun Application.main() {
             val state = LedgerDB.get(pubkey)
             if (state != null) {
                 val ret = AccountInfo(state.seq, state.balance(), state.stakingBalance(LedgerDB.height()))
-                call.respond(JSON.indented.stringify(ret))
+                call.respond(JSON.indented.stringify(AccountInfo.serializer(), ret))
             } else {
                 call.respond(HttpStatusCode.NotFound, "account not found")
             }
@@ -92,14 +92,14 @@ fun Application.main() {
         get("/txpool") {
             val tx = TxPool.mapHashes { it.toString() }
             val ret = TxPoolInfo(TxPool.size(), TxPool.dataSize(), tx)
-            call.respond(JSON.indented.stringify(ret))
+            call.respond(JSON.indented.stringify(TxPoolInfo.serializer(), ret))
         }
 
         get("/account/generate") {
             val pair = Mnemonic.generate()
             val publicKey = pair.second.toPublicKey()
             val ret = MnemonicInfo(pair.first, Address.encode(publicKey), publicKey.toString())
-            call.respond(JSON.indented.stringify(ret))
+            call.respond(JSON.indented.stringify(MnemonicInfo.serializer(), ret))
         }
 
         post("/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {

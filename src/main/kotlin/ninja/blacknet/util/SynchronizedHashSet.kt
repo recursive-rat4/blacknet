@@ -9,8 +9,8 @@
 
 package ninja.blacknet.util
 
-import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.withLock
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class SynchronizedHashSet<T>(private val set: HashSet<T>) {
     constructor() : this(HashSet())

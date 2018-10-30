@@ -16,9 +16,9 @@ private val logger = KotlinLogging.logger {}
 interface TxData {
     fun serialize(): ByteArray
     fun getType(): Byte
-    fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean
+    suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean
 
-    fun process(tx: Transaction, ledger: Ledger): Boolean {
+    suspend fun process(tx: Transaction, ledger: Ledger): Boolean {
         val account = ledger.get(tx.from)
         if (account == null) {
             logger.info("account not found")

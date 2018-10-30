@@ -13,17 +13,17 @@ import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.BlockDB
-import ninja.blacknet.serialization.BlacknetInput
+import ninja.blacknet.serialization.BlacknetDecoder
 
 private val logger = KotlinLogging.logger {}
 
 interface Ledger {
     fun addSupply(amount: Long)
     fun checkFee(size: Int, amount: Long): Boolean
-    fun checkSequence(key: PublicKey, seq: Int): Boolean
     fun height(): Int
-    fun get(key: PublicKey): AccountState?
-    fun set(key: PublicKey, state: AccountState)
+    suspend fun checkSequence(key: PublicKey, seq: Int): Boolean
+    suspend fun get(key: PublicKey): AccountState?
+    suspend fun set(key: PublicKey, state: AccountState)
 
     suspend fun processTransaction(hash: Hash, bytes: ByteArray): Boolean {
         val tx = Transaction.deserialize(bytes)
@@ -52,7 +52,7 @@ interface Ledger {
             logger.info("unknown transaction type ${tx.type}")
             return false
         }
-        val data = BlacknetInput.fromBytes(tx.data.array).deserialize(serializer)
+        val data = BlacknetDecoder.fromBytes(tx.data.array).decode(serializer)
         if (data == null) {
             logger.info("deserialization of tx data failed")
             return false

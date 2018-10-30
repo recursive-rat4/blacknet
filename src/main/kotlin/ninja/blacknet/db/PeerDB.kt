@@ -9,8 +9,8 @@
 
 package ninja.blacknet.db
 
-import io.ktor.util.random
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.Node
@@ -19,6 +19,7 @@ import org.mapdb.DBMaker
 import org.mapdb.HTreeMap
 import org.mapdb.Serializer
 import kotlin.math.min
+import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -29,7 +30,7 @@ object PeerDB {
     private val map = db.hashMap("peers", Serializer.ELSA, Serializer.ELSA).createOrOpen() as HTreeMap<Address, Entry>
 
     init {
-        launch { oldEntriesRemover() }
+        GlobalScope.launch { oldEntriesRemover() }
     }
 
     fun commit() {
@@ -70,7 +71,7 @@ object PeerDB {
         val candidates = map.keys.filter { !filter.contains(it) }
         if (candidates.isEmpty())
             return null
-        return candidates[random(candidates.size)]
+        return candidates[Random.nextInt(candidates.size)]
     }
 
     fun getRandom(n: Int): MutableList<Address> {

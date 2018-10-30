@@ -11,15 +11,16 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encode
 import ninja.blacknet.core.DataType
-import ninja.blacknet.serialization.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class Data(private val list: DataList) : Packet {
     override fun serialize(): ByteReadPacket {
-        val out = BlacknetOutput()
-        out.write(this)
+        val out = BlacknetEncoder()
+        out.encode(serializer(), this)
         return out.build()
     }
 

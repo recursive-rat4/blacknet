@@ -11,9 +11,10 @@ package ninja.blacknet.core
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encode
 import ninja.blacknet.crypto.Message
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetEncoder
 
 @Serializable
 class Transfer(
@@ -22,8 +23,8 @@ class Transfer(
         val message: Message
 ) : TxData {
     override fun serialize(): ByteArray {
-        val out = BlacknetOutput()
-        out.write(this)
+        val out = BlacknetEncoder()
+        out.encode(serializer(), this)
         return out.build().readBytes()
     }
 
@@ -31,7 +32,7 @@ class Transfer(
         return TxType.Transfer.ordinal.toByte()
     }
 
-    override fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
         if (message.type == Message.ENCRYPTED)
             TODO()
         if (!account.credit(amount))

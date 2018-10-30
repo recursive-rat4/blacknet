@@ -11,13 +11,14 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.serialization.BlacknetOutput
+import kotlinx.serialization.encode
+import ninja.blacknet.serialization.BlacknetEncoder
 
 @Serializable
 class Ping(private val id: Int) : Packet {
     override fun serialize(): ByteReadPacket {
-        val out = BlacknetOutput()
-        out.write(this)
+        val out = BlacknetEncoder()
+        out.encode(serializer(), this)
         return out.build()
     }
 

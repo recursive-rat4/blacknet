@@ -9,12 +9,12 @@
 
 package ninja.blacknet.crypto
 
-import kotlinx.serialization.KInput
-import kotlinx.serialization.KOutput
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
-import ninja.blacknet.serialization.BlacknetInput
-import ninja.blacknet.serialization.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.util.fromHex
 import java.math.BigInteger
@@ -48,13 +48,13 @@ class BigInt(private val int: BigInteger) {
             return BigInt(bytes)
         }
 
-        override fun save(output: KOutput, obj: BigInt) {
-            val bytes = SerializableByteArray(obj.toByteArray())
-            (output as BlacknetOutput).writeSerializableByteArrayValue(bytes)
+        override fun deserialize(input: Decoder): BigInt {
+            return BigInt((input as BlacknetDecoder).decodeSerializableByteArrayValue())
         }
 
-        override fun load(input: KInput): BigInt {
-            return BigInt((input as BlacknetInput).readSerializableByteArrayValue())
+        override fun serialize(output: Encoder, obj: BigInt) {
+            val bytes = SerializableByteArray(obj.toByteArray())
+            (output as BlacknetEncoder).encodeSerializableByteArrayValue(bytes)
         }
     }
 }

@@ -11,8 +11,9 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encode
 import mu.KotlinLogging
-import ninja.blacknet.serialization.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetEncoder
 
 private val logger = KotlinLogging.logger {}
 
@@ -26,8 +27,8 @@ class Version(
         private val feeFilter: Long
 ) : Packet {
     override fun serialize(): ByteReadPacket {
-        val out = BlacknetOutput()
-        out.write(this)
+        val out = BlacknetEncoder()
+        out.encode(serializer(), this)
         return out.build()
     }
 

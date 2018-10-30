@@ -12,14 +12,14 @@ package ninja.blacknet.serialization
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.io.core.IoBuffer
 import kotlinx.io.core.readBytes
-import kotlinx.serialization.ElementValueInput
-import kotlinx.serialization.KSerialLoader
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ElementValueDecoder
+import kotlinx.serialization.internal.EnumDescriptor
 import java.nio.ByteBuffer
-import kotlin.reflect.KClass
 
-class BlacknetInput(private val input: ByteReadPacket) : ElementValueInput() {
-    fun <T : Any?> deserialize(loader: KSerialLoader<T>): T? {
-        val v = loader.load(this)
+class BlacknetDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
+    fun <T : Any?> decode(loader: DeserializationStrategy<T>): T? {
+        val v = loader.deserialize(this)
         if (input.remaining > 0) {
             input.release()
             return null
@@ -27,33 +27,32 @@ class BlacknetInput(private val input: ByteReadPacket) : ElementValueInput() {
         return v
     }
 
-    override fun readByteValue(): Byte = input.readByte()
-    override fun readIntValue(): Int = input.readInt()
-    override fun readLongValue(): Long = input.readLong()
+    override fun decodeByte(): Byte = input.readByte()
+    override fun decodeInt(): Int = input.readInt()
+    override fun decodeLong(): Long = input.readLong()
 
-    override fun readStringValue(): String {
+    override fun decodeString(): String {
         val size = input.unpackInt()
         return String(input.readBytes(size))
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : Enum<T>> readEnumValue(enumClass: KClass<T>): T = enumClass.java.enumConstants[input.unpackInt()]
+    override fun decodeEnum(enumDescription: EnumDescriptor): Int = input.unpackInt()
 
-    fun readSerializableByteArrayValue(): SerializableByteArray {
+    fun decodeSerializableByteArrayValue(): SerializableByteArray {
         val size = input.unpackInt()
         return SerializableByteArray(input.readBytes(size))
     }
 
-    fun readByteArrayValue(size: Int): ByteArray {
+    fun decodeByteArrayValue(size: Int): ByteArray {
         return input.readBytes(size)
     }
 
     companion object {
-        fun fromBytes(bytes: ByteArray): BlacknetInput {
+        fun fromBytes(bytes: ByteArray): BlacknetDecoder {
             val buf = IoBuffer(ByteBuffer.wrap(bytes))
             buf.resetForRead()
             val input = ByteReadPacket(buf, IoBuffer.NoPool)
-            return BlacknetInput(input)
+            return BlacknetDecoder(input)
         }
     }
 }

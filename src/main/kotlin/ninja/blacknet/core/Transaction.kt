@@ -11,9 +11,10 @@ package ninja.blacknet.core
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encode
 import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.BlacknetInput
-import ninja.blacknet.serialization.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
@@ -27,8 +28,8 @@ class Transaction(
         val data: SerializableByteArray
 ) {
     fun serialize(): ByteArray {
-        val out = BlacknetOutput()
-        out.write(this)
+        val out = BlacknetEncoder()
+        out.encode(serializer(), this)
         return out.build().readBytes()
     }
 
@@ -46,7 +47,7 @@ class Transaction(
 
     companion object {
         fun deserialize(bytes: ByteArray): Transaction? {
-            return BlacknetInput.fromBytes(bytes).deserialize(Transaction.serializer())
+            return BlacknetDecoder.fromBytes(bytes).decode(Transaction.serializer())
         }
 
         fun create(from: PublicKey, seq: Int, fee: Long, type: Byte, data: ByteArray): Transaction {

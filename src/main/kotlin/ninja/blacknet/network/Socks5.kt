@@ -13,16 +13,16 @@ import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import io.ktor.network.util.ioCoroutineDispatcher
-import kotlinx.coroutines.experimental.io.ByteReadChannel
-import kotlinx.coroutines.experimental.io.ByteWriteChannel
-import kotlinx.coroutines.experimental.io.readFully
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.io.ByteReadChannel
+import kotlinx.coroutines.io.ByteWriteChannel
+import kotlinx.coroutines.io.readFully
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.writeFully
 
 class Socks5(private val proxy: Address) {
     suspend fun connect(address: Address): Pair<ByteReadChannel, ByteWriteChannel> {
-        val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(proxy.getSocketAddress())
+        val socket = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().connect(proxy.getSocketAddress())
         val readChannel = socket.openReadChannel()
         val writeChannel = socket.openWriteChannel(true)
         val builder = BytePacketBuilder()

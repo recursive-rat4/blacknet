@@ -11,9 +11,10 @@ package ninja.blacknet.core
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encode
 import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.BlacknetInput
-import ninja.blacknet.serialization.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
@@ -26,8 +27,8 @@ class Block(
         var signature: Signature
 ) {
     fun serialize(): ByteArray {
-        val out = BlacknetOutput()
-        out.write(this)
+        val out = BlacknetEncoder()
+        out.encode(serializer(), this)
         return out.build().readBytes()
     }
 
@@ -45,7 +46,7 @@ class Block(
 
     companion object {
         fun deserialize(bytes: ByteArray): Block? {
-            return BlacknetInput.fromBytes(bytes).deserialize(Block.serializer())
+            return BlacknetDecoder.fromBytes(bytes).decode(Block.serializer())
         }
     }
 }

@@ -11,9 +11,10 @@ package ninja.blacknet.core
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BlacknetOutput
+import ninja.blacknet.serialization.BlacknetEncoder
 
 private val logger = KotlinLogging.logger {}
 
@@ -23,8 +24,8 @@ class Lease(
         val to: PublicKey
 ) : TxData {
     override fun serialize(): ByteArray {
-        val out = BlacknetOutput()
-        out.write(this)
+        val out = BlacknetEncoder()
+        out.encode(serializer(), this)
         return out.build().readBytes()
     }
 
@@ -32,7 +33,7 @@ class Lease(
         return TxType.Lease.ordinal.toByte()
     }
 
-    override fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
         if (amount < PoS.MIN_LEASE) {
             logger.info("$amount less than minimal ${PoS.MIN_LEASE}")
             return false

@@ -9,6 +9,6 @@
 
 package ninja.blacknet.util
 
-import kotlinx.coroutines.experimental.timeunit.TimeUnit
+private const val SECONDS = 1000
 
-suspend fun delay(seconds: Int) = kotlinx.coroutines.experimental.delay(seconds.toLong(), TimeUnit.SECONDS)
+suspend fun delay(seconds: Int) = kotlinx.coroutines.delay(seconds.toLong() * SECONDS)

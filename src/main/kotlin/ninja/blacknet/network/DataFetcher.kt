@@ -9,26 +9,28 @@
 
 package ninja.blacknet.network
 
-import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.delay
 
 object DataFetcher {
-    private val inventoryChannel = LinkedListChannel<Pair<Connection, InvList>>()
-    private val requested = HashMap<Hash, Long>()
+    private val inventoryChannel: Channel<Pair<Connection, InvList>> = Channel(Channel.UNLIMITED)
+    private val requested = SynchronizedHashMap<Hash, Long>()
 
     init {
-        launch { fetcher() }
-        launch { watchdog() }
+        GlobalScope.launch { fetcher() }
+        GlobalScope.launch { watchdog() }
     }
 
     fun offer(from: Connection, list: InvList) {
         inventoryChannel.offer(Pair(from, list))
     }
 
-    fun fetched(hash: Hash) {
+    suspend fun fetched(hash: Hash) {
         requested.remove(hash)
     }
 
@@ -48,7 +50,7 @@ object DataFetcher {
                     continue
 
                 if (type.db.isInteresting(hash)) {
-                    requested[hash] = currTime
+                    requested.set(hash, currTime)
                     request.add(Pair(type, hash))
                 }
 

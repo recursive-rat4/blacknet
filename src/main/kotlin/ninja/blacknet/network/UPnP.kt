@@ -9,7 +9,8 @@
 
 package ninja.blacknet.network
 
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.p2pport
@@ -19,7 +20,7 @@ private val logger = KotlinLogging.logger {}
 
 object UPnP {
     fun forwardAsync() {
-        launch { forward() }
+        GlobalScope.launch { forward() }
     }
 
     suspend fun forward() {

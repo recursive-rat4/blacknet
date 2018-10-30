@@ -14,7 +14,7 @@ import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import io.ktor.network.util.ioCoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands.HS_ADDRESS
 import net.freehaven.tor.control.TorControlConnection
@@ -110,7 +110,7 @@ enum class Network(val addrSize: Int) {
                         val chan = Socks5(socksProxy).connect(address)
                         return Connection(chan.first, chan.second, address, socksProxy, Connection.State.OUTGOING_WAITING)
                     } else {
-                        val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(address.getSocketAddress())
+                        val socket = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
                         if (Config[listen] && !localAddress.isLocal())
                             Node.listenAddress.add(Address(localAddress.network, Config[p2pport], localAddress.bytes))
@@ -131,7 +131,7 @@ enum class Network(val addrSize: Int) {
                 val s = java.net.Socket("localhost", Config[torcontrol])
                 val tor = TorControlConnection(s)
                 tor.launchThread(true)
-                tor.authenticate(ByteArray(0));
+                tor.authenticate(ByteArray(0))
 
                 val request = HashMap<Int, String?>()
                 request[Config[p2pport]] = null

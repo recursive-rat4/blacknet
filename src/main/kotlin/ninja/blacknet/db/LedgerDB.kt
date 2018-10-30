@@ -10,6 +10,7 @@
 package ninja.blacknet.db
 
 import com.google.common.io.Resources
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
@@ -48,7 +49,9 @@ object LedgerDB : Ledger {
             for (i in list) {
                 val publicKey = PublicKey.fromString(i.publicKey)!!
                 val account = AccountState.create(i.balance)
-                set(publicKey, account)
+                runBlocking {
+                    set(publicKey, account)
+                }
                 supply += i.balance
             }
 
@@ -83,11 +86,11 @@ object LedgerDB : Ledger {
         return accounts.size
     }
 
-    override fun get(key: PublicKey): AccountState? {
+    override suspend fun get(key: PublicKey): AccountState? {
         return accounts[key]
     }
 
-    override fun set(key: PublicKey, state: AccountState) {
+    override suspend fun set(key: PublicKey, state: AccountState) {
         accounts[key] = state
     }
 
@@ -97,7 +100,7 @@ object LedgerDB : Ledger {
 
     override fun checkFee(size: Int, amount: Long) = amount >= 0
 
-    override fun checkSequence(key: PublicKey, seq: Int): Boolean {
+    override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {
         val account = get(key) ?: return false
         return account.seq == seq
     }

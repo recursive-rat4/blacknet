@@ -9,8 +9,8 @@
 
 package ninja.blacknet.serialization
 
-import kotlinx.serialization.KInput
-import kotlinx.serialization.KOutput
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import ninja.blacknet.util.fromHex
@@ -44,12 +44,12 @@ class SerializableByteArray(
             return SerializableByteArray(bytes)
         }
 
-        override fun save(output: KOutput, obj: SerializableByteArray) {
-            (output as BlacknetOutput).writeSerializableByteArrayValue(obj)
+        override fun deserialize(input: Decoder): SerializableByteArray {
+            return (input as BlacknetDecoder).decodeSerializableByteArrayValue()
         }
 
-        override fun load(input: KInput): SerializableByteArray {
-            return (input as BlacknetInput).readSerializableByteArrayValue()
+        override fun serialize(output: Encoder, obj: SerializableByteArray) {
+            (output as BlacknetEncoder).encodeSerializableByteArrayValue(obj)
         }
     }
 }

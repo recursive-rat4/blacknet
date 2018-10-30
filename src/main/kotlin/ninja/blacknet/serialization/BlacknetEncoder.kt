@@ -11,34 +11,34 @@ package ninja.blacknet.serialization
 
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
-import kotlinx.serialization.ElementValueOutput
-import kotlin.reflect.KClass
+import kotlinx.serialization.ElementValueEncoder
+import kotlinx.serialization.internal.EnumDescriptor
 
-class BlacknetOutput : ElementValueOutput() {
+class BlacknetEncoder : ElementValueEncoder() {
     private val out = BytePacketBuilder()
 
     fun build(): ByteReadPacket {
         return out.build()
     }
 
-    override fun writeByteValue(value: Byte) = out.writeByte(value)
-    override fun writeIntValue(value: Int) = out.writeInt(value)
-    override fun writeLongValue(value: Long) = out.writeLong(value)
+    override fun encodeByte(value: Byte) = out.writeByte(value)
+    override fun encodeInt(value: Int) = out.writeInt(value)
+    override fun encodeLong(value: Long) = out.writeLong(value)
 
-    override fun writeStringValue(value: String) {
+    override fun encodeString(value: String) {
         val bytes = value.toByteArray()
         out.packInt(bytes.size)
         out.writeFully(bytes, 0, bytes.size)
     }
 
-    override fun <T : Enum<T>> writeEnumValue(enumClass: KClass<T>, value: T) = out.packInt(value.ordinal)
+    override fun encodeEnum(enumDescription: EnumDescriptor, ordinal: Int) = out.packInt(ordinal)
 
-    fun writeSerializableByteArrayValue(value: SerializableByteArray) {
+    fun encodeSerializableByteArrayValue(value: SerializableByteArray) {
         out.packInt(value.size())
         out.writeFully(value.array, 0, value.size())
     }
 
-    fun writeByteArrayValue(value: ByteArray, size: Int) {
+    fun encodeByteArrayValue(value: ByteArray, size: Int) {
         out.writeFully(value, 0, size)
     }
 }
