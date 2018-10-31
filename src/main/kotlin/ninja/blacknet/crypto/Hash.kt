@@ -26,6 +26,7 @@ class Hash(val bytes: SerializableByteArray32) {
 
     companion object {
         const val SIZE = 32
+        const val DIGEST_SIZE = SIZE * 8
         val ZERO = Hash(SerializableByteArray32())
 
         fun fromString(hex: String?): Hash? {

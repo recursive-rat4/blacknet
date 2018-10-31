@@ -13,4 +13,8 @@ class PrivateKey(val bytes: ByteArray) {
     fun toPublicKey(): PublicKey {
         return Ed25519.publicKey(this)
     }
+
+    companion object {
+        const val SIZE = 32
+    }
 }

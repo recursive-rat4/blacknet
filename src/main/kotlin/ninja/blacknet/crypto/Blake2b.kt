@@ -22,7 +22,7 @@ object Blake2b {
 
     fun hash(message: ByteArray): Hash {
         val bytes = ByteArray(Hash.SIZE)
-        val b = Blake2b(Hash.SIZE * 8)
+        val b = Blake2b(Hash.DIGEST_SIZE)
         b.update(message, 0, message.size)
         b.digest(bytes, 0)
         return Hash(bytes)
@@ -30,9 +30,26 @@ object Blake2b {
 
     fun hash(message: ByteArray, offset: Int, len: Int): Hash {
         val bytes = ByteArray(Hash.SIZE)
-        val b = Blake2b(Hash.SIZE * 8)
+        val b = Blake2b(Hash.DIGEST_SIZE)
         b.update(message, offset, len)
         b.digest(bytes, 0)
         return Hash(bytes)
+    }
+
+    fun hasher(): Hasher {
+        return Hasher(Blake2b(Hash.DIGEST_SIZE))
+    }
+
+    class Hasher(private val blake2b: Blake2b) {
+        operator fun plus(bytes: ByteArray): Hasher {
+            blake2b.update(bytes, 0, bytes.size)
+            return this
+        }
+
+        fun hash(): Hash {
+            val bytes = ByteArray(Hash.SIZE)
+            blake2b.digest(bytes, 0)
+            return Hash(bytes)
+        }
     }
 }
