@@ -21,10 +21,7 @@ import io.ktor.routing.routing
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.Message
-import ninja.blacknet.crypto.Mnemonic
+import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
@@ -174,6 +171,25 @@ fun Application.main() {
                 call.respond(signed.first.toString())
             else
                 call.respond("Transaction rejected")
+        }
+
+        post("/signmessage/{mnemonic}/{message}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
+
+            val signature = Message.sign(privateKey, message)
+
+            call.respond(signature.toString())
+        }
+
+        get("/verifymessage/{account}/{signature}/{message}") {
+            val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
+            val signature = Signature.fromString(call.parameters["signature"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid signature")
+            val message = call.parameters["message"] ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid message")
+
+            val result = Message.verify(pubkey, signature, message)
+
+            call.respond(result.toString())
         }
     }
 }

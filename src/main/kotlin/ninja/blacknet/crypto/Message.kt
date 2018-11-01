@@ -19,6 +19,7 @@ class Message(
         val data: SerializableByteArray
 ) {
     companion object {
+        const val SIGN_MAGIC = "Blacknet Signed Message:\n"
         const val PLAIN: Byte = 0
         const val ENCRYPTED: Byte = 1
 
@@ -30,5 +31,17 @@ class Message(
         }
 
         fun empty() = Message(PLAIN, SerializableByteArray.EMPTY)
+
+        fun sign(privateKey: PrivateKey, message: String): Signature {
+            return Ed25519.sign(hash(message), privateKey)
+        }
+
+        fun verify(publicKey: PublicKey, signature: Signature, message: String): Boolean {
+            return Ed25519.verify(signature, hash(message), publicKey)
+        }
+
+        private fun hash(message: String): Hash {
+            return Blake2b.hash((SIGN_MAGIC + message).toUtf8Bytes())
+        }
     }
 }

@@ -11,6 +11,7 @@ package ninja.blacknet.crypto
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.serialization.SerializableByteArray64
+import ninja.blacknet.util.fromHex
 
 @Serializable
 class Signature(val bytes: SerializableByteArray64) {
@@ -21,5 +22,12 @@ class Signature(val bytes: SerializableByteArray64) {
     companion object {
         const val SIZE = 64
         val EMPTY = Signature(SerializableByteArray64())
+
+        fun fromString(hex: String?): Signature? {
+            if (hex == null || hex.length != SIZE * 2)
+                return null
+            val bytes = fromHex(hex) ?: return null
+            return Signature(bytes)
+        }
     }
 }

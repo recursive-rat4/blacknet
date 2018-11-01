@@ -10,15 +10,9 @@
 package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.Blake2b
-import com.rfksystems.blake2b.security.Blake2bProvider
-import java.security.Security
 
 object Blake2b {
     const val BLAKE2_B_512 = Blake2b.BLAKE2_B_512
-
-    init {
-        Security.addProvider(Blake2bProvider())
-    }
 
     fun hash(message: ByteArray): Hash {
         val bytes = ByteArray(Hash.SIZE)
