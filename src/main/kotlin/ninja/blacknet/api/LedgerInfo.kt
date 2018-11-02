@@ -15,7 +15,9 @@ import kotlinx.serialization.Serializable
 class LedgerInfo(
         val height: Int,
         val blockHash: String,
+        val cumulativeDifficulty: String,
         val supply: Long,
         val accounts: Int,
-        val maxBlockSize: Int
+        val maxBlockSize: Int,
+        val nxtrng: String
 )

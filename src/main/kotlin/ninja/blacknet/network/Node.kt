@@ -26,6 +26,7 @@ import ninja.blacknet.Config.outgoingconnections
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
+import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
@@ -106,7 +107,11 @@ object Node : CoroutineScope {
     }
 
     fun getMaxPacketSize(): Int {
-        return LedgerDB.getMaxBlockSize() + 100
+        return LedgerDB.maxBlockSize() + 100
+    }
+
+    fun isInitialBlockDownload(): Boolean {
+        return false //TODO
     }
 
     fun listenOn(address: Address) {
@@ -143,7 +148,9 @@ object Node : CoroutineScope {
     }
 
     fun sendVersion(connection: Connection) {
-        val v = Version(magic, version, time(), nonce, agent, minTxFee)
+        val blockHash = if (isInitialBlockDownload()) Hash.ZERO else LedgerDB.blockHash()
+        val cumulativeDifficulty = if (isInitialBlockDownload()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
+        val v = Version(magic, version, time(), nonce, agent, minTxFee, blockHash, cumulativeDifficulty)
         connection.sendPacket(v)
     }
 

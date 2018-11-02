@@ -44,8 +44,8 @@ object BlockDB : DataDB() {
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        if (bytes.size > LedgerDB.getMaxBlockSize()) {
-            logger.info("too large block ${bytes.size} bytes, maximum ${LedgerDB.getMaxBlockSize()}")
+        if (bytes.size > LedgerDB.maxBlockSize()) {
+            logger.info("too large block ${bytes.size} bytes, maximum ${LedgerDB.maxBlockSize()}")
             return false
         }
         val block = Block.deserialize(bytes)

@@ -16,6 +16,7 @@ import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import mu.KotlinLogging
 import ninja.blacknet.core.*
+import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import org.mapdb.DBMaker
@@ -29,8 +30,10 @@ object LedgerDB : Ledger {
     private val accounts = db.hashMap("accounts", PublicKeySerializer, AccountStateSerializer).createOrOpen()
     private val height = db.atomicInteger("height").createOrOpen()
     private val blockHash = db.atomicVar("blockHash", HashSerializer, Hash.ZERO).createOrOpen()
+    private val cumulativeDifficulty = db.atomicVar("cumulativeDifficulty", BigIntSerializer, BigInt.ZERO).createOrOpen()
     private val supply = db.atomicLong("supply").createOrOpen()
     private val blockSizes = db.indexTreeList("blockSizes", Serializer.INTEGER).createOrOpen()
+    private val nxtrng = db.indexTreeList("nxtrng", HashSerializer).createOrOpen()
 
     private var maxBlockSize: Int
 
@@ -57,6 +60,7 @@ object LedgerDB : Ledger {
 
             addSupply(supply)
             blockSizes.add(0)
+            nxtrng.add(Hash.ZERO)
             commit()
             logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
         }
@@ -76,6 +80,10 @@ object LedgerDB : Ledger {
 
     fun blockHash(): Hash {
         return blockHash.get()
+    }
+
+    fun cumulativeDifficulty(): BigInt {
+        return cumulativeDifficulty.get()
     }
 
     fun supply(): Long {
@@ -105,8 +113,12 @@ object LedgerDB : Ledger {
         return account.seq == seq
     }
 
-    fun getMaxBlockSize(): Int {
+    fun maxBlockSize(): Int {
         return maxBlockSize
+    }
+
+    fun nxtrng(): Hash {
+        return nxtrng.first()!!
     }
 
     private fun calcMaxBlockSize(): Int {
@@ -129,6 +141,8 @@ object LedgerDB : Ledger {
         height.set(height.get() + 1)
         blockHash.set(hash)
         blockSizes.add(size)
+        nxtrng.add(PoS.nxtrng(nxtrng(), block.generator))
+        //TODO cumulative difficulty
 
         var fees = 0L
         for (bytes in block.transactions) {

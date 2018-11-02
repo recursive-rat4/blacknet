@@ -16,12 +16,11 @@ import org.mapdb.Serializer
 
 object AccountStateSerializer : Serializer<AccountState> {
     override fun hashCode(o: AccountState, seed: Int): Int {
-        return o.seq xor o.stake.toInt() xor o.immature.hashCode() xor seed
+        return o.hashCode() xor seed
     }
 
     override fun equals(first: AccountState?, second: AccountState?): Boolean {
-        return first === second || (first != null && second != null &&
-                first.seq == second.seq && first.stake == second.stake && first.immature == second.immature)
+        return first === second || first == second
     }
 
     override fun isTrusted(): Boolean {

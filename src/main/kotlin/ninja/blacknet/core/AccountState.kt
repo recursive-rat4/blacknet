@@ -14,7 +14,7 @@ import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
 
-class AccountState(
+data class AccountState(
         var seq: Int,
         var stake: Long,
         var immature: MutableList<Input>,

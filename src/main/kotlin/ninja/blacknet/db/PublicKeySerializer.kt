@@ -16,7 +16,7 @@ import org.mapdb.Serializer
 
 object PublicKeySerializer : Serializer<PublicKey> {
     override fun hashCode(o: PublicKey, seed: Int): Int {
-        return o.bytes.array.contentHashCode() xor seed
+        return o.hashCode() xor seed
     }
 
     override fun equals(first: PublicKey?, second: PublicKey?): Boolean {

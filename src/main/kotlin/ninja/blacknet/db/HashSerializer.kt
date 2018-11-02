@@ -16,7 +16,7 @@ import org.mapdb.Serializer
 
 object HashSerializer : Serializer<Hash> {
     override fun hashCode(o: Hash, seed: Int): Int {
-        return o.bytes.array.contentHashCode() xor seed
+        return o.hashCode() xor seed
     }
 
     override fun equals(first: Hash?, second: Hash?): Boolean {

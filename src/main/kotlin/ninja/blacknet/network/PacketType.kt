@@ -19,7 +19,7 @@ enum class PacketType {
     Peers,
     Inventory,
     GetData,
-    Data
+    Data,
     ;
 
     companion object {

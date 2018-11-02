@@ -13,6 +13,9 @@ import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
 import mu.KotlinLogging
+import ninja.blacknet.crypto.BigInt
+import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.BlacknetEncoder
 
 private val logger = KotlinLogging.logger {}
@@ -24,7 +27,9 @@ class Version(
         private val time: Long,
         private val nonce: Long,
         private val agent: String,
-        private val feeFilter: Long
+        private val feeFilter: Long,
+        private val chain: Hash,
+        private val cumulativeDifficulty: BigInt
 ) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetEncoder()
@@ -55,5 +60,8 @@ class Version(
             connection.state = Connection.State.OUTGOING_CONNECTED
             logger.info("Connected to ${connection.remoteAddress}")
         }
+
+        if (chain != Hash.ZERO && cumulativeDifficulty > LedgerDB.cumulativeDifficulty())
+            TODO()
     }
 }

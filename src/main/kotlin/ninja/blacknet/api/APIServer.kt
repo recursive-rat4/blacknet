@@ -71,7 +71,7 @@ fun Application.main() {
         }
 
         get("/ledger") {
-            val ret = LedgerInfo(LedgerDB.height(), LedgerDB.blockHash().toString(), LedgerDB.supply(), LedgerDB.accounts(), LedgerDB.getMaxBlockSize())
+            val ret = LedgerInfo(LedgerDB.height(), LedgerDB.blockHash().toString(), LedgerDB.cumulativeDifficulty().toString(), LedgerDB.supply(), LedgerDB.accounts(), LedgerDB.maxBlockSize(), LedgerDB.nxtrng().toString())
             call.respond(JSON.indented.stringify(LedgerInfo.serializer(), ret))
         }
 

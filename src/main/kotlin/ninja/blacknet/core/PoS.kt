@@ -9,9 +9,17 @@
 
 package ninja.blacknet.core
 
+import ninja.blacknet.crypto.Blake2b
+import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
+
 object PoS {
     fun reward(supply: Long): Long {
         return 0 // TODO
+    }
+
+    fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
+        return (Blake2b.hasher() + nxtrng.bytes.array + generator.bytes.array).hash()
     }
 
     const val MATURITY = 1350
