@@ -33,6 +33,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "io.ktor:ktor-network:$ktor_version"
     compile "io.ktor:ktor-server-jetty:$ktor_version"
+    compile "io.ktor:ktor-websockets:$ktor_version"
     compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
     compile "net.i2p.crypto:eddsa:0.3.0"
     compile "com.rfksystems:blake2b:1.0.0"

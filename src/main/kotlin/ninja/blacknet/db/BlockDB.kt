@@ -10,6 +10,7 @@
 package ninja.blacknet.db
 
 import mu.KotlinLogging
+import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
 import ninja.blacknet.crypto.Hash
@@ -70,6 +71,7 @@ object BlockDB : DataDB() {
             map[hash] = bytes
             commit()
             logger.info("Accepted block $hash")
+            APIServer.blockNotify(hash)
             return true
         } else {
             LedgerDB.rollback()

@@ -14,10 +14,20 @@ import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.DefaultHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.cio.websocket.CloseReason
+import io.ktor.http.cio.websocket.Frame
+import io.ktor.http.cio.websocket.close
+import io.ktor.http.cio.websocket.readText
 import io.ktor.response.respond
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
+import io.ktor.websocket.WebSockets
+import io.ktor.websocket.webSocket
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import ninja.blacknet.core.*
@@ -27,13 +37,68 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.util.SynchronizedArrayList
+import kotlin.coroutines.CoroutineContext
+
+object APIServer : CoroutineScope {
+    override val coroutineContext: CoroutineContext = Dispatchers.Default
+    val blockNotify = SynchronizedArrayList<SendChannel<Frame>>()
+    val transactionNotify = SynchronizedArrayList<Pair<SendChannel<Frame>, PublicKey>>()
+
+    suspend fun blockNotify(hash: Hash) {
+        blockNotify.forEach {
+            launch {
+                try {
+                    it.send(Frame.Text(hash.toString()))
+                } finally {
+                }
+            }
+        }
+    }
+
+    suspend fun transactionNotify(hash: Hash, pubkey: PublicKey) {
+        transactionNotify.forEach {
+            launch {
+                try {
+                    if (it.second == pubkey)
+                        it.first.send(Frame.Text(hash.toString()))
+                } finally {
+                }
+            }
+        }
+    }
+}
 
 fun Application.main() {
     install(DefaultHeaders)
+    install(WebSockets)
 
     routing {
         get("/") {
             call.respond("It works\n")
+        }
+
+        webSocket("/notify/block") {
+            try {
+                APIServer.blockNotify.add(outgoing)
+                while (true) {
+                    incoming.receive()
+                }
+            } finally {
+                APIServer.blockNotify.remove(outgoing)
+            }
+        }
+
+        webSocket("/notify/transaction") {
+            try {
+                while (true) {
+                    val string = (incoming.receive() as Frame.Text).readText()
+                    val pubkey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
+                    APIServer.transactionNotify.add(Pair(outgoing, pubkey))
+                }
+            } finally {
+                APIServer.transactionNotify.removeIf { it.first == outgoing }
+            }
         }
 
         get("/peerinfo") {

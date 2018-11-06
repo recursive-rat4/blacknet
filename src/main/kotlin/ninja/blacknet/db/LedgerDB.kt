@@ -118,7 +118,7 @@ object LedgerDB : Ledger {
     }
 
     fun nxtrng(): Hash {
-        return nxtrng.first()!!
+        return nxtrng.last()!!
     }
 
     private fun calcMaxBlockSize(): Int {
