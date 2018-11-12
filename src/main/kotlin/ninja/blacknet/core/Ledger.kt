@@ -19,22 +19,23 @@ private val logger = KotlinLogging.logger {}
 
 interface Ledger {
     fun addSupply(amount: Long)
+    fun addUndo(hash: Hash, undo: UndoBlock)
     fun checkFee(size: Int, amount: Long): Boolean
     fun height(): Int
     suspend fun checkSequence(key: PublicKey, seq: Int): Boolean
     suspend fun get(key: PublicKey): AccountState?
     suspend fun set(key: PublicKey, state: AccountState)
 
-    suspend fun processTransaction(hash: Hash, bytes: ByteArray): Boolean {
+    suspend fun processTransaction(hash: Hash, bytes: ByteArray, undo: UndoList): Boolean {
         val tx = Transaction.deserialize(bytes)
         if (tx == null) {
             logger.info("deserialization failed")
             return false
         }
-        return processTransaction(tx, hash, bytes.size)
+        return processTransaction(tx, hash, bytes.size, undo)
     }
 
-    suspend fun processTransaction(tx: Transaction, hash: Hash, size: Int): Boolean {
+    suspend fun processTransaction(tx: Transaction, hash: Hash, size: Int, undo: UndoList): Boolean {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
             return false
@@ -57,6 +58,6 @@ interface Ledger {
             logger.info("deserialization of tx data failed")
             return false
         }
-        return data.process(tx, this)
+        return data.process(tx, this, undo)
     }
 }

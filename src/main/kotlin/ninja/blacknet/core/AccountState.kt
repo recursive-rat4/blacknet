@@ -65,6 +65,10 @@ data class AccountState(
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }
 
+    fun copy() = AccountState(seq, stake, immature.toMutableList(), leases.toMutableList())
+
+    fun isEmpty() = seq == 0 && stake == 0L && immature.isEmpty() && leases.isEmpty()
+
     companion object {
         fun create(stake: Long = 0): AccountState {
             return AccountState(0, stake, ArrayList(), ArrayList())

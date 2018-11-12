@@ -23,6 +23,7 @@ import java.math.BigInteger
 class BigInt(private val int: BigInteger) {
     constructor(bytes: ByteArray) : this(BigInteger(bytes))
     constructor(bytes: SerializableByteArray) : this(bytes.array)
+    constructor(n: Long) : this(BigInteger.valueOf(n))
 
     operator fun compareTo(other: BigInt): Int = int.compareTo(other.int)
     operator fun plus(other: BigInt): BigInt = BigInt(int.add(other.int))

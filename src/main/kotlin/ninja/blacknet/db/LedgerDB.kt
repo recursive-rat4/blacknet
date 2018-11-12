@@ -32,6 +32,7 @@ object LedgerDB : Ledger {
     private val blockHash = db.atomicVar("blockHash", HashSerializer, Hash.ZERO).createOrOpen()
     private val cumulativeDifficulty = db.atomicVar("cumulativeDifficulty", BigIntSerializer, BigInt.ZERO).createOrOpen()
     private val supply = db.atomicLong("supply").createOrOpen()
+    private val undo = db.hashMap("undo", HashSerializer, UndoSerializer).createOrOpen()
     private val blockSizes = db.indexTreeList("blockSizes", Serializer.INTEGER).createOrOpen()
     private val nxtrng = db.indexTreeList("nxtrng", HashSerializer).createOrOpen()
 
@@ -106,6 +107,14 @@ object LedgerDB : Ledger {
         supply.set(supply.get() + amount)
     }
 
+    private fun setSupply(amount: Long) {
+        supply.set(amount)
+    }
+
+    override fun addUndo(hash: Hash, undo: UndoBlock) {
+        this.undo[hash] = undo
+    }
+
     override fun checkFee(size: Int, amount: Long) = amount >= 0
 
     override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {
@@ -144,6 +153,7 @@ object LedgerDB : Ledger {
         nxtrng.add(PoS.nxtrng(nxtrng(), block.generator))
         //TODO cumulative difficulty
 
+        val undo = UndoBlock(supply(), UndoList())
         var fees = 0L
         for (bytes in block.transactions) {
             val tx = Transaction.deserialize(bytes.array)
@@ -151,7 +161,7 @@ object LedgerDB : Ledger {
                 logger.info("deserialization failed")
                 return false
             }
-            if (!processTransaction(tx, hash, bytes.array.size)) {
+            if (!processTransaction(tx, DataType.TxHash(bytes.array), bytes.array.size, undo.accounts)) {
                 logger.info("invalid transaction")
                 return false
             }
@@ -164,11 +174,36 @@ object LedgerDB : Ledger {
             return false
         }
         val reward = PoS.reward(supply())
+        undo.accounts.add(Pair(block.generator, generator.copy()))
+        this.undo[hash] = undo
         addSupply(reward)
         generator.debit(height(), reward + fees)
         set(block.generator, generator)
         maxBlockSize = calcMaxBlockSize()
 
         return true
+    }
+
+    suspend fun undoBlock() {
+        val hash = blockHash()
+        val undo = this.undo[hash]!!
+
+        val height = height.get()
+        this.height.set(height - 1)
+        //TODO blockHash.set()
+        blockSizes.removeAt(height)
+        nxtrng.removeAt(height)
+
+        setSupply(undo.supply)
+        for (i in undo.accounts.reversed()) {
+            val key = i.first
+            val state = i.second
+            if (state.isEmpty())
+                accounts.remove(key)
+            else
+                accounts[key] = state
+        }
+
+        this.undo.remove(hash)
     }
 }

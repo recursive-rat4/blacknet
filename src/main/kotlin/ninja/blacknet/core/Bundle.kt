@@ -29,7 +29,7 @@ class Bundle(
         return TxType.Bundle.ordinal.toByte()
     }
 
-    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
         return false //TODO
     }
 }

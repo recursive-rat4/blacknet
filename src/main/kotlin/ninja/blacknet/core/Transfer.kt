@@ -32,12 +32,13 @@ class Transfer(
         return TxType.Transfer.ordinal.toByte()
     }
 
-    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
         if (message.type == Message.ENCRYPTED)
             TODO()
         if (!account.credit(amount))
             return false
         val toAccount = ledger.get(to) ?: AccountState.create()
+        undo.add(Pair(to, toAccount.copy()))
         toAccount.debit(ledger.height(), amount)
         ledger.set(to, toAccount)
         return true

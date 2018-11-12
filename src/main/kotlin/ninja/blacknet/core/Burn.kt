@@ -30,7 +30,7 @@ class Burn(
         return TxType.Burn.ordinal.toByte()
     }
 
-    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
         if (!account.credit(amount)) {
             return false
         }
