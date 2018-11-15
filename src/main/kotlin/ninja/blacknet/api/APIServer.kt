@@ -171,7 +171,7 @@ fun Application.main() {
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val message = Message.create(call.parameters["message"], call.parameters["encrypted"]?.toByte())
+            val message = Message.create(call.parameters["message"], call.parameters["encrypted"]?.toByte(), privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
 
             val data = Transfer(amount, to, message).serialize()
             val tx = Transaction.create(from, seq, fee, TxType.Transfer.getType(), data)
