@@ -9,13 +9,16 @@
 
 package ninja.blacknet.crypto
 
+import com.rfksystems.blake2b.Blake2b.BLAKE2_B_512
 import com.rfksystems.blake2b.security.Blake2bProvider
 import net.i2p.crypto.eddsa.EdDSAEngine
 import net.i2p.crypto.eddsa.EdDSAPrivateKey
 import net.i2p.crypto.eddsa.EdDSAPublicKey
 import net.i2p.crypto.eddsa.math.Curve
 import net.i2p.crypto.eddsa.math.Field
+import net.i2p.crypto.eddsa.math.FieldElement
 import net.i2p.crypto.eddsa.math.GroupElement
+import net.i2p.crypto.eddsa.math.ed25519.Ed25519FieldElement
 import net.i2p.crypto.eddsa.math.ed25519.Ed25519LittleEndianEncoding
 import net.i2p.crypto.eddsa.math.ed25519.Ed25519ScalarOps
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec
@@ -24,9 +27,13 @@ import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec
 import ninja.blacknet.util.byteArrayOfInts
 import java.security.MessageDigest
 import java.security.Security
+import kotlin.experimental.and
+import kotlin.experimental.or
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 object Ed25519 {
-    private val field: Field
+    val field: Field
     private val curve: Curve
     private val B: GroupElement
     private val spec: EdDSANamedCurveSpec
@@ -44,7 +51,7 @@ object Ed25519 {
                 true)
         spec = EdDSANamedCurveSpec("Ed25519-Blake2b",
                 curve,
-                Blake2b.BLAKE2_B_512,
+                BLAKE2_B_512,
                 Ed25519ScalarOps(),
                 B)
     }
@@ -55,7 +62,7 @@ object Ed25519 {
     }
 
     fun sign(hash: Hash, privateKey: PrivateKey): Signature {
-        val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(Blake2b.BLAKE2_B_512))
+        val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         val edDSAPrivateKeySpec = EdDSAPrivateKeySpec(privateKey.bytes, spec)
         val edDSAPrivateKey = EdDSAPrivateKey(edDSAPrivateKeySpec)
         edDSAEngine.initSign(edDSAPrivateKey)
@@ -65,7 +72,7 @@ object Ed25519 {
     }
 
     fun verify(signature: Signature, hash: Hash, publicKey: PublicKey): Boolean {
-        val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(Blake2b.BLAKE2_B_512))
+        val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         val edDSAPublicKeySpec = EdDSAPublicKeySpec(publicKey.bytes.array, spec)
         val edDSAPublicKey = EdDSAPublicKey(edDSAPublicKeySpec)
         edDSAEngine.initVerify(edDSAPublicKey)
@@ -73,4 +80,127 @@ object Ed25519 {
         edDSAEngine.update(hash.bytes.array)
         return edDSAEngine.verify(signature.bytes.array)
     }
+
+    fun x25519(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {
+        val privKey = toCurve25519(privateKey)
+        val pubKey = toCurve25519(publicKey)
+
+        var x1 = field.fromByteArray(pubKey)
+        var x2 = field.ONE
+        var z2 = field.ZERO
+        var x3 = field.fromByteArray(pubKey)
+        var z3 = field.ONE
+
+        var swap = 0
+        for (pos in 254 downTo 0) {
+            val b = (privKey[pos / 8].toInt() shr (pos and 7)) and 1
+            swap = swap xor b
+            if (swap == 1) {
+                x2 = x3.also { x3 = x2 }
+                z2 = z3.also { z3 = z2 }
+            }
+            swap = b
+            var tmp0 = x3 - z3
+            var tmp1 = x2 - z2
+            x2 = x2 + z2
+            z2 = x3 + z3
+            z3 = tmp0 * x2
+            z2 = z2 * tmp1
+            tmp0 = tmp1.square()
+            tmp1 = x2.square()
+            x3 = z3 + z2
+            z2 = z3 - z2
+            x2 = tmp1 * tmp0
+            tmp1 = tmp1 - tmp0
+            z2 = z2.square()
+            z3 = tmp1.scalarProduct(121666)
+            x3 = x3.square()
+            tmp0 = tmp0 + z3
+            z3 = x1 * z2
+            z2 = tmp1 * tmp0
+        }
+        if (swap == 1) {
+            x2 = x3.also { x3 = x2 }
+            z2 = z3.also { z3 = z2 }
+        }
+
+        z2 = z2.invert()
+        x2 = x2 * z2
+
+        val q = x2.toByteArray()
+        return Blake2b.hash(q).bytes.array
+    }
+
+    private fun toCurve25519(publicKey: PublicKey): ByteArray {
+        val A = GroupElement(curve, publicKey.bytes.array)
+        val one_minus_y = field.ONE - A.y
+        val x = (field.ONE + A.y) * one_minus_y.invert()
+        return x.toByteArray()
+    }
+
+    private fun toCurve25519(privateKey: PrivateKey): ByteArray {
+        val hash = Blake2b.hash(512, privateKey.bytes)
+        val h = hash.copyOf(PrivateKey.SIZE)
+        h[0] = h[0] and 248.toByte()
+        h[31] = h[31] and 127
+        h[31] = h[31] or 64
+        return h
+    }
+}
+
+private fun FieldElement.getArray(): IntArray {
+    val prop = (this as Ed25519FieldElement).javaClass.kotlin.memberProperties.find { it.name == "t" }!!
+    prop.isAccessible = true
+    return prop.get(this) as IntArray
+}
+
+private fun FieldElement.scalarProduct(n: Int): FieldElement {
+    val f = getArray()
+    val h = LongArray(f.size) { f[it] * n.toLong() }
+
+    val carry9 = (h[9] + (1.toLong() shl 24)) shr 25
+    h[0] += carry9 * 19
+    h[9] -= carry9 * (1.toLong() shl 25)
+    val carry1 = (h[1] + (1.toLong() shl 24)) shr 25
+    h[2] += carry1
+    h[1] -= carry1 * (1.toLong() shl 25)
+    val carry3 = (h[3] + (1.toLong() shl 24)) shr 25
+    h[4] += carry3
+    h[3] -= carry3 * (1.toLong() shl 25)
+    val carry5 = (h[5] + (1.toLong() shl 24)) shr 25
+    h[6] += carry5
+    h[5] -= carry5 * (1.toLong() shl 25)
+    val carry7 = (h[7] + (1.toLong() shl 24)) shr 25
+    h[8] += carry7
+    h[7] -= carry7 * (1.toLong() shl 25)
+
+    val carry0 = (h[0] + (1.toLong() shl 25)) shr 26
+    h[1] += carry0
+    h[0] -= carry0 * (1.toLong() shl 26)
+    val carry2 = (h[2] + (1.toLong() shl 25)) shr 26
+    h[3] += carry2
+    h[2] -= carry2 * (1.toLong() shl 26)
+    val carry4 = (h[4] + (1.toLong() shl 25)) shr 26
+    h[5] += carry4
+    h[4] -= carry4 * (1.toLong() shl 26)
+    val carry6 = (h[6] + (1.toLong() shl 25)) shr 26
+    h[7] += carry6
+    h[6] -= carry6 * (1.toLong() shl 26)
+    val carry8 = (h[8] + (1.toLong() shl 25)) shr 26
+    h[9] += carry8
+    h[8] -= carry8 * (1.toLong() shl 26)
+
+    return Ed25519FieldElement(Ed25519.field, IntArray(h.size) { h[it].toInt() })
+}
+
+private operator fun FieldElement.times(element: FieldElement): FieldElement {
+    return this.multiply(element)
+}
+
+private operator fun FieldElement.plus(element: FieldElement): FieldElement {
+    return this.add(element)
+}
+
+private operator fun FieldElement.minus(element: FieldElement): FieldElement {
+    return this.subtract(element)
 }

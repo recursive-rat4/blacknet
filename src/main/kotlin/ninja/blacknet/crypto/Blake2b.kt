@@ -12,8 +12,6 @@ package ninja.blacknet.crypto
 import com.rfksystems.blake2b.Blake2b
 
 object Blake2b {
-    const val BLAKE2_B_512 = Blake2b.BLAKE2_B_512
-
     fun hash(message: ByteArray): Hash {
         val bytes = ByteArray(Hash.SIZE)
         val b = Blake2b(Hash.DIGEST_SIZE)
@@ -28,6 +26,14 @@ object Blake2b {
         b.update(message, offset, len)
         b.digest(bytes, 0)
         return Hash(bytes)
+    }
+
+    fun hash(digestSize: Int, message: ByteArray): ByteArray {
+        val bytes = ByteArray(digestSize / 8)
+        val b = Blake2b(digestSize)
+        b.update(message, 0, message.size)
+        b.digest(bytes, 0)
+        return bytes
     }
 
     fun hasher(): Hasher {

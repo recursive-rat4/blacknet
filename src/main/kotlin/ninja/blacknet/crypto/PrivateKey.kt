@@ -9,12 +9,24 @@
 
 package ninja.blacknet.crypto
 
+import ninja.blacknet.util.fromHex
+import ninja.blacknet.util.toHex
+
 class PrivateKey(val bytes: ByteArray) {
+    override fun toString(): String = bytes.toHex()
+
     fun toPublicKey(): PublicKey {
         return Ed25519.publicKey(this)
     }
 
     companion object {
         const val SIZE = 32
+
+        fun fromString(hex: String?): PrivateKey? {
+            if (hex == null || hex.length != SIZE * 2)
+                return null
+            val bytes = fromHex(hex) ?: return null
+            return PrivateKey(bytes)
+        }
     }
 }
