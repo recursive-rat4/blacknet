@@ -31,6 +31,7 @@ object Main {
             }
         }
         Node.listenOnTor()
+        Node.listenOnI2P()
 
         /* Launch Blacknet API web-server on port 8283
          * using Ktor.

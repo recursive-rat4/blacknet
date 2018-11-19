@@ -17,7 +17,7 @@ object Bech32 {
     class Data(val hrp: ByteArray, val data: ByteArray)
 
     fun encode(bech32: Data): String {
-        val converted = Base32.convertBits(bech32.data, 8, 5, true)!!
+        val converted = convertBits(bech32.data, 8, 5, true)!!
 
         val chk = createChecksum(bech32.hrp, converted)
 
@@ -84,7 +84,7 @@ object Bech32 {
         }
 
         val ret = data.copyOf(data.size - 6)
-        val converted = Base32.convertBits(ret, 5, 8, false) ?: return null
+        val converted = convertBits(ret, 5, 8, false) ?: return null
 
         return Data(hrp, converted)
     }
@@ -142,6 +142,38 @@ object Bech32 {
         }
 
         return ret
+    }
+
+    private fun convertBits(data: ByteArray, fromBits: Int, toBits: Int, pad: Boolean): ByteArray? {
+        var acc = 0
+        var bits = 0
+        val maxv = (1 shl toBits) - 1
+        val ret = ArrayList<Byte>(32)
+
+        for (value in data) {
+            val b = value.toInt() and 0xff
+
+            if (b < 0) {
+                return null
+            } else if (b shr fromBits > 0) {
+                return null
+            }
+
+            acc = acc shl fromBits or b
+            bits += fromBits
+            while (bits >= toBits) {
+                bits -= toBits
+                ret.add((acc shr bits and maxv).toByte())
+            }
+        }
+
+        if (pad && bits > 0) {
+            ret.add((acc shl toBits - bits and maxv).toByte())
+        } else if (bits >= fromBits || (acc shl toBits - bits and maxv).toByte().toInt() != 0) {
+            return null
+        }
+
+        return ret.toByteArray()
     }
 
     private infix fun Byte.shr(other: Byte): Byte = (this.toInt() shr other.toInt()).toByte()

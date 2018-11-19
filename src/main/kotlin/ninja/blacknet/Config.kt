@@ -26,6 +26,8 @@ object Config {
     val torhost by stringType
     val torport by intType
     val torcontrol by intType
+    val i2psamhost by stringType
+    val i2psamport by intType
 
     operator fun <T> get(key: Key<T>): T = config[key]
     fun <T> contains(key: Key<T>): Boolean = config.contains(key)

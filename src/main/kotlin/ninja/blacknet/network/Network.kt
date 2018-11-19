@@ -19,6 +19,7 @@ import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands.HS_ADDRESS
 import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
+import net.i2p.data.Base32
 import ninja.blacknet.Config
 import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.p2pport
@@ -27,7 +28,6 @@ import ninja.blacknet.Config.proxyport
 import ninja.blacknet.Config.torcontrol
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
-import ninja.blacknet.crypto.Base32
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -122,7 +122,11 @@ enum class Network(val addrSize: Int) {
                     val chan = Socks5(torProxy).connect(address)
                     return Connection(chan.first, chan.second, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
-                else -> throw NotImplementedError("not implemented for " + address.network)
+                I2P -> {
+                    if (!I2PSAM.haveSession()) throw RuntimeException("i2p sam is not available")
+                    val chan = I2PSAM.connect(address)
+                    return Connection(chan.first, chan.second, address, I2PSAM.localAddress!!, Connection.State.OUTGOING_WAITING)
+                }
             }
         }
 
@@ -150,6 +154,19 @@ enum class Network(val addrSize: Int) {
                 logger.info("Can't connect to tor controller")
             } catch (e: TorControlError) {
                 logger.info("Tor " + e.message)
+            } catch (e: Throwable) {
+            }
+            return null
+        }
+
+        suspend fun listenOnI2P(): Address? {
+            try {
+                I2PSAM.createSession()
+                return I2PSAM.localAddress
+            } catch (e: ConnectException) {
+                logger.info("Can't connect to i2p sam")
+            } catch (e: I2PSAM.I2PException) {
+                logger.info("I2P " + e.message)
             } catch (e: Throwable) {
             }
             return null

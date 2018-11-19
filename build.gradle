@@ -45,6 +45,7 @@ dependencies {
     compile 'com.google.guava:guava:27.0-jre'
     compile 'org.bitlet:weupnp:0.1.4'
     compile 'org.bouncycastle:bcprov-jdk15on:1.60'
+    compile 'net.i2p:i2p:0.9.37'
 }
 
 distributions {

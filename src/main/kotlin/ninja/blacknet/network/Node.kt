@@ -16,6 +16,8 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.io.cancel
+import kotlinx.coroutines.io.close
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
@@ -132,7 +134,18 @@ object Node : CoroutineScope {
             val address = Network.listenOnTor()
             if (address != null) {
                 logger.info("Listening on $address")
-                Node.listenAddress.add(address)
+                listenAddress.add(address)
+            }
+        }
+    }
+
+    fun listenOnI2P() {
+        launch {
+            val address = Network.listenOnI2P()
+            if (address != null) {
+                logger.info("Listening on $address")
+                listenAddress.add(address)
+                i2plistener()
             }
         }
     }
@@ -188,6 +201,19 @@ object Node : CoroutineScope {
             if (!localAddress.isLocal())
                 listenAddress.add(localAddress)
             val connection = Connection(socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+            connections.add(connection)
+        }
+    }
+
+    private suspend fun i2plistener() {
+        while (true) {
+            val c = I2PSAM.accept() ?: continue
+            if (incoming() >= Config[incomingconnections]) {
+                c.readChannel.cancel()
+                c.writeChannel.close()
+                continue
+            }
+            val connection = Connection(c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
             connections.add(connection)
         }
     }

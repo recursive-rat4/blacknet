@@ -33,8 +33,6 @@ class Transfer(
     }
 
     override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
-        if (message.type == Message.ENCRYPTED)
-            TODO()
         if (!account.credit(amount))
             return false
         val toAccount = ledger.get(to) ?: AccountState.create()
