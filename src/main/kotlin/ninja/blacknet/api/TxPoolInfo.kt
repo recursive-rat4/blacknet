@@ -10,10 +10,18 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.core.TxPool
 
 @Serializable
 class TxPoolInfo(
         val size: Int,
         val dataSize: Int,
         val tx: List<String>
-)
+) {
+    companion object {
+        suspend fun get(): TxPoolInfo {
+            val tx = TxPool.mapHashes { it.toString() }
+            return TxPoolInfo(TxPool.size(), TxPool.dataSize(), tx)
+        }
+    }
+}

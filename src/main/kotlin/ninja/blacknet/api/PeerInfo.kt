@@ -11,6 +11,7 @@ package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.network.Connection
+import ninja.blacknet.network.Node
 
 @Serializable
 class PeerInfo(
@@ -35,4 +36,8 @@ class PeerInfo(
             connection.state.name,
             connection.dosScore
     )
+
+    companion object {
+        suspend fun getAll() = Node.connections.map { PeerInfo(it) }
+    }
 }

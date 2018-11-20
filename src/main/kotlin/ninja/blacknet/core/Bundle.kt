@@ -17,6 +17,7 @@ import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class Bundle(
+        val magic: Int,
         val data: SerializableByteArray
 ) : TxData {
     override fun serialize(): ByteArray {
@@ -30,6 +31,6 @@ class Bundle(
     }
 
     override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
-        return false //TODO
+        return true
     }
 }

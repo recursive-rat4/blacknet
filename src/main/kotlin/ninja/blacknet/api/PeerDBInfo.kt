@@ -10,9 +10,17 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.db.PeerDB
 
 @Serializable
 class PeerDBInfo(
         val size: Int,
         val peers: List<String>
-)
+) {
+    companion object {
+        fun get(): PeerDBInfo {
+            val peers = PeerDB.getAll().map { it.toString() }
+            return PeerDBInfo(peers.size, peers)
+        }
+    }
+}

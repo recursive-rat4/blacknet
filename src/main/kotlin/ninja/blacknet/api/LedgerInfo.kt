@@ -10,14 +10,28 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.db.LedgerDB
 
 @Serializable
 class LedgerInfo(
         val height: Int,
         val blockHash: String,
+        val blockTime: Long,
         val cumulativeDifficulty: String,
         val supply: Long,
         val accounts: Int,
         val maxBlockSize: Int,
         val nxtrng: String
-)
+) {
+    companion object {
+        fun get() = LedgerInfo(
+                LedgerDB.height(),
+                LedgerDB.blockHash().toString(),
+                LedgerDB.blockTime(),
+                LedgerDB.cumulativeDifficulty().toString(),
+                LedgerDB.supply(),
+                LedgerDB.accounts(),
+                LedgerDB.maxBlockSize(),
+                LedgerDB.nxtrng().toString())
+    }
+}

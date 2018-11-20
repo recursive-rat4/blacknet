@@ -10,8 +10,13 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.db.BlockDB
 
 @Serializable
 class BlockDBInfo(
         val size: Int
-)
+) {
+    companion object {
+        fun get() = BlockDBInfo(BlockDB.size())
+    }
+}

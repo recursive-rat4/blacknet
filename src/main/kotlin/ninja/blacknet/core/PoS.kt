@@ -9,19 +9,33 @@
 
 package ninja.blacknet.core
 
+import mu.KotlinLogging
 import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 
+private val logger = KotlinLogging.logger {}
+
 object PoS {
     fun reward(supply: Long): Long {
-        return 0 // TODO
+        val blocks = 365 * 24 * 60 * 60 / BLOCK_TIME
+        return supply / 100 / blocks
     }
 
     fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
         return (Blake2b.hasher() + nxtrng.bytes.array + generator.bytes.array).hash()
     }
 
+    fun check(block: Block): Boolean {
+        if (block.time and TIMESTAMP_MASK != 0L) {
+            logger.info("invalid timestamp mask")
+            return false
+        }
+        return false//TODO
+    }
+
+    const val BLOCK_TIME = 64
+    const val TIMESTAMP_MASK = 15L
     const val MATURITY = 1350
     const val BLOCK_SIZE_SPAN = 1351
     const val COIN = 100000000L

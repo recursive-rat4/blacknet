@@ -30,6 +30,7 @@ object LedgerDB : Ledger {
     private val accounts = db.hashMap("accounts", PublicKeySerializer, AccountStateSerializer).createOrOpen()
     private val height = db.atomicInteger("height").createOrOpen()
     private val blockHash = db.atomicVar("blockHash", HashSerializer, Hash.ZERO).createOrOpen()
+    private val blockTime = db.atomicLong("blockTime").createOrOpen()
     private val cumulativeDifficulty = db.atomicVar("cumulativeDifficulty", BigIntSerializer, BigInt.ZERO).createOrOpen()
     private val supply = db.atomicLong("supply").createOrOpen()
     private val undo = db.hashMap("undo", HashSerializer, UndoSerializer).createOrOpen()
@@ -81,6 +82,10 @@ object LedgerDB : Ledger {
 
     fun blockHash(): Hash {
         return blockHash.get()
+    }
+
+    fun blockTime(): Long {
+        return blockTime.get()
     }
 
     fun cumulativeDifficulty(): BigInt {
@@ -146,14 +151,20 @@ object LedgerDB : Ledger {
             logger.error("not on current chain")
             return false
         }
+        if (block.time <= blockTime()) {
+            logger.info("timestamp is too early")
+            return false
+        }
+
+        val undo = UndoBlock(blockTime(), supply(), UndoList())
 
         height.set(height.get() + 1)
         blockHash.set(hash)
+        blockTime.set(block.time)
         blockSizes.add(size)
         nxtrng.add(PoS.nxtrng(nxtrng(), block.generator))
         //TODO cumulative difficulty
 
-        val undo = UndoBlock(supply(), UndoList())
         var fees = 0L
         for (bytes in block.transactions) {
             val tx = Transaction.deserialize(bytes.array)
@@ -191,6 +202,7 @@ object LedgerDB : Ledger {
         val height = height.get()
         this.height.set(height - 1)
         //TODO blockHash.set()
+        blockTime.set(undo.blockTime)
         blockSizes.removeAt(height)
         nxtrng.removeAt(height)
 

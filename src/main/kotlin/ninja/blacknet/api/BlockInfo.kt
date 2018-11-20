@@ -10,8 +10,13 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import mu.KotlinLogging
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataType
+import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.BlockDB
+
+private val logger = KotlinLogging.logger {}
 
 @Serializable
 class BlockInfo(
@@ -32,4 +37,16 @@ class BlockInfo(
             block.transactions.map { DataType.Transaction.hash(it.array).toString() },
             block.signature.toString()
     )
+
+    companion object {
+        suspend fun get(hash: Hash): BlockInfo? {
+            val bytes = BlockDB.get(hash) ?: return null
+            val block = Block.deserialize(bytes)
+            if (block == null) {
+                logger.error("block deserialization failed")
+                return null
+            }
+            return BlockInfo(block, bytes.size)
+        }
+    }
 }

@@ -10,10 +10,20 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.Address
+import ninja.blacknet.crypto.Mnemonic
 
 @Serializable
 class MnemonicInfo(
         val mnemonic: String,
         val address: String,
         val publicKey: String
-)
+) {
+    companion object {
+        fun new(): MnemonicInfo {
+            val pair = Mnemonic.generate()
+            val publicKey = pair.second.toPublicKey()
+            return MnemonicInfo(pair.first, Address.encode(publicKey), publicKey.toString())
+        }
+    }
+}

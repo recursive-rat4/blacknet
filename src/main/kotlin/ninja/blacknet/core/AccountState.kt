@@ -43,7 +43,20 @@ data class AccountState(
             logger.info("insufficient funds")
             return false
         }
-        return false //TODO
+
+        var r = amount - stake
+        stake = 0
+        while (r > 0) {
+            if (r < immature[0].amount) {
+                immature[0].amount -= r
+                break
+            } else {
+                r -= immature[0].amount
+                immature.removeAt(0)
+            }
+        }
+
+        return true
     }
 
     fun debit(height: Int, amount: Long) {
@@ -60,7 +73,7 @@ data class AccountState(
         immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
     }
 
-    class Input(val height: Int, val amount: Long) {
+    data class Input(val height: Int, var amount: Long) {
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }

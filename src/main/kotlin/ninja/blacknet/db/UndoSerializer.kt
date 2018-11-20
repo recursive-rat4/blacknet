@@ -29,6 +29,7 @@ object UndoSerializer : Serializer<UndoBlock> {
     }
 
     override fun deserialize(input: DataInput2, available: Int): UndoBlock {
+        val blockTime = input.unpackLong()
         val supply = input.unpackLong()
         val size = input.unpackInt()
         val accounts = UndoList(size)
@@ -38,10 +39,11 @@ object UndoSerializer : Serializer<UndoBlock> {
                 val state = AccountStateSerializer.deserialize(input, 0)
                 accounts.add(Pair(key, state))
             }
-        return UndoBlock(supply, accounts)
+        return UndoBlock(blockTime, supply, accounts)
     }
 
     override fun serialize(out: DataOutput2, value: UndoBlock) {
+        out.packLong(value.blockTime)
         out.packLong(value.supply)
         out.packInt(value.accounts.size)
         for (i in value.accounts) {

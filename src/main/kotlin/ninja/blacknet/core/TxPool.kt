@@ -26,8 +26,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     override fun checkFee(size: Int, amount: Long): Boolean {
-        //TODO
-        return amount >= Node.minTxFee
+        return amount >= Node.minTxFee * (1 + size / 1000)
     }
 
     override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {

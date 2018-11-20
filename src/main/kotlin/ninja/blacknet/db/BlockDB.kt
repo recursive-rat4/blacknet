@@ -13,6 +13,7 @@ import mu.KotlinLogging
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
+import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Node
 import org.mapdb.DBMaker
@@ -65,7 +66,10 @@ object BlockDB : DataDB() {
             logger.info("invalid signature")
             return false
         }
-        //TODO pos
+        if (!PoS.check(block)) {
+            logger.info("invalid proof of stake")
+            return false
+        }
         if (LedgerDB.processBlock(hash, block, bytes.size)) {
             LedgerDB.commit()
             map[hash] = bytes

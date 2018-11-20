@@ -32,9 +32,6 @@ import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.BlockDB
-import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.util.SynchronizedArrayList
@@ -102,66 +99,49 @@ fun Application.main() {
         }
 
         get("/peerinfo") {
-            val ret = Node.connections.map { PeerInfo(it) }
-            call.respond(JSON.indented.stringify(PeerInfo.serializer().list, ret))
+            call.respond(JSON.indented.stringify(PeerInfo.serializer().list, PeerInfo.getAll()))
         }
 
         get("/nodeinfo") {
-            val listening = Node.listenAddress.map { it.toString() }
-            val ret = NodeInfo(Node.agent, Node.version, Node.outgoing(), Node.incoming(), listening)
-            call.respond(JSON.indented.stringify(NodeInfo.serializer(), ret))
+            call.respond(JSON.indented.stringify(NodeInfo.serializer(), NodeInfo.get()))
         }
 
         get("/peerdb") {
-            val peers = PeerDB.getAll().map { it.toString() }
-            val ret = PeerDBInfo(peers.size, peers)
-            call.respond(JSON.indented.stringify(PeerDBInfo.serializer(), ret))
+            call.respond(JSON.indented.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
         }
 
         get("/blockdb") {
-            val ret = BlockDBInfo(BlockDB.size())
-            call.respond(JSON.indented.stringify(BlockDBInfo.serializer(), ret))
+            call.respond(JSON.indented.stringify(BlockDBInfo.serializer(), BlockDBInfo.get()))
         }
 
         get("/blockdb/get/{hash}") {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
-            val bytes = BlockDB.get(hash)
-            if (bytes != null) {
-                val block = Block.deserialize(bytes)
-                val ret = BlockInfo(block!!, bytes.size)
+            val ret = BlockInfo.get(hash)
+            if (ret != null)
                 call.respond(JSON.indented.stringify(BlockInfo.serializer(), ret))
-            } else {
+            else
                 call.respond(HttpStatusCode.NotFound, "block not found")
-            }
         }
 
         get("/ledger") {
-            val ret = LedgerInfo(LedgerDB.height(), LedgerDB.blockHash().toString(), LedgerDB.cumulativeDifficulty().toString(), LedgerDB.supply(), LedgerDB.accounts(), LedgerDB.maxBlockSize(), LedgerDB.nxtrng().toString())
-            call.respond(JSON.indented.stringify(LedgerInfo.serializer(), ret))
+            call.respond(JSON.indented.stringify(LedgerInfo.serializer(), LedgerInfo.get()))
         }
 
         get("/ledger/get/{account}") {
             val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
-            val state = LedgerDB.get(pubkey)
-            if (state != null) {
-                val ret = AccountInfo(state.seq, state.balance(), state.stakingBalance(LedgerDB.height()))
+            val ret = AccountInfo.get(pubkey)
+            if (ret != null)
                 call.respond(JSON.indented.stringify(AccountInfo.serializer(), ret))
-            } else {
+            else
                 call.respond(HttpStatusCode.NotFound, "account not found")
-            }
         }
 
         get("/txpool") {
-            val tx = TxPool.mapHashes { it.toString() }
-            val ret = TxPoolInfo(TxPool.size(), TxPool.dataSize(), tx)
-            call.respond(JSON.indented.stringify(TxPoolInfo.serializer(), ret))
+            call.respond(JSON.indented.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
         }
 
         get("/account/generate") {
-            val pair = Mnemonic.generate()
-            val publicKey = pair.second.toPublicKey()
-            val ret = MnemonicInfo(pair.first, Address.encode(publicKey), publicKey.toString())
-            call.respond(JSON.indented.stringify(MnemonicInfo.serializer(), ret))
+            call.respond(JSON.indented.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
         }
 
         post("/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {

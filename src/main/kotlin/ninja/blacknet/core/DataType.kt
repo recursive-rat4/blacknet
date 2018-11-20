@@ -20,7 +20,6 @@ enum class DataType(
 ) {
     Block(BlockDB, BlockHash),
     Transaction(TxPool, TxHash),
-    Bundle(BundlePool, BundleHash),
     ;
 
     object BlockHash : (ByteArray) -> Hash {
@@ -32,12 +31,6 @@ enum class DataType(
     object TxHash : (ByteArray) -> Hash {
         override fun invoke(bytes: ByteArray): Hash {
             return Blake2b.hash(bytes, Signature.SIZE, bytes.size - Signature.SIZE)
-        }
-    }
-
-    object BundleHash : (ByteArray) -> Hash {
-        override fun invoke(bytes: ByteArray): Hash {
-            return Blake2b.hash(bytes)
         }
     }
 

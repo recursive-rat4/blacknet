@@ -11,6 +11,10 @@ package ninja.blacknet.core
 
 import ninja.blacknet.crypto.PublicKey
 
-data class UndoBlock(val supply: Long, val accounts: UndoList)
+data class UndoBlock(
+        val blockTime: Long,
+        val supply: Long,
+        val accounts: UndoList
+)
 
 typealias UndoList = ArrayList<Pair<PublicKey, AccountState>>
