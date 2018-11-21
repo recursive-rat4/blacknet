@@ -35,7 +35,9 @@ object LedgerDB : Ledger {
     private val supply = db.atomicLong("supply").createOrOpen()
     private val undo = db.hashMap("undo", HashSerializer, UndoSerializer).createOrOpen()
     private val blockSizes = db.indexTreeList("blockSizes", Serializer.INTEGER).createOrOpen()
-    private val nxtrng = db.indexTreeList("nxtrng", HashSerializer).createOrOpen()
+    private val nxtrng = db.atomicVar("nxtrng", HashSerializer, Hash.ZERO).createOrOpen()
+    private val chain = db.indexTreeList("chain", HashSerializer).createOrOpen()
+    private val chainIndex = db.hashMap("chainIndex", HashSerializer, Serializer.INTEGER).createOrOpen()
 
     private var maxBlockSize: Int
 
@@ -62,7 +64,8 @@ object LedgerDB : Ledger {
 
             addSupply(supply)
             blockSizes.add(0)
-            nxtrng.add(Hash.ZERO)
+            chain.add(Hash.ZERO)
+            chainIndex[Hash.ZERO] = 0
             commit()
             logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
         }
@@ -90,6 +93,13 @@ object LedgerDB : Ledger {
 
     fun cumulativeDifficulty(): BigInt {
         return cumulativeDifficulty.get()
+    }
+
+    fun getRollingCheckpoint(): Hash {
+        val height = height()
+        if (height < PoS.MATURITY)
+            return Hash.ZERO
+        return chain[height - PoS.MATURITY]!!
     }
 
     fun supply(): Long {
@@ -132,7 +142,15 @@ object LedgerDB : Ledger {
     }
 
     fun nxtrng(): Hash {
-        return nxtrng.last()!!
+        return nxtrng.get()
+    }
+
+    fun getBlockHash(index: Int): Hash? {
+        return chain[index]
+    }
+
+    fun getBlockNumber(hash: Hash): Int? {
+        return chainIndex[hash]
     }
 
     private fun calcMaxBlockSize(): Int {
@@ -156,13 +174,16 @@ object LedgerDB : Ledger {
             return false
         }
 
-        val undo = UndoBlock(blockTime(), supply(), UndoList())
+        val undo = UndoBlock(blockTime(), supply(), nxtrng(), UndoList())
 
-        height.set(height.get() + 1)
+        val height = height.get() + 1
+        this.height.set(height)
         blockHash.set(hash)
         blockTime.set(block.time)
         blockSizes.add(size)
-        nxtrng.add(PoS.nxtrng(nxtrng(), block.generator))
+        nxtrng.set(PoS.nxtrng(nxtrng(), block.generator))
+        chain.add(hash)
+        chainIndex[hash] = height
         //TODO cumulative difficulty
 
         var fees = 0L
@@ -201,10 +222,12 @@ object LedgerDB : Ledger {
 
         val height = height.get()
         this.height.set(height - 1)
-        //TODO blockHash.set()
+        blockHash.set(chain[height - 1])
         blockTime.set(undo.blockTime)
         blockSizes.removeAt(height)
-        nxtrng.removeAt(height)
+        nxtrng.set(undo.nxtrng)
+        chain.removeAt(height)
+        chainIndex.remove(hash)
 
         setSupply(undo.supply)
         for (i in undo.accounts.reversed()) {

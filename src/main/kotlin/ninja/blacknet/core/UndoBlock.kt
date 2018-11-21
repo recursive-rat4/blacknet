@@ -9,11 +9,13 @@
 
 package ninja.blacknet.core
 
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 
 data class UndoBlock(
         val blockTime: Long,
         val supply: Long,
+        val nxtrng: Hash,
         val accounts: UndoList
 )
 

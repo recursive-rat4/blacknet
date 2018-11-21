@@ -61,7 +61,7 @@ object DataFetcher {
             }
 
             if (request.size == 0)
-                return
+                continue
 
             connection.sendPacket(GetData(request))
         }
