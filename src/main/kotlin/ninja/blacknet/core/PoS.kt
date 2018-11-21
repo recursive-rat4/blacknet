@@ -10,34 +10,82 @@
 package ninja.blacknet.core
 
 import mu.KotlinLogging
-import ninja.blacknet.crypto.Blake2b
-import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.*
+import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.network.Node
+import ninja.blacknet.util.byteArrayOfInts
+import ninja.blacknet.util.delay
 
 private val logger = KotlinLogging.logger {}
 
 object PoS {
     fun reward(supply: Long): Long {
-        val blocks = 365 * 24 * 60 * 60 / BLOCK_TIME
+        val blocks = 365 * 24 * 60 * 60 / TARGET_BLOCK_TIME
         return supply / 100 / blocks
     }
 
     fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
-        return (Blake2b.hasher() + nxtrng.bytes.array + generator.bytes.array).hash()
+        return (Blake2b.Hasher() + nxtrng.bytes.array + generator.bytes.array).hash()
     }
 
-    fun check(block: Block): Boolean {
-        if (block.time and TIMESTAMP_MASK != 0L) {
+    fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInt, prevTime: Long, stake: Long): Boolean {
+        if (stake <= 0) {
+            logger.info("invalid stake amount $stake")
+            return false
+        }
+        if (time and TIMESTAMP_MASK != 0L) {
             logger.info("invalid timestamp mask")
             return false
         }
-        return false//TODO
+        val hash = (Blake2b.Hasher() + nxtrng.bytes.array + prevTime + generator.bytes.array + time).hash()
+        val x = hash.toBigInt() / stake
+        //println("$hash ${x.toHex()} $difficulty $stake ${x - difficulty}")
+        return x < difficulty
     }
 
-    const val BLOCK_TIME = 64
+    fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
+        val dTime = Math.min(blockTime - prevBlockTime, TARGET_BLOCK_TIME * SPACING)
+        return difficulty * (A2 + 2 * dTime) / A1
+    }
+
+    fun cumulativeDifficulty(cumulativeDifficulty: BigInt, difficulty: BigInt): BigInt {
+        return cumulativeDifficulty + ONE_SHL_256 / difficulty
+    }
+
+    suspend fun staker(privateKey: PrivateKey, publicKey: PublicKey) {
+        while (true) {
+            delay(1)
+
+            val time = Node.time() and (TIMESTAMP_MASK xor -1L)
+            if (time <= LedgerDB.blockTime())
+                continue
+
+            val stake = LedgerDB.get(publicKey)!!.stakingBalance(LedgerDB.height())
+            if (stake <= 0) {
+                delay(16)
+                continue
+            }
+
+            if (check(time, publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), stake)) {
+                val block = Block.create(LedgerDB.blockHash(), time, publicKey)
+                TxPool.fill(block)
+                val signed = block.sign(privateKey)
+                Node.broadcastBlock(signed.first, signed.second)
+            }
+        }
+    }
+
+    const val TARGET_BLOCK_TIME = 64L
+    const val TARGET_TIMESPAN = 960L
+    const val INTERVAL = TARGET_TIMESPAN / TARGET_BLOCK_TIME
+    const val SPACING = 10
     const val TIMESTAMP_MASK = 15L
     const val MATURITY = 1350
     const val BLOCK_SIZE_SPAN = 1351
     const val COIN = 100000000L
     const val MIN_LEASE = 1000 * COIN
+    val A1 = BigInt((INTERVAL + 1) * TARGET_BLOCK_TIME)
+    val A2 = BigInt((INTERVAL - 1) * TARGET_BLOCK_TIME)
+    val INITIAL_DIFFICULTY = BigInt(byteArrayOfInts(0x00, 0xAF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
+    val ONE_SHL_256 = BigInt.ONE shl 256
 }

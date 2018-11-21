@@ -29,6 +29,8 @@ object UndoSerializer : Serializer<UndoBlock> {
 
     override fun deserialize(input: DataInput2, available: Int): UndoBlock {
         val blockTime = input.unpackLong()
+        val difficulty = BigIntSerializer.deserialize(input, 0)
+        val cumulativeDifficulty = BigIntSerializer.deserialize(input, 0)
         val supply = input.unpackLong()
         val nxtrng = HashSerializer.deserialize(input, 0)
         val accountsSize = input.unpackInt()
@@ -59,11 +61,13 @@ object UndoSerializer : Serializer<UndoBlock> {
                     multisig = MultisigSerializer.deserialize(input, 0)
                 multisigs.add(Pair(id, multisig))
             }
-        return UndoBlock(blockTime, supply, nxtrng, accounts, htlcs, multisigs)
+        return UndoBlock(blockTime, difficulty, cumulativeDifficulty, supply, nxtrng, accounts, htlcs, multisigs)
     }
 
     override fun serialize(out: DataOutput2, value: UndoBlock) {
         out.packLong(value.blockTime)
+        BigIntSerializer.serialize(out, value.difficulty)
+        BigIntSerializer.serialize(out, value.cumulativeDifficulty)
         out.packLong(value.supply)
         HashSerializer.serialize(out, value.nxtrng)
         out.packInt(value.accounts.size)

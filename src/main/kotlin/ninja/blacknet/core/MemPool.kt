@@ -15,6 +15,14 @@ import ninja.blacknet.util.SynchronizedHashMap
 abstract class MemPool : DataDB() {
     private val map = SynchronizedHashMap<Hash, ByteArray>()
 
+    suspend fun clear() {
+        return map.clear()
+    }
+
+    suspend fun copy(): HashMap<Hash, ByteArray> {
+        return map.copy()
+    }
+
     suspend fun size(): Int {
         return map.size()
     }

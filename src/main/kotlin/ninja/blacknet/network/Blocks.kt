@@ -12,12 +12,15 @@ package ninja.blacknet.network
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
-import ninja.blacknet.core.DataType
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class Data(private val list: DataList) : Packet {
+class Blocks(
+        private val hashes: ArrayList<Hash>,
+        private val blocks: ArrayList<SerializableByteArray>
+) : Packet {
     override fun serialize(): ByteReadPacket {
         val out = BlacknetEncoder()
         out.encode(serializer(), this)
@@ -25,27 +28,10 @@ class Data(private val list: DataList) : Packet {
     }
 
     override fun getType(): Int {
-        return PacketType.Data.ordinal
+        return PacketType.Blocks.ordinal
     }
 
     override suspend fun process(connection: Connection) {
-        if (list.size > DataType.MAX_DATA) {
-            connection.dos("invalid Data size")
-            return
-        }
-
-        for (i in list) {
-            val type = i.first
-            val bytes = i.second
-
-            val hash = type.hash(bytes.array)
-
-            DataFetcher.fetched(hash)
-
-            if (!type.db.process(hash, bytes.array, connection))
-                connection.dos("invalid " + type.name + " " + hash)
-        }
+        ChainFetcher.fetched(connection, hashes, blocks)
     }
 }
-
-typealias DataList = ArrayList<Pair<DataType, SerializableByteArray>>

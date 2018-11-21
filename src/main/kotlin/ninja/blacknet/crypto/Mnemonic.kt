@@ -9,7 +9,6 @@
 
 package ninja.blacknet.crypto
 
-import kotlinx.serialization.toUtf8Bytes
 import java.security.SecureRandom
 
 object Mnemonic {
@@ -49,6 +48,6 @@ object Mnemonic {
     }
 
     private fun hash(string: String): Hash {
-        return Blake2b.hash(string.toUtf8Bytes())
+        return Blake2b.utf8(string)
     }
 }

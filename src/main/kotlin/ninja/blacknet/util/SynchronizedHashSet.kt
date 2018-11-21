@@ -19,6 +19,10 @@ class SynchronizedHashSet<T>(private val set: HashSet<T>) {
 
     suspend fun add(element: T) = mutex.withLock { set.add(element) }
 
+    suspend fun contains(element: T) = mutex.withLock { set.contains(element) }
+
+    suspend fun clear() = mutex.withLock { set.clear() }
+
     suspend fun filter(predicate: (T) -> Boolean) = mutex.withLock { set.filter(predicate) }
 
     suspend fun toList() = mutex.withLock { set.toList() }
@@ -26,6 +30,6 @@ class SynchronizedHashSet<T>(private val set: HashSet<T>) {
     suspend fun <R> map(transform: (T) -> R): ArrayList<R> = mutex.withLock {
         val ret = ArrayList<R>(set.size)
         set.forEach { ret.add(transform(it)) }
-        ret
+        return@withLock ret
     }
 }

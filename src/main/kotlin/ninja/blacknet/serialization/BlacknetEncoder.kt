@@ -11,7 +11,10 @@ package ninja.blacknet.serialization
 
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
+import kotlinx.serialization.CompositeEncoder
 import kotlinx.serialization.ElementValueEncoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.internal.EnumDescriptor
 
 class BlacknetEncoder : ElementValueEncoder() {
@@ -32,6 +35,12 @@ class BlacknetEncoder : ElementValueEncoder() {
     }
 
     override fun encodeEnum(enumDescription: EnumDescriptor, ordinal: Int) = out.packInt(ordinal)
+
+    override fun beginCollection(desc: SerialDescriptor, collectionSize: Int, vararg typeParams: KSerializer<*>): CompositeEncoder {
+        return super.beginCollection(desc, collectionSize, *typeParams).also {
+            out.packInt(collectionSize)
+        }
+    }
 
     fun encodeSerializableByteArrayValue(value: SerializableByteArray) {
         out.packInt(value.size())

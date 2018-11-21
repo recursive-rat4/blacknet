@@ -20,6 +20,8 @@ enum class PacketType {
     Inventory,
     GetData,
     Data,
+    GetBlocks,
+    Blocks,
     ;
 
     companion object {
@@ -33,6 +35,8 @@ enum class PacketType {
                 Inventory.ordinal -> ninja.blacknet.network.Inventory.serializer()
                 GetData.ordinal -> ninja.blacknet.network.GetData.serializer()
                 Data.ordinal -> ninja.blacknet.network.Data.serializer()
+                GetBlocks.ordinal -> ninja.blacknet.network.GetBlocks.serializer()
+                Blocks.ordinal -> ninja.blacknet.network.Blocks.serializer()
                 else -> null
             }
         }

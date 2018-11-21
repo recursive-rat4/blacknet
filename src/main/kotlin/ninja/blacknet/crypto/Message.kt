@@ -23,8 +23,7 @@ class Message(
 
     fun decrypt(privateKey: PrivateKey, publicKey: PublicKey): String? {
         val sharedKey = x25519(privateKey, publicKey)
-        val decrypted = ChaCha20.decrypt(sharedKey, data.array) ?: return null
-        return String(decrypted)
+        return ChaCha20.decryptUtf8(sharedKey, data.array)
     }
 
     companion object {
@@ -50,10 +49,8 @@ class Message(
         }
 
         fun encrypted(string: String, privateKey: PrivateKey, publicKey: PublicKey): Message {
-            val bytes = string.toUtf8Bytes()
             val sharedKey = x25519(privateKey, publicKey)
-            val encrypted = ChaCha20.encrypt(sharedKey, bytes)
-            return Message(ENCRYPTED, encrypted)
+            return Message(ENCRYPTED, ChaCha20.encryptUtf8(sharedKey, string))
         }
 
         fun empty() = Message(PLAIN, SerializableByteArray.EMPTY)
@@ -67,7 +64,7 @@ class Message(
         }
 
         private fun hash(message: String): Hash {
-            return Blake2b.hash((SIGN_MAGIC + message).toUtf8Bytes())
+            return (Blake2b.Hasher() + SIGN_MAGIC + message).hash()
         }
     }
 }

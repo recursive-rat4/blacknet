@@ -13,8 +13,10 @@ import mu.KotlinLogging
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
-import ninja.blacknet.core.PoS
+import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.network.ChainFetcher
+import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
@@ -45,13 +47,13 @@ object BlockDB : DataDB() {
         return map.remove(hash)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Boolean {
         val block = Block.deserialize(bytes)
         if (block == null) {
             logger.info("deserialization failed")
             return false
         }
-        if (block.version != 0) {
+        if (block.version != Block.VERSION) {
             logger.info("unknown version ${block.version}")
         }
         if (Node.isTooFarInFuture(block.time)) {
@@ -67,15 +69,21 @@ object BlockDB : DataDB() {
             return false
         }
         if (block.previous != LedgerDB.blockHash()) {
-            logger.info("not on current chain")
-            //TODO
-            return true
+            if (connection != null) {
+                ChainFetcher.offer(connection, hash)
+                return true
+            } else {
+                logger.info("block $hash not on current chain")
+                return false
+            }
         }
-        if (LedgerDB.processBlock(hash, block, bytes.size)) {
+        val txHashes = ArrayList<Hash>(block.transactions.size)
+        if (LedgerDB.processBlock(hash, block, bytes.size, txHashes)) {
             LedgerDB.commit()
             map[hash] = bytes
             commit()
             logger.info("Accepted block $hash")
+            TxPool.remove(txHashes)
             APIServer.blockNotify(hash)
             return true
         } else {

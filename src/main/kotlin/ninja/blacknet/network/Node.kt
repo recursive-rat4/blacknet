@@ -31,6 +31,8 @@ import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PrivateKey
+import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.util.SynchronizedArrayList
@@ -113,8 +115,8 @@ object Node : CoroutineScope {
         return LedgerDB.maxBlockSize() + 100
     }
 
-    fun isInitialBlockDownload(): Boolean {
-        return false //TODO
+    fun isSynchronizing(): Boolean {
+        return ChainFetcher.isSynchronizing()
     }
 
     fun listenOn(address: Address) {
@@ -170,10 +172,20 @@ object Node : CoroutineScope {
     }
 
     fun sendVersion(connection: Connection) {
-        val blockHash = if (isInitialBlockDownload()) Hash.ZERO else LedgerDB.blockHash()
-        val cumulativeDifficulty = if (isInitialBlockDownload()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
+        val blockHash = if (isSynchronizing()) Hash.ZERO else LedgerDB.blockHash()
+        val cumulativeDifficulty = if (isSynchronizing()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
         val v = Version(magic, version, time(), nonce, agent, minTxFee, blockHash, cumulativeDifficulty)
         connection.sendPacket(v)
+    }
+
+    suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
+        if (BlockDB.process(hash, bytes)) {
+            val inv = InvList()
+            inv.add(Pair(DataType.Block, hash))
+            broadcastPacket(Inventory(inv))
+            return true
+        }
+        return false
     }
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray, fee: Long): Boolean {
@@ -302,6 +314,16 @@ object Node : CoroutineScope {
 
             broadcastPacket(Peers(randomPeers))
         }
+    }
+
+    suspend fun startStaker(privateKey: PrivateKey): Boolean {
+        val publicKey = privateKey.toPublicKey()
+        if (LedgerDB.get(publicKey) == null) {
+            logger.info("account not found")
+            return false
+        }
+        launch { PoS.staker(privateKey, publicKey) }
+        return true
     }
 
     private const val DNS_TIMEOUT = 5

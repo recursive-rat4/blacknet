@@ -10,11 +10,13 @@
 package ninja.blacknet.core
 
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.network.Connection
+import ninja.blacknet.util.SynchronizedHashSet
 
 abstract class DataDB {
-    private val rejects = HashSet<Hash>()
+    private val rejects = SynchronizedHashSet<Hash>()
 
-    fun clearRejects() {
+    suspend fun clearRejects() {
         rejects.clear()
     }
 
@@ -22,10 +24,10 @@ abstract class DataDB {
         return !rejects.contains(hash) && !contains(hash)
     }
 
-    suspend fun process(hash: Hash, bytes: ByteArray): Boolean {
+    suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Boolean {
         if (!isInteresting(hash))
             return false
-        if (!processImpl(hash, bytes)) {
+        if (!processImpl(hash, bytes, connection)) {
             rejects.add(hash)
             return false
         }
@@ -35,5 +37,5 @@ abstract class DataDB {
     abstract suspend fun contains(hash: Hash): Boolean
     abstract suspend fun get(hash: Hash): ByteArray?
     abstract suspend fun remove(hash: Hash): ByteArray?
-    abstract suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean
+    abstract suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Boolean
 }

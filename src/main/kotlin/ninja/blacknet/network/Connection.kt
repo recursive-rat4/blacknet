@@ -96,6 +96,7 @@ class Connection(
         try {
             for (packet in sendChannel)
                 writeChannel.writePacket(packet)
+        } catch (e: ClosedWriteChannelException) {
         } catch (e: Throwable) {
             logger.error("Exception in sender $remoteAddress", e)
         } finally {

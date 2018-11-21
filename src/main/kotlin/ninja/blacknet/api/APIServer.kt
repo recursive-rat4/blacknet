@@ -18,7 +18,10 @@ import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.close
 import io.ktor.http.cio.websocket.readText
+import io.ktor.http.content.files
+import io.ktor.http.content.static
 import io.ktor.response.respond
+import io.ktor.response.respondRedirect
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
@@ -74,7 +77,11 @@ fun Application.main() {
 
     routing {
         get("/") {
-            call.respond("It works\n")
+            call.respondRedirect("static/index.html")
+        }
+
+        static("static") {
+            files("html")
         }
 
         webSocket("/api/v1/notify/block") {
@@ -251,6 +258,12 @@ fun Application.main() {
             }
 
             call.respond("Connected")
+        }
+
+        post("/api/v1/staker/start/{mnemonic}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            call.respond(Node.startStaker(privateKey).toString())
         }
     }
 }

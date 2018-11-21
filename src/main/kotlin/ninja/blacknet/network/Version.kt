@@ -62,6 +62,6 @@ class Version(
         }
 
         if (chain != Hash.ZERO && cumulativeDifficulty > LedgerDB.cumulativeDifficulty())
-            TODO()
+            ChainFetcher.offer(connection, chain, cumulativeDifficulty)
     }
 }

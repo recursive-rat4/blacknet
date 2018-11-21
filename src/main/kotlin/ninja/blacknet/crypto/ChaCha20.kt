@@ -9,6 +9,8 @@
 
 package ninja.blacknet.crypto
 
+import kotlinx.io.core.String
+import kotlinx.serialization.toUtf8Bytes
 import org.bouncycastle.crypto.engines.ChaCha7539Engine
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -38,6 +40,14 @@ object ChaCha20 {
         if (engine.processBytes(bytes, IV_SIZE, size, decrypted, 0) == size)
             return decrypted
         return null
+    }
+
+    fun encryptUtf8(key: ByteArray, string: String): ByteArray {
+        return encrypt(key, string.toUtf8Bytes())
+    }
+
+    fun decryptUtf8(key: ByteArray, bytes: ByteArray): String? {
+        return decrypt(key, bytes)?.let { String(it) }
     }
 }
 

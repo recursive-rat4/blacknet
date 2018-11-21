@@ -9,7 +9,12 @@
 
 package ninja.blacknet.db
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
@@ -21,16 +26,20 @@ import ninja.blacknet.crypto.PublicKey
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
 import java.io.File
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 
 private val logger = KotlinLogging.logger {}
 
-object LedgerDB : Ledger {
+object LedgerDB : CoroutineScope, Ledger {
+    override val coroutineContext: CoroutineContext = Dispatchers.Default
+    private val mutex = Mutex()
     private val db = DBMaker.fileDB("db/ledger").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
     private val accounts = db.hashMap("accounts", PublicKeySerializer, AccountStateSerializer).createOrOpen()
     private val height = db.atomicInteger("height").createOrOpen()
     private val blockHash = db.atomicVar("blockHash", HashSerializer, Hash.ZERO).createOrOpen()
     private val blockTime = db.atomicLong("blockTime").createOrOpen()
+    private val difficulty = db.atomicVar("difficulty", BigIntSerializer, BigInt.ZERO).createOrOpen()
     private val cumulativeDifficulty = db.atomicVar("cumulativeDifficulty", BigIntSerializer, BigInt.ZERO).createOrOpen()
     private val supply = db.atomicLong("supply").createOrOpen()
     private val undo = db.hashMap("undo", HashSerializer, UndoSerializer).createOrOpen()
@@ -67,6 +76,8 @@ object LedgerDB : Ledger {
             blockSizes.add(0)
             chain.add(Hash.ZERO)
             chainIndex[Hash.ZERO] = 0
+            blockTime.set(1545555600)
+            difficulty.set(PoS.INITIAL_DIFFICULTY)
             commit()
             logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
         }
@@ -90,6 +101,10 @@ object LedgerDB : Ledger {
 
     override fun blockTime(): Long {
         return blockTime.get()
+    }
+
+    fun difficulty(): BigInt {
+        return difficulty.get()
     }
 
     fun cumulativeDifficulty(): BigInt {
@@ -155,7 +170,18 @@ object LedgerDB : Ledger {
     }
 
     fun getBlockHash(index: Int): Hash? {
-        return chain[index]
+        return chain.getOrNull(index)
+    }
+
+    suspend fun getNextBlockHashes(start: Hash, max: Int): ArrayList<Hash> = mutex.withLock {
+        var i = getBlockNumber(start) ?: return ArrayList()
+        val ret = ArrayList<Hash>(max)
+        while (true) {
+            i++
+            val hash = chain.getOrNull(i) ?: break
+            ret.add(hash)
+        }
+        return ret
     }
 
     fun getBlockNumber(hash: Hash): Int? {
@@ -197,7 +223,7 @@ object LedgerDB : Ledger {
         return max(default, median * 2)
     }
 
-    suspend fun processBlock(hash: Hash, block: Block, size: Int): Boolean {
+    suspend fun processBlock(hash: Hash, block: Block, size: Int, txHashes: ArrayList<Hash>): Boolean = mutex.withLock {
         if (block.previous != blockHash()) {
             logger.error("not on current chain")
             return false
@@ -210,12 +236,27 @@ object LedgerDB : Ledger {
             logger.info("timestamp is too early")
             return false
         }
-        if (!PoS.check(block)) {
-            logger.info("invalid proof of stake")
+        val generator = get(block.generator)
+        if (generator == null) {
+            logger.info("block generator not found")
             return false
         }
 
-        val undo = UndoBlock(blockTime(), supply(), nxtrng(), UndoList(), UndoHTLCList(), UndoMultisigList())
+        val undo = UndoBlock(
+                blockTime(),
+                difficulty(),
+                cumulativeDifficulty(),
+                supply(),
+                nxtrng(),
+                UndoList(),
+                UndoHTLCList(),
+                UndoMultisigList())
+        undo.accounts.add(Pair(block.generator, generator.copy()))
+
+        if (!PoS.check(block.time, block.generator, undo.nxtrng, undo.difficulty, undo.blockTime, generator.stakingBalance(height()))) {
+            logger.info("invalid proof of stake")
+            return false
+        }
 
         val height = height.get() + 1
         this.height.set(height)
@@ -225,7 +266,9 @@ object LedgerDB : Ledger {
         nxtrng.set(PoS.nxtrng(nxtrng(), block.generator))
         chain.add(hash)
         chainIndex[hash] = height
-        //TODO cumulative difficulty
+        val difficulty = PoS.nextDifficulty(undo.difficulty, undo.blockTime, block.time)
+        this.difficulty.set(difficulty)
+        cumulativeDifficulty.set(PoS.cumulativeDifficulty(undo.cumulativeDifficulty, difficulty))
 
         var fees = 0L
         for (bytes in block.transactions) {
@@ -234,20 +277,16 @@ object LedgerDB : Ledger {
                 logger.info("deserialization failed")
                 return false
             }
-            if (!processTransaction(tx, Transaction.Hasher(bytes.array), bytes.array.size, undo)) {
+            val txHash = Transaction.Hasher(bytes.array)
+            if (!processTransaction(tx, txHash, bytes.array.size, undo)) {
                 logger.info("invalid transaction")
                 return false
             }
+            txHashes.add(txHash)
             fees += tx.fee
         }
 
-        val generator = get(block.generator)
-        if (generator == null) {
-            logger.error("block generator not found")
-            return false
-        }
         val reward = PoS.reward(supply())
-        undo.accounts.add(Pair(block.generator, generator.copy()))
         this.undo[hash] = undo
         addSupply(reward)
         generator.debit(height(), reward + fees)
@@ -257,14 +296,16 @@ object LedgerDB : Ledger {
         return true
     }
 
-    suspend fun undoBlock() {
+    private fun undoBlock(): Hash {
         val hash = blockHash()
         val undo = this.undo[hash]!!
 
         val height = height.get()
         this.height.set(height - 1)
+        cumulativeDifficulty.set(undo.cumulativeDifficulty)
         blockHash.set(chain[height - 1])
         blockTime.set(undo.blockTime)
+        difficulty.set(undo.difficulty)
         blockSizes.removeAt(height)
         nxtrng.set(undo.nxtrng)
         chain.removeAt(height)
@@ -297,5 +338,40 @@ object LedgerDB : Ledger {
         }
 
         this.undo.remove(hash)
+        return hash
+    }
+
+    suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = mutex.withLock {
+        val i = getBlockNumber(hash) ?: return@withLock ArrayList()
+        val height = height()
+        var n = height - i
+        val ret = ArrayList<Hash>(n)
+        while (n-- > 0)
+            ret.add(undoBlock())
+        return@withLock ret
+    }
+
+    suspend fun undoRollack(hash: Hash, list: ArrayList<Hash>) = mutex.withLock {
+        val toRemove = rollbackTo(hash)
+        launch { toRemove.forEach { BlockDB.remove(it) } }
+
+        list.forEach {
+            val bytes = BlockDB.get(it)
+            if (bytes == null) {
+                logger.error("block not found")
+                return
+            }
+            val block = Block.deserialize(bytes)
+            if (block == null) {
+                logger.error("deserialization failed")
+                return
+            }
+            val txHashes = ArrayList<Hash>(block.transactions.size)
+            if (!processBlock(it, block, bytes.size, txHashes)) {
+                logger.error("process block failed")
+                return
+            }
+            TxPool.remove(txHashes)
+        }
     }
 }

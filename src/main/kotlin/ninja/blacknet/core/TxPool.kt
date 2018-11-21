@@ -9,14 +9,48 @@
 
 package ninja.blacknet.core
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import mu.KotlinLogging
+import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
+import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
 
+private val logger = KotlinLogging.logger {}
+
 object TxPool : MemPool(), Ledger {
+    private val mutex = Mutex()
     private val accounts = SynchronizedHashMap<PublicKey, AccountState>()
+    private val transactions = SynchronizedArrayList<Hash>()
+
+    suspend fun fill(block: Block) = mutex.withLock {
+        val poolSize = size()
+        val toRemove = ArrayList<Hash>()
+        var freeSize = LedgerDB.maxBlockSize() - 176
+        var i = 0
+        while (freeSize > 0 && i < poolSize) {
+            val hash = transactions.get(i)
+            i++
+            val bytes = get(hash)
+            if (bytes == null) {
+                logger.error("inconsistent mempool")
+                continue
+            }
+            if (bytes.size > freeSize)
+                break
+
+            freeSize -= bytes.size
+            toRemove.add(hash)
+            block.transactions.add(SerializableByteArray(bytes))
+        }
+        removeUnlocked(toRemove)
+    }
 
     suspend fun getSequence(key: PublicKey): Int {
         val account = accounts.get(key)
@@ -47,12 +81,28 @@ object TxPool : MemPool(), Ledger {
         accounts.set(key, state)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        if (processTransaction(hash, bytes, UndoBlock(0, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Boolean = mutex.withLock {
+        if (processTransaction(hash, bytes, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
+            transactions.add(hash)
             return true
         }
         return false
+    }
+
+    suspend fun remove(hashes: ArrayList<Hash>) = mutex.withLock {
+        removeUnlocked(hashes)
+    }
+
+    private suspend fun removeUnlocked(hashes: ArrayList<Hash>) {
+        val txs = transactions.copy()
+        val map = copy()
+        accounts.clear()
+        transactions.clear()
+        clear()
+        for (hash in txs)
+            if (!hashes.contains(hash))
+                processImpl(hash, map[hash]!!, null)
     }
 
     override fun addSupply(amount: Long) {}

@@ -62,12 +62,17 @@ class Block(
     }
 
     companion object {
+        const val VERSION = 0
         const val CONTENT_HASH_POS = 4 + Hash.SIZE + 8 + PublicKey.SIZE
         const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE
         const val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE
 
         fun deserialize(bytes: ByteArray): Block? {
             return BlacknetDecoder.fromBytes(bytes).decode(Block.serializer())
+        }
+
+        fun create(previous: Hash, time: Long, generator: PublicKey): Block {
+            return Block(VERSION, previous, time, generator, Hash.ZERO, Signature.EMPTY, ArrayList())
         }
     }
 }

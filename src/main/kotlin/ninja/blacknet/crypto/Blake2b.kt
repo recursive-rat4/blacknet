@@ -10,6 +10,9 @@
 package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.Blake2b
+import kotlinx.io.core.BytePacketBuilder
+import kotlinx.io.core.readBytes
+import kotlinx.serialization.toUtf8Bytes
 
 object Blake2b : (ByteArray) -> ByteArray {
     fun hash(message: ByteArray): Hash {
@@ -36,20 +39,27 @@ object Blake2b : (ByteArray) -> ByteArray {
         return bytes
     }
 
-    fun hasher(): Hasher {
-        return Hasher(Blake2b(Hash.DIGEST_SIZE))
+    fun utf8(string: String): Hash {
+        return hash(string.toUtf8Bytes())
     }
 
-    class Hasher(private val blake2b: Blake2b) {
+    class Hasher(private val builder: BytePacketBuilder = BytePacketBuilder()) {
+        operator fun plus(long: Long): Hasher {
+            builder.writeLong(long)
+            return this
+        }
+
+        operator fun plus(string: String): Hasher {
+            return this.plus(string.toUtf8Bytes())
+        }
+
         operator fun plus(bytes: ByteArray): Hasher {
-            blake2b.update(bytes, 0, bytes.size)
+            builder.writeFully(bytes, 0, bytes.size)
             return this
         }
 
         fun hash(): Hash {
-            val bytes = ByteArray(Hash.SIZE)
-            blake2b.digest(bytes, 0)
-            return Hash(bytes)
+            return ninja.blacknet.crypto.Blake2b.hash(builder.build().readBytes())
         }
     }
 

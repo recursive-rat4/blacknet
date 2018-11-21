@@ -14,6 +14,7 @@ import kotlinx.io.core.IoBuffer
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ElementValueDecoder
+import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.internal.EnumDescriptor
 import java.nio.ByteBuffer
 
@@ -37,6 +38,7 @@ class BlacknetDecoder(private val input: ByteReadPacket) : ElementValueDecoder()
     }
 
     override fun decodeEnum(enumDescription: EnumDescriptor): Int = input.unpackInt()
+    override fun decodeCollectionSize(desc: SerialDescriptor): Int = input.unpackInt()
 
     fun decodeSerializableByteArrayValue(): SerializableByteArray {
         val size = input.unpackInt()

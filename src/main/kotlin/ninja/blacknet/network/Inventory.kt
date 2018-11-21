@@ -29,6 +29,9 @@ class Inventory(private val list: InvList) : Packet {
     }
 
     override suspend fun process(connection: Connection) {
+        if (Node.isSynchronizing())
+            return
+
         if (list.size > DataType.MAX_INVENTORY) {
             connection.dos("invalid Inventory size")
             return

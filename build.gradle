@@ -21,7 +21,7 @@ apply plugin: 'application'
 mainClassName = "ninja.blacknet.Main"
 
 group 'ninja.blacknet'
-version '0.1-SNAPSHOT'
+version '0.1.0'
 
 repositories {
     jcenter()

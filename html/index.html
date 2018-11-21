@@ -1,0 +1,131 @@
+<!--
+  ~ Copyright (c) 2018 Pavel Vasin
+  ~
+  ~ Licensed under the Jelurida Public License version 1.1
+  ~ for the Blacknet Public Blockchain Platform (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ See the LICENSE.txt file at the top-level directory of this distribution.
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blacknet</title>
+</head>
+<body>
+
+<h1>Blacknet</h1>
+<p id="info_height"></p>
+<p id="info_connections"></p>
+
+<h2>Start staking</h2>
+<p>Mnemonic<br><input type="password" style="width:100%" id="start_staking_mnemonic"></p>
+<p>Result<br><input type="text" readonly="true" style="width:100%" id="start_staking_result"></p>
+<input onclick="start_staking();" value="Start staking" type="button">
+
+<h2>Get balance</h2>
+<p>Account<br><input type="text" style="width:100%" id="balance_account"></p>
+<p>Result<br><input type="text" readonly="true" style="width:100%" id="balance_result"></p>
+<input onclick="balance();" value="Get balance" type="button">
+
+<h2>Transfer</h2>
+<p>Mnemonic<br><input type="password" style="width:100%" id="transfer_mnemonic"></p>
+<p>Fee<br><input type="text" style="width:100%" id="transfer_fee"></p>
+<p>Amount<br><input type="text" style="width:100%" id="transfer_amount"></p>
+<p>To<br><input type="text" style="width:100%" id="transfer_to"></p>
+<p>Message<br><input type="text" style="width:100%" id="transfer_message"></p>
+<p>Encrypted<br><input type="checkbox" id="transfer_encrypted"></p>
+<p>Result<br><input type="text" readonly="true" style="width:100%" id="transfer_result"></p>
+<input onclick="transfer();" value="Transfer" type="button">
+
+<h2>Sign message</h2>
+<p>Mnemonic<br><input type="password" style="width:100%" id="sign_mnemonic"></p>
+<p>Message<br><input type="text" style="width:100%" id="sign_message"></p>
+<p>Result<br><input type="text" readonly="true" style="width:100%" id="sign_result"></p>
+<input onclick="sign();" value="Sign message" type="button">
+
+<h2>Verify message</h2>
+<p>Account<br><input type="text" style="width:100%" id="verify_account"></p>
+<p>Signature<br><input type="text" style="width:100%" id="verify_signature"></p>
+<p>Message<br><input type="text" style="width:100%" id="verify_message"></p>
+<p>Result<br><input type="text" readonly="true" style="width:100%" id="verify_result"></p>
+<input onclick="verify();" value="Verify message" type="button">
+
+<script type="text/javascript">
+function request(method, url, callback) {
+    url = "/api/v1" + url
+    let xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = callback;
+    xhr.open(method, url, true);
+    xhr.send();
+}
+function start_staking() {
+	let mnemonic = document.getElementById('start_staking_mnemonic').value;
+    let url = "/staker/start/" + mnemonic + "/";
+
+    request("POST", url, function () {
+        document.getElementById('start_staking_result').value = this.responseText;
+    });
+}
+function balance() {
+	let account = document.getElementById('balance_account').value;
+    let url = "/ledger/get/" + account + "/";
+
+    request("GET", url, function () {
+        if (this.status == 404) {
+            document.getElementById('balance_result').value = 0;
+            return;
+        }
+        let data = JSON.parse(this.responseText)
+        document.getElementById('balance_result').value = data.balance;
+    });
+}
+function transfer() {
+	let mnemonic = document.getElementById('transfer_mnemonic').value;
+	let fee = document.getElementById('transfer_fee').value;
+	let amount = document.getElementById('transfer_amount').value;
+	let to = document.getElementById('transfer_to').value;
+	let message = document.getElementById('transfer_message').value;
+	let encrypted = message && document.getElementById('transfer_encrypted').checked ? "1" : "";
+    let url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
+
+    request("POST", url, function () {
+        document.getElementById('transfer_result').value = this.responseText;
+    });
+}
+function sign() {
+	let mnemonic = document.getElementById('sign_mnemonic').value;
+	let message = document.getElementById('sign_message').value;
+    let url = "/signmessage/" + mnemonic + "/" + message + "/";
+
+    request("POST", url, function () {
+        document.getElementById('sign_result').value = this.responseText;
+    });
+}
+function verify() {
+	let account = document.getElementById('verify_account').value;
+	let signature = document.getElementById('verify_signature').value;
+	let message = document.getElementById('verify_message').value;
+    let url = "/verifymessage/" + account + "/" + signature + "/" + message + "/";
+
+    request("GET", url, function () {
+        document.getElementById('verify_result').value = this.responseText;
+    });
+}
+function request_info() {
+    request("GET", "/ledger", function () {
+        let data = JSON.parse(this.responseText)
+        document.getElementById('info_height').innerHTML = "Blockchain height: " + data.height;
+    });
+    request("GET", "/nodeinfo", function () {
+        let data = JSON.parse(this.responseText)
+        document.getElementById('info_connections').innerHTML = "Connections: " + data.outgoing + " outgoing, " + data.incoming + " incoming";
+    });
+}
+request_info();
+let ws = new WebSocket("ws://localhost:8283/api/v1/notify/block");
+ws.onmessage = request_info;
+</script>
+</body>
+</html>
