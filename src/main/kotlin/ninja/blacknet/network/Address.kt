@@ -11,7 +11,7 @@ package ninja.blacknet.network
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Config
-import ninja.blacknet.Config.p2pport
+import ninja.blacknet.Config.port
 import ninja.blacknet.serialization.SerializableByteArray
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -54,7 +54,7 @@ class Address(
     }
 
     companion object {
-        val LOOPBACK = Address.IPv4_LOOPBACK(Config[p2pport])
+        val LOOPBACK = Address.IPv4_LOOPBACK(Config[port])
 
         fun IPv4_ANY(port: Int) = Address(Network.IPv4, port, ByteArray(Network.IPv4.addrSize))
         fun IPv4_LOOPBACK(port: Int) = Address(Network.IPv4, port, Network.IPv4_LOOPBACK_BYTES)

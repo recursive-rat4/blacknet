@@ -25,6 +25,7 @@ import ninja.blacknet.Config.dnsseed
 import ninja.blacknet.Config.incomingconnections
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.outgoingconnections
+import ninja.blacknet.Config.port
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
@@ -127,6 +128,14 @@ object Node : CoroutineScope {
             listenAddress.add(address)
             listener(server)
         }
+    }
+
+    fun listenOnIP() {
+        if (Config.isDisabled(Network.IPv4) && Config.isDisabled(Network.IPv6))
+            return
+        if (Config.isDisabled(Network.IPv4))
+            return Node.listenOn(Address.IPv6_ANY(Config[port]))
+        Node.listenOn(Address.IPv4_ANY(Config[port]))
     }
 
     fun listenOnTor() {

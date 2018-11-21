@@ -22,7 +22,7 @@ import net.freehaven.tor.control.TorControlError
 import net.i2p.data.Base32
 import ninja.blacknet.Config
 import ninja.blacknet.Config.listen
-import ninja.blacknet.Config.p2pport
+import ninja.blacknet.Config.port
 import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
 import ninja.blacknet.Config.torcontrol
@@ -104,6 +104,7 @@ enum class Network(val addrSize: Int) {
         }
 
         suspend fun connect(address: Address): Connection {
+            if (Config.isDisabled(address.network)) throw RuntimeException("${address.network} is disabled")
             when (address.network) {
                 IPv4, IPv6 -> {
                     if (socksProxy != null) {
@@ -113,7 +114,7 @@ enum class Network(val addrSize: Int) {
                         val socket = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
                         if (Config[listen] && !localAddress.isLocal())
-                            Node.listenAddress.add(Address(localAddress.network, Config[p2pport], localAddress.bytes))
+                            Node.listenAddress.add(Address(localAddress.network, Config[port], localAddress.bytes))
                         return Connection(socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
                     }
                 }
@@ -138,7 +139,7 @@ enum class Network(val addrSize: Int) {
                 tor.authenticate(ByteArray(0))
 
                 val request = HashMap<Int, String?>()
-                request[Config[p2pport]] = null
+                request[Config[port]] = null
 
                 val response = tor.addOnion(request)
                 val string = response[HS_ADDRESS]!!
@@ -149,7 +150,7 @@ enum class Network(val addrSize: Int) {
                     TORv3.addrSize -> TORv3
                     else -> throw TorControlError("Unknown KeyType")
                 }
-                return Address(type, Config[p2pport], bytes)
+                return Address(type, Config[port], bytes)
             } catch (e: ConnectException) {
                 logger.info("Can't connect to tor controller")
             } catch (e: TorControlError) {

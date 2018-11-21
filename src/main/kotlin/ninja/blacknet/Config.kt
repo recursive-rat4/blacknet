@@ -10,14 +10,19 @@
 package ninja.blacknet
 
 import com.natpryce.konfig.*
+import ninja.blacknet.network.Network
 
 object Config {
     private val config = ConfigurationProperties.fromResource("blacknet.conf")
 
     val mintxfee by stringType
     val dnsseed by booleanType
-    val p2pport by intType
+    val ipv4 by booleanType
+    val ipv6 by booleanType
     val listen by booleanType
+    val port by intType
+    val tor by booleanType
+    val i2p by booleanType
     val upnp by booleanType
     val incomingconnections by intType
     val outgoingconnections by intType
@@ -31,4 +36,12 @@ object Config {
 
     operator fun <T> get(key: Key<T>): T = config[key]
     fun <T> contains(key: Key<T>): Boolean = config.contains(key)
+
+    fun isDisabled(network: Network): Boolean = when (network) {
+        Network.IPv4 -> !config[ipv4]
+        Network.IPv6 -> !config[ipv6]
+        Network.TORv2 -> !config[tor]
+        Network.TORv3 -> !config[tor]
+        Network.I2P -> !config[i2p]
+    }
 }

@@ -25,7 +25,7 @@ import net.i2p.data.Destination
 import ninja.blacknet.Config
 import ninja.blacknet.Config.i2psamhost
 import ninja.blacknet.Config.i2psamport
-import ninja.blacknet.Config.p2pport
+import ninja.blacknet.Config.port
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
@@ -69,7 +69,7 @@ object I2PSAM : CoroutineScope {
 
         val dest = getValue(answer, "DESTINATION")
         val bytes = Destination(dest).getHash().getData()
-        localAddress = Address(Network.I2P, Config[p2pport], bytes)
+        localAddress = Address(Network.I2P, Config[port], bytes)
 
         launch {
             while (true) {
@@ -108,7 +108,7 @@ object I2PSAM : CoroutineScope {
                 channels.second.writeStringUtf8("PONG" + message.drop(4) + '\n')
             } else {
                 val bytes = Destination(message.takeWhile { it != ' ' }).getHash().getData()
-                val remoteAddress = Address(Network.I2P, Config[p2pport], bytes)
+                val remoteAddress = Address(Network.I2P, Config[port], bytes)
                 return Accepted(channels.first, channels.second, remoteAddress)
             }
         }

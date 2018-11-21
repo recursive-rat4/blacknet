@@ -13,7 +13,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Config.p2pport
+import ninja.blacknet.Config.port
 import org.bitlet.weupnp.GatewayDiscover
 
 private val logger = KotlinLogging.logger {}
@@ -35,14 +35,14 @@ object UPnP {
         }
 
         logger.info("Sending port mapping request")
-        if (!gateway.addPortMapping(Config[p2pport], Config[p2pport], gateway.localAddress.hostAddress, "TCP", Node.agent)) {
+        if (!gateway.addPortMapping(Config[port], Config[port], gateway.localAddress.hostAddress, "TCP", Node.agent)) {
             logger.info("Port mapping failed")
             return
         }
 
         var address: Address? = null
         try {
-            address = Network.parse(gateway.externalIPAddress, Config[p2pport])
+            address = Network.parse(gateway.externalIPAddress, Config[port])
         } catch (e: Throwable) {
         }
         if (address != null) {
@@ -54,7 +54,7 @@ object UPnP {
 
         Runtime.getRuntime().addShutdownHook(Thread {
             logger.info("Removing port mapping")
-            gateway.deletePortMapping(Config[p2pport], "TCP")
+            gateway.deletePortMapping(Config[port], "TCP")
         })
     }
 }
