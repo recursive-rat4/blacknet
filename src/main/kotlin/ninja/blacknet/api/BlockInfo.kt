@@ -12,7 +12,7 @@ package ninja.blacknet.api
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.Block
-import ninja.blacknet.core.DataType
+import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 
@@ -34,7 +34,7 @@ class BlockInfo(
             block.previous.toString(),
             block.time,
             block.generator.toString(),
-            block.transactions.map { DataType.Transaction.hash(it.array).toString() },
+            block.transactions.map { Transaction.Hasher(it.array).toString() },
             block.signature.toString()
     )
 

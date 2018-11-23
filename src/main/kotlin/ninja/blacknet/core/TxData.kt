@@ -10,15 +10,16 @@
 package ninja.blacknet.core
 
 import mu.KotlinLogging
+import ninja.blacknet.crypto.Hash
 
 private val logger = KotlinLogging.logger {}
 
 interface TxData {
     fun serialize(): ByteArray
     fun getType(): Byte
-    suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean
+    suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean
 
-    suspend fun process(tx: Transaction, ledger: Ledger, undo: UndoList): Boolean {
+    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         val account = ledger.get(tx.from)
         if (account == null) {
             logger.info("account not found")
@@ -28,12 +29,12 @@ interface TxData {
             logger.info("invalid sequence number")
             return false
         }
-        undo.add(Pair(tx.from, account.copy()))
+        undo.add(tx.from, account.copy())
         if (!account.credit(tx.fee)) {
             logger.info("insufficient funds for tx fee")
             return false
         }
-        if (processImpl(tx, account, ledger, undo)) {
+        if (processImpl(tx, hash, account, ledger, undo)) {
             account.prune(ledger.height())
             account.seq++
             ledger.set(tx.from, account)

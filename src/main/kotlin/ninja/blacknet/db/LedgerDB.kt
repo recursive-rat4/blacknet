@@ -193,7 +193,7 @@ object LedgerDB : Ledger {
                 logger.info("deserialization failed")
                 return false
             }
-            if (!processTransaction(tx, DataType.TxHash(bytes.array), bytes.array.size, undo.accounts)) {
+            if (!processTransaction(tx, Transaction.Hasher(bytes.array), bytes.array.size, undo)) {
                 logger.info("invalid transaction")
                 return false
             }

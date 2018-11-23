@@ -12,6 +12,7 @@ package ninja.blacknet.core
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
@@ -30,7 +31,7 @@ class Bundle(
         return TxType.Bundle.ordinal.toByte()
     }
 
-    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
         return true
     }
 }

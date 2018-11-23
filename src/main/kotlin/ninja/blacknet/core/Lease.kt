@@ -13,6 +13,7 @@ import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
 import mu.KotlinLogging
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetEncoder
 
@@ -33,15 +34,15 @@ class Lease(
         return TxType.Lease.ordinal.toByte()
     }
 
-    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
         if (amount < PoS.MIN_LEASE) {
             logger.info("$amount less than minimal ${PoS.MIN_LEASE}")
             return false
         }
         if (!account.credit(amount))
             return false
-        val toAccount = ledger.get(to) ?: AccountState.create()
-        undo.add(Pair(to, toAccount.copy()))
+        val toAccount = ledger.getOrCreate(to)
+        undo.add(to, toAccount.copy())
         toAccount.leases.add(AccountState.Input(ledger.height(), amount))
         ledger.set(to, toAccount)
         return true

@@ -13,6 +13,7 @@ import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
 import mu.KotlinLogging
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetEncoder
 
@@ -34,13 +35,13 @@ class CancelLease(
         return TxType.CancelLease.ordinal.toByte()
     }
 
-    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
         val toAccount = ledger.get(to)
         if (toAccount == null) {
             logger.info("account not found")
             return false
         }
-        undo.add(Pair(to, toAccount.copy()))
+        undo.add(to, toAccount.copy())
         if (toAccount.leases.remove(AccountState.Input(height, amount))) {
             account.debit(ledger.height(), amount)
             ledger.set(to, toAccount)

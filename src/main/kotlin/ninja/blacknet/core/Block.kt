@@ -34,7 +34,7 @@ class Block(
 
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
         val bytes = serialize()
-        val hash = DataType.Block.hash(bytes)
+        val hash = Hasher(bytes)
         signature = Ed25519.sign(hash, privateKey)
         System.arraycopy(signature.bytes.array, 0, bytes, bytes.size - Signature.SIZE, Signature.SIZE)
         return Pair(hash, bytes)
@@ -42,6 +42,12 @@ class Block(
 
     fun verifySignature(hash: Hash): Boolean {
         return Ed25519.verify(signature, hash, generator)
+    }
+
+    object Hasher : (ByteArray) -> Hash {
+        override fun invoke(bytes: ByteArray): Hash {
+            return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
+        }
     }
 
     companion object {

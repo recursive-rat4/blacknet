@@ -60,7 +60,8 @@ data class AccountState(
     }
 
     fun debit(height: Int, amount: Long) {
-        immature.add(Input(height, amount))
+        if (amount != 0L)
+            immature.add(Input(height, amount))
     }
 
     fun prune(height: Int) {

@@ -26,7 +26,9 @@ interface Ledger {
     suspend fun get(key: PublicKey): AccountState?
     suspend fun set(key: PublicKey, state: AccountState)
 
-    suspend fun processTransaction(hash: Hash, bytes: ByteArray, undo: UndoList): Boolean {
+    suspend fun getOrCreate(key: PublicKey) = get(key) ?: AccountState.create()
+
+    suspend fun processTransaction(hash: Hash, bytes: ByteArray, undo: UndoBlock): Boolean {
         val tx = Transaction.deserialize(bytes)
         if (tx == null) {
             logger.info("deserialization failed")
@@ -35,7 +37,7 @@ interface Ledger {
         return processTransaction(tx, hash, bytes.size, undo)
     }
 
-    suspend fun processTransaction(tx: Transaction, hash: Hash, size: Int, undo: UndoList): Boolean {
+    suspend fun processTransaction(tx: Transaction, hash: Hash, size: Int, undo: UndoBlock): Boolean {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
             return false
@@ -58,6 +60,6 @@ interface Ledger {
             logger.info("deserialization of tx data failed")
             return false
         }
-        return data.process(tx, this, undo)
+        return data.process(tx, hash, this, undo)
     }
 }

@@ -12,6 +12,7 @@ package ninja.blacknet.core
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.Message
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetEncoder
@@ -32,11 +33,11 @@ class Transfer(
         return TxType.Transfer.ordinal.toByte()
     }
 
-    override suspend fun processImpl(tx: Transaction, account: AccountState, ledger: Ledger, undo: UndoList): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
         if (!account.credit(amount))
             return false
-        val toAccount = ledger.get(to) ?: AccountState.create()
-        undo.add(Pair(to, toAccount.copy()))
+        val toAccount = ledger.getOrCreate(to)
+        undo.add(to, toAccount.copy())
         toAccount.debit(ledger.height(), amount)
         ledger.set(to, toAccount)
         return true

@@ -17,6 +17,8 @@ data class UndoBlock(
         val supply: Long,
         val nxtrng: Hash,
         val accounts: UndoList
-)
+) {
+    fun add(publicKey: PublicKey, state: AccountState) = accounts.add(Pair(publicKey, state))
+}
 
 typealias UndoList = ArrayList<Pair<PublicKey, AccountState>>

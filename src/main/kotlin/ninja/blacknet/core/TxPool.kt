@@ -48,7 +48,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        if (processTransaction(hash, bytes, UndoList())) {
+        if (processTransaction(hash, bytes, UndoBlock(0, 0, Hash.ZERO, UndoList()))) {
             add(hash, bytes)
             return true
         }

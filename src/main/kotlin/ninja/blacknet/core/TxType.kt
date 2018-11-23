@@ -16,7 +16,7 @@ enum class TxType {
     Burn,
     Lease,
     CancelLease,
-    Bundle
+    Bundle,
     ;
 
     fun getType(): Byte = ordinal.toByte()
