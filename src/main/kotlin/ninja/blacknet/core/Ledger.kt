@@ -21,10 +21,14 @@ interface Ledger {
     fun addSupply(amount: Long)
     fun addUndo(hash: Hash, undo: UndoBlock)
     fun checkFee(size: Int, amount: Long): Boolean
+    fun blockTime(): Long
     fun height(): Int
     suspend fun checkSequence(key: PublicKey, seq: Int): Boolean
     suspend fun get(key: PublicKey): AccountState?
     suspend fun set(key: PublicKey, state: AccountState)
+    fun addHTLC(id: Hash, htlc: HTLC)
+    fun getHTLC(id: Hash): HTLC?
+    fun removeHTLC(id: Hash)
 
     suspend fun getOrCreate(key: PublicKey) = get(key) ?: AccountState.create()
 

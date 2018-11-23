@@ -48,7 +48,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        if (processTransaction(hash, bytes, UndoBlock(0, 0, Hash.ZERO, UndoList()))) {
+        if (processTransaction(hash, bytes, UndoBlock(0, 0, Hash.ZERO, UndoList(), UndoHTLCList()))) {
             add(hash, bytes)
             return true
         }
@@ -57,5 +57,9 @@ object TxPool : MemPool(), Ledger {
 
     override fun addSupply(amount: Long) {}
     override fun addUndo(hash: Hash, undo: UndoBlock) {}
+    override fun blockTime() = -1L
     override fun height() = -1
+    override fun addHTLC(id: Hash, htlc: HTLC) {}
+    override fun getHTLC(id: Hash): HTLC? = null
+    override fun removeHTLC(id: Hash) {}
 }

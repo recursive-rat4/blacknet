@@ -9,7 +9,9 @@
 
 package ninja.blacknet.db
 
+import ninja.blacknet.core.HTLC
 import ninja.blacknet.core.UndoBlock
+import ninja.blacknet.core.UndoHTLCList
 import ninja.blacknet.core.UndoList
 import org.mapdb.DataInput2
 import org.mapdb.DataOutput2
@@ -32,15 +34,25 @@ object UndoSerializer : Serializer<UndoBlock> {
         val blockTime = input.unpackLong()
         val supply = input.unpackLong()
         val nxtrng = HashSerializer.deserialize(input, 0)
-        val size = input.unpackInt()
-        val accounts = UndoList(size)
-        if (size > 0)
-            for (i in 1..size) {
+        val accountsSize = input.unpackInt()
+        val accounts = UndoList(accountsSize)
+        if (accountsSize > 0)
+            for (i in 1..accountsSize) {
                 val key = PublicKeySerializer.deserialize(input, 0)
                 val state = AccountStateSerializer.deserialize(input, 0)
                 accounts.add(Pair(key, state))
             }
-        return UndoBlock(blockTime, supply, nxtrng, accounts)
+        val htlcsSize = input.unpackInt()
+        val htlcs = UndoHTLCList(htlcsSize)
+        if (htlcsSize > 0)
+            for (i in 1..htlcsSize) {
+                val id = HashSerializer.deserialize(input, 0)
+                var htlc: HTLC? = null
+                if (input.readBoolean())
+                    htlc = HTLCSerializer.deserialize(input, 0)
+                htlcs.add(Pair(id, htlc))
+            }
+        return UndoBlock(blockTime, supply, nxtrng, accounts, htlcs)
     }
 
     override fun serialize(out: DataOutput2, value: UndoBlock) {
@@ -51,6 +63,17 @@ object UndoSerializer : Serializer<UndoBlock> {
         for (i in value.accounts) {
             PublicKeySerializer.serialize(out, i.first)
             AccountStateSerializer.serialize(out, i.second)
+        }
+        out.packInt(value.htlcs.size)
+        for (i in value.htlcs) {
+            HashSerializer.serialize(out, i.first)
+            val htlc = i.second
+            if (htlc != null) {
+                out.writeBoolean(true)
+                HTLCSerializer.serialize(out, htlc)
+            } else {
+                out.writeBoolean(false)
+            }
         }
     }
 }

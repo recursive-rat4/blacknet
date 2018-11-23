@@ -17,6 +17,10 @@ enum class TxType {
     Lease,
     CancelLease,
     Bundle,
+    CreateHTLC,
+    UnlockHTLC,
+    RefundHTLC,
+    SpendHTLC,
     ;
 
     fun getType(): Byte = ordinal.toByte()
@@ -29,6 +33,10 @@ enum class TxType {
                 Lease.ordinal.toByte() -> ninja.blacknet.core.Lease.serializer()
                 CancelLease.ordinal.toByte() -> ninja.blacknet.core.CancelLease.serializer()
                 Bundle.ordinal.toByte() -> ninja.blacknet.core.Bundle.serializer()
+                CreateHTLC.ordinal.toByte() -> ninja.blacknet.core.CreateHTLC.serializer()
+                UnlockHTLC.ordinal.toByte() -> ninja.blacknet.core.UnlockHTLC.serializer()
+                RefundHTLC.ordinal.toByte() -> ninja.blacknet.core.RefundHTLC.serializer()
+                SpendHTLC.ordinal.toByte() -> ninja.blacknet.core.SpendHTLC.serializer()
                 else -> null
             }
         }

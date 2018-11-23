@@ -38,6 +38,7 @@ object LedgerDB : Ledger {
     private val nxtrng = db.atomicVar("nxtrng", HashSerializer, Hash.ZERO).createOrOpen()
     private val chain = db.indexTreeList("chain", HashSerializer).createOrOpen()
     private val chainIndex = db.hashMap("chainIndex", HashSerializer, Serializer.INTEGER).createOrOpen()
+    private val htlc = db.hashMap("htlc", HashSerializer, HTLCSerializer).createOrOpen()
 
     private var maxBlockSize: Int
 
@@ -87,7 +88,7 @@ object LedgerDB : Ledger {
         return blockHash.get()
     }
 
-    fun blockTime(): Long {
+    override fun blockTime(): Long {
         return blockTime.get()
     }
 
@@ -153,6 +154,18 @@ object LedgerDB : Ledger {
         return chainIndex[hash]
     }
 
+    override fun addHTLC(id: Hash, htlc: HTLC) {
+        this.htlc[id] = htlc
+    }
+
+    override fun getHTLC(id: Hash): HTLC? {
+        return htlc[id]
+    }
+
+    override fun removeHTLC(id: Hash) {
+        htlc.remove(id)
+    }
+
     private fun calcMaxBlockSize(): Int {
         val default = 100000
         val height = height()
@@ -174,7 +187,7 @@ object LedgerDB : Ledger {
             return false
         }
 
-        val undo = UndoBlock(blockTime(), supply(), nxtrng(), UndoList())
+        val undo = UndoBlock(blockTime(), supply(), nxtrng(), UndoList(), UndoHTLCList())
 
         val height = height.get() + 1
         this.height.set(height)
@@ -237,6 +250,14 @@ object LedgerDB : Ledger {
                 accounts.remove(key)
             else
                 accounts[key] = state
+        }
+        for (i in undo.htlcs.reversed()) {
+            val id = i.first
+            val htlc = i.second
+            if (htlc != null)
+                addHTLC(id, htlc)
+            else
+                removeHTLC(id)
         }
 
         this.undo.remove(hash)

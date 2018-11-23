@@ -11,7 +11,7 @@ package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.Blake2b
 
-object Blake2b {
+object Blake2b : (ByteArray) -> ByteArray {
     fun hash(message: ByteArray): Hash {
         val bytes = ByteArray(Hash.SIZE)
         val b = Blake2b(Hash.DIGEST_SIZE)
@@ -52,4 +52,6 @@ object Blake2b {
             return Hash(bytes)
         }
     }
+
+    override fun invoke(bytes: ByteArray): ByteArray = hash(bytes).bytes.array
 }
