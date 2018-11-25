@@ -48,7 +48,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        if (processTransaction(hash, bytes, UndoBlock(0, 0, Hash.ZERO, UndoList(), UndoHTLCList()))) {
+        if (processTransaction(hash, bytes, UndoBlock(0, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
             return true
         }
@@ -62,4 +62,7 @@ object TxPool : MemPool(), Ledger {
     override fun addHTLC(id: Hash, htlc: HTLC) {}
     override fun getHTLC(id: Hash): HTLC? = null
     override fun removeHTLC(id: Hash) {}
+    override fun addMultisig(id: Hash, multisig: Multisig) {}
+    override fun getMultisig(id: Hash): Multisig? = null
+    override fun removeMultisig(id: Hash) {}
 }

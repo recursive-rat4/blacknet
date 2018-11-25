@@ -49,10 +49,15 @@ class CreateHTLC(
             return false
         }
 
+        if (amount == 0L) {
+            logger.info("invalid amount")
+            return false
+        }
+
         if (!account.credit(amount))
             return false
 
-        undo.add(hash, null)
+        undo.addHTLC(hash, null)
 
         val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLockType, timeLock, hashType, hashLock)
         ledger.addHTLC(hash, htlc)

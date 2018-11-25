@@ -21,6 +21,8 @@ enum class TxType {
     UnlockHTLC,
     RefundHTLC,
     SpendHTLC,
+    CreateMultisig,
+    SpendMultisig,
     ;
 
     fun getType(): Byte = ordinal.toByte()
@@ -37,6 +39,8 @@ enum class TxType {
                 UnlockHTLC.ordinal.toByte() -> ninja.blacknet.core.UnlockHTLC.serializer()
                 RefundHTLC.ordinal.toByte() -> ninja.blacknet.core.RefundHTLC.serializer()
                 SpendHTLC.ordinal.toByte() -> ninja.blacknet.core.SpendHTLC.serializer()
+                CreateMultisig.ordinal.toByte() -> ninja.blacknet.core.CreateMultisig.serializer()
+                SpendMultisig.ordinal.toByte() -> ninja.blacknet.core.SpendMultisig.serializer()
                 else -> null
             }
         }

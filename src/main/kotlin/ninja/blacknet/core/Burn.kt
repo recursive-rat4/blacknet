@@ -12,9 +12,12 @@ package ninja.blacknet.core
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
+import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
+
+private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Burn(
@@ -32,6 +35,10 @@ class Burn(
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+        if (amount == 0L) {
+            logger.info("invalid amount")
+            return false
+        }
         if (!account.credit(amount)) {
             return false
         }

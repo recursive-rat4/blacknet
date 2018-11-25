@@ -21,7 +21,9 @@ class LedgerInfo(
         val supply: Long,
         val accounts: Int,
         val maxBlockSize: Int,
-        val nxtrng: String
+        val nxtrng: String,
+        val htlcs: Int,
+        val multisigs: Int
 ) {
     companion object {
         fun get() = LedgerInfo(
@@ -32,6 +34,9 @@ class LedgerInfo(
                 LedgerDB.supply(),
                 LedgerDB.accounts(),
                 LedgerDB.maxBlockSize(),
-                LedgerDB.nxtrng().toString())
+                LedgerDB.nxtrng().toString(),
+                LedgerDB.htlcs(),
+                LedgerDB.multisigs()
+        )
     }
 }

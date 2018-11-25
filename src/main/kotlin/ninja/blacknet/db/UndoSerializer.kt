@@ -9,10 +9,7 @@
 
 package ninja.blacknet.db
 
-import ninja.blacknet.core.HTLC
-import ninja.blacknet.core.UndoBlock
-import ninja.blacknet.core.UndoHTLCList
-import ninja.blacknet.core.UndoList
+import ninja.blacknet.core.*
 import org.mapdb.DataInput2
 import org.mapdb.DataOutput2
 import org.mapdb.Serializer
@@ -52,7 +49,17 @@ object UndoSerializer : Serializer<UndoBlock> {
                     htlc = HTLCSerializer.deserialize(input, 0)
                 htlcs.add(Pair(id, htlc))
             }
-        return UndoBlock(blockTime, supply, nxtrng, accounts, htlcs)
+        val multisigsSize = input.unpackInt()
+        val multisigs = UndoMultisigList(multisigsSize)
+        if (multisigsSize > 0)
+            for (i in 1..multisigsSize) {
+                val id = HashSerializer.deserialize(input, 0)
+                var multisig: Multisig? = null
+                if (input.readBoolean())
+                    multisig = MultisigSerializer.deserialize(input, 0)
+                multisigs.add(Pair(id, multisig))
+            }
+        return UndoBlock(blockTime, supply, nxtrng, accounts, htlcs, multisigs)
     }
 
     override fun serialize(out: DataOutput2, value: UndoBlock) {
@@ -71,6 +78,17 @@ object UndoSerializer : Serializer<UndoBlock> {
             if (htlc != null) {
                 out.writeBoolean(true)
                 HTLCSerializer.serialize(out, htlc)
+            } else {
+                out.writeBoolean(false)
+            }
+        }
+        out.packInt(value.multisigs.size)
+        for (i in value.multisigs) {
+            HashSerializer.serialize(out, i.first)
+            val multisig = i.second
+            if (multisig != null) {
+                out.writeBoolean(true)
+                MultisigSerializer.serialize(out, multisig)
             } else {
                 out.writeBoolean(false)
             }

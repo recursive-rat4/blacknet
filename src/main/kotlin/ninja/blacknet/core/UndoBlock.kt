@@ -17,11 +17,14 @@ data class UndoBlock(
         val supply: Long,
         val nxtrng: Hash,
         val accounts: UndoList,
-        val htlcs: UndoHTLCList
+        val htlcs: UndoHTLCList,
+        val multisigs: UndoMultisigList
 ) {
     fun add(publicKey: PublicKey, state: AccountState) = accounts.add(Pair(publicKey, state))
-    fun add(id: Hash, htlc: HTLC?) = htlcs.add(Pair(id, htlc))
+    fun addHTLC(id: Hash, htlc: HTLC?) = htlcs.add(Pair(id, htlc))
+    fun addMultisig(id: Hash, multisig: Multisig?) = multisigs.add(Pair(id, multisig))
 }
 
 typealias UndoList = ArrayList<Pair<PublicKey, AccountState>>
 typealias UndoHTLCList = ArrayList<Pair<Hash, HTLC?>>
+typealias UndoMultisigList = ArrayList<Pair<Hash, Multisig?>>

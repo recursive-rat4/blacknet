@@ -47,7 +47,7 @@ class RefundHTLC(
             return false
         }
 
-        undo.add(id, htlc)
+        undo.addHTLC(id, htlc)
 
         account.debit(ledger.height(), htlc.amount)
         ledger.removeHTLC(id)

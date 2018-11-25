@@ -76,7 +76,7 @@ class SpendHTLC(
         val height = ledger.height()
         val toAccount = ledger.getOrCreate(htlc.to)
         undo.add(htlc.to, toAccount.copy())
-        undo.add(id, htlc)
+        undo.addHTLC(id, htlc)
 
         account.debit(height, amountA)
         toAccount.debit(height, amountB)

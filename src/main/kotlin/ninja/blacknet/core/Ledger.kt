@@ -29,6 +29,9 @@ interface Ledger {
     fun addHTLC(id: Hash, htlc: HTLC)
     fun getHTLC(id: Hash): HTLC?
     fun removeHTLC(id: Hash)
+    fun addMultisig(id: Hash, multisig: Multisig)
+    fun getMultisig(id: Hash): Multisig?
+    fun removeMultisig(id: Hash)
 
     suspend fun getOrCreate(key: PublicKey) = get(key) ?: AccountState.create()
 

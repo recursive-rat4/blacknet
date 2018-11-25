@@ -38,7 +38,8 @@ object LedgerDB : Ledger {
     private val nxtrng = db.atomicVar("nxtrng", HashSerializer, Hash.ZERO).createOrOpen()
     private val chain = db.indexTreeList("chain", HashSerializer).createOrOpen()
     private val chainIndex = db.hashMap("chainIndex", HashSerializer, Serializer.INTEGER).createOrOpen()
-    private val htlc = db.hashMap("htlc", HashSerializer, HTLCSerializer).createOrOpen()
+    private val htlcs = db.hashMap("htlcs", HashSerializer, HTLCSerializer).createOrOpen()
+    private val multisigs = db.hashMap("multisigs", HashSerializer, MultisigSerializer).createOrOpen()
 
     private var maxBlockSize: Int
 
@@ -111,6 +112,14 @@ object LedgerDB : Ledger {
         return accounts.size
     }
 
+    fun htlcs(): Int {
+        return htlcs.size
+    }
+
+    fun multisigs(): Int {
+        return multisigs.size
+    }
+
     override suspend fun get(key: PublicKey): AccountState? {
         return accounts[key]
     }
@@ -155,15 +164,27 @@ object LedgerDB : Ledger {
     }
 
     override fun addHTLC(id: Hash, htlc: HTLC) {
-        this.htlc[id] = htlc
+        htlcs[id] = htlc
     }
 
     override fun getHTLC(id: Hash): HTLC? {
-        return htlc[id]
+        return htlcs[id]
     }
 
     override fun removeHTLC(id: Hash) {
-        htlc.remove(id)
+        htlcs.remove(id)
+    }
+
+    override fun addMultisig(id: Hash, multisig: Multisig) {
+        multisigs[id] = multisig
+    }
+
+    override fun getMultisig(id: Hash): Multisig? {
+        return multisigs[id]
+    }
+
+    override fun removeMultisig(id: Hash) {
+        multisigs.remove(id)
     }
 
     private fun calcMaxBlockSize(): Int {
@@ -187,7 +208,7 @@ object LedgerDB : Ledger {
             return false
         }
 
-        val undo = UndoBlock(blockTime(), supply(), nxtrng(), UndoList(), UndoHTLCList())
+        val undo = UndoBlock(blockTime(), supply(), nxtrng(), UndoList(), UndoHTLCList(), UndoMultisigList())
 
         val height = height.get() + 1
         this.height.set(height)
@@ -258,6 +279,14 @@ object LedgerDB : Ledger {
                 addHTLC(id, htlc)
             else
                 removeHTLC(id)
+        }
+        for (i in undo.multisigs.reversed()) {
+            val id = i.first
+            val multisig = i.second
+            if (multisig != null)
+                addMultisig(id, multisig)
+            else
+                removeMultisig(id)
         }
 
         this.undo.remove(hash)

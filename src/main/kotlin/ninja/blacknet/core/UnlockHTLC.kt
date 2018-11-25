@@ -67,7 +67,7 @@ class UnlockHTLC(
 
         val toAccount = ledger.getOrCreate(htlc.to)
         undo.add(htlc.to, toAccount.copy())
-        undo.add(id, htlc)
+        undo.addHTLC(id, htlc)
 
         toAccount.debit(ledger.height(), htlc.amount)
         ledger.removeHTLC(id)
