@@ -25,8 +25,9 @@ class BlockInfo(
         val previous: String,
         val time: Long,
         val generator: String,
-        val transactions: List<String>,
-        val signature: String
+        val contentHash: String,
+        val signature: String,
+        val transactions: List<String>
 ) {
     constructor(block: Block, size: Int) : this(
             size,
@@ -34,8 +35,9 @@ class BlockInfo(
             block.previous.toString(),
             block.time,
             block.generator.toString(),
-            block.transactions.map { Transaction.Hasher(it.array).toString() },
-            block.signature.toString()
+            block.contentHash.toString(),
+            block.signature.toString(),
+            block.transactions.map { Transaction.Hasher(it.array).toString() }
     )
 
     companion object {

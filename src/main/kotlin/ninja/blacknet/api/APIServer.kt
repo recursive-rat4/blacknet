@@ -34,6 +34,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.transaction.*
 import ninja.blacknet.util.SynchronizedArrayList
 import kotlin.coroutines.CoroutineContext
 
@@ -75,7 +76,7 @@ fun Application.main() {
             call.respond("It works\n")
         }
 
-        webSocket("/notify/block") {
+        webSocket("/api/v1/notify/block") {
             try {
                 APIServer.blockNotify.add(outgoing)
                 while (true) {
@@ -86,7 +87,7 @@ fun Application.main() {
             }
         }
 
-        webSocket("/notify/transaction") {
+        webSocket("/api/v1/notify/transaction") {
             try {
                 while (true) {
                     val string = (incoming.receive() as Frame.Text).readText()
@@ -98,23 +99,23 @@ fun Application.main() {
             }
         }
 
-        get("/peerinfo") {
+        get("/api/v1/peerinfo") {
             call.respond(JSON.indented.stringify(PeerInfo.serializer().list, PeerInfo.getAll()))
         }
 
-        get("/nodeinfo") {
+        get("/api/v1/nodeinfo") {
             call.respond(JSON.indented.stringify(NodeInfo.serializer(), NodeInfo.get()))
         }
 
-        get("/peerdb") {
+        get("/api/v1/peerdb") {
             call.respond(JSON.indented.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
         }
 
-        get("/blockdb") {
+        get("/api/v1/blockdb") {
             call.respond(JSON.indented.stringify(BlockDBInfo.serializer(), BlockDBInfo.get()))
         }
 
-        get("/blockdb/get/{hash}") {
+        get("/api/v1/blockdb/get/{hash}") {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
             val ret = BlockInfo.get(hash)
             if (ret != null)
@@ -123,11 +124,11 @@ fun Application.main() {
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
 
-        get("/ledger") {
+        get("/api/v1/ledger") {
             call.respond(JSON.indented.stringify(LedgerInfo.serializer(), LedgerInfo.get()))
         }
 
-        get("/ledger/get/{account}") {
+        get("/api/v1/ledger/get/{account}") {
             val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
             val ret = AccountInfo.get(pubkey)
             if (ret != null)
@@ -136,15 +137,15 @@ fun Application.main() {
                 call.respond(HttpStatusCode.NotFound, "account not found")
         }
 
-        get("/txpool") {
+        get("/api/v1/txpool") {
             call.respond(JSON.indented.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
         }
 
-        get("/account/generate") {
+        get("/api/v1/account/generate") {
             call.respond(JSON.indented.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
         }
 
-        post("/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {
+        post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
             val seq = TxPool.getSequence(from)
@@ -163,7 +164,7 @@ fun Application.main() {
                 call.respond("Transaction rejected")
         }
 
-        post("/burn/{mnemonic}/{fee}/{amount}/{message?}/") {
+        post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
             val seq = TxPool.getSequence(from)
@@ -181,7 +182,7 @@ fun Application.main() {
                 call.respond("Transaction rejected")
         }
 
-        post("/lease/{mnemonic}/{fee}/{amount}/{to}") {
+        post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
             val seq = TxPool.getSequence(from)
@@ -199,7 +200,7 @@ fun Application.main() {
                 call.respond("Transaction rejected")
         }
 
-        post("/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}") {
+        post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
             val seq = TxPool.getSequence(from)
@@ -218,7 +219,7 @@ fun Application.main() {
                 call.respond("Transaction rejected")
         }
 
-        post("/signmessage/{mnemonic}/{message}") {
+        post("/api/v1/signmessage/{mnemonic}/{message}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
 
@@ -227,7 +228,7 @@ fun Application.main() {
             call.respond(signature.toString())
         }
 
-        get("/verifymessage/{account}/{signature}/{message}") {
+        get("/api/v1/verifymessage/{account}/{signature}/{message}") {
             val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
             val signature = Signature.fromString(call.parameters["signature"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid signature")
             val message = call.parameters["message"] ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid message")

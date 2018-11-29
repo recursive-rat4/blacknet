@@ -7,27 +7,24 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
 import mu.KotlinLogging
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetEncoder
-import ninja.blacknet.serialization.SerializableByteArray
 
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-class CreateHTLC(
+class CancelLease(
         val amount: Long,
         val to: PublicKey,
-        val timeLockType: Byte,
-        val timeLock: Long,
-        val hashType: Byte,
-        val hashLock: SerializableByteArray
+        val height: Int
 ) : TxData {
     override fun serialize(): ByteArray {
         val out = BlacknetEncoder()
@@ -36,31 +33,22 @@ class CreateHTLC(
     }
 
     override fun getType(): Byte {
-        return TxType.CreateHTLC.ordinal.toByte()
+        return TxType.CancelLease.ordinal.toByte()
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
-        if (!HTLC.isValidTimeLockType(timeLockType)) {
-            logger.info("unknown timelock type $timeLockType")
+        val toAccount = ledger.get(to)
+        if (toAccount == null) {
+            logger.info("account not found")
             return false
         }
-        if (!HTLC.isValidHashType(hashType)) {
-            logger.info("unknown hash type $hashType")
-            return false
+        undo.add(to, toAccount.copy())
+        if (toAccount.leases.remove(AccountState.Input(height, amount))) {
+            account.debit(ledger.height(), amount)
+            ledger.set(to, toAccount)
+            return true
         }
-
-        if (amount == 0L) {
-            logger.info("invalid amount")
-            return false
-        }
-
-        if (!account.credit(amount))
-            return false
-
-        undo.addHTLC(hash, null)
-
-        val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLockType, timeLock, hashType, hashLock)
-        ledger.addHTLC(hash, htlc)
-        return true
+        logger.info("lease not found")
+        return false
     }
 }

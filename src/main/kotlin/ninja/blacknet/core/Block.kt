@@ -23,8 +23,9 @@ class Block(
         val previous: Hash,
         val time: Long,
         val generator: PublicKey,
-        val transactions: ArrayList<SerializableByteArray>,
-        var signature: Signature
+        var contentHash: Hash,
+        var signature: Signature,
+        val transactions: ArrayList<SerializableByteArray>
 ) {
     fun serialize(): ByteArray {
         val out = BlacknetEncoder()
@@ -34,23 +35,37 @@ class Block(
 
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
         val bytes = serialize()
+        contentHash = contentHash(bytes)
+        System.arraycopy(contentHash.bytes.array, 0, bytes, CONTENT_HASH_POS, Hash.SIZE)
         val hash = Hasher(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature.bytes.array, 0, bytes, bytes.size - Signature.SIZE, Signature.SIZE)
+        System.arraycopy(signature.bytes.array, 0, bytes, SIGNATURE_POS, Signature.SIZE)
         return Pair(hash, bytes)
+    }
+
+    fun verifyContentHash(bytes: ByteArray): Boolean {
+        return contentHash == contentHash(bytes)
     }
 
     fun verifySignature(hash: Hash): Boolean {
         return Ed25519.verify(signature, hash, generator)
     }
 
+    private fun contentHash(bytes: ByteArray): Hash {
+        return Blake2b.hash(bytes, HEADER_SIZE, bytes.size - HEADER_SIZE)
+    }
+
     object Hasher : (ByteArray) -> Hash {
         override fun invoke(bytes: ByteArray): Hash {
-            return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
+            return Blake2b.hash(bytes, 0, HEADER_SIZE - Signature.SIZE)
         }
     }
 
     companion object {
+        const val CONTENT_HASH_POS = 4 + Hash.SIZE + 8 + PublicKey.SIZE
+        const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE
+        const val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE
+
         fun deserialize(bytes: ByteArray): Block? {
             return BlacknetDecoder.fromBytes(bytes).decode(Block.serializer())
         }

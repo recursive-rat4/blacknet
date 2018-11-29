@@ -7,22 +7,23 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
 import mu.KotlinLogging
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.SerializableByteArray
 
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-class SpendHTLC(
+class UnlockHTLC(
         val id: Hash,
-        val amountA: Long,
-        val amountB: Long,
+        val preimage: SerializableByteArray,
         var signatureB: Signature
 ) : TxData {
     override fun serialize(): ByteArray {
@@ -32,7 +33,7 @@ class SpendHTLC(
     }
 
     override fun getType(): Byte {
-        return TxType.SpendHTLC.ordinal.toByte()
+        return TxType.UnlockHTLC.ordinal.toByte()
     }
 
     fun sign(privateKey: PrivateKey) {
@@ -56,16 +57,8 @@ class SpendHTLC(
             logger.info("htlc not found")
             return false
         }
-        if (amountA < 0 || amountB < 0) {
-            logger.info("negative amount")
-            return false
-        }
-        if (amountA + amountB != htlc.amount) {
-            logger.info("invalid amount")
-            return false
-        }
-        if (tx.from != htlc.from) {
-            logger.info("invalid sender")
+        if (!htlc.verifyHashLock(preimage)) {
+            logger.info("invalid hashlock")
             return false
         }
         if (!verifySignature(htlc.to)) {
@@ -73,13 +66,11 @@ class SpendHTLC(
             return false
         }
 
-        val height = ledger.height()
         val toAccount = ledger.getOrCreate(htlc.to)
         undo.add(htlc.to, toAccount.copy())
         undo.addHTLC(id, htlc)
 
-        account.debit(height, amountA)
-        toAccount.debit(height, amountB)
+        toAccount.debit(ledger.height(), htlc.amount)
         ledger.removeHTLC(id)
         return true
     }

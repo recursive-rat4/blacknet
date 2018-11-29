@@ -7,22 +7,23 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
 import mu.KotlinLogging
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.SerializableByteArray
 
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-class Lease(
+class Burn(
         val amount: Long,
-        val to: PublicKey
+        val message: SerializableByteArray
 ) : TxData {
     override fun serialize(): ByteArray {
         val out = BlacknetEncoder()
@@ -31,20 +32,18 @@ class Lease(
     }
 
     override fun getType(): Byte {
-        return TxType.Lease.ordinal.toByte()
+        return TxType.Burn.ordinal.toByte()
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
-        if (amount < PoS.MIN_LEASE) {
-            logger.info("$amount less than minimal ${PoS.MIN_LEASE}")
+        if (amount == 0L) {
+            logger.info("invalid amount")
             return false
         }
-        if (!account.credit(amount))
+        if (!account.credit(amount)) {
             return false
-        val toAccount = ledger.getOrCreate(to)
-        undo.add(to, toAccount.copy())
-        toAccount.leases.add(AccountState.Input(ledger.height(), amount))
-        ledger.set(to, toAccount)
+        }
+        ledger.addSupply(-amount)
         return true
     }
 }

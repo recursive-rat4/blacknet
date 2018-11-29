@@ -7,20 +7,20 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
-import mu.KotlinLogging
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetEncoder
-
-private val logger = KotlinLogging.logger {}
+import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class RefundHTLC(
-        val id: Hash
+class Bundle(
+        val magic: Int,
+        val data: SerializableByteArray
 ) : TxData {
     override fun serialize(): ByteArray {
         val out = BlacknetEncoder()
@@ -29,28 +29,10 @@ class RefundHTLC(
     }
 
     override fun getType(): Byte {
-        return TxType.UnlockHTLC.ordinal.toByte()
+        return TxType.Bundle.ordinal.toByte()
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
-        val htlc = ledger.getHTLC(id)
-        if (htlc == null) {
-            logger.info("htlc not found")
-            return false
-        }
-        if (tx.from != htlc.from) {
-            logger.info("invalid sender")
-            return false
-        }
-        if (!htlc.verifyTimeLock(ledger)) {
-            logger.info("invalid timelock")
-            return false
-        }
-
-        undo.addHTLC(id, htlc)
-
-        account.debit(ledger.height(), htlc.amount)
-        ledger.removeHTLC(id)
         return true
     }
 }

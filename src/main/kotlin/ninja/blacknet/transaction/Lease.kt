@@ -7,21 +7,23 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
+import mu.KotlinLogging
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.Message
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetEncoder
 
+private val logger = KotlinLogging.logger {}
+
 @Serializable
-class Transfer(
+class Lease(
         val amount: Long,
-        val to: PublicKey,
-        val message: Message
+        val to: PublicKey
 ) : TxData {
     override fun serialize(): ByteArray {
         val out = BlacknetEncoder()
@@ -30,15 +32,19 @@ class Transfer(
     }
 
     override fun getType(): Byte {
-        return TxType.Transfer.ordinal.toByte()
+        return TxType.Lease.ordinal.toByte()
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+        if (amount < PoS.MIN_LEASE) {
+            logger.info("$amount less than minimal ${PoS.MIN_LEASE}")
+            return false
+        }
         if (!account.credit(amount))
             return false
         val toAccount = ledger.getOrCreate(to)
         undo.add(to, toAccount.copy())
-        toAccount.debit(ledger.height(), amount)
+        toAccount.leases.add(AccountState.Input(ledger.height(), amount))
         ledger.set(to, toAccount)
         return true
     }

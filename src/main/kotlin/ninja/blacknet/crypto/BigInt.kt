@@ -20,12 +20,12 @@ import ninja.blacknet.util.fromHex
 import java.math.BigInteger
 
 @Serializable
-class BigInt(private val int: BigInteger) {
+class BigInt(private val int: BigInteger) : Comparable<BigInt> {
     constructor(bytes: ByteArray) : this(BigInteger(bytes))
     constructor(bytes: SerializableByteArray) : this(bytes.array)
     constructor(n: Long) : this(BigInteger.valueOf(n))
 
-    operator fun compareTo(other: BigInt): Int = int.compareTo(other.int)
+    override operator fun compareTo(other: BigInt): Int = int.compareTo(other.int)
     operator fun plus(other: BigInt): BigInt = BigInt(int.add(other.int))
     operator fun minus(other: BigInt): BigInt = BigInt(int.subtract(other.int))
     operator fun times(other: BigInt): BigInt = BigInt(int.multiply(other.int))

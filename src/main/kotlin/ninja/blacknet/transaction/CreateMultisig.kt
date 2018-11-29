@@ -7,12 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
 import mu.KotlinLogging
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.util.sumByLong

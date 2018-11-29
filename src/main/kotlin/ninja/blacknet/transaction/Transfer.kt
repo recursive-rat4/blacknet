@@ -7,23 +7,22 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
-import mu.KotlinLogging
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.Message
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BlacknetEncoder
 
-private val logger = KotlinLogging.logger {}
-
 @Serializable
-class CancelLease(
+class Transfer(
         val amount: Long,
         val to: PublicKey,
-        val height: Int
+        val message: Message
 ) : TxData {
     override fun serialize(): ByteArray {
         val out = BlacknetEncoder()
@@ -32,22 +31,16 @@ class CancelLease(
     }
 
     override fun getType(): Byte {
-        return TxType.CancelLease.ordinal.toByte()
+        return TxType.Transfer.ordinal.toByte()
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
-        val toAccount = ledger.get(to)
-        if (toAccount == null) {
-            logger.info("account not found")
+        if (!account.credit(amount))
             return false
-        }
+        val toAccount = ledger.getOrCreate(to)
         undo.add(to, toAccount.copy())
-        if (toAccount.leases.remove(AccountState.Input(height, amount))) {
-            account.debit(ledger.height(), amount)
-            ledger.set(to, toAccount)
-            return true
-        }
-        logger.info("lease not found")
-        return false
+        toAccount.debit(ledger.height(), amount)
+        ledger.set(to, toAccount)
+        return true
     }
 }

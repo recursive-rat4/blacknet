@@ -30,8 +30,8 @@ object DataFetcher {
         inventoryChannel.offer(Pair(from, list))
     }
 
-    suspend fun fetched(hash: Hash) {
-        requested.remove(hash)
+    suspend fun fetched(hash: Hash): Boolean {
+        return requested.remove(hash) != null
     }
 
     private suspend fun fetcher() {

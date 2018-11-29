@@ -46,10 +46,6 @@ object BlockDB : DataDB() {
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray): Boolean {
-        if (bytes.size > LedgerDB.maxBlockSize()) {
-            logger.info("too large block ${bytes.size} bytes, maximum ${LedgerDB.maxBlockSize()}")
-            return false
-        }
         val block = Block.deserialize(bytes)
         if (block == null) {
             logger.info("deserialization failed")
@@ -62,13 +58,18 @@ object BlockDB : DataDB() {
             logger.info("too far in future ${block.time}")
             return false
         }
+        if (!block.verifyContentHash(bytes)) {
+            logger.info("invalid content hash")
+            return false
+        }
         if (!block.verifySignature(hash)) {
             logger.info("invalid signature")
             return false
         }
-        if (!PoS.check(block)) {
-            logger.info("invalid proof of stake")
-            return false
+        if (block.previous != LedgerDB.blockHash()) {
+            logger.info("not on current chain")
+            //TODO
+            return true
         }
         if (LedgerDB.processBlock(hash, block, bytes.size)) {
             LedgerDB.commit()

@@ -21,6 +21,8 @@ class SynchronizedArrayList<T>(private val list: ArrayList<T>) {
 
     suspend fun add(element: T) = mutex.withLock { list.add(element) }
 
+    suspend fun clear() = mutex.withLock { list.clear() }
+
     suspend fun remove(element: T) = mutex.withLock { list.remove(element) }
 
     suspend fun removeIf(filter: (T) -> Boolean) = mutex.withLock { list.removeIf(filter) }
@@ -34,6 +36,6 @@ class SynchronizedArrayList<T>(private val list: ArrayList<T>) {
     suspend fun <R> map(transform: (T) -> R): ArrayList<R> = mutex.withLock {
         val ret = ArrayList<R>(list.size)
         list.forEach { ret.add(transform(it)) }
-        ret
+        return@withLock ret
     }
 }

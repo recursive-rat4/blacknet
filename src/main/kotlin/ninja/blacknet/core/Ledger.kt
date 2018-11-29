@@ -14,6 +14,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.transaction.TxType
 
 private val logger = KotlinLogging.logger {}
 

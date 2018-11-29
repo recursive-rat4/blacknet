@@ -7,12 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encode
 import mu.KotlinLogging
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BlacknetEncoder
 
@@ -43,6 +44,8 @@ class SpendMultisig(
     fun verifySignatures(multisig: Multisig): Boolean {
         val multisigHash = hash()
         for (i in signatures) {
+            if (signatures.count { it.first == i.first } != 1)
+                return false
             val publicKey = multisig.keys.getOrNull(i.first.toInt()) ?: return false
             if (!Ed25519.verify(i.second, multisigHash, publicKey))
                 return false

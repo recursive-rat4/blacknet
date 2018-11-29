@@ -203,8 +203,16 @@ object LedgerDB : Ledger {
             logger.error("not on current chain")
             return false
         }
+        if (size > maxBlockSize()) {
+            logger.info("too large block $size bytes, maximum ${maxBlockSize()}")
+            return false
+        }
         if (block.time <= blockTime()) {
             logger.info("timestamp is too early")
+            return false
+        }
+        if (!PoS.check(block)) {
+            logger.info("invalid proof of stake")
             return false
         }
 

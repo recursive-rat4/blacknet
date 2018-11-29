@@ -7,9 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.transaction
 
 import mu.KotlinLogging
+import ninja.blacknet.core.AccountState
+import ninja.blacknet.core.Ledger
+import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.UndoBlock
 import ninja.blacknet.crypto.Hash
 
 private val logger = KotlinLogging.logger {}
