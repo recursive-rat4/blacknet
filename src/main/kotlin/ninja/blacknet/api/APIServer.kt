@@ -32,6 +32,7 @@ import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.*
@@ -236,6 +237,20 @@ fun Application.main() {
             val result = Message.verify(pubkey, signature, message)
 
             call.respond(result.toString())
+        }
+
+        get("/api/v1/addpeer/{address}/{port?}") {
+            val port = call.parameters["port"]?.toInt() ?: Node.DEFAULT_P2P_PORT
+            val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
+
+            try {
+                Node.connectTo(address)
+            } catch (e: Throwable) {
+                call.respond(e.message ?: "unknown error")
+                return@get
+            }
+
+            call.respond("Connected")
         }
     }
 }
