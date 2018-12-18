@@ -25,7 +25,7 @@ private val logger = KotlinLogging.logger {}
 
 object PeerDB {
     const val DELAY = 60 * 60
-    private val db = DBMaker.fileDB("peer.db").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
+    private val db = DBMaker.fileDB("db/peers").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
     @Suppress("UNCHECKED_CAST")
     private val map = db.hashMap("peers", Serializer.ELSA, Serializer.ELSA).createOrOpen() as HTreeMap<Address, Entry>
 
