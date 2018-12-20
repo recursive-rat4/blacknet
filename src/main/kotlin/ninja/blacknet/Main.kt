@@ -9,17 +9,28 @@
 
 package ninja.blacknet
 
+import com.google.common.io.Resources
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.jetty.Jetty
+import mu.KotlinLogging
 import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.UPnP
+import java.util.logging.LogManager
+
+private val logger = KotlinLogging.logger {}
 
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
+        val url = Resources.getResource("logging.properties")
+        val inStream = Resources.asByteSource(url).openStream()
+        LogManager.getLogManager().readConfiguration(inStream);
+        inStream.close()
+        logger.info("Starting Blacknet node")
+
         if (Config[listen]) {
             try {
                 Node.listenOnIP()

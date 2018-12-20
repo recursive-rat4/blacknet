@@ -39,7 +39,7 @@ dependencies {
     compile "com.rfksystems:blake2b:1.0.0"
     compile "org.mapdb:mapdb:3.0.7"
     compile "org.slf4j:slf4j-jdk14:1.7.25"
-    compile 'io.github.microutils:kotlin-logging:1.6.10'
+    compile 'io.github.microutils:kotlin-logging:1.6.22'
     compile 'org.briarproject:jtorctl:0.3'
     compile 'com.natpryce:konfig:1.6.10.0'
     compile 'com.google.guava:guava:27.0.1-jre'

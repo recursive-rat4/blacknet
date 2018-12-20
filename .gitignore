@@ -6,5 +6,5 @@
 .idea
 /out
 
-# db
 /db
+/log
