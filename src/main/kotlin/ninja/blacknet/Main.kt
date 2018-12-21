@@ -9,7 +9,6 @@
 
 package ninja.blacknet
 
-import com.google.common.io.Resources
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.jetty.Jetty
@@ -18,6 +17,7 @@ import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.UPnP
+import java.io.FileInputStream
 import java.util.logging.LogManager
 
 private val logger = KotlinLogging.logger {}
@@ -25,8 +25,7 @@ private val logger = KotlinLogging.logger {}
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        val url = Resources.getResource("logging.properties")
-        val inStream = Resources.asByteSource(url).openStream()
+        val inStream = FileInputStream("config/logging.properties")
         LogManager.getLogManager().readConfiguration(inStream);
         inStream.close()
         logger.info("Starting Blacknet node")
@@ -54,10 +53,10 @@ object Main {
          * https://ktor.io/
          *
          * Ktor configuration is stored in
-         * resources/application.conf
+         * config/ktor.conf
          * https://ktor.io/servers/engine.html
          *
          */
-        embeddedServer(Jetty, commandLineEnvironment(args)).start(wait = true)
+        embeddedServer(Jetty, commandLineEnvironment(arrayOf("-config=config/ktor.conf"))).start(wait = true)
     }
 }

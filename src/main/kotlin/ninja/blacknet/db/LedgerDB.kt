@@ -9,7 +9,6 @@
 
 package ninja.blacknet.db
 
-import com.google.common.io.Resources
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JSON
@@ -21,6 +20,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
+import java.io.File
 import kotlin.math.max
 
 private val logger = KotlinLogging.logger {}
@@ -50,8 +50,7 @@ object LedgerDB : Ledger {
         class Entry(val publicKey: String, val balance: Long)
 
         if (accounts.isEmpty()) {
-            val url = Resources.getResource("genesis.json")
-            val genesis = Resources.toString(url, Charsets.UTF_8)
+            val genesis = File("config/genesis.json").readText()
             val list = JSON.parse(Entry.serializer().list, genesis)
 
             var supply = 0L

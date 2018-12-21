@@ -11,9 +11,10 @@ package ninja.blacknet
 
 import com.natpryce.konfig.*
 import ninja.blacknet.network.Network
+import java.io.File
 
 object Config {
-    private val config = ConfigurationProperties.fromResource("blacknet.conf")
+    private val config = ConfigurationProperties.fromFile(File("config/blacknet.conf"))
 
     val mintxfee by stringType
     val dnsseed by booleanType
