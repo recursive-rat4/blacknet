@@ -48,6 +48,9 @@ class Connection(
         launch { sender() }
     }
 
+    fun totalBytesRead() = readChannel.totalBytesRead
+    fun totalBytesWritten() = writeChannel.totalBytesWritten
+
     private suspend fun receiver() {
         try {
             while (true) {

@@ -17,24 +17,28 @@ import ninja.blacknet.network.Node
 class PeerInfo(
         val remoteAddress: String,
         val localAddress: String,
-        val connectedat: Long,
         val timeoffset: Long,
         val ping: Long,
         val version: Int,
         val agent: String,
         val state: String,
-        val dosscore: Int
+        val dosscore: Int,
+        val connectedat: Long,
+        val totalBytesRead: Long,
+        val totalBytesWritten: Long
 ) {
     constructor(connection: Connection) : this(
             connection.remoteAddress.toString(),
             connection.localAddress.toString(),
-            connection.connectedAt,
             connection.timeOffset,
             connection.ping,
             connection.version,
             connection.agent,
             connection.state.name,
-            connection.dosScore
+            connection.dosScore,
+            connection.connectedAt,
+            connection.totalBytesRead(),
+            connection.totalBytesWritten()
     )
 
     companion object {
