@@ -29,10 +29,12 @@ import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
+import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.PeerDB
@@ -42,6 +44,8 @@ import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.SynchronizedArrayList
 import kotlin.coroutines.CoroutineContext
+
+private val logger = KotlinLogging.logger {}
 
 object APIServer : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
@@ -91,6 +95,8 @@ fun Application.main() {
                 while (true) {
                     incoming.receive()
                 }
+            } catch (e: ClosedReceiveChannelException) {
+                logger.info("WebSocket API client disconnected")
             } finally {
                 APIServer.blockNotify.remove(outgoing)
             }
@@ -103,6 +109,8 @@ fun Application.main() {
                     val pubkey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
                     APIServer.transactionNotify.add(Pair(outgoing, pubkey))
                 }
+            } catch (e: ClosedReceiveChannelException) {
+                logger.info("WebSocket API client disconnected")
             } finally {
                 APIServer.transactionNotify.removeIf { it.first == outgoing }
             }
