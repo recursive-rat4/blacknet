@@ -25,5 +25,12 @@ class MnemonicInfo(
             val publicKey = pair.second.toPublicKey()
             return MnemonicInfo(pair.first, Address.encode(publicKey), publicKey.toString())
         }
+
+        fun fromString(string: String?): MnemonicInfo? {
+            if (string == null) return null
+            val privateKey = Mnemonic.fromString(string) ?: return null
+            val publicKey = privateKey.toPublicKey()
+            return MnemonicInfo(string, Address.encode(publicKey), publicKey.toString())
+        }
     }
 }

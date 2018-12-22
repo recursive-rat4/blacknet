@@ -162,6 +162,12 @@ fun Application.main() {
             call.respond(JSON.indented.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
         }
 
+        post("/api/v1/mnemonic/info/{mnemonic}") {
+            val info = MnemonicInfo.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            call.respond(JSON.indented.stringify(MnemonicInfo.serializer(), info))
+        }
+
         post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()

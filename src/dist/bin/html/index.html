@@ -52,6 +52,11 @@
 <p>Result<br><input type="text" readonly="true" style="width:100%" id="verify_result"></p>
 <input onclick="verify();" value="Verify message" type="button">
 
+<h2>Mnemonic info</h2>
+<p>Mnemonic<br><input type="password" style="width:100%" id="mnemonic_info"></p>
+<p>Result<br><input type="text" readonly="true" style="width:100%" id="mnemonic_info_result"></p>
+<input onclick="mnemonic_info();" value="Mnemonic info" type="button">
+
 <script type="text/javascript">
 function request(method, url, callback) {
     url = "/api/v1" + url
@@ -111,6 +116,14 @@ function verify() {
 
     request("GET", url, function () {
         document.getElementById('verify_result').value = this.responseText;
+    });
+}
+function mnemonic_info() {
+    let mnemonic = document.getElementById('mnemonic_info').value;
+    let url = "/mnemonic/info/" + mnemonic + "/";
+
+    request("POST", url, function () {
+        document.getElementById('mnemonic_info_result').value = this.responseText;
     });
 }
 function request_info() {
