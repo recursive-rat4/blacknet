@@ -192,22 +192,22 @@ object Node : CoroutineScope {
         if (TxPool.process(hash, bytes)) {
             val inv = InvList()
             inv.add(Pair(DataType.Transaction, hash))
-            val packet = Inventory(inv).build()
-            connections.forEach {
-                if (it.state.isConnected() && it.feeFilter <= fee)
-                    it.sendPacket(packet)
+            val packet = Inventory(inv)
+            broadcastPacket(packet) {
+                it.feeFilter <= fee
             }
             return true
         }
         return false
     }
 
-    private suspend fun broadcastPacket(packet: Packet) {
+    private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }) {
         val bytes = packet.build()
         connections.forEach {
-            if (it.state.isConnected())
-                it.sendPacket(bytes)
+            if (it.state.isConnected() && filter(it))
+                it.sendPacket(bytes.copy())
         }
+        bytes.release()
     }
 
     private suspend fun listener(server: ServerSocket) {
