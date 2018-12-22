@@ -16,6 +16,7 @@ import mu.KotlinLogging
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.PeerDB
 import ninja.blacknet.serialization.BlacknetEncoder
 
 private val logger = KotlinLogging.logger {}
@@ -58,6 +59,8 @@ class Version(
             logger.info("Accepted connection from ${connection.remoteAddress}")
         } else {
             connection.state = Connection.State.OUTGOING_CONNECTED
+            PeerDB.connected(connection.remoteAddress)
+            PeerDB.commit()
             logger.info("Connected to ${connection.remoteAddress}")
         }
 

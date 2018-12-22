@@ -261,13 +261,12 @@ object Node : CoroutineScope {
                 continue
             }
 
+            PeerDB.attempt(address)
+            PeerDB.commit()
+
             try {
                 connectTo(address)
-                PeerDB.connected(address)
             } catch (e: Throwable) {
-                PeerDB.failed(address)
-            } finally {
-                PeerDB.commit()
             }
 
             delay(NETWORK_TIMEOUT) //TODO

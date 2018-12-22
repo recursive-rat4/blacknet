@@ -272,9 +272,6 @@ fun Application.main() {
                 return@get
             }
 
-            PeerDB.add(address)
-            PeerDB.commit()
-
             call.respond("Connected")
         }
 

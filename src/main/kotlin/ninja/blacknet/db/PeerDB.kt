@@ -54,7 +54,7 @@ object PeerDB {
             map[address] = Entry(Address.LOOPBACK, 0, 0, Node.time())
     }
 
-    fun failed(address: Address) {
+    fun attempt(address: Address) {
         if (address.isLocal()) return
         val entry = map[address]
         if (entry != null)
@@ -79,11 +79,11 @@ object PeerDB {
         return map.keys.shuffled().asSequence().take(x).toMutableList()
     }
 
-    fun add(peers: List<Address>, from: Address) = peers.forEach { add(it, from) }
-
-    fun add(peer: Address, from: Address = Address.LOOPBACK) {
-        if (!map.contains(peer))
-            map[peer] = Entry(from, 0, 0, 0)
+    fun add(peers: List<Address>, from: Address) {
+        peers.forEach {
+            if (!map.contains(it))
+                map[it] = Entry(from, 0, 0, 0)
+        }
     }
 
     private suspend fun oldEntriesRemover() {
