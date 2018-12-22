@@ -255,7 +255,7 @@ object Node : CoroutineScope {
 
             val address = PeerDB.getCandidate(filter)
             if (address == null) {
-                logger.info("Don't have candidates in PeerDB")
+                logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config[outgoingconnections]}")
                 delay(PeerDB.DELAY)
                 dnsSeeder(false)
                 continue
