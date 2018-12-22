@@ -35,6 +35,7 @@ import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
@@ -256,6 +257,9 @@ fun Application.main() {
                 call.respond(e.message ?: "unknown error")
                 return@get
             }
+
+            PeerDB.add(address)
+            PeerDB.commit()
 
             call.respond("Connected")
         }
