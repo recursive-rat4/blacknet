@@ -12,50 +12,220 @@
 <head>
     <meta charset="UTF-8">
     <title>Blacknet</title>
+    <style>
+        * {
+          margin: 0;
+          padding: 0;
+          font-family: sans-serif;
+        }
+
+        :root {
+          --darker-grey-bg: #2D2D2D;
+          --lighter-grey-bg: #3B3B3B;
+          --gold-text: #E8BA3F;
+          --grey-text: #ADADAD;
+        }
+
+        body {
+          background-color:var(--lighter-grey-bg);
+        }
+
+        header {
+          color: var(--gold-text);
+          background-color: var(--darker-grey-bg);
+          padding: 1rem;
+        }
+
+        .container {
+          width: 80%;
+          margin: 0 auto;
+          padding: 1rem 0;
+        }
+
+        p {
+          padding: 2px;
+        }
+
+        fieldset {
+          padding: 1rem;
+          border: 1px groove;
+          border-color: var(--darker-grey-bg);
+          margin: 1rem 0;
+        }
+
+        legend {
+          color: var(--grey-text);
+          font-size: 1.5em;
+          font-weight: bold;
+          padding-left: 4px;
+          padding-right: 4px;
+        }
+
+        label {
+          color: var(--grey-text);
+          flex-basis: 123px;
+          flex-grow: 1;
+        }
+
+        input {
+          border: 2px solid var(--darker-grey-bg);
+          border-radius: 4px;
+          height: 1.5em;
+          width: 80%;
+          padding: .25rem;
+          background-color: var(--grey-text);
+          flex-grow: 8;
+        }
+        input:read-only {
+          background-color: var(--lighter-grey-bg);
+          color: var(--gold-text);
+          border: none;
+          box-shadow: inset 0 0 0px #000000;
+        }
+        input:-moz-read-only {
+          background-color: var(--lighter-grey-bg);
+          color: var(--gold-text);
+          border: none;
+            box-shadow: inset 0 0 0px #000000;
+        }
+        input:focus {
+          box-shadow: inset 0 0 4px #000000;
+        }
+
+        button {
+          font-size: 1.25em;
+          cursor: pointer;
+          border-radius: 4px;
+          border: 2px solid var(--darker-grey);
+          padding: .25rem;
+        }
+
+        .field-row {
+          display: flex;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
 
+<header>
 <h1>Blacknet</h1>
 <p id="info_height"></p>
 <p id="info_connections"></p>
+</header>
 
-<h2>Start staking</h2>
-<p>Mnemonic<br><input type="password" style="width:100%" id="start_staking_mnemonic"></p>
-<p>Result<br><input type="text" readonly="true" style="width:100%" id="start_staking_result"></p>
-<input onclick="start_staking();" value="Start staking" type="button">
+<div class="container">
+<fieldset>
+  <legend>Start staking</legend>
+  <div class="field-row">
+  <label>Mnemonic</label>
+  <input type="password" id="start_staking_mnemonic">
+  </div>
+  <div class="field-row">
+  <label>Result</label>
+  <input type="text" id="start_staking_result" readonly>
+  </div>
+  <button onclick="start_staking();">Start staking</button>
+</fieldset>
 
-<h2>Get balance</h2>
-<p>Account<br><input type="text" style="width:100%" id="balance_account"></p>
-<p>Result<br><input type="text" readonly="true" style="width:100%" id="balance_result"></p>
-<input onclick="balance();" value="Get balance" type="button">
+<fieldset>
+  <legend>Get balance</legend>
+  <div class="field-row">
+  <label>Account</label>
+  <input type="text" id="balance_account">
+  </div>
+  <div class="field-row">
+  <label>Result</label>
+  <input type="text" id="balance_result" readonly>
+  </div>
+  <button onclick="balance();">Get balance</button>
+</fieldset>
 
-<h2>Transfer</h2>
-<p>Mnemonic<br><input type="password" style="width:100%" id="transfer_mnemonic"></p>
-<p>Fee<br><input type="text" style="width:100%" id="transfer_fee"></p>
-<p>Amount<br><input type="text" style="width:100%" id="transfer_amount"></p>
-<p>To<br><input type="text" style="width:100%" id="transfer_to"></p>
-<p>Message<br><input type="text" style="width:100%" id="transfer_message"></p>
-<p>Encrypted<br><input type="checkbox" id="transfer_encrypted"></p>
-<p>Result<br><input type="text" readonly="true" style="width:100%" id="transfer_result"></p>
-<input onclick="transfer();" value="Transfer" type="button">
+<fieldset>
+  <legend>Transfer</legend>
+  <div class="field-row">
+  <label>Mnemonic</label>
+  <input type="password" id="transfer_mnemonic">
+  </div>
+  <div class="field-row">
+  <label>Fee</label>
+  <input type="text" id="transfer_fee">
+  </div>
+  <div class="field-row">
+  <label>Amount</label>
+  <input type="text" id="transfer_amount">
+  </div>
+  <div class="field-row">
+  <label>To</label>
+  <input type="text" id="transfer_to">
+  </div>
+  <div class="field-row">
+  <label>Message</label>
+  <input type="text" id="transfer_message">
+  </div>
+  <div class="field-row">
+  <label>Encrypted</label>
+  <input type="checkbox" id="transfer_encrypted">
+  </div>
+  <div class="field-row">
+  <label>Result</label>
+  <input type="text" id="transfer_result" readonly>
+  </div>
+  <button onclick="transfer();">Transfer</button>
+</fieldset>
 
-<h2>Sign message</h2>
-<p>Mnemonic<br><input type="password" style="width:100%" id="sign_mnemonic"></p>
-<p>Message<br><input type="text" style="width:100%" id="sign_message"></p>
-<p>Result<br><input type="text" readonly="true" style="width:100%" id="sign_result"></p>
-<input onclick="sign();" value="Sign message" type="button">
+<fieldset>
+  <legend>Sign message</legend>
+  <div class="field-row">
+  <label>Mnemonic</label>
+  <input type="password" id="sign_mnemonic">
+  </div>
+  <div class="field-row">
+  <label>Message</label>
+  <input type="text" id="sign_message">
+  </div>
+  <div class="field-row">
+  <label>Result</label>
+  <input type="text" id="sign_result" readonly>
+  </div>
+  <button onclick="sign();">Sign message</button>
+</fieldset>
 
-<h2>Verify message</h2>
-<p>Account<br><input type="text" style="width:100%" id="verify_account"></p>
-<p>Signature<br><input type="text" style="width:100%" id="verify_signature"></p>
-<p>Message<br><input type="text" style="width:100%" id="verify_message"></p>
-<p>Result<br><input type="text" readonly="true" style="width:100%" id="verify_result"></p>
-<input onclick="verify();" value="Verify message" type="button">
+<fieldset>
+  <legend>Verify message</legend>
+  <div class="field-row">
+  <label>Account</label>
+  <input type="text" id="verify_account">
+  </div>
+  <div class="field-row">
+  <label>Signature</label>
+  <input type="text" id="verify_signature">
+  </div>
+  <div class="field-row">
+  <label>Message</label>
+  <input type="text" id="verify_message">
+  </div>
+  <div class="field-row">
+  <label>Result</label>
+  <input type="text" id="verify_result" readonly>
+  </div>
+  <button onclick="verify();">Verify message</button>
+</fieldset>
 
-<h2>Mnemonic info</h2>
-<p>Mnemonic<br><input type="password" style="width:100%" id="mnemonic_info"></p>
-<p>Result<br><input type="text" readonly="true" style="width:100%" id="mnemonic_info_result"></p>
-<input onclick="mnemonic_info();" value="Mnemonic info" type="button">
+<fieldset>
+  <legend>Mnemonic info</legend>
+  <div class="field-row">
+  <label>Mnemonic</label>
+  <input type="password" id="mnemonic_info">
+  </div>
+  <div class="field-row">
+  <label>Result</label>
+  <input type="text" id="mnemonic_info_result" readonly>
+  </div>
+  <button onclick="mnemonic_info();">Mnemonic info</button>
+</fieldset>
+</div>
 
 <script type="text/javascript">
 function request(method, url, callback) {
