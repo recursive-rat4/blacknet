@@ -56,6 +56,9 @@ object PoS {
         while (true) {
             delay(1)
 
+            if (Node.isSynchronizing())
+                continue
+
             val time = Node.time() and (TIMESTAMP_MASK xor -1L)
             if (time <= LedgerDB.blockTime())
                 continue

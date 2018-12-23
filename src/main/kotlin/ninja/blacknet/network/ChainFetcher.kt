@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.core.Block
+import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
@@ -71,6 +72,7 @@ object ChainFetcher : CoroutineScope {
             if (!BlockDB.isInteresting(data.chain))
                 continue
 
+            logger.info("Fetching ${data.chain} from ${data.connection.remoteAddress}")
             requestTime = Node.time()
             syncChain = data
             data.connection.sendPacket(GetBlocks(LedgerDB.blockHash(), LedgerDB.getRollingCheckpoint()))
@@ -84,10 +86,23 @@ object ChainFetcher : CoroutineScope {
     }
 
     private suspend fun fetched() {
-        if (undoRollack != null && undoDifficulty >= LedgerDB.cumulativeDifficulty()) {
-            logger.info("Reconnecting ${undoRollack!!.size} blocks")
-            LedgerDB.undoRollack(rollbackTo!!, undoRollack!!)
+        if (undoRollack != null) {
+            if (undoDifficulty >= LedgerDB.cumulativeDifficulty()) {
+                logger.info("Reconnecting ${undoRollack!!.size} blocks")
+                LedgerDB.undoRollack(rollbackTo!!, undoRollack!!)
+                LedgerDB.commit()
+            } else {
+                logger.info("Removing ${undoRollack!!.size} blocks from db")
+                val toRemove = undoRollack!!
+                launch { BlockDB.remove(toRemove) }
+                //announce new chain after reorganization
+                Node.broadcastInv(arrayListOf(Pair(DataType.Block, LedgerDB.blockHash())))
+            }
         }
+        if (syncChain != null) {
+            logger.info("Finished fetching")
+        }
+
         syncChain = null
         rollbackTo = null
         undoRollack = null
@@ -96,13 +111,13 @@ object ChainFetcher : CoroutineScope {
 
     suspend fun fetched(connection: Connection, hashes: ArrayList<Hash>, blocks: ArrayList<SerializableByteArray>) {
         if (syncChain == null || syncChain!!.connection != connection) {
-            logger.info("Disconnecting ${connection.remoteAddress}")
+            logger.info("Unexpected synchronization. Disconnecting ${connection.remoteAddress}")
             connection.close()
             return
         }
         if (!hashes.isEmpty()) {
             if (rollbackTo != null) {
-                logger.info("Disconnecting ${connection.remoteAddress}")
+                logger.info("Unexpected rollback. Disconnecting ${connection.remoteAddress}")
                 connection.close()
                 fetched()
                 return
@@ -119,10 +134,18 @@ object ChainFetcher : CoroutineScope {
             connection.sendPacket(GetBlocks(prev, checkpoint))
             return
         }
+        if (blocks.isEmpty()) {
+            logger.info("No blocks. Disconnecting ${connection.remoteAddress}")
+            connection.close()
+            fetched()
+            return
+        }
         launch {
             if (rollbackTo != null && undoRollack == null) {
                 undoDifficulty = LedgerDB.cumulativeDifficulty()
                 undoRollack = LedgerDB.rollbackTo(rollbackTo!!)
+                logger.info("Disconnected ${undoRollack!!.size} blocks")
+                LedgerDB.commit()
             }
             for (i in blocks) {
                 val hash = Block.Hasher(i.array)

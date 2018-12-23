@@ -34,6 +34,8 @@ class Data(private val list: DataList) : Packet {
             return
         }
 
+        val inv = InvList()
+
         for (i in list) {
             val type = i.first
             val bytes = i.second
@@ -42,9 +44,15 @@ class Data(private val list: DataList) : Packet {
 
             DataFetcher.fetched(hash)
 
-            if (!type.db.process(hash, bytes.array, connection))
+            if (type.db.process(hash, bytes.array, connection))
+                inv.add(Pair(type, hash))
+            else
                 connection.dos("invalid " + type.name + " " + hash)
         }
+
+        //TODO don't announce to sender
+        if (!inv.isEmpty())
+            Node.broadcastInv(inv)
     }
 }
 

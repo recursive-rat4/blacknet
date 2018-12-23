@@ -201,6 +201,12 @@ object Node : CoroutineScope {
         return false
     }
 
+    suspend fun broadcastInv(inv: InvList): Boolean {
+        //TODO feeFilter
+        broadcastPacket(Inventory(inv))
+        return true
+    }
+
     private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }) {
         val bytes = packet.build()
         connections.forEach {

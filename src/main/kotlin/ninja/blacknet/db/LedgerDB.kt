@@ -224,6 +224,10 @@ object LedgerDB : CoroutineScope, Ledger {
     }
 
     suspend fun processBlock(hash: Hash, block: Block, size: Int, txHashes: ArrayList<Hash>): Boolean = mutex.withLock {
+        return@withLock processBlockUnlocked(hash, block, size, txHashes)
+    }
+
+    private suspend fun processBlockUnlocked(hash: Hash, block: Block, size: Int, txHashes: ArrayList<Hash>): Boolean {
         if (block.previous != blockHash()) {
             logger.error("not on current chain")
             return false
@@ -342,20 +346,24 @@ object LedgerDB : CoroutineScope, Ledger {
     }
 
     suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = mutex.withLock {
-        val i = getBlockNumber(hash) ?: return@withLock ArrayList()
+        return@withLock rollbackToUnlocked(hash)
+    }
+
+    private fun rollbackToUnlocked(hash: Hash): ArrayList<Hash> {
+        val i = getBlockNumber(hash) ?: return ArrayList()
         val height = height()
         var n = height - i
         val ret = ArrayList<Hash>(n)
         while (n-- > 0)
             ret.add(undoBlock())
-        return@withLock ret
+        return ret
     }
 
     suspend fun undoRollack(hash: Hash, list: ArrayList<Hash>) = mutex.withLock {
-        val toRemove = rollbackTo(hash)
-        launch { toRemove.forEach { BlockDB.remove(it) } }
+        val toRemove = rollbackToUnlocked(hash)
+        launch { BlockDB.remove(toRemove) }
 
-        list.forEach {
+        list.asReversed().forEach {
             val bytes = BlockDB.get(it)
             if (bytes == null) {
                 logger.error("block not found")
@@ -367,7 +375,7 @@ object LedgerDB : CoroutineScope, Ledger {
                 return
             }
             val txHashes = ArrayList<Hash>(block.transactions.size)
-            if (!processBlock(it, block, bytes.size, txHashes)) {
+            if (!processBlockUnlocked(it, block, bytes.size, txHashes)) {
                 logger.error("process block failed")
                 return
             }

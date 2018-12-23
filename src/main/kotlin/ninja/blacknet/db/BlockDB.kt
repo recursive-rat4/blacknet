@@ -35,6 +35,13 @@ object BlockDB : DataDB() {
         return map.size
     }
 
+    suspend fun remove(list: ArrayList<Hash>) {
+        list.forEach {
+            BlockDB.remove(it)
+        }
+        BlockDB.commit()
+    }
+
     override suspend fun contains(hash: Hash): Boolean {
         return map.contains(hash)
     }
