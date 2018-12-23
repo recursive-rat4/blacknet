@@ -310,7 +310,7 @@ object Node : CoroutineScope {
             if (randomPeers.size == 0)
                 continue
 
-            val myAddress = listenAddress.filter { !it.isLocal() }
+            val myAddress = listenAddress.filter { !it.isLocal() && !it.isPrivate() }
             if (myAddress.isNotEmpty()) {
                 val i = Random.nextInt(randomPeers.size * 500)
                 if (i < randomPeers.size)

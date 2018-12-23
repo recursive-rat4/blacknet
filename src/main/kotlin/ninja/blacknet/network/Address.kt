@@ -33,6 +33,10 @@ class Address(
         return network.isLocal(this)
     }
 
+    fun isPrivate(): Boolean {
+        return network.isPrivate(this)
+    }
+
     fun getAddressString(): String {
         return network.getAddressString(this)
     }
