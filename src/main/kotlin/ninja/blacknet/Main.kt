@@ -9,6 +9,7 @@
 
 package ninja.blacknet
 
+import com.rfksystems.blake2b.security.Blake2bProvider
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.jetty.Jetty
@@ -18,6 +19,7 @@ import ninja.blacknet.Config.upnp
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.UPnP
 import java.io.FileInputStream
+import java.security.Security
 import java.util.logging.LogManager
 
 private val logger = KotlinLogging.logger {}
@@ -25,6 +27,8 @@ private val logger = KotlinLogging.logger {}
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
+        Security.addProvider(Blake2bProvider())
+
         val inStream = FileInputStream("config/logging.properties")
         LogManager.getLogManager().readConfiguration(inStream);
         inStream.close()

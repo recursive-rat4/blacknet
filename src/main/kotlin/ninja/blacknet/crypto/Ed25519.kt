@@ -10,7 +10,6 @@
 package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.Blake2b.BLAKE2_B_512
-import com.rfksystems.blake2b.security.Blake2bProvider
 import net.i2p.crypto.eddsa.EdDSAEngine
 import net.i2p.crypto.eddsa.EdDSAPrivateKey
 import net.i2p.crypto.eddsa.EdDSAPublicKey
@@ -26,7 +25,6 @@ import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec
 import ninja.blacknet.util.byteArrayOfInts
 import java.security.MessageDigest
-import java.security.Security
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.reflect.full.memberProperties
@@ -39,8 +37,6 @@ object Ed25519 {
     private val spec: EdDSANamedCurveSpec
 
     init {
-        Security.addProvider(Blake2bProvider())
-
         field = Field(256,
                 byteArrayOfInts(0xed, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f),
                 Ed25519LittleEndianEncoding())
