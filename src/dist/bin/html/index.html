@@ -30,7 +30,7 @@
           background-color:var(--lighter-grey-bg);
         }
 
-        header {
+        header, footer {
           color: var(--gold-text);
           background-color: var(--darker-grey-bg);
           padding: 1rem;
@@ -80,13 +80,11 @@
           background-color: var(--lighter-grey-bg);
           color: var(--gold-text);
           border: none;
-          box-shadow: inset 0 0 0px #000000;
         }
         input:-moz-read-only {
           background-color: var(--lighter-grey-bg);
           color: var(--gold-text);
           border: none;
-            box-shadow: inset 0 0 0px #000000;
         }
         input:focus {
           box-shadow: inset 0 0 4px #000000;
@@ -96,7 +94,7 @@
           font-size: 1.25em;
           cursor: pointer;
           border-radius: 4px;
-          border: 2px solid var(--darker-grey);
+          border: 2px solid var(--darker-grey-bg);
           padding: .25rem;
         }
 
@@ -104,6 +102,44 @@
           display: flex;
           align-items: center;
           margin-bottom: 1rem;
+        }
+
+        #node-table {
+          width: 100%;
+        }
+
+        caption {
+          color: var(--grey-text);
+          padding: .5rem;
+          background-color: var(--darker-grey-bg);
+        }
+
+        thead td {
+          color: var(--grey-text);
+          padding: .5rem;
+        }
+
+        tbody td {
+          color: var(--grey-text);
+          padding: .25rem .5rem;
+        }
+
+        tr:hover {
+          background-color: var(--darker-grey-bg);
+        }
+
+        #api-menu {
+          display: flex;
+          justify-content: space-between;
+          list-style: none;
+          height: 35px;
+          align-items: center;
+        }
+
+        .menu-item {
+          padding-left: 5px;
+          padding-right: 5px;
+          cursor: pointer;
         }
     </style>
 </head>
@@ -116,127 +152,162 @@
 </header>
 
 <div class="container">
-<fieldset>
-  <legend>Start staking</legend>
-  <div class="field-row">
-  <label>Mnemonic</label>
-  <input type="password" id="start_staking_mnemonic">
-  </div>
-  <div class="field-row">
-  <label>Result</label>
-  <input type="text" id="start_staking_result" readonly>
-  </div>
-  <button onclick="start_staking();">Start staking</button>
-</fieldset>
 
-<fieldset>
-  <legend>Get balance</legend>
-  <div class="field-row">
-  <label>Account</label>
-  <input type="text" id="balance_account">
-  </div>
-  <div class="field-row">
-  <label>Result</label>
-  <input type="text" id="balance_result" readonly>
-  </div>
-  <button onclick="balance();">Get balance</button>
-</fieldset>
+<div>
+  <fieldset>
+    <legend>Start staking</legend>
+    <div class="field-row">
+    <label>Mnemonic</label>
+    <input type="password" id="start_staking_mnemonic">
+    </div>
+    <div class="field-row">
+    <label>Result</label>
+    <input type="text" id="start_staking_result" readonly>
+    </div>
+    <button onclick="start_staking();">Start staking</button>
+  </fieldset>
 
-<fieldset>
-  <legend>Transfer</legend>
-  <div class="field-row">
-  <label>Mnemonic</label>
-  <input type="password" id="transfer_mnemonic">
-  </div>
-  <div class="field-row">
-  <label>Fee</label>
-  <input type="text" id="transfer_fee">
-  </div>
-  <div class="field-row">
-  <label>Amount</label>
-  <input type="text" id="transfer_amount">
-  </div>
-  <div class="field-row">
-  <label>To</label>
-  <input type="text" id="transfer_to">
-  </div>
-  <div class="field-row">
-  <label>Message</label>
-  <input type="text" id="transfer_message">
-  </div>
-  <div class="field-row">
-  <label>Encrypted</label>
-  <input type="checkbox" id="transfer_encrypted">
-  </div>
-  <div class="field-row">
-  <label>Result</label>
-  <input type="text" id="transfer_result" readonly>
-  </div>
-  <button onclick="transfer();">Transfer</button>
-</fieldset>
+  <fieldset>
+    <legend>Get balance</legend>
+    <div class="field-row">
+    <label>Account</label>
+    <input type="text" id="balance_account">
+    </div>
+    <div class="field-row">
+    <label>Result</label>
+    <input type="text" id="balance_result" readonly>
+    </div>
+    <button onclick="balance();">Get balance</button>
+  </fieldset>
 
-<fieldset>
-  <legend>Sign message</legend>
-  <div class="field-row">
-  <label>Mnemonic</label>
-  <input type="password" id="sign_mnemonic">
-  </div>
-  <div class="field-row">
-  <label>Message</label>
-  <input type="text" id="sign_message">
-  </div>
-  <div class="field-row">
-  <label>Result</label>
-  <input type="text" id="sign_result" readonly>
-  </div>
-  <button onclick="sign();">Sign message</button>
-</fieldset>
+  <fieldset>
+    <legend>Transfer</legend>
+    <div class="field-row">
+    <label>Mnemonic</label>
+    <input type="password" id="transfer_mnemonic">
+    </div>
+    <div class="field-row">
+    <label>Fee</label>
+    <input type="text" id="transfer_fee">
+    </div>
+    <div class="field-row">
+    <label>Amount</label>
+    <input type="text" id="transfer_amount">
+    </div>
+    <div class="field-row">
+    <label>To</label>
+    <input type="text" id="transfer_to">
+    </div>
+    <div class="field-row">
+    <label>Message</label>
+    <input type="text" id="transfer_message">
+    </div>
+    <div class="field-row">
+    <label>Encrypted</label>
+    <input type="checkbox" id="transfer_encrypted">
+    </div>
+    <div class="field-row">
+    <label>Result</label>
+    <input type="text" id="transfer_result" readonly>
+    </div>
+    <button onclick="transfer();">Transfer</button>
+  </fieldset>
 
-<fieldset>
-  <legend>Verify message</legend>
-  <div class="field-row">
-  <label>Account</label>
-  <input type="text" id="verify_account">
-  </div>
-  <div class="field-row">
-  <label>Signature</label>
-  <input type="text" id="verify_signature">
-  </div>
-  <div class="field-row">
-  <label>Message</label>
-  <input type="text" id="verify_message">
-  </div>
-  <div class="field-row">
-  <label>Result</label>
-  <input type="text" id="verify_result" readonly>
-  </div>
-  <button onclick="verify();">Verify message</button>
-</fieldset>
+  <fieldset>
+    <legend>Sign message</legend>
+    <div class="field-row">
+    <label>Mnemonic</label>
+    <input type="password" id="sign_mnemonic">
+    </div>
+    <div class="field-row">
+    <label>Message</label>
+    <input type="text" id="sign_message">
+    </div>
+    <div class="field-row">
+    <label>Result</label>
+    <input type="text" id="sign_result" readonly>
+    </div>
+    <button onclick="sign();">Sign message</button>
+  </fieldset>
 
-<fieldset>
-  <legend>Mnemonic info</legend>
-  <div class="field-row">
-  <label>Mnemonic</label>
-  <input type="password" id="mnemonic_info">
-  </div>
-  <div class="field-row">
-  <label>Result</label>
-  <input type="text" id="mnemonic_info_result" readonly>
-  </div>
-  <button onclick="mnemonic_info();">Mnemonic info</button>
-</fieldset>
+  <fieldset>
+    <legend>Verify message</legend>
+    <div class="field-row">
+    <label>Account</label>
+    <input type="text" id="verify_account">
+    </div>
+    <div class="field-row">
+    <label>Signature</label>
+    <input type="text" id="verify_signature">
+    </div>
+    <div class="field-row">
+    <label>Message</label>
+    <input type="text" id="verify_message">
+    </div>
+    <div class="field-row">
+    <label>Result</label>
+    <input type="text" id="verify_result" readonly>
+    </div>
+    <button onclick="verify();">Verify message</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>Mnemonic info</legend>
+    <div class="field-row">
+    <label>Mnemonic</label>
+    <input type="password" id="mnemonic_info">
+    </div>
+    <div class="field-row">
+    <label>Result</label>
+    <input type="text" id="mnemonic_info_result" readonly>
+    </div>
+    <button onclick="mnemonic_info();">Mnemonic info</button>
+  </fieldset>
 </div>
+
+<div>
+  <table id="node-table">
+  <caption>Connected Nodes</caption>
+  <thead>
+  <tr><td>IP</td><td>Ping</td><td>Bytes Read</td><td>Bytes Written</td><td>In/Out</td></tr>
+  </thead>
+  <tbody id="node-list">
+  </tbody>
+  </table>
+  <!-- <template> is poplulated by display_node_list() -->
+  <template id="node-row">
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  </template>
+</div>
+
+</div> <!-- End container div -->
+
+<footer>
+<ul id="api-menu">
+  <li onclick="display_api_json_result('peerinfo');" class="menu-item">peerinfo</li>
+  <li onclick="display_api_json_result('nodeinfo');" class="menu-item">nodeinfo</li>
+  <li onclick="display_api_json_result('ledger');" class="menu-item">ledger</li>
+  <li onclick="display_api_json_result('peerdb');" class="menu-item">peerdb</li>
+</ul>
+<pre id='api-json-result'></pre>
+</footer>
 
 <script type="text/javascript">
 function request(method, url, callback) {
     url = "/api/v1" + url
     let xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = callback;
+    xhr.addEventListener('load', callback);
     xhr.open(method, url, true);
     xhr.send();
 }
 function start_staking() {
-	let mnemonic = document.getElementById('start_staking_mnemonic').value;
+    let mnemonic = document.getElementById('start_staking_mnemonic').value;
     let url = "/staker/start/" + mnemonic + "/";
 
     request("POST", url, function () {
@@ -244,7 +315,7 @@ function start_staking() {
     });
 }
 function balance() {
-	let account = document.getElementById('balance_account').value;
+    let account = document.getElementById('balance_account').value;
     let url = "/ledger/get/" + account + "/";
 
     request("GET", url, function () {
@@ -257,12 +328,12 @@ function balance() {
     });
 }
 function transfer() {
-	let mnemonic = document.getElementById('transfer_mnemonic').value;
-	let fee = document.getElementById('transfer_fee').value;
-	let amount = document.getElementById('transfer_amount').value;
-	let to = document.getElementById('transfer_to').value;
-	let message = document.getElementById('transfer_message').value;
-	let encrypted = message && document.getElementById('transfer_encrypted').checked ? "1" : "";
+    let mnemonic = document.getElementById('transfer_mnemonic').value;
+    let fee = document.getElementById('transfer_fee').value;
+    let amount = document.getElementById('transfer_amount').value;
+    let to = document.getElementById('transfer_to').value;
+    let message = document.getElementById('transfer_message').value;
+    let encrypted = message && document.getElementById('transfer_encrypted').checked ? "1" : "";
     let url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
     request("POST", url, function () {
@@ -270,8 +341,8 @@ function transfer() {
     });
 }
 function sign() {
-	let mnemonic = document.getElementById('sign_mnemonic').value;
-	let message = document.getElementById('sign_message').value;
+    let mnemonic = document.getElementById('sign_mnemonic').value;
+    let message = document.getElementById('sign_message').value;
     let url = "/signmessage/" + mnemonic + "/" + message + "/";
 
     request("POST", url, function () {
@@ -279,9 +350,9 @@ function sign() {
     });
 }
 function verify() {
-	let account = document.getElementById('verify_account').value;
-	let signature = document.getElementById('verify_signature').value;
-	let message = document.getElementById('verify_message').value;
+    let account = document.getElementById('verify_account').value;
+    let signature = document.getElementById('verify_signature').value;
+    let message = document.getElementById('verify_message').value;
     let url = "/verifymessage/" + account + "/" + signature + "/" + message + "/";
 
     request("GET", url, function () {
@@ -296,6 +367,60 @@ function mnemonic_info() {
         document.getElementById('mnemonic_info_result').value = this.responseText;
     });
 }
+function display_api_json_result(apiCall) {
+  if (apiCall === '') return;
+  const url = `/${apiCall}/`;
+  request("GET", url, function() {
+    const data = JSON.parse(this.responseText);
+    const pre = document.getElementById("api-json-result");
+    const h2 = document.createElement('h2');
+    const p = document.createElement('p');
+    pre.innerHTML = '';
+    h2.innerHTML = apiCall;
+    p.innerHTML = '[Close]';
+    p.style.cursor = 'pointer';
+    p.onclick = function(){ pre.innerHTML = '' };
+    pre.append(h2);
+    pre.append(p);
+    pre.append(this.responseText);
+    switch (apiCall) {
+      case "nodeinfo":
+        document.getElementById('info_connections').innerHTML = "Connections: " + data.outgoing + " outgoing, " + data.incoming + " incoming";
+        break;
+      case "ledger":
+        document.getElementById('info_height').innerHTML = "Blockchain height: " + data.height;
+        break;
+      case "peerinfo":
+        display_node_list(data);
+        break;
+    }
+  });
+}
+function display_node_list(data=null) {
+  if (data === null) {
+    request('GET', '/peerinfo', function() {
+      const data = JSON.parse(this.responseText);
+      createTableRows(data);
+    });
+  } else {
+    createTableRows(data);
+  }
+  function createTableRows(data){
+    const tbody = document.querySelector('#node-list');
+    const template = document.querySelector('#node-row');
+    tbody.innerHTML = '';
+    data.forEach( (node) => {
+      const clone = document.importNode(template.content, true);
+      const td = clone.querySelectorAll('td');
+      td[0].textContent = node.remoteAddress;
+      td[1].textContent = node.ping;
+      td[2].textContent = node.totalBytesRead;
+      td[3].textContent = node.totalBytesWritten;
+      td[4].textContent = node.state === 'INCOMING_CONNECTED' ? 'In'  : 'Out';
+      tbody.appendChild(clone);
+    });
+  }
+}
 function request_info() {
     request("GET", "/ledger", function () {
         let data = JSON.parse(this.responseText)
@@ -305,6 +430,7 @@ function request_info() {
         let data = JSON.parse(this.responseText)
         document.getElementById('info_connections').innerHTML = "Connections: " + data.outgoing + " outgoing, " + data.incoming + " incoming";
     });
+    display_node_list();
 }
 request_info();
 let ws = new WebSocket("ws://localhost:8283/api/v1/notify/block");
