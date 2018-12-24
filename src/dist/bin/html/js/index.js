@@ -85,6 +85,6 @@ void function(){
     }
     request_info();
     
-    let ws = new WebSocket("ws://"+location.hostname+"/api/v1/notify/block");
+    let ws = new WebSocket("ws://"+location.host+"/api/v1/notify/block");
     ws.onmessage = request_info;
 }();
