@@ -35,7 +35,7 @@
         <label>Result</label>
         <input type="text" id="start_staking_result" readonly>
       </div>
-      <button onclick="start_staking();">Start staking</button>
+      <button id="start_staking">Start staking</button>
     </fieldset>
 
     <fieldset>
@@ -48,7 +48,7 @@
         <label>Result</label>
         <input type="text" id="balance_result" readonly>
       </div>
-      <button onclick="balance();">Get balance</button>
+      <button id="balance">Get balance</button>
     </fieldset>
 
     <fieldset>
@@ -81,7 +81,7 @@
         <label>Result</label>
         <input type="text" id="transfer_result" readonly>
       </div>
-      <button onclick="transfer();">Transfer</button>
+      <button id="transfer">Transfer</button>
     </fieldset>
 
     <fieldset>
@@ -98,7 +98,7 @@
         <label>Result</label>
         <input type="text" id="sign_result" readonly>
       </div>
-      <button onclick="sign();">Sign message</button>
+      <button id="sign">Sign message</button>
     </fieldset>
 
     <fieldset>
@@ -119,7 +119,7 @@
         <label>Result</label>
         <input type="text" id="verify_result" readonly>
       </div>
-      <button onclick="verify();">Verify message</button>
+      <button id="verify">Verify message</button>
     </fieldset>
 
     <fieldset>
@@ -132,10 +132,10 @@
         <label>Result</label>
         <input type="text" id="mnemonic_info_result" readonly>
       </div>
-      <button onclick="mnemonic_info();">Mnemonic info</button>
+      <button id="mnemonic_info">Mnemonic info</button>
     </fieldset>
   </div>
-
+  <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
   <script type="text/javascript" src="js/index.js"></script>
 </body>
 </html>
