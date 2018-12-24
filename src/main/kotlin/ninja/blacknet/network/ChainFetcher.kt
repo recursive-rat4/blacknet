@@ -140,31 +140,29 @@ object ChainFetcher : CoroutineScope {
             fetched()
             return
         }
-        launch {
-            if (rollbackTo != null && undoRollack == null) {
-                undoDifficulty = LedgerDB.cumulativeDifficulty()
-                undoRollack = LedgerDB.rollbackTo(rollbackTo!!)
-                logger.info("Disconnected ${undoRollack!!.size} blocks")
-                LedgerDB.commit()
-            }
-            for (i in blocks) {
-                val hash = Block.Hasher(i.array)
-                if (!BlockDB.process(hash, i.array, null)) {
-                    logger.info("Invalid block $hash Disconnecting ${connection.remoteAddress}")
-                    connection.close()
-                    fetched()
-                    return@launch
-                }
-            }
-            if (syncChain!!.chain == LedgerDB.blockHash()) {
+        if (rollbackTo != null && undoRollack == null) {
+            undoDifficulty = LedgerDB.cumulativeDifficulty()
+            undoRollack = LedgerDB.rollbackTo(rollbackTo!!)
+            logger.info("Disconnected ${undoRollack!!.size} blocks")
+            LedgerDB.commit()
+        }
+        for (i in blocks) {
+            val hash = Block.Hasher(i.array)
+            if (!BlockDB.process(hash, i.array, null)) {
+                logger.info("Invalid block $hash Disconnecting ${connection.remoteAddress}")
+                connection.close()
                 fetched()
-            } else {
-                if (syncChain!!.cumulativeDifficulty() == BigInt.ZERO
-                        || syncChain!!.cumulativeDifficulty() > LedgerDB.cumulativeDifficulty())
-                    requestBlocks()
-                else
-                    fetched()
+                return
             }
+        }
+        if (syncChain!!.chain == LedgerDB.blockHash()) {
+            fetched()
+        } else {
+            if (syncChain!!.cumulativeDifficulty() == BigInt.ZERO
+                    || syncChain!!.cumulativeDifficulty() > LedgerDB.cumulativeDifficulty())
+                requestBlocks()
+            else
+                fetched()
         }
     }
 
