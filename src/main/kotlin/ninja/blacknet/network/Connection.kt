@@ -104,6 +104,7 @@ class Connection(
             logger.error("Exception in sender $remoteAddress", e)
         } finally {
             close()
+            Node.disconnected(this)
         }
     }
 

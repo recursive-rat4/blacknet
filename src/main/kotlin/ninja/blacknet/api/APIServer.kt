@@ -96,7 +96,6 @@ fun Application.main() {
                     incoming.receive()
                 }
             } catch (e: ClosedReceiveChannelException) {
-                logger.info("WebSocket API client disconnected")
             } finally {
                 APIServer.blockNotify.remove(outgoing)
             }

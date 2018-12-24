@@ -142,7 +142,7 @@ enum class Network(val addrSize: Int) {
                         val chan = Socks5(socksProxy).connect(address)
                         return Connection(chan.first, chan.second, address, socksProxy, Connection.State.OUTGOING_WAITING)
                     } else {
-                        val socket = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().connect(address.getSocketAddress())
+                        val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
                         if (Config[listen] && !localAddress.isLocal())
                             Node.listenAddress.add(Address(localAddress.network, Config[port], localAddress.bytes))
@@ -255,5 +255,7 @@ enum class Network(val addrSize: Int) {
                 return emptyList()
             }
         }
+
+        private val selector = ActorSelectorManager(Dispatchers.IO)
     }
 }

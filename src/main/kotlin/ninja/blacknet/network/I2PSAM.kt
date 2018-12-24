@@ -33,6 +33,7 @@ private val logger = KotlinLogging.logger {}
 
 object I2PSAM : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
+    private val selector = ActorSelectorManager(Dispatchers.IO)
     private val sessionId = generateId()
     val sam: Address?
     var localAddress: Address? = null
@@ -49,7 +50,7 @@ object I2PSAM : CoroutineScope {
     }
 
     private suspend fun connectToSAM(): Pair<ByteReadChannel, ByteWriteChannel> {
-        val socket = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().connect(sam!!.getSocketAddress())
+        val socket = aSocket(selector).tcp().connect(sam!!.getSocketAddress())
         val readChannel = socket.openReadChannel()
         val writeChannel = socket.openWriteChannel(true)
 

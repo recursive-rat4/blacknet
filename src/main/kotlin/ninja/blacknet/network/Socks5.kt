@@ -22,7 +22,7 @@ import kotlinx.io.core.writeFully
 
 class Socks5(private val proxy: Address) {
     suspend fun connect(address: Address): Pair<ByteReadChannel, ByteWriteChannel> {
-        val socket = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().connect(proxy.getSocketAddress())
+        val socket = aSocket(selector).tcp().connect(proxy.getSocketAddress())
         val readChannel = socket.openReadChannel()
         val writeChannel = socket.openWriteChannel(true)
         val builder = BytePacketBuilder()
@@ -98,6 +98,7 @@ class Socks5(private val proxy: Address) {
         const val IPv4_ADDRESS = 1.toByte()
         const val DOMAIN_NAME = 3.toByte()
         const val IPv6_ADDRESS = 4.toByte()
+        private val selector = ActorSelectorManager(Dispatchers.IO)
     }
 }
 
