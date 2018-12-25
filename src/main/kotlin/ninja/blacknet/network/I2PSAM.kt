@@ -55,8 +55,7 @@ object I2PSAM : CoroutineScope {
         val writeChannel = socket.openWriteChannel(true)
 
         val answer = request(readChannel, writeChannel, "HELLO VERSION MIN=3.2\n")
-        if (!checkResult(answer))
-            throw I2PException("handshake failed")
+        checkResult(answer)
 
         return Pair(readChannel, writeChannel)
     }
@@ -65,8 +64,7 @@ object I2PSAM : CoroutineScope {
         val channels = connectToSAM()
 
         val answer = request(channels.first, channels.second, "SESSION CREATE STYLE=STREAM ID=$sessionId DESTINATION=TRANSIENT SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n")
-        if (!checkResult(answer))
-            throw I2PException("create session failed")
+        checkResult(answer)
 
         val dest = getValue(answer, "DESTINATION")
         val bytes = Destination(dest).getHash().getData()
@@ -89,8 +87,7 @@ object I2PSAM : CoroutineScope {
         val destination = lookup(channels.first, channels.second, address.getAddressString())
 
         val answer = request(channels.first, channels.second, "STREAM CONNECT ID=$sessionId DESTINATION=$destination\n")
-        if (!checkResult(answer))
-            throw I2PException("connect failed")
+        checkResult(answer)
 
         return channels
     }
@@ -99,8 +96,12 @@ object I2PSAM : CoroutineScope {
         val channels = connectToSAM()
 
         val answer = request(channels.first, channels.second, "STREAM ACCEPT ID=$sessionId\n")
-        if (!checkResult(answer))
-            throw I2PException("accept failed")
+        try {
+            checkResult(answer)
+        } catch (e: Throwable) {
+            logger.info("STREAM ACCEPT failed: ${e.message}")
+            return null
+        }
 
         while (true) {
             val message = channels.first.readUTF8Line() ?: break
@@ -119,29 +120,30 @@ object I2PSAM : CoroutineScope {
 
     private suspend fun lookup(readChannel: ByteReadChannel, writeChannel: ByteWriteChannel, name: String): String {
         val answer = request(readChannel, writeChannel, "NAMING LOOKUP NAME=$name\n")
-        if (!checkResult(answer))
-            throw I2PException("lookup failed")
-
+        checkResult(answer)
         return getValue(answer, "VALUE")!!
     }
 
-    private fun checkResult(answer: String?): Boolean {
-        if (answer == null) return false
+    private fun checkResult(answer: String?) {
+        if (answer == null)
+            throw I2PException("Connection closed")
         val result = getValue(answer, "RESULT")
-        if (result == null || result != "OK") {
-            logger.info(result)
-            return false
+        if (result == null)
+            throw I2PException("No RESULT")
+        if (result.isEmpty())
+            throw I2PException("Empty RESULT")
+        if (result != "OK") {
+            val message = getValue(answer, "MESSAGE")
+            if (message != null && !message.isEmpty())
+                throw I2PException("$result: $message")
+            else
+                throw I2PException(result)
         }
-        return true
     }
 
     private suspend fun request(readChannel: ByteReadChannel, writeChannel: ByteWriteChannel, request: String): String? {
         writeChannel.writeStringUtf8(request)
-        val answer = readChannel.readUTF8Line() ?: return null
-        val message = getValue(answer, "MESSAGE")
-        if (message != null)
-            logger.info(message)
-        return answer
+        return readChannel.readUTF8Line()
     }
 
     private fun generateId(): String {

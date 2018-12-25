@@ -25,8 +25,6 @@ abstract class DataDB {
     }
 
     suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Boolean {
-        if (!isInteresting(hash))
-            return false
         if (!processImpl(hash, bytes, connection)) {
             rejects.add(hash)
             return false
