@@ -94,6 +94,9 @@ fun Application.main() {
                 APIServer.blockNotify.add(outgoing)
                 while (true) {
                     incoming.receive()
+                    val string = (incoming.receive() as Frame.Text).readText()
+                    val pubkey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
+                    APIServer.transactionNotify.add(Pair(outgoing, pubkey))
                 }
             } catch (e: ClosedReceiveChannelException) {
                 logger.info("WebSocket API client disconnected")
