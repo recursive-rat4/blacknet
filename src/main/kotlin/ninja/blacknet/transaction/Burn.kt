@@ -32,7 +32,7 @@ class Burn(
     }
 
     override fun getType(): Byte {
-        return TxType.Burn.ordinal.toByte()
+        return TxType.Burn.type
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {

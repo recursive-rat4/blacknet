@@ -37,7 +37,7 @@ class CreateHTLC(
     }
 
     override fun getType(): Byte {
-        return TxType.CreateHTLC.ordinal.toByte()
+        return TxType.CreateHTLC.type
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {

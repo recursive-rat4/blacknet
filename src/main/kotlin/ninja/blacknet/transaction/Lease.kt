@@ -32,7 +32,7 @@ class Lease(
     }
 
     override fun getType(): Byte {
-        return TxType.Lease.ordinal.toByte()
+        return TxType.Lease.type
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {

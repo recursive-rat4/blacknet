@@ -364,18 +364,13 @@ object LedgerDB : CoroutineScope, Ledger {
         launch { BlockDB.remove(toRemove) }
 
         list.asReversed().forEach {
-            val bytes = BlockDB.get(it)
-            if (bytes == null) {
+            val block = BlockDB.block(it)
+            if (block == null) {
                 logger.error("block not found")
                 return
             }
-            val block = Block.deserialize(bytes)
-            if (block == null) {
-                logger.error("deserialization failed")
-                return
-            }
-            val txHashes = ArrayList<Hash>(block.transactions.size)
-            if (!processBlockUnlocked(it, block, bytes.size, txHashes)) {
+            val txHashes = ArrayList<Hash>(block.first.transactions.size)
+            if (!processBlockUnlocked(it, block.first, block.second, txHashes)) {
                 logger.error("process block failed")
                 return
             }

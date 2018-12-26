@@ -33,7 +33,7 @@ class UnlockHTLC(
     }
 
     override fun getType(): Byte {
-        return TxType.UnlockHTLC.ordinal.toByte()
+        return TxType.UnlockHTLC.type
     }
 
     fun sign(privateKey: PrivateKey) {

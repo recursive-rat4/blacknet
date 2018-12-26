@@ -35,6 +35,16 @@ object BlockDB : DataDB() {
         return map.size
     }
 
+    fun block(hash: Hash): Pair<Block, Int>? {
+        val bytes = map[hash] ?: return null
+        val block = Block.deserialize(bytes)
+        if (block == null) {
+            logger.error("$hash deserialization failed")
+            return null
+        }
+        return Pair(block, bytes.size)
+    }
+
     suspend fun remove(list: ArrayList<Hash>) {
         list.forEach {
             BlockDB.remove(it)

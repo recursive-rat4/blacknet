@@ -58,6 +58,10 @@ interface Ledger {
             logger.info("too low fee ${tx.fee}")
             return false
         }
+        if (tx.type == TxType.Generated.type) {
+            logger.info("Generated as individual tx")
+            return false
+        }
         val serializer = TxType.getSerializer(tx.type)
         if (serializer == null) {
             logger.info("unknown transaction type ${tx.type}")

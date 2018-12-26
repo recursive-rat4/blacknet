@@ -32,7 +32,7 @@ class SpendMultisig(
     }
 
     override fun getType(): Byte {
-        return TxType.SpendMultisig.ordinal.toByte()
+        return TxType.SpendMultisig.type
     }
 
     fun sign(i: Int, privateKey: PrivateKey): Boolean {

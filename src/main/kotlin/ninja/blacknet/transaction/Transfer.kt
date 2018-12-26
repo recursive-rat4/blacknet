@@ -31,7 +31,7 @@ class Transfer(
     }
 
     override fun getType(): Byte {
-        return TxType.Transfer.ordinal.toByte()
+        return TxType.Transfer.type
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {

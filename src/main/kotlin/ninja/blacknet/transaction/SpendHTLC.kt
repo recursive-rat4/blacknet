@@ -33,7 +33,7 @@ class SpendHTLC(
     }
 
     override fun getType(): Byte {
-        return TxType.SpendHTLC.ordinal.toByte()
+        return TxType.SpendHTLC.type
     }
 
     fun sign(privateKey: PrivateKey) {

@@ -33,7 +33,7 @@ class CreateMultisig(
     }
 
     override fun getType(): Byte {
-        return TxType.CreateMultisig.ordinal.toByte()
+        return TxType.CreateMultisig.type
     }
 
     fun sign(privateKey: PrivateKey): Boolean {

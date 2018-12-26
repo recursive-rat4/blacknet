@@ -177,7 +177,7 @@ fun Application.main() {
             val message = Message.create(call.parameters["message"], call.parameters["encrypted"]?.toByte(), privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
 
             val data = Transfer(amount, to, message).serialize()
-            val tx = Transaction.create(from, seq, fee, TxType.Transfer.getType(), data)
+            val tx = Transaction.create(from, seq, fee, TxType.Transfer.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second, fee))
@@ -195,7 +195,7 @@ fun Application.main() {
             val message = SerializableByteArray.fromString(call.parameters["message"].orEmpty()) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
 
             val data = Burn(amount, message).serialize()
-            val tx = Transaction.create(from, seq, fee, TxType.Burn.getType(), data)
+            val tx = Transaction.create(from, seq, fee, TxType.Burn.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second, fee))
@@ -213,7 +213,7 @@ fun Application.main() {
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
 
             val data = Lease(amount, to).serialize()
-            val tx = Transaction.create(from, seq, fee, TxType.Lease.getType(), data)
+            val tx = Transaction.create(from, seq, fee, TxType.Lease.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second, fee))
@@ -232,7 +232,7 @@ fun Application.main() {
             val height = call.parameters["height"]?.toInt() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
 
             val data = CancelLease(amount, to, height).serialize()
-            val tx = Transaction.create(from, seq, fee, TxType.CancelLease.getType(), data)
+            val tx = Transaction.create(from, seq, fee, TxType.CancelLease.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second, fee))
