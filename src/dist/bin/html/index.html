@@ -9,188 +9,206 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Blacknet</title>
-    <link rel="stylesheet" href="css/index.css">
+  <meta charset="UTF-8">
+  <title>Blacknet</title>
+  <link rel="stylesheet" href="css/index.css">
 </head>
+
 <body>
 
-<header>
-<h1>Blacknet</h1>
-<p id="info_height"></p>
-<p id="info_connections"></p>
-</header>
+  <header>
+    <h1>Blacknet</h1>
+    <p id="info_height"></p>
+    <p id="info_connections"></p>
+  </header>
 
-<div class="container">
+  <div class="container">
 
-<div>
-  <fieldset>
-    <legend>Start staking</legend>
-    <div class="field-row">
-    <label>Mnemonic</label>
-    <input type="password" id="start_staking_mnemonic">
-    </div>
-    <div class="field-row">
-    <label>Result</label>
-    <input type="text" id="start_staking_result" readonly>
-    </div>
-    <button onclick="start_staking();">Start staking</button>
-  </fieldset>
+    <div>
+      <fieldset>
+        <legend>Start staking</legend>
+        <div class="field-row">
+          <label>Mnemonic</label>
+          <input type="password" id="start_staking_mnemonic">
+        </div>
+        <div class="field-row">
+          <label>Result</label>
+          <input type="text" id="start_staking_result" readonly>
+        </div>
+        <button onclick="start_staking();">Start staking</button>
+      </fieldset>
 
-  <fieldset>
-    <legend>Get balance</legend>
-    <div class="field-row">
-    <label>Account</label>
-    <input type="text" id="balance_account">
-    </div>
-    <div class="field-row">
-    <label>Result</label>
-    <input type="text" id="balance_result" readonly>
-    </div>
-    <button onclick="balance();">Get balance</button>
-  </fieldset>
+      <fieldset>
+        <legend>Get balance</legend>
+        <div class="field-row">
+          <label>Account</label>
+          <input type="text" id="balance_account">
+        </div>
+        <div class="field-row">
+          <label>Result</label>
+          <input type="text" id="balance_result" readonly>
+        </div>
+        <button onclick="balance();">Get balance</button>
+      </fieldset>
 
-  <fieldset>
-    <legend>Transfer</legend>
-    <div class="field-row">
-    <label>Mnemonic</label>
-    <input type="password" id="transfer_mnemonic">
-    </div>
-    <div class="field-row">
-    <label>Fee</label>
-    <input type="text" id="transfer_fee">
-    </div>
-    <div class="field-row">
-    <label>Amount</label>
-    <input type="text" id="transfer_amount">
-    </div>
-    <div class="field-row">
-    <label>To</label>
-    <input type="text" id="transfer_to">
-    </div>
-    <div class="field-row">
-    <label>Message</label>
-    <input type="text" id="transfer_message">
-    </div>
-    <div class="field-row">
-    <label>Encrypted</label>
-    <input type="checkbox" id="transfer_encrypted">
-    </div>
-    <div class="field-row">
-    <label>Result</label>
-    <input type="text" id="transfer_result" readonly>
-    </div>
-    <button onclick="transfer();">Transfer</button>
-  </fieldset>
+      <fieldset>
+        <legend>Transfer</legend>
+        <div class="field-row">
+          <label>Mnemonic</label>
+          <input type="password" id="transfer_mnemonic">
+        </div>
+        <div class="field-row">
+          <label>Fee</label>
+          <input type="text" id="transfer_fee">
+        </div>
+        <div class="field-row">
+          <label>Amount</label>
+          <input type="text" id="transfer_amount">
+        </div>
+        <div class="field-row">
+          <label>To</label>
+          <input type="text" id="transfer_to">
+        </div>
+        <div class="field-row">
+          <label>Message</label>
+          <input type="text" id="transfer_message">
+        </div>
+        <div class="field-row">
+          <label>Encrypted</label>
+          <input type="checkbox" id="transfer_encrypted">
+        </div>
+        <div class="field-row">
+          <label>Result</label>
+          <input type="text" id="transfer_result" readonly>
+        </div>
+        <button onclick="transfer();">Transfer</button>
+      </fieldset>
 
-  <fieldset>
-    <legend>Sign message</legend>
-    <div class="field-row">
-    <label>Mnemonic</label>
-    <input type="password" id="sign_mnemonic">
-    </div>
-    <div class="field-row">
-    <label>Message</label>
-    <input type="text" id="sign_message">
-    </div>
-    <div class="field-row">
-    <label>Result</label>
-    <input type="text" id="sign_result" readonly>
-    </div>
-    <button onclick="sign();">Sign message</button>
-  </fieldset>
+      <fieldset>
+        <legend>Sign message</legend>
+        <div class="field-row">
+          <label>Mnemonic</label>
+          <input type="password" id="sign_mnemonic">
+        </div>
+        <div class="field-row">
+          <label>Message</label>
+          <input type="text" id="sign_message">
+        </div>
+        <div class="field-row">
+          <label>Result</label>
+          <input type="text" id="sign_result" readonly>
+        </div>
+        <button onclick="sign();">Sign message</button>
+      </fieldset>
 
-  <fieldset>
-    <legend>Verify message</legend>
-    <div class="field-row">
-    <label>Account</label>
-    <input type="text" id="verify_account">
-    </div>
-    <div class="field-row">
-    <label>Signature</label>
-    <input type="text" id="verify_signature">
-    </div>
-    <div class="field-row">
-    <label>Message</label>
-    <input type="text" id="verify_message">
-    </div>
-    <div class="field-row">
-    <label>Result</label>
-    <input type="text" id="verify_result" readonly>
-    </div>
-    <button onclick="verify();">Verify message</button>
-  </fieldset>
+      <fieldset>
+        <legend>Verify message</legend>
+        <div class="field-row">
+          <label>Account</label>
+          <input type="text" id="verify_account">
+        </div>
+        <div class="field-row">
+          <label>Signature</label>
+          <input type="text" id="verify_signature">
+        </div>
+        <div class="field-row">
+          <label>Message</label>
+          <input type="text" id="verify_message">
+        </div>
+        <div class="field-row">
+          <label>Result</label>
+          <input type="text" id="verify_result" readonly>
+        </div>
+        <button onclick="verify();">Verify message</button>
+      </fieldset>
 
-  <fieldset>
-    <legend>Mnemonic info</legend>
-    <div class="field-row">
-    <label>Mnemonic</label>
-    <input type="password" id="mnemonic_info">
+      <fieldset>
+        <legend>Mnemonic info</legend>
+        <div class="field-row">
+          <label>Mnemonic</label>
+          <input type="password" id="mnemonic_info">
+        </div>
+        <div class="field-row">
+          <label>Result</label>
+          <input type="text" id="mnemonic_info_result" readonly>
+        </div>
+        <button onclick="mnemonic_info();">Mnemonic info</button>
+      </fieldset>
     </div>
-    <div class="field-row">
-    <label>Result</label>
-    <input type="text" id="mnemonic_info_result" readonly>
+
+    <div>
+      <table id="node-table">
+        <caption>Connected Nodes</caption>
+        <thead>
+          <tr>
+            <td>IP</td>
+            <td class="narrow">Ping</td>
+            <td>Bytes Read</td>
+            <td>Bytes Written</td>
+            <td class="narrow">In/Out</td>
+          </tr>
+        </thead>
+        <tbody id="node-list">
+        </tbody>
+      </table>
+      <!-- <template> is poplulated by display_node_list() -->
+      <template id="node-row">
+        <tr>
+          <td></td>
+          <td class="narrow"></td>
+          <td></td>
+          <td></td>
+          <td class="narrow"></td>
+        </tr>
+      </template>
     </div>
-    <button onclick="mnemonic_info();">Mnemonic info</button>
-  </fieldset>
-</div>
 
-<div>
-  <table id="node-table">
-  <caption>Connected Nodes</caption>
-  <thead>
-  <tr><td>IP</td><td class="narrow">Ping</td><td>Bytes Read</td><td>Bytes Written</td><td class="narrow">In/Out</td></tr>
-  </thead>
-  <tbody id="node-list">
-  </tbody>
-  </table>
-  <!-- <template> is poplulated by display_node_list() -->
-  <template id="node-row">
-  <tr>
-    <td></td>
-    <td class="narrow"></td>
-    <td></td>
-    <td></td>
-    <td class="narrow"></td>
-  </tr>
-  </template>
-</div>
+    <div>
+      <table id="block-table">
+        <caption>Recent Blocks</caption>
+        <thead>
+          <tr>
+            <td class="narrow">Height</td>
+            <td>Hash</td>
+            <td class="narrow">Size</td>
+            <td class="narrow">Time</td>
+            <td class="narrow">Txns</td>
+            <td>Generator</td>
+          </tr>
+        </thead>
+        <tbody id="block-list">
+        </tbody>
+      </table>
+      <!-- <template> is poplulated by display_block_list() -->
+      <template id="block-row">
+        <tr>
+          <td class="narrow"></td>
+          <td></td>
+          <td class="narrow"></td>
+          <td class="narrow"></td>
+          <td class="narrow"></td>
+          <td></td>
+        </tr>
+      </template>
+    </div>
 
-<div>
-  <table id="block-table">
-  <caption>Recent Blocks</caption>
-  <thead>
-  <tr><td class="narrow">Height</td><td>Hash</td><td class="narrow">Size</td><td class="narrow">Time</td><td class="narrow">Txns</td><td>Generator</td></tr>
-  </thead>
-  <tbody id="block-list">
-  </tbody>
-  </table>
-  <!-- <template> is poplulated by display_block_list() -->
-  <template id="block-row">
-  <tr>
-    <td class="narrow"></td>
-    <td></td>
-    <td class="narrow"></td>
-    <td class="narrow"></td>
-    <td class="narrow"></td>
-    <td></td>
-  </tr>
-  </template>
-</div>
+  </div>
+  <!-- End container div -->
 
-</div> <!-- End container div -->
+  <footer>
+    <ul id="api-menu">
+      <li onclick="display_api_json_result('peerinfo');" class="menu-item">peerinfo</li>
+      <li onclick="display_api_json_result('nodeinfo');" class="menu-item">nodeinfo</li>
+      <li onclick="display_api_json_result('ledger');" class="menu-item">ledger</li>
+      <li onclick="display_api_json_result('peerdb');" class="menu-item">peerdb</li>
+    </ul>
+    <pre id='api-json-result'></pre>
+  </footer>
 
-<footer>
-<ul id="api-menu">
-  <li onclick="display_api_json_result('peerinfo');" class="menu-item">peerinfo</li>
-  <li onclick="display_api_json_result('nodeinfo');" class="menu-item">nodeinfo</li>
-  <li onclick="display_api_json_result('ledger');" class="menu-item">ledger</li>
-  <li onclick="display_api_json_result('peerdb');" class="menu-item">peerdb</li>
-</ul>
-<pre id='api-json-result'></pre>
-</footer>
-
-<script type="text/javascript" src="js/index.js"></script>
+  <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="js/index.js"></script>
 </body>
+
 </html>
