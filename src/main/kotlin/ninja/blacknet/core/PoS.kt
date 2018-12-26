@@ -13,6 +13,7 @@ import mu.KotlinLogging
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Node
+import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.delay
 
@@ -52,7 +53,13 @@ object PoS {
         return cumulativeDifficulty + ONE_SHL_256 / difficulty
     }
 
+    private val stakers = SynchronizedHashSet<PublicKey>()
     suspend fun staker(privateKey: PrivateKey, publicKey: PublicKey) {
+        if (!stakers.add(publicKey)) {
+            logger.info("${Address.encode(publicKey)} is already staking")
+            return
+        }
+
         while (true) {
             delay(1)
 
