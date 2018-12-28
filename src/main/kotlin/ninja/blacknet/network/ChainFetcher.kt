@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.core.Block
+import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
@@ -96,7 +97,7 @@ object ChainFetcher : CoroutineScope {
                 val toRemove = undoRollack!!
                 launch { BlockDB.remove(toRemove) }
                 //announce new chain after reorganization
-                Node.broadcastInv(arrayListOf(Pair(DataType.Block, LedgerDB.blockHash())))
+                Node.broadcastInv(arrayListOf(Pair(DataType.Block, LedgerDB.blockHash())), syncChain!!.connection)
             }
         }
         if (syncChain != null) {
@@ -148,8 +149,9 @@ object ChainFetcher : CoroutineScope {
         }
         for (i in blocks) {
             val hash = Block.Hasher(i.array)
-            if (!BlockDB.process(hash, i.array, null)) {
-                logger.info("Invalid block $hash Disconnecting ${connection.remoteAddress}")
+            val status = BlockDB.process(hash, i.array, null)
+            if (status != Status.ACCEPTED) {
+                logger.info("$status block $hash Disconnecting ${connection.remoteAddress}")
                 connection.close()
                 fetched()
                 return

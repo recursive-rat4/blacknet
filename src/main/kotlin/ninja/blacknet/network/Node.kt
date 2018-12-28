@@ -26,6 +26,7 @@ import ninja.blacknet.Config.incomingconnections
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.outgoingconnections
 import ninja.blacknet.Config.port
+import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
@@ -161,7 +162,7 @@ object Node : CoroutineScope {
         }
     }
 
-    suspend fun disconnected(connection: Connection) {
+    fun disconnected(connection: Connection) = launch {
         connections.remove(connection)
     }
 
@@ -179,17 +180,21 @@ object Node : CoroutineScope {
     }
 
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
-        if (BlockDB.process(hash, bytes)) {
+        val status = BlockDB.process(hash, bytes)
+        if (status == Status.ACCEPTED) {
             val inv = InvList()
             inv.add(Pair(DataType.Block, hash))
             broadcastPacket(Inventory(inv))
             return true
+        } else {
+            logger.info("$status block $hash")
+            return false
         }
-        return false
     }
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray, fee: Long): Boolean {
-        if (TxPool.process(hash, bytes)) {
+        val status = TxPool.process(hash, bytes)
+        if (status == Status.ACCEPTED) {
             val inv = InvList()
             inv.add(Pair(DataType.Transaction, hash))
             val packet = Inventory(inv)
@@ -197,13 +202,17 @@ object Node : CoroutineScope {
                 it.feeFilter <= fee
             }
             return true
+        } else {
+            logger.info("$status tx $hash")
+            return false
         }
-        return false
     }
 
-    suspend fun broadcastInv(inv: InvList): Boolean {
+    suspend fun broadcastInv(inv: InvList, filter: Connection): Boolean {
         //TODO feeFilter
-        broadcastPacket(Inventory(inv))
+        broadcastPacket(Inventory(inv)) {
+            it != filter
+        }
         return true
     }
 

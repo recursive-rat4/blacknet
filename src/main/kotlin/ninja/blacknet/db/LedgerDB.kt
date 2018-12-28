@@ -154,6 +154,7 @@ object LedgerDB : CoroutineScope, Ledger {
         this.undo[hash] = undo
     }
 
+    override fun checkBlockHash(hash: Hash) = hash == Hash.ZERO || chainIndex.containsKey(hash)
     override fun checkFee(size: Int, amount: Long) = amount >= 0
 
     override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {
@@ -316,25 +317,25 @@ object LedgerDB : CoroutineScope, Ledger {
         chainIndex.remove(hash)
 
         setSupply(undo.supply)
-        for (i in undo.accounts.reversed()) {
-            val key = i.first
-            val state = i.second
+        undo.accounts.asReversed().forEach {
+            val key = it.first
+            val state = it.second
             if (state.isEmpty())
                 accounts.remove(key)
             else
                 accounts[key] = state
         }
-        for (i in undo.htlcs.reversed()) {
-            val id = i.first
-            val htlc = i.second
+        undo.htlcs.asReversed().forEach {
+            val id = it.first
+            val htlc = it.second
             if (htlc != null)
                 addHTLC(id, htlc)
             else
                 removeHTLC(id)
         }
-        for (i in undo.multisigs.reversed()) {
-            val id = i.first
-            val multisig = i.second
+        undo.multisigs.asReversed().forEach {
+            val id = it.first
+            val multisig = it.second
             if (multisig != null)
                 addMultisig(id, multisig)
             else

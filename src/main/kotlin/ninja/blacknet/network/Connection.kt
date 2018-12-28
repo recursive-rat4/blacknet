@@ -78,7 +78,6 @@ class Connection(
             logger.error("Exception in receiver $remoteAddress", e)
         } finally {
             close()
-            Node.disconnected(this)
         }
     }
 
@@ -104,7 +103,6 @@ class Connection(
             logger.error("Exception in sender $remoteAddress", e)
         } finally {
             close()
-            Node.disconnected(this)
         }
     }
 
@@ -126,6 +124,7 @@ class Connection(
     fun close() {
         writeChannel.close()
         readChannel.cancel()
+        Node.disconnected(this)
     }
 
     class PingRequest(val id: Int, val time: Long)

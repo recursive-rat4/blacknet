@@ -12,7 +12,6 @@ package ninja.blacknet.core
 import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.serialization.BlacknetDecoder
 import ninja.blacknet.transaction.TxType
 
@@ -21,6 +20,7 @@ private val logger = KotlinLogging.logger {}
 interface Ledger {
     fun addSupply(amount: Long)
     fun addUndo(hash: Hash, undo: UndoBlock)
+    fun checkBlockHash(hash: Hash): Boolean
     fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long
     fun height(): Int
@@ -50,7 +50,7 @@ interface Ledger {
             logger.info("invalid signature")
             return false
         }
-        if (tx.blochHash != Hash.ZERO && !BlockDB.contains(tx.blochHash)) {
+        if (!checkBlockHash(tx.blochHash)) {
             logger.info("not valid on this chain")
             return false
         }

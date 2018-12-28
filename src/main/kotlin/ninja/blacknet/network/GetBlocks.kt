@@ -64,7 +64,16 @@ class GetBlocks(
 
         while (index < height) {
             index++
-            val bytes = BlockDB.get(LedgerDB.getBlockHash(index)!!)!!
+            val hash = LedgerDB.getBlockHash(index)
+            if (hash == null) {
+                logger.error("$index null")
+                break
+            }
+            val bytes = BlockDB.get(hash)
+            if (bytes == null) {
+                logger.error("$hash null")
+                break
+            }
             if (size + bytes.size + 4 > maxSize)
                 break
             size += bytes.size + 4

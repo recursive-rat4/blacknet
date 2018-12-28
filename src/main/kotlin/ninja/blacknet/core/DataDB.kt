@@ -24,16 +24,28 @@ abstract class DataDB {
         return !rejects.contains(hash) && !contains(hash)
     }
 
-    suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Boolean {
-        if (!processImpl(hash, bytes, connection)) {
+    suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Status {
+        if (rejects.contains(hash))
+            return Status.INVALID
+        if (contains(hash))
+            return Status.ALREADY_HAVE
+        val status = processImpl(hash, bytes, connection)
+        if (status == Status.INVALID)
             rejects.add(hash)
-            return false
-        }
-        return true
+        return status
     }
 
     abstract suspend fun contains(hash: Hash): Boolean
     abstract suspend fun get(hash: Hash): ByteArray?
     abstract suspend fun remove(hash: Hash): ByteArray?
-    abstract suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Boolean
+    abstract suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status
+
+    enum class Status {
+        ACCEPTED,
+        IN_FUTURE,
+        ALREADY_HAVE,
+        INVALID,
+        NOT_ON_THIS_CHAIN,
+        ;
+    }
 }

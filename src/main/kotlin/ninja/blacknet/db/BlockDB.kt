@@ -15,7 +15,6 @@ import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import org.mapdb.DBMaker
@@ -64,35 +63,31 @@ object BlockDB : DataDB() {
         return map.remove(hash)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Boolean {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
         val block = Block.deserialize(bytes)
         if (block == null) {
             logger.info("deserialization failed")
-            return false
+            return Status.INVALID
         }
         if (block.version != Block.VERSION) {
             logger.info("unknown version ${block.version}")
         }
         if (Node.isTooFarInFuture(block.time)) {
             logger.info("too far in future ${block.time}")
-            return false
+            return Status.IN_FUTURE
         }
         if (!block.verifyContentHash(bytes)) {
             logger.info("invalid content hash")
-            return false
+            return Status.INVALID
         }
         if (!block.verifySignature(hash)) {
             logger.info("invalid signature")
-            return false
+            return Status.INVALID
         }
         if (block.previous != LedgerDB.blockHash()) {
-            if (connection != null) {
-                ChainFetcher.offer(connection, hash)
-                return true
-            } else {
+            if (connection == null)
                 logger.info("block $hash not on current chain")
-                return false
-            }
+            return Status.NOT_ON_THIS_CHAIN
         }
         val txHashes = ArrayList<Hash>(block.transactions.size)
         if (LedgerDB.processBlock(hash, block, bytes.size, txHashes)) {
@@ -102,10 +97,10 @@ object BlockDB : DataDB() {
             logger.info("Accepted block $hash")
             TxPool.remove(txHashes)
             APIServer.blockNotify(hash)
-            return true
+            return Status.ACCEPTED
         } else {
             LedgerDB.rollback()
-            return false
+            return Status.INVALID
         }
     }
 }

@@ -59,6 +59,10 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.get(key)?.seq ?: 0
     }
 
+    override fun checkBlockHash(hash: Hash): Boolean {
+        return LedgerDB.checkBlockHash(hash)
+    }
+
     override fun checkFee(size: Int, amount: Long): Boolean {
         return amount >= Node.minTxFee * (1 + size / 1000)
     }
@@ -81,13 +85,13 @@ object TxPool : MemPool(), Ledger {
         accounts.set(key, state)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Boolean = mutex.withLock {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status = mutex.withLock {
         if (processTransaction(hash, bytes, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
             transactions.add(hash)
-            return true
+            return Status.ACCEPTED
         }
-        return false
+        return Status.INVALID
     }
 
     suspend fun remove(hashes: ArrayList<Hash>) = mutex.withLock {
