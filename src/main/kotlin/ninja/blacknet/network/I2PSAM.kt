@@ -13,6 +13,7 @@ import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import io.ktor.util.error
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.io.ByteReadChannel
@@ -26,6 +27,7 @@ import ninja.blacknet.Config
 import ninja.blacknet.Config.i2psamhost
 import ninja.blacknet.Config.i2psamport
 import ninja.blacknet.Config.port
+import java.io.File
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
@@ -35,6 +37,7 @@ object I2PSAM : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
     private val selector = ActorSelectorManager(Dispatchers.IO)
     private val sessionId = generateId()
+    private var privateKey = "TRANSIENT"
     val sam: Address?
     var localAddress: Address? = null
 
@@ -43,6 +46,11 @@ object I2PSAM : CoroutineScope {
             sam = Network.resolve(Config[i2psamhost], Config[i2psamport])
         else
             sam = null
+
+        try {
+            privateKey = File("db/privateKey.i2p").readText()
+        } catch (e: Throwable) {
+        }
     }
 
     fun haveSession(): Boolean {
@@ -63,12 +71,15 @@ object I2PSAM : CoroutineScope {
     suspend fun createSession() {
         val channels = connectToSAM()
 
-        val answer = request(channels.first, channels.second, "SESSION CREATE STYLE=STREAM ID=$sessionId DESTINATION=TRANSIENT SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n")
+        val answer = request(channels.first, channels.second, "SESSION CREATE STYLE=STREAM ID=$sessionId DESTINATION=$privateKey SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n")
         checkResult(answer)
 
-        val dest = getValue(answer, "DESTINATION")
+        val dest = getValue(answer, "DESTINATION") ?: throw I2PException("Invalid response")
         val bytes = Destination(dest).getHash().getData()
         localAddress = Address(Network.I2P, Config[port], bytes)
+
+        if (privateKey == "TRANSIENT")
+            savePrivateKey(dest)
 
         launch {
             while (true) {
@@ -176,4 +187,14 @@ object I2PSAM : CoroutineScope {
 
     class Accepted(val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel, val remoteAddress: Address)
     class I2PException(message: String) : RuntimeException(message)
+
+    private fun savePrivateKey(dest: String) {
+        privateKey = dest
+        logger.info("Saving I2P destination to db")
+        try {
+            File("db/privateKey.i2p").writeText(privateKey)
+        } catch (e: Throwable) {
+            logger.error(e)
+        }
+    }
 }
