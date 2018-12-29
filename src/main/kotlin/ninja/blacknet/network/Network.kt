@@ -164,24 +164,7 @@ enum class Network(val addrSize: Int) {
 
         fun listenOnTor(): Address? {
             try {
-                val s = java.net.Socket("localhost", Config[torcontrol])
-                val tor = TorControlConnection(s)
-                tor.launchThread(true)
-                tor.authenticate(ByteArray(0))
-
-                val request = HashMap<Int, String?>()
-                request[Config[port]] = null
-
-                val response = tor.addOnion(request)
-                val string = response[HS_ADDRESS]!!
-                val bytes = Base32.decode(string)!!
-
-                val type = when (bytes.size) {
-                    TORv2.addrSize -> TORv2
-                    TORv3.addrSize -> TORv3
-                    else -> throw TorControlError("Unknown KeyType")
-                }
-                return Address(type, Config[port], bytes)
+                return TorController.listen()
             } catch (e: ConnectException) {
                 logger.info("Can't connect to tor controller")
             } catch (e: TorControlError) {
