@@ -167,6 +167,9 @@ object ChainFetcher : CoroutineScope {
             LedgerDB.commit()
         }
         for (i in blocks) {
+            // prevent slow nodes to Disconnect on timeout while verifying many blocks
+            requestTime = Node.time()
+
             val hash = Block.Hasher(i.array)
             if (undoRollback?.contains(hash) == true) {
                 logger.info("Rollback contains $hash")
