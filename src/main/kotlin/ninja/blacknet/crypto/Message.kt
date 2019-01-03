@@ -27,7 +27,7 @@ class Message(
     }
 
     companion object {
-        const val SIGN_MAGIC = "Blacknet Signed Message:\n"
+        private val SIGN_MAGIC = "Blacknet Signed Message:\n".toUtf8Bytes()
         const val PLAIN: Byte = 0
         const val ENCRYPTED: Byte = 1
 

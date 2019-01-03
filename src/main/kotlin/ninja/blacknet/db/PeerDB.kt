@@ -81,9 +81,16 @@ object PeerDB {
 
     fun add(peers: List<Address>, from: Address) {
         peers.forEach {
-            if (!map.contains(it))
-                map[it] = Entry(from, 0, 0, 0)
+            add(it, from)
         }
+    }
+
+    fun add(peer: Address, from: Address): Boolean {
+        if (!map.contains(peer)) {
+            map[peer] = Entry(from, 0, 0, 0)
+            return true
+        }
+        return false
     }
 
     private suspend fun oldEntriesRemover() {

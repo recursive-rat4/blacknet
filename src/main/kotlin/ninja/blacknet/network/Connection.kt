@@ -35,6 +35,7 @@ class Connection(
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     val connectedAt = Node.time()
 
+    private var closed = false
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
@@ -99,6 +100,7 @@ class Connection(
             for (packet in sendChannel)
                 writeChannel.writePacket(packet)
         } catch (e: ClosedWriteChannelException) {
+        } catch (e: CancellationException) {
         } catch (e: Throwable) {
             logger.error("Exception in sender $remoteAddress", e)
         } finally {
@@ -122,9 +124,12 @@ class Connection(
     }
 
     fun close() {
+        if (closed) return
+        closed = true
         writeChannel.close()
         readChannel.cancel()
         Node.disconnected(this)
+        ChainFetcher.disconnected(this)
     }
 
     class PingRequest(val id: Int, val time: Long)

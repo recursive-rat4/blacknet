@@ -9,7 +9,6 @@
 
 package ninja.blacknet.network
 
-import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -40,7 +39,6 @@ import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.delay
 import java.math.BigDecimal
-import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
@@ -89,12 +87,19 @@ object Node : CoroutineScope {
         }
     }
 
-    suspend fun incoming(): Int {
+    suspend fun incoming(includeWaiting: Boolean = false): Int {
         return connections.sumBy {
-            when (it.state) {
-                Connection.State.INCOMING_CONNECTED -> 1
-                else -> 0
-            }
+            if (includeWaiting)
+                when (it.state) {
+                    Connection.State.INCOMING_CONNECTED -> 1
+                    Connection.State.INCOMING_WAITING -> 1
+                    else -> 0
+                }
+            else
+                when (it.state) {
+                    Connection.State.INCOMING_CONNECTED -> 1
+                    else -> 0
+                }
         }
     }
 
@@ -122,10 +127,10 @@ object Node : CoroutineScope {
 
     fun listenOn(address: Address) {
         val addr = when (address.network) {
-            Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
+            Network.IPv4, Network.IPv6 -> address.getSocketAddress()
             else -> throw NotImplementedError("not implemented for " + address.network)
         }
-        val server = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().bind(addr)
+        val server = aSocket(Network.selector).tcp().bind(addr)
         logger.info("Listening on $address")
         launch {
             listenAddress.add(address)
@@ -228,11 +233,12 @@ object Node : CoroutineScope {
     private suspend fun listener(server: ServerSocket) {
         while (true) {
             val socket = server.accept()
-            if (incoming() >= Config[incomingconnections]) {
+            val remoteAddress = Network.address(socket.remoteAddress as InetSocketAddress)
+            if (!haveSlot()) {
+                logger.info("Too many connections, dropping $remoteAddress")
                 socket.close()
                 continue
             }
-            val remoteAddress = Network.address(socket.remoteAddress as InetSocketAddress)
             val localAddress = Network.address(socket.localAddress as InetSocketAddress)
             if (!localAddress.isLocal())
                 listenAddress.add(localAddress)
@@ -244,7 +250,8 @@ object Node : CoroutineScope {
     private suspend fun i2plistener() {
         while (true) {
             val c = I2PSAM.accept() ?: continue
-            if (incoming() >= Config[incomingconnections]) {
+            if (!haveSlot()) {
+                logger.info("Too many connections, dropping ${c.remoteAddress}")
                 c.readChannel.cancel()
                 c.writeChannel.close()
                 continue
@@ -252,6 +259,16 @@ object Node : CoroutineScope {
             val connection = Connection(c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
             connections.add(connection)
         }
+    }
+
+    private suspend fun haveSlot(): Boolean {
+        if (incoming(true) < Config[incomingconnections])
+            return true
+        return evictConnection()
+    }
+
+    private suspend fun evictConnection(): Boolean {
+        return false //TODO
     }
 
     private suspend fun connector() {

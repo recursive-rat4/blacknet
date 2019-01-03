@@ -9,6 +9,8 @@
 
 package ninja.blacknet.db
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
@@ -23,6 +25,7 @@ import org.mapdb.Serializer
 private val logger = KotlinLogging.logger {}
 
 object BlockDB : DataDB() {
+    private val mutex = Mutex()
     private val db = DBMaker.fileDB("db/blocks").transactionEnable().fileMmapEnableIfSupported().closeOnJvmShutdown().make()
     private val map = db.hashMap("blocks", HashSerializer, Serializer.BYTE_ARRAY).createOrOpen()
 
@@ -84,23 +87,25 @@ object BlockDB : DataDB() {
             logger.info("invalid signature")
             return Status.INVALID
         }
-        if (block.previous != LedgerDB.blockHash()) {
-            if (connection == null)
-                logger.info("block $hash not on current chain")
-            return Status.NOT_ON_THIS_CHAIN
-        }
-        val txHashes = ArrayList<Hash>(block.transactions.size)
-        if (LedgerDB.processBlock(hash, block, bytes.size, txHashes)) {
-            LedgerDB.commit()
-            map[hash] = bytes
-            commit()
-            logger.info("Accepted block $hash")
-            TxPool.remove(txHashes)
-            APIServer.blockNotify(hash)
-            return Status.ACCEPTED
-        } else {
-            LedgerDB.rollback()
-            return Status.INVALID
+        mutex.withLock {
+            if (block.previous != LedgerDB.blockHash()) {
+                if (connection == null)
+                    logger.info("block $hash not on current chain")
+                return Status.NOT_ON_THIS_CHAIN
+            }
+            val txHashes = ArrayList<Hash>(block.transactions.size)
+            if (LedgerDB.processBlock(hash, block, bytes.size, txHashes)) {
+                LedgerDB.commit()
+                map[hash] = bytes
+                commit()
+                logger.info("Accepted block $hash")
+                TxPool.remove(txHashes)
+                APIServer.blockNotify(hash)
+                return Status.ACCEPTED
+            } else {
+                LedgerDB.rollback()
+                return Status.INVALID
+            }
         }
     }
 }

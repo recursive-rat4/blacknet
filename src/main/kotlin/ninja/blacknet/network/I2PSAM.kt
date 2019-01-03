@@ -9,7 +9,6 @@
 
 package ninja.blacknet.network
 
-import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -35,7 +34,6 @@ private val logger = KotlinLogging.logger {}
 
 object I2PSAM : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
-    private val selector = ActorSelectorManager(Dispatchers.IO)
     private val sessionId = generateId()
     private var privateKey = "TRANSIENT"
     val sam: Address?
@@ -58,7 +56,7 @@ object I2PSAM : CoroutineScope {
     }
 
     private suspend fun connectToSAM(): Pair<ByteReadChannel, ByteWriteChannel> {
-        val socket = aSocket(selector).tcp().connect(sam!!.getSocketAddress())
+        val socket = aSocket(Network.selector).tcp().connect(sam!!.getSocketAddress())
         val readChannel = socket.openReadChannel()
         val writeChannel = socket.openWriteChannel(true)
 

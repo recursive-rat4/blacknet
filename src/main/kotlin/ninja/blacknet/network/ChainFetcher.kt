@@ -32,10 +32,13 @@ object ChainFetcher : CoroutineScope {
     const val TIMEOUT = 5
     private val chains = SynchronizedArrayList<ChainData>()
     private var requestTime = 0L
+    @Volatile
+    private var disconnected: ChainData? = null
+    @Volatile
     private var syncChain: ChainData? = null
     private var rollbackTo: Hash? = null
     private var undoDifficulty = BigInt.ZERO
-    private var undoRollack: ArrayList<Hash>? = null
+    private var undoRollback: ArrayList<Hash>? = null
 
     init {
         launch { fetcher() }
@@ -45,12 +48,24 @@ object ChainFetcher : CoroutineScope {
         return syncChain != null
     }
 
+    fun disconnected(connection: Connection) = launch {
+        chains.removeIf { it.connection == connection }
+        if (syncChain?.connection == connection) {
+            disconnected = syncChain
+        }
+    }
+
     suspend fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt? = null) {
         chains.add(ChainData(connection, chain, cumulativeDifficulty))
     }
 
     private suspend fun fetcher() {
         while (true) {
+            if (disconnected == syncChain)
+                fetched()
+            else
+                disconnected = null
+
             if (syncChain != null) {
                 if (Node.time() <= requestTime + Node.NETWORK_TIMEOUT) {
                     delay(TIMEOUT)
@@ -87,26 +102,30 @@ object ChainFetcher : CoroutineScope {
     }
 
     private suspend fun fetched() {
-        if (undoRollack != null) {
+        if (undoRollback != null) {
             if (undoDifficulty >= LedgerDB.cumulativeDifficulty()) {
-                logger.info("Reconnecting ${undoRollack!!.size} blocks")
-                LedgerDB.undoRollack(rollbackTo!!, undoRollack!!)
+                logger.info("Reconnecting ${undoRollback!!.size} blocks")
+                LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
                 LedgerDB.commit()
             } else {
-                logger.info("Removing ${undoRollack!!.size} blocks from db")
-                val toRemove = undoRollack!!
+                logger.info("Removing ${undoRollback!!.size} blocks from db")
+                val toRemove = undoRollback!!
                 launch { BlockDB.remove(toRemove) }
                 //announce new chain after reorganization
                 Node.broadcastInv(arrayListOf(Pair(DataType.Block, LedgerDB.blockHash())), syncChain!!.connection)
             }
         }
         if (syncChain != null) {
-            logger.info("Finished fetching")
+            if (syncChain == disconnected)
+                logger.info("Peer disconnected")
+            else
+                logger.info("Finished fetching")
         }
 
         syncChain = null
+        disconnected = null
         rollbackTo = null
-        undoRollack = null
+        undoRollback = null
         undoDifficulty = BigInt.ZERO
     }
 
@@ -118,7 +137,7 @@ object ChainFetcher : CoroutineScope {
         }
         if (!hashes.isEmpty()) {
             if (rollbackTo != null) {
-                logger.info("Unexpected rollback. Disconnecting ${connection.remoteAddress}")
+                logger.info("Unexpected rollback")
                 connection.close()
                 fetched()
                 return
@@ -141,17 +160,23 @@ object ChainFetcher : CoroutineScope {
             fetched()
             return
         }
-        if (rollbackTo != null && undoRollack == null) {
+        if (rollbackTo != null && undoRollback == null) {
             undoDifficulty = LedgerDB.cumulativeDifficulty()
-            undoRollack = LedgerDB.rollbackTo(rollbackTo!!)
-            logger.info("Disconnected ${undoRollack!!.size} blocks")
+            undoRollback = LedgerDB.rollbackTo(rollbackTo!!)
+            logger.info("Disconnected ${undoRollback!!.size} blocks")
             LedgerDB.commit()
         }
         for (i in blocks) {
             val hash = Block.Hasher(i.array)
+            if (undoRollback?.contains(hash) == true) {
+                logger.info("Rollback contains $hash")
+                connection.close()
+                fetched()
+                return
+            }
             val status = BlockDB.process(hash, i.array, null)
             if (status != Status.ACCEPTED) {
-                logger.info("$status block $hash Disconnecting ${connection.remoteAddress}")
+                logger.info("$status block $hash")
                 connection.close()
                 fetched()
                 return

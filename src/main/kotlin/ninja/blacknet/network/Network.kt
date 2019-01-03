@@ -239,6 +239,6 @@ enum class Network(val addrSize: Int) {
             }
         }
 
-        private val selector = ActorSelectorManager(Dispatchers.IO)
+        val selector = ActorSelectorManager(Dispatchers.IO)
     }
 }

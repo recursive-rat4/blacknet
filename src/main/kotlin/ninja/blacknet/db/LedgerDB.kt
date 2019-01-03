@@ -360,7 +360,7 @@ object LedgerDB : CoroutineScope, Ledger {
         return ret
     }
 
-    suspend fun undoRollack(hash: Hash, list: ArrayList<Hash>) = mutex.withLock {
+    suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>) = mutex.withLock {
         val toRemove = rollbackToUnlocked(hash)
         launch { BlockDB.remove(toRemove) }
 
@@ -368,12 +368,12 @@ object LedgerDB : CoroutineScope, Ledger {
             val block = BlockDB.block(it)
             if (block == null) {
                 logger.error("block not found")
-                return
+                return@withLock
             }
             val txHashes = ArrayList<Hash>(block.first.transactions.size)
             if (!processBlockUnlocked(it, block.first, block.second, txHashes)) {
                 logger.error("process block failed")
-                return
+                return@withLock
             }
             TxPool.remove(txHashes)
         }
