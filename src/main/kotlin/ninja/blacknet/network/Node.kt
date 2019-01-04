@@ -139,9 +139,9 @@ object Node : CoroutineScope {
     }
 
     fun listenOnIP() {
-        if (Config.isDisabled(Network.IPv4) && Config.isDisabled(Network.IPv6))
+        if (Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
             return
-        if (Config.isDisabled(Network.IPv4))
+        if (Network.IPv4.isDisabled())
             return Node.listenOn(Address.IPv6_ANY(Config[port]))
         Node.listenOn(Address.IPv4_ANY(Config[port]))
     }

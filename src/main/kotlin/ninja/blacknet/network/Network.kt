@@ -70,6 +70,10 @@ enum class Network(val addrSize: Int) {
         }
     }
 
+    fun isDisabled(): Boolean {
+        return Config.isDisabled(this)
+    }
+
     private fun isLocalIPv4(bytes: ByteArray): Boolean {
         return bytes[0] == 0.toByte() || bytes[0] == 127.toByte()
     }
@@ -135,7 +139,7 @@ enum class Network(val addrSize: Int) {
         }
 
         suspend fun connect(address: Address): Connection {
-            if (Config.isDisabled(address.network)) throw RuntimeException("${address.network} is disabled")
+            if (address.network.isDisabled()) throw RuntimeException("${address.network} is disabled")
             when (address.network) {
                 IPv4, IPv6 -> {
                     if (socksProxy != null) {
