@@ -86,6 +86,12 @@ object PeerDB {
     }
 
     fun add(peer: Address, from: Address): Boolean {
+        if (peer.network.isDisabled())
+            return false
+        if (peer.isLocal())
+            return false
+        if (peer.isPrivate() && !from.isPrivate())
+            return false
         if (!map.contains(peer)) {
             map[peer] = Entry(from, 0, 0, 0)
             return true

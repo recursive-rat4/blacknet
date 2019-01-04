@@ -36,12 +36,12 @@ class Peers(private val list: List<Address>) : Packet {
         var added = false
 
         for (i in list) {
-            if (!i.checkSize() || i.isLocal()) {
+            if (!i.checkSize()) {
                 connection.dos("invalid Address")
                 continue
             }
-            if (!i.isPrivate() || connection.remoteAddress.isPrivate())
-                added = added or PeerDB.add(i, connection.remoteAddress)
+
+            added = added or PeerDB.add(i, connection.remoteAddress)
         }
 
         if (added)

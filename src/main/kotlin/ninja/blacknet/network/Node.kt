@@ -330,7 +330,7 @@ object Node : CoroutineScope {
 
     private suspend fun peerAnnouncer() {
         while (true) {
-            delay(5 * 60)
+            delay(7 * 60)
 
             val randomPeers = PeerDB.getRandom(Peers.MAX)
             if (randomPeers.size == 0)
@@ -375,7 +375,7 @@ object Node : CoroutineScope {
 
         val seeds = "dnsseed.blacknet.ninja"
         try {
-            val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT).filter { !it.isLocal() }
+            val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT)
             PeerDB.add(peers, Address.LOOPBACK)
             PeerDB.commit()
         } catch (e: Throwable) {
