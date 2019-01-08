@@ -10,6 +10,7 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JSON
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
@@ -27,7 +28,7 @@ class BlockInfo(
         val signature: String,
         val transactions: List<String>
 ) {
-    constructor(block: Block, size: Int) : this(
+    constructor(block: Block, size: Int, txdetail: Boolean) : this(
             size,
             block.version,
             block.previous.toString(),
@@ -35,13 +36,18 @@ class BlockInfo(
             Address.encode(block.generator),
             block.contentHash.toString(),
             block.signature.toString(),
-            block.transactions.map { Transaction.Hasher(it.array).toString() }
+            block.transactions.map {
+                if (txdetail)
+                    TransactionInfo.fromBytes(it.array)?.let { JSON.plain.stringify(TransactionInfo.serializer(), it) } ?: "Deserialization error"
+                else
+                    Transaction.Hasher(it.array).toString()
+            }
     )
 
     companion object {
-        fun get(hash: Hash): BlockInfo? {
+        fun get(hash: Hash, txdetail: Boolean): BlockInfo? {
             val block = BlockDB.block(hash) ?: return null
-            return BlockInfo(block.first, block.second)
+            return BlockInfo(block.first, block.second, txdetail)
         }
     }
 }

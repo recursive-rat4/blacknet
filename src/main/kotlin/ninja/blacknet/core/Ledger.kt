@@ -12,7 +12,7 @@ package ninja.blacknet.core
 import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
 
 private val logger = KotlinLogging.logger {}
@@ -62,12 +62,7 @@ interface Ledger {
             logger.info("Generated as individual tx")
             return false
         }
-        val serializer = TxType.getSerializer(tx.type)
-        if (serializer == null) {
-            logger.info("unknown transaction type ${tx.type}")
-            return false
-        }
-        val data = BlacknetDecoder.fromBytes(tx.data.array).decode(serializer)
+        val data = TxData.deserealize(tx.type, tx.data.array)
         if (data == null) {
             logger.info("deserialization of tx data failed")
             return false

@@ -15,6 +15,7 @@ import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.UndoBlock
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.serialization.BlacknetDecoder
 
 private val logger = KotlinLogging.logger {}
 
@@ -45,5 +46,16 @@ interface TxData {
             return true
         }
         return false
+    }
+
+    companion object {
+        fun deserealize(type: Byte, bytes: ByteArray): TxData? {
+            val serializer = TxType.getSerializer(type)
+            if (serializer == null) {
+                logger.info("unknown transaction type:$type")
+                return null
+            }
+            return BlacknetDecoder.fromBytes(bytes).decode(serializer)
+        }
     }
 }

@@ -37,7 +37,6 @@ import kotlinx.serialization.list
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
@@ -131,9 +130,10 @@ fun Application.main() {
             call.respond(JSON.indented.stringify(BlockDBInfo.serializer(), BlockDBInfo.get()))
         }
 
-        get("/api/v1/blockdb/get/{hash}") {
+        get("/api/v1/blockdb/get/{hash}/{txdetail?}") {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
-            val ret = BlockInfo.get(hash)
+            val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
+            val ret = BlockInfo.get(hash, txdetail)
             if (ret != null)
                 call.respond(JSON.indented.stringify(BlockInfo.serializer(), ret))
             else
