@@ -98,7 +98,9 @@ object BlockDB : DataDB() {
                 LedgerDB.commit()
                 map[hash] = bytes
                 commit()
-                logger.info("Accepted block $hash")
+                if (connection != null) {
+                    logger.info("Accepted block $hash")
+                }
                 TxPool.remove(txHashes)
                 APIServer.blockNotify(hash)
                 return Status.ACCEPTED

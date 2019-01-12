@@ -83,6 +83,7 @@ object PoS {
                 val block = Block.create(LedgerDB.blockHash(), time, publicKey)
                 TxPool.fill(block)
                 val signed = block.sign(privateKey)
+                logger.info("Staked block ${signed.first}")
                 Node.broadcastBlock(signed.first, signed.second)
             }
         }
