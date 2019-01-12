@@ -268,7 +268,22 @@ object Node : CoroutineScope {
     }
 
     private suspend fun evictConnection(): Boolean {
-        return false //TODO
+        val candidates = connections.copy().asSequence()
+                .sortedBy { if (it.ping != 0L) it.ping else Long.MAX_VALUE }.drop(4)
+                .sortedByDescending { it.lastTxTime }.drop(4)
+                .sortedByDescending { it.lastBlockTime }.drop(4)
+                .sortedBy { it.connectedAt }.drop(4)
+                .toMutableList()
+
+        //TODO network groups
+
+        if (candidates.isEmpty())
+            return false
+
+        val connection = candidates.random()
+        logger.info("Evicting ${connection.remoteAddress}")
+        connection.close()
+        return true
     }
 
     private suspend fun connector() {

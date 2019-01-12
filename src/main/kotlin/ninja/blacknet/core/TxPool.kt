@@ -89,6 +89,7 @@ object TxPool : MemPool(), Ledger {
         if (processTransaction(hash, bytes, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
             transactions.add(hash)
+            connection?.lastTxTime = Node.time()
             return Status.ACCEPTED
         }
         return Status.INVALID

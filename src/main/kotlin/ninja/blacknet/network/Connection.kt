@@ -36,6 +36,8 @@ class Connection(
     val connectedAt = Node.time()
 
     private var closed = false
+    var lastBlockTime: Long = 0
+    var lastTxTime: Long = 0
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0

@@ -100,6 +100,7 @@ object BlockDB : DataDB() {
                 commit()
                 if (connection != null) {
                     logger.info("Accepted block $hash")
+                    connection.lastBlockTime = Node.time()
                 }
                 TxPool.remove(txHashes)
                 APIServer.blockNotify(hash)

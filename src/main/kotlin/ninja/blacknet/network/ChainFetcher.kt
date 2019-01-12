@@ -185,6 +185,7 @@ object ChainFetcher : CoroutineScope {
                 return
             }
         }
+        connection.lastBlockTime = Node.time()
         logger.info("Connected ${blocks.size} blocks")
         if (syncChain!!.chain == LedgerDB.blockHash()) {
             fetched()
