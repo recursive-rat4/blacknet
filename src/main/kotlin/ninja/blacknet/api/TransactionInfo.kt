@@ -23,7 +23,7 @@ class TransactionInfo(
         val signature: String,
         val from: String,
         val seq: Int,
-        val blochHash: String,
+        val blockHash: String,
         val fee: Long,
         val type: Byte,
         val data: String
@@ -34,7 +34,7 @@ class TransactionInfo(
             tx.signature.toString(),
             Address.encode(tx.from),
             tx.seq,
-            tx.blochHash.toString(),
+            tx.blockHash.toString(),
             tx.fee,
             tx.type,
             data(tx.type, tx.data.array)

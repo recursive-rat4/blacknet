@@ -22,7 +22,7 @@ class Transaction(
         var signature: Signature,
         val from: PublicKey,
         val seq: Int,
-        val blochHash: Hash,
+        val blockHash: Hash,
         val fee: Long,
         val type: Byte,
         val data: SerializableByteArray

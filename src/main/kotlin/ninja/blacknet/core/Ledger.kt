@@ -50,7 +50,7 @@ interface Ledger {
             logger.info("invalid signature")
             return false
         }
-        if (!checkBlockHash(tx.blochHash)) {
+        if (!checkBlockHash(tx.blockHash)) {
             logger.info("not valid on this chain")
             return false
         }
