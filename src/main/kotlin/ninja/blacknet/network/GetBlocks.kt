@@ -38,9 +38,6 @@ class GetBlocks(
     }
 
     override suspend fun process(connection: Connection) {
-        if (Node.isSynchronizing())
-            return
-
         if (checkpoint != Hash.ZERO) {
             if (!BlockDB.contains(checkpoint)) {
                 logger.info("Chain fork $best Disconnecting ${connection.remoteAddress}")

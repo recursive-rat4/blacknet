@@ -33,6 +33,10 @@ object BlockDB : DataDB() {
         db.commit()
     }
 
+    fun rollback() {
+        db.rollback()
+    }
+
     fun size(): Int {
         return map.size
     }
@@ -93,10 +97,10 @@ object BlockDB : DataDB() {
                     logger.info("block $hash not on current chain")
                 return Status.NOT_ON_THIS_CHAIN
             }
+            map[hash] = bytes
             val txHashes = ArrayList<Hash>(block.transactions.size)
             if (LedgerDB.processBlock(hash, block, bytes.size, txHashes)) {
                 LedgerDB.commit()
-                map[hash] = bytes
                 commit()
                 if (connection != null) {
                     logger.info("Accepted block $hash")
@@ -107,6 +111,7 @@ object BlockDB : DataDB() {
                 return Status.ACCEPTED
             } else {
                 LedgerDB.rollback()
+                rollback()
                 return Status.INVALID
             }
         }

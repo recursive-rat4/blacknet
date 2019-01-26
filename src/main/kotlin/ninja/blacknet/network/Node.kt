@@ -324,10 +324,10 @@ object Node : CoroutineScope {
         while (true) {
             delay(NETWORK_TIMEOUT)
 
-            val currTime = time()
+            val currTime = timeMilli()
             connections.forEach {
                 if (it.state.isWaiting()) {
-                    if (currTime > it.connectedAt + NETWORK_TIMEOUT)
+                    if (currTime > it.connectedAt + NETWORK_TIMEOUT * 1000)
                         it.close()
                 } else {
                     if (it.pingRequest == null) {

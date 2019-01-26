@@ -181,6 +181,8 @@ object LedgerDB : CoroutineScope, Ledger {
             i++
             val hash = chain.getOrNull(i) ?: break
             ret.add(hash)
+            if (ret.size >= max)
+                break
         }
         return ret
     }
@@ -292,6 +294,7 @@ object LedgerDB : CoroutineScope, Ledger {
         }
 
         val reward = PoS.reward(supply())
+        this.undo.remove(getRollingCheckpoint())
         this.undo[hash] = undo
         addSupply(reward)
         generator.debit(height(), reward + fees)

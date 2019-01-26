@@ -33,7 +33,7 @@ class Connection(
 ) : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
-    val connectedAt = Node.time()
+    val connectedAt = Node.timeMilli()
 
     private var closed = false
     var lastBlockTime: Long = 0

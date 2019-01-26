@@ -74,7 +74,6 @@ object ChainFetcher : CoroutineScope {
 
                 logger.info("Disconnecting on timeout ${syncChain!!.connection.remoteAddress}")
                 syncChain!!.connection.close()
-                fetched()
             }
 
             val data = selectChain()
@@ -155,8 +154,6 @@ object ChainFetcher : CoroutineScope {
             return
         }
         if (blocks.isEmpty()) {
-            logger.info("No blocks. Disconnecting ${connection.remoteAddress}")
-            connection.close()
             fetched()
             return
         }

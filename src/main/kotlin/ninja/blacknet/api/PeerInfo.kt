@@ -36,7 +36,7 @@ class PeerInfo(
             connection.agent,
             connection.state.name,
             connection.dosScore,
-            connection.connectedAt,
+            connection.connectedAt / 1000,
             connection.totalBytesRead(),
             connection.totalBytesWritten()
     )

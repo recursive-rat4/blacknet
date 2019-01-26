@@ -47,6 +47,7 @@ class Version(
         connection.version = version
         connection.agent = agent
         connection.feeFilter = feeFilter
+        connection.ping = Node.timeMilli() - connection.connectedAt
 
         if (magic != Node.magic || version < Node.minVersion || nonce == Node.nonce) {
             connection.close()
