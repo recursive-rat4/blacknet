@@ -35,12 +35,12 @@ class SerializableByteArray64(val array: ByteArray) {
     companion object {
         const val SIZE = 64
 
-        override fun deserialize(input: Decoder): SerializableByteArray64 {
-            return SerializableByteArray64((input as BlacknetDecoder).decodeByteArrayValue(SIZE))
+        override fun deserialize(decoder: Decoder): SerializableByteArray64 {
+            return SerializableByteArray64((decoder as BlacknetDecoder).decodeByteArrayValue(SIZE))
         }
 
-        override fun serialize(output: Encoder, obj: SerializableByteArray64) {
-            (output as BlacknetEncoder).encodeByteArrayValue(obj.array, SIZE)
+        override fun serialize(encoder: Encoder, obj: SerializableByteArray64) {
+            (encoder as BlacknetEncoder).encodeByteArrayValue(obj.array, SIZE)
         }
     }
 }

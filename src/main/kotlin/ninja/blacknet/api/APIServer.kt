@@ -32,7 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JSON
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import mu.KotlinLogging
 import ninja.blacknet.core.*
@@ -115,19 +115,19 @@ fun Application.main() {
         }
 
         get("/api/v1/peerinfo") {
-            call.respond(JSON.indented.stringify(PeerInfo.serializer().list, PeerInfo.getAll()))
+            call.respond(Json.indented.stringify(PeerInfo.serializer().list, PeerInfo.getAll()))
         }
 
         get("/api/v1/nodeinfo") {
-            call.respond(JSON.indented.stringify(NodeInfo.serializer(), NodeInfo.get()))
+            call.respond(Json.indented.stringify(NodeInfo.serializer(), NodeInfo.get()))
         }
 
         get("/api/v1/peerdb") {
-            call.respond(JSON.indented.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
+            call.respond(Json.indented.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
         }
 
         get("/api/v1/blockdb") {
-            call.respond(JSON.indented.stringify(BlockDBInfo.serializer(), BlockDBInfo.get()))
+            call.respond(Json.indented.stringify(BlockDBInfo.serializer(), BlockDBInfo.get()))
         }
 
         get("/api/v1/blockdb/get/{hash}/{txdetail?}") {
@@ -135,36 +135,36 @@ fun Application.main() {
             val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
             val ret = BlockInfo.get(hash, txdetail)
             if (ret != null)
-                call.respond(JSON.indented.stringify(BlockInfo.serializer(), ret))
+                call.respond(Json.indented.stringify(BlockInfo.serializer(), ret))
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
 
         get("/api/v1/ledger") {
-            call.respond(JSON.indented.stringify(LedgerInfo.serializer(), LedgerInfo.get()))
+            call.respond(Json.indented.stringify(LedgerInfo.serializer(), LedgerInfo.get()))
         }
 
         get("/api/v1/ledger/get/{account}") {
             val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
             val ret = AccountInfo.get(pubkey)
             if (ret != null)
-                call.respond(JSON.indented.stringify(AccountInfo.serializer(), ret))
+                call.respond(Json.indented.stringify(AccountInfo.serializer(), ret))
             else
                 call.respond(HttpStatusCode.NotFound, "account not found")
         }
 
         get("/api/v1/txpool") {
-            call.respond(JSON.indented.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
+            call.respond(Json.indented.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
         }
 
         get("/api/v1/account/generate") {
-            call.respond(JSON.indented.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
+            call.respond(Json.indented.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
         }
 
         post("/api/v1/mnemonic/info/{mnemonic}") {
             val info = MnemonicInfo.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(JSON.indented.stringify(MnemonicInfo.serializer(), info))
+            call.respond(Json.indented.stringify(MnemonicInfo.serializer(), info))
         }
 
         post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {

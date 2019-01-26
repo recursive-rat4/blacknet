@@ -44,12 +44,12 @@ class SerializableByteArray(
             return SerializableByteArray(bytes)
         }
 
-        override fun deserialize(input: Decoder): SerializableByteArray {
-            return (input as BlacknetDecoder).decodeSerializableByteArrayValue()
+        override fun deserialize(decoder: Decoder): SerializableByteArray {
+            return (decoder as BlacknetDecoder).decodeSerializableByteArrayValue()
         }
 
-        override fun serialize(output: Encoder, obj: SerializableByteArray) {
-            (output as BlacknetEncoder).encodeSerializableByteArrayValue(obj)
+        override fun serialize(encoder: Encoder, obj: SerializableByteArray) {
+            (encoder as BlacknetEncoder).encodeSerializableByteArrayValue(obj)
         }
     }
 }

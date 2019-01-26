@@ -16,7 +16,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JSON
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import mu.KotlinLogging
 import ninja.blacknet.core.*
@@ -60,7 +60,7 @@ object LedgerDB : CoroutineScope, Ledger {
 
         if (accounts.isEmpty()) {
             val genesis = File("config/genesis.json").readText()
-            val list = JSON.parse(Entry.serializer().list, genesis)
+            val list = Json.parse(Entry.serializer().list, genesis)
 
             var supply = 0L
             for (i in list) {

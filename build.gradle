@@ -1,6 +1,6 @@
 buildscript {
     ext.kotlin_version = '1.3.11'
-    ext.serialization_version = '0.9.1'
+    ext.serialization_version = '0.10.0'
     ext.ktor_version = '1.0.1'
 
     repositories {
@@ -45,7 +45,7 @@ dependencies {
     compile 'com.google.guava:guava:27.0.1-jre'
     compile 'org.bitlet:weupnp:0.1.4'
     compile 'org.bouncycastle:bcprov-jdk15on:1.60'
-    compile 'net.i2p:i2p:0.9.37'
+    compile 'net.i2p:i2p:0.9.38'
 }
 
 distributions {
