@@ -46,6 +46,9 @@ object DataFetcher {
                 val type = i.first
                 val hash = i.second
 
+                if (connection.version >= ChainAnnounce.MIN_VERSION && type == DataType.Block)
+                    continue
+
                 if (requested.containsKey(hash))
                     continue
 

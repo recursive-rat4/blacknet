@@ -50,7 +50,7 @@ object Node : CoroutineScope {
     const val DEFAULT_P2P_PORT = 28453
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
-    const val version = 5
+    const val version = 6
     const val minVersion = 5
     const val agent = "Blacknet"
     override val coroutineContext: CoroutineContext = Dispatchers.Default
@@ -184,12 +184,22 @@ object Node : CoroutineScope {
         connection.sendPacket(v)
     }
 
+    suspend fun announceChain(hash: Hash, filter: Connection? = null) {
+        val ann = ChainAnnounce(hash, LedgerDB.cumulativeDifficulty())
+        broadcastPacket(ann) {
+            it != filter && it.version >= ChainAnnounce.MIN_VERSION
+        }
+        val inv = InvList()
+        inv.add(Pair(DataType.Block, hash))
+        broadcastPacket(Inventory(inv)) {
+            it != filter
+        }
+    }
+
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val status = BlockDB.process(hash, bytes)
         if (status == Status.ACCEPTED) {
-            val inv = InvList()
-            inv.add(Pair(DataType.Block, hash))
-            broadcastPacket(Inventory(inv))
+            announceChain(hash)
             return true
         } else {
             logger.info("$status block $hash")

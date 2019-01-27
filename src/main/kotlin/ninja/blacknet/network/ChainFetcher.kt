@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB.Status
-import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
@@ -32,10 +31,12 @@ object ChainFetcher : CoroutineScope {
     const val TIMEOUT = 5
     private val chains = SynchronizedArrayList<ChainData>()
     private var requestTime = 0L
+    private var connectedBlocks = 0
     @Volatile
     private var disconnected: ChainData? = null
     @Volatile
     private var syncChain: ChainData? = null
+    private var originalChain: Hash? = null
     private var rollbackTo: Hash? = null
     private var undoDifficulty = BigInt.ZERO
     private var undoRollback: ArrayList<Hash>? = null
@@ -94,7 +95,8 @@ object ChainFetcher : CoroutineScope {
             logger.info("Fetching ${data.chain} from ${data.connection.remoteAddress}")
             requestTime = Node.time()
             syncChain = data
-            data.connection.sendPacket(GetBlocks(LedgerDB.blockHash(), LedgerDB.getRollingCheckpoint()))
+            originalChain = LedgerDB.blockHash()
+            data.connection.sendPacket(GetBlocks(originalChain!!, LedgerDB.getRollingCheckpoint()))
         }
     }
 
@@ -115,19 +117,24 @@ object ChainFetcher : CoroutineScope {
                 logger.info("Removing ${undoRollback!!.size} blocks from db")
                 val toRemove = undoRollback!!
                 launch { BlockDB.remove(toRemove) }
-                //announce new chain after reorganization
-                Node.broadcastInv(arrayListOf(Pair(DataType.Block, LedgerDB.blockHash())), syncChain!!.connection)
             }
         }
         if (syncChain != null) {
+            val newChain = LedgerDB.blockHash()
+            if (newChain != originalChain) {
+                Node.announceChain(newChain, syncChain!!.connection)
+            }
+
             if (syncChain == disconnected)
-                logger.info("Peer disconnected")
+                logger.info("Peer disconnected. Fetched $connectedBlocks blocks")
             else
-                logger.info("Finished fetching")
+                logger.info("Finished fetching $connectedBlocks blocks")
         }
 
         syncChain = null
         disconnected = null
+        connectedBlocks = 0
+        originalChain = null
         rollbackTo = null
         undoRollback = null
         undoDifficulty = BigInt.ZERO
@@ -185,7 +192,9 @@ object ChainFetcher : CoroutineScope {
             }
         }
         connection.lastBlockTime = Node.time()
-        logger.info("Connected ${blocks.size} blocks")
+        connectedBlocks += blocks.size
+        if (blocks.size >= 10)
+            logger.info("Connected ${blocks.size} blocks")
         if (syncChain!!.chain == LedgerDB.blockHash()) {
             fetched()
         } else {
