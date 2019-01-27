@@ -16,8 +16,6 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
-import net.freehaven.tor.control.TorControlCommands.HS_ADDRESS
-import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
 import net.i2p.data.Base32
 import ninja.blacknet.Config
@@ -25,7 +23,6 @@ import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.port
 import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
-import ninja.blacknet.Config.torcontrol
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
 import java.net.ConnectException

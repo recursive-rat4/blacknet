@@ -48,7 +48,7 @@ private val logger = KotlinLogging.logger {}
 
 object Node : CoroutineScope {
     const val DEFAULT_P2P_PORT = 28453
-    const val NETWORK_TIMEOUT = 60
+    const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
     const val version = 5
     const val minVersion = 5
@@ -121,8 +121,8 @@ object Node : CoroutineScope {
         return LedgerDB.maxBlockSize() + 100
     }
 
-    fun isSynchronizing(): Boolean {
-        return ChainFetcher.isSynchronizing()
+    fun isInitialSynchronization(): Boolean {
+        return ChainFetcher.isSynchronizing() && time() > LedgerDB.blockTime() + PoS.TARGET_BLOCK_TIME * PoS.MATURITY
     }
 
     fun listenOn(address: Address) {
@@ -178,8 +178,8 @@ object Node : CoroutineScope {
     }
 
     fun sendVersion(connection: Connection) {
-        val blockHash = if (isSynchronizing()) Hash.ZERO else LedgerDB.blockHash()
-        val cumulativeDifficulty = if (isSynchronizing()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
+        val blockHash = if (isInitialSynchronization()) Hash.ZERO else LedgerDB.blockHash()
+        val cumulativeDifficulty = if (isInitialSynchronization()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
         val v = Version(magic, version, time(), nonce, agent, minTxFee, blockHash, cumulativeDifficulty)
         connection.sendPacket(v)
     }
@@ -316,7 +316,7 @@ object Node : CoroutineScope {
             } catch (e: Throwable) {
             }
 
-            delay(NETWORK_TIMEOUT) //TODO
+            delay(NETWORK_TIMEOUT / 2) //TODO
         }
     }
 
@@ -324,10 +324,10 @@ object Node : CoroutineScope {
         while (true) {
             delay(NETWORK_TIMEOUT)
 
-            val currTime = timeMilli()
+            val currTime = time()
             connections.forEach {
                 if (it.state.isWaiting()) {
-                    if (currTime > it.connectedAt + NETWORK_TIMEOUT * 1000)
+                    if (currTime > it.connectedAt + NETWORK_TIMEOUT)
                         it.close()
                 } else {
                     if (it.pingRequest == null) {

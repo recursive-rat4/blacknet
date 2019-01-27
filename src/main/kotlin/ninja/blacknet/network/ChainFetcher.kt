@@ -48,7 +48,9 @@ object ChainFetcher : CoroutineScope {
         return syncChain != null
     }
 
-    fun disconnected(connection: Connection) = launch {
+    fun disconnected(connection: Connection) = launch { disconnectedSync(connection) }
+
+    private suspend fun disconnectedSync(connection: Connection) {
         chains.removeIf { it.connection == connection }
         if (syncChain?.connection == connection) {
             disconnected = syncChain
@@ -74,6 +76,8 @@ object ChainFetcher : CoroutineScope {
 
                 logger.info("Disconnecting on timeout ${syncChain!!.connection.remoteAddress}")
                 syncChain!!.connection.close()
+                disconnectedSync(syncChain!!.connection)
+                continue
             }
 
             val data = selectChain()
@@ -104,8 +108,9 @@ object ChainFetcher : CoroutineScope {
         if (undoRollback != null) {
             if (undoDifficulty >= LedgerDB.cumulativeDifficulty()) {
                 logger.info("Reconnecting ${undoRollback!!.size} blocks")
-                LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
+                val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
                 LedgerDB.commit()
+                launch { BlockDB.remove(toRemove) }
             } else {
                 logger.info("Removing ${undoRollback!!.size} blocks from db")
                 val toRemove = undoRollback!!
@@ -138,7 +143,6 @@ object ChainFetcher : CoroutineScope {
             if (rollbackTo != null) {
                 logger.info("Unexpected rollback")
                 connection.close()
-                fetched()
                 return
             }
             val checkpoint = LedgerDB.getRollingCheckpoint()
@@ -171,14 +175,12 @@ object ChainFetcher : CoroutineScope {
             if (undoRollback?.contains(hash) == true) {
                 logger.info("Rollback contains $hash")
                 connection.close()
-                fetched()
                 return
             }
             val status = BlockDB.process(hash, i.array, null)
             if (status != Status.ACCEPTED) {
                 logger.info("$status block $hash")
                 connection.close()
-                fetched()
                 return
             }
         }

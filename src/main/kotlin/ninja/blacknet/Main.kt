@@ -30,7 +30,7 @@ object Main {
         Security.addProvider(Blake2bProvider())
 
         val inStream = FileInputStream("config/logging.properties")
-        LogManager.getLogManager().readConfiguration(inStream);
+        LogManager.getLogManager().readConfiguration(inStream)
         inStream.close()
         logger.info("Starting Blacknet node")
 

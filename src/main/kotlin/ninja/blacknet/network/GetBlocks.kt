@@ -52,23 +52,29 @@ class GetBlocks(
             return
         }
 
+        var index = LedgerDB.getBlockNumber(best)
+        if (index == null) {
+            logger.error("number $best null")
+            connection.sendPacket(Blocks(ArrayList(), ArrayList()))
+            return
+        }
+
         val height = LedgerDB.height()
         val maxSize = Node.getMaxPacketSize()
         val response = ArrayList<SerializableByteArray>()
 
-        var index = LedgerDB.getBlockNumber(best)!!
         var size = 8
 
         while (index < height) {
             index++
             val hash = LedgerDB.getBlockHash(index)
             if (hash == null) {
-                logger.error("$index null")
+                logger.error("hash $index null")
                 break
             }
             val bytes = BlockDB.get(hash)
             if (bytes == null) {
-                logger.error("$hash null")
+                logger.error("block $hash null")
                 break
             }
             if (size + bytes.size + 4 > maxSize)

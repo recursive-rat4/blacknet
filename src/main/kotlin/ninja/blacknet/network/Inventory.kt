@@ -29,7 +29,7 @@ class Inventory(private val list: InvList) : Packet {
     }
 
     override suspend fun process(connection: Connection) {
-        if (Node.isSynchronizing())
+        if (Node.isInitialSynchronization())
             return
 
         if (list.size > DataType.MAX_INVENTORY) {

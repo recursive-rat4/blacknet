@@ -66,7 +66,7 @@ object PoS {
             if (Node.isOffline())
                 continue
 
-            if (Node.isSynchronizing())
+            if (Node.isInitialSynchronization())
                 continue
 
             val time = Node.time() and (TIMESTAMP_MASK xor -1L)

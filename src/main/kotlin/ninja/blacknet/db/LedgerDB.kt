@@ -9,9 +9,6 @@
 
 package ninja.blacknet.db
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -26,13 +23,11 @@ import ninja.blacknet.crypto.PublicKey
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 
 private val logger = KotlinLogging.logger {}
 
-object LedgerDB : CoroutineScope, Ledger {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
+object LedgerDB : Ledger {
     private val mutex = Mutex()
     private val db = DBMaker.fileDB("db/ledger").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
     private val accounts = db.hashMap("accounts", PublicKeySerializer, AccountStateSerializer).createOrOpen()
@@ -294,7 +289,6 @@ object LedgerDB : CoroutineScope, Ledger {
         }
 
         val reward = PoS.reward(supply())
-        this.undo.remove(getRollingCheckpoint())
         this.undo[hash] = undo
         addSupply(reward)
         generator.debit(height(), reward + fees)
@@ -363,22 +357,23 @@ object LedgerDB : CoroutineScope, Ledger {
         return ret
     }
 
-    suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>) = mutex.withLock {
+    suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = mutex.withLock {
         val toRemove = rollbackToUnlocked(hash)
-        launch { BlockDB.remove(toRemove) }
 
         list.asReversed().forEach {
             val block = BlockDB.block(it)
             if (block == null) {
                 logger.error("block not found")
-                return@withLock
+                return@withLock toRemove
             }
             val txHashes = ArrayList<Hash>(block.first.transactions.size)
             if (!processBlockUnlocked(it, block.first, block.second, txHashes)) {
                 logger.error("process block failed")
-                return@withLock
+                return@withLock toRemove
             }
             TxPool.remove(txHashes)
         }
+
+        return@withLock toRemove
     }
 }

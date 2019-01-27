@@ -46,7 +46,10 @@ class Data(private val list: DataList) : Packet {
 
             val hash = type.hash(bytes.array)
 
-            DataFetcher.fetched(hash)
+            if (!DataFetcher.fetched(hash)) {
+                connection.dos("unrequested ${type.name} $hash")
+                continue
+            }
 
             val status = type.db.process(hash, bytes.array, connection)
             when (status) {
