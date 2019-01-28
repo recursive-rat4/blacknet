@@ -9,11 +9,14 @@
 
 package ninja.blacknet.core
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.util.SynchronizedHashSet
 
 abstract class DataDB {
+    protected val mutex = Mutex()
     private val rejects = SynchronizedHashSet<Hash>()
 
     suspend fun clearRejects() {
@@ -24,7 +27,7 @@ abstract class DataDB {
         return !rejects.contains(hash) && !contains(hash)
     }
 
-    suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Status {
+    suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Status = mutex.withLock {
         if (rejects.contains(hash))
             return Status.INVALID
         if (contains(hash))

@@ -185,7 +185,7 @@ object ChainFetcher : CoroutineScope {
                 return
             }
             val status = BlockDB.process(hash, i.array, null)
-            if (status != Status.ACCEPTED) {
+            if (status != Status.ACCEPTED && status != Status.ALREADY_HAVE) {
                 logger.info("$status block $hash")
                 connection.close()
                 return
