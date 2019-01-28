@@ -35,24 +35,29 @@ class Connection(
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     val connectedAt = Node.time()
 
-    private var closed = false
+    @Volatile
+    var totalBytesRead: Long = 0
+    @Volatile
+    var totalBytesWritten: Long = 0
+    @Volatile
     var lastBlockTime: Long = 0
+    @Volatile
     var lastTxTime: Long = 0
+    @Volatile
+    var ping: Long = 0
+    @Volatile
+    private var closed = false
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
     var timeOffset: Long = 0
     var pingRequest: PingRequest? = null
-    var ping: Long = 0
     var dosScore: Int = 0
 
     init {
         launch { receiver() }
         launch { sender() }
     }
-
-    fun totalBytesRead() = readChannel.totalBytesRead
-    fun totalBytesWritten() = writeChannel.totalBytesWritten
 
     private suspend fun receiver() {
         try {
@@ -87,11 +92,14 @@ class Connection(
     private suspend fun recvPacket(): ByteReadPacket {
         try {
             val size = readChannel.readInt()
+            totalBytesRead += 4
             if (size > Node.getMaxPacketSize()) {
                 logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting $remoteAddress")
                 close()
             }
-            return readChannel.readPacket(size)
+            val ret = readChannel.readPacket(size)
+            totalBytesRead += size
+            return ret
         } catch (e: IOException) {
             throw ClosedReceiveChannelException(e.message)
         }
@@ -99,8 +107,11 @@ class Connection(
 
     private suspend fun sender() {
         try {
-            for (packet in sendChannel)
+            for (packet in sendChannel) {
+                val size = packet.remaining
                 writeChannel.writePacket(packet)
+                totalBytesWritten += size
+            }
         } catch (e: ClosedWriteChannelException) {
         } catch (e: CancellationException) {
         } catch (e: Throwable) {

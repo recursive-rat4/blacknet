@@ -37,8 +37,8 @@ class PeerInfo(
             connection.state.name,
             connection.dosScore,
             connection.connectedAt,
-            connection.totalBytesRead(),
-            connection.totalBytesWritten()
+            connection.totalBytesRead,
+            connection.totalBytesWritten
     )
 
     companion object {
