@@ -137,6 +137,10 @@ object LedgerDB : Ledger {
         accounts[key] = state
     }
 
+    private fun remove(key: PublicKey) {
+        accounts.remove(key)
+    }
+
     override fun addSupply(amount: Long) {
         supply.set(supply.get() + amount)
     }
@@ -147,6 +151,10 @@ object LedgerDB : Ledger {
 
     override fun addUndo(hash: Hash, undo: UndoBlock) {
         this.undo[hash] = undo
+    }
+
+    private fun removeUndo(hash: Hash) {
+        this.undo.remove(hash)
     }
 
     override fun checkBlockHash(hash: Hash) = hash == Hash.ZERO || chainIndex.containsKey(hash)
@@ -289,8 +297,9 @@ object LedgerDB : Ledger {
         }
 
         val reward = PoS.reward(supply())
-        this.undo[hash] = undo
+        addUndo(hash, undo)
         addSupply(reward)
+        generator.prune(height())
         generator.debit(height(), reward + fees)
         set(block.generator, generator)
         maxBlockSize = calcMaxBlockSize()
@@ -298,7 +307,7 @@ object LedgerDB : Ledger {
         return true
     }
 
-    private fun undoBlock(): Hash {
+    private suspend fun undoBlock(): Hash {
         val hash = blockHash()
         val undo = this.undo[hash]!!
 
@@ -318,9 +327,9 @@ object LedgerDB : Ledger {
             val key = it.first
             val state = it.second
             if (state.isEmpty())
-                accounts.remove(key)
+                remove(key)
             else
-                accounts[key] = state
+                set(key, state)
         }
         undo.htlcs.asReversed().forEach {
             val id = it.first
@@ -339,7 +348,7 @@ object LedgerDB : Ledger {
                 removeMultisig(id)
         }
 
-        this.undo.remove(hash)
+        removeUndo(hash)
         return hash
     }
 
@@ -347,7 +356,7 @@ object LedgerDB : Ledger {
         return@withLock rollbackToUnlocked(hash)
     }
 
-    private fun rollbackToUnlocked(hash: Hash): ArrayList<Hash> {
+    private suspend fun rollbackToUnlocked(hash: Hash): ArrayList<Hash> {
         val i = getBlockNumber(hash) ?: return ArrayList()
         val height = height()
         var n = height - i

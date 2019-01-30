@@ -38,8 +38,8 @@ object BlockDB : DataDB() {
         return map.size
     }
 
-    fun block(hash: Hash): Pair<Block, Int>? {
-        val bytes = map[hash] ?: return null
+    suspend fun block(hash: Hash): Pair<Block, Int>? {
+        val bytes = get(hash) ?: return null
         val block = Block.deserialize(bytes)
         if (block == null) {
             logger.error("$hash deserialization failed")

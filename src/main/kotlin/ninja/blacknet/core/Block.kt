@@ -9,9 +9,7 @@
 
 package ninja.blacknet.core
 
-import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BlacknetDecoder
 import ninja.blacknet.serialization.BlacknetEncoder
@@ -27,11 +25,7 @@ class Block(
         var signature: Signature,
         val transactions: ArrayList<SerializableByteArray>
 ) {
-    fun serialize(): ByteArray {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build().readBytes()
-    }
+    fun serialize(): ByteArray = BlacknetEncoder.toBytes(serializer(), this)
 
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
         val bytes = serialize()
@@ -67,9 +61,7 @@ class Block(
         const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE
         const val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE
 
-        fun deserialize(bytes: ByteArray): Block? {
-            return BlacknetDecoder.fromBytes(bytes).decode(Block.serializer())
-        }
+        fun deserialize(bytes: ByteArray): Block? = BlacknetDecoder.fromBytes(bytes).decode(serializer())
 
         fun create(previous: Hash, time: Long, generator: PublicKey): Block {
             return Block(VERSION, previous, time, generator, Hash.ZERO, Signature.EMPTY, ArrayList())

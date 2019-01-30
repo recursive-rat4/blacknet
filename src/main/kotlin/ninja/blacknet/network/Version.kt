@@ -11,7 +11,6 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
@@ -32,11 +31,7 @@ class Version(
         private val chain: Hash,
         private val cumulativeDifficulty: BigInt
 ) : Packet {
-    override fun serialize(): ByteReadPacket {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build()
-    }
+    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
     override fun getType(): Int {
         return PacketType.Version.ordinal

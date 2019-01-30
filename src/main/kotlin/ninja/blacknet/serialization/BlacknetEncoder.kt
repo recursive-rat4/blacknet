@@ -11,10 +11,8 @@ package ninja.blacknet.serialization
 
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
-import kotlinx.serialization.CompositeEncoder
-import kotlinx.serialization.ElementValueEncoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
+import kotlinx.io.core.readBytes
+import kotlinx.serialization.*
 import kotlinx.serialization.internal.EnumDescriptor
 
 class BlacknetEncoder : ElementValueEncoder() {
@@ -49,6 +47,20 @@ class BlacknetEncoder : ElementValueEncoder() {
 
     fun encodeByteArrayValue(value: ByteArray, size: Int) {
         out.writeFully(value, 0, size)
+    }
+
+    companion object {
+        fun <T : Any?> toBytes(strategy: SerializationStrategy<T>, obj: T): ByteArray {
+            val encoder = BlacknetEncoder()
+            strategy.serialize(encoder, obj)
+            return encoder.build().readBytes()
+        }
+
+        fun <T : Any?> toPacket(strategy: SerializationStrategy<T>, obj: T): ByteReadPacket {
+            val encoder = BlacknetEncoder()
+            strategy.serialize(encoder, obj)
+            return encoder.build()
+        }
     }
 }
 

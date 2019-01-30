@@ -11,7 +11,6 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.Hash
@@ -27,11 +26,7 @@ class GetBlocks(
         private val best: Hash,
         private val checkpoint: Hash
 ) : Packet {
-    override fun serialize(): ByteReadPacket {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build()
-    }
+    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
     override fun getType(): Int {
         return PacketType.GetBlocks.ordinal

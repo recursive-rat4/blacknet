@@ -45,7 +45,7 @@ class BlockInfo(
     )
 
     companion object {
-        fun get(hash: Hash, txdetail: Boolean): BlockInfo? {
+        suspend fun get(hash: Hash, txdetail: Boolean): BlockInfo? {
             val block = BlockDB.block(hash) ?: return null
             return BlockInfo(block.first, block.second, txdetail)
         }

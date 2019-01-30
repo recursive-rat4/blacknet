@@ -11,7 +11,6 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
@@ -22,11 +21,7 @@ private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Data(private val list: DataList) : Packet {
-    override fun serialize(): ByteReadPacket {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build()
-    }
+    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
     override fun getType(): Int {
         return PacketType.Data.ordinal
