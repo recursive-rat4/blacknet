@@ -25,6 +25,8 @@ import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
+import ninja.blacknet.util.byteArrayOfInts
+import ninja.blacknet.util.startsWith
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -72,11 +74,25 @@ enum class Network(val addrSize: Int) {
     }
 
     private fun isLocalIPv4(bytes: ByteArray): Boolean {
-        return bytes[0] == 0.toByte() || bytes[0] == 127.toByte()
+        // 0.0.0.0 – 0.255.255.255
+        if (bytes[0] == 0.toByte()) return true
+        // 127.0.0.0 – 127.255.255.255
+        if (bytes[0] == 127.toByte()) return true
+        // 169.254.0.0 – 169.254.255.255
+        if (bytes[0] == 169.toByte() && bytes[1] == 254.toByte()) return true
+
+        return false
     }
 
     private fun isLocalIPv6(bytes: ByteArray): Boolean {
-        return bytes.contentEquals(Network.IPv6_ANY_BYTES) || bytes.contentEquals(Network.IPv6_LOOPBACK_BYTES)
+        // ::
+        if (bytes.contentEquals(IPv6_ANY_BYTES)) return true
+        // ::1
+        if (bytes.contentEquals(IPv6_LOOPBACK_BYTES)) return true
+        // fe80:: - febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+        if (bytes.startsWith(IPv6_LINKLOCAL_BYTES)) return true
+
+        return false
     }
 
     private fun isPrivateIPv4(bytes: ByteArray): Boolean {
@@ -106,6 +122,7 @@ enum class Network(val addrSize: Int) {
         val IPv4_LOOPBACK_BYTES = byteArrayOf(127, 0, 0, 1)
         val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
         val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+        val IPv6_LINKLOCAL_BYTES = byteArrayOfInts(0xFE, 0x80, 0, 0, 0, 0, 0, 0)
 
         private val socksProxy: Address?
         private val torProxy: Address?

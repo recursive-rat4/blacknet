@@ -54,3 +54,10 @@ fun fromHex(string: String) : ByteArray? {
 }
 
 fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { pos -> ints[pos].toByte() }
+
+fun ByteArray.startsWith(bytes: ByteArray): Boolean {
+    for (i in bytes.indices)
+        if (this[i] != bytes[i])
+            return false
+    return true
+}
