@@ -303,30 +303,36 @@ object Node : CoroutineScope {
         }
 
         while (true) {
-            if (outgoing() >= Config[outgoingconnections]) {
+            val n = Config[outgoingconnections] - outgoing()
+            if (n <= 0) {
                 delay(NETWORK_TIMEOUT)
                 continue
             }
 
             val filter = connections.map { it.remoteAddress }.plus(listenAddress.toList())
 
-            val address = PeerDB.getCandidate(filter)
-            if (address == null) {
+            val addresses = PeerDB.getCandidates(n, filter)
+            if (addresses.isEmpty()) {
                 logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config[outgoingconnections]}")
                 delay(PeerDB.DELAY)
                 dnsSeeder(false)
                 continue
             }
 
-            PeerDB.attempt(address)
+            addresses.forEach { PeerDB.attempt(it) }
             PeerDB.commit()
 
-            try {
-                connectTo(address)
-            } catch (e: Throwable) {
+            addresses.forEach {
+                val address = it
+                launch {
+                    try {
+                        connectTo(address)
+                    } catch (e: Throwable) {
+                    }
+                }
             }
 
-            delay(NETWORK_TIMEOUT / 2) //TODO
+            delay(NETWORK_TIMEOUT)
         }
     }
 

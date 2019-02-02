@@ -74,6 +74,14 @@ object PeerDB {
         return candidates[Random.nextInt(candidates.size)]
     }
 
+    fun getCandidates(n: Int, filter: List<Address>): List<Address> {
+        val candidates = map.keys.filter { !filter.contains(it) }
+        if (candidates.isEmpty())
+            return emptyList()
+        val x = min(candidates.size, n)
+        return candidates.shuffled().take(x)
+    }
+
     fun getRandom(n: Int): MutableList<Address> {
         val x = min(size(), n)
         return map.keys.shuffled().asSequence().take(x).toMutableList()
