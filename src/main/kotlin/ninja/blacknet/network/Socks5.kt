@@ -9,6 +9,7 @@
 
 package ninja.blacknet.network
 
+import io.ktor.network.sockets.ASocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -19,7 +20,7 @@ import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.writeFully
 
 class Socks5(private val proxy: Address) {
-    suspend fun connect(address: Address): Pair<ByteReadChannel, ByteWriteChannel> {
+    suspend fun connect(address: Address): Connection {
         val socket = aSocket(Network.selector).tcp().connect(proxy.getSocketAddress())
         val readChannel = socket.openReadChannel()
         val writeChannel = socket.openWriteChannel(true)
@@ -85,8 +86,10 @@ class Socks5(private val proxy: Address) {
         }
         readChannel.skip(2) // port
 
-        return Pair(readChannel, writeChannel)
+        return Connection(socket, readChannel, writeChannel)
     }
+
+    class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel)
 
     companion object {
         const val VERSION = 5.toByte()

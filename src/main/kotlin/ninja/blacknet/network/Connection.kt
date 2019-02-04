@@ -9,6 +9,7 @@
 
 package ninja.blacknet.network
 
+import io.ktor.network.sockets.ASocket
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,11 +21,13 @@ import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.serialization.BlacknetDecoder
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 
 private val logger = KotlinLogging.logger {}
 
 class Connection(
+        private val socket: ASocket,
         private val readChannel: ByteReadChannel,
         private val writeChannel: ByteWriteChannel,
         val remoteAddress: Address,
@@ -32,6 +35,7 @@ class Connection(
         var state: State
 ) : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
+    private val closed = AtomicBoolean()
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     val connectedAt = Node.time()
 
@@ -45,8 +49,7 @@ class Connection(
     var lastTxTime: Long = 0
     @Volatile
     var ping: Long = 0
-    @Volatile
-    private var closed = false
+
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
@@ -137,12 +140,11 @@ class Connection(
     }
 
     fun close() {
-        if (closed) return
-        closed = true
-        writeChannel.close()
-        readChannel.cancel()
-        Node.disconnected(this)
-        ChainFetcher.disconnected(this)
+        if (closed.compareAndSet(false, true)) {
+            socket.close()
+            Node.disconnected(this)
+            ChainFetcher.disconnected(this)
+        }
     }
 
     class PingRequest(val id: Int, val time: Long)

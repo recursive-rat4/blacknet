@@ -157,25 +157,25 @@ enum class Network(val addrSize: Int) {
             when (address.network) {
                 IPv4, IPv6 -> {
                     if (socksProxy != null) {
-                        val chan = Socks5(socksProxy).connect(address)
-                        return Connection(chan.first, chan.second, address, socksProxy, Connection.State.OUTGOING_WAITING)
+                        val c = Socks5(socksProxy).connect(address)
+                        return Connection(c.socket, c.readChannel, c.writeChannel, address, socksProxy, Connection.State.OUTGOING_WAITING)
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
                         if (Config[listen] && !localAddress.isLocal())
                             Node.listenAddress.add(Address(localAddress.network, Config[port], localAddress.bytes))
-                        return Connection(socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
+                        return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
                     }
                 }
                 TORv2, TORv3 -> {
                     if (torProxy == null) throw RuntimeException("tor proxy is not set")
-                    val chan = Socks5(torProxy).connect(address)
-                    return Connection(chan.first, chan.second, address, torProxy, Connection.State.OUTGOING_WAITING)
+                    val c = Socks5(torProxy).connect(address)
+                    return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
                 I2P -> {
                     if (!I2PSAM.haveSession()) throw RuntimeException("i2p sam is not available")
-                    val chan = I2PSAM.connect(address)
-                    return Connection(chan.first, chan.second, address, I2PSAM.localAddress!!, Connection.State.OUTGOING_WAITING)
+                    val c = I2PSAM.connect(address)
+                    return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.localAddress!!, Connection.State.OUTGOING_WAITING)
                 }
             }
         }

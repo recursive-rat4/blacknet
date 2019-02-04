@@ -9,6 +9,7 @@
 
 package ninja.blacknet.network
 
+import io.ktor.network.sockets.ASocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -55,22 +56,21 @@ object I2PSAM : CoroutineScope {
         return localAddress != null
     }
 
-    private suspend fun connectToSAM(): Pair<ByteReadChannel, ByteWriteChannel> {
+    private suspend fun connectToSAM(): Connection {
         val socket = aSocket(Network.selector).tcp().connect(sam!!.getSocketAddress())
-        val readChannel = socket.openReadChannel()
-        val writeChannel = socket.openWriteChannel(true)
+        val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true))
 
-        val answer = request(readChannel, writeChannel, "HELLO VERSION MIN=3.2\n")
-        checkResult(answer)
+        val answer = request(connection, "HELLO VERSION MIN=3.2\n")
+        connection.checkResult(answer)
 
-        return Pair(readChannel, writeChannel)
+        return connection
     }
 
     suspend fun createSession() {
-        val channels = connectToSAM()
+        val connection = connectToSAM()
 
-        val answer = request(channels.first, channels.second, "SESSION CREATE STYLE=STREAM ID=$sessionId DESTINATION=$privateKey SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n")
-        checkResult(answer)
+        val answer = request(connection, "SESSION CREATE STYLE=STREAM ID=$sessionId DESTINATION=$privateKey SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n")
+        connection.checkResult(answer)
 
         val dest = getValue(answer, "DESTINATION") ?: throw I2PException("Invalid response")
         val bytes = Destination(dest).getHash().getData()
@@ -81,78 +81,62 @@ object I2PSAM : CoroutineScope {
 
         launch {
             while (true) {
-                val message = channels.first.readUTF8Line() ?: break
+                val message = connection.readChannel.readUTF8Line() ?: break
 
                 if (message.startsWith("PING")) {
-                    channels.second.writeStringUtf8("PONG" + message.drop(4) + '\n')
+                    connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
                 }
             }
+            connection.socket.close()
         }
     }
 
-    suspend fun connect(address: Address): Pair<ByteReadChannel, ByteWriteChannel> {
-        val channels = connectToSAM()
+    suspend fun connect(address: Address): Connection {
+        val connection = connectToSAM()
 
-        val destination = lookup(channels.first, channels.second, address.getAddressString())
+        val destination = lookup(connection, address.getAddressString())
 
-        val answer = request(channels.first, channels.second, "STREAM CONNECT ID=$sessionId DESTINATION=$destination\n")
-        checkResult(answer)
+        val answer = request(connection, "STREAM CONNECT ID=$sessionId DESTINATION=$destination\n")
+        connection.checkResult(answer)
 
-        return channels
+        return connection
     }
 
     suspend fun accept(): Accepted? {
-        val channels = connectToSAM()
+        val connection = connectToSAM()
 
-        val answer = request(channels.first, channels.second, "STREAM ACCEPT ID=$sessionId\n")
+        val answer = request(connection, "STREAM ACCEPT ID=$sessionId\n")
         try {
-            checkResult(answer)
+            connection.checkResult(answer)
         } catch (e: Throwable) {
             logger.info("STREAM ACCEPT failed: ${e.message}")
             return null
         }
 
         while (true) {
-            val message = channels.first.readUTF8Line() ?: break
+            val message = connection.readChannel.readUTF8Line() ?: break
 
             if (message.startsWith("PING")) {
-                channels.second.writeStringUtf8("PONG" + message.drop(4) + '\n')
+                connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
             } else {
                 val bytes = Destination(message.takeWhile { it != ' ' }).getHash().getData()
                 val remoteAddress = Address(Network.I2P, Config[port], bytes)
-                return Accepted(channels.first, channels.second, remoteAddress)
+                return Accepted(connection.socket, connection.readChannel, connection.writeChannel, remoteAddress)
             }
         }
 
         return null
     }
 
-    private suspend fun lookup(readChannel: ByteReadChannel, writeChannel: ByteWriteChannel, name: String): String {
-        val answer = request(readChannel, writeChannel, "NAMING LOOKUP NAME=$name\n")
-        checkResult(answer)
+    private suspend fun lookup(connection: Connection, name: String): String {
+        val answer = request(connection, "NAMING LOOKUP NAME=$name\n")
+        connection.checkResult(answer)
         return getValue(answer, "VALUE")!!
     }
 
-    private fun checkResult(answer: String?) {
-        if (answer == null)
-            throw I2PException("Connection closed")
-        val result = getValue(answer, "RESULT")
-        if (result == null)
-            throw I2PException("No RESULT")
-        if (result.isEmpty())
-            throw I2PException("Empty RESULT")
-        if (result != "OK") {
-            val message = getValue(answer, "MESSAGE")
-            if (message != null && !message.isEmpty())
-                throw I2PException("$result: $message")
-            else
-                throw I2PException(result)
-        }
-    }
-
-    private suspend fun request(readChannel: ByteReadChannel, writeChannel: ByteWriteChannel, request: String): String? {
-        writeChannel.writeStringUtf8(request)
-        return readChannel.readUTF8Line()
+    private suspend fun request(connection: Connection, request: String): String? {
+        connection.writeChannel.writeStringUtf8(request)
+        return connection.readChannel.readUTF8Line()
     }
 
     private fun generateId(): String {
@@ -183,7 +167,31 @@ object I2PSAM : CoroutineScope {
         return answer.substring(valueStart, valueEnd)
     }
 
-    class Accepted(val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel, val remoteAddress: Address)
+    class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel) {
+        internal fun checkResult(answer: String?) {
+            if (answer == null)
+                exception("Connection closed")
+            val result = getValue(answer, "RESULT")
+            if (result == null)
+                exception("No RESULT")
+            if (result!!.isEmpty())
+                exception("Empty RESULT")
+            if (result != "OK") {
+                val message = getValue(answer, "MESSAGE")
+                if (message != null && !message.isEmpty())
+                    exception("$result: $message")
+                else
+                    exception(result)
+            }
+        }
+
+        private fun exception(message: String) {
+            socket.close()
+            throw I2PException(message)
+        }
+    }
+
+    class Accepted(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel, val remoteAddress: Address)
     class I2PException(message: String) : RuntimeException(message)
 
     private fun savePrivateKey(dest: String) {

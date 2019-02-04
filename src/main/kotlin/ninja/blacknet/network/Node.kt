@@ -15,8 +15,6 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.io.cancel
-import kotlinx.coroutines.io.close
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
@@ -252,7 +250,7 @@ object Node : CoroutineScope {
             val localAddress = Network.address(socket.localAddress as InetSocketAddress)
             if (!localAddress.isLocal())
                 listenAddress.add(localAddress)
-            val connection = Connection(socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+            val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
             connections.add(connection)
         }
     }
@@ -262,11 +260,10 @@ object Node : CoroutineScope {
             val c = I2PSAM.accept() ?: continue
             if (!haveSlot()) {
                 logger.info("Too many connections, dropping ${c.remoteAddress}")
-                c.readChannel.cancel()
-                c.writeChannel.close()
+                c.socket.close()
                 continue
             }
-            val connection = Connection(c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
+            val connection = Connection(c.socket, c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
             connections.add(connection)
         }
     }
