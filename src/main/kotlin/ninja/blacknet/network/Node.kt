@@ -20,6 +20,7 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
 import ninja.blacknet.Config.incomingconnections
+import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.outgoingconnections
 import ninja.blacknet.Config.port
@@ -148,6 +149,8 @@ object Node : CoroutineScope {
         launch {
             val address = Network.listenOnTor()
             if (address != null) {
+                if (!Config[listen] || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+                    listenOn(Address.LOOPBACK)
                 logger.info("Listening on $address")
                 listenAddress.add(address)
             }
