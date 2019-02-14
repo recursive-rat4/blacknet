@@ -19,6 +19,8 @@ class SynchronizedHashSet<T>(private val set: HashSet<T>) {
 
     suspend fun add(element: T) = mutex.withLock { set.add(element) }
 
+    suspend fun remove(element: T) = mutex.withLock { set.remove(element) }
+
     suspend fun contains(element: T) = mutex.withLock { set.contains(element) }
 
     suspend fun clear() = mutex.withLock { set.clear() }

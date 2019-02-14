@@ -175,10 +175,11 @@ object Node : CoroutineScope {
     suspend fun connectTo(address: Address) {
         val connection = Network.connect(address)
         connections.add(connection)
-        sendVersion(connection)
+        sendVersion(connection, nonce)
+        connection.launch(this)
     }
 
-    fun sendVersion(connection: Connection) {
+    fun sendVersion(connection: Connection, nonce: Long) {
         val blockHash = if (isInitialSynchronization()) Hash.ZERO else LedgerDB.blockHash()
         val cumulativeDifficulty = if (isInitialSynchronization()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
         val v = Version(magic, version, time(), nonce, agent, minTxFee, blockHash, cumulativeDifficulty)
@@ -245,30 +246,30 @@ object Node : CoroutineScope {
         while (true) {
             val socket = server.accept()
             val remoteAddress = Network.address(socket.remoteAddress as InetSocketAddress)
-            if (!haveSlot()) {
-                logger.info("Too many connections, dropping $remoteAddress")
-                socket.close()
-                continue
-            }
             val localAddress = Network.address(socket.localAddress as InetSocketAddress)
             if (!localAddress.isLocal())
                 listenAddress.add(localAddress)
             val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
-            connections.add(connection)
+            addConnection(connection)
         }
     }
 
     private suspend fun i2plistener() {
-        while (true) {
+        while (I2PSAM.haveSession()) {
             val c = I2PSAM.accept() ?: continue
-            if (!haveSlot()) {
-                logger.info("Too many connections, dropping ${c.remoteAddress}")
-                c.socket.close()
-                continue
-            }
             val connection = Connection(c.socket, c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
-            connections.add(connection)
+            addConnection(connection)
         }
+    }
+
+    private suspend fun addConnection(connection: Connection) {
+        if (!haveSlot()) {
+            logger.info("Too many connections, dropping ${connection.remoteAddress}")
+            connection.close()
+            return
+        }
+        connections.add(connection)
+        connection.launch(this)
     }
 
     private suspend fun haveSlot(): Boolean {
@@ -361,17 +362,19 @@ object Node : CoroutineScope {
 
     private suspend fun peerAnnouncer() {
         while (true) {
-            delay(7 * 60)
+            delay(5 * 60 + Random.nextInt(5 * 60))
 
             val randomPeers = PeerDB.getRandom(Peers.MAX)
             if (randomPeers.size == 0)
                 continue
 
-            val myAddress = listenAddress.filter { !it.isLocal() && !it.isPrivate() }
+            val myAddress = listenAddress.filter { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
             if (myAddress.isNotEmpty()) {
-                val i = Random.nextInt(randomPeers.size * 500)
-                if (i < randomPeers.size)
+                val i = Random.nextInt(randomPeers.size * 10)
+                if (i < randomPeers.size) {
                     randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
+                    logger.info("Announcing ${randomPeers[i]}")
+                }
             }
 
             broadcastPacket(Peers(randomPeers))

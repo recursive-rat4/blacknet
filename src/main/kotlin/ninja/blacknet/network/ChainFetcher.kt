@@ -59,6 +59,11 @@ object ChainFetcher : CoroutineScope {
     }
 
     suspend fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt? = null) {
+        if (chain == Hash.ZERO)
+            return
+        if (cumulativeDifficulty != null && cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
+            return
+
         chains.add(ChainData(connection, chain, cumulativeDifficulty))
     }
 
@@ -123,6 +128,7 @@ object ChainFetcher : CoroutineScope {
             val newChain = LedgerDB.blockHash()
             if (newChain != originalChain) {
                 Node.announceChain(newChain, syncChain!!.connection)
+                LedgerDB.prune()
             }
 
             if (syncChain == disconnected)

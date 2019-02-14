@@ -16,7 +16,6 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
-import net.freehaven.tor.control.TorControlError
 import net.i2p.data.Base32
 import ninja.blacknet.Config
 import ninja.blacknet.Config.listen
@@ -46,7 +45,8 @@ enum class Network(val addrSize: Int) {
         return when (this) {
             IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString()
             IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString() + ']'
-            TORv2, TORv3 -> Base32.encode(address.bytes.array) + TOR_SUFFIX
+            TORv2 -> Base32.encode(address.bytes.array) + TOR_SUFFIX
+            TORv3 -> Base32.encode(address.bytes.array) + TOR_SUFFIX //FIXME checksum
             I2P -> Base32.encode(address.bytes.array) + I2P_SUFFIX
         }
     }
@@ -185,9 +185,8 @@ enum class Network(val addrSize: Int) {
                 return TorController.listen()
             } catch (e: ConnectException) {
                 logger.info("Can't connect to tor controller")
-            } catch (e: TorControlError) {
-                logger.info("Tor " + e.message)
             } catch (e: Throwable) {
+                logger.info(e.message)
             }
             return null
         }
@@ -198,9 +197,8 @@ enum class Network(val addrSize: Int) {
                 return I2PSAM.localAddress
             } catch (e: ConnectException) {
                 logger.info("Can't connect to i2p sam")
-            } catch (e: I2PSAM.I2PException) {
-                logger.info("I2P " + e.message)
             } catch (e: Throwable) {
+                logger.info(e.message)
             }
             return null
         }

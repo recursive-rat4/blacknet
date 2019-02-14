@@ -12,7 +12,6 @@ package ninja.blacknet.network
 import io.ktor.network.sockets.ASocket
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.io.*
@@ -22,7 +21,6 @@ import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.serialization.BlacknetDecoder
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.CoroutineContext
 
 private val logger = KotlinLogging.logger {}
 
@@ -33,8 +31,7 @@ class Connection(
         val remoteAddress: Address,
         val localAddress: Address,
         var state: State
-) : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
+) {
     private val closed = AtomicBoolean()
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     val connectedAt = Node.time()
@@ -57,9 +54,9 @@ class Connection(
     var pingRequest: PingRequest? = null
     var dosScore: Int = 0
 
-    init {
-        launch { receiver() }
-        launch { sender() }
+    fun launch(scope: CoroutineScope) {
+        scope.launch { receiver() }
+        scope.launch { sender() }
     }
 
     private suspend fun receiver() {

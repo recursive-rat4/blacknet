@@ -385,4 +385,15 @@ object LedgerDB : Ledger {
 
         return@withLock toRemove
     }
+
+    suspend fun prune() = mutex.withLock {
+        var height = height() - PoS.MATURITY
+        while (height > 0) {
+            val hash = chain[height]!!
+            if (!undo.containsKey(hash))
+                break
+            removeUndo(hash)
+            height--
+        }
+    }
 }

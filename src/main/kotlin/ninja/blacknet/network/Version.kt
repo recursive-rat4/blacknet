@@ -14,7 +14,6 @@ import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.serialization.BlacknetEncoder
 
@@ -43,13 +42,17 @@ class Version(
         connection.agent = agent
         connection.feeFilter = feeFilter
 
-        if (magic != Node.magic || version < Node.minVersion || nonce == Node.nonce) {
+        if (magic != Node.magic || version < Node.minVersion) {
             connection.close()
             return
         }
 
         if (connection.state == Connection.State.INCOMING_WAITING) {
-            Node.sendVersion(connection)
+            if (nonce == Node.nonce) {
+                connection.close()
+                return
+            }
+            Node.sendVersion(connection, nonce)
             connection.state = Connection.State.INCOMING_CONNECTED
             logger.info("Accepted connection from ${connection.remoteAddress}")
         } else {
@@ -59,7 +62,6 @@ class Version(
             logger.info("Connected to ${connection.remoteAddress}")
         }
 
-        if (chain != Hash.ZERO && cumulativeDifficulty > LedgerDB.cumulativeDifficulty())
-            ChainFetcher.offer(connection, chain, cumulativeDifficulty)
+        ChainFetcher.offer(connection, chain, cumulativeDifficulty)
     }
 }

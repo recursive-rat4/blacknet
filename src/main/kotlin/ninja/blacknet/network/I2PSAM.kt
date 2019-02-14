@@ -22,11 +22,12 @@ import kotlinx.coroutines.io.readUTF8Line
 import kotlinx.coroutines.io.writeStringUtf8
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import net.i2p.data.Destination
+import net.i2p.data.Base64
 import ninja.blacknet.Config
 import ninja.blacknet.Config.i2psamhost
 import ninja.blacknet.Config.i2psamport
 import ninja.blacknet.Config.port
+import ninja.blacknet.crypto.SHA256
 import java.io.File
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
@@ -38,6 +39,7 @@ object I2PSAM : CoroutineScope {
     private val sessionId = generateId()
     private var privateKey = "TRANSIENT"
     val sam: Address?
+    @Volatile
     var localAddress: Address? = null
 
     init {
@@ -47,7 +49,11 @@ object I2PSAM : CoroutineScope {
             sam = null
 
         try {
-            privateKey = File("db/privateKey.i2p").readText()
+            val file = File("db/privateKey.i2p")
+            val lastModified = file.lastModified()
+            if (lastModified != 0L && lastModified < 1549868177000)
+                file.renameTo(File("db/privateKey.$lastModified.i2p"))
+            privateKey = file.readText()
         } catch (e: Throwable) {
         }
     }
@@ -71,13 +77,13 @@ object I2PSAM : CoroutineScope {
 
         val answer = request(connection, "SESSION CREATE STYLE=STREAM ID=$sessionId DESTINATION=$privateKey SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n")
         connection.checkResult(answer)
+        val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("Invalid response")
 
-        val dest = getValue(answer, "DESTINATION") ?: throw I2PException("Invalid response")
-        val bytes = Destination(dest).getHash().getData()
-        localAddress = Address(Network.I2P, Config[port], bytes)
+        val destination = lookup(connection, "ME")
+        localAddress = Address(Network.I2P, Config[port], hash(destination))
 
-        if (privateKey == "TRANSIENT")
-            savePrivateKey(dest)
+        if (this.privateKey == "TRANSIENT")
+            savePrivateKey(privateKey)
 
         launch {
             while (true) {
@@ -87,7 +93,11 @@ object I2PSAM : CoroutineScope {
                     connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
                 }
             }
+            Node.listenAddress.remove(localAddress!!)
+            localAddress = null
             connection.socket.close()
+            logger.info("i2p session closed")
+            //TODO reconnect
         }
     }
 
@@ -119,8 +129,8 @@ object I2PSAM : CoroutineScope {
             if (message.startsWith("PING")) {
                 connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
             } else {
-                val bytes = Destination(message.takeWhile { it != ' ' }).getHash().getData()
-                val remoteAddress = Address(Network.I2P, Config[port], bytes)
+                val destination = message.takeWhile { it != ' ' }
+                val remoteAddress = Address(Network.I2P, Config[port], hash(destination))
                 return Accepted(connection.socket, connection.readChannel, connection.writeChannel, remoteAddress)
             }
         }
@@ -135,9 +145,14 @@ object I2PSAM : CoroutineScope {
     }
 
     private suspend fun request(connection: Connection, request: String): String? {
+        logger.debug(request.dropLast(1))
         connection.writeChannel.writeStringUtf8(request)
-        return connection.readChannel.readUTF8Line()
+        val answer = connection.readChannel.readUTF8Line()
+        logger.debug("$answer")
+        return answer
     }
+
+    private fun hash(destination: String) = SHA256.hash(Base64.decode(destination))
 
     private fun generateId(): String {
         val size = 8
@@ -179,9 +194,9 @@ object I2PSAM : CoroutineScope {
             if (result != "OK") {
                 val message = getValue(answer, "MESSAGE")
                 if (message != null && !message.isEmpty())
-                    exception("$result: $message")
+                    exception("I2P: $result $message")
                 else
-                    exception(result)
+                    exception("I2P: $result")
             }
         }
 
@@ -196,7 +211,7 @@ object I2PSAM : CoroutineScope {
 
     private fun savePrivateKey(dest: String) {
         privateKey = dest
-        logger.info("Saving I2P destination to db")
+        logger.info("Saving I2P private key to db")
         try {
             File("db/privateKey.i2p").writeText(privateKey)
         } catch (e: Throwable) {

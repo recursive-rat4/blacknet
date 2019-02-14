@@ -10,6 +10,8 @@
 package ninja.blacknet.network
 
 import io.ktor.util.error
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands
 import net.freehaven.tor.control.TorControlConnection
@@ -25,6 +27,10 @@ object TorController {
 
     init {
         try {
+            val file = File("db/privateKey.tor")
+            val lastModified = file.lastModified()
+            if (lastModified != 0L && lastModified < 1549868177000)
+                file.renameTo(File("db/privateKey.$lastModified.tor"))
             privateKey = File("db/privateKey.tor").readText()
         } catch (e: Throwable) {
         }
@@ -33,7 +39,8 @@ object TorController {
     fun listen(): Address? {
         val s = java.net.Socket("localhost", Config[Config.torcontrol])
         val tor = TorControlConnection(s)
-        tor.launchThread(true)
+        val thread = tor.launchThread(true)
+        //TODO cookie, password
         tor.authenticate(ByteArray(0))
 
         val request = HashMap<Int, String?>()
@@ -49,7 +56,16 @@ object TorController {
         if (privateKey == "NEW:RSA1024")
             savePrivateKey(response[TorControlCommands.HS_PRIVKEY]!!)
 
-        return Address(Network.TORv2, Config[Config.port], bytes)
+        val address = Address(Network.TORv2, Config[Config.port], bytes)
+
+        GlobalScope.launch {
+            thread.join()
+            Node.listenAddress.remove(address)
+            logger.info("lost connection to tor controller")
+            //TODO reconnect
+        }
+
+        return address
     }
 
     private fun savePrivateKey(privKey: String) {

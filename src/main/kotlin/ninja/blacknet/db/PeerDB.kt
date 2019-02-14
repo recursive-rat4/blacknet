@@ -107,6 +107,10 @@ object PeerDB {
         return false
     }
 
+    fun contains(peer: Address): Boolean {
+        return map.contains(peer)
+    }
+
     private suspend fun oldEntriesRemover() {
         while (true) {
             delay(DELAY)
