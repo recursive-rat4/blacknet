@@ -11,6 +11,8 @@ package ninja.blacknet.network
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.core.Block
@@ -19,9 +21,7 @@ import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.util.SynchronizedArrayList
-import ninja.blacknet.util.delay
+import ninja.blacknet.util.withTimeout
 import kotlin.coroutines.CoroutineContext
 
 private val logger = KotlinLogging.logger {}
@@ -29,8 +29,8 @@ private val logger = KotlinLogging.logger {}
 object ChainFetcher : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
     const val TIMEOUT = 5
-    private val chains = SynchronizedArrayList<ChainData>()
-    private var requestTime = 0L
+    private val chains = Channel<ChainData>(16)
+    private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     private var connectedBlocks = 0
     @Volatile
     private var disconnected: ChainData? = null
@@ -49,22 +49,19 @@ object ChainFetcher : CoroutineScope {
         return syncChain != null
     }
 
-    fun disconnected(connection: Connection) = launch { disconnectedSync(connection) }
-
-    private suspend fun disconnectedSync(connection: Connection) {
-        chains.removeIf { it.connection == connection }
+    fun disconnected(connection: Connection) {
         if (syncChain?.connection == connection) {
             disconnected = syncChain
         }
     }
 
-    suspend fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt? = null) {
+    fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt? = null) {
         if (chain == Hash.ZERO)
             return
         if (cumulativeDifficulty != null && cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
             return
 
-        chains.add(ChainData(connection, chain, cumulativeDifficulty))
+        chains.offer(ChainData(connection, chain, cumulativeDifficulty))
     }
 
     private suspend fun fetcher() {
@@ -74,23 +71,7 @@ object ChainFetcher : CoroutineScope {
             else
                 disconnected = null
 
-            if (syncChain != null) {
-                if (Node.time() <= requestTime + Node.NETWORK_TIMEOUT) {
-                    delay(TIMEOUT)
-                    continue
-                }
-
-                logger.info("Disconnecting on timeout ${syncChain!!.connection.remoteAddress}")
-                syncChain!!.connection.close()
-                disconnectedSync(syncChain!!.connection)
-                continue
-            }
-
-            val data = selectChain()
-            if (data == null) {
-                delay(TIMEOUT)
-                continue
-            }
+            val data = chains.receive()
 
             if (data.cumulativeDifficulty() != BigInt.ZERO && data.cumulativeDifficulty() <= LedgerDB.cumulativeDifficulty())
                 continue
@@ -98,17 +79,57 @@ object ChainFetcher : CoroutineScope {
                 continue
 
             logger.info("Fetching ${data.chain} from ${data.connection.remoteAddress}")
-            requestTime = Node.time()
             syncChain = data
             originalChain = LedgerDB.blockHash()
             data.connection.sendPacket(GetBlocks(originalChain!!, LedgerDB.getRollingCheckpoint()))
-        }
-    }
 
-    private suspend fun selectChain(): ChainData? {
-        val chain = chains.maxBy { it.cumulativeDifficulty() } ?: return null
-        chains.remove(chain)
-        return chain
+            try {
+                while (true) {
+                    val answer = withTimeout(TIMEOUT) { recvChannel.receive() }
+                    if (answer.isEmpty()) {
+                        fetched()
+                        break
+                    }
+                    if (!answer.hashes.isEmpty()) {
+                        if (rollbackTo != null) {
+                            logger.info("Unexpected rollback")
+                            data.connection.close()
+                            break
+                        }
+                        val checkpoint = LedgerDB.getRollingCheckpoint()
+                        var prev = checkpoint
+                        for (hash in answer.hashes) {
+                            if (LedgerDB.getBlockNumber(hash) == null)
+                                break
+                            prev = hash
+                        }
+                        rollbackTo = prev
+                        data.connection.sendPacket(GetBlocks(prev, checkpoint))
+                        continue
+                    }
+                    processBlocks(data.connection, answer)
+
+                    if (data.chain == LedgerDB.blockHash()) {
+                        fetched()
+                        break
+                    } else {
+                        if (data.cumulativeDifficulty() == BigInt.ZERO
+                                || data.cumulativeDifficulty() > LedgerDB.cumulativeDifficulty()) {
+                            requestBlocks(data.connection)
+                        } else {
+                            fetched()
+                            break
+                        }
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                logger.info("${e.message}")
+                data.connection.close()
+            } catch (e: Throwable) {
+                logger.error("Exception in processBlocks ${data.connection.remoteAddress}", e)
+                data.connection.close()
+            }
+        }
     }
 
     private suspend fun fetched() {
@@ -146,44 +167,24 @@ object ChainFetcher : CoroutineScope {
         undoDifficulty = BigInt.ZERO
     }
 
-    suspend fun fetched(connection: Connection, hashes: ArrayList<Hash>, blocks: ArrayList<SerializableByteArray>) {
+    suspend fun fetched(connection: Connection, answer: Blocks) {
         if (syncChain == null || syncChain!!.connection != connection) {
             logger.info("Unexpected synchronization. Disconnecting ${connection.remoteAddress}")
             connection.close()
             return
         }
-        if (!hashes.isEmpty()) {
-            if (rollbackTo != null) {
-                logger.info("Unexpected rollback")
-                connection.close()
-                return
-            }
-            val checkpoint = LedgerDB.getRollingCheckpoint()
-            var prev = checkpoint
-            for (hash in hashes) {
-                if (LedgerDB.getBlockNumber(hash) == null)
-                    break
-                prev = hash
-            }
-            requestTime = Node.time()
-            rollbackTo = prev
-            connection.sendPacket(GetBlocks(prev, checkpoint))
-            return
-        }
-        if (blocks.isEmpty()) {
-            fetched()
-            return
-        }
+        if (syncChain != disconnected)
+            recvChannel.send(answer)
+    }
+
+    private suspend fun processBlocks(connection: Connection, answer: Blocks) {
         if (rollbackTo != null && undoRollback == null) {
             undoDifficulty = LedgerDB.cumulativeDifficulty()
             undoRollback = LedgerDB.rollbackTo(rollbackTo!!)
             logger.info("Disconnected ${undoRollback!!.size} blocks")
             LedgerDB.commit()
         }
-        for (i in blocks) {
-            // prevent slow nodes to Disconnect on timeout while verifying many blocks
-            requestTime = Node.time()
-
+        for (i in answer.blocks) {
             val hash = Block.Hasher(i.array)
             if (undoRollback?.contains(hash) == true) {
                 logger.info("Rollback contains $hash")
@@ -198,23 +199,13 @@ object ChainFetcher : CoroutineScope {
             }
         }
         connection.lastBlockTime = Node.time()
-        connectedBlocks += blocks.size
-        if (blocks.size >= 10)
-            logger.info("Connected ${blocks.size} blocks")
-        if (syncChain!!.chain == LedgerDB.blockHash()) {
-            fetched()
-        } else {
-            if (syncChain!!.cumulativeDifficulty() == BigInt.ZERO
-                    || syncChain!!.cumulativeDifficulty() > LedgerDB.cumulativeDifficulty())
-                requestBlocks()
-            else
-                fetched()
-        }
+        connectedBlocks += answer.blocks.size
+        if (answer.blocks.size >= 10)
+            logger.info("Connected ${answer.blocks.size} blocks")
     }
 
-    private fun requestBlocks() {
-        requestTime = Node.time()
-        syncChain!!.connection.sendPacket(GetBlocks(LedgerDB.blockHash(), LedgerDB.getRollingCheckpoint()))
+    private fun requestBlocks(connection: Connection) {
+        connection.sendPacket(GetBlocks(LedgerDB.blockHash(), LedgerDB.getRollingCheckpoint()))
     }
 
     private class ChainData(val connection: Connection, val chain: Hash, val cumulativeDifficulty: BigInt?) {

@@ -17,8 +17,8 @@ import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class Blocks(
-        private val hashes: ArrayList<Hash>,
-        private val blocks: ArrayList<SerializableByteArray>
+        internal val hashes: ArrayList<Hash>,
+        internal val blocks: ArrayList<SerializableByteArray>
 ) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
@@ -26,7 +26,11 @@ class Blocks(
         return PacketType.Blocks.ordinal
     }
 
+    fun isEmpty(): Boolean {
+        return hashes.isEmpty() && blocks.isEmpty()
+    }
+
     override suspend fun process(connection: Connection) {
-        ChainFetcher.fetched(connection, hashes, blocks)
+        ChainFetcher.fetched(connection, this)
     }
 }
