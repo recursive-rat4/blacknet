@@ -49,7 +49,7 @@ object Node : CoroutineScope {
     const val DEFAULT_P2P_PORT = 28453
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
-    const val version = 6
+    const val version = 7
     const val minVersion = 5
     const val agent = "Blacknet"
     override val coroutineContext: CoroutineContext = Dispatchers.Default

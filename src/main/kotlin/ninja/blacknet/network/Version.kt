@@ -16,6 +16,7 @@ import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.serialization.BlacknetEncoder
+import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -52,7 +53,10 @@ class Version(
                 connection.close()
                 return
             }
-            Node.sendVersion(connection, nonce)
+            if (version >= FIXED_NONCE_VERSION)
+                Node.sendVersion(connection, nonce)
+            else
+                Node.sendVersion(connection, Random.nextLong())
             connection.state = Connection.State.INCOMING_CONNECTED
             logger.info("Accepted connection from ${connection.remoteAddress}")
         } else {
@@ -63,5 +67,9 @@ class Version(
         }
 
         ChainFetcher.offer(connection, chain, cumulativeDifficulty)
+    }
+
+    companion object {
+        const val FIXED_NONCE_VERSION = 7
     }
 }
