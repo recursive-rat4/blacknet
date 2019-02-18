@@ -73,6 +73,8 @@ object ChainFetcher : CoroutineScope {
 
             val data = chains.receive()
 
+            if (data.connection.isClosed())
+                continue
             if (data.cumulativeDifficulty() != BigInt.ZERO && data.cumulativeDifficulty() <= LedgerDB.cumulativeDifficulty())
                 continue
             if (!BlockDB.isInteresting(data.chain))
@@ -107,7 +109,10 @@ object ChainFetcher : CoroutineScope {
                         data.connection.sendPacket(GetBlocks(prev, checkpoint))
                         continue
                     }
-                    processBlocks(data.connection, answer)
+                    if (!processBlocks(data.connection, answer)) {
+                        fetched()
+                        break
+                    }
 
                     if (data.chain == LedgerDB.blockHash()) {
                         fetched()
@@ -177,7 +182,7 @@ object ChainFetcher : CoroutineScope {
             recvChannel.send(answer)
     }
 
-    private suspend fun processBlocks(connection: Connection, answer: Blocks) {
+    private suspend fun processBlocks(connection: Connection, answer: Blocks): Boolean {
         if (rollbackTo != null && undoRollback == null) {
             undoDifficulty = LedgerDB.cumulativeDifficulty()
             undoRollback = LedgerDB.rollbackTo(rollbackTo!!)
@@ -189,19 +194,22 @@ object ChainFetcher : CoroutineScope {
             if (undoRollback?.contains(hash) == true) {
                 logger.info("Rollback contains $hash")
                 connection.close()
-                return
+                return false
             }
             val status = BlockDB.process(hash, i.array, null)
-            if (status != Status.ACCEPTED && status != Status.ALREADY_HAVE) {
+            if (status == Status.IN_FUTURE) {
+                return false
+            } else if (status != Status.ACCEPTED && status != Status.ALREADY_HAVE) {
                 logger.info("$status block $hash")
                 connection.close()
-                return
+                return false
             }
         }
         connection.lastBlockTime = Node.time()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
             logger.info("Connected ${answer.blocks.size} blocks")
+        return true
     }
 
     private fun requestBlocks(connection: Connection) {

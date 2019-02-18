@@ -144,6 +144,10 @@ class Connection(
         }
     }
 
+    fun isClosed(): Boolean {
+        return closed.get()
+    }
+
     class PingRequest(val id: Int, val time: Long)
 
     enum class State {
