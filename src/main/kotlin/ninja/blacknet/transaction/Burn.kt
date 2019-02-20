@@ -35,14 +35,16 @@ class Burn(
         return TxType.Burn.type
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         if (amount == 0L) {
             logger.info("invalid amount")
             return false
         }
+        val account = ledger.get(tx.from)!!
         if (!account.credit(amount)) {
             return false
         }
+        ledger.set(tx.from, account)
         ledger.addSupply(-amount)
         return true
     }

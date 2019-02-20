@@ -36,7 +36,7 @@ class CancelLease(
         return TxType.CancelLease.type
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         val toAccount = ledger.get(to)
         if (toAccount == null) {
             logger.info("account not found")
@@ -44,8 +44,10 @@ class CancelLease(
         }
         undo.add(to, toAccount.copy())
         if (toAccount.leases.remove(AccountState.Input(height, amount))) {
-            account.debit(ledger.height(), amount)
             ledger.set(to, toAccount)
+            val account = ledger.get(tx.from)!!
+            account.debit(ledger.height(), amount)
+            ledger.set(tx.from, account)
             return true
         }
         logger.info("lease not found")

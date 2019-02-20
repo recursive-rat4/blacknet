@@ -56,7 +56,7 @@ class Block(
     }
 
     companion object {
-        const val VERSION = 0
+        const val VERSION = 1
         const val CONTENT_HASH_POS = 4 + Hash.SIZE + 8 + PublicKey.SIZE
         const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE
         const val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE

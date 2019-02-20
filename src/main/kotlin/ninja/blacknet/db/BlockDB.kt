@@ -73,7 +73,7 @@ object BlockDB : DataDB() {
             logger.info("deserialization failed")
             return Status.INVALID
         }
-        if (block.version != Block.VERSION) {
+        if (block.version != 0 && block.version != 1) {
             logger.info("unknown version ${block.version}")
         }
         if (Node.isTooFarInFuture(block.time)) {

@@ -44,10 +44,44 @@ object LedgerDB : Ledger {
     private val chainIndex = db.hashMap("chainIndex", HashSerializer, Serializer.INTEGER).createOrOpen()
     private val htlcs = db.hashMap("htlcs", HashSerializer, HTLCSerializer).createOrOpen()
     private val multisigs = db.hashMap("multisigs", HashSerializer, MultisigSerializer).createOrOpen()
+    private val updatedV1 = db.atomicBoolean("updatedV1", false).createOrOpen()
 
     private var maxBlockSize: Int
 
     init {
+        val rescanHashes = ArrayList<Hash>()
+        val rescanBlocks = ArrayList<ByteArray>()
+
+        if (!updatedV1.get()) {
+            logger.info("Rescanning blockchain...")
+            runBlocking {
+                rescanHashes.ensureCapacity(height())
+                rescanBlocks.ensureCapacity(height())
+                for (i in 1..height()) {
+                    rescanHashes.add(chain[i]!!)
+                    rescanBlocks.add(BlockDB.get(chain[i]!!)!!)
+                }
+                logger.info("Loaded ${rescanBlocks.size} blocks")
+
+                accounts.clear()
+                height.set(0)
+                blockHash.set(Hash.ZERO)
+                blockTime.set(0)
+                difficulty.set(BigInt.ZERO)
+                cumulativeDifficulty.set(BigInt.ZERO)
+                supply.set(0)
+                undo.clear()
+                blockSizes.clear()
+                nxtrng.set(Hash.ZERO)
+                chain.clear()
+                chainIndex.clear()
+                htlcs.clear()
+                multisigs.clear()
+                commit()
+                BlockDB.remove(rescanHashes)
+            }
+        }
+
         maxBlockSize = calcMaxBlockSize()
 
         @Serializable
@@ -73,8 +107,20 @@ object LedgerDB : Ledger {
             chainIndex[Hash.ZERO] = 0
             blockTime.set(1545555600)
             difficulty.set(PoS.INITIAL_DIFFICULTY)
+            updatedV1.set(true)
             commit()
             logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
+        }
+
+        if (rescanBlocks.isNotEmpty()) {
+            runBlocking {
+                for (i in 0 until rescanBlocks.size) {
+                    if (BlockDB.process(rescanHashes[i], rescanBlocks[i]) != DataDB.Status.ACCEPTED)
+                        break
+                    if (i % 1000 == 999)
+                        logger.info("Rescanned 1000 blocks")
+                }
+            }
         }
     }
 
@@ -160,11 +206,6 @@ object LedgerDB : Ledger {
     override fun checkBlockHash(hash: Hash) = hash == Hash.ZERO || chainIndex.containsKey(hash)
     override fun checkFee(size: Int, amount: Long) = amount >= 0
 
-    override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {
-        val account = get(key) ?: return false
-        return account.seq == seq
-    }
-
     fun maxBlockSize(): Int {
         return maxBlockSize
     }
@@ -246,7 +287,7 @@ object LedgerDB : Ledger {
             logger.info("timestamp is too early")
             return false
         }
-        val generator = get(block.generator)
+        var generator = get(block.generator)
         if (generator == null) {
             logger.info("block generator not found")
             return false
@@ -261,7 +302,6 @@ object LedgerDB : Ledger {
                 UndoList(),
                 UndoHTLCList(),
                 UndoMultisigList())
-        undo.accounts.add(Pair(block.generator, generator.copy()))
 
         if (!PoS.check(block.time, block.generator, undo.nxtrng, undo.difficulty, undo.blockTime, generator.stakingBalance(height()))) {
             logger.info("invalid proof of stake")
@@ -296,6 +336,8 @@ object LedgerDB : Ledger {
             fees += tx.fee
         }
 
+        generator = get(block.generator)!!
+        undo.accounts.add(Pair(block.generator, generator.copy()))
         val reward = PoS.reward(supply())
         addUndo(hash, undo)
         addSupply(reward)

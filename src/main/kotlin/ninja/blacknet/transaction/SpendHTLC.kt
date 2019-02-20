@@ -51,7 +51,7 @@ class SpendHTLC(
         return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             logger.info("htlc not found")
@@ -79,8 +79,11 @@ class SpendHTLC(
         undo.add(htlc.to, toAccount.copy())
         undo.addHTLC(id, htlc)
 
-        account.debit(height, amountA)
         toAccount.debit(height, amountB)
+        ledger.set(htlc.to, toAccount)
+        val account = ledger.get(tx.from)!!
+        account.debit(height, amountA)
+        ledger.set(tx.from, account)
         ledger.removeHTLC(id)
         return true
     }

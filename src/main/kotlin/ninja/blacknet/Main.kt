@@ -16,6 +16,9 @@ import io.ktor.server.jetty.Jetty
 import mu.KotlinLogging
 import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.upnp
+import ninja.blacknet.db.BlockDB
+import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.UPnP
 import java.io.FileInputStream
@@ -33,6 +36,11 @@ object Main {
         LogManager.getLogManager().readConfiguration(inStream)
         inStream.close()
         logger.info("Starting Blacknet node")
+
+        // init db before network
+        BlockDB
+        LedgerDB
+        PeerDB
 
         if (Config[listen]) {
             try {

@@ -65,13 +65,6 @@ object TxPool : MemPool(), Ledger {
         return amount >= Node.minTxFee * (1 + size / 1000)
     }
 
-    override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {
-        val account = accounts.get(key)
-        if (account != null)
-            return account.seq == seq
-        return LedgerDB.checkSequence(key, seq)
-    }
-
     override suspend fun get(key: PublicKey): AccountState? {
         val account = accounts.get(key)
         if (account != null)

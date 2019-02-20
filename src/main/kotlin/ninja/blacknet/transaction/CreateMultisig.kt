@@ -55,7 +55,7 @@ class CreateMultisig(
         return Blake2b.hash(bytes)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         if (n < 0 || n > deposits.size) {
             logger.info("invalid n")
             return false
@@ -94,6 +94,7 @@ class CreateMultisig(
                 undo.add(deposits[i].first, depositAccount.copy())
                 if (!depositAccount.credit(deposits[i].second))
                     return false
+                ledger.set(deposits[i].first, depositAccount)
             }
         }
 
