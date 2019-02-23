@@ -29,7 +29,7 @@ private val logger = KotlinLogging.logger {}
 
 object LedgerDB : Ledger {
     private val mutex = Mutex()
-    private val db = DBMaker.fileDB("db/ledger").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
+    private val db = DBMaker.fileDB("db/ledger").transactionEnable().closeOnJvmShutdown().make()
     private val accounts = db.hashMap("accounts", PublicKeySerializer, AccountStateSerializer).createOrOpen()
     private val height = db.atomicInteger("height").createOrOpen()
     private val blockHash = db.atomicVar("blockHash", HashSerializer, Hash.ZERO).createOrOpen()
@@ -117,8 +117,10 @@ object LedgerDB : Ledger {
                 for (i in 0 until rescanBlocks.size) {
                     if (BlockDB.process(rescanHashes[i], rescanBlocks[i]) != DataDB.Status.ACCEPTED)
                         break
-                    if (i % 1000 == 999)
-                        logger.info("Rescanned 1000 blocks")
+                    if (i % 5000 == 4999) {
+                        logger.info("Rescanned 5000 blocks")
+                        prune()
+                    }
                 }
             }
         }

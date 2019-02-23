@@ -14,13 +14,10 @@ import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.jetty.Jetty
 import mu.KotlinLogging
-import ninja.blacknet.Config.listen
-import ninja.blacknet.Config.upnp
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.UPnP
 import java.io.FileInputStream
 import java.security.Security
 import java.util.logging.LogManager
@@ -35,23 +32,12 @@ object Main {
         val inStream = FileInputStream("config/logging.properties")
         LogManager.getLogManager().readConfiguration(inStream)
         inStream.close()
-        logger.info("Starting Blacknet node")
 
-        // init db before network
+        logger.info("Starting Blacknet node")
         BlockDB
         LedgerDB
         PeerDB
-
-        if (Config[listen]) {
-            try {
-                Node.listenOnIP()
-                if (Config[upnp])
-                    UPnP.forwardAsync()
-            } catch (e: Throwable) {
-            }
-        }
-        Node.listenOnTor()
-        Node.listenOnI2P()
+        Node
 
         /* Launch Blacknet API web-server on port 8283
          * using Ktor.

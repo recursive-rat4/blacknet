@@ -49,6 +49,23 @@ $(document).ready(function(){
             balance();
         });
     }
+    function stop_staking() {
+        let mnemonic = document.getElementById('start_staking_mnemonic').value;
+        let url = "/staker/stop/" + mnemonic + "/";
+
+        request("POST", url, function () {
+            document.getElementById('start_staking_result').value = this.responseText;
+        });
+
+        url = "/mnemonic/info/" + mnemonic + "/";
+        request("POST", url, function () {
+            const data = JSON.parse(this.responseText);
+            data.mnemonic = '[hidden]';
+            document.getElementById('mnemonic_info_result').value = JSON.stringify(data);
+            document.getElementById('balance_account').value = data.address;
+            balance();
+        });
+    }
     function balance() {
         let account = document.getElementById('balance_account').value;
         let url = "/ledger/get/" + account + "/";
@@ -189,6 +206,7 @@ $(document).ready(function(){
 
 
     body.on("click", "#start_staking", start_staking)
+        .on("click", "#stop_staking", stop_staking)
         .on("click", "#balance", balance)
         .on("click", "#transfer", transfer)
         .on("click", "#sign", sign)

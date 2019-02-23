@@ -29,6 +29,8 @@ class SynchronizedHashMap<K, V>(private val map: HashMap<K, V>) {
 
     suspend fun set(key: K, value: V) = mutex.withLock { map.set(key, value) }
 
+    suspend fun putIfAbsent(key: K, value: V): V? = mutex.withLock { map.putIfAbsent(key, value) }
+
     suspend fun remove(key: K) = mutex.withLock { map.remove(key) }
 
     suspend fun containsKey(key: K) = mutex.withLock { map.containsKey(key) }

@@ -277,7 +277,13 @@ fun Application.main() {
         post("/api/v1/staker/start/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(Node.startStaker(privateKey).toString())
+            call.respond(PoS.startStaker(privateKey).toString())
+        }
+
+        post("/api/v1/staker/stop/{mnemonic}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            call.respond(PoS.stopStaker(privateKey).toString())
         }
     }
 }

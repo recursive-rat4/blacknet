@@ -23,7 +23,7 @@ import org.mapdb.Serializer
 private val logger = KotlinLogging.logger {}
 
 object BlockDB : DataDB() {
-    private val db = DBMaker.fileDB("db/blocks").transactionEnable().fileMmapEnableIfSupported().closeOnJvmShutdown().make()
+    private val db = DBMaker.fileDB("db/blocks").transactionEnable().closeOnJvmShutdown().make()
     private val map = db.hashMap("blocks", HashSerializer, Serializer.BYTE_ARRAY).createOrOpen()
 
     fun commit() {

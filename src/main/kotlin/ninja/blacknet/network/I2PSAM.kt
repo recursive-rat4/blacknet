@@ -145,10 +145,10 @@ object I2PSAM : CoroutineScope {
     }
 
     private suspend fun request(connection: Connection, request: String): String? {
-        logger.debug(request.dropLast(1))
+        logger.debug { request.dropLast(1) }
         connection.writeChannel.writeStringUtf8(request)
         val answer = connection.readChannel.readUTF8Line()
-        logger.debug("$answer")
+        logger.debug { "$answer" }
         return answer
     }
 

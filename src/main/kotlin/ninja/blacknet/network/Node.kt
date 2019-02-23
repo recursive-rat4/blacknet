@@ -24,13 +24,13 @@ import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.outgoingconnections
 import ninja.blacknet.Config.port
+import ninja.blacknet.Config.upnp
 import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PrivateKey
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
@@ -59,6 +59,16 @@ object Node : CoroutineScope {
     var minTxFee = parseAmount(Config[mintxfee])
 
     init {
+        if (Config[listen]) {
+            try {
+                Node.listenOnIP()
+                if (Config[upnp])
+                    UPnP.forwardAsync()
+            } catch (e: Throwable) {
+            }
+        }
+        launch { listenOnTor() }
+        launch { listenOnI2P() }
         launch { connector() }
         launch { pinger() }
         launch { peerAnnouncer() }
@@ -137,34 +147,30 @@ object Node : CoroutineScope {
         }
     }
 
-    fun listenOnIP() {
+    private fun listenOnIP() {
         if (Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
             return
         if (Network.IPv4.isDisabled())
-            return Node.listenOn(Address.IPv6_ANY(Config[port]))
-        Node.listenOn(Address.IPv4_ANY(Config[port]))
+            return listenOn(Address.IPv6_ANY(Config[port]))
+        listenOn(Address.IPv4_ANY(Config[port]))
     }
 
-    fun listenOnTor() {
-        launch {
-            val address = Network.listenOnTor()
-            if (address != null) {
-                if (!Config[listen] || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
-                    listenOn(Address.LOOPBACK)
-                logger.info("Listening on $address")
-                listenAddress.add(address)
-            }
+    private suspend fun listenOnTor() {
+        val address = Network.listenOnTor()
+        if (address != null) {
+            if (!Config[listen] || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+                listenOn(Address.LOOPBACK)
+            logger.info("Listening on $address")
+            listenAddress.add(address)
         }
     }
 
-    fun listenOnI2P() {
-        launch {
-            val address = Network.listenOnI2P()
-            if (address != null) {
-                logger.info("Listening on $address")
-                listenAddress.add(address)
-                i2plistener()
-            }
+    private suspend fun listenOnI2P() {
+        val address = Network.listenOnI2P()
+        if (address != null) {
+            logger.info("Listening on $address")
+            listenAddress.add(address)
+            i2plistener()
         }
     }
 
@@ -379,16 +385,6 @@ object Node : CoroutineScope {
 
             broadcastPacket(Peers(randomPeers))
         }
-    }
-
-    suspend fun startStaker(privateKey: PrivateKey): Boolean {
-        val publicKey = privateKey.toPublicKey()
-        if (LedgerDB.get(publicKey) == null) {
-            logger.info("account not found")
-            return false
-        }
-        launch { PoS.staker(privateKey, publicKey) }
-        return true
     }
 
     private const val DNS_TIMEOUT = 5
