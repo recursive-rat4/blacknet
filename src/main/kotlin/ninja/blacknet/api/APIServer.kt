@@ -38,6 +38,7 @@ import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
@@ -136,6 +137,16 @@ fun Application.main() {
             val ret = BlockInfo.get(hash)
             if (ret != null)
                 call.respond(JSON.indented.stringify(BlockInfo.serializer(), ret))
+            else
+                call.respond(HttpStatusCode.NotFound, "block not found")
+        }
+        
+        get("/api/v1/blockdb/getblockhash/{blockheight}") {
+            
+            val height = call.parameters["blockheight"]?.toInt() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
+            val ret = LedgerDB.getBlockHash(height)
+            if (ret != null)
+                call.respond(ret.toString())
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
