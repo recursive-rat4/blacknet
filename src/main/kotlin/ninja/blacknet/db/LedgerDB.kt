@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import io.ktor.util.error
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -57,9 +58,13 @@ object LedgerDB : Ledger {
             runBlocking {
                 rescanHashes.ensureCapacity(height())
                 rescanBlocks.ensureCapacity(height())
-                for (i in 1..height()) {
-                    rescanHashes.add(chain[i]!!)
-                    rescanBlocks.add(BlockDB.get(chain[i]!!)!!)
+                try {
+                    for (i in 1..height()) {
+                        rescanHashes.add(chain[i]!!)
+                        rescanBlocks.add(BlockDB.get(chain[i]!!)!!)
+                    }
+                } catch (e: Throwable) {
+                    logger.error(e)
                 }
                 logger.info("Loaded ${rescanBlocks.size} blocks")
 
@@ -78,7 +83,7 @@ object LedgerDB : Ledger {
                 htlcs.clear()
                 multisigs.clear()
                 commit()
-                BlockDB.remove(rescanHashes)
+                BlockDB.clear()
             }
         }
 

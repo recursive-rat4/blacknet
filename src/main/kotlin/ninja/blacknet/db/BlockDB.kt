@@ -50,9 +50,9 @@ object BlockDB : DataDB() {
 
     suspend fun remove(list: ArrayList<Hash>) {
         list.forEach {
-            BlockDB.remove(it)
+            remove(it)
         }
-        BlockDB.commit()
+        commit()
     }
 
     override suspend fun contains(hash: Hash): Boolean {
@@ -111,5 +111,10 @@ object BlockDB : DataDB() {
             rollback()
             return Status.INVALID
         }
+    }
+
+    internal fun clear() {
+        map.clear()
+        commit()
     }
 }
