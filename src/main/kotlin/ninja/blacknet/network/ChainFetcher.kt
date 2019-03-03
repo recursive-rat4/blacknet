@@ -86,7 +86,7 @@ object ChainFetcher : CoroutineScope {
             data.connection.sendPacket(GetBlocks(originalChain!!, LedgerDB.getRollingCheckpoint()))
 
             try {
-                while (true) {
+                requestLoop@ while (true) {
                     val answer = withTimeout(TIMEOUT) { recvChannel.receive() }
                     if (answer.isEmpty()) {
                         fetched()
@@ -101,6 +101,11 @@ object ChainFetcher : CoroutineScope {
                         val checkpoint = LedgerDB.getRollingCheckpoint()
                         var prev = checkpoint
                         for (hash in answer.hashes) {
+                            if (BlockDB.isRejected(hash)) {
+                                data.connection.dos("invalid chain")
+                                fetched()
+                                break@requestLoop
+                            }
                             if (LedgerDB.getBlockNumber(hash) == null)
                                 break
                             prev = hash

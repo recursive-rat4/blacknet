@@ -27,6 +27,10 @@ abstract class DataDB {
         return !rejects.contains(hash) && !contains(hash)
     }
 
+    suspend fun isRejected(hash: Hash): Boolean {
+        return rejects.contains(hash)
+    }
+
     suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Status = mutex.withLock {
         if (rejects.contains(hash))
             return Status.INVALID
