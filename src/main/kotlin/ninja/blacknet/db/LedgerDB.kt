@@ -45,7 +45,7 @@ object LedgerDB : Ledger {
     private val chainIndex = db.hashMap("chainIndex", HashSerializer, Serializer.INTEGER).createOrOpen()
     private val htlcs = db.hashMap("htlcs", HashSerializer, HTLCSerializer).createOrOpen()
     private val multisigs = db.hashMap("multisigs", HashSerializer, MultisigSerializer).createOrOpen()
-    private val updatedV1 = db.atomicBoolean("updatedV1", false).createOrOpen()
+    private val updatedV2 = db.atomicBoolean("updatedV2", false).createOrOpen()
 
     private var maxBlockSize: Int
 
@@ -53,7 +53,7 @@ object LedgerDB : Ledger {
         val rescanHashes = ArrayList<Hash>()
         val rescanBlocks = ArrayList<ByteArray>()
 
-        if (!updatedV1.get()) {
+        if (!updatedV2.get()) {
             logger.info("Rescanning blockchain...")
             runBlocking {
                 rescanHashes.ensureCapacity(height())
@@ -112,7 +112,7 @@ object LedgerDB : Ledger {
             chainIndex[Hash.ZERO] = 0
             blockTime.set(1545555600)
             difficulty.set(PoS.INITIAL_DIFFICULTY)
-            updatedV1.set(true)
+            updatedV2.set(true)
             commit()
             logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
         }

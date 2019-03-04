@@ -46,7 +46,7 @@ class Lease(
         ledger.set(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
         undo.add(to, toAccount.copy())
-        toAccount.leases.add(AccountState.Input(ledger.height(), amount))
+        toAccount.leases.add(AccountState.LeaseInput(tx.from, ledger.height(), amount))
         ledger.set(to, toAccount)
         return true
     }

@@ -10,6 +10,7 @@
 package ninja.blacknet.core
 
 import mu.KotlinLogging
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
@@ -18,7 +19,7 @@ data class AccountState(
         var seq: Int,
         var stake: Long,
         var immature: MutableList<Input>,
-        var leases: MutableList<Input>
+        var leases: MutableList<LeaseInput>
 ) {
     fun balance(): Long {
         return stake + immature.sumByLong { it.amount }
@@ -75,6 +76,11 @@ data class AccountState(
     }
 
     data class Input(val height: Int, var amount: Long) {
+        fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
+        fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
+    }
+
+    data class LeaseInput(val from: PublicKey, val height: Int, val amount: Long) {
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }

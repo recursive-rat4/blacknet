@@ -43,7 +43,7 @@ class CancelLease(
             return false
         }
         undo.add(to, toAccount.copy())
-        if (toAccount.leases.remove(AccountState.Input(height, amount))) {
+        if (toAccount.leases.remove(AccountState.LeaseInput(tx.from, height, amount))) {
             ledger.set(to, toAccount)
             val account = ledger.get(tx.from)!!
             account.debit(ledger.height(), amount)
