@@ -32,6 +32,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import mu.KotlinLogging
@@ -49,8 +51,9 @@ private val logger = KotlinLogging.logger {}
 
 object APIServer : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
-    val blockNotify = SynchronizedArrayList<SendChannel<Frame>>()
-    val transactionNotify = SynchronizedArrayList<Pair<SendChannel<Frame>, PublicKey>>()
+    internal val txMutex = Mutex()
+    internal val blockNotify = SynchronizedArrayList<SendChannel<Frame>>()
+    internal val transactionNotify = SynchronizedArrayList<Pair<SendChannel<Frame>, PublicKey>>()
 
     suspend fun blockNotify(hash: Hash) {
         blockNotify.forEach {
@@ -180,75 +183,83 @@ fun Application.main() {
         post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
-            val seq = TxPool.getSequence(from)
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
             val message = Message.create(call.parameters["message"], call.parameters["encrypted"]?.toByte(), privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
 
-            val data = Transfer(amount, to, message).serialize()
-            val tx = Transaction.create(from, seq, fee, TxType.Transfer.type, data)
-            val signed = tx.sign(privateKey)
+            APIServer.txMutex.withLock {
+                val seq = TxPool.getSequence(from)
+                val data = Transfer(amount, to, message).serialize()
+                val tx = Transaction.create(from, seq, fee, TxType.Transfer.type, data)
+                val signed = tx.sign(privateKey)
 
-            if (Node.broadcastTx(signed.first, signed.second, fee))
-                call.respond(signed.first.toString())
-            else
-                call.respond("Transaction rejected")
+                if (Node.broadcastTx(signed.first, signed.second, fee))
+                    call.respond(signed.first.toString())
+                else
+                    call.respond("Transaction rejected")
+            }
         }
 
         post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
-            val seq = TxPool.getSequence(from)
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val message = SerializableByteArray.fromString(call.parameters["message"].orEmpty()) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
 
-            val data = Burn(amount, message).serialize()
-            val tx = Transaction.create(from, seq, fee, TxType.Burn.type, data)
-            val signed = tx.sign(privateKey)
+            APIServer.txMutex.withLock {
+                val seq = TxPool.getSequence(from)
+                val data = Burn(amount, message).serialize()
+                val tx = Transaction.create(from, seq, fee, TxType.Burn.type, data)
+                val signed = tx.sign(privateKey)
 
-            if (Node.broadcastTx(signed.first, signed.second, fee))
-                call.respond(signed.first.toString())
-            else
-                call.respond("Transaction rejected")
+                if (Node.broadcastTx(signed.first, signed.second, fee))
+                    call.respond(signed.first.toString())
+                else
+                    call.respond("Transaction rejected")
+            }
         }
 
         post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
-            val seq = TxPool.getSequence(from)
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
 
-            val data = Lease(amount, to).serialize()
-            val tx = Transaction.create(from, seq, fee, TxType.Lease.type, data)
-            val signed = tx.sign(privateKey)
+            APIServer.txMutex.withLock {
+                val seq = TxPool.getSequence(from)
+                val data = Lease(amount, to).serialize()
+                val tx = Transaction.create(from, seq, fee, TxType.Lease.type, data)
+                val signed = tx.sign(privateKey)
 
-            if (Node.broadcastTx(signed.first, signed.second, fee))
-                call.respond(signed.first.toString())
-            else
-                call.respond("Transaction rejected")
+                if (Node.broadcastTx(signed.first, signed.second, fee))
+                    call.respond(signed.first.toString())
+                else
+                    call.respond("Transaction rejected")
+            }
         }
 
         post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
-            val seq = TxPool.getSequence(from)
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
             val height = call.parameters["height"]?.toInt() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
 
-            val data = CancelLease(amount, to, height).serialize()
-            val tx = Transaction.create(from, seq, fee, TxType.CancelLease.type, data)
-            val signed = tx.sign(privateKey)
+            APIServer.txMutex.withLock {
+                val seq = TxPool.getSequence(from)
+                val data = CancelLease(amount, to, height).serialize()
+                val tx = Transaction.create(from, seq, fee, TxType.CancelLease.type, data)
+                val signed = tx.sign(privateKey)
 
-            if (Node.broadcastTx(signed.first, signed.second, fee))
-                call.respond(signed.first.toString())
-            else
-                call.respond("Transaction rejected")
+                if (Node.broadcastTx(signed.first, signed.second, fee))
+                    call.respond(signed.first.toString())
+                else
+                    call.respond("Transaction rejected")
+            }
         }
 
         post("/api/v1/signmessage/{mnemonic}/{message}") {
