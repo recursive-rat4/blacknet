@@ -47,6 +47,7 @@ object LedgerDB : Ledger {
     private val multisigs = db.hashMap("multisigs", HashSerializer, MultisigSerializer).createOrOpen()
     private val updatedV2 = db.atomicBoolean("updatedV2", false).createOrOpen()
 
+    const val DEFAULT_MAX_BLOCK_SIZE = 100000
     private var maxBlockSize: Int
 
     init {
@@ -267,14 +268,13 @@ object LedgerDB : Ledger {
     }
 
     private fun calcMaxBlockSize(): Int {
-        val default = 100000
         val height = height()
         if (height < PoS.BLOCK_SIZE_SPAN)
-            return default
+            return DEFAULT_MAX_BLOCK_SIZE
         val sizes = Array(PoS.BLOCK_SIZE_SPAN) { blockSizes[height - it]!! }
         sizes.sort()
         val median = sizes[PoS.BLOCK_SIZE_SPAN / 2]
-        return max(default, median * 2)
+        return max(DEFAULT_MAX_BLOCK_SIZE, median * 2)
     }
 
     suspend fun processBlock(hash: Hash, block: Block, size: Int, txHashes: ArrayList<Hash>): Boolean = mutex.withLock {

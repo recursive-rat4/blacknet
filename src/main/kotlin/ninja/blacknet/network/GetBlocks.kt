@@ -55,7 +55,7 @@ class GetBlocks(
         }
 
         val height = LedgerDB.height()
-        val maxSize = Node.getMaxPacketSize()
+        val maxSize = LedgerDB.DEFAULT_MAX_BLOCK_SIZE // we don't know actual value, so assume minimum
         val response = ArrayList<SerializableByteArray>()
 
         var size = 8
@@ -72,9 +72,12 @@ class GetBlocks(
                 logger.error("block $hash null")
                 break
             }
-            if (size + bytes.size + 4 > maxSize)
-                break
             size += bytes.size + 4
+            if (size > maxSize) {
+                if (response.isEmpty())
+                    response.add(SerializableByteArray(bytes))
+                break
+            }
             response.add(SerializableByteArray(bytes))
         }
 
