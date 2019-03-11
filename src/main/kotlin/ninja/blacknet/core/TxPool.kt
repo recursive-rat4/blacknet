@@ -24,6 +24,7 @@ import ninja.blacknet.util.SynchronizedHashMap
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
+    const val INVALID_FEE = -1L
     private val accounts = SynchronizedHashMap<PublicKey, AccountState>()
     private val transactions = SynchronizedArrayList<Hash>()
 
@@ -77,13 +78,33 @@ object TxPool : MemPool(), Ledger {
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
-        if (processTransaction(hash, bytes, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
+        val tx = Transaction.deserialize(bytes)
+        if (tx == null) {
+            logger.info("deserialization failed")
+            return Status.INVALID
+        }
+        if (processTransaction(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
             transactions.add(hash)
             connection?.lastTxTime = Node.time()
             return Status.ACCEPTED
         }
         return Status.INVALID
+    }
+
+    internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Long {
+        val tx = Transaction.deserialize(bytes)
+        if (tx == null) {
+            logger.info("deserialization failed")
+            return INVALID_FEE
+        }
+        if (processTransaction(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
+            add(hash, bytes)
+            transactions.add(hash)
+            connection?.lastTxTime = Node.time()
+            return tx.fee
+        }
+        return INVALID_FEE
     }
 
     suspend fun remove(hashes: ArrayList<Hash>) = mutex.withLock {

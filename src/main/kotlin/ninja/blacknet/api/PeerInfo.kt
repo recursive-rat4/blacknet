@@ -17,13 +17,14 @@ import ninja.blacknet.network.Node
 class PeerInfo(
         val remoteAddress: String,
         val localAddress: String,
-        val timeoffset: Long,
+        val timeOffset: Long,
         val ping: Long,
         val version: Int,
         val agent: String,
         val state: String,
-        val dosscore: Int,
-        val connectedat: Long,
+        val dosScore: Int,
+        val feeFilter: Long,
+        val connectedAt: Long,
         val totalBytesRead: Long,
         val totalBytesWritten: Long
 ) {
@@ -36,6 +37,7 @@ class PeerInfo(
             connection.agent,
             connection.state.name,
             connection.dosScore,
+            connection.feeFilter,
             connection.connectedAt,
             connection.totalBytesRead,
             connection.totalBytesWritten

@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
+import ninja.blacknet.core.TxPool
 import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
@@ -33,7 +34,7 @@ class Data(private val list: DataList) : Packet {
             return
         }
 
-        val inv = InvList()
+        val inv = UnfilteredInvList()
 
         for (i in list) {
             val type = i.first
@@ -46,9 +47,13 @@ class Data(private val list: DataList) : Packet {
                 continue
             }
 
-            val status = type.db.process(hash, bytes.array, connection)
-            when (status) {
-                Status.ACCEPTED -> inv.add(Pair(type, hash))
+            val status = if (type == DataType.Transaction)
+                TxPool.processTx(hash, bytes.array, connection)
+            else
+                Pair(type.db.process(hash, bytes.array, connection), 0L)
+
+            when (status.first) {
+                Status.ACCEPTED -> inv.add(Triple(type, hash, status.second))
                 Status.INVALID -> connection.dos("invalid ${type.name} $hash")
                 Status.IN_FUTURE -> logger.info("in future ${type.name} $hash")
                 Status.NOT_ON_THIS_CHAIN -> {

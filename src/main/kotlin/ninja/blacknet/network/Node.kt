@@ -192,22 +192,22 @@ object Node : CoroutineScope {
         connection.sendPacket(v)
     }
 
-    suspend fun announceChain(hash: Hash, filter: Connection? = null) {
-        val ann = ChainAnnounce(hash, LedgerDB.cumulativeDifficulty())
+    suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null) {
+        val ann = ChainAnnounce(hash, cumulativeDifficulty)
         broadcastPacket(ann) {
-            it != filter && it.version >= ChainAnnounce.MIN_VERSION
+            it != source && it.version >= ChainAnnounce.MIN_VERSION
         }
         val inv = InvList()
         inv.add(Pair(DataType.Block, hash))
         broadcastPacket(Inventory(inv)) {
-            it != filter
+            it != source
         }
     }
 
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val status = BlockDB.process(hash, bytes)
         if (status == Status.ACCEPTED) {
-            announceChain(hash)
+            announceChain(hash, LedgerDB.cumulativeDifficulty())
             return true
         } else {
             logger.info("$status block $hash")
@@ -215,28 +215,36 @@ object Node : CoroutineScope {
         }
     }
 
-    suspend fun broadcastTx(hash: Hash, bytes: ByteArray, fee: Long): Boolean {
-        val status = TxPool.process(hash, bytes)
-        if (status == Status.ACCEPTED) {
+    suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Boolean {
+        val status = TxPool.processTx(hash, bytes)
+        if (status.first == Status.ACCEPTED) {
             val inv = InvList()
             inv.add(Pair(DataType.Transaction, hash))
             val packet = Inventory(inv)
             broadcastPacket(packet) {
-                it.feeFilter <= fee
+                it.feeFilter <= status.second
             }
             return true
+        } else if (status.first == Status.ALREADY_HAVE) {
+            logger.info("Already in tx pool $hash")
+            return true
         } else {
-            logger.info("$status tx $hash")
+            logger.info("${status.first} tx $hash")
             return false
         }
     }
 
-    suspend fun broadcastInv(inv: InvList, filter: Connection): Boolean {
-        //TODO feeFilter
-        broadcastPacket(Inventory(inv)) {
-            it != filter
+    suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection) {
+        connections.forEach {
+            if (it != source && it.state.isConnected()) {
+                val inv = InvList()
+                for (i in unfiltered)
+                    if (i.first != DataType.Transaction || it.feeFilter <= i.third)
+                        inv.add(Pair(i.first, i.second))
+                if (inv.isNotEmpty())
+                    it.sendPacket(Inventory(inv))
+            }
         }
-        return true
     }
 
     private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }) {

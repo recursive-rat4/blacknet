@@ -47,7 +47,7 @@ class TransactionInfo(
         }
 
         private fun data(type: Byte, bytes: ByteArray): String {
-            val txData = TxData.deserealize(type, bytes) ?: return "Deserialization error"
+            val txData = TxData.deserialize(type, bytes) ?: return "Deserialization error"
             return when (type) {
                 TxType.Transfer.type -> Json.plain.stringify(TransferInfo.serializer(), TransferInfo(txData as Transfer))
                 TxType.Burn.type -> Json.plain.stringify(BurnInfo.serializer(), BurnInfo(txData as Burn))

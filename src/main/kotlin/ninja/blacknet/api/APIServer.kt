@@ -194,7 +194,7 @@ fun Application.main() {
                 val tx = Transaction.create(from, seq, fee, TxType.Transfer.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second, fee))
+                if (Node.broadcastTx(signed.first, signed.second))
                     call.respond(signed.first.toString())
                 else
                     call.respond("Transaction rejected")
@@ -214,7 +214,7 @@ fun Application.main() {
                 val tx = Transaction.create(from, seq, fee, TxType.Burn.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second, fee))
+                if (Node.broadcastTx(signed.first, signed.second))
                     call.respond(signed.first.toString())
                 else
                     call.respond("Transaction rejected")
@@ -234,7 +234,7 @@ fun Application.main() {
                 val tx = Transaction.create(from, seq, fee, TxType.Lease.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second, fee))
+                if (Node.broadcastTx(signed.first, signed.second))
                     call.respond(signed.first.toString())
                 else
                     call.respond("Transaction rejected")
@@ -255,8 +255,20 @@ fun Application.main() {
                 val tx = Transaction.create(from, seq, fee, TxType.CancelLease.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second, fee))
+                if (Node.broadcastTx(signed.first, signed.second))
                     call.respond(signed.first.toString())
+                else
+                    call.respond("Transaction rejected")
+            }
+        }
+
+        get("/api/v1/transaction/raw/send/{serialized}/") {
+            val serialized = SerializableByteArray.fromString(call.parameters["serialized"].orEmpty()) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
+            val hash = Transaction.Hasher(serialized.array)
+
+            APIServer.txMutex.withLock {
+                if (Node.broadcastTx(hash, serialized.array))
+                    call.respond(hash.toString())
                 else
                     call.respond("Transaction rejected")
             }

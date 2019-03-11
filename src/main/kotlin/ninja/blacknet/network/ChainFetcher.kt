@@ -143,8 +143,9 @@ object ChainFetcher : CoroutineScope {
     }
 
     private suspend fun fetched() {
+        val cumulativeDifficulty = LedgerDB.cumulativeDifficulty()
         if (undoRollback != null) {
-            if (undoDifficulty >= LedgerDB.cumulativeDifficulty()) {
+            if (undoDifficulty >= cumulativeDifficulty) {
                 logger.info("Reconnecting ${undoRollback!!.size} blocks")
                 val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
                 LedgerDB.commit()
@@ -158,7 +159,7 @@ object ChainFetcher : CoroutineScope {
         if (syncChain != null) {
             val newChain = LedgerDB.blockHash()
             if (newChain != originalChain) {
-                Node.announceChain(newChain, syncChain!!.connection)
+                Node.announceChain(newChain, cumulativeDifficulty, syncChain!!.connection)
                 LedgerDB.prune()
             }
 

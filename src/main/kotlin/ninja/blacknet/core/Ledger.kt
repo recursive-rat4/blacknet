@@ -35,15 +35,6 @@ interface Ledger {
 
     suspend fun getOrCreate(key: PublicKey) = get(key) ?: AccountState.create()
 
-    suspend fun processTransaction(hash: Hash, bytes: ByteArray, undo: UndoBlock): Boolean {
-        val tx = Transaction.deserialize(bytes)
-        if (tx == null) {
-            logger.info("deserialization failed")
-            return false
-        }
-        return processTransaction(tx, hash, bytes.size, undo)
-    }
-
     suspend fun processTransaction(tx: Transaction, hash: Hash, size: Int, undo: UndoBlock): Boolean {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
@@ -61,7 +52,7 @@ interface Ledger {
             logger.info("Generated as individual tx")
             return false
         }
-        val data = TxData.deserealize(tx.type, tx.data.array)
+        val data = TxData.deserialize(tx.type, tx.data.array)
         if (data == null) {
             logger.info("deserialization of tx data failed")
             return false

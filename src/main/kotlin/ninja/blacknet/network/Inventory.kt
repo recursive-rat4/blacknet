@@ -37,3 +37,4 @@ class Inventory(private val list: InvList) : Packet {
 }
 
 typealias InvList = ArrayList<Pair<DataType, Hash>>
+typealias UnfilteredInvList = ArrayList<Triple<DataType, Hash, Long>>

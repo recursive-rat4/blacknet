@@ -45,7 +45,7 @@ interface TxData {
     }
 
     companion object {
-        fun deserealize(type: Byte, bytes: ByteArray): TxData? {
+        fun deserialize(type: Byte, bytes: ByteArray): TxData? {
             val serializer = TxType.getSerializer(type)
             if (serializer == null) {
                 logger.info("unknown transaction type:$type")
