@@ -22,9 +22,7 @@ class Blocks(
 ) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.Blocks.ordinal
-    }
+    override fun getType() = PacketType.Blocks
 
     fun isEmpty(): Boolean {
         return hashes.isEmpty() && blocks.isEmpty()

@@ -9,9 +9,7 @@
 
 package ninja.blacknet.transaction
 
-import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.Message
@@ -24,15 +22,9 @@ class Transfer(
         val to: PublicKey,
         val message: Message
 ) : TxData {
-    override fun serialize(): ByteArray {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build().readBytes()
-    }
+    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
 
-    override fun getType(): Byte {
-        return TxType.Transfer.type
-    }
+    override fun getType() = TxType.Transfer
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         val account = ledger.get(tx.from)!!

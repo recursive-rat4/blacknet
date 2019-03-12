@@ -22,7 +22,7 @@ class NodeInfo(
 ) {
     companion object {
         suspend fun get(): NodeInfo {
-            val listening = Node.listenAddress.map { it.toString() }
+            val listening = Node.listenAddress.mapToList { it.toString() }
             return NodeInfo(Node.agent, Node.version, Node.outgoing(), Node.incoming(), listening)
         }
     }

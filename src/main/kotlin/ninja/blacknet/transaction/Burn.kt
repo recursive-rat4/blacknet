@@ -9,9 +9,7 @@
 
 package ninja.blacknet.transaction
 
-import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
@@ -25,15 +23,9 @@ class Burn(
         val amount: Long,
         val message: SerializableByteArray
 ) : TxData {
-    override fun serialize(): ByteArray {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build().readBytes()
-    }
+    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
 
-    override fun getType(): Byte {
-        return TxType.Burn.type
-    }
+    override fun getType() = TxType.Burn
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         if (amount == 0L) {

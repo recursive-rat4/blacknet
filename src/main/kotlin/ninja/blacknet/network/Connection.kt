@@ -16,11 +16,15 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.io.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
+import ninja.blacknet.core.DataType
 import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.util.SynchronizedArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 private val logger = KotlinLogging.logger {}
 
@@ -33,7 +37,9 @@ class Connection(
         var state: State
 ) {
     private val closed = AtomicBoolean()
+    private val dosScore = AtomicInteger(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
+    private val inventoryToSend = SynchronizedArrayList<InvType>()
     val connectedAt = Node.time()
 
     @Volatile
@@ -45,6 +51,8 @@ class Connection(
     @Volatile
     var lastTxTime: Long = 0
     @Volatile
+    var lastInvSentTime: Long = 0
+    @Volatile
     var ping: Long = 0
 
     var version: Int = 0
@@ -52,7 +60,6 @@ class Connection(
     var feeFilter: Long = 0
     var timeOffset: Long = 0
     var pingRequest: PingRequest? = null
-    var dosScore: Int = 0
 
     fun launch(scope: CoroutineScope) {
         scope.launch { receiver() }
@@ -97,9 +104,9 @@ class Connection(
                 logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting $remoteAddress")
                 close()
             }
-            val ret = readChannel.readPacket(size)
+            val result = readChannel.readPacket(size)
             totalBytesRead += size
-            return ret
+            return result
         } catch (e: IOException) {
             throw ClosedReceiveChannelException(e.message)
         }
@@ -121,23 +128,61 @@ class Connection(
         }
     }
 
+    suspend fun inventory(inv: InvType) = inventoryToSend.mutex.withLock {
+        inventoryToSend.list.add(inv)
+        if (inventoryToSend.list.size == DataType.MAX_INVENTORY) {
+            sendInventoryImpl(Node.time())
+        }
+    }
+
+    suspend fun inventory(inv: InvList): Unit = inventoryToSend.mutex.withLock {
+        val newSize = inventoryToSend.list.size + inv.size
+        if (newSize < DataType.MAX_INVENTORY) {
+            inventoryToSend.list.addAll(inv)
+        } else if (newSize > DataType.MAX_INVENTORY) {
+            sendInventoryImpl(Node.time())
+            inventoryToSend.list.addAll(inv)
+        } else {
+            inventoryToSend.list.addAll(inv)
+            sendInventoryImpl(Node.time())
+        }
+    }
+
+    internal suspend fun sendInventory(time: Long) = inventoryToSend.mutex.withLock {
+        if (inventoryToSend.list.size != 0) {
+            sendInventoryImpl(time)
+        }
+    }
+
+    private fun sendInventoryImpl(time: Long) {
+        sendPacket(Inventory(inventoryToSend.list))
+        inventoryToSend.list.clear()
+        lastInvSentTime = time
+    }
+
     fun sendPacket(p: Packet) {
+        logger.debug { "Sending ${p.getType()} to $remoteAddress" }
         sendChannel.offer(p.build())
     }
 
-    fun sendPacket(bytes: ByteReadPacket) {
+    internal fun sendPacket(bytes: ByteReadPacket) {
         sendChannel.offer(bytes)
     }
 
     fun dos(reason: String) {
-        dosScore++
-        logger.info("DoS: $dosScore $reason $remoteAddress")
-        if (dosScore >= 100)
+        val score = dosScore.incrementAndGet()
+        logger.info("DoS: $score $reason $remoteAddress")
+        if (score == 100)
             close()
+    }
+
+    fun dosScore(): Int {
+        return dosScore.get()
     }
 
     fun close() {
         if (closed.compareAndSet(false, true)) {
+            sendChannel.cancel()
             socket.close()
             Node.disconnected(this)
             ChainFetcher.disconnected(this)

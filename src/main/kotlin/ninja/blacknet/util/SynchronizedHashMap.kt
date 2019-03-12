@@ -12,42 +12,45 @@ package ninja.blacknet.util
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class SynchronizedHashMap<K, V>(private val map: HashMap<K, V>) {
-    constructor() : this(HashMap())
+class SynchronizedHashMap<K, V>(
+        val mutex: Mutex = Mutex(),
+        val map: HashMap<K, V> = HashMap()
+) {
+    suspend inline fun copy() = mutex.withLock { HashMap(map) }
 
-    private val mutex = Mutex()
+    suspend inline fun clear() = mutex.withLock { map.clear() }
 
-    suspend fun copy() = mutex.withLock { HashMap(map) }
+    suspend inline fun isEmpty() = mutex.withLock { map.isEmpty() }
 
-    suspend fun clear() = mutex.withLock { map.clear() }
+    suspend inline fun isNotEmpty() = mutex.withLock { !map.isEmpty() }
 
-    suspend fun isEmpty() = mutex.withLock { map.isEmpty() }
+    suspend inline fun size() = mutex.withLock { map.size }
 
-    suspend fun size() = mutex.withLock { map.size }
+    suspend inline fun get(key: K): V? = mutex.withLock { map.get(key) }
 
-    suspend fun get(key: K): V? = mutex.withLock { map.get(key) }
+    suspend inline fun put(key: K, value: V) = mutex.withLock { map.put(key, value) }
 
-    suspend fun set(key: K, value: V) = mutex.withLock { map.set(key, value) }
+    suspend inline fun putAll(m: Map<K, V>) = mutex.withLock { map.putAll(m) }
 
-    suspend fun putIfAbsent(key: K, value: V): V? = mutex.withLock { map.putIfAbsent(key, value) }
+    suspend inline fun putIfAbsent(key: K, value: V): V? = mutex.withLock { map.putIfAbsent(key, value) }
 
-    suspend fun remove(key: K) = mutex.withLock { map.remove(key) }
+    suspend inline fun remove(key: K) = mutex.withLock { map.remove(key) }
 
-    suspend fun containsKey(key: K) = mutex.withLock { map.containsKey(key) }
+    suspend inline fun removeAll(keys: ArrayList<K>) = mutex.withLock { for (i in keys.indices) map.remove(keys[i]) }
 
-    suspend fun sumValuesBy(selector: (V) -> Int) = mutex.withLock { map.values.sumBy(selector) }
+    suspend inline fun containsKey(key: K) = mutex.withLock { map.containsKey(key) }
 
-    suspend fun <R> mapKeys(transform: (K) -> R): ArrayList<R> = mutex.withLock {
-        val ret = ArrayList<R>(map.size)
-        map.keys.forEach { ret.add(transform(it)) }
-        return@withLock ret
-    }
+    suspend inline fun sumValuesBy(selector: (V) -> Int) = mutex.withLock { map.values.sumBy(selector) }
 
-    suspend fun filterValues(predicate: (V) -> Boolean): Map<K, V> = mutex.withLock {
-        val result = HashMap<K, V>()
+    suspend inline fun <R> mapKeysToList(transform: (K) -> R) = mutex.withLock { map.keys.mapTo(ArrayList(map.size), transform) }
+
+    suspend inline fun forEach(action: (Map.Entry<K, V>) -> Unit) = mutex.withLock { map.forEach(action) }
+
+    suspend inline fun filterToKeyList(predicate: (K, V) -> Boolean) = mutex.withLock {
+        val result = ArrayList<K>(map.size)
         for (entry in map) {
-            if (predicate(entry.value)) {
-                result.put(entry.key, entry.value)
+            if (predicate(entry.key, entry.value)) {
+                result.add(entry.key)
             }
         }
         return@withLock result

@@ -14,6 +14,7 @@ import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import io.ktor.util.error
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import net.i2p.data.Base32
@@ -173,7 +174,7 @@ enum class Network(val addrSize: Int) {
                     return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
                 I2P -> {
-                    if (!I2PSAM.haveSession()) throw RuntimeException("i2p sam is not available")
+                    if (!I2PSAM.haveSession()) throw RuntimeException("I2P SAM session is not available")
                     val c = I2PSAM.connect(address)
                     return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.localAddress!!, Connection.State.OUTGOING_WAITING)
                 }
@@ -196,9 +197,11 @@ enum class Network(val addrSize: Int) {
                 I2PSAM.createSession()
                 return I2PSAM.localAddress
             } catch (e: ConnectException) {
-                logger.info("Can't connect to i2p sam")
+                logger.info("Can't connect to I2P SAM")
+            } catch (e: I2PSAM.I2PException) {
+                logger.info("I2P ${e.message}")
             } catch (e: Throwable) {
-                logger.info(e.message)
+                logger.error(e)
             }
             return null
         }

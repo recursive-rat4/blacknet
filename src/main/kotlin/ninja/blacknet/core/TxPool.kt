@@ -74,7 +74,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     override suspend fun set(key: PublicKey, state: AccountState) {
-        accounts.set(key, state)
+        accounts.put(key, state)
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {

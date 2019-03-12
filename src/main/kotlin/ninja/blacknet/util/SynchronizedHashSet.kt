@@ -12,26 +12,27 @@ package ninja.blacknet.util
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class SynchronizedHashSet<T>(private val set: HashSet<T>) {
-    constructor() : this(HashSet())
+class SynchronizedHashSet<T>(
+        val mutex: Mutex = Mutex(),
+        val set: HashSet<T> = HashSet()
+) {
+    suspend inline fun isEmpty() = mutex.withLock { set.isEmpty() }
 
-    private val mutex = Mutex()
+    suspend inline fun isNotEmpty() = mutex.withLock { !set.isEmpty() }
 
-    suspend fun add(element: T) = mutex.withLock { set.add(element) }
+    suspend inline fun size() = mutex.withLock { set.size }
 
-    suspend fun remove(element: T) = mutex.withLock { set.remove(element) }
+    suspend inline fun add(element: T) = mutex.withLock { set.add(element) }
 
-    suspend fun contains(element: T) = mutex.withLock { set.contains(element) }
+    suspend inline fun remove(element: T) = mutex.withLock { set.remove(element) }
 
-    suspend fun clear() = mutex.withLock { set.clear() }
+    suspend inline fun contains(element: T) = mutex.withLock { set.contains(element) }
 
-    suspend fun filter(predicate: (T) -> Boolean) = mutex.withLock { set.filter(predicate) }
+    suspend inline fun clear() = mutex.withLock { set.clear() }
 
-    suspend fun toList() = mutex.withLock { set.toList() }
+    suspend inline fun toList() = mutex.withLock { set.toList() }
 
-    suspend fun <R> map(transform: (T) -> R): ArrayList<R> = mutex.withLock {
-        val ret = ArrayList<R>(set.size)
-        set.forEach { ret.add(transform(it)) }
-        return@withLock ret
-    }
+    suspend inline fun filterToList(predicate: (T) -> Boolean) = mutex.withLock { set.filterTo(ArrayList(set.size), predicate) }
+
+    suspend inline fun <R> mapToList(transform: (T) -> R) = mutex.withLock { set.mapTo(ArrayList(set.size), transform) }
 }

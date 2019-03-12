@@ -14,14 +14,14 @@ import kotlinx.io.core.ByteReadPacket
 
 interface Packet {
     fun serialize(): ByteReadPacket
-    fun getType(): Int
+    fun getType(): PacketType
     suspend fun process(connection: Connection)
 
     fun build(): ByteReadPacket {
         val s = serialize()
         val b = BytePacketBuilder()
         b.writeInt(s.remaining.toInt() + 4)
-        b.writeInt(getType())
+        b.writeInt(getType().ordinal)
         b.writePacket(s)
         return b.build()
     }

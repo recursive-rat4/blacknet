@@ -228,15 +228,15 @@ object LedgerDB : Ledger {
 
     suspend fun getNextBlockHashes(start: Hash, max: Int): ArrayList<Hash> = mutex.withLock {
         var i = getBlockNumber(start) ?: return ArrayList()
-        val ret = ArrayList<Hash>(max)
+        val result = ArrayList<Hash>(max)
         while (true) {
             i++
             val hash = chain.getOrNull(i) ?: break
-            ret.add(hash)
-            if (ret.size >= max)
+            result.add(hash)
+            if (result.size >= max)
                 break
         }
-        return ret
+        return result
     }
 
     fun getBlockNumber(hash: Hash): Int? {
@@ -409,10 +409,10 @@ object LedgerDB : Ledger {
         val i = getBlockNumber(hash) ?: return ArrayList()
         val height = height()
         var n = height - i
-        val ret = ArrayList<Hash>(n)
+        val result = ArrayList<Hash>(n)
         while (n-- > 0)
-            ret.add(undoBlock())
-        return ret
+            result.add(undoBlock())
+        return result
     }
 
     suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = mutex.withLock {

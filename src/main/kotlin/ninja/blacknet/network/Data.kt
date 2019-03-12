@@ -24,9 +24,7 @@ private val logger = KotlinLogging.logger {}
 class Data(private val list: DataList) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.Data.ordinal
-    }
+    override fun getType() = PacketType.Data
 
     override suspend fun process(connection: Connection) {
         if (list.size > DataType.MAX_DATA) {

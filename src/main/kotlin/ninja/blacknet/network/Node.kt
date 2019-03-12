@@ -73,6 +73,7 @@ object Node : CoroutineScope {
         launch { pinger() }
         launch { peerAnnouncer() }
         launch { dnsSeeder(true) }
+        launch { inventoryBroadcaster() }
     }
 
     fun time(): Long {
@@ -197,10 +198,10 @@ object Node : CoroutineScope {
         broadcastPacket(ann) {
             it != source && it.version >= ChainAnnounce.MIN_VERSION
         }
-        val inv = InvList()
-        inv.add(Pair(DataType.Block, hash))
-        broadcastPacket(Inventory(inv)) {
-            it != source
+        val inv = Pair(DataType.Block, hash)
+        connections.forEach {
+            if (it != source && it.state.isConnected() && it.version < ChainAnnounce.MIN_VERSION)
+                it.inventory(inv)
         }
     }
 
@@ -218,11 +219,10 @@ object Node : CoroutineScope {
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Boolean {
         val status = TxPool.processTx(hash, bytes)
         if (status.first == Status.ACCEPTED) {
-            val inv = InvList()
-            inv.add(Pair(DataType.Transaction, hash))
-            val packet = Inventory(inv)
-            broadcastPacket(packet) {
-                it.feeFilter <= status.second
+            val inv = Pair(DataType.Transaction, hash)
+            connections.forEach {
+                if (it.state.isConnected() && it.feeFilter <= status.second)
+                    it.inventory(inv)
             }
             return true
         } else if (status.first == Status.ALREADY_HAVE) {
@@ -235,19 +235,25 @@ object Node : CoroutineScope {
     }
 
     suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection) {
+        val invs = unfiltered.map { Pair(it.first, it.second) }
+        val toSend = InvList(invs.size)
         connections.forEach {
             if (it != source && it.state.isConnected()) {
-                val inv = InvList()
-                for (i in unfiltered)
-                    if (i.first != DataType.Transaction || it.feeFilter <= i.third)
-                        inv.add(Pair(i.first, i.second))
-                if (inv.isNotEmpty())
-                    it.sendPacket(Inventory(inv))
+                for (i in unfiltered.indices) {
+                    val inv = unfiltered[i]
+                    if (inv.first != DataType.Transaction || it.feeFilter <= inv.third)
+                        toSend.add(invs[i])
+                }
+                if (toSend.size != 0) {
+                    it.inventory(toSend)
+                    toSend.clear()
+                }
             }
         }
     }
 
     private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }) {
+        logger.debug { "Broadcasting ${packet.getType()}" }
         val bytes = packet.build()
         connections.forEach {
             if (it.state.isConnected() && filter(it))
@@ -382,8 +388,8 @@ object Node : CoroutineScope {
             if (randomPeers.size == 0)
                 continue
 
-            val myAddress = listenAddress.filter { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
-            if (myAddress.isNotEmpty()) {
+            val myAddress = listenAddress.filterToList { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
+            if (myAddress.size != 0) {
                 val i = Random.nextInt(randomPeers.size * 10)
                 if (i < randomPeers.size) {
                     randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
@@ -417,6 +423,19 @@ object Node : CoroutineScope {
             PeerDB.add(peers, Address.LOOPBACK)
             PeerDB.commit()
         } catch (e: Throwable) {
+        }
+    }
+
+    private const val INV_TIMEOUT = 5
+    private suspend fun inventoryBroadcaster() {
+        while (true) {
+            delay(INV_TIMEOUT)
+            val currTime = time()
+            connections.forEach {
+                if (it.state.isConnected() && currTime >= it.lastInvSentTime + INV_TIMEOUT) {
+                    it.sendInventory(currTime)
+                }
+            }
         }
     }
 

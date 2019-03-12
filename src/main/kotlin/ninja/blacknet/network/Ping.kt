@@ -17,9 +17,7 @@ import ninja.blacknet.serialization.BlacknetEncoder
 class Ping(private val id: Int) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.Ping.ordinal
-    }
+    override fun getType() = PacketType.Ping
 
     override suspend fun process(connection: Connection) {
         connection.sendPacket(Pong(id))

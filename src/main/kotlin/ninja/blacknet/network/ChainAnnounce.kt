@@ -22,9 +22,7 @@ class ChainAnnounce(
 ) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.ChainAnnounce.ordinal
-    }
+    override fun getType() = PacketType.ChainAnnounce
 
     override suspend fun process(connection: Connection) {
         ChainFetcher.offer(connection, chain, cumulativeDifficulty)

@@ -63,7 +63,7 @@ object I2PSAM : CoroutineScope {
     }
 
     private suspend fun connectToSAM(): Connection {
-        val socket = aSocket(Network.selector).tcp().connect(sam!!.getSocketAddress())
+        val socket = aSocket(Network.selector).tcp().connect(sam?.getSocketAddress() ?: throw I2PException("SAM is not configured"))
         val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true))
 
         val answer = request(connection, "HELLO VERSION MIN=3.2\n")
@@ -77,7 +77,7 @@ object I2PSAM : CoroutineScope {
 
         val answer = request(connection, "SESSION CREATE STYLE=STREAM ID=$sessionId DESTINATION=$privateKey SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n")
         connection.checkResult(answer)
-        val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("Invalid response")
+        val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("SAM invalid response")
 
         val destination = lookup(connection, "ME")
         localAddress = Address(Network.I2P, Config[port], hash(destination))
@@ -96,7 +96,7 @@ object I2PSAM : CoroutineScope {
             Node.listenAddress.remove(localAddress!!)
             localAddress = null
             connection.socket.close()
-            logger.info("i2p session closed")
+            logger.info("SAM SESSION closed")
             //TODO reconnect
         }
     }
@@ -185,18 +185,18 @@ object I2PSAM : CoroutineScope {
     class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel) {
         internal fun checkResult(answer: String?) {
             if (answer == null)
-                exception("Connection closed")
+                exception("SAM connection closed")
             val result = getValue(answer, "RESULT")
             if (result == null)
-                exception("No RESULT")
+                exception("SAM No RESULT")
             if (result!!.isEmpty())
-                exception("Empty RESULT")
+                exception("SAM Empty RESULT")
             if (result != "OK") {
                 val message = getValue(answer, "MESSAGE")
                 if (message != null && !message.isEmpty())
-                    exception("I2P: $result $message")
+                    exception("SAM $result $message")
                 else
-                    exception("I2P: $result")
+                    exception("SAM $result")
             }
         }
 

@@ -19,9 +19,7 @@ import ninja.blacknet.serialization.SerializableByteArray
 class GetData(private val list: InvList) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.GetData.ordinal
-    }
+    override fun getType() = PacketType.GetData
 
     override suspend fun process(connection: Connection) {
         if (list.size > DataType.MAX_DATA) {

@@ -9,9 +9,7 @@
 
 package ninja.blacknet.transaction
 
-import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
@@ -26,15 +24,9 @@ class CancelLease(
         val to: PublicKey,
         val height: Int
 ) : TxData {
-    override fun serialize(): ByteArray {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build().readBytes()
-    }
+    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
 
-    override fun getType(): Byte {
-        return TxType.CancelLease.type
-    }
+    override fun getType() = TxType.CancelLease
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         val toAccount = ledger.get(to)

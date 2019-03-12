@@ -28,9 +28,7 @@ class GetBlocks(
 ) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.GetBlocks.ordinal
-    }
+    override fun getType() = PacketType.GetBlocks
 
     override suspend fun process(connection: Connection) {
         if (checkpoint != Hash.ZERO) {

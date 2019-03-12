@@ -20,7 +20,7 @@ class TxPoolInfo(
 ) {
     companion object {
         suspend fun get(): TxPoolInfo {
-            val tx = TxPool.mapHashes { it.toString() }
+            val tx = TxPool.mapHashesToList { it.toString() }
             return TxPoolInfo(TxPool.size(), TxPool.dataSize(), tx)
         }
     }

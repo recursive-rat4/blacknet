@@ -20,7 +20,7 @@ private val logger = KotlinLogging.logger {}
 
 interface TxData {
     fun serialize(): ByteArray
-    fun getType(): Byte
+    fun getType(): TxType
     suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean
 
     suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {

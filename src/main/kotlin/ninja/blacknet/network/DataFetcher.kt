@@ -53,7 +53,7 @@ object DataFetcher {
                     continue
 
                 if (type.db.isInteresting(hash)) {
-                    requested.set(hash, currTime)
+                    requested.put(hash, currTime)
                     request.add(Pair(type, hash))
                 }
 
@@ -75,8 +75,8 @@ object DataFetcher {
             delay(Node.NETWORK_TIMEOUT)
 
             val currTime = Node.time()
-            val timeouted = requested.filterValues { currTime > it + Node.NETWORK_TIMEOUT }
-            timeouted.forEach { requested.remove(it.key) }
+            val timeouted = requested.filterToKeyList { _, time -> currTime > time + Node.NETWORK_TIMEOUT }
+            requested.removeAll(timeouted)
         }
     }
 }

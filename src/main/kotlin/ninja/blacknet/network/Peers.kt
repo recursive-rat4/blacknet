@@ -18,9 +18,7 @@ import ninja.blacknet.serialization.BlacknetEncoder
 class Peers(private val list: List<Address>) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.Peers.ordinal
-    }
+    override fun getType() = PacketType.Peers
 
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {

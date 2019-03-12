@@ -33,9 +33,7 @@ class Version(
 ) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.Version.ordinal
-    }
+    override fun getType() = PacketType.Version
 
     override suspend fun process(connection: Connection) {
         connection.timeOffset = Node.time() - time

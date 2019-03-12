@@ -9,9 +9,7 @@
 
 package ninja.blacknet.transaction
 
-import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -26,15 +24,9 @@ class CreateMultisig(
         val deposits: ArrayList<Pair<PublicKey, Long>>,
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
-    override fun serialize(): ByteArray {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build().readBytes()
-    }
+    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
 
-    override fun getType(): Byte {
-        return TxType.CreateMultisig.type
-    }
+    override fun getType() = TxType.CreateMultisig
 
     fun sign(privateKey: PrivateKey): Boolean {
         val publicKey = privateKey.toPublicKey()

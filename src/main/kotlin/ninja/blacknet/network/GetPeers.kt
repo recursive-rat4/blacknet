@@ -18,9 +18,7 @@ import ninja.blacknet.serialization.BlacknetEncoder
 class GetPeers : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.GetPeers.ordinal
-    }
+    override fun getType() = PacketType.GetPeers
 
     override suspend fun process(connection: Connection) {
         if (connection.state == Connection.State.OUTGOING_CONNECTED) {

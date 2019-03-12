@@ -31,12 +31,12 @@ abstract class MemPool : DataDB() {
         return map.sumValuesBy { it.size }
     }
 
-    suspend fun <T> mapHashes(transform: (Hash) -> T): List<T> {
-        return map.mapKeys(transform)
+    suspend fun <T> mapHashesToList(transform: (Hash) -> T): MutableList<T> {
+        return map.mapKeysToList(transform)
     }
 
     protected suspend fun add(hash: Hash, bytes: ByteArray) {
-        map.set(hash, bytes)
+        map.put(hash, bytes)
     }
 
     override suspend fun contains(hash: Hash): Boolean {

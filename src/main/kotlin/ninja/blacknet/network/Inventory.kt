@@ -16,12 +16,10 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetEncoder
 
 @Serializable
-class Inventory(private val list: InvList) : Packet {
+internal class Inventory(private val list: InvList) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
-    override fun getType(): Int {
-        return PacketType.Inventory.ordinal
-    }
+    override fun getType() = PacketType.Inventory
 
     override suspend fun process(connection: Connection) {
         if (Node.isInitialSynchronization())
@@ -36,5 +34,6 @@ class Inventory(private val list: InvList) : Packet {
     }
 }
 
-typealias InvList = ArrayList<Pair<DataType, Hash>>
+typealias InvType = Pair<DataType, Hash>
+typealias InvList = ArrayList<InvType>
 typealias UnfilteredInvList = ArrayList<Triple<DataType, Hash, Long>>

@@ -137,18 +137,18 @@ fun Application.main() {
         get("/api/v1/blockdb/get/{hash}/{txdetail?}") {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
             val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
-            val ret = BlockInfo.get(hash, txdetail)
-            if (ret != null)
-                call.respond(Json.indented.stringify(BlockInfo.serializer(), ret))
+            val result = BlockInfo.get(hash, txdetail)
+            if (result != null)
+                call.respond(Json.indented.stringify(BlockInfo.serializer(), result))
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
 
         get("/api/v1/blockdb/getblockhash/{height}") {
             val height = call.parameters["height"]?.toInt() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
-            val ret = LedgerDB.getBlockHash(height)
-            if (ret != null)
-                call.respond(ret.toString())
+            val result = LedgerDB.getBlockHash(height)
+            if (result != null)
+                call.respond(result.toString())
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
@@ -159,9 +159,9 @@ fun Application.main() {
 
         get("/api/v1/ledger/get/{account}") {
             val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
-            val ret = AccountInfo.get(pubkey)
-            if (ret != null)
-                call.respond(Json.indented.stringify(AccountInfo.serializer(), ret))
+            val result = AccountInfo.get(pubkey)
+            if (result != null)
+                call.respond(Json.indented.stringify(AccountInfo.serializer(), result))
             else
                 call.respond(HttpStatusCode.NotFound, "account not found")
         }

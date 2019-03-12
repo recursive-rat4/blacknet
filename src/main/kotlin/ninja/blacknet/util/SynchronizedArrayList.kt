@@ -12,40 +12,43 @@ package ninja.blacknet.util
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class SynchronizedArrayList<T>(private val list: ArrayList<T>) {
-    constructor() : this(ArrayList())
+class SynchronizedArrayList<T>(
+        val mutex: Mutex = Mutex(),
+        val list: ArrayList<T> = ArrayList()
+) {
+    constructor(initialCapacity: Int) : this(list = ArrayList(initialCapacity))
 
-    private val mutex = Mutex()
+    suspend inline fun isEmpty() = mutex.withLock { list.isEmpty() }
 
-    suspend fun size() = mutex.withLock { list.size }
+    suspend inline fun isNotEmpty() = mutex.withLock { !list.isEmpty() }
 
-    suspend fun add(element: T) = mutex.withLock { list.add(element) }
+    suspend inline fun size() = mutex.withLock { list.size }
 
-    suspend fun copy() = mutex.withLock { ArrayList(list) }
+    suspend inline fun add(element: T) = mutex.withLock { list.add(element) }
 
-    suspend fun clear() = mutex.withLock { list.clear() }
+    suspend inline fun addAll(elements: Collection<T>) = mutex.withLock { list.addAll(elements) }
 
-    suspend fun get(index: Int): T = mutex.withLock { list.get(index) }
+    suspend inline fun copy() = mutex.withLock { ArrayList(list) }
 
-    suspend fun remove(element: T) = mutex.withLock { list.remove(element) }
+    suspend inline fun clear() = mutex.withLock { list.clear() }
 
-    suspend fun removeIf(filter: (T) -> Boolean) = mutex.withLock { list.removeIf(filter) }
+    suspend inline fun get(index: Int): T = mutex.withLock { list.get(index) }
 
-    suspend fun forEach(action: (T) -> Unit) = mutex.withLock { list.forEach(action) }
+    suspend inline fun remove(element: T) = mutex.withLock { list.remove(element) }
 
-    suspend fun sumBy(selector: (T) -> Int) = mutex.withLock { list.sumBy(selector) }
+    suspend inline fun removeIf(noinline filter: (T) -> Boolean) = mutex.withLock { list.removeIf(filter) }
 
-    suspend fun filter(predicate: (T) -> Boolean) = mutex.withLock { list.filter(predicate) }
+    suspend inline fun forEach(action: (T) -> Unit) = mutex.withLock { for (i in list.indices) action(list[i]) }
 
-    suspend fun <R : Comparable<R>> maxBy(selector: (T) -> R) = mutex.withLock { list.maxBy(selector) }
+    suspend inline fun sumBy(selector: (T) -> Int) = mutex.withLock { list.sumBy(selector) }
 
-    suspend fun <R> map(transform: (T) -> R): ArrayList<R> = mutex.withLock {
-        val ret = ArrayList<R>(list.size)
-        list.forEach { ret.add(transform(it)) }
-        return@withLock ret
-    }
+    suspend inline fun filter(predicate: (T) -> Boolean) = mutex.withLock { list.filterTo(ArrayList(list.size), predicate) }
 
-    suspend fun removeFirstIf(filter: (T) -> Boolean): T? = mutex.withLock {
+    suspend inline fun <R : Comparable<R>> maxBy(selector: (T) -> R) = mutex.withLock { list.maxBy(selector) }
+
+    suspend inline fun <R> map(transform: (T) -> R): ArrayList<R> = mutex.withLock { list.mapTo(ArrayList(list.size), transform) }
+
+    suspend inline fun removeFirstIf(filter: (T) -> Boolean): T? = mutex.withLock {
         val i = list.indexOfFirst(filter)
         if (i == -1) return@withLock null
         return@withLock list.removeAt(i)
