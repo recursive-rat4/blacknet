@@ -12,8 +12,7 @@ package ninja.blacknet.core
 import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.BlockDB
-import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
 
 private val logger = KotlinLogging.logger {}
@@ -21,10 +20,10 @@ private val logger = KotlinLogging.logger {}
 interface Ledger {
     fun addSupply(amount: Long)
     fun addUndo(hash: Hash, undo: UndoBlock)
+    fun checkBlockHash(hash: Hash): Boolean
     fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long
     fun height(): Int
-    suspend fun checkSequence(key: PublicKey, seq: Int): Boolean
     suspend fun get(key: PublicKey): AccountState?
     suspend fun set(key: PublicKey, state: AccountState)
     fun addHTLC(id: Hash, htlc: HTLC)
@@ -50,7 +49,7 @@ interface Ledger {
             logger.info("invalid signature")
             return false
         }
-        if (tx.blochHash != Hash.ZERO && !BlockDB.contains(tx.blochHash)) {
+        if (!checkBlockHash(tx.blockHash)) {
             logger.info("not valid on this chain")
             return false
         }
@@ -62,12 +61,7 @@ interface Ledger {
             logger.info("Generated as individual tx")
             return false
         }
-        val serializer = TxType.getSerializer(tx.type)
-        if (serializer == null) {
-            logger.info("unknown transaction type ${tx.type}")
-            return false
-        }
-        val data = BlacknetDecoder.fromBytes(tx.data.array).decode(serializer)
+        val data = TxData.deserealize(tx.type, tx.data.array)
         if (data == null) {
             logger.info("deserialization of tx data failed")
             return false

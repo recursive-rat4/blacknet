@@ -40,7 +40,7 @@ class CreateHTLC(
         return TxType.CreateHTLC.type
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         if (!HTLC.isValidTimeLockType(timeLockType)) {
             logger.info("unknown timelock type $timeLockType")
             return false
@@ -55,12 +55,14 @@ class CreateHTLC(
             return false
         }
 
+        val account = ledger.get(tx.from)!!
         if (!account.credit(amount))
             return false
 
         undo.addHTLC(hash, null)
 
         val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLockType, timeLock, hashType, hashLock)
+        ledger.set(tx.from, account)
         ledger.addHTLC(hash, htlc)
         return true
     }

@@ -37,6 +37,7 @@ object AccountStateSerializer : Serializer<AccountState> {
         }
         out.packInt(state.leases.size)
         for (i in state.leases) {
+            PublicKeySerializer.serialize(out, i.from)
             out.packInt(i.height)
             out.packLong(i.amount)
         }
@@ -51,10 +52,10 @@ object AccountStateSerializer : Serializer<AccountState> {
             for (i in 1..immatureSize)
                 immature.add(AccountState.Input(input.unpackInt(), input.unpackLong()))
         val leasesSize = input.unpackInt()
-        val leases = ArrayList<AccountState.Input>(leasesSize)
+        val leases = ArrayList<AccountState.LeaseInput>(leasesSize)
         if (leasesSize > 0)
             for (i in 1..leasesSize)
-                leases.add(AccountState.Input(input.unpackInt(), input.unpackLong()))
+                leases.add(AccountState.LeaseInput(PublicKeySerializer.deserialize(input, 0), input.unpackInt(), input.unpackLong()))
         return AccountState(seq, stake, immature, leases)
     }
 }

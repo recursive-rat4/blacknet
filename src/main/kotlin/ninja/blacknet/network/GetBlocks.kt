@@ -11,7 +11,6 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.Hash
@@ -27,20 +26,13 @@ class GetBlocks(
         private val best: Hash,
         private val checkpoint: Hash
 ) : Packet {
-    override fun serialize(): ByteReadPacket {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build()
-    }
+    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
     override fun getType(): Int {
         return PacketType.GetBlocks.ordinal
     }
 
     override suspend fun process(connection: Connection) {
-        if (Node.isSynchronizing())
-            return
-
         if (checkpoint != Hash.ZERO) {
             if (!BlockDB.contains(checkpoint)) {
                 logger.info("Chain fork $best Disconnecting ${connection.remoteAddress}")
@@ -55,16 +47,31 @@ class GetBlocks(
             return
         }
 
+        var index = LedgerDB.getBlockNumber(best)
+        if (index == null) {
+            logger.error("number $best null")
+            connection.sendPacket(Blocks(ArrayList(), ArrayList()))
+            return
+        }
+
         val height = LedgerDB.height()
         val maxSize = Node.getMaxPacketSize()
         val response = ArrayList<SerializableByteArray>()
 
-        var index = LedgerDB.getBlockNumber(best)!!
         var size = 8
 
         while (index < height) {
             index++
-            val bytes = BlockDB.get(LedgerDB.getBlockHash(index)!!)!!
+            val hash = LedgerDB.getBlockHash(index)
+            if (hash == null) {
+                logger.error("hash $index null")
+                break
+            }
+            val bytes = BlockDB.get(hash)
+            if (bytes == null) {
+                logger.error("block $hash null")
+                break
+            }
             if (size + bytes.size + 4 > maxSize)
                 break
             size += bytes.size + 4

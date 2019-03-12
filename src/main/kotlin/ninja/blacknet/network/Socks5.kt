@@ -9,11 +9,10 @@
 
 package ninja.blacknet.network
 
-import io.ktor.network.selector.ActorSelectorManager
+import io.ktor.network.sockets.ASocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.ByteWriteChannel
 import kotlinx.coroutines.io.readFully
@@ -21,8 +20,8 @@ import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.writeFully
 
 class Socks5(private val proxy: Address) {
-    suspend fun connect(address: Address): Pair<ByteReadChannel, ByteWriteChannel> {
-        val socket = aSocket(selector).tcp().connect(proxy.getSocketAddress())
+    suspend fun connect(address: Address): Connection {
+        val socket = aSocket(Network.selector).tcp().connect(proxy.getSocketAddress())
         val readChannel = socket.openReadChannel()
         val writeChannel = socket.openWriteChannel(true)
         val builder = BytePacketBuilder()
@@ -87,8 +86,10 @@ class Socks5(private val proxy: Address) {
         }
         readChannel.skip(2) // port
 
-        return Pair(readChannel, writeChannel)
+        return Connection(socket, readChannel, writeChannel)
     }
+
+    class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel)
 
     companion object {
         const val VERSION = 5.toByte()
@@ -98,7 +99,6 @@ class Socks5(private val proxy: Address) {
         const val IPv4_ADDRESS = 1.toByte()
         const val DOMAIN_NAME = 3.toByte()
         const val IPv6_ADDRESS = 4.toByte()
-        private val selector = ActorSelectorManager(Dispatchers.IO)
     }
 }
 

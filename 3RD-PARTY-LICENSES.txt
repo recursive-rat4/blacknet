@@ -36,6 +36,3 @@ GNU LGPL 2.1 or later: https://www.gnu.org/licenses/lgpl-2.1.html
 
 Bouncy Castle https://bouncycastle.org/ is licensed under the
 MIT license: https://bouncycastle.org/licence.html
-
-I2P SDK is in the public domain
-https://geti2p.net/en/get-involved/develop/licenses

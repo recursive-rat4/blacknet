@@ -10,18 +10,18 @@
 package ninja.blacknet.transaction
 
 import mu.KotlinLogging
-import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.UndoBlock
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.serialization.BlacknetDecoder
 
 private val logger = KotlinLogging.logger {}
 
 interface TxData {
     fun serialize(): ByteArray
     fun getType(): Byte
-    suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean
+    suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean
 
     suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         val account = ledger.get(tx.from)
@@ -38,12 +38,20 @@ interface TxData {
             logger.info("insufficient funds for tx fee")
             return false
         }
-        if (processImpl(tx, hash, account, ledger, undo)) {
-            account.prune(ledger.height())
-            account.seq++
-            ledger.set(tx.from, account)
-            return true
+        account.prune(ledger.height())
+        account.seq++
+        ledger.set(tx.from, account)
+        return processImpl(tx, hash, ledger, undo)
+    }
+
+    companion object {
+        fun deserealize(type: Byte, bytes: ByteArray): TxData? {
+            val serializer = TxType.getSerializer(type)
+            if (serializer == null) {
+                logger.info("unknown transaction type:$type")
+                return null
+            }
+            return BlacknetDecoder.fromBytes(bytes).decode(serializer)
         }
-        return false
     }
 }

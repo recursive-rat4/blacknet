@@ -9,29 +9,28 @@
 
 package ninja.blacknet.network
 
-import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.io.cancel
-import kotlinx.coroutines.io.close
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
 import ninja.blacknet.Config.incomingconnections
+import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.outgoingconnections
 import ninja.blacknet.Config.port
+import ninja.blacknet.Config.upnp
+import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PrivateKey
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
@@ -39,7 +38,6 @@ import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.delay
 import java.math.BigDecimal
-import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
@@ -49,9 +47,9 @@ private val logger = KotlinLogging.logger {}
 
 object Node : CoroutineScope {
     const val DEFAULT_P2P_PORT = 28453
-    const val NETWORK_TIMEOUT = 60
+    const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
-    const val version = 5
+    const val version = 7
     const val minVersion = 5
     const val agent = "Blacknet"
     override val coroutineContext: CoroutineContext = Dispatchers.Default
@@ -61,6 +59,16 @@ object Node : CoroutineScope {
     var minTxFee = parseAmount(Config[mintxfee])
 
     init {
+        if (Config[listen]) {
+            try {
+                Node.listenOnIP()
+                if (Config[upnp])
+                    UPnP.forwardAsync()
+            } catch (e: Throwable) {
+            }
+        }
+        launch { listenOnTor() }
+        launch { listenOnI2P() }
         launch { connector() }
         launch { pinger() }
         launch { peerAnnouncer() }
@@ -88,12 +96,19 @@ object Node : CoroutineScope {
         }
     }
 
-    suspend fun incoming(): Int {
+    suspend fun incoming(includeWaiting: Boolean = false): Int {
         return connections.sumBy {
-            when (it.state) {
-                Connection.State.INCOMING_CONNECTED -> 1
-                else -> 0
-            }
+            if (includeWaiting)
+                when (it.state) {
+                    Connection.State.INCOMING_CONNECTED -> 1
+                    Connection.State.INCOMING_WAITING -> 1
+                    else -> 0
+                }
+            else
+                when (it.state) {
+                    Connection.State.INCOMING_CONNECTED -> 1
+                    else -> 0
+                }
         }
     }
 
@@ -115,16 +130,16 @@ object Node : CoroutineScope {
         return LedgerDB.maxBlockSize() + 100
     }
 
-    fun isSynchronizing(): Boolean {
-        return ChainFetcher.isSynchronizing()
+    fun isInitialSynchronization(): Boolean {
+        return ChainFetcher.isSynchronizing() && time() > LedgerDB.blockTime() + PoS.TARGET_BLOCK_TIME * PoS.MATURITY
     }
 
     fun listenOn(address: Address) {
         val addr = when (address.network) {
-            Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port)
+            Network.IPv4, Network.IPv6 -> address.getSocketAddress()
             else -> throw NotImplementedError("not implemented for " + address.network)
         }
-        val server = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().bind(addr)
+        val server = aSocket(Network.selector).tcp().bind(addr)
         logger.info("Listening on $address")
         launch {
             listenAddress.add(address)
@@ -132,64 +147,77 @@ object Node : CoroutineScope {
         }
     }
 
-    fun listenOnIP() {
-        if (Config.isDisabled(Network.IPv4) && Config.isDisabled(Network.IPv6))
+    private fun listenOnIP() {
+        if (Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
             return
-        if (Config.isDisabled(Network.IPv4))
-            return Node.listenOn(Address.IPv6_ANY(Config[port]))
-        Node.listenOn(Address.IPv4_ANY(Config[port]))
+        if (Network.IPv4.isDisabled())
+            return listenOn(Address.IPv6_ANY(Config[port]))
+        listenOn(Address.IPv4_ANY(Config[port]))
     }
 
-    fun listenOnTor() {
-        launch {
-            val address = Network.listenOnTor()
-            if (address != null) {
-                logger.info("Listening on $address")
-                listenAddress.add(address)
-            }
+    private suspend fun listenOnTor() {
+        val address = Network.listenOnTor()
+        if (address != null) {
+            if (!Config[listen] || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+                listenOn(Address.LOOPBACK)
+            logger.info("Listening on $address")
+            listenAddress.add(address)
         }
     }
 
-    fun listenOnI2P() {
-        launch {
-            val address = Network.listenOnI2P()
-            if (address != null) {
-                logger.info("Listening on $address")
-                listenAddress.add(address)
-                i2plistener()
-            }
+    private suspend fun listenOnI2P() {
+        val address = Network.listenOnI2P()
+        if (address != null) {
+            logger.info("Listening on $address")
+            listenAddress.add(address)
+            i2plistener()
         }
     }
 
-    suspend fun disconnected(connection: Connection) {
+    fun disconnected(connection: Connection) = launch {
         connections.remove(connection)
     }
 
     suspend fun connectTo(address: Address) {
         val connection = Network.connect(address)
         connections.add(connection)
-        sendVersion(connection)
+        sendVersion(connection, nonce)
+        connection.launch(this)
     }
 
-    fun sendVersion(connection: Connection) {
-        val blockHash = if (isSynchronizing()) Hash.ZERO else LedgerDB.blockHash()
-        val cumulativeDifficulty = if (isSynchronizing()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
+    fun sendVersion(connection: Connection, nonce: Long) {
+        val blockHash = if (isInitialSynchronization()) Hash.ZERO else LedgerDB.blockHash()
+        val cumulativeDifficulty = if (isInitialSynchronization()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
         val v = Version(magic, version, time(), nonce, agent, minTxFee, blockHash, cumulativeDifficulty)
         connection.sendPacket(v)
     }
 
-    suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
-        if (BlockDB.process(hash, bytes)) {
-            val inv = InvList()
-            inv.add(Pair(DataType.Block, hash))
-            broadcastPacket(Inventory(inv))
-            return true
+    suspend fun announceChain(hash: Hash, filter: Connection? = null) {
+        val ann = ChainAnnounce(hash, LedgerDB.cumulativeDifficulty())
+        broadcastPacket(ann) {
+            it != filter && it.version >= ChainAnnounce.MIN_VERSION
         }
-        return false
+        val inv = InvList()
+        inv.add(Pair(DataType.Block, hash))
+        broadcastPacket(Inventory(inv)) {
+            it != filter
+        }
+    }
+
+    suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
+        val status = BlockDB.process(hash, bytes)
+        if (status == Status.ACCEPTED) {
+            announceChain(hash)
+            return true
+        } else {
+            logger.info("$status block $hash")
+            return false
+        }
     }
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray, fee: Long): Boolean {
-        if (TxPool.process(hash, bytes)) {
+        val status = TxPool.process(hash, bytes)
+        if (status == Status.ACCEPTED) {
             val inv = InvList()
             inv.add(Pair(DataType.Transaction, hash))
             val packet = Inventory(inv)
@@ -197,13 +225,17 @@ object Node : CoroutineScope {
                 it.feeFilter <= fee
             }
             return true
+        } else {
+            logger.info("$status tx $hash")
+            return false
         }
-        return false
     }
 
-    suspend fun broadcastInv(inv: InvList): Boolean {
+    suspend fun broadcastInv(inv: InvList, filter: Connection): Boolean {
         //TODO feeFilter
-        broadcastPacket(Inventory(inv))
+        broadcastPacket(Inventory(inv)) {
+            it != filter
+        }
         return true
     }
 
@@ -219,30 +251,56 @@ object Node : CoroutineScope {
     private suspend fun listener(server: ServerSocket) {
         while (true) {
             val socket = server.accept()
-            if (incoming() >= Config[incomingconnections]) {
-                socket.close()
-                continue
-            }
             val remoteAddress = Network.address(socket.remoteAddress as InetSocketAddress)
             val localAddress = Network.address(socket.localAddress as InetSocketAddress)
             if (!localAddress.isLocal())
                 listenAddress.add(localAddress)
-            val connection = Connection(socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
-            connections.add(connection)
+            val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+            addConnection(connection)
         }
     }
 
     private suspend fun i2plistener() {
-        while (true) {
+        while (I2PSAM.haveSession()) {
             val c = I2PSAM.accept() ?: continue
-            if (incoming() >= Config[incomingconnections]) {
-                c.readChannel.cancel()
-                c.writeChannel.close()
-                continue
-            }
-            val connection = Connection(c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
-            connections.add(connection)
+            val connection = Connection(c.socket, c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
+            addConnection(connection)
         }
+    }
+
+    private suspend fun addConnection(connection: Connection) {
+        if (!haveSlot()) {
+            logger.info("Too many connections, dropping ${connection.remoteAddress}")
+            connection.close()
+            return
+        }
+        connections.add(connection)
+        connection.launch(this)
+    }
+
+    private suspend fun haveSlot(): Boolean {
+        if (incoming(true) < Config[incomingconnections])
+            return true
+        return evictConnection()
+    }
+
+    private suspend fun evictConnection(): Boolean {
+        val candidates = connections.copy().asSequence()
+                .sortedBy { if (it.ping != 0L) it.ping else Long.MAX_VALUE }.drop(4)
+                .sortedByDescending { it.lastTxTime }.drop(4)
+                .sortedByDescending { it.lastBlockTime }.drop(4)
+                .sortedBy { it.connectedAt }.drop(4)
+                .toMutableList()
+
+        //TODO network groups
+
+        if (candidates.isEmpty())
+            return false
+
+        val connection = candidates.random()
+        logger.info("Evicting ${connection.remoteAddress}")
+        connection.close()
+        return true
     }
 
     private suspend fun connector() {
@@ -252,30 +310,36 @@ object Node : CoroutineScope {
         }
 
         while (true) {
-            if (outgoing() >= Config[outgoingconnections]) {
+            val n = Config[outgoingconnections] - outgoing()
+            if (n <= 0) {
                 delay(NETWORK_TIMEOUT)
                 continue
             }
 
             val filter = connections.map { it.remoteAddress }.plus(listenAddress.toList())
 
-            val address = PeerDB.getCandidate(filter)
-            if (address == null) {
+            val addresses = PeerDB.getCandidates(n, filter)
+            if (addresses.isEmpty()) {
                 logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config[outgoingconnections]}")
                 delay(PeerDB.DELAY)
                 dnsSeeder(false)
                 continue
             }
 
-            PeerDB.attempt(address)
+            addresses.forEach { PeerDB.attempt(it) }
             PeerDB.commit()
 
-            try {
-                connectTo(address)
-            } catch (e: Throwable) {
+            addresses.forEach {
+                val address = it
+                launch {
+                    try {
+                        connectTo(address)
+                    } catch (e: Throwable) {
+                    }
+                }
             }
 
-            delay(NETWORK_TIMEOUT) //TODO
+            delay(NETWORK_TIMEOUT)
         }
     }
 
@@ -304,31 +368,23 @@ object Node : CoroutineScope {
 
     private suspend fun peerAnnouncer() {
         while (true) {
-            delay(5 * 60)
+            delay(5 * 60 + Random.nextInt(5 * 60))
 
             val randomPeers = PeerDB.getRandom(Peers.MAX)
             if (randomPeers.size == 0)
                 continue
 
-            val myAddress = listenAddress.filter { !it.isLocal() && !it.isPrivate() }
+            val myAddress = listenAddress.filter { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
             if (myAddress.isNotEmpty()) {
-                val i = Random.nextInt(randomPeers.size * 500)
-                if (i < randomPeers.size)
+                val i = Random.nextInt(randomPeers.size * 10)
+                if (i < randomPeers.size) {
                     randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
+                    logger.info("Announcing ${randomPeers[i]}")
+                }
             }
 
             broadcastPacket(Peers(randomPeers))
         }
-    }
-
-    suspend fun startStaker(privateKey: PrivateKey): Boolean {
-        val publicKey = privateKey.toPublicKey()
-        if (LedgerDB.get(publicKey) == null) {
-            logger.info("account not found")
-            return false
-        }
-        launch { PoS.staker(privateKey, publicKey) }
-        return true
     }
 
     private const val DNS_TIMEOUT = 5
@@ -349,7 +405,7 @@ object Node : CoroutineScope {
 
         val seeds = "dnsseed.blacknet.ninja"
         try {
-            val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT).filter { !it.isLocal() }
+            val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT)
             PeerDB.add(peers, Address.LOOPBACK)
             PeerDB.commit()
         } catch (e: Throwable) {

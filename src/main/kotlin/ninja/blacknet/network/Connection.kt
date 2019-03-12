@@ -9,9 +9,9 @@
 
 package ninja.blacknet.network
 
+import io.ktor.network.sockets.ASocket
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.io.*
@@ -20,36 +20,44 @@ import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.serialization.BlacknetDecoder
-import kotlin.coroutines.CoroutineContext
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val logger = KotlinLogging.logger {}
 
 class Connection(
+        private val socket: ASocket,
         private val readChannel: ByteReadChannel,
         private val writeChannel: ByteWriteChannel,
         val remoteAddress: Address,
         val localAddress: Address,
         var state: State
-) : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
+) {
+    private val closed = AtomicBoolean()
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     val connectedAt = Node.time()
+
+    @Volatile
+    var totalBytesRead: Long = 0
+    @Volatile
+    var totalBytesWritten: Long = 0
+    @Volatile
+    var lastBlockTime: Long = 0
+    @Volatile
+    var lastTxTime: Long = 0
+    @Volatile
+    var ping: Long = 0
 
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
     var timeOffset: Long = 0
     var pingRequest: PingRequest? = null
-    var ping: Long = 0
     var dosScore: Int = 0
 
-    init {
-        launch { receiver() }
-        launch { sender() }
+    fun launch(scope: CoroutineScope) {
+        scope.launch { receiver() }
+        scope.launch { sender() }
     }
-
-    fun totalBytesRead() = readChannel.totalBytesRead
-    fun totalBytesWritten() = writeChannel.totalBytesWritten
 
     private suspend fun receiver() {
         try {
@@ -78,18 +86,20 @@ class Connection(
             logger.error("Exception in receiver $remoteAddress", e)
         } finally {
             close()
-            Node.disconnected(this)
         }
     }
 
     private suspend fun recvPacket(): ByteReadPacket {
         try {
             val size = readChannel.readInt()
+            totalBytesRead += 4
             if (size > Node.getMaxPacketSize()) {
                 logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting $remoteAddress")
                 close()
             }
-            return readChannel.readPacket(size)
+            val ret = readChannel.readPacket(size)
+            totalBytesRead += size
+            return ret
         } catch (e: IOException) {
             throw ClosedReceiveChannelException(e.message)
         }
@@ -97,14 +107,17 @@ class Connection(
 
     private suspend fun sender() {
         try {
-            for (packet in sendChannel)
+            for (packet in sendChannel) {
+                val size = packet.remaining
                 writeChannel.writePacket(packet)
+                totalBytesWritten += size
+            }
         } catch (e: ClosedWriteChannelException) {
+        } catch (e: CancellationException) {
         } catch (e: Throwable) {
             logger.error("Exception in sender $remoteAddress", e)
         } finally {
             close()
-            Node.disconnected(this)
         }
     }
 
@@ -124,8 +137,15 @@ class Connection(
     }
 
     fun close() {
-        writeChannel.close()
-        readChannel.cancel()
+        if (closed.compareAndSet(false, true)) {
+            socket.close()
+            Node.disconnected(this)
+            ChainFetcher.disconnected(this)
+        }
+    }
+
+    fun isClosed(): Boolean {
+        return closed.get()
     }
 
     class PingRequest(val id: Int, val time: Long)

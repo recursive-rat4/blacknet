@@ -16,18 +16,16 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
-import net.freehaven.tor.control.TorControlCommands.HS_ADDRESS
-import net.freehaven.tor.control.TorControlConnection
-import net.freehaven.tor.control.TorControlError
 import net.i2p.data.Base32
 import ninja.blacknet.Config
 import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.port
 import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
-import ninja.blacknet.Config.torcontrol
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
+import ninja.blacknet.util.byteArrayOfInts
+import ninja.blacknet.util.startsWith
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -47,7 +45,8 @@ enum class Network(val addrSize: Int) {
         return when (this) {
             IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString()
             IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString() + ']'
-            TORv2, TORv3 -> Base32.encode(address.bytes.array) + TOR_SUFFIX
+            TORv2 -> Base32.encode(address.bytes.array) + TOR_SUFFIX
+            TORv3 -> Base32.encode(address.bytes.array) + TOR_SUFFIX //FIXME checksum
             I2P -> Base32.encode(address.bytes.array) + I2P_SUFFIX
         }
     }
@@ -70,12 +69,30 @@ enum class Network(val addrSize: Int) {
         }
     }
 
+    fun isDisabled(): Boolean {
+        return Config.isDisabled(this)
+    }
+
     private fun isLocalIPv4(bytes: ByteArray): Boolean {
-        return bytes[0] == 0.toByte() || bytes[0] == 127.toByte()
+        // 0.0.0.0 – 0.255.255.255
+        if (bytes[0] == 0.toByte()) return true
+        // 127.0.0.0 – 127.255.255.255
+        if (bytes[0] == 127.toByte()) return true
+        // 169.254.0.0 – 169.254.255.255
+        if (bytes[0] == 169.toByte() && bytes[1] == 254.toByte()) return true
+
+        return false
     }
 
     private fun isLocalIPv6(bytes: ByteArray): Boolean {
-        return bytes.contentEquals(Network.IPv6_ANY_BYTES) || bytes.contentEquals(Network.IPv6_LOOPBACK_BYTES)
+        // ::
+        if (bytes.contentEquals(IPv6_ANY_BYTES)) return true
+        // ::1
+        if (bytes.contentEquals(IPv6_LOOPBACK_BYTES)) return true
+        // fe80:: - febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+        if (bytes.startsWith(IPv6_LINKLOCAL_BYTES)) return true
+
+        return false
     }
 
     private fun isPrivateIPv4(bytes: ByteArray): Boolean {
@@ -105,6 +122,7 @@ enum class Network(val addrSize: Int) {
         val IPv4_LOOPBACK_BYTES = byteArrayOf(127, 0, 0, 1)
         val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
         val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+        val IPv6_LINKLOCAL_BYTES = byteArrayOfInts(0xFE, 0x80, 0, 0, 0, 0, 0, 0)
 
         private val socksProxy: Address?
         private val torProxy: Address?
@@ -135,58 +153,40 @@ enum class Network(val addrSize: Int) {
         }
 
         suspend fun connect(address: Address): Connection {
-            if (Config.isDisabled(address.network)) throw RuntimeException("${address.network} is disabled")
+            if (address.network.isDisabled()) throw RuntimeException("${address.network} is disabled")
             when (address.network) {
                 IPv4, IPv6 -> {
                     if (socksProxy != null) {
-                        val chan = Socks5(socksProxy).connect(address)
-                        return Connection(chan.first, chan.second, address, socksProxy, Connection.State.OUTGOING_WAITING)
+                        val c = Socks5(socksProxy).connect(address)
+                        return Connection(c.socket, c.readChannel, c.writeChannel, address, socksProxy, Connection.State.OUTGOING_WAITING)
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
                         if (Config[listen] && !localAddress.isLocal())
                             Node.listenAddress.add(Address(localAddress.network, Config[port], localAddress.bytes))
-                        return Connection(socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
+                        return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
                     }
                 }
                 TORv2, TORv3 -> {
                     if (torProxy == null) throw RuntimeException("tor proxy is not set")
-                    val chan = Socks5(torProxy).connect(address)
-                    return Connection(chan.first, chan.second, address, torProxy, Connection.State.OUTGOING_WAITING)
+                    val c = Socks5(torProxy).connect(address)
+                    return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
                 I2P -> {
                     if (!I2PSAM.haveSession()) throw RuntimeException("i2p sam is not available")
-                    val chan = I2PSAM.connect(address)
-                    return Connection(chan.first, chan.second, address, I2PSAM.localAddress!!, Connection.State.OUTGOING_WAITING)
+                    val c = I2PSAM.connect(address)
+                    return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.localAddress!!, Connection.State.OUTGOING_WAITING)
                 }
             }
         }
 
         fun listenOnTor(): Address? {
             try {
-                val s = java.net.Socket("localhost", Config[torcontrol])
-                val tor = TorControlConnection(s)
-                tor.launchThread(true)
-                tor.authenticate(ByteArray(0))
-
-                val request = HashMap<Int, String?>()
-                request[Config[port]] = null
-
-                val response = tor.addOnion(request)
-                val string = response[HS_ADDRESS]!!
-                val bytes = Base32.decode(string)!!
-
-                val type = when (bytes.size) {
-                    TORv2.addrSize -> TORv2
-                    TORv3.addrSize -> TORv3
-                    else -> throw TorControlError("Unknown KeyType")
-                }
-                return Address(type, Config[port], bytes)
+                return TorController.listen()
             } catch (e: ConnectException) {
                 logger.info("Can't connect to tor controller")
-            } catch (e: TorControlError) {
-                logger.info("Tor " + e.message)
             } catch (e: Throwable) {
+                logger.info(e.message)
             }
             return null
         }
@@ -197,9 +197,8 @@ enum class Network(val addrSize: Int) {
                 return I2PSAM.localAddress
             } catch (e: ConnectException) {
                 logger.info("Can't connect to i2p sam")
-            } catch (e: I2PSAM.I2PException) {
-                logger.info("I2P " + e.message)
             } catch (e: Throwable) {
+                logger.info(e.message)
             }
             return null
         }
@@ -256,6 +255,6 @@ enum class Network(val addrSize: Int) {
             }
         }
 
-        private val selector = ActorSelectorManager(Dispatchers.IO)
+        val selector = ActorSelectorManager(Dispatchers.IO)
     }
 }

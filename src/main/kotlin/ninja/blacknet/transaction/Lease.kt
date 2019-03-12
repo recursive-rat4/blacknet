@@ -35,16 +35,18 @@ class Lease(
         return TxType.Lease.type
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         if (amount < PoS.MIN_LEASE) {
             logger.info("$amount less than minimal ${PoS.MIN_LEASE}")
             return false
         }
+        val account = ledger.get(tx.from)!!
         if (!account.credit(amount))
             return false
+        ledger.set(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
         undo.add(to, toAccount.copy())
-        toAccount.leases.add(AccountState.Input(ledger.height(), amount))
+        toAccount.leases.add(AccountState.LeaseInput(tx.from, ledger.height(), amount))
         ledger.set(to, toAccount)
         return true
     }

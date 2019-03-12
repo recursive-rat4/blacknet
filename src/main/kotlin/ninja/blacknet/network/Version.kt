@@ -11,13 +11,12 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import mu.KotlinLogging
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.serialization.BlacknetEncoder
+import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -32,11 +31,7 @@ class Version(
         private val chain: Hash,
         private val cumulativeDifficulty: BigInt
 ) : Packet {
-    override fun serialize(): ByteReadPacket {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build()
-    }
+    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
     override fun getType(): Int {
         return PacketType.Version.ordinal
@@ -48,13 +43,20 @@ class Version(
         connection.agent = agent
         connection.feeFilter = feeFilter
 
-        if (magic != Node.magic || version < Node.minVersion || nonce == Node.nonce) {
+        if (magic != Node.magic || version < Node.minVersion) {
             connection.close()
             return
         }
 
         if (connection.state == Connection.State.INCOMING_WAITING) {
-            Node.sendVersion(connection)
+            if (nonce == Node.nonce) {
+                connection.close()
+                return
+            }
+            if (version >= FIXED_NONCE_VERSION)
+                Node.sendVersion(connection, nonce)
+            else
+                Node.sendVersion(connection, Random.nextLong())
             connection.state = Connection.State.INCOMING_CONNECTED
             logger.info("Accepted connection from ${connection.remoteAddress}")
         } else {
@@ -64,7 +66,10 @@ class Version(
             logger.info("Connected to ${connection.remoteAddress}")
         }
 
-        if (chain != Hash.ZERO && cumulativeDifficulty > LedgerDB.cumulativeDifficulty())
-            ChainFetcher.offer(connection, chain, cumulativeDifficulty)
+        ChainFetcher.offer(connection, chain, cumulativeDifficulty)
+    }
+
+    companion object {
+        const val FIXED_NONCE_VERSION = 7
     }
 }

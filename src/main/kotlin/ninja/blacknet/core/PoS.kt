@@ -9,11 +9,14 @@
 
 package ninja.blacknet.core
 
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Node
-import ninja.blacknet.util.SynchronizedHashSet
+import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.delay
 
@@ -53,36 +56,62 @@ object PoS {
         return cumulativeDifficulty + ONE_SHL_256 / difficulty
     }
 
-    private val stakers = SynchronizedHashSet<PublicKey>()
-    suspend fun staker(privateKey: PrivateKey, publicKey: PublicKey) {
-        if (!stakers.add(publicKey)) {
+    private val stakers = SynchronizedHashMap<PublicKey, Job>()
+    suspend fun startStaker(privateKey: PrivateKey): Boolean {
+        val publicKey = privateKey.toPublicKey()
+
+        if (LedgerDB.get(publicKey) == null) {
+            logger.info("account not found")
+            return false
+        }
+
+        val job = Node.launch(start = CoroutineStart.LAZY) {
+            while (true) {
+                delay(1)
+
+                if (Node.isOffline())
+                    continue
+
+                if (Node.isInitialSynchronization())
+                    continue
+
+                val time = Node.time() and (TIMESTAMP_MASK xor -1L)
+                if (time <= LedgerDB.blockTime())
+                    continue
+
+                val stake = LedgerDB.get(publicKey)!!.stakingBalance(LedgerDB.height())
+                if (stake <= 0) {
+                    delay(16)
+                    continue
+                }
+
+                if (check(time, publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), stake)) {
+                    val block = Block.create(LedgerDB.blockHash(), time, publicKey)
+                    TxPool.fill(block)
+                    val signed = block.sign(privateKey)
+                    logger.info("Staked block ${signed.first}")
+                    Node.broadcastBlock(signed.first, signed.second)
+                }
+            }
+        }
+
+        if (stakers.putIfAbsent(publicKey, job) != null) {
             logger.info("${Address.encode(publicKey)} is already staking")
-            return
+            return false
         }
 
-        while (true) {
-            delay(1)
+        return job.start()
+    }
 
-            if (Node.isSynchronizing())
-                continue
-
-            val time = Node.time() and (TIMESTAMP_MASK xor -1L)
-            if (time <= LedgerDB.blockTime())
-                continue
-
-            val stake = LedgerDB.get(publicKey)!!.stakingBalance(LedgerDB.height())
-            if (stake <= 0) {
-                delay(16)
-                continue
-            }
-
-            if (check(time, publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), stake)) {
-                val block = Block.create(LedgerDB.blockHash(), time, publicKey)
-                TxPool.fill(block)
-                val signed = block.sign(privateKey)
-                Node.broadcastBlock(signed.first, signed.second)
-            }
+    suspend fun stopStaker(privateKey: PrivateKey): Boolean {
+        val publicKey = privateKey.toPublicKey()
+        val job = stakers.remove(publicKey)
+        if (job == null) {
+            logger.info("${Address.encode(publicKey)} is not staking")
+            return false
         }
+        job.cancel()
+        return true
     }
 
     const val TARGET_BLOCK_TIME = 64L

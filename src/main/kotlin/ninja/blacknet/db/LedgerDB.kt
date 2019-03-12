@@ -9,14 +9,12 @@
 
 package ninja.blacknet.db
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import io.ktor.util.error
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JSON
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import mu.KotlinLogging
 import ninja.blacknet.core.*
@@ -26,15 +24,13 @@ import ninja.blacknet.crypto.PublicKey
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 
 private val logger = KotlinLogging.logger {}
 
-object LedgerDB : CoroutineScope, Ledger {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
+object LedgerDB : Ledger {
     private val mutex = Mutex()
-    private val db = DBMaker.fileDB("db/ledger").transactionEnable().fileMmapEnable().closeOnJvmShutdown().make()
+    private val db = DBMaker.fileDB("db/ledger").transactionEnable().closeOnJvmShutdown().make()
     private val accounts = db.hashMap("accounts", PublicKeySerializer, AccountStateSerializer).createOrOpen()
     private val height = db.atomicInteger("height").createOrOpen()
     private val blockHash = db.atomicVar("blockHash", HashSerializer, Hash.ZERO).createOrOpen()
@@ -49,10 +45,48 @@ object LedgerDB : CoroutineScope, Ledger {
     private val chainIndex = db.hashMap("chainIndex", HashSerializer, Serializer.INTEGER).createOrOpen()
     private val htlcs = db.hashMap("htlcs", HashSerializer, HTLCSerializer).createOrOpen()
     private val multisigs = db.hashMap("multisigs", HashSerializer, MultisigSerializer).createOrOpen()
+    private val updatedV2 = db.atomicBoolean("updatedV2", false).createOrOpen()
 
     private var maxBlockSize: Int
 
     init {
+        val rescanHashes = ArrayList<Hash>()
+        val rescanBlocks = ArrayList<ByteArray>()
+
+        if (!updatedV2.get()) {
+            logger.info("Rescanning blockchain...")
+            runBlocking {
+                rescanHashes.ensureCapacity(height())
+                rescanBlocks.ensureCapacity(height())
+                try {
+                    for (i in 1..height()) {
+                        rescanHashes.add(chain[i]!!)
+                        rescanBlocks.add(BlockDB.get(chain[i]!!)!!)
+                    }
+                } catch (e: Throwable) {
+                    logger.error(e)
+                }
+                logger.info("Loaded ${rescanBlocks.size} blocks")
+
+                accounts.clear()
+                height.set(0)
+                blockHash.set(Hash.ZERO)
+                blockTime.set(0)
+                difficulty.set(BigInt.ZERO)
+                cumulativeDifficulty.set(BigInt.ZERO)
+                supply.set(0)
+                undo.clear()
+                blockSizes.clear()
+                nxtrng.set(Hash.ZERO)
+                chain.clear()
+                chainIndex.clear()
+                htlcs.clear()
+                multisigs.clear()
+                commit()
+                BlockDB.clear()
+            }
+        }
+
         maxBlockSize = calcMaxBlockSize()
 
         @Serializable
@@ -60,7 +94,7 @@ object LedgerDB : CoroutineScope, Ledger {
 
         if (accounts.isEmpty()) {
             val genesis = File("config/genesis.json").readText()
-            val list = JSON.parse(Entry.serializer().list, genesis)
+            val list = Json.parse(Entry.serializer().list, genesis)
 
             var supply = 0L
             for (i in list) {
@@ -78,8 +112,22 @@ object LedgerDB : CoroutineScope, Ledger {
             chainIndex[Hash.ZERO] = 0
             blockTime.set(1545555600)
             difficulty.set(PoS.INITIAL_DIFFICULTY)
+            updatedV2.set(true)
             commit()
             logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
+        }
+
+        if (rescanBlocks.isNotEmpty()) {
+            runBlocking {
+                for (i in 0 until rescanBlocks.size) {
+                    if (BlockDB.process(rescanHashes[i], rescanBlocks[i]) != DataDB.Status.ACCEPTED)
+                        break
+                    if (i % 5000 == 4999) {
+                        logger.info("Rescanned 5000 blocks")
+                        prune()
+                    }
+                }
+            }
         }
     }
 
@@ -142,6 +190,10 @@ object LedgerDB : CoroutineScope, Ledger {
         accounts[key] = state
     }
 
+    private fun remove(key: PublicKey) {
+        accounts.remove(key)
+    }
+
     override fun addSupply(amount: Long) {
         supply.set(supply.get() + amount)
     }
@@ -154,12 +206,12 @@ object LedgerDB : CoroutineScope, Ledger {
         this.undo[hash] = undo
     }
 
-    override fun checkFee(size: Int, amount: Long) = amount >= 0
-
-    override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {
-        val account = get(key) ?: return false
-        return account.seq == seq
+    private fun removeUndo(hash: Hash) {
+        this.undo.remove(hash)
     }
+
+    override fun checkBlockHash(hash: Hash) = hash == Hash.ZERO || chainIndex.containsKey(hash)
+    override fun checkFee(size: Int, amount: Long) = amount >= 0
 
     fun maxBlockSize(): Int {
         return maxBlockSize
@@ -180,6 +232,8 @@ object LedgerDB : CoroutineScope, Ledger {
             i++
             val hash = chain.getOrNull(i) ?: break
             ret.add(hash)
+            if (ret.size >= max)
+                break
         }
         return ret
     }
@@ -240,7 +294,7 @@ object LedgerDB : CoroutineScope, Ledger {
             logger.info("timestamp is too early")
             return false
         }
-        val generator = get(block.generator)
+        var generator = get(block.generator)
         if (generator == null) {
             logger.info("block generator not found")
             return false
@@ -255,7 +309,6 @@ object LedgerDB : CoroutineScope, Ledger {
                 UndoList(),
                 UndoHTLCList(),
                 UndoMultisigList())
-        undo.accounts.add(Pair(block.generator, generator.copy()))
 
         if (!PoS.check(block.time, block.generator, undo.nxtrng, undo.difficulty, undo.blockTime, generator.stakingBalance(height()))) {
             logger.info("invalid proof of stake")
@@ -290,9 +343,12 @@ object LedgerDB : CoroutineScope, Ledger {
             fees += tx.fee
         }
 
+        generator = get(block.generator)!!
+        undo.accounts.add(Pair(block.generator, generator.copy()))
         val reward = PoS.reward(supply())
-        this.undo[hash] = undo
+        addUndo(hash, undo)
         addSupply(reward)
+        generator.prune(height())
         generator.debit(height(), reward + fees)
         set(block.generator, generator)
         maxBlockSize = calcMaxBlockSize()
@@ -300,7 +356,7 @@ object LedgerDB : CoroutineScope, Ledger {
         return true
     }
 
-    private fun undoBlock(): Hash {
+    private suspend fun undoBlock(): Hash {
         val hash = blockHash()
         val undo = this.undo[hash]!!
 
@@ -316,32 +372,32 @@ object LedgerDB : CoroutineScope, Ledger {
         chainIndex.remove(hash)
 
         setSupply(undo.supply)
-        for (i in undo.accounts.reversed()) {
-            val key = i.first
-            val state = i.second
+        undo.accounts.asReversed().forEach {
+            val key = it.first
+            val state = it.second
             if (state.isEmpty())
-                accounts.remove(key)
+                remove(key)
             else
-                accounts[key] = state
+                set(key, state)
         }
-        for (i in undo.htlcs.reversed()) {
-            val id = i.first
-            val htlc = i.second
+        undo.htlcs.asReversed().forEach {
+            val id = it.first
+            val htlc = it.second
             if (htlc != null)
                 addHTLC(id, htlc)
             else
                 removeHTLC(id)
         }
-        for (i in undo.multisigs.reversed()) {
-            val id = i.first
-            val multisig = i.second
+        undo.multisigs.asReversed().forEach {
+            val id = it.first
+            val multisig = it.second
             if (multisig != null)
                 addMultisig(id, multisig)
             else
                 removeMultisig(id)
         }
 
-        this.undo.remove(hash)
+        removeUndo(hash)
         return hash
     }
 
@@ -349,7 +405,7 @@ object LedgerDB : CoroutineScope, Ledger {
         return@withLock rollbackToUnlocked(hash)
     }
 
-    private fun rollbackToUnlocked(hash: Hash): ArrayList<Hash> {
+    private suspend fun rollbackToUnlocked(hash: Hash): ArrayList<Hash> {
         val i = getBlockNumber(hash) ?: return ArrayList()
         val height = height()
         var n = height - i
@@ -359,22 +415,34 @@ object LedgerDB : CoroutineScope, Ledger {
         return ret
     }
 
-    suspend fun undoRollack(hash: Hash, list: ArrayList<Hash>) = mutex.withLock {
+    suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = mutex.withLock {
         val toRemove = rollbackToUnlocked(hash)
-        launch { BlockDB.remove(toRemove) }
 
         list.asReversed().forEach {
             val block = BlockDB.block(it)
             if (block == null) {
                 logger.error("block not found")
-                return
+                return@withLock toRemove
             }
             val txHashes = ArrayList<Hash>(block.first.transactions.size)
             if (!processBlockUnlocked(it, block.first, block.second, txHashes)) {
                 logger.error("process block failed")
-                return
+                return@withLock toRemove
             }
             TxPool.remove(txHashes)
+        }
+
+        return@withLock toRemove
+    }
+
+    suspend fun prune() = mutex.withLock {
+        var height = height() - PoS.MATURITY
+        while (height > 0) {
+            val hash = chain[height]!!
+            if (!undo.containsKey(hash))
+                break
+            removeUndo(hash)
+            height--
         }
     }
 }

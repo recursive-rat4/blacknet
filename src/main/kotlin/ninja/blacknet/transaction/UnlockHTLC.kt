@@ -51,7 +51,7 @@ class UnlockHTLC(
         return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             logger.info("htlc not found")
@@ -71,6 +71,7 @@ class UnlockHTLC(
         undo.addHTLC(id, htlc)
 
         toAccount.debit(ledger.height(), htlc.amount)
+        ledger.set(htlc.to, toAccount)
         ledger.removeHTLC(id)
         return true
     }

@@ -22,6 +22,7 @@ enum class PacketType {
     Data,
     GetBlocks,
     Blocks,
+    ChainAnnounce,
     ;
 
     companion object {
@@ -37,6 +38,7 @@ enum class PacketType {
                 Data.ordinal -> ninja.blacknet.network.Data.serializer()
                 GetBlocks.ordinal -> ninja.blacknet.network.GetBlocks.serializer()
                 Blocks.ordinal -> ninja.blacknet.network.Blocks.serializer()
+                ChainAnnounce.ordinal -> ninja.blacknet.network.ChainAnnounce.serializer()
                 else -> null
             }
         }

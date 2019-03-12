@@ -26,8 +26,14 @@ class Message(
         return ChaCha20.decryptUtf8(sharedKey, data.array)
     }
 
+    override fun toString() = when (type) {
+        PLAIN -> String(data.array)
+        ENCRYPTED -> "ENCRYPTED:$data"
+        else -> "UNKNOWN TYPE:$type DATA:$data"
+    }
+
     companion object {
-        const val SIGN_MAGIC = "Blacknet Signed Message:\n"
+        private val SIGN_MAGIC = "Blacknet Signed Message:\n".toUtf8Bytes()
         const val PLAIN: Byte = 0
         const val ENCRYPTED: Byte = 1
 

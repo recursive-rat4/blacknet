@@ -34,9 +34,11 @@ class Transfer(
         return TxType.Transfer.type
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, account: AccountState, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+        val account = ledger.get(tx.from)!!
         if (!account.credit(amount))
             return false
+        ledger.set(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
         undo.add(to, toAccount.copy())
         toAccount.debit(ledger.height(), amount)

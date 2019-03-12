@@ -61,13 +61,13 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
             return BigInt(bytes)
         }
 
-        override fun deserialize(input: Decoder): BigInt {
-            return BigInt((input as BlacknetDecoder).decodeSerializableByteArrayValue())
+        override fun deserialize(decoder: Decoder): BigInt {
+            return BigInt((decoder as BlacknetDecoder).decodeSerializableByteArrayValue())
         }
 
-        override fun serialize(output: Encoder, obj: BigInt) {
+        override fun serialize(encoder: Encoder, obj: BigInt) {
             val bytes = SerializableByteArray(obj.toByteArray())
-            (output as BlacknetEncoder).encodeSerializableByteArrayValue(bytes)
+            (encoder as BlacknetEncoder).encodeSerializableByteArrayValue(bytes)
         }
     }
 }

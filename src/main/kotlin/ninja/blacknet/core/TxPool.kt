@@ -9,7 +9,6 @@
 
 package ninja.blacknet.core
 
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.crypto.BigInt
@@ -25,7 +24,6 @@ import ninja.blacknet.util.SynchronizedHashMap
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
-    private val mutex = Mutex()
     private val accounts = SynchronizedHashMap<PublicKey, AccountState>()
     private val transactions = SynchronizedArrayList<Hash>()
 
@@ -59,15 +57,12 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.get(key)?.seq ?: 0
     }
 
-    override fun checkFee(size: Int, amount: Long): Boolean {
-        return amount >= Node.minTxFee * (1 + size / 1000)
+    override fun checkBlockHash(hash: Hash): Boolean {
+        return LedgerDB.checkBlockHash(hash)
     }
 
-    override suspend fun checkSequence(key: PublicKey, seq: Int): Boolean {
-        val account = accounts.get(key)
-        if (account != null)
-            return account.seq == seq
-        return LedgerDB.checkSequence(key, seq)
+    override fun checkFee(size: Int, amount: Long): Boolean {
+        return amount >= Node.minTxFee * (1 + size / 1000)
     }
 
     override suspend fun get(key: PublicKey): AccountState? {
@@ -81,13 +76,14 @@ object TxPool : MemPool(), Ledger {
         accounts.set(key, state)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Boolean = mutex.withLock {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
         if (processTransaction(hash, bytes, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
             transactions.add(hash)
-            return true
+            connection?.lastTxTime = Node.time()
+            return Status.ACCEPTED
         }
-        return false
+        return Status.INVALID
     }
 
     suspend fun remove(hashes: ArrayList<Hash>) = mutex.withLock {

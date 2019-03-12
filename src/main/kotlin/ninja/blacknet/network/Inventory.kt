@@ -11,25 +11,20 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
 import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetEncoder
 
 @Serializable
 class Inventory(private val list: InvList) : Packet {
-    override fun serialize(): ByteReadPacket {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build()
-    }
+    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
     override fun getType(): Int {
         return PacketType.Inventory.ordinal
     }
 
     override suspend fun process(connection: Connection) {
-        if (Node.isSynchronizing())
+        if (Node.isInitialSynchronization())
             return
 
         if (list.size > DataType.MAX_INVENTORY) {

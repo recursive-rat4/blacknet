@@ -11,18 +11,17 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encode
+import mu.KotlinLogging
+import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
 import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
+private val logger = KotlinLogging.logger {}
+
 @Serializable
 class Data(private val list: DataList) : Packet {
-    override fun serialize(): ByteReadPacket {
-        val out = BlacknetEncoder()
-        out.encode(serializer(), this)
-        return out.build()
-    }
+    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
     override fun getType(): Int {
         return PacketType.Data.ordinal
@@ -42,17 +41,26 @@ class Data(private val list: DataList) : Packet {
 
             val hash = type.hash(bytes.array)
 
-            DataFetcher.fetched(hash)
+            if (!DataFetcher.fetched(hash)) {
+                connection.dos("unrequested ${type.name} $hash")
+                continue
+            }
 
-            if (type.db.process(hash, bytes.array, connection))
-                inv.add(Pair(type, hash))
-            else
-                connection.dos("invalid " + type.name + " " + hash)
+            val status = type.db.process(hash, bytes.array, connection)
+            when (status) {
+                Status.ACCEPTED -> inv.add(Pair(type, hash))
+                Status.INVALID -> connection.dos("invalid ${type.name} $hash")
+                Status.IN_FUTURE -> logger.info("in future ${type.name} $hash")
+                Status.NOT_ON_THIS_CHAIN -> {
+                    if (type == DataType.Block) ChainFetcher.offer(connection, hash)
+                    else logger.info("not on this chain ${type.name} $hash")
+                }
+                Status.ALREADY_HAVE -> {}
+            }
         }
 
-        //TODO don't announce to sender
         if (!inv.isEmpty())
-            Node.broadcastInv(inv)
+            Node.broadcastInv(inv, connection)
     }
 }
 

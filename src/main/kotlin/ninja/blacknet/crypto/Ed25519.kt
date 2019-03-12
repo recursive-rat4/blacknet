@@ -31,7 +31,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
 object Ed25519 {
-    val field: Field
+    internal val field: Field
     private val curve: Curve
     private val B: GroupElement
     private val spec: EdDSANamedCurveSpec
@@ -58,9 +58,9 @@ object Ed25519 {
     }
 
     fun sign(hash: Hash, privateKey: PrivateKey): Signature {
-        val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         val edDSAPrivateKeySpec = EdDSAPrivateKeySpec(privateKey.bytes, spec)
         val edDSAPrivateKey = EdDSAPrivateKey(edDSAPrivateKeySpec)
+        val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         edDSAEngine.initSign(edDSAPrivateKey)
         edDSAEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE)
         edDSAEngine.update(hash.bytes.array)
@@ -68,9 +68,10 @@ object Ed25519 {
     }
 
     fun verify(signature: Signature, hash: Hash, publicKey: PublicKey): Boolean {
-        val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
-        val edDSAPublicKeySpec = EdDSAPublicKeySpec(publicKey.bytes.array, spec)
+        val A = toGroupElement(publicKey)
+        val edDSAPublicKeySpec = EdDSAPublicKeySpec(A, spec)
         val edDSAPublicKey = EdDSAPublicKey(edDSAPublicKeySpec)
+        val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         edDSAEngine.initVerify(edDSAPublicKey)
         edDSAEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE)
         edDSAEngine.update(hash.bytes.array)
@@ -78,8 +79,8 @@ object Ed25519 {
     }
 
     fun x25519(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {
-        val privKey = toCurve25519(privateKey)
         val pubKey = toCurve25519(publicKey)
+        val privKey = toCurve25519(privateKey)
 
         var x1 = field.fromByteArray(pubKey)
         var x2 = field.ONE
@@ -128,7 +129,7 @@ object Ed25519 {
     }
 
     private fun toCurve25519(publicKey: PublicKey): ByteArray {
-        val A = GroupElement(curve, publicKey.bytes.array)
+        val A = toGroupElement(publicKey)
         val one_minus_y = field.ONE - A.y
         val x = (field.ONE + A.y) * one_minus_y.invert()
         return x.toByteArray()
@@ -141,6 +142,14 @@ object Ed25519 {
         h[31] = h[31] and 127
         h[31] = h[31] or 64
         return h
+    }
+
+    private fun toGroupElement(publicKey: PublicKey): GroupElement {
+        try {
+            return GroupElement(curve, publicKey.bytes.array)
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Invalid public key: not a valid point on the curve")
+        }
     }
 }
 
