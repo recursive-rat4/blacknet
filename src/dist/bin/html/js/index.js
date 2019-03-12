@@ -99,7 +99,7 @@ $(document).ready(function(){
         let url = "/mnemonic/info/" + mnemonic + "/";
 
         request("POST", url, function () {
-            document.getElementById('mnemonic_info_result').value = this.responseText;
+            document.getElementById('mnemonic_info_result').innerHTML = this.responseText;
         });
     }
     async function display_api_json_result(apiCall) {
@@ -187,6 +187,22 @@ $(document).ready(function(){
         if (message.data) { add_block(message.data, ledgerData.height); }
     }
 
+    function generate_new_account(){
+        
+        let mnemonic = window.blacknet_mnemonic();
+        let kp = window.blacknet_mnemonic_keypair(mnemonic);
+        let account = window.blacknet_pk_account(kp.publicKey);
+        document.getElementById('new_account').value = account;
+        document.getElementById('new_public_key').value = bufferToHex(kp.publicKey);
+        document.getElementById('new_mnemonic').value = mnemonic;
+    }
+
+    function bufferToHex(buffer) {
+        return Array
+            .from (new Uint8Array (buffer))
+            .map (b => b.toString (16).padStart (2, "0"))
+            .join ("");
+    }
 
     body.on("click", "#start_staking", start_staking)
         .on("click", "#balance", balance)
@@ -194,6 +210,7 @@ $(document).ready(function(){
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
+        .on("click", "#Generate_new_account", generate_new_account)
         .on("click", "#display_api_json_result",function(event){
             let el = event.target;
             display_api_json_result(el.dataset.type);
