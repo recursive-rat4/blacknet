@@ -30,7 +30,7 @@ class RefundHTLC(
     }
 
     override fun getType(): Byte {
-        return TxType.UnlockHTLC.type
+        return TxType.RefundHTLC.type
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
