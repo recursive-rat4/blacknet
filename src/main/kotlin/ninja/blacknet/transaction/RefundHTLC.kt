@@ -23,7 +23,7 @@ class RefundHTLC(
 ) : TxData {
     override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
 
-    override fun getType() = TxType.UnlockHTLC
+    override fun getType() = TxType.RefundHTLC
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
         val htlc = ledger.getHTLC(id)
