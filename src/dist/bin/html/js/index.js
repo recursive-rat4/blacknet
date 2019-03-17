@@ -112,7 +112,7 @@ $(document).ready(function(){
         });
     }
     function mnemonic_info() {
-        let mnemonic = document.getElementById('mnemonic_info').value;
+        let mnemonic = document.getElementById('mnemonic_info_mnemonic').value;
         let url = "/mnemonic/info/" + mnemonic + "/";
 
         request("POST", url, function () {
@@ -204,6 +204,13 @@ $(document).ready(function(){
         if (message.data) { add_block(message.data, ledgerData.height); }
     }
 
+    async function generate_new_account() {
+        let url = '/account/generate';
+        let blockData = await request_promise('GET', url);
+        blockData = JSON.parse(blockData);
+        document.getElementById('new_account').value = blockData.address;
+        document.getElementById('new_mnemonic').value = blockData.mnemonic;
+    }
 
     body.on("click", "#start_staking", start_staking)
         .on("click", "#stop_staking", stop_staking)
@@ -212,6 +219,7 @@ $(document).ready(function(){
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
+        .on("click", "#generate_new_account", generate_new_account)
         .on("click", "#display_api_json_result",function(event){
             let el = event.target;
             display_api_json_result(el.dataset.type);

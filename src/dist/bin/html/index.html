@@ -132,7 +132,7 @@
         <legend>Mnemonic info</legend>
         <div class="field-row">
           <label>Mnemonic</label>
-          <input type="password" id="mnemonic_info">
+          <input type="password" id="mnemonic_info_mnemonic">
         </div>
         <div class="field-row">
           <label>Result</label>
@@ -140,8 +140,20 @@
         </div>
         <button id="mnemonic_info">Mnemonic info</button>
       </fieldset>
-    </div>
+      <fieldset>
+        <legend>Generate new account</legend>
+        <div class="field-row">
+          <label>Mnemonic</label>
+          <input type="text" id="new_mnemonic" readonly>
+        </div>
+        <div class="field-row">
+          <label>Account</label>
+          <input type="text" id="new_account" readonly>
+        </div>
+        <button id="generate_new_account">Generate</button>
+      </fieldset>
 
+    </div>
     <div>
       <table id="node-table">
         <caption>Connected Nodes</caption>
@@ -203,10 +215,10 @@
 
   <footer>
     <ul id="api-menu">
-      <li id="display_api_json_result" data-type = "peerinfo" class="menu-item">peerinfo</li>
-      <li id="display_api_json_result" data-type = "nodeinfo" class="menu-item">nodeinfo</li>
-      <li id="display_api_json_result" data-type = "ledger" class="menu-item">ledger</li>
-      <li id="display_api_json_result" data-type = "peerdb" class="menu-item">peerdb</li>
+      <li id="display_api_json_result" data-type="peerinfo" class="menu-item">peerinfo</li>
+      <li id="display_api_json_result" data-type="nodeinfo" class="menu-item">nodeinfo</li>
+      <li id="display_api_json_result" data-type="ledger" class="menu-item">ledger</li>
+      <li id="display_api_json_result" data-type="peerdb" class="menu-item">peerdb</li>
     </ul>
     <pre id='api-json-result'></pre>
   </footer>
