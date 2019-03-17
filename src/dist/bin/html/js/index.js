@@ -204,14 +204,15 @@ $(document).ready(function(){
         if (message.data) { add_block(message.data, ledgerData.height); }
     }
 
-    function generate_new_account(){
+    async function generate_new_account(){
         
-        let mnemonic = window.blacknet_mnemonic();
-        let kp = window.blacknet_mnemonic_keypair(mnemonic);
-        let account = window.blacknet_pk_account(kp.publicKey);
-        document.getElementById('new_account').value = account;
-        document.getElementById('new_public_key').value = bufferToHex(kp.publicKey);
-        document.getElementById('new_mnemonic').value = mnemonic;
+
+        let url = '/account/generate';
+        let blockData = await request_promise('GET', url);
+        blockData = JSON.parse(blockData);
+        document.getElementById('new_account').value = blockData.address;
+        document.getElementById('new_public_key').value = blockData.publicKey;
+        document.getElementById('new_mnemonic').value = blockData.mnemonic;
     }
 
     function bufferToHex(buffer) {
