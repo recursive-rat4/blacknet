@@ -10,7 +10,6 @@
 package ninja.blacknet.network
 
 import io.ktor.util.error
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands
@@ -58,7 +57,7 @@ object TorController {
 
         val address = Address(Network.TORv2, Config[Config.port], bytes)
 
-        GlobalScope.launch {
+        Node.launch {
             thread.join()
             Node.listenAddress.remove(address)
             logger.info("lost connection to tor controller")

@@ -9,10 +9,9 @@
 
 package ninja.blacknet.network
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.core.Block
@@ -22,18 +21,14 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.util.withTimeout
-import kotlin.coroutines.CoroutineContext
 
 private val logger = KotlinLogging.logger {}
 
-object ChainFetcher : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
+object ChainFetcher {
     const val TIMEOUT = 5
     private val chains = Channel<ChainData>(16)
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     private var connectedBlocks = 0
-    @Volatile
-    private var disconnected: ChainData? = null
     @Volatile
     private var syncChain: ChainData? = null
     private var originalChain: Hash? = null
@@ -42,17 +37,11 @@ object ChainFetcher : CoroutineScope {
     private var undoRollback: ArrayList<Hash>? = null
 
     init {
-        launch { fetcher() }
+        Node.launch { fetcher() }
     }
 
     fun isSynchronizing(): Boolean {
         return syncChain != null
-    }
-
-    fun disconnected(connection: Connection) {
-        if (syncChain?.connection == connection) {
-            disconnected = syncChain
-        }
     }
 
     fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt? = null) {
@@ -66,11 +55,6 @@ object ChainFetcher : CoroutineScope {
 
     private suspend fun fetcher() {
         while (true) {
-            if (disconnected == syncChain)
-                fetched()
-            else
-                disconnected = null
-
             val data = chains.receive()
 
             if (data.connection.isClosed())
@@ -83,19 +67,18 @@ object ChainFetcher : CoroutineScope {
             logger.info("Fetching ${data.chain} from ${data.connection.remoteAddress}")
             syncChain = data
             originalChain = LedgerDB.blockHash()
-            data.connection.sendPacket(GetBlocks(originalChain!!, LedgerDB.getRollingCheckpoint()))
 
             try {
+                data.connection.sendPacket(GetBlocks(originalChain!!, LedgerDB.getRollingCheckpoint()))
+
                 requestLoop@ while (true) {
                     val answer = withTimeout(TIMEOUT) { recvChannel.receive() }
                     if (answer.isEmpty()) {
-                        fetched()
                         break
                     }
                     if (!answer.hashes.isEmpty()) {
                         if (rollbackTo != null) {
-                            logger.info("Unexpected rollback")
-                            data.connection.close()
+                            data.connection.dos("Unexpected rollback")
                             break
                         }
                         val checkpoint = LedgerDB.getRollingCheckpoint()
@@ -103,7 +86,6 @@ object ChainFetcher : CoroutineScope {
                         for (hash in answer.hashes) {
                             if (BlockDB.isRejected(hash)) {
                                 data.connection.dos("invalid chain")
-                                fetched()
                                 break@requestLoop
                             }
                             if (LedgerDB.getBlockNumber(hash) == null)
@@ -115,23 +97,21 @@ object ChainFetcher : CoroutineScope {
                         continue
                     }
                     if (!processBlocks(data.connection, answer)) {
-                        fetched()
                         break
                     }
 
                     if (data.chain == LedgerDB.blockHash()) {
-                        fetched()
                         break
                     } else {
                         if (data.cumulativeDifficulty() == BigInt.ZERO
                                 || data.cumulativeDifficulty() > LedgerDB.cumulativeDifficulty()) {
                             requestBlocks(data.connection)
                         } else {
-                            fetched()
                             break
                         }
                     }
                 }
+            } catch (e: ClosedSendChannelException) {
             } catch (e: TimeoutCancellationException) {
                 logger.info("${e.message}")
                 data.connection.close()
@@ -139,6 +119,8 @@ object ChainFetcher : CoroutineScope {
                 logger.error("Exception in processBlocks ${data.connection.remoteAddress}", e)
                 data.connection.close()
             }
+
+            fetched()
         }
     }
 
@@ -149,28 +131,26 @@ object ChainFetcher : CoroutineScope {
                 logger.info("Reconnecting ${undoRollback!!.size} blocks")
                 val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
                 LedgerDB.commit()
-                launch { BlockDB.remove(toRemove) }
+                BlockDB.remove(toRemove)
             } else {
                 logger.info("Removing ${undoRollback!!.size} blocks from db")
                 val toRemove = undoRollback!!
-                launch { BlockDB.remove(toRemove) }
+                BlockDB.remove(toRemove)
             }
         }
-        if (syncChain != null) {
-            val newChain = LedgerDB.blockHash()
-            if (newChain != originalChain) {
-                Node.announceChain(newChain, cumulativeDifficulty, syncChain!!.connection)
-                LedgerDB.prune()
-            }
 
-            if (syncChain == disconnected)
-                logger.info("Peer disconnected. Fetched $connectedBlocks blocks")
-            else
-                logger.info("Finished fetching $connectedBlocks blocks")
+        val newChain = LedgerDB.blockHash()
+        if (newChain != originalChain) {
+            Node.announceChain(newChain, cumulativeDifficulty, syncChain!!.connection)
+            LedgerDB.prune()
         }
+
+        if (syncChain!!.connection.isClosed())
+            logger.info("Peer disconnected. Fetched $connectedBlocks blocks")
+        else
+            logger.info("Finished fetching $connectedBlocks blocks")
 
         syncChain = null
-        disconnected = null
         connectedBlocks = 0
         originalChain = null
         rollbackTo = null
@@ -184,7 +164,7 @@ object ChainFetcher : CoroutineScope {
             connection.close()
             return
         }
-        if (syncChain != disconnected)
+        if (!connection.isClosed())
             recvChannel.send(answer)
     }
 

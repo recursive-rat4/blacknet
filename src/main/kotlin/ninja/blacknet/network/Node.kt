@@ -63,7 +63,7 @@ object Node : CoroutineScope {
             try {
                 Node.listenOnIP()
                 if (Config[upnp])
-                    UPnP.forwardAsync()
+                    launch { UPnP.forward() }
             } catch (e: Throwable) {
             }
         }
@@ -173,10 +173,6 @@ object Node : CoroutineScope {
             listenAddress.add(address)
             i2plistener()
         }
-    }
-
-    fun disconnected(connection: Connection) = launch {
-        connections.remove(connection)
     }
 
     suspend fun connectTo(address: Address) {

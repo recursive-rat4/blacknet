@@ -85,10 +85,12 @@ class Connection(
                     dos("deserialization failed")
                     continue
                 }
+                logger.debug { "Received ${packet.getType()} from $remoteAddress" }
                 packet.process(this)
             }
         } catch (e: ClosedReceiveChannelException) {
         } catch (e: CancellationException) {
+        } catch (e: IOException) {
         } catch (e: Throwable) {
             logger.error("Exception in receiver $remoteAddress", e)
         } finally {
@@ -97,19 +99,15 @@ class Connection(
     }
 
     private suspend fun recvPacket(): ByteReadPacket {
-        try {
-            val size = readChannel.readInt()
-            totalBytesRead += 4
-            if (size > Node.getMaxPacketSize()) {
-                logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting $remoteAddress")
-                close()
-            }
-            val result = readChannel.readPacket(size)
-            totalBytesRead += size
-            return result
-        } catch (e: IOException) {
-            throw ClosedReceiveChannelException(e.message)
+        val size = readChannel.readInt()
+        totalBytesRead += 4
+        if (size > Node.getMaxPacketSize()) {
+            logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting $remoteAddress")
+            close()
         }
+        val result = readChannel.readPacket(size)
+        totalBytesRead += size
+        return result
     }
 
     private suspend fun sender() {
@@ -160,9 +158,9 @@ class Connection(
         lastInvSentTime = time
     }
 
-    fun sendPacket(p: Packet) {
-        logger.debug { "Sending ${p.getType()} to $remoteAddress" }
-        sendChannel.offer(p.build())
+    fun sendPacket(packet: Packet) {
+        logger.debug { "Sending ${packet.getType()} to $remoteAddress" }
+        sendChannel.offer(packet.build())
     }
 
     internal fun sendPacket(bytes: ByteReadPacket) {
@@ -184,8 +182,9 @@ class Connection(
         if (closed.compareAndSet(false, true)) {
             sendChannel.cancel()
             socket.close()
-            Node.disconnected(this)
-            ChainFetcher.disconnected(this)
+            Node.launch {
+                Node.connections.remove(this@Connection)
+            }
         }
     }
 

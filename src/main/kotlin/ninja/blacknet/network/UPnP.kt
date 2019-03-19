@@ -9,8 +9,6 @@
 
 package ninja.blacknet.network
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.port
@@ -19,10 +17,6 @@ import org.bitlet.weupnp.GatewayDiscover
 private val logger = KotlinLogging.logger {}
 
 object UPnP {
-    fun forwardAsync() {
-        GlobalScope.launch { forward() }
-    }
-
     suspend fun forward() {
         logger.info("Looking for UPnP Gateway")
         val discover = GatewayDiscover()

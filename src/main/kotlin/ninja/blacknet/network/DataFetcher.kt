@@ -9,7 +9,6 @@
 
 package ninja.blacknet.network
 
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import ninja.blacknet.core.DataType
@@ -22,8 +21,8 @@ object DataFetcher {
     private val requested = SynchronizedHashMap<Hash, Long>()
 
     init {
-        GlobalScope.launch { fetcher() }
-        GlobalScope.launch { watchdog() }
+        Node.launch { fetcher() }
+        Node.launch { watchdog() }
     }
 
     fun offer(from: Connection, list: InvList) {
