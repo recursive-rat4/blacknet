@@ -89,10 +89,11 @@ object BlockDB : DataDB() {
                 logger.info("block $hash not on current chain")
             return Status.NOT_ON_THIS_CHAIN
         }
+        val txDb = LedgerDB.DBTransaction(hash, block.time, bytes.size, block.generator)
         val txHashes = ArrayList<Hash>(block.transactions.size)
-        if (LedgerDB.processBlock(hash, block, bytes.size, txHashes)) {
+        if (LedgerDB.processBlock(txDb, hash, block, bytes.size, txHashes)) {
             map[hash] = bytes
-            LedgerDB.commit()
+            txDb.commit()
             commit()
             if (connection != null) {
                 logger.info("Accepted block $hash")
@@ -103,7 +104,7 @@ object BlockDB : DataDB() {
             APIServer.blockNotify(hash)
             return Status.ACCEPTED
         } else {
-            LedgerDB.rollback()
+            txDb.rollback()
             return Status.INVALID
         }
     }

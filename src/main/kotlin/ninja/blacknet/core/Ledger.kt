@@ -33,9 +33,11 @@ interface Ledger {
     fun getMultisig(id: Hash): Multisig?
     fun removeMultisig(id: Hash)
 
-    suspend fun getOrCreate(key: PublicKey) = get(key) ?: AccountState.create()
+    suspend fun getOrCreate(key: PublicKey): AccountState {
+        return get(key) ?: AccountState.create()
+    }
 
-    suspend fun processTransaction(tx: Transaction, hash: Hash, size: Int, undo: UndoBlock): Boolean {
+    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int, undo: UndoBlock): Boolean {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
             return false

@@ -83,7 +83,7 @@ object TxPool : MemPool(), Ledger {
             logger.info("deserialization failed")
             return Status.INVALID
         }
-        if (processTransaction(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
+        if (processTransactionImpl(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
             transactions.add(hash)
             connection?.lastTxTime = Node.time()
@@ -98,7 +98,7 @@ object TxPool : MemPool(), Ledger {
             logger.info("deserialization failed")
             return INVALID_FEE
         }
-        if (processTransaction(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
+        if (processTransactionImpl(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
             transactions.add(hash)
             connection?.lastTxTime = Node.time()

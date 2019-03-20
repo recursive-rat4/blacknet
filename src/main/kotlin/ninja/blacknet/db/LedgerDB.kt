@@ -136,10 +136,6 @@ object LedgerDB : Ledger {
         db.commit()
     }
 
-    fun rollback() {
-        db.rollback()
-    }
-
     override fun height(): Int {
         return height.get()
     }
@@ -277,11 +273,11 @@ object LedgerDB : Ledger {
         return max(DEFAULT_MAX_BLOCK_SIZE, median * 2)
     }
 
-    suspend fun processBlock(hash: Hash, block: Block, size: Int, txHashes: ArrayList<Hash>): Boolean = mutex.withLock {
-        return@withLock processBlockUnlocked(hash, block, size, txHashes)
+    internal suspend fun processBlock(txDb: DBTransaction, hash: Hash, block: Block, size: Int, txHashes: ArrayList<Hash>): Boolean = mutex.withLock {
+        return@withLock processBlockImpl(txDb, hash, block, size, txHashes)
     }
 
-    private suspend fun processBlockUnlocked(hash: Hash, block: Block, size: Int, txHashes: ArrayList<Hash>): Boolean {
+    private suspend fun processBlockImpl(txDb: DBTransaction, hash: Hash, block: Block, size: Int, txHashes: ArrayList<Hash>): Boolean {
         if (block.previous != blockHash()) {
             logger.error("not on current chain")
             return false
@@ -294,7 +290,7 @@ object LedgerDB : Ledger {
             logger.info("timestamp is too early")
             return false
         }
-        var generator = get(block.generator)
+        var generator = txDb.get(block.generator)
         if (generator == null) {
             logger.info("block generator not found")
             return false
@@ -315,18 +311,6 @@ object LedgerDB : Ledger {
             return false
         }
 
-        val height = height.get() + 1
-        this.height.set(height)
-        blockHash.set(hash)
-        blockTime.set(block.time)
-        blockSizes.add(size)
-        nxtrng.set(PoS.nxtrng(nxtrng(), block.generator))
-        chain.add(hash)
-        chainIndex[hash] = height
-        val difficulty = PoS.nextDifficulty(undo.difficulty, undo.blockTime, block.time)
-        this.difficulty.set(difficulty)
-        cumulativeDifficulty.set(PoS.cumulativeDifficulty(undo.cumulativeDifficulty, difficulty))
-
         var fees = 0L
         for (bytes in block.transactions) {
             val tx = Transaction.deserialize(bytes.array)
@@ -335,7 +319,7 @@ object LedgerDB : Ledger {
                 return false
             }
             val txHash = Transaction.Hasher(bytes.array)
-            if (!processTransaction(tx, txHash, bytes.array.size, undo)) {
+            if (!txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)) {
                 logger.info("invalid transaction")
                 return false
             }
@@ -343,14 +327,14 @@ object LedgerDB : Ledger {
             fees += tx.fee
         }
 
-        generator = get(block.generator)!!
-        undo.accounts.add(Pair(block.generator, generator.copy()))
+        generator = txDb.get(block.generator)!!
+        undo.add(block.generator, generator.copy())
         val reward = PoS.reward(supply())
-        addUndo(hash, undo)
-        addSupply(reward)
+        txDb.addUndo(hash, undo)
+        txDb.addSupply(reward)
         generator.prune(height())
         generator.debit(height(), reward + fees)
-        set(block.generator, generator)
+        txDb.set(block.generator, generator)
         maxBlockSize = calcMaxBlockSize()
 
         return true
@@ -401,7 +385,7 @@ object LedgerDB : Ledger {
         return hash
     }
 
-    suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = mutex.withLock {
+    internal suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = mutex.withLock {
         return@withLock rollbackToUnlocked(hash)
     }
 
@@ -415,7 +399,7 @@ object LedgerDB : Ledger {
         return result
     }
 
-    suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = mutex.withLock {
+    internal suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = mutex.withLock {
         val toRemove = rollbackToUnlocked(hash)
 
         list.asReversed().forEach {
@@ -424,18 +408,22 @@ object LedgerDB : Ledger {
                 logger.error("block not found")
                 return@withLock toRemove
             }
+
+            val txDb = LedgerDB.DBTransaction(it, block.first.time, block.second, block.first.generator)
             val txHashes = ArrayList<Hash>(block.first.transactions.size)
-            if (!processBlockUnlocked(it, block.first, block.second, txHashes)) {
+            if (!processBlockImpl(txDb, it, block.first, block.second, txHashes)) {
                 logger.error("process block failed")
+                txDb.rollback()
                 return@withLock toRemove
             }
+            txDb.commit()
             TxPool.remove(txHashes)
         }
 
         return@withLock toRemove
     }
 
-    suspend fun prune() = mutex.withLock {
+    internal suspend fun prune() = mutex.withLock {
         var height = height() - PoS.MATURITY
         while (height > 0) {
             val hash = chain[height]!!
@@ -443,6 +431,115 @@ object LedgerDB : Ledger {
                 break
             removeUndo(hash)
             height--
+        }
+    }
+
+    internal class DBTransaction(
+            private val blockHash: Hash,
+            private val blockTime: Long,
+            private val blockSize: Int,
+            private val blockGenerator: PublicKey,
+            private val height: Int = LedgerDB.height() + 1,
+            private var supply: Long = LedgerDB.supply(),
+            private val accounts: MutableMap<PublicKey, AccountState> = HashMap(),
+            private val htlcs: MutableMap<Hash, HTLC?> = HashMap(),
+            private val multisigs: MutableMap<Hash, Multisig?> = HashMap(),
+            private var undo: UndoBlock? = null
+    ) : Ledger {
+        override fun addSupply(amount: Long) {
+            supply += amount
+        }
+
+        override fun addUndo(hash: Hash, undo: UndoBlock) {
+            check(hash == blockHash && this.undo == null)
+            this.undo = undo
+        }
+
+        override fun checkBlockHash(hash: Hash): Boolean {
+            return hash == blockHash || LedgerDB.checkBlockHash(hash)
+        }
+
+        override fun checkFee(size: Int, amount: Long): Boolean {
+            return LedgerDB.checkFee(size, amount)
+        }
+
+        override fun blockTime(): Long {
+            return blockTime
+        }
+
+        override fun height(): Int {
+            return height
+        }
+
+        override suspend fun get(key: PublicKey): AccountState? {
+            return accounts.get(key) ?: LedgerDB.get(key)
+        }
+
+        override suspend fun set(key: PublicKey, state: AccountState) {
+            accounts.set(key, state)
+        }
+
+        override fun addHTLC(id: Hash, htlc: HTLC) {
+            htlcs.put(id, htlc)
+        }
+
+        override fun getHTLC(id: Hash): HTLC? {
+            if (!htlcs.containsKey(id))
+                return LedgerDB.getHTLC(id)
+            return htlcs.get(id)
+        }
+
+        override fun removeHTLC(id: Hash) {
+            htlcs.put(id, null)
+        }
+
+        override fun addMultisig(id: Hash, multisig: Multisig) {
+            multisigs.put(id, multisig)
+        }
+
+        override fun getMultisig(id: Hash): Multisig? {
+            if (!multisigs.containsKey(id))
+                return LedgerDB.getMultisig(id)
+            return multisigs.get(id)
+        }
+
+        override fun removeMultisig(id: Hash) {
+            multisigs.put(id, null)
+        }
+
+        fun commit() {
+            check(undo != null)
+            LedgerDB.undo.set(blockHash, undo)
+            LedgerDB.blockHash.set(blockHash)
+            LedgerDB.blockTime.set(blockTime)
+            LedgerDB.height.set(height)
+            LedgerDB.supply.set(supply)
+            for (account in accounts)
+                LedgerDB.accounts.set(account.key, account.value)
+            for (htlc in htlcs)
+                if (htlc.value != null)
+                    LedgerDB.htlcs.set(htlc.key, htlc.value)
+                else
+                    LedgerDB.htlcs.remove(htlc.key)
+            for (multisig in multisigs)
+                if (multisig.value != null)
+                    LedgerDB.multisigs.set(multisig.key, multisig.value)
+                else
+                    LedgerDB.multisigs.remove(multisig.key)
+
+            LedgerDB.blockSizes.add(blockSize)
+            LedgerDB.nxtrng.set(PoS.nxtrng(LedgerDB.nxtrng(), blockGenerator))
+            LedgerDB.chain.add(blockHash)
+            LedgerDB.chainIndex[blockHash] = height
+            val difficulty = PoS.nextDifficulty(undo!!.difficulty, undo!!.blockTime, blockTime)
+            LedgerDB.difficulty.set(difficulty)
+            LedgerDB.cumulativeDifficulty.set(PoS.cumulativeDifficulty(undo!!.cumulativeDifficulty, difficulty))
+
+            LedgerDB.db.commit()
+        }
+
+        fun rollback() {
+            LedgerDB.db.rollback()
         }
     }
 }
