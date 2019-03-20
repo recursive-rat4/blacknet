@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.serialization.BlacknetEncoder
 
 @Serializable
-class Ping(private val id: Int) : Packet {
+internal class Ping(private val id: Int) : Packet {
     override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Ping

@@ -43,6 +43,8 @@ class Connection(
     val connectedAt = Node.time()
 
     @Volatile
+    var lastPacketTime: Long = 0
+    @Volatile
     var totalBytesRead: Long = 0
     @Volatile
     var totalBytesWritten: Long = 0
@@ -54,12 +56,13 @@ class Connection(
     var lastInvSentTime: Long = 0
     @Volatile
     var ping: Long = 0
+    @Volatile
+    internal var pingRequest: PingRequest? = null
 
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
     var timeOffset: Long = 0
-    var pingRequest: PingRequest? = null
 
     fun launch(scope: CoroutineScope) {
         scope.launch { receiver() }
@@ -107,6 +110,7 @@ class Connection(
         }
         val result = readChannel.readPacket(size)
         totalBytesRead += size
+        lastPacketTime = Node.time()
         return result
     }
 

@@ -25,6 +25,7 @@ class PeerInfo(
         val dosScore: Int,
         val feeFilter: Long,
         val connectedAt: Long,
+        val lastPacketTime: Long,
         val totalBytesRead: Long,
         val totalBytesWritten: Long
 ) {
@@ -39,6 +40,7 @@ class PeerInfo(
             connection.dosScore(),
             connection.feeFilter,
             connection.connectedAt,
+            connection.lastPacketTime,
             connection.totalBytesRead,
             connection.totalBytesWritten
     )

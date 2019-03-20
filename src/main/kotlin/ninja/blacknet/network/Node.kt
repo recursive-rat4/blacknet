@@ -16,6 +16,7 @@ import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
@@ -341,7 +342,7 @@ object Node : CoroutineScope {
 
             addresses.forEach {
                 val address = it
-                launch {
+                Node.launch {
                     try {
                         connectTo(address)
                     } catch (e: Throwable) {
@@ -364,9 +365,12 @@ object Node : CoroutineScope {
                         it.close()
                 } else {
                     if (it.pingRequest == null) {
-                        val id = Random.nextInt()
-                        it.pingRequest = Connection.PingRequest(id, timeMilli())
-                        it.sendPacket(Ping(id))
+                        if (it.ping != 0L && currTime > it.lastPacketTime + NETWORK_TIMEOUT) {
+                            logger.debug { "Sending ping to ${it.remoteAddress}" }
+                            sendPing(it)
+                        } else if (it.ping == 0L) {
+                            sendPing(it)
+                        }
                     } else {
                         logger.info("Disconnecting ${it.remoteAddress} on ping timeout")
                         it.close()
@@ -374,6 +378,11 @@ object Node : CoroutineScope {
                 }
             }
         }
+    }
+    private fun sendPing(connection: Connection) {
+        val id = Random.nextInt()
+        connection.pingRequest = Connection.PingRequest(id, timeMilli())
+        connection.sendPacket(Ping(id))
     }
 
     private suspend fun peerAnnouncer() {
