@@ -115,7 +115,7 @@ object LedgerDB : Ledger {
             difficulty.set(PoS.INITIAL_DIFFICULTY)
             updatedV2.set(true)
             commit()
-            logger.info("loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
+            logger.info("Loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
         }
 
         if (rescanBlocks.isNotEmpty()) {
