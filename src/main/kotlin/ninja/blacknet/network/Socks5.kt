@@ -17,6 +17,7 @@ import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.ByteWriteChannel
 import kotlinx.coroutines.io.readFully
 import kotlinx.io.core.BytePacketBuilder
+import kotlinx.io.core.Closeable
 import kotlinx.io.core.writeFully
 
 class Socks5(private val proxy: Address) {
@@ -32,12 +33,10 @@ class Socks5(private val proxy: Address) {
         writeChannel.writePacket(builder.build())
 
         if (readChannel.readByte() != VERSION) {
-            socket.close()
-            throw RuntimeException("unknown socks version")
+            return error(socket, "unknown socks version")
         }
         if (readChannel.readByte() != NO_AUTHENTICATION) {
-            socket.close()
-            throw RuntimeException("socks auth not accepted")
+            return error(socket, "socks auth not accepted")
         }
 
         builder.writeByte(VERSION)
@@ -55,38 +54,39 @@ class Socks5(private val proxy: Address) {
             Network.TORv2, Network.TORv3 -> {
                 val bytes = address.getAddressString().toByteArray(Charsets.US_ASCII)
                 if (bytes.size < 1 || bytes.size > 255)
-                    throw RuntimeException("invalid length of domain name")
+                    return error(socket, "invalid length of domain name")
                 builder.writeByte(DOMAIN_NAME)
                 builder.writeByte(bytes.size.toByte())
                 builder.writeFully(bytes)
             }
-            else -> throw NotImplementedError("not implemented for " + address.network)
+            else -> return error(socket, "not implemented for ${address.network}")
         }
         builder.writeShort(address.port.toShort())
         writeChannel.writePacket(builder.build())
 
         if (readChannel.readByte() != VERSION) {
-            socket.close()
-            throw RuntimeException("unknown socks version")
+            return error(socket, "unknown socks version")
         }
         if (readChannel.readByte() != REQUEST_GRANTED) {
-            socket.close()
-            throw RuntimeException("connection failed")
+            return error(socket, "connection failed")
         }
         if (readChannel.readByte() != 0.toByte()) {
-            socket.close()
-            throw RuntimeException("invalid socks response")
+            return error(socket, "invalid socks response")
         }
         val addrType = readChannel.readByte()
         when (addrType) {
-            IPv4_ADDRESS -> readChannel.skip(4)
-            IPv6_ADDRESS -> readChannel.skip(16)
-            DOMAIN_NAME -> readChannel.skip(readChannel.readByte().toInt())
-            else -> throw RuntimeException("unknown socks response")
+            IPv4_ADDRESS -> readChannel.skip(4 + 2)
+            IPv6_ADDRESS -> readChannel.skip(16 + 2)
+            DOMAIN_NAME -> readChannel.skip(readChannel.readByte().toInt() + 2)
+            else -> return error(socket, "unknown socks response")
         }
-        readChannel.skip(2) // port
 
         return Connection(socket, readChannel, writeChannel)
+    }
+
+    private fun error(closeable: Closeable, message: String): Connection {
+        closeable.close()
+        throw RuntimeException(message)
     }
 
     class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel)
