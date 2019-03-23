@@ -100,6 +100,7 @@ object BlockDB : DataDB() {
                 connection.lastBlockTime = Node.time()
                 Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
             }
+            TxPool.clearRejects()
             TxPool.remove(txHashes)
             APIServer.blockNotify(hash)
             return Status.ACCEPTED

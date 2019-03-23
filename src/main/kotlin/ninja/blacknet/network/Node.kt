@@ -338,7 +338,6 @@ object Node : CoroutineScope {
             }
 
             addresses.forEach { PeerDB.attempt(it) }
-            PeerDB.commit()
 
             addresses.forEach {
                 val address = it

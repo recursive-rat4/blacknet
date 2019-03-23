@@ -30,7 +30,6 @@ object TxPool : MemPool(), Ledger {
 
     suspend fun fill(block: Block) = mutex.withLock {
         val poolSize = size()
-        val toRemove = ArrayList<Hash>()
         var freeSize = LedgerDB.maxBlockSize() - 176
         var i = 0
         while (freeSize > 0 && i < poolSize) {
@@ -41,14 +40,12 @@ object TxPool : MemPool(), Ledger {
                 logger.error("inconsistent mempool")
                 continue
             }
-            if (bytes.size > freeSize)
+            if (bytes.size + 4 > freeSize)
                 break
 
-            freeSize -= bytes.size
-            toRemove.add(hash)
+            freeSize -= bytes.size + 4
             block.transactions.add(SerializableByteArray(bytes))
         }
-        removeUnlocked(toRemove)
     }
 
     suspend fun getSequence(key: PublicKey): Int {
