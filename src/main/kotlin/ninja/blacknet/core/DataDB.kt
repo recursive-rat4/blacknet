@@ -17,8 +17,9 @@ import ninja.blacknet.util.SynchronizedHashSet
 
 abstract class DataDB {
     protected val mutex = Mutex()
-    protected val TX_INVALID = Pair(Status.INVALID, 0L)
-    protected val TX_ALREADY_HAVE = Pair(Status.ALREADY_HAVE, 0L)
+    private val TX_INVALID = Pair(Status.INVALID, 0L)
+    private val TX_ALREADY_HAVE = Pair(Status.ALREADY_HAVE, 0L)
+    private val TX_IN_FUTURE = Pair(Status.IN_FUTURE, 0L)
     private val rejects = SynchronizedHashSet<Hash>()
 
     suspend fun clearRejects() {
@@ -50,9 +51,12 @@ abstract class DataDB {
         if (contains(hash))
             return TX_ALREADY_HAVE
         val fee = TxPool.processImplWithFee(hash, bytes, connection)
-        if (fee == TxPool.INVALID_FEE) {
+        if (fee == TxPool.INVALID) {
             rejects.add(hash)
             return TX_INVALID
+        } else if (fee == TxPool.IN_FUTURE) {
+            rejects.add(hash)
+            return TX_IN_FUTURE
         }
         return Pair(Status.ACCEPTED, fee)
     }

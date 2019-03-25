@@ -24,7 +24,8 @@ import ninja.blacknet.util.SynchronizedHashMap
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
-    const val INVALID_FEE = -1L
+    internal const val INVALID = -1L
+    internal const val IN_FUTURE = -2L
     private val accounts = SynchronizedHashMap<PublicKey, AccountState>()
     private val transactions = SynchronizedArrayList<Hash>()
 
@@ -93,15 +94,23 @@ object TxPool : MemPool(), Ledger {
         val tx = Transaction.deserialize(bytes)
         if (tx == null) {
             logger.info("deserialization failed")
-            return INVALID_FEE
+            return INVALID
         }
+
+        val from = LedgerDB.get(tx.from)
+        if (from != null)
+            if (tx.seq > from.seq)
+                return IN_FUTURE
+            else if (tx.seq < from.seq)
+                return INVALID
+
         if (processTransactionImpl(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
             add(hash, bytes)
             transactions.add(hash)
             connection?.lastTxTime = Node.time()
             return tx.fee
         }
-        return INVALID_FEE
+        return INVALID
     }
 
     suspend fun remove(hashes: ArrayList<Hash>) = mutex.withLock {

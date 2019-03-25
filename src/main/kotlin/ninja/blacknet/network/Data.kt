@@ -53,7 +53,7 @@ class Data(private val list: DataList) : Packet {
             when (status.first) {
                 Status.ACCEPTED -> inv.add(Triple(type, hash, status.second))
                 Status.INVALID -> connection.dos("invalid ${type.name} $hash")
-                Status.IN_FUTURE -> logger.info("in future ${type.name} $hash")
+                Status.IN_FUTURE -> logger.debug { "in future ${type.name} $hash" }
                 Status.NOT_ON_THIS_CHAIN -> {
                     if (type == DataType.Block) ChainFetcher.offer(connection, hash)
                     else logger.info("not on this chain ${type.name} $hash")
