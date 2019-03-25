@@ -293,18 +293,22 @@ fun Application.main() {
             call.respond(result.toString())
         }
 
-        get("/api/v1/addpeer/{address}/{port?}") {
+        get("/api/v1/addpeer/{address}/{port?}/{force?}") {
             val port = call.parameters["port"]?.toInt() ?: Node.DEFAULT_P2P_PORT
             val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
+            val force = call.parameters["force"]?.toBoolean() ?: false
 
             try {
-                Node.connectTo(address)
+                val connection = Node.connections.find { it.remoteAddress == address }
+                if (force || connection == null) {
+                    Node.connectTo(address)
+                    call.respond("Connected")
+                } else {
+                    call.respond("Already connected on ${connection.localAddress}")
+                }
             } catch (e: Throwable) {
                 call.respond(e.message ?: "unknown error")
-                return@get
             }
-
-            call.respond("Connected")
         }
 
         post("/api/v1/staker/start/{mnemonic}") {

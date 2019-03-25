@@ -40,6 +40,8 @@ class SynchronizedArrayList<T>(
 
     suspend inline fun forEach(action: (T) -> Unit) = mutex.withLock { for (i in list.indices) action(list[i]) }
 
+    suspend inline fun find(predicate: (T) -> Boolean) = mutex.withLock { list.find(predicate) }
+
     suspend inline fun sumBy(selector: (T) -> Int) = mutex.withLock { list.sumBy(selector) }
 
     suspend inline fun filter(predicate: (T) -> Boolean) = mutex.withLock { list.filterTo(ArrayList(list.size), predicate) }
