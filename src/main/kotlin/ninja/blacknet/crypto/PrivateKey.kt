@@ -13,6 +13,8 @@ import ninja.blacknet.util.fromHex
 import ninja.blacknet.util.toHex
 
 class PrivateKey(val bytes: ByteArray) {
+    override fun equals(other: Any?): Boolean = (other is PrivateKey) && bytes.contentEquals(other.bytes)
+    override fun hashCode(): Int = bytes.contentHashCode()
     override fun toString(): String = bytes.toHex()
 
     fun toPublicKey(): PublicKey {

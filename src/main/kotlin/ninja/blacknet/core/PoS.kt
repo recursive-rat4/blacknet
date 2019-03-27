@@ -9,15 +9,15 @@
 
 package ninja.blacknet.core
 
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
-import ninja.blacknet.util.SynchronizedHashMap
+import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.delay
 
@@ -57,8 +57,49 @@ object PoS {
         return cumulativeDifficulty + ONE_SHL_256 / difficulty
     }
 
-    private val stakers = SynchronizedHashMap<PublicKey, Job>()
-    suspend fun startStaker(privateKey: PrivateKey): Boolean {
+    private val stakers = SynchronizedArrayList<Pair<PrivateKey, PublicKey>>()
+    private var job: Job? = null
+
+    private suspend fun staker() {
+        while (true) {
+            delay(1)
+
+            if (ChainFetcher.isConnectingBlocks())
+                continue
+
+            if (Node.isOffline())
+                continue
+
+            if (Node.isInitialSynchronization())
+                continue
+
+            val time = Node.time() and (TIMESTAMP_MASK xor -1L)
+            if (time <= LedgerDB.blockTime())
+                continue
+
+            stakers.mutex.withLock {
+                for (i in stakers.list.indices) {
+                    val privateKey = stakers.list[i].first
+                    val publicKey = stakers.list[i].second
+
+                    val stake = LedgerDB.get(publicKey)!!.stakingBalance(LedgerDB.height())
+                    if (stake <= 0)
+                        continue
+
+                    if (check(time, publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), stake)) {
+                        val block = Block.create(LedgerDB.blockHash(), time, publicKey)
+                        TxPool.fill(block)
+                        val signed = block.sign(privateKey)
+                        logger.info("Staked ${signed.first}")
+                        Node.broadcastBlock(signed.first, signed.second)
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun startStaker(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
         val publicKey = privateKey.toPublicKey()
 
         if (LedgerDB.get(publicKey) == null) {
@@ -66,55 +107,29 @@ object PoS {
             return false
         }
 
-        val job = Node.launch(start = CoroutineStart.LAZY) {
-            while (true) {
-                delay(1)
-
-                if (ChainFetcher.isConnectingBlocks())
-                    continue
-
-                if (Node.isOffline())
-                    continue
-
-                if (Node.isInitialSynchronization())
-                    continue
-
-                val time = Node.time() and (TIMESTAMP_MASK xor -1L)
-                if (time <= LedgerDB.blockTime())
-                    continue
-
-                val stake = LedgerDB.get(publicKey)!!.stakingBalance(LedgerDB.height())
-                if (stake <= 0) {
-                    delay(16)
-                    continue
-                }
-
-                if (check(time, publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), stake)) {
-                    val block = Block.create(LedgerDB.blockHash(), time, publicKey)
-                    TxPool.fill(block)
-                    val signed = block.sign(privateKey)
-                    logger.info("Staked block ${signed.first}")
-                    Node.broadcastBlock(signed.first, signed.second)
-                }
-            }
-        }
-
-        if (stakers.putIfAbsent(publicKey, job) != null) {
+        val pair = Pair(privateKey, publicKey)
+        if (stakers.list.contains(pair)) {
             logger.info("${Address.encode(publicKey)} is already staking")
             return false
         }
 
-        return job.start()
+        stakers.list.add(pair)
+        if (stakers.list.size == 1)
+            job = Node.launch { staker() }
+        return true
     }
 
-    suspend fun stopStaker(privateKey: PrivateKey): Boolean {
+    suspend fun stopStaker(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
         val publicKey = privateKey.toPublicKey()
-        val job = stakers.remove(publicKey)
-        if (job == null) {
+        val pair = Pair(privateKey, publicKey)
+        if (!stakers.list.remove(pair)) {
             logger.info("${Address.encode(publicKey)} is not staking")
             return false
         }
-        job.cancel()
+        if (stakers.list.size == 0) {
+            job!!.cancel()
+            job = null
+        }
         return true
     }
 
