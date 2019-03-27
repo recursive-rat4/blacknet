@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.byteArrayOfInts
@@ -68,6 +69,9 @@ object PoS {
         val job = Node.launch(start = CoroutineStart.LAZY) {
             while (true) {
                 delay(1)
+
+                if (ChainFetcher.isConnectingBlocks())
+                    continue
 
                 if (Node.isOffline())
                     continue

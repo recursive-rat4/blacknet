@@ -30,6 +30,8 @@ object ChainFetcher {
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     private var connectedBlocks = 0
     @Volatile
+    private var connectingBlocks = false
+    @Volatile
     private var syncChain: ChainData? = null
     private var originalChain: Hash? = null
     private var rollbackTo: Hash? = null
@@ -38,6 +40,10 @@ object ChainFetcher {
 
     init {
         Node.launch { fetcher() }
+    }
+
+    fun isConnectingBlocks(): Boolean {
+        return connectingBlocks
     }
 
     fun isSynchronizing(): Boolean {
@@ -96,9 +102,11 @@ object ChainFetcher {
                         data.connection.sendPacket(GetBlocks(prev, checkpoint))
                         continue
                     }
-                    if (!processBlocks(data.connection, answer)) {
+                    connectingBlocks = true
+                    val accepted = processBlocks(data.connection, answer)
+                    connectingBlocks = false
+                    if (!accepted)
                         break
-                    }
 
                     if (data.chain == LedgerDB.blockHash()) {
                         break
@@ -128,9 +136,11 @@ object ChainFetcher {
         val cumulativeDifficulty = LedgerDB.cumulativeDifficulty()
         if (undoRollback != null) {
             if (undoDifficulty >= cumulativeDifficulty) {
+                connectingBlocks = true
                 logger.info("Reconnecting ${undoRollback!!.size} blocks")
                 val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
                 BlockDB.remove(toRemove)
+                connectingBlocks = false
             } else {
                 logger.info("Removing ${undoRollback!!.size} blocks from db")
                 val toRemove = undoRollback!!
