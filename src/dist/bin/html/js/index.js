@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(document).ready(function () {
 
     const apiVersion = "/api/v1", body = $("body");
     function request_promise(method, url) {
@@ -76,27 +76,31 @@ $(document).ready(function(){
                 return;
             }
             let data = JSON.parse(this.responseText);
-            let balance = parseInt(data.balance)/1e8;
+            let balance = parseInt(data.balance) / 1e8;
             document.getElementById('balance_result').value = balance + ' BLN';
         });
     }
     function transfer() {
 
-        let mnemonic, fee = 100000, amount, to, message, encrypted, url;
+        let mnemonic, fee = 100000, amount, to, message, encrypted, amountText, url;
 
         to = qs('#transfer_to').value;
         amount = qs('#transfer_amount').value;
         mnemonic = qs('#transfer_mnemonic').value;
         message = qs('#transfer_message').value;
         encrypted = message && qs('#transfer_encrypted').checked ? "1" : "";
-        
+
+        amountText = parseInt(amount).toFixed(8);
         amount = parseInt(amount) * 1e8;
 
         url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
-        request("POST", url, function () {
-            document.getElementById('transfer_result').value = this.responseText;
-        });
+        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
+
+            request("POST", url, function () {
+                document.getElementById('transfer_result').value = this.responseText;
+            });
+        }
     }
     function sign() {
         let mnemonic = document.getElementById('sign_mnemonic').value;
@@ -218,7 +222,7 @@ $(document).ready(function(){
         document.getElementById('new_mnemonic').value = blockData.mnemonic;
     }
 
-    function qs(selector){
+    function qs(selector) {
         return document.querySelector(selector);
     }
 
@@ -230,7 +234,7 @@ $(document).ready(function(){
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
         .on("click", "#generate_new_account", generate_new_account)
-        .on("click", "#display_api_json_result",function(event){
+        .on("click", "#display_api_json_result", function (event) {
             let el = event.target;
             display_api_json_result(el.dataset.type);
         });
