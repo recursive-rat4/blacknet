@@ -75,18 +75,24 @@ $(document).ready(function(){
                 document.getElementById('balance_result').value = 0;
                 return;
             }
-            let data = JSON.parse(this.responseText)
-            document.getElementById('balance_result').value = data.balance;
+            let data = JSON.parse(this.responseText);
+            let balance = parseInt(data.balance)/1e8;
+            document.getElementById('balance_result').value = balance + ' BLN';
         });
     }
     function transfer() {
-        let mnemonic = document.getElementById('transfer_mnemonic').value;
-        let fee = document.getElementById('transfer_fee').value;
-        let amount = document.getElementById('transfer_amount').value;
-        let to = document.getElementById('transfer_to').value;
-        let message = document.getElementById('transfer_message').value;
-        let encrypted = message && document.getElementById('transfer_encrypted').checked ? "1" : "";
-        let url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
+
+        let mnemonic, fee = 100000, amount, to, message, encrypted, url;
+
+        to = qs('#transfer_to').value;
+        amount = qs('#transfer_amount').value;
+        mnemonic = qs('#transfer_mnemonic').value;
+        message = qs('#transfer_message').value;
+        encrypted = message && qs('#transfer_encrypted').checked ? "1" : "";
+        
+        amount = parseInt(amount) * 1e8;
+
+        url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
         request("POST", url, function () {
             document.getElementById('transfer_result').value = this.responseText;
@@ -210,6 +216,10 @@ $(document).ready(function(){
         blockData = JSON.parse(blockData);
         document.getElementById('new_account').value = blockData.address;
         document.getElementById('new_mnemonic').value = blockData.mnemonic;
+    }
+
+    function qs(selector){
+        return document.querySelector(selector);
     }
 
     body.on("click", "#start_staking", start_staking)

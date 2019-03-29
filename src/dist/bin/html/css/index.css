@@ -172,3 +172,7 @@ tr:hover {
   padding-right: 5px;
   cursor: pointer;
 }
+
+.field-row strong{
+  color:  var(--gold-text) ;
+}
