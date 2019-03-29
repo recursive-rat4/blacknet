@@ -19,15 +19,53 @@ data class UndoBlock(
         val cumulativeDifficulty: BigInt,
         val supply: Long,
         val nxtrng: Hash,
-        val accounts: UndoList,
+        val accounts: UndoAccountList,
         val htlcs: UndoHTLCList,
         val multisigs: UndoMultisigList
+)
+
+open class UndoBuilder(
+        val blockTime: Long,
+        val difficulty: BigInt,
+        val cumulativeDifficulty: BigInt,
+        val supply: Long,
+        val nxtrng: Hash,
+        private val accounts: HashMap<PublicKey, AccountState> = HashMap(),
+        private val htlcs: HashMap<Hash, HTLC?> = HashMap(),
+        private val multisigs: HashMap<Hash, Multisig?> = HashMap()
 ) {
-    fun add(publicKey: PublicKey, state: AccountState) = accounts.add(Pair(publicKey, state))
-    fun addHTLC(id: Hash, htlc: HTLC?) = htlcs.add(Pair(id, htlc))
-    fun addMultisig(id: Hash, multisig: Multisig?) = multisigs.add(Pair(id, multisig))
+    open fun add(publicKey: PublicKey, state: AccountState) {
+        if (!accounts.containsKey(publicKey))
+            accounts.put(publicKey, state.copy())
+    }
+
+    open fun addHTLC(id: Hash, htlc: HTLC?) {
+        if (!htlcs.containsKey(id))
+            htlcs.put(id, htlc)
+    }
+
+    open fun addMultisig(id: Hash, multisig: Multisig?) {
+        if (!multisigs.containsKey(id))
+            multisigs.put(id, multisig)
+    }
+
+    fun build(): UndoBlock {
+        return UndoBlock(
+                blockTime,
+                difficulty,
+                cumulativeDifficulty,
+                supply,
+                nxtrng,
+                accounts.toArrayList(),
+                htlcs.toArrayList(),
+                multisigs.toArrayList())
+    }
 }
 
-typealias UndoList = ArrayList<Pair<PublicKey, AccountState>>
+private fun <K, V> HashMap<K, V>.toArrayList(): ArrayList<Pair<K, V>> {
+    return mapTo(ArrayList(size)) { Pair(it.key, it.value) }
+}
+
+typealias UndoAccountList = ArrayList<Pair<PublicKey, AccountState>>
 typealias UndoHTLCList = ArrayList<Pair<Hash, HTLC?>>
 typealias UndoMultisigList = ArrayList<Pair<Hash, Multisig?>>

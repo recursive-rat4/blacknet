@@ -45,7 +45,7 @@ object LedgerDB : Ledger {
     private val chainIndex = db.hashMap("chainIndex", HashSerializer, Serializer.INTEGER).createOrOpen()
     private val htlcs = db.hashMap("htlcs", HashSerializer, HTLCSerializer).createOrOpen()
     private val multisigs = db.hashMap("multisigs", HashSerializer, MultisigSerializer).createOrOpen()
-    private val updatedV2 = db.atomicBoolean("updatedV2", false).createOrOpen()
+    private val updated = db.atomicBoolean("updatedV3", false).createOrOpen()
 
     const val DEFAULT_MAX_BLOCK_SIZE = 100000
     private var maxBlockSize: Int
@@ -54,7 +54,7 @@ object LedgerDB : Ledger {
         val rescanHashes = ArrayList<Hash>()
         val rescanBlocks = ArrayList<ByteArray>()
 
-        if (!updatedV2.get()) {
+        if (!updated.get()) {
             logger.info("Rescanning blockchain...")
             runBlocking {
                 rescanHashes.ensureCapacity(height())
@@ -113,7 +113,7 @@ object LedgerDB : Ledger {
             chainIndex[Hash.ZERO] = 0
             blockTime.set(1545555600)
             difficulty.set(PoS.INITIAL_DIFFICULTY)
-            updatedV2.set(true)
+            updated.set(true)
             commit()
             logger.info("Loaded genesis.json ${accounts()} accounts, supply = ${supply()}")
         }
@@ -296,15 +296,12 @@ object LedgerDB : Ledger {
             return false
         }
 
-        val undo = UndoBlock(
+        val undo = UndoBuilder(
                 blockTime(),
                 difficulty(),
                 cumulativeDifficulty(),
                 supply(),
-                nxtrng(),
-                UndoList(),
-                UndoHTLCList(),
-                UndoMultisigList())
+                nxtrng())
 
         if (!PoS.check(block.time, block.generator, undo.nxtrng, undo.difficulty, undo.blockTime, generator.stakingBalance(height()))) {
             logger.info("invalid proof of stake")
@@ -328,14 +325,13 @@ object LedgerDB : Ledger {
         }
 
         generator = txDb.get(block.generator)!!
-        undo.add(block.generator, generator.copy())
+        undo.add(block.generator, generator)
+        txDb.addUndo(hash, undo.build())
         val reward = PoS.reward(supply())
-        txDb.addUndo(hash, undo)
         txDb.addSupply(reward)
         generator.prune(height())
         generator.debit(height(), reward + fees)
         txDb.set(block.generator, generator)
-        maxBlockSize = calcMaxBlockSize()
 
         return true
     }
@@ -356,7 +352,7 @@ object LedgerDB : Ledger {
         chainIndex.remove(hash)
 
         setSupply(undo.supply)
-        undo.accounts.asReversed().forEach {
+        undo.accounts.forEach {
             val key = it.first
             val state = it.second
             if (state.isEmpty())
@@ -364,7 +360,7 @@ object LedgerDB : Ledger {
             else
                 set(key, state)
         }
-        undo.htlcs.asReversed().forEach {
+        undo.htlcs.forEach {
             val id = it.first
             val htlc = it.second
             if (htlc != null)
@@ -372,7 +368,7 @@ object LedgerDB : Ledger {
             else
                 removeHTLC(id)
         }
-        undo.multisigs.asReversed().forEach {
+        undo.multisigs.forEach {
             val id = it.first
             val multisig = it.second
             if (multisig != null)
@@ -413,7 +409,7 @@ object LedgerDB : Ledger {
             val txHashes = ArrayList<Hash>(block.first.transactions.size)
             if (!processBlockImpl(txDb, it, block.first, block.second, txHashes)) {
                 logger.error("process block failed")
-                txDb.rollback()
+                txDb.close()
                 return@withLock toRemove
             }
             txDb.commit()
@@ -536,10 +532,11 @@ object LedgerDB : Ledger {
             LedgerDB.cumulativeDifficulty.set(PoS.cumulativeDifficulty(undo!!.cumulativeDifficulty, difficulty))
 
             LedgerDB.db.commit()
+
+            maxBlockSize = calcMaxBlockSize()
         }
 
-        fun rollback() {
-            LedgerDB.db.rollback()
+        fun close() {
         }
     }
 }

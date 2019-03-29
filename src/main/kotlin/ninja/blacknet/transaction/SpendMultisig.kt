@@ -14,6 +14,7 @@ import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
 
@@ -51,7 +52,7 @@ class SpendMultisig(
         return Blake2b.hash(bytes)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         val multisig = ledger.getMultisig(id)
         if (multisig == null) {
             logger.info("multisig not found")
@@ -61,7 +62,13 @@ class SpendMultisig(
             logger.info("invalid number of amounts")
             return false
         }
-        if (amounts.sum() != multisig.amount) {
+        val amount = try {
+            amounts.sumByLong()
+        } catch (e: ArithmeticException) {
+            logger.info("invalid total amount: ${e.message}")
+            return false
+        }
+        if (amount != multisig.amount) {
             logger.info("invalid total amount")
             return false
         }
@@ -87,7 +94,7 @@ class SpendMultisig(
                 return false
             } else if (amounts[i] != 0L) {
                 val toAccount = ledger.getOrCreate(multisig.keys[i])
-                undo.add(multisig.keys[i], toAccount.copy())
+                undo.add(multisig.keys[i], toAccount)
                 toAccount.debit(height, amounts[i])
                 ledger.set(multisig.keys[i], toAccount)
             }

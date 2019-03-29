@@ -27,7 +27,7 @@ class Burn(
 
     override fun getType() = TxType.Burn
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         if (amount == 0L) {
             logger.info("invalid amount")
             return false

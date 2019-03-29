@@ -12,7 +12,7 @@ package ninja.blacknet.transaction
 import mu.KotlinLogging
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.core.UndoBlock
+import ninja.blacknet.core.UndoBuilder
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BlacknetDecoder
 
@@ -21,9 +21,9 @@ private val logger = KotlinLogging.logger {}
 interface TxData {
     fun serialize(): ByteArray
     fun getType(): TxType
-    suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean
+    suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean
 
-    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         val account = ledger.get(tx.from)
         if (account == null) {
             logger.info("account not found")
@@ -33,7 +33,7 @@ interface TxData {
             logger.info("invalid sequence number")
             return false
         }
-        undo.add(tx.from, account.copy())
+        undo.add(tx.from, account)
         if (!account.credit(tx.fee)) {
             logger.info("insufficient funds for tx fee")
             return false

@@ -105,7 +105,7 @@ object BlockDB : DataDB() {
             APIServer.blockNotify(hash)
             return Status.ACCEPTED
         } else {
-            txDb.rollback()
+            txDb.close()
             return Status.INVALID
         }
     }

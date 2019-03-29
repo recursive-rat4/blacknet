@@ -21,7 +21,7 @@ apply plugin: 'application'
 mainClassName = "ninja.blacknet.Main"
 
 group 'ninja.blacknet'
-version '0.1.10'
+version '0.1.11'
 
 repositories {
     jcenter()
@@ -54,6 +54,16 @@ distributions {
             from { "3RD-PARTY-LICENSES.txt" }
         }
     }
+}
+
+task createVersionTxt {
+    doLast {
+        new File("$buildDir/resources/main/version.txt").write(project.version.toString())
+    }
+}
+
+jar {
+    dependsOn createVersionTxt
 }
 
 compileKotlin {

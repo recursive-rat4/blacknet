@@ -12,7 +12,15 @@ package ninja.blacknet.util
 inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
     var sum: Long = 0
     for (element in this) {
-        sum += selector(element)
+        sum = Math.addExact(sum, selector(element))
+    }
+    return sum
+}
+
+fun ArrayList<Long>.sumByLong(): Long {
+    var sum: Long = 0
+    for (i in this.indices) {
+        sum = Math.addExact(sum, this[i])
     }
     return sum
 }

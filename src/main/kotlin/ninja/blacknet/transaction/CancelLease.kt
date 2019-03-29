@@ -28,13 +28,13 @@ class CancelLease(
 
     override fun getType() = TxType.CancelLease
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         val toAccount = ledger.get(to)
         if (toAccount == null) {
             logger.info("account not found")
             return false
         }
-        undo.add(to, toAccount.copy())
+        undo.add(to, toAccount)
         if (toAccount.leases.remove(AccountState.LeaseInput(tx.from, height, amount))) {
             ledger.set(to, toAccount)
             val account = ledger.get(tx.from)!!

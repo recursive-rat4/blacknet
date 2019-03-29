@@ -37,7 +37,7 @@ interface Ledger {
         return get(key) ?: AccountState.create()
     }
 
-    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int, undo: UndoBlock): Boolean {
+    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int, undo: UndoBuilder): Boolean {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
             return false

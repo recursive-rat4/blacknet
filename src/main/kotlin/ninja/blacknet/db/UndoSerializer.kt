@@ -34,7 +34,7 @@ object UndoSerializer : Serializer<UndoBlock> {
         val supply = input.unpackLong()
         val nxtrng = HashSerializer.deserialize(input, 0)
         val accountsSize = input.unpackInt()
-        val accounts = UndoList(accountsSize)
+        val accounts = UndoAccountList(accountsSize)
         if (accountsSize > 0)
             for (i in 1..accountsSize) {
                 val key = PublicKeySerializer.deserialize(input, 0)

@@ -25,7 +25,7 @@ class RefundHTLC(
 
     override fun getType() = TxType.RefundHTLC
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             logger.info("htlc not found")

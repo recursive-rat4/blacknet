@@ -24,7 +24,7 @@ class Bundle(
 
     override fun getType() = TxType.Bundle
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         return true
     }
 }

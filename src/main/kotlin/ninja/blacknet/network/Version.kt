@@ -21,7 +21,7 @@ import kotlin.random.Random
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-class Version(
+internal class Version(
         private val magic: Int,
         private val version: Int,
         private val time: Long,
@@ -38,7 +38,7 @@ class Version(
     override suspend fun process(connection: Connection) {
         connection.timeOffset = Node.time() - time
         connection.version = version
-        connection.agent = agent
+        connection.agent = Bip14.sanitize(agent)
         connection.feeFilter = feeFilter
 
         if (magic != Node.magic || version < Node.minVersion) {

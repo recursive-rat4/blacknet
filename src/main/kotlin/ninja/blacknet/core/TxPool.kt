@@ -81,7 +81,7 @@ object TxPool : MemPool(), Ledger {
             logger.info("deserialization failed")
             return Status.INVALID
         }
-        if (processTransactionImpl(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
+        if (processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())) {
             add(hash, bytes)
             transactions.add(hash)
             connection?.lastTxTime = Node.time()
@@ -104,13 +104,19 @@ object TxPool : MemPool(), Ledger {
             else if (tx.seq < from.seq)
                 return INVALID
 
-        if (processTransactionImpl(tx, hash, bytes.size, UndoBlock(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, UndoList(), UndoHTLCList(), UndoMultisigList()))) {
+        if (processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())) {
             add(hash, bytes)
             transactions.add(hash)
             connection?.lastTxTime = Node.time()
             return tx.fee
         }
         return INVALID
+    }
+
+    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO) {
+        override fun add(publicKey: PublicKey, state: AccountState) {}
+        override fun addHTLC(id: Hash, htlc: HTLC?) {}
+        override fun addMultisig(id: Hash, multisig: Multisig?) {}
     }
 
     suspend fun remove(hashes: ArrayList<Hash>) = mutex.withLock {

@@ -28,11 +28,11 @@ class CreateMultisig(
 
     override fun getType() = TxType.CreateMultisig
 
-    fun sign(privateKey: PrivateKey): Boolean {
+    fun sign(from: PublicKey, seq: Int, privateKey: PrivateKey): Boolean {
         val publicKey = privateKey.toPublicKey()
         val i = deposits.indexOfFirst { it.first == publicKey }
         if (i == -1) return false
-        val signature = Ed25519.sign(hash(), privateKey)
+        val signature = Ed25519.sign(hash(from, seq), privateKey)
         signatures.add(Pair(i.toByte(), signature))
         return true
     }
@@ -41,13 +41,13 @@ class CreateMultisig(
         return Ed25519.verify(signature, hash, publicKey)
     }
 
-    private fun hash(): Hash {
+    private fun hash(from: PublicKey, seq: Int): Hash {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = copy.serialize()
-        return Blake2b.hash(bytes)
+        return (Blake2b.Hasher() + from.bytes.array + seq + bytes).hash()
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         if (n < 0 || n > deposits.size) {
             logger.info("invalid n")
             return false
@@ -60,13 +60,18 @@ class CreateMultisig(
             logger.info("too many signatures")
             return false
         }
-        val total = deposits.sumByLong { it.second }
+        val total = try {
+            deposits.sumByLong { it.second }
+        } catch (e: ArithmeticException) {
+            logger.info("invalid total amount: ${e.message}")
+            return false
+        }
         if (total <= 0) {
             logger.info("invalid total amount")
             return false
         }
 
-        val multisigHash = hash()
+        val multisigHash = hash(tx.from, tx.seq)
         for (i in deposits.indices) {
             if (deposits[i].second != 0L) {
                 val signature = signatures.find { it.first == i.toByte() }?.second
@@ -83,7 +88,7 @@ class CreateMultisig(
                     logger.info("account not found")
                     return false
                 }
-                undo.add(deposits[i].first, depositAccount.copy())
+                undo.add(deposits[i].first, depositAccount)
                 if (!depositAccount.credit(deposits[i].second))
                     return false
                 ledger.set(deposits[i].first, depositAccount)

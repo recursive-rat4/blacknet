@@ -9,6 +9,7 @@
 
 package ninja.blacknet.crypto
 
+import com.google.common.primitives.Ints
 import com.google.common.primitives.Longs
 import com.rfksystems.blake2b.Blake2b
 import kotlinx.serialization.toUtf8Bytes
@@ -43,6 +44,10 @@ object Blake2b : (ByteArray) -> ByteArray {
     }
 
     class Hasher(private val blake2b: Blake2b = Blake2b(Hash.DIGEST_SIZE)) {
+        operator fun plus(int: Int): Hasher {
+            return this.plus(Ints.toByteArray(int))
+        }
+
         operator fun plus(long: Long): Hasher {
             return this.plus(Longs.toByteArray(long))
         }

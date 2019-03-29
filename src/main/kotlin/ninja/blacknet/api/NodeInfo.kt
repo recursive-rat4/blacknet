@@ -10,6 +10,7 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.network.Bip14
 import ninja.blacknet.network.Node
 
 @Serializable
@@ -23,7 +24,7 @@ class NodeInfo(
     companion object {
         suspend fun get(): NodeInfo {
             val listening = Node.listenAddress.mapToList { it.toString() }
-            return NodeInfo(Node.agent, Node.version, Node.outgoing(), Node.incoming(), listening)
+            return NodeInfo(Bip14.agent, Node.version, Node.outgoing(), Node.incoming(), listening)
         }
     }
 }

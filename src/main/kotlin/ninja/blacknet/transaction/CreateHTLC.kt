@@ -32,7 +32,7 @@ class CreateHTLC(
 
     override fun getType() = TxType.CreateHTLC
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBlock): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         if (!HTLC.isValidTimeLockType(timeLockType)) {
             logger.info("unknown timelock type $timeLockType")
             return false

@@ -19,7 +19,7 @@ class PeerInfo(
         val localAddress: String,
         val timeOffset: Long,
         val ping: Long,
-        val version: Int,
+        val protocolVersion: Int,
         val agent: String,
         val state: String,
         val dosScore: Int,

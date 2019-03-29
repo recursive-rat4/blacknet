@@ -16,7 +16,6 @@ import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
@@ -50,9 +49,8 @@ object Node : CoroutineScope {
     const val DEFAULT_P2P_PORT = 28453
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
-    const val version = 7
+    const val version = 8
     const val minVersion = 5
-    const val agent = "Blacknet"
     override val coroutineContext: CoroutineContext = Dispatchers.Default
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
@@ -186,7 +184,7 @@ object Node : CoroutineScope {
     fun sendVersion(connection: Connection, nonce: Long) {
         val blockHash = if (isInitialSynchronization()) Hash.ZERO else LedgerDB.blockHash()
         val cumulativeDifficulty = if (isInitialSynchronization()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
-        val v = Version(magic, version, time(), nonce, agent, minTxFee, blockHash, cumulativeDifficulty)
+        val v = Version(magic, version, time(), nonce, Bip14.agent, minTxFee, blockHash, cumulativeDifficulty)
         connection.sendPacket(v)
     }
 
