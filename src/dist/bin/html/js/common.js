@@ -30,7 +30,15 @@ void function(){
             network.find('.accounts').html(data.accounts);
         });
     };
+    Blacknet.get = function(url, callback){
+
+        return $.get(apiVersion + url, callback);
+    };
+    Blacknet.post = function(url, callback){
+        return $.post(apiVersion + url, {}, callback);
+    };
 
     Blacknet.network();
     Blacknet.balance();
+    window.Blacknet = Blacknet;
 }();

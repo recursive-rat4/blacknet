@@ -50,14 +50,34 @@ $(document).ready(function () {
         return false;
     }
 
+    function sign() {
+        let mnemonic = $('#sign_mnemonic').val();
+        let message = $('#sign_message').val();
+        let url = "/signmessage/" + mnemonic + "/" + message + "/";
+
+        Blacknet.post(url, function (data) {
+            $('#sign_result').val(data);
+        });
+    }
+    function verify() {
+        let account = $('#verify_account').val();
+        let signature = $('#verify_signature').val();
+        let message = $('#verify_message').val();
+        let url = "/verifymessage/" + account + "/" + signature + "/" + message + "/";
+
+        Blacknet.get(url, function (data) {
+            $('#verify_result').val(data);
+        });
+    }
+    
     menu.on('click', 'li', menuSwitch);
     body.on("click", "#start_staking", start_staking_click);
-    panel.find('.'+hash).show();
+    panel.find('.'+hash).show()
         // .on("click", "#stop_staking", stop_staking)
         // .on("click", "#balance", balance)
         // .on("click", "#transfer", transfer)
-        // .on("click", "#sign", sign)
-        // .on("click", "#verify", verify)
+        .on("click", "#sign", sign)
+        .on("click", "#verify", verify)
         // .on("click", "#mnemonic_info", mnemonic_info)
         // .on("click", "#generate_new_account", generate_new_account)
         // .on("click", "#display_api_json_result", function (event) {
