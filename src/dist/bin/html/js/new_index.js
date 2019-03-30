@@ -84,6 +84,16 @@ $(document).ready(function () {
             $('#mnemonic_info_result').html(html);
         }, 'json');
     }
+
+    async function generate_new_account() {
+        let url = '/account/generate';
+        let blockData = await Blacknet.getPromise(url);
+        blockData = JSON.parse(blockData);
+        $('#new_account').val(blockData.address);
+        $('#new_mnemonic').val(blockData.mnemonic);
+        $('#new_pubkey').val(blockData.publicKey);
+        
+    }
     
     menu.on('click', 'li', menuSwitch);
     body.on("click", "#start_staking", start_staking_click);
@@ -94,7 +104,7 @@ $(document).ready(function () {
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
-        // .on("click", "#generate_new_account", generate_new_account)
+        .on("click", "#generate_new_account", generate_new_account)
         // .on("click", "#display_api_json_result", function (event) {
         //     let el = event.target;
         //     display_api_json_result(el.dataset.type);
