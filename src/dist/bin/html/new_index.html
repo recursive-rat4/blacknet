@@ -26,7 +26,7 @@
             Blacknet
         </div>
         <div class="network">
-            <p>Height: <span>123799</span> Connections: <span>29</span></p>
+            <p>Supply: <span class="supply"></span> Accounts: <span class="accounts"></span> Height: <span class="height"></span> Connections: <span class="connections">0</span></p>
         </div>
     </header>
     <div class="container">
@@ -60,7 +60,7 @@
                         </tr>
                         <tr>
                             <td>Balance</td>
-                            <td>21213.0213123 BLN</td>
+                            <td class="balance">21213.0213123 BLN</td>
                         </tr>
                         <tr>
                             <td>Staking</td>
@@ -211,10 +211,10 @@
             <p><span>This operation needs your Mnemonic.</span></p>
             <br>
             <p>Enter Your Mnemonic:</p>
-            <input type="password">
+            <input type="password" class='mnemonic'>
         </div>
         <div class="btns">
-            <button id="generate_new_account">Confirm</button>
+            <button class="confirm">Confirm</button>
         </div>
     </div>
     <footer>
@@ -224,6 +224,7 @@
 
     <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="js/new_index.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
 </body>
 
 </html>
