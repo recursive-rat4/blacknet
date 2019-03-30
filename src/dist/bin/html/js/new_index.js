@@ -69,6 +69,21 @@ $(document).ready(function () {
             $('#verify_result').val(data);
         });
     }
+    function mnemonic_info() {
+        let mnemonic = $('#mnemonic_info_mnemonic').val();
+        let url = "/mnemonic/info/" + mnemonic + "/";
+
+        Blacknet.post( url, function (data) {
+            let html = '';
+
+            data.mnemonic = data.mnemonic.replace(/[a-z]/g, '*');
+            
+            html += 'mnemonic: ' + data.mnemonic;
+            html += '<br>address: ' + data.address;
+            html += '<br>publicKey: ' + data.publicKey;
+            $('#mnemonic_info_result').html(html);
+        }, 'json');
+    }
     
     menu.on('click', 'li', menuSwitch);
     body.on("click", "#start_staking", start_staking_click);
@@ -78,7 +93,7 @@ $(document).ready(function () {
         // .on("click", "#transfer", transfer)
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
-        // .on("click", "#mnemonic_info", mnemonic_info)
+        .on("click", "#mnemonic_info", mnemonic_info)
         // .on("click", "#generate_new_account", generate_new_account)
         // .on("click", "#display_api_json_result", function (event) {
         //     let el = event.target;

@@ -34,8 +34,8 @@ void function(){
 
         return $.get(apiVersion + url, callback);
     };
-    Blacknet.post = function(url, callback){
-        return $.post(apiVersion + url, {}, callback);
+    Blacknet.post = function(url, callback, type){
+        return $.post(apiVersion + url, {}, callback, type);
     };
 
     Blacknet.network();

@@ -287,3 +287,10 @@ input:focus,button:focus{
     width: 490px;
     padding: 2px 5px;
 }
+
+
+fieldset pre{
+    width: 80%;
+    height: 55px;
+    flex-grow: 8;
+}
