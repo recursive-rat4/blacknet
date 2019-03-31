@@ -5,10 +5,36 @@ void function(){
     const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");;
     const hash = localStorage.hashIndex || 'overview';
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
-    const account = localStorage.account || 'blacknet1mm29uzgw40vl3mtaf3mepserc0vtmuapvmx5l92qxggvx0aqlnysp3v2hz';
+    const account = localStorage.account;
+    const dialogAccount = $('.dialog.account');
 
 
+    Blacknet.init = function(){
 
+        if(account){
+
+            mask.removeClass('init').hide();
+            $('.dialog.account').hide();
+
+            mask.on('click', function(){
+                mask.hide();
+                dialogPassword.hide();
+            });
+        }else{
+            dialogAccount.find('.enter').unbind().on('click', function(){
+                
+                let account = dialogAccount.find('.account_text').val();
+
+                if(/^blacknet[a-z0-9]{59}$/.test(account)){
+
+                    localStorage.account = account;
+                    location.reload();
+                }else{
+                    alert('Invalid Account');
+                }
+            });
+        }
+    };
 
     Blacknet.balance = async function(){
 
@@ -33,7 +59,6 @@ void function(){
         $.getJSON(apiVersion + '/nodeinfo', function(data){
 
             network.find('.connections').html(data.incoming);
-            console.log(data.incoming);
         });
     };
     Blacknet.get = function(url, callback){
@@ -48,6 +73,7 @@ void function(){
         return $.post(apiVersion + url, {}, callback, type);
     };
 
+    Blacknet.init();
     Blacknet.network();
     Blacknet.balance();
     window.Blacknet = Blacknet;

@@ -4,7 +4,6 @@ $(document).ready(function () {
     const hash = localStorage.hashIndex || 'overview';
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
 
-    const account = localStorage.account || 'blacknet1mm29uzgw40vl3mtaf3mepserc0vtmuapvmx5l92qxggvx0aqlnysp3v2hz';
     
     menu.find('a[data-index="'+hash+'"]').parent().addClass('active');
    
@@ -124,9 +123,7 @@ $(document).ready(function () {
         }
     }
 
-    mask.on('click', function(){
-        hidePasswordDialog();
-    });
+    
     
     menu.on('click', 'li', menuSwitch);
     panel.find('.'+hash).show();

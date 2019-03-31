@@ -221,7 +221,11 @@ box-shadow: inset 0 0 4px #000000;
     background: var(--darker-grey-bg);
     opacity: 0.9;
     z-index: 100;
-    display: none;
+    /* display: none; */
+}
+.mask.init{
+    background: #2A2A2A;
+    opacity: 1;
 }
 
 .dialog{
@@ -293,4 +297,21 @@ fieldset pre{
     width: 80%;
     height: 55px;
     flex-grow: 8;
+}
+
+.dialog.account {
+    text-align: center;
+    width: 600px;
+    height: 360px;
+    margin: -200px 0 0 -300px;
+    border: none;
+    border-radius: none;
+}
+
+.dialog.account h1{
+    color: var(--gold-text);
+}
+
+.dialog.account button{
+    margin-top: 20px;
 }
