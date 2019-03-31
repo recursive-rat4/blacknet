@@ -15,7 +15,7 @@ void function(){
         let balance = $('.balance');
 
         $.getJSON(apiVersion + '/ledger/get/' + account + '/', function(data){
-            balance.html( (data.balance/1e8).toFixed(8) + ' BLN');
+            balance.html( new BigNumber(data.balance).dividedBy(1e8) + ' BLN');
         }).fail(function(){
             balance.html('0.00000000 BLN');
         });
@@ -28,6 +28,12 @@ void function(){
             network.find('.height').html(data.height);
             network.find('.supply').html((data.supply/1e8).toFixed(0));
             network.find('.accounts').html(data.accounts);
+        });
+
+        $.getJSON(apiVersion + '/nodeinfo', function(data){
+
+            network.find('.connections').html(data.incoming);
+            console.log(data.incoming);
         });
     };
     Blacknet.get = function(url, callback){

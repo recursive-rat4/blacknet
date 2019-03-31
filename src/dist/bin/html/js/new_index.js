@@ -94,13 +94,47 @@ $(document).ready(function () {
         $('#new_pubkey').val(blockData.publicKey);
         
     }
+
+    function transfer_click(){
+        mask.show();
+        dialogPassword.show().find('.confirm').unbind().on('click', function(){
+            transfer(dialogPassword.find('.mnemonic').val());
+        });
+    }
+
+    function transfer(mnemonic) {
+        
+        let fee = 100000, amount, to, message, encrypted, amountText, url;
+
+        to = $('#transfer_to').val();
+        amount = $('#transfer_amount').val();
+        message = $('#transfer_message').val();
+        encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
+
+        amountText = new BigNumber(amount).toFixed(8);
+        amount = new BigNumber(amount).times(1e8);
+
+        url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
+
+        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
+
+            Blacknet.post(url, function (data) {
+                $('#transfer_result').val(data);
+            });
+        }
+    }
+
+    mask.on('click', function(){
+        hidePasswordDialog();
+    });
     
     menu.on('click', 'li', menuSwitch);
-    body.on("click", "#start_staking", start_staking_click);
-    panel.find('.'+hash).show()
+    panel.find('.'+hash).show();
+
         // .on("click", "#stop_staking", stop_staking)
         // .on("click", "#balance", balance)
-        // .on("click", "#transfer", transfer)
+    body.on("click", "#start_staking", start_staking_click)
+        .on("click", "#transfer", transfer_click)
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
