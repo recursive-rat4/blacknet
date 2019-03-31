@@ -76,7 +76,7 @@ $(document).ready(function () {
                 return;
             }
             let data = JSON.parse(this.responseText);
-            let balance = parseInt(data.balance) / 1e8;
+            let balance = new BigNumber(data.balance).dividedBy(1e8);
             document.getElementById('balance_result').value = balance + ' BLN';
         });
     }
@@ -90,8 +90,8 @@ $(document).ready(function () {
         message = qs('#transfer_message').value;
         encrypted = message && qs('#transfer_encrypted').checked ? "1" : "";
 
-        amountText = parseInt(amount).toFixed(8);
-        amount = parseInt(amount) * 1e8;
+        amountText = new BigNumber(amount).toFixed(8);
+        amount = new BigNumber(amount).times(1e8);
 
         url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
