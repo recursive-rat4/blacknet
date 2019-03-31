@@ -317,7 +317,7 @@ object LedgerDB : Ledger {
             }
             val txHash = Transaction.Hasher(bytes.array)
             if (!txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)) {
-                logger.info("invalid transaction")
+                logger.info("invalid tx $txHash")
                 return false
             }
             txHashes.add(txHash)

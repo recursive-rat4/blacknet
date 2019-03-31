@@ -57,12 +57,13 @@ distributions {
 }
 
 task createVersionTxt {
+    dependsOn processResources
     doLast {
         new File("$buildDir/resources/main/version.txt").write(project.version.toString())
     }
 }
 
-jar {
+classes {
     dependsOn createVersionTxt
 }
 
