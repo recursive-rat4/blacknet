@@ -1,4 +1,13 @@
-$(document).ready(function(){
+/*
+ * Copyright (c) 2018-2019 Blacknet Team
+ *
+ * Licensed under the Jelurida Public License version 1.1
+ * for the Blacknet Public Blockchain Platform (the "License");
+ * you may not use this file except in compliance with the License.
+ * See the LICENSE.txt file at the top-level directory of this distribution.
+ */
+
+$(document).ready(function () {
 
     const apiVersion = "/api/v1", body = $("body");
     function request_promise(method, url) {
@@ -75,22 +84,32 @@ $(document).ready(function(){
                 document.getElementById('balance_result').value = 0;
                 return;
             }
-            let data = JSON.parse(this.responseText)
-            document.getElementById('balance_result').value = data.balance;
+            let data = JSON.parse(this.responseText);
+            let balance = new BigNumber(data.balance).dividedBy(1e8);
+            document.getElementById('balance_result').value = balance + ' BLN';
         });
     }
     function transfer() {
-        let mnemonic = document.getElementById('transfer_mnemonic').value;
-        let fee = document.getElementById('transfer_fee').value;
-        let amount = document.getElementById('transfer_amount').value;
-        let to = document.getElementById('transfer_to').value;
-        let message = document.getElementById('transfer_message').value;
-        let encrypted = message && document.getElementById('transfer_encrypted').checked ? "1" : "";
-        let url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
-        request("POST", url, function () {
-            document.getElementById('transfer_result').value = this.responseText;
-        });
+        let mnemonic, fee = 100000, amount, to, message, encrypted, amountText, url;
+
+        to = qs('#transfer_to').value;
+        amount = qs('#transfer_amount').value;
+        mnemonic = qs('#transfer_mnemonic').value;
+        message = qs('#transfer_message').value;
+        encrypted = message && qs('#transfer_encrypted').checked ? "1" : "";
+
+        amountText = new BigNumber(amount).toFixed(8);
+        amount = new BigNumber(amount).times(1e8);
+
+        url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
+
+        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
+
+            request("POST", url, function () {
+                document.getElementById('transfer_result').value = this.responseText;
+            });
+        }
     }
     function sign() {
         let mnemonic = document.getElementById('sign_mnemonic').value;
@@ -212,6 +231,10 @@ $(document).ready(function(){
         document.getElementById('new_mnemonic').value = blockData.mnemonic;
     }
 
+    function qs(selector) {
+        return document.querySelector(selector);
+    }
+
     body.on("click", "#start_staking", start_staking)
         .on("click", "#stop_staking", stop_staking)
         .on("click", "#balance", balance)
@@ -220,7 +243,7 @@ $(document).ready(function(){
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
         .on("click", "#generate_new_account", generate_new_account)
-        .on("click", "#display_api_json_result",function(event){
+        .on("click", "#display_api_json_result", function (event) {
             let el = event.target;
             display_api_json_result(el.dataset.type);
         });

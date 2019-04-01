@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2018 Pavel Vasin
+  ~ Copyright (c) 2018-2019 Blacknet Team
   ~
   ~ Licensed under the Jelurida Public License version 1.1
   ~ for the Blacknet Public Blockchain Platform (the "License");
@@ -13,6 +13,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Blacknet</title>
+  <link rel="shortcut icon" href="favicon.ico">
   <link rel="stylesheet" href="css/index.css">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self';">
 </head>
@@ -64,12 +65,12 @@
           <input type="password" id="transfer_mnemonic">
         </div>
         <div class="field-row">
-          <label>Fee</label>
-          <input type="text" id="transfer_fee">
+          <label>Fee <strong>(BLN)</strong></label>
+          <input type="text" id="transfer_fee" readonly value='0.001'>
         </div>
         <div class="field-row">
-          <label>Amount</label>
-          <input type="text" id="transfer_amount">
+          <label>Amount <strong>(BLN)</strong></label>
+          <input type="number" id="transfer_amount">
         </div>
         <div class="field-row">
           <label>To</label>
@@ -224,6 +225,7 @@
   </footer>
 
   <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="js/bignumber.min.js"></script>
   <script type="text/javascript" src="js/index.js"></script>
 </body>
 

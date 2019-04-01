@@ -1,0 +1,247 @@
+<!--
+  ~ Copyright (c) 2018-2019 Blacknet Team
+  ~
+  ~ Licensed under the Jelurida Public License version 1.1
+  ~ for the Blacknet Public Blockchain Platform (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ See the LICENSE.txt file at the top-level directory of this distribution.
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Blacknet</title>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/new_index.css">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            Blacknet
+        </div>
+        <div class="network">
+            <p>Supply:<span class="supply"></span>  Accounts: <span class="accounts"></span>  Height: <span class="height"></span>  Connections: <span class="connections">-</span></p>
+        </div>
+    </header>
+    <div class="container">
+        <div class="main-menu">
+
+            <div class="menu">
+                <ul>
+                    <li><a href="#" data-index="overview">Overview</a></li>
+                    <li><a href="#" data-index="send">Send</a></li>
+                    <!-- <li><a href="#" data-index="transactions">Transactions</a></li> -->
+                    <li><a href="#" data-index="sign">Sign/Verify Message</a></li>
+                    <li><a href="#" data-index="info">Mnemonic info</a></li>
+                    <li><a href="#" data-index="generate">Generate new account</a></li>
+                    <!-- <li><a href="#" data-index="recentblocks">Recent Blocks</a></li> -->
+                    <!-- <li><a href="#" data-index="txpool">Tx Pool</a></li> -->
+                </ul>
+            </div>
+        </div>
+        <div class="rightpanel">
+            <div class="overview">
+                <table>
+                    <thead>
+                        <td>
+                            Wallet Info
+                        </td>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Account</td>
+                            <td>blacknet1p6net7gqy907ga6skdasf63ewz08ez83puhmlyquj0sdy0f0xyvslc4j3u</td>
+                        </tr>
+                        <tr>
+                            <td>Balance</td>
+                            <td class="balance">21213.0213123 BLN</td>
+                        </tr>
+                        <tr>
+                            <td>Staking</td>
+                            <td>no <button id="start_staking">Start staking</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="transactions">
+                transactions
+            </div>
+            <div class="send">
+                <fieldset>
+                    <legend>Send BLN</legend>
+                    <!-- <div class="field-row">
+                        <label>Mnemonic</label>
+                        <input type="password" id="transfer_mnemonic">
+                    </div> -->
+                    <div class="field-row">
+                        <label>Pay To</label>
+                        <input type="text" id="transfer_to">
+                    </div>
+
+                    <div class="field-row">
+                        <label>Amount <strong>(BLN)</strong></label>
+                        <input type="number" id="transfer_amount">
+                    </div>
+
+                    <div class="field-row">
+                        <label>Message</label>
+                        <input type="text" id="transfer_message">
+                    </div>
+                    <div class="field-row">
+                        <label>Encrypted</label>
+                        <input type="checkbox" id="transfer_encrypted">
+                    </div>
+                    <div class="field-row">
+                        <label>Fee <strong>(BLN)</strong></label>
+                        <input type="text" id="transfer_fee" readonly value='0.001'>
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="transfer_result" readonly>
+                    </div>
+                    <button id="transfer">Send</button>
+                </fieldset>
+            </div>
+            <div class="sign">
+                <fieldset>
+                    <legend>Sign message</legend>
+                    <div class="field-row">
+                        <label>Mnemonic</label>
+                        <input type="password" id="sign_mnemonic">
+                    </div>
+                    <div class="field-row">
+                        <label>Message</label>
+                        <input type="text" id="sign_message">
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="sign_result" readonly>
+                    </div>
+                    <button id="sign">Sign message</button>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Verify message</legend>
+                    <div class="field-row">
+                        <label>Account</label>
+                        <input type="text" id="verify_account">
+                    </div>
+                    <div class="field-row">
+                        <label>Signature</label>
+                        <input type="text" id="verify_signature">
+                    </div>
+                    <div class="field-row">
+                        <label>Message</label>
+                        <input type="text" id="verify_message">
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="verify_result" readonly>
+                    </div>
+                    <button id="verify">Verify message</button>
+                </fieldset>
+            </div>
+            <div class="info">
+                <fieldset>
+                    <legend>Mnemonic info</legend>
+                    <div class="field-row">
+                        <label>Mnemonic</label>
+                        <input type="password" id="mnemonic_info_mnemonic">
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <pre id="mnemonic_info_result"></pre>
+                    </div>
+                    <button id="mnemonic_info">Mnemonic info</button>
+                </fieldset>
+            </div>
+            <div class="generate">
+                <fieldset>
+                    <legend>Generate new account</legend>
+                    <div class="field-row">
+                        <label>Mnemonic</label>
+                        <input type="text" id="new_mnemonic" readonly>
+                    </div>
+                    <div class="field-row">
+                        <label>PublicKey</label>
+                        <input type="text" id="new_pubkey" readonly>
+                    </div>
+                    <div class="field-row">
+                        <label>Account</label>
+                        <input type="text" id="new_account" readonly>
+                    </div>
+                    <button id="generate_new_account">Generate</button>
+                </fieldset>
+            </div>
+            <div class="recentblocks">
+                recentblocks
+            </div>
+            <div class="txpool">
+                to be develop
+            </div>
+
+        </div>
+        <!-- End container div -->
+    </div>
+
+    <div class="mask init"></div>
+    <div class="dialog send">
+        <div class="header"></div>
+        <div class="body">
+            <br>
+            <p>Are you sure you want to send?</p>
+            <br>
+            <br>
+            <p>1000.00000000 BLN to</p>
+            <p>blacknet1p6net7gqy907ga6skdasf63ewz08ez83puhmlyquj0sdy0f0xyvslc4j3u</p>
+            <br>
+            <br>
+            <p>BLN added as transaction fee?</p>
+        </div>
+        <div class="btns">
+            <button id="generate_new_account">Confirm</button>
+            <button id="generate_new_account" class="cancel">Cancel</button>
+        </div>
+    </div>
+    <div class="dialog password">
+        <div class="header"></div>
+        <div class="body">
+            <p><span>This operation needs your Mnemonic.</span></p>
+            <br>
+            <p>Enter Your Mnemonic:</p>
+            <input type="password" class='mnemonic'>
+        </div>
+        <div class="btns">
+            <button class="confirm">Confirm</button>
+        </div>
+    </div>
+    <div class="dialog account">
+        <div class="header"></div>
+        <div class="body">
+            <img src="images/logo.png" height="160" width="160" alt="">
+            <h1>Blacknet Wallet</h1>
+            <p>Enter Your Account:<input type="text" class='account_text' placeholder="blacknet1*****"></p>
+            
+        </div>
+        <div class="">
+            <button class="enter">Enter</button>
+        </div>
+    </div>
+    <footer>
+
+    </footer>
+
+
+    <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="js/bignumber.min.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
+    <script type="text/javascript" src="js/new_index.js"></script>
+</body>
+
+</html>

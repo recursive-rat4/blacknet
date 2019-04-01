@@ -8,3 +8,6 @@
 
 /db
 /log
+
+# MacOS
+.DS_store
