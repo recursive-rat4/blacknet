@@ -25,9 +25,8 @@ class PrivateKey(val bytes: ByteArray) {
         const val SIZE = 32
 
         fun fromString(hex: String?): PrivateKey? {
-            if (hex == null || hex.length != SIZE * 2)
-                return null
-            val bytes = fromHex(hex) ?: return null
+            if (hex == null) return null
+            val bytes = fromHex(hex, SIZE) ?: return null
             return PrivateKey(bytes)
         }
     }

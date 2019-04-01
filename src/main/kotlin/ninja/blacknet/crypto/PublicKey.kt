@@ -9,26 +9,47 @@
 
 package ninja.blacknet.crypto
 
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
-import ninja.blacknet.serialization.SerializableByteArray32
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.json.JsonInput
+import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.util.fromHex
+import ninja.blacknet.util.toHex
 
 @Serializable
-class PublicKey(val bytes: SerializableByteArray32) {
-    constructor(bytes: ByteArray) : this(SerializableByteArray32(bytes))
+class PublicKey(val bytes: ByteArray) {
+    override fun equals(other: Any?): Boolean = (other is PublicKey) && bytes.contentEquals(other.bytes)
+    override fun hashCode(): Int = bytes.contentHashCode()
+    override fun toString(): String = bytes.toHex()
 
-    override fun equals(other: Any?): Boolean = (other is PublicKey) && bytes == other.bytes
-    override fun hashCode(): Int = bytes.hashCode()
-    override fun toString(): String = bytes.toString()
-
+    @Serializer(forClass = PublicKey::class)
     companion object {
         const val SIZE = 32
 
         fun fromString(hex: String?): PublicKey? {
-            if (hex == null || hex.length != SIZE * 2)
-                return null
-            val bytes = fromHex(hex) ?: return null
+            if (hex == null) return null
+            val bytes = fromHex(hex, SIZE) ?: return null
             return PublicKey(bytes)
+        }
+
+        override fun deserialize(decoder: Decoder): PublicKey {
+            return when (decoder) {
+                is BlacknetDecoder -> PublicKey(decoder.decodeByteArrayValue(SIZE))
+                is JsonInput -> Address.decode(decoder.decodeString())!!
+                else -> throw RuntimeException("unsupported decoder")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: PublicKey) {
+            when (encoder) {
+                is BlacknetEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is JsonOutput -> encoder.encodeString(Address.encode(obj))
+                else -> throw RuntimeException("unsupported encoder")
+            }
         }
     }
 }

@@ -30,10 +30,10 @@ class Block(
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
         val bytes = serialize()
         contentHash = contentHash(bytes)
-        System.arraycopy(contentHash.bytes.array, 0, bytes, CONTENT_HASH_POS, Hash.SIZE)
+        System.arraycopy(contentHash.bytes, 0, bytes, CONTENT_HASH_POS, Hash.SIZE)
         val hash = Hasher(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature.bytes.array, 0, bytes, SIGNATURE_POS, Signature.SIZE)
+        System.arraycopy(signature.bytes, 0, bytes, SIGNATURE_POS, Signature.SIZE)
         return Pair(hash, bytes)
     }
 

@@ -63,7 +63,7 @@ object Ed25519 {
         val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         edDSAEngine.initSign(edDSAPrivateKey)
         edDSAEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE)
-        edDSAEngine.update(hash.bytes.array)
+        edDSAEngine.update(hash.bytes)
         return Signature(edDSAEngine.sign())
     }
 
@@ -74,8 +74,8 @@ object Ed25519 {
         val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         edDSAEngine.initVerify(edDSAPublicKey)
         edDSAEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE)
-        edDSAEngine.update(hash.bytes.array)
-        return edDSAEngine.verify(signature.bytes.array)
+        edDSAEngine.update(hash.bytes)
+        return edDSAEngine.verify(signature.bytes)
     }
 
     fun x25519(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {
@@ -125,7 +125,7 @@ object Ed25519 {
         x2 = x2 * z2
 
         val q = x2.toByteArray()
-        return Blake2b.hash(q).bytes.array
+        return Blake2b.hash(q).bytes
     }
 
     private fun toCurve25519(publicKey: PublicKey): ByteArray {
@@ -146,7 +146,7 @@ object Ed25519 {
 
     private fun toGroupElement(publicKey: PublicKey): GroupElement {
         try {
-            return GroupElement(curve, publicKey.bytes.array)
+            return GroupElement(curve, publicKey.bytes)
         } catch (e: IllegalArgumentException) {
             throw IllegalArgumentException("Invalid public key: not a valid point on the curve")
         }

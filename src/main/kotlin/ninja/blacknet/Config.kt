@@ -35,6 +35,10 @@ object Config {
     val i2psamhost by stringType
     val i2psamport by intType
 
+    object apiserver : PropertyGroup() {
+        val jsonindented by booleanType
+    }
+
     operator fun <T> get(key: Key<T>): T = config[key]
     fun <T> contains(key: Key<T>): Boolean = config.contains(key)
 
@@ -44,5 +48,11 @@ object Config {
         Network.TORv2 -> !config[tor]
         Network.TORv3 -> !config[tor]
         Network.I2P -> !config[i2p]
+    }
+
+    fun jsonindented(): Boolean {
+        if (contains(apiserver.jsonindented))
+            return get(apiserver.jsonindented)
+        return false
     }
 }

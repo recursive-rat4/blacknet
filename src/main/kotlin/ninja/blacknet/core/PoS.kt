@@ -30,7 +30,7 @@ object PoS {
     }
 
     fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
-        return (Blake2b.Hasher() + nxtrng.bytes.array + generator.bytes.array).hash()
+        return (Blake2b.Hasher() + nxtrng.bytes + generator.bytes).hash()
     }
 
     fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInt, prevTime: Long, stake: Long): Boolean {
@@ -42,7 +42,7 @@ object PoS {
             logger.info("invalid timestamp mask")
             return false
         }
-        val hash = (Blake2b.Hasher() + nxtrng.bytes.array + prevTime + generator.bytes.array + time).hash()
+        val hash = (Blake2b.Hasher() + nxtrng.bytes + prevTime + generator.bytes + time).hash()
         val x = hash.toBigInt() / stake
         //println("$hash ${x.toHex()} $difficulty $stake ${x - difficulty}")
         return x < difficulty

@@ -10,7 +10,7 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
@@ -26,9 +26,9 @@ class TransactionInfo(
         val blockHash: String,
         val fee: Long,
         val type: Byte,
-        val data: String
+        val data: JsonElement
 ) {
-    constructor(tx: Transaction, hash: Hash, size: Int) : this(
+    constructor(tx: Transaction, hash: Hash, size: Int, data: JsonElement) : this(
             hash.toString(),
             size,
             tx.signature.toString(),
@@ -37,24 +37,29 @@ class TransactionInfo(
             tx.blockHash.toString(),
             tx.fee,
             tx.type,
-            data(tx.type, tx.data.array)
+            data
     )
 
     companion object {
-        fun fromBytes(bytes: ByteArray): TransactionInfo? {
-            val hash = Transaction.Hasher(bytes)
-            return Transaction.deserialize(bytes)?.let { TransactionInfo(it, hash, bytes.size) }
+        fun get(tx: Transaction, hash: Hash, size: Int): TransactionInfo {
+            return TransactionInfo(tx, hash, size, data(tx.type, tx.data.array))
         }
 
-        private fun data(type: Byte, bytes: ByteArray): String {
-            val txData = TxData.deserialize(type, bytes) ?: return "Deserialization error"
+        private fun data(type: Byte, bytes: ByteArray): JsonElement {
+            val txData = TxData.deserialize(type, bytes) ?: throw RuntimeException("Deserialization error")
             return when (type) {
-                TxType.Transfer.type -> Json.plain.stringify(TransferInfo.serializer(), TransferInfo(txData as Transfer))
-                TxType.Burn.type -> Json.plain.stringify(BurnInfo.serializer(), BurnInfo(txData as Burn))
-                TxType.Lease.type -> Json.plain.stringify(LeaseInfo.serializer(), LeaseInfo(txData as Lease))
-                TxType.CancelLease.type -> Json.plain.stringify(CancelLeaseInfo.serializer(), CancelLeaseInfo(txData as CancelLease))
-                TxType.Bundle.type -> Json.plain.stringify(BundleInfo.serializer(), BundleInfo(txData as Bundle))
-                else -> "Unknown type:$type data:$bytes"
+                TxType.Transfer.type -> APIServer.json.toJson(Transfer.serializer(), txData as Transfer)
+                TxType.Burn.type -> APIServer.json.toJson(Burn.serializer(), txData as Burn)
+                TxType.Lease.type -> APIServer.json.toJson(Lease.serializer(), txData as Lease)
+                TxType.CancelLease.type -> APIServer.json.toJson(CancelLease.serializer(), txData as CancelLease)
+                TxType.Bundle.type -> APIServer.json.toJson(Bundle.serializer(), txData as Bundle)
+                TxType.CreateHTLC.type -> APIServer.json.toJson(CreateHTLC.serializer(), txData as CreateHTLC)
+                TxType.UnlockHTLC.type -> APIServer.json.toJson(UnlockHTLC.serializer(), txData as UnlockHTLC)
+                TxType.RefundHTLC.type -> APIServer.json.toJson(RefundHTLC.serializer(), txData as RefundHTLC)
+                TxType.SpendHTLC.type -> APIServer.json.toJson(SpendHTLC.serializer(), txData as SpendHTLC)
+                TxType.CreateMultisig.type -> APIServer.json.toJson(CreateMultisig.serializer(), txData as CreateMultisig)
+                TxType.SpendMultisig.type -> APIServer.json.toJson(SpendMultisig.serializer(), txData as SpendMultisig)
+                else -> throw RuntimeException("Unknown tx type:$type")
             }
         }
     }

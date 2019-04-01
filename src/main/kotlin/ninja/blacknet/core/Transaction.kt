@@ -31,7 +31,7 @@ class Transaction(
         val bytes = serialize()
         val hash = Hasher(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature.bytes.array, 0, bytes, 0, Signature.SIZE)
+        System.arraycopy(signature.bytes, 0, bytes, 0, Signature.SIZE)
         return Pair(hash, bytes)
     }
 

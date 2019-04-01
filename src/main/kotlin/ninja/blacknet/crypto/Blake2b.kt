@@ -68,5 +68,5 @@ object Blake2b : (ByteArray) -> ByteArray {
         }
     }
 
-    override fun invoke(bytes: ByteArray): ByteArray = hash(bytes).bytes.array
+    override fun invoke(bytes: ByteArray): ByteArray = hash(bytes).bytes
 }

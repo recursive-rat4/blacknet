@@ -31,7 +31,7 @@ class UnlockHTLC(
     fun sign(privateKey: PrivateKey) {
         val bytes = serialize()
         signatureB = Ed25519.sign(hash(bytes), privateKey)
-        System.arraycopy(signatureB.bytes.array, 0, bytes, 0, Signature.SIZE)
+        System.arraycopy(signatureB.bytes, 0, bytes, 0, Signature.SIZE)
     }
 
     fun verifySignature(publicKey: PublicKey): Boolean {

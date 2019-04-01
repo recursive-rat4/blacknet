@@ -52,7 +52,7 @@ object HTLCSerializer : Serializer<HTLC> {
         out.writeByte(value.timeLockType)
         out.packLong(value.timeLock)
         out.writeByte(value.hashType)
-        out.packInt(value.hashLock.size())
+        out.packInt(value.hashLock.array.size)
         out.write(value.hashLock.array)
     }
 }

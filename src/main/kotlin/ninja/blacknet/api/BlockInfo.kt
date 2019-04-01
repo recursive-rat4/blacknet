@@ -10,7 +10,9 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonLiteral
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
@@ -19,6 +21,7 @@ import ninja.blacknet.db.BlockDB
 
 @Serializable
 class BlockInfo(
+        val hash: String,
         val size: Int,
         val version: Int,
         val previous: String,
@@ -26,9 +29,10 @@ class BlockInfo(
         val generator: String,
         val contentHash: String,
         val signature: String,
-        val transactions: List<String>
+        val transactions: JsonElement
 ) {
-    constructor(block: Block, size: Int, txdetail: Boolean) : this(
+    constructor(block: Block, hash: Hash, size: Int, transactions: JsonElement) : this(
+            hash.toString(),
             size,
             block.version,
             block.previous.toString(),
@@ -36,18 +40,24 @@ class BlockInfo(
             Address.encode(block.generator),
             block.contentHash.toString(),
             block.signature.toString(),
-            block.transactions.map {
-                if (txdetail)
-                    TransactionInfo.fromBytes(it.array)?.let { Json.plain.stringify(TransactionInfo.serializer(), it) } ?: "Deserialization error"
-                else
-                    Transaction.Hasher(it.array).toString()
-            }
+            transactions
     )
 
     companion object {
         suspend fun get(hash: Hash, txdetail: Boolean): BlockInfo? {
             val block = BlockDB.block(hash) ?: return null
-            return BlockInfo(block.first, block.second, txdetail)
+            val transactions = if (txdetail) {
+                JsonArray(block.first.transactions.map {
+                    val bytes = it.array
+                    val tx = Transaction.deserialize(bytes) ?: throw RuntimeException("Deserialization error")
+                    val txHash = Transaction.Hasher(bytes)
+                    val info = TransactionInfo.get(tx, txHash, bytes.size)
+                    return@map APIServer.json.toJson(TransactionInfo.serializer(), info)
+                })
+            } else {
+                JsonLiteral(block.first.transactions.size)
+            }
+            return BlockInfo(block.first, hash, block.second, transactions)
         }
     }
 }

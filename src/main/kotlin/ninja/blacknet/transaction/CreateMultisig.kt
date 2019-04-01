@@ -44,7 +44,7 @@ class CreateMultisig(
     private fun hash(from: PublicKey, seq: Int): Hash {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = copy.serialize()
-        return (Blake2b.Hasher() + from.bytes.array + seq + bytes).hash()
+        return (Blake2b.Hasher() + from.bytes + seq + bytes).hash()
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {

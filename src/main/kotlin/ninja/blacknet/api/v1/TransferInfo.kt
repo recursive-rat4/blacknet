@@ -7,18 +7,21 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api
+package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.transaction.Bundle
+import ninja.blacknet.crypto.Address
+import ninja.blacknet.transaction.Transfer
 
 @Serializable
-class BundleInfo(
-        val magic: Int,
-        val data: String
+class TransferInfo(
+        val amount: Long,
+        val to: String,
+        val message: String
 ) {
-    constructor(data: Bundle) : this(
-            data.magic,
-            data.data.toString()
+    constructor(data: Transfer) : this(
+            data.amount,
+            Address.encode(data.to),
+            data.message.toString()
     )
 }

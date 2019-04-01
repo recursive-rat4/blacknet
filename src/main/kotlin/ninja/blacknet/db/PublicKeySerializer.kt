@@ -32,7 +32,7 @@ object PublicKeySerializer : Serializer<PublicKey> {
     }
 
     override fun serialize(out: DataOutput2, value: PublicKey) {
-        out.write(value.bytes.array)
+        out.write(value.bytes)
     }
 
     override fun deserialize(input: DataInput2, available: Int): PublicKey {

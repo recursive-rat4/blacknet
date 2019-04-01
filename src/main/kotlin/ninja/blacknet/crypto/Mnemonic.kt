@@ -27,8 +27,8 @@ object Mnemonic {
 
             val mnemonic = builder.toString()
             val hash = hash(mnemonic)
-            if (checkVersion(hash.bytes.array))
-                return Pair(mnemonic, PrivateKey(hash.bytes.array))
+            if (checkVersion(hash.bytes))
+                return Pair(mnemonic, PrivateKey(hash.bytes))
 
             builder.setLength(0)
         }
@@ -38,8 +38,8 @@ object Mnemonic {
         if (string == null)
             return null
         val hash = hash(string)
-        if (checkVersion(hash.bytes.array))
-            return PrivateKey(hash.bytes.array)
+        if (checkVersion(hash.bytes))
+            return PrivateKey(hash.bytes)
         return null
     }
 

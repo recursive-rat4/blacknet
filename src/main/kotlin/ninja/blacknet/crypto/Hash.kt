@@ -9,31 +9,52 @@
 
 package ninja.blacknet.crypto
 
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
-import ninja.blacknet.serialization.SerializableByteArray32
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.json.JsonInput
+import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.util.fromHex
+import ninja.blacknet.util.toHex
 import java.math.BigInteger
 
 @Serializable
-class Hash(val bytes: SerializableByteArray32) {
-    constructor(bytes: ByteArray) : this(SerializableByteArray32(bytes))
+class Hash(val bytes: ByteArray) {
+    override fun equals(other: Any?): Boolean = (other is Hash) && bytes.contentEquals(other.bytes)
+    override fun hashCode(): Int = bytes.contentHashCode()
+    override fun toString(): String = bytes.toHex()
 
-    override fun equals(other: Any?): Boolean = (other is Hash) && bytes == other.bytes
-    override fun hashCode(): Int = bytes.hashCode()
-    override fun toString(): String = bytes.toString()
+    fun toBigInt(): BigInt = BigInt(BigInteger(1, bytes))
 
-    fun toBigInt(): BigInt = BigInt(BigInteger(1, bytes.array))
-
+    @Serializer(forClass = Hash::class)
     companion object {
         const val SIZE = 32
         const val DIGEST_SIZE = SIZE * 8
-        val ZERO = Hash(SerializableByteArray32())
+        val ZERO = Hash(ByteArray(SIZE))
 
         fun fromString(hex: String?): Hash? {
-            if (hex == null || hex.length != SIZE * 2)
-                return null
-            val bytes = fromHex(hex) ?: return null
+            if (hex == null) return null
+            val bytes = fromHex(hex, SIZE) ?: return null
             return Hash(bytes)
+        }
+
+        override fun deserialize(decoder: Decoder): Hash {
+            return when (decoder) {
+                is BlacknetDecoder -> Hash(decoder.decodeByteArrayValue(SIZE))
+                is JsonInput -> Hash.fromString(decoder.decodeString())!!
+                else -> throw RuntimeException("unsupported decoder")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: Hash) {
+            when (encoder) {
+                is BlacknetEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
+                else -> throw RuntimeException("unsupported encoder")
+            }
         }
     }
 }

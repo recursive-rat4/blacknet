@@ -37,6 +37,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import mu.KotlinLogging
+import ninja.blacknet.Config
+import ninja.blacknet.api.v1.BlockInfoV1
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
@@ -54,6 +56,7 @@ object APIServer : CoroutineScope {
     internal val txMutex = Mutex()
     internal val blockNotify = SynchronizedArrayList<SendChannel<Frame>>()
     internal val transactionNotify = SynchronizedArrayList<Pair<SendChannel<Frame>, PublicKey>>()
+    val json = Json(indented = Config.jsonindented())
 
     suspend fun blockNotify(hash: Hash) {
         blockNotify.forEach {
@@ -119,33 +122,43 @@ fun Application.main() {
         }
 
         get("/api/v1/peerinfo") {
-            call.respond(Json.indented.stringify(PeerInfo.serializer().list, PeerInfo.getAll()))
+            call.respond(APIServer.json.stringify(PeerInfo.serializer().list, PeerInfo.getAll()))
         }
 
         get("/api/v1/nodeinfo") {
-            call.respond(Json.indented.stringify(NodeInfo.serializer(), NodeInfo.get()))
+            call.respond(APIServer.json.stringify(NodeInfo.serializer(), NodeInfo.get()))
         }
 
         get("/api/v1/peerdb") {
-            call.respond(Json.indented.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
+            call.respond(APIServer.json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
         }
 
         get("/api/v1/blockdb") {
-            call.respond(Json.indented.stringify(BlockDBInfo.serializer(), BlockDBInfo.get()))
+            call.respond(APIServer.json.stringify(BlockDBInfo.serializer(), BlockDBInfo.get()))
         }
 
         get("/api/v1/blockdb/get/{hash}/{txdetail?}") {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
             val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
+            val result = BlockInfoV1.get(hash, txdetail)
+            if (result != null)
+                call.respond(APIServer.json.stringify(BlockInfoV1.serializer(), result))
+            else
+                call.respond(HttpStatusCode.NotFound, "block not found")
+        }
+
+        get("/api/v2/blockdb/get/{hash}/{txdetail?}") {
+            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+            val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
             val result = BlockInfo.get(hash, txdetail)
             if (result != null)
-                call.respond(Json.indented.stringify(BlockInfo.serializer(), result))
+                call.respond(APIServer.json.stringify(BlockInfo.serializer(), result))
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
 
         get("/api/v1/blockdb/getblockhash/{height}") {
-            val height = call.parameters["height"]?.toInt() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
+            val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
             val result = LedgerDB.getBlockHash(height)
             if (result != null)
                 call.respond(result.toString())
@@ -154,30 +167,30 @@ fun Application.main() {
         }
 
         get("/api/v1/ledger") {
-            call.respond(Json.indented.stringify(LedgerInfo.serializer(), LedgerInfo.get()))
+            call.respond(APIServer.json.stringify(LedgerInfo.serializer(), LedgerInfo.get()))
         }
 
         get("/api/v1/ledger/get/{account}") {
             val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
             val result = AccountInfo.get(pubkey)
             if (result != null)
-                call.respond(Json.indented.stringify(AccountInfo.serializer(), result))
+                call.respond(APIServer.json.stringify(AccountInfo.serializer(), result))
             else
                 call.respond(HttpStatusCode.NotFound, "account not found")
         }
 
         get("/api/v1/txpool") {
-            call.respond(Json.indented.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
+            call.respond(APIServer.json.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
         }
 
         get("/api/v1/account/generate") {
-            call.respond(Json.indented.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
+            call.respond(APIServer.json.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
         }
 
         post("/api/v1/mnemonic/info/{mnemonic}") {
             val info = MnemonicInfo.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(Json.indented.stringify(MnemonicInfo.serializer(), info))
+            call.respond(APIServer.json.stringify(MnemonicInfo.serializer(), info))
         }
 
         post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {
@@ -247,7 +260,7 @@ fun Application.main() {
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val height = call.parameters["height"]?.toInt() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
+            val height = call.parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
 
             APIServer.txMutex.withLock {
                 val seq = TxPool.getSequence(from)
@@ -294,7 +307,7 @@ fun Application.main() {
         }
 
         get("/api/v1/addpeer/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.toInt() ?: Node.DEFAULT_P2P_PORT
+            val port = call.parameters["port"]?.toIntOrNull() ?: Node.DEFAULT_P2P_PORT
             val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
             val force = call.parameters["force"]?.toBoolean() ?: false
 

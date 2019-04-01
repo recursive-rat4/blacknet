@@ -50,12 +50,12 @@ class BlacknetEncoder : ElementValueEncoder() {
     }
 
     fun encodeSerializableByteArrayValue(value: SerializableByteArray) {
-        packInt(value.size())
-        out.writeFully(value.array, 0, value.size())
+        packInt(value.array.size)
+        out.writeFully(value.array, 0, value.array.size)
     }
 
-    fun encodeByteArrayValue(value: ByteArray, size: Int) {
-        out.writeFully(value, 0, size)
+    fun encodeByteArrayValue(value: ByteArray) {
+        out.writeFully(value, 0, value.size)
     }
 
     fun packInt(value: Int) {

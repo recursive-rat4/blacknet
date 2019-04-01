@@ -9,25 +9,48 @@
 
 package ninja.blacknet.crypto
 
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
-import ninja.blacknet.serialization.SerializableByteArray64
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.json.JsonInput
+import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.util.fromHex
+import ninja.blacknet.util.toHex
 
 @Serializable
-class Signature(val bytes: SerializableByteArray64) {
-    constructor(bytes: ByteArray) : this(SerializableByteArray64(bytes))
+class Signature(val bytes: ByteArray) {
+    override fun equals(other: Any?): Boolean = (other is Signature) && bytes.contentEquals(other.bytes)
+    override fun hashCode(): Int = bytes.contentHashCode()
+    override fun toString(): String = bytes.toHex()
 
-    override fun toString(): String = bytes.toString()
-
+    @Serializer(forClass = Signature::class)
     companion object {
         const val SIZE = 64
-        val EMPTY = Signature(SerializableByteArray64())
+        val EMPTY = Signature(ByteArray(SIZE))
 
         fun fromString(hex: String?): Signature? {
-            if (hex == null || hex.length != SIZE * 2)
-                return null
-            val bytes = fromHex(hex) ?: return null
+            if (hex == null) return null
+            val bytes = fromHex(hex, SIZE) ?: return null
             return Signature(bytes)
+        }
+
+        override fun deserialize(decoder: Decoder): Signature {
+            return when (decoder) {
+                is BlacknetDecoder -> Signature(decoder.decodeByteArrayValue(SIZE))
+                is JsonInput -> Signature.fromString(decoder.decodeString())!!
+                else -> throw RuntimeException("unsupported decoder")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: Signature) {
+            when (encoder) {
+                is BlacknetEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
+                else -> throw RuntimeException("unsupported encoder")
+            }
         }
     }
 }

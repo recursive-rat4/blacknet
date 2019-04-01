@@ -26,7 +26,7 @@ class Address(
     constructor(network: Network, port: Int, bytes: ByteArray) : this(network, port, SerializableByteArray(bytes))
 
     fun checkSize(): Boolean {
-        return bytes.size() == network.addrSize
+        return bytes.array.size == network.addrSize
     }
 
     fun isLocal(): Boolean {

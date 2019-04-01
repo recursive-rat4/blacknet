@@ -13,6 +13,8 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
+import kotlinx.serialization.json.JsonInput
+import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.util.fromHex
 import ninja.blacknet.util.toHex
 
@@ -20,8 +22,6 @@ import ninja.blacknet.util.toHex
 class SerializableByteArray(
         val array: ByteArray
 ) : java.io.Serializable {
-    fun size(): Int = array.size
-
     override fun equals(other: Any?): Boolean {
         return (other is SerializableByteArray) && array.contentEquals(other.array)
     }
@@ -45,11 +45,19 @@ class SerializableByteArray(
         }
 
         override fun deserialize(decoder: Decoder): SerializableByteArray {
-            return (decoder as BlacknetDecoder).decodeSerializableByteArrayValue()
+            return when (decoder) {
+                is BlacknetDecoder -> decoder.decodeSerializableByteArrayValue()
+                is JsonInput -> fromString(decoder.decodeString())!!
+                else -> throw RuntimeException("unsupported decoder")
+            }
         }
 
         override fun serialize(encoder: Encoder, obj: SerializableByteArray) {
-            (encoder as BlacknetEncoder).encodeSerializableByteArrayValue(obj)
+            when (encoder) {
+                is BlacknetEncoder -> encoder.encodeSerializableByteArrayValue(obj)
+                is JsonOutput -> encoder.encodeString(obj.array.toHex())
+                else -> throw RuntimeException("unsupported encoder")
+            }
         }
     }
 }
