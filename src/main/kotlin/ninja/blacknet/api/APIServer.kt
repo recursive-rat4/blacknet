@@ -69,11 +69,11 @@ object APIServer : CoroutineScope {
         }
     }
 
-    suspend fun transactionNotify(hash: Hash, pubkey: PublicKey) {
+    suspend fun transactionNotify(hash: Hash, publicKey: PublicKey) {
         transactionNotify.forEach {
             launch {
                 try {
-                    if (it.second == pubkey)
+                    if (it.second == publicKey)
                         it.first.send(Frame.Text(hash.toString()))
                 } finally {
                 }
@@ -111,8 +111,8 @@ fun Application.main() {
             try {
                 while (true) {
                     val string = (incoming.receive() as Frame.Text).readText()
-                    val pubkey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
-                    APIServer.transactionNotify.add(Pair(outgoing, pubkey))
+                    val publicKey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
+                    APIServer.transactionNotify.add(Pair(outgoing, publicKey))
                 }
             } catch (e: ClosedReceiveChannelException) {
                 logger.info("WebSocket API client disconnected")
@@ -171,8 +171,8 @@ fun Application.main() {
         }
 
         get("/api/v1/ledger/get/{account}") {
-            val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
-            val result = AccountInfo.get(pubkey)
+            val publicKey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
+            val result = AccountInfo.get(publicKey)
             if (result != null)
                 call.respond(APIServer.json.stringify(AccountInfo.serializer(), result))
             else
@@ -287,6 +287,18 @@ fun Application.main() {
             }
         }
 
+        post("/api/v1/decryptmessage/{mnemonic}/{from}/{message}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val publicKey = Address.decode(call.parameters["from"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid from")
+            val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
+
+            val decrypted = Message.decrypt(privateKey, publicKey, message)
+            if (decrypted != null)
+                call.respond(decrypted)
+            else
+                call.respond(HttpStatusCode.NotFound, "Decryption failed")
+        }
+
         post("/api/v1/signmessage/{mnemonic}/{message}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
@@ -297,11 +309,11 @@ fun Application.main() {
         }
 
         get("/api/v1/verifymessage/{account}/{signature}/{message}") {
-            val pubkey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
+            val publicKey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
             val signature = Signature.fromString(call.parameters["signature"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid signature")
             val message = call.parameters["message"] ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid message")
 
-            val result = Message.verify(pubkey, signature, message)
+            val result = Message.verify(publicKey, signature, message)
 
             call.respond(result.toString())
         }

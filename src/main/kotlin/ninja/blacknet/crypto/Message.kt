@@ -16,6 +16,7 @@ import ninja.blacknet.crypto.Ed25519.x25519
 import ninja.blacknet.serialization.BlacknetDecoder
 import ninja.blacknet.serialization.BlacknetEncoder
 import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.util.fromHex
 import ninja.blacknet.util.toHex
 
 @Serializable
@@ -67,6 +68,12 @@ class Message(
         fun encrypted(string: String, privateKey: PrivateKey, publicKey: PublicKey): Message {
             val sharedKey = x25519(privateKey, publicKey)
             return Message(ENCRYPTED, ChaCha20.encryptUtf8(sharedKey, string))
+        }
+
+        fun decrypt(privateKey: PrivateKey, publicKey: PublicKey, hex: String): String? {
+            val sharedKey = x25519(privateKey, publicKey)
+            val bytes = fromHex(hex) ?: return null
+            return ChaCha20.decryptUtf8(sharedKey, bytes)
         }
 
         fun sign(privateKey: PrivateKey, message: String): Signature {
