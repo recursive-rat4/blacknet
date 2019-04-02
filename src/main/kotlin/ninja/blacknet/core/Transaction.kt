@@ -48,8 +48,8 @@ class Transaction(
     companion object {
         fun deserialize(bytes: ByteArray): Transaction? = BlacknetDecoder.fromBytes(bytes).decode(serializer())
 
-        fun create(from: PublicKey, seq: Int, fee: Long, type: Byte, data: ByteArray): Transaction {
-            return Transaction(Signature.EMPTY, from, seq, Hash.ZERO, fee, type, SerializableByteArray(data))
+        fun create(from: PublicKey, seq: Int, blockHash: Hash?, fee: Long, type: Byte, data: ByteArray): Transaction {
+            return Transaction(Signature.EMPTY, from, seq, blockHash ?: Hash.ZERO, fee, type, SerializableByteArray(data))
         }
     }
 }

@@ -194,18 +194,20 @@ fun Application.main() {
             call.respond(APIServer.json.stringify(MnemonicInfo.serializer(), info))
         }
 
-        post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}") {
+        post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}/{blockHash?}/") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val message = Message.create(call.parameters["message"], call.parameters["encrypted"]?.toByte(), privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
+            val encrypted = call.parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid encrypted") }
+            val message = Message.create(call.parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
+            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
             APIServer.txMutex.withLock {
                 val seq = TxPool.getSequence(from)
                 val data = Transfer(amount, to, message).serialize()
-                val tx = Transaction.create(from, seq, fee, TxType.Transfer.type, data)
+                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Transfer.type, data)
                 val signed = tx.sign(privateKey)
 
                 if (Node.broadcastTx(signed.first, signed.second))
@@ -215,17 +217,18 @@ fun Application.main() {
             }
         }
 
-        post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/") {
+        post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/{blockHash?}/") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val message = SerializableByteArray.fromString(call.parameters["message"].orEmpty()) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
+            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
             APIServer.txMutex.withLock {
                 val seq = TxPool.getSequence(from)
                 val data = Burn(amount, message).serialize()
-                val tx = Transaction.create(from, seq, fee, TxType.Burn.type, data)
+                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Burn.type, data)
                 val signed = tx.sign(privateKey)
 
                 if (Node.broadcastTx(signed.first, signed.second))
@@ -235,17 +238,18 @@ fun Application.main() {
             }
         }
 
-        post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}") {
+        post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}/{blockHash?}/") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
+            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
             APIServer.txMutex.withLock {
                 val seq = TxPool.getSequence(from)
                 val data = Lease(amount, to).serialize()
-                val tx = Transaction.create(from, seq, fee, TxType.Lease.type, data)
+                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Lease.type, data)
                 val signed = tx.sign(privateKey)
 
                 if (Node.broadcastTx(signed.first, signed.second))
@@ -255,18 +259,19 @@ fun Application.main() {
             }
         }
 
-        post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}") {
+        post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}/{blockHash?}/") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
             val fee = call.parameters["fee"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
             val amount = call.parameters["amount"]?.toLong() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
             val height = call.parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
+            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
             APIServer.txMutex.withLock {
                 val seq = TxPool.getSequence(from)
                 val data = CancelLease(amount, to, height).serialize()
-                val tx = Transaction.create(from, seq, fee, TxType.CancelLease.type, data)
+                val tx = Transaction.create(from, seq, blockHash, fee, TxType.CancelLease.type, data)
                 val signed = tx.sign(privateKey)
 
                 if (Node.broadcastTx(signed.first, signed.second))
