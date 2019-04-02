@@ -14,7 +14,8 @@ import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,9 +23,9 @@ private val logger = KotlinLogging.logger {}
 class RefundHTLC(
         val id: Hash
 ) : TxData {
-    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
-
     override fun getType() = TxType.RefundHTLC
+    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
+    override fun toJson() = Json.toJson(serializer(), this)
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         val htlc = ledger.getHTLC(id)

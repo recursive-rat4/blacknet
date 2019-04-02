@@ -60,7 +60,7 @@ void function(){
         $.getJSON(apiVersion + '/ledger', function(data){
             
             network.find('.height').html(data.height);
-            network.find('.supply').html((data.supply/1e8).toFixed(0));
+            network.find('.supply').html(new BigNumber(data.supply).dividedBy(1e8).toFixed(0));
             network.find('.accounts').html(data.accounts);
         });
 

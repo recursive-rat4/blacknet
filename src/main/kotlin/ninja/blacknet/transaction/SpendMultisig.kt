@@ -10,11 +10,15 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonArray
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
+import ninja.blacknet.serialization.toHex
 
 private val logger = KotlinLogging.logger {}
 
@@ -24,9 +28,9 @@ class SpendMultisig(
         val amounts: ArrayList<Long>,
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
-    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
-
     override fun getType() = TxType.SpendMultisig
+    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
+    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
     fun sign(i: Int, privateKey: PrivateKey): Boolean {
         val signature = Ed25519.sign(hash(), privateKey)
@@ -102,5 +106,23 @@ class SpendMultisig(
 
         ledger.removeMultisig(id)
         return true
+    }
+
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val id: String,
+            val amounts: JsonArray,
+            val signatures: ArrayList<Pair<Byte, Signature>>
+    ) {
+        constructor(data: SpendMultisig) : this(
+                data.id.bytes.toHex(),
+                jsonArray {
+                    data.amounts.forEach {
+                        it.toString()
+                    }
+                },
+                data.signatures
+        )
     }
 }

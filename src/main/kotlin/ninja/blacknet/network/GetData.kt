@@ -12,12 +12,12 @@ package ninja.blacknet.network
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.DataType
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class GetData(private val list: InvList) : Packet {
-    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
+    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.GetData
 

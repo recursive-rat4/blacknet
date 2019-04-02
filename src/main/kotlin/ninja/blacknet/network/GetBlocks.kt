@@ -16,7 +16,7 @@ import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 private val logger = KotlinLogging.logger {}
@@ -26,7 +26,7 @@ class GetBlocks(
         private val best: Hash,
         private val checkpoint: Hash
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
+    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.GetBlocks
 

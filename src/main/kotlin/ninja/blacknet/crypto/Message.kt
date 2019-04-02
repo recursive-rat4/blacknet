@@ -9,15 +9,13 @@
 
 package ninja.blacknet.crypto
 
-import kotlinx.serialization.*
-import kotlinx.serialization.json.JsonInput
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.toUtf8Bytes
 import ninja.blacknet.crypto.Ed25519.x25519
-import ninja.blacknet.serialization.BlacknetDecoder
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.util.fromHex
-import ninja.blacknet.util.toHex
+import ninja.blacknet.serialization.fromHex
+import ninja.blacknet.serialization.toHex
 
 @Serializable
 class Message(
@@ -25,6 +23,8 @@ class Message(
         val message: SerializableByteArray
 ) {
     constructor(type: Byte, bytes: ByteArray) : this(type, SerializableByteArray(bytes))
+
+    fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
     fun isEmpty(): Boolean {
         return type == PLAIN && message.array.isEmpty()
@@ -41,7 +41,6 @@ class Message(
         else -> "UNKNOWN TYPE:$type DATA:$message"
     }
 
-    @Serializer(forClass = Message::class)
     companion object {
         private val SIGN_MAGIC = "Blacknet Signed Message:\n".toUtf8Bytes()
         const val PLAIN: Byte = 0
@@ -87,30 +86,17 @@ class Message(
         private fun hash(message: String): Hash {
             return (Blake2b.Hasher() + SIGN_MAGIC + message).hash()
         }
+    }
 
-        override fun deserialize(decoder: Decoder): Message {
-            return when (decoder) {
-                is BlacknetDecoder -> Message(decoder.decodeByte(), decoder.decodeSerializableByteArrayValue())
-                is JsonInput -> throw NotImplementedError("not implemented for JsonInput")
-                else -> throw RuntimeException("unsupported decoder")
-            }
-        }
-
-        override fun serialize(encoder: Encoder, obj: Message) {
-            when (encoder) {
-                is BlacknetEncoder -> {
-                    encoder.encodeByte(obj.type)
-                    encoder.encodeSerializableByteArrayValue(obj.message)
-                }
-                is JsonOutput -> {
-                    val data = if (obj.type == PLAIN) String(obj.message.array) else obj.message.array.toHex()
-                    encoder.beginStructure(Message.descriptor)
-                    encoder.encodeByteElement(Message.descriptor, 0, obj.type)
-                    encoder.encodeStringElement(Message.descriptor, 1, data)
-                    encoder.endStructure(Message.descriptor)
-                }
-                else -> throw RuntimeException("unsupported encoder")
-            }
-        }
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val type: Byte,
+            val message: String
+    ) {
+        constructor(data: Message) : this(
+                data.type,
+                if (data.type == PLAIN) String(data.message.array) else data.message.array.toHex()
+        )
     }
 }

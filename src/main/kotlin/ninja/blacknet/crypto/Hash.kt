@@ -15,10 +15,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.serialization.BlacknetDecoder
-import ninja.blacknet.serialization.BlacknetEncoder
-import ninja.blacknet.util.fromHex
-import ninja.blacknet.util.toHex
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.fromHex
+import ninja.blacknet.serialization.toHex
 import java.math.BigInteger
 
 @Serializable
@@ -43,7 +43,7 @@ class Hash(val bytes: ByteArray) {
 
         override fun deserialize(decoder: Decoder): Hash {
             return when (decoder) {
-                is BlacknetDecoder -> Hash(decoder.decodeByteArrayValue(SIZE))
+                is BinaryDecoder -> Hash(decoder.decodeByteArrayValue(SIZE))
                 is JsonInput -> Hash.fromString(decoder.decodeString())!!
                 else -> throw RuntimeException("unsupported decoder")
             }
@@ -51,7 +51,7 @@ class Hash(val bytes: ByteArray) {
 
         override fun serialize(encoder: Encoder, obj: Hash) {
             when (encoder) {
-                is BlacknetEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is BinaryEncoder -> encoder.encodeByteArrayValue(obj.bytes)
                 is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
                 else -> throw RuntimeException("unsupported encoder")
             }

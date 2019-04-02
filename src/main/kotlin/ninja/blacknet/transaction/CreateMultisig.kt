@@ -10,10 +10,13 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonArray
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
@@ -24,9 +27,9 @@ class CreateMultisig(
         val deposits: ArrayList<Pair<PublicKey, Long>>,
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
-    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
-
     override fun getType() = TxType.CreateMultisig
+    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
+    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
     fun sign(from: PublicKey, seq: Int, privateKey: PrivateKey): Boolean {
         val publicKey = privateKey.toPublicKey()
@@ -102,5 +105,23 @@ class CreateMultisig(
         val multisig = Multisig(total, n, keys)
         ledger.addMultisig(hash, multisig)
         return true
+    }
+
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val n: Byte,
+            val deposits: JsonArray,
+            val signatures: ArrayList<Pair<Byte, Signature>>
+    ) {
+        constructor(data: CreateMultisig) : this(
+                data.n,
+                jsonArray {
+                    data.deposits.forEach {
+                        Pair(Address.encode(it.first), it.second.toString())
+                    }
+                },
+                data.signatures
+        )
     }
 }

@@ -20,7 +20,7 @@ import kotlinx.serialization.internal.EnumDescriptor
 import kotlin.experimental.and
 import kotlin.experimental.or
 
-class BlacknetEncoder : ElementValueEncoder() {
+class BinaryEncoder : ElementValueEncoder() {
     private val out = BytePacketBuilder()
 
     fun build(): ByteReadPacket {
@@ -80,13 +80,13 @@ class BlacknetEncoder : ElementValueEncoder() {
 
     companion object {
         fun <T : Any?> toBytes(strategy: SerializationStrategy<T>, obj: T): ByteArray {
-            val encoder = BlacknetEncoder()
+            val encoder = BinaryEncoder()
             strategy.serialize(encoder, obj)
             return encoder.toBytes()
         }
 
         fun <T : Any?> toPacket(strategy: SerializationStrategy<T>, obj: T): ByteReadPacket {
-            val encoder = BlacknetEncoder()
+            val encoder = BinaryEncoder()
             strategy.serialize(encoder, obj)
             return encoder.build()
         }

@@ -15,7 +15,7 @@ import mu.KotlinLogging
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
@@ -31,7 +31,7 @@ internal class Version(
         private val chain: Hash,
         private val cumulativeDifficulty: BigInt
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
+    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Version
 

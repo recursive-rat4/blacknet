@@ -13,14 +13,14 @@ import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
 class ChainAnnounce(
         private val chain: Hash,
         private val cumulativeDifficulty: BigInt
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
+    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.ChainAnnounce
 

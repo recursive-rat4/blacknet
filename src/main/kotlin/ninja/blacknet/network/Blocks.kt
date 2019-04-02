@@ -12,7 +12,7 @@ package ninja.blacknet.network
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
@@ -20,7 +20,7 @@ class Blocks(
         internal val hashes: ArrayList<Hash>,
         internal val blocks: ArrayList<SerializableByteArray>
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
+    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Blocks
 

@@ -22,7 +22,7 @@ import kotlinx.serialization.internal.EnumDescriptor
 import java.nio.ByteBuffer
 import kotlin.experimental.and
 
-class BlacknetDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
+class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
     fun <T : Any?> decode(loader: DeserializationStrategy<T>): T? {
         val v = loader.deserialize(this)
         if (input.remaining > 0) {
@@ -74,11 +74,11 @@ class BlacknetDecoder(private val input: ByteReadPacket) : ElementValueDecoder()
     }
 
     companion object {
-        fun fromBytes(bytes: ByteArray): BlacknetDecoder {
+        fun fromBytes(bytes: ByteArray): BinaryDecoder {
             val buf = IoBuffer(ByteBuffer.wrap(bytes))
             buf.resetForRead()
             val input = ByteReadPacket(buf, IoBuffer.NoPool)
-            return BlacknetDecoder(input)
+            return BinaryDecoder(input)
         }
     }
 }

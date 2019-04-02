@@ -12,9 +12,11 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.*
+import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
 
 private val logger = KotlinLogging.logger {}
 
@@ -23,9 +25,9 @@ class Lease(
         val amount: Long,
         val to: PublicKey
 ) : TxData {
-    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
-
     override fun getType() = TxType.Lease
+    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
+    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         if (amount < PoS.MIN_LEASE) {
@@ -41,5 +43,17 @@ class Lease(
         toAccount.leases.add(AccountState.LeaseInput(tx.from, ledger.height(), amount))
         ledger.set(to, toAccount)
         return true
+    }
+
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val amount: String,
+            val to: String
+    ) {
+        constructor(data: Lease) : this(
+                data.amount.toString(),
+                Address.encode(data.to)
+        )
     }
 }

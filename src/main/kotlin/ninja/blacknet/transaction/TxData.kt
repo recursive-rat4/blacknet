@@ -9,18 +9,20 @@
 
 package ninja.blacknet.transaction
 
+import kotlinx.serialization.json.JsonElement
 import mu.KotlinLogging
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.UndoBuilder
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.serialization.BlacknetDecoder
+import ninja.blacknet.serialization.BinaryDecoder
 
 private val logger = KotlinLogging.logger {}
 
 interface TxData {
-    fun serialize(): ByteArray
     fun getType(): TxType
+    fun serialize(): ByteArray
+    fun toJson(): JsonElement
     suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean
 
     suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
@@ -51,7 +53,7 @@ interface TxData {
                 logger.info("unknown transaction type:$type")
                 return null
             }
-            return BlacknetDecoder.fromBytes(bytes).decode(serializer)
+            return BinaryDecoder.fromBytes(bytes).decode(serializer)
         }
     }
 }

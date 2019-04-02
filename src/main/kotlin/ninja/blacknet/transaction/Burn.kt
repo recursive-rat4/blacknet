@@ -13,8 +13,10 @@ import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.serialization.toHex
 
 private val logger = KotlinLogging.logger {}
 
@@ -23,9 +25,9 @@ class Burn(
         val amount: Long,
         val message: SerializableByteArray
 ) : TxData {
-    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
-
     override fun getType() = TxType.Burn
+    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
+    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
         if (amount == 0L) {
@@ -39,5 +41,17 @@ class Burn(
         ledger.set(tx.from, account)
         ledger.addSupply(-amount)
         return true
+    }
+
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val amount: String,
+            val message: String
+    ) {
+        constructor(data: Burn) : this(
+                data.amount.toString(),
+                data.message.array.toHex()
+        )
     }
 }

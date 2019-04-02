@@ -15,10 +15,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.serialization.BlacknetDecoder
-import ninja.blacknet.serialization.BlacknetEncoder
-import ninja.blacknet.util.fromHex
-import ninja.blacknet.util.toHex
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.fromHex
+import ninja.blacknet.serialization.toHex
 
 @Serializable
 class PublicKey(val bytes: ByteArray) {
@@ -38,7 +38,7 @@ class PublicKey(val bytes: ByteArray) {
 
         override fun deserialize(decoder: Decoder): PublicKey {
             return when (decoder) {
-                is BlacknetDecoder -> PublicKey(decoder.decodeByteArrayValue(SIZE))
+                is BinaryDecoder -> PublicKey(decoder.decodeByteArrayValue(SIZE))
                 is JsonInput -> Address.decode(decoder.decodeString())!!
                 else -> throw RuntimeException("unsupported decoder")
             }
@@ -46,7 +46,7 @@ class PublicKey(val bytes: ByteArray) {
 
         override fun serialize(encoder: Encoder, obj: PublicKey) {
             when (encoder) {
-                is BlacknetEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is BinaryEncoder -> encoder.encodeByteArrayValue(obj.bytes)
                 is JsonOutput -> encoder.encodeString(Address.encode(obj))
                 else -> throw RuntimeException("unsupported encoder")
             }

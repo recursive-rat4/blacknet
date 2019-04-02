@@ -10,10 +10,13 @@
 package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.BlacknetDecoder
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.transaction.TxData
 
 @Serializable
 class Transaction(
@@ -25,7 +28,8 @@ class Transaction(
         val type: Byte,
         val data: SerializableByteArray
 ) {
-    fun serialize(): ByteArray = BlacknetEncoder.toBytes(serializer(), this)
+    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+    fun toJson(hash: Hash, size: Int) = Json.toJson(Info.serializer(), Info(this, hash, size))
 
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
         val bytes = serialize()
@@ -46,10 +50,43 @@ class Transaction(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): Transaction? = BlacknetDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Transaction? = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
         fun create(from: PublicKey, seq: Int, blockHash: Hash?, fee: Long, type: Byte, data: ByteArray): Transaction {
             return Transaction(Signature.EMPTY, from, seq, blockHash ?: Hash.ZERO, fee, type, SerializableByteArray(data))
+        }
+    }
+
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val hash: String,
+            val size: Int,
+            val signature: String,
+            val from: String,
+            val seq: Int,
+            val blockHash: String,
+            val fee: String,
+            val type: Byte,
+            val data: JsonElement
+    ) {
+        constructor(tx: Transaction, hash: Hash, size: Int) : this(
+                hash.toString(),
+                size,
+                tx.signature.toString(),
+                Address.encode(tx.from),
+                tx.seq,
+                tx.blockHash.toString(),
+                tx.fee.toString(),
+                tx.type,
+                data(tx.type, tx.data.array)
+        )
+
+        companion object {
+            private fun data(type: Byte, bytes: ByteArray): JsonElement {
+                val txData = TxData.deserialize(type, bytes) ?: throw RuntimeException("Deserialization error")
+                return txData.toJson()
+            }
         }
     }
 }

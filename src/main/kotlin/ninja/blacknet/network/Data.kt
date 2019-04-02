@@ -15,14 +15,14 @@ import mu.KotlinLogging
 import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.TxPool
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Data(private val list: DataList) : Packet {
-    override fun serialize(): ByteReadPacket = BlacknetEncoder.toPacket(serializer(), this)
+    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Data
 

@@ -13,7 +13,9 @@ import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.toHex
 
 private val logger = KotlinLogging.logger {}
 
@@ -24,9 +26,9 @@ class SpendHTLC(
         val amountB: Long,
         var signatureB: Signature
 ) : TxData {
-    override fun serialize() = BlacknetEncoder.toBytes(serializer(), this)
-
     override fun getType() = TxType.SpendHTLC
+    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
+    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
     fun sign(privateKey: PrivateKey) {
         val bytes = serialize()
@@ -84,5 +86,21 @@ class SpendHTLC(
         ledger.set(tx.from, account)
         ledger.removeHTLC(id)
         return true
+    }
+
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val id: String,
+            val amountA: String,
+            val amountB: String,
+            val signatureB: String
+    ) {
+        constructor(data: SpendHTLC) : this(
+                data.id.bytes.toHex(),
+                data.amountA.toString(),
+                data.amountB.toString(),
+                data.signatureB.bytes.toHex()
+        )
     }
 }

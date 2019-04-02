@@ -15,10 +15,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.serialization.BlacknetDecoder
-import ninja.blacknet.serialization.BlacknetEncoder
-import ninja.blacknet.util.fromHex
-import ninja.blacknet.util.toHex
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.fromHex
+import ninja.blacknet.serialization.toHex
 
 @Serializable
 class Signature(val bytes: ByteArray) {
@@ -39,7 +39,7 @@ class Signature(val bytes: ByteArray) {
 
         override fun deserialize(decoder: Decoder): Signature {
             return when (decoder) {
-                is BlacknetDecoder -> Signature(decoder.decodeByteArrayValue(SIZE))
+                is BinaryDecoder -> Signature(decoder.decodeByteArrayValue(SIZE))
                 is JsonInput -> Signature.fromString(decoder.decodeString())!!
                 else -> throw RuntimeException("unsupported decoder")
             }
@@ -47,7 +47,7 @@ class Signature(val bytes: ByteArray) {
 
         override fun serialize(encoder: Encoder, obj: Signature) {
             when (encoder) {
-                is BlacknetEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is BinaryEncoder -> encoder.encodeByteArrayValue(obj.bytes)
                 is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
                 else -> throw RuntimeException("unsupported encoder")
             }

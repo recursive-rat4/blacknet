@@ -13,11 +13,11 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
-import ninja.blacknet.serialization.BlacknetDecoder
-import ninja.blacknet.serialization.BlacknetEncoder
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.util.fromHex
-import ninja.blacknet.util.toHex
+import ninja.blacknet.serialization.fromHex
+import ninja.blacknet.serialization.toHex
 import java.math.BigInteger
 
 @Serializable
@@ -62,12 +62,12 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
         }
 
         override fun deserialize(decoder: Decoder): BigInt {
-            return BigInt((decoder as BlacknetDecoder).decodeSerializableByteArrayValue())
+            return BigInt((decoder as BinaryDecoder).decodeSerializableByteArrayValue())
         }
 
         override fun serialize(encoder: Encoder, obj: BigInt) {
             val bytes = SerializableByteArray(obj.toByteArray())
-            (encoder as BlacknetEncoder).encodeSerializableByteArrayValue(bytes)
+            (encoder as BinaryEncoder).encodeSerializableByteArrayValue(bytes)
         }
     }
 }
