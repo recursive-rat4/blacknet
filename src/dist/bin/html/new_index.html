@@ -36,11 +36,13 @@
                 <ul>
                     <li><a href="#" data-index="overview">Overview</a></li>
                     <li><a href="#" data-index="send">Send</a></li>
-                    <!-- <li><a href="#" data-index="transactions">Transactions</a></li> -->
+                    <li><a href="#" data-index="staking">Staking</a></li>
                     <li><a href="#" data-index="sign">Sign/Verify Message</a></li>
                     <li><a href="#" data-index="info">Mnemonic info</a></li>
                     <li><a href="#" data-index="generate">Generate new account</a></li>
-                    <!-- <li><a href="#" data-index="recentblocks">Recent Blocks</a></li> -->
+                    <li><a href="#" data-index="lease">Lease</a></li>
+                    <li><a href="#" data-index="cancel_lease">Cancel Lease</a></li>
+                    <li><a href="#" data-index="recentblocks">Recent Blocks</a></li>
                     <!-- <li><a href="#" data-index="txpool">Tx Pool</a></li> -->
                 </ul>
             </div>
@@ -49,22 +51,42 @@
             <div class="overview">
                 <table>
                     <thead>
-                        <td>
+                        <td colspan="2">
                             Wallet Info
                         </td>
                     </thead>
                     <tbody>
                         <tr>
                             <td>Account</td>
-                            <td>blacknet1p6net7gqy907ga6skdasf63ewz08ez83puhmlyquj0sdy0f0xyvslc4j3u</td>
+                            <td class="overview_account"></td>
                         </tr>
                         <tr>
                             <td>Balance</td>
-                            <td class="balance">21213.0213123 BLN</td>
+                            <td class="overview_balance">0.0000 BLN</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="staking">
+                <table>
+                    <thead>
+                        <td colspan="2">
+                            Staking Info
+                        </td>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>isStaking</td>
+                            <td>no </td>
                         </tr>
                         <tr>
-                            <td>Staking</td>
-                            <td>no <button id="start_staking">Start staking</button></td>
+                            <td>
+                                Start/Stop
+                            </td>
+                            <td>
+                                <button id="start_staking">Start staking</button>
+                                <button id="stop_staking">Stop staking</button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -185,7 +207,56 @@
             <div class="txpool">
                 to be develop
             </div>
+            <div class="lease">
+                <fieldset>
+                    <legend>Lease BLN</legend>
+                    <div class="field-row">
+                        <label>Lease To</label>
+                        <input type="text" id="lease_to">
+                    </div>
 
+                    <div class="field-row">
+                        <label>Amount <strong>(BLN)</strong></label>
+                        <input type="number" id="lease_amount">
+                    </div>
+                    <div class="field-row">
+                        <label>Fee <strong>(BLN)</strong></label>
+                        <input type="text" id="lease_fee" readonly value='0.001'>
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="lease_result" readonly>
+                    </div>
+                    <button id="lease">Lease</button>
+                </fieldset>
+            </div>
+            <div class="cancel_lease">
+                <fieldset>
+                    <legend>Cancel Lease BLN</legend>
+                    <div class="field-row">
+                        <label>Cancel Lease To</label>
+                        <input type="text" id="cancel_lease_to">
+                    </div>
+
+                    <div class="field-row">
+                        <label>Amount <strong>(BLN)</strong></label>
+                        <input type="number" id="cancel_lease_amount">
+                    </div>
+                    <div class="field-row">
+                        <label>Block Height</label>
+                        <input type="number" id="cancel_lease_height">
+                    </div>
+                    <div class="field-row">
+                        <label>Fee <strong>(BLN)</strong></label>
+                        <input type="text" id="cancel_lease_fee" readonly value='0.001'>
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="cancel_lease_result" readonly>
+                    </div>
+                    <button id="cancel_lease">Cancel Lease</button>
+                </fieldset>
+            </div>
         </div>
         <!-- End container div -->
     </div>
