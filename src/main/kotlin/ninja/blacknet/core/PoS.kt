@@ -100,7 +100,7 @@ object PoS {
         }
     }
 
-    suspend fun startStaker(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
+    suspend fun startStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
         val publicKey = privateKey.toPublicKey()
 
         if (LedgerDB.get(publicKey) == null) {
@@ -120,7 +120,7 @@ object PoS {
         return true
     }
 
-    suspend fun stopStaker(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
+    suspend fun stopStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
         val publicKey = privateKey.toPublicKey()
         val pair = Pair(privateKey, publicKey)
         if (!stakers.list.remove(pair)) {
@@ -132,6 +132,10 @@ object PoS {
             job = null
         }
         return true
+    }
+
+    suspend fun isStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
+        return stakers.list.find { it.first == privateKey } != null
     }
 
     const val TARGET_BLOCK_TIME = 64L

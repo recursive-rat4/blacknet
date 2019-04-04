@@ -345,13 +345,31 @@ fun Application.main() {
         post("/api/v1/staker/start/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.startStaker(privateKey).toString())
+            call.respond(PoS.startStaking(privateKey).toString())
         }
 
         post("/api/v1/staker/stop/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.stopStaker(privateKey).toString())
+            call.respond(PoS.stopStaking(privateKey).toString())
+        }
+
+        post("/api/v1/startStaking/{mnemonic}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            call.respond(PoS.startStaking(privateKey).toString())
+        }
+
+        post("/api/v1/stopStaking/{mnemonic}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            call.respond(PoS.stopStaking(privateKey).toString())
+        }
+
+        post("/api/v1/isStaking/{mnemonic}") {
+            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            call.respond(PoS.isStaking(privateKey).toString())
         }
     }
 }
