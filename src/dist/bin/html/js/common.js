@@ -17,13 +17,15 @@ void function () {
     const dialogAccount = $('.dialog.account');
 
 
-    Blacknet.init = function () {
+    Blacknet.init = async function () {
 
+        await Blacknet.wait(1000);
+        
         if (account) {
 
             mask.removeClass('init').hide();
-            $('.dialog.account').hide();
-
+            dialogAccount.hide();
+            
             $('.overview').find('.overview_account').text(account);
 
             mask.on('click', function () {
@@ -31,12 +33,13 @@ void function () {
                 dialogPassword.hide();
             });
         } else {
+            dialogAccount.find('.spinner').hide();
+            dialogAccount.find('.account-input').show();
             dialogAccount.find('.enter').unbind().on('click', function () {
 
                 let account = dialogAccount.find('.account_text').val();
 
                 if (/^blacknet[a-z0-9]{59}$/.test(account)) {
-
                     localStorage.account = account;
                     location.reload();
                 } else {
@@ -116,6 +119,13 @@ void function () {
 
             Blacknet.post(url, callback);
         }
+    };
+    Blacknet.wait = function(timeout){
+        return new Promise(function(resolve, reject){
+            setTimeout(function(){
+                resolve();
+            }, timeout);
+        });
     };
 
     Blacknet.init();
