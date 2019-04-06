@@ -150,29 +150,29 @@ fieldset {
   }
 
 legend {
-color: var(--grey-text);
-font-size: 1.5em;
-font-weight: bold;
-padding-left: 4px;
-padding-right: 4px;
+    color: var(--grey-text);
+    font-size: 1.5em;
+    font-weight: bold;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 label {
-color: var(--grey-text);
-flex-basis: 123px;
-font-size: 1em;
-flex-grow: 1;
+    color: var(--grey-text);
+    flex-basis: 123px;
+    font-size: 1em;
+    flex-grow: 1;
 }
 
 input {
-border: 2px solid var(--darker-grey-bg);
-border-radius: 4px;
-height: 1.5em;
-width: 80%;
-padding: .25rem;
-background-color: var(--grey-text);
-flex-grow: 8;
-font-size: 1.15em;
+    border: 2px solid var(--darker-grey-bg);
+    border-radius: 4px;
+    height: 1.5em;
+    width: 80%;
+    padding: .25rem;
+    background-color: var(--grey-text);
+    flex-grow: 8;
+    font-size: 1.15em;
 }
 
 button{
@@ -206,21 +206,50 @@ button{
 }
 
 input:read-only {
-background-color: var(--lighter-grey-bg);
-color: var(--gold-text);
-border: none;
-font-size: 1.15em;
+    background-color: var(--lighter-grey-bg);
+    color: var(--gold-text);
+    border: none;
+    font-size: 1.15em;
 }
 input:-moz-read-only {
-background-color: var(--lighter-grey-bg);
-color: var(--gold-text);
-border: none;
-font-size: 1.15em;
+    background-color: var(--lighter-grey-bg);
+    color: var(--gold-text);
+    border: none;
+    font-size: 1.15em;
 }
 /* input:focus {
 box-shadow: inset 0 0 4px #000000;
 } */
 
+
+table{
+    border-collapse: collapse;
+    border: 1px solid var(--grey-text);
+    margin-top: 10px;
+    min-width: 400px;
+}
+table td{
+    border: 1px solid var(--grey-text)
+}
+thead td {
+    color: var(--grey-text);
+    padding: 10px;
+    text-align: center;
+}
+
+tbody td {
+    color: var(--grey-text);
+    padding: 10px;
+    word-wrap: break-word;
+}
+
+td.narrow {
+    width: 70px;
+}
+
+tr:hover {
+    background-color: var(--darker-grey-bg);
+}
 .mask{
     position: absolute;
     top:0;
@@ -312,7 +341,7 @@ fieldset pre{
     text-align: center;
     width: 600px;
     height: 360px;
-    margin: -200px 0 0 -300px;
+    margin: -200px 0 0 -320px;
     border: none;
     border-radius: none;
 }
@@ -323,4 +352,60 @@ fieldset pre{
 
 .dialog.account button{
     margin-top: 20px;
+}
+.spinner {
+    margin: 0 auto;
+    width: 50px;
+    height: 40px;
+    text-align: center;
+    font-size: 10px;
+  }
+  
+  .spinner > div {
+    background-color:var(--gold-text);
+    height: 100%;
+    width: 6px;
+    display: inline-block;
+    
+    -webkit-animation: sk-stretchdelay 1.2s infinite ease-in-out;
+    animation: sk-stretchdelay 1.2s infinite ease-in-out;
+  }
+  
+  .spinner .rect2 {
+    -webkit-animation-delay: -1.1s;
+    animation-delay: -1.1s;
+  }
+  
+  .spinner .rect3 {
+    -webkit-animation-delay: -1.0s;
+    animation-delay: -1.0s;
+  }
+  
+  .spinner .rect4 {
+    -webkit-animation-delay: -0.9s;
+    animation-delay: -0.9s;
+  }
+  
+  .spinner .rect5 {
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.8s;
+  }
+  
+  @-webkit-keyframes sk-stretchdelay {
+    0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
+    20% { -webkit-transform: scaleY(1.0) }
+  }
+  
+  @keyframes sk-stretchdelay {
+    0%, 40%, 100% { 
+      transform: scaleY(0.4);
+      -webkit-transform: scaleY(0.4);
+    }  20% { 
+      transform: scaleY(1.0);
+      -webkit-transform: scaleY(1.0);
+    }
+  }
+
+.account-input{
+    display: none;
 }

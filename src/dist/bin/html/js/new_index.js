@@ -19,33 +19,34 @@ $(document).ready(function () {
     
 
 
-    function start_staking_click() {
+    function staking_click(type) {
 
-        mask.show();
-        dialogPassword.show();
+        return function(){
+            mask.show();
+            dialogPassword.show().find('.confirm').unbind().on('click', function(){
 
-        dialogPassword.find('.confirm').unbind().on('click', function(){
-            start_staking(dialogPassword.find('.mnemonic').val());
-        });
+                let mnemonic = dialogPassword.find('.mnemonic').val();
+
+                post_staking(mnemonic, type);
+            });
+        }
     }
 
-    function start_staking(mnemonic){
 
-        let url = apiVersion + "/staker/start/" + mnemonic + "/";
+    function post_staking(mnemonic, type){
 
-        $.post(url, {}, function(){
-            hidePasswordDialog();
+        let url = apiVersion + "/"+type+"Staking/" + mnemonic + "/";
+
+        $.post(url, {}, function(ret){
+
+            let msg = ret == 'false' ? type.toUpperCase() + ' FAILED!' : type.toUpperCase() + ' SUCCESS!';
+            clearPassWordDialog();
+            timeAlert(msg);
         }).fail(function(){
-            hidePasswordDialog();
-            alert('Invalid mnemonic');
+            clearPassWordDialog();
+            timeAlert('Invalid mnemonic');
         });
     }
-
-    function hidePasswordDialog(){
-         mask.hide();
-         dialogPassword.hide();
-     }
-
         
     function menuSwitch(){
         
@@ -103,44 +104,81 @@ $(document).ready(function () {
         
     }
 
-    function transfer_click(){
-        mask.show();
-        dialogPassword.show().find('.confirm').unbind().on('click', function(){
-            transfer(dialogPassword.find('.mnemonic').val());
-        });
+    function transfer_click(type){
+
+        return function(){
+            mask.show();
+            dialogPassword.show().find('.confirm').unbind().on('click', function(){
+
+                let mnemonic = dialogPassword.find('.mnemonic').val();
+                switch(type){
+                    case 'send': transfer(mnemonic);break;
+                    case 'lease': lease(mnemonic);break;
+                    case 'cancel_lease': cancel_lease(mnemonic);break;
+                }
+            });
+        }
     }
 
     function transfer(mnemonic) {
         
-        let fee = 100000, amount, to, message, encrypted, amountText, url;
+        let to = $('#transfer_to').val();
+        let amount = $('#transfer_amount').val();
+        let message = $('#transfer_message').val();
+        let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
 
-        to = $('#transfer_to').val();
-        amount = $('#transfer_amount').val();
-        message = $('#transfer_message').val();
-        encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
-
-        amountText = new BigNumber(amount).toFixed(8);
-        amount = new BigNumber(amount).times(1e8);
-
-        url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
-
-        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
-
-            Blacknet.post(url, function (data) {
-                $('#transfer_result').val(data);
-            });
-        }
+        Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function(data){
+            $('#transfer_result').val(data);
+            clearPassWordDialog();
+        });
     }
+
+    function lease(mnemonic) {
+        
+        let to = $('#lease_to').val();
+        let amount = $('#lease_amount').val();
+
+        Blacknet.lease(mnemonic, 'lease', amount, to, 0,function(data){
+            $('#lease_result').val(data);
+            clearPassWordDialog();
+        });
+    }
+
+    function cancel_lease(mnemonic) {
+        
+        let to = $('#cancel_lease_to').val();
+        let amount = $('#cancel_lease_amount').val();
+        let height = $('#cancel_lease_height').val();
+
+        Blacknet.lease(mnemonic, 'cancellease', amount, to, height,function(data){
+            $('#cancel_lease_result').val(data);
+            clearPassWordDialog();
+        });
+    }
+
+    function clearPassWordDialog(){
+        mask.hide();
+        dialogPassword.hide().find('.confirm').unbind();
+        dialogPassword.find('.mnemonic').val('');
+    }
+
+    function timeAlert(msg, timeout){
+        setTimeout(function(){
+            alert(msg);
+        }, timeout || 100);
+    }
+    
 
     
     
     menu.on('click', 'li', menuSwitch);
     panel.find('.'+hash).show();
 
-        // .on("click", "#stop_staking", stop_staking)
-        // .on("click", "#balance", balance)
-    body.on("click", "#start_staking", start_staking_click)
-        .on("click", "#transfer", transfer_click)
+    body.on("click", "#stop_staking", staking_click('stop'))
+        .on("click", "#start_staking", staking_click('start'))
+        .on("click", "#transfer", transfer_click('send'))
+        .on("click", "#lease", transfer_click('lease'))
+        .on("click", "#cancel_lease", transfer_click('cancel_lease'))
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)

@@ -185,3 +185,7 @@ tr:hover {
 .field-row strong{
   color:  var(--gold-text) ;
 }
+a, a:active {
+  color: #3CA2A2;
+  text-decoration: none;
+}
