@@ -409,3 +409,8 @@ fieldset pre{
 .account-input{
     display: none;
 }
+
+a, a:active {
+    color: #3CA2A2;
+    text-decoration: none;
+  }

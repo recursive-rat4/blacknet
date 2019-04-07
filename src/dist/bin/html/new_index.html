@@ -58,7 +58,10 @@
                     <tbody>
                         <tr>
                             <td>Account</td>
-                            <td class="overview_account"></td>
+                            <td>
+                                <span class="overview_account"></span>
+                                <a href="#" id="switch_account">Switch Account</a>
+                            </td>
                         </tr>
                         <tr>
                             <td>Balance</td>
@@ -202,7 +205,21 @@
                 </fieldset>
             </div>
             <div class="recentblocks">
-                recentblocks
+                <table id="block-table">
+                    <caption>Recent Blocks</caption>
+                    <thead>
+                        <tr>
+                        <td class="narrow">Height</td>
+                        <td>Hash</td>
+                        <td class="narrow">Size</td>
+                        <td class="narrow">Time</td>
+                        <td class="narrow">Txns</td>
+                        <td>Generator</td>
+                        </tr>
+                    </thead>
+                    <tbody id="block-list">
+                    </tbody>
+                </table>
             </div>
             <div class="txpool">
                 to be develop

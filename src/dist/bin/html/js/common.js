@@ -64,6 +64,7 @@ void function () {
         let network = $('.network');
         $.getJSON(apiVersion + '/ledger', function (data) {
 
+            Blacknet.height = data.height;
             network.find('.height').html(data.height);
             network.find('.supply').html(new BigNumber(data.supply).dividedBy(1e8).toFixed(0));
             network.find('.accounts').html(data.accounts);

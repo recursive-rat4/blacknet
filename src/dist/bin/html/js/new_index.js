@@ -167,8 +167,29 @@ $(document).ready(function () {
             alert(msg);
         }, timeout || 100);
     }
-    
 
+    function switchAccount(){
+
+        localStorage.account = "";
+        location.reload();
+    }
+    
+    async function append_block(hash, height) {
+
+        
+    }
+
+    async function request_info(message = {}) {
+
+        Blacknet.network();
+        
+        if (message.data) {
+            append_block(message.data);
+            Blacknet.height++;
+        }
+    }
+    let ws = new WebSocket("ws://" + location.host + "/api/v1/notify/block");
+    ws.onmessage = request_info;
     
     
     menu.on('click', 'li', menuSwitch);
@@ -183,6 +204,8 @@ $(document).ready(function () {
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
         .on("click", "#generate_new_account", generate_new_account)
+        .on("click", "#switch_account", switchAccount)
+        
         // .on("click", "#display_api_json_result", function (event) {
         //     let el = event.target;
         //     display_api_json_result(el.dataset.type);
