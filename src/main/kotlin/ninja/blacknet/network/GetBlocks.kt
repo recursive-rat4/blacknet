@@ -32,51 +32,42 @@ class GetBlocks(
 
     override suspend fun process(connection: Connection) {
         if (checkpoint != Hash.ZERO) {
-            if (!BlockDB.contains(checkpoint)) {
+            if (!LedgerDB.chainContains(checkpoint)) {
                 logger.info("Chain fork $best Disconnecting ${connection.remoteAddress}")
                 connection.close()
                 return
             }
         }
 
-        if (best != Hash.ZERO && !BlockDB.contains(best)) {
+        if (best != Hash.ZERO && !LedgerDB.chainContains(best)) {
             val response = LedgerDB.getNextBlockHashes(checkpoint, PoS.MATURITY)
             connection.sendPacket(Blocks(response, ArrayList()))
             return
         }
 
-        var index = LedgerDB.getBlockNumber(best)
-        if (index == null) {
-            logger.error("number $best null")
+        var chainIndex = LedgerDB.getChainIndex(best)
+        if (chainIndex == null) {
             connection.sendPacket(Blocks(ArrayList(), ArrayList()))
             return
         }
 
-        val height = LedgerDB.height()
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = ArrayList<SerializableByteArray>()
 
         var size = 8
 
-        while (index < height) {
-            index++
-            val hash = LedgerDB.getBlockHash(index)
-            if (hash == null) {
-                logger.error("hash $index null")
+        while (true) {
+            val hash = chainIndex!!.next
+            if (hash == Hash.ZERO)
                 break
-            }
+            size += chainIndex.nextSize + 4 //TODO
+            if (response.isNotEmpty() && size >= maxSize)
+                break
             val bytes = BlockDB.get(hash)
-            if (bytes == null) {
-                logger.error("block $hash null")
+            if (bytes == null)
                 break
-            }
-            size += bytes.size + 4
-            if (size > maxSize) {
-                if (response.isEmpty())
-                    response.add(SerializableByteArray(bytes))
-                break
-            }
             response.add(SerializableByteArray(bytes))
+            chainIndex = LedgerDB.getChainIndex(chainIndex.next)
         }
 
         connection.sendPacket(Blocks(ArrayList(), response))

@@ -19,7 +19,7 @@ import kotlinx.serialization.json.JsonOutput
 @Serializable
 class SerializableByteArray(
         val array: ByteArray
-) : java.io.Serializable {
+) {
     override fun equals(other: Any?): Boolean {
         return (other is SerializableByteArray) && array.contentEquals(other.array)
     }

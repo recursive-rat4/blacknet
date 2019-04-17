@@ -9,9 +9,13 @@
 
 package ninja.blacknet.core
 
+import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
+@Serializable
 data class HTLC(
         val height: Int,
         val time: Long,
@@ -23,6 +27,8 @@ data class HTLC(
         val hashType: Byte,
         val hashLock: SerializableByteArray
 ) {
+    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
     fun verifyTimeLock(ledger: Ledger): Boolean {
         val type = TimeLockType.get(timeLockType) ?: return false
         return type.verify(this, ledger)
@@ -78,6 +84,8 @@ data class HTLC(
     }
 
     companion object {
+        fun deserialize(bytes: ByteArray): HTLC? = BinaryDecoder.fromBytes(bytes).decode(HTLC.serializer())
+
         fun isValidTimeLockType(type: Byte): Boolean = TimeLockType.get(type) != null
         fun isValidHashType(type: Byte): Boolean = HashType.get(type) != null
     }

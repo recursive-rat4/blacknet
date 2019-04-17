@@ -39,7 +39,7 @@ abstract class MemPool : DataDB() {
         map.put(hash, bytes)
     }
 
-    override suspend fun contains(hash: Hash): Boolean {
+    override suspend fun containsImpl(hash: Hash): Boolean {
         return map.containsKey(hash)
     }
 
@@ -47,7 +47,7 @@ abstract class MemPool : DataDB() {
         return map.get(hash)
     }
 
-    override suspend fun remove(hash: Hash): ByteArray? {
-        return map.remove(hash)
+    suspend fun remove(hash: Hash) {
+        map.remove(hash)
     }
 }

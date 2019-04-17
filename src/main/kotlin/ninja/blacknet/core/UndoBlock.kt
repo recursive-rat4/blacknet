@@ -9,20 +9,32 @@
 
 package ninja.blacknet.core
 
+import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
 
-data class UndoBlock(
+@Serializable
+class UndoBlock(
         val blockTime: Long,
         val difficulty: BigInt,
         val cumulativeDifficulty: BigInt,
         val supply: Long,
         val nxtrng: Hash,
+        val rollingCheckpoint: Hash,
+        val blockSize: Int,
         val accounts: UndoAccountList,
         val htlcs: UndoHTLCList,
         val multisigs: UndoMultisigList
-)
+) {
+    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
+    companion object {
+        fun deserialize(bytes: ByteArray): UndoBlock? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+    }
+}
 
 open class UndoBuilder(
         val blockTime: Long,
@@ -30,6 +42,8 @@ open class UndoBuilder(
         val cumulativeDifficulty: BigInt,
         val supply: Long,
         val nxtrng: Hash,
+        val rollingCheckpoint: Hash,
+        val blockSize: Int,
         private val accounts: HashMap<PublicKey, AccountState> = HashMap(),
         private val htlcs: HashMap<Hash, HTLC?> = HashMap(),
         private val multisigs: HashMap<Hash, Multisig?> = HashMap()
@@ -56,6 +70,8 @@ open class UndoBuilder(
                 cumulativeDifficulty,
                 supply,
                 nxtrng,
+                rollingCheckpoint,
+                blockSize,
                 accounts.toArrayList(),
                 htlcs.toArrayList(),
                 multisigs.toArrayList())

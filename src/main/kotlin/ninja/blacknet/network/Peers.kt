@@ -26,19 +26,14 @@ class Peers(private val list: List<Address>) : Packet {
             return
         }
 
-        var added = false
-
         for (i in list) {
             if (!i.checkSize()) {
                 connection.dos("invalid Address")
-                continue
+                return
             }
-
-            added = added or PeerDB.add(i, connection.remoteAddress)
         }
 
-        if (added)
-            PeerDB.commit()
+        PeerDB.add(list, connection.remoteAddress)
     }
 
     companion object {

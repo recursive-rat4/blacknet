@@ -22,7 +22,7 @@ class Address(
         val network: Network,
         val port: Int,
         val bytes: SerializableByteArray
-) : java.io.Serializable {
+) {
     constructor(network: Network, port: Int, bytes: ByteArray) : this(network, port, SerializableByteArray(bytes))
 
     fun checkSize(): Boolean {

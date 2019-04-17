@@ -16,8 +16,11 @@ CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
 BLAKE2b https://github.com/rfksystems/blake2b is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
-MapDB http://www.mapdb.org/ is licensed under the
+LevelDB in Java https://github.com/dain/leveldb is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
+LevelDB JNI https://github.com/fusesource/leveldbjni is licensed under the
+3-Clause BSD License: https://github.com/fusesource/leveldbjni/blob/master/license.txt
 
 SLF4J https://www.slf4j.org/ is licensed under the
 MIT license: https://www.slf4j.org/license.html

@@ -60,7 +60,6 @@ internal class Version(
         } else {
             connection.state = Connection.State.OUTGOING_CONNECTED
             PeerDB.connected(connection.remoteAddress)
-            PeerDB.commit()
             logger.info("Connected to ${connection.remoteAddress}")
         }
 

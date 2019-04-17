@@ -77,7 +77,7 @@ object ChainFetcher {
             originalChain = LedgerDB.blockHash()
 
             try {
-                data.connection.sendPacket(GetBlocks(originalChain!!, LedgerDB.getRollingCheckpoint()))
+                data.connection.sendPacket(GetBlocks(originalChain!!, LedgerDB.rollingCheckpoint()))
 
                 requestLoop@ while (true) {
                     val answer = withTimeout(TIMEOUT) { recvChannel.receive() }
@@ -89,7 +89,7 @@ object ChainFetcher {
                             data.connection.dos("unexpected rollback")
                             break
                         }
-                        val checkpoint = LedgerDB.getRollingCheckpoint()
+                        val checkpoint = LedgerDB.rollingCheckpoint()
                         var prev = checkpoint
                         for (hash in answer.hashes) {
                             if (BlockDB.isRejected(hash)) {
@@ -121,6 +121,7 @@ object ChainFetcher {
                         if (data.cumulativeDifficulty() == BigInt.ZERO
                                 || data.cumulativeDifficulty() > LedgerDB.cumulativeDifficulty()) {
                             requestBlocks(data.connection)
+                            continue
                         } else {
                             break
                         }
@@ -157,7 +158,6 @@ object ChainFetcher {
         val newChain = LedgerDB.blockHash()
         if (newChain != originalChain) {
             Node.announceChain(newChain, cumulativeDifficulty, syncChain!!.connection)
-            LedgerDB.prune()
         }
 
         if (syncChain!!.connection.isClosed())
@@ -188,7 +188,6 @@ object ChainFetcher {
             undoDifficulty = LedgerDB.cumulativeDifficulty()
             undoRollback = LedgerDB.rollbackTo(rollbackTo!!)
             logger.info("Disconnected ${undoRollback!!.size} blocks")
-            LedgerDB.commit()
         }
         for (i in answer.blocks) {
             val hash = Block.Hasher(i.array)
@@ -209,6 +208,7 @@ object ChainFetcher {
                 return false
             }
         }
+        LedgerDB.prune()
         connection.lastBlockTime = Node.time()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
@@ -217,7 +217,7 @@ object ChainFetcher {
     }
 
     private fun requestBlocks(connection: Connection) {
-        connection.sendPacket(GetBlocks(LedgerDB.blockHash(), LedgerDB.getRollingCheckpoint()))
+        connection.sendPacket(GetBlocks(LedgerDB.blockHash(), LedgerDB.rollingCheckpoint()))
     }
 
     private class ChainData(val connection: Connection, val chain: Hash, val cumulativeDifficulty: BigInt?) {

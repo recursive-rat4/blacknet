@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
@@ -17,22 +18,11 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
-import org.mapdb.DBMaker
-import org.mapdb.Serializer
 
 private val logger = KotlinLogging.logger {}
 
 object BlockDB : DataDB() {
-    private val db = DBMaker.fileDB("db/blocks").transactionEnable().closeOnJvmShutdown().make()
-    private val map = db.hashMap("blocks", HashSerializer, Serializer.BYTE_ARRAY).createOrOpen()
-
-    fun commit() {
-        db.commit()
-    }
-
-    fun size(): Int {
-        return map.size
-    }
+    private val BLOCK_KEY = "block".toByteArray()
 
     suspend fun block(hash: Hash): Pair<Block, Int>? {
         val bytes = get(hash) ?: return null
@@ -44,23 +34,20 @@ object BlockDB : DataDB() {
         return Pair(block, bytes.size)
     }
 
-    suspend fun remove(list: ArrayList<Hash>) {
+    suspend fun remove(list: ArrayList<Hash>) = mutex.withLock {
+        val txDb = LevelDB.createWriteBatch()
         list.forEach {
-            remove(it)
+            txDb.delete(BLOCK_KEY, it.bytes)
         }
-        commit()
+        txDb.write()
     }
 
-    override suspend fun contains(hash: Hash): Boolean {
-        return map.contains(hash)
+    override suspend fun containsImpl(hash: Hash): Boolean {
+        return LedgerDB.chainContains(hash)
     }
 
     override suspend fun get(hash: Hash): ByteArray? {
-        return map[hash]
-    }
-
-    override suspend fun remove(hash: Hash): ByteArray? {
-        return map.remove(hash)
+        return LevelDB.get(BLOCK_KEY, hash.bytes)
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
@@ -84,34 +71,31 @@ object BlockDB : DataDB() {
             logger.info("invalid signature")
             return Status.INVALID
         }
-        if (block.previous != LedgerDB.blockHash()) {
-            if (connection == null)
-                logger.info("block $hash not on current chain")
-            return Status.NOT_ON_THIS_CHAIN
-        }
-        val txDb = LedgerDB.DBTransaction(hash, block.time, bytes.size, block.generator)
-        val txHashes = ArrayList<Hash>(block.transactions.size)
-        if (LedgerDB.processBlock(txDb, hash, block, bytes.size, txHashes)) {
-            map[hash] = bytes
-            txDb.commit()
-            commit()
-            if (connection != null) {
-                logger.info("Accepted block $hash")
-                connection.lastBlockTime = Node.time()
-                Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
+        LedgerDB.mutex.withLock {
+            if (block.previous != LedgerDB.blockHash()) {
+                if (connection == null)
+                    logger.info("block $hash not on current chain prev ${block.previous}")
+                return Status.NOT_ON_THIS_CHAIN
             }
-            TxPool.clearRejects()
-            TxPool.remove(txHashes)
-            APIServer.blockNotify(hash)
-            return Status.ACCEPTED
-        } else {
-            txDb.close()
-            return Status.INVALID
+            val batch = LevelDB.createWriteBatch()
+            val txDb = LedgerDB.Update(hash, block.time, bytes.size, block.generator)
+            val txHashes = ArrayList<Hash>(block.transactions.size)
+            if (LedgerDB.processBlockImpl(txDb, hash, block, bytes.size, txHashes)) {
+                batch.put(BLOCK_KEY, hash.bytes, bytes)
+                txDb.commitImpl(batch)
+                if (connection != null) {
+                    logger.info("Accepted block $hash")
+                    connection.lastBlockTime = Node.time()
+                    Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
+                }
+                TxPool.clearRejectsImpl()
+                TxPool.remove(txHashes)
+                APIServer.blockNotify(hash)
+                return Status.ACCEPTED
+            } else {
+                batch.close()
+                return Status.INVALID
+            }
         }
-    }
-
-    internal fun clear() {
-        map.clear()
-        commit()
     }
 }

@@ -34,6 +34,7 @@ object Config {
     val torcontrol by intType
     val i2psamhost by stringType
     val i2psamport by intType
+    val dbcache by intType
 
     object apiserver : PropertyGroup() {
         val jsonindented by booleanType

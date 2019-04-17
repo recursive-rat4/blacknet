@@ -16,11 +16,15 @@ class SynchronizedHashMap<K, V>(
         val mutex: Mutex = Mutex(),
         val map: HashMap<K, V> = HashMap()
 ) {
+    constructor(expectedSize: Int, loadFactor: Float = DEFAULT_LOAD_FACTOR) : this(map = HashMap(capacity(expectedSize, loadFactor), loadFactor))
+
     suspend inline fun copy() = mutex.withLock { HashMap(map) }
 
     suspend inline fun clear() = mutex.withLock { map.clear() }
 
     suspend inline fun isEmpty() = mutex.withLock { map.isEmpty() }
+
+    suspend inline fun keys() = mutex.withLock { ArrayList(map.keys) }
 
     suspend inline fun size() = mutex.withLock { map.size }
 
@@ -52,5 +56,11 @@ class SynchronizedHashMap<K, V>(
             }
         }
         return@withLock result
+    }
+
+    companion object {
+        private const val DEFAULT_LOAD_FACTOR = 0.75f
+
+        private fun capacity(expectedSize: Int, loadFactor: Float) = (expectedSize / loadFactor + 1F).toInt()
     }
 }

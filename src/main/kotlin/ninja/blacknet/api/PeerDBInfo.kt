@@ -18,7 +18,7 @@ class PeerDBInfo(
         val peers: List<String>
 ) {
     companion object {
-        fun get(): PeerDBInfo {
+        suspend fun get(): PeerDBInfo {
             val peers = PeerDB.getAll().map { it.toString() }
             return PeerDBInfo(peers.size, peers)
         }

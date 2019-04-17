@@ -339,7 +339,6 @@ object Node : CoroutineScope {
 
     private suspend fun connector() {
         if (PeerDB.isEmpty()) {
-            logger.info("PeerDB is empty.")
             delay(DNS_TIMEOUT)
         }
 
@@ -448,7 +447,6 @@ object Node : CoroutineScope {
         try {
             val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT)
             PeerDB.add(peers, Address.LOOPBACK)
-            PeerDB.commit()
         } catch (e: Throwable) {
         }
     }

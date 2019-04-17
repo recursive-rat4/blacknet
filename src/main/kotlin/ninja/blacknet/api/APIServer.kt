@@ -28,8 +28,6 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
@@ -42,25 +40,25 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.LevelDB
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.SynchronizedArrayList
-import kotlin.coroutines.CoroutineContext
 
 private val logger = KotlinLogging.logger {}
 
-object APIServer : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
+object APIServer {
     internal val txMutex = Mutex()
+    internal var lastIndex: Pair<Hash, ChainIndex>? = null
     internal val blockNotify = SynchronizedArrayList<SendChannel<Frame>>()
     internal val transactionNotify = SynchronizedArrayList<Pair<SendChannel<Frame>, PublicKey>>()
 
     suspend fun blockNotify(hash: Hash) {
         blockNotify.forEach {
-            launch {
+            Node.launch {
                 try {
                     it.send(Frame.Text(hash.toString()))
                 } finally {
@@ -71,7 +69,7 @@ object APIServer : CoroutineScope {
 
     suspend fun transactionNotify(hash: Hash, publicKey: PublicKey) {
         transactionNotify.forEach {
-            launch {
+            Node.launch {
                 try {
                     if (it.second == publicKey)
                         it.first.send(Frame.Text(hash.toString()))
@@ -133,8 +131,8 @@ fun Application.main() {
             call.respond(Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
         }
 
-        get("/api/v1/blockdb") {
-            call.respond(Json.stringify(BlockDBInfo.serializer(), BlockDBInfo.get()))
+        get("/api/v1/leveldb/stats") {
+            call.respond(LevelDB.getProperty("leveldb.stats") ?: "Not implemented")
         }
 
         get("/api/v1/blockdb/get/{hash}/{txdetail?}") {
@@ -160,9 +158,49 @@ fun Application.main() {
 
         get("/api/v1/blockdb/getblockhash/{height}") {
             val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
-            val result = LedgerDB.getBlockHash(height)
+
+            LedgerDB.mutex.withLock {
+                if (height < 0 || height > LedgerDB.height())
+                    return@get call.respond(HttpStatusCode.NotFound, "block not found")
+                else if (height == 0)
+                    return@get call.respond(Hash.ZERO.toString())
+                else if (height == LedgerDB.height())
+                    return@get call.respond(LedgerDB.blockHash().toString())
+
+                if (APIServer.lastIndex != null && APIServer.lastIndex!!.second.height == height)
+                    return@get call.respond(APIServer.lastIndex!!.first.toString())
+
+                var hash: Hash
+                var index: ChainIndex
+                if (height < LedgerDB.height() / 2) {
+                    hash = Hash.ZERO
+                    index = LedgerDB.getChainIndex(hash)!!
+                } else {
+                    hash = LedgerDB.blockHash()
+                    index = LedgerDB.getChainIndex(hash)!!
+                }
+                if (APIServer.lastIndex != null && Math.abs(height - index.height) > Math.abs(height - APIServer.lastIndex!!.second.height))
+                    index = APIServer.lastIndex!!.second
+                while (index.height > height) {
+                    hash = index.previous
+                    index = LedgerDB.getChainIndex(hash)!!
+                }
+                while (index.height < height) {
+                    hash = index.next
+                    index = LedgerDB.getChainIndex(hash)!!
+                }
+                if (index.height < LedgerDB.height() - PoS.MATURITY - 1)
+                    APIServer.lastIndex = Pair(hash, index)
+                call.respond(hash.toString())
+            }
+        }
+
+        get("/api/v1/blockdb/getblockindex/{hash}/") {
+            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+
+            val result = LedgerDB.getChainIndex(hash)
             if (result != null)
-                call.respond(result.toString())
+                call.respond(Json.stringify(ChainIndex.serializer(), result))
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
@@ -178,6 +216,10 @@ fun Application.main() {
                 call.respond(Json.stringify(AccountInfo.serializer(), result))
             else
                 call.respond(HttpStatusCode.NotFound, "account not found")
+        }
+
+        get("/api/v1/ledger/check") {
+            call.respond(Json.stringify(LedgerDB.Check.serializer(), LedgerDB.check()))
         }
 
         get("/api/v1/txpool") {

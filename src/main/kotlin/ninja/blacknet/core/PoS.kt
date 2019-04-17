@@ -45,7 +45,6 @@ object PoS {
         }
         val hash = (Blake2b.Hasher() + nxtrng.bytes + prevTime + generator.bytes + time).hash()
         val x = hash.toBigInt() / stake
-        //println("$hash ${x.toHex()} $difficulty $stake ${x - difficulty}")
         return x < difficulty
     }
 
@@ -78,24 +77,28 @@ object PoS {
             if (time <= LedgerDB.blockTime())
                 continue
 
-            stakers.mutex.withLock {
-                for (i in stakers.list.indices) {
-                    val privateKey = stakers.list[i].first
-                    val publicKey = stakers.list[i].second
+            @Suppress("LABEL_NAME_CLASH")
+            val block = stakers.mutex.withLock {
+                LedgerDB.mutex.withLock {
+                    for (i in stakers.list.indices) {
+                        val privateKey = stakers.list[i].first
+                        val publicKey = stakers.list[i].second
 
-                    val stake = LedgerDB.get(publicKey)!!.stakingBalance(LedgerDB.height())
-                    if (stake <= 0)
-                        continue
+                        val stake = LedgerDB.get(publicKey)?.stakingBalance(LedgerDB.height()) ?: 0
 
-                    if (check(time, publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), stake)) {
-                        val block = Block.create(LedgerDB.blockHash(), time, publicKey)
-                        TxPool.fill(block)
-                        val signed = block.sign(privateKey)
-                        logger.info("Staked ${signed.first}")
-                        Node.broadcastBlock(signed.first, signed.second)
-                        break
+                        if (stake > 0 && check(time, publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), stake)) {
+                            val block = Block.create(LedgerDB.blockHash(), time, publicKey)
+                            TxPool.fill(block)
+                            return@withLock block.sign(privateKey)
+                        }
                     }
+                    return@withLock null
                 }
+            }
+
+            if (block != null) {
+                logger.info("Staked ${block.first}")
+                Node.broadcastBlock(block.first, block.second)
             }
         }
     }

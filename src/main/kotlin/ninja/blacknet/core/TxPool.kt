@@ -113,17 +113,17 @@ object TxPool : MemPool(), Ledger {
         return INVALID
     }
 
-    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO) {
+    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0) {
         override fun add(publicKey: PublicKey, state: AccountState) {}
         override fun addHTLC(id: Hash, htlc: HTLC?) {}
         override fun addMultisig(id: Hash, multisig: Multisig?) {}
     }
 
     suspend fun remove(hashes: ArrayList<Hash>) = mutex.withLock {
-        removeUnlocked(hashes)
+        removeImpl(hashes)
     }
 
-    private suspend fun removeUnlocked(hashes: ArrayList<Hash>) {
+    private suspend fun removeImpl(hashes: ArrayList<Hash>) {
         val txs = transactions.copy()
         val map = copy()
         accounts.clear()

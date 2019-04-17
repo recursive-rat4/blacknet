@@ -18,14 +18,12 @@ class LedgerInfo(
         val height: Int,
         val blockHash: String,
         val blockTime: Long,
+        val rollingCheckpoint: String,
         val difficulty: String,
         val cumulativeDifficulty: String,
         val supply: Long,
-        val accounts: Int,
         val maxBlockSize: Int,
-        val nxtrng: String,
-        val htlcs: Int,
-        val multisigs: Int
+        val nxtrng: String
 ) {
     companion object {
         suspend fun get(): LedgerInfo = LedgerDB.mutex.withLock {
@@ -33,14 +31,12 @@ class LedgerInfo(
                     LedgerDB.height(),
                     LedgerDB.blockHash().toString(),
                     LedgerDB.blockTime(),
+                    LedgerDB.rollingCheckpoint().toString(),
                     LedgerDB.difficulty().toString(),
                     LedgerDB.cumulativeDifficulty().toString(),
                     LedgerDB.supply(),
-                    LedgerDB.accounts(),
                     LedgerDB.maxBlockSize(),
-                    LedgerDB.nxtrng().toString(),
-                    LedgerDB.htlcs(),
-                    LedgerDB.multisigs()
+                    LedgerDB.nxtrng().toString()
             )
         }
     }

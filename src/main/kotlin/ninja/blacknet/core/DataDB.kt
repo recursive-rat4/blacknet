@@ -13,31 +13,30 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
-import ninja.blacknet.util.SynchronizedHashSet
 
 abstract class DataDB {
     protected val mutex = Mutex()
     private val TX_INVALID = Pair(Status.INVALID, 0L)
     private val TX_ALREADY_HAVE = Pair(Status.ALREADY_HAVE, 0L)
     private val TX_IN_FUTURE = Pair(Status.IN_FUTURE, 0L)
-    private val rejects = SynchronizedHashSet<Hash>()
+    private val rejects = HashSet<Hash>()
 
-    suspend fun clearRejects() {
+    internal fun clearRejectsImpl() {
         rejects.clear()
     }
 
-    suspend fun isInteresting(hash: Hash): Boolean {
-        return !rejects.contains(hash) && !contains(hash)
+    suspend fun isInteresting(hash: Hash): Boolean = mutex.withLock {
+        return !rejects.contains(hash) && !containsImpl(hash)
     }
 
-    suspend fun isRejected(hash: Hash): Boolean {
+    suspend fun isRejected(hash: Hash): Boolean = mutex.withLock {
         return rejects.contains(hash)
     }
 
     suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Status = mutex.withLock {
         if (rejects.contains(hash))
             return Status.INVALID
-        if (contains(hash))
+        if (containsImpl(hash))
             return Status.ALREADY_HAVE
         val status = processImpl(hash, bytes, connection)
         if (status == Status.INVALID)
@@ -48,7 +47,7 @@ abstract class DataDB {
     suspend fun processTx(hash: Hash, bytes: ByteArray, connection: Connection? = null): Pair<Status, Long> = mutex.withLock {
         if (rejects.contains(hash))
             return TX_INVALID
-        if (contains(hash))
+        if (containsImpl(hash))
             return TX_ALREADY_HAVE
         val fee = TxPool.processImplWithFee(hash, bytes, connection)
         if (fee == TxPool.INVALID) {
@@ -61,9 +60,8 @@ abstract class DataDB {
         return Pair(Status.ACCEPTED, fee)
     }
 
-    abstract suspend fun contains(hash: Hash): Boolean
     abstract suspend fun get(hash: Hash): ByteArray?
-    abstract suspend fun remove(hash: Hash): ByteArray?
+    protected abstract suspend fun containsImpl(hash: Hash): Boolean
     protected abstract suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status
 
     enum class Status {

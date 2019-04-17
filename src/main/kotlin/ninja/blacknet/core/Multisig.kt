@@ -9,11 +9,20 @@
 
 package ninja.blacknet.core
 
+import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
 
+@Serializable
 data class Multisig(
         val amount: Long,
         val n: Byte,
         val keys: ArrayList<PublicKey>
 ) {
+    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
+    companion object {
+        fun deserialize(bytes: ByteArray): Multisig? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+    }
 }

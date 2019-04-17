@@ -9,24 +9,45 @@
 
 package ninja.blacknet.core
 
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
 import mu.KotlinLogging
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
 
-data class AccountState(
+@Serializable
+class AccountState(
         var seq: Int,
         var stake: Long,
         var immature: MutableList<Input>,
         var leases: MutableList<LeaseInput>
 ) {
+    override fun equals(other: Any?): Boolean {
+        return (other is AccountState) && seq == other.seq && stake == other.stake && immature == other.immature && leases == other.leases
+    }
+
+    override fun hashCode(): Int {
+        return seq xor stake.hashCode() xor immature.hashCode() xor leases.hashCode()
+    }
+
+    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
     fun balance(): Long {
         return stake + immature.sumByLong { it.amount }
     }
 
     fun stakingBalance(height: Int): Long {
         return stake + immature.sumByLong { it.matureBalance(height) } + leases.sumByLong { it.matureBalance(height) }
+    }
+
+    fun totalBalance(): Long {
+        return stake + immature.sumByLong { it.amount } + leases.sumByLong { it.amount }
     }
 
     fun credit(amount: Long): Boolean {
@@ -75,6 +96,7 @@ data class AccountState(
         immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
     }
 
+    @Serializable
     class Input(val height: Int, var amount: Long) {
         override fun equals(other: Any?): Boolean = (other is Input) && height == other.height && amount == other.amount
         override fun hashCode(): Int = height xor amount.hashCode()
@@ -83,6 +105,7 @@ data class AccountState(
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }
 
+    @Serializable
     class LeaseInput(val from: PublicKey, val height: Int, val amount: Long) {
         override fun equals(other: Any?): Boolean = (other is LeaseInput) && from == other.from && height == other.height && amount == other.amount
         override fun hashCode(): Int = from.hashCode() xor height xor amount.hashCode()
@@ -101,9 +124,52 @@ data class AccountState(
         return seq == 0 && stake == 0L && immature.isEmpty() && leases.isEmpty()
     }
 
+    @Serializer(forClass = AccountState::class)
     companion object {
+        fun deserialize(bytes: ByteArray): AccountState? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+
         fun create(stake: Long = 0): AccountState {
             return AccountState(0, stake, ArrayList(), ArrayList())
+        }
+
+        override fun deserialize(decoder: Decoder): AccountState {
+            when (decoder) {
+                is BinaryDecoder -> {
+                    val seq = decoder.unpackInt()
+                    val stake = decoder.unpackLong()
+                    val immatureSize = decoder.unpackInt()
+                    val immature = ArrayList<Input>(immatureSize)
+                    for (i in 0 until immatureSize)
+                        immature.add(Input(decoder.unpackInt(), decoder.unpackLong()))
+                    val leasesSize = decoder.unpackInt()
+                    val leases = ArrayList<LeaseInput>(leasesSize)
+                    for (i in 0 until leasesSize)
+                        leases.add(LeaseInput(PublicKey(decoder.decodeByteArrayValue(PublicKey.SIZE)), decoder.unpackInt(), decoder.unpackLong()))
+                    return AccountState(seq, stake, immature, leases)
+                }
+                else -> throw RuntimeException("unsupported decoder")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: AccountState) {
+            when (encoder) {
+                is BinaryEncoder -> {
+                    encoder.packInt(obj.seq)
+                    encoder.packLong(obj.stake)
+                    encoder.packInt(obj.immature.size)
+                    for (i in 0 until obj.immature.size) {
+                        encoder.packInt(obj.immature[i].height)
+                        encoder.packLong(obj.immature[i].amount)
+                    }
+                    encoder.packInt(obj.leases.size)
+                    for (i in 0 until obj.leases.size) {
+                        encoder.encodeByteArrayValue(obj.leases[i].from.bytes)
+                        encoder.packInt(obj.leases[i].height)
+                        encoder.packLong(obj.leases[i].amount)
+                    }
+                }
+                else -> throw RuntimeException("unsupported encoder")
+            }
         }
     }
 }
