@@ -79,9 +79,10 @@ void function () {
 
         return $.get(apiVersion + url, callback);
     };
-    Blacknet.getPromise = function (url) {
 
-        return $.get(apiVersion + url);
+    Blacknet.getPromise = function (url, type) {
+
+        return $.get(apiVersion + url, type);
     };
     Blacknet.post = function (url, callback, type) {
         return $.post(apiVersion + url, {}, callback, type);

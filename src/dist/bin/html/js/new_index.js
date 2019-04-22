@@ -175,8 +175,17 @@ $(document).ready(function () {
     }
     
     async function append_block(hash, height) {
-
         
+        let url = `/blockdb/get/${hash}`;
+        let block = await Blacknet.getPromise(url, 'json');
+
+        let tmpl = `<tr><td class="narrow height">${height}</td><td class="hash">${hash}</td>
+                    <td class="size narrow">${block.size}</td><td class="time narrow">${block.time}</td>
+                    <td class="txns narrow">${block.transactions.length}</td>
+                    <td class="generator">${block.generator}</td></tr>`;
+        
+        $(tmpl).appentTo("#block-list");
+
     }
 
     async function request_info(message = {}) {
@@ -205,10 +214,5 @@ $(document).ready(function () {
         .on("click", "#mnemonic_info", mnemonic_info)
         .on("click", "#generate_new_account", generate_new_account)
         .on("click", "#switch_account", switchAccount)
-        
-        // .on("click", "#display_api_json_result", function (event) {
-        //     let el = event.target;
-        //     display_api_json_result(el.dataset.type);
-        // });
     
 });
