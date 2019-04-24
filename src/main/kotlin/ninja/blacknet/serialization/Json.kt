@@ -11,11 +11,12 @@ package ninja.blacknet.serialization
 
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.Config
 
 object Json {
-    private val json = Json(indented = Config.jsonindented())
+    private val json = Json(JsonConfiguration(prettyPrint = Config.jsonindented(), indent = "    "))
 
     fun <T> stringify(serializer: SerializationStrategy<T>, obj: T): String = json.stringify(serializer, obj)
     fun <T : Any?> toJson(serializer: SerializationStrategy<T>, obj: T): JsonElement = json.toJson(serializer, obj)

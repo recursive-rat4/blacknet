@@ -61,7 +61,7 @@ object PoS {
     private val stakers = SynchronizedArrayList<Pair<PrivateKey, PublicKey>>()
     private var job: Job? = null
 
-    private suspend fun staker() {
+    private suspend fun miner() {
         while (true) {
             delay(1)
 
@@ -116,7 +116,7 @@ object PoS {
 
         stakers.list.add(pair)
         if (stakers.list.size == 1)
-            job = Node.launch { staker() }
+            job = Node.launch { miner() }
         return true
     }
 

@@ -9,15 +9,19 @@
 
 package ninja.blacknet.network
 
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.port
+import org.bitlet.weupnp.GatewayDevice
 import org.bitlet.weupnp.GatewayDiscover
 
 private val logger = KotlinLogging.logger {}
 
 object UPnP {
-    suspend fun forward() {
+    private const val PROTOCOL = "TCP"
+
+    fun forward() {
         logger.info("Looking for UPnP Gateway")
         val discover = GatewayDiscover()
         discover.discover()
@@ -29,7 +33,7 @@ object UPnP {
         }
 
         logger.info("Sending port mapping request")
-        if (!gateway.addPortMapping(Config[port], Config[port], gateway.localAddress.hostAddress, "TCP", Bip14.client)) {
+        if (!gateway.addPortMapping(Config[port], Config[port], gateway.localAddress.hostAddress, PROTOCOL, Bip14.client)) {
             logger.info("Port mapping failed")
             return
         }
@@ -40,15 +44,19 @@ object UPnP {
         } catch (e: Throwable) {
         }
         if (address != null) {
-            Node.listenAddress.add(address)
+            Node.launch { Node.listenAddress.add(address) }
             logger.info("Mapped to $address")
         } else {
             logger.info("Mapped to unknown external address")
         }
 
-        Runtime.getRuntime().addShutdownHook(Thread {
+        Node.addShutdownHook {
             logger.info("Removing port mapping")
-            gateway.deletePortMapping(Config[port], "TCP")
-        })
+            remove(gateway)
+        }
+    }
+
+    private fun remove(gateway: GatewayDevice) {
+        gateway.deletePortMapping(Config[port], PROTOCOL)
     }
 }

@@ -20,8 +20,6 @@ class SynchronizedArrayList<T>(
 
     suspend inline fun isEmpty() = mutex.withLock { list.isEmpty() }
 
-    suspend inline fun isNotEmpty() = mutex.withLock { !list.isEmpty() }
-
     suspend inline fun size() = mutex.withLock { list.size }
 
     suspend inline fun add(element: T) = mutex.withLock { list.add(element) }
@@ -38,7 +36,9 @@ class SynchronizedArrayList<T>(
 
     suspend inline fun removeIf(noinline filter: (T) -> Boolean) = mutex.withLock { list.removeIf(filter) }
 
-    suspend inline fun forEach(action: (T) -> Unit) = mutex.withLock { for (i in list.indices) action(list[i]) }
+    suspend inline fun forEach(action: (T) -> Unit) = mutex.withLock { for (i in 0 until list.size) action(list[i]) }
+
+    suspend inline fun reversedForEach(action: (T) -> Unit) = mutex.withLock { for (i in list.size - 1 downTo 0) action(list[i]) }
 
     suspend inline fun find(predicate: (T) -> Boolean) = mutex.withLock { list.find(predicate) }
 
