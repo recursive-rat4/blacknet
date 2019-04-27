@@ -139,13 +139,18 @@ void function () {
     };
 
     Blacknet.unix_to_local_time = function (unix_timestamp) {
-        const date = new Date(unix_timestamp * 1000);
-        const hours = date.getHours();
-        const minutes = "0" + date.getMinutes();
-        const seconds = "0" + date.getSeconds();
-        return hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-    }
 
+        let date = new Date(unix_timestamp * 1000);
+        let hours =  "0" + date.getHours();
+        let minutes = "0" + date.getMinutes();
+        let seconds = "0" + date.getSeconds();
+        let day = date.getDate();
+        let year = date.getFullYear();
+        let month = date.getMonth() + 1;
+    
+        return year + "-" +month + "-" +day+" "+  hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+    }
+    
     Blacknet.init();
     Blacknet.network();
     Blacknet.balance();

@@ -190,10 +190,10 @@ $(document).ready(function () {
         
         $(tmpl).prependTo("#block-list");
 
-        let rowsCount = $('#block-table').find('tr').length;
+        let rowsCount = $('#block-list').find('tr').length;
 
         if(rowsCount > 15){
-            $('#block-table tr:last-child').remove();
+            $('#block-list tr:last-child').remove();
         }
     }
 

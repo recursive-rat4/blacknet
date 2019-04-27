@@ -227,7 +227,7 @@ table{
     border-collapse: collapse;
     border: 1px solid var(--grey-text);
     margin-top: 10px;
-    min-width: 400px;
+    min-width: 600px;
 }
 table td{
     border: 1px solid var(--grey-text)
@@ -244,16 +244,10 @@ tbody td {
     word-wrap: break-word;
 }
 
-td.narrow {
-    width: 70px;
-}
-
 tr:hover {
     background-color: var(--darker-grey-bg);
 }
-#block-list td{
-    text-align: center;
-}
+
 .mask{
     position: absolute;
     top:0;
