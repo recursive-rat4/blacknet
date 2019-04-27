@@ -33,7 +33,7 @@ $(document).ready(function () {
     }
 
 
-    function post_staking(mnemonic, type){
+    async function post_staking(mnemonic, type){
 
         let url = apiVersion + "/staker/"+type+"/" + mnemonic + "/";
 
@@ -46,6 +46,10 @@ $(document).ready(function () {
             clearPassWordDialog();
             timeAlert('Invalid mnemonic');
         });
+
+        let data = await Blacknet.postPromise('/isStaking/' + mnemonic);
+        localStorage.isStaking = data;
+        $('.isStaking').text(data);
     }
         
     function menuSwitch(){
@@ -101,7 +105,6 @@ $(document).ready(function () {
         $('#new_account').val(blockData.address);
         $('#new_mnemonic').val(blockData.mnemonic);
         $('#new_pubkey').val(blockData.publicKey);
-        
     }
 
     function transfer_click(type){
@@ -179,13 +182,19 @@ $(document).ready(function () {
         let url = `/blockdb/get/${hash}`;
         let block = await Blacknet.getPromise(url, 'json');
 
-        let tmpl = `<tr><td class="narrow height">${height}</td><td class="hash">${hash}</td>
-                    <td class="size narrow">${block.size}</td><td class="time narrow">${block.time}</td>
+        let tmpl = `<tr><td class="narrow height">${height}</td>
+                    <td class="size narrow">${block.size}</td>
+                    <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
                     <td class="txns narrow">${block.transactions.length}</td>
                     <td class="generator">${block.generator}</td></tr>`;
         
-        $(tmpl).appentTo("#block-list");
+        $(tmpl).prependTo("#block-list");
 
+        let rowsCount = $('#block-table').find('tr').length;
+
+        if(rowsCount > 15){
+            $('#block-table tr:last-child').remove();
+        }
     }
 
     async function request_info(message = {}) {
@@ -193,7 +202,7 @@ $(document).ready(function () {
         Blacknet.network();
         
         if (message.data) {
-            append_block(message.data);
+            append_block(message.data, Blacknet.height);
             Blacknet.height++;
         }
     }

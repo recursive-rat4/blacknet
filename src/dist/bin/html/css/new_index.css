@@ -59,7 +59,7 @@ header .network{
     line-height: 32px;
     font-size: 14px;
 }
-p span{
+p span, .strong{
     color: var(--gold-text);
 }
 
@@ -116,6 +116,7 @@ p span{
 }
 .rightpanel>div{
     display: none;
+    padding-top: 15px;
 }
 
 
@@ -249,6 +250,9 @@ td.narrow {
 
 tr:hover {
     background-color: var(--darker-grey-bg);
+}
+#block-list td{
+    text-align: center;
 }
 .mask{
     position: absolute;

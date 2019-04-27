@@ -20,13 +20,17 @@ void function () {
     Blacknet.init = async function () {
 
         await Blacknet.wait(1000);
-        
+
         if (account) {
 
             mask.removeClass('init').hide();
             dialogAccount.hide();
-            
+
             $('.overview').find('.overview_account').text(account);
+
+            if (localStorage.isStaking) {
+                $('.isStaking').text(localStorage.isStaking);
+            }
 
             mask.on('click', function () {
                 mask.hide();
@@ -82,10 +86,14 @@ void function () {
 
     Blacknet.getPromise = function (url, type) {
 
-        return $.get(apiVersion + url, type);
+        return type == 'json' ? $.getJSON(apiVersion + url) : $.get(apiVersion + url);
     };
     Blacknet.post = function (url, callback, type) {
         return $.post(apiVersion + url, {}, callback, type);
+    };
+
+    Blacknet.postPromise = function (url) {
+        return $.post(apiVersion + url, {});
     };
 
     Blacknet.sendMoney = function (mnemonic, amount, to, message, encrypted, callback) {
@@ -122,13 +130,21 @@ void function () {
             Blacknet.post(url, callback);
         }
     };
-    Blacknet.wait = function(timeout){
-        return new Promise(function(resolve, reject){
-            setTimeout(function(){
+    Blacknet.wait = function (timeout) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
                 resolve();
             }, timeout);
         });
     };
+
+    Blacknet.unix_to_local_time = function (unix_timestamp) {
+        const date = new Date(unix_timestamp * 1000);
+        const hours = date.getHours();
+        const minutes = "0" + date.getMinutes();
+        const seconds = "0" + date.getSeconds();
+        return hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+    }
 
     Blacknet.init();
     Blacknet.network();
