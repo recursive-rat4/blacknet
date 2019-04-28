@@ -51,6 +51,8 @@ void function () {
                 }
             });
         }
+        
+        
     };
 
     Blacknet.balance = async function () {
@@ -76,7 +78,7 @@ void function () {
 
         $.getJSON(apiVersion + '/nodeinfo', function (data) {
 
-            network.find('.connections').html(data.incoming);
+            network.find('.connections').text(data.outgoing);
         });
     };
     Blacknet.get = function (url, callback) {
@@ -150,9 +152,36 @@ void function () {
     
         return year + "-" +month + "-" +day+" "+  hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
-    
+
+    async function getPeerInfo(){
+
+        let peers = await Blacknet.getPromise('/peerinfo', 'json');
+        
+        peers.map(renderPeer);
+        
+    }
+
+    function renderPeer(peer, index){
+        
+        let tmpl = `<tr>
+                        <td>${index+1}</td>
+                        <td class="right">${peer.remoteAddress}</td>
+                        <td>${peer.agent}</td>
+                        <td class="right">${peer.ping}ms</td>
+                        <td class="narrow">${peer.timeOffset}</td>
+                        <td class="narrow">${peer.totalBytesRead}</td>
+                        <td class="narrow">${peer.totalBytesWritten}</td>
+                    </tr>`;
+        
+        $(tmpl).appendTo("#peer-list");
+        console.log(tmpl)
+    }
+
+
     Blacknet.init();
     Blacknet.network();
     Blacknet.balance();
+    getPeerInfo();
+
     window.Blacknet = Blacknet;
 }();

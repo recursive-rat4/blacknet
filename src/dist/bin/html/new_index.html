@@ -43,6 +43,7 @@
                     <li><a href="#" data-index="lease">Lease</a></li>
                     <li><a href="#" data-index="cancel_lease">Cancel Lease</a></li>
                     <li><a href="#" data-index="recentblocks">Recent Blocks</a></li>
+                    <li><a href="#" data-index="peerinfo">Peers</a></li>
                     <!-- <li><a href="#" data-index="txpool">Tx Pool</a></li> -->
                 </ul>
             </div>
@@ -209,6 +210,24 @@
                         </tr>
                     </thead>
                     <tbody id="block-list">
+                    </tbody>
+                </table>
+            </div>
+            <div class="peerinfo">
+                <h3>Peers</h3>
+                <table id="peer-table">
+                    <thead>
+                        <tr>
+                            <td>Index</td>
+                            <td class="narrow">Node</td>
+                            <td>User Agent</td>
+                            <td class="narrow">Ping</td>
+                            <td class="narrow">Time Offset</td>
+                            <td class="narrow">Bytes Read</td>
+                            <td class="narrow">Bytes Written</td>
+                        </tr>
+                    </thead>
+                    <tbody id="peer-list">
                     </tbody>
                 </table>
             </div>

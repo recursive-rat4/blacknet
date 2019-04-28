@@ -19,18 +19,20 @@
     --gold-text: #E8BA3F;
     --grey-text: #ADADAD;
 }
-body{
+
+body {
     background: #3B3B3B;
 }
 
-header{
+header {
     display: table;
     background: linear-gradient(to bottom, #2D2D2D, #323232);
     width: 100%;
     border-bottom: 1px solid #141414;
     z-index: 98;
 }
-.logo{
+
+.logo {
     float: left;
     height: 64px;
     padding-left: 80px;
@@ -46,7 +48,8 @@ header{
     background-size: 40px 40px;
     background-position: 30px 50%;
 }
-header .network{
+
+header .network {
     float: right;
     height: 32px;
     margin-top: 16px;
@@ -59,52 +62,51 @@ header .network{
     line-height: 32px;
     font-size: 14px;
 }
-p span, .strong{
+
+p span, .strong {
     color: var(--gold-text);
 }
 
-.main-menu{
+.main-menu {
     width: 220px;
     float: left;
-    
     background: #3B3B3B;
-    
     overflow: hidden;
     color: var(--grey-text);
     background: linear-gradient(left right, #3d3d3d, #222);
 }
 
-.menu li{
+.menu li {
     height: 40px;
     line-height: 40px;
     padding-left: 20px;
-    
 }
-.menu li:hover{
+
+.menu li:hover {
     cursor: pointer;
-    
 }
-.menu li:hover a{
+
+.menu li:hover a {
     color: var(--gold-text);
 }
 
-.menu li a{
+.menu li a {
     color: var(--grey-text);
     text-decoration: none;
     display: inline-block;
     width: 100%;
 }
-.menu li.active{
+
+.menu li.active {
     background-color: var(--gold-text);
     border-right: 1px solid var(--gold-text);
-
 }
-.menu li.active a{
+
+.menu li.active a {
     color: #fff;
 }
 
-
-.rightpanel{
+.rightpanel {
     padding: 10px 20px;
     position: absolute;
     color: var(--grey-text);
@@ -114,26 +116,26 @@ p span, .strong{
     top: 64px;
     border-left: 1px solid #222;
 }
-.rightpanel>div{
+
+.rightpanel>div {
     display: none;
     padding-top: 15px;
 }
 
-
-.rightpanel .info{
-    
+.rightpanel .info {
     word-break: break-all;
     font-size: 14px;
-    
 }
-.rightpanel .info h3{
+
+.rightpanel .info h3 {
     color: var(--gold-text);
     margin: 10px 0 5px;
     padding: 5px 0;
     font-size: 14px;
     border-bottom: 1px solid #ADADAD;
 }
-.rightpanel .info p{
+
+.rightpanel .info p {
     margin: 0 0 5px;
 }
 
@@ -141,14 +143,14 @@ p span, .strong{
     display: flex;
     align-items: center;
     margin-bottom: 1rem;
-  }
+}
 
 fieldset {
     padding: 1rem;
     border: 1px groove;
     border-color: var(--gold-text);
     margin: 0 0 1em;
-  }
+}
 
 legend {
     color: var(--grey-text);
@@ -166,17 +168,17 @@ label {
 }
 
 input {
-    border: 2px solid var(--darker-grey-bg);
+    border: 1px solid var(--darker-grey-bg);
     border-radius: 4px;
-    height: 1.5em;
+    height: 28px;
     width: 80%;
-    padding: .25rem;
+    padding: 5px 10px;
     background-color: var(--grey-text);
     flex-grow: 8;
-    font-size: 1.15em;
+    font-size: 14px;
 }
 
-button{
+button {
     line-height: 1.499;
     position: relative;
     display: inline-block;
@@ -186,7 +188,7 @@ button{
     background-image: none;
     border: 1px solid transparent;
     -webkit-box-shadow: 0 2px 0 rgba(231, 162, 14, 0.02);
-    box-shadow: 0 2px 0 rgba(0,0,0,0.015);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.015);
     cursor: pointer;
     -webkit-transition: all .3s cubic-bezier(.645, .045, .355, 1);
     transition: all .3s cubic-bezier(.645, .045, .355, 1);
@@ -200,8 +202,8 @@ button{
     padding: 0 15px;
     font-size: 14px;
     border-radius: 4px;
-    color: rgba(0,0,0,0.65);
-    background-color:#ddd;
+    color: rgba(0, 0, 0, 0.65);
+    background-color: #ddd;
     border-color: #d9d9d9;
     -webkit-writing-mode: horizontal-tb !important;
 }
@@ -212,26 +214,29 @@ input:read-only {
     border: none;
     font-size: 1.15em;
 }
+
 input:-moz-read-only {
     background-color: var(--lighter-grey-bg);
     color: var(--gold-text);
     border: none;
     font-size: 1.15em;
 }
+
 /* input:focus {
 box-shadow: inset 0 0 4px #000000;
 } */
 
-
-table{
+table {
     border-collapse: collapse;
     border: 1px solid var(--grey-text);
     margin-top: 10px;
     min-width: 600px;
 }
-table td{
+
+table td {
     border: 1px solid var(--grey-text)
 }
+
 thead td {
     color: var(--grey-text);
     padding: 10px;
@@ -242,31 +247,36 @@ tbody td {
     color: var(--grey-text);
     padding: 10px;
     word-wrap: break-word;
+    font-size: 14px;
+}
+tbody td.right{
+    text-align: right;
 }
 
 tr:hover {
     background-color: var(--darker-grey-bg);
 }
 
-.mask{
+.mask {
     position: absolute;
-    top:0;
+    top: 0;
     left: 0;
-    right:0;
+    right: 0;
     bottom: 0;
     background: var(--darker-grey-bg);
     opacity: 0.9;
     z-index: 100;
     /* display: none; */
 }
-.mask.init{
+
+.mask.init {
     background: #2A2A2A;
     opacity: 1;
 }
 
-.dialog{
+.dialog {
     position: absolute;
-    top:50%;
+    top: 50%;
     left: 50%;
     width: 450px;
     height: 300px;
@@ -278,38 +288,43 @@ tr:hover {
     border-radius: 3px;
     font-size: 12px;
     padding: 15px 20px;
-    
     overflow: hidden;
 }
+
 .dialog.send {
     display: none;
 }
-.dialog.send .body{
+
+.dialog.send .body {
     height: 260px;
 }
-.dialog .btns{
+
+.dialog .btns {
     margin-top: 10px;
 }
-.dialog p{
 
+.dialog p {
     font-size: 14px;
     word-break: break-all;
     line-height: 1.5;
+}
 
+.dialog .btns button {
+    float: right;
 }
-.dialog .btns button{
-    float:  right;
-}
-button.cancel{
+
+button.cancel {
     background: transparent;
     border: 1px solid #575757;
     color: #90B2EF;
     margin-right: 20px;
 }
-input:focus,button:focus{
-    outline:0;
+
+input:focus, button:focus {
+    outline: 0;
 }
-.dialog.password{
+
+.dialog.password {
     width: 500px;
     height: 150px;
     padding: 10px 20px;
@@ -317,19 +332,20 @@ input:focus,button:focus{
     margin-top: -75px;
     display: none;
 }
-.dialog.password .body{
+
+.dialog.password .body {
     margin-top: 10px;
     line-height: 1.5;
 }
-.dialog.password input{
+
+.dialog.password input {
     height: 24px;
     font-size: 12px;
     width: 490px;
     padding: 2px 5px;
 }
 
-
-fieldset pre{
+fieldset pre {
     width: 80%;
     height: 55px;
     flex-grow: 8;
@@ -344,71 +360,76 @@ fieldset pre{
     border-radius: none;
 }
 
-.dialog.account h1{
+.dialog.account h1 {
     color: var(--gold-text);
 }
 
-.dialog.account button{
+.dialog.account button {
     margin-top: 20px;
 }
+
 .spinner {
     margin: 0 auto;
     width: 50px;
     height: 40px;
     text-align: center;
     font-size: 10px;
-  }
-  
-  .spinner > div {
-    background-color:var(--gold-text);
+}
+
+.spinner>div {
+    background-color: var(--gold-text);
     height: 100%;
     width: 6px;
     display: inline-block;
-    
     -webkit-animation: sk-stretchdelay 1.2s infinite ease-in-out;
     animation: sk-stretchdelay 1.2s infinite ease-in-out;
-  }
-  
-  .spinner .rect2 {
+}
+
+.spinner .rect2 {
     -webkit-animation-delay: -1.1s;
     animation-delay: -1.1s;
-  }
-  
-  .spinner .rect3 {
+}
+
+.spinner .rect3 {
     -webkit-animation-delay: -1.0s;
     animation-delay: -1.0s;
-  }
-  
-  .spinner .rect4 {
+}
+
+.spinner .rect4 {
     -webkit-animation-delay: -0.9s;
     animation-delay: -0.9s;
-  }
-  
-  .spinner .rect5 {
+}
+
+.spinner .rect5 {
     -webkit-animation-delay: -0.8s;
     animation-delay: -0.8s;
-  }
-  
-  @-webkit-keyframes sk-stretchdelay {
-    0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
-    20% { -webkit-transform: scaleY(1.0) }
-  }
-  
-  @keyframes sk-stretchdelay {
-    0%, 40%, 100% { 
-      transform: scaleY(0.4);
-      -webkit-transform: scaleY(0.4);
-    }  20% { 
-      transform: scaleY(1.0);
-      -webkit-transform: scaleY(1.0);
-    }
-  }
+}
 
-.account-input{
+@-webkit-keyframes sk-stretchdelay {
+    0%, 40%, 100% {
+        -webkit-transform: scaleY(0.4)
+    }
+    20% {
+        -webkit-transform: scaleY(1.0)
+    }
+}
+
+@keyframes sk-stretchdelay {
+    0%, 40%, 100% {
+        transform: scaleY(0.4);
+        -webkit-transform: scaleY(0.4);
+    }
+    20% {
+        transform: scaleY(1.0);
+        -webkit-transform: scaleY(1.0);
+    }
+}
+
+.account-input {
     display: none;
 }
 
 a, a:active {
     color: #3CA2A2;
     text-decoration: none;
-  }
+}
