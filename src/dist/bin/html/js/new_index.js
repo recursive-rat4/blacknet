@@ -185,17 +185,16 @@ $(document).ready(function () {
         location.reload();
     }
 
-    async function request_info(message = {}) {
-
-        Blacknet.network();
-    }
+    const request_info = Blacknet.throttle(Blacknet.network, 1000);
 
     async function processMessage() {
-        if (Blacknet.startHeight < Blacknet.height) {
-            Blacknet.startHeight++;
-            await Blacknet.addBlockWithHeight(Blacknet.startHeight);
+        let currentHeight = $('#block-list tr td').first().text();
+        currentHeight = +currentHeight;
+
+        if (currentHeight < Blacknet.height) {
+            await Blacknet.addBlockWithHeight(currentHeight + 1);
         } else {
-            await Blacknet.wait(2000);
+            await Blacknet.wait(500);
         }
         processMessage();
     }

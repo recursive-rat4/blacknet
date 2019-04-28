@@ -165,7 +165,7 @@ void function () {
 
         let url = `/blockdb/get/${hash}`;
         let block = await Blacknet.getPromise(url, 'json');
-        
+
         let tmpl = `<tr><td class="narrow height">${height}</td>
                     <td class="size narrow">${block.size}</td>
                     <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
@@ -181,21 +181,47 @@ void function () {
         }
     }
 
-    Blacknet.initRecentBlocks = async function(){
+    Blacknet.initRecentBlocks = async function () {
 
         let i = 35;
         let height = Blacknet.height;
 
-        while(i-->0){
-            await Blacknet.addBlockWithHeight(height - i); 
+        while (i-- > 0) {
+            await Blacknet.addBlockWithHeight(height - i);
         }
     }
 
-    Blacknet.addBlockWithHeight = async function(height){
+    Blacknet.addBlockWithHeight = async function (height) {
         let hash = await Blacknet.getPromise('/blockdb/getblockhash/' + height);
-        Blacknet.addBlock(hash, height);
+        await Blacknet.addBlock(hash, height);
     };
-    
+
+
+    Blacknet.throttle = function (fn, threshhold) {
+
+        let last, timer, threshhold = threshhold || 250;
+
+        return function () {
+
+            let context = this;
+            let args = arguments;
+            let now = +new Date();
+
+            if (last && now < last + threshhold) {
+                clearTimeout(timer);
+
+                timer = setTimeout(function () {
+                    last = now;
+                    fn.apply(context, args);
+                }, threshhold);
+
+            } else {
+                last = now;
+                fn.apply(context, args);
+            }
+        }
+    }
+
     async function getPeerInfo() {
 
         let peers = await Blacknet.getPromise('/peerinfo', 'json');
@@ -218,7 +244,7 @@ void function () {
         $(tmpl).appendTo("#peer-list");
     }
 
-    Blacknet.ready = async function(callback){
+    Blacknet.ready = async function (callback) {
 
         Blacknet.init();
         await Blacknet.network();
@@ -229,7 +255,7 @@ void function () {
     };
 
 
-    
+
 
 
     window.Blacknet = Blacknet;
