@@ -79,6 +79,7 @@ void function () {
         let nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
         network.find('.connections').text(nodeinfo.outgoing);
         $('.overview_agent').text(nodeinfo.agent);
+        getPeerInfo();
     };
 
     Blacknet.renderOverview = function(ledger){
@@ -163,7 +164,7 @@ void function () {
     async function getPeerInfo(){
 
         let peers = await Blacknet.getPromise('/peerinfo', 'json');
-        
+        $('#peer-list').html('');
         peers.map(renderPeer);
         
     }
