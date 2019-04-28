@@ -174,7 +174,6 @@ void function () {
                     </tr>`;
         
         $(tmpl).appendTo("#peer-list");
-        console.log(tmpl)
     }
 
 
