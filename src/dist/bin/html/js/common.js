@@ -197,9 +197,9 @@ void function () {
     };
 
 
-    Blacknet.throttle = function (fn, threshhold) {
+    Blacknet.throttle = function (fn, threshhold = 250) {
 
-        let last, timer, threshhold = threshhold || 250;
+        let last, timer;
 
         return function () {
 
