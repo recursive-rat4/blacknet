@@ -186,7 +186,7 @@ void function () {
         let i = 35;
         let height = Blacknet.height;
 
-        while(i-->-1){
+        while(i-->0){
             await Blacknet.addBlockWithHeight(height - i); 
         }
     }

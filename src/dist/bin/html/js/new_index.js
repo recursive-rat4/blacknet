@@ -185,8 +185,6 @@ $(document).ready(function () {
         location.reload();
     }
 
-
-
     async function request_info(message = {}) {
 
         Blacknet.network();
@@ -197,7 +195,7 @@ $(document).ready(function () {
             Blacknet.startHeight++;
             await Blacknet.addBlockWithHeight(Blacknet.startHeight);
         } else {
-            await Blacknet.wait(1000);
+            await Blacknet.wait(2000);
         }
         processMessage();
     }
