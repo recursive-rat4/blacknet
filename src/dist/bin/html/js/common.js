@@ -51,8 +51,8 @@ void function () {
                 }
             });
         }
-        
-        
+
+
     };
 
     Blacknet.balance = async function () {
@@ -80,11 +80,13 @@ void function () {
         network.find('.connections').text(nodeinfo.outgoing);
         $('.overview_agent').text(nodeinfo.agent);
         getPeerInfo();
+
+        Blacknet.addBlockWithHeight(Blacknet.height);
     };
 
-    Blacknet.renderOverview = function(ledger){
+    Blacknet.renderOverview = function (ledger) {
 
-        for(let key in ledger){
+        for (let key in ledger) {
 
             $('.overview_' + key).text(ledger[key]);
         }
@@ -151,28 +153,53 @@ void function () {
     Blacknet.unix_to_local_time = function (unix_timestamp) {
 
         let date = new Date(unix_timestamp * 1000);
-        let hours =  "0" + date.getHours();
+        let hours = "0" + date.getHours();
         let minutes = "0" + date.getMinutes();
         let seconds = "0" + date.getSeconds();
         let day = date.getDate();
         let year = date.getFullYear();
         let month = date.getMonth() + 1;
-    
-        return year + "-" +month + "-" +day+" "+  hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+        return year + "-" + month + "-" + day + " " + hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
-    async function getPeerInfo(){
+    Blacknet.addBlock = async function (hash, height) {
+
+        let url = `/blockdb/get/${hash}`;
+        let block = await Blacknet.getPromise(url, 'json');
+
+        let tmpl = `<tr><td class="narrow height">${height}</td>
+                    <td class="size narrow">${block.size}</td>
+                    <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
+                    <td class="txns narrow">${block.transactions.length}</td>
+                    <td class="generator">${block.generator}</td></tr>`;
+
+        $(tmpl).prependTo("#block-list");
+
+        let rowsCount = $('#block-list').find('tr').length;
+
+        if (rowsCount > 35) {
+            $('#block-list tr:last-child').remove();
+        }
+    }
+
+    Blacknet.addBlockWithHeight = async function(height){
+
+        let hash = await Blacknet.getPromise('/blockdb/getblockhash/' + height);
+        Blacknet.addBlock(hash, height);
+    };
+    
+    async function getPeerInfo() {
 
         let peers = await Blacknet.getPromise('/peerinfo', 'json');
         $('#peer-list').html('');
         peers.map(renderPeer);
-        
     }
 
-    function renderPeer(peer, index){
-        
+    function renderPeer(peer, index) {
+
         let tmpl = `<tr>
-                        <td>${index+1}</td>
+                        <td>${index + 1}</td>
                         <td class="right">${peer.remoteAddress}</td>
                         <td>${peer.agent}</td>
                         <td class="right">${peer.ping}ms</td>
@@ -180,7 +207,7 @@ void function () {
                         <td class="narrow">${peer.totalBytesRead}</td>
                         <td class="narrow">${peer.totalBytesWritten}</td>
                     </tr>`;
-        
+
         $(tmpl).appendTo("#peer-list");
     }
 
@@ -188,7 +215,6 @@ void function () {
     Blacknet.init();
     Blacknet.network();
     Blacknet.balance();
-    getPeerInfo();
 
     window.Blacknet = Blacknet;
 }();

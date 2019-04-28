@@ -186,33 +186,12 @@ $(document).ready(function () {
         location.reload();
     }
 
-    async function append_block(hash, height) {
-
-        let url = `/blockdb/get/${hash}`;
-        let block = await Blacknet.getPromise(url, 'json');
-
-        let tmpl = `<tr><td class="narrow height">${height}</td>
-                    <td class="size narrow">${block.size}</td>
-                    <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
-                    <td class="txns narrow">${block.transactions.length}</td>
-                    <td class="generator">${block.generator}</td></tr>`;
-
-        $(tmpl).prependTo("#block-list");
-
-        let rowsCount = $('#block-list').find('tr').length;
-
-        if (rowsCount > 35) {
-            $('#block-list tr:last-child').remove();
-        }
-    }
-
     async function request_info(message = {}) {
 
         Blacknet.network();
 
         if (message.data) {
-            append_block(message.data, Blacknet.height);
-            Blacknet.height++;
+            Blacknet.addBlock(message.data, Blacknet.height);
         }
     }
 
