@@ -68,18 +68,25 @@ void function () {
 
     Blacknet.network = async function () {
         let network = $('.network');
-        $.getJSON(apiVersion + '/ledger', function (data) {
+        let data = await Blacknet.getPromise('/ledger', 'json');
 
-            Blacknet.height = data.height;
-            network.find('.height').html(data.height);
-            network.find('.supply').html(new BigNumber(data.supply).dividedBy(1e8).toFixed(0));
-            network.find('.accounts').html(data.accounts);
-        });
+        Blacknet.height = data.height;
+        network.find('.height').html(data.height);
+        network.find('.supply').html(new BigNumber(data.supply).dividedBy(1e8).toFixed(0));
+        network.find('.accounts').html(data.accounts);
+        Blacknet.renderOverview(data);
 
-        $.getJSON(apiVersion + '/nodeinfo', function (data) {
+        let nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
+        network.find('.connections').text(nodeinfo.outgoing);
+        $('.overview_agent').text(nodeinfo.agent);
+    };
 
-            network.find('.connections').text(data.outgoing);
-        });
+    Blacknet.renderOverview = function(ledger){
+
+        for(let key in ledger){
+
+            $('.overview_' + key).text(ledger[key]);
+        }
     };
     Blacknet.get = function (url, callback) {
 
