@@ -86,7 +86,13 @@ void function () {
 
         for (let key in ledger) {
 
-            $('.overview_' + key).text(ledger[key]);
+            let value = ledger[key];
+            if(key == 'blockTime'){
+                value = Blacknet.unix_to_local_time(value);
+            }else if(key == 'supply'){
+                value = new BigNumber(value).dividedBy(1e8) + ' BLN';
+            }
+            $('.overview_' + key).text(value);
         }
     };
     Blacknet.get = function (url, callback) {
@@ -115,7 +121,8 @@ void function () {
 
         url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
-        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
+        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + 
+            to + '\n\n0.001 BLN added as transaction fee?')) {
 
             Blacknet.post(url, callback);
         }
@@ -134,8 +141,8 @@ void function () {
             url = "/cancellease/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + height + "/";
         }
 
-
-        if (confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText + ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
+        if (confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
+             ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
 
             Blacknet.post(url, callback);
         }
@@ -158,7 +165,8 @@ void function () {
         let year = date.getFullYear();
         let month = date.getMonth() + 1;
 
-        return year + "-" + month + "-" + day + " " + hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+        return year + "-" + ('0' + month).substr(-2) + "-" +
+             ('0' + day).substr(-2) + " " + hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
     Blacknet.addBlock = async function (hash, height) {
