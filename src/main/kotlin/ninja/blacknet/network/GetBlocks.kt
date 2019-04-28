@@ -53,7 +53,7 @@ class GetBlocks(
         }
 
         val height = LedgerDB.height()
-        val maxSize = LedgerDB.DEFAULT_MAX_BLOCK_SIZE // we don't know actual value, so assume minimum
+        val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = ArrayList<SerializableByteArray>()
 
         var size = 8

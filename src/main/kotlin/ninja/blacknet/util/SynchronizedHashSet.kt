@@ -18,8 +18,6 @@ class SynchronizedHashSet<T>(
 ) {
     suspend inline fun isEmpty() = mutex.withLock { set.isEmpty() }
 
-    suspend inline fun isNotEmpty() = mutex.withLock { !set.isEmpty() }
-
     suspend inline fun size() = mutex.withLock { set.size }
 
     suspend inline fun add(element: T) = mutex.withLock { set.add(element) }

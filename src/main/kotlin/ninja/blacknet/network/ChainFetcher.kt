@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB.Status
+import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
@@ -85,7 +86,7 @@ object ChainFetcher {
                     }
                     if (!answer.hashes.isEmpty()) {
                         if (rollbackTo != null) {
-                            data.connection.dos("Unexpected rollback")
+                            data.connection.dos("unexpected rollback")
                             break
                         }
                         val checkpoint = LedgerDB.getRollingCheckpoint()
@@ -95,8 +96,13 @@ object ChainFetcher {
                                 data.connection.dos("invalid chain")
                                 break@requestLoop
                             }
-                            if (LedgerDB.getBlockNumber(hash) == null)
+                            val blockNumber = LedgerDB.getBlockNumber(hash)
+                            if (blockNumber == null)
                                 break
+                            if (blockNumber < LedgerDB.height() - PoS.MATURITY - 1) {
+                                data.connection.dos("rollback to $blockNumber")
+                                break@requestLoop
+                            }
                             prev = hash
                         }
                         rollbackTo = prev
@@ -143,9 +149,8 @@ object ChainFetcher {
                 BlockDB.remove(toRemove)
                 connectingBlocks = false
             } else {
-                logger.info("Removing ${undoRollback!!.size} blocks from db")
-                val toRemove = undoRollback!!
-                BlockDB.remove(toRemove)
+                logger.debug { "Removing ${undoRollback!!.size} blocks from db" }
+                BlockDB.remove(undoRollback!!)
             }
         }
 
@@ -194,6 +199,9 @@ object ChainFetcher {
             }
             val status = BlockDB.process(hash, i.array, null)
             if (status == Status.IN_FUTURE) {
+                return false
+            } else if (status == Status.NOT_ON_THIS_CHAIN) {
+                connection.close() //XXX
                 return false
             } else if (status != Status.ACCEPTED && status != Status.ALREADY_HAVE) {
                 logger.info("$status block $hash")

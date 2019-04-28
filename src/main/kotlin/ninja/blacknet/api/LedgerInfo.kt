@@ -9,6 +9,7 @@
 
 package ninja.blacknet.api
 
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.db.LedgerDB
 
@@ -27,18 +28,20 @@ class LedgerInfo(
         val multisigs: Int
 ) {
     companion object {
-        fun get() = LedgerInfo(
-                LedgerDB.height(),
-                LedgerDB.blockHash().toString(),
-                LedgerDB.blockTime(),
-                LedgerDB.difficulty().toString(),
-                LedgerDB.cumulativeDifficulty().toString(),
-                LedgerDB.supply(),
-                LedgerDB.accounts(),
-                LedgerDB.maxBlockSize(),
-                LedgerDB.nxtrng().toString(),
-                LedgerDB.htlcs(),
-                LedgerDB.multisigs()
-        )
+        suspend fun get(): LedgerInfo = LedgerDB.mutex.withLock {
+            return LedgerInfo(
+                    LedgerDB.height(),
+                    LedgerDB.blockHash().toString(),
+                    LedgerDB.blockTime(),
+                    LedgerDB.difficulty().toString(),
+                    LedgerDB.cumulativeDifficulty().toString(),
+                    LedgerDB.supply(),
+                    LedgerDB.accounts(),
+                    LedgerDB.maxBlockSize(),
+                    LedgerDB.nxtrng().toString(),
+                    LedgerDB.htlcs(),
+                    LedgerDB.multisigs()
+            )
+        }
     }
 }

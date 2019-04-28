@@ -16,6 +16,7 @@ import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
@@ -52,12 +53,21 @@ object Node : CoroutineScope {
     const val version = 8
     const val minVersion = 5
     override val coroutineContext: CoroutineContext = Dispatchers.Default
+    private val shutdownHooks = SynchronizedArrayList<suspend () -> Unit>()
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
     var minTxFee = parseAmount(Config[mintxfee])
 
     init {
+        Runtime.getRuntime().addShutdownHook(Thread {
+            runBlocking {
+                shutdownHooks.reversedForEach {
+                    it()
+                }
+            }
+        })
+
         if (Config[listen]) {
             try {
                 Node.listenOnIP()
@@ -73,6 +83,17 @@ object Node : CoroutineScope {
         launch { peerAnnouncer() }
         launch { dnsSeeder(true) }
         launch { inventoryBroadcaster() }
+    }
+
+    /**
+     * Registers a new shutdown hook.
+     *
+     * All registered shutdown hooks will be run sequentially in the reversed order.
+     */
+    fun addShutdownHook(hook: suspend () -> Unit) {
+        runBlocking {
+            shutdownHooks.add(hook)
+        }
     }
 
     fun time(): Long {
@@ -128,6 +149,10 @@ object Node : CoroutineScope {
 
     fun getMaxPacketSize(): Int {
         return LedgerDB.maxBlockSize() + 100
+    }
+
+    fun getMinPacketSize(): Int {
+        return LedgerDB.DEFAULT_MAX_BLOCK_SIZE + 100
     }
 
     fun isInitialSynchronization(): Boolean {

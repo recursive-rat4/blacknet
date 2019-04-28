@@ -16,7 +16,7 @@ import ninja.blacknet.network.Node
 @Serializable
 class NodeInfo(
         val agent: String,
-        val version: Int,
+        val protocolVersion: Int,
         val outgoing: Int,
         val incoming: Int,
         val listening: List<String>

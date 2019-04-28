@@ -22,8 +22,6 @@ class SynchronizedHashMap<K, V>(
 
     suspend inline fun isEmpty() = mutex.withLock { map.isEmpty() }
 
-    suspend inline fun isNotEmpty() = mutex.withLock { !map.isEmpty() }
-
     suspend inline fun size() = mutex.withLock { map.size }
 
     suspend inline fun get(key: K): V? = mutex.withLock { map.get(key) }

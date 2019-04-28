@@ -24,7 +24,7 @@ $(document).ready(function () {
         return function () {
             mask.show();
             dialogPassword.show().find('.confirm').unbind().on('click', function () {
-                
+
                 let mnemonic = dialogPassword.find('.mnemonic').val();
 
                 type == 'refresh_staking' ? refreshStaking(mnemonic) : post_staking(mnemonic, type);
@@ -35,7 +35,7 @@ $(document).ready(function () {
 
     async function post_staking(mnemonic, type) {
 
-        let url = apiVersion + "/staker/" + type + "/" + mnemonic + "/";
+        let url = apiVersion + "/" + type + "Staking/" + mnemonic + "/";
 
         $.post(url, {}, function (ret) {
 
@@ -49,7 +49,7 @@ $(document).ready(function () {
         });
     }
 
-    async function refreshStaking(mnemonic){
+    async function refreshStaking(mnemonic) {
 
         let stakingText = $('.isStaking'), data;
 

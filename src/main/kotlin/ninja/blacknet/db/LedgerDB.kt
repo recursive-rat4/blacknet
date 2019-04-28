@@ -29,7 +29,7 @@ import kotlin.math.max
 private val logger = KotlinLogging.logger {}
 
 object LedgerDB : Ledger {
-    private val mutex = Mutex()
+    val mutex = Mutex()
     private val db = DBMaker.fileDB("db/ledger").transactionEnable().closeOnJvmShutdown().make()
     private val accounts = db.hashMap("accounts", PublicKeySerializer, AccountStateSerializer).createOrOpen()
     private val height = db.atomicInteger("height").createOrOpen()

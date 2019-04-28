@@ -9,6 +9,7 @@
 
 package ninja.blacknet.api
 
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
@@ -20,7 +21,7 @@ class AccountInfo(
         val stakingBalance: Long
 ) {
     companion object {
-        suspend fun get(publicKey: PublicKey): AccountInfo? {
+        suspend fun get(publicKey: PublicKey): AccountInfo? = LedgerDB.mutex.withLock {
             val state = LedgerDB.get(publicKey) ?: return null
             return AccountInfo(state.seq, state.balance(), state.stakingBalance(LedgerDB.height()))
         }

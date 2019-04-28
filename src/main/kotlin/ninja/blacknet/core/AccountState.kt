@@ -75,19 +75,31 @@ data class AccountState(
         immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
     }
 
-    data class Input(val height: Int, var amount: Long) {
+    class Input(val height: Int, var amount: Long) {
+        override fun equals(other: Any?): Boolean = (other is Input) && height == other.height && amount == other.amount
+        override fun hashCode(): Int = height xor amount.hashCode()
+        fun copy(): Input = Input(height, amount)
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }
 
-    data class LeaseInput(val from: PublicKey, val height: Int, val amount: Long) {
+    class LeaseInput(val from: PublicKey, val height: Int, val amount: Long) {
+        override fun equals(other: Any?): Boolean = (other is LeaseInput) && from == other.from && height == other.height && amount == other.amount
+        override fun hashCode(): Int = from.hashCode() xor height xor amount.hashCode()
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }
 
-    fun copy() = AccountState(seq, stake, immature.toMutableList(), leases.toMutableList())
+    fun copy(): AccountState {
+        val copyImmature = ArrayList<Input>(immature.size)
+        for (i in 0 until immature.size)
+            copyImmature.add(immature[i].copy())
+        return AccountState(seq, stake, copyImmature, ArrayList(leases))
+    }
 
-    fun isEmpty() = seq == 0 && stake == 0L && immature.isEmpty() && leases.isEmpty()
+    fun isEmpty(): Boolean {
+        return seq == 0 && stake == 0L && immature.isEmpty() && leases.isEmpty()
+    }
 
     companion object {
         fun create(stake: Long = 0): AccountState {
