@@ -201,7 +201,7 @@ $(document).ready(function () {
 
         let rowsCount = $('#block-list').find('tr').length;
 
-        if (rowsCount > 15) {
+        if (rowsCount > 35) {
             $('#block-list tr:last-child').remove();
         }
     }

@@ -115,6 +115,7 @@ p span, .strong {
     bottom: 0;
     top: 64px;
     border-left: 1px solid #222;
+    overflow: scroll;
 }
 
 .rightpanel>div {
@@ -234,7 +235,7 @@ table {
     border-collapse: collapse;
     /* border: 1px solid var(--grey-text); */
     margin-top: 10px;
-    min-width: 600px;
+    min-width: 800px;
 }
 
 
