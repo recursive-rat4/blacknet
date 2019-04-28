@@ -80,8 +80,6 @@ void function () {
         network.find('.connections').text(nodeinfo.outgoing);
         $('.overview_agent').text(nodeinfo.agent);
         getPeerInfo();
-
-        Blacknet.addBlockWithHeight(Blacknet.height);
     };
 
     Blacknet.renderOverview = function (ledger) {
@@ -167,7 +165,7 @@ void function () {
 
         let url = `/blockdb/get/${hash}`;
         let block = await Blacknet.getPromise(url, 'json');
-
+        
         let tmpl = `<tr><td class="narrow height">${height}</td>
                     <td class="size narrow">${block.size}</td>
                     <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
@@ -183,8 +181,17 @@ void function () {
         }
     }
 
-    Blacknet.addBlockWithHeight = async function(height){
+    Blacknet.initRecentBlocks = async function(){
 
+        let i = 35;
+        let height = Blacknet.height;
+
+        while(i-->-1){
+            await Blacknet.addBlockWithHeight(height - i); 
+        }
+    }
+
+    Blacknet.addBlockWithHeight = async function(height){
         let hash = await Blacknet.getPromise('/blockdb/getblockhash/' + height);
         Blacknet.addBlock(hash, height);
     };
@@ -211,10 +218,19 @@ void function () {
         $(tmpl).appendTo("#peer-list");
     }
 
+    Blacknet.ready = async function(callback){
 
-    Blacknet.init();
-    Blacknet.network();
-    Blacknet.balance();
+        Blacknet.init();
+        await Blacknet.network();
+        await Blacknet.initRecentBlocks();
+        await Blacknet.balance();
+        Blacknet.startHeight = Blacknet.height + 1;
+        callback();
+    };
+
+
+    
+
 
     window.Blacknet = Blacknet;
 }();

@@ -13,7 +13,6 @@ $(document).ready(function () {
     const hash = localStorage.hashIndex || 'overview';
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
 
-
     menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
 
 
@@ -186,18 +185,32 @@ $(document).ready(function () {
         location.reload();
     }
 
+
+
     async function request_info(message = {}) {
 
         Blacknet.network();
+    }
 
-        if (message.data) {
-            Blacknet.addBlock(message.data, Blacknet.height);
+    async function processMessage() {
+        if (Blacknet.startHeight < Blacknet.height) {
+            Blacknet.startHeight++;
+            await Blacknet.addBlockWithHeight(Blacknet.startHeight);
+        } else {
+            await Blacknet.wait(1000);
         }
+        processMessage();
     }
 
 
-    let ws = new WebSocket("ws://" + location.host + "/api/v1/notify/block");
-    ws.onmessage = request_info;
+    Blacknet.ready(function () {
+
+        let ws = new WebSocket("ws://" + location.host + "/api/v1/notify/block");
+        ws.onmessage = request_info;
+        processMessage();
+    });
+
+
 
 
     menu.on('click', 'li', menuSwitch);
