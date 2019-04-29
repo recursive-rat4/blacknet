@@ -13,47 +13,59 @@ $(document).ready(function () {
     const hash = localStorage.hashIndex || 'overview';
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
 
-    
-    menu.find('a[data-index="'+hash+'"]').parent().addClass('active');
-   
-    
+    menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
+
+
 
 
     function staking_click(type) {
 
-        return function(){
+        return function () {
             mask.show();
-            dialogPassword.show().find('.confirm').unbind().on('click', function(){
+            dialogPassword.show().find('.confirm').unbind().on('click', function () {
 
                 let mnemonic = dialogPassword.find('.mnemonic').val();
 
-                post_staking(mnemonic, type);
+                type == 'refresh_staking' ? refreshStaking(mnemonic) : post_staking(mnemonic, type);
             });
         }
     }
 
 
-    function post_staking(mnemonic, type){
+    async function post_staking(mnemonic, type) {
 
-        let url = apiVersion + "/"+type+"Staking/" + mnemonic + "/";
+        let url = apiVersion + "/" + type + "Staking/" + mnemonic + "/";
 
-        $.post(url, {}, function(ret){
+        $.post(url, {}, function (ret) {
 
             let msg = ret == 'false' ? type.toUpperCase() + ' FAILED!' : type.toUpperCase() + ' SUCCESS!';
             clearPassWordDialog();
+            refreshStaking(mnemonic);
             timeAlert(msg);
-        }).fail(function(){
+        }).fail(function () {
             clearPassWordDialog();
             timeAlert('Invalid mnemonic');
         });
     }
-        
-    function menuSwitch(){
-        
+
+    async function refreshStaking(mnemonic) {
+
+        let stakingText = $('.isStaking'), data;
+
+        stakingText.text('loading');
+        data = await Blacknet.postPromise('/isStaking/' + mnemonic);
+        localStorage.isStaking = data;
+        clearPassWordDialog();
+        await Blacknet.wait(2000);
+        $('.isStaking').text(data);
+    }
+
+    function menuSwitch() {
+
         const target = $(this), index = target.find('a').attr('data-index');
 
         target.addClass('active').siblings().removeClass('active');
-        panel.find('.'+index).show().siblings().hide();
+        panel.find('.' + index).show().siblings().hide();
 
         localStorage.hashIndex = index;
         return false;
@@ -82,11 +94,11 @@ $(document).ready(function () {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
         let url = "/mnemonic/info/" + mnemonic + "/";
 
-        Blacknet.post( url, function (data) {
+        Blacknet.post(url, function (data) {
             let html = '';
 
             data.mnemonic = data.mnemonic.replace(/[a-z]/g, '*');
-            
+
             html += 'mnemonic: ' + data.mnemonic;
             html += '<br>address: ' + data.address;
             html += '<br>publicKey: ' + data.publicKey;
@@ -101,81 +113,109 @@ $(document).ready(function () {
         $('#new_account').val(blockData.address);
         $('#new_mnemonic').val(blockData.mnemonic);
         $('#new_pubkey').val(blockData.publicKey);
-        
     }
 
-    function transfer_click(type){
+    function transfer_click(type) {
 
-        return function(){
+        return function () {
             mask.show();
-            dialogPassword.show().find('.confirm').unbind().on('click', function(){
+            dialogPassword.show().find('.confirm').unbind().on('click', function () {
 
                 let mnemonic = dialogPassword.find('.mnemonic').val();
-                switch(type){
-                    case 'send': transfer(mnemonic);break;
-                    case 'lease': lease(mnemonic);break;
-                    case 'cancel_lease': cancel_lease(mnemonic);break;
+                switch (type) {
+                    case 'send': transfer(mnemonic); break;
+                    case 'lease': lease(mnemonic); break;
+                    case 'cancel_lease': cancel_lease(mnemonic); break;
                 }
             });
         }
     }
 
     function transfer(mnemonic) {
-        
+
         let to = $('#transfer_to').val();
         let amount = $('#transfer_amount').val();
         let message = $('#transfer_message').val();
         let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
 
-        Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function(data){
+        Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
             $('#transfer_result').val(data);
             clearPassWordDialog();
         });
     }
 
     function lease(mnemonic) {
-        
+
         let to = $('#lease_to').val();
         let amount = $('#lease_amount').val();
 
-        Blacknet.lease(mnemonic, 'lease', amount, to, 0,function(data){
+        Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
             $('#lease_result').val(data);
             clearPassWordDialog();
         });
     }
 
     function cancel_lease(mnemonic) {
-        
+
         let to = $('#cancel_lease_to').val();
         let amount = $('#cancel_lease_amount').val();
         let height = $('#cancel_lease_height').val();
 
-        Blacknet.lease(mnemonic, 'cancellease', amount, to, height,function(data){
+        Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
             $('#cancel_lease_result').val(data);
             clearPassWordDialog();
         });
     }
 
-    function clearPassWordDialog(){
+    function clearPassWordDialog() {
         mask.hide();
         dialogPassword.hide().find('.confirm').unbind();
         dialogPassword.find('.mnemonic').val('');
     }
 
-    function timeAlert(msg, timeout){
-        setTimeout(function(){
+    function timeAlert(msg, timeout) {
+        setTimeout(function () {
             alert(msg);
         }, timeout || 100);
     }
-    
 
-    
-    
+    function switchAccount() {
+
+        localStorage.account = "";
+        location.reload();
+    }
+
+    const request_info = Blacknet.throttle(Blacknet.network, 1000);
+
+    async function processMessage() {
+        let currentHeight = $('#block-list tr td').first().text();
+        currentHeight = +currentHeight;
+
+        if (currentHeight < Blacknet.height) {
+            await Blacknet.addBlockWithHeight(currentHeight + 1);
+        } else {
+            await Blacknet.wait(500);
+        }
+        processMessage();
+    }
+
+
+    Blacknet.ready(function () {
+
+        let ws = new WebSocket("ws://" + location.host + "/api/v1/notify/block");
+        ws.onmessage = request_info;
+        processMessage();
+    });
+
+
+
+
     menu.on('click', 'li', menuSwitch);
-    panel.find('.'+hash).show();
+    panel.find('.' + hash).show();
 
     body.on("click", "#stop_staking", staking_click('stop'))
         .on("click", "#start_staking", staking_click('start'))
+        .on("click", "#refresh_staking", staking_click('refresh_staking'))
         .on("click", "#transfer", transfer_click('send'))
         .on("click", "#lease", transfer_click('lease'))
         .on("click", "#cancel_lease", transfer_click('cancel_lease'))
@@ -183,9 +223,6 @@ $(document).ready(function () {
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
         .on("click", "#generate_new_account", generate_new_account)
-        // .on("click", "#display_api_json_result", function (event) {
-        //     let el = event.target;
-        //     display_api_json_result(el.dataset.type);
-        // });
-    
+        .on("click", "#switch_account", switchAccount)
+
 });

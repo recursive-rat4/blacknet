@@ -26,7 +26,8 @@
             Blacknet
         </div>
         <div class="network">
-            <p>Supply:<span class="supply"></span> Accounts: <span class="accounts"></span> Height: <span class="height"></span>                Connections: <span class="connections">-</span></p>
+            <p>Supply:<span class="supply"></span> Accounts: <span class="accounts"></span> Height: <span
+                    class="height"></span> Connections: <span class="connections">-</span></p>
         </div>
     </header>
     <div class="container">
@@ -35,57 +36,101 @@
             <div class="menu">
                 <ul>
                     <li><a href="#" data-index="overview">Overview</a></li>
-                    <li><a href="#" data-index="send">Send</a></li>
                     <li><a href="#" data-index="staking">Staking</a></li>
-                    <li><a href="#" data-index="sign">Sign/Verify Message</a></li>
-                    <li><a href="#" data-index="info">Mnemonic info</a></li>
-                    <li><a href="#" data-index="generate">Generate new account</a></li>
+                    <li><a href="#" data-index="send">Send</a></li>
                     <li><a href="#" data-index="lease">Lease</a></li>
                     <li><a href="#" data-index="cancel_lease">Cancel Lease</a></li>
+                    <li><a href="#" data-index="sign">Sign/Verify Message</a></li>
                     <li><a href="#" data-index="recentblocks">Recent Blocks</a></li>
+                    <li><a href="#" data-index="peerinfo">Peers</a></li>
+                    <li><a href="#" data-index="generate">Generate new account</a></li>
+                    <li><a href="#" data-index="info">Mnemonic info</a></li>
                     <!-- <li><a href="#" data-index="txpool">Tx Pool</a></li> -->
                 </ul>
             </div>
         </div>
         <div class="rightpanel">
             <div class="overview">
+                <h3>Wallet Info</h3>
                 <table>
-                    <thead>
-                        <td colspan="2">
-                            Wallet Info
-                        </td>
-                    </thead>
                     <tbody>
                         <tr>
                             <td>Account</td>
-                            <td class="overview_account"></td>
+                            <td>
+                                <span class="overview_account"></span>
+                                <a href="#" id="switch_account">Switch Account</a>
+                            </td>
                         </tr>
                         <tr>
                             <td>Balance</td>
-                            <td class="overview_balance">0.0000 BLN</td>
+                            <td class="overview_balance strong">0.0000 BLN</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3>Node Info</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Agent</td>
+                            <td width="636">
+                                <span class="overview_agent"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Height</td>
+                            <td>
+                                <span class="overview_height"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>BlockHash</td>
+                            <td>
+                                <span class="overview_blockHash"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>BlockTime</td>
+                            <td>
+                                <span class="overview_blockTime"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Difficulty</td>
+                            <td>
+                                <span class="overview_difficulty"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>CumulativeDifficulty</td>
+                            <td>
+                                <span class="overview_cumulativeDifficulty"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Supply</td>
+                            <td>
+                                <span class="overview_supply strong"></span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             <div class="staking">
+                <h3>Staking Info</h3>
                 <table>
-                    <thead>
-                        <td colspan="2">
-                            Staking Info
-                        </td>
-                    </thead>
                     <tbody>
                         <tr>
                             <td>isStaking</td>
-                            <td>no </td>
+                            <td class="isStaking">false</td>
                         </tr>
                         <tr>
                             <td>
-                                Start/Stop
+                                Start/Stop/Refresh
                             </td>
                             <td>
                                 <button id="start_staking">Start staking</button>
                                 <button id="stop_staking">Stop staking</button>
+                                <button id="refresh_staking">Refresh</button>
                             </td>
                         </tr>
                     </tbody>
@@ -202,7 +247,38 @@
                 </fieldset>
             </div>
             <div class="recentblocks">
-                recentblocks
+                <h3>Recent Blocks</h3>
+                <table id="block-table">
+                    <thead>
+                        <tr>
+                            <td class="narrow">Height</td>
+                            <td class="narrow">Size</td>
+                            <td class="narrow">Time</td>
+                            <td class="narrow">Txns</td>
+                            <td>Generator</td>
+                        </tr>
+                    </thead>
+                    <tbody id="block-list">
+                    </tbody>
+                </table>
+            </div>
+            <div class="peerinfo">
+                <h3>Peers</h3>
+                <table id="peer-table">
+                    <thead>
+                        <tr>
+                            <td>Index</td>
+                            <td class="narrow">Node</td>
+                            <td>User Agent</td>
+                            <td class="narrow">Ping</td>
+                            <td class="narrow">Time Offset</td>
+                            <td class="narrow">Bytes Read</td>
+                            <td class="narrow">Bytes Written</td>
+                        </tr>
+                    </thead>
+                    <tbody id="peer-list">
+                    </tbody>
+                </table>
             </div>
             <div class="txpool">
                 to be develop
@@ -295,7 +371,6 @@
     <div class="dialog account">
         <div class="header"></div>
         <div class="body">
-
         </div>
         <div class="body">
             <img src="images/logo.png" height="160" width="160" alt="">
@@ -307,7 +382,8 @@
                 <div class="rect4"></div>
                 <div class="rect5"></div>
             </div>
-            <p class="account-input">Enter Your Account:<input type="text" class='account_text' placeholder="blacknet___________________________________________________________"></p>
+            <p class="account-input">Enter Your Account:<input type="text" class='account_text'
+                    placeholder="blacknet___________________________________________________________"></p>
         </div>
         <div class="account-input">
             <button class="enter">Enter</button>
