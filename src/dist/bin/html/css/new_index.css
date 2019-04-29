@@ -151,11 +151,12 @@ fieldset {
     border: 1px groove;
     border-color: var(--gold-text);
     margin: 0 0 1em;
+    width: 666px;
 }
 
 legend {
     color: var(--grey-text);
-    font-size: 1.5em;
+    font-size: 18px;
     font-weight: bold;
     padding-left: 4px;
     padding-right: 4px;
@@ -163,15 +164,19 @@ legend {
 
 label {
     color: var(--grey-text);
-    flex-basis: 123px;
-    font-size: 1em;
+    flex-basis: 120px;
+    font-size: 14px;
     flex-grow: 1;
+}
+label strong{
+    color: var(--gold-text);
+    font-size: 12px;
 }
 
 input {
     border: 1px solid var(--darker-grey-bg);
     border-radius: 4px;
-    height: 28px;
+    height: 20px;
     width: 80%;
     padding: 5px 10px;
     background-color: var(--grey-text);
@@ -209,18 +214,23 @@ button {
     -webkit-writing-mode: horizontal-tb !important;
 }
 
+fieldset button, .staking button{
+    color: var(--gold-text);
+    background-color: var(--darker-grey-bg);
+    border: none;
+}
 input:read-only {
     background-color: var(--lighter-grey-bg);
     color: var(--gold-text);
     border: none;
-    font-size: 1.15em;
+    font-size: 12px;
 }
 
 input:-moz-read-only {
     background-color: var(--lighter-grey-bg);
     color: var(--gold-text);
     border: none;
-    font-size: 1.15em;
+    font-size: 12px;
 }
 
 /* input:focus {
