@@ -42,6 +42,10 @@ class AccountState(
         return stake + immature.sumByLong { it.amount }
     }
 
+    fun confirmedBalance(height: Int, confirmations: Int): Long {
+        return stake + immature.sumByLong { it.confirmedBalance(height, confirmations) }
+    }
+
     fun stakingBalance(height: Int): Long {
         return stake + immature.sumByLong { it.matureBalance(height) } + leases.sumByLong { it.matureBalance(height) }
     }
@@ -101,7 +105,9 @@ class AccountState(
         override fun equals(other: Any?): Boolean = (other is Input) && height == other.height && amount == other.amount
         override fun hashCode(): Int = height xor amount.hashCode()
         fun copy(): Input = Input(height, amount)
+        fun isConfirmed(height: Int, confirmations: Int): Boolean = height > this.height + confirmations
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
+        fun confirmedBalance(height: Int, confirmations: Int): Long = if (isConfirmed(height, confirmations)) amount else 0
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }
 

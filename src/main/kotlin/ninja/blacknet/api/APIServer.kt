@@ -209,9 +209,10 @@ fun Application.main() {
             call.respond(Json.stringify(LedgerInfo.serializer(), LedgerInfo.get()))
         }
 
-        get("/api/v1/ledger/get/{account}") {
+        get("/api/v1/ledger/get/{account}/{confirmations?}") {
             val publicKey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
-            val result = AccountInfo.get(publicKey)
+            val confirmations = call.parameters["confirmations"]?.toIntOrNull() ?: PoS.DEFAULT_CONFIRMATIONS
+            val result = AccountInfo.get(publicKey, confirmations)
             if (result != null)
                 call.respond(Json.stringify(AccountInfo.serializer(), result))
             else

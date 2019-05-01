@@ -146,6 +146,7 @@ object PoS {
     const val INTERVAL = TARGET_TIMESPAN / TARGET_BLOCK_TIME
     const val SPACING = 10
     const val TIMESTAMP_MASK = 15L
+    const val DEFAULT_CONFIRMATIONS = 10
     const val MATURITY = 1350
     const val BLOCK_SIZE_SPAN = 1351
     const val COIN = 100000000L

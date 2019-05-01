@@ -18,12 +18,14 @@ import ninja.blacknet.db.LedgerDB
 class AccountInfo(
         val seq: Int,
         val balance: Long,
+        val confirmedBalance: Long,
         val stakingBalance: Long
 ) {
     companion object {
-        suspend fun get(publicKey: PublicKey): AccountInfo? = LedgerDB.mutex.withLock {
+        suspend fun get(publicKey: PublicKey, confirmations: Int): AccountInfo? = LedgerDB.mutex.withLock {
             val state = LedgerDB.get(publicKey) ?: return null
-            return AccountInfo(state.seq, state.balance(), state.stakingBalance(LedgerDB.height()))
+            val height = LedgerDB.height()
+            return AccountInfo(state.seq, state.balance(), state.confirmedBalance(height, confirmations), state.stakingBalance(height))
         }
     }
 }
