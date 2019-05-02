@@ -9,248 +9,225 @@
 
 $(document).ready(function () {
 
-    const apiVersion = "/api/v1", body = $("body");
-    function request_promise(method, url) {
-        return new Promise(function (resolve, reject) {
-            url = apiVersion + url;
-            const xhr = new XMLHttpRequest();
-            xhr.open(method, url, true);
-            xhr.onload = function () {
-                if (this.status >= 200 && this.status < 300) {
-                    resolve(xhr.responseText);
-                } else {
-                    reject({
-                        status: this.status,
-                        statusText: xhr.statusText
-                    });
-                }
-            };
-            xhr.onerror = function () {
-                reject({
-                    status: this.status,
-                    statusText: xhr.statusText
-                });
-            };
-            xhr.send();
-        });
-    }
-    function request(method, url, callback) {
-        url = apiVersion + url
-        let xhr = new XMLHttpRequest();
-        xhr.addEventListener('load', callback);
-        xhr.open(method, url, true);
-        xhr.send();
-    }
-    function start_staking() {
-        let mnemonic = document.getElementById('start_staking_mnemonic').value;
-        let url = "/staker/start/" + mnemonic + "/";
+    const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");;
+    const hash = localStorage.hashIndex || 'overview';
+    const dialogPassword = $('.dialog.password'), mask = $('.mask');
 
-        request("POST", url, function () {
-            document.getElementById('start_staking_result').value = this.responseText;
-        });
+    menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
 
-        url = "/mnemonic/info/" + mnemonic + "/";
-        request("POST", url, function () {
-            const data = JSON.parse(this.responseText);
-            data.mnemonic = '[hidden]';
-            document.getElementById('mnemonic_info_result').value = JSON.stringify(data);
-            document.getElementById('balance_account').value = data.address;
-            balance();
-        });
-    }
-    function stop_staking() {
-        let mnemonic = document.getElementById('start_staking_mnemonic').value;
-        let url = "/staker/stop/" + mnemonic + "/";
 
-        request("POST", url, function () {
-            document.getElementById('start_staking_result').value = this.responseText;
-        });
 
-        url = "/mnemonic/info/" + mnemonic + "/";
-        request("POST", url, function () {
-            const data = JSON.parse(this.responseText);
-            data.mnemonic = '[hidden]';
-            document.getElementById('mnemonic_info_result').value = JSON.stringify(data);
-            document.getElementById('balance_account').value = data.address;
-            balance();
-        });
-    }
-    function balance() {
-        let account = document.getElementById('balance_account').value;
-        let url = "/ledger/get/" + account + "/";
 
-        request("GET", url, function () {
-            if (this.status == 404) {
-                document.getElementById('balance_result').value = 0;
-                return;
-            }
-            let data = JSON.parse(this.responseText);
-            let balance = new BigNumber(data.balance).dividedBy(1e8);
-            document.getElementById('balance_result').value = balance + ' BLN';
-        });
-    }
-    function transfer() {
+    function staking_click(type) {
 
-        let mnemonic, fee = 100000, amount, to, message, encrypted, amountText, url;
+        return function () {
+            mask.show();
+            dialogPassword.show().find('.confirm').unbind().on('click', function () {
 
-        to = qs('#transfer_to').value;
-        amount = qs('#transfer_amount').value;
-        mnemonic = qs('#transfer_mnemonic').value;
-        message = qs('#transfer_message').value;
-        encrypted = message && qs('#transfer_encrypted').checked ? "1" : "";
+                let mnemonic = dialogPassword.find('.mnemonic').val();
 
-        amountText = new BigNumber(amount).toFixed(8);
-        amount = new BigNumber(amount).times(1e8);
-
-        url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
-
-        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
-
-            request("POST", url, function () {
-                document.getElementById('transfer_result').value = this.responseText;
+                type == 'refresh_staking' ? refreshStaking(mnemonic) : post_staking(mnemonic, type);
             });
         }
     }
+
+
+    async function post_staking(mnemonic, type) {
+
+        let url = apiVersion + "/" + type + "Staking/" + mnemonic + "/";
+
+        $.post(url, {}, function (ret) {
+
+            let msg = ret == 'false' ? type.toUpperCase() + ' FAILED!' : type.toUpperCase() + ' SUCCESS!';
+            clearPassWordDialog();
+            refreshStaking(mnemonic);
+            timeAlert(msg);
+        }).fail(function () {
+            clearPassWordDialog();
+            timeAlert('Invalid mnemonic');
+        });
+    }
+
+    async function refreshStaking(mnemonic) {
+
+        let stakingText = $('.isStaking'), data;
+
+        stakingText.text('loading');
+        data = await Blacknet.postPromise('/isStaking/' + mnemonic);
+        localStorage.isStaking = data;
+        clearPassWordDialog();
+        await Blacknet.wait(2000);
+        $('.isStaking').text(data);
+    }
+
+    function menuSwitch() {
+
+        const target = $(this), index = target.find('a').attr('data-index');
+
+        target.addClass('active').siblings().removeClass('active');
+        panel.find('.' + index).show().siblings().hide();
+
+        localStorage.hashIndex = index;
+        return false;
+    }
+
     function sign() {
-        let mnemonic = document.getElementById('sign_mnemonic').value;
-        let message = document.getElementById('sign_message').value;
+        let mnemonic = $('#sign_mnemonic').val();
+        let message = $('#sign_message').val();
         let url = "/signmessage/" + mnemonic + "/" + message + "/";
 
-        request("POST", url, function () {
-            document.getElementById('sign_result').value = this.responseText;
+        Blacknet.post(url, function (data) {
+            $('#sign_result').val(data);
         });
     }
     function verify() {
-        let account = document.getElementById('verify_account').value;
-        let signature = document.getElementById('verify_signature').value;
-        let message = document.getElementById('verify_message').value;
+        let account = $('#verify_account').val();
+        let signature = $('#verify_signature').val();
+        let message = $('#verify_message').val();
         let url = "/verifymessage/" + account + "/" + signature + "/" + message + "/";
 
-        request("GET", url, function () {
-            document.getElementById('verify_result').value = this.responseText;
+        Blacknet.get(url, function (data) {
+            $('#verify_result').val(data);
         });
     }
     function mnemonic_info() {
-        let mnemonic = document.getElementById('mnemonic_info_mnemonic').value;
+        let mnemonic = $('#mnemonic_info_mnemonic').val();
         let url = "/mnemonic/info/" + mnemonic + "/";
 
-        request("POST", url, function () {
-            document.getElementById('mnemonic_info_result').value = this.responseText;
-        });
-    }
-    async function display_api_json_result(apiCall) {
-        if (apiCall === '') return;
-        const url = `/${apiCall}/`;
-        const textData = await request_promise("GET", url);
-        const jsonData = JSON.parse(textData);
-        const pre = document.getElementById("api-json-result");
-        const h2 = document.createElement('h2');
-        const p = document.createElement('p');
-        pre.innerHTML = '';
-        h2.innerHTML = apiCall;
-        p.innerHTML = '[Close]';
-        p.style.cursor = 'pointer';
-        p.onclick = function () { pre.innerHTML = '' };
-        pre.append(h2);
-        pre.append(p);
-        pre.append(textData);
-        switch (apiCall) {
-            case "nodeinfo":
-                document.getElementById('info_connections').innerHTML = "Connections: " + jsonData.outgoing + " outgoing, " + jsonData.incoming + " incoming";
-                break;
-            case "ledger":
-                document.getElementById('info_height').innerHTML = "Blockchain height: " + jsonData.height;
-                break;
-            case "peerinfo":
-                display_node_list(jsonData);
-                break;
-        }
-    }
-    function display_node_list(data) {
-        const tbody = document.querySelector('#node-list');
-        const template = document.querySelector('#node-row');
-        tbody.innerHTML = '';
-        data.forEach((node) => {
-            const clone = document.importNode(template.content, true);
-            const td = clone.querySelectorAll('td');
-            td[0].textContent = node.remoteAddress;
-            td[1].textContent = node.ping;
-            td[2].textContent = node.totalBytesRead;
-            td[3].textContent = node.totalBytesWritten;
-            td[4].textContent = node.state === 'INCOMING_CONNECTED' ? 'In' : 'Out';
-            tbody.appendChild(clone);
-        });
-    }
-    async function add_block(hash, height) {
-        const url = `/blockdb/get/${hash}`;
-        let blockData = await request_promise('GET', url);
-        blockData = JSON.parse(blockData);
-        const table = document.getElementById("block-table");
-        const rowCount = table.rows.length;
-        rowCount > 10 ? table.deleteRow(rowCount - 1) : false;
-        const tbody = document.querySelector('#block-list');
-        const template = document.querySelector('#block-row');
-        const clone = document.importNode(template.content, true);
-        const td = clone.querySelectorAll('td');
-        td[0].textContent = height;
-        td[1].textContent = hash;
-        td[2].textContent = blockData.size;
-        td[3].textContent = unix_to_local_time(blockData.time);
-        td[4].textContent = blockData.transactions.length;
-        td[5].textContent = blockData.generator;
-        tbody.prepend(clone);
-    }
-    function unix_to_local_time(unix_timestamp) {
-        const date = new Date(unix_timestamp * 1000);
-        const hours = date.getHours();
-        const minutes = "0" + date.getMinutes();
-        const seconds = "0" + date.getSeconds();
-        return hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-    }
-    async function request_info(message = {}) {
-        let ledgerData = await request_promise("GET", "/ledger");
-        ledgerData = JSON.parse(ledgerData);
-        document.getElementById('info_height').innerHTML = "Blockchain height: " + ledgerData.height;
+        Blacknet.post(url, function (data) {
+            let html = '';
 
-        let nodeInfoData = await request_promise("GET", "/nodeinfo");
-        nodeInfoData = JSON.parse(nodeInfoData);
-        document.getElementById('info_connections').innerHTML = "Connections: " + nodeInfoData.outgoing + " outgoing, " + nodeInfoData.incoming + " incoming";
+            data.mnemonic = data.mnemonic.replace(/[a-z]/g, '*');
 
-        let peerInfoData = await request_promise("GET", "/peerinfo");
-        peerInfoData = JSON.parse(peerInfoData);
-        display_node_list(peerInfoData);
-
-        if (message.data) { add_block(message.data, ledgerData.height); }
+            html += 'mnemonic: ' + data.mnemonic;
+            html += '<br>address: ' + data.address;
+            html += '<br>publicKey: ' + data.publicKey;
+            $('#mnemonic_info_result').html(html);
+        }, 'json');
     }
 
     async function generate_new_account() {
         let url = '/account/generate';
-        let blockData = await request_promise('GET', url);
+        let blockData = await Blacknet.getPromise(url);
         blockData = JSON.parse(blockData);
-        document.getElementById('new_account').value = blockData.address;
-        document.getElementById('new_mnemonic').value = blockData.mnemonic;
+        $('#new_account').val(blockData.address);
+        $('#new_mnemonic').val(blockData.mnemonic);
+        $('#new_pubkey').val(blockData.publicKey);
     }
 
-    function qs(selector) {
-        return document.querySelector(selector);
+    function transfer_click(type) {
+
+        return function () {
+            mask.show();
+            dialogPassword.show().find('.confirm').unbind().on('click', function () {
+
+                let mnemonic = dialogPassword.find('.mnemonic').val();
+                switch (type) {
+                    case 'send': transfer(mnemonic); break;
+                    case 'lease': lease(mnemonic); break;
+                    case 'cancel_lease': cancel_lease(mnemonic); break;
+                }
+            });
+        }
     }
 
-    body.on("click", "#start_staking", start_staking)
-        .on("click", "#stop_staking", stop_staking)
-        .on("click", "#balance", balance)
-        .on("click", "#transfer", transfer)
+    function transfer(mnemonic) {
+
+        let to = $('#transfer_to').val();
+        let amount = $('#transfer_amount').val();
+        let message = $('#transfer_message').val();
+        let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
+
+        Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
+            $('#transfer_result').val(data);
+            clearPassWordDialog();
+        });
+    }
+
+    function lease(mnemonic) {
+
+        let to = $('#lease_to').val();
+        let amount = $('#lease_amount').val();
+
+        Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
+            $('#lease_result').val(data);
+            clearPassWordDialog();
+        });
+    }
+
+    function cancel_lease(mnemonic) {
+
+        let to = $('#cancel_lease_to').val();
+        let amount = $('#cancel_lease_amount').val();
+        let height = $('#cancel_lease_height').val();
+
+        Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
+            $('#cancel_lease_result').val(data);
+            clearPassWordDialog();
+        });
+    }
+
+    function clearPassWordDialog() {
+        mask.hide();
+        dialogPassword.hide().find('.confirm').unbind();
+        dialogPassword.find('.mnemonic').val('');
+    }
+
+    function timeAlert(msg, timeout) {
+        setTimeout(function () {
+            alert(msg);
+        }, timeout || 100);
+    }
+
+    function switchAccount() {
+
+        localStorage.account = "";
+        location.reload();
+    }
+
+    const request_info = Blacknet.throttle(Blacknet.network, 100);
+
+    async function processMessage() {
+        let currentHeight = $('#block-list tr td').first().text();
+        currentHeight = +currentHeight;
+
+        if (currentHeight < Blacknet.height) {
+
+            if(currentHeight < Blacknet.height - 100){
+                currentHeight = Blacknet.height - 35;
+            }
+
+            await Blacknet.addBlockWithHeight(currentHeight + 1);
+        } else {
+            await Blacknet.wait(500);
+        }
+        processMessage();
+    }
+
+
+    Blacknet.ready(function () {
+
+        let ws = new WebSocket("ws://" + location.host + "/api/v1/notify/block");
+        ws.onmessage = request_info;
+        processMessage();
+    });
+
+
+
+
+    menu.on('click', 'li', menuSwitch);
+    panel.find('.' + hash).show();
+
+    body.on("click", "#stop_staking", staking_click('stop'))
+        .on("click", "#start_staking", staking_click('start'))
+        .on("click", "#refresh_staking", staking_click('refresh_staking'))
+        .on("click", "#transfer", transfer_click('send'))
+        .on("click", "#lease", transfer_click('lease'))
+        .on("click", "#cancel_lease", transfer_click('cancel_lease'))
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
         .on("click", "#generate_new_account", generate_new_account)
-        .on("click", "#display_api_json_result", function (event) {
-            let el = event.target;
-            display_api_json_result(el.dataset.type);
-        });
+        .on("click", "#switch_account", switchAccount)
 
-
-    request_info();
-    let ws = new WebSocket("ws://" + location.host + "/api/v1/notify/block");
-    ws.onmessage = request_info;
-
-})
+});
