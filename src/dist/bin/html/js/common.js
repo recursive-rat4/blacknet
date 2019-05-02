@@ -262,9 +262,16 @@ void function () {
         callback();
     };
 
+    window.addEventListener('beforeunload', function (e) {
 
+        let tabState = $('[data-index="generate"]').parent().hasClass('active');
 
+        if(window.isGenerated && tabState){
 
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
 
     window.Blacknet = Blacknet;
 }();

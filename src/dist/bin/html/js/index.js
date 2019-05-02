@@ -113,6 +113,7 @@ $(document).ready(function () {
         $('#new_account').val(blockData.address);
         $('#new_mnemonic').val(blockData.mnemonic);
         $('#new_pubkey').val(blockData.publicKey);
+        window.isGenerated = true;
     }
 
     function transfer_click(type) {
