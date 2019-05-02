@@ -185,13 +185,18 @@ $(document).ready(function () {
         location.reload();
     }
 
-    const request_info = Blacknet.throttle(Blacknet.network, 1000);
+    const request_info = Blacknet.throttle(Blacknet.network, 100);
 
     async function processMessage() {
         let currentHeight = $('#block-list tr td').first().text();
         currentHeight = +currentHeight;
 
         if (currentHeight < Blacknet.height) {
+
+            if(currentHeight < Blacknet.height - 100){
+                currentHeight = Blacknet.height - 35;
+            }
+
             await Blacknet.addBlockWithHeight(currentHeight + 1);
         } else {
             await Blacknet.wait(500);
