@@ -194,7 +194,7 @@ $(document).ready(function () {
 
         if (currentHeight < Blacknet.height) {
 
-            if(currentHeight < Blacknet.height - 100){
+            if(currentHeight < Blacknet.height - 35){
                 currentHeight = Blacknet.height - 35;
             }
 
