@@ -11,223 +11,393 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <title>Blacknet</title>
-  <link rel="shortcut icon" href="favicon.ico">
-  <link rel="stylesheet" href="css/index.css">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self';">
+    <meta charset="UTF-8">
+    <title>Blacknet</title>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/new_index.css">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';">
 </head>
 
 <body>
 
-  <header>
-    <h1>Blacknet</h1>
-    <p id="info_height"></p>
-    <p id="info_connections"></p>
-    <p><a href="new_index.html">New Wallet Version</a></p>
-  </header>
+    <header>
+        <div class="logo">
+            Blacknet
+        </div>
+        <div class="network">
+            <p>Supply:<span class="supply"></span> Height: <span
+                    class="height"></span> Connections: <span class="connections">-</span></p>
+        </div>
+    </header>
+    <div class="container">
+        <div class="main-menu">
 
-  <div class="container">
+            <div class="menu">
+                <ul>
+                    <li><a href="#" data-index="overview">Overview</a></li>
+                    <li><a href="#" data-index="staking">Staking</a></li>
+                    <li><a href="#" data-index="send">Send</a></li>
+                    <li><a href="#" data-index="lease">Lease</a></li>
+                    <li><a href="#" data-index="cancel_lease">Cancel Lease</a></li>
+                    <li><a href="#" data-index="sign">Sign/Verify Message</a></li>
+                    <li><a href="#" data-index="recentblocks">Recent Blocks</a></li>
+                    <li><a href="#" data-index="peerinfo">Peers</a></li>
+                    <li><a href="#" data-index="generate">Generate new account</a></li>
+                    <li><a href="#" data-index="info">Mnemonic info</a></li>
+                    <!-- <li><a href="#" data-index="txpool">Tx Pool</a></li> -->
+                </ul>
+            </div>
+        </div>
+        <div class="rightpanel">
+            <div class="overview">
+                <h3>Wallet Info</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Account</td>
+                            <td>
+                                <span class="overview_account"></span>
+                                <a href="#" id="switch_account">Switch Account</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Balance</td>
+                            <td class="overview_balance strong">0.0000 BLN</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3>Node Info</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Agent</td>
+                            <td width="636">
+                                <span class="overview_agent"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Height</td>
+                            <td>
+                                <span class="overview_height"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>BlockHash</td>
+                            <td>
+                                <span class="overview_blockHash"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>BlockTime</td>
+                            <td>
+                                <span class="overview_blockTime"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Difficulty</td>
+                            <td>
+                                <span class="overview_difficulty"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>CumulativeDifficulty</td>
+                            <td>
+                                <span class="overview_cumulativeDifficulty"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Supply</td>
+                            <td>
+                                <span class="overview_supply strong"></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="staking">
+                <h3>Staking Info</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>isStaking</td>
+                            <td class="isStaking">false</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Start/Stop/Refresh
+                            </td>
+                            <td>
+                                <button id="start_staking">Start staking</button>
+                                <button id="stop_staking">Stop staking</button>
+                                <button id="refresh_staking">Refresh</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="transactions">
+                transactions
+            </div>
+            <div class="send">
+                <fieldset>
+                    <legend>Send BLN</legend>
+                    <!-- <div class="field-row">
+                        <label>Mnemonic</label>
+                        <input type="password" id="transfer_mnemonic">
+                    </div> -->
+                    <div class="field-row">
+                        <label>Pay To</label>
+                        <input type="text" id="transfer_to">
+                    </div>
 
-    <div>
-      <fieldset>
-        <legend>Start staking</legend>
-        <div class="field-row">
-          <label>Mnemonic</label>
-          <input type="password" id="start_staking_mnemonic">
-        </div>
-        <div class="field-row">
-          <label>Result</label>
-          <input type="text" id="start_staking_result" readonly>
-        </div>
-        <div class="field-row">
-          <button id="start_staking">Start staking</button>
-          <button id="stop_staking">Stop staking</button>
-        </div>
-      </fieldset>
+                    <div class="field-row">
+                        <label>Amount <strong>(BLN)</strong></label>
+                        <input type="number" id="transfer_amount">
+                    </div>
 
-      <fieldset>
-        <legend>Get balance</legend>
-        <div class="field-row">
-          <label>Account</label>
-          <input type="text" id="balance_account">
-        </div>
-        <div class="field-row">
-          <label>Result</label>
-          <input type="text" id="balance_result" readonly>
-        </div>
-        <button id="balance">Get balance</button>
-      </fieldset>
+                    <div class="field-row">
+                        <label>Message</label>
+                        <input type="text" id="transfer_message">
+                    </div>
+                    <div class="field-row">
+                        <label>Encrypted</label>
+                        <input type="checkbox" id="transfer_encrypted">
+                    </div>
+                    <div class="field-row">
+                        <label>Fee <strong>(BLN)</strong></label>
+                        <input type="text" id="transfer_fee" readonly value='0.001'>
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="transfer_result" readonly>
+                    </div>
+                    <button id="transfer">Send</button>
+                </fieldset>
+            </div>
+            <div class="sign">
+                <fieldset>
+                    <legend>Sign message</legend>
+                    <div class="field-row">
+                        <label>Mnemonic</label>
+                        <input type="password" id="sign_mnemonic">
+                    </div>
+                    <div class="field-row">
+                        <label>Message</label>
+                        <input type="text" id="sign_message">
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="sign_result" readonly>
+                    </div>
+                    <button id="sign">Sign message</button>
+                </fieldset>
 
-      <fieldset>
-        <legend>Transfer</legend>
-        <div class="field-row">
-          <label>Mnemonic</label>
-          <input type="password" id="transfer_mnemonic">
-        </div>
-        <div class="field-row">
-          <label>Fee <strong>(BLN)</strong></label>
-          <input type="text" id="transfer_fee" readonly value='0.001'>
-        </div>
-        <div class="field-row">
-          <label>Amount <strong>(BLN)</strong></label>
-          <input type="number" id="transfer_amount">
-        </div>
-        <div class="field-row">
-          <label>To</label>
-          <input type="text" id="transfer_to">
-        </div>
-        <div class="field-row">
-          <label>Message</label>
-          <input type="text" id="transfer_message">
-        </div>
-        <div class="field-row">
-          <label>Encrypted</label>
-          <input type="checkbox" id="transfer_encrypted">
-        </div>
-        <div class="field-row">
-          <label>Result</label>
-          <input type="text" id="transfer_result" readonly>
-        </div>
-        <button id="transfer">Transfer</button>
-      </fieldset>
+                <fieldset>
+                    <legend>Verify message</legend>
+                    <div class="field-row">
+                        <label>Account</label>
+                        <input type="text" id="verify_account">
+                    </div>
+                    <div class="field-row">
+                        <label>Signature</label>
+                        <input type="text" id="verify_signature">
+                    </div>
+                    <div class="field-row">
+                        <label>Message</label>
+                        <input type="text" id="verify_message">
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="verify_result" readonly>
+                    </div>
+                    <button id="verify">Verify message</button>
+                </fieldset>
+            </div>
+            <div class="info">
+                <fieldset>
+                    <legend>Mnemonic info</legend>
+                    <div class="field-row">
+                        <label>Mnemonic</label>
+                        <input type="password" id="mnemonic_info_mnemonic">
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <pre id="mnemonic_info_result"></pre>
+                    </div>
+                    <button id="mnemonic_info">Mnemonic info</button>
+                </fieldset>
+            </div>
+            <div class="generate">
+                <fieldset>
+                    <legend>Generate new account</legend>
+                    <div class="field-row">
+                        <label>Mnemonic</label>
+                        <input type="text" id="new_mnemonic" readonly>
+                    </div>
+                    <div class="field-row">
+                        <label>PublicKey</label>
+                        <input type="text" id="new_pubkey" readonly>
+                    </div>
+                    <div class="field-row">
+                        <label>Account</label>
+                        <input type="text" id="new_account" readonly>
+                    </div>
+                    <button id="generate_new_account">Generate</button>
+                </fieldset>
+            </div>
+            <div class="recentblocks">
+                <h3>Recent Blocks</h3>
+                <table id="block-table">
+                    <thead>
+                        <tr>
+                            <td class="narrow">Height</td>
+                            <td class="narrow">Size</td>
+                            <td class="narrow">Time</td>
+                            <td class="narrow">Txns</td>
+                            <td>Generator</td>
+                        </tr>
+                    </thead>
+                    <tbody id="block-list">
+                    </tbody>
+                </table>
+            </div>
+            <div class="peerinfo">
+                <h3>Peers</h3>
+                <table id="peer-table">
+                    <thead>
+                        <tr>
+                            <td>Index</td>
+                            <td class="narrow">Node</td>
+                            <td>User Agent</td>
+                            <td class="narrow">Ping</td>
+                            <td class="narrow">Time Offset</td>
+                            <td class="narrow">Bytes Read</td>
+                            <td class="narrow">Bytes Written</td>
+                        </tr>
+                    </thead>
+                    <tbody id="peer-list">
+                    </tbody>
+                </table>
+            </div>
+            <div class="txpool">
+                to be develop
+            </div>
+            <div class="lease">
+                <fieldset>
+                    <legend>Lease BLN</legend>
+                    <div class="field-row">
+                        <label>Lease To</label>
+                        <input type="text" id="lease_to">
+                    </div>
 
-      <fieldset>
-        <legend>Sign message</legend>
-        <div class="field-row">
-          <label>Mnemonic</label>
-          <input type="password" id="sign_mnemonic">
-        </div>
-        <div class="field-row">
-          <label>Message</label>
-          <input type="text" id="sign_message">
-        </div>
-        <div class="field-row">
-          <label>Result</label>
-          <input type="text" id="sign_result" readonly>
-        </div>
-        <button id="sign">Sign message</button>
-      </fieldset>
+                    <div class="field-row">
+                        <label>Amount <strong>(BLN)</strong></label>
+                        <input type="number" id="lease_amount">
+                    </div>
+                    <div class="field-row">
+                        <label>Fee <strong>(BLN)</strong></label>
+                        <input type="text" id="lease_fee" readonly value='0.001'>
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="lease_result" readonly>
+                    </div>
+                    <button id="lease">Lease</button>
+                </fieldset>
+            </div>
+            <div class="cancel_lease">
+                <fieldset>
+                    <legend>Cancel Lease BLN</legend>
+                    <div class="field-row">
+                        <label>Cancel Lease To</label>
+                        <input type="text" id="cancel_lease_to">
+                    </div>
 
-      <fieldset>
-        <legend>Verify message</legend>
-        <div class="field-row">
-          <label>Account</label>
-          <input type="text" id="verify_account">
+                    <div class="field-row">
+                        <label>Amount <strong>(BLN)</strong></label>
+                        <input type="number" id="cancel_lease_amount">
+                    </div>
+                    <div class="field-row">
+                        <label>Block Height</label>
+                        <input type="number" id="cancel_lease_height">
+                    </div>
+                    <div class="field-row">
+                        <label>Fee <strong>(BLN)</strong></label>
+                        <input type="text" id="cancel_lease_fee" readonly value='0.001'>
+                    </div>
+                    <div class="field-row">
+                        <label>Result</label>
+                        <input type="text" id="cancel_lease_result" readonly>
+                    </div>
+                    <button id="cancel_lease">Cancel Lease</button>
+                </fieldset>
+            </div>
         </div>
-        <div class="field-row">
-          <label>Signature</label>
-          <input type="text" id="verify_signature">
-        </div>
-        <div class="field-row">
-          <label>Message</label>
-          <input type="text" id="verify_message">
-        </div>
-        <div class="field-row">
-          <label>Result</label>
-          <input type="text" id="verify_result" readonly>
-        </div>
-        <button id="verify">Verify message</button>
-      </fieldset>
-
-      <fieldset>
-        <legend>Mnemonic info</legend>
-        <div class="field-row">
-          <label>Mnemonic</label>
-          <input type="password" id="mnemonic_info_mnemonic">
-        </div>
-        <div class="field-row">
-          <label>Result</label>
-          <input type="text" id="mnemonic_info_result" readonly>
-        </div>
-        <button id="mnemonic_info">Mnemonic info</button>
-      </fieldset>
-      <fieldset>
-        <legend>Generate new account</legend>
-        <div class="field-row">
-          <label>Mnemonic</label>
-          <input type="text" id="new_mnemonic" readonly>
-        </div>
-        <div class="field-row">
-          <label>Account</label>
-          <input type="text" id="new_account" readonly>
-        </div>
-        <button id="generate_new_account">Generate</button>
-      </fieldset>
-
+        <!-- End container div -->
     </div>
-    <div>
-      <table id="node-table">
-        <caption>Connected Nodes</caption>
-        <thead>
-          <tr>
-            <td>IP</td>
-            <td class="narrow">Ping</td>
-            <td>Bytes Read</td>
-            <td>Bytes Written</td>
-            <td class="narrow">In/Out</td>
-          </tr>
-        </thead>
-        <tbody id="node-list">
-        </tbody>
-      </table>
-      <!-- <template> is poplulated by display_node_list() -->
-      <template id="node-row">
-        <tr>
-          <td></td>
-          <td class="narrow"></td>
-          <td></td>
-          <td></td>
-          <td class="narrow"></td>
-        </tr>
-      </template>
+
+    <div class="mask init"></div>
+    <div class="dialog send">
+        <div class="header"></div>
+        <div class="body">
+            <br>
+            <p>Are you sure you want to send?</p>
+            <br>
+            <br>
+            <p>1000.00000000 BLN to</p>
+            <p>blacknet1p6net7gqy907ga6skdasf63ewz08ez83puhmlyquj0sdy0f0xyvslc4j3u</p>
+            <br>
+            <br>
+            <p>BLN added as transaction fee?</p>
+        </div>
+        <div class="btns">
+            <button id="generate_new_account">Confirm</button>
+            <button id="generate_new_account" class="cancel">Cancel</button>
+        </div>
     </div>
-
-    <div>
-      <table id="block-table">
-        <caption>Recent Blocks</caption>
-        <thead>
-          <tr>
-            <td class="narrow">Height</td>
-            <td>Hash</td>
-            <td class="narrow">Size</td>
-            <td class="narrow">Time</td>
-            <td class="narrow">Txns</td>
-            <td>Generator</td>
-          </tr>
-        </thead>
-        <tbody id="block-list">
-        </tbody>
-      </table>
-      <!-- <template> is poplulated by display_block_list() -->
-      <template id="block-row">
-        <tr>
-          <td class="narrow"></td>
-          <td></td>
-          <td class="narrow"></td>
-          <td class="narrow"></td>
-          <td class="narrow"></td>
-          <td></td>
-        </tr>
-      </template>
+    <div class="dialog password">
+        <div class="header"></div>
+        <div class="body">
+            <p><span>This operation needs your Mnemonic.</span></p>
+            <br>
+            <p>Enter Your Mnemonic:</p>
+            <input type="password" class='mnemonic'>
+        </div>
+        <div class="btns">
+            <button class="confirm">Confirm</button>
+        </div>
     </div>
+    <div class="dialog account">
+        <div class="header"></div>
+        <div class="body">
+        </div>
+        <div class="body">
+            <img src="images/logo.png" height="160" width="160" alt="">
+            <h1>Blacknet Wallet</h1>
+            <div class="spinner">
+                <div class="rect1"></div>
+                <div class="rect2"></div>
+                <div class="rect3"></div>
+                <div class="rect4"></div>
+                <div class="rect5"></div>
+            </div>
+            <p class="account-input">Enter Your Account:<input type="text" class='account_text'
+                    placeholder="blacknet___________________________________________________________"></p>
+        </div>
+        <div class="account-input">
+            <button class="enter">Enter</button>
+        </div>
+    </div>
+    <footer>
 
-  </div>
-  <!-- End container div -->
+    </footer>
 
-  <footer>
-    <ul id="api-menu">
-      <li id="display_api_json_result" data-type="peerinfo" class="menu-item">peerinfo</li>
-      <li id="display_api_json_result" data-type="nodeinfo" class="menu-item">nodeinfo</li>
-      <li id="display_api_json_result" data-type="ledger" class="menu-item">ledger</li>
-      <li id="display_api_json_result" data-type="peerdb" class="menu-item">peerdb</li>
-    </ul>
-    <pre id='api-json-result'></pre>
-  </footer>
 
-  <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
-  <script type="text/javascript" src="js/bignumber.min.js"></script>
-  <script type="text/javascript" src="js/index.js"></script>
+    <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="js/bignumber.min.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
 </body>
 
 </html>
