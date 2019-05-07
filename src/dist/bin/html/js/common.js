@@ -257,6 +257,8 @@ void function () {
         let lang = navigator.language || navigator.userLanguage;
         if (lang.indexOf('zh') !== -1) {
             i18n({ locale: 'zh' });
+        } else if (lang.indexOf('ja') !== -1) {
+            i18n({ locale: 'ja' });
         }
 
         Blacknet.init();
