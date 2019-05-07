@@ -77,7 +77,7 @@ void function () {
         Blacknet.renderOverview(data);
 
         let nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
-        network.find('.connections').text(nodeinfo.outgoing+nodeinfo.incoming);
+        network.find('.connections').text(nodeinfo.outgoing + nodeinfo.incoming);
         $('.overview_agent').text(nodeinfo.agent);
         getPeerInfo();
     };
@@ -87,9 +87,9 @@ void function () {
         for (let key in ledger) {
 
             let value = ledger[key];
-            if(key == 'blockTime'){
+            if (key == 'blockTime') {
                 value = Blacknet.unix_to_local_time(value);
-            }else if(key == 'supply'){
+            } else if (key == 'supply') {
                 value = new BigNumber(value).dividedBy(1e8) + ' BLN';
             }
             $('.overview_' + key).text(value);
@@ -121,7 +121,7 @@ void function () {
 
         url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
-        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + 
+        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
             to + '\n\n0.001 BLN added as transaction fee?')) {
 
             Blacknet.post(url, callback);
@@ -142,7 +142,7 @@ void function () {
         }
 
         if (confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
-             ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
+            ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
 
             Blacknet.post(url, callback);
         }
@@ -166,7 +166,7 @@ void function () {
         let month = date.getMonth() + 1;
 
         return year + "-" + ('0' + month).substr(-2) + "-" +
-             ('0' + day).substr(-2) + " " + hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+            ('0' + day).substr(-2) + " " + hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
     Blacknet.addBlock = async function (hash, height) {
@@ -254,14 +254,11 @@ void function () {
 
     Blacknet.ready = async function (callback) {
 
-        let lang = navigator.language || navigator.userLanguage; 
-        console.log(lang.indexOf('zh') !== -1)
-        if(lang.indexOf('zh') !== -1){
-            i18n({
-                locale: 'zh'
-            });
+        let lang = navigator.language || navigator.userLanguage;
+        if (lang.indexOf('zh') !== -1) {
+            i18n({ locale: 'zh' });
         }
-        
+
         Blacknet.init();
         await Blacknet.network();
         await Blacknet.initRecentBlocks();
@@ -274,7 +271,7 @@ void function () {
 
         let tabState = $('[data-index="generate"]').parent().hasClass('active');
 
-        if(window.isGenerated && tabState){
+        if (window.isGenerated && tabState) {
 
             e.preventDefault();
             e.returnValue = '';
