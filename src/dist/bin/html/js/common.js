@@ -259,6 +259,8 @@ void function () {
             i18n({ locale: 'zh' });
         } else if (lang.indexOf('ja') !== -1) {
             i18n({ locale: 'ja' });
+        } else if (lang.indexOf('sk') !== -1) {
+            i18n({ locale: 'sk' });
         }
 
         Blacknet.init();
