@@ -99,6 +99,7 @@ header .network {
 
 .menu li.active {
     background-color: var(--gold-text);
+    overflow: hidden;
     border-right: 1px solid var(--gold-text);
 }
 
