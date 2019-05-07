@@ -254,6 +254,14 @@ void function () {
 
     Blacknet.ready = async function (callback) {
 
+        let lang = navigator.language || navigator.userLanguage; 
+
+        if(lang.indexOf('zh') !== -1){
+            i18n({
+                locale: 'zh'
+            });
+        }
+        
         Blacknet.init();
         await Blacknet.network();
         await Blacknet.initRecentBlocks();
