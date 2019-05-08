@@ -51,8 +51,6 @@ void function () {
                 }
             });
         }
-
-
     };
 
     Blacknet.balance = async function () {
@@ -67,34 +65,75 @@ void function () {
     };
 
     Blacknet.network = async function () {
-        let network = $('.network');
-        let data = await Blacknet.getPromise('/ledger', 'json');
-
-        Blacknet.height = data.height;
-        network.find('.height').html(data.height);
-        network.find('.supply').html(new BigNumber(data.supply).dividedBy(1e8).toFixed(0));
-        network.find('.accounts').html(data.accounts);
-        Blacknet.renderOverview(data);
-
-        let nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
-        network.find('.connections').text(nodeinfo.outgoing + nodeinfo.incoming);
-        $('.overview_agent').text(nodeinfo.agent);
+        
+        Blacknet.ledger = await Blacknet.getPromise('/ledger', 'json');
+        Blacknet.nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
+        
+        Blacknet.renderStatus();
+        Blacknet.renderOverview();
+        
         getPeerInfo();
     };
 
-    Blacknet.renderOverview = function (ledger) {
+    Blacknet.renderStatus = function(){
+        
+        let network = $('.network');
+        let ledger = Blacknet.ledger, nodeinfo = Blacknet.nodeinfo;
+
+        network.find('.height').html(ledger.height);
+        network.find('.supply').html(new BigNumber(ledger.supply).dividedBy(1e8).toFixed(0));
+        network.find('.accounts').html(ledger.accounts);
+        network.find('.connections').text(nodeinfo.outgoing + nodeinfo.incoming);
+        $('.overview_agent').text(nodeinfo.agent);
+    };
+
+    Blacknet.renderOverview = function () {
+
+        let ledger = Blacknet.ledger;
 
         for (let key in ledger) {
 
             let value = ledger[key];
             if (key == 'blockTime') {
                 value = Blacknet.unix_to_local_time(value);
+                Blacknet.renderProgressBar(ledger[key]);
             } else if (key == 'supply') {
                 value = new BigNumber(value).dividedBy(1e8) + ' BLN';
             }
             $('.overview_' + key).text(value);
         }
     };
+
+    Blacknet.renderProgressBar = async function (timestamp) {
+
+        let secs = Date.now() / 1000 - timestamp, timeBehindText = "";
+        let HOUR_IN_SECONDS = 60 * 60;
+        let DAY_IN_SECONDS = 24 * 60 * 60;
+        let WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
+        let YEAR_IN_SECONDS = 31556952; // Average length of year in Gregorian calendar
+        if (secs < 2 * DAY_IN_SECONDS) {
+            timeBehindText = secs / HOUR_IN_SECONDS + " hour(s)";
+        }
+        else if (secs < 2 * WEEK_IN_SECONDS) {
+            timeBehindText = secs / DAY_IN_SECONDS + " day(s)";
+        }
+        else if (secs < YEAR_IN_SECONDS) {
+            timeBehindText = secs / WEEK_IN_SECONDS + " week(s)";
+        }
+        else {
+            let years = secs / YEAR_IN_SECONDS;
+            let remainder = secs % YEAR_IN_SECONDS;
+            timeBehindText = years + " year(s) and " + remainder + "week(s)";
+        }
+
+        if (!Blacknet.startTime) {
+
+            // let block = Blacknet.getBlock
+        }
+
+        console.log(timeBehindText)
+    }
+
     Blacknet.get = function (url, callback) {
 
         return $.get(apiVersion + url, callback);
@@ -147,6 +186,7 @@ void function () {
             Blacknet.post(url, callback);
         }
     };
+
     Blacknet.wait = function (timeout) {
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
@@ -174,10 +214,16 @@ void function () {
         let url = `/blockdb/get/${hash}`;
         let block = await Blacknet.getPromise(url, 'json');
 
+        block.txns = block.transactions.length;
+        Blacknet.renderBlock(block, height);
+    }
+
+    Blacknet.renderBlock = async function (block, height) {
+
         let tmpl = `<tr><td class="narrow height">${height}</td>
                     <td class="size narrow">${block.size}</td>
                     <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
-                    <td class="txns narrow">${block.transactions.length}</td>
+                    <td class="txns narrow">${block.txns}</td>
                     <td class="generator">${block.generator}</td></tr>`;
 
         $(tmpl).prependTo("#block-list");
@@ -192,7 +238,7 @@ void function () {
     Blacknet.initRecentBlocks = async function () {
 
         let i = 35;
-        let height = Blacknet.height;
+        let height = Blacknet.ledger.height;
 
         while (i-- > 0) {
             await Blacknet.addBlockWithHeight(height - i);

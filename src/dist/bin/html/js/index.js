@@ -186,34 +186,28 @@ $(document).ready(function () {
         location.reload();
     }
 
-    const request_info = Blacknet.throttle(Blacknet.network, 100);
+    const request_info = function(message){
+        
+        if (message.data) {
 
-    async function processMessage() {
-        let currentHeight = $('#block-list tr td').first().text();
-        currentHeight = +currentHeight;
+            let arr = message.data.split(',');
+            let block = {};
+            block.time = arr[1];
+            block.size = arr[2];
+            block.txns = arr[3];
+            block.generator = arr[4];;
 
-        if (currentHeight < Blacknet.height) {
-
-            if(currentHeight < Blacknet.height - 35){
-                currentHeight = Blacknet.height - 35;
-            }
-
-            await Blacknet.addBlockWithHeight(currentHeight + 1);
-        } else {
-            await Blacknet.wait(500);
+            Blacknet.renderBlock(block, arr[0]);
+            Blacknet.network();
         }
-        processMessage();
-    }
-
+        
+    };
 
     Blacknet.ready(function () {
 
         let ws = new WebSocket("ws://" + location.host + "/api/v1/notify/block");
         ws.onmessage = request_info;
-        processMessage();
     });
-
-
 
 
     menu.on('click', 'li', menuSwitch);

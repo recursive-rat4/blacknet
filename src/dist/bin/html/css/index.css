@@ -169,7 +169,8 @@ label {
     font-size: 14px;
     flex-grow: 1;
 }
-label strong{
+
+label strong {
     color: var(--gold-text);
     font-size: 12px;
 }
@@ -215,11 +216,12 @@ button {
     -webkit-writing-mode: horizontal-tb !important;
 }
 
-fieldset button, .staking button{
+fieldset button, .staking button {
     color: var(--gold-text);
     background-color: var(--darker-grey-bg);
     border: none;
 }
+
 input:read-only {
     background-color: var(--lighter-grey-bg);
     color: var(--gold-text);
@@ -238,7 +240,7 @@ input:-moz-read-only {
 box-shadow: inset 0 0 4px #000000;
 } */
 
-.overview table{
+.overview table {
     margin-bottom: 25px;
 }
 
@@ -248,7 +250,6 @@ table {
     margin-top: 10px;
     min-width: 800px;
 }
-
 
 thead td {
     color: var(--grey-text);
@@ -265,7 +266,8 @@ tbody td {
     border-bottom: 1px solid #5B5B5B;
     height: 24px;
 }
-tbody td.right{
+
+tbody td.right {
     text-align: right;
 }
 
@@ -448,4 +450,31 @@ fieldset pre {
 a, a:active {
     color: #3CA2A2;
     text-decoration: none;
+}
+
+
+.progress-stats{
+    position: absolute;
+    bottom: 40px;
+    left: 10px;
+    display: none;
+}
+.progress{
+    display: flex;
+    height: 20px;
+    overflow: hidden;
+    width: 200px;
+    background-color: var(--darker-grey-bg);
+    border-radius: 2px;
+}
+
+.progress-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    background-color: var(--gold-text);
+    transition: width .6s ease;
+    width: 100px;
 }

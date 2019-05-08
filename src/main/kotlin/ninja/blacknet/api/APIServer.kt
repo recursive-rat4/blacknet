@@ -56,11 +56,17 @@ object APIServer {
     internal val blockNotify = SynchronizedArrayList<SendChannel<Frame>>()
     internal val transactionNotify = SynchronizedArrayList<Pair<SendChannel<Frame>, PublicKey>>()
 
-    suspend fun blockNotify(hash: Hash) {
+    suspend fun blockNotify(block: Block, size: Int, height: Int) {
         blockNotify.forEach {
             Node.launch {
                 try {
-                    it.send(Frame.Text(hash.toString()))
+                    var message = height.toString();
+                    message += "," + block.time.toString() 
+                    message += "," + size.toString() 
+                    message += "," + block.transactions.size.toString()
+                    message += "," + Address.encode(block.generator)
+
+                    it.send(Frame.Text(message))
                 } finally {
                 }
             }
