@@ -10,7 +10,7 @@
 void function () {
 
     const Blacknet = {};
-    const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");;
+    const blockListEl = $('#block-list'), apiVersion = "/api/v1", body = $("body");;
     const hash = localStorage.hashIndex || 'overview';
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
     const account = localStorage.account;
@@ -65,18 +65,18 @@ void function () {
     };
 
     Blacknet.network = async function () {
-        
+
         Blacknet.ledger = await Blacknet.getPromise('/ledger', 'json');
         Blacknet.nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
-        
+
         Blacknet.renderStatus();
         Blacknet.renderOverview();
-        
+
         getPeerInfo();
     };
 
-    Blacknet.renderStatus = function(){
-        
+    Blacknet.renderStatus = function () {
+
         let network = $('.network');
         let ledger = Blacknet.ledger, nodeinfo = Blacknet.nodeinfo;
 
@@ -226,12 +226,12 @@ void function () {
                     <td class="txns narrow">${block.txns}</td>
                     <td class="generator">${block.generator}</td></tr>`;
 
-        $(tmpl).prependTo("#block-list");
+        $(tmpl).prependTo(blockListEl);
 
-        let rowsCount = $('#block-list').find('tr').length;
+        let rowsCount = blockListEl[0].childNodes.length;
 
-        if (rowsCount > 35) {
-            $('#block-list tr:last-child').remove();
+        if (rowsCount > 36) {
+            blockListEl.find('tr:last-child').remove();
         }
     }
 
@@ -239,6 +239,8 @@ void function () {
 
         let i = 35;
         let height = Blacknet.ledger.height;
+
+        if (height < 35) return;
 
         while (i-- > 0) {
             await Blacknet.addBlockWithHeight(height - i);

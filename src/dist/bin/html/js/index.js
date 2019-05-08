@@ -200,7 +200,6 @@ $(document).ready(function () {
             Blacknet.renderBlock(block, arr[0]);
             Blacknet.network();
         }
-        
     };
 
     Blacknet.ready(function () {
