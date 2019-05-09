@@ -312,9 +312,9 @@ void function () {
         }
 
         Blacknet.init();
+        await Blacknet.balance();
         await Blacknet.network();
         await Blacknet.initRecentBlocks();
-        await Blacknet.balance();
         Blacknet.startHeight = Blacknet.height + 1;
         callback();
     };
