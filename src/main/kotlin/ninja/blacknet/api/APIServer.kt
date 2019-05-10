@@ -53,14 +53,24 @@ private val logger = KotlinLogging.logger {}
 object APIServer {
     internal val txMutex = Mutex()
     internal var lastIndex: Pair<Hash, ChainIndex>? = null
+    internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
     internal val blockNotify = SynchronizedArrayList<SendChannel<Frame>>()
     internal val transactionNotify = SynchronizedArrayList<Pair<SendChannel<Frame>, PublicKey>>()
 
-    suspend fun blockNotify(hash: Hash) {
-        blockNotify.forEach {
+    suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
+        blockNotifyV1.forEach {
             Node.launch {
                 try {
                     it.send(Frame.Text(hash.toString()))
+                } finally {
+                }
+            }
+        }
+        val notification = BlockNotification(block, hash, height, size)
+        blockNotify.forEach {
+            Node.launch {
+                try {
+                    it.send(Frame.Text(Json.stringify(BlockNotification.serializer(), notification)))
                 } finally {
                 }
             }
@@ -94,6 +104,18 @@ fun Application.main() {
         }
 
         webSocket("/api/v1/notify/block") {
+            try {
+                APIServer.blockNotifyV1.add(outgoing)
+                while (true) {
+                    incoming.receive()
+                }
+            } catch (e: ClosedReceiveChannelException) {
+            } finally {
+                APIServer.blockNotifyV1.remove(outgoing)
+            }
+        }
+
+        webSocket("/api/v2/notify/block") {
             try {
                 APIServer.blockNotify.add(outgoing)
                 while (true) {

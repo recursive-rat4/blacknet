@@ -90,7 +90,7 @@ object BlockDB : DataDB() {
                 }
                 TxPool.clearRejectsImpl()
                 TxPool.remove(txHashes)
-                APIServer.blockNotify(hash)
+                APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
                 return Status.ACCEPTED
             } else {
                 batch.close()
