@@ -15,10 +15,7 @@ import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.jetty.Jetty
 import mu.KotlinLogging
-import ninja.blacknet.db.BlockDB
-import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.db.LevelDB
-import ninja.blacknet.db.PeerDB
+import ninja.blacknet.db.*
 import ninja.blacknet.network.Node
 import java.io.FileInputStream
 import java.security.Security
@@ -41,6 +38,7 @@ object Main {
         LedgerDB
         PeerDB
         Node
+        WalletDB
 
         /* Launch Blacknet API web-server on port 8283
          * using Ktor.

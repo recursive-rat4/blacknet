@@ -35,6 +35,7 @@ object Config {
     val i2psamhost by stringType
     val i2psamport by intType
     val dbcache by intType
+    val mnemonics by listType(stringType)
 
     object apiserver : PropertyGroup() {
         val jsonindented by booleanType

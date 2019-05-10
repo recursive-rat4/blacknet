@@ -12,6 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
@@ -22,6 +23,7 @@ class Bundle(
         val data: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.Bundle
+    override fun involves(publicKey: PublicKey) = false
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
 

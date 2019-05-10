@@ -26,6 +26,7 @@ class Lease(
         val to: PublicKey
 ) : TxData {
     override fun getType() = TxType.Lease
+    override fun involves(publicKey: PublicKey) = to == publicKey
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 

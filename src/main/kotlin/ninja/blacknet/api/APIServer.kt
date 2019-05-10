@@ -34,30 +34,27 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.list
-import mu.KotlinLogging
 import ninja.blacknet.api.v1.BlockInfoV1
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.BlockDB
-import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.db.LevelDB
+import ninja.blacknet.db.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.serialization.toHex
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.SynchronizedArrayList
-
-private val logger = KotlinLogging.logger {}
+import ninja.blacknet.util.SynchronizedHashMap
 
 object APIServer {
     internal val txMutex = Mutex()
     internal var lastIndex: Pair<Hash, ChainIndex>? = null
     internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
     internal val blockNotify = SynchronizedArrayList<SendChannel<Frame>>()
-    internal val transactionNotify = SynchronizedArrayList<Pair<SendChannel<Frame>, PublicKey>>()
+    internal val transactionNotify = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
 
-    suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
+    suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) = blockNotify.mutex.withLock {
         blockNotifyV1.forEach {
             Node.launch {
                 try {
@@ -66,23 +63,31 @@ object APIServer {
                 }
             }
         }
+
+        if (blockNotify.list.isEmpty())
+            return@withLock
         val notification = BlockNotification(block, hash, height, size)
-        blockNotify.forEach {
+        val message = Json.stringify(BlockNotification.serializer(), notification)
+        blockNotify.list.forEach {
             Node.launch {
                 try {
-                    it.send(Frame.Text(Json.stringify(BlockNotification.serializer(), notification)))
+                    it.send(Frame.Text(message))
                 } finally {
                 }
             }
         }
     }
 
-    suspend fun transactionNotify(hash: Hash, publicKey: PublicKey) {
-        transactionNotify.forEach {
+    suspend fun transactionNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey) = transactionNotify.mutex.withLock {
+        if (transactionNotify.map.isEmpty())
+            return@withLock
+        val notification = TransactionNotification(tx, hash, time, size)
+        val message = Json.stringify(TransactionNotification.serializer(), notification)
+        transactionNotify.map.forEach {
             Node.launch {
                 try {
-                    if (it.second == publicKey)
-                        it.first.send(Frame.Text(hash.toString()))
+                    if (it.value.contains(publicKey))
+                        it.key.send(Frame.Text(message))
                 } finally {
                 }
             }
@@ -132,12 +137,22 @@ fun Application.main() {
                 while (true) {
                     val string = (incoming.receive() as Frame.Text).readText()
                     val publicKey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
-                    APIServer.transactionNotify.add(Pair(outgoing, publicKey))
+
+                    APIServer.transactionNotify.mutex.withLock {
+                        val keys = APIServer.transactionNotify.map.get(outgoing)
+                        if (keys == null) {
+                            @Suppress("NAME_SHADOWING")
+                            val keys = HashSet<PublicKey>()
+                            keys.add(publicKey)
+                            APIServer.transactionNotify.map.put(outgoing, keys)
+                        } else {
+                            keys.add(publicKey)
+                        }
+                    }
                 }
             } catch (e: ClosedReceiveChannelException) {
-                logger.info("WebSocket API client disconnected")
             } finally {
-                APIServer.transactionNotify.removeIf { it.first == outgoing }
+                APIServer.transactionNotify.remove(outgoing)
             }
         }
 
@@ -160,6 +175,7 @@ fun Application.main() {
         get("/api/v1/blockdb/get/{hash}/{txdetail?}") {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
             val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
+
             val result = BlockInfoV1.get(hash, txdetail)
             if (result != null)
                 call.respond(Json.stringify(BlockInfoV1.serializer(), result))
@@ -435,6 +451,38 @@ fun Application.main() {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
             call.respond(PoS.isStaking(privateKey).toString())
+        }
+
+        get("/api/v1/walletdb/getwallet/{address}") {
+            val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
+
+            call.respond(Json.stringify(WalletDB.Wallet.serializer(), WalletDB.getWallet(publicKey)))
+        }
+
+        get("/api/v1/walletdb/gettransaction/{hash}/{raw?}") {
+            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+            val raw = call.parameters["raw"]?.toBoolean() ?: false
+
+            val result = WalletDB.getTransaction(hash)
+            if (result != null) {
+                if (raw)
+                    return@get call.respond(result.toHex())
+
+                val tx = Transaction.deserialize(result)!!
+                call.respond(Json.stringify(Transaction.Info.serializer(), Transaction.Info(tx, hash, result.size)))
+            } else {
+                call.respond(HttpStatusCode.NotFound, "transaction not found")
+            }
+        }
+
+        get("/api/v1/walletdb/getconfirmations/{hash}") {
+            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+
+            val result = WalletDB.getConfirmations(hash)
+            if (result != null)
+                call.respond(result.toString())
+            else
+                call.respond(HttpStatusCode.NotFound, "transaction not found")
         }
     }
 }

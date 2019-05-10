@@ -58,8 +58,9 @@ object PoS {
     }
 
     private val stakers = SynchronizedArrayList<Pair<PrivateKey, PublicKey>>()
-    private var job: Job? = null
+    internal suspend fun stakersSize() = stakers.size()
 
+    private var job: Job? = null
     private suspend fun miner() {
         while (true) {
             delay(1)
@@ -106,16 +107,14 @@ object PoS {
     suspend fun startStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
         val publicKey = privateKey.toPublicKey()
 
-        if (LedgerDB.get(publicKey) == null) {
-            logger.info("account not found")
-            return false
-        }
-
         val pair = Pair(privateKey, publicKey)
         if (stakers.list.contains(pair)) {
             logger.info("${Address.encode(publicKey)} is already staking")
             return false
         }
+
+        if (LedgerDB.get(publicKey) == null)
+            logger.warn("${Address.encode(publicKey)} not found in LedgerDB")
 
         stakers.list.add(pair)
         if (stakers.list.size == 1)

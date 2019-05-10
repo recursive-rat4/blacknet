@@ -32,5 +32,7 @@ class SynchronizedHashSet<T>(
 
     suspend inline fun filterToList(predicate: (T) -> Boolean) = mutex.withLock { set.filterTo(ArrayList(set.size), predicate) }
 
+    suspend inline fun forEach(action: (T) -> Unit) = mutex.withLock { set.forEach(action) }
+
     suspend inline fun <R> mapToList(transform: (T) -> R) = mutex.withLock { set.mapTo(ArrayList(set.size), transform) }
 }

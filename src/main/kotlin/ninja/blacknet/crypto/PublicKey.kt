@@ -26,6 +26,8 @@ class PublicKey(val bytes: ByteArray) {
     override fun hashCode(): Int = bytes.contentHashCode()
     override fun toString(): String = bytes.toHex()
 
+    fun hash(): Hash = Blake2b.hash(bytes)
+
     @Serializer(forClass = PublicKey::class)
     companion object {
         const val SIZE = 32

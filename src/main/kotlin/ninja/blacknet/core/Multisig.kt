@@ -20,6 +20,7 @@ data class Multisig(
         val n: Byte,
         val keys: ArrayList<PublicKey>
 ) {
+    fun involves(publicKey: PublicKey): Boolean = keys.contains(publicKey)
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
     companion object {

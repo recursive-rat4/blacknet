@@ -28,6 +28,7 @@ class CreateMultisig(
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
     override fun getType() = TxType.CreateMultisig
+    override fun involves(publicKey: PublicKey) = deposits.find { it.first == publicKey } != null
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
@@ -110,12 +111,12 @@ class CreateMultisig(
     @Suppress("unused")
     @Serializable
     class Info(
-            val n: Byte,
+            val n: Int,
             val deposits: JsonArray,
             val signatures: ArrayList<Pair<Byte, Signature>>
     ) {
         constructor(data: CreateMultisig) : this(
-                data.n,
+                data.n.toUByte().toInt(),
                 jsonArray {
                     data.deposits.forEach {
                         Pair(Address.encode(it.first), it.second.toString())

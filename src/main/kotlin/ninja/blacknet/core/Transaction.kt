@@ -11,12 +11,14 @@ package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.json
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.TxData
+import ninja.blacknet.transaction.TxType
 
 @Serializable
 class Transaction(
@@ -30,6 +32,10 @@ class Transaction(
 ) {
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
     fun toJson(hash: Hash, size: Int) = Json.toJson(Info.serializer(), Info(this, hash, size))
+
+    fun data(): TxData? {
+        return TxData.deserialize(type, data.array)
+    }
 
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
         val bytes = serialize()
@@ -55,6 +61,29 @@ class Transaction(
         fun create(from: PublicKey, seq: Int, blockHash: Hash?, fee: Long, type: Byte, data: ByteArray): Transaction {
             return Transaction(Signature.EMPTY, from, seq, blockHash ?: Hash.ZERO, fee, type, SerializableByteArray(data))
         }
+
+        /**
+         * Returns a new Generated [Transaction]
+         *
+         * [Transaction.signature] the empty signature
+         *
+         * [Transaction.from] generator of the block
+         *
+         * [Transaction.seq] height of the block
+         *
+         * [Transaction.blockHash] hash of the block
+         *
+         * [Transaction.fee] the amount
+         *
+         * [Transaction.type] 254
+         *
+         * [Transaction.data] the empty object
+         *
+         * @return Transaction
+         */
+        fun generated(from: PublicKey, height: Int, blockHash: Hash, amount: Long): Transaction {
+            return Transaction(Signature.EMPTY, from, height, blockHash, amount, TxType.Generated.type, SerializableByteArray.EMPTY)
+        }
     }
 
     @Suppress("unused")
@@ -67,7 +96,7 @@ class Transaction(
             val seq: Int,
             val blockHash: String,
             val fee: String,
-            val type: Byte,
+            val type: Int,
             val data: JsonElement
     ) {
         constructor(tx: Transaction, hash: Hash, size: Int) : this(
@@ -78,12 +107,13 @@ class Transaction(
                 tx.seq,
                 tx.blockHash.toString(),
                 tx.fee.toString(),
-                tx.type,
+                tx.type.toUByte().toInt(),
                 data(tx.type, tx.data.array)
         )
 
         companion object {
-            private fun data(type: Byte, bytes: ByteArray): JsonElement {
+            fun data(type: Byte, bytes: ByteArray): JsonElement {
+                if (type == TxType.Generated.type) return json {}
                 val txData = TxData.deserialize(type, bytes) ?: throw RuntimeException("Deserialization error")
                 return txData.toJson()
             }

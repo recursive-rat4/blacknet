@@ -32,6 +32,7 @@ class CreateHTLC(
         val hashLock: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.CreateHTLC
+    override fun involves(publicKey: PublicKey) = to == publicKey
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
@@ -67,17 +68,17 @@ class CreateHTLC(
     class Info(
             val amount: String,
             val to: String,
-            val timeLockType: Byte,
+            val timeLockType: Int,
             val timeLock: Long,
-            val hashType: Byte,
+            val hashType: Int,
             val hashLock: String
     ) {
         constructor(data: CreateHTLC) : this(
                 data.amount.toString(),
                 Address.encode(data.to),
-                data.timeLockType,
+                data.timeLockType.toUByte().toInt(),
                 data.timeLock,
-                data.hashType,
+                data.hashType.toUByte().toInt(),
                 data.hashLock.array.toHex()
         )
     }

@@ -15,6 +15,7 @@ import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
@@ -84,7 +85,9 @@ object TxPool : MemPool(), Ledger {
         if (processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())) {
             add(hash, bytes)
             transactions.add(hash)
-            connection?.lastTxTime = Node.time()
+            val currTime = connection?.lastPacketTime ?: Node.time()
+            connection?.lastTxTime = currTime
+            WalletDB.processTransaction(hash, tx, bytes, currTime, 0)
             return Status.ACCEPTED
         }
         return Status.INVALID
@@ -107,7 +110,9 @@ object TxPool : MemPool(), Ledger {
         if (processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())) {
             add(hash, bytes)
             transactions.add(hash)
-            connection?.lastTxTime = Node.time()
+            val currTime = connection?.lastPacketTime ?: Node.time()
+            connection?.lastTxTime = currTime
+            WalletDB.processTransaction(hash, tx, bytes, currTime, 0)
             return tx.fee
         }
         return INVALID

@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
@@ -26,6 +27,7 @@ class Burn(
         val message: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.Burn
+    override fun involves(publicKey: PublicKey) = false
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 

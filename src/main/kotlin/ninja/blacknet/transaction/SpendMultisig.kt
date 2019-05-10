@@ -15,6 +15,7 @@ import kotlinx.serialization.json.jsonArray
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
@@ -29,6 +30,7 @@ class SpendMultisig(
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
     override fun getType() = TxType.SpendMultisig
+    override fun involves(publicKey: PublicKey) = LedgerDB.getMultisig(id)!!.involves(publicKey)
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
@@ -113,7 +115,7 @@ class SpendMultisig(
     class Info(
             val id: String,
             val amounts: JsonArray,
-            val signatures: ArrayList<Pair<Byte, Signature>>
+            val signatures: JsonArray
     ) {
         constructor(data: SpendMultisig) : this(
                 data.id.bytes.toHex(),
@@ -122,7 +124,14 @@ class SpendMultisig(
                         it.toString()
                     }
                 },
-                data.signatures
+                jsonArray {
+                    data.signatures.forEach {
+                        SignatureInfo(it.first.toUByte().toInt(), it.second.toString())
+                    }
+                }
         )
     }
+
+    @Serializable
+    class SignatureInfo(val i: Int, val signature: String)
 }

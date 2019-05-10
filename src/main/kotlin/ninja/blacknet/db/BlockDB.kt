@@ -77,10 +77,10 @@ object BlockDB : DataDB() {
                 return Status.NOT_ON_THIS_CHAIN
             }
             val batch = LevelDB.createWriteBatch()
-            val txDb = LedgerDB.Update(hash, block.time, bytes.size, block.generator)
+            val txDb = LedgerDB.Update(batch, hash, block.time, bytes.size, block.generator)
             if (LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)) {
                 batch.put(BLOCK_KEY, hash.bytes, bytes)
-                txDb.commitImpl(batch)
+                txDb.commitImpl()
                 if (connection != null) {
                     logger.info("Accepted block $hash")
                     connection.lastBlockTime = Node.time()

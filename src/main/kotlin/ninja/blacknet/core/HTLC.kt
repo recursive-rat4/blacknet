@@ -27,6 +27,7 @@ data class HTLC(
         val hashType: Byte,
         val hashLock: SerializableByteArray
 ) {
+    fun involves(publicKey: PublicKey): Boolean = from == publicKey || to == publicKey
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
     fun verifyTimeLock(ledger: Ledger): Boolean {

@@ -91,11 +91,11 @@ class Message(
     @Suppress("unused")
     @Serializable
     class Info(
-            val type: Byte,
+            val type: Int,
             val message: String
     ) {
         constructor(data: Message) : this(
-                data.type,
+                data.type.toUByte().toInt(),
                 if (data.type == PLAIN) String(data.message.array) else data.message.array.toHex()
         )
     }

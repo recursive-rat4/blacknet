@@ -25,7 +25,7 @@ class TransactionInfo(
         val seq: Int,
         val blockHash: String,
         val fee: Long,
-        val type: Byte,
+        val type: Int,
         val data: String
 ) {
     constructor(tx: Transaction, hash: Hash, size: Int) : this(
@@ -36,7 +36,7 @@ class TransactionInfo(
             tx.seq,
             tx.blockHash.toString(),
             tx.fee,
-            tx.type,
+            tx.type.toUByte().toInt(),
             data(tx.type, tx.data.array)
     )
 

@@ -31,7 +31,7 @@ private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
     val mutex = Mutex()
-    private const val VERSION = 2
+    private const val VERSION = 3
     private val ACCOUNT_KEY = "account".toByteArray()
     private val CHAIN_KEY = "chain".toByteArray()
     private val HTLC_KEY = "htlc".toByteArray()
@@ -41,8 +41,18 @@ object LedgerDB {
     private val STATE_KEY = "ledgerstate".toByteArray()
     private val VERSION_KEY = "ledgerversion".toByteArray()
 
-    private const val GENESIS_TIME = 1545555600L
+    const val GENESIS_TIME = 1545555600L
     private fun genesisState() = State(0, Hash.ZERO, GENESIS_TIME, PoS.INITIAL_DIFFICULTY, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO)
+
+    fun genesisBlock(): List<GenesisEntry> {
+        val bytes = File("config/genesis.json").readBytes()
+        logger.info("Loaded genesis.json ${Blake2b.hash(bytes)}")
+        val genesis = String(bytes)
+        return Json.parse(GenesisEntry.serializer().list, genesis)
+    }
+
+    @Serializable
+    class GenesisEntry(val publicKey: String, val balance: Long)
 
     @Serializable
     private class State(
@@ -75,17 +85,12 @@ object LedgerDB {
     const val DEFAULT_MAX_BLOCK_SIZE = 100000
     private var maxBlockSize: Int
 
-    private fun loadGenesis() {
-        @Serializable
-        class GenesisEntry(val publicKey: String, val balance: Long)
-
-        val bytes = File("config/genesis.json").readBytes()
-        val genesis = String(bytes)
-        val list = Json.parse(GenesisEntry.serializer().list, genesis)
+    private fun loadGenesisState() {
+        val genesis = genesisBlock()
         val batch = LevelDB.createWriteBatch()
 
         var supply = 0L
-        for (i in list) {
+        for (i in genesis) {
             val publicKey = PublicKey.fromString(i.publicKey)!!
             val account = AccountState.create(i.balance)
             batch.put(ACCOUNT_KEY, publicKey.bytes, account.serialize())
@@ -104,7 +109,6 @@ object LedgerDB {
         batch.put(VERSION_KEY, version.toBytes())
 
         batch.write()
-        logger.info("Loaded genesis.json ${Blake2b.hash(bytes)}")
     }
 
     init {
@@ -125,7 +129,7 @@ object LedgerDB {
             if (version == VERSION) {
                 state = LedgerDB.State.deserialize(stateBytes)!!
                 logger.info("Blockchain height ${state.height}")
-            } else if (version == 1) {
+            } else if (version == 2 || version == 1) {
                 state = LedgerDB.State.deserialize(stateBytes)!!
                 logger.info("Reindexing ${state.height} blocks...")
 
@@ -146,10 +150,10 @@ object LedgerDB {
                         val bytes = blocks[i]
                         val block = Block.deserialize(bytes)!!
                         val batch = LevelDB.createWriteBatch()
-                        val txDb = Update(hash, block.time, bytes.size, block.generator)
+                        val txDb = Update(batch, hash, block.time, bytes.size, block.generator)
                         processBlockImpl(txDb, hash, block, bytes.size)
                         pruneImpl(batch)
-                        txDb.commitImpl(batch)
+                        txDb.commitImpl()
                     }
                 }
             } else {
@@ -157,7 +161,7 @@ object LedgerDB {
             }
 
         } else {
-            loadGenesis()
+            loadGenesisState()
         }
     }
 
@@ -325,13 +329,13 @@ object LedgerDB {
             logger.info("timestamp is too early")
             return false
         }
-        var generator = txDb.get(block.generator)
+        val generator = txDb.get(block.generator)
         if (generator == null) {
             logger.info("block generator not found")
             return false
         }
+        val height = txDb.height()
 
-        val height = height()
         val undo = UndoBuilder(
                 blockTime(),
                 difficulty(),
@@ -348,38 +352,49 @@ object LedgerDB {
         }
 
         var fees = 0L
-        for (bytes in block.transactions) {
-            val tx = Transaction.deserialize(bytes.array)
-            if (tx == null) {
-                logger.info("deserialization failed")
-                return false
+        WalletDB.mutex.withLock {
+            for (bytes in block.transactions) {
+                val tx = Transaction.deserialize(bytes.array)
+                if (tx == null) {
+                    logger.info("deserialization failed")
+                    return false
+                }
+                val txHash = Transaction.Hasher(bytes.array)
+                if (!txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)) {
+                    logger.info("invalid tx $txHash")
+                    return false
+                }
+                undo.txHashes.add(txHash)
+                fees += tx.fee
+
+                WalletDB.wallets.forEach { (publicKey, wallet) ->
+                    WalletDB.processTransactionImpl(publicKey, wallet, txHash, tx, bytes.array, block.time, height, txDb.batch)
+                }
             }
-            val txHash = Transaction.Hasher(bytes.array)
-            if (!txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)) {
-                logger.info("invalid tx $txHash")
-                return false
+
+            @Suppress("NAME_SHADOWING")
+            val generator = txDb.get(block.generator)!!
+            undo.add(block.generator, generator)
+            txDb.addUndo(hash, undo.build())
+
+            val reward = PoS.reward(supply())
+            val generated = reward + fees
+
+            val prevIndex = txDb.getChainIndex(block.previous)!!
+            prevIndex.next = hash
+            prevIndex.nextSize = size
+            txDb.setChainIndex(block.previous, prevIndex)
+            txDb.setChainIndex(hash, ChainIndex(block.previous, Hash.ZERO, 0, height, generated))
+
+            txDb.addSupply(reward)
+            generator.prune(height)
+            generator.debit(height, generated)
+            txDb.set(block.generator, generator)
+
+            WalletDB.wallets.forEach { (publicKey, wallet) ->
+                WalletDB.processBlockImpl(txDb.batch, publicKey, wallet, hash, block, height, generated)
             }
-            undo.txHashes.add(txHash)
-            fees += tx.fee
         }
-
-        generator = txDb.get(block.generator)!!
-        undo.add(block.generator, generator)
-        txDb.addUndo(hash, undo.build())
-
-        val reward = PoS.reward(supply())
-        val generated = reward + fees
-
-        val prevIndex = txDb.getChainIndex(block.previous)!!
-        prevIndex.next = hash
-        prevIndex.nextSize = size
-        txDb.setChainIndex(block.previous, prevIndex)
-        txDb.setChainIndex(hash, ChainIndex(block.previous, Hash.ZERO, 0, height, generated))
-
-        txDb.addSupply(reward)
-        generator.prune(height)
-        generator.debit(height, generated)
-        txDb.set(block.generator, generator)
 
         TxPool.mutex.withLock {
             TxPool.clearRejectsImpl()
@@ -389,7 +404,7 @@ object LedgerDB {
         return true
     }
 
-    private fun undoBlock(): Hash {
+    private suspend fun undoBlock(): Hash {
         val hash = blockHash()
         val chainIndex = getChainIndex(hash)!!
         val undo = getUndo(hash)
@@ -438,6 +453,9 @@ object LedgerDB {
         }
 
         removeUndo(hash)
+
+        WalletDB.disconnectBlock(hash, undo.txHashes)
+
         return hash
     }
 
@@ -445,10 +463,10 @@ object LedgerDB {
         return@withLock rollbackToImpl(hash)
     }
 
-    private fun rollbackToImpl(hash: Hash): ArrayList<Hash> {
+    private suspend fun rollbackToImpl(hash: Hash): ArrayList<Hash> {
         val i = getBlockNumber(hash) ?: return ArrayList()
         val height = height()
-        var n = height - i - 1
+        var n = height - i
         if (n <= 0) throw RuntimeException("Rollback of $n blocks")
         val result = ArrayList<Hash>(n)
         while (n-- > 0)
@@ -467,13 +485,13 @@ object LedgerDB {
             }
 
             val batch = LevelDB.createWriteBatch()
-            val txDb = LedgerDB.Update(it, block.first.time, block.second, block.first.generator)
+            val txDb = LedgerDB.Update(batch, it, block.first.time, block.second, block.first.generator)
             if (!processBlockImpl(txDb, it, block.first, block.second)) {
                 batch.close()
                 logger.error("process block failed")
                 return@withLock toRemove
             }
-            txDb.commitImpl(batch)
+            txDb.commitImpl()
         }
 
         return@withLock toRemove
@@ -520,7 +538,7 @@ object LedgerDB {
         blockSizes.clear()
         state = genesisState()
 
-        loadGenesis()
+        loadGenesisState()
     }
 
     suspend fun check(): Check = mutex.withLock {
@@ -556,6 +574,7 @@ object LedgerDB {
     )
 
     internal class Update(
+            val batch: LevelDB.WriteBatch,
             private val blockHash: Hash,
             private val blockTime: Long,
             private val blockSize: Int,
@@ -638,7 +657,7 @@ object LedgerDB {
             multisigs.put(id, null)
         }
 
-        fun commitImpl(batch: LevelDB.WriteBatch) {
+        fun commitImpl() {
             batch.put(UNDO_KEY, blockHash.bytes, undo!!.serialize())
             for (chainIndex in chainIndex)
                 batch.put(CHAIN_KEY, chainIndex.key.bytes, chainIndex.value.serialize())

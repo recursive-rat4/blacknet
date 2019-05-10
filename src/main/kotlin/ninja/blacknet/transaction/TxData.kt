@@ -15,12 +15,14 @@ import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.UndoBuilder
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 
 private val logger = KotlinLogging.logger {}
 
 interface TxData {
     fun getType(): TxType
+    fun involves(publicKey: PublicKey): Boolean
     fun serialize(): ByteArray
     fun toJson(): JsonElement
     suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean
