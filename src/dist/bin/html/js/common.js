@@ -64,16 +64,7 @@ void function () {
         });
     };
 
-    Blacknet.network = async function () {
-
-        Blacknet.ledger = await Blacknet.getPromise('/ledger', 'json');
-        Blacknet.nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
-
-        Blacknet.renderStatus();
-        Blacknet.renderOverview();
-
-        getPeerInfo();
-    };
+    
 
     Blacknet.renderStatus = function () {
 
@@ -113,14 +104,11 @@ void function () {
         let YEAR_IN_SECONDS = 31556952; // Average length of year in Gregorian calendar
         if (secs < 2 * DAY_IN_SECONDS) {
             timeBehindText = secs / HOUR_IN_SECONDS + " hour(s)";
-        }
-        else if (secs < 2 * WEEK_IN_SECONDS) {
+        } else if (secs < 2 * WEEK_IN_SECONDS) {
             timeBehindText = secs / DAY_IN_SECONDS + " day(s)";
-        }
-        else if (secs < YEAR_IN_SECONDS) {
+        } else if (secs < YEAR_IN_SECONDS) {
             timeBehindText = secs / WEEK_IN_SECONDS + " week(s)";
-        }
-        else {
+        } else {
             let years = secs / YEAR_IN_SECONDS;
             let remainder = secs % YEAR_IN_SECONDS;
             timeBehindText = years + " year(s) and " + remainder + "week(s)";
@@ -317,6 +305,18 @@ void function () {
         await Blacknet.initRecentBlocks();
         Blacknet.startHeight = Blacknet.height + 1;
         callback();
+    };
+
+    const timePeerInfo = Blacknet.throttle(getPeerInfo, 1000);
+    Blacknet.network = async function () {
+
+        Blacknet.ledger = await Blacknet.getPromise('/ledger', 'json');
+        Blacknet.nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
+
+        Blacknet.renderStatus();
+        Blacknet.renderOverview();
+
+        timePeerInfo();
     };
 
     window.addEventListener('beforeunload', function (e) {

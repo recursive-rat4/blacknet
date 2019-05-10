@@ -187,24 +187,18 @@ $(document).ready(function () {
     }
 
     const request_info = function(message){
-        
+
         if (message.data) {
+            let block = JSON.parse(message.data);
 
-            let arr = message.data.split(',');
-            let block = {};
-            block.time = arr[1];
-            block.size = arr[2];
-            block.txns = arr[3];
-            block.generator = arr[4];;
-
-            Blacknet.renderBlock(block, arr[0]);
+            Blacknet.renderBlock(block, block.height);
             Blacknet.network();
         }
     };
 
     Blacknet.ready(function () {
 
-        let ws = new WebSocket("ws://" + location.host + "/api/v1/notify/block");
+        let ws = new WebSocket("ws://" + location.host + "/api/v2/notify/block");
         ws.onmessage = request_info;
     });
 
