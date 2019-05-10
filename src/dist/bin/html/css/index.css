@@ -453,11 +453,21 @@ a, a:active {
 }
 
 
-.progress-stats{
-    position: absolute;
-    bottom: 40px;
-    left: 10px;
+.progress-stats, .progress-stats-text{
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1000;
     display: none;
+}
+.progress-stats-text{
+    z-index: 1001;
+    color: #eee;
+    height: 20px;
+    width: 200px;
+    font-size: 12px;
+    line-height: 20px;
+    text-align: center;
 }
 .progress{
     display: flex;
@@ -476,5 +486,4 @@ a, a:active {
     white-space: nowrap;
     background-color: var(--gold-text);
     transition: width .6s ease;
-    width: 100px;
 }

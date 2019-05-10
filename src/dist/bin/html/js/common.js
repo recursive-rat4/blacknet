@@ -11,7 +11,7 @@ void function () {
 
     const Blacknet = {};
     const blockListEl = $('#block-list'), apiVersion = "/api/v1", body = $("body");;
-    const hash = localStorage.hashIndex || 'overview';
+    const progressStats = $('.progress-stats, .progress-stats-text');
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
     const account = localStorage.account;
     const dialogAccount = $('.dialog.account');
@@ -25,6 +25,7 @@ void function () {
 
             mask.removeClass('init').hide();
             dialogAccount.hide();
+            Blacknet.showProgress();
 
             $('.overview').find('.overview_account').text(account);
 
@@ -64,7 +65,7 @@ void function () {
         });
     };
 
-    
+
 
     Blacknet.renderStatus = function () {
 
@@ -97,30 +98,54 @@ void function () {
 
     Blacknet.renderProgressBar = async function (timestamp) {
 
-        let secs = Date.now() / 1000 - timestamp, timeBehindText = "";
+        let secs = Date.now() / 1000 - timestamp, totalSecs, pecent, timeBehindText = "", now = Date.now();
         let HOUR_IN_SECONDS = 60 * 60;
         let DAY_IN_SECONDS = 24 * 60 * 60;
         let WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
         let YEAR_IN_SECONDS = 31556952; // Average length of year in Gregorian calendar
-        if (secs < 2 * DAY_IN_SECONDS) {
-            timeBehindText = secs / HOUR_IN_SECONDS + " hour(s)";
+        
+        if (secs < 5 * 60) {
+            timeBehindText = undefined;
+        } else if (secs < 2 * DAY_IN_SECONDS) {
+            timeBehindText = (secs / HOUR_IN_SECONDS).toFixed(2) + " hour(s)";
         } else if (secs < 2 * WEEK_IN_SECONDS) {
-            timeBehindText = secs / DAY_IN_SECONDS + " day(s)";
+            timeBehindText = (secs / DAY_IN_SECONDS).toFixed(2) + " day(s)";
         } else if (secs < YEAR_IN_SECONDS) {
-            timeBehindText = secs / WEEK_IN_SECONDS + " week(s)";
+            timeBehindText = (secs / WEEK_IN_SECONDS).toFixed(2) + " week(s)";
         } else {
             let years = secs / YEAR_IN_SECONDS;
             let remainder = secs % YEAR_IN_SECONDS;
-            timeBehindText = years + " year(s) and " + remainder + "week(s)";
+            timeBehindText = years.toFixed(2) + " year(s) and " + remainder.toFixed(2) + "week(s)";
         }
 
         if (!Blacknet.startTime) {
 
-            // let block = Blacknet.getBlock
+            let hash = await Blacknet.getPromise('/blockdb/getblockhash/1');
+            let block = await Blacknet.getPromise('/blockdb/get/' + hash, 'json');
+            Blacknet.startTime = block.time;
+        }
+        Blacknet.timeBehindText = timeBehindText;
+        
+        if (timeBehindText == undefined) {
+            progressStats.hide();
+            return ;
         }
 
-        console.log(timeBehindText)
+        totalSecs = Date.now() / 1000 - Blacknet.startTime;
+        pecent = (secs * 100) / totalSecs;
+
+        pecent = 100 - pecent;
+
+        $('.progress-bar').css('width', `${pecent}%`);
+        $('.progress-stats-text').text(timeBehindText);
     }
+
+    Blacknet.showProgress = function(){
+
+        if(Blacknet.timeBehindText != undefined){
+           progressStats.show();
+        }
+    };
 
     Blacknet.get = function (url, callback) {
 
