@@ -10,8 +10,8 @@
 void function () {
 
     const Blacknet = {};
-    const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");;
-    const hash = localStorage.hashIndex || 'overview';
+    const blockListEl = $('#block-list'), apiVersion = "/api/v1", body = $("body");;
+    const progressStats = $('.progress-stats, .progress-stats-text');
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
     const account = localStorage.account;
     const dialogAccount = $('.dialog.account');
@@ -25,6 +25,7 @@ void function () {
 
             mask.removeClass('init').hide();
             dialogAccount.hide();
+            Blacknet.showProgress();
 
             $('.overview').find('.overview_account').text(account);
 
@@ -51,8 +52,6 @@ void function () {
                 }
             });
         }
-
-
     };
 
     Blacknet.balance = async function () {
@@ -66,35 +65,87 @@ void function () {
         });
     };
 
-    Blacknet.network = async function () {
+
+
+    Blacknet.renderStatus = function () {
+
         let network = $('.network');
-        let data = await Blacknet.getPromise('/ledger', 'json');
+        let ledger = Blacknet.ledger, nodeinfo = Blacknet.nodeinfo;
 
-        Blacknet.height = data.height;
-        network.find('.height').html(data.height);
-        network.find('.supply').html(new BigNumber(data.supply).dividedBy(1e8).toFixed(0));
-        network.find('.accounts').html(data.accounts);
-        Blacknet.renderOverview(data);
-
-        let nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
-        network.find('.connections').text(nodeinfo.outgoing+nodeinfo.incoming);
+        network.find('.height').html(ledger.height);
+        network.find('.supply').html(new BigNumber(ledger.supply).dividedBy(1e8).toFixed(0));
+        network.find('.accounts').html(ledger.accounts);
+        network.find('.connections').text(nodeinfo.outgoing + nodeinfo.incoming);
         $('.overview_agent').text(nodeinfo.agent);
-        getPeerInfo();
     };
 
-    Blacknet.renderOverview = function (ledger) {
+    Blacknet.renderOverview = function () {
+
+        let ledger = Blacknet.ledger;
 
         for (let key in ledger) {
 
             let value = ledger[key];
-            if(key == 'blockTime'){
+            if (key == 'blockTime') {
                 value = Blacknet.unix_to_local_time(value);
-            }else if(key == 'supply'){
+                Blacknet.renderProgressBar(ledger[key]);
+            } else if (key == 'supply') {
                 value = new BigNumber(value).dividedBy(1e8) + ' BLN';
             }
             $('.overview_' + key).text(value);
         }
     };
+
+    Blacknet.renderProgressBar = async function (timestamp) {
+
+        let secs = Date.now() / 1000 - timestamp, totalSecs, pecent, timeBehindText = "", now = Date.now();
+        let HOUR_IN_SECONDS = 60 * 60;
+        let DAY_IN_SECONDS = 24 * 60 * 60;
+        let WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
+        let YEAR_IN_SECONDS = 31556952; // Average length of year in Gregorian calendar
+        
+        if (secs < 5 * 60) {
+            timeBehindText = undefined;
+        } else if (secs < 2 * DAY_IN_SECONDS) {
+            timeBehindText = (secs / HOUR_IN_SECONDS).toFixed(2) + " hour(s)";
+        } else if (secs < 2 * WEEK_IN_SECONDS) {
+            timeBehindText = (secs / DAY_IN_SECONDS).toFixed(2) + " day(s)";
+        } else if (secs < YEAR_IN_SECONDS) {
+            timeBehindText = (secs / WEEK_IN_SECONDS).toFixed(2) + " week(s)";
+        } else {
+            let years = secs / YEAR_IN_SECONDS;
+            let remainder = secs % YEAR_IN_SECONDS;
+            timeBehindText = years.toFixed(2) + " year(s) and " + remainder.toFixed(2) + "week(s)";
+        }
+
+        if (!Blacknet.startTime) {
+
+            const GENESIS_TIME = 1545555600;
+            Blacknet.startTime = GENESIS_TIME;
+        }
+        Blacknet.timeBehindText = timeBehindText;
+        
+        if (timeBehindText == undefined) {
+            progressStats.hide();
+            return ;
+        }
+
+        totalSecs = Date.now() / 1000 - Blacknet.startTime;
+        pecent = (secs * 100) / totalSecs;
+
+        pecent = 100 - pecent;
+
+        $('.progress-bar').css('width', `${pecent}%`);
+        $('.progress-stats-text').text(timeBehindText + " behind");
+    }
+
+    Blacknet.showProgress = function(){
+
+        if(Blacknet.timeBehindText != undefined){
+           progressStats.show();
+        }
+    };
+
     Blacknet.get = function (url, callback) {
 
         return $.get(apiVersion + url, callback);
@@ -121,7 +172,7 @@ void function () {
 
         url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
-        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' + 
+        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
             to + '\n\n0.001 BLN added as transaction fee?')) {
 
             Blacknet.post(url, callback);
@@ -142,11 +193,12 @@ void function () {
         }
 
         if (confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
-             ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
+            ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
 
             Blacknet.post(url, callback);
         }
     };
+
     Blacknet.wait = function (timeout) {
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
@@ -166,7 +218,7 @@ void function () {
         let month = date.getMonth() + 1;
 
         return year + "-" + ('0' + month).substr(-2) + "-" +
-             ('0' + day).substr(-2) + " " + hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+            ('0' + day).substr(-2) + " " + hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
     Blacknet.addBlock = async function (hash, height) {
@@ -174,35 +226,45 @@ void function () {
         let url = `/blockdb/get/${hash}`;
         let block = await Blacknet.getPromise(url, 'json');
 
+        block.txns = block.transactions.length;
+        Blacknet.renderBlock(block, height, false);
+
+        return block.previous
+    }
+
+    Blacknet.renderBlock = async function (block, height, prepend = true) {
+
         let tmpl = `<tr><td class="narrow height">${height}</td>
                     <td class="size narrow">${block.size}</td>
                     <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
-                    <td class="txns narrow">${block.transactions.length}</td>
+                    <td class="txns narrow">${block.txns}</td>
                     <td class="generator">${block.generator}</td></tr>`;
 
-        $(tmpl).prependTo("#block-list");
+        if (prepend)
+            $(tmpl).prependTo(blockListEl);
+        else
+            $(tmpl).appendTo(blockListEl);
 
-        let rowsCount = $('#block-list').find('tr').length;
+        let rowsCount = blockListEl[0].childNodes.length;
 
-        if (rowsCount > 35) {
-            $('#block-list tr:last-child').remove();
+        if (rowsCount > 36) {
+            blockListEl.find('tr:last-child').remove();
         }
     }
 
     Blacknet.initRecentBlocks = async function () {
 
-        let i = 35;
-        let height = Blacknet.height;
+        let i = 0;
+        let hash = Blacknet.ledger.blockHash;
+        let height = Blacknet.ledger.height;
 
-        while (i-- > 0) {
-            await Blacknet.addBlockWithHeight(height - i);
+        if (height < 36) return;
+
+        while (i++ < 35) {
+            hash = await Blacknet.addBlock(hash, height);
+            height--;
         }
     }
-
-    Blacknet.addBlockWithHeight = async function (height) {
-        let hash = await Blacknet.getPromise('/blockdb/getblockhash/' + height);
-        await Blacknet.addBlock(hash, height);
-    };
 
 
     Blacknet.throttle = function (fn, threshhold = 250) {
@@ -254,19 +316,40 @@ void function () {
 
     Blacknet.ready = async function (callback) {
 
+        let lang = navigator.language || navigator.userLanguage;
+        if (lang.indexOf('zh') !== -1) {
+            i18n({ locale: 'zh' });
+        } else if (lang.indexOf('ja') !== -1) {
+            i18n({ locale: 'ja' });
+        } else if (lang.indexOf('sk') !== -1) {
+            i18n({ locale: 'sk' });
+        }
+
         Blacknet.init();
+        await Blacknet.balance();
         await Blacknet.network();
         await Blacknet.initRecentBlocks();
-        await Blacknet.balance();
         Blacknet.startHeight = Blacknet.height + 1;
         callback();
+    };
+
+    const timePeerInfo = Blacknet.throttle(getPeerInfo, 1000);
+    Blacknet.network = async function () {
+
+        Blacknet.ledger = await Blacknet.getPromise('/ledger', 'json');
+        Blacknet.nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
+
+        Blacknet.renderStatus();
+        Blacknet.renderOverview();
+
+        timePeerInfo();
     };
 
     window.addEventListener('beforeunload', function (e) {
 
         let tabState = $('[data-index="generate"]').parent().hasClass('active');
 
-        if(window.isGenerated && tabState){
+        if (window.isGenerated && tabState) {
 
             e.preventDefault();
             e.returnValue = '';
