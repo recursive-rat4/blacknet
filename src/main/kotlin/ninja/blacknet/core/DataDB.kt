@@ -15,7 +15,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 
 abstract class DataDB {
-    protected val mutex = Mutex()
+    internal val mutex = Mutex()
     private val TX_INVALID = Pair(Status.INVALID, 0L)
     private val TX_ALREADY_HAVE = Pair(Status.ALREADY_HAVE, 0L)
     private val TX_IN_FUTURE = Pair(Status.IN_FUTURE, 0L)

@@ -10,12 +10,12 @@
 package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
+import ninja.blacknet.serialization.Json
 
 @Serializable
 class BlockInfoV1(
@@ -38,7 +38,7 @@ class BlockInfoV1(
             block.signature.toString(),
             block.transactions.map {
                 if (txdetail)
-                    TransactionInfo.fromBytes(it.array)?.let { Json.plain.stringify(TransactionInfo.serializer(), it) } ?: "Deserialization error"
+                    TransactionInfo.fromBytes(it.array)?.let { Json.stringify(TransactionInfo.serializer(), it) } ?: "Deserialization error"
                 else
                     Transaction.Hasher(it.array).toString()
             }

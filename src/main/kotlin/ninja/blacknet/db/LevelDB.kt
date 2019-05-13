@@ -29,8 +29,16 @@ object LevelDB {
         return db.getProperty(name)
     }
 
+    internal fun key(key1: ByteArray, key2: ByteArray): ByteArray {
+        return key1 + key2
+    }
+
+    internal fun get(key: ByteArray): ByteArray? {
+        return db.get(key)
+    }
+
     fun get(key1: ByteArray, key2: ByteArray): ByteArray? {
-        return db.get(key1 + key2)
+        return db.get(key(key1, key2))
     }
 
     fun contains(key1: ByteArray, key2: ByteArray): Boolean {
@@ -38,11 +46,11 @@ object LevelDB {
     }
 
     fun put(key1: ByteArray, key2: ByteArray, bytes: ByteArray) {
-        db.put(key1 + key2, bytes)
+        db.put(key(key1, key2), bytes)
     }
 
     fun delete(key1: ByteArray, key2: ByteArray) {
-        db.delete(key1 + key2)
+        db.delete(key(key1, key2))
     }
 
     fun createWriteBatch(): WriteBatch {
@@ -50,12 +58,20 @@ object LevelDB {
     }
 
     class WriteBatch internal constructor(private val batch: org.iq80.leveldb.WriteBatch) {
+        internal fun put(key: ByteArray, bytes: ByteArray) {
+            batch.put(key, bytes)
+        }
+
         fun put(key1: ByteArray, key2: ByteArray, bytes: ByteArray) {
-            batch.put(key1 + key2, bytes)
+            batch.put(key(key1, key2), bytes)
+        }
+
+        internal fun delete(key: ByteArray) {
+            batch.delete(key)
         }
 
         fun delete(key1: ByteArray, key2: ByteArray) {
-            batch.delete(key1 + key2)
+            batch.delete(key(key1, key2))
         }
 
         fun write(sync: Boolean = false) {

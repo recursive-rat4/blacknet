@@ -120,9 +120,8 @@ void function () {
 
         if (!Blacknet.startTime) {
 
-            let hash = await Blacknet.getPromise('/blockdb/getblockhash/1');
-            let block = await Blacknet.getPromise('/blockdb/get/' + hash, 'json');
-            Blacknet.startTime = block.time;
+            const GENESIS_TIME = 1545555600;
+            Blacknet.startTime = GENESIS_TIME;
         }
         Blacknet.timeBehindText = timeBehindText;
         
@@ -137,7 +136,7 @@ void function () {
         pecent = 100 - pecent;
 
         $('.progress-bar').css('width', `${pecent}%`);
-        $('.progress-stats-text').text(timeBehindText);
+        $('.progress-stats-text').text(timeBehindText + " behind");
     }
 
     Blacknet.showProgress = function(){
@@ -228,10 +227,12 @@ void function () {
         let block = await Blacknet.getPromise(url, 'json');
 
         block.txns = block.transactions.length;
-        Blacknet.renderBlock(block, height);
+        Blacknet.renderBlock(block, height, false);
+
+        return block.previous
     }
 
-    Blacknet.renderBlock = async function (block, height) {
+    Blacknet.renderBlock = async function (block, height, prepend = true) {
 
         let tmpl = `<tr><td class="narrow height">${height}</td>
                     <td class="size narrow">${block.size}</td>
@@ -239,7 +240,10 @@ void function () {
                     <td class="txns narrow">${block.txns}</td>
                     <td class="generator">${block.generator}</td></tr>`;
 
-        $(tmpl).prependTo(blockListEl);
+        if (prepend)
+            $(tmpl).prependTo(blockListEl);
+        else
+            $(tmpl).appendTo(blockListEl);
 
         let rowsCount = blockListEl[0].childNodes.length;
 
@@ -250,20 +254,17 @@ void function () {
 
     Blacknet.initRecentBlocks = async function () {
 
-        let i = 35;
+        let i = 0;
+        let hash = Blacknet.ledger.blockHash;
         let height = Blacknet.ledger.height;
 
-        if (height < 35) return;
+        if (height < 36) return;
 
-        while (i-- > 0) {
-            await Blacknet.addBlockWithHeight(height - i);
+        while (i++ < 35) {
+            hash = await Blacknet.addBlock(hash, height);
+            height--;
         }
     }
-
-    Blacknet.addBlockWithHeight = async function (height) {
-        let hash = await Blacknet.getPromise('/blockdb/getblockhash/' + height);
-        await Blacknet.addBlock(hash, height);
-    };
 
 
     Blacknet.throttle = function (fn, threshhold = 250) {

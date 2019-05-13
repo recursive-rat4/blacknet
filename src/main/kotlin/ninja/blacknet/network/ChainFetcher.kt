@@ -208,7 +208,8 @@ object ChainFetcher {
                 return false
             }
         }
-        LedgerDB.prune()
+        if (undoRollback == null)
+            LedgerDB.prune()
         connection.lastBlockTime = Node.time()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)

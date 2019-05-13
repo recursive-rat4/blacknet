@@ -25,6 +25,7 @@ class UndoBlock(
         val nxtrng: Hash,
         val rollingCheckpoint: Hash,
         val blockSize: Int,
+        val txHashes: ArrayList<Hash>,
         val accounts: UndoAccountList,
         val htlcs: UndoHTLCList,
         val multisigs: UndoMultisigList
@@ -44,6 +45,7 @@ open class UndoBuilder(
         val nxtrng: Hash,
         val rollingCheckpoint: Hash,
         val blockSize: Int,
+        val txHashes: ArrayList<Hash>,
         private val accounts: HashMap<PublicKey, AccountState> = HashMap(),
         private val htlcs: HashMap<Hash, HTLC?> = HashMap(),
         private val multisigs: HashMap<Hash, Multisig?> = HashMap()
@@ -72,6 +74,7 @@ open class UndoBuilder(
                 nxtrng,
                 rollingCheckpoint,
                 blockSize,
+                txHashes,
                 accounts.toArrayList(),
                 htlcs.toArrayList(),
                 multisigs.toArrayList())
