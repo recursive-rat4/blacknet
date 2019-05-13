@@ -175,7 +175,7 @@ label strong {
     font-size: 12px;
 }
 
-input {
+input[type="text"], input[type="password"], input[type="number"] {
     border: 1px solid var(--darker-grey-bg);
     border-radius: 4px;
     height: 20px;
@@ -216,10 +216,17 @@ button {
     -webkit-writing-mode: horizontal-tb !important;
 }
 
-fieldset button, .staking button {
+fieldset button, .staking button{
     color: var(--gold-text);
     background-color: var(--darker-grey-bg);
     border: none;
+}
+.newaccount button{
+    color: var(--gold-text);
+    background-color: var(--darker-grey-bg);
+    width: 100px;
+    float: right;
+    border: 1px solid var(--gold-text);
 }
 
 input:read-only {
@@ -376,6 +383,11 @@ fieldset pre {
     margin: -200px 0 0 -320px;
     border: none;
     border-radius: none;
+}
+.dialog.newaccount{
+    display: none;
+    width: 700px;
+    margin: -200px 0 0 -350px;
 }
 
 .dialog.account h1 {

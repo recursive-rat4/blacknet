@@ -346,9 +346,7 @@ void function () {
 
     window.addEventListener('beforeunload', function (e) {
 
-        let tabState = $('[data-index="generate"]').parent().hasClass('active');
-
-        if (window.isGenerated && tabState) {
+        if (window.isGenerated) {
 
             e.preventDefault();
             e.returnValue = '';
