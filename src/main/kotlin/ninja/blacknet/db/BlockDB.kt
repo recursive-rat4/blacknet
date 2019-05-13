@@ -14,7 +14,6 @@ import mu.KotlinLogging
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
-import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
@@ -79,8 +78,7 @@ object BlockDB : DataDB() {
             }
             val batch = LevelDB.createWriteBatch()
             val txDb = LedgerDB.Update(hash, block.time, bytes.size, block.generator)
-            val txHashes = ArrayList<Hash>(block.transactions.size)
-            if (LedgerDB.processBlockImpl(txDb, hash, block, bytes.size, txHashes)) {
+            if (LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)) {
                 batch.put(BLOCK_KEY, hash.bytes, bytes)
                 txDb.commitImpl(batch)
                 if (connection != null) {
@@ -88,8 +86,6 @@ object BlockDB : DataDB() {
                     connection.lastBlockTime = Node.time()
                     Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
                 }
-                TxPool.clearRejectsImpl()
-                TxPool.remove(txHashes)
                 APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
                 return Status.ACCEPTED
             } else {

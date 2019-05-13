@@ -143,6 +143,7 @@ object PeerDB {
             }
             if (!toRemove.isEmpty()) {
                 toRemove.forEach { map.remove(it) }
+                commit()
                 logger.info("Removed ${toRemove.size} old entries from peer db")
             }
         }

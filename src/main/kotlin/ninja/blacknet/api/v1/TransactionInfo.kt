@@ -10,10 +10,10 @@
 package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.*
 
 @Serializable
@@ -49,11 +49,11 @@ class TransactionInfo(
         private fun data(type: Byte, bytes: ByteArray): String {
             val txData = TxData.deserialize(type, bytes) ?: return "Deserialization error"
             return when (type) {
-                TxType.Transfer.type -> Json.plain.stringify(TransferInfo.serializer(), TransferInfo(txData as Transfer))
-                TxType.Burn.type -> Json.plain.stringify(Burn.serializer(), txData as Burn)
-                TxType.Lease.type -> Json.plain.stringify(Lease.serializer(), txData as Lease)
-                TxType.CancelLease.type -> Json.plain.stringify(CancelLease.serializer(), txData as CancelLease)
-                TxType.Bundle.type -> Json.plain.stringify(Bundle.serializer(), txData as Bundle)
+                TxType.Transfer.type -> Json.stringify(TransferInfo.serializer(), TransferInfo(txData as Transfer))
+                TxType.Burn.type -> Json.stringify(Burn.serializer(), txData as Burn)
+                TxType.Lease.type -> Json.stringify(Lease.serializer(), txData as Lease)
+                TxType.CancelLease.type -> Json.stringify(CancelLease.serializer(), txData as CancelLease)
+                TxType.Bundle.type -> Json.stringify(Bundle.serializer(), txData as Bundle)
                 else -> "Unknown type:$type data:$bytes"
             }
         }
