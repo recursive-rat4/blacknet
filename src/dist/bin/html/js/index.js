@@ -106,16 +106,6 @@ $(document).ready(function () {
         }, 'json');
     }
 
-    async function generate_new_account() {
-        let url = '/account/generate';
-        let blockData = await Blacknet.getPromise(url);
-        blockData = JSON.parse(blockData);
-        $('#new_account').val(blockData.address);
-        $('#new_mnemonic').val(blockData.mnemonic);
-        $('#new_pubkey').val(blockData.publicKey);
-        window.isGenerated = true;
-    }
-
     function transfer_click(type) {
 
         return function () {
@@ -186,7 +176,31 @@ $(document).ready(function () {
         location.reload();
     }
 
-    const request_info = function(message){
+    async function newAccount() {
+        $('.account.dialog').hide();
+        $('.newaccount.dialog').show();
+        let url = '/account/generate';
+        let mnemonicInfo = await Blacknet.getPromise(url);
+        mnemonicInfo = JSON.parse(mnemonicInfo);
+        $('#new_account').val(mnemonicInfo.address);
+        $('#new_mnemonic').val(mnemonicInfo.mnemonic);
+        window.isGenerated = true;
+    }
+
+    function newAccountNext() {
+
+        let status = $('#confirm_mnemonic_warning').prop('checked');
+
+        if (!status) {
+
+            $('#confirm_mnemonic_warning_container label').css('color', 'red');
+        } else{
+            location.reload();
+        }
+        return false;
+    }
+
+    const request_info = function (message) {
 
         if (message.data) {
             let block = JSON.parse(message.data);
@@ -195,6 +209,10 @@ $(document).ready(function () {
             Blacknet.network();
         }
     };
+
+    function confirm_mnemonic_warning(){
+        window.isGenerated = !this.checked;
+    }
 
     Blacknet.ready(function () {
 
@@ -215,7 +233,12 @@ $(document).ready(function () {
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
-        .on("click", "#generate_new_account", generate_new_account)
+        // .on("click", "#generate_new_account", generate_new_account)
         .on("click", "#switch_account", switchAccount)
+        .on("click", "#newAccount", newAccount)
+        .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
+        .on("click", "#new_account_next_step", newAccountNext);
+
+        
 
 });
