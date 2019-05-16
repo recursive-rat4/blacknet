@@ -274,8 +274,11 @@ tbody td {
     height: 24px;
 }
 
-tbody td.right {
+table td.right {
     text-align: right;
+}
+table td.left{
+    text-align: left;
 }
 
 tr:hover {

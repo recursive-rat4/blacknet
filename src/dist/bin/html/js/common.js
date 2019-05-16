@@ -103,7 +103,7 @@ void function () {
         let DAY_IN_SECONDS = 24 * 60 * 60;
         let WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
         let YEAR_IN_SECONDS = 31556952; // Average length of year in Gregorian calendar
-        
+
         if (secs < 5 * 60) {
             timeBehindText = undefined;
         } else if (secs < 2 * DAY_IN_SECONDS) {
@@ -124,10 +124,10 @@ void function () {
             Blacknet.startTime = GENESIS_TIME;
         }
         Blacknet.timeBehindText = timeBehindText;
-        
+
         if (timeBehindText == undefined) {
             progressStats.hide();
-            return ;
+            return;
         }
 
         totalSecs = Date.now() / 1000 - Blacknet.startTime;
@@ -139,10 +139,10 @@ void function () {
         $('.progress-stats-text').text(timeBehindText + " behind");
     }
 
-    Blacknet.showProgress = function(){
+    Blacknet.showProgress = function () {
 
-        if(Blacknet.timeBehindText != undefined){
-           progressStats.show();
+        if (Blacknet.timeBehindText != undefined) {
+            progressStats.show();
         }
     };
 
@@ -266,6 +266,70 @@ void function () {
         }
     }
 
+    Blacknet.initRecentTransactions = async function () {
+
+        let data = await Blacknet.getPromise('/walletdb/getwallet/' + account, 'json');
+        let transactions = data.transactions;
+
+        let array = [], tx = {}, hash;
+
+        while (transactions.length) {
+
+            let tmp = transactions.shift();
+
+            if (typeof tmp == 'string') {
+
+                tx = await Blacknet.getPromise('/walletdb/gettransaction/' + tmp + '/false', 'json');
+                hash = tmp;
+            } else {
+
+                tx.height = tmp.height;
+                tx.time   = tmp.time;
+                array.push(tx);
+                
+                tx = {};
+            }
+        }
+
+        $('#tx-list').html('');
+        array.map(Blacknet.renderTransaction)
+
+    };
+
+    Blacknet.renderTransaction = function(tx){
+
+        let amount = tx.data.amount, tmpl, type, txType, txaccount = tx.from;
+        
+        txType = [ "Transfer","Burn","Lease","CancelLease","Bundle","CreateHTLC",
+            "UnlockHTLC","RefundHTLC","SpendHTLC","CreateMultisig","SpendMultisig"];
+
+        type = txType[tx.type];
+
+        if(tx.type == 254){
+            amount = tx.fee;
+            type = 'Generated';
+        }
+
+        if(tx.type == 0 ){
+            if(tx.from == account){
+                type = "Sent to";
+                txaccount = tx.data.to;
+            }else{
+                type = "Received with";
+            }
+        }
+
+        amount = new BigNumber(amount).dividedBy(1e8).toFixed(8);
+
+        tmpl = `<tr>
+                    <td class="narrow" data-i18n="Time">${Blacknet.unix_to_local_time(tx.time)}</td>
+                    <td class="narrow" data-i18n="Type">${type}</td>
+                    <td class="left" data-i18n="Account">${txaccount}</td>
+                    <td class="right" data-i18n="Amount">${amount} <span class="strong">BLN</span></td>
+                </tr>`;
+        $(tmpl).appendTo('#tx-list')
+    };
+
 
     Blacknet.throttle = function (fn, threshhold = 250) {
 
@@ -329,6 +393,11 @@ void function () {
         await Blacknet.balance();
         await Blacknet.network();
         await Blacknet.initRecentBlocks();
+
+        if (account) {
+            await Blacknet.initRecentTransactions();
+        }
+
         Blacknet.startHeight = Blacknet.height + 1;
         callback();
     };

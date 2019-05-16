@@ -36,12 +36,12 @@
             <div class="menu">
                 <ul>
                     <li><a href="#" data-index="overview" data-i18n="overview">Overview</a></li>
+                    <li><a href="#" data-index="transactions" data-i18n="Transactions">Transactions</a></li>
                     <li><a href="#" data-index="staking" data-i18n="staking">Staking</a></li>
                     <li><a href="#" data-index="send" data-i18n="send">Send</a></li>
                     <li><a href="#" data-index="lease" data-i18n="lease">Lease</a></li>
                     <li><a href="#" data-index="cancel_lease" data-i18n="cancel lease">Cancel Lease</a></li>
                     <li><a href="#" data-index="sign" data-i18n="sign/verify message">Sign/Verify Message</a></li>
-                    <!-- <li><a href="#" data-index="generate" data-i18n="generate new account">Generate new account</a></li> -->
                     <li><a href="#" data-index="peerinfo" data-i18n="peers">Peers</a></li>
                     <li><a href="#" data-index="recentblocks" data-i18n="recent blocks">Recent Blocks</a></li>
                     <li><a href="#" data-index="info" data-i18n="mnemonic info">Mnemonic info</a></li>
@@ -137,7 +137,20 @@
                 </table>
             </div>
             <div class="transactions">
-                transactions
+                <h3 data-i18n="Recent Transactions">Recent Transactions</h3>
+                <table id="tx-table">
+                    <thead>
+                        <tr>
+                            <td class="left" data-i18n="Time">Time</td>
+                            <td class="left" data-i18n="Type">Type</td>
+                            <td class="left" data-i18n="Account">Account</td>
+                            <td class="left" data-i18n="Amount">Amount</td>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-list">
+                        <tr><td colspan="4">loading...</td></tr>
+                    </tbody>
+                </table>
             </div>
             <div class="send">
                 <fieldset>
