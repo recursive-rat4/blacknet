@@ -292,8 +292,9 @@ void function () {
         }
 
         $('#tx-list').html('');
-        array.map(Blacknet.renderTransaction)
-
+        array.sort(function(x, y){
+            return y.time - x.time ;
+        }).map(Blacknet.renderTransaction)
     };
 
     Blacknet.renderTransaction = function(tx){
