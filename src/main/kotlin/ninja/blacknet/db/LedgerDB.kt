@@ -134,11 +134,9 @@ object LedgerDB {
                 logger.info("Reindexing ${state.height} blocks...")
 
                 runBlocking {
-                    val blocks = ArrayList<ByteArray>(state.height)
                     val blockHashes = ArrayList<Hash>(state.height)
                     var index = getChainIndex(Hash.ZERO)!!
                     while (index.next != Hash.ZERO) {
-                        blocks.add(BlockDB.get(index.next)!!)
                         blockHashes.add(index.next)
                         index = getChainIndex(index.next)!!
                     }
@@ -147,11 +145,10 @@ object LedgerDB {
 
                     for (i in 0 until blockHashes.size) {
                         val hash = blockHashes[i]
-                        val bytes = blocks[i]
-                        val block = Block.deserialize(bytes)!!
+                        val (block, size) = BlockDB.block(hash)!!
                         val batch = LevelDB.createWriteBatch()
-                        val txDb = Update(batch, hash, block.time, bytes.size, block.generator)
-                        processBlockImpl(txDb, hash, block, bytes.size)
+                        val txDb = Update(batch, hash, block.time, size, block.generator)
+                        processBlockImpl(txDb, hash, block, size)
                         pruneImpl(batch)
                         txDb.commitImpl()
                     }

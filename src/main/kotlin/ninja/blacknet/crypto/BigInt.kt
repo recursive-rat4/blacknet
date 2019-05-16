@@ -13,6 +13,7 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
+import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
@@ -62,12 +63,23 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
         }
 
         override fun deserialize(decoder: Decoder): BigInt {
-            return BigInt((decoder as BinaryDecoder).decodeSerializableByteArrayValue())
+            return when (decoder) {
+                is BinaryDecoder -> BigInt(decoder.decodeSerializableByteArrayValue())
+                else -> throw RuntimeException("unsupported decoder")
+            }
         }
 
         override fun serialize(encoder: Encoder, obj: BigInt) {
-            val bytes = SerializableByteArray(obj.toByteArray())
-            (encoder as BinaryEncoder).encodeSerializableByteArrayValue(bytes)
+            when (encoder) {
+                is BinaryEncoder -> {
+                    val bytes = SerializableByteArray(obj.toByteArray())
+                    encoder.encodeSerializableByteArrayValue(bytes)
+                }
+                is JsonOutput -> {
+                    encoder.encodeString(obj.int.toString())
+                }
+                else -> throw RuntimeException("unsupported encoder")
+            }
         }
     }
 }

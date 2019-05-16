@@ -21,6 +21,7 @@ import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.core.DataType
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -48,6 +49,8 @@ class Connection(
     var totalBytesRead: Long = 0
     @Volatile
     var totalBytesWritten: Long = 0
+    @Volatile
+    var lashChain: ChainAnnounce = ChainAnnounce.GENESIS
     @Volatile
     var lastBlockTime: Long = 0
     @Volatile
@@ -97,7 +100,7 @@ class Connection(
         } catch (e: Throwable) {
             logger.error("Exception in receiver $remoteAddress", e)
         } finally {
-            close()
+            close(false)
         }
     }
 
@@ -126,7 +129,8 @@ class Connection(
         } catch (e: Throwable) {
             logger.error("Exception in sender $remoteAddress", e)
         } finally {
-            close()
+            close(false)
+            closeSocket()
         }
     }
 
@@ -182,14 +186,21 @@ class Connection(
         return dosScore.get()
     }
 
-    fun close() {
+    fun close(cancel: Boolean = true) {
         if (closed.compareAndSet(false, true)) {
-            sendChannel.cancel()
-            socket.close()
+            if (cancel)
+                sendChannel.cancel()
+            else
+                sendChannel.close()
             Node.launch {
+                ChainFetcher.disconnected(this@Connection)
                 Node.connections.remove(this@Connection)
             }
         }
+    }
+
+    private fun closeSocket() {
+        socket.close()
     }
 
     fun isClosed(): Boolean {

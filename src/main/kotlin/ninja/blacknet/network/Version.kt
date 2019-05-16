@@ -12,8 +12,6 @@ package ninja.blacknet.network
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.crypto.BigInt
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.serialization.BinaryEncoder
 import kotlin.random.Random
@@ -28,8 +26,7 @@ internal class Version(
         private val nonce: Long,
         private val agent: String,
         private val feeFilter: Long,
-        private val chain: Hash,
-        private val cumulativeDifficulty: BigInt
+        private val chain: ChainAnnounce
 ) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
@@ -40,6 +37,7 @@ internal class Version(
         connection.version = version
         connection.agent = Bip14.sanitize(agent)
         connection.feeFilter = feeFilter
+        connection.lashChain = chain
 
         if (magic != Node.magic || version < Node.minVersion) {
             connection.close()
@@ -63,7 +61,7 @@ internal class Version(
             logger.info("Connected to ${connection.remoteAddress}")
         }
 
-        ChainFetcher.offer(connection, chain, cumulativeDifficulty)
+        ChainFetcher.offer(connection, chain.chain, chain.cumulativeDifficulty)
     }
 
     companion object {

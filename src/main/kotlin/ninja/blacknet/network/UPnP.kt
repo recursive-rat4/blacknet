@@ -33,7 +33,7 @@ object UPnP {
         }
 
         logger.info("Sending port mapping request")
-        if (!gateway.addPortMapping(Config[port], Config[port], gateway.localAddress.hostAddress, PROTOCOL, Bip14.client)) {
+        if (!gateway.addPortMapping(Config[port], Config[port], gateway.localAddress.hostAddress, PROTOCOL, Bip14.CLIENT)) {
             logger.info("Port mapping failed")
             return
         }
