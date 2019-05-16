@@ -316,7 +316,7 @@ void function () {
                 type = "Sent to";
                 txaccount = tx.data.to;
             }else{
-                type = "Received with";
+                type = "Received from";
             }
         }
 
