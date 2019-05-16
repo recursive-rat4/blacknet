@@ -109,7 +109,7 @@ object LevelDB {
         if ((osName.indexOf("mac") >= 0) || (osName.indexOf("darwin") >= 0)) {
             homeDir = homeDir + "/Library/Application Support/Blacknet"
         } else if (osName.indexOf("win") >= 0) {
-            homeDir = homeDir + "/Appdata/Roaming/Blacknet"
+            homeDir = homeDir + "/AppData/Roaming/Blacknet"
         } else {
             homeDir = homeDir + "/.Blacknet"
         }
