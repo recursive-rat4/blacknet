@@ -118,6 +118,23 @@ header .network {
     border-left: 1px solid #222;
     overflow-y: scroll;
 }
+.rightpanel::-webkit-scrollbar {
+    background-color:transparent;
+    width:16px
+}
+
+/* background of the scrollbar except button or resizer */
+.rightpanel::-webkit-scrollbar-track {
+    background-color:transparent
+}
+
+/* scrollbar itself */
+.rightpanel::-webkit-scrollbar-thumb {
+    background-color: var(--darker-grey-bg);
+}
+
+/* set button(top and bottom of the scrollbar) */
+.rightpanel::-webkit-scrollbar-button {display:none}
 
 .rightpanel>div {
     display: none;
