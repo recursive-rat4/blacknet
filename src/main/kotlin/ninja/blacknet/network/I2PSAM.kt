@@ -49,10 +49,10 @@ object I2PSAM : CoroutineScope {
             sam = null
 
         try {
-            val file = File("db/privateKey.i2p")
+            val file = File(Config.dataDir + "/privateKey.i2p")
             val lastModified = file.lastModified()
             if (lastModified != 0L && lastModified < 1549868177000)
-                file.renameTo(File("db/privateKey.$lastModified.i2p"))
+                file.renameTo(File(Config.dataDir + "/privateKey.$lastModified.i2p"))
             privateKey = file.readText()
         } catch (e: Throwable) {
         }
@@ -213,7 +213,7 @@ object I2PSAM : CoroutineScope {
         privateKey = dest
         logger.info("Saving I2P private key to db")
         try {
-            File("db/privateKey.i2p").writeText(privateKey)
+            File(Config.dataDir + "/privateKey.i2p").writeText(privateKey)
         } catch (e: Throwable) {
             logger.error(e)
         }

@@ -116,8 +116,22 @@ header .network {
     bottom: 0;
     top: 64px;
     border-left: 1px solid #222;
-    overflow: scroll;
+    overflow-y: scroll;
 }
+.rightpanel::-webkit-scrollbar {
+    background-color:transparent;
+    width:16px
+}
+
+.rightpanel::-webkit-scrollbar-track {
+    background-color:transparent
+}
+
+.rightpanel::-webkit-scrollbar-thumb {
+    background-color: var(--darker-grey-bg);
+}
+
+.rightpanel::-webkit-scrollbar-button {display:none}
 
 .rightpanel>div {
     display: none;
@@ -148,7 +162,7 @@ header .network {
 }
 
 fieldset {
-    padding: 1rem;
+    padding: 15px;
     border: 1px groove;
     border-color: var(--gold-text);
     margin: 0 0 1em;
@@ -274,8 +288,11 @@ tbody td {
     height: 24px;
 }
 
-tbody td.right {
+table td.right {
     text-align: right;
+}
+table td.left{
+    text-align: left;
 }
 
 tr:hover {
@@ -374,6 +391,13 @@ fieldset pre {
     width: 80%;
     height: 55px;
     flex-grow: 8;
+}
+.add-peer{
+    margin-top: 50px;
+    width: 768px;
+}
+.add-peer button{
+    float: right;
 }
 
 .dialog.account {

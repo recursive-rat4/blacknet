@@ -214,6 +214,17 @@ $(document).ready(function () {
         window.isGenerated = !this.checked;
     }
 
+    async function addPeer(){
+
+        let ip = $('#ip_address').val(), port = $('#ip_port').val();
+
+        let result = await Blacknet.getPromise(`/addpeer/${ip}/${port}/true`);
+
+        alert(`${ip} ${result}`);
+        $('#ip_address').val('');
+
+    }
+
     Blacknet.ready(function () {
 
         let ws = new WebSocket("ws://" + location.host + "/api/v2/notify/block");
@@ -233,7 +244,7 @@ $(document).ready(function () {
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
-        // .on("click", "#generate_new_account", generate_new_account)
+        .on("click", "#add_peer_btn", addPeer)
         .on("click", "#switch_account", switchAccount)
         .on("click", "#newAccount", newAccount)
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)

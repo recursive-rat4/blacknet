@@ -19,7 +19,7 @@ private val logger = KotlinLogging.logger {}
 
 object LevelDB {
     private val factory: DBFactory = loadFactory()
-    private val db: DB = factory.open(File("db/leveldb"), options())
+    private val db: DB = factory.open(File(Config.dataDir + "/leveldb"), options())
 
     internal fun iterator(): DBIterator {
         return db.iterator()
