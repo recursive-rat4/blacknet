@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-* {
+ * {
     margin: 0;
     padding: 0;
     font-family: "Titillium Web", Arial, sans-serif;
@@ -107,6 +107,10 @@ header .network {
     color: #fff;
 }
 
+.menu .cancel_lease_tab{
+    display: none;
+}
+
 .rightpanel {
     padding: 10px 20px;
     position: absolute;
@@ -189,7 +193,7 @@ label strong {
     font-size: 12px;
 }
 
-input[type="text"], input[type="password"], input[type="number"] {
+input[type="text"], input[type="password"], input[type="number"], select {
     border: 1px solid var(--darker-grey-bg);
     border-radius: 4px;
     height: 20px;
@@ -198,6 +202,11 @@ input[type="text"], input[type="password"], input[type="number"] {
     background-color: var(--grey-text);
     flex-grow: 8;
     font-size: 14px;
+}
+
+select{
+    height: 30px;
+    display: inline-block;
 }
 
 button {
@@ -411,7 +420,8 @@ fieldset pre {
 .dialog.newaccount{
     display: none;
     width: 700px;
-    margin: -200px 0 0 -350px;
+    height: 260px;
+    margin: -130px 0 0 -350px;
 }
 
 .dialog.account h1 {

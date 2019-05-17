@@ -284,38 +284,71 @@ void function () {
             } else {
 
                 tx.height = tmp.height;
-                tx.time   = tmp.time;
+                tx.time = tmp.time;
                 array.push(tx);
-                
+
                 tx = {};
             }
         }
 
         $('#tx-list').html('');
-        array.sort(function(x, y){
-            return y.time - x.time ;
-        }).map(Blacknet.renderTransaction)
+        array.sort(function (x, y) {
+            return y.time - x.time;
+        }).map(Blacknet.renderTransaction);
+
+        Blacknet.renderLeaseOption(array);
     };
 
-    Blacknet.renderTransaction = function(tx){
+    Blacknet.renderLeaseOption = function (txns) {
+
+        let leaseTxns, accounts = [], aobj = {}, hobj = {}, height = [];
+
+        leaseTxns = txns.filter(function (tx) {
+            return tx.type == 2;
+        });
+
+        if (leaseTxns.length == 0) return;
+
+        leaseTxns.map(function (tx) {
+            aobj[tx.data.to] = '';
+            hobj[tx.height] = '';
+        });
+
+        accounts = Object.keys(aobj);
+        height = Object.keys(hobj);
+
+        accounts.forEach(function (account) {
+
+            $('#cancel_lease_to').append($("<option></option>").attr("value", account).text(account));
+        });
+
+        height.forEach(function (account) {
+
+            $('#cancel_lease_height').append($("<option></option>").attr("value", account).text(account));
+        });
+
+        $('.cancel_lease_tab').show();
+    };
+
+    Blacknet.renderTransaction = function (tx) {
 
         let amount = tx.data.amount, tmpl, type, txType, txaccount = tx.from;
-        
-        txType = [ "Transfer","Burn","Lease","CancelLease","Bundle","CreateHTLC",
-            "UnlockHTLC","RefundHTLC","SpendHTLC","CreateMultisig","SpendMultisig"];
+
+        txType = ["Transfer", "Burn", "Lease", "CancelLease", "Bundle", "CreateHTLC",
+            "UnlockHTLC", "RefundHTLC", "SpendHTLC", "CreateMultisig", "SpendMultisig"];
 
         type = txType[tx.type];
 
-        if(tx.type == 254){
+        if (tx.type == 254) {
             amount = tx.fee;
             type = 'Generated';
         }
 
-        if(tx.type == 0 ){
-            if(tx.from == account){
+        if (tx.type == 0) {
+            if (tx.from == account) {
                 type = "Sent to";
                 txaccount = tx.data.to;
-            }else{
+            } else {
                 type = "Received from";
             }
         }
