@@ -26,7 +26,7 @@ class AccountState(
         var seq: Int,
         var stake: Long,
         var immature: MutableList<Input>,
-        var leases: MutableList<LeaseInput>
+        var leases: MutableList<Lease>
 ) {
     override fun equals(other: Any?): Boolean {
         return (other is AccountState) && seq == other.seq && stake == other.stake && immature == other.immature && leases == other.leases
@@ -112,9 +112,9 @@ class AccountState(
     }
 
     @Serializable
-    class LeaseInput(val from: PublicKey, val height: Int, val amount: Long) {
-        override fun equals(other: Any?): Boolean = (other is LeaseInput) && from == other.from && height == other.height && amount == other.amount
-        override fun hashCode(): Int = from.hashCode() xor height xor amount.hashCode()
+    class Lease(val publicKey: PublicKey, val height: Int, val amount: Long) {
+        override fun equals(other: Any?): Boolean = (other is Lease) && publicKey == other.publicKey && height == other.height && amount == other.amount
+        override fun hashCode(): Int = publicKey.hashCode() xor height xor amount.hashCode()
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
     }
@@ -148,9 +148,9 @@ class AccountState(
                     for (i in 0 until immatureSize)
                         immature.add(Input(decoder.unpackInt(), decoder.unpackLong()))
                     val leasesSize = decoder.unpackInt()
-                    val leases = ArrayList<LeaseInput>(leasesSize)
+                    val leases = ArrayList<Lease>(leasesSize)
                     for (i in 0 until leasesSize)
-                        leases.add(LeaseInput(PublicKey(decoder.decodeByteArrayValue(PublicKey.SIZE)), decoder.unpackInt(), decoder.unpackLong()))
+                        leases.add(Lease(PublicKey(decoder.decodeByteArrayValue(PublicKey.SIZE)), decoder.unpackInt(), decoder.unpackLong()))
                     return AccountState(seq, stake, immature, leases)
                 }
                 else -> throw RuntimeException("unsupported decoder")
@@ -169,7 +169,7 @@ class AccountState(
                     }
                     encoder.packInt(obj.leases.size)
                     for (i in 0 until obj.leases.size) {
-                        encoder.encodeByteArrayValue(obj.leases[i].from.bytes)
+                        encoder.encodeByteArrayValue(obj.leases[i].publicKey.bytes)
                         encoder.packInt(obj.leases[i].height)
                         encoder.packLong(obj.leases[i].amount)
                     }

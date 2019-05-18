@@ -326,7 +326,7 @@ object LedgerDB {
             logger.info("timestamp is too early")
             return false
         }
-        val generator = txDb.get(block.generator)
+        var generator = txDb.get(block.generator)
         if (generator == null) {
             logger.info("block generator not found")
             return false
@@ -349,48 +349,45 @@ object LedgerDB {
         }
 
         var fees = 0L
-        WalletDB.mutex.withLock {
-            for (bytes in block.transactions) {
-                val tx = Transaction.deserialize(bytes.array)
-                if (tx == null) {
-                    logger.info("deserialization failed")
-                    return false
-                }
-                val txHash = Transaction.Hasher(bytes.array)
-                if (!txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)) {
-                    logger.info("invalid tx $txHash")
-                    return false
-                }
-                undo.txHashes.add(txHash)
-                fees += tx.fee
-
-                WalletDB.wallets.forEach { (publicKey, wallet) ->
-                    WalletDB.processTransactionImpl(publicKey, wallet, txHash, tx, bytes.array, block.time, height, txDb.batch)
-                }
+        for (bytes in block.transactions) {
+            val tx = Transaction.deserialize(bytes.array)
+            if (tx == null) {
+                logger.info("deserialization failed")
+                return false
             }
-
-            @Suppress("NAME_SHADOWING")
-            val generator = txDb.get(block.generator)!!
-            undo.add(block.generator, generator)
-            txDb.addUndo(hash, undo.build())
-
-            val reward = PoS.reward(supply())
-            val generated = reward + fees
-
-            val prevIndex = txDb.getChainIndex(block.previous)!!
-            prevIndex.next = hash
-            prevIndex.nextSize = size
-            txDb.setChainIndex(block.previous, prevIndex)
-            txDb.setChainIndex(hash, ChainIndex(block.previous, Hash.ZERO, 0, height, generated))
-
-            txDb.addSupply(reward)
-            generator.prune(height)
-            generator.debit(height, generated)
-            txDb.set(block.generator, generator)
+            val txHash = Transaction.Hasher(bytes.array)
+            if (!txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)) {
+                logger.info("invalid tx $txHash")
+                return false
+            }
+            undo.txHashes.add(txHash)
+            fees += tx.fee
 
             WalletDB.wallets.forEach { (publicKey, wallet) ->
-                WalletDB.processBlockImpl(txDb.batch, publicKey, wallet, hash, block, height, generated)
+                WalletDB.processTransactionImpl(publicKey, wallet, txHash, tx, bytes.array, block.time, height, txDb.batch)
             }
+        }
+
+        generator = txDb.get(block.generator)!!
+        undo.add(block.generator, generator)
+        txDb.addUndo(hash, undo.build())
+
+        val reward = PoS.reward(supply())
+        val generated = reward + fees
+
+        val prevIndex = txDb.getChainIndex(block.previous)!!
+        prevIndex.next = hash
+        prevIndex.nextSize = size
+        txDb.setChainIndex(block.previous, prevIndex)
+        txDb.setChainIndex(hash, ChainIndex(block.previous, Hash.ZERO, 0, height, generated))
+
+        txDb.addSupply(reward)
+        generator.prune(height)
+        generator.debit(height, generated)
+        txDb.set(block.generator, generator)
+
+        WalletDB.wallets.forEach { (publicKey, wallet) ->
+            WalletDB.processBlockImpl(txDb.batch, publicKey, wallet, hash, block, height, generated)
         }
 
         TxPool.mutex.withLock {

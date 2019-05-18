@@ -15,6 +15,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
@@ -38,7 +39,7 @@ class CancelLease(
             return false
         }
         undo.add(to, toAccount)
-        if (toAccount.leases.remove(AccountState.LeaseInput(tx.from, height, amount))) {
+        if (toAccount.leases.remove(AccountState.Lease(tx.from, height, amount))) {
             ledger.set(to, toAccount)
             val account = ledger.get(tx.from)!!
             account.debit(ledger.height(), amount)
@@ -47,6 +48,10 @@ class CancelLease(
         }
         logger.info("lease not found")
         return false
+    }
+
+    companion object {
+        fun deserialize(bytes: ByteArray): CancelLease? = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

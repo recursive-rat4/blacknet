@@ -459,6 +459,12 @@ fun Application.main() {
             call.respond(Json.stringify(WalletDB.Wallet.serializer(), WalletDB.getWallet(publicKey)))
         }
 
+        get("/api/v1/walletdb/getoutleases/{address}") {
+            val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
+
+            call.respond(Json.stringify(AccountState.Lease.serializer().list, WalletDB.getOutLeases(publicKey)))
+        }
+
         get("/api/v1/walletdb/gettransaction/{hash}/{raw?}") {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
             val raw = call.parameters["raw"]?.toBoolean() ?: false

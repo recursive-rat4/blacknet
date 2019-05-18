@@ -17,6 +17,7 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.mnemonics
 import ninja.blacknet.api.APIServer
+import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.PoS
 import ninja.blacknet.core.Transaction
@@ -26,6 +27,9 @@ import ninja.blacknet.crypto.Mnemonic
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.transaction.CancelLease
+import ninja.blacknet.transaction.Lease
+import ninja.blacknet.transaction.TxType
 
 private val logger = KotlinLogging.logger {}
 
@@ -44,7 +48,10 @@ object WalletDB {
                 val publicKey = PublicKey(decoder.decodeByteArrayValue(PublicKey.SIZE))
                 wallets.put(publicKey, Wallet.deserialize(LevelDB.get(WALLET_KEY, publicKey.bytes)!!))
             }
-            logger.info("Loaded ${wallets.size} wallets")
+            if (wallets.size == 1)
+                logger.info("Loaded wallet with ${wallets.values.first().transactions.size} transactions")
+            else
+                logger.info("Loaded ${wallets.size} wallets")
         }
 
         if (Config.contains(mnemonics)) {
@@ -126,32 +133,33 @@ object WalletDB {
     }
 
     suspend fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, b: LevelDB.WriteBatch? = null) = mutex.withLock {
+        var store = true
         wallets.forEach { (publicKey, wallet) ->
-            processTransactionImpl(publicKey, wallet, hash, tx, bytes, time, height, b)
+            if (processTransactionImpl(publicKey, wallet, hash, tx, bytes, time, height, b, true, store))
+                store = false
         }
     }
 
-    internal suspend fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, b: LevelDB.WriteBatch? = null, notify: Boolean = true) {
+    internal suspend fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, b: LevelDB.WriteBatch? = null, notify: Boolean = true, store: Boolean = true): Boolean {
         val write = b == null
         val batch = b ?: LevelDB.createWriteBatch()
-        val addedTo = ArrayList<PublicKey>(wallets.size)
         var added = false
 
         if (tx.from == publicKey || tx.data()!!.involves(publicKey)) {
-            addedTo.add(publicKey)
             wallet.transactions.put(hash, TransactionData(time, height))
             batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
-            if (!added) {
+            if (store)
                 batch.put(TX_KEY, hash.bytes, bytes)
-                added = true
-            }
+            added = true
         }
 
         if (write)
             batch.write()
 
         if (notify && added)
-            addedTo.forEach { APIServer.transactionNotify(tx, hash, time, bytes.size, it) }
+            APIServer.transactionNotify(tx, hash, time, bytes.size, publicKey)
+
+        return added
     }
 
     @Serializable
@@ -192,9 +200,13 @@ object WalletDB {
     }
 
     suspend fun getWallet(publicKey: PublicKey, rescan: Boolean = true): Wallet = mutex.withLock {
+        return@withLock getWalletImpl(publicKey, rescan)
+    }
+
+    private suspend fun getWalletImpl(publicKey: PublicKey, rescan: Boolean = true): Wallet {
         var wallet = wallets.get(publicKey)
         if (wallet != null)
-            return@withLock wallet
+            return wallet
 
         logger.info("Creating new wallet for ${Address.encode(publicKey)}")
         val batch = LevelDB.createWriteBatch()
@@ -203,7 +215,7 @@ object WalletDB {
         if (!rescan) {
             addWalletImpl(batch, publicKey, wallet)
             batch.write()
-            return@withLock wallet
+            return wallet
         }
 
         var hash = Hash.ZERO
@@ -233,7 +245,28 @@ object WalletDB {
 
         addWalletImpl(batch, publicKey, wallet)
         batch.write()
-        return@withLock wallet
+        return wallet
+    }
+
+    suspend fun getOutLeases(publicKey: PublicKey): List<AccountState.Lease> = mutex.withLock {
+        val wallet = getWalletImpl(publicKey)
+        val leases = ArrayList<AccountState.Lease>()
+        val cancels = ArrayList<AccountState.Lease>()
+
+        wallet.transactions.forEach { (hash, txData) ->
+            val tx = Transaction.deserialize(getTransaction(hash)!!)!!
+            if (tx.type == TxType.Lease.type) {
+                val data = Lease.deserialize(tx.data.array)!!
+                leases.add(AccountState.Lease(data.to, txData.height, data.amount))
+            } else if (tx.type == TxType.CancelLease.type) {
+                val data = CancelLease.deserialize(tx.data.array)!!
+                cancels.add(AccountState.Lease(data.to, data.height, data.amount))
+            }
+        }
+
+        cancels.forEach { leases.remove(it) }
+
+        return@withLock leases
     }
 
     private suspend fun scanBlockImpl(batch: LevelDB.WriteBatch, publicKey: PublicKey, wallet: Wallet, hash: Hash, height: Int, generated: Long) {
