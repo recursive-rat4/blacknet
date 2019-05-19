@@ -31,6 +31,9 @@ header {
     border-bottom: 1px solid #141414;
     z-index: 98;
 }
+.account-input a{
+    font-size: 14px;
+}
 
 .logo {
     float: left;
@@ -256,14 +259,14 @@ input:read-only {
     background-color: var(--lighter-grey-bg);
     color: var(--gold-text);
     border: none;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 input:-moz-read-only {
     background-color: var(--lighter-grey-bg);
     color: var(--gold-text);
     border: none;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 /* input:focus {

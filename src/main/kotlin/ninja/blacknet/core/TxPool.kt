@@ -125,6 +125,9 @@ object TxPool : MemPool(), Ledger {
     }
 
     internal suspend fun removeImpl(hashes: ArrayList<Hash>) {
+        if (hashes.isEmpty() || transactions.isEmpty())
+            return
+
         val txs = transactions.copy()
         val map = copy()
         accounts.clear()
