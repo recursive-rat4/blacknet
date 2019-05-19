@@ -15,6 +15,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
@@ -41,9 +42,13 @@ class Lease(
         ledger.set(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
         undo.add(to, toAccount)
-        toAccount.leases.add(AccountState.LeaseInput(tx.from, ledger.height(), amount))
+        toAccount.leases.add(AccountState.Lease(tx.from, ledger.height(), amount))
         ledger.set(to, toAccount)
         return true
+    }
+
+    companion object {
+        fun deserialize(bytes: ByteArray): Lease? = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

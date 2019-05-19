@@ -14,14 +14,12 @@ import ninja.blacknet.Config
 import ninja.blacknet.Config.dbcache
 import org.iq80.leveldb.*
 import java.io.File
-import java.util.Locale
 
 private val logger = KotlinLogging.logger {}
 
 object LevelDB {
     private val factory: DBFactory = loadFactory()
-
-    private val db: DB = factory.open(File(getDBDir()), options())
+    private val db: DB = factory.open(File(Config.dataDir + "/leveldb"), options())
 
     internal fun iterator(): DBIterator {
         return db.iterator()
@@ -98,29 +96,6 @@ object LevelDB {
                 .logger(DBLogger)
         logger.info("LevelDB cache ${Config[dbcache]} MiB, max open files ${options.maxOpenFiles()}")
         return options
-    }
-
-    private fun getDBDir(): String {
-
-        var homeDir = System.getProperty("user.home")
-
-        val osName = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
-
-        if ((osName.indexOf("mac") >= 0) || (osName.indexOf("darwin") >= 0)) {
-            homeDir = homeDir + "/Library/Application Support/Blacknet"
-        } else if (osName.indexOf("win") >= 0) {
-            homeDir = homeDir + "/AppData/Roaming/Blacknet"
-        } else {
-            homeDir = homeDir + "/.Blacknet"
-        }
-
-        val dbDir = homeDir + "/db/leveldb"
-
-        val f = File(dbDir.toString())
-
-        f.mkdirs();
-
-        return dbDir
     }
 
     private fun loadFactory(): DBFactory {

@@ -10,6 +10,8 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.network.ChainAnnounce
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 
@@ -25,6 +27,7 @@ class PeerInfo(
         val dosScore: Int,
         val feeFilter: Long,
         val connectedAt: Long,
+        val lastChain: ChainInfo,
         val lastPacketTime: Long,
         val totalBytesRead: Long,
         val totalBytesWritten: Long
@@ -40,10 +43,24 @@ class PeerInfo(
             connection.dosScore(),
             connection.feeFilter,
             connection.connectedAt,
+            ChainInfo.get(connection.lashChain),
             connection.lastPacketTime,
             connection.totalBytesRead,
             connection.totalBytesWritten
     )
+
+    @Serializable
+    class ChainInfo(
+            val chain: String,
+            val cumulativeDifficulty: String,
+            val fork: Boolean
+    ) {
+        companion object {
+            fun get(chain: ChainAnnounce): ChainInfo {
+                return ChainInfo(chain.chain.toString(), chain.cumulativeDifficulty.toString(), !LedgerDB.chainContains(chain.chain))
+            }
+        }
+    }
 
     companion object {
         suspend fun getAll() = Node.connections.map { PeerInfo(it) }

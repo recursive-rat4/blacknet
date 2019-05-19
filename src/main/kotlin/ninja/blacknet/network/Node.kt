@@ -50,7 +50,7 @@ object Node : CoroutineScope {
     const val DEFAULT_P2P_PORT = 28453
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
-    const val version = 8
+    const val version = 9
     const val minVersion = 5
     override val coroutineContext: CoroutineContext = Dispatchers.Default
     private val shutdownHooks = SynchronizedArrayList<suspend () -> Unit>()
@@ -207,16 +207,19 @@ object Node : CoroutineScope {
     }
 
     fun sendVersion(connection: Connection, nonce: Long) {
-        val blockHash = if (isInitialSynchronization()) Hash.ZERO else LedgerDB.blockHash()
-        val cumulativeDifficulty = if (isInitialSynchronization()) BigInt.ZERO else LedgerDB.cumulativeDifficulty()
-        val v = Version(magic, version, time(), nonce, Bip14.agent, minTxFee, blockHash, cumulativeDifficulty)
+        val chain = if (isInitialSynchronization()) {
+            ChainAnnounce.GENESIS
+        } else {
+            ChainAnnounce(LedgerDB.blockHash(), LedgerDB.cumulativeDifficulty())
+        }
+        val v = Version(magic, version, time(), nonce, Bip14.agent, minTxFee, chain)
         connection.sendPacket(v)
     }
 
     suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null) {
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         broadcastPacket(ann) {
-            it != source && it.version >= ChainAnnounce.MIN_VERSION
+            it != source && it.lashChain.chain != hash && it.version >= ChainAnnounce.MIN_VERSION
         }
         val inv = Pair(DataType.Block, hash)
         connections.forEach {

@@ -17,9 +17,11 @@ import kotlin.math.min
 private val logger = KotlinLogging.logger {}
 
 object Bip14 {
-    const val client = "Blacknet"
+    const val MIN_VERSION = 8
+    const val CLIENT = "Blacknet"
+
     val version = loadVersion()
-    val agent = "/$client:$version/"
+    val agent = "/$CLIENT:$version/"
 
     fun sanitize(string: String): String {
         val length = min(string.length, MAX_LENGTH)
@@ -43,7 +45,7 @@ object Bip14 {
             ""
         }
         if (string.isEmpty()) {
-            logger.warn("Running unknown version of $client")
+            logger.warn("Running unknown version of $CLIENT")
             return "unknown"
         }
         return string

@@ -11,28 +11,20 @@ package ninja.blacknet.network
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.BigInt
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-class ChainAnnounce(
-        internal val chain: Hash,
-        internal val cumulativeDifficulty: BigInt
+class ChainFork(
 ) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.ChainAnnounce
+    override fun getType() = PacketType.ChainFork
 
     override suspend fun process(connection: Connection) {
-        connection.lashChain = this
-
-        ChainFetcher.offer(connection, chain, cumulativeDifficulty)
+        ChainFetcher.chainFork(connection)
     }
 
     companion object {
-        const val MIN_VERSION = 6
-
-        val GENESIS = ChainAnnounce(Hash.ZERO, BigInt.ZERO)
+        const val MIN_VERSION = 9
     }
 }

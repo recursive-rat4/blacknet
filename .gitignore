@@ -6,8 +6,5 @@
 .idea
 /out
 
-/db
-/log
-
 # MacOS
 .DS_store
