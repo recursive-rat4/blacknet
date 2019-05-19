@@ -56,13 +56,22 @@ void function () {
 
     Blacknet.balance = async function () {
 
-        let balance = $('.overview_balance');
+        let balance = $('.overview_balance'),
+            confirmedBalance = $('.overview_confirmed_balance'),
+            stakingBalance = $('.overview_staking_balance');;
 
         $.getJSON(apiVersion + '/ledger/get/' + account + '/', function (data) {
-            balance.html(new BigNumber(data.balance).dividedBy(1e8) + ' BLN');
+            balance.html(Blacknet.toBLNString(data.balance));
+            confirmedBalance.html(Blacknet.toBLNString(data.confirmedBalance));
+            stakingBalance.html(Blacknet.toBLNString(data.stakingBalance));
+
         }).fail(function () {
             balance.html('0.00000000 BLN');
         });
+    };
+
+    Blacknet.toBLNString = function(number){
+        return new BigNumber(number).dividedBy(1e8).toFixed(8) + ' BLN';
     };
 
 
@@ -299,18 +308,23 @@ void function () {
         Blacknet.renderLeaseOption(array);
     };
 
-    Blacknet.renderLeaseOption = function (txns) {
+    Blacknet.renderLeaseOption = async function (txns) {
+
+
+        let outLeases = await Blacknet.getPromise('/walletdb/getoutleases/' + account, 'json');
+
+
 
         let leaseTxns, accounts = [], aobj = {}, hobj = {}, height = [];
 
-        leaseTxns = txns.filter(function (tx) {
-            return tx.type == 2;
-        });
+        // leaseTxns = txns.filter(function (tx) {
+        //     return tx.type == 2;
+        // });
 
-        if (leaseTxns.length == 0) return;
+        // if (leaseTxns.length == 0) return;
 
-        leaseTxns.map(function (tx) {
-            aobj[tx.data.to] = '';
+        outLeases.map(function (tx) {
+            aobj[tx.publicKey] = '';
             hobj[tx.height] = '';
         });
 
