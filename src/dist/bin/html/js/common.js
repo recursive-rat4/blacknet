@@ -315,13 +315,9 @@ void function () {
 
 
 
-        let leaseTxns, accounts = [], aobj = {}, hobj = {}, height = [];
+        let accounts = [], aobj = {}, hobj = {}, height = [];
 
-        // leaseTxns = txns.filter(function (tx) {
-        //     return tx.type == 2;
-        // });
-
-        // if (leaseTxns.length == 0) return;
+        if (outLeases.length == 0) return;
 
         outLeases.map(function (tx) {
             aobj[tx.publicKey] = '';

@@ -64,5 +64,15 @@
     "This operation needs your Mnemonic.": "这个操作需要输入您的助记词。",
     "Enter Your Mnemonic:": "输入您的助记词：",
     "Enter": "回车",
-    "Connections": "连接"
+    "Connections": "连接",
+    "Transactions": "交易",
+    "Recent Transactions": "最近的交易",
+    "Wallet Info": "钱包信息",
+    "Node Info": "节点信息",
+    "Type": "类型",
+    "Confirmed Balance": "确认余额",
+    "Staking Balance": "挖矿余额",
+    "create account":"（没有帐户？点击这里创建一个帐户！）",
+    "promise of save mnemonic": "我不会忘记我的助记符，我永远不会透露它",
+    "Next": "下一步"
 }
