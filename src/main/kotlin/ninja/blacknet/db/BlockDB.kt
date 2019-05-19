@@ -70,29 +70,27 @@ object BlockDB : DataDB() {
             logger.info("invalid signature")
             return Status.INVALID
         }
-        WalletDB.mutex.withLock {
-            LedgerDB.mutex.withLock {
-                if (block.previous != LedgerDB.blockHash()) {
-                    if (connection == null)
-                        logger.info("block $hash not on current chain prev ${block.previous}")
-                    return Status.NOT_ON_THIS_CHAIN
+        LedgerDB.mutex.withLock {
+            if (block.previous != LedgerDB.blockHash()) {
+                if (connection == null)
+                    logger.info("block $hash not on current chain prev ${block.previous}")
+                return Status.NOT_ON_THIS_CHAIN
+            }
+            val batch = LevelDB.createWriteBatch()
+            val txDb = LedgerDB.Update(batch, hash, block.time, bytes.size, block.generator)
+            if (LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)) {
+                batch.put(BLOCK_KEY, hash.bytes, bytes)
+                txDb.commitImpl()
+                if (connection != null) {
+                    logger.info("Accepted block $hash")
+                    connection.lastBlockTime = Node.time()
+                    Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
                 }
-                val batch = LevelDB.createWriteBatch()
-                val txDb = LedgerDB.Update(batch, hash, block.time, bytes.size, block.generator)
-                if (LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)) {
-                    batch.put(BLOCK_KEY, hash.bytes, bytes)
-                    txDb.commitImpl()
-                    if (connection != null) {
-                        logger.info("Accepted block $hash")
-                        connection.lastBlockTime = Node.time()
-                        Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
-                    }
-                    APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
-                    return Status.ACCEPTED
-                } else {
-                    batch.close()
-                    return Status.INVALID
-                }
+                APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
+                return Status.ACCEPTED
+            } else {
+                batch.close()
+                return Status.INVALID
             }
         }
     }

@@ -363,9 +363,7 @@ object LedgerDB {
             undo.txHashes.add(txHash)
             fees += tx.fee
 
-            WalletDB.wallets.forEach { (publicKey, wallet) ->
-                WalletDB.processTransactionImpl(publicKey, wallet, txHash, tx, bytes.array, block.time, height, txDb.batch)
-            }
+            WalletDB.processTransaction(txHash, tx, bytes.array, block.time, height, txDb.batch)
         }
 
         generator = txDb.get(block.generator)!!
@@ -386,9 +384,7 @@ object LedgerDB {
         generator.debit(height, generated)
         txDb.set(block.generator, generator)
 
-        WalletDB.wallets.forEach { (publicKey, wallet) ->
-            WalletDB.processBlockImpl(txDb.batch, publicKey, wallet, hash, block, height, generated)
-        }
+        WalletDB.processBlock(hash, block, height, generated, txDb.batch)
 
         TxPool.mutex.withLock {
             TxPool.clearRejectsImpl()
