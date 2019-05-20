@@ -56,13 +56,22 @@ void function () {
 
     Blacknet.balance = async function () {
 
-        let balance = $('.overview_balance');
+        let balance = $('.overview_balance'),
+            confirmedBalance = $('.overview_confirmed_balance'),
+            stakingBalance = $('.overview_staking_balance');;
 
         $.getJSON(apiVersion + '/ledger/get/' + account + '/', function (data) {
-            balance.html(new BigNumber(data.balance).dividedBy(1e8) + ' BLN');
+            balance.html(Blacknet.toBLNString(data.balance));
+            confirmedBalance.html(Blacknet.toBLNString(data.confirmedBalance));
+            stakingBalance.html(Blacknet.toBLNString(data.stakingBalance));
+
         }).fail(function () {
             balance.html('0.00000000 BLN');
         });
+    };
+
+    Blacknet.toBLNString = function(number){
+        return new BigNumber(number).dividedBy(1e8).toFixed(8) + ' BLN';
     };
 
 
@@ -284,38 +293,72 @@ void function () {
             } else {
 
                 tx.height = tmp.height;
-                tx.time   = tmp.time;
+                tx.time = tmp.time;
                 array.push(tx);
-                
+
                 tx = {};
             }
         }
 
         $('#tx-list').html('');
-        array.sort(function(x, y){
-            return y.time - x.time ;
-        }).map(Blacknet.renderTransaction)
+        array.sort(function (x, y) {
+            return y.time - x.time;
+        }).map(Blacknet.renderTransaction);
+
+        Blacknet.renderLeaseOption(array);
     };
 
-    Blacknet.renderTransaction = function(tx){
+    Blacknet.renderLeaseOption = async function (txns) {
+
+
+        let outLeases = await Blacknet.getPromise('/walletdb/getoutleases/' + account, 'json');
+
+
+
+        let accounts = [], aobj = {}, hobj = {}, height = [];
+
+        if (outLeases.length == 0) return;
+
+        outLeases.map(function (tx) {
+            aobj[tx.publicKey] = '';
+            hobj[tx.height] = '';
+        });
+
+        accounts = Object.keys(aobj);
+        height = Object.keys(hobj);
+
+        accounts.forEach(function (account) {
+
+            $('#cancel_lease_to').append($("<option></option>").attr("value", account).text(account));
+        });
+
+        height.forEach(function (account) {
+
+            $('#cancel_lease_height').append($("<option></option>").attr("value", account).text(account));
+        });
+
+        $('.cancel_lease_tab').show();
+    };
+
+    Blacknet.renderTransaction = function (tx) {
 
         let amount = tx.data.amount, tmpl, type, txType, txaccount = tx.from;
-        
-        txType = [ "Transfer","Burn","Lease","CancelLease","Bundle","CreateHTLC",
-            "UnlockHTLC","RefundHTLC","SpendHTLC","CreateMultisig","SpendMultisig"];
+
+        txType = ["Transfer", "Burn", "Lease", "CancelLease", "Bundle", "CreateHTLC",
+            "UnlockHTLC", "RefundHTLC", "SpendHTLC", "CreateMultisig", "SpendMultisig"];
 
         type = txType[tx.type];
 
-        if(tx.type == 254){
+        if (tx.type == 254) {
             amount = tx.fee;
             type = 'Generated';
         }
 
-        if(tx.type == 0 ){
-            if(tx.from == account){
+        if (tx.type == 0) {
+            if (tx.from == account) {
                 type = "Sent to";
                 txaccount = tx.data.to;
-            }else{
+            } else {
                 type = "Received from";
             }
         }

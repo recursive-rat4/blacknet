@@ -34,7 +34,7 @@ import ninja.blacknet.transaction.TxType
 private val logger = KotlinLogging.logger {}
 
 object WalletDB {
-    private val mutex = Mutex()
+    internal val mutex = Mutex()
     private val KEYS_KEY = "keys".toByteArray()
     private val TX_KEY = "tx".toByteArray()
     private val WALLET_KEY = "wallet".toByteArray()
@@ -141,7 +141,7 @@ object WalletDB {
     suspend fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, b: LevelDB.WriteBatch? = null) = mutex.withLock {
         val write = b == null
         val batch = b ?: LevelDB.createWriteBatch()
-        var store = true
+        var store = !LevelDB.contains(TX_KEY, hash.bytes)
 
         wallets.forEach { (publicKey, wallet) ->
             if (processTransactionImpl(publicKey, wallet, hash, tx, bytes, time, height, batch, false, store))
@@ -207,11 +207,7 @@ object WalletDB {
         batch.put(WALLET_KEY, KEYS_KEY, keysBytes)
     }
 
-    suspend fun getWallet(publicKey: PublicKey, rescan: Boolean = true): Wallet = mutex.withLock {
-        return@withLock getWalletImpl(publicKey, rescan)
-    }
-
-    private suspend fun getWalletImpl(publicKey: PublicKey, rescan: Boolean = true): Wallet {
+    internal suspend fun getWalletImpl(publicKey: PublicKey, rescan: Boolean = true): Wallet {
         var wallet = wallets.get(publicKey)
         if (wallet != null)
             return wallet
