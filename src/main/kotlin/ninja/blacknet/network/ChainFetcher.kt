@@ -135,6 +135,7 @@ object ChainFetcher {
                         }
                     }
                 }
+            } catch (e: CancellationException) {
             } catch (e: ClosedSendChannelException) {
             } catch (e: TimeoutCancellationException) {
                 logger.info("${e.message}")
