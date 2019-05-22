@@ -10,7 +10,6 @@
 package ninja.blacknet.db
 
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.list
@@ -30,7 +29,6 @@ import java.util.ArrayDeque
 private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
-    val mutex = Mutex()
     private const val VERSION = 3
     private val ACCOUNT_KEY = "account".toByteArray()
     private val CHAIN_KEY = "chain".toByteArray()
@@ -257,7 +255,7 @@ object LedgerDB {
         return maxBlockSize
     }
 
-    suspend fun getNextBlockHashes(start: Hash, max: Int): ArrayList<Hash> = mutex.withLock {
+    suspend fun getNextBlockHashes(start: Hash, max: Int): ArrayList<Hash> = BlockDB.mutex.withLock {
         var chainIndex = getChainIndex(start) ?: return@withLock ArrayList()
         val result = ArrayList<Hash>(max)
         while (true) {
@@ -363,7 +361,7 @@ object LedgerDB {
             undo.txHashes.add(txHash)
             fees += tx.fee
 
-            WalletDB.processTransaction(txHash, tx, bytes.array, block.time, height, txDb.batch)
+            WalletDB.processTransactionImpl(txHash, tx, bytes.array, block.time, height, txDb.batch)
         }
 
         generator = txDb.get(block.generator)!!
@@ -384,7 +382,7 @@ object LedgerDB {
         generator.debit(height, generated)
         txDb.set(block.generator, generator)
 
-        WalletDB.processBlock(hash, block, height, generated, txDb.batch)
+        WalletDB.processBlockImpl(hash, block, height, generated, txDb.batch)
 
         TxPool.mutex.withLock {
             TxPool.clearRejectsImpl()
@@ -444,12 +442,12 @@ object LedgerDB {
 
         removeUndo(hash)
 
-        WalletDB.disconnectBlock(hash, undo.txHashes)
+        WalletDB.disconnectBlockImpl(hash, undo.txHashes)
 
         return hash
     }
 
-    internal suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = mutex.withLock {
+    internal suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = BlockDB.mutex.withLock {
         return@withLock rollbackToImpl(hash)
     }
 
@@ -464,7 +462,7 @@ object LedgerDB {
         return result
     }
 
-    internal suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = mutex.withLock {
+    internal suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = BlockDB.mutex.withLock {
         val toRemove = rollbackToImpl(hash)
 
         list.asReversed().forEach {
@@ -487,7 +485,7 @@ object LedgerDB {
         return@withLock toRemove
     }
 
-    internal suspend fun prune() = mutex.withLock {
+    internal suspend fun prune() = BlockDB.mutex.withLock {
         val batch = LevelDB.createWriteBatch()
         pruneImpl(batch)
         batch.write()
@@ -531,7 +529,7 @@ object LedgerDB {
         loadGenesisState()
     }
 
-    suspend fun check(): Check = mutex.withLock {
+    suspend fun check(): Check = BlockDB.mutex.withLock {
         var supply = 0L
         val result = Check(false, 0, 0, 0)
         val iterator = LevelDB.iterator()

@@ -197,7 +197,7 @@ fun Application.main() {
         get("/api/v1/blockdb/getblockhash/{height}") {
             val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
 
-            LedgerDB.mutex.withLock {
+            BlockDB.mutex.withLock {
                 if (height < 0 || height > LedgerDB.height())
                     return@get call.respond(HttpStatusCode.NotFound, "block not found")
                 else if (height == 0)
@@ -456,7 +456,7 @@ fun Application.main() {
         get("/api/v1/walletdb/getwallet/{address}") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
 
-            WalletDB.mutex.withLock {
+            BlockDB.mutex.withLock {
                 call.respond(Json.stringify(WalletDB.Wallet.serializer(), WalletDB.getWalletImpl(publicKey)))
             }
         }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.crypto.*
+import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
@@ -80,7 +81,7 @@ object PoS {
 
             @Suppress("LABEL_NAME_CLASH")
             val block = stakers.mutex.withLock {
-                LedgerDB.mutex.withLock {
+                BlockDB.mutex.withLock {
                     for (i in stakers.list.indices) {
                         val privateKey = stakers.list[i].first
                         val publicKey = stakers.list[i].second

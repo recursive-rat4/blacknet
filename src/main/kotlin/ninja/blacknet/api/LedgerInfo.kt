@@ -11,6 +11,7 @@ package ninja.blacknet.api
 
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
+import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 
 @Serializable
@@ -26,7 +27,7 @@ class LedgerInfo(
         val nxtrng: String
 ) {
     companion object {
-        suspend fun get(): LedgerInfo = LedgerDB.mutex.withLock {
+        suspend fun get(): LedgerInfo = BlockDB.mutex.withLock {
             return LedgerInfo(
                     LedgerDB.height(),
                     LedgerDB.blockHash().toString(),

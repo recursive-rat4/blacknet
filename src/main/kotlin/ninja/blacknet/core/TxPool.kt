@@ -85,9 +85,6 @@ object TxPool : MemPool(), Ledger {
         if (processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())) {
             add(hash, bytes)
             transactions.add(hash)
-            val currTime = connection?.lastPacketTime ?: Node.time()
-            connection?.lastTxTime = currTime
-            WalletDB.processTransaction(hash, tx, bytes, currTime, 0)
             return Status.ACCEPTED
         }
         return Status.INVALID
@@ -112,7 +109,8 @@ object TxPool : MemPool(), Ledger {
             transactions.add(hash)
             val currTime = connection?.lastPacketTime ?: Node.time()
             connection?.lastTxTime = currTime
-            WalletDB.processTransaction(hash, tx, bytes, currTime, 0)
+            WalletDB.processTransaction(hash, tx, bytes, currTime)
+            logger.debug { "Accepted $hash" }
             return tx.fee
         }
         return INVALID
