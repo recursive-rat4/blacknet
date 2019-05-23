@@ -50,7 +50,7 @@ class Connection(
     @Volatile
     var totalBytesWritten: Long = 0
     @Volatile
-    var lashChain: ChainAnnounce = ChainAnnounce.GENESIS
+    var lastChain: ChainAnnounce = ChainAnnounce.GENESIS
     @Volatile
     var lastBlockTime: Long = 0
     @Volatile

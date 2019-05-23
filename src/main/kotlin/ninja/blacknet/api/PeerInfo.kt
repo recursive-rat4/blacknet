@@ -43,7 +43,7 @@ class PeerInfo(
             connection.dosScore(),
             connection.feeFilter,
             connection.connectedAt,
-            ChainInfo.get(connection.lashChain),
+            ChainInfo.get(connection.lastChain),
             connection.lastPacketTime,
             connection.totalBytesRead,
             connection.totalBytesWritten

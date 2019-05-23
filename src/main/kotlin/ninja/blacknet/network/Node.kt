@@ -219,7 +219,7 @@ object Node : CoroutineScope {
     suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null) {
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         broadcastPacket(ann) {
-            it != source && it.lashChain.chain != hash && it.version >= ChainAnnounce.MIN_VERSION
+            it != source && it.lastChain.chain != hash && it.version >= ChainAnnounce.MIN_VERSION
         }
         val inv = Pair(DataType.Block, hash)
         connections.forEach {

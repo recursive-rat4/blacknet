@@ -11,9 +11,9 @@
 package ninja.blacknet
 
 import com.rfksystems.blake2b.security.Blake2bProvider
+import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.jetty.Jetty
 import mu.KotlinLogging
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Node
@@ -56,6 +56,6 @@ object Main {
          * https://ktor.io/servers/engine.html
          *
          */
-        embeddedServer(Jetty, commandLineEnvironment(arrayOf("-config=config/ktor.conf"))).start(wait = true)
+        embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=config/ktor.conf"))).start(wait = true)
     }
 }

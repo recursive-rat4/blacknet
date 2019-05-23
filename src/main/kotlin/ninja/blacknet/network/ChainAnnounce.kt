@@ -25,7 +25,7 @@ class ChainAnnounce(
     override fun getType() = PacketType.ChainAnnounce
 
     override suspend fun process(connection: Connection) {
-        connection.lashChain = this
+        connection.lastChain = this
 
         ChainFetcher.offer(connection, chain, cumulativeDifficulty)
     }

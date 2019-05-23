@@ -37,7 +37,7 @@ internal class Version(
         connection.version = version
         connection.agent = Bip14.sanitize(agent)
         connection.feeFilter = feeFilter
-        connection.lashChain = chain
+        connection.lastChain = chain
 
         if (magic != Node.magic || version < Node.minVersion) {
             connection.close()
