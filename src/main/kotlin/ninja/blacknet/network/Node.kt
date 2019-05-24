@@ -68,6 +68,8 @@ object Node : CoroutineScope {
             }
         })
 
+        logger.info("${Runtime.getRuntime().availableProcessors()} CPU available")
+
         if (Config[listen]) {
             try {
                 Node.listenOnIP()

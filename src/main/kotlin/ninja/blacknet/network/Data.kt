@@ -56,9 +56,9 @@ class Data(private val list: DataList) : Packet {
                 Status.IN_FUTURE -> logger.debug { "in future ${type.name} $hash" }
                 Status.NOT_ON_THIS_CHAIN -> {
                     if (type == DataType.Block) ChainFetcher.offer(connection, hash)
-                    else logger.info("not on this chain ${type.name} $hash")
+                    else logger.debug { "not on this chain ${type.name} $hash" }
                 }
-                Status.ALREADY_HAVE -> {}
+                Status.ALREADY_HAVE -> logger.debug { "already have  ${type.name} $hash" }
             }
         }
 

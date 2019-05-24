@@ -36,27 +36,27 @@ interface Ledger {
         return get(key) ?: AccountState.create()
     }
 
-    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int, undo: UndoBuilder): Boolean {
+    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int, undo: UndoBuilder): DataDB.Status {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
-            return false
+            return DataDB.Status.INVALID
         }
         if (!checkBlockHash(tx.blockHash)) {
             logger.info("not valid on this chain")
-            return false
+            return DataDB.Status.NOT_ON_THIS_CHAIN
         }
         if (!checkFee(size, tx.fee)) {
             logger.info("too low fee ${tx.fee}")
-            return false
+            return DataDB.Status.INVALID
         }
         if (tx.type == TxType.Generated.type) {
             logger.info("Generated as individual tx")
-            return false
+            return DataDB.Status.INVALID
         }
         val data = tx.data()
         if (data == null) {
             logger.info("deserialization of tx data failed")
-            return false
+            return DataDB.Status.INVALID
         }
         return data.process(tx, hash, this, undo)
     }

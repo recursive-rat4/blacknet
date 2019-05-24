@@ -11,6 +11,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.json.JsonElement
 import mu.KotlinLogging
+import ninja.blacknet.core.DataDB
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.UndoBuilder
@@ -27,25 +28,31 @@ interface TxData {
     fun toJson(): JsonElement
     suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean
 
-    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
+    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): DataDB.Status {
         val account = ledger.get(tx.from)
         if (account == null) {
             logger.info("account not found")
-            return false
+            return DataDB.Status.INVALID
         }
-        if (tx.seq != account.seq) {
-            logger.info("invalid sequence number")
-            return false
+        if (tx.seq < account.seq) {
+            logger.debug { "already have seq ${tx.seq}" }
+            return DataDB.Status.ALREADY_HAVE
+        } else if (tx.seq > account.seq) {
+            logger.debug { "in future seq ${tx.seq}" }
+            return DataDB.Status.IN_FUTURE
         }
         undo.add(tx.from, account)
         if (!account.credit(tx.fee)) {
             logger.info("insufficient funds for tx fee")
-            return false
+            return DataDB.Status.INVALID
         }
         account.prune(ledger.height())
         account.seq++
         ledger.set(tx.from, account)
-        return processImpl(tx, hash, ledger, undo)
+        return if (processImpl(tx, hash, ledger, undo))
+            DataDB.Status.ACCEPTED
+        else
+            DataDB.Status.INVALID
     }
 
     companion object {

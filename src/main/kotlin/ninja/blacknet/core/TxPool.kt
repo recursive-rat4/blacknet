@@ -82,12 +82,12 @@ object TxPool : MemPool(), Ledger {
             logger.info("deserialization failed")
             return Status.INVALID
         }
-        if (processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())) {
+        val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
+        if (status == Status.ACCEPTED) {
             add(hash, bytes)
             transactions.add(hash)
-            return Status.ACCEPTED
         }
-        return Status.INVALID
+        return status
     }
 
     internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Long {
@@ -96,15 +96,8 @@ object TxPool : MemPool(), Ledger {
             logger.info("deserialization failed")
             return INVALID
         }
-
-        val from = LedgerDB.get(tx.from)
-        if (from != null)
-            if (tx.seq > from.seq)
-                return IN_FUTURE
-            else if (tx.seq < from.seq)
-                return INVALID
-
-        if (processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())) {
+        val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
+        if (status == Status.ACCEPTED) {
             add(hash, bytes)
             transactions.add(hash)
             val currTime = connection?.lastPacketTime ?: Node.time()
@@ -112,8 +105,11 @@ object TxPool : MemPool(), Ledger {
             WalletDB.processTransaction(hash, tx, bytes, currTime)
             logger.debug { "Accepted $hash" }
             return tx.fee
+        } else if (status == Status.IN_FUTURE) {
+            return IN_FUTURE
+        } else {
+            return INVALID
         }
-        return INVALID
     }
 
     private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, ArrayList()) {
