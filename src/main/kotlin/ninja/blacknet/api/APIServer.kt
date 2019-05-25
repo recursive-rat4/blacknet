@@ -95,7 +95,7 @@ object APIServer {
     }
 }
 
-fun Application.main() {
+fun Application.APIServer() {
     install(DefaultHeaders)
     install(WebSockets)
 

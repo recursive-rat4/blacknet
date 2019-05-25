@@ -55,7 +55,7 @@ object ChainFetcher {
 
     internal fun disconnected(connection: Connection) {
         if (syncChain?.connection == connection)
-            request?.cancel()
+            request?.cancel(CancellationException("Connection closed"))
     }
 
     fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt? = null) {
@@ -135,9 +135,8 @@ object ChainFetcher {
                         }
                     }
                 }
-            } catch (e: CancellationException) {
             } catch (e: ClosedSendChannelException) {
-            } catch (e: TimeoutCancellationException) {
+            } catch (e: CancellationException) {
                 logger.info("${e.message}")
                 data.connection.close()
             } catch (e: Throwable) {
@@ -174,6 +173,7 @@ object ChainFetcher {
         else
             logger.info("Finished fetching $connectedBlocks blocks")
 
+        recvChannel.poll()
         if (request != null) {
             request!!.cancel()
             request = null
@@ -222,7 +222,7 @@ object ChainFetcher {
             if (status == Status.IN_FUTURE) {
                 return false
             } else if (status == Status.NOT_ON_THIS_CHAIN) {
-                connection.close() //XXX
+                connection.close()
                 return false
             } else if (status != Status.ACCEPTED && status != Status.ALREADY_HAVE) {
                 logger.info("$status block $hash")

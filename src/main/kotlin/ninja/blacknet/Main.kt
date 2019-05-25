@@ -33,6 +33,10 @@ object Main {
         inStream.close()
 
         logger.info("Starting Blacknet node")
+
+        if (System.getProperty("user.name") == "root")
+            logger.warn("Running as root")
+
         LevelDB
         BlockDB
         LedgerDB
@@ -40,22 +44,24 @@ object Main {
         Node
         WalletDB
 
-        /* Launch Blacknet API web-server on port 8283
-         * using Ktor.
-         * http://localhost:8283
+        /* Launch Blacknet API web-server using Ktor.
          *
          * Blacknet API web-server logic is implemented in
-         * ninja.blacknet.api.APIServerKt.main
+         * ninja.blacknet.api.APIServer
+         * ninja.blacknet.api.PublicServer
          *
          * Ktor is a framework for building asynchronous servers and clients
          * in connected systems using the powerful Kotlin programming language.
          * https://ktor.io/
          *
          * Ktor configuration is stored in
-         * config/ktor.conf
+         * config/ktor.conf public server
+         * config/rpc.conf private server
          * https://ktor.io/servers/engine.html
          *
          */
-        embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=config/ktor.conf"))).start(wait = true)
+        if (Config.publicapi())
+            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=config/ktor.conf"))).start(wait = false)
+        embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=config/rpc.conf"))).start(wait = true)
     }
 }

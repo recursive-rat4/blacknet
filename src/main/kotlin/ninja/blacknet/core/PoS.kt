@@ -66,6 +66,7 @@ object PoS {
         while (true) {
             delay(1)
 
+            //XXX race condition
             if (ChainFetcher.isConnectingBlocks())
                 continue
 

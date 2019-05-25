@@ -44,6 +44,7 @@ object Config {
 
     object apiserver : PropertyGroup() {
         val jsonindented by booleanType
+        val publicserver by booleanType
     }
 
     operator fun <T> get(key: Key<T>): T = config[key]
@@ -60,6 +61,12 @@ object Config {
     fun jsonindented(): Boolean {
         if (contains(apiserver.jsonindented))
             return get(apiserver.jsonindented)
+        return false
+    }
+
+    fun publicapi(): Boolean {
+        if (contains(apiserver.publicserver))
+            return get(apiserver.publicserver)
         return false
     }
 
