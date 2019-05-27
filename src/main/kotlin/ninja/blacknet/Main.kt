@@ -37,6 +37,10 @@ object Main {
         if (System.getProperty("user.name") == "root")
             logger.warn("Running as root")
 
+        if (Config.portable())
+            logger.info("Portable mode")
+        logger.info("Using data directory ${Config.dataDir}")
+
         LevelDB
         BlockDB
         LedgerDB

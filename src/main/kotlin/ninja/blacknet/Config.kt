@@ -11,11 +11,8 @@
 package ninja.blacknet
 
 import com.natpryce.konfig.*
-import mu.KotlinLogging
 import ninja.blacknet.network.Network
 import java.io.File
-
-private val logger = KotlinLogging.logger {}
 
 object Config {
     private val config = ConfigurationProperties.fromFile(File("config/blacknet.conf"))
@@ -40,6 +37,7 @@ object Config {
     val i2psamport by intType
     val dbcache by intType
     val mnemonics by listType(stringType)
+    val portable by booleanType
     val datadir by stringType
 
     object apiserver : PropertyGroup() {
@@ -64,6 +62,12 @@ object Config {
         return false
     }
 
+    fun portable(): Boolean {
+        if (contains(portable))
+            return get(portable)
+        return false
+    }
+
     fun publicapi(): Boolean {
         if (contains(apiserver.publicserver))
             return get(apiserver.publicserver)
@@ -71,31 +75,23 @@ object Config {
     }
 
     val dataDir: String = {
-        if (!contains(datadir)) {
+        val dir = if (portable()) {
+            File("db").getAbsolutePath()
+        } else if (!contains(datadir)) {
             val userHome = System.getProperty("user.home")
             val osName = System.getProperty("os.name", "generic").toLowerCase()
 
-            val dir = userHome +
+            userHome +
                     if ((osName.indexOf("mac") >= 0) || (osName.indexOf("darwin") >= 0))
                         "/Library/Application Support/Blacknet"
                     else if (osName.indexOf("win") >= 0)
                         "/AppData/Roaming/Blacknet"
                     else
                         "/.blacknet"
-
-            val file = File("db")
-            if (file.exists()) {
-                logger.info("Moving data from ${file.absolutePath} to $dir")
-                file.renameTo(File(dir))
-            } else {
-                File(dir).mkdirs()
-            }
-
-            dir
         } else {
-            val dir = get(datadir)
-            File(dir).mkdirs()
-            dir
+            get(datadir)
         }
+        File(dir).mkdirs()
+        dir
     }()
 }

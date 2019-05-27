@@ -69,7 +69,7 @@ object TorController {
 
     private fun savePrivateKey(privKey: String) {
         privateKey = privKey
-        logger.info("Saving Tor private key to db")
+        logger.info("Saving Tor private key")
         try {
             File(Config.dataDir + "/privateKey.tor").writeText(privateKey)
         } catch (e: Throwable) {

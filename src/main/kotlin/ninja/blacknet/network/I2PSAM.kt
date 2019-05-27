@@ -211,7 +211,7 @@ object I2PSAM : CoroutineScope {
 
     private fun savePrivateKey(dest: String) {
         privateKey = dest
-        logger.info("Saving I2P private key to db")
+        logger.info("Saving I2P private key")
         try {
             File(Config.dataDir + "/privateKey.i2p").writeText(privateKey)
         } catch (e: Throwable) {
