@@ -269,6 +269,12 @@ fun Application.APIServer() {
             call.respond(Json.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
         }
 
+        get("/api/v1/address/info/{address}") {
+            val info = AddressInfo.fromString(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
+
+            call.respond(Json.stringify(AddressInfo.serializer(), info))
+        }
+
         post("/api/v1/mnemonic/info/{mnemonic}") {
             val info = MnemonicInfo.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 

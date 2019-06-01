@@ -16,7 +16,7 @@ object Mnemonic {
     private val random = SecureRandom()
 
     fun generate(): Pair<String, PrivateKey> {
-        val builder = StringBuilder(108)
+        val builder = StringBuilder(9 * WORDS)
 
         while (true) {
             for (i in 1..WORDS) {
