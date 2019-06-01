@@ -8,3 +8,9 @@
 
 # MacOS
 .DS_store
+
+#dev
+bin
+.project
+.classpath
+.settings

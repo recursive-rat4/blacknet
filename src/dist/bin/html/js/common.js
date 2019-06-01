@@ -44,24 +44,23 @@ void function () {
 
                 let account = dialogAccount.find('.account_text').val();
 
-                if (!account) {
-                    let mnemonic = dialogAccount.find('.mnemonic_text').val();
-                    account = await Blacknet.mnemonicToAddress(mnemonic);
+                if(account.length < 22){
+                    return;
                 }
-
                 if (/^blacknet[a-z0-9]{59}$/.test(account)) {
                     localStorage.account = account;
-                    location.reload();
                 } else {
-                    alert('Invalid Account');
+                    account = await Blacknet.mnemonicToAddress(account);
+                    localStorage.account = account;
                 }
+                location.reload();
             });
         }
     };
 
     Blacknet.mnemonicToAddress = async function (mnemonic) {
         let url = "/mnemonic/info/" + mnemonic + "/";
-        let mnemonicInfo = await Blacknet.postPromise(url).fail(function () { alert('Invalid Mnemonic'); });
+        let mnemonicInfo = await Blacknet.postPromise(url, true);
         mnemonicInfo = JSON.parse(mnemonicInfo);
         return mnemonicInfo.address;
     };
@@ -82,7 +81,7 @@ void function () {
         });
     };
 
-    Blacknet.toBLNString = function(number){
+    Blacknet.toBLNString = function (number) {
         return new BigNumber(number).dividedBy(1e8).toFixed(8) + ' BLN';
     };
 
@@ -180,8 +179,10 @@ void function () {
         return $.post(apiVersion + url, {}, callback, type);
     };
 
-    Blacknet.postPromise = function (url) {
-        return $.post(apiVersion + url, {});
+    Blacknet.postPromise = function (url, isNeedAlert) {
+        return $.post(apiVersion + url, {}).fail(function (res) { 
+            if (isNeedAlert && res.responseText) alert(res.responseText); 
+        });
     };
 
     Blacknet.sendMoney = function (mnemonic, amount, to, message, encrypted, callback) {
@@ -381,9 +382,20 @@ void function () {
                     <td class="narrow" data-i18n="Time">${Blacknet.unix_to_local_time(tx.time)}</td>
                     <td class="narrow" data-i18n="Type">${type}</td>
                     <td class="left" data-i18n="Account">${txaccount}</td>
-                    <td class="right" data-i18n="Amount">${amount} <span class="strong">BLN</span></td>
+                    <td class="right" data-i18n="Amount"><span class="strong">${amount} BLN</span></td>
+                    <td class="left message" data-i18n="Message"><p></p></td>
                 </tr>`;
-        $(tmpl).appendTo('#tx-list')
+        let node = $(tmpl);
+        if (tx.type == 0) {
+            if (tx.data.message.type == 0) {
+                node.find('.message p').text(tx.data.message.message);
+            } else if (tx.data.message.type == 1) {
+                node.find('.message p').css({ color: "red" }).text("Encrypted message");
+            } else {
+                node.find('.message p').css({ color: "red" }).text("Non-standard message");
+            }
+        }
+        node.appendTo('#tx-list')
     };
 
 
