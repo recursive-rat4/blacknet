@@ -189,6 +189,7 @@ label {
     flex-basis: 120px;
     font-size: 14px;
     flex-grow: 1;
+    max-width: 120px;
 }
 
 label strong {
@@ -288,10 +289,11 @@ thead td {
     color: var(--grey-text);
     padding: 10px;
     text-align: center;
+    font-size: 16px;
     background-color: var(--darker-grey-bg);
 }
 
-tbody td {
+tbody td, tfoot td {
     color: var(--grey-text);
     padding: 5px 10px;
     word-wrap: break-word;
@@ -301,12 +303,17 @@ tbody td {
     line-height: 24px;
     vertical-align: top;
 }
-
+.tx-foot tr{
+    display: none;
+}
 table td.right {
     text-align: right;
 }
 table td.left{
     text-align: left;
+}
+.text-center{
+    text-align: center;
 }
 
 td.message p{
@@ -539,4 +546,17 @@ a, a:active {
     white-space: nowrap;
     background-color: var(--gold-text);
     transition: width .6s ease;
+}
+
+.about{
+    padding-left: 180px;
+    background: url("../images/logo.png") no-repeat;
+}
+p{
+    line-height: 1.8;
+}
+
+.about p{
+    margin-bottom: 30px;
+    line-height: 1.8;
 }

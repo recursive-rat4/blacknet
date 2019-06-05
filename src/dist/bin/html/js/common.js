@@ -292,9 +292,12 @@ void function () {
 
         let data = await Blacknet.getPromise('/walletdb/getwallet/' + account, 'json');
         let transactions = data.transactions;
-
+        let txAmount = transactions.length, txProgress = $('.tx-progress');
         let array = [], tx = {}, hash;
 
+        if(transactions.length == 0){
+            $('.tx-foot tr').show();
+        }
         while (transactions.length) {
 
             let tmp = transactions.shift();
@@ -304,16 +307,20 @@ void function () {
                 tx = await Blacknet.getPromise('/walletdb/gettransaction/' + tmp + '/false', 'json');
                 hash = tmp;
             } else {
-
                 tx.height = tmp.height;
                 tx.time = tmp.time;
                 array.push(tx);
-
                 tx = {};
+            }
+            if(transactions.length > 16){
+                txProgress.text(`${txAmount - transactions.length} / ${txAmount}`);
+            }else{
+                txProgress.hide();
             }
         }
 
         $('#tx-list').html('');
+
         array.sort(function (x, y) {
             return y.time - x.time;
         }).map(Blacknet.renderTransaction);
@@ -385,14 +392,14 @@ void function () {
                     <td class="right" data-i18n="Amount"><span class="strong">${amount} BLN</span></td>
                     <td class="left message" data-i18n="Message"><p></p></td>
                 </tr>`;
-        let node = $(tmpl);
+        let node = $(tmpl), p = node.find('.message p');
         if (tx.type == 0) {
             if (tx.data.message.type == 0) {
-                node.find('.message p').text(tx.data.message.message);
+                p.text(tx.data.message.message);
             } else if (tx.data.message.type == 1) {
-                node.find('.message p').css({ color: "red" }).text("Encrypted message");
+                p.css({ color: "red" }).text("Encrypted message");
             } else {
-                node.find('.message p').css({ color: "red" }).text("Non-standard message");
+                p.css({ color: "red" }).text("Non-standard message");
             }
         }
         node.appendTo('#tx-list')
