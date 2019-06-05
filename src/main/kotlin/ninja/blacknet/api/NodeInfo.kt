@@ -16,6 +16,7 @@ import ninja.blacknet.network.Node
 @Serializable
 class NodeInfo(
         val agent: String,
+        val version: String,
         val protocolVersion: Int,
         val outgoing: Int,
         val incoming: Int,
@@ -24,7 +25,13 @@ class NodeInfo(
     companion object {
         suspend fun get(): NodeInfo {
             val listening = Node.listenAddress.mapToList { it.toString() }
-            return NodeInfo(Bip14.agent, Node.version, Node.outgoing(), Node.incoming(), listening)
+            return NodeInfo(
+                    Bip14.agent,
+                    Bip14.version,
+                    Node.version,
+                    Node.outgoing(),
+                    Node.incoming(),
+                    listening)
         }
     }
 }
