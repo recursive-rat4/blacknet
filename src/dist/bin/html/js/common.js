@@ -96,7 +96,7 @@ void function () {
         network.find('.supply').html(new BigNumber(ledger.supply).dividedBy(1e8).toFixed(0));
         network.find('.accounts').html(ledger.accounts);
         network.find('.connections').text(nodeinfo.outgoing + nodeinfo.incoming);
-        $('.overview_agent').text(nodeinfo.agent);
+        $('.overview_version').text(nodeinfo.version);
     };
 
     Blacknet.renderOverview = function () {
