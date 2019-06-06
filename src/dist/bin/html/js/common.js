@@ -10,6 +10,7 @@
 void function () {
 
     const Blacknet = {};
+    const DEFAULT_CONFIRMATIONS = 10;
     const blockListEl = $('#block-list'), apiVersion = "/api/v1", body = $("body");;
     const progressStats = $('.progress-stats, .progress-stats-text');
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
@@ -293,7 +294,7 @@ void function () {
         let data = await Blacknet.getPromise('/walletdb/getwallet/' + account, 'json');
         let transactions = data.transactions;
         let txAmount = transactions.length, txProgress = $('.tx-progress');
-        let array = [], tx = {}, hash;
+        let array = [], tx = {};
 
         if(transactions.length == 0){
             $('.tx-foot tr').show();
@@ -307,13 +308,14 @@ void function () {
             if (typeof tmp == 'string') {
 
                 tx = await Blacknet.getPromise('/walletdb/gettransaction/' + tmp + '/false', 'json');
-                hash = tmp;
-            } else {
                 tx.height = tmp.height;
+            } else {
                 tx.time = tmp.time;
+                tx.height = tmp.height;
                 array.push(tx);
                 tx = {};
             }
+            
             if(transactions.length > 16){
                 txProgress.text(`${txAmount - transactions.length} / ${txAmount}`);
             }else{
@@ -390,7 +392,9 @@ void function () {
                     <td class="left">${txaccount}</td>
                     <td class="right"><span class="strong">${amount} BLN</span></td>
                     <td class="left message"><p></p></td>
+                    <td class="left status" data-height="${tx.height}"></td>
                 </tr>`;
+
         let node = $(tmpl), p = node.find('.message p');
         if (tx.type == 0) {
             if (tx.data.message.type == 0) {
@@ -401,9 +405,31 @@ void function () {
                 p.css({ color: "red" }).text("Non-standard message");
             }
         }
+
+        node.find('.status').text(Blacknet.getStatusText(tx.height));
         prepend ? node.prependTo('#tx-list') : node.appendTo('#tx-list');
     };
 
+    Blacknet.getStatusText = function(height){
+        let confirmations = Blacknet.ledger.height - height, statusText = 'Confirmed';
+        if(height == 0){
+            statusText = `Unconfirmed`;
+        }else if(confirmations < DEFAULT_CONFIRMATIONS){
+            statusText = `${confirmations} Confirmations`;
+        }
+        return statusText;
+    };
+
+    Blacknet.refreshTxConfirmations = function(){
+
+        $.each($('#tx-list tr'), function(i, el){
+
+            let node = $(el).find('.status');
+            let height = node.data('height');
+
+            node.text(Blacknet.getStatusText(height));
+        });
+    };
 
     Blacknet.throttle = function (fn, threshhold = 250) {
 

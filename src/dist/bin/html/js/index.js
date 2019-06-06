@@ -226,6 +226,7 @@ $(document).ready(function () {
 
         if (blockStack.length == 0) {
             Blacknet.refreshBalance();
+            Blacknet.refreshTxConfirmations();
         }
     }
 

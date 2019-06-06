@@ -316,6 +316,9 @@ table td.left{
     text-align: center;
 }
 
+td.status{
+    font-size: 12px;
+}
 td.message p{
     max-width: 200px;
     font-size: 12px;
