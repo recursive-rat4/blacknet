@@ -10,6 +10,7 @@
 void function () {
 
     const Blacknet = {};
+    const DEFAULT_CONFIRMATIONS = 10;
     const blockListEl = $('#block-list'), apiVersion = "/api/v1", body = $("body");;
     const progressStats = $('.progress-stats, .progress-stats-text');
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
@@ -30,7 +31,7 @@ void function () {
             $('.overview').find('.overview_account').text(account);
 
             if (localStorage.isStaking) {
-                $('.isStaking').text(localStorage.isStaking);
+                $('.is_staking').text(localStorage.isStaking);
             }
 
             mask.on('click', function () {
@@ -293,10 +294,12 @@ void function () {
         let data = await Blacknet.getPromise('/walletdb/getwallet/' + account, 'json');
         let transactions = data.transactions;
         let txAmount = transactions.length, txProgress = $('.tx-progress');
-        let array = [], tx = {}, hash;
+        let array = [], tx = {};
 
         if(transactions.length == 0){
             $('.tx-foot tr').show();
+        }else{
+            $('.tx-foot tr').hide();
         }
         while (transactions.length) {
 
@@ -305,13 +308,14 @@ void function () {
             if (typeof tmp == 'string') {
 
                 tx = await Blacknet.getPromise('/walletdb/gettransaction/' + tmp + '/false', 'json');
-                hash = tmp;
-            } else {
                 tx.height = tmp.height;
+            } else {
                 tx.time = tmp.time;
+                tx.height = tmp.height;
                 array.push(tx);
                 tx = {};
             }
+            
             if(transactions.length > 16){
                 txProgress.text(`${txAmount - transactions.length} / ${txAmount}`);
             }else{
@@ -322,7 +326,7 @@ void function () {
         $('#tx-list').html('');
 
         array.sort(function (x, y) {
-            return y.time - x.time;
+            return x.time - y.time;
         }).map(Blacknet.renderTransaction);
 
         Blacknet.renderLeaseOption(array);
@@ -332,9 +336,6 @@ void function () {
 
 
         let outLeases = await Blacknet.getPromise('/walletdb/getoutleases/' + account, 'json');
-
-
-
         let accounts = [], aobj = {}, hobj = {}, height = [];
 
         if (outLeases.length == 0) return;
@@ -360,7 +361,7 @@ void function () {
         $('.cancel_lease_tab').show();
     };
 
-    Blacknet.renderTransaction = function (tx) {
+    Blacknet.renderTransaction = function (tx, prepend) {
 
         let amount = tx.data.amount, tmpl, type, txType, txaccount = tx.from;
 
@@ -386,12 +387,14 @@ void function () {
         amount = new BigNumber(amount).dividedBy(1e8).toFixed(8);
 
         tmpl = `<tr>
-                    <td class="narrow" data-i18n="Time">${Blacknet.unix_to_local_time(tx.time)}</td>
-                    <td class="narrow" data-i18n="Type">${type}</td>
-                    <td class="left" data-i18n="Account">${txaccount}</td>
-                    <td class="right" data-i18n="Amount"><span class="strong">${amount} BLN</span></td>
-                    <td class="left message" data-i18n="Message"><p></p></td>
+                    <td class="narrow">${Blacknet.unix_to_local_time(tx.time)}</td>
+                    <td class="narrow">${type}</td>
+                    <td class="left">${txaccount}</td>
+                    <td class="right"><span class="strong">${amount} BLN</span></td>
+                    <td class="left message"><p></p></td>
+                    <td class="left status" data-height="${tx.height}"></td>
                 </tr>`;
+
         let node = $(tmpl), p = node.find('.message p');
         if (tx.type == 0) {
             if (tx.data.message.type == 0) {
@@ -402,9 +405,31 @@ void function () {
                 p.css({ color: "red" }).text("Non-standard message");
             }
         }
-        node.appendTo('#tx-list')
+
+        node.find('.status').text(Blacknet.getStatusText(tx.height));
+        prepend ? node.prependTo('#tx-list') : node.appendTo('#tx-list');
     };
 
+    Blacknet.getStatusText = function(height){
+        let confirmations = Blacknet.ledger.height - height, statusText = 'Confirmed';
+        if(height == 0){
+            statusText = `Unconfirmed`;
+        }else if(confirmations < DEFAULT_CONFIRMATIONS){
+            statusText = `${confirmations} Confirmations`;
+        }
+        return statusText;
+    };
+
+    Blacknet.refreshTxConfirmations = function(){
+
+        $.each($('#tx-list tr'), function(i, el){
+
+            let node = $(el).find('.status');
+            let height = node.data('height');
+
+            node.text(Blacknet.getStatusText(height));
+        });
+    };
 
     Blacknet.throttle = function (fn, threshhold = 250) {
 
@@ -473,8 +498,15 @@ void function () {
             await Blacknet.initRecentTransactions();
         }
 
-        Blacknet.startHeight = Blacknet.height + 1;
         callback();
+    };
+
+    Blacknet.refreshBalance = async function(){
+
+        await Blacknet.balance();
+        if (account) {
+            await Blacknet.initRecentTransactions();
+        }
     };
 
     const timePeerInfo = Blacknet.throttle(getPeerInfo, 1000);
