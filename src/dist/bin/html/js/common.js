@@ -31,7 +31,7 @@ void function () {
             $('.overview').find('.overview_account').text(account);
 
             if (localStorage.isStaking) {
-                $('.isStaking').text(localStorage.isStaking);
+                $('.is_staking').text(localStorage.isStaking);
             }
 
             mask.on('click', function () {
