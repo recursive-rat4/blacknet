@@ -183,7 +183,7 @@ $(document).ready(function () {
         let url = '/account/generate';
         let mnemonicInfo = await Blacknet.getPromise(url);
         mnemonicInfo = JSON.parse(mnemonicInfo);
-        $('#new_account').val(mnemonicInfo.address);
+        $('#new_account_text').val(mnemonicInfo.address);
         $('#new_mnemonic').val(mnemonicInfo.mnemonic);
         window.isGenerated = true;
     }
@@ -266,7 +266,7 @@ $(document).ready(function () {
         .on("click", "#mnemonic_info", mnemonic_info)
         .on("click", "#add_peer_btn", addPeer)
         .on("click", "#switch_account", switchAccount)
-        .on("click", "#newAccount", newAccount)
+        .on("click", "#new_account", newAccount)
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
         .on("click", "#new_account_next_step", newAccountNext);
 

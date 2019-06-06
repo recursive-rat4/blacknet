@@ -386,11 +386,11 @@ void function () {
         amount = new BigNumber(amount).dividedBy(1e8).toFixed(8);
 
         tmpl = `<tr>
-                    <td class="narrow" data-i18n="Time">${Blacknet.unix_to_local_time(tx.time)}</td>
-                    <td class="narrow" data-i18n="Type">${type}</td>
-                    <td class="left" data-i18n="Account">${txaccount}</td>
-                    <td class="right" data-i18n="Amount"><span class="strong">${amount} BLN</span></td>
-                    <td class="left message" data-i18n="Message"><p></p></td>
+                    <td class="narrow">${Blacknet.unix_to_local_time(tx.time)}</td>
+                    <td class="narrow">${type}</td>
+                    <td class="left">${txaccount}</td>
+                    <td class="right"><span class="strong">${amount} BLN</span></td>
+                    <td class="left message"><p></p></td>
                 </tr>`;
         let node = $(tmpl), p = node.find('.message p');
         if (tx.type == 0) {
