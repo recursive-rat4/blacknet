@@ -51,14 +51,14 @@ $(document).ready(function () {
 
     async function refreshStaking(mnemonic) {
 
-        let stakingText = $('.isStaking'), data;
+        let stakingText = $('.is_staking'), data;
 
         stakingText.text('loading');
         data = await Blacknet.postPromise('/isStaking/' + mnemonic);
         localStorage.isStaking = data;
         clearPassWordDialog();
         await Blacknet.wait(2000);
-        $('.isStaking').text(data);
+        stakingText.text(data);
     }
 
     function menuSwitch() {
