@@ -16,9 +16,6 @@ $(document).ready(function () {
 
     menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
 
-
-
-
     function staking_click(type) {
 
         return function () {
@@ -195,13 +192,13 @@ $(document).ready(function () {
         if (!status) {
 
             $('#confirm_mnemonic_warning_container label').css('color', 'red');
-        } else{
+        } else {
             location.reload();
         }
         return false;
     }
 
-    const request_info = function (message) {
+    const block_request = function (message) {
 
         if (message.data) {
             let block = JSON.parse(message.data);
@@ -211,13 +208,13 @@ $(document).ready(function () {
     };
 
 
-    async function blockStackProcess(){
+    async function blockStackProcess() {
 
         let block;
 
-        if(blockStack.length == 0) return;
+        if (blockStack.length == 0) return;
 
-        if(blockStack.length > 100){
+        if (blockStack.length > 100) {
 
             blockStack = blockStack.slice(-35);
         }
@@ -226,15 +223,19 @@ $(document).ready(function () {
 
         await Blacknet.renderBlock(block, block.height);
         await Blacknet.network();
+
+        if (blockStack.length == 0) {
+            Blacknet.refreshBalance();
+        }
     }
 
     setInterval(blockStackProcess, 100);
 
-    function confirm_mnemonic_warning(){
+    function confirm_mnemonic_warning() {
         window.isGenerated = !this.checked;
     }
 
-    async function addPeer(){
+    async function addPeer() {
 
         let ip = $('#ip_address').val(), port = $('#ip_port').val();
 
@@ -247,8 +248,23 @@ $(document).ready(function () {
 
     Blacknet.ready(function () {
 
-        let ws = new WebSocket("ws://" + location.host + "/api/v2/notify/block");
-        ws.onmessage = request_info;
+        let blockNotify = new WebSocket("ws://" + location.host + "/api/v2/notify/block");
+        let transactionNotify = new WebSocket("ws://" + location.host + "/api/v1/notify/transaction");
+        
+        blockNotify.onmessage = block_request;
+        transactionNotify.onmessage = function(message){
+            if (message.data) {
+                let tx = JSON.parse(message.data);
+    
+                Blacknet.renderTransaction(tx, true);
+            }
+        };
+
+        transactionNotify.onopen = function(){
+
+            transactionNotify.send(localStorage.account);
+        };
+        
     });
 
 
@@ -270,6 +286,6 @@ $(document).ready(function () {
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
         .on("click", "#new_account_next_step", newAccountNext);
 
-        
+
 
 });

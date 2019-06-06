@@ -297,6 +297,8 @@ void function () {
 
         if(transactions.length == 0){
             $('.tx-foot tr').show();
+        }else{
+            $('.tx-foot tr').hide();
         }
         while (transactions.length) {
 
@@ -322,7 +324,7 @@ void function () {
         $('#tx-list').html('');
 
         array.sort(function (x, y) {
-            return y.time - x.time;
+            return x.time - y.time;
         }).map(Blacknet.renderTransaction);
 
         Blacknet.renderLeaseOption(array);
@@ -332,9 +334,6 @@ void function () {
 
 
         let outLeases = await Blacknet.getPromise('/walletdb/getoutleases/' + account, 'json');
-
-
-
         let accounts = [], aobj = {}, hobj = {}, height = [];
 
         if (outLeases.length == 0) return;
@@ -360,7 +359,7 @@ void function () {
         $('.cancel_lease_tab').show();
     };
 
-    Blacknet.renderTransaction = function (tx) {
+    Blacknet.renderTransaction = function (tx, prepend) {
 
         let amount = tx.data.amount, tmpl, type, txType, txaccount = tx.from;
 
@@ -402,7 +401,7 @@ void function () {
                 p.css({ color: "red" }).text("Non-standard message");
             }
         }
-        node.appendTo('#tx-list')
+        prepend ? node.prependTo('#tx-list') : node.appendTo('#tx-list');
     };
 
 
@@ -473,8 +472,15 @@ void function () {
             await Blacknet.initRecentTransactions();
         }
 
-        Blacknet.startHeight = Blacknet.height + 1;
         callback();
+    };
+
+    Blacknet.refreshBalance = async function(){
+
+        await Blacknet.balance();
+        if (account) {
+            await Blacknet.initRecentTransactions();
+        }
     };
 
     const timePeerInfo = Blacknet.throttle(getPeerInfo, 1000);
