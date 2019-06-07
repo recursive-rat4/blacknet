@@ -453,13 +453,15 @@ object LedgerDB {
     }
 
     internal suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = BlockDB.mutex.withLock {
-        return@withLock rollbackToImpl(hash)
+        return@withLock rollbackToImpl(hash, false)
     }
 
-    private suspend fun rollbackToImpl(hash: Hash): ArrayList<Hash> {
+    private suspend fun rollbackToImpl(hash: Hash, allowZero: Boolean): ArrayList<Hash> {
         val i = getBlockNumber(hash) ?: return ArrayList()
         val height = height()
         var n = height - i
+        if (allowZero && n == 0)
+            return ArrayList()
         if (n <= 0) throw RuntimeException("Rollback of $n blocks")
         val result = ArrayList<Hash>(n)
         while (n-- > 0)
@@ -468,7 +470,7 @@ object LedgerDB {
     }
 
     internal suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = BlockDB.mutex.withLock {
-        val toRemove = rollbackToImpl(hash)
+        val toRemove = rollbackToImpl(hash, true)
 
         list.asReversed().forEach {
             val block = BlockDB.block(it)
