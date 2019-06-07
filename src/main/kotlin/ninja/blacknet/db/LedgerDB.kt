@@ -150,7 +150,12 @@ object LedgerDB {
                         val (block, size) = BlockDB.block(hash)!!
                         val batch = LevelDB.createWriteBatch()
                         val txDb = Update(batch, hash, block.time, size, block.generator)
-                        processBlockImpl(txDb, hash, block, size)
+                        val txHashes = processBlockImpl(txDb, hash, block, size)
+                        if (txHashes == null) {
+                            batch.close()
+                            logger.error("process block failed")
+                            break
+                        }
                         pruneImpl(batch)
                         txDb.commitImpl()
                     }
@@ -315,23 +320,23 @@ object LedgerDB {
         return Math.max(DEFAULT_MAX_BLOCK_SIZE, median * 2)
     }
 
-    internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): Boolean {
+    internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): ArrayList<Hash>? {
         if (block.previous != blockHash()) {
             logger.error("not on current chain")
-            return false
+            return null
         }
         if (size > maxBlockSize()) {
             logger.info("too large block $size bytes, maximum ${maxBlockSize()}")
-            return false
+            return null
         }
         if (block.time <= blockTime()) {
             logger.info("timestamp is too early")
-            return false
+            return null
         }
         var generator = txDb.get(block.generator)
         if (generator == null) {
             logger.info("block generator not found")
-            return false
+            return null
         }
         val height = txDb.height()
 
@@ -347,7 +352,7 @@ object LedgerDB {
 
         if (!PoS.check(block.time, block.generator, undo.nxtrng, undo.difficulty, undo.blockTime, generator.stakingBalance(height))) {
             logger.info("invalid proof of stake")
-            return false
+            return null
         }
 
         var fees = 0L
@@ -355,13 +360,13 @@ object LedgerDB {
             val tx = Transaction.deserialize(bytes.array)
             if (tx == null) {
                 logger.info("deserialization failed")
-                return false
+                return null
             }
             val txHash = Transaction.Hasher(bytes.array)
             val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)
             if (status != DataDB.Status.ACCEPTED) {
                 logger.info("$status tx $txHash")
-                return false
+                return null
             }
             undo.txHashes.add(txHash)
             fees += tx.fee
@@ -389,12 +394,7 @@ object LedgerDB {
 
         WalletDB.processBlockImpl(hash, block, height, generated, txDb.batch)
 
-        TxPool.mutex.withLock {
-            TxPool.clearRejectsImpl()
-            TxPool.removeImpl(undo.txHashes)
-        }
-
-        return true
+        return undo.txHashes
     }
 
     private suspend fun undoBlock(): Hash {
@@ -481,7 +481,8 @@ object LedgerDB {
 
             val batch = LevelDB.createWriteBatch()
             val txDb = LedgerDB.Update(batch, it, block.first.time, block.second, block.first.generator)
-            if (!processBlockImpl(txDb, it, block.first, block.second)) {
+            val txHashes = processBlockImpl(txDb, it, block.first, block.second)
+            if (txHashes == null) {
                 batch.close()
                 logger.error("process block failed")
                 return@withLock toRemove
