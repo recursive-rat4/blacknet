@@ -6,40 +6,25 @@ Blacknet.template = {
 
     transaction: async function (tx, account) {
 
-        let amount = tx.data.amount, tmpl, type, status, txType, txaccount = tx.from;
+        let amount = tx.data.amount, tmpl, txfee, type, status, txaccount = tx.from;
 
-        txType = ["Transfer", "Burn", "Lease", "CancelLease", "Bundle", "CreateHTLC",
-            "UnlockHTLC", "RefundHTLC", "SpendHTLC", "CreateMultisig", "SpendMultisig"];
-
-        type = txType[tx.type];
-
-        let txfee = new BigNumber(tx.fee).dividedBy(1e8).toFixed(8) + ' BLN';
+        type = Blacknet.getTxType(tx);
+        txfee = Blacknet.getFormatBalance(tx.fee);
 
         if (tx.type == 254) {
             amount = tx.fee;
-            type = 'Generated';
             txfee = '';
         }
-
-        if (tx.type == 0) {
-            if (tx.from == account) {
-                type = "Sent to";
-                txaccount = tx.data.to;
-            } else {
-                type = "Received from";
-            }
-        }
-
+        
         status = await Blacknet.getStatusText(tx.height, tx.hash);
-
-        amount = new BigNumber(amount).dividedBy(1e8).toFixed(8);
+        amount = Blacknet.getFormatBalance(amount);
 
         tmpl =
             `<tr class="preview txhash${tx.hash}" data-hash="${tx.hash}"  data-height="${tx.height}">
                 <td class="narrow">${Blacknet.unix_to_local_time(tx.time)}</td>
                 <td class="narrow">${type}</td>
                 <td class="left">${txaccount}</td>
-                <td class="right"><span class="strong">${amount} BLN</span></td>
+                <td class="right"><span class="strong">${amount}</span></td>
                 <td class="left status" data-height="${tx.height}">${status}</td>
             </tr>
             <tr class="undis" data-hash="${tx.hash}"  data-height="${tx.height}">

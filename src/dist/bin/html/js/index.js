@@ -258,6 +258,7 @@ $(document).ready(function () {
                 let tx = JSON.parse(message.data);
     
                 Blacknet.renderTransaction(tx, true);
+                Blacknet.newTransactionNotify(tx);
             }
         };
 

@@ -399,6 +399,47 @@ void function () {
         return statusText;
     };
 
+    Blacknet.getTxType = function(tx){
+
+        let txType = ["Transfer", "Burn", "Lease", "CancelLease", "Bundle", "CreateHTLC",
+            "UnlockHTLC", "RefundHTLC", "SpendHTLC", "CreateMultisig", "SpendMultisig"];
+
+        let type = txType[tx.type];
+
+        if (tx.type == 254) {
+            type = 'Generated';
+        }
+
+        if (tx.type == 0) {
+            if (tx.from == account) {
+                type = "Sent to";
+                txaccount = tx.data.to;
+            } else {
+                type = "Received from";
+            }
+        }
+        return type;
+    };
+
+    Blacknet.getFormatBalance = function(balance){
+
+        return new BigNumber(balance).dividedBy(1e8).toFixed(8) + ' BLN';
+    };
+
+    Blacknet.newTransactionNotify = function(tx){
+
+        let notification = $('.notification.tx').clone();
+        let time = Blacknet.unix_to_local_time(tx.time);
+        let type = Blacknet.getTxType(tx), amount = Blacknet.getFormatBalance(tx.data.amount);;
+
+        notification.find('.time').text(time);
+        notification.find('.type').text(type);
+        notification.find('.amount').text(amount);
+
+        notification.appendTo('body').show();
+
+        notification.delay(2000).animate({top: "-100px", opacity: 0}, 1000);
+    };
     Blacknet.renderTxStatus = async function(index, el){
 
         let statusText, node = $(el).find('.status');
