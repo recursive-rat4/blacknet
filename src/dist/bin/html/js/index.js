@@ -242,6 +242,8 @@ $(document).ready(function () {
 
         let result = await Blacknet.getPromise(`/addpeer/${ip}/${port}/true`);
 
+        await Blacknet.network();
+
         alert(`${ip} ${result}`);
         $('#ip_address').val('');
 
