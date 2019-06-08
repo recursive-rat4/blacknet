@@ -41,7 +41,7 @@ Blacknet.template = {
                         <dt>From</dt>
                         <dd class="${tx.from == account ? 'current': ''}">${tx.from}</dd>
                     </dl>
-                    <dl>
+                    <dl class="to">
                         <dt>To</dt>
                         <dd class="${tx.data.to == account ? 'current': ''}">${tx.data.to || ''}</dd>
                     </dl>
@@ -49,13 +49,13 @@ Blacknet.template = {
                         <dt>Type</dt>
                         <dd>${type.replace(' from', '')}</dd>
                     </dl>
-                    <dl>
+                    <dl class="fee">
                         <dt>Fee</dt>
                         <dd><span class="strong">${txfee}</span></dd>
                     </dl>
                     <dl>
                         <dt>Amount</dt>
-                        <dd><span class="strong">${new BigNumber(amount).toFixed(8)} BLN</span></dd>
+                        <dd><span class="strong">${amount}</span></dd>
                     </dl>
                     <dl>
                         <dt>Size</dt>
@@ -95,7 +95,7 @@ Blacknet.template = {
 
         if (!message) node.find('.msg_text').hide();
         if (tx.type == 254){
-            node.find('.sign_text').hide();
+            node.find('.sign_text,.to,.fee').hide();
         }
         return node;
     },
