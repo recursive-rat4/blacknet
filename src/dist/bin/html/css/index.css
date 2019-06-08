@@ -303,6 +303,7 @@ tbody td, tfoot td {
     line-height: 24px;
     vertical-align: top;
 }
+
 .tx-foot tr{
     display: none;
 }
@@ -562,4 +563,29 @@ p{
 .about p{
     margin-bottom: 30px;
     line-height: 1.8;
+}
+dl dt{
+    width: 100px;
+}
+dl dd.current{
+    color: var(--gold-text);
+}
+
+dl dt, dl dd{
+    display: inline-block;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+tr.undis{
+    display: none;
+}
+
+#tx-list tr.preview{
+    cursor: pointer;
+}
+
+
+#tx-list tr.preview td.noborder{
+    border-bottom: none;
 }

@@ -285,8 +285,15 @@ $(document).ready(function () {
         .on("click", "#switch_account", switchAccount)
         .on("click", "#new_account", newAccount)
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
-        .on("click", "#new_account_next_step", newAccountNext);
-
+        .on("click", "#new_account_next_step", newAccountNext)
+        .on("click", "tr.preview", function(){
+            $(this).next().toggle();
+            $(this).hide();
+        })
+        .on("click", ".tx-foot .show_more_txs", function(){
+            $(this).hide();
+            Blacknet.refreshMoreTxs();
+        });
 
 
 });
