@@ -178,13 +178,12 @@
                                 <td class="left" data-i18n="type">Type</td>
                                 <td class="left" data-i18n="account">Account</td>
                                 <td class="right" data-i18n="amount">Amount</td>
-                                <td class="left" data-i18n="message">Message</td>
-                                <td class="left" data-i18n="status">Status</td>
+                                <td class="left"></td>
                             </tr>
                         </thead>
                         <tbody id="tx-list">
                             <tr>
-                                <td colspan="6">
+                                <td colspan="5">
                                     <div class="spinner">
                                         <div class="rect1"></div>
                                         <div class="rect2"></div>
@@ -197,9 +196,14 @@
                             </tr>
                         </tbody>
                         <tfoot class="tx-foot">
-                            <tr>
-                                <td colspan="6" class="text-center">
-                                    <p><label data-i18n="No transactions yet">No transactions yet</label></p>
+                            <tr class="no_tx_yet">
+                                <td colspan="5" class="text-center">
+                                    <p><span data-i18n="No transactions yet">No transactions yet</span></p>
+                                </td>
+                            </tr>
+                            <tr class="show_more_txs">
+                                <td colspan="5" class="text-center">
+                                    <a href="#" class="full_transaction_history">Show Full Transaction History</a>
                                 </td>
                             </tr>
                         </tfoot>
@@ -345,10 +349,10 @@
                     <p>
                         Blacknet Version <span class='overview_version strong'></span>.<br/>
                         Copyright © 2018-2019 Blacknet Team.<br/>
-                        <label data-i18n="This software uses experimental cryptography.">This software uses experimental cryptography.</label><br/>
-                        <label data-i18n="Visit">Visit</label> <a href="https://blacknet.ninja" target="_blank">https://blacknet.ninja</a>
-                        <label data-i18n="for further information about the software.">for further information about the software.</label><br/>
-                        <label data-i18n="For licensing information see">For licensing information see</label> <a href="LICENSE.txt" target="_blank">LICENSE</a>
+                        <span data-i18n="This software uses experimental cryptography.">This software uses experimental cryptography.</span><br/>
+                        <span data-i18n="Visit">Visit</span> <a href="https://blacknet.ninja" target="_blank">https://blacknet.ninja</a>
+                        <span data-i18n="for further information about the software.">for further information about the software.</span><br/>
+                        <span data-i18n="For licensing information see">For licensing information see</span> <a href="LICENSE.txt" target="_blank">LICENSE</a>
                         and <a href="3RD-PARTY-LICENSES.txt" target="_blank">3RD-PARTY-LICENSES</a>.
                     </p>
                 </div>
@@ -505,11 +509,18 @@
             </div>
         </div>
         <div class="progress-stats-text"></div>
+
+        <div class="notification tx">
+            <p>Incoming Transaction</p>
+            <p>Date: <span class="time"></span></p>
+            <p>Amount: <span class="amount"></span>        Type: <span class="type"></span></p>
+        </div>  
         <footer></footer>
 
         <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
         <script type="text/javascript" src="js/bignumber.min.js"></script>
         <script type="text/javascript" src="js/common.js"></script>
+        <script type="text/javascript" src="js/tmpl.js"></script>
         <script type="text/javascript" src="js/i18n.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
     </body>

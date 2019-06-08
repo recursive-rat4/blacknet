@@ -65,6 +65,9 @@ header .network {
     line-height: 32px;
     font-size: 14px;
 }
+.network p{
+    line-height: 32px;
+}
 
 .strong {
     color: var(--gold-text);
@@ -303,6 +306,7 @@ tbody td, tfoot td {
     line-height: 24px;
     vertical-align: top;
 }
+
 .tx-foot tr{
     display: none;
 }
@@ -340,6 +344,24 @@ td.message p{
 .mask.init {
     background: #2A2A2A;
     opacity: 1;
+}
+
+.notification{
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 80;
+    border: 1px solid #575557;
+    background-color: #383638;
+    width: 400px;
+    font-size: 12px;
+    border-radius: 5px;
+    padding: 10px;
+    display: none;
+}
+.notification p{
+    color: #FFFFFF;
+    line-height: 1.6;
 }
 
 .dialog {
@@ -562,4 +584,29 @@ p{
 .about p{
     margin-bottom: 30px;
     line-height: 1.8;
+}
+dl dt{
+    width: 100px;
+}
+dl dd.current{
+    color: var(--gold-text);
+}
+
+dl dt, dl dd{
+    display: inline-block;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+tr.undis{
+    display: none;
+}
+
+#tx-list tr.preview{
+    cursor: pointer;
+}
+
+
+#tx-list tr.preview td.noborder{
+    border-bottom: none;
 }

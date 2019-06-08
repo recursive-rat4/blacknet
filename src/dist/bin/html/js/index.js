@@ -242,6 +242,8 @@ $(document).ready(function () {
 
         let result = await Blacknet.getPromise(`/addpeer/${ip}/${port}/true`);
 
+        await Blacknet.network();
+
         alert(`${ip} ${result}`);
         $('#ip_address').val('');
 
@@ -258,6 +260,7 @@ $(document).ready(function () {
                 let tx = JSON.parse(message.data);
     
                 Blacknet.renderTransaction(tx, true);
+                Blacknet.newTransactionNotify(tx);
             }
         };
 
@@ -285,8 +288,15 @@ $(document).ready(function () {
         .on("click", "#switch_account", switchAccount)
         .on("click", "#new_account", newAccount)
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
-        .on("click", "#new_account_next_step", newAccountNext);
-
+        .on("click", "#new_account_next_step", newAccountNext)
+        .on("click", "tr.preview", function(){
+            $(this).next().toggle();
+            $(this).hide();
+        })
+        .on("click", ".tx-foot .show_more_txs", function(){
+            $(this).hide();
+            Blacknet.refreshMoreTxs();
+        });
 
 
 });
