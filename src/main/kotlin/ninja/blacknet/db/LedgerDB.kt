@@ -20,6 +20,7 @@ import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.network.Network
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -84,6 +85,7 @@ object LedgerDB {
 
     private val blockSizes = ArrayDeque<Int>(PoS.BLOCK_SIZE_SPAN)
     const val DEFAULT_MAX_BLOCK_SIZE = 100000
+    const val MAX_BLOCK_SIZE = Int.MAX_VALUE - Network.RESERVED
     private var maxBlockSize: Int
 
     private fun loadGenesisState() {
@@ -356,7 +358,13 @@ object LedgerDB {
         val sizes = Array(PoS.BLOCK_SIZE_SPAN) { iterator.next() }
         sizes.sort()
         val median = sizes[PoS.BLOCK_SIZE_SPAN / 2]
-        return Math.max(DEFAULT_MAX_BLOCK_SIZE, median * 2)
+        val size = median * 2
+        if (size < 0 || size > MAX_BLOCK_SIZE)
+            return MAX_BLOCK_SIZE
+        else if (size < DEFAULT_MAX_BLOCK_SIZE)
+            return DEFAULT_MAX_BLOCK_SIZE
+        else
+            return size
     }
 
     internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): ArrayList<Hash>? {

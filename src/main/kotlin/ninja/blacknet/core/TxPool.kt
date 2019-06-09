@@ -11,6 +11,7 @@ package ninja.blacknet.core
 
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
@@ -32,7 +33,7 @@ object TxPool : MemPool(), Ledger {
 
     suspend fun fill(block: Block) = mutex.withLock {
         val poolSize = size()
-        var freeSize = LedgerDB.maxBlockSize() - 176
+        var freeSize = Math.min(LedgerDB.maxBlockSize(), Config.softBlockSizeLimit) - 176
         var i = 0
         while (freeSize > 0 && i < poolSize) {
             val hash = transactions.get(i)

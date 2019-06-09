@@ -11,6 +11,7 @@
 package ninja.blacknet
 
 import com.natpryce.konfig.*
+import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Network
 import java.io.File
 
@@ -37,6 +38,7 @@ object Config {
     val i2psamport by intType
     val dbcache by intType
     val mnemonics by listType(stringType)
+    val softblocksizelimit by intType
     val portable by booleanType
     val datadir by stringType
 
@@ -73,6 +75,13 @@ object Config {
             return get(apiserver.publicserver)
         return false
     }
+
+    val softBlockSizeLimit: Int = {
+        if (contains(softblocksizelimit))
+            get(softblocksizelimit)
+        else
+            LedgerDB.MAX_BLOCK_SIZE
+    }()
 
     val dataDir: String = {
         val dir = if (portable()) {
