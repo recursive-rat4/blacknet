@@ -105,25 +105,33 @@ object WalletDB {
     }
 
     private suspend fun broadcaster() {
-        while (true) {
-            delay(DELAY)
+        delay(Node.NETWORK_TIMEOUT)
 
+        while (true) {
             val inv = UnfilteredInvList()
 
             BlockDB.mutex.withLock {
                 wallets.forEach { (_, wallet) ->
+                    val unconfirmed = ArrayList<Triple<Hash, ByteArray, Transaction>>()
+
                     wallet.transactions.forEach { (hash, txData) ->
                         if (txData.height == 0) {
                             val bytes = getTransaction(hash)!!
                             val tx = Transaction.deserialize(bytes)!!
                             if (tx.type != TxType.Generated.type) {
-                                val status = TxPool.process(hash, bytes)
-                                if (status == DataDB.Status.ACCEPTED || status == DataDB.Status.ALREADY_HAVE) {
-                                    inv.add(Triple(DataType.Transaction, hash, tx.fee))
-                                } else {
-                                    logger.debug { "$status tx $hash" }
-                                }
+                                unconfirmed.add(Triple(hash, bytes, tx))
                             }
+                        }
+                    }
+
+                    unconfirmed.sortBy { (_, _, tx) -> tx.seq }
+
+                    unconfirmed.forEach { (hash, bytes, tx) ->
+                        val status = TxPool.process(hash, bytes)
+                        if (status == DataDB.Status.ACCEPTED || status == DataDB.Status.ALREADY_HAVE) {
+                            inv.add(Triple(DataType.Transaction, hash, tx.fee))
+                        } else {
+                            logger.debug { "$status tx $hash" }
                         }
                     }
                 }
@@ -133,6 +141,8 @@ object WalletDB {
                 logger.info("Broadcasting ${inv.size} transactions")
                 Node.broadcastInv(inv)
             }
+
+            delay(DELAY)
         }
     }
 
