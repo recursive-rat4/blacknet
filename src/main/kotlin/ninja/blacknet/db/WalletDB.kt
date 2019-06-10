@@ -367,7 +367,7 @@ object WalletDB {
 
     private suspend fun rescanBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
         if (height != 0) {
-            val block = BlockDB.block(hash)!!.first
+            val block = BlockDB.blockImpl(hash)!!.first
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
                 val tx = Transaction.deserialize(bytes.array)!!

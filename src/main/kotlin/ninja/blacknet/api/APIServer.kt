@@ -260,7 +260,7 @@ fun Application.APIServer() {
             do {
                 hash = index.next
                 index = LedgerDB.getChainIndex(hash)!!
-                val bytes = BlockDB.get(hash)!!
+                val bytes = BlockDB.getImpl(hash)!!
                 stream.writeInt(bytes.size)
                 stream.write(bytes, 0, bytes.size)
             } while (hash != checkpoint)

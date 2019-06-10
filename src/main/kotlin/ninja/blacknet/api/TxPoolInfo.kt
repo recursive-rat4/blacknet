@@ -9,6 +9,7 @@
 
 package ninja.blacknet.api
 
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.TxPool
 
@@ -19,9 +20,9 @@ class TxPoolInfo(
         val tx: List<String>
 ) {
     companion object {
-        suspend fun get(): TxPoolInfo {
-            val tx = TxPool.mapHashesToList { it.toString() }
-            return TxPoolInfo(TxPool.size(), TxPool.dataSize(), tx)
+        suspend fun get(): TxPoolInfo = TxPool.mutex.withLock {
+            val tx = TxPool.mapHashesToListImpl { it.toString() }
+            return TxPoolInfo(TxPool.sizeImpl(), TxPool.dataSizeImpl(), tx)
         }
     }
 }

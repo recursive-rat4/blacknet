@@ -152,7 +152,7 @@ object LedgerDB {
 
                     for (i in 0 until blockHashes.size) {
                         val hash = blockHashes[i]
-                        val (block, size) = BlockDB.block(hash)!!
+                        val (block, size) = BlockDB.blockImpl(hash)!!
                         val batch = LevelDB.createWriteBatch()
                         val txDb = Update(batch, hash, block.time, size, block.generator)
                         val txHashes = processBlockImpl(txDb, hash, block, size)
@@ -520,7 +520,7 @@ object LedgerDB {
         val toRemove = rollbackToImpl(hash, true)
 
         list.asReversed().forEach {
-            val block = BlockDB.block(it)
+            val block = BlockDB.blockImpl(it)
             if (block == null) {
                 logger.error("block not found")
                 return@withLock toRemove
@@ -665,11 +665,11 @@ object LedgerDB {
             return height
         }
 
-        override suspend fun get(key: PublicKey): AccountState? {
+        override fun get(key: PublicKey): AccountState? {
             return (accounts.get(key) ?: LedgerDB.get(key))
         }
 
-        override suspend fun set(key: PublicKey, state: AccountState) {
+        override fun set(key: PublicKey, state: AccountState) {
             accounts.set(key, state)
         }
 

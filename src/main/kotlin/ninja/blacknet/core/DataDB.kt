@@ -25,6 +25,10 @@ abstract class DataDB {
         rejects.clear()
     }
 
+    suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
+        return@withLock getImpl(hash)
+    }
+
     suspend fun isInteresting(hash: Hash): Boolean = mutex.withLock {
         return !rejects.contains(hash) && !containsImpl(hash)
     }
@@ -60,7 +64,7 @@ abstract class DataDB {
         return Pair(Status.ACCEPTED, fee)
     }
 
-    abstract suspend fun get(hash: Hash): ByteArray?
+    internal abstract suspend fun getImpl(hash: Hash): ByteArray?
     protected abstract suspend fun containsImpl(hash: Hash): Boolean
     protected abstract suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status
 
