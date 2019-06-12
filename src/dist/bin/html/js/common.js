@@ -318,6 +318,7 @@ void function () {
         }
 
         if (array.length > 0) {
+            Blacknet.subTransactions = array;
             showMore.show();
         }
     };
@@ -331,20 +332,18 @@ void function () {
         Blacknet.renderTransaction(tx);
     };
 
-    Blacknet.refreshMoreTxs = async function () {
+    Blacknet.showMoreTxs = async function () {
 
-        let data = await Blacknet.getPromise('/walletdb/getwallet/' + account, 'json');
-        let transactions = data.transactions;
-
+        let transactions = Blacknet.subTransactions;
         let node = $('.tx-item:last-child');
 
         time = +node[0].dataset.time || 0;
 
         while(transactions.length){
-
             let tx = transactions.shift();
+
             if(tx.time < time){ 
-                await Blacknet.processTransaction(Blacknet.subTransactions.shift());
+                await Blacknet.processTransaction(tx);
             }
         }
     };
