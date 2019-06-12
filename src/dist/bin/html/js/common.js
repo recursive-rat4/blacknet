@@ -424,7 +424,6 @@ void function () {
         if (tx.type == 0) {
             if (tx.from == account) {
                 type = "Sent to";
-                txaccount = tx.data.to;
             } else {
                 type = "Received from";
             }

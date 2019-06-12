@@ -15,13 +15,17 @@ Blacknet.template = {
             amount = tx.fee;
             txfee = '';
         }
-        if(tx.time * 1000 < Date.now() - 1000 * 10){
+        if (tx.type == 0 && tx.from == account) {
+            txaccount = tx.data.to;
+        }
+
+        if (tx.time * 1000 < Date.now() - 1000 * 10) {
             status = 'Confirmed';
-        }else{
+        } else {
             status = await Blacknet.getStatusText(tx.height, tx.hash);
         }
-        
-        
+
+
         amount = Blacknet.getFormatBalance(amount);
 
         tmpl =
@@ -44,11 +48,11 @@ Blacknet.template = {
                     </dl>
                     <dl>
                         <dt>From</dt>
-                        <dd class="${tx.from == account ? 'current': ''}">${tx.from}</dd>
+                        <dd class="${tx.from == account ? 'current' : ''}">${tx.from}</dd>
                     </dl>
                     <dl class="to">
                         <dt>To</dt>
-                        <dd class="${tx.data.to == account ? 'current': ''}">${tx.data.to || ''}</dd>
+                        <dd class="${tx.data.to == account ? 'current' : ''}">${tx.data.to || ''}</dd>
                     </dl>
                     <dl>
                         <dt>Type</dt>
@@ -99,15 +103,15 @@ Blacknet.template = {
         }
 
         if (!message) node.find('.msg_text').hide();
-        if (tx.type == 254){
+        if (tx.type == 254) {
             node.find('.sign_text,.to,.fee').hide();
         }
         return node;
     },
 
-    peer: function(peer, index) {
+    peer: function (peer, index) {
 
-        let tmpl = 
+        let tmpl =
             `<tr>
                 <td>${index + 1}</td>
                 <td class="right">${peer.remoteAddress}</td>
@@ -117,7 +121,7 @@ Blacknet.template = {
                 <td class="narrow">${peer.totalBytesRead}</td>
                 <td class="narrow">${peer.totalBytesWritten}</td>
             </tr>`;
-    
+
         $(tmpl).appendTo("#peer-list");
     },
 
@@ -131,7 +135,7 @@ Blacknet.template = {
                     <td class="txns narrow">${block.txns}</td>
                     <td class="generator">${block.generator}</td></tr>`;
 
-        
+
         $(tmpl)[op](blockListEl);
 
         let rowsCount = blockListEl[0].childNodes.length;
