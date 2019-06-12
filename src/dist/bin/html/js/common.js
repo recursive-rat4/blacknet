@@ -316,6 +316,10 @@ void function () {
 
             await Blacknet.processTransaction(array.shift())
         }
+
+        if (array.length > 0) {
+            showMore.show();
+        }
     };
 
     Blacknet.processTransaction = async function(data){
