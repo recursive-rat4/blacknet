@@ -316,11 +316,6 @@ void function () {
 
             await Blacknet.processTransaction(array.shift())
         }
-
-        if (array.length > 0) {
-            Blacknet.subTransactions = array;
-            showMore.show();
-        }
     };
 
     Blacknet.processTransaction = async function(data){
@@ -333,8 +328,20 @@ void function () {
     };
 
     Blacknet.refreshMoreTxs = async function () {
-        while(Blacknet.subTransactions.length){
-            await Blacknet.processTransaction(Blacknet.subTransactions.shift());
+
+        let data = await Blacknet.getPromise('/walletdb/getwallet/' + account, 'json');
+        let transactions = data.transactions;
+
+        let node = $('.tx-item:last-child');
+
+        time = +node[0].dataset.time || 0;
+
+        while(transactions.length){
+
+            let tx = transactions.shift();
+            if(tx.time < time){ 
+                await Blacknet.processTransaction(Blacknet.subTransactions.shift());
+            }
         }
     };
 

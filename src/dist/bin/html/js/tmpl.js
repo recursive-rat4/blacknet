@@ -32,7 +32,7 @@ Blacknet.template = {
                 <td class="right"><span class="strong">${amount}</span></td>
                 <td class="left status" data-height="${tx.height}">${status}</td>
             </tr>
-            <tr class="undis" data-hash="${tx.hash}"  data-height="${tx.height}">
+            <tr class="undis tx-item" data-time="${tx.time}" data-hash="${tx.hash}"  data-height="${tx.height}">
                 <td colspan="5">
                     <dl>
                         <dt>Time</dt>
