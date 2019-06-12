@@ -15,8 +15,13 @@ Blacknet.template = {
             amount = tx.fee;
             txfee = '';
         }
+        if(tx.time * 1000 < Date.now() - 1000 * 10){
+            status = 'Confirmed';
+        }else{
+            status = await Blacknet.getStatusText(tx.height, tx.hash);
+        }
         
-        status = await Blacknet.getStatusText(tx.height, tx.hash);
+        
         amount = Blacknet.getFormatBalance(amount);
 
         tmpl =

@@ -16,7 +16,8 @@ void function () {
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
     const account = localStorage.account;
     const dialogAccount = $('.dialog.account');
-
+    const notificationNode = $('.notification.tx').first();
+    const txList =  $('#tx-list');
 
     Blacknet.init = async function () {
 
@@ -309,7 +310,7 @@ void function () {
 
         txProgress.hide();
 
-        $('#tx-list').html('');
+        txList.html('');
 
         while (array.length && defaultTxAmount-- > 0) {
 
@@ -368,7 +369,7 @@ void function () {
 
     Blacknet.renderTransaction = async function (tx, prepend) {
 
-        let node = $('#tx-list').find('.txhash' + tx.hash);
+        let node = txList.find('.txhash' + tx.hash);
         if (typeof tx.height == 'undefined') {
             tx.height = 0;
         }
@@ -381,7 +382,7 @@ void function () {
 
         node = await Blacknet.template.transaction(tx, account);
 
-        prepend ? node.prependTo('#tx-list') : node.appendTo('#tx-list');
+        prepend ? node.prependTo(txList) : node.appendTo(txList);
     };
 
     Blacknet.getStatusText = async function (height, hash) {
@@ -428,9 +429,13 @@ void function () {
 
     Blacknet.newTransactionNotify = function(tx){
 
-        let notification = $('.notification.tx').clone();
+        let notification = notificationNode.clone();
         let time = Blacknet.unix_to_local_time(tx.time);
         let type = Blacknet.getTxType(tx), amount = Blacknet.getFormatBalance(tx.data.amount);;
+
+        if(type == 'Generated'){
+            amount = Blacknet.getFormatBalance(tx.fee);
+        }
 
         notification.find('.time').text(time);
         notification.find('.type').text(type);
@@ -438,7 +443,9 @@ void function () {
 
         notification.appendTo('body').show();
 
-        notification.delay(2000).animate({top: "-100px", opacity: 0}, 1000);
+        notification.delay(2000).animate({top: "-100px", opacity: 0}, 1000, function(){
+            notification.remove();
+        });
     };
     Blacknet.renderTxStatus = async function(index, el){
 

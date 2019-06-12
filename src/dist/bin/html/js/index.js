@@ -260,7 +260,9 @@ $(document).ready(function () {
                 let tx = JSON.parse(message.data);
     
                 Blacknet.renderTransaction(tx, true);
-                Blacknet.newTransactionNotify(tx);
+                // if(tx.time * 1000 > Date.now() - 1000*60){
+                    Blacknet.newTransactionNotify(tx);
+                // }
             }
         };
 
