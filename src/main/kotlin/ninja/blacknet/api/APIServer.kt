@@ -456,6 +456,20 @@ fun Application.APIServer() {
             }
         }
 
+        get("/api/v1/disconnectpeer/{address}/{port?}/{force?}") {
+            val port = call.parameters["port"]?.toIntOrNull() ?: Node.DEFAULT_P2P_PORT
+            val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
+            val force = call.parameters["force"]?.toBoolean() ?: false
+
+            val connection = Node.connections.find { it.remoteAddress == address }
+            if (connection != null) {
+                connection.close(force)
+                call.respond("Disconnected")
+            } else {
+                call.respond("Not connected to ${address}")
+            }
+        }
+
         post("/api/v1/staker/start/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
