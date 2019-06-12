@@ -203,7 +203,7 @@
                             </tr>
                             <tr class="show_more_txs">
                                 <td colspan="5" class="text-center">
-                                    <a href="#" class="full_transaction_history">Show Full Transaction History</a>
+                                    <a href="#" class="full_transaction_history" data-i18n="Show Full Transaction History">Show Full Transaction History</a>
                                 </td>
                             </tr>
                         </tfoot>
@@ -238,7 +238,7 @@
                                 <span data-i18n="fee">Fee</span>
                                 <strong>(BLN)</strong>
                             </label>
-                            <input type="text" id="transfer_fee" readonly value='0.001'>
+                            <input type="text" id="transfer_fee" value='0.001'>
                         </div>
                         <div class="field-row">
                             <label data-i18n="result">Result</label>
@@ -376,7 +376,7 @@
                                 <span data-i18n="fee">Fee</span>
                                 <strong>(BLN)</strong>
                             </label>
-                            <input type="text" id="lease_fee" readonly value='0.001'>
+                            <input type="text" id="lease_fee" value='0.001'>
                         </div>
                         <div class="field-row">
                             <label data-i18n="result">Result</label>
@@ -407,9 +407,11 @@
                             <select name="account" id="cancel_lease_height"></select>
                         </div>
                         <div class="field-row">
-                            <label data-i18n="fee">Fee <strong>(BLN)</strong>
+                        		<label>
+                            		<span data-i18n="fee">Fee</span>
+                             		<strong>(BLN)</strong>
                             </label>
-                            <input type="text" id="cancel_lease_fee" readonly value='0.001'>
+                            <input type="text" id="cancel_lease_fee" value='0.001'>
                         </div>
                         <div class="field-row">
                             <label data-i18n="result">Result</label>
