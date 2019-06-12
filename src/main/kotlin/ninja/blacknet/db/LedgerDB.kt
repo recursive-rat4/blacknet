@@ -14,14 +14,18 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.list
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.network.Network
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.util.buffered
+import ninja.blacknet.util.data
 import ninja.blacknet.util.startsWith
 import java.io.File
 import java.util.ArrayDeque
@@ -81,6 +85,7 @@ object LedgerDB {
 
     private val blockSizes = ArrayDeque<Int>(PoS.BLOCK_SIZE_SPAN)
     const val DEFAULT_MAX_BLOCK_SIZE = 100000
+    const val MAX_BLOCK_SIZE = Int.MAX_VALUE - Network.RESERVED
     private var maxBlockSize: Int
 
     private fun loadGenesisState() {
@@ -147,7 +152,7 @@ object LedgerDB {
 
                     for (i in 0 until blockHashes.size) {
                         val hash = blockHashes[i]
-                        val (block, size) = BlockDB.block(hash)!!
+                        val (block, size) = BlockDB.blockImpl(hash)!!
                         val batch = LevelDB.createWriteBatch()
                         val txDb = Update(batch, hash, block.time, size, block.generator)
                         val txHashes = processBlockImpl(txDb, hash, block, size)
@@ -163,9 +168,45 @@ object LedgerDB {
             } else {
                 throw RuntimeException("Unknown database version $version")
             }
-
         } else {
             loadGenesisState()
+        }
+
+        val bootstrap = File(Config.dataDir + "/bootstrap.dat")
+        if (bootstrap.exists()) {
+            runBlocking {
+                logger.info("Found bootstrap")
+                var n = 0
+
+                val stream = bootstrap.inputStream().buffered().data()
+                try {
+                    while (true) {
+                        val size = stream.readInt()
+                        val bytes = ByteArray(size)
+                        stream.readFully(bytes)
+
+                        val hash = Block.Hasher(bytes)
+                        val status = BlockDB.process(hash, bytes)
+                        if (status == DataDB.Status.ACCEPTED) {
+                            n++
+                            prune()
+                        } else if (status != DataDB.Status.ALREADY_HAVE) {
+                            logger.info("$status block $hash")
+                            break
+                        }
+                    }
+                } catch (e: Throwable) {
+                    logger.debug { e }
+                } finally {
+                    stream.close()
+                }
+
+                val f = File(Config.dataDir + "/bootstrap.dat.old")
+                f.delete()
+                bootstrap.renameTo(f)
+
+                logger.info("Imported $n blocks")
+            }
         }
     }
 
@@ -317,7 +358,13 @@ object LedgerDB {
         val sizes = Array(PoS.BLOCK_SIZE_SPAN) { iterator.next() }
         sizes.sort()
         val median = sizes[PoS.BLOCK_SIZE_SPAN / 2]
-        return Math.max(DEFAULT_MAX_BLOCK_SIZE, median * 2)
+        val size = median * 2
+        if (size < 0 || size > MAX_BLOCK_SIZE)
+            return MAX_BLOCK_SIZE
+        else if (size < DEFAULT_MAX_BLOCK_SIZE)
+            return DEFAULT_MAX_BLOCK_SIZE
+        else
+            return size
     }
 
     internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): ArrayList<Hash>? {
@@ -473,7 +520,7 @@ object LedgerDB {
         val toRemove = rollbackToImpl(hash, true)
 
         list.asReversed().forEach {
-            val block = BlockDB.block(it)
+            val block = BlockDB.blockImpl(it)
             if (block == null) {
                 logger.error("block not found")
                 return@withLock toRemove
@@ -618,11 +665,11 @@ object LedgerDB {
             return height
         }
 
-        override suspend fun get(key: PublicKey): AccountState? {
+        override fun get(key: PublicKey): AccountState? {
             return (accounts.get(key) ?: LedgerDB.get(key))
         }
 
-        override suspend fun set(key: PublicKey, state: AccountState) {
+        override fun set(key: PublicKey, state: AccountState) {
             accounts.set(key, state)
         }
 

@@ -23,8 +23,8 @@ interface Ledger {
     fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long
     fun height(): Int
-    suspend fun get(key: PublicKey): AccountState?
-    suspend fun set(key: PublicKey, state: AccountState)
+    fun get(key: PublicKey): AccountState?
+    fun set(key: PublicKey, state: AccountState)
     fun addHTLC(id: Hash, htlc: HTLC)
     fun getHTLC(id: Hash): HTLC?
     fun removeHTLC(id: Hash)

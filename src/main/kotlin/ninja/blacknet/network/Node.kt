@@ -150,11 +150,11 @@ object Node : CoroutineScope {
     }
 
     fun getMaxPacketSize(): Int {
-        return LedgerDB.maxBlockSize() + 100
+        return LedgerDB.maxBlockSize() + Network.RESERVED
     }
 
     fun getMinPacketSize(): Int {
-        return LedgerDB.DEFAULT_MAX_BLOCK_SIZE + 100
+        return LedgerDB.DEFAULT_MAX_BLOCK_SIZE + Network.RESERVED
     }
 
     fun isInitialSynchronization(): Boolean {

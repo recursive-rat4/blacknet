@@ -24,8 +24,12 @@ private val logger = KotlinLogging.logger {}
 object BlockDB : DataDB() {
     private val BLOCK_KEY = "block".toByteArray()
 
-    suspend fun block(hash: Hash): Pair<Block, Int>? {
-        val bytes = get(hash) ?: return null
+    suspend fun block(hash: Hash): Pair<Block, Int>? = mutex.withLock {
+        return@withLock blockImpl(hash)
+    }
+
+    suspend fun blockImpl(hash: Hash): Pair<Block, Int>? {
+        val bytes = getImpl(hash) ?: return null
         val block = Block.deserialize(bytes)
         if (block == null) {
             logger.error("$hash deserialization failed")
@@ -46,7 +50,7 @@ object BlockDB : DataDB() {
         return LedgerDB.chainContains(hash)
     }
 
-    override suspend fun get(hash: Hash): ByteArray? {
+    override suspend fun getImpl(hash: Hash): ByteArray? {
         return LevelDB.get(BLOCK_KEY, hash.bytes)
     }
 

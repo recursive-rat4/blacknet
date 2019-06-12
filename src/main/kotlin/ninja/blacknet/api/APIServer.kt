@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.list
+import ninja.blacknet.Config
 import ninja.blacknet.api.v1.BlockInfoV1
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -46,6 +47,9 @@ import ninja.blacknet.serialization.toHex
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
+import ninja.blacknet.util.buffered
+import ninja.blacknet.util.data
+import java.io.File
 
 object APIServer {
     internal val txMutex = Mutex()
@@ -241,6 +245,29 @@ fun Application.APIServer() {
                 call.respond(Json.stringify(ChainIndex.serializer(), result))
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
+        }
+
+        get("/api/v1/blockdb/makebootstrap") {
+            val checkpoint = LedgerDB.rollingCheckpoint()
+            if (checkpoint == Hash.ZERO)
+                return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
+
+            val file = File(Config.dataDir + "/bootstrap.dat.new")
+            val stream = file.outputStream().buffered().data()
+
+            var hash = Hash.ZERO
+            var index = LedgerDB.getChainIndex(hash)!!
+            do {
+                hash = index.next
+                index = LedgerDB.getChainIndex(hash)!!
+                val bytes = BlockDB.getImpl(hash)!!
+                stream.writeInt(bytes.size)
+                stream.write(bytes, 0, bytes.size)
+            } while (hash != checkpoint)
+
+            stream.close()
+
+            call.respond(file.absolutePath)
         }
 
         get("/api/v1/ledger") {

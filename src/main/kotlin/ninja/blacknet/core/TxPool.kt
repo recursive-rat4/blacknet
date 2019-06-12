@@ -11,6 +11,7 @@ package ninja.blacknet.core
 
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
@@ -19,25 +20,25 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.util.SynchronizedArrayList
-import ninja.blacknet.util.SynchronizedHashMap
 
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
     internal const val INVALID = -1L
     internal const val IN_FUTURE = -2L
-    private val accounts = SynchronizedHashMap<PublicKey, AccountState>()
-    private val transactions = SynchronizedArrayList<Hash>()
+    private val accounts = HashMap<PublicKey, AccountState>()
+    private val htlcs = HashMap<Hash, HTLC?>()
+    private val multisigs = HashMap<Hash, Multisig?>()
+    private val transactions = ArrayList<Hash>()
 
     suspend fun fill(block: Block) = mutex.withLock {
-        val poolSize = size()
-        var freeSize = LedgerDB.maxBlockSize() - 176
+        val poolSize = sizeImpl()
+        var freeSize = Math.min(LedgerDB.maxBlockSize(), Config.softBlockSizeLimit) - 176
         var i = 0
         while (freeSize > 0 && i < poolSize) {
             val hash = transactions.get(i)
             i++
-            val bytes = get(hash)
+            val bytes = getImpl(hash)
             if (bytes == null) {
                 logger.error("inconsistent mempool")
                 continue
@@ -50,7 +51,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    suspend fun getSequence(key: PublicKey): Int {
+    suspend fun getSequence(key: PublicKey): Int = mutex.withLock {
         val account = accounts.get(key)
         if (account != null)
             return account.seq
@@ -65,15 +66,51 @@ object TxPool : MemPool(), Ledger {
         return amount >= Node.minTxFee * (1 + size / 1000)
     }
 
-    override suspend fun get(key: PublicKey): AccountState? {
+    override fun blockTime(): Long {
+        return LedgerDB.blockTime()
+    }
+
+    override fun height(): Int {
+        return LedgerDB.height()
+    }
+
+    override fun get(key: PublicKey): AccountState? {
         val account = accounts.get(key)
         if (account != null)
             return account
         return LedgerDB.get(key)
     }
 
-    override suspend fun set(key: PublicKey, state: AccountState) {
+    override fun set(key: PublicKey, state: AccountState) {
         accounts.put(key, state)
+    }
+
+    override fun addHTLC(id: Hash, htlc: HTLC) {
+        htlcs.put(id, htlc)
+    }
+
+    override fun getHTLC(id: Hash): HTLC? {
+        if (!htlcs.containsKey(id))
+            return LedgerDB.getHTLC(id)
+        return htlcs.get(id)
+    }
+
+    override fun removeHTLC(id: Hash) {
+        htlcs.put(id, null)
+    }
+
+    override fun addMultisig(id: Hash, multisig: Multisig) {
+        multisigs.put(id, multisig)
+    }
+
+    override fun getMultisig(id: Hash): Multisig? {
+        if (!multisigs.containsKey(id))
+            return LedgerDB.getMultisig(id)
+        return multisigs.get(id)
+    }
+
+    override fun removeMultisig(id: Hash) {
+        multisigs.put(id, null)
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
@@ -84,7 +121,7 @@ object TxPool : MemPool(), Ledger {
         }
         val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
         if (status == Status.ACCEPTED) {
-            add(hash, bytes)
+            addImpl(hash, bytes)
             transactions.add(hash)
         }
         return status
@@ -98,7 +135,7 @@ object TxPool : MemPool(), Ledger {
         }
         val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
         if (status == Status.ACCEPTED) {
-            add(hash, bytes)
+            addImpl(hash, bytes)
             transactions.add(hash)
             val currTime = connection?.lastPacketTime ?: Node.time()
             connection?.lastTxTime = currTime
@@ -122,11 +159,13 @@ object TxPool : MemPool(), Ledger {
         if (hashes.isEmpty() || transactions.isEmpty())
             return
 
-        val txs = transactions.copy()
-        val map = copy()
+        val txs = ArrayList(transactions)
+        val map = copyImpl()
         accounts.clear()
+        htlcs.clear()
+        multisigs.clear()
         transactions.clear()
-        clear()
+        clearImpl()
         for (hash in txs)
             if (!hashes.contains(hash))
                 processImpl(hash, map[hash]!!, null)
@@ -134,12 +173,4 @@ object TxPool : MemPool(), Ledger {
 
     override fun addSupply(amount: Long) {}
     override fun addUndo(hash: Hash, undo: UndoBlock) {}
-    override fun blockTime() = -1L
-    override fun height() = -1
-    override fun addHTLC(id: Hash, htlc: HTLC) {}
-    override fun getHTLC(id: Hash): HTLC? = null
-    override fun removeHTLC(id: Hash) {}
-    override fun addMultisig(id: Hash, multisig: Multisig) {}
-    override fun getMultisig(id: Hash): Multisig? = null
-    override fun removeMultisig(id: Hash) {}
 }
