@@ -53,10 +53,9 @@ class GetBlocks(
             return
         }
 
+        var size = PACKET_HEADER_SIZE + 2 + 1
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = ArrayList<SerializableByteArray>()
-
-        var size = 8
 
         while (true) {
             val hash = chainIndex!!.next

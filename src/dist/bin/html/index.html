@@ -203,7 +203,7 @@
                             </tr>
                             <tr class="show_more_txs">
                                 <td colspan="5" class="text-center">
-                                    <a href="#" class="full_transaction_history">Show Full Transaction History</a>
+                                    <a href="#" class="full_transaction_history" data-i18n="Show Full Transaction History">Show Full Transaction History</a>
                                 </td>
                             </tr>
                         </tfoot>
@@ -407,7 +407,9 @@
                             <select name="account" id="cancel_lease_height"></select>
                         </div>
                         <div class="field-row">
-                            <label data-i18n="fee">Fee <strong>(BLN)</strong>
+                        		<label>
+                            		<span data-i18n="fee">Fee</span>
+                             		<strong>(BLN)</strong>
                             </label>
                             <input type="text" id="cancel_lease_fee" value='0.001'>
                         </div>
@@ -517,7 +519,7 @@
         </div>  
         <footer></footer>
 
-        <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+        <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
         <script type="text/javascript" src="js/bignumber.min.js"></script>
         <script type="text/javascript" src="js/common.js"></script>
         <script type="text/javascript" src="js/tmpl.js"></script>

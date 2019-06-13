@@ -27,6 +27,8 @@ class GetData(private val list: InvList) : Packet {
             return
         }
 
+        var size = PACKET_HEADER_SIZE + 2
+        val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = DataList()
 
         for (i in list) {
@@ -34,7 +36,25 @@ class GetData(private val list: InvList) : Packet {
             val hash = i.second
 
             val value = type.db.get(hash) ?: continue
-            response.add(Pair(type, SerializableByteArray(value)))
+            val newSize = size + value.size + 4
+
+            if (response.isEmpty()) {
+                response.add(Pair(type, SerializableByteArray(value)))
+                size = newSize
+                if (size > maxSize) {
+                    connection.sendPacket(Data(response))
+                    response.clear()
+                    size = PACKET_HEADER_SIZE + 2
+                }
+            } else {
+                if (newSize > maxSize) {
+                    connection.sendPacket(Data(response))
+                    response.clear()
+                    size = PACKET_HEADER_SIZE + 2
+                }
+                response.add(Pair(type, SerializableByteArray(value)))
+                size += value.size + 4
+            }
         }
 
         if (response.size == 0)
