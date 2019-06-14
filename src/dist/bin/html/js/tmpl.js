@@ -25,11 +25,10 @@ Blacknet.template = {
             status = await Blacknet.getStatusText(tx.height, tx.hash);
         }
 
-
         amount = Blacknet.getFormatBalance(amount);
 
         tmpl =
-            `<tr class="preview txhash${tx.hash}" data-hash="${tx.hash}"  data-height="${tx.height}">
+            `<tr class="preview txhash${tx.hash}" data-hash="${tx.height}${tx.time}"  data-height="${tx.height}">
                 <td class="narrow">${Blacknet.unix_to_local_time(tx.time)}</td>
                 <td class="narrow">${type}</td>
                 <td class="left">${txaccount}</td>
