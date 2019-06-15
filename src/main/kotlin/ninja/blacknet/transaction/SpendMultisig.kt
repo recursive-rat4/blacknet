@@ -11,7 +11,8 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -19,7 +20,6 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
-import ninja.blacknet.serialization.toHex
 
 private val logger = KotlinLogging.logger {}
 
@@ -118,20 +118,16 @@ class SpendMultisig(
             val signatures: JsonArray
     ) {
         constructor(data: SpendMultisig) : this(
-                data.id.bytes.toHex(),
-                jsonArray {
-                    data.amounts.forEach {
-                        it.toString()
+                data.id.toString(),
+                JsonArray(data.amounts.map { amount ->
+                    JsonPrimitive(amount.toString())
+                }),
+                JsonArray(data.signatures.map { (i, signature) ->
+                    json {
+                        "i" to i.toUByte().toInt()
+                        "signature" to signature.toString()
                     }
-                },
-                jsonArray {
-                    data.signatures.forEach {
-                        SignatureInfo(it.first.toUByte().toInt(), it.second.toString())
-                    }
-                }
+                })
         )
     }
-
-    @Serializable
-    class SignatureInfo(val i: Int, val signature: String)
 }

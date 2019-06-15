@@ -11,10 +11,11 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.json
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
@@ -108,21 +109,31 @@ class CreateMultisig(
         return true
     }
 
+    companion object {
+        fun deserialize(bytes: ByteArray): CreateMultisig? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+    }
+
     @Suppress("unused")
     @Serializable
     class Info(
             val n: Int,
             val deposits: JsonArray,
-            val signatures: ArrayList<Pair<Byte, Signature>>
+            val signatures: JsonArray
     ) {
         constructor(data: CreateMultisig) : this(
                 data.n.toUByte().toInt(),
-                jsonArray {
-                    data.deposits.forEach {
-                        Pair(Address.encode(it.first), it.second.toString())
+                JsonArray(data.deposits.map { (publicKey, amount) ->
+                    json {
+                        "from" to Address.encode(publicKey)
+                        "amount" to amount.toString()
                     }
-                },
-                data.signatures
+                }),
+                JsonArray(data.signatures.map { (i, signature) ->
+                    json {
+                        "i" to i.toUByte().toInt()
+                        "signature" to signature.toString()
+                    }
+                })
         )
     }
 }
