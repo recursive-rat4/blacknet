@@ -12,7 +12,7 @@ package ninja.blacknet.network
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
 
-const val PACKET_HEADER_SIZE = 4 + 4
+const val PACKET_HEADER_SIZE = 4
 
 interface Packet {
     fun serialize(): ByteReadPacket
