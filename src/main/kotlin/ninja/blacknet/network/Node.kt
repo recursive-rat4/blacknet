@@ -13,8 +13,6 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -41,61 +39,37 @@ import ninja.blacknet.util.delay
 import java.math.BigDecimal
 import java.net.InetSocketAddress
 import java.time.Instant
-import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
-object Node : CoroutineScope {
+object Node {
     const val DEFAULT_P2P_PORT = 28453
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
     const val version = 9
     const val minVersion = 5
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
-    private val shutdownHooks = SynchronizedArrayList<suspend () -> Unit>()
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
     var minTxFee = parseAmount(Config[mintxfee])
 
     init {
-        Runtime.getRuntime().addShutdownHook(Thread {
-            runBlocking {
-                shutdownHooks.reversedForEach {
-                    it()
-                }
-            }
-        })
-
-        logger.info("${Runtime.getRuntime().availableProcessors()} CPU available")
-
         if (Config[listen]) {
             try {
                 Node.listenOnIP()
                 if (Config[upnp])
-                    launch { UPnP.forward() }
+                    Runtime.launch { UPnP.forward() }
             } catch (e: Throwable) {
             }
         }
-        launch { listenOnTor() }
-        launch { listenOnI2P() }
-        launch { connector() }
-        launch { pinger() }
-        launch { peerAnnouncer() }
-        launch { dnsSeeder(true) }
-        launch { inventoryBroadcaster() }
-    }
-
-    /**
-     * Registers a new shutdown hook.
-     *
-     * All registered shutdown hooks will be run sequentially in the reversed order.
-     */
-    fun addShutdownHook(hook: suspend () -> Unit) {
-        runBlocking {
-            shutdownHooks.add(hook)
-        }
+        Runtime.launch { listenOnTor() }
+        Runtime.launch { listenOnI2P() }
+        Runtime.launch { connector() }
+        Runtime.launch { pinger() }
+        Runtime.launch { peerAnnouncer() }
+        Runtime.launch { dnsSeeder(true) }
+        Runtime.launch { inventoryBroadcaster() }
     }
 
     fun time(): Long {
@@ -168,7 +142,7 @@ object Node : CoroutineScope {
         }
         val server = aSocket(Network.selector).tcp().bind(addr)
         logger.info("Listening on $address")
-        launch {
+        Runtime.launch {
             listenAddress.add(address)
             listener(server)
         }
@@ -205,7 +179,7 @@ object Node : CoroutineScope {
         val connection = Network.connect(address)
         connections.add(connection)
         sendVersion(connection, nonce)
-        connection.launch(this)
+        connection.launch()
     }
 
     fun sendVersion(connection: Connection, nonce: Long) {
@@ -314,7 +288,7 @@ object Node : CoroutineScope {
             return
         }
         connections.add(connection)
-        connection.launch(this)
+        connection.launch()
     }
 
     private suspend fun haveSlot(): Boolean {
@@ -368,7 +342,7 @@ object Node : CoroutineScope {
 
             addresses.forEach {
                 val address = it
-                Node.launch {
+                Runtime.launch {
                     try {
                         connectTo(address)
                     } catch (e: Throwable) {

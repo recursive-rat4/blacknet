@@ -19,6 +19,7 @@ import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.delay
@@ -120,7 +121,7 @@ object PoS {
 
         stakers.list.add(pair)
         if (stakers.list.size == 1)
-            job = Node.launch { miner() }
+            job = Runtime.launch { miner() }
         return true
     }
 

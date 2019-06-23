@@ -18,6 +18,7 @@ import kotlinx.serialization.internal.HashMapSerializer
 import mu.KotlinLogging
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.util.SynchronizedHashMap
@@ -47,8 +48,8 @@ object PeerDB {
             logger.info("Loaded ${map.size()} peer addresses")
         }
 
-        Node.addShutdownHook { commit(true) }
-        Node.launch { oldEntriesRemover() }
+        Runtime.addShutdownHook { commit(true) }
+        Runtime.launch { oldEntriesRemover() }
     }
 
     suspend fun size(): Int {

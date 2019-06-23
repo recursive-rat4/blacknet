@@ -42,7 +42,7 @@ object ChainFetcher {
     private var undoRollback: ArrayList<Hash>? = null
 
     init {
-        Node.launch { fetcher() }
+        Runtime.launch { fetcher() }
     }
 
     fun isConnectingBlocks(): Boolean {
@@ -240,7 +240,7 @@ object ChainFetcher {
     }
 
     private fun requestBlocks(connection: Connection, hash: Hash, checkpoint: Hash) {
-        request = Node.async { recvChannel.receive() }
+        request = Runtime.async { recvChannel.receive() }
         connection.sendPacket(GetBlocks(hash, checkpoint))
     }
 

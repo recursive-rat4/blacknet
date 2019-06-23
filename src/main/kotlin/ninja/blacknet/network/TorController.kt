@@ -57,7 +57,7 @@ object TorController {
 
         val address = Address(Network.TORv2, Config[Config.port], bytes)
 
-        Node.launch {
+        Runtime.launch {
             thread.join()
             Node.listenAddress.remove(address)
             logger.info("lost connection to tor controller")

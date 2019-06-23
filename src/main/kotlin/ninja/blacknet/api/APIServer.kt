@@ -41,6 +41,7 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.serialization.toHex
@@ -60,7 +61,7 @@ object APIServer {
 
     suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) = blockNotify.mutex.withLock {
         blockNotifyV1.forEach {
-            Node.launch {
+            Runtime.launch {
                 try {
                     it.send(Frame.Text(hash.toString()))
                 } finally {
@@ -73,7 +74,7 @@ object APIServer {
         val notification = BlockNotification(block, hash, height, size)
         val message = Json.stringify(BlockNotification.serializer(), notification)
         blockNotify.list.forEach {
-            Node.launch {
+            Runtime.launch {
                 try {
                     it.send(Frame.Text(message))
                 } finally {
@@ -88,7 +89,7 @@ object APIServer {
         val notification = TransactionNotification(tx, hash, time, size)
         val message = Json.stringify(TransactionNotification.serializer(), notification)
         transactionNotify.map.forEach {
-            Node.launch {
+            Runtime.launch {
                 try {
                     if (it.value.contains(publicKey))
                         it.key.send(Frame.Text(message))

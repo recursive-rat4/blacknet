@@ -23,6 +23,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.Mnemonic
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.network.UnfilteredInvList
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -101,7 +102,7 @@ object WalletDB {
             }
         }
 
-        Node.launch { broadcaster() }
+        Runtime.launch { broadcaster() }
     }
 
     private suspend fun broadcaster() {

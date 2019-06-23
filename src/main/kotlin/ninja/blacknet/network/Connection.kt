@@ -66,9 +66,9 @@ class Connection(
     var feeFilter: Long = 0
     var timeOffset: Long = 0
 
-    fun launch(scope: CoroutineScope) {
-        scope.launch { receiver() }
-        scope.launch { sender() }
+    fun launch() {
+        Runtime.launch { receiver() }
+        Runtime.launch { sender() }
     }
 
     private suspend fun receiver() {
@@ -193,7 +193,7 @@ class Connection(
                 sendChannel.cancel()
             else
                 sendChannel.close()
-            Node.launch {
+            Runtime.launch {
                 ChainFetcher.disconnected(this@Connection)
                 Node.connections.remove(this@Connection)
             }

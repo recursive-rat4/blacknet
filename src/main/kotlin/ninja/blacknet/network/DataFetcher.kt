@@ -21,8 +21,8 @@ object DataFetcher {
     private val requested = SynchronizedHashMap<Hash, Long>()
 
     init {
-        Node.launch { fetcher() }
-        Node.launch { watchdog() }
+        Runtime.launch { fetcher() }
+        Runtime.launch { watchdog() }
     }
 
     fun offer(from: Connection, list: InvList) {
