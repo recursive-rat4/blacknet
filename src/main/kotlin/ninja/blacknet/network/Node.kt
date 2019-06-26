@@ -14,7 +14,7 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
@@ -81,7 +81,7 @@ object Node {
     }
 
     fun isTooFarInFuture(time: Long): Boolean {
-        return time > Node.time() + 15
+        return time > Node.time() + PoS.MAX_FUTURE_DRIFT
     }
 
     suspend fun outgoing(): Int {
@@ -249,6 +249,21 @@ object Node {
                 }
             }
         }
+    }
+
+    suspend fun warnings(): List<String> {
+        connections.mutex.withLock {
+            val size = connections.list.size
+            if (size >= 5) {
+                val offsets = Array(size) { connections.list[it].timeOffset }
+                offsets.sort()
+                val median = offsets[size / 2]
+                if (median > PoS.MAX_FUTURE_DRIFT || median < -PoS.MAX_FUTURE_DRIFT)
+                    return listOf("Please check your system clock. Many peers report different time.")
+            }
+        }
+
+        return emptyList()
     }
 
     private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }) {

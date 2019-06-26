@@ -10,6 +10,8 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.db.BlockDB
+import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Bip14
 import ninja.blacknet.network.Node
 
@@ -20,18 +22,21 @@ class NodeInfo(
         val protocolVersion: Int,
         val outgoing: Int,
         val incoming: Int,
-        val listening: List<String>
+        val listening: List<String>,
+        val warnings: List<String>
 ) {
     companion object {
         suspend fun get(): NodeInfo {
             val listening = Node.listenAddress.mapToList { it.toString() }
+            val warnings = BlockDB.warnings() + LedgerDB.warnings() + Node.warnings()
             return NodeInfo(
                     Bip14.agent,
                     Bip14.version,
                     Node.version,
                     Node.outgoing(),
                     Node.incoming(),
-                    listening)
+                    listening,
+                    warnings)
         }
     }
 }

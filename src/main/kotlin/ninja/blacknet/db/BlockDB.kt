@@ -11,6 +11,7 @@ package ninja.blacknet.db
 
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
@@ -18,10 +19,12 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
+import java.io.File
 
 private val logger = KotlinLogging.logger {}
 
 object BlockDB : DataDB() {
+    private const val MIN_DISK_SPACE = LedgerDB.MAX_BLOCK_SIZE
     private val BLOCK_KEY = "block".toByteArray()
 
     suspend fun block(hash: Hash): Pair<Block, Int>? = mutex.withLock {
@@ -81,7 +84,7 @@ object BlockDB : DataDB() {
             return Status.NOT_ON_THIS_CHAIN
         }
         val batch = LevelDB.createWriteBatch()
-        val txDb = LedgerDB.Update(batch, hash, block.time, bytes.size, block.generator)
+        val txDb = LedgerDB.Update(batch, block.version, hash, block.time, bytes.size, block.generator)
         val txHashes = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
         if (txHashes != null) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
@@ -101,5 +104,12 @@ object BlockDB : DataDB() {
             batch.close()
             return Status.INVALID
         }
+    }
+
+    fun warnings(): List<String> {
+        if (File(Config.dataDir).getUsableSpace() < MIN_DISK_SPACE)
+            return listOf("Disk space is low!")
+
+        return emptyList()
     }
 }

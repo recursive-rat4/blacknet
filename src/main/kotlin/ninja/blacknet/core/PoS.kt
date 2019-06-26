@@ -23,6 +23,7 @@ import ninja.blacknet.network.Runtime
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.delay
+import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
@@ -51,7 +52,7 @@ object PoS {
     }
 
     fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
-        val dTime = Math.min(blockTime - prevBlockTime, TARGET_BLOCK_TIME * SPACING)
+        val dTime = min(blockTime - prevBlockTime, TARGET_BLOCK_TIME * SPACING)
         return difficulty * (A2 + 2 * dTime) / A1
     }
 
@@ -148,6 +149,7 @@ object PoS {
     const val INTERVAL = TARGET_TIMESPAN / TARGET_BLOCK_TIME
     const val SPACING = 10
     const val TIMESTAMP_MASK = 15L
+    const val MAX_FUTURE_DRIFT = 15L
     const val DEFAULT_CONFIRMATIONS = 10
     const val MATURITY = 1350
     const val BLOCK_SIZE_SPAN = 1351

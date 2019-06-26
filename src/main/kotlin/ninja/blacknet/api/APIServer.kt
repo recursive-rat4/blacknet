@@ -51,6 +51,7 @@ import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import java.io.File
+import kotlin.math.abs
 
 object APIServer {
     internal val txMutex = Mutex()
@@ -222,7 +223,7 @@ fun Application.APIServer() {
                     hash = LedgerDB.blockHash()
                     index = LedgerDB.getChainIndex(hash)!!
                 }
-                if (APIServer.lastIndex != null && Math.abs(height - index.height) > Math.abs(height - APIServer.lastIndex!!.second.height))
+                if (APIServer.lastIndex != null && abs(height - index.height) > abs(height - APIServer.lastIndex!!.second.height))
                     index = APIServer.lastIndex!!.second
                 while (index.height > height) {
                     hash = index.previous

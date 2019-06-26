@@ -43,10 +43,10 @@ object Main {
 
         LevelDB
         BlockDB
+        WalletDB
         LedgerDB
         PeerDB
         Node
-        WalletDB
 
         /* Launch Blacknet API web-server using Ktor.
          *
