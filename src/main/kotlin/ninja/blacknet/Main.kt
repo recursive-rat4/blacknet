@@ -17,6 +17,7 @@ import io.ktor.server.engine.embeddedServer
 import mu.KotlinLogging
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import java.io.FileInputStream
 import java.security.Security
 import java.util.logging.LogManager
@@ -40,6 +41,8 @@ object Main {
         if (Config.portable())
             logger.info("Portable mode")
         logger.info("Using data directory ${Config.dataDir}")
+
+        logger.info("${Runtime.availableProcessors} CPU available")
 
         LevelDB
         BlockDB

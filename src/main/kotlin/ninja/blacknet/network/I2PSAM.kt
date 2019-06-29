@@ -14,8 +14,6 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.util.error
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.ByteWriteChannel
 import kotlinx.coroutines.io.readUTF8Line
@@ -29,13 +27,11 @@ import ninja.blacknet.Config.i2psamport
 import ninja.blacknet.Config.port
 import ninja.blacknet.crypto.SHA256
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
-object I2PSAM : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
+object I2PSAM {
     private val sessionId = generateId()
     private var privateKey = "TRANSIENT"
     val sam: Address?
@@ -85,7 +81,7 @@ object I2PSAM : CoroutineScope {
         if (this.privateKey == "TRANSIENT")
             savePrivateKey(privateKey)
 
-        launch {
+        Runtime.launch {
             while (true) {
                 val message = connection.readChannel.readUTF8Line() ?: break
 

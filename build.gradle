@@ -21,7 +21,7 @@ apply plugin: 'application'
 mainClassName = "ninja.blacknet.Main"
 
 group 'ninja.blacknet'
-version '0.2.2'
+version '0.2.3'
 
 repositories {
     jcenter()
@@ -45,7 +45,7 @@ dependencies {
     compile 'com.natpryce:konfig:1.6.10.0'
     compile 'com.google.guava:guava:27.1-jre'
     compile 'org.bitlet:weupnp:0.1.4'
-    compile 'org.bouncycastle:bcprov-jdk15on:1.61'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.62'
     compile 'org.ethereum:leveldbjni-all:1.18.3'
 }
 
