@@ -18,6 +18,7 @@ import ninja.blacknet.network.Node
 
 @Serializable
 class PeerInfo(
+        val peerId: Long,
         val remoteAddress: String,
         val localAddress: String,
         val timeOffset: Long,
@@ -62,6 +63,7 @@ class PeerInfo(
     companion object {
         fun get(connection: Connection, forkCache: HashMap<Hash, Boolean>): PeerInfo {
             return PeerInfo(
+                    connection.peerId,
                     connection.remoteAddress.toString(),
                     connection.localAddress.toString(),
                     connection.timeOffset,

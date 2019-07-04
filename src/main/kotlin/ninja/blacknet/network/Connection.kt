@@ -19,6 +19,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.core.DataType
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
@@ -60,6 +61,7 @@ class Connection(
     @Volatile
     internal var pingRequest: PingRequest? = null
 
+    var peerId: Long = 0
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
@@ -89,14 +91,14 @@ class Connection(
                     dos("deserialization failed")
                     continue
                 }
-                logger.debug { "Received ${packet.getType()} from $remoteAddress" }
+                logger.debug { "Received ${packet.getType()} from ${debugName()}" }
                 packet.process(this)
             }
         } catch (e: ClosedReceiveChannelException) {
         } catch (e: CancellationException) {
         } catch (e: IOException) {
         } catch (e: Throwable) {
-            logger.error("Exception in receiver $remoteAddress", e)
+            logger.error("Exception in receiver ${debugName()}", e)
         } finally {
             close(false)
         }
@@ -107,7 +109,7 @@ class Connection(
         totalBytesRead += 4
         if (size > Node.getMaxPacketSize()) {
             if (state.isConnected()) {
-                logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting $remoteAddress")
+                logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}")
             }
             close()
         }
@@ -127,7 +129,7 @@ class Connection(
         } catch (e: ClosedWriteChannelException) {
         } catch (e: CancellationException) {
         } catch (e: Throwable) {
-            logger.error("Exception in sender $remoteAddress", e)
+            logger.error("Exception in sender ${debugName()}", e)
         } finally {
             close(false)
             closeSocket()
@@ -167,7 +169,7 @@ class Connection(
     }
 
     fun sendPacket(packet: Packet) {
-        logger.debug { "Sending ${packet.getType()} to $remoteAddress" }
+        logger.debug { "Sending ${packet.getType()} to ${debugName()}" }
         sendChannel.offer(packet.build())
     }
 
@@ -177,7 +179,7 @@ class Connection(
 
     fun dos(reason: String) {
         val score = dosScore.incrementAndGet()
-        logger.info("DoS: $score $reason $remoteAddress")
+        logger.info("DoS: $score $reason ${debugName()}")
         if (score == 100)
             close()
     }
@@ -205,6 +207,13 @@ class Connection(
 
     fun isClosed(): Boolean {
         return closed.get()
+    }
+
+    fun debugName(): String {
+        if (Config.logIPs)
+            return remoteAddress.toString()
+        else
+            return "peer $peerId"
     }
 
     class PingRequest(val id: Int, val time: Long)

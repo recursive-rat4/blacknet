@@ -78,7 +78,7 @@ object ChainFetcher {
             if (!BlockDB.isInteresting(data.chain))
                 continue
 
-            logger.info("Fetching ${data.chain} from ${data.connection.remoteAddress}")
+            logger.info("Fetching ${data.chain} from ${data.connection.debugName()}")
             syncChain = data
             originalChain = LedgerDB.blockHash()
 
@@ -140,7 +140,7 @@ object ChainFetcher {
                 logger.info("${e.message}")
                 data.connection.close()
             } catch (e: Throwable) {
-                logger.error("Exception in processBlocks ${data.connection.remoteAddress}", e)
+                logger.error("Exception in processBlocks ${data.connection.debugName()}", e)
                 data.connection.close()
             }
 
@@ -188,7 +188,7 @@ object ChainFetcher {
 
     fun chainFork(connection: Connection) {
         if (request == null || syncChain == null || syncChain!!.connection != connection) {
-            logger.info("Unexpected chain fork message ${connection.remoteAddress}")
+            logger.info("Unexpected chain fork message ${connection.debugName()}")
             connection.close()
         } else {
             request!!.cancel()
@@ -198,7 +198,7 @@ object ChainFetcher {
 
     suspend fun fetched(connection: Connection, blocks: Blocks) {
         if (request == null || syncChain == null || syncChain!!.connection != connection) {
-            logger.info("Unexpected synchronization ${connection.remoteAddress}")
+            logger.info("Unexpected synchronization ${connection.debugName()}")
             connection.close()
             return
         }

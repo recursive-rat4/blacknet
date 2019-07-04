@@ -34,6 +34,7 @@ internal class Version(
 
     override suspend fun process(connection: Connection) {
         connection.timeOffset = Node.time() - time
+        connection.peerId = Node.newPeerId()
         connection.version = version
         connection.agent = Bip14.sanitize(agent)
         connection.feeFilter = feeFilter
@@ -54,11 +55,11 @@ internal class Version(
             else
                 Node.sendVersion(connection, Random.nextLong())
             connection.state = Connection.State.INCOMING_CONNECTED
-            logger.info("Accepted connection from ${connection.remoteAddress}")
+            logger.info("Accepted connection from ${connection.debugName()} $agent")
         } else {
             connection.state = Connection.State.OUTGOING_CONNECTED
             PeerDB.connected(connection.remoteAddress)
-            logger.info("Connected to ${connection.remoteAddress}")
+            logger.info("Connected to ${connection.debugName()} $agent")
         }
 
         ChainFetcher.offer(connection, chain.chain, chain.cumulativeDifficulty)

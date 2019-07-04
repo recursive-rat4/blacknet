@@ -33,7 +33,7 @@ class GetBlocks(
     override suspend fun process(connection: Connection) {
         if (checkpoint != Hash.ZERO) {
             if (!LedgerDB.chainContains(checkpoint)) {
-                logger.info("Chain fork ${connection.remoteAddress}")
+                logger.info("Chain fork ${connection.debugName()}")
                 if (connection.version >= ChainFork.MIN_VERSION)
                     connection.sendPacket(ChainFork())
                 connection.close(false)

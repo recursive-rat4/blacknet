@@ -39,6 +39,7 @@ import ninja.blacknet.util.delay
 import java.math.BigDecimal
 import java.net.InetSocketAddress
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
@@ -53,6 +54,7 @@ object Node {
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
     var minTxFee = parseAmount(Config[mintxfee])
+    private val nextPeerId = AtomicLong(1)
 
     init {
         if (Config[listen]) {
@@ -82,6 +84,10 @@ object Node {
 
     fun isTooFarInFuture(time: Long): Boolean {
         return time > Node.time() + PoS.MAX_FUTURE_DRIFT
+    }
+
+    fun newPeerId(): Long {
+        return nextPeerId.getAndIncrement()
     }
 
     suspend fun outgoing(): Int {
@@ -298,7 +304,7 @@ object Node {
 
     private suspend fun addConnection(connection: Connection) {
         if (!haveSlot()) {
-            logger.info("Too many connections, dropping ${connection.remoteAddress}")
+            logger.info("Too many connections, dropping ${connection.debugName()}")
             connection.close()
             return
         }
@@ -326,7 +332,7 @@ object Node {
             return false
 
         val connection = candidates.random()
-        logger.info("Evicting ${connection.remoteAddress}")
+        logger.info("Evicting ${connection.debugName()}")
         connection.close()
         return true
     }
@@ -381,13 +387,13 @@ object Node {
                 } else {
                     if (it.pingRequest == null) {
                         if (it.ping != 0L && currTime > it.lastPacketTime + NETWORK_TIMEOUT) {
-                            logger.debug { "Sending ping to ${it.remoteAddress}" }
+                            logger.debug { "Sending ping to ${it.debugName()}" }
                             sendPing(it)
                         } else if (it.ping == 0L) {
                             sendPing(it)
                         }
                     } else {
-                        logger.info("Disconnecting ${it.remoteAddress} on ping timeout")
+                        logger.info("Disconnecting ${it.debugName()} on ping timeout")
                         it.close()
                     }
                 }

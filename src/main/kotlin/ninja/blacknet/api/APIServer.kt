@@ -472,6 +472,19 @@ fun Application.APIServer() {
             }
         }
 
+        get("/api/v1/disconnectpeerbyid/{id}/{force?}") {
+            val id = call.parameters["id"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid id")
+            val force = call.parameters["force"]?.toBoolean() ?: false
+
+            val connection = Node.connections.find { it.peerId == id }
+            if (connection != null) {
+                connection.close(force)
+                call.respond("Disconnected")
+            } else {
+                call.respond("Not connected")
+            }
+        }
+
         post("/api/v1/staker/start/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 

@@ -41,6 +41,7 @@ object Config {
     val softblocksizelimit by intType
     val portable by booleanType
     val datadir by stringType
+    val logips by booleanType
 
     object apiserver : PropertyGroup() {
         val jsonindented by booleanType
@@ -75,6 +76,13 @@ object Config {
             return get(apiserver.publicserver)
         return false
     }
+
+    val logIPs: Boolean = {
+        if (contains(logips))
+            get(logips)
+        else
+            false
+    }()
 
     val softBlockSizeLimit: Int = {
         if (contains(softblocksizelimit))
