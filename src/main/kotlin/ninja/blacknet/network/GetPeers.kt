@@ -27,8 +27,6 @@ class GetPeers : Packet {
         }
 
         val randomPeers = PeerDB.getRandom(Peers.MAX)
-        if (randomPeers.size == 0)
-            return
 
         connection.sendPacket(Peers(randomPeers))
     }

@@ -59,6 +59,8 @@ internal class Version(
         } else {
             connection.state = Connection.State.OUTGOING_CONNECTED
             PeerDB.connected(connection.remoteAddress)
+            if (PeerDB.isLow())
+                connection.sendPacket(GetPeers())
             logger.info("Connected to ${connection.debugName()} $agent")
         }
 

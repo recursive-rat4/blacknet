@@ -60,6 +60,10 @@ object PeerDB {
         return map.isEmpty()
     }
 
+    suspend fun isLow(): Boolean {
+        return map.size() < 100
+    }
+
     suspend fun connected(address: Address) {
         if (address.isLocal()) return
         val entry = map.get(address)
