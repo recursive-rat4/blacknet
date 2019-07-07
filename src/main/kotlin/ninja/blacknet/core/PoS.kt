@@ -78,7 +78,7 @@ object PoS {
             if (Node.isInitialSynchronization())
                 continue
 
-            val time = Node.time() and (TIMESTAMP_MASK xor -1L)
+            val time = Runtime.time() and (TIMESTAMP_MASK xor -1L)
             if (time <= LedgerDB.blockTime())
                 continue
 

@@ -29,7 +29,7 @@ internal class Pong(private val id: Int) : Packet {
             connection.dos("invalid Pong id")
             return
         }
-        connection.ping = Node.timeMilli() - request.time
+        connection.ping = Runtime.timeMilli() - request.time
         connection.pingRequest = null
     }
 }

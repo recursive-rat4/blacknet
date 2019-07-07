@@ -33,7 +33,7 @@ internal class Version(
     override fun getType() = PacketType.Version
 
     override suspend fun process(connection: Connection) {
-        connection.timeOffset = Node.time() - time
+        connection.timeOffset = Runtime.time() - time
         connection.peerId = Node.newPeerId()
         connection.version = version
         connection.agent = Bip14.sanitize(agent)

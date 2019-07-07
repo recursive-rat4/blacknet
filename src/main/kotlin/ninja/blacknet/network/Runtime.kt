@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import ninja.blacknet.util.SynchronizedArrayList
+import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 
 object Runtime : CoroutineScope {
@@ -33,6 +34,20 @@ object Runtime : CoroutineScope {
         runBlocking {
             shutdownHooks.add(hook)
         }
+    }
+
+    /**
+     * Returns the time as the number of seconds since the Epoch.
+     */
+    fun time(): Long {
+        return Instant.now().getEpochSecond()
+    }
+
+    /**
+     * Returns the time as the number of milliseconds since the Epoch.
+     */
+    fun timeMilli(): Long {
+        return Instant.now().toEpochMilli()
     }
 
     init {

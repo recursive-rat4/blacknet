@@ -40,7 +40,7 @@ class Connection(
     private val dosScore = AtomicInteger(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     private val inventoryToSend = SynchronizedArrayList<InvType>()
-    val connectedAt = Node.time()
+    val connectedAt = Runtime.time()
 
     @Volatile
     var lastPacketTime: Long = 0
@@ -115,7 +115,7 @@ class Connection(
         }
         val result = readChannel.readPacket(size)
         totalBytesRead += size
-        lastPacketTime = Node.time()
+        lastPacketTime = Runtime.time()
         return result
     }
 
@@ -139,7 +139,7 @@ class Connection(
     suspend fun inventory(inv: InvType) = inventoryToSend.mutex.withLock {
         inventoryToSend.list.add(inv)
         if (inventoryToSend.list.size == DataType.MAX_INVENTORY) {
-            sendInventoryImpl(Node.time())
+            sendInventoryImpl(Runtime.time())
         }
     }
 
@@ -148,11 +148,11 @@ class Connection(
         if (newSize < DataType.MAX_INVENTORY) {
             inventoryToSend.list.addAll(inv)
         } else if (newSize > DataType.MAX_INVENTORY) {
-            sendInventoryImpl(Node.time())
+            sendInventoryImpl(Runtime.time())
             inventoryToSend.list.addAll(inv)
         } else {
             inventoryToSend.list.addAll(inv)
-            sendInventoryImpl(Node.time())
+            sendInventoryImpl(Runtime.time())
         }
     }
 

@@ -232,7 +232,7 @@ object ChainFetcher {
         }
         if (undoRollback == null)
             LedgerDB.prune()
-        connection.lastBlockTime = Node.time()
+        connection.lastBlockTime = Runtime.time()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
             logger.info("Connected ${answer.blocks.size} blocks")

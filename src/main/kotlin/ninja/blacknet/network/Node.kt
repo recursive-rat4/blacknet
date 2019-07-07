@@ -74,16 +74,8 @@ object Node {
         Runtime.launch { inventoryBroadcaster() }
     }
 
-    fun time(): Long {
-        return Instant.now().getEpochSecond()
-    }
-
-    fun timeMilli(): Long {
-        return Instant.now().toEpochMilli()
-    }
-
     fun isTooFarInFuture(time: Long): Boolean {
-        return time > Node.time() + PoS.MAX_FUTURE_DRIFT
+        return time > Runtime.time() + PoS.MAX_FUTURE_DRIFT
     }
 
     fun newPeerId(): Long {
@@ -138,7 +130,7 @@ object Node {
     }
 
     fun isInitialSynchronization(): Boolean {
-        return ChainFetcher.isSynchronizing() && time() > LedgerDB.blockTime() + PoS.TARGET_BLOCK_TIME * PoS.MATURITY
+        return ChainFetcher.isSynchronizing() && Runtime.time() > LedgerDB.blockTime() + PoS.TARGET_BLOCK_TIME * PoS.MATURITY
     }
 
     fun listenOn(address: Address) {
@@ -194,7 +186,7 @@ object Node {
         } else {
             ChainAnnounce(LedgerDB.blockHash(), LedgerDB.cumulativeDifficulty())
         }
-        val v = Version(magic, version, time(), nonce, Bip14.agent, minTxFee, chain)
+        val v = Version(magic, version, Runtime.time(), nonce, Bip14.agent, minTxFee, chain)
         connection.sendPacket(v)
     }
 
@@ -379,7 +371,7 @@ object Node {
         while (true) {
             delay(NETWORK_TIMEOUT)
 
-            val currTime = time()
+            val currTime = Runtime.time()
             connections.forEach {
                 if (it.state.isWaiting()) {
                     if (currTime > it.connectedAt + NETWORK_TIMEOUT)
@@ -402,7 +394,7 @@ object Node {
     }
     private fun sendPing(connection: Connection) {
         val id = Random.nextInt()
-        connection.pingRequest = Connection.PingRequest(id, timeMilli())
+        connection.pingRequest = Connection.PingRequest(id, Runtime.timeMilli())
         connection.sendPacket(Ping(id))
     }
 
@@ -455,7 +447,7 @@ object Node {
     private suspend fun inventoryBroadcaster() {
         while (true) {
             delay(INV_TIMEOUT)
-            val currTime = time()
+            val currTime = Runtime.time()
             connections.forEach {
                 if (it.state.isConnected() && currTime >= it.lastInvSentTime + INV_TIMEOUT) {
                     it.sendInventory(currTime)

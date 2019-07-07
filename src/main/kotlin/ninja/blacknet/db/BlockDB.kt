@@ -19,6 +19,7 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import java.io.File
 
 private val logger = KotlinLogging.logger {}
@@ -91,7 +92,7 @@ object BlockDB : DataDB() {
             txDb.commitImpl()
             if (connection != null) {
                 logger.info("Accepted block $hash")
-                connection.lastBlockTime = Node.time()
+                connection.lastBlockTime = Runtime.time()
                 Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
             }
             TxPool.mutex.withLock {

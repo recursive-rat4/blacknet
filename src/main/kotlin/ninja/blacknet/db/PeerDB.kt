@@ -68,18 +68,18 @@ object PeerDB {
         if (address.isLocal()) return
         val entry = map.get(address)
         if (entry != null)
-            map.put(address, Entry(entry.from, 0, 0, Node.time()))
+            map.put(address, Entry(entry.from, 0, 0, Runtime.time()))
         else
-            map.put(address, Entry(Address.LOOPBACK, 0, 0, Node.time()))
+            map.put(address, Entry(Address.LOOPBACK, 0, 0, Runtime.time()))
     }
 
     suspend fun attempt(address: Address) {
         if (address.isLocal()) return
         val entry = map.get(address)
         if (entry != null)
-            map.put(address, Entry(entry.from, entry.attempts + 1, Node.time(), entry.lastConnected))
+            map.put(address, Entry(entry.from, entry.attempts + 1, Runtime.time(), entry.lastConnected))
         else
-            map.put(address, Entry(Address.LOOPBACK, 0, Node.time(), 0))
+            map.put(address, Entry(Address.LOOPBACK, 0, Runtime.time(), 0))
     }
 
     suspend fun getAll(): List<Address> {
@@ -141,7 +141,7 @@ object PeerDB {
             if (Node.isOffline()) continue
 
             val toRemove = ArrayList<Address>()
-            val currTime = Node.time()
+            val currTime = Runtime.time()
             map.forEach {
                 if (it.value.isOld(currTime))
                     toRemove.add(it.key)

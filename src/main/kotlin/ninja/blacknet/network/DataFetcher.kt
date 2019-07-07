@@ -39,7 +39,7 @@ object DataFetcher {
             val list = inventory.second
 
             val request = InvList()
-            val currTime = Node.time()
+            val currTime = Runtime.time()
 
             for (i in list) {
                 val type = i.first
@@ -73,7 +73,7 @@ object DataFetcher {
         while (true) {
             delay(Node.NETWORK_TIMEOUT)
 
-            val currTime = Node.time()
+            val currTime = Runtime.time()
             val timeouted = requested.filterToKeyList { _, time -> currTime > time + Node.NETWORK_TIMEOUT }
             requested.removeAll(timeouted)
         }

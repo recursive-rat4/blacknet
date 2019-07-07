@@ -19,6 +19,7 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.SerializableByteArray
 import kotlin.math.min
 
@@ -138,7 +139,7 @@ object TxPool : MemPool(), Ledger {
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
             transactions.add(hash)
-            val currTime = connection?.lastPacketTime ?: Node.time()
+            val currTime = connection?.lastPacketTime ?: Runtime.time()
             connection?.lastTxTime = currTime
             WalletDB.processTransaction(hash, tx, bytes, currTime)
             logger.debug { "Accepted $hash" }
