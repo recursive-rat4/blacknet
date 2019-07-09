@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
@@ -15,6 +15,9 @@ import mu.KotlinLogging
 import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.TxPool
+import ninja.blacknet.network.Connection
+import ninja.blacknet.network.DataFetcher
+import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
@@ -54,10 +57,7 @@ class Data(private val list: DataList) : Packet {
                 Status.ACCEPTED -> inv.add(Triple(type, hash, status.second))
                 Status.INVALID -> connection.dos("invalid ${type.name} $hash")
                 Status.IN_FUTURE -> logger.debug { "in future ${type.name} $hash" }
-                Status.NOT_ON_THIS_CHAIN -> {
-                    if (type == DataType.Block) ChainFetcher.offer(connection, hash)
-                    else logger.debug { "not on this chain ${type.name} $hash" }
-                }
+                Status.NOT_ON_THIS_CHAIN -> logger.debug { "not on this chain ${type.name} $hash" }
                 Status.ALREADY_HAVE -> logger.debug { "already have  ${type.name} $hash" }
             }
         }

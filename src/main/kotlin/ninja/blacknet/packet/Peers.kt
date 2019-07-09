@@ -7,33 +7,38 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.DataType
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.PeerDB
+import ninja.blacknet.network.Address
+import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-internal class Inventory(private val list: InvList) : Packet {
+class Peers(private val list: List<Address>) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.Inventory
+    override fun getType() = PacketType.Peers
 
     override suspend fun process(connection: Connection) {
-        if (Node.isInitialSynchronization())
-            return
-
-        if (list.size > DataType.MAX_INVENTORY) {
-            connection.dos("invalid Inventory size")
+        if (list.size > MAX) {
+            connection.dos("invalid Peers size")
             return
         }
 
-        DataFetcher.offer(connection, list)
+        for (i in list) {
+            if (!i.checkSize()) {
+                connection.dos("invalid Address")
+                return
+            }
+        }
+
+        PeerDB.add(list, connection.remoteAddress)
+    }
+
+    companion object {
+        const val MAX = 1000
     }
 }
-
-typealias InvType = Pair<DataType, Hash>
-typealias InvList = ArrayList<InvType>
-typealias UnfilteredInvList = ArrayList<Triple<DataType, Hash, Long>>

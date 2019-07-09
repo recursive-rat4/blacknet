@@ -80,8 +80,7 @@ object BlockDB : DataDB() {
             return Status.INVALID
         }
         if (block.previous != LedgerDB.blockHash()) {
-            if (connection == null)
-                logger.info("block $hash not on current chain prev ${block.previous}")
+            logger.info("block $hash not on current chain prev ${block.previous}")
             return Status.NOT_ON_THIS_CHAIN
         }
         val batch = LevelDB.createWriteBatch()
@@ -90,11 +89,6 @@ object BlockDB : DataDB() {
         if (txHashes != null) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
-            if (connection != null) {
-                logger.info("Accepted block $hash")
-                connection.lastBlockTime = Runtime.time()
-                Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
-            }
             TxPool.mutex.withLock {
                 TxPool.clearRejectsImpl()
                 TxPool.removeImpl(txHashes)

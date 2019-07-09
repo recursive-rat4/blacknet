@@ -21,6 +21,8 @@ import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.packet.Blocks
+import ninja.blacknet.packet.GetBlocks
 import ninja.blacknet.util.withTimeout
 
 private val logger = KotlinLogging.logger {}
@@ -58,10 +60,10 @@ object ChainFetcher {
             request?.cancel(CancellationException("Connection closed"))
     }
 
-    fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt? = null) {
+    fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt) {
         if (chain == Hash.ZERO)
             return
-        if (cumulativeDifficulty != null && cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
+        if (cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
             return
 
         chains.offer(ChainData(connection, chain, cumulativeDifficulty))
@@ -73,7 +75,7 @@ object ChainFetcher {
 
             if (data.connection.isClosed())
                 continue
-            if (data.cumulativeDifficulty() != BigInt.ZERO && data.cumulativeDifficulty() <= LedgerDB.cumulativeDifficulty())
+            if (data.cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
                 continue
             if (!BlockDB.isInteresting(data.chain))
                 continue
@@ -126,8 +128,7 @@ object ChainFetcher {
                     if (data.chain == LedgerDB.blockHash()) {
                         break
                     } else {
-                        if (data.cumulativeDifficulty() == BigInt.ZERO
-                                || data.cumulativeDifficulty() > LedgerDB.cumulativeDifficulty()) {
+                        if (data.cumulativeDifficulty > LedgerDB.cumulativeDifficulty()) {
                             requestBlocks(data.connection, LedgerDB.blockHash(), LedgerDB.rollingCheckpoint())
                             continue
                         } else {
@@ -244,7 +245,5 @@ object ChainFetcher {
         connection.sendPacket(GetBlocks(hash, checkpoint))
     }
 
-    private class ChainData(val connection: Connection, val chain: Hash, val cumulativeDifficulty: BigInt?) {
-        fun cumulativeDifficulty() = cumulativeDifficulty ?: BigInt.ZERO
-    }
+    private class ChainData(val connection: Connection, val chain: Hash, val cumulativeDifficulty: BigInt)
 }

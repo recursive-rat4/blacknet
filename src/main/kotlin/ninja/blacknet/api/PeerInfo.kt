@@ -12,7 +12,7 @@ package ninja.blacknet.api
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.network.ChainAnnounce
+import ninja.blacknet.packet.ChainAnnounce
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 

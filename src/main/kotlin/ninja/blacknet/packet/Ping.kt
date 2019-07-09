@@ -7,28 +7,20 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class Blocks(
-        internal val hashes: ArrayList<Hash>,
-        internal val blocks: ArrayList<SerializableByteArray>
-) : Packet {
+internal class Ping(private val id: Int) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.Blocks
-
-    fun isEmpty(): Boolean {
-        return hashes.isEmpty() && blocks.isEmpty()
-    }
+    override fun getType() = PacketType.Ping
 
     override suspend fun process(connection: Connection) {
-        ChainFetcher.fetched(connection, this)
+        connection.sendPacket(Pong(id))
     }
 }

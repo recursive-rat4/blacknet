@@ -33,12 +33,12 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.packet.*
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.delay
 import java.math.BigDecimal
 import java.net.InetSocketAddress
-import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 
@@ -49,7 +49,7 @@ object Node {
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
     const val version = 9
-    const val minVersion = 5
+    const val minVersion = 6
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
@@ -193,12 +193,7 @@ object Node {
     suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null) {
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         broadcastPacket(ann) {
-            it != source && it.lastChain.chain != hash && it.version >= ChainAnnounce.MIN_VERSION
-        }
-        val inv = Pair(DataType.Block, hash)
-        connections.forEach {
-            if (it != source && it.state.isConnected() && it.version < ChainAnnounce.MIN_VERSION)
-                it.inventory(inv)
+            it != source && it.state.isConnected() && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
         }
     }
 
