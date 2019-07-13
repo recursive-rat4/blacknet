@@ -30,7 +30,6 @@ import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
@@ -198,7 +197,7 @@ object Node {
     }
 
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
-        val status = BlockDB.process(hash, bytes)
+        val status = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Status.ACCEPTED) {
             announceChain(hash, LedgerDB.cumulativeDifficulty())
             return true

@@ -29,13 +29,13 @@ private val logger = KotlinLogging.logger {}
 
 object ChainFetcher {
     const val TIMEOUT = 5
-    private val chains = Channel<ChainData>(16)
+    private val chains = Channel<ChainData?>(16)
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     @Volatile
     private var request: Deferred<Blocks>? = null
     private var connectedBlocks = 0
     @Volatile
-    private var connectingBlocks = false
+    private var stakedBlock: Triple<Hash, ByteArray, CompletableDeferred<Status>>? = null
     @Volatile
     private var syncChain: ChainData? = null
     private var originalChain: Hash? = null
@@ -45,10 +45,6 @@ object ChainFetcher {
 
     init {
         Runtime.launch { fetcher() }
-    }
-
-    fun isConnectingBlocks(): Boolean {
-        return connectingBlocks
     }
 
     fun isSynchronizing(): Boolean {
@@ -69,11 +65,29 @@ object ChainFetcher {
         chains.offer(ChainData(connection, chain, cumulativeDifficulty))
     }
 
+    suspend fun stakedBlock(hash: Hash, bytes: ByteArray): Status {
+        val status = CompletableDeferred<Status>()
+        stakedBlock = Triple(hash, bytes, status)
+        request?.cancel(CancellationException("Staked new block"))
+        chains.offer(null)
+        return status.await()
+    }
+
     private suspend fun fetcher() {
         while (true) {
             val data = chains.receive()
 
-            if (data.connection.isClosed())
+            if (stakedBlock != null) {
+                val hash = stakedBlock!!.first
+                val bytes = stakedBlock!!.second
+                val deferred = stakedBlock!!.third
+
+                val status = BlockDB.process(hash, bytes)
+                stakedBlock = null
+                deferred.complete(status)
+            }
+
+            if (data == null)
                 continue
             if (data.cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
                 continue
@@ -119,9 +133,8 @@ object ChainFetcher {
                         requestBlocks(data.connection, prev, checkpoint)
                         continue
                     }
-                    connectingBlocks = true
+
                     val accepted = processBlocks(data.connection, answer)
-                    connectingBlocks = false
                     if (!accepted)
                         break
 
@@ -138,8 +151,7 @@ object ChainFetcher {
                 }
             } catch (e: ClosedSendChannelException) {
             } catch (e: CancellationException) {
-                logger.info("${e.message}")
-                data.connection.close()
+                logger.info("Fetching cancelled: ${e.message}")
             } catch (e: Throwable) {
                 logger.error("Exception in processBlocks ${data.connection.debugName()}", e)
                 data.connection.close()
@@ -153,11 +165,9 @@ object ChainFetcher {
         val cumulativeDifficulty = LedgerDB.cumulativeDifficulty()
         if (undoRollback != null) {
             if (undoDifficulty >= cumulativeDifficulty) {
-                connectingBlocks = true
                 logger.info("Reconnecting ${undoRollback!!.size} blocks")
                 val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
                 BlockDB.remove(toRemove)
-                connectingBlocks = false
             } else {
                 logger.debug { "Removing ${undoRollback!!.size} blocks from db" }
                 BlockDB.remove(undoRollback!!)
@@ -199,8 +209,9 @@ object ChainFetcher {
 
     suspend fun fetched(connection: Connection, blocks: Blocks) {
         if (request == null || syncChain == null || syncChain!!.connection != connection) {
-            logger.info("Unexpected synchronization ${connection.debugName()}")
-            connection.close()
+            // request may be cancelled
+            //logger.info("Unexpected synchronization ${connection.debugName()}")
+            //connection.close()
             return
         }
         recvChannel.send(blocks)

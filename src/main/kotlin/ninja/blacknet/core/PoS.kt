@@ -17,7 +17,6 @@ import mu.KotlinLogging
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.Runtime
 import ninja.blacknet.util.SynchronizedArrayList
@@ -64,13 +63,9 @@ object PoS {
     internal suspend fun stakersSize() = stakers.size()
 
     private var job: Job? = null
-    private suspend fun miner() {
+    private suspend fun staker() {
         while (true) {
             delay(1)
-
-            //XXX race condition
-            if (ChainFetcher.isConnectingBlocks())
-                continue
 
             if (Node.isOffline())
                 continue
@@ -122,7 +117,7 @@ object PoS {
 
         stakers.list.add(pair)
         if (stakers.list.size == 1)
-            job = Runtime.launch { miner() }
+            job = Runtime.launch { staker() }
         return true
     }
 
