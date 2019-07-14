@@ -13,9 +13,11 @@ import ninja.blacknet.crypto.Hash
 
 abstract class MemPool : DataDB() {
     private val map = HashMap<Hash, ByteArray>()
+    private var dataSize = 0
 
     fun clearImpl() {
-        return map.clear()
+        map.clear()
+        dataSize = 0
     }
 
     fun copyImpl(): HashMap<Hash, ByteArray> {
@@ -27,7 +29,7 @@ abstract class MemPool : DataDB() {
     }
 
     fun dataSizeImpl(): Int {
-        return map.values.sumBy { it.size }
+        return dataSize
     }
 
     fun <T> mapHashesToListImpl(transform: (Hash) -> T): MutableList<T> {
@@ -36,6 +38,7 @@ abstract class MemPool : DataDB() {
 
     protected fun addImpl(hash: Hash, bytes: ByteArray) {
         map.put(hash, bytes)
+        dataSize += bytes.size
     }
 
     override suspend fun containsImpl(hash: Hash): Boolean {
@@ -47,6 +50,7 @@ abstract class MemPool : DataDB() {
     }
 
     fun removeImpl(hash: Hash) {
-        map.remove(hash)
+        val bytes = map.remove(hash)
+        dataSize -= bytes?.size ?: 0
     }
 }

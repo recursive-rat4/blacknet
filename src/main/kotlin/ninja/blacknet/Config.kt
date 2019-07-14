@@ -39,6 +39,7 @@ object Config {
     val dbcache by intType
     val mnemonics by listType(stringType)
     val softblocksizelimit by intType
+    val txpoolsize by intType
     val portable by booleanType
     val datadir by stringType
     val logips by booleanType
@@ -51,12 +52,17 @@ object Config {
     operator fun <T> get(key: Key<T>): T = config[key]
     fun <T> contains(key: Key<T>): Boolean = config.contains(key)
 
+    private val disabledIPv4 = !config[ipv4]
+    private val disabledIPv6 = !config[ipv6]
+    private val disabledTOR = !config[tor]
+    private val disabledI2P = !config[i2p]
+
     fun isDisabled(network: Network): Boolean = when (network) {
-        Network.IPv4 -> !config[ipv4]
-        Network.IPv6 -> !config[ipv6]
-        Network.TORv2 -> !config[tor]
-        Network.TORv3 -> !config[tor]
-        Network.I2P -> !config[i2p]
+        Network.IPv4 -> disabledIPv4
+        Network.IPv6 -> disabledIPv6
+        Network.TORv2 -> disabledTOR
+        Network.TORv3 -> disabledTOR
+        Network.I2P -> disabledI2P
     }
 
     fun jsonindented(): Boolean {
@@ -91,6 +97,13 @@ object Config {
             LedgerDB.MAX_BLOCK_SIZE
     }()
 
+    val txPoolSize: Int = {
+        if (contains(txpoolsize))
+            get(txpoolsize) * MiB
+        else
+            128 * MiB
+    }()
+
     val dataDir: String = {
         val dir = if (portable()) {
             File("db").getAbsolutePath()
@@ -111,4 +124,6 @@ object Config {
         File(dir).mkdirs()
         dir
     }()
+
+    private const val MiB = 1024 * 1024
 }

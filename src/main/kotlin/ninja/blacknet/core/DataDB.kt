@@ -11,8 +11,12 @@ package ninja.blacknet.core
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
+
+private val logger = KotlinLogging.logger {}
 
 abstract class DataDB {
     internal val mutex = Mutex()
@@ -53,6 +57,12 @@ abstract class DataDB {
             return TX_INVALID
         if (containsImpl(hash))
             return TX_ALREADY_HAVE
+        if (TxPool.dataSizeImpl() + bytes.size > Config.txPoolSize) {
+            if (connection != null)
+                return TX_IN_FUTURE
+            else
+                logger.warn("TxPool is full")
+        }
         val fee = TxPool.processImplWithFee(hash, bytes, connection)
         if (fee == TxPool.INVALID) {
             rejects.add(hash)
