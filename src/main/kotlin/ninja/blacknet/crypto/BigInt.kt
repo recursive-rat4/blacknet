@@ -16,7 +16,6 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.serialization.fromHex
 import ninja.blacknet.serialization.toHex
 import java.math.BigInteger
@@ -24,7 +23,6 @@ import java.math.BigInteger
 @Serializable
 class BigInt(private val int: BigInteger) : Comparable<BigInt> {
     constructor(bytes: ByteArray) : this(BigInteger(bytes))
-    constructor(bytes: SerializableByteArray) : this(bytes.array)
     constructor(n: Long) : this(BigInteger.valueOf(n))
 
     override operator fun compareTo(other: BigInt): Int = int.compareTo(other.int)
@@ -64,20 +62,15 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
 
         override fun deserialize(decoder: Decoder): BigInt {
             return when (decoder) {
-                is BinaryDecoder -> BigInt(decoder.decodeSerializableByteArrayValue())
+                is BinaryDecoder -> BigInt(decoder.decodeByteArray())
                 else -> throw RuntimeException("unsupported decoder")
             }
         }
 
         override fun serialize(encoder: Encoder, obj: BigInt) {
             when (encoder) {
-                is BinaryEncoder -> {
-                    val bytes = SerializableByteArray(obj.toByteArray())
-                    encoder.encodeSerializableByteArrayValue(bytes)
-                }
-                is JsonOutput -> {
-                    encoder.encodeString(obj.int.toString())
-                }
+                is BinaryEncoder -> encoder.encodeByteArray(obj.toByteArray())
+                is JsonOutput -> encoder.encodeString(obj.int.toString())
                 else -> throw RuntimeException("unsupported encoder")
             }
         }

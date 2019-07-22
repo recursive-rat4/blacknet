@@ -174,6 +174,10 @@ fun Application.APIServer() {
             call.respond(Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
         }
 
+        get("/api/v1/peerdb/networkstat") {
+            call.respond(Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get(true)))
+        }
+
         get("/api/v1/leveldb/stats") {
             call.respond(LevelDB.getProperty("leveldb.stats") ?: "Not implemented")
         }

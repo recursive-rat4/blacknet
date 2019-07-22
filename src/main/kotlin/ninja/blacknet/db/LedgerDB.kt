@@ -118,7 +118,7 @@ object LedgerDB {
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
-        version.packInt(VERSION)
+        version.encodeVarInt(VERSION)
         batch.put(VERSION_KEY, version.toBytes())
     }
 
@@ -126,16 +126,16 @@ object LedgerDB {
         val blockSizesBytes = LevelDB.get(SIZES_KEY)
         if (blockSizesBytes != null) {
             val decoder = BinaryDecoder.fromBytes(blockSizesBytes)
-            val size = decoder.unpackInt()
+            val size = decoder.decodeVarInt()
             for (i in 0 until size)
-                blockSizes.addLast(decoder.unpackInt())
+                blockSizes.addLast(decoder.decodeVarInt())
         }
         maxBlockSize = calcMaxBlockSize()
 
         val stateBytes = LevelDB.get(STATE_KEY)
         if (stateBytes != null) {
             val versionBytes = LevelDB.get(VERSION_KEY)!!
-            val version = BinaryDecoder.fromBytes(versionBytes).unpackInt()
+            val version = BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
 
             if (version == VERSION) {
                 state = LedgerDB.State.deserialize(stateBytes)!!
@@ -748,9 +748,9 @@ object LedgerDB {
             blockSizes.addLast(blockSize)
             maxBlockSize = calcMaxBlockSize()
             val encoder = BinaryEncoder()
-            encoder.packInt(blockSizes.size)
+            encoder.encodeVarInt(blockSizes.size)
             for (size in blockSizes)
-                encoder.packInt(size)
+                encoder.encodeVarInt(size)
             batch.put(SIZES_KEY, encoder.toBytes())
 
             batch.write()

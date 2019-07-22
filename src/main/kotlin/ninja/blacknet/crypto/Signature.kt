@@ -39,7 +39,7 @@ class Signature(val bytes: ByteArray) {
 
         override fun deserialize(decoder: Decoder): Signature {
             return when (decoder) {
-                is BinaryDecoder -> Signature(decoder.decodeByteArrayValue(SIZE))
+                is BinaryDecoder -> Signature(decoder.decodeFixedByteArray(SIZE))
                 is JsonInput -> Signature.fromString(decoder.decodeString())!!
                 else -> throw RuntimeException("unsupported decoder")
             }
@@ -47,7 +47,7 @@ class Signature(val bytes: ByteArray) {
 
         override fun serialize(encoder: Encoder, obj: Signature) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is BinaryEncoder -> encoder.encodeFixedByteArray(obj.bytes)
                 is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
                 else -> throw RuntimeException("unsupported encoder")
             }

@@ -12,6 +12,9 @@ package ninja.blacknet.util
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/**
+ * Thread-safe wrapper for [HashMap]
+ */
 class SynchronizedHashMap<K, V>(
         val mutex: Mutex = Mutex(),
         val map: HashMap<K, V> = HashMap()
@@ -19,6 +22,8 @@ class SynchronizedHashMap<K, V>(
     constructor(expectedSize: Int, loadFactor: Float = DEFAULT_LOAD_FACTOR) : this(map = HashMap(capacity(expectedSize, loadFactor), loadFactor))
 
     suspend inline fun copy() = mutex.withLock { HashMap(map) }
+
+    suspend inline fun copyToArray() = mutex.withLock { map.mapTo(ArrayList(map.size), { Pair(it.key, it.value) }) }
 
     suspend inline fun clear() = mutex.withLock { map.clear() }
 

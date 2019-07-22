@@ -18,10 +18,8 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
-import ninja.blacknet.Config.incomingconnections
 import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.mintxfee
-import ninja.blacknet.Config.outgoingconnections
 import ninja.blacknet.Config.port
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.core.DataDB.Status
@@ -117,7 +115,7 @@ object Node {
     }
 
     suspend fun isOffline(): Boolean {
-        return connected() == 0
+        return connections.find { it.state.isConnected() } == null
     }
 
     fun getMaxPacketSize(): Int {
@@ -299,7 +297,7 @@ object Node {
     }
 
     private suspend fun haveSlot(): Boolean {
-        if (incoming(true) < Config[incomingconnections])
+        if (incoming(true) < Config.incomingConnections)
             return true
         return evictConnection()
     }
@@ -329,7 +327,7 @@ object Node {
         }
 
         while (true) {
-            val n = Config[outgoingconnections] - outgoing()
+            val n = Config.outgoingConnections - outgoing()
             if (n <= 0) {
                 delay(NETWORK_TIMEOUT)
                 continue
@@ -339,13 +337,13 @@ object Node {
 
             val addresses = PeerDB.getCandidates(n, filter)
             if (addresses.isEmpty()) {
-                logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config[outgoingconnections]}")
+                logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.outgoingConnections}")
                 delay(PeerDB.DELAY)
                 dnsSeeder(false)
                 continue
             }
 
-            addresses.forEach { PeerDB.attempt(it) }
+            val currTime = Runtime.time()
 
             addresses.forEach {
                 val address = it
@@ -353,6 +351,7 @@ object Node {
                     try {
                         connectTo(address)
                     } catch (e: Throwable) {
+                        PeerDB.failed(address, currTime)
                     }
                 }
             }

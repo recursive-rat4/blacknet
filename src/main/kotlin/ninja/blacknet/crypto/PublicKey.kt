@@ -40,7 +40,7 @@ class PublicKey(val bytes: ByteArray) {
 
         override fun deserialize(decoder: Decoder): PublicKey {
             return when (decoder) {
-                is BinaryDecoder -> PublicKey(decoder.decodeByteArrayValue(SIZE))
+                is BinaryDecoder -> PublicKey(decoder.decodeFixedByteArray(SIZE))
                 is JsonInput -> Address.decode(decoder.decodeString())!!
                 else -> throw RuntimeException("unsupported decoder")
             }
@@ -48,7 +48,7 @@ class PublicKey(val bytes: ByteArray) {
 
         override fun serialize(encoder: Encoder, obj: PublicKey) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is BinaryEncoder -> encoder.encodeFixedByteArray(obj.bytes)
                 is JsonOutput -> encoder.encodeString(Address.encode(obj))
                 else -> throw RuntimeException("unsupported encoder")
             }

@@ -83,6 +83,9 @@ object Config {
         return false
     }
 
+    val incomingConnections: Int = Config[incomingconnections]
+    val outgoingConnections: Int = Config[outgoingconnections]
+
     val logIPs: Boolean = {
         if (contains(logips))
             get(logips)

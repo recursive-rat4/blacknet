@@ -46,7 +46,7 @@ object WalletDB {
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
-        version.packInt(VERSION)
+        version.encodeVarInt(VERSION)
         batch.put(WALLET_KEY, VERSION_KEY, version.toBytes())
     }
 
@@ -55,7 +55,7 @@ object WalletDB {
         val versionBytes = LevelDB.get(WALLET_KEY, VERSION_KEY)
 
         val version = if (versionBytes != null) {
-            BinaryDecoder.fromBytes(versionBytes).unpackInt()
+            BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
         } else {
             1
         }
@@ -64,7 +64,7 @@ object WalletDB {
             if (keysBytes != null) {
                 val decoder = BinaryDecoder.fromBytes(keysBytes)
                 for (i in 0 until keysBytes.size step PublicKey.SIZE) {
-                    val publicKey = PublicKey(decoder.decodeByteArrayValue(PublicKey.SIZE))
+                    val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE))
                     wallets.put(publicKey, Wallet.deserialize(LevelDB.get(WALLET_KEY, publicKey.bytes)!!))
                 }
                 if (wallets.size == 1)
@@ -280,12 +280,12 @@ object WalletDB {
     ) {
         fun serialize(): ByteArray {
             val encoder = BinaryEncoder()
-            encoder.packInt(seq)
-            encoder.packInt(transactions.size)
+            encoder.encodeVarInt(seq)
+            encoder.encodeVarInt(transactions.size)
             for ((hash, data) in transactions) {
-                encoder.encodeByteArrayValue(hash.bytes)
-                encoder.packLong(data.time)
-                encoder.packInt(data.height)
+                encoder.encodeFixedByteArray(hash.bytes)
+                encoder.encodeVarLong(data.time)
+                encoder.encodeVarInt(data.height)
             }
             return encoder.toBytes()
         }
@@ -293,11 +293,11 @@ object WalletDB {
         companion object {
             fun deserialize(bytes: ByteArray): Wallet {
                 val decoder = BinaryDecoder.fromBytes(bytes)
-                val seq = decoder.unpackInt()
-                val size = decoder.unpackInt()
+                val seq = decoder.decodeVarInt()
+                val size = decoder.decodeVarInt()
                 val wallet = Wallet(seq, HashMap(size * 2))
                 for (i in 0 until size)
-                    wallet.transactions.put(Hash(decoder.decodeByteArrayValue(Hash.SIZE)), TransactionData(decoder.unpackLong(), decoder.unpackInt()))
+                    wallet.transactions.put(Hash(decoder.decodeFixedByteArray(Hash.SIZE)), TransactionData(decoder.decodeVarLong(), decoder.decodeVarInt()))
                 return wallet
             }
         }
@@ -307,7 +307,7 @@ object WalletDB {
         wallets.put(publicKey, wallet)
         batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
         val encoder = BinaryEncoder()
-        wallets.forEach { (publicKey, _) -> encoder.encodeByteArrayValue(publicKey.bytes) }
+        wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey.bytes) }
         val keysBytes = encoder.toBytes()
         batch.put(WALLET_KEY, KEYS_KEY, keysBytes)
     }

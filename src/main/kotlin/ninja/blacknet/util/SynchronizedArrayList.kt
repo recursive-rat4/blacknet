@@ -12,6 +12,9 @@ package ninja.blacknet.util
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/**
+ * Thread-safe wrapper for [ArrayList]
+ */
 class SynchronizedArrayList<T>(
         val mutex: Mutex = Mutex(),
         val list: ArrayList<T> = ArrayList()
