@@ -14,6 +14,8 @@ import com.rfksystems.blake2b.security.Blake2bProvider
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
+import io.ktor.util.error
+import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Node
@@ -37,6 +39,16 @@ object Main {
 
         if (System.getProperty("user.name") == "root")
             logger.warn("Running as root")
+
+        if (Config.debugCoroutines) {
+            logger.warn("Installing debug probes, node may work slower")
+            try {
+                DebugProbes.install()
+            } catch (e: Throwable) {
+                logger.error(e)
+                Config.debugCoroutines = false
+            }
+        }
 
         if (Config.portable())
             logger.info("Portable mode")
@@ -67,7 +79,7 @@ object Main {
          * https://ktor.io/servers/engine.html
          *
          */
-        if (Config.publicapi())
+        if (Config.publicAPI())
             embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=config/ktor.conf"))).start(wait = false)
         embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=config/rpc.conf"))).start(wait = true)
     }

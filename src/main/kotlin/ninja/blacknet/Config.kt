@@ -49,6 +49,10 @@ object Config {
         val publicserver by booleanType
     }
 
+    object runtime : PropertyGroup() {
+        val debugcoroutines by booleanType
+    }
+
     operator fun <T> get(key: Key<T>): T = config[key]
     fun <T> contains(key: Key<T>): Boolean = config.contains(key)
 
@@ -65,23 +69,28 @@ object Config {
         Network.I2P -> disabledI2P
     }
 
-    fun jsonindented(): Boolean {
+    fun jsonIndented(): Boolean {
         if (contains(apiserver.jsonindented))
             return get(apiserver.jsonindented)
-        return false
+        else
+            return false
     }
 
     fun portable(): Boolean {
         if (contains(portable))
             return get(portable)
-        return false
+        else
+            return false
     }
 
-    fun publicapi(): Boolean {
+    fun publicAPI(): Boolean {
         if (contains(apiserver.publicserver))
             return get(apiserver.publicserver)
-        return false
+        else
+            return false
     }
+
+    var debugCoroutines: Boolean
 
     val incomingConnections: Int = Config[incomingconnections]
     val outgoingConnections: Int = Config[outgoingconnections]
@@ -129,4 +138,13 @@ object Config {
     }()
 
     private const val MiB = 1024 * 1024
+
+    init {
+        debugCoroutines =
+                if (contains(runtime.debugcoroutines))
+                    get(runtime.debugcoroutines)
+                else
+                    false
+
+    }
 }

@@ -30,6 +30,7 @@ import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -51,6 +52,7 @@ import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import java.io.File
+import java.io.PrintStream
 import kotlin.math.abs
 
 object APIServer {
@@ -563,6 +565,17 @@ fun Application.APIServer() {
                 call.respond(result.toString())
             else
                 call.respond(HttpStatusCode.NotFound, "transaction not found")
+        }
+
+        get("/api/dumpcoroutines") {
+            if (Config.debugCoroutines) {
+                val stream = PrintStream(File(Config.dataDir + "/coroutines_${Runtime.time()}.log"))
+                DebugProbes.dumpCoroutines(stream)
+                stream.close()
+                call.respond(true.toString())
+            } else {
+                call.respond(false.toString())
+            }
         }
     }
 }
