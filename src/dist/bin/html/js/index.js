@@ -9,20 +9,25 @@
 
 $(document).ready(function () {
 
-    const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");;
+    const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");
     const hash = localStorage.hashIndex || 'overview';
     const dialogPassword = $('.dialog.password'), mask = $('.mask');
     let blockStack = [];
 
     menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
-
+    
+    
+    function getMnemoic(){
+        
+        return $.trim(dialogPassword.find('.mnemonic').val());
+    }
     function staking_click(type) {
 
         return function () {
             mask.show();
             dialogPassword.show().find('.confirm').unbind().on('click', function () {
 
-                let mnemonic = dialogPassword.find('.mnemonic').val();
+                let mnemonic = getMnemoic();
 
                 type == 'refresh_staking' ? refreshStaking(mnemonic) : post_staking(mnemonic, type);
             });
@@ -110,7 +115,7 @@ $(document).ready(function () {
             mask.show();
             dialogPassword.show().find('.confirm').unbind().on('click', function () {
 
-                let mnemonic = dialogPassword.find('.mnemonic').val();
+                let mnemonic = getMnemoic();
                 switch (type) {
                     case 'send': transfer(mnemonic); break;
                     case 'lease': lease(mnemonic); break;
