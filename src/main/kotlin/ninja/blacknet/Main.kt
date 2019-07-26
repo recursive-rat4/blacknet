@@ -18,6 +18,7 @@ import mu.KotlinLogging
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.Runtime
+import ninja.blacknet.util.ConfigSupport
 import java.io.FileInputStream
 import java.security.Security
 import java.util.logging.LogManager
@@ -29,7 +30,7 @@ object Main {
     fun main(args: Array<String>) {
         Security.addProvider(Blake2bProvider())
 
-        val inStream = FileInputStream("config/logging.properties")
+        val inStream = FileInputStream(ConfigSupport.getConfigDir() + "/logging.properties")
         LogManager.getLogManager().readConfiguration(inStream)
         inStream.close()
 
@@ -68,7 +69,7 @@ object Main {
          *
          */
         if (Config.publicapi())
-            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=config/ktor.conf"))).start(wait = false)
-        embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=config/rpc.conf"))).start(wait = true)
+            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + ConfigSupport.getConfigDir() + "/ktor.conf"))).start(wait = false)
+        embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + ConfigSupport.getConfigDir() + "/rpc.conf"))).start(wait = true)
     }
 }

@@ -24,6 +24,7 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.util.ConfigSupport
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.startsWith
@@ -49,7 +50,7 @@ object LedgerDB {
     private fun genesisState() = State(0, Hash.ZERO, GENESIS_TIME, PoS.INITIAL_DIFFICULTY, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0)
 
     fun genesisBlock(): List<GenesisEntry> {
-        val bytes = File("config/genesis.json").readBytes()
+        val bytes = File(ConfigSupport.getConfigDir() + "/genesis.json").readBytes()
         logger.info("Loaded genesis.json ${Blake2b.hash(bytes)}")
         val genesis = String(bytes)
         return Json.parse(GenesisEntry.serializer().list, genesis)
