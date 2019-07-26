@@ -13,7 +13,7 @@ void function () {
     const DEFAULT_CONFIRMATIONS = 10;
     const blockListEl = $('#block-list'), apiVersion = "/api/v1", body = $("body");;
     const progressStats = $('.progress-stats, .progress-stats-text');
-    const dialogPassword = $('.dialog.password'), mask = $('.mask');
+    const dialogPassword = $('.dialog.password'), dialogConfirm = $('.dialog.confirm'), mask = $('.mask');
     const account = localStorage.account;
     const dialogAccount = $('.dialog.account');
     const notificationNode = $('.notification.tx').first();
@@ -45,6 +45,7 @@ void function () {
             mask.on('click', function () {
                 mask.hide();
                 dialogPassword.hide();
+                dialogConfirm.hide();
             });
         } else {
             dialogAccount.find('.spinner').hide();
@@ -211,11 +212,12 @@ void function () {
 
         url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
 
-        if (confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
-            to + '\n\n0.001 BLN added as transaction fee?')) {
-
-            Blacknet.post(url, callback);
-        }
+        Blacknet.confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
+        to + '\n\n0.001 BLN added as transaction fee?', function(flag){
+            if(flag){
+                Blacknet.post(url, callback);
+            }
+        })
     };
 
     Blacknet.lease = function (mnemonic, type, amount, to, height, callback) {
@@ -230,12 +232,13 @@ void function () {
         } else {
             url = "/cancellease/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + height + "/";
         }
-
-        if (confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
-            ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?')) {
-
-            Blacknet.post(url, callback);
-        }
+        
+        Blacknet.confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
+        ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?', function(flag){
+            if(flag){
+                Blacknet.post(url, callback);
+            }
+        })
     };
 
     Blacknet.wait = function (timeout) {
@@ -673,6 +676,26 @@ void function () {
             return true
         }
         return false
+    }
+    /**
+     * confirm dialog
+     * @method confirm
+     * @for Blacknet
+     * @param {string} text
+     * @param {function} fn
+     * @return {null}
+     */
+    Blacknet.confirm = function(text, fn){
+        mask.show();
+        dialogConfirm.find(".body").html(text.replace("\n", "<br/>"))
+        dialogConfirm.show().find('.confirm, .cancel').unbind().on('click', function () {
+             if(Object.prototype.toString.call(fn) === "[object Function]"){
+                fn.call(this, $(this).hasClass("confirm"));
+            }
+            mask.hide();
+            dialogConfirm.hide().find('.confirm').unbind();
+            dialogConfirm.hide().find('.cancel').unbind();
+        });
     }
 
     /**
