@@ -53,14 +53,15 @@ void function () {
 
                 let account = dialogAccount.find('.account_text').val();
 
-                if (account.length < 22) {
-                    return;
-                }
-                if (/^blacknet[a-z0-9]{59}$/.test(account)) {
+                if(Blacknet.verifyAccount(account)) {
                     localStorage.account = account;
-                } else {
+                }else if(Blacknet.verifyMnemonic(account)){
                     account = await Blacknet.mnemonicToAddress(account);
                     localStorage.account = account;
+                } else {
+                    Blacknet.message("Invalid account/mnemonic", "warning")
+                    dialogAccount.find('.account_text').focus()
+                    return 
                 }
                 location.reload();
             });
