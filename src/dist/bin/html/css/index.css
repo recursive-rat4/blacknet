@@ -216,6 +216,10 @@ select{
     display: inline-block;
 }
 
+input:focus {
+    border: 1px solid var(--gold-text);
+}
+
 button {
     line-height: 1.499;
     position: relative;
@@ -260,6 +264,12 @@ fieldset button, .staking button{
     background-color: var(--darker-grey-bg);
     width: 100px;
     float: right;
+    border: 1px solid var(--gold-text);
+}
+button.v2{
+    color: var(--gold-text);
+    background-color: var(--darker-grey-bg);
+    width: 100px;
     border: 1px solid var(--gold-text);
 }
 
@@ -614,4 +624,48 @@ tr.undis{
 
 #tx-list tr.preview td.noborder{
     border-bottom: none;
+}
+
+
+
+/* blacknet-message */
+.blacknet-message{
+    width: 100%;
+    z-index: 102;
+    position: fixed;
+    top: 16px;
+    left: 0;
+    pointer-events: none;
+}
+
+.blacknet-message-notice{
+    text-align: center;
+}
+
+.blacknet-message-notice-content {
+    display: inline-block;
+    background: var(--gold-text);
+    margin-bottom: 16px;
+    padding: 8px 10px;
+    font-size: 14px;
+    border-radius: 3px;
+    color: var(--darker-grey-bg);
+    text-align: center;
+    box-shadow: var(--darker-grey-bg) 0 0 10px;
+    position: relative;
+}
+
+.blacknet-message-notice-content .fa-check-circle{
+    color: green;
+    margin-right: 3px;
+}
+
+.blacknet-message-notice-content .fa-times-circle{
+    color: red;
+    margin-right: 3px;
+}
+
+.blacknet-message-notice-content .fa-info-circle{
+    color: yellow;
+    margin-right: 3px;
 }

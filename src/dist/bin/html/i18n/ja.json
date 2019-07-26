@@ -74,5 +74,11 @@
     "Staking Balance": "ステークバランス",
     "create account": "（アカウントをお持ちでない場合は、ここをクリックして作成してください。）",
     "promise of save mnemonic": "私は自分のニーモニックを忘れないし、それを決して開示しません",
-    "Next": "次へ"
+    "Next": "次へ",
+    "Invalid account": "無効なアカウント",
+    "Invalid amount": "無効な金額",
+    "Invalid mnemonic": "無効なニーモニック",
+    "Invalid message": "無効なメッセージ",
+    "Invalid signature": "無効な署名",
+    "Invalid account/mnemonic": "無効なアカウント/ニーモニック"
 }

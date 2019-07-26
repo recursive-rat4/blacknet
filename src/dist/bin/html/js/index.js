@@ -29,6 +29,12 @@ $(document).ready(function () {
 
                 let mnemonic = getMnemoic();
 
+                //验证助记词
+                if(!Blacknet.verifyMnemonic(mnemonic)){
+                    Blacknet.message("Invalid mnemonic", "warning")
+                    dialogPassword.find('.mnemonic').focus()
+                    return
+                }   
                 type == 'refresh_staking' ? refreshStaking(mnemonic) : post_staking(mnemonic, type);
             });
         }
@@ -78,7 +84,16 @@ $(document).ready(function () {
         let mnemonic = $('#sign_mnemonic').val();
         let message = $('#sign_message').val();
         let url = "/signmessage/" + mnemonic + "/" + message + "/";
-
+        if(!Blacknet.verifyMnemonic(mnemonic)){
+            Blacknet.message("Invalid mnemonic", "warning")
+            $('#sign_mnemonic').focus()
+            return
+        }
+        if(!Blacknet.verifyMessage(message)){
+            Blacknet.message("Invalid message", "warning")
+            $('#sign_message').focus()
+            return
+        }
         Blacknet.post(url, function (data) {
             $('#sign_result').val(data);
         });
@@ -88,7 +103,21 @@ $(document).ready(function () {
         let signature = $('#verify_signature').val();
         let message = $('#verify_message').val();
         let url = "/verifymessage/" + account + "/" + signature + "/" + message + "/";
-
+        if(!Blacknet.verifyAccount(account)) {
+            Blacknet.message("Invalid account", "warning")
+            $('#verify_account').focus()
+            return 
+        }
+        if(!Blacknet.verifySign(signature)){
+            Blacknet.message("Invalid signature", "warning")
+            $('#verify_signature').focus()
+            return
+        }
+        if(!Blacknet.verifyMessage(message)){
+            Blacknet.message("Invalid message", "warning")
+            $('#verify_message').focus()
+            return
+        }
         Blacknet.get(url, function (data) {
             $('#verify_result').val(data);
         });
@@ -96,7 +125,11 @@ $(document).ready(function () {
     function mnemonic_info() {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
         let url = "/mnemonic/info/" + mnemonic + "/";
-
+        if(!Blacknet.verifyMnemonic(mnemonic)){
+            Blacknet.message("Invalid mnemonic", "warning")
+            $('#mnemonic_info_mnemonic').focus()
+            return
+        }
         Blacknet.post(url, function (data) {
             let html = '';
 
@@ -110,12 +143,17 @@ $(document).ready(function () {
     }
 
     function transfer_click(type) {
-
         return function () {
             mask.show();
             dialogPassword.show().find('.confirm').unbind().on('click', function () {
 
                 let mnemonic = getMnemoic();
+                //验证助记词
+                if(!Blacknet.verifyMnemonic(mnemonic)){
+                    Blacknet.message("Invalid mnemonic", "warning")
+                    dialogPassword.find('.mnemonic').focus()
+                    return
+                }
                 switch (type) {
                     case 'send': transfer(mnemonic); break;
                     case 'lease': lease(mnemonic); break;
@@ -126,12 +164,22 @@ $(document).ready(function () {
     }
 
     function transfer(mnemonic) {
-
         let to = $('#transfer_to').val();
         let amount = $('#transfer_amount').val();
         let message = $('#transfer_message').val();
         let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
-
+        if(!Blacknet.verifyAccount(to)) {
+            Blacknet.message("Invalid account", "warning")
+            $('#transfer_to').focus()
+            clearPassWordDialog();
+            return 
+        }
+        if(!Blacknet.verifyAmount(amount)) {
+            Blacknet.message("Invalid amount", "warning")
+            $('#transfer_amount').focus()
+            clearPassWordDialog();
+            return 
+        }
         Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
             $('#transfer_result').val(data);
             clearPassWordDialog();
@@ -142,7 +190,18 @@ $(document).ready(function () {
 
         let to = $('#lease_to').val();
         let amount = $('#lease_amount').val();
-
+        if(!Blacknet.verifyAccount(to)) {
+            Blacknet.message("Invalid account", "warning")
+            $('#lease_to').focus()
+            clearPassWordDialog();
+            return 
+        }
+        if(!Blacknet.verifyAmount(amount)) {
+            Blacknet.message("Invalid amount", "warning")
+            $('#lease_amount').focus()
+            clearPassWordDialog();
+            return 
+        }
         Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
             $('#lease_result').val(data);
             clearPassWordDialog();
@@ -154,7 +213,18 @@ $(document).ready(function () {
         let to = $('#cancel_lease_to').val();
         let amount = $('#cancel_lease_amount').val();
         let height = $('#cancel_lease_height').val();
-
+        if(!Blacknet.verifyAccount(to)) {
+            Blacknet.message("Invalid account", "warning")
+            $('#cancel_lease_to').focus()
+            clearPassWordDialog();
+            return 
+        }
+        if(!Blacknet.verifyAmount(amount)) {
+            Blacknet.message("Invalid amount", "warning")
+            $('#cancel_lease_amount').focus()
+            clearPassWordDialog();
+            return 
+        }
         Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
             $('#cancel_lease_result').val(data);
             clearPassWordDialog();
@@ -169,7 +239,7 @@ $(document).ready(function () {
 
     function timeAlert(msg, timeout) {
         setTimeout(function () {
-            alert(msg);
+            Blacknet.message(msg, "warning")
         }, timeout || 100);
     }
 
@@ -242,16 +312,21 @@ $(document).ready(function () {
     }
 
     async function addPeer() {
-
         let ip = $('#ip_address').val(), port = $('#ip_port').val();
+
+        if(!Blacknet.verifyIP(ip)) {
+            Blacknet.message("Invalid ip address", "warning")
+            $('#ip_address').focus()
+            return 
+        }
 
         let result = await Blacknet.getPromise(`/addpeer/${ip}/${port}/true`);
 
         await Blacknet.network();
 
-        alert(`${ip} ${result}`);
-        $('#ip_address').val('');
+        Blacknet.message(`${ip} ${result}`, "success")
 
+        $('#ip_address').val('');
     }
 
     Blacknet.ready(function () {

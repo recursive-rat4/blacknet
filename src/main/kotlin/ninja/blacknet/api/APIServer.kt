@@ -303,7 +303,7 @@ fun Application.APIServer() {
 
             call.respond(Json.stringify(AddressInfo.serializer(), info))
         }
-
+        
         post("/api/v1/mnemonic/info/{mnemonic}") {
             val info = MnemonicInfo.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
