@@ -119,8 +119,7 @@ $(document).ready(function () {
             return
         }
         Blacknet.get(url, function (data) {
-            $('#verify_result').text(data);
-            $('#verify_result').parent().removeClass("hidden")
+            $('#verify_result').text(data).parent().removeClass("hidden")
         });
     }
     function mnemonic_info() {
@@ -137,10 +136,9 @@ $(document).ready(function () {
             data.mnemonic = data.mnemonic.replace(/[a-z]/g, '*');
 
             html += 'mnemonic: ' + data.mnemonic;
-            html += '<br>address: ' + data.address;
-            html += '<br>publicKey: ' + data.publicKey;
-            $('#mnemonic_info_result').html(html);
-            $('#mnemonic_info_result').parent().removeClass("hidden")
+            html += '\naddress: ' + data.address;
+            html += '\npublicKey: ' + data.publicKey;
+            $('#mnemonic_info_result').text(html).parent().removeClass("hidden")
         }, 'json');
     }
 
@@ -187,8 +185,7 @@ $(document).ready(function () {
         }
         input_mnemonic(function (mnemonic) {
             Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
-                $('#transfer_result').text(data);
-                $('#transfer_result').parent().removeClass("hidden")
+                $('#transfer_result').text(data).parent().removeClass("hidden")
                 clearPassWordDialog();
             });
         })
@@ -209,8 +206,7 @@ $(document).ready(function () {
         }
         input_mnemonic(function (mnemonic) {
             Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
-                $('#lease_result').text(data);
-                $('#lease_result').parent().removeClass("hidden")
+                $('#lease_result').text(data).parent().removeClass("hidden")
                 clearPassWordDialog();
             });
         })
@@ -233,8 +229,7 @@ $(document).ready(function () {
         }
         input_mnemonic(function (mnemonic) {
             Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
-                $('#cancel_lease_result').text(data);
-                $('#cancel_lease_result').parent().removeClass("hidden")
+                $('#cancel_lease_result').text(data).parent().removeClass("hidden")
                 clearPassWordDialog();
             });
         })
