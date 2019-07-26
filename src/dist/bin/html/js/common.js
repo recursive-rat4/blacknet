@@ -232,7 +232,7 @@ void function () {
         } else {
             url = "/cancellease/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + height + "/";
         }
-        
+
         Blacknet.confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
         ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?', function(flag){
             if(flag){
@@ -692,7 +692,9 @@ void function () {
              if(Object.prototype.toString.call(fn) === "[object Function]"){
                 fn.call(this, $(this).hasClass("confirm"));
             }
-            mask.hide();
+            if(!dialogPassword.is(":visible")){
+                mask.hide();
+            }
             dialogConfirm.hide().find('.confirm').unbind();
             dialogConfirm.hide().find('.cancel').unbind();
         });
