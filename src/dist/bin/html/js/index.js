@@ -144,26 +144,31 @@ $(document).ready(function () {
 
     function transfer_click(type) {
         return function () {
-            mask.show();
-            dialogPassword.show().find('.confirm').unbind().on('click', function () {
-
-                let mnemonic = getMnemoic();
-                //验证助记词
-                if(!Blacknet.verifyMnemonic(mnemonic)){
-                    Blacknet.message("Invalid mnemonic", "warning")
-                    dialogPassword.find('.mnemonic').focus()
-                    return
-                }
-                switch (type) {
-                    case 'send': transfer(mnemonic); break;
-                    case 'lease': lease(mnemonic); break;
-                    case 'cancel_lease': cancel_lease(mnemonic); break;
-                }
-            });
+            switch (type) {
+                case 'send': transfer(); break;
+                case 'lease': lease(); break;
+                case 'cancel_lease': cancel_lease(); break;
+            }
         }
     }
 
-    function transfer(mnemonic) {
+    function input_mnemonic(fn){
+        mask.show();
+        dialogPassword.show().find('.confirm').unbind().on('click', function () {
+            let mnemonic = getMnemoic();
+            //验证助记词
+            if(!Blacknet.verifyMnemonic(mnemonic)){
+                Blacknet.message("Invalid mnemonic", "warning")
+                dialogPassword.find('.mnemonic').focus()
+                return
+            }
+            if(Object.prototype.toString.call(fn) === "[object Function]"){
+                fn.call(this, mnemonic);
+            }
+        });
+    }
+
+    function transfer() {
         let to = $('#transfer_to').val();
         let amount = $('#transfer_amount').val();
         let message = $('#transfer_message').val();
@@ -171,41 +176,40 @@ $(document).ready(function () {
         if(!Blacknet.verifyAccount(to)) {
             Blacknet.message("Invalid account", "warning")
             $('#transfer_to').focus()
-            clearPassWordDialog();
             return 
         }
         if(!Blacknet.verifyAmount(amount)) {
             Blacknet.message("Invalid amount", "warning")
             $('#transfer_amount').focus()
-            clearPassWordDialog();
             return 
         }
-        Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
-            $('#transfer_result').val(data);
-            clearPassWordDialog();
-        });
+        input_mnemonic(function (mnemonic) {
+            Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
+                $('#transfer_result').val(data);
+                clearPassWordDialog();
+            });
+        })
     }
 
-    function lease(mnemonic) {
-
+    function lease() {
         let to = $('#lease_to').val();
         let amount = $('#lease_amount').val();
         if(!Blacknet.verifyAccount(to)) {
             Blacknet.message("Invalid account", "warning")
             $('#lease_to').focus()
-            clearPassWordDialog();
             return 
         }
         if(!Blacknet.verifyAmount(amount)) {
             Blacknet.message("Invalid amount", "warning")
             $('#lease_amount').focus()
-            clearPassWordDialog();
             return 
         }
-        Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
-            $('#lease_result').val(data);
-            clearPassWordDialog();
-        });
+        input_mnemonic(function (mnemonic) {
+            Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
+                $('#lease_result').val(data);
+                clearPassWordDialog();
+            });
+        })
     }
 
     function cancel_lease(mnemonic) {
@@ -216,19 +220,19 @@ $(document).ready(function () {
         if(!Blacknet.verifyAccount(to)) {
             Blacknet.message("Invalid account", "warning")
             $('#cancel_lease_to').focus()
-            clearPassWordDialog();
             return 
         }
         if(!Blacknet.verifyAmount(amount)) {
             Blacknet.message("Invalid amount", "warning")
             $('#cancel_lease_amount').focus()
-            clearPassWordDialog();
             return 
         }
-        Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
-            $('#cancel_lease_result').val(data);
-            clearPassWordDialog();
-        });
+        input_mnemonic(function (mnemonic) {
+            Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
+                $('#cancel_lease_result').val(data);
+                clearPassWordDialog();
+            });
+        })
     }
 
     function clearPassWordDialog() {
