@@ -684,6 +684,9 @@ void function () {
      * @return {null}
      */
     Blacknet.message = function(msg, type){
+        if(window.i18nData[msg.toLocaleLowerCase()]) {
+            msg = window.i18nData[msg.toLocaleLowerCase()]
+        }
         Blacknet.template.message(msg, type)
     }
 

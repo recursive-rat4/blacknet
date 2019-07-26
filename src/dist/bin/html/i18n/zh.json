@@ -84,5 +84,11 @@
     "Visit": "点击",
     "for further information about the software.": "来获取更多相关信息.",   
     "For licensing information see": "获得更多信息请参阅",
-    "Show Full Transaction History": "显示所有交易记录"
+    "Show Full Transaction History": "显示所有交易记录",
+    "Invalid account": "无效的账号地址",
+    "Invalid amount": "无效的金额",
+    "Invalid mnemonic": "无效的助记词",
+    "Invalid message": "无效的附加消息",
+    "Invalid signature": "无效的签名",
+    "Invalid account/mnemonic": "无效的账号/助记词"
 }

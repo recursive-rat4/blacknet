@@ -232,7 +232,6 @@ $(document).ready(function () {
 
     function timeAlert(msg, timeout) {
         setTimeout(function () {
-            // alert(msg);
             Blacknet.message(msg, "warning")
         }, timeout || 100);
     }
