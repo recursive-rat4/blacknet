@@ -45,6 +45,7 @@ void function () {
             dialogAccount.find('.enter').unbind().on('click', async function () {
 
                 let account = dialogAccount.find('.account_text').val();
+                account = $.trim(account);
 
                 if (account.length < 22) {
                     return;
