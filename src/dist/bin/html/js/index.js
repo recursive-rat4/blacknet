@@ -11,7 +11,7 @@ $(document).ready(function () {
 
     const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");
     const hash = localStorage.hashIndex || 'overview';
-    const dialogPassword = $('.dialog.password'), mask = $('.mask');
+    const dialogPassword = $('.dialog.password'),mask = $('.mask');
     let blockStack = [];
 
     menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
