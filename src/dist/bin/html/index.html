@@ -259,12 +259,12 @@
                             </label>
                             <input type="text" id="transfer_fee" value='0.001'>
                         </div>
-                        <div class="field-row">
+                            <button id="transfer" data-i18n="send">Send</button>
+                    </fieldset>
+                    <div class="field-row field-row-outer hidden">
                             <label data-i18n="result">Result</label>
                             <input type="text" id="transfer_result" readonly>
                         </div>
-                            <button id="transfer" data-i18n="send">Send</button>
-                    </fieldset>
                 </div>
                 <div class="sign">
                     <fieldset>
@@ -277,13 +277,12 @@
                             <label data-i18n="message">Message</label>
                             <input type="text" id="sign_message">
                         </div>
-                        <div class="field-row">
-                            <label data-i18n="result">Result</label>
-                            <input type="text" id="sign_result" readonly>
-                        </div>
                         <button id="sign" data-i18n="sign message">Sign message</button>
                     </fieldset>
-
+                    <div class="field-row field-row-outer hidden">
+                        <label data-i18n="result">Result</label>
+                        <input type="text" id="sign_result" readonly>
+                    </div>
                     <fieldset>
                         <legend data-i18n="verify message">Verify message</legend>
                         <div class="field-row">
@@ -298,12 +297,12 @@
                             <label data-i18n="message">Message</label>
                             <input type="text" id="verify_message">
                         </div>
-                        <div class="field-row">
-                            <label data-i18n="result">Result</label>
-                            <input type="text" id="verify_result" readonly>
-                        </div>
                         <button id="verify" data-i18n="verify message">Verify message</button>
                     </fieldset>
+                    <div class="field-row field-row-outer hidden">
+                        <label data-i18n="result">Result</label>
+                        <input type="text" id="verify_result" readonly>
+                    </div>
                 </div>
                 <div class="info">
                     <fieldset>
@@ -312,12 +311,13 @@
                             <label data-i18n="mnemonic">Mnemonic</label>
                             <input type="password" id="mnemonic_info_mnemonic">
                         </div>
-                        <div class="field-row">
+                        
+                        <button id="mnemonic_info" data-i18n="mnemonic info">Mnemonic info</button>
+                    </fieldset>
+                    <div class="field-row field-row-outer hidden">
                             <label data-i18n="result">Result</label>
                             <pre id="mnemonic_info_result"></pre>
                         </div>
-                        <button id="mnemonic_info" data-i18n="mnemonic info">Mnemonic info</button>
-                    </fieldset>
                 </div>
                 <div class="generate"></div>
                 <div class="recentblocks">
@@ -397,12 +397,12 @@
                             </label>
                             <input type="text" id="lease_fee" value='0.001'>
                         </div>
-                        <div class="field-row">
-                            <label data-i18n="result">Result</label>
-                            <input type="text" id="lease_result" readonly>
-                        </div>
                         <button id="lease" data-i18n="lease">Lease</button>
                     </fieldset>
+                    <div class="field-row field-row-outer hidden">
+                        <label data-i18n="result">Result</label>
+                        <input type="text" id="lease_result" readonly>
+                    </div>
                 </div>
                 <div class="cancel_lease">
                     <fieldset>
@@ -432,12 +432,12 @@
                             </label>
                             <input type="text" id="cancel_lease_fee" value='0.001'>
                         </div>
-                        <div class="field-row">
-                            <label data-i18n="result">Result</label>
-                            <input type="text" id="cancel_lease_result" readonly>
-                        </div>
                         <button id="cancel_lease" data-i18n="cancel lease">Cancel Lease</button>
                     </fieldset>
+                    <div class="field-row field-row-outer hidden">
+                        <label data-i18n="result">Result</label>
+                        <input type="text" id="cancel_lease_result" readonly>
+                    </div>
                 </div>
             </div>
             <!-- End container div -->
