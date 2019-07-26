@@ -167,11 +167,19 @@ header .network {
 .rightpanel .info p {
     margin: 0 0 5px;
 }
-
-.field-row {
+fieldset .field-row{
     display: flex;
     align-items: center;
+}
+
+.field-row {
     margin-bottom: 1rem;
+    max-width: 666px;
+}
+
+.field-row p{
+    word-break: break-all;
+    font-size: 12px;
 }
 
 .field-row-outer.hidden{
@@ -461,7 +469,7 @@ input:focus, button:focus {
 .dialog.confirm .body{
     /* text-align: center; */
     line-height: 25px;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .dialog.confirm .btns{

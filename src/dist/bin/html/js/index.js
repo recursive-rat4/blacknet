@@ -95,8 +95,7 @@ $(document).ready(function () {
             return
         }
         Blacknet.post(url, function (data) {
-            $('#sign_result').val(data);
-            $('#sign_result').parent().removeClass("hidden")
+            $('#sign_result').text(data).parent().removeClass("hidden")
         });
     }
     function verify() {
@@ -120,7 +119,7 @@ $(document).ready(function () {
             return
         }
         Blacknet.get(url, function (data) {
-            $('#verify_result').val(data);
+            $('#verify_result').text(data);
             $('#verify_result').parent().removeClass("hidden")
         });
     }
@@ -188,7 +187,7 @@ $(document).ready(function () {
         }
         input_mnemonic(function (mnemonic) {
             Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
-                $('#transfer_result').val(data);
+                $('#transfer_result').text(data);
                 $('#transfer_result').parent().removeClass("hidden")
                 clearPassWordDialog();
             });
@@ -210,7 +209,7 @@ $(document).ready(function () {
         }
         input_mnemonic(function (mnemonic) {
             Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
-                $('#lease_result').val(data);
+                $('#lease_result').text(data);
                 $('#lease_result').parent().removeClass("hidden")
                 clearPassWordDialog();
             });
@@ -234,7 +233,7 @@ $(document).ready(function () {
         }
         input_mnemonic(function (mnemonic) {
             Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
-                $('#cancel_lease_result').val(data);
+                $('#cancel_lease_result').text(data);
                 $('#cancel_lease_result').parent().removeClass("hidden")
                 clearPassWordDialog();
             });
