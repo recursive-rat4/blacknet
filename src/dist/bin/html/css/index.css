@@ -469,7 +469,11 @@ input:focus, button:focus {
 }
 
 .dialog.confirm{
-    height: 150px;
+    width: 510px;
+    height: 160px;
+    padding: 10px 20px;
+    margin-left: -255px;
+    margin-top: -80px;
     display: none;
 }
 
