@@ -19,10 +19,17 @@ void function () {
     const notificationNode = $('.notification.tx').first();
     const txList = $('#tx-list');
 
+    /**
+     * init 
+     * @method init
+     * @for Blacknet
+     * @param {null} 
+     * @return {null}
+     */
     Blacknet.init = async function () {
 
         await Blacknet.wait(1000);
-
+        
         if (account) {
 
             mask.removeClass('init').hide();
@@ -67,6 +74,13 @@ void function () {
         return mnemonicInfo.address;
     };
 
+    /**
+     * account balance
+     * @method balance
+     * @for Blacknet
+     * @param {null} 
+     * @return {null}
+     */
     Blacknet.balance = async function () {
 
         let balance = $('.overview_balance'),
@@ -580,6 +594,97 @@ void function () {
 
         timePeerInfo();
     };
+
+    /**
+     * verify mnemonic
+     * @method verifyMnemonic
+     * @for Blacknet
+     * @param {string} mnemonic
+     * @return {boolean} true/fasle
+     */
+    Blacknet.verifyMnemonic = function(mnemonic){
+        if(Object.prototype.toString.call(mnemonic) === "[object String]" && mnemonic.split(" ").length == 12){
+            return true
+        }
+        return false
+    }
+    /**
+     * verify account address
+     * @method verifyAccount
+     * @for Blacknet
+     * @param {string} account
+     * @return {boolean} true/fasle
+     */
+    Blacknet.verifyAccount = function(account){
+        if(Object.prototype.toString.call(account) === "[object String]" && account.length > 21 && /^blacknet[a-z0-9]{59}$/.test(account)){
+            return true
+        }
+        return false
+    }
+    /**
+     * verify amount
+     * @method verifyAmount
+     * @for Blacknet
+     * @param {string} amount
+     * @return {boolean} true/fasle
+     */
+    Blacknet.verifyAmount = function(amount){
+        if(Object.prototype.toString.call(amount) === "[object Number]" && amount > 0){
+            return true
+        }
+        return false
+    }
+    /**
+     * verify message
+     * @method verifyMessage
+     * @for Blacknet
+     * @param {string} message
+     * @return {boolean} true/fasle
+     */
+    Blacknet.verifyMessage = function(message){
+        if(Object.prototype.toString.call(message) === "[object String]" && message.length > 0){
+            return true
+        }
+        return false
+    }
+    /**
+     * verify sign
+     * @method verifySign
+     * @for Blacknet
+     * @param {string} sign
+     * @return {boolean} true/fasle
+     */
+    Blacknet.verifySign = function(sign){
+        if(Object.prototype.toString.call(sign) === "[object String]" && sign.length === 128){
+            return true
+        }
+        return false
+    }
+    /**
+     * verify ip
+     * @method verifyIP
+     * @for Blacknet
+     * @param {string} ip
+     * @return {boolean} true/fasle
+     */
+    Blacknet.verifyIP = function(ip){
+        if(Object.prototype.toString.call(ip) === "[object String]" && /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/.test(ip)){
+            return true
+        }
+        return false
+    }
+
+    /**
+     * message tips
+     * @method message
+     * @for Blacknet
+     * @param {string} msg
+     * @param {string} type
+     * @return {null}
+     */
+    Blacknet.message = function(msg, type){
+        Blacknet.template.message(msg, type)
+    }
 
     window.addEventListener('beforeunload', function (e) {
 

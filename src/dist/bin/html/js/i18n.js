@@ -4,7 +4,7 @@
 async function i18n(config) {
 
     let data = await $.getJSON('i18n/' + config.locale + '.json');
-
+    window.i18nData = data
     for(let key in data){
 
         data[key.toLowerCase()] = data[key];

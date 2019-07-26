@@ -142,8 +142,34 @@ Blacknet.template = {
         if (rowsCount > 36) {
             blockListEl.find('tr:last-child').remove();
         }
+    },
+
+    message: async function (msg, type) {
+        var icon
+        switch (type) {
+            case "success":
+                icon = '<i class="fa fa-check-circle"></i>'
+                break;
+            case "error":
+                icon = '<i class="fa fa-times-circle"></i>';
+                break;
+            case "warning":
+                icon = '<i class="fa fa-info-circle"></i>';
+                break;
+            default:
+                icon = ''
+                break;
+        }
+        var messageText = `<div class="blacknet-message-notice">
+            <div class="blacknet-message-notice-content">${icon}${msg}
+            </div>
+        </div>`;
+        var $msg = $(messageText)
+        $(".blacknet-message").append($msg)
+        setTimeout(function () {
+            $msg.remove()
+        }, 2000)
+       
     }
-
-
 
 };
