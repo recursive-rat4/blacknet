@@ -630,7 +630,7 @@ void function () {
      * @return {boolean} true/fasle
      */
     Blacknet.verifyAmount = function(amount){
-        if(Object.prototype.toString.call(amount) === "[object Number]" && amount > 0){
+        if(/\d+/.test(amount) && amount > 0){
             return true
         }
         return false
