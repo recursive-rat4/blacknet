@@ -687,7 +687,7 @@ void function () {
      */
     Blacknet.confirm = function(text, fn){
         mask.show();
-        dialogConfirm.find(".body").html(text.replace("\n", "<br/>"))
+        dialogConfirm.find(".body").html(text.replace(/\n/g, "<br/>"))
         dialogConfirm.show().find('.confirm, .cancel').unbind().on('click', function () {
              if(Object.prototype.toString.call(fn) === "[object Function]"){
                 fn.call(this, $(this).hasClass("confirm"));
