@@ -49,7 +49,7 @@ object LedgerDB {
     private fun genesisState() = State(0, Hash.ZERO, GENESIS_TIME, PoS.INITIAL_DIFFICULTY, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0)
 
     fun genesisBlock(): List<GenesisEntry> {
-        val bytes = File("config/genesis.json").readBytes()
+        val bytes = File(Config.dir, "genesis.json").readBytes()
         logger.info("Loaded genesis.json ${Blake2b.hash(bytes)}")
         val genesis = String(bytes)
         return Json.parse(GenesisEntry.serializer().list, genesis)
@@ -176,7 +176,7 @@ object LedgerDB {
             loadGenesisState()
         }
 
-        val bootstrap = File(Config.dataDir + "/bootstrap.dat")
+        val bootstrap = File(Config.dataDir, "bootstrap.dat")
         if (bootstrap.exists()) {
             runBlocking {
                 logger.info("Found bootstrap")
@@ -205,7 +205,7 @@ object LedgerDB {
                     stream.close()
                 }
 
-                val f = File(Config.dataDir + "/bootstrap.dat.old")
+                val f = File(Config.dataDir, "bootstrap.dat.old")
                 f.delete()
                 bootstrap.renameTo(f)
 

@@ -101,7 +101,7 @@ object BlockDB : DataDB() {
     }
 
     fun warnings(): List<String> {
-        if (File(Config.dataDir).getUsableSpace() < MIN_DISK_SPACE)
+        if (Config.dataDir.getUsableSpace() < MIN_DISK_SPACE)
             return listOf("Disk space is low!")
 
         return emptyList()

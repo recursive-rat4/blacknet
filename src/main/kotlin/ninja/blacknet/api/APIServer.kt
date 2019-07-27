@@ -113,7 +113,7 @@ fun Application.APIServer() {
         }
 
         static("static") {
-            files("html")
+            files(Config.htmlDir)
         }
 
         webSocket("/api/v1/notify/block") {
@@ -260,7 +260,7 @@ fun Application.APIServer() {
             if (checkpoint == Hash.ZERO)
                 return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
 
-            val file = File(Config.dataDir + "/bootstrap.dat.new")
+            val file = File(Config.dataDir, "bootstrap.dat.new")
             val stream = file.outputStream().buffered().data()
 
             var hash = Hash.ZERO
@@ -569,7 +569,7 @@ fun Application.APIServer() {
 
         get("/api/dumpcoroutines") {
             if (Config.debugCoroutines) {
-                val stream = PrintStream(File(Config.dataDir + "/coroutines_${Runtime.time()}.log"))
+                val stream = PrintStream(File(Config.dataDir, "coroutines_${Runtime.time()}.log"))
                 DebugProbes.dumpCoroutines(stream)
                 stream.close()
                 call.respond(true.toString())

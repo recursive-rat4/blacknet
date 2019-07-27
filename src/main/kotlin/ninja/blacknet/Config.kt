@@ -13,10 +13,14 @@ package ninja.blacknet
 import com.natpryce.konfig.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Network
+import ninja.blacknet.network.Runtime
 import java.io.File
 
 object Config {
-    private val config = ConfigurationProperties.fromFile(File("config/blacknet.conf"))
+    val dir: File = File(path("config"))
+    val htmlDir: String = path("html")
+
+    private val config = ConfigurationProperties.fromFile(File(dir, "blacknet.conf"))
 
     val mintxfee by stringType
     val dnsseed by booleanType
@@ -116,24 +120,21 @@ object Config {
             128 * MiB
     }()
 
-    val dataDir: String = {
+    val dataDir: File = {
         val dir = if (portable()) {
-            File("db").getAbsolutePath()
+            File("db")
         } else if (!contains(datadir)) {
             val userHome = System.getProperty("user.home")
-            val osName = System.getProperty("os.name", "generic").toLowerCase()
 
-            userHome +
-                    if ((osName.indexOf("mac") >= 0) || (osName.indexOf("darwin") >= 0))
-                        "/Library/Application Support/Blacknet"
-                    else if (osName.indexOf("win") >= 0)
-                        "/AppData/Roaming/Blacknet"
-                    else
-                        "/.blacknet"
+            File(userHome, when {
+                Runtime.macOS -> "Library/Application Support/Blacknet"
+                Runtime.windowsOS -> "AppData\\Roaming\\Blacknet"
+                else -> ".blacknet"
+            })
         } else {
-            get(datadir)
+            File(get(datadir))
         }
-        File(dir).mkdirs()
+        dir.mkdirs()
         dir
     }()
 
@@ -145,6 +146,16 @@ object Config {
                     get(runtime.debugcoroutines)
                 else
                     false
+    }
 
+    private fun path(path: String): String {
+        if (Runtime.windowsOS) {
+            val file = File(path)
+            if (file.isFile()) {
+                // git symlink
+                return file.readText()
+            }
+        }
+        return path
     }
 }
