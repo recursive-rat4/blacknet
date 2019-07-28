@@ -74,111 +74,116 @@
                     </li>
                 </ul>
             </div>
-        </div>
-        <div class="rightpanel">
-            <div class="overview">
-                <h3 data-i18n="wallet info">Wallet Info</h3>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td data-i18n="account">Account</td>
-                            <td>
-                                <span class="overview_account"></span>
-                                <a href="#" id="switch_account" data-i18n="switch account">Switch Account</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="balance">Balance</td>
-                            <td class="overview_balance strong">0.00000000 BLN</td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="confirmed balance">Confirmed Balance</td>
-                            <td class="overview_confirmed_balance strong">0.00000000 BLN</td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="staking balance">Staking Balance</td>
-                            <td class="overview_staking_balance strong">0.00000000 BLN</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <h3 data-i18n="node info">Node Info</h3>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td data-i18n="version">Version</td>
-                            <td width="636">
-                                <span class="overview_version"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="height">Height</td>
-                            <td>
-                                <span class="overview_height"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="blockhash">BlockHash</td>
-                            <td>
-                                <span class="overview_blockHash"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="blocktime">BlockTime</td>
-                            <td>
-                                <span class="overview_blockTime"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="difficulty">Difficulty</td>
-                            <td>
-                                <span class="overview_difficulty"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="cumulative difficulty">CumulativeDifficulty</td>
-                            <td>
-                                <span class="overview_cumulativeDifficulty"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="supply">Supply</td>
-                            <td>
-                                <span class="overview_supply strong"></span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="staking">
-                <h3 data-i18n="staking info">Staking Info</h3>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td data-i18n="isstaking">isStaking</td>
-                            <td class="is_staking">false</td>
-                        </tr>
-                        <tr>
-                            <td data-i18n="start/stop/refresh">
-                                Start/Stop/Refresh
-                            </td>
-                            <td>
-                                <button id="refresh_staking" data-i18n="refresh">Refresh</button>
-                                <button id="stop_staking" data-i18n="stop staking">Stop staking</button>
-                                <button id="start_staking" data-i18n="start staking">Start staking</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="transactions">
-                <h3 data-i18n="recent transactions">Recent Transactions</h3>
-
-                <table id="tx-table">
-                    <thead>
-                        <tr>
-                            <td class="left" data-i18n="time">Time</td>
-                            <td class="left" data-i18n="type">Type</td>
-                            <!-- <td class="left">
+            <div class="rightpanel">
+                <div class="overview">
+                    <h3 data-i18n="wallet info">Wallet Info</h3>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td data-i18n="account">Account</td>
+                                <td>
+                                    <span class="overview_account"></span>
+                                    <a href="#" id="switch_account" data-i18n="switch account">Switch Account</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="balance">Balance</td>
+                                <td class="overview_balance strong">0.00000000 BLN</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="confirmed balance">Confirmed Balance</td>
+                                <td class="overview_confirmed_balance strong">0.00000000 BLN</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="staking balance">Staking Balance</td>
+                                <td class="overview_staking_balance strong">0.00000000 BLN</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3 data-i18n="node info">Node Info</h3>
+                    <table>
+                        <tbody>
+                            <tr class="overview_warnings_row">
+                                <td data-i18n="warnings">Warnings</td>
+                                <td>
+                                    <span class="overview_warnings"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="version">Version</td>
+                                <td width="636">
+                                    <span class="overview_version"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="height">Height</td>
+                                <td>
+                                    <span class="overview_height"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="blockhash">BlockHash</td>
+                                <td>
+                                    <span class="overview_blockHash"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="blocktime">BlockTime</td>
+                                <td>
+                                    <span class="overview_blockTime"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="difficulty">Difficulty</td>
+                                <td>
+                                    <span class="overview_difficulty"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="cumulative difficulty">CumulativeDifficulty</td>
+                                <td>
+                                    <span class="overview_cumulativeDifficulty"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="supply">Supply</td>
+                                <td>
+                                    <span class="overview_supply strong"></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="staking">
+                    <h3 data-i18n="staking info">Staking Info</h3>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td data-i18n="isstaking">isStaking</td>
+                                <td class="is_staking">false</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="start/stop/refresh">
+                                  Start/Stop/Refresh
+                              </td>
+                                <td>
+                                    <button id="refresh_staking" data-i18n="refresh">Refresh</button>
+                                    <button id="stop_staking" data-i18n="stop staking">Stop staking</button>
+                                    <button id="start_staking" data-i18n="start staking">Start staking</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="transactions">
+                    <h3 data-i18n="recent transactions">Recent Transactions</h3>
+                    
+                    <table id="tx-table">
+                        <thead>
+                            <tr>
+                                <td class="left" data-i18n="time">Time</td>
+                                <td class="left" data-i18n="type">Type</td>
+                                <!-- <td class="left">
                                     <select name="tx-type" id="tx-type">
                                         <option value="rat4">All</option>
                                         <option value="254">Generated</option>

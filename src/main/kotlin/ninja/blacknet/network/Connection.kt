@@ -21,6 +21,7 @@ import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.core.DataType
+import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
@@ -198,6 +199,9 @@ class Connection(
             Runtime.launch {
                 ChainFetcher.disconnected(this@Connection)
                 Node.connections.remove(this@Connection)
+                if (state == State.OUTGOING_WAITING) {
+                    PeerDB.failed(remoteAddress, connectedAt)
+                }
             }
         }
     }

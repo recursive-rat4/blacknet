@@ -26,6 +26,16 @@ object Runtime : CoroutineScope {
     val availableProcessors = java.lang.Runtime.getRuntime().availableProcessors()
 
     /**
+     * Running on macOS
+     */
+    val macOS: Boolean
+
+    /**
+     * Running on Windows
+     */
+    val windowsOS: Boolean
+
+    /**
      * Registers a new shutdown hook.
      *
      * All registered shutdown hooks will be run sequentially in the reversed order.
@@ -58,5 +68,9 @@ object Runtime : CoroutineScope {
                 }
             }
         })
+
+        val osName = System.getProperty("os.name")
+        macOS = osName.startsWith("Mac")
+        windowsOS = osName.startsWith("Windows")
     }
 }

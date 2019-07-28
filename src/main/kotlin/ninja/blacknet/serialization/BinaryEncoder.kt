@@ -6,7 +6,7 @@
  * you may not use this file except in compliance with the License.
  * See the LICENSE.txt file at the top-level directory of this distribution.
  *
- * packInt, packLong originally come from MapDB http://www.mapdb.org/
+ * encodeVarInt, encodeVarLong originally come from MapDB http://www.mapdb.org/
  * licensed under the Apache License, Version 2.0
  */
 
@@ -20,46 +20,56 @@ import kotlinx.serialization.internal.EnumDescriptor
 import kotlin.experimental.and
 import kotlin.experimental.or
 
+/**
+ * Encoder to the Blacknet Binary Format
+ */
 class BinaryEncoder : ElementValueEncoder() {
     private val out = BytePacketBuilder()
 
-    fun build(): ByteReadPacket {
+    fun toPacket(): ByteReadPacket {
         return out.build()
     }
 
     fun toBytes(): ByteArray {
-        return build().readBytes()
+        return toPacket().readBytes()
     }
 
     override fun encodeByte(value: Byte) = out.writeByte(value)
+    override fun encodeShort(value: Short) = out.writeShort(value)
     override fun encodeInt(value: Int) = out.writeInt(value)
     override fun encodeLong(value: Long) = out.writeLong(value)
 
+    override fun encodeNull() = out.writeByte(0)
+    override fun encodeNotNullMark() = out.writeByte(1)
+    override fun encodeBoolean(value: Boolean) = out.writeByte(if (value) 1 else 0)
+    override fun encodeFloat(value: Float) = out.writeFloat(value)
+    override fun encodeDouble(value: Double) = out.writeDouble(value)
+
     override fun encodeString(value: String) {
         val bytes = value.toByteArray()
-        packInt(bytes.size)
+        encodeVarInt(bytes.size)
         out.writeFully(bytes, 0, bytes.size)
     }
 
-    override fun encodeEnum(enumDescription: EnumDescriptor, ordinal: Int) = packInt(ordinal)
+    override fun encodeEnum(enumDescription: EnumDescriptor, ordinal: Int) = encodeVarInt(ordinal)
 
     override fun beginCollection(desc: SerialDescriptor, collectionSize: Int, vararg typeParams: KSerializer<*>): CompositeEncoder {
         return super.beginCollection(desc, collectionSize, *typeParams).also {
-            packInt(collectionSize)
+            encodeVarInt(collectionSize)
         }
     }
 
-    fun encodeSerializableByteArrayValue(value: SerializableByteArray) {
-        packInt(value.array.size)
-        out.writeFully(value.array, 0, value.array.size)
-    }
-
-    fun encodeByteArrayValue(value: ByteArray) {
+    fun encodeByteArray(value: ByteArray) {
+        encodeVarInt(value.size)
         out.writeFully(value, 0, value.size)
     }
 
-    fun packInt(value: Int) {
-        var shift = 31 - Integer.numberOfLeadingZeros(value)
+    fun encodeFixedByteArray(value: ByteArray) {
+        out.writeFully(value, 0, value.size)
+    }
+
+    fun encodeVarInt(value: Int) {
+        var shift = 31 - java.lang.Integer.numberOfLeadingZeros(value)
         shift -= shift % 7 // round down to nearest multiple of 7
         while (shift != 0) {
             out.writeByte(value.ushr(shift).toByte() and 0x7F)
@@ -68,8 +78,8 @@ class BinaryEncoder : ElementValueEncoder() {
         out.writeByte(value.toByte() and 0x7F or 0x80.toByte())
     }
 
-    fun packLong(value: Long) {
-        var shift = 63 - Long.numberOfLeadingZeros(value)
+    fun encodeVarLong(value: Long) {
+        var shift = 63 - java.lang.Long.numberOfLeadingZeros(value)
         shift -= shift % 7 // round down to nearest multiple of 7
         while (shift != 0) {
             out.writeByte(value.ushr(shift).toByte() and 0x7F)
@@ -88,9 +98,7 @@ class BinaryEncoder : ElementValueEncoder() {
         fun <T : Any?> toPacket(strategy: SerializationStrategy<T>, obj: T): ByteReadPacket {
             val encoder = BinaryEncoder()
             strategy.serialize(encoder, obj)
-            return encoder.build()
+            return encoder.toPacket()
         }
     }
 }
-
-private fun Long.Companion.numberOfLeadingZeros(value: Long): Int = java.lang.Long.numberOfLeadingZeros(value)

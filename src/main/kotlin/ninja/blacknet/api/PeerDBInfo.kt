@@ -10,17 +10,25 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import ninja.blacknet.db.PeerDB
 
 @Serializable
 class PeerDBInfo(
         val size: Int,
-        val peers: List<String>
+        val peers: JsonArray
 ) {
     companion object {
-        suspend fun get(): PeerDBInfo {
-            val peers = PeerDB.getAll().map { it.toString() }
-            return PeerDBInfo(peers.size, peers)
+        suspend fun get(stats: Boolean = false): PeerDBInfo {
+            val peers = PeerDB.getAll().map { (address, entry) ->
+                if (!stats) {
+                    JsonPrimitive(address.toString())
+                } else {
+                    entry.toJson(address)
+                }
+            }
+            return PeerDBInfo(peers.size, JsonArray(peers))
         }
     }
 }

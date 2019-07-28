@@ -26,11 +26,11 @@ object TorController {
 
     init {
         try {
-            val file = File(Config.dataDir + "/privateKey.tor")
+            val file = File(Config.dataDir, "privateKey.tor")
             val lastModified = file.lastModified()
             if (lastModified != 0L && lastModified < 1549868177000)
-                file.renameTo(File(Config.dataDir + "/privateKey.$lastModified.tor"))
-            privateKey = File(Config.dataDir + "/privateKey.tor").readText()
+                file.renameTo(File(Config.dataDir, "privateKey.$lastModified.tor"))
+            privateKey = File(Config.dataDir, "privateKey.tor").readText()
         } catch (e: Throwable) {
         }
     }
@@ -71,7 +71,7 @@ object TorController {
         privateKey = privKey
         logger.info("Saving Tor private key")
         try {
-            File(Config.dataDir + "/privateKey.tor").writeText(privateKey)
+            File(Config.dataDir, "privateKey.tor").writeText(privateKey)
         } catch (e: Throwable) {
             logger.error(e)
         }

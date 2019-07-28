@@ -82,6 +82,7 @@ $(document).ready(function () {
 
     function sign() {
         let mnemonic = $('#sign_mnemonic').val();
+        mnemonic = $.trim(mnemonic);
         let message = $('#sign_message').val();
         let url = "/signmessage/" + mnemonic + "/" + message + "/";
         if(!Blacknet.verifyMnemonic(mnemonic)){
@@ -124,6 +125,7 @@ $(document).ready(function () {
     }
     function mnemonic_info() {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
+        mnemonic = $.trim(mnemonic);
         let url = "/mnemonic/info/" + mnemonic + "/";
         if(!Blacknet.verifyMnemonic(mnemonic)){
             Blacknet.message("Invalid mnemonic", "warning")

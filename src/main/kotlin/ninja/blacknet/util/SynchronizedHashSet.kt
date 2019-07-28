@@ -12,6 +12,9 @@ package ninja.blacknet.util
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/**
+ * Thread-safe wrapper for [HashSet]
+ */
 class SynchronizedHashSet<T>(
         val mutex: Mutex = Mutex(),
         val set: HashSet<T> = HashSet()

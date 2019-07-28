@@ -32,11 +32,11 @@ class ChainIndex(
         override fun deserialize(decoder: Decoder): ChainIndex {
             return when (decoder) {
                 is BinaryDecoder -> ChainIndex(
-                        Hash(decoder.decodeByteArrayValue(Hash.SIZE)),
-                        Hash(decoder.decodeByteArrayValue(Hash.SIZE)),
-                        decoder.unpackInt(),
-                        decoder.unpackInt(),
-                        decoder.unpackLong())
+                        Hash(decoder.decodeFixedByteArray(Hash.SIZE)),
+                        Hash(decoder.decodeFixedByteArray(Hash.SIZE)),
+                        decoder.decodeVarInt(),
+                        decoder.decodeVarInt(),
+                        decoder.decodeVarLong())
                 else -> throw RuntimeException("unsupported decoder")
             }
         }
@@ -44,11 +44,11 @@ class ChainIndex(
         override fun serialize(encoder: Encoder, obj: ChainIndex) {
             when (encoder) {
                 is BinaryEncoder -> {
-                    encoder.encodeByteArrayValue(obj.previous.bytes)
-                    encoder.encodeByteArrayValue(obj.next.bytes)
-                    encoder.packInt(obj.nextSize)
-                    encoder.packInt(obj.height)
-                    encoder.packLong(obj.generated)
+                    encoder.encodeFixedByteArray(obj.previous.bytes)
+                    encoder.encodeFixedByteArray(obj.next.bytes)
+                    encoder.encodeVarInt(obj.nextSize)
+                    encoder.encodeVarInt(obj.height)
+                    encoder.encodeVarLong(obj.generated)
                 }
                 is JsonOutput -> {
                     @Suppress("NAME_SHADOWING")

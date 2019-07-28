@@ -6,7 +6,7 @@
  * you may not use this file except in compliance with the License.
  * See the LICENSE.txt file at the top-level directory of this distribution.
  *
- * unpackInt, unpackLong originally come from MapDB http://www.mapdb.org/
+ * decodeVarInt, decodeVarLong originally come from MapDB http://www.mapdb.org/
  * licensed under the Apache License, Version 2.0
  */
 
@@ -22,6 +22,9 @@ import kotlinx.serialization.internal.EnumDescriptor
 import java.nio.ByteBuffer
 import kotlin.experimental.and
 
+/**
+ * Decoder from the Blacknet Binary Format
+ */
 class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
     fun <T : Any?> decode(loader: DeserializationStrategy<T>): T? {
         val v = loader.deserialize(this)
@@ -33,27 +36,33 @@ class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
     }
 
     override fun decodeByte(): Byte = input.readByte()
+    override fun decodeShort(): Short = input.readShort()
     override fun decodeInt(): Int = input.readInt()
     override fun decodeLong(): Long = input.readLong()
 
+    override fun decodeNotNullMark(): Boolean = input.readByte() != 0.toByte()
+    override fun decodeBoolean(): Boolean = input.readByte() != 0.toByte()
+    override fun decodeFloat(): Float = input.readFloat()
+    override fun decodeDouble(): Double = input.readDouble()
+
     override fun decodeString(): String {
-        val size = unpackInt()
+        val size = decodeVarInt()
         return String(input.readBytes(size))
     }
 
-    override fun decodeEnum(enumDescription: EnumDescriptor): Int = unpackInt()
-    override fun decodeCollectionSize(desc: SerialDescriptor): Int = unpackInt()
+    override fun decodeEnum(enumDescription: EnumDescriptor): Int = decodeVarInt()
+    override fun decodeCollectionSize(desc: SerialDescriptor): Int = decodeVarInt()
 
-    fun decodeSerializableByteArrayValue(): SerializableByteArray {
-        val size = unpackInt()
-        return SerializableByteArray(input.readBytes(size))
-    }
-
-    fun decodeByteArrayValue(size: Int): ByteArray {
+    fun decodeByteArray(): ByteArray {
+        val size = decodeVarInt()
         return input.readBytes(size)
     }
 
-    fun unpackInt(): Int {
+    fun decodeFixedByteArray(size: Int): ByteArray {
+        return input.readBytes(size)
+    }
+
+    fun decodeVarInt(): Int {
         var ret = 0
         var v: Byte
         do {
@@ -63,7 +72,7 @@ class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
         return ret
     }
 
-    fun unpackLong(): Long {
+    fun decodeVarLong(): Long {
         var ret = 0L
         var v: Byte
         do {
