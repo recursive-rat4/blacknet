@@ -524,7 +524,7 @@ fun Application.APIServer() {
         get("/api/v1/walletdb/getwallet/{address}") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
 
-            BlockDB.mutex.withLock {
+            WalletDB.mutex.withLock {
                 call.respond(Json.stringify(WalletDB.Wallet.serializer(), WalletDB.getWalletImpl(publicKey)))
             }
         }
