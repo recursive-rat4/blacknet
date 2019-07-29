@@ -61,5 +61,11 @@
     "This operation needs your Mnemonic.": "Táto operácia vyžaduje vašu frázu.",
     "Enter Your Mnemonic:": "Zadajte vašu frázu:",
     "Enter": "Zadať",
-    "Connections": "Pripojenia"
+    "Connections": "Pripojenia",
+    "Invalid account": "Nesprávny účet",
+    "Invalid amount": "Neplatná suma",
+    "Invalid mnemonic": "Neplatná mnemotechnika",
+    "Invalid message": "Neplatná správa",
+    "Invalid signature": "Neplatný podpis",
+    "Invalid account/mnemonic": "Neplatný účet / mnemotechnika"
 }

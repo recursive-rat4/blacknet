@@ -108,17 +108,17 @@ Blacknet.template = {
         return node;
     },
 
-    peer: function (peer, index) {
+    peer: function (peer) {
 
         let tmpl =
             `<tr>
-                <td>${index + 1}</td>
+                <td>${peer.peerId}</td>
                 <td class="right">${peer.remoteAddress}</td>
                 <td>${peer.agent}</td>
-                <td class="right">${peer.ping}ms</td>
-                <td class="narrow">${peer.timeOffset}</td>
-                <td class="narrow">${peer.totalBytesRead}</td>
-                <td class="narrow">${peer.totalBytesWritten}</td>
+                <td class="right">${peer.ping} ms</td>
+                <td class="narrow">${peer.timeOffset} s</td>
+                <td class="narrow">${(peer.totalBytesRead/1048576).toFixed(2)} MiB</td>
+                <td class="narrow">${(peer.totalBytesWritten/1048576).toFixed(2)} MiB</td>
             </tr>`;
 
         $(tmpl).appendTo("#peer-list");
@@ -142,8 +142,34 @@ Blacknet.template = {
         if (rowsCount > 36) {
             blockListEl.find('tr:last-child').remove();
         }
+    },
+
+    message: async function (msg, type) {
+        var icon
+        switch (type) {
+            case "success":
+                icon = '<i class="fa fa-check-circle"></i>'
+                break;
+            case "error":
+                icon = '<i class="fa fa-times-circle"></i>';
+                break;
+            case "warning":
+                icon = '<i class="fa fa-info-circle"></i>';
+                break;
+            default:
+                icon = ''
+                break;
+        }
+        var messageText = `<div class="blacknet-message-notice">
+            <div class="blacknet-message-notice-content">${icon}${msg}
+            </div>
+        </div>`;
+        var $msg = $(messageText)
+        $(".blacknet-message").append($msg)
+        setTimeout(function () {
+            $msg.remove()
+        }, 2000)
+       
     }
-
-
 
 };
