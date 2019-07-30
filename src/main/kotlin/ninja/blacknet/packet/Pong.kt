@@ -7,36 +7,31 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.db.PeerDB
+import ninja.blacknet.network.Connection
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-class Peers(private val list: List<Address>) : Packet {
+internal class Pong(private val id: Int) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.Peers
+    override fun getType() = PacketType.Pong
 
     override suspend fun process(connection: Connection) {
-        if (list.size > MAX) {
-            connection.dos("invalid Peers size")
+        val request = connection.pingRequest
+        if (request == null) {
+            connection.dos("unexpected Pong")
             return
         }
-
-        for (i in list) {
-            if (!i.checkSize()) {
-                connection.dos("invalid Address")
-                return
-            }
+        if (request.id != id) {
+            connection.dos("invalid Pong id")
+            return
         }
-
-        PeerDB.add(list, connection.remoteAddress)
-    }
-
-    companion object {
-        const val MAX = 1000
+        connection.ping = Runtime.timeMilli() - request.time
+        connection.pingRequest = null
     }
 }

@@ -30,6 +30,7 @@ import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -41,6 +42,7 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.serialization.toHex
@@ -50,6 +52,8 @@ import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import java.io.File
+import java.io.PrintStream
+import kotlin.math.abs
 
 object APIServer {
     internal val txMutex = Mutex()
@@ -60,7 +64,7 @@ object APIServer {
 
     suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) = blockNotify.mutex.withLock {
         blockNotifyV1.forEach {
-            Node.launch {
+            Runtime.launch {
                 try {
                     it.send(Frame.Text(hash.toString()))
                 } finally {
@@ -73,7 +77,7 @@ object APIServer {
         val notification = BlockNotification(block, hash, height, size)
         val message = Json.stringify(BlockNotification.serializer(), notification)
         blockNotify.list.forEach {
-            Node.launch {
+            Runtime.launch {
                 try {
                     it.send(Frame.Text(message))
                 } finally {
@@ -88,7 +92,7 @@ object APIServer {
         val notification = TransactionNotification(tx, hash, time, size)
         val message = Json.stringify(TransactionNotification.serializer(), notification)
         transactionNotify.map.forEach {
-            Node.launch {
+            Runtime.launch {
                 try {
                     if (it.value.contains(publicKey))
                         it.key.send(Frame.Text(message))
@@ -109,7 +113,7 @@ fun Application.APIServer() {
         }
 
         static("static") {
-            files("html")
+            files(Config.htmlDir)
         }
 
         webSocket("/api/v1/notify/block") {
@@ -172,6 +176,10 @@ fun Application.APIServer() {
             call.respond(Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
         }
 
+        get("/api/v1/peerdb/networkstat") {
+            call.respond(Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get(true)))
+        }
+
         get("/api/v1/leveldb/stats") {
             call.respond(LevelDB.getProperty("leveldb.stats") ?: "Not implemented")
         }
@@ -221,7 +229,7 @@ fun Application.APIServer() {
                     hash = LedgerDB.blockHash()
                     index = LedgerDB.getChainIndex(hash)!!
                 }
-                if (APIServer.lastIndex != null && Math.abs(height - index.height) > Math.abs(height - APIServer.lastIndex!!.second.height))
+                if (APIServer.lastIndex != null && abs(height - index.height) > abs(height - APIServer.lastIndex!!.second.height))
                     index = APIServer.lastIndex!!.second
                 while (index.height > height) {
                     hash = index.previous
@@ -252,7 +260,7 @@ fun Application.APIServer() {
             if (checkpoint == Hash.ZERO)
                 return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
 
-            val file = File(Config.dataDir + "/bootstrap.dat.new")
+            val file = File(Config.dataDir, "bootstrap.dat.new")
             val stream = file.outputStream().buffered().data()
 
             var hash = Hash.ZERO
@@ -470,6 +478,19 @@ fun Application.APIServer() {
             }
         }
 
+        get("/api/v1/disconnectpeerbyid/{id}/{force?}") {
+            val id = call.parameters["id"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid id")
+            val force = call.parameters["force"]?.toBoolean() ?: false
+
+            val connection = Node.connections.find { it.peerId == id }
+            if (connection != null) {
+                connection.close(force)
+                call.respond("Disconnected")
+            } else {
+                call.respond("Not connected")
+            }
+        }
+
         post("/api/v1/staker/start/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
@@ -544,6 +565,17 @@ fun Application.APIServer() {
                 call.respond(result.toString())
             else
                 call.respond(HttpStatusCode.NotFound, "transaction not found")
+        }
+
+        get("/api/dumpcoroutines") {
+            if (Config.debugCoroutines) {
+                val stream = PrintStream(File(Config.dataDir, "coroutines_${Runtime.time()}.log"))
+                DebugProbes.dumpCoroutines(stream)
+                stream.close()
+                call.respond(true.toString())
+            } else {
+                call.respond(false.toString())
+            }
         }
     }
 }

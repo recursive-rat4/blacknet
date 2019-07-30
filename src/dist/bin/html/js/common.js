@@ -45,6 +45,7 @@ void function () {
             dialogAccount.find('.enter').unbind().on('click', async function () {
 
                 let account = dialogAccount.find('.account_text').val();
+                account = $.trim(account);
 
                 if (account.length < 22) {
                     return;
@@ -92,13 +93,21 @@ void function () {
     Blacknet.renderStatus = function () {
 
         let network = $('.network');
+        let warnings = $('.overview_warnings'), warnings_row = $('.overview_warnings_row');
         let ledger = Blacknet.ledger, nodeinfo = Blacknet.nodeinfo;
 
         network.find('.height').html(ledger.height);
         network.find('.supply').html(new BigNumber(ledger.supply).dividedBy(1e8).toFixed(0));
-        network.find('.accounts').html(ledger.accounts);
         network.find('.connections').text(nodeinfo.outgoing + nodeinfo.incoming);
         $('.overview_version').text(nodeinfo.version);
+
+        if (nodeinfo.warnings.length > 0) {
+            warnings.text(nodeinfo.warnings);
+            warnings_row.show();
+        } else {
+            warnings.text("");
+            warnings_row.hide();
+        }
     };
 
     Blacknet.renderOverview = function () {

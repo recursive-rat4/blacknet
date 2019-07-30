@@ -43,7 +43,7 @@ class Hash(val bytes: ByteArray) {
 
         override fun deserialize(decoder: Decoder): Hash {
             return when (decoder) {
-                is BinaryDecoder -> Hash(decoder.decodeByteArrayValue(SIZE))
+                is BinaryDecoder -> Hash(decoder.decodeFixedByteArray(SIZE))
                 is JsonInput -> Hash.fromString(decoder.decodeString())!!
                 else -> throw RuntimeException("unsupported decoder")
             }
@@ -51,7 +51,7 @@ class Hash(val bytes: ByteArray) {
 
         override fun serialize(encoder: Encoder, obj: Hash) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeByteArrayValue(obj.bytes)
+                is BinaryEncoder -> encoder.encodeFixedByteArray(obj.bytes)
                 is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
                 else -> throw RuntimeException("unsupported encoder")
             }

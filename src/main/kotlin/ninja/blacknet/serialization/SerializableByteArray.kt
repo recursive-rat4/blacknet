@@ -44,7 +44,7 @@ class SerializableByteArray(
 
         override fun deserialize(decoder: Decoder): SerializableByteArray {
             return when (decoder) {
-                is BinaryDecoder -> decoder.decodeSerializableByteArrayValue()
+                is BinaryDecoder -> SerializableByteArray(decoder.decodeByteArray())
                 is JsonInput -> fromString(decoder.decodeString())!!
                 else -> throw RuntimeException("unsupported decoder")
             }
@@ -52,7 +52,7 @@ class SerializableByteArray(
 
         override fun serialize(encoder: Encoder, obj: SerializableByteArray) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeSerializableByteArrayValue(obj)
+                is BinaryEncoder -> encoder.encodeByteArray(obj.array)
                 is JsonOutput -> encoder.encodeString(obj.array.toHex())
                 else -> throw RuntimeException("unsupported encoder")
             }

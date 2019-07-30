@@ -7,10 +7,11 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
+import ninja.blacknet.network.Connection
 
 const val PACKET_HEADER_SIZE = 4
 

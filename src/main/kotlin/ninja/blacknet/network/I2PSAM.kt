@@ -14,8 +14,6 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.util.error
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.ByteWriteChannel
 import kotlinx.coroutines.io.readUTF8Line
@@ -29,13 +27,11 @@ import ninja.blacknet.Config.i2psamport
 import ninja.blacknet.Config.port
 import ninja.blacknet.crypto.SHA256
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
-object I2PSAM : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
+object I2PSAM {
     private val sessionId = generateId()
     private var privateKey = "TRANSIENT"
     val sam: Address?
@@ -49,10 +45,10 @@ object I2PSAM : CoroutineScope {
             sam = null
 
         try {
-            val file = File(Config.dataDir + "/privateKey.i2p")
+            val file = File(Config.dataDir, "privateKey.i2p")
             val lastModified = file.lastModified()
             if (lastModified != 0L && lastModified < 1549868177000)
-                file.renameTo(File(Config.dataDir + "/privateKey.$lastModified.i2p"))
+                file.renameTo(File(Config.dataDir, "privateKey.$lastModified.i2p"))
             privateKey = file.readText()
         } catch (e: Throwable) {
         }
@@ -85,7 +81,7 @@ object I2PSAM : CoroutineScope {
         if (this.privateKey == "TRANSIENT")
             savePrivateKey(privateKey)
 
-        launch {
+        Runtime.launch {
             while (true) {
                 val message = connection.readChannel.readUTF8Line() ?: break
 
@@ -213,7 +209,7 @@ object I2PSAM : CoroutineScope {
         privateKey = dest
         logger.info("Saving I2P private key")
         try {
-            File(Config.dataDir + "/privateKey.i2p").writeText(privateKey)
+            File(Config.dataDir, "privateKey.i2p").writeText(privateKey)
         } catch (e: Throwable) {
             logger.error(e)
         }

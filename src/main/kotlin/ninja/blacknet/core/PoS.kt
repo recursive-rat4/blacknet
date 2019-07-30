@@ -17,11 +17,12 @@ import mu.KotlinLogging
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.delay
+import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
@@ -50,7 +51,7 @@ object PoS {
     }
 
     fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
-        val dTime = Math.min(blockTime - prevBlockTime, TARGET_BLOCK_TIME * SPACING)
+        val dTime = min(blockTime - prevBlockTime, TARGET_BLOCK_TIME * SPACING)
         return difficulty * (A2 + 2 * dTime) / A1
     }
 
@@ -62,13 +63,9 @@ object PoS {
     internal suspend fun stakersSize() = stakers.size()
 
     private var job: Job? = null
-    private suspend fun miner() {
+    private suspend fun staker() {
         while (true) {
             delay(1)
-
-            //XXX race condition
-            if (ChainFetcher.isConnectingBlocks())
-                continue
 
             if (Node.isOffline())
                 continue
@@ -76,7 +73,7 @@ object PoS {
             if (Node.isInitialSynchronization())
                 continue
 
-            val time = Node.time() and (TIMESTAMP_MASK xor -1L)
+            val time = Runtime.time() and (TIMESTAMP_MASK xor -1L)
             if (time <= LedgerDB.blockTime())
                 continue
 
@@ -120,7 +117,7 @@ object PoS {
 
         stakers.list.add(pair)
         if (stakers.list.size == 1)
-            job = Node.launch { miner() }
+            job = Runtime.launch { staker() }
         return true
     }
 
@@ -147,6 +144,7 @@ object PoS {
     const val INTERVAL = TARGET_TIMESPAN / TARGET_BLOCK_TIME
     const val SPACING = 10
     const val TIMESTAMP_MASK = 15L
+    const val MAX_FUTURE_DRIFT = 15L
     const val DEFAULT_CONFIRMATIONS = 10
     const val MATURITY = 1350
     const val BLOCK_SIZE_SPAN = 1351

@@ -21,19 +21,21 @@ import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.packet.Blocks
+import ninja.blacknet.packet.GetBlocks
 import ninja.blacknet.util.withTimeout
 
 private val logger = KotlinLogging.logger {}
 
 object ChainFetcher {
     const val TIMEOUT = 5
-    private val chains = Channel<ChainData>(16)
+    private val chains = Channel<ChainData?>(16)
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     @Volatile
     private var request: Deferred<Blocks>? = null
     private var connectedBlocks = 0
     @Volatile
-    private var connectingBlocks = false
+    private var stakedBlock: Triple<Hash, ByteArray, CompletableDeferred<Status>>? = null
     @Volatile
     private var syncChain: ChainData? = null
     private var originalChain: Hash? = null
@@ -42,11 +44,7 @@ object ChainFetcher {
     private var undoRollback: ArrayList<Hash>? = null
 
     init {
-        Node.launch { fetcher() }
-    }
-
-    fun isConnectingBlocks(): Boolean {
-        return connectingBlocks
+        Runtime.launch { fetcher() }
     }
 
     fun isSynchronizing(): Boolean {
@@ -58,27 +56,45 @@ object ChainFetcher {
             request?.cancel(CancellationException("Connection closed"))
     }
 
-    fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt? = null) {
+    fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt) {
         if (chain == Hash.ZERO)
             return
-        if (cumulativeDifficulty != null && cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
+        if (cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
             return
 
         chains.offer(ChainData(connection, chain, cumulativeDifficulty))
+    }
+
+    suspend fun stakedBlock(hash: Hash, bytes: ByteArray): Status {
+        val status = CompletableDeferred<Status>()
+        stakedBlock = Triple(hash, bytes, status)
+        request?.cancel(CancellationException("Staked new block"))
+        chains.offer(null)
+        return status.await()
     }
 
     private suspend fun fetcher() {
         while (true) {
             val data = chains.receive()
 
-            if (data.connection.isClosed())
+            if (stakedBlock != null) {
+                val hash = stakedBlock!!.first
+                val bytes = stakedBlock!!.second
+                val deferred = stakedBlock!!.third
+
+                val status = BlockDB.process(hash, bytes)
+                stakedBlock = null
+                deferred.complete(status)
+            }
+
+            if (data == null)
                 continue
-            if (data.cumulativeDifficulty() != BigInt.ZERO && data.cumulativeDifficulty() <= LedgerDB.cumulativeDifficulty())
+            if (data.cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
                 continue
             if (!BlockDB.isInteresting(data.chain))
                 continue
 
-            logger.info("Fetching ${data.chain} from ${data.connection.remoteAddress}")
+            logger.info("Fetching ${data.chain} from ${data.connection.debugName()}")
             syncChain = data
             originalChain = LedgerDB.blockHash()
 
@@ -117,17 +133,15 @@ object ChainFetcher {
                         requestBlocks(data.connection, prev, checkpoint)
                         continue
                     }
-                    connectingBlocks = true
+
                     val accepted = processBlocks(data.connection, answer)
-                    connectingBlocks = false
                     if (!accepted)
                         break
 
                     if (data.chain == LedgerDB.blockHash()) {
                         break
                     } else {
-                        if (data.cumulativeDifficulty() == BigInt.ZERO
-                                || data.cumulativeDifficulty() > LedgerDB.cumulativeDifficulty()) {
+                        if (data.cumulativeDifficulty > LedgerDB.cumulativeDifficulty()) {
                             requestBlocks(data.connection, LedgerDB.blockHash(), LedgerDB.rollingCheckpoint())
                             continue
                         } else {
@@ -137,10 +151,9 @@ object ChainFetcher {
                 }
             } catch (e: ClosedSendChannelException) {
             } catch (e: CancellationException) {
-                logger.info("${e.message}")
-                data.connection.close()
+                logger.info("Fetching cancelled: ${e.message}")
             } catch (e: Throwable) {
-                logger.error("Exception in processBlocks ${data.connection.remoteAddress}", e)
+                logger.error("Exception in processBlocks ${data.connection.debugName()}", e)
                 data.connection.close()
             }
 
@@ -152,11 +165,9 @@ object ChainFetcher {
         val cumulativeDifficulty = LedgerDB.cumulativeDifficulty()
         if (undoRollback != null) {
             if (undoDifficulty >= cumulativeDifficulty) {
-                connectingBlocks = true
                 logger.info("Reconnecting ${undoRollback!!.size} blocks")
                 val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
                 BlockDB.remove(toRemove)
-                connectingBlocks = false
             } else {
                 logger.debug { "Removing ${undoRollback!!.size} blocks from db" }
                 BlockDB.remove(undoRollback!!)
@@ -188,7 +199,7 @@ object ChainFetcher {
 
     fun chainFork(connection: Connection) {
         if (request == null || syncChain == null || syncChain!!.connection != connection) {
-            logger.info("Unexpected chain fork message ${connection.remoteAddress}")
+            logger.info("Unexpected chain fork message ${connection.debugName()}")
             connection.close()
         } else {
             request!!.cancel()
@@ -198,8 +209,9 @@ object ChainFetcher {
 
     suspend fun fetched(connection: Connection, blocks: Blocks) {
         if (request == null || syncChain == null || syncChain!!.connection != connection) {
-            logger.info("Unexpected synchronization ${connection.remoteAddress}")
-            connection.close()
+            // request may be cancelled
+            //logger.info("Unexpected synchronization ${connection.debugName()}")
+            //connection.close()
             return
         }
         recvChannel.send(blocks)
@@ -232,7 +244,7 @@ object ChainFetcher {
         }
         if (undoRollback == null)
             LedgerDB.prune()
-        connection.lastBlockTime = Node.time()
+        connection.lastBlockTime = Runtime.time()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
             logger.info("Connected ${answer.blocks.size} blocks")
@@ -240,11 +252,9 @@ object ChainFetcher {
     }
 
     private fun requestBlocks(connection: Connection, hash: Hash, checkpoint: Hash) {
-        request = Node.async { recvChannel.receive() }
+        request = Runtime.async { recvChannel.receive() }
         connection.sendPacket(GetBlocks(hash, checkpoint))
     }
 
-    private class ChainData(val connection: Connection, val chain: Hash, val cumulativeDifficulty: BigInt?) {
-        fun cumulativeDifficulty() = cumulativeDifficulty ?: BigInt.ZERO
-    }
+    private class ChainData(val connection: Connection, val chain: Hash, val cumulativeDifficulty: BigInt)
 }

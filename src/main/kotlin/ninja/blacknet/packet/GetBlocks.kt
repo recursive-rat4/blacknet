@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
@@ -16,6 +16,8 @@ import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.network.Connection
+import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
@@ -33,7 +35,7 @@ class GetBlocks(
     override suspend fun process(connection: Connection) {
         if (checkpoint != Hash.ZERO) {
             if (!LedgerDB.chainContains(checkpoint)) {
-                logger.info("Chain fork ${connection.remoteAddress}")
+                logger.info("Chain fork ${connection.debugName()}")
                 if (connection.version >= ChainFork.MIN_VERSION)
                     connection.sendPacket(ChainFork())
                 connection.close(false)

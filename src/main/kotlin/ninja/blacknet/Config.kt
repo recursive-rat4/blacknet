@@ -13,10 +13,14 @@ package ninja.blacknet
 import com.natpryce.konfig.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Network
+import ninja.blacknet.network.Runtime
 import java.io.File
 
 object Config {
-    private val config = ConfigurationProperties.fromFile(File("config/blacknet.conf"))
+    val dir: File = File(path("config"))
+    val htmlDir: String = path("html")
+
+    private val config = ConfigurationProperties.fromFile(File(dir, "blacknet.conf"))
 
     val mintxfee by stringType
     val dnsseed by booleanType
@@ -39,42 +43,68 @@ object Config {
     val dbcache by intType
     val mnemonics by listType(stringType)
     val softblocksizelimit by intType
+    val txpoolsize by intType
     val portable by booleanType
     val datadir by stringType
+    val logips by booleanType
 
     object apiserver : PropertyGroup() {
         val jsonindented by booleanType
         val publicserver by booleanType
     }
 
+    object runtime : PropertyGroup() {
+        val debugcoroutines by booleanType
+    }
+
     operator fun <T> get(key: Key<T>): T = config[key]
     fun <T> contains(key: Key<T>): Boolean = config.contains(key)
 
+    private val disabledIPv4 = !config[ipv4]
+    private val disabledIPv6 = !config[ipv6]
+    private val disabledTOR = !config[tor]
+    private val disabledI2P = !config[i2p]
+
     fun isDisabled(network: Network): Boolean = when (network) {
-        Network.IPv4 -> !config[ipv4]
-        Network.IPv6 -> !config[ipv6]
-        Network.TORv2 -> !config[tor]
-        Network.TORv3 -> !config[tor]
-        Network.I2P -> !config[i2p]
+        Network.IPv4 -> disabledIPv4
+        Network.IPv6 -> disabledIPv6
+        Network.TORv2 -> disabledTOR
+        Network.TORv3 -> disabledTOR
+        Network.I2P -> disabledI2P
     }
 
-    fun jsonindented(): Boolean {
+    fun jsonIndented(): Boolean {
         if (contains(apiserver.jsonindented))
             return get(apiserver.jsonindented)
-        return false
+        else
+            return false
     }
 
     fun portable(): Boolean {
         if (contains(portable))
             return get(portable)
-        return false
+        else
+            return false
     }
 
-    fun publicapi(): Boolean {
+    fun publicAPI(): Boolean {
         if (contains(apiserver.publicserver))
             return get(apiserver.publicserver)
-        return false
+        else
+            return false
     }
+
+    var debugCoroutines: Boolean
+
+    val incomingConnections: Int = Config[incomingconnections]
+    val outgoingConnections: Int = Config[outgoingconnections]
+
+    val logIPs: Boolean = {
+        if (contains(logips))
+            get(logips)
+        else
+            false
+    }()
 
     val softBlockSizeLimit: Int = {
         if (contains(softblocksizelimit))
@@ -83,24 +113,49 @@ object Config {
             LedgerDB.MAX_BLOCK_SIZE
     }()
 
-    val dataDir: String = {
+    val txPoolSize: Int = {
+        if (contains(txpoolsize))
+            get(txpoolsize) * MiB
+        else
+            128 * MiB
+    }()
+
+    val dataDir: File = {
         val dir = if (portable()) {
-            File("db").getAbsolutePath()
+            File("db")
         } else if (!contains(datadir)) {
             val userHome = System.getProperty("user.home")
-            val osName = System.getProperty("os.name", "generic").toLowerCase()
 
-            userHome +
-                    if ((osName.indexOf("mac") >= 0) || (osName.indexOf("darwin") >= 0))
-                        "/Library/Application Support/Blacknet"
-                    else if (osName.indexOf("win") >= 0)
-                        "/AppData/Roaming/Blacknet"
-                    else
-                        "/.blacknet"
+            File(userHome, when {
+                Runtime.macOS -> "Library/Application Support/Blacknet"
+                Runtime.windowsOS -> "AppData\\Roaming\\Blacknet"
+                else -> ".blacknet"
+            })
         } else {
-            get(datadir)
+            File(get(datadir))
         }
-        File(dir).mkdirs()
+        dir.mkdirs()
         dir
     }()
+
+    private const val MiB = 1024 * 1024
+
+    init {
+        debugCoroutines =
+                if (contains(runtime.debugcoroutines))
+                    get(runtime.debugcoroutines)
+                else
+                    false
+    }
+
+    private fun path(path: String): String {
+        if (Runtime.windowsOS) {
+            val file = File(path)
+            if (file.isFile()) {
+                // git symlink
+                return file.readText()
+            }
+        }
+        return path
+    }
 }

@@ -19,7 +19,9 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.SerializableByteArray
+import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
@@ -33,7 +35,7 @@ object TxPool : MemPool(), Ledger {
 
     suspend fun fill(block: Block) = mutex.withLock {
         val poolSize = sizeImpl()
-        var freeSize = Math.min(LedgerDB.maxBlockSize(), Config.softBlockSizeLimit) - 176
+        var freeSize = min(LedgerDB.maxBlockSize(), Config.softBlockSizeLimit) - 176
         var i = 0
         while (freeSize > 0 && i < poolSize) {
             val hash = transactions.get(i)
@@ -137,7 +139,7 @@ object TxPool : MemPool(), Ledger {
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
             transactions.add(hash)
-            val currTime = connection?.lastPacketTime ?: Node.time()
+            val currTime = connection?.lastPacketTime ?: Runtime.time()
             connection?.lastTxTime = currTime
             WalletDB.processTransaction(hash, tx, bytes, currTime)
             logger.debug { "Accepted $hash" }
@@ -149,7 +151,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, ArrayList()) {
+    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0, ArrayList()) {
         override fun add(publicKey: PublicKey, state: AccountState) {}
         override fun addHTLC(id: Hash, htlc: HTLC?) {}
         override fun addMultisig(id: Hash, multisig: Multisig?) {}

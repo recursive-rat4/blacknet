@@ -13,17 +13,13 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
-import ninja.blacknet.Config.incomingconnections
 import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.mintxfee
-import ninja.blacknet.Config.outgoingconnections
 import ninja.blacknet.Config.port
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.core.DataDB.Status
@@ -32,82 +28,55 @@ import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.packet.*
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.delay
 import java.math.BigDecimal
 import java.net.InetSocketAddress
-import java.time.Instant
-import kotlin.coroutines.CoroutineContext
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
-object Node : CoroutineScope {
+object Node {
     const val DEFAULT_P2P_PORT = 28453
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
     const val version = 9
-    const val minVersion = 5
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
-    private val shutdownHooks = SynchronizedArrayList<suspend () -> Unit>()
+    const val minVersion = 6
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
     var minTxFee = parseAmount(Config[mintxfee])
+    private val nextPeerId = AtomicLong(1)
 
     init {
-        Runtime.getRuntime().addShutdownHook(Thread {
-            runBlocking {
-                shutdownHooks.reversedForEach {
-                    it()
-                }
-            }
-        })
-
-        logger.info("${Runtime.getRuntime().availableProcessors()} CPU available")
-
         if (Config[listen]) {
             try {
                 Node.listenOnIP()
                 if (Config[upnp])
-                    launch { UPnP.forward() }
+                    Runtime.launch { UPnP.forward() }
             } catch (e: Throwable) {
             }
         }
-        launch { listenOnTor() }
-        launch { listenOnI2P() }
-        launch { connector() }
-        launch { pinger() }
-        launch { peerAnnouncer() }
-        launch { dnsSeeder(true) }
-        launch { inventoryBroadcaster() }
-    }
-
-    /**
-     * Registers a new shutdown hook.
-     *
-     * All registered shutdown hooks will be run sequentially in the reversed order.
-     */
-    fun addShutdownHook(hook: suspend () -> Unit) {
-        runBlocking {
-            shutdownHooks.add(hook)
-        }
-    }
-
-    fun time(): Long {
-        return Instant.now().getEpochSecond()
-    }
-
-    fun timeMilli(): Long {
-        return Instant.now().toEpochMilli()
+        Runtime.launch { listenOnTor() }
+        Runtime.launch { listenOnI2P() }
+        Runtime.launch { connector() }
+        Runtime.launch { pinger() }
+        Runtime.launch { peerAnnouncer() }
+        Runtime.launch { dnsSeeder(true) }
+        Runtime.launch { inventoryBroadcaster() }
     }
 
     fun isTooFarInFuture(time: Long): Boolean {
-        return time > Node.time() + 15
+        return time > Runtime.time() + PoS.MAX_FUTURE_DRIFT
+    }
+
+    fun newPeerId(): Long {
+        return nextPeerId.getAndIncrement()
     }
 
     suspend fun outgoing(): Int {
@@ -146,7 +115,7 @@ object Node : CoroutineScope {
     }
 
     suspend fun isOffline(): Boolean {
-        return connected() == 0
+        return connections.find { it.state.isConnected() } == null
     }
 
     fun getMaxPacketSize(): Int {
@@ -158,7 +127,7 @@ object Node : CoroutineScope {
     }
 
     fun isInitialSynchronization(): Boolean {
-        return ChainFetcher.isSynchronizing() && time() > LedgerDB.blockTime() + PoS.TARGET_BLOCK_TIME * PoS.MATURITY
+        return ChainFetcher.isSynchronizing() && Runtime.time() > LedgerDB.blockTime() + PoS.TARGET_BLOCK_TIME * PoS.MATURITY
     }
 
     fun listenOn(address: Address) {
@@ -168,7 +137,7 @@ object Node : CoroutineScope {
         }
         val server = aSocket(Network.selector).tcp().bind(addr)
         logger.info("Listening on $address")
-        launch {
+        Runtime.launch {
             listenAddress.add(address)
             listener(server)
         }
@@ -205,7 +174,7 @@ object Node : CoroutineScope {
         val connection = Network.connect(address)
         connections.add(connection)
         sendVersion(connection, nonce)
-        connection.launch(this)
+        connection.launch()
     }
 
     fun sendVersion(connection: Connection, nonce: Long) {
@@ -214,24 +183,19 @@ object Node : CoroutineScope {
         } else {
             ChainAnnounce(LedgerDB.blockHash(), LedgerDB.cumulativeDifficulty())
         }
-        val v = Version(magic, version, time(), nonce, Bip14.agent, minTxFee, chain)
+        val v = Version(magic, version, Runtime.time(), nonce, Bip14.agent, minTxFee, chain)
         connection.sendPacket(v)
     }
 
     suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null) {
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         broadcastPacket(ann) {
-            it != source && it.lastChain.chain != hash && it.version >= ChainAnnounce.MIN_VERSION
-        }
-        val inv = Pair(DataType.Block, hash)
-        connections.forEach {
-            if (it != source && it.state.isConnected() && it.version < ChainAnnounce.MIN_VERSION)
-                it.inventory(inv)
+            it != source && it.state.isConnected() && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
         }
     }
 
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
-        val status = BlockDB.process(hash, bytes)
+        val status = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Status.ACCEPTED) {
             announceChain(hash, LedgerDB.cumulativeDifficulty())
             return true
@@ -277,6 +241,21 @@ object Node : CoroutineScope {
         }
     }
 
+    suspend fun warnings(): List<String> {
+        connections.mutex.withLock {
+            val size = connections.list.size
+            if (size >= 5) {
+                val offsets = Array(size) { connections.list[it].timeOffset }
+                offsets.sort()
+                val median = offsets[size / 2]
+                if (median > PoS.MAX_FUTURE_DRIFT || median < -PoS.MAX_FUTURE_DRIFT)
+                    return listOf("Please check your system clock. Many peers report different time.")
+            }
+        }
+
+        return emptyList()
+    }
+
     private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }) {
         logger.debug { "Broadcasting ${packet.getType()}" }
         val bytes = packet.build()
@@ -309,16 +288,16 @@ object Node : CoroutineScope {
 
     private suspend fun addConnection(connection: Connection) {
         if (!haveSlot()) {
-            logger.info("Too many connections, dropping ${connection.remoteAddress}")
+            logger.info("Too many connections, dropping ${connection.debugName()}")
             connection.close()
             return
         }
         connections.add(connection)
-        connection.launch(this)
+        connection.launch()
     }
 
     private suspend fun haveSlot(): Boolean {
-        if (incoming(true) < Config[incomingconnections])
+        if (incoming(true) < Config.incomingConnections)
             return true
         return evictConnection()
     }
@@ -337,7 +316,7 @@ object Node : CoroutineScope {
             return false
 
         val connection = candidates.random()
-        logger.info("Evicting ${connection.remoteAddress}")
+        logger.info("Evicting ${connection.debugName()}")
         connection.close()
         return true
     }
@@ -348,7 +327,7 @@ object Node : CoroutineScope {
         }
 
         while (true) {
-            val n = Config[outgoingconnections] - outgoing()
+            val n = Config.outgoingConnections - outgoing()
             if (n <= 0) {
                 delay(NETWORK_TIMEOUT)
                 continue
@@ -358,20 +337,21 @@ object Node : CoroutineScope {
 
             val addresses = PeerDB.getCandidates(n, filter)
             if (addresses.isEmpty()) {
-                logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config[outgoingconnections]}")
+                logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.outgoingConnections}")
                 delay(PeerDB.DELAY)
                 dnsSeeder(false)
                 continue
             }
 
-            addresses.forEach { PeerDB.attempt(it) }
+            val currTime = Runtime.time()
 
             addresses.forEach {
                 val address = it
-                Node.launch {
+                Runtime.launch {
                     try {
                         connectTo(address)
                     } catch (e: Throwable) {
+                        PeerDB.failed(address, currTime)
                     }
                 }
             }
@@ -384,7 +364,7 @@ object Node : CoroutineScope {
         while (true) {
             delay(NETWORK_TIMEOUT)
 
-            val currTime = time()
+            val currTime = Runtime.time()
             connections.forEach {
                 if (it.state.isWaiting()) {
                     if (currTime > it.connectedAt + NETWORK_TIMEOUT)
@@ -392,13 +372,13 @@ object Node : CoroutineScope {
                 } else {
                     if (it.pingRequest == null) {
                         if (it.ping != 0L && currTime > it.lastPacketTime + NETWORK_TIMEOUT) {
-                            logger.debug { "Sending ping to ${it.remoteAddress}" }
+                            logger.debug { "Sending ping to ${it.debugName()}" }
                             sendPing(it)
                         } else if (it.ping == 0L) {
                             sendPing(it)
                         }
                     } else {
-                        logger.info("Disconnecting ${it.remoteAddress} on ping timeout")
+                        logger.info("Disconnecting ${it.debugName()} on ping timeout")
                         it.close()
                     }
                 }
@@ -407,7 +387,7 @@ object Node : CoroutineScope {
     }
     private fun sendPing(connection: Connection) {
         val id = Random.nextInt()
-        connection.pingRequest = Connection.PingRequest(id, timeMilli())
+        connection.pingRequest = Connection.PingRequest(id, Runtime.timeMilli())
         connection.sendPacket(Ping(id))
     }
 
@@ -460,7 +440,7 @@ object Node : CoroutineScope {
     private suspend fun inventoryBroadcaster() {
         while (true) {
             delay(INV_TIMEOUT)
-            val currTime = time()
+            val currTime = Runtime.time()
             connections.forEach {
                 if (it.state.isConnected() && currTime >= it.lastInvSentTime + INV_TIMEOUT) {
                     it.sendInventory(currTime)

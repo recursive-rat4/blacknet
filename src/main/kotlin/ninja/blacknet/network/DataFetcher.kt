@@ -13,6 +13,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.packet.GetData
+import ninja.blacknet.packet.InvList
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.delay
 
@@ -21,8 +23,8 @@ object DataFetcher {
     private val requested = SynchronizedHashMap<Hash, Long>()
 
     init {
-        Node.launch { fetcher() }
-        Node.launch { watchdog() }
+        Runtime.launch { fetcher() }
+        Runtime.launch { watchdog() }
     }
 
     fun offer(from: Connection, list: InvList) {
@@ -39,14 +41,16 @@ object DataFetcher {
             val list = inventory.second
 
             val request = InvList()
-            val currTime = Node.time()
+            val currTime = Runtime.time()
 
             for (i in list) {
                 val type = i.first
                 val hash = i.second
 
-                if (connection.version >= ChainAnnounce.MIN_VERSION && type == DataType.Block)
+                if (type == DataType.Block) {
+                    connection.dos("Block Inv")
                     continue
+                }
 
                 if (requested.containsKey(hash))
                     continue
@@ -73,7 +77,7 @@ object DataFetcher {
         while (true) {
             delay(Node.NETWORK_TIMEOUT)
 
-            val currTime = Node.time()
+            val currTime = Runtime.time()
             val timeouted = requested.filterToKeyList { _, time -> currTime > time + Node.NETWORK_TIMEOUT }
             requested.removeAll(timeouted)
         }

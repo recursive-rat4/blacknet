@@ -11,7 +11,6 @@ package ninja.blacknet.network
 
 import io.ktor.network.sockets.ASocket
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.io.*
@@ -20,7 +19,10 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.core.DataType
+import ninja.blacknet.db.PeerDB
+import ninja.blacknet.packet.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -40,7 +42,7 @@ class Connection(
     private val dosScore = AtomicInteger(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     private val inventoryToSend = SynchronizedArrayList<InvType>()
-    val connectedAt = Node.time()
+    val connectedAt = Runtime.time()
 
     @Volatile
     var lastPacketTime: Long = 0
@@ -61,14 +63,15 @@ class Connection(
     @Volatile
     internal var pingRequest: PingRequest? = null
 
+    var peerId: Long = 0
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
     var timeOffset: Long = 0
 
-    fun launch(scope: CoroutineScope) {
-        scope.launch { receiver() }
-        scope.launch { sender() }
+    fun launch() {
+        Runtime.launch { receiver() }
+        Runtime.launch { sender() }
     }
 
     private suspend fun receiver() {
@@ -90,14 +93,14 @@ class Connection(
                     dos("deserialization failed")
                     continue
                 }
-                logger.debug { "Received ${packet.getType()} from $remoteAddress" }
+                logger.debug { "Received ${packet.getType()} from ${debugName()}" }
                 packet.process(this)
             }
         } catch (e: ClosedReceiveChannelException) {
         } catch (e: CancellationException) {
         } catch (e: IOException) {
         } catch (e: Throwable) {
-            logger.error("Exception in receiver $remoteAddress", e)
+            logger.error("Exception in receiver ${debugName()}", e)
         } finally {
             close(false)
         }
@@ -108,13 +111,13 @@ class Connection(
         totalBytesRead += 4
         if (size > Node.getMaxPacketSize()) {
             if (state.isConnected()) {
-                logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting $remoteAddress")
+                logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}")
             }
             close()
         }
         val result = readChannel.readPacket(size)
         totalBytesRead += size
-        lastPacketTime = Node.time()
+        lastPacketTime = Runtime.time()
         return result
     }
 
@@ -128,7 +131,7 @@ class Connection(
         } catch (e: ClosedWriteChannelException) {
         } catch (e: CancellationException) {
         } catch (e: Throwable) {
-            logger.error("Exception in sender $remoteAddress", e)
+            logger.error("Exception in sender ${debugName()}", e)
         } finally {
             close(false)
             closeSocket()
@@ -138,7 +141,7 @@ class Connection(
     suspend fun inventory(inv: InvType) = inventoryToSend.mutex.withLock {
         inventoryToSend.list.add(inv)
         if (inventoryToSend.list.size == DataType.MAX_INVENTORY) {
-            sendInventoryImpl(Node.time())
+            sendInventoryImpl(Runtime.time())
         }
     }
 
@@ -147,11 +150,11 @@ class Connection(
         if (newSize < DataType.MAX_INVENTORY) {
             inventoryToSend.list.addAll(inv)
         } else if (newSize > DataType.MAX_INVENTORY) {
-            sendInventoryImpl(Node.time())
+            sendInventoryImpl(Runtime.time())
             inventoryToSend.list.addAll(inv)
         } else {
             inventoryToSend.list.addAll(inv)
-            sendInventoryImpl(Node.time())
+            sendInventoryImpl(Runtime.time())
         }
     }
 
@@ -168,7 +171,7 @@ class Connection(
     }
 
     fun sendPacket(packet: Packet) {
-        logger.debug { "Sending ${packet.getType()} to $remoteAddress" }
+        logger.debug { "Sending ${packet.getType()} to ${debugName()}" }
         sendChannel.offer(packet.build())
     }
 
@@ -178,7 +181,7 @@ class Connection(
 
     fun dos(reason: String) {
         val score = dosScore.incrementAndGet()
-        logger.info("DoS: $score $reason $remoteAddress")
+        logger.info("DoS: $score $reason ${debugName()}")
         if (score == 100)
             close()
     }
@@ -193,9 +196,12 @@ class Connection(
                 sendChannel.cancel()
             else
                 sendChannel.close()
-            Node.launch {
+            Runtime.launch {
                 ChainFetcher.disconnected(this@Connection)
                 Node.connections.remove(this@Connection)
+                if (state == State.OUTGOING_WAITING) {
+                    PeerDB.failed(remoteAddress, connectedAt)
+                }
             }
         }
     }
@@ -206,6 +212,13 @@ class Connection(
 
     fun isClosed(): Boolean {
         return closed.get()
+    }
+
+    fun debugName(): String {
+        if (Config.logIPs)
+            return remoteAddress.toString()
+        else
+            return "peer $peerId"
     }
 
     class PingRequest(val id: Int, val time: Long)

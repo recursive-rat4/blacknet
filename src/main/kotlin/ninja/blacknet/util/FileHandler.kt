@@ -10,10 +10,16 @@
 package ninja.blacknet.util
 
 import ninja.blacknet.Config
+import java.io.File
 import java.util.logging.FileHandler
 import java.util.logging.SimpleFormatter
 
-class FileHandler : FileHandler(Config.dataDir + "/debug.log", 10000000, 1,true) {
+class FileHandler : FileHandler(
+        File(Config.dataDir, "debug.log").getPath(),
+        10000000,
+        1,
+        true
+) {
     init {
         setFormatter(SimpleFormatter())
     }

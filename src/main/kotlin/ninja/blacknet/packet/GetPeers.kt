@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Pavel Vasin
+ * Copyright (c) 2018 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -7,24 +7,28 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import ninja.blacknet.db.PeerDB
+import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-class ChainFork(
-) : Packet {
+class GetPeers : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.ChainFork
+    override fun getType() = PacketType.GetPeers
 
     override suspend fun process(connection: Connection) {
-        ChainFetcher.chainFork(connection)
-    }
+        if (connection.state == Connection.State.OUTGOING_CONNECTED) {
+            connection.dos("GetPeers from outgoing connection")
+            return
+        }
 
-    companion object {
-        const val MIN_VERSION = 9
+        val randomPeers = PeerDB.getRandom(Peers.MAX)
+
+        connection.sendPacket(Peers(randomPeers))
     }
 }

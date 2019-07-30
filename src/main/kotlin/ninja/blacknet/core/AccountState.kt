@@ -141,16 +141,16 @@ class AccountState(
         override fun deserialize(decoder: Decoder): AccountState {
             when (decoder) {
                 is BinaryDecoder -> {
-                    val seq = decoder.unpackInt()
-                    val stake = decoder.unpackLong()
-                    val immatureSize = decoder.unpackInt()
+                    val seq = decoder.decodeVarInt()
+                    val stake = decoder.decodeVarLong()
+                    val immatureSize = decoder.decodeVarInt()
                     val immature = ArrayList<Input>(immatureSize)
                     for (i in 0 until immatureSize)
-                        immature.add(Input(decoder.unpackInt(), decoder.unpackLong()))
-                    val leasesSize = decoder.unpackInt()
+                        immature.add(Input(decoder.decodeVarInt(), decoder.decodeVarLong()))
+                    val leasesSize = decoder.decodeVarInt()
                     val leases = ArrayList<Lease>(leasesSize)
                     for (i in 0 until leasesSize)
-                        leases.add(Lease(PublicKey(decoder.decodeByteArrayValue(PublicKey.SIZE)), decoder.unpackInt(), decoder.unpackLong()))
+                        leases.add(Lease(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE)), decoder.decodeVarInt(), decoder.decodeVarLong()))
                     return AccountState(seq, stake, immature, leases)
                 }
                 else -> throw RuntimeException("unsupported decoder")
@@ -160,18 +160,18 @@ class AccountState(
         override fun serialize(encoder: Encoder, obj: AccountState) {
             when (encoder) {
                 is BinaryEncoder -> {
-                    encoder.packInt(obj.seq)
-                    encoder.packLong(obj.stake)
-                    encoder.packInt(obj.immature.size)
+                    encoder.encodeVarInt(obj.seq)
+                    encoder.encodeVarLong(obj.stake)
+                    encoder.encodeVarInt(obj.immature.size)
                     for (i in 0 until obj.immature.size) {
-                        encoder.packInt(obj.immature[i].height)
-                        encoder.packLong(obj.immature[i].amount)
+                        encoder.encodeVarInt(obj.immature[i].height)
+                        encoder.encodeVarLong(obj.immature[i].amount)
                     }
-                    encoder.packInt(obj.leases.size)
+                    encoder.encodeVarInt(obj.leases.size)
                     for (i in 0 until obj.leases.size) {
-                        encoder.encodeByteArrayValue(obj.leases[i].publicKey.bytes)
-                        encoder.packInt(obj.leases[i].height)
-                        encoder.packLong(obj.leases[i].amount)
+                        encoder.encodeFixedByteArray(obj.leases[i].publicKey.bytes)
+                        encoder.encodeVarInt(obj.leases[i].height)
+                        encoder.encodeVarLong(obj.leases[i].amount)
                     }
                 }
                 else -> throw RuntimeException("unsupported encoder")

@@ -10,13 +10,15 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.network.ChainAnnounce
+import ninja.blacknet.packet.ChainAnnounce
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 
 @Serializable
 class PeerInfo(
+        val peerId: Long,
         val remoteAddress: String,
         val localAddress: String,
         val timeOffset: Long,
@@ -32,37 +34,56 @@ class PeerInfo(
         val totalBytesRead: Long,
         val totalBytesWritten: Long
 ) {
-    constructor(connection: Connection) : this(
-            connection.remoteAddress.toString(),
-            connection.localAddress.toString(),
-            connection.timeOffset,
-            connection.ping,
-            connection.version,
-            connection.agent,
-            connection.state.name,
-            connection.dosScore(),
-            connection.feeFilter,
-            connection.connectedAt,
-            ChainInfo.get(connection.lastChain),
-            connection.lastPacketTime,
-            connection.totalBytesRead,
-            connection.totalBytesWritten
-    )
-
     @Serializable
     class ChainInfo(
             val chain: String,
             val cumulativeDifficulty: String,
             val fork: Boolean
     ) {
+        constructor(chain: ChainAnnounce, fork: Boolean) : this(
+                chain.chain.toString(),
+                chain.cumulativeDifficulty.toString(),
+                fork
+        )
+
         companion object {
-            fun get(chain: ChainAnnounce): ChainInfo {
-                return ChainInfo(chain.chain.toString(), chain.cumulativeDifficulty.toString(), !LedgerDB.chainContains(chain.chain))
+            fun get(chain: ChainAnnounce, forkCache: HashMap<Hash, Boolean>): ChainInfo {
+                val cached = forkCache.get(chain.chain)
+                return if (cached != null) {
+                    ChainInfo(chain, cached)
+                } else {
+                    val fork = !LedgerDB.chainContains(chain.chain)
+                    forkCache.put(chain.chain, fork)
+                    ChainInfo(chain, fork)
+                }
             }
         }
     }
 
     companion object {
-        suspend fun getAll() = Node.connections.map { PeerInfo(it) }
+        fun get(connection: Connection, forkCache: HashMap<Hash, Boolean>): PeerInfo {
+            return PeerInfo(
+                    connection.peerId,
+                    connection.remoteAddress.toString(),
+                    connection.localAddress.toString(),
+                    connection.timeOffset,
+                    connection.ping,
+                    connection.version,
+                    connection.agent,
+                    connection.state.name,
+                    connection.dosScore(),
+                    connection.feeFilter,
+                    connection.connectedAt,
+                    ChainInfo.get(connection.lastChain, forkCache),
+                    connection.lastPacketTime,
+                    connection.totalBytesRead,
+                    connection.totalBytesWritten
+            )
+        }
+
+        suspend fun getAll(): List<PeerInfo> {
+            val forkCache = HashMap<Hash, Boolean>()
+            return Node.connections.map { PeerInfo.get(it, forkCache) }
+        }
     }
 }

@@ -44,13 +44,13 @@ object UPnP {
         } catch (e: Throwable) {
         }
         if (address != null) {
-            Node.launch { Node.listenAddress.add(address) }
+            Runtime.launch { Node.listenAddress.add(address) }
             logger.info("Mapped to $address")
         } else {
             logger.info("Mapped to unknown external address")
         }
 
-        Node.addShutdownHook {
+        Runtime.addShutdownHook {
             logger.info("Removing port mapping")
             remove(gateway)
         }

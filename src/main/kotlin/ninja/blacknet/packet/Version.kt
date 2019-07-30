@@ -7,12 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.network.*
 import ninja.blacknet.serialization.BinaryEncoder
 import kotlin.random.Random
 
@@ -33,13 +34,20 @@ internal class Version(
     override fun getType() = PacketType.Version
 
     override suspend fun process(connection: Connection) {
-        connection.timeOffset = Node.time() - time
+        if (magic != Node.magic) {
+            connection.close()
+            return
+        }
+
+        connection.timeOffset = Runtime.time() - time
+        connection.peerId = Node.newPeerId()
         connection.version = version
         connection.agent = Bip14.sanitize(agent)
         connection.feeFilter = feeFilter
         connection.lastChain = chain
 
-        if (magic != Node.magic || version < Node.minVersion) {
+        if (version < Node.minVersion) {
+            logger.info("${connection.debugName()} obsolete version $agent")
             connection.close()
             return
         }
@@ -54,11 +62,13 @@ internal class Version(
             else
                 Node.sendVersion(connection, Random.nextLong())
             connection.state = Connection.State.INCOMING_CONNECTED
-            logger.info("Accepted connection from ${connection.remoteAddress}")
+            logger.info("Accepted connection from ${connection.debugName()} $agent")
         } else {
             connection.state = Connection.State.OUTGOING_CONNECTED
-            PeerDB.connected(connection.remoteAddress)
-            logger.info("Connected to ${connection.remoteAddress}")
+            PeerDB.connected(connection.remoteAddress, connection.connectedAt, connection.agent)
+            if (PeerDB.isLow())
+                connection.sendPacket(GetPeers())
+            logger.info("Connected to ${connection.debugName()} $agent")
         }
 
         ChainFetcher.offer(connection, chain.chain, chain.cumulativeDifficulty)

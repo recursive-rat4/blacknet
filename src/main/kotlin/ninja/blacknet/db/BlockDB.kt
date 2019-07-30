@@ -11,6 +11,7 @@ package ninja.blacknet.db
 
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
@@ -18,10 +19,12 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
+import java.io.File
 
 private val logger = KotlinLogging.logger {}
 
 object BlockDB : DataDB() {
+    private const val MIN_DISK_SPACE = LedgerDB.MAX_BLOCK_SIZE * 2L
     private val BLOCK_KEY = "block".toByteArray()
 
     suspend fun block(hash: Hash): Pair<Block, Int>? = mutex.withLock {
@@ -76,21 +79,15 @@ object BlockDB : DataDB() {
             return Status.INVALID
         }
         if (block.previous != LedgerDB.blockHash()) {
-            if (connection == null)
-                logger.info("block $hash not on current chain prev ${block.previous}")
+            logger.info("block $hash not on current chain prev ${block.previous}")
             return Status.NOT_ON_THIS_CHAIN
         }
         val batch = LevelDB.createWriteBatch()
-        val txDb = LedgerDB.Update(batch, hash, block.time, bytes.size, block.generator)
+        val txDb = LedgerDB.Update(batch, block.version, hash, block.time, bytes.size, block.generator)
         val txHashes = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
         if (txHashes != null) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
-            if (connection != null) {
-                logger.info("Accepted block $hash")
-                connection.lastBlockTime = Node.time()
-                Node.announceChain(hash, LedgerDB.cumulativeDifficulty(), connection)
-            }
             TxPool.mutex.withLock {
                 TxPool.clearRejectsImpl()
                 TxPool.removeImpl(txHashes)
@@ -101,5 +98,12 @@ object BlockDB : DataDB() {
             batch.close()
             return Status.INVALID
         }
+    }
+
+    fun warnings(): List<String> {
+        if (Config.dataDir.getUsableSpace() < MIN_DISK_SPACE)
+            return listOf("Disk space is low!")
+
+        return emptyList()
     }
 }

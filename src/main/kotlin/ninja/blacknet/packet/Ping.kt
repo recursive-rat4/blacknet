@@ -7,29 +7,20 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.db.PeerDB
+import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-class GetPeers : Packet {
+internal class Ping(private val id: Int) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.GetPeers
+    override fun getType() = PacketType.Ping
 
     override suspend fun process(connection: Connection) {
-        if (connection.state == Connection.State.OUTGOING_CONNECTED) {
-            connection.dos("GetPeers from outgoing connection")
-            return
-        }
-
-        val randomPeers = PeerDB.getRandom(Peers.MAX)
-        if (randomPeers.size == 0)
-            return
-
-        connection.sendPacket(Peers(randomPeers))
+        connection.sendPacket(Pong(id))
     }
 }
