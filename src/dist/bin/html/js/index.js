@@ -335,10 +335,10 @@ $(document).ready(function () {
     }
 
     async function addPeer() {
-        let ip = $('#ip_address').val(), port = $('#ip_port').val();
+        let address = $('#ip_address').val(), port = $('#ip_port').val();
 
-        if(!Blacknet.verifyIP(ip)) {
-            Blacknet.message("Invalid ip address", "warning")
+        if(!Blacknet.verifyNetworkAddress(address)) {
+            Blacknet.message("Invalid address", "warning")
             $('#ip_address').focus()
             return 
         }

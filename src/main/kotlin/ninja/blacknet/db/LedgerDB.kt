@@ -423,7 +423,7 @@ object LedgerDB {
             undo.txHashes.add(txHash)
             fees += tx.fee
 
-            WalletDB.processTransactionImpl(txHash, tx, bytes.array, block.time, height, txDb.batch)
+            WalletDB.processTransaction(txHash, tx, bytes.array, block.time, height, txDb.batch)
         }
 
         generator = txDb.get(block.generator)!!
@@ -444,12 +444,12 @@ object LedgerDB {
         generator.debit(height, generated)
         txDb.set(block.generator, generator)
 
-        WalletDB.processBlockImpl(hash, block, height, generated, txDb.batch)
+        WalletDB.processBlock(hash, block, height, generated, txDb.batch)
 
         return undo.txHashes
     }
 
-    private fun undoBlock(): Hash {
+    private suspend fun undoBlock(): Hash {
         val hash = state.blockHash
         val chainIndex = getChainIndex(hash)!!
         val undo = getUndo(hash)
@@ -500,7 +500,7 @@ object LedgerDB {
 
         removeUndo(hash)
 
-        WalletDB.disconnectBlockImpl(hash, undo.txHashes)
+        WalletDB.disconnectBlock(hash, undo.txHashes)
 
         return hash
     }

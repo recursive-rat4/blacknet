@@ -11,6 +11,7 @@ package ninja.blacknet.db
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
@@ -32,12 +33,14 @@ import ninja.blacknet.transaction.Lease
 import ninja.blacknet.transaction.TxType
 import ninja.blacknet.util.delay
 import ninja.blacknet.util.startsWith
+import ninja.blacknet.util.withUnlock
 
 private val logger = KotlinLogging.logger {}
 
 object WalletDB {
     private const val DELAY = 30 * 60
     private const val VERSION = 2
+    internal val mutex = Mutex()
     private val KEYS_KEY = "keys".toByteArray()
     private val TX_KEY = "tx".toByteArray()
     private val VERSION_KEY = "version".toByteArray()
@@ -111,7 +114,7 @@ object WalletDB {
         while (true) {
             val inv = UnfilteredInvList()
 
-            BlockDB.mutex.withLock {
+            mutex.withLock {
                 wallets.forEach { (_, wallet) ->
                     val unconfirmed = ArrayList<Triple<Hash, ByteArray, Transaction>>()
 
@@ -147,7 +150,7 @@ object WalletDB {
         }
     }
 
-    suspend fun getConfirmations(hash: Hash): Int? = BlockDB.mutex.withLock {
+    suspend fun getConfirmations(hash: Hash): Int? = mutex.withLock {
         wallets.forEach { (_, wallet) ->
             val data = wallet.transactions.get(hash)
             if (data != null) {
@@ -158,7 +161,7 @@ object WalletDB {
         return@withLock null
     }
 
-    suspend fun getSequence(publicKey: PublicKey): Int = BlockDB.mutex.withLock {
+    suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
         return@withLock getWalletImpl(publicKey).seq
     }
 
@@ -166,7 +169,7 @@ object WalletDB {
         return LevelDB.get(TX_KEY, hash.bytes)
     }
 
-    internal fun disconnectBlockImpl(blockHash: Hash, txHashes: ArrayList<Hash>) {
+    suspend fun disconnectBlock(blockHash: Hash, txHashes: ArrayList<Hash>) = mutex.withLock {
         val updated = HashMap<PublicKey, Wallet>(wallets.size)
         wallets.forEach { (publicKey, wallet) ->
             val generated = wallet.transactions.get(blockHash)
@@ -191,7 +194,7 @@ object WalletDB {
         }
     }
 
-    suspend fun processBlockImpl(hash: Hash, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
+    suspend fun processBlock(hash: Hash, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch) = mutex.withLock {
         wallets.forEach { (publicKey, wallet) ->
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, false)
         }
@@ -216,13 +219,17 @@ object WalletDB {
         }
     }
 
-    suspend fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long) = BlockDB.mutex.withLock {
+    suspend fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long) = mutex.withLock {
         val batch = LevelDB.createWriteBatch()
         processTransactionImpl(hash, tx, bytes, time, 0, batch)
         batch.write()
     }
 
-    internal suspend fun processTransactionImpl(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch) {
+    suspend fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch) = mutex.withLock {
+        processTransactionImpl(hash, tx, bytes, time, height, batch)
+    }
+
+    private suspend fun processTransactionImpl(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch) {
         var store = !LevelDB.contains(TX_KEY, hash.bytes)
 
         wallets.forEach { (publicKey, wallet) ->
@@ -327,17 +334,23 @@ object WalletDB {
             return wallet
         }
 
-        var hash = Hash.ZERO
-        var index = LedgerDB.getChainIndex(hash)!!
-        val height = LedgerDB.height()
-        val n = height - index.height + 1
-        if (n > 0) {
-            logger.info("Rescanning $n blocks...")
-            do {
-                rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
-                hash = index.next
-                index = LedgerDB.getChainIndex(hash)!!
-            } while (index.height != height)
+        mutex.withUnlock {
+            BlockDB.mutex.withLock {
+                mutex.withLock {
+                    var hash = Hash.ZERO
+                    var index = LedgerDB.getChainIndex(hash)!!
+                    val height = LedgerDB.height()
+                    val n = height - index.height + 1
+                    if (n > 0) {
+                        logger.info("Rescanning $n blocks...")
+                        do {
+                            rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
+                            hash = index.next
+                            index = LedgerDB.getChainIndex(hash)!!
+                        } while (index.height != height)
+                    }
+                }
+            }
         }
 
         addWalletImpl(batch, publicKey, wallet)
@@ -345,7 +358,7 @@ object WalletDB {
         return wallet
     }
 
-    suspend fun getOutLeases(publicKey: PublicKey): List<AccountState.Lease> = BlockDB.mutex.withLock {
+    suspend fun getOutLeases(publicKey: PublicKey): List<AccountState.Lease> = mutex.withLock {
         val wallet = getWalletImpl(publicKey)
         val leases = ArrayList<AccountState.Lease>()
         val cancels = ArrayList<AccountState.Lease>()

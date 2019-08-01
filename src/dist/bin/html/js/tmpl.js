@@ -108,17 +108,17 @@ Blacknet.template = {
         return node;
     },
 
-    peer: function (peer, index) {
+    peer: function (peer) {
 
         let tmpl =
             `<tr>
-                <td>${index + 1}</td>
+                <td>${peer.peerId}</td>
                 <td class="right">${peer.remoteAddress}</td>
                 <td>${peer.agent}</td>
-                <td class="right">${peer.ping}ms</td>
-                <td class="narrow">${peer.timeOffset}</td>
-                <td class="narrow">${peer.totalBytesRead}</td>
-                <td class="narrow">${peer.totalBytesWritten}</td>
+                <td class="right">${peer.ping} ms</td>
+                <td class="narrow">${peer.timeOffset} s</td>
+                <td class="narrow">${(peer.totalBytesRead/1048576).toFixed(2)} MiB</td>
+                <td class="narrow">${(peer.totalBytesWritten/1048576).toFixed(2)} MiB</td>
             </tr>`;
 
         $(tmpl).appendTo("#peer-list");

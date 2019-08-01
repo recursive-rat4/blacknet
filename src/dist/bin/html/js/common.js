@@ -637,7 +637,7 @@ void function () {
      * @method verifyMnemonic
      * @for Blacknet
      * @param {string} mnemonic
-     * @return {boolean} true/fasle
+     * @return {boolean} true/false
      */
     Blacknet.verifyMnemonic = function(mnemonic){
         if(Object.prototype.toString.call(mnemonic) === "[object String]" && mnemonic.split(" ").length == 12){
@@ -650,7 +650,7 @@ void function () {
      * @method verifyAccount
      * @for Blacknet
      * @param {string} account
-     * @return {boolean} true/fasle
+     * @return {boolean} true/false
      */
     Blacknet.verifyAccount = function(account){
         if(Object.prototype.toString.call(account) === "[object String]" && account.length > 21 && /^blacknet[a-z0-9]{59}$/.test(account)){
@@ -663,7 +663,7 @@ void function () {
      * @method verifyAmount
      * @for Blacknet
      * @param {string} amount
-     * @return {boolean} true/fasle
+     * @return {boolean} true/false
      */
     Blacknet.verifyAmount = function(amount){
         if(/\d+/.test(amount) && amount > 0){
@@ -676,7 +676,7 @@ void function () {
      * @method verifyMessage
      * @for Blacknet
      * @param {string} message
-     * @return {boolean} true/fasle
+     * @return {boolean} true/false
      */
     Blacknet.verifyMessage = function(message){
         if(Object.prototype.toString.call(message) === "[object String]" && message.length > 0){
@@ -689,7 +689,7 @@ void function () {
      * @method verifySign
      * @for Blacknet
      * @param {string} sign
-     * @return {boolean} true/fasle
+     * @return {boolean} true/false
      */
     Blacknet.verifySign = function(sign){
         if(Object.prototype.toString.call(sign) === "[object String]" && sign.length === 128){
@@ -698,14 +698,15 @@ void function () {
         return false
     }
     /**
-     * verify ip
-     * @method verifyIP
+     * verify network address
+     * @method verifyNetworkAddress
      * @for Blacknet
-     * @param {string} ip
-     * @return {boolean} true/fasle
+     * @param {string} network address
+     * @return {boolean} true/false
      */
-    Blacknet.verifyIP = function(ip){
-        if(Object.prototype.toString.call(ip) === "[object String]" && /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/.test(ip)){
+    Blacknet.verifyNetworkAddress = function(address){
+        // ipv4 | ipv6 | tor | i2p
+        if(Object.prototype.toString.call(address) === "[object String]" && address.length >= 7 && address.length <= 70){
             return true
         }
         return false

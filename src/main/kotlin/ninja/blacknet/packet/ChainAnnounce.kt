@@ -33,8 +33,6 @@ class ChainAnnounce(
     }
 
     companion object {
-        const val MIN_VERSION = 6
-
         val GENESIS = ChainAnnounce(Hash.ZERO, BigInt.ZERO)
     }
 }
