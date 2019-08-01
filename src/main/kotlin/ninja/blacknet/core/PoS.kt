@@ -139,17 +139,36 @@ object PoS {
         return stakers.list.find { it.first == privateKey } != null
     }
 
+    /**
+     * Expected block time
+     */
     const val TARGET_BLOCK_TIME = 64L
+    /**
+     * Default number of confirmations
+     */
+    const val DEFAULT_CONFIRMATIONS = 10
+    /**
+     * Maximum number of blocks that can be rolled back
+     */
+    const val MATURITY = 1350
+    /**
+     * Number of blocks used to calculate the maximum block size
+     */
+    const val BLOCK_SIZE_SPAN = 1351
+    /**
+     * Satoshi
+     */
+    const val COIN = 100000000L
+    /**
+     * Minimum amount that can be leased out for cold staking
+     */
+    const val MIN_LEASE = 1000 * COIN
+
     const val TARGET_TIMESPAN = 960L
     const val INTERVAL = TARGET_TIMESPAN / TARGET_BLOCK_TIME
     const val SPACING = 10
     const val TIMESTAMP_MASK = 15L
     const val MAX_FUTURE_DRIFT = 15L
-    const val DEFAULT_CONFIRMATIONS = 10
-    const val MATURITY = 1350
-    const val BLOCK_SIZE_SPAN = 1351
-    const val COIN = 100000000L
-    const val MIN_LEASE = 1000 * COIN
     val A1 = BigInt((INTERVAL + 1) * TARGET_BLOCK_TIME)
     val A2 = BigInt((INTERVAL - 1) * TARGET_BLOCK_TIME)
     val INITIAL_DIFFICULTY = BigInt(byteArrayOfInts(0x00, 0xAF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))

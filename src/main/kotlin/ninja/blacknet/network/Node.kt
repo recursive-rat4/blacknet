@@ -46,7 +46,7 @@ object Node {
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
     const val version = 9
-    const val minVersion = 6
+    const val minVersion = 7
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
@@ -80,36 +80,38 @@ object Node {
     }
 
     suspend fun outgoing(): Int {
-        return connections.sumBy {
+        return connections.count {
             when (it.state) {
-                Connection.State.OUTGOING_CONNECTED -> 1
-                else -> 0
+                Connection.State.OUTGOING_CONNECTED -> true
+                else -> false
             }
         }
     }
 
     suspend fun incoming(includeWaiting: Boolean = false): Int {
-        return connections.sumBy {
-            if (includeWaiting)
+        return if (includeWaiting)
+            connections.count {
                 when (it.state) {
-                    Connection.State.INCOMING_CONNECTED -> 1
-                    Connection.State.INCOMING_WAITING -> 1
-                    else -> 0
+                    Connection.State.INCOMING_CONNECTED -> true
+                    Connection.State.INCOMING_WAITING -> true
+                    else -> false
                 }
-            else
+            }
+        else
+            connections.count {
                 when (it.state) {
-                    Connection.State.INCOMING_CONNECTED -> 1
-                    else -> 0
+                    Connection.State.INCOMING_CONNECTED -> true
+                    else -> false
                 }
-        }
+            }
     }
 
     suspend fun connected(): Int {
-        return connections.sumBy {
+        return connections.count {
             when (it.state) {
-                Connection.State.OUTGOING_CONNECTED -> 1
-                Connection.State.INCOMING_CONNECTED -> 1
-                else -> 0
+                Connection.State.INCOMING_CONNECTED -> true
+                Connection.State.OUTGOING_CONNECTED -> true
+                else -> false
             }
         }
     }
@@ -366,10 +368,7 @@ object Node {
 
             val currTime = Runtime.time()
             connections.forEach {
-                if (it.state.isWaiting()) {
-                    if (currTime > it.connectedAt + NETWORK_TIMEOUT)
-                        it.close()
-                } else {
+                if (it.state.isConnected()) {
                     if (it.pingRequest == null) {
                         if (it.ping != 0L && currTime > it.lastPacketTime + NETWORK_TIMEOUT) {
                             logger.debug { "Sending ping to ${it.debugName()}" }
@@ -381,6 +380,9 @@ object Node {
                         logger.info("Disconnecting ${it.debugName()} on ping timeout")
                         it.close()
                     }
+                } else {
+                    if (currTime > it.connectedAt + NETWORK_TIMEOUT)
+                        it.close()
                 }
             }
         }
@@ -393,7 +395,10 @@ object Node {
 
     private suspend fun peerAnnouncer() {
         while (true) {
-            delay(5 * 60 + Random.nextInt(5 * 60))
+            delay(10 * 60 + Random.nextInt(10 * 60))
+
+            if (isOffline())
+                continue
 
             val randomPeers = PeerDB.getRandom(Peers.MAX)
             if (randomPeers.size == 0)
@@ -401,7 +406,7 @@ object Node {
 
             val myAddress = listenAddress.filterToList { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
             if (myAddress.size != 0) {
-                val i = Random.nextInt(randomPeers.size * 10)
+                val i = Random.nextInt(randomPeers.size * 5)
                 if (i < randomPeers.size) {
                     randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
                     logger.info("Announcing ${randomPeers[i]}")
