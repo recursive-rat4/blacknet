@@ -35,38 +35,44 @@ $(document).ready(function () {
                     dialogPassword.find('.mnemonic').focus()
                     return
                 }   
-                type == 'refresh_staking' ? refreshStaking(mnemonic) : post_staking(mnemonic, type);
+                type == 'isStaking' ? refreshStaking(mnemonic, type) : changeStaking(mnemonic, type);
             });
         }
     }
 
+    async function postStaking(mnemonic, type, callback){
 
-    async function post_staking(mnemonic, type) {
-
-        let url = apiVersion + "/" + type + "Staking/" + mnemonic + "/";
-
-        $.post(url, {}, function (ret) {
-
-            let msg = ret == 'false' ? type.toUpperCase() + ' FAILED!' : type.toUpperCase() + ' SUCCESS!';
-            clearPassWordDialog();
-            refreshStaking(mnemonic);
-            timeAlert(msg);
-        }).fail(function () {
+        let url = '/' + type;
+        let formdata = new FormData();
+        formdata.append('mnemonic', mnemonic);
+        Blacknet.postV2(url, formdata, callback, function () {
             clearPassWordDialog();
             timeAlert('Invalid mnemonic');
         });
     }
 
-    async function refreshStaking(mnemonic) {
-
-        let stakingText = $('.is_staking'), data;
-
+    async function refreshStaking(mnemonic, type) {
+        
+        let stakingText = $('.is_staking');
         stakingText.text('loading');
-        data = await Blacknet.postPromise('/isStaking/' + mnemonic);
-        localStorage.isStaking = data;
         clearPassWordDialog();
-        await Blacknet.wait(2000);
-        stakingText.text(data);
+        await Blacknet.wait(1000);
+        postStaking(mnemonic, type, function(ret){
+            localStorage.isStaking = ret;
+            stakingText.text(ret);
+        });
+    }
+
+    async function changeStaking(mnemonic, type) {
+
+        postStaking(mnemonic, type, function(ret){
+            
+            let msg = ret == 'false' ? 'FAILED!' :'SUCCESS!';
+
+            timeAlert(type + ' ' + msg);
+            clearPassWordDialog();
+            refreshStaking(mnemonic, 'isStaking');
+        });
     }
 
     function menuSwitch() {
@@ -84,7 +90,6 @@ $(document).ready(function () {
         let mnemonic = $('#sign_mnemonic').val();
         mnemonic = $.trim(mnemonic);
         let message = $('#sign_message').val();
-        let url = "/signmessage/" + mnemonic + "/" + message + "/";
         if(!Blacknet.verifyMnemonic(mnemonic)){
             Blacknet.message("Invalid mnemonic", "warning")
             $('#sign_mnemonic').focus()
@@ -95,7 +100,11 @@ $(document).ready(function () {
             $('#sign_message').focus()
             return
         }
-        Blacknet.post(url, function (data) {
+        let data = new FormData();
+        data.append('mnemonic', mnemonic);
+        data.append('message', message);
+
+        Blacknet.postV2('/signmessage', data, function(data){
             $('#sign_result').text(data).parent().removeClass("hidden")
         });
     }
@@ -119,22 +128,29 @@ $(document).ready(function () {
             $('#verify_message').focus()
             return
         }
-        Blacknet.get(url, function (data) {
-            $('#verify_result').text(data).parent().removeClass("hidden")
+
+        let data = new FormData();
+        data.append('account', account);
+        data.append('signature', signature);
+        data.append('message', message);
+
+        Blacknet.postV2('/verifymessage', data, function(data){
+            $('#sign_result').text(data).parent().removeClass("hidden")
         });
     }
     function mnemonic_info() {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
         mnemonic = $.trim(mnemonic);
-        let url = "/mnemonic/info/" + mnemonic + "/";
+        let formdata = new FormData();
+        formdata.append('mnemonic', mnemonic);
+
         if(!Blacknet.verifyMnemonic(mnemonic)){
             Blacknet.message("Invalid mnemonic", "warning")
             $('#mnemonic_info_mnemonic').focus()
             return
         }
-        Blacknet.post(url, function (data) {
+        Blacknet.postV2('/mnemonic/info', formdata, function (data) {
             let html = '';
-
             data.mnemonic = data.mnemonic.replace(/[a-z]/g, '*');
 
             html += 'mnemonic: ' + data.mnemonic;
@@ -186,6 +202,7 @@ $(document).ready(function () {
             return 
         }
         input_mnemonic(function (mnemonic) {
+            
             Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
                 $('#transfer_result').text(data).parent().removeClass("hidden")
                 clearPassWordDialog();
@@ -363,9 +380,9 @@ $(document).ready(function () {
     menu.on('click', 'li', menuSwitch);
     panel.find('.' + hash).show();
 
-    body.on("click", "#stop_staking", staking_click('stop'))
-        .on("click", "#start_staking", staking_click('start'))
-        .on("click", "#refresh_staking", staking_click('refresh_staking'))
+    body.on("click", "#stop_staking", staking_click('stopStaking'))
+        .on("click", "#start_staking", staking_click('startStaking'))
+        .on("click", "#refresh_staking", staking_click('isStaking'))
         .on("click", "#transfer", transfer_click('send'))
         .on("click", "#lease", transfer_click('lease'))
         .on("click", "#cancel_lease", transfer_click('cancel_lease'))

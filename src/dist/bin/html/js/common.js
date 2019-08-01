@@ -11,7 +11,7 @@ void function () {
 
     const Blacknet = {};
     const DEFAULT_CONFIRMATIONS = 10;
-    const blockListEl = $('#block-list'), apiVersion = "/api/v1", body = $("body");;
+    const blockListEl = $('#block-list'), apiVersion = "/api/v1",apiVersion2 = "/api/v2", body = $("body");;
     const progressStats = $('.progress-stats, .progress-stats-text');
     const dialogPassword = $('.dialog.password'), dialogConfirm = $('.dialog.confirm'), mask = $('.mask');
     const account = localStorage.account;
@@ -205,6 +205,23 @@ void function () {
     Blacknet.post = function (url, callback, type) {
         return $.post(apiVersion + url, {}, callback, type);
     };
+    Blacknet.postV2 = function (url, data, callback, fail) {
+        
+        let options = {
+            url: apiVersion2 + url,
+            data: data,
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            success: callback,
+            fail: fail
+        };
+
+        if( fail == 'json' ) options.dataType = 'json';
+
+        return $.ajax(options);
+    };
 
     Blacknet.postPromise = function (url, isNeedAlert) {
         return $.post(apiVersion + url, {}).fail(function (res) {
@@ -214,17 +231,24 @@ void function () {
 
     Blacknet.sendMoney = function (mnemonic, amount, to, message, encrypted, callback) {
 
-        let fee = 100000, amountText, url;
+        let fee = 100000, amountText;
 
         amountText = new BigNumber(amount).toFixed(8);
         amount = new BigNumber(amount).times(1e8);
 
-        url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
-
         Blacknet.confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
         to + '\n\n0.001 BLN added as transaction fee?', function(flag){
             if(flag){
-                Blacknet.post(url, callback);
+
+                let formdata = new FormData();
+                formdata.append('mnemonic', mnemonic);
+                formdata.append('amount', amount);
+                formdata.append('fee', fee);
+                formdata.append('to', to);
+                formdata.append('message', message);
+                formdata.append('encrypted', encrypted);
+
+                Blacknet.postV2('/transfer', formdata, callback);
             }
         })
     };
