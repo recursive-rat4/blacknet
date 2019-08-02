@@ -15,7 +15,6 @@ import mu.KotlinLogging
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.*
 import ninja.blacknet.serialization.BinaryEncoder
-import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -57,10 +56,7 @@ internal class Version(
                 connection.close()
                 return
             }
-            if (version >= FIXED_NONCE_VERSION)
-                Node.sendVersion(connection, nonce)
-            else
-                Node.sendVersion(connection, Random.nextLong())
+            Node.sendVersion(connection, nonce)
             connection.state = Connection.State.INCOMING_CONNECTED
             logger.info("Accepted connection from ${connection.debugName()} $agent")
         } else {
@@ -72,9 +68,5 @@ internal class Version(
         }
 
         ChainFetcher.offer(connection, chain.chain, chain.cumulativeDifficulty)
-    }
-
-    companion object {
-        const val FIXED_NONCE_VERSION = 7
     }
 }
