@@ -39,7 +39,7 @@ private val logger = KotlinLogging.logger {}
 
 object WalletDB {
     private const val DELAY = 30 * 60
-    private const val VERSION = 2
+    private const val VERSION = 3
     internal val mutex = Mutex()
     private val KEYS_KEY = "keys".toByteArray()
     private val TX_KEY = "tx".toByteArray()
@@ -63,13 +63,15 @@ object WalletDB {
             1
         }
 
-        if (version == VERSION) {
+        if (version == VERSION || version == 2) {
             if (keysBytes != null) {
                 val decoder = BinaryDecoder.fromBytes(keysBytes)
                 for (i in 0 until keysBytes.size step PublicKey.SIZE) {
                     val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE))
                     wallets.put(publicKey, Wallet.deserialize(LevelDB.get(WALLET_KEY, publicKey.bytes)!!))
                 }
+                if (version == 2)
+                    updateV2()
                 if (wallets.size == 1)
                     logger.info("Loaded wallet with ${wallets.values.first().transactions.size} transactions")
                 else
@@ -204,7 +206,9 @@ object WalletDB {
         if (height != 0) {
             if (block!!.generator == publicKey) {
                 val tx = Transaction.generated(publicKey, height, hash, generated)
-                processTransactionImpl(publicKey, wallet, hash, tx, tx.serialize(), block.time, height, batch, rescan)
+                val txBytes = tx.serialize()
+                val txHash = Transaction.Hasher(txBytes)
+                processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, block.time, height, batch, rescan)
             }
         } else {
             val genesis = LedgerDB.genesisBlock()
@@ -212,7 +216,9 @@ object WalletDB {
                 val key = PublicKey.fromString(i.publicKey)!!
                 if (key == publicKey) {
                     val tx = Transaction.generated(publicKey, height, hash, i.balance)
-                    processTransactionImpl(publicKey, wallet, publicKey.hash(), tx, tx.serialize(), LedgerDB.GENESIS_TIME, height, batch, rescan)
+                    val txBytes = tx.serialize()
+                    val txHash = Transaction.Hasher(txBytes)
+                    processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, LedgerDB.GENESIS_TIME, height, batch, rescan)
                     break
                 }
             }
@@ -406,5 +412,45 @@ object WalletDB {
         iterator.close()
 
         wallets.clear()
+    }
+
+    private fun updateV2() {
+        val toUpdate = ArrayList<Triple<PublicKey, Hash, ByteArray>>()
+
+        wallets.forEach { (publicKey, wallet) ->
+            wallet.transactions.forEach { (hash, _) ->
+                val bytes = getTransaction(hash)!!
+                val tx = Transaction.deserialize(bytes)!!
+                if (tx.type == TxType.Generated.type)
+                    toUpdate.add(Triple(publicKey, hash, bytes))
+            }
+        }
+
+        val updatedTx = HashMap<Hash, Pair<Hash, ByteArray>>()
+        val updatedWallets = HashMap<PublicKey, Wallet>()
+        val batch = LevelDB.createWriteBatch()
+
+        toUpdate.forEach { (publicKey, hash, bytes) ->
+            val newHash = Transaction.Hasher(bytes)
+            val wallet = wallets.get(publicKey)!!
+            val txData = wallet.transactions.remove(hash)!!
+            wallet.transactions.put(newHash, txData)
+            updatedTx.put(hash, Pair(newHash, bytes))
+            updatedWallets.put(publicKey, wallet)
+        }
+
+        updatedTx.forEach { (hash, pair) ->
+            batch.delete(TX_KEY, hash.bytes)
+            batch.put(TX_KEY, pair.first.bytes, pair.second)
+        }
+        updatedWallets.forEach { (publicKey, wallet) ->
+            batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
+        }
+
+        setVersion(batch)
+        batch.write()
+
+        if (toUpdate.size != 0)
+            logger.info("Re-hashed ${toUpdate.size} Generated tx in ${updatedWallets.size} wallets")
     }
 }
