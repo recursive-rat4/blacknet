@@ -255,21 +255,26 @@ void function () {
 
     Blacknet.lease = function (mnemonic, type, amount, to, height, callback) {
 
-        let fee = 100000, amountText, url, type_text = type == 'lease' ? 'lease' : 'cancel lease';
+        let fee = 100000, amountText, type_text = type == 'lease' ? 'lease' : 'cancel lease';
 
         amountText = new BigNumber(amount).toFixed(8);
         amount = new BigNumber(amount).times(1e8);
 
-        if (type == 'lease') {
-            url = "/" + type + "/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/";
-        } else {
-            url = "/cancellease/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + height + "/";
-        }
-
         Blacknet.confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
         ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?', function(flag){
             if(flag){
-                Blacknet.post(url, callback);
+                
+                let formdata = new FormData();
+                formdata.append('mnemonic', mnemonic);
+                formdata.append('amount', amount);
+                formdata.append('fee', fee);
+                formdata.append('to', to);
+
+                if(height) {
+                    formdata.append('height', height);
+                }
+
+                Blacknet.postV2('/' + type, formdata, callback);
             }
         })
     };
