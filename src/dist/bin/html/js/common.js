@@ -241,12 +241,13 @@ void function () {
             if(flag){
 
                 let formdata = new FormData();
+
                 formdata.append('mnemonic', mnemonic);
                 formdata.append('amount', amount);
                 formdata.append('fee', fee);
                 formdata.append('to', to);
                 formdata.append('message', message);
-                formdata.append('encrypted', encrypted||false);
+                formdata.append('encrypted', encrypted);
 
                 Blacknet.postV2('/transfer', formdata, callback);
             }

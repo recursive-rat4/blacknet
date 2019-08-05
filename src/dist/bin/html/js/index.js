@@ -190,7 +190,7 @@ $(document).ready(function () {
         let to = $('#transfer_to').val();
         let amount = $('#transfer_amount').val();
         let message = $('#transfer_message').val();
-        let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
+        let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "0";
         if(!Blacknet.verifyAccount(to)) {
             Blacknet.message("Invalid account", "warning")
             $('#transfer_to').focus()
@@ -394,10 +394,6 @@ $(document).ready(function () {
         .on("click", "#new_account", newAccount)
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
         .on("click", "#new_account_next_step", newAccountNext)
-        .on("click", "tr.preview", function(){
-            $(this).next().toggle();
-            $(this).hide();
-        })
         .on("click", ".tx-foot .show_more_txs", function(){
             $(this).hide();
             Blacknet.showMoreTxs();
