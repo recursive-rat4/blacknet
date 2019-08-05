@@ -246,7 +246,7 @@ void function () {
                 formdata.append('fee', fee);
                 formdata.append('to', to);
                 formdata.append('message', message);
-                formdata.append('encrypted', encrypted);
+                formdata.append('encrypted', encrypted||false);
 
                 Blacknet.postV2('/transfer', formdata, callback);
             }
