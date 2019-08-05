@@ -658,12 +658,12 @@ object LedgerDB {
         }
 
         override fun addUndo(hash: Hash, undo: UndoBlock) {
-            check(hash == blockHash && this.undo == null)
+            //check(hash == blockHash && this.undo == null)
             this.undo = undo
         }
 
         override fun checkBlockHash(hash: Hash): Boolean {
-            return hash == blockHash || LedgerDB.checkBlockHash(hash)
+            return /* hash == blockHash || */ LedgerDB.checkBlockHash(hash)
         }
 
         override fun checkFee(size: Int, amount: Long): Boolean {

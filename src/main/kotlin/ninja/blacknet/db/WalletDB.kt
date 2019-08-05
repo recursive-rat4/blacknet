@@ -385,6 +385,13 @@ object WalletDB {
         return@withLock leases
     }
 
+    fun getCheckpoint(): Hash {
+        return if (!PoS.guessInitialSynchronization())
+            LedgerDB.rollingCheckpoint()
+        else
+            Hash.ZERO
+    }
+
     private suspend fun rescanBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
         if (height != 0) {
             val block = BlockDB.blockImpl(hash)!!.first

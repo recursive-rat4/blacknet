@@ -129,7 +129,7 @@ object Node {
     }
 
     fun isInitialSynchronization(): Boolean {
-        return ChainFetcher.isSynchronizing() && Runtime.time() > LedgerDB.blockTime() + PoS.TARGET_BLOCK_TIME * PoS.MATURITY
+        return ChainFetcher.isSynchronizing() && PoS.guessInitialSynchronization()
     }
 
     fun listenOn(address: Address) {
@@ -180,10 +180,10 @@ object Node {
     }
 
     fun sendVersion(connection: Connection, nonce: Long) {
-        val chain = if (isInitialSynchronization()) {
-            ChainAnnounce.GENESIS
-        } else {
+        val chain = if (!isInitialSynchronization()) {
             ChainAnnounce(LedgerDB.blockHash(), LedgerDB.cumulativeDifficulty())
+        } else {
+            ChainAnnounce.GENESIS
         }
         val v = Version(magic, version, Runtime.time(), nonce, Bip14.agent, minTxFee, chain)
         connection.sendPacket(v)

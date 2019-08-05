@@ -12,6 +12,9 @@ package ninja.blacknet.crypto
 import ninja.blacknet.serialization.fromHex
 import ninja.blacknet.serialization.toHex
 
+/**
+ * Ed25519 private key
+ */
 class PrivateKey(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is PrivateKey) && bytes.contentEquals(other.bytes)
     override fun hashCode(): Int = bytes.contentHashCode()
