@@ -34,6 +34,9 @@ header {
 .account-input a{
     font-size: 14px;
 }
+.account_text{
+    text-align: center;
+}
 
 .logo {
     float: left;
@@ -164,11 +167,23 @@ header .network {
 .rightpanel .info p {
     margin: 0 0 5px;
 }
-
-.field-row {
+fieldset .field-row{
     display: flex;
     align-items: center;
+}
+
+.field-row {
     margin-bottom: 1rem;
+    max-width: 666px;
+}
+
+.field-row p{
+    word-break: break-all;
+    font-size: 12px;
+}
+
+.field-row-outer.hidden{
+    visibility: hidden;
 }
 
 fieldset {
@@ -216,6 +231,10 @@ select{
     display: inline-block;
 }
 
+input:focus {
+    border: 1px solid var(--gold-text);
+}
+
 button {
     line-height: 1.499;
     position: relative;
@@ -260,6 +279,12 @@ fieldset button, .staking button{
     background-color: var(--darker-grey-bg);
     width: 100px;
     float: right;
+    border: 1px solid var(--gold-text);
+}
+button.v2{
+    color: var(--gold-text);
+    background-color: var(--darker-grey-bg);
+    width: 100px;
     border: 1px solid var(--gold-text);
 }
 
@@ -411,7 +436,8 @@ td.message p{
 button.cancel {
     background: transparent;
     border: 1px solid #575757;
-    color: #90B2EF;
+    /* color: #90B2EF; */
+    color: #575757;
     margin-right: 20px;
 }
 
@@ -438,6 +464,32 @@ input:focus, button:focus {
     font-size: 12px;
     width: 490px;
     padding: 2px 5px;
+}
+
+.dialog.confirm .body{
+    /* text-align: center; */
+    line-height: 25px;
+    font-size: 14px;
+}
+
+.dialog.confirm .btns{
+    text-align: center;
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+}
+
+.dialog.confirm .btns button{
+    float: none;
+}
+
+.dialog.confirm{
+    width: 510px;
+    height: 240px;
+    padding: 10px 20px;
+    margin-left: -255px;
+    margin-top: -120px;
+    display: none;
 }
 
 fieldset pre {
@@ -614,4 +666,48 @@ tr.undis{
 
 #tx-list tr.preview td.noborder{
     border-bottom: none;
+}
+
+
+
+/* blacknet-message */
+.blacknet-message{
+    width: 100%;
+    z-index: 102;
+    position: fixed;
+    top: 16px;
+    left: 0;
+    pointer-events: none;
+}
+
+.blacknet-message-notice{
+    text-align: center;
+}
+
+.blacknet-message-notice-content {
+    display: inline-block;
+    background: var(--gold-text);
+    margin-bottom: 16px;
+    padding: 8px 10px;
+    font-size: 14px;
+    border-radius: 3px;
+    color: var(--darker-grey-bg);
+    text-align: center;
+    box-shadow: var(--darker-grey-bg) 0 0 10px;
+    position: relative;
+}
+
+.blacknet-message-notice-content .fa-check-circle{
+    color: green;
+    margin-right: 3px;
+}
+
+.blacknet-message-notice-content .fa-times-circle{
+    color: red;
+    margin-right: 3px;
+}
+
+.blacknet-message-notice-content .fa-info-circle{
+    color: yellow;
+    margin-right: 3px;
 }

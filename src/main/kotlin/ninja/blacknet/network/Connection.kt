@@ -80,12 +80,17 @@ class Connection(
                 val bytes = recvPacket()
                 val type = bytes.readInt()
 
-                if ((state.isWaiting() && type != 0) || (state.isConnected() && type == 0))
-                    break
+                if (state.isConnected()) {
+                    if (type == PacketType.Version.ordinal)
+                        break
+                } else {
+                    if (type != PacketType.Version.ordinal)
+                        break
+                }
 
                 val serializer = PacketType.getSerializer(type)
                 if (serializer == null) {
-                    logger.info("unknown packet type $type")
+                    dos("unknown packet type $type")
                     continue
                 }
                 val packet = BinaryDecoder(bytes).decode(serializer)
@@ -197,10 +202,16 @@ class Connection(
             else
                 sendChannel.close()
             Runtime.launch {
-                ChainFetcher.disconnected(this@Connection)
                 Node.connections.remove(this@Connection)
-                if (state == State.OUTGOING_WAITING) {
-                    PeerDB.failed(remoteAddress, connectedAt)
+                when (state) {
+                    State.INCOMING_CONNECTED, State.OUTGOING_CONNECTED -> {
+                        ChainFetcher.disconnected(this@Connection)
+                    }
+                    State.OUTGOING_WAITING -> {
+                        PeerDB.failed(remoteAddress, connectedAt)
+                    }
+                    State.INCOMING_WAITING -> {
+                    }
                 }
             }
         }
@@ -224,17 +235,13 @@ class Connection(
     class PingRequest(val id: Int, val time: Long)
 
     enum class State {
-        INCOMING_WAITING,
         INCOMING_CONNECTED,
-        OUTGOING_WAITING,
-        OUTGOING_CONNECTED;
+        INCOMING_WAITING,
+        OUTGOING_CONNECTED,
+        OUTGOING_WAITING;
 
         fun isConnected(): Boolean {
             return this == INCOMING_CONNECTED || this == OUTGOING_CONNECTED
-        }
-
-        fun isWaiting(): Boolean {
-            return this == INCOMING_WAITING || this == OUTGOING_WAITING
         }
     }
 }

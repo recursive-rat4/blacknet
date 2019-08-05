@@ -11,7 +11,7 @@ $(document).ready(function () {
 
     const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");
     const hash = localStorage.hashIndex || 'overview';
-    const dialogPassword = $('.dialog.password'), mask = $('.mask');
+    const dialogPassword = $('.dialog.password'),mask = $('.mask');
     let blockStack = [];
 
     menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
@@ -29,38 +29,50 @@ $(document).ready(function () {
 
                 let mnemonic = getMnemoic();
 
-                type == 'refresh_staking' ? refreshStaking(mnemonic) : post_staking(mnemonic, type);
+                //验证助记词
+                if(!Blacknet.verifyMnemonic(mnemonic)){
+                    Blacknet.message("Invalid mnemonic", "warning")
+                    dialogPassword.find('.mnemonic').focus()
+                    return
+                }   
+                type == 'isStaking' ? refreshStaking(mnemonic, type) : changeStaking(mnemonic, type);
             });
         }
     }
 
+    async function postStaking(mnemonic, type, callback){
 
-    async function post_staking(mnemonic, type) {
-
-        let url = apiVersion + "/" + type + "Staking/" + mnemonic + "/";
-
-        $.post(url, {}, function (ret) {
-
-            let msg = ret == 'false' ? type.toUpperCase() + ' FAILED!' : type.toUpperCase() + ' SUCCESS!';
-            clearPassWordDialog();
-            refreshStaking(mnemonic);
-            timeAlert(msg);
-        }).fail(function () {
+        let url = '/' + type;
+        let formdata = new FormData();
+        formdata.append('mnemonic', mnemonic);
+        Blacknet.postV2(url, formdata, callback, function () {
             clearPassWordDialog();
             timeAlert('Invalid mnemonic');
         });
     }
 
-    async function refreshStaking(mnemonic) {
-
-        let stakingText = $('.is_staking'), data;
-
+    async function refreshStaking(mnemonic, type) {
+        
+        let stakingText = $('.is_staking');
         stakingText.text('loading');
-        data = await Blacknet.postPromise('/isStaking/' + mnemonic);
-        localStorage.isStaking = data;
         clearPassWordDialog();
-        await Blacknet.wait(2000);
-        stakingText.text(data);
+        await Blacknet.wait(1000);
+        postStaking(mnemonic, type, function(ret){
+            localStorage.isStaking = ret;
+            stakingText.text(ret);
+        });
+    }
+
+    async function changeStaking(mnemonic, type) {
+
+        postStaking(mnemonic, type, function(ret){
+            
+            let msg = ret == 'false' ? 'FAILED!' :'SUCCESS!';
+
+            timeAlert(type + ' ' + msg);
+            clearPassWordDialog();
+            refreshStaking(mnemonic, 'isStaking');
+        });
     }
 
     function menuSwitch() {
@@ -78,10 +90,22 @@ $(document).ready(function () {
         let mnemonic = $('#sign_mnemonic').val();
         mnemonic = $.trim(mnemonic);
         let message = $('#sign_message').val();
-        let url = "/signmessage/" + mnemonic + "/" + message + "/";
+        if(!Blacknet.verifyMnemonic(mnemonic)){
+            Blacknet.message("Invalid mnemonic", "warning")
+            $('#sign_mnemonic').focus()
+            return
+        }
+        if(!Blacknet.verifyMessage(message)){
+            Blacknet.message("Invalid message", "warning")
+            $('#sign_message').focus()
+            return
+        }
+        let data = new FormData();
+        data.append('mnemonic', mnemonic);
+        data.append('message', message);
 
-        Blacknet.post(url, function (data) {
-            $('#sign_result').val(data);
+        Blacknet.postV2('/signmessage', data, function(data){
+            $('#sign_result').text(data).parent().removeClass("hidden")
         });
     }
     function verify() {
@@ -89,66 +113,122 @@ $(document).ready(function () {
         let signature = $('#verify_signature').val();
         let message = $('#verify_message').val();
         let url = "/verifymessage/" + account + "/" + signature + "/" + message + "/";
+        if(!Blacknet.verifyAccount(account)) {
+            Blacknet.message("Invalid account", "warning")
+            $('#verify_account').focus()
+            return 
+        }
+        if(!Blacknet.verifySign(signature)){
+            Blacknet.message("Invalid signature", "warning")
+            $('#verify_signature').focus()
+            return
+        }
+        if(!Blacknet.verifyMessage(message)){
+            Blacknet.message("Invalid message", "warning")
+            $('#verify_message').focus()
+            return
+        }
 
-        Blacknet.get(url, function (data) {
-            $('#verify_result').val(data);
+        let data = new FormData();
+        data.append('account', account);
+        data.append('signature', signature);
+        data.append('message', message);
+
+        Blacknet.postV2('/verifymessage', data, function(data){
+            $('#sign_result').text(data).parent().removeClass("hidden")
         });
     }
     function mnemonic_info() {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
         mnemonic = $.trim(mnemonic);
-        let url = "/mnemonic/info/" + mnemonic + "/";
+        let formdata = new FormData();
+        formdata.append('mnemonic', mnemonic);
 
-        Blacknet.post(url, function (data) {
+        if(!Blacknet.verifyMnemonic(mnemonic)){
+            Blacknet.message("Invalid mnemonic", "warning")
+            $('#mnemonic_info_mnemonic').focus()
+            return
+        }
+        Blacknet.postV2('/mnemonic/info', formdata, function (data) {
             let html = '';
-
             data.mnemonic = data.mnemonic.replace(/[a-z]/g, '*');
 
             html += 'mnemonic: ' + data.mnemonic;
-            html += '<br>address: ' + data.address;
-            html += '<br>publicKey: ' + data.publicKey;
-            $('#mnemonic_info_result').html(html);
+            html += '\naddress: ' + data.address;
+            html += '\npublicKey: ' + data.publicKey;
+            $('#mnemonic_info_result').text(html).parent().removeClass("hidden")
         }, 'json');
     }
 
     function transfer_click(type) {
-
         return function () {
-            mask.show();
-            dialogPassword.show().find('.confirm').unbind().on('click', function () {
-
-                let mnemonic = getMnemoic();
-                switch (type) {
-                    case 'send': transfer(mnemonic); break;
-                    case 'lease': lease(mnemonic); break;
-                    case 'cancel_lease': cancel_lease(mnemonic); break;
-                }
-            });
+            switch (type) {
+                case 'send': transfer(); break;
+                case 'lease': lease(); break;
+                case 'cancel_lease': cancel_lease(); break;
+            }
         }
     }
 
-    function transfer(mnemonic) {
+    function input_mnemonic(fn){
+        mask.show();
+        dialogPassword.show().find('.confirm').unbind().on('click', function () {
+            let mnemonic = getMnemoic();
+            //验证助记词
+            if(!Blacknet.verifyMnemonic(mnemonic)){
+                Blacknet.message("Invalid mnemonic", "warning")
+                dialogPassword.find('.mnemonic').focus()
+                return
+            }
+            if(Object.prototype.toString.call(fn) === "[object Function]"){
+                fn.call(this, mnemonic);
+            }
+        });
+    }
 
+    function transfer() {
         let to = $('#transfer_to').val();
         let amount = $('#transfer_amount').val();
         let message = $('#transfer_message').val();
         let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
-
-        Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
-            $('#transfer_result').val(data);
-            clearPassWordDialog();
-        });
+        if(!Blacknet.verifyAccount(to)) {
+            Blacknet.message("Invalid account", "warning")
+            $('#transfer_to').focus()
+            return 
+        }
+        if(!Blacknet.verifyAmount(amount)) {
+            Blacknet.message("Invalid amount", "warning")
+            $('#transfer_amount').focus()
+            return 
+        }
+        input_mnemonic(function (mnemonic) {
+            
+            Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
+                $('#transfer_result').text(data).parent().removeClass("hidden")
+                clearPassWordDialog();
+            });
+        })
     }
 
-    function lease(mnemonic) {
-
+    function lease() {
         let to = $('#lease_to').val();
         let amount = $('#lease_amount').val();
-
-        Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
-            $('#lease_result').val(data);
-            clearPassWordDialog();
-        });
+        if(!Blacknet.verifyAccount(to)) {
+            Blacknet.message("Invalid account", "warning")
+            $('#lease_to').focus()
+            return 
+        }
+        if(!Blacknet.verifyAmount(amount)) {
+            Blacknet.message("Invalid amount", "warning")
+            $('#lease_amount').focus()
+            return 
+        }
+        input_mnemonic(function (mnemonic) {
+            Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
+                $('#lease_result').text(data).parent().removeClass("hidden")
+                clearPassWordDialog();
+            });
+        })
     }
 
     function cancel_lease(mnemonic) {
@@ -156,11 +236,22 @@ $(document).ready(function () {
         let to = $('#cancel_lease_to').val();
         let amount = $('#cancel_lease_amount').val();
         let height = $('#cancel_lease_height').val();
-
-        Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
-            $('#cancel_lease_result').val(data);
-            clearPassWordDialog();
-        });
+        if(!Blacknet.verifyAccount(to)) {
+            Blacknet.message("Invalid account", "warning")
+            $('#cancel_lease_to').focus()
+            return 
+        }
+        if(!Blacknet.verifyAmount(amount)) {
+            Blacknet.message("Invalid amount", "warning")
+            $('#cancel_lease_amount').focus()
+            return 
+        }
+        input_mnemonic(function (mnemonic) {
+            Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
+                $('#cancel_lease_result').text(data).parent().removeClass("hidden")
+                clearPassWordDialog();
+            });
+        })
     }
 
     function clearPassWordDialog() {
@@ -171,7 +262,7 @@ $(document).ready(function () {
 
     function timeAlert(msg, timeout) {
         setTimeout(function () {
-            alert(msg);
+            Blacknet.message(msg, "warning")
         }, timeout || 100);
     }
 
@@ -244,16 +335,21 @@ $(document).ready(function () {
     }
 
     async function addPeer() {
+        let address = $('#ip_address').val(), port = $('#ip_port').val();
 
-        let ip = $('#ip_address').val(), port = $('#ip_port').val();
+        if(!Blacknet.verifyNetworkAddress(address)) {
+            Blacknet.message("Invalid address", "warning")
+            $('#ip_address').focus()
+            return 
+        }
 
         let result = await Blacknet.getPromise(`/addpeer/${ip}/${port}/true`);
 
         await Blacknet.network();
 
-        alert(`${ip} ${result}`);
-        $('#ip_address').val('');
+        Blacknet.message(`${ip} ${result}`, "success")
 
+        $('#ip_address').val('');
     }
 
     Blacknet.ready(function () {
@@ -284,9 +380,9 @@ $(document).ready(function () {
     menu.on('click', 'li', menuSwitch);
     panel.find('.' + hash).show();
 
-    body.on("click", "#stop_staking", staking_click('stop'))
-        .on("click", "#start_staking", staking_click('start'))
-        .on("click", "#refresh_staking", staking_click('refresh_staking'))
+    body.on("click", "#stop_staking", staking_click('stopStaking'))
+        .on("click", "#start_staking", staking_click('startStaking'))
+        .on("click", "#refresh_staking", staking_click('isStaking'))
         .on("click", "#transfer", transfer_click('send'))
         .on("click", "#lease", transfer_click('lease'))
         .on("click", "#cancel_lease", transfer_click('cancel_lease'))
