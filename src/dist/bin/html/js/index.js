@@ -326,11 +326,11 @@ $(document).ready(function () {
             return 
         }
 
-        let result = await Blacknet.getPromise(`/addpeer/${ip}/${port}/true`);
+        let result = await Blacknet.getPromise(`/addpeer/${address}/${port}/true`);
 
         await Blacknet.network();
 
-        Blacknet.message(`${ip} ${result}`, "success")
+        Blacknet.message(`${address} ${result}`, "success")
 
         $('#ip_address').val('');
     }
