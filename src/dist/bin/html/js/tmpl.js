@@ -62,7 +62,7 @@ Blacknet.template = {
         amount = Blacknet.getFormatBalance(amount);
 
         tmpl =
-            `<tr class="preview txhash${tx.hash}" data-hash="${tx.hash}"  data-height="${tx.height}">
+            `<tr class="preview txhash${tx.hash} tx-item" data-time="${tx.time}" data-hash="${tx.hash}"  data-height="${tx.height}">
                 <td class="narrow">${Blacknet.unix_to_local_time(tx.time)}</td>
                 <td class="narrow">${txText}</td>
                 <td class="left">${linkText}</td>

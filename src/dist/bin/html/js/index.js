@@ -397,6 +397,7 @@ $(document).ready(function () {
         .on("click", ".tx-foot .show_more_txs", function(){
             $(this).hide();
             Blacknet.showMoreTxs();
+            return false;
         });
 
 

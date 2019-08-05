@@ -136,7 +136,9 @@ void function () {
             if (key == 'blockTime') {
                 value = Blacknet.unix_to_local_time(value);
                 Blacknet.renderProgressBar(ledger[key]);
-            } else if (key == 'supply') {
+            } else if(key == 'height' || key == 'blockHash'){
+                $('.overview_' + key).prop('href', 'https://www.blnscan.io/' + value);
+            }else if (key == 'supply') {
                 value = new BigNumber(value).dividedBy(1e8) + ' BLN';
             }
             $('.overview_' + key).text(value);
