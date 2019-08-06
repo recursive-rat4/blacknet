@@ -10,6 +10,7 @@
 
 package ninja.blacknet.api
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -347,7 +348,12 @@ fun Application.APIServer() {
             val fee = feeStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid fee")
             val amount = amountStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid amount")
             val to = Address.decode(toStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid to")
-            val encrypted = encryptedStr?.let { it.toByteOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid encrypted") }
+            var encrypted : Byte
+            when (encryptedStr?.toBoolean()) {
+                null -> return Pair(HttpStatusCode.BadRequest, "invalid encrypted")
+                true -> encrypted = 1
+                false -> encrypted = 0
+            }
             val message = Message.create(messageStr, encrypted, privateKey, to) ?: return Pair(HttpStatusCode.BadRequest, "failed to create message")
             val blockHash = blockHashStr?.let { Hash.fromString(it) ?: return Pair(HttpStatusCode.BadRequest, "invalid blockHash") }
 
@@ -365,7 +371,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}/{blockHash?}/") {
-            call.respond(transfer(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["message"], call.parameters["encrypted"], call.parameters["blockHash"]))
+            val (status, msg) = transfer(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["message"], call.parameters["encrypted"], call.parameters["blockHash"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/transfer") {
@@ -381,7 +388,9 @@ fun Application.APIServer() {
             val message = args.getOrDefault("message", null)
             val encrypted = args.getOrDefault("encrypted", null)
             val blockHash = args.getOrDefault("blockHash", null)
-            call.respond(transfer(mnemonic, fee, amount, to, message, encrypted, blockHash))
+
+            val (status, msg) = transfer(mnemonic, fee, amount, to, message, encrypted, blockHash)
+            call.respond(status, msg)
         }
 
         suspend fun burn(mnemonicStr : String?, feeStr : String?, amountStr : String?, messageStr : String?, blockHashStr : String?) : Pair<HttpStatusCode, String> {
@@ -406,7 +415,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/{blockHash?}/") {
-            call.respond(burn(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["message"], call.parameters["blockHash"]))
+            val (status, msg) = burn(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["message"], call.parameters["blockHash"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/burn") {
@@ -420,7 +430,8 @@ fun Application.APIServer() {
             val amount = args.getOrDefault("amount", null)
             val message = args.getOrDefault("message", null)
             val blockHash = args.getOrDefault("blockHash", null)
-            call.respond(burn(mnemonic, fee, amount, message, blockHash))
+            val (status, msg) =burn(mnemonic, fee, amount, message, blockHash)
+            call.respond(status, msg)
         }
 
         suspend fun lease(mnemonicStr : String?, feeStr : String?, amountStr : String?, toStr : String?, blockHashStr : String?) : Pair<HttpStatusCode, String> {
@@ -445,7 +456,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}/{blockHash?}/") {
-            call.respond(lease(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["blockHash"]))
+            val (status, msg) = lease(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["blockHash"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/lease") {
@@ -459,7 +471,8 @@ fun Application.APIServer() {
             val amount = args.getOrDefault("amount", null)
             val to = args.getOrDefault("to", "")
             val blockHash = args.getOrDefault("blockHash", null)
-            call.respond(lease(mnemonic, fee, amount, to, blockHash))
+            val (status, msg) = lease(mnemonic, fee, amount, to, blockHash)
+            call.respond(status, msg)
         }
 
         suspend fun cancellease(mnemonicStr : String?, feeStr : String?, amountStr : String?, toStr : String?, heightStr : String?, blockHashStr : String?) : Pair<HttpStatusCode, String> {
@@ -485,7 +498,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}/{blockHash?}/") {
-            call.respond(cancellease(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["height"], call.parameters["blockHash"]))
+            val (status, msg) = cancellease(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["height"], call.parameters["blockHash"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/cancellease") {
@@ -500,7 +514,8 @@ fun Application.APIServer() {
             val to = args.getOrDefault("to", "")
             val height = args.getOrDefault("height", null)
             val blockHash = args.getOrDefault("blockHash", null)
-            call.respond(cancellease(mnemonic, fee, amount, to, height, blockHash))
+            val (status, msg) = cancellease(mnemonic, fee, amount, to, height, blockHash)
+            call.respond(status, msg)
         }
 
         get("/api/v1/transaction/raw/send/{serialized}/") {
@@ -528,7 +543,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/decryptmessage/{mnemonic}/{from}/{message}") {
-            call.respond(decryptmessage(call.parameters["mnemonic"], call.parameters["from"], call.parameters["message"]))
+            val (status, msg) = decryptmessage(call.parameters["mnemonic"], call.parameters["from"], call.parameters["message"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/decryptmessage") {
@@ -540,7 +556,8 @@ fun Application.APIServer() {
             val mnemonic = args.getOrDefault("mnemonic", "")
             val from = args.getOrDefault("from", "")
             val message = args.getOrDefault("message", null)
-            call.respond(decryptmessage(mnemonic, from, message))
+            val (status, msg) = decryptmessage(mnemonic, from, message)
+            call.respond(status, msg)
         }
 
         fun signmessage(mnemonicStr : String?, messageStr : String?) : Pair<HttpStatusCode, String> {
@@ -553,7 +570,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/signmessage/{mnemonic}/{message}") {
-            call.respond(signmessage(call.parameters["mnemonic"], call.parameters["message"]))
+            val (status, msg) = signmessage(call.parameters["mnemonic"], call.parameters["message"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/signmessage") {
@@ -564,7 +582,8 @@ fun Application.APIServer() {
             val args = readMultipart(multipart)
             val mnemonic = args.getOrDefault("mnemonic", "")
             val message = args.getOrDefault("message", null)
-            call.respond(signmessage(mnemonic, message))
+            val (status, msg) = signmessage(mnemonic, message)
+            call.respond(status, msg)
         }
 
         get("/api/v1/verifymessage/{account}/{signature}/{message}") {
@@ -629,7 +648,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/staker/start/{mnemonic}") {
-            call.respond(startStaker(call.parameters["mnemonic"]))
+            val (status, msg) = startStaker(call.parameters["mnemonic"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/staker/start") {
@@ -639,7 +659,8 @@ fun Application.APIServer() {
             }
             val args = readMultipart(multipart)
             val mnemonic = args.getOrDefault("mnemonic", "")
-            call.respond(startStaker(mnemonic))
+            val (status, msg) = startStaker(mnemonic)
+            call.respond(status, msg)
         }
 
         suspend fun stopStaker(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
@@ -649,7 +670,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/staker/stop/{mnemonic}") {
-            call.respond(stopStaker(call.parameters["mnemonic"]))
+            val (status, msg) = stopStaker(call.parameters["mnemonic"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/staker/stop") {
@@ -659,7 +681,8 @@ fun Application.APIServer() {
             }
             val args = readMultipart(multipart)
             val mnemonic = args.getOrDefault("mnemonic", "")
-            call.respond(stopStaker(mnemonic))
+            val (status, msg) = stopStaker(mnemonic)
+            call.respond(status, msg)
         }
 
         suspend fun startStaking(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
@@ -669,7 +692,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/startStaking/{mnemonic}") {
-            call.respond(startStaking(call.parameters["mnemonic"]))
+            val (status, msg) = startStaking(call.parameters["mnemonic"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/startStaking") {
@@ -679,7 +703,8 @@ fun Application.APIServer() {
             }
             val args = readMultipart(multipart)
             val mnemonic = args.getOrDefault("mnemonic", "")
-            call.respond(startStaking(mnemonic))
+            val (status, msg) = startStaking(mnemonic)
+            call.respond(status, msg)
         }
 
         suspend fun stopStaking(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
@@ -689,7 +714,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/stopStaking/{mnemonic}") {
-            call.respond(stopStaking(call.parameters["mnemonic"]))
+            val (status, msg) = stopStaking(call.parameters["mnemonic"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/stopStaking") {
@@ -699,7 +725,8 @@ fun Application.APIServer() {
             }
             val args = readMultipart(multipart)
             val mnemonic = args.getOrDefault("mnemonic", "")
-            call.respond(stopStaking(mnemonic))
+            val (status, msg) = stopStaking(mnemonic)
+            call.respond(status, msg)
         }
 
         suspend fun isStaking(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
@@ -709,7 +736,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v1/isStaking/{mnemonic}") {
-            call.respond(isStaking(call.parameters["mnemonic"]))
+            val (status, msg) = isStaking(call.parameters["mnemonic"])
+            call.respond(status, msg)
         }
 
         post("/api/v2/isStaking") {
@@ -719,7 +747,8 @@ fun Application.APIServer() {
             }
             val args = readMultipart(multipart)
             val mnemonic = args.getOrDefault("mnemonic", "")
-            call.respond(isStaking(mnemonic))
+            val (status, msg) = isStaking(mnemonic)
+            call.respond(status, msg)
         }
 
         get("/api/v1/walletdb/getwallet/{address}") {
