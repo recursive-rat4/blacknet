@@ -129,13 +129,8 @@ $(document).ready(function () {
             return
         }
 
-        let data = new FormData();
-        data.append('account', account);
-        data.append('signature', signature);
-        data.append('message', message);
-
-        Blacknet.postV2('/verifymessage', data, function(data){
-            $('#sign_result').text(data).parent().removeClass("hidden")
+        Blacknet.get(url, function(data){
+            $('#verify_result').text(data).parent().removeClass("hidden")
         });
     }
     function mnemonic_info() {

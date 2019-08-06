@@ -53,9 +53,9 @@ Blacknet.template = {
         if(tx.type != 0 && tx.type != 2 && tx.type != 3){
 
             if(tx.from != 'genesis'){
-                linkText = `<a href="/${tx.from}">${tx.from}</a>`;
+                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.from}">${tx.from}</a>`;
             }else{
-                linkText = `<a href="/${tx.to}">${tx.to}</a>`;
+                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.to}">${tx.to}</a>`;
             }
         }
 
