@@ -341,15 +341,15 @@ fun Application.APIServer() {
             call.respond(Json.stringify(MnemonicInfo.serializer(), info))
         }
 
-        post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}/{blockHash?}/") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+        suspend fun transfer(mnemonicStr : String?, feeStr : String?, amountStr : String?, toStr : String?, messageStr : String?, encryptedStr : String?, blockHashStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
-            val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val encrypted = call.parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid encrypted") }
-            val message = Message.create(call.parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
-            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
+            val fee = feeStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid fee")
+            val amount = amountStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid amount")
+            val to = Address.decode(toStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid to")
+            val encrypted = encryptedStr?.let { it.toByteOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid encrypted") }
+            val message = Message.create(messageStr, encrypted, privateKey, to) ?: return Pair(HttpStatusCode.BadRequest, "failed to create message")
+            val blockHash = blockHashStr?.let { Hash.fromString(it) ?: return Pair(HttpStatusCode.BadRequest, "invalid blockHash") }
 
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
@@ -357,11 +357,15 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, blockHash, fee, TxType.Transfer.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second))
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
+                when (Node.broadcastTx(signed.first, signed.second)) {
+                    true -> return Pair(HttpStatusCode.OK, signed.first.toString())
+                    false -> return Pair(HttpStatusCode.OK, "Transaction rejected")
+                }
             }
+        }
+
+        post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}/{blockHash?}/") {
+            call.respond(transfer(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["message"], call.parameters["encrypted"], call.parameters["blockHash"]))
         }
 
         post("/api/v2/transfer") {
@@ -370,36 +374,23 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val from = privateKey.toPublicKey()
-            val fee = args.getOrDefault("fee", null)?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = args.getOrDefault("amount", null)?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(args.getOrDefault("to", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val encrypted = args.getOrDefault("encrypted", null)?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid encrypted") }
-            val message = Message.create(args.getOrDefault("message", ""), encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
-            val blockHash = args.getOrDefault("blockHash", null)?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
-
-            APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
-                val data = Transfer(amount, to, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Transfer.type, data)
-                val signed = tx.sign(privateKey)
-
-                if (Node.broadcastTx(signed.first, signed.second))
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
-            }
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            val fee = args.getOrDefault("fee", null)
+            val amount = args.getOrDefault("amount", null)
+            val to = args.getOrDefault("to", "")
+            val message = args.getOrDefault("message", null)
+            val encrypted = args.getOrDefault("encrypted", null)
+            val blockHash = args.getOrDefault("blockHash", null)
+            call.respond(transfer(mnemonic, fee, amount, to, message, encrypted, blockHash))
         }
 
-        post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/{blockHash?}/") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+        suspend fun burn(mnemonicStr : String?, feeStr : String?, amountStr : String?, messageStr : String?, blockHashStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
-            val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val message = SerializableByteArray.fromString(call.parameters["message"].orEmpty()) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
-            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
+            val fee = feeStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid fee")
+            val amount = amountStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid amount")
+            val message = SerializableByteArray.fromString(messageStr.orEmpty()) ?: return Pair(HttpStatusCode.BadRequest, "invalid message")
+            val blockHash = blockHashStr?.let { Hash.fromString(it) ?: return Pair(HttpStatusCode.BadRequest, "invalid blockHash") }
 
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
@@ -407,11 +398,15 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, blockHash, fee, TxType.Burn.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second))
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
+                when (Node.broadcastTx(signed.first, signed.second)) {
+                    true -> return Pair(HttpStatusCode.OK, signed.first.toString())
+                    false -> return Pair(HttpStatusCode.OK, "Transaction rejected")
+                }
             }
+        }
+
+        post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/{blockHash?}/") {
+            call.respond(burn(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["message"], call.parameters["blockHash"]))
         }
 
         post("/api/v2/burn") {
@@ -420,40 +415,21 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic", ""))
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val from = privateKey.toPublicKey()
-            val fee = args.getOrDefault("fee", null)?.toLongOrNull()
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = args.getOrDefault("amount", null)?.toLongOrNull()
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val message = SerializableByteArray.fromString(args.getOrDefault("message", null).orEmpty())
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
-            val blockHash = args.getOrDefault("blockHash", null)?.let {
-                Hash.fromString(it)
-                        ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash")
-            }
-
-            APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
-                val data = Burn(amount, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Burn.type, data)
-                val signed = tx.sign(privateKey)
-
-                if (Node.broadcastTx(signed.first, signed.second))
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
-            }
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            val fee = args.getOrDefault("fee", null)
+            val amount = args.getOrDefault("amount", null)
+            val message = args.getOrDefault("message", null)
+            val blockHash = args.getOrDefault("blockHash", null)
+            call.respond(burn(mnemonic, fee, amount, message, blockHash))
         }
 
-        post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}/{blockHash?}/") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+        suspend fun lease(mnemonicStr : String?, feeStr : String?, amountStr : String?, toStr : String?, blockHashStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
-            val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
+            val fee = feeStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid fee")
+            val amount = amountStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid amount")
+            val to = Address.decode(toStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid to")
+            val blockHash = blockHashStr?.let { Hash.fromString(it) ?: return Pair(HttpStatusCode.BadRequest, "invalid blockHash") }
 
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
@@ -461,11 +437,15 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, blockHash, fee, TxType.Lease.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second))
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
+                when (Node.broadcastTx(signed.first, signed.second)) {
+                    true -> return Pair(HttpStatusCode.OK, signed.first.toString())
+                    false -> return Pair(HttpStatusCode.OK, "Transaction rejected")
+                }
             }
+        }
+
+        post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}/{blockHash?}/") {
+            call.respond(lease(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["blockHash"]))
         }
 
         post("/api/v2/lease") {
@@ -474,34 +454,22 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val from = privateKey.toPublicKey()
-            val fee = args.getOrDefault("fee", null)?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = args.getOrDefault("amount", null)?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(args.getOrDefault("to", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val blockHash = args.getOrDefault("blockHash", null)?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
-
-            APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
-                val data = Lease(amount, to).serialize()
-                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Lease.type, data)
-                val signed = tx.sign(privateKey)
-
-                if (Node.broadcastTx(signed.first, signed.second))
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
-            }
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            val fee = args.getOrDefault("fee", null)
+            val amount = args.getOrDefault("amount", null)
+            val to = args.getOrDefault("to", "")
+            val blockHash = args.getOrDefault("blockHash", null)
+            call.respond(lease(mnemonic, fee, amount, to, blockHash))
         }
 
-        post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}/{blockHash?}/") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+        suspend fun cancellease(mnemonicStr : String?, feeStr : String?, amountStr : String?, toStr : String?, heightStr : String?, blockHashStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
             val from = privateKey.toPublicKey()
-            val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val height = call.parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
-            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
+            val fee = feeStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid fee")
+            val amount = amountStr?.toLongOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid amount")
+            val to = Address.decode(toStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid to")
+            val height = heightStr?.toIntOrNull() ?: return Pair(HttpStatusCode.BadRequest, "invalid height")
+            val blockHash = blockHashStr?.let { Hash.fromString(it) ?: return Pair(HttpStatusCode.BadRequest, "invalid blockHash") }
 
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
@@ -509,11 +477,15 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, blockHash, fee, TxType.CancelLease.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second))
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
+                when (Node.broadcastTx(signed.first, signed.second)) {
+                    true -> return Pair(HttpStatusCode.OK, signed.first.toString())
+                    false -> return Pair(HttpStatusCode.OK, "Transaction rejected")
+                }
             }
+        }
+
+        post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}/{blockHash?}/") {
+            call.respond(cancellease(call.parameters["mnemonic"], call.parameters["fee"], call.parameters["amount"], call.parameters["to"], call.parameters["height"], call.parameters["blockHash"]))
         }
 
         post("/api/v2/cancellease") {
@@ -522,25 +494,13 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val from = privateKey.toPublicKey()
-            val fee = args.getOrDefault("fee", null)?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = args.getOrDefault("amount", null)?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(args.getOrDefault("to", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val height = args.getOrDefault("height", null)?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
-            val blockHash = args.getOrDefault("blockHash", null)?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
-
-            APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
-                val data = CancelLease(amount, to, height).serialize()
-                val tx = Transaction.create(from, seq, blockHash, fee, TxType.CancelLease.type, data)
-                val signed = tx.sign(privateKey)
-
-                if (Node.broadcastTx(signed.first, signed.second))
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
-            }
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            val fee = args.getOrDefault("fee", null)
+            val amount = args.getOrDefault("amount", null)
+            val to = args.getOrDefault("to", "")
+            val height = args.getOrDefault("height", null)
+            val blockHash = args.getOrDefault("blockHash", null)
+            call.respond(cancellease(mnemonic, fee, amount, to, height, blockHash))
         }
 
         get("/api/v1/transaction/raw/send/{serialized}/") {
@@ -555,16 +515,20 @@ fun Application.APIServer() {
             }
         }
 
-        post("/api/v1/decryptmessage/{mnemonic}/{from}/{message}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val publicKey = Address.decode(call.parameters["from"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid from")
-            val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
+        fun decryptmessage(mnemonicStr : String?, fromStr : String?, messageStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val publicKey = Address.decode(fromStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid from")
+            val message = messageStr ?: return Pair(HttpStatusCode.BadRequest, "invalid message")
 
             val decrypted = Message.decrypt(privateKey, publicKey, message)
             if (decrypted != null)
-                call.respond(decrypted)
+                return Pair(HttpStatusCode.OK, decrypted)
             else
-                call.respond(HttpStatusCode.NotFound, "Decryption failed")
+                return Pair(HttpStatusCode.NotFound, "Decryption failed")
+        }
+
+        post("/api/v1/decryptmessage/{mnemonic}/{from}/{message}") {
+            call.respond(decryptmessage(call.parameters["mnemonic"], call.parameters["from"], call.parameters["message"]))
         }
 
         post("/api/v2/decryptmessage") {
@@ -573,24 +537,23 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val publicKey = Address.decode(args.getOrDefault("from", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid from")
-            val message = args.getOrDefault("message", null) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
-
-            val decrypted = Message.decrypt(privateKey, publicKey, message)
-            if (decrypted != null)
-                call.respond(decrypted)
-            else
-                call.respond(HttpStatusCode.NotFound, "Decryption failed")
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            val from = args.getOrDefault("from", "")
+            val message = args.getOrDefault("message", null)
+            call.respond(decryptmessage(mnemonic, from, message))
         }
 
-        post("/api/v1/signmessage/{mnemonic}/{message}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
+        fun signmessage(mnemonicStr : String?, messageStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val message = messageStr ?: return Pair(HttpStatusCode.BadRequest, "invalid message")
 
             val signature = Message.sign(privateKey, message)
 
-            call.respond(signature.toString())
+            return Pair(HttpStatusCode.OK, signature.toString())
+        }
+
+        post("/api/v1/signmessage/{mnemonic}/{message}") {
+            call.respond(signmessage(call.parameters["mnemonic"], call.parameters["message"]))
         }
 
         post("/api/v2/signmessage") {
@@ -599,12 +562,9 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val message = args.getOrDefault("message", null) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
-
-            val signature = Message.sign(privateKey, message)
-
-            call.respond(signature.toString())
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            val message = args.getOrDefault("message", null)
+            call.respond(signmessage(mnemonic, message))
         }
 
         get("/api/v1/verifymessage/{account}/{signature}/{message}") {
@@ -662,10 +622,14 @@ fun Application.APIServer() {
             }
         }
 
-        post("/api/v1/staker/start/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+        suspend fun startStaker(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.startStaking(privateKey).toString())
+            return Pair(HttpStatusCode.OK, PoS.startStaking(privateKey).toString())
+        }
+
+        post("/api/v1/staker/start/{mnemonic}") {
+            call.respond(startStaker(call.parameters["mnemonic"]))
         }
 
         post("/api/v2/staker/start") {
@@ -674,15 +638,18 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic","")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            call.respond(startStaker(mnemonic))
+        }
 
-            call.respond(PoS.startStaking(privateKey).toString())
+        suspend fun stopStaker(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            return Pair(HttpStatusCode.OK, PoS.stopStaking(privateKey).toString())
         }
 
         post("/api/v1/staker/stop/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(PoS.stopStaking(privateKey).toString())
+            call.respond(stopStaker(call.parameters["mnemonic"]))
         }
 
         post("/api/v2/staker/stop") {
@@ -691,15 +658,18 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic","")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            call.respond(stopStaker(mnemonic))
+        }
 
-            call.respond(PoS.stopStaking(privateKey).toString())
+        suspend fun startStaking(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            return Pair(HttpStatusCode.OK, PoS.startStaking(privateKey).toString())
         }
 
         post("/api/v1/startStaking/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(PoS.startStaking(privateKey).toString())
+            call.respond(startStaking(call.parameters["mnemonic"]))
         }
 
         post("/api/v2/startStaking") {
@@ -708,15 +678,18 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic","")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            call.respond(startStaking(mnemonic))
+        }
 
-            call.respond(PoS.startStaking(privateKey).toString())
+        suspend fun stopStaking(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            return Pair(HttpStatusCode.OK, PoS.stopStaking(privateKey).toString())
         }
 
         post("/api/v1/stopStaking/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(PoS.stopStaking(privateKey).toString())
+            call.respond(stopStaking(call.parameters["mnemonic"]))
         }
 
         post("/api/v2/stopStaking") {
@@ -725,15 +698,18 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic","")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            call.respond(stopStaking(mnemonic))
+        }
 
-            call.respond(PoS.stopStaking(privateKey).toString())
+        suspend fun isStaking(mnemonicStr : String?) : Pair<HttpStatusCode, String> {
+            val privateKey = Mnemonic.fromString(mnemonicStr) ?: return Pair(HttpStatusCode.BadRequest, "invalid mnemonic")
+
+            return Pair(HttpStatusCode.OK, PoS.isStaking(privateKey).toString())
         }
 
         post("/api/v1/isStaking/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(PoS.isStaking(privateKey).toString())
+            call.respond(isStaking(call.parameters["mnemonic"]))
         }
 
         post("/api/v2/isStaking") {
@@ -742,9 +718,8 @@ fun Application.APIServer() {
                 return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
             }
             val args = readMultipart(multipart)
-            val privateKey = Mnemonic.fromString(args.getOrDefault("mnemonic","")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(PoS.isStaking(privateKey).toString())
+            val mnemonic = args.getOrDefault("mnemonic", "")
+            call.respond(isStaking(mnemonic))
         }
 
         get("/api/v1/walletdb/getwallet/{address}") {
