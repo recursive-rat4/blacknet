@@ -13,6 +13,7 @@ $(document).ready(function () {
     const hash = localStorage.hashIndex || 'overview';
     const dialogPassword = $('.dialog.password'),mask = $('.mask');
     let blockStack = [];
+    let Mini_Lease = 1000;
 
     menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
     
@@ -218,12 +219,23 @@ $(document).ready(function () {
             $('#lease_amount').focus()
             return 
         }
+
+        if(+amount < Mini_Lease){
+            Blacknet.message("Lease amount must > 1000 BLN", "warning")
+            $('#lease_amount').focus()
+            return
+        }
+
         input_mnemonic(function (mnemonic) {
             Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
                 $('#lease_result').text(data).parent().removeClass("hidden")
                 clearPassWordDialog();
             });
         })
+    }
+
+    function leaseVerify(){
+
     }
 
     function cancel_lease(mnemonic) {
@@ -240,6 +252,11 @@ $(document).ready(function () {
             Blacknet.message("Invalid amount", "warning")
             $('#cancel_lease_amount').focus()
             return 
+        }
+        if(+amount < Mini_Lease){
+            Blacknet.message("Lease amount must > 1000 BLN", "warning")
+            $('#cancel_lease_amount').focus()
+            return
         }
         input_mnemonic(function (mnemonic) {
             Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
