@@ -17,6 +17,9 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
+/**
+ * Network address
+ */
 @Serializable
 class Address(
         val network: Network,

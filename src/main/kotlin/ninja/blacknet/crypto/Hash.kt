@@ -21,6 +21,9 @@ import ninja.blacknet.serialization.fromHex
 import ninja.blacknet.serialization.toHex
 import java.math.BigInteger
 
+/**
+ * Blake2b hash
+ */
 @Serializable
 class Hash(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is Hash) && bytes.contentEquals(other.bytes)

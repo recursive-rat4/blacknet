@@ -59,6 +59,10 @@ object PoS {
         return cumulativeDifficulty + ONE_SHL_256 / difficulty
     }
 
+    fun guessInitialSynchronization(): Boolean {
+        return Runtime.time() > LedgerDB.blockTime() + TARGET_BLOCK_TIME * MATURITY
+    }
+
     private val stakers = SynchronizedArrayList<Pair<PrivateKey, PublicKey>>()
     internal suspend fun stakersSize() = stakers.size()
 

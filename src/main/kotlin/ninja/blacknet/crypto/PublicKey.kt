@@ -20,13 +20,14 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.fromHex
 import ninja.blacknet.serialization.toHex
 
+/**
+ * Ed25519 public key
+ */
 @Serializable
 class PublicKey(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is PublicKey) && bytes.contentEquals(other.bytes)
     override fun hashCode(): Int = bytes.contentHashCode()
     override fun toString(): String = bytes.toHex()
-
-    fun hash(): Hash = Blake2b.hash(bytes)
 
     @Serializer(forClass = PublicKey::class)
     companion object {

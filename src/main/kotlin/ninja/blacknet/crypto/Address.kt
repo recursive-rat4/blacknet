@@ -9,6 +9,9 @@
 
 package ninja.blacknet.crypto
 
+/**
+ * Blacknet address
+ */
 object Address {
     private val HRP = "blacknet".toByteArray(Charsets.US_ASCII)
 
