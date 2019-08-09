@@ -22,7 +22,7 @@ apply plugin: 'application'
 mainClassName = "ninja.blacknet.Main"
 
 group 'ninja.blacknet'
-version '0.2.3'
+version '0.2.4'
 
 repositories {
     jcenter()
@@ -44,10 +44,10 @@ dependencies {
     compile "com.rfksystems:blake2b:1.0.0"
     compile 'org.iq80.leveldb:leveldb:0.12'
     compile "org.slf4j:slf4j-jdk14:1.7.25"
-    compile 'io.github.microutils:kotlin-logging:1.6.26'
+    compile 'io.github.microutils:kotlin-logging:1.7.4'
     compile 'org.briarproject:jtorctl:0.3'
     compile 'com.natpryce:konfig:1.6.10.0'
-    compile 'com.google.guava:guava:27.1-jre'
+    compile 'com.google.guava:guava:28.0-jre'
     compile 'org.bitlet:weupnp:0.1.4'
     compile 'org.bouncycastle:bcprov-jdk15on:1.62'
     compile 'org.ethereum:leveldbjni-all:1.18.3'
