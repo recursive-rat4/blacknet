@@ -23,6 +23,7 @@ import io.ktor.http.cio.websocket.readText
 import io.ktor.http.content.*
 import io.ktor.request.isMultipart
 import io.ktor.request.receiveMultipart
+import io.ktor.request.receiveParameters
 import io.ktor.response.respond
 import io.ktor.response.respondRedirect
 import io.ktor.routing.get
@@ -318,27 +319,9 @@ fun Application.APIServer() {
             call.respond(Json.stringify(MnemonicInfo.serializer(), info))
         }
 
-        // check if call.request is multipart first
-        // TODO here still have an issue https://github.com/ktorio/ktor/issues/482
-        suspend fun readMultipart(multipart : MultiPartData) : Map<String, String> {
-            val result = hashMapOf<String, String>()
-            multipart.forEachPart {
-                when (it) {
-                    is PartData.FormItem -> {
-                        result[it.name.toString()] = it.value
-                    }
-                }
-            }
-            return result
-        }
-
         post("/api/v2/mnemonic/info") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val info = MnemonicInfo.fromString(args.getOrDefault("mnemonic", "")) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val args = call.receiveParameters()
+            val info = MnemonicInfo.fromString(args["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
             call.respond(Json.stringify(MnemonicInfo.serializer(), info))
         }
 
@@ -376,20 +359,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/transfer") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val fee = args.getOrDefault("fee", null)
-            val amount = args.getOrDefault("amount", null)
-            val to = args.getOrDefault("to", "")
-            val message = args.getOrDefault("message", null)
-            val encrypted = args.getOrDefault("encrypted", null)
-            val blockHash = args.getOrDefault("blockHash", null)
-
-            val (status, msg) = transfer(mnemonic, fee, amount, to, message, encrypted, blockHash)
+            val args = call.receiveParameters()
+            val (status, msg) = transfer(args["mnemonic"], args["fee"], args["amount"], args["to"], args["message"], args["encrypted"], args["blockHash"])
             call.respond(status, msg)
         }
 
@@ -420,17 +391,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/burn") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val fee = args.getOrDefault("fee", null)
-            val amount = args.getOrDefault("amount", null)
-            val message = args.getOrDefault("message", null)
-            val blockHash = args.getOrDefault("blockHash", null)
-            val (status, msg) =burn(mnemonic, fee, amount, message, blockHash)
+            val args = call.receiveParameters()
+            val (status, msg) =burn(args["mnemonic"], args["fee"], args["amount"], args["message"], args["blockHash"])
             call.respond(status, msg)
         }
 
@@ -461,17 +423,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/lease") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val fee = args.getOrDefault("fee", null)
-            val amount = args.getOrDefault("amount", null)
-            val to = args.getOrDefault("to", "")
-            val blockHash = args.getOrDefault("blockHash", null)
-            val (status, msg) = lease(mnemonic, fee, amount, to, blockHash)
+            val args = call.receiveParameters()
+            val (status, msg) = lease(args["mnemonic"], args["fee"], args["amount"], args["to"], args["blockHash"])
             call.respond(status, msg)
         }
 
@@ -503,18 +456,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/cancellease") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val fee = args.getOrDefault("fee", null)
-            val amount = args.getOrDefault("amount", null)
-            val to = args.getOrDefault("to", "")
-            val height = args.getOrDefault("height", null)
-            val blockHash = args.getOrDefault("blockHash", null)
-            val (status, msg) = cancellease(mnemonic, fee, amount, to, height, blockHash)
+            val args = call.receiveParameters()
+            val (status, msg) = cancellease(args["mnemonic"], args["fee"], args["amount"], args["to"], args["height"], args["blockHash"])
             call.respond(status, msg)
         }
 
@@ -548,15 +491,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/decryptmessage") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val from = args.getOrDefault("from", "")
-            val message = args.getOrDefault("message", null)
-            val (status, msg) = decryptmessage(mnemonic, from, message)
+            val args = call.receiveParameters()
+            val (status, msg) = decryptmessage(args["mnemonic"], args["from"], args["message"])
             call.respond(status, msg)
         }
 
@@ -575,14 +511,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/signmessage") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val message = args.getOrDefault("message", null)
-            val (status, msg) = signmessage(mnemonic, message)
+            val args = call.receiveParameters()
+            val (status, msg) = signmessage(args["mnemonic"], args["message"])
             call.respond(status, msg)
         }
 
@@ -653,13 +583,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/staker/start") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val (status, msg) = startStaker(mnemonic)
+            val args = call.receiveParameters()
+            val (status, msg) = startStaker(args["mnemonic"])
             call.respond(status, msg)
         }
 
@@ -675,13 +600,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/staker/stop") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val (status, msg) = stopStaker(mnemonic)
+            val args = call.receiveParameters()
+            val (status, msg) = stopStaker(args["mnemonic"])
             call.respond(status, msg)
         }
 
@@ -697,13 +617,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/startStaking") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val (status, msg) = startStaking(mnemonic)
+            val args = call.receiveParameters()
+            val (status, msg) = startStaking(args["mnemonic"])
             call.respond(status, msg)
         }
 
@@ -719,13 +634,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/stopStaking") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val (status, msg) = stopStaking(mnemonic)
+            val args = call.receiveParameters()
+            val (status, msg) = stopStaking(args["mnemonic"])
             call.respond(status, msg)
         }
 
@@ -741,13 +651,8 @@ fun Application.APIServer() {
         }
 
         post("/api/v2/isStaking") {
-            val multipart = call.receiveMultipart()
-            if (!call.request.isMultipart()) {
-                return@post call.respond(HttpStatusCode.BadRequest, "not a multipart request")
-            }
-            val args = readMultipart(multipart)
-            val mnemonic = args.getOrDefault("mnemonic", "")
-            val (status, msg) = isStaking(mnemonic)
+            val args = call.receiveParameters()
+            val (status, msg) = isStaking(args["mnemonic"])
             call.respond(status, msg)
         }
 
