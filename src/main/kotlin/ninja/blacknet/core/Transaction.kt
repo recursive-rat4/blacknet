@@ -58,8 +58,8 @@ class Transaction(
     companion object {
         fun deserialize(bytes: ByteArray): Transaction? = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
-        fun create(from: PublicKey, seq: Int, blockHash: Hash?, fee: Long, type: Byte, data: ByteArray): Transaction {
-            return Transaction(Signature.EMPTY, from, seq, blockHash ?: Hash.ZERO, fee, type, SerializableByteArray(data))
+        fun create(from: PublicKey, seq: Int, blockHash: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
+            return Transaction(Signature.EMPTY, from, seq, blockHash, fee, type, SerializableByteArray(data))
         }
 
         /**

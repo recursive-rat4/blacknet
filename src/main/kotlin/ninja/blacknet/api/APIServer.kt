@@ -343,7 +343,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Transfer(amount, to, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Transfer.type, data)
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
                 val signed = tx.sign(privateKey)
 
                 when (Node.broadcastTx(signed.first, signed.second)) {
@@ -375,7 +375,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Burn(amount, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Burn.type, data)
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Burn.type, data)
                 val signed = tx.sign(privateKey)
 
                 when (Node.broadcastTx(signed.first, signed.second)) {
@@ -407,7 +407,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Lease(amount, to).serialize()
-                val tx = Transaction.create(from, seq, blockHash, fee, TxType.Lease.type, data)
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Lease.type, data)
                 val signed = tx.sign(privateKey)
 
                 when (Node.broadcastTx(signed.first, signed.second)) {
@@ -440,7 +440,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = CancelLease(amount, to, height).serialize()
-                val tx = Transaction.create(from, seq, blockHash, fee, TxType.CancelLease.type, data)
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.CancelLease.type, data)
                 val signed = tx.sign(privateKey)
 
                 when (Node.broadcastTx(signed.first, signed.second)) {
