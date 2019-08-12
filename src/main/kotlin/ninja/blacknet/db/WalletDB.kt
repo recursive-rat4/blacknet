@@ -255,7 +255,7 @@ object WalletDB {
                 wallet.transactions.put(hash, TransactionData(time, height))
                 if (from && tx.type != TxType.Generated.type) {
                     if (tx.seq == wallet.seq)
-                        wallet.seq++
+                        wallet.seq += 1
                     else
                         logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} $hash")
                 }

@@ -192,7 +192,8 @@ object LedgerDB {
                         val hash = Block.Hasher(bytes)
                         val status = BlockDB.process(hash, bytes)
                         if (status == DataDB.Status.ACCEPTED) {
-                            n++
+                            if (++n % 50000 == 0)
+                                logger.info("Processed $n blocks")
                             prune()
                         } else if (status != DataDB.Status.ALREADY_HAVE) {
                             logger.info("$status block $hash")
@@ -407,6 +408,8 @@ object LedgerDB {
             return null
         }
 
+        txDb.set(block.generator, generator)
+
         var fees = 0L
         for (bytes in block.transactions) {
             val tx = Transaction.deserialize(bytes.array)
@@ -440,7 +443,6 @@ object LedgerDB {
         txDb.setChainIndex(hash, ChainIndex(block.previous, Hash.ZERO, 0, height, generated))
 
         txDb.addSupply(reward)
-        generator.prune(height)
         generator.debit(height, generated)
         txDb.set(block.generator, generator)
 
@@ -606,13 +608,13 @@ object LedgerDB {
             val entry = iterator.next()
             if (entry.key.startsWith(ACCOUNT_KEY)) {
                 supply += AccountState.deserialize(entry.value)!!.totalBalance()
-                result.accounts++
+                result.accounts += 1
             } else if (entry.key.startsWith(HTLC_KEY)) {
                 supply += HTLC.deserialize(entry.value)!!.amount
-                result.htlcs++
+                result.htlcs += 1
             } else if (entry.key.startsWith(MULTISIG_KEY)) {
                 supply += Multisig.deserialize(entry.value)!!.amount
-                result.multisigs++
+                result.multisigs += 1
             }
         }
         iterator.close()
@@ -679,7 +681,12 @@ object LedgerDB {
         }
 
         override fun get(key: PublicKey): AccountState? {
-            return (accounts.get(key) ?: LedgerDB.get(key))
+            val account = accounts.get(key)
+            if (account != null)
+                return account
+            val dbAccount = LedgerDB.get(key)
+            dbAccount?.prune(height)
+            return dbAccount
         }
 
         override fun set(key: PublicKey, state: AccountState) {

@@ -75,8 +75,8 @@ object Bech32 {
             if (b == -1)
                 return null
             data[j] = b.toByte()
-            i++
-            j++
+            i += 1
+            j += 1
         }
 
         if (!verifyChecksum(hrp, data)) {

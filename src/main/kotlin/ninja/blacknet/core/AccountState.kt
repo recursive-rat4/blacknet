@@ -91,8 +91,6 @@ class AccountState(
     }
 
     fun prune(height: Int) {
-        if (height < 0) return
-
         val mature = immature.sumByLong { it.matureBalance(height) }
         if (mature == 0L) return
 

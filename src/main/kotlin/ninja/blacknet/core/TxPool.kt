@@ -38,8 +38,7 @@ object TxPool : MemPool(), Ledger {
         var freeSize = min(LedgerDB.maxBlockSize(), Config.softBlockSizeLimit) - 176
         var i = 0
         while (freeSize > 0 && i < poolSize) {
-            val hash = transactions.get(i)
-            i++
+            val hash = transactions.get(i++)
             val bytes = getImpl(hash)
             if (bytes == null) {
                 logger.error("inconsistent mempool")
