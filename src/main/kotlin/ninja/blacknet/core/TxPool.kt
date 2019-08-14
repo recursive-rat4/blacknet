@@ -59,6 +59,8 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.get(key)?.seq ?: 0
     }
 
+    override fun addSupply(amount: Long) {}
+
     override fun checkBlockHash(hash: Hash): Boolean {
         return LedgerDB.checkBlockHash(hash)
     }
@@ -171,7 +173,4 @@ object TxPool : MemPool(), Ledger {
             if (!hashes.contains(hash))
                 processImpl(hash, map[hash]!!, null)
     }
-
-    override fun addSupply(amount: Long) {}
-    override fun addUndo(hash: Hash, undo: UndoBlock) {}
 }

@@ -171,7 +171,7 @@ object WalletDB {
         return LevelDB.get(TX_KEY, hash.bytes)
     }
 
-    suspend fun disconnectBlock(blockHash: Hash, txHashes: ArrayList<Hash>) = mutex.withLock {
+    suspend fun disconnectBlock(blockHash: Hash, txHashes: ArrayList<Hash>, batch: LevelDB.WriteBatch) = mutex.withLock {
         val updated = HashMap<PublicKey, Wallet>(wallets.size)
         wallets.forEach { (publicKey, wallet) ->
             val generated = wallet.transactions.get(blockHash)
@@ -187,12 +187,10 @@ object WalletDB {
                 }
             }
         }
-        if (!updated.isEmpty()) {
-            val batch = LevelDB.createWriteBatch()
+        if (updated.size != 0) {
             updated.forEach { (publicKey, wallet) ->
                 batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
             }
-            batch.write()
         }
     }
 
