@@ -151,7 +151,7 @@ class AccountState(
                         leases.add(Lease(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE)), decoder.decodeVarInt(), decoder.decodeVarLong()))
                     return AccountState(seq, stake, immature, leases)
                 }
-                else -> throw RuntimeException("unsupported decoder")
+                else -> throw RuntimeException("Unsupported decoder")
             }
         }
 
@@ -172,7 +172,7 @@ class AccountState(
                         encoder.encodeVarLong(obj.leases[i].amount)
                     }
                 }
-                else -> throw RuntimeException("unsupported encoder")
+                else -> throw RuntimeException("Unsupported encoder")
             }
         }
     }

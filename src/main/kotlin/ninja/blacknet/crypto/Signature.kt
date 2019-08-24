@@ -44,7 +44,7 @@ class Signature(val bytes: ByteArray) {
             return when (decoder) {
                 is BinaryDecoder -> Signature(decoder.decodeFixedByteArray(SIZE))
                 is JsonInput -> Signature.fromString(decoder.decodeString())!!
-                else -> throw RuntimeException("unsupported decoder")
+                else -> throw RuntimeException("Unsupported decoder")
             }
         }
 
@@ -52,7 +52,7 @@ class Signature(val bytes: ByteArray) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(obj.bytes)
                 is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
-                else -> throw RuntimeException("unsupported encoder")
+                else -> throw RuntimeException("Unsupported encoder")
             }
         }
     }

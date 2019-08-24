@@ -150,7 +150,7 @@ enum class Network(val addrSize: Int) {
             return when (bytes.size) {
                 IPv6.addrSize -> Address(IPv6, port, bytes)
                 IPv4.addrSize -> Address(IPv4, port, bytes)
-                else -> throw RuntimeException("unknown ip address type")
+                else -> throw RuntimeException("Unknown ip address type")
             }
         }
 
@@ -170,7 +170,7 @@ enum class Network(val addrSize: Int) {
                     }
                 }
                 TORv2, TORv3 -> {
-                    if (torProxy == null) throw RuntimeException("tor proxy is not set")
+                    if (torProxy == null) throw RuntimeException("Tor proxy is not set")
                     val c = Socks5(torProxy).connect(address)
                     return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }

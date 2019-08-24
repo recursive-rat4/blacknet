@@ -135,7 +135,7 @@ object Node {
     fun listenOn(address: Address) {
         val addr = when (address.network) {
             Network.IPv4, Network.IPv6 -> address.getSocketAddress()
-            else -> throw NotImplementedError("not implemented for " + address.network)
+            else -> throw NotImplementedError("Not implemented for " + address.network)
         }
         val server = aSocket(Network.selector).tcp().bind(addr)
         logger.info("Listening on $address")

@@ -37,7 +37,7 @@ class ChainIndex(
                         decoder.decodeVarInt(),
                         decoder.decodeVarInt(),
                         decoder.decodeVarLong())
-                else -> throw RuntimeException("unsupported decoder")
+                else -> throw RuntimeException("Unsupported decoder")
             }
         }
 
@@ -60,7 +60,7 @@ class ChainIndex(
                     encoder.encodeSerializableElement(descriptor, 4, Long.serializer(), obj.generated)
                     encoder.endStructure(descriptor)
                 }
-                else -> throw RuntimeException("unsupported encoder")
+                else -> throw RuntimeException("Unsupported encoder")
             }
         }
     }

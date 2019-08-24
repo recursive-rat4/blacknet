@@ -43,7 +43,7 @@ class PublicKey(val bytes: ByteArray) {
             return when (decoder) {
                 is BinaryDecoder -> PublicKey(decoder.decodeFixedByteArray(SIZE))
                 is JsonInput -> Address.decode(decoder.decodeString())!!
-                else -> throw RuntimeException("unsupported decoder")
+                else -> throw RuntimeException("Unsupported decoder")
             }
         }
 
@@ -51,7 +51,7 @@ class PublicKey(val bytes: ByteArray) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(obj.bytes)
                 is JsonOutput -> encoder.encodeString(Address.encode(obj))
-                else -> throw RuntimeException("unsupported encoder")
+                else -> throw RuntimeException("Unsupported encoder")
             }
         }
     }
