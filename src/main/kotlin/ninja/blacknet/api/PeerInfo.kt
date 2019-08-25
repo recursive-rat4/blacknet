@@ -27,10 +27,9 @@ class PeerInfo(
         val agent: String,
         val state: String,
         val dosScore: Int,
-        val feeFilter: Long,
+        val feeFilter: String,
         val connectedAt: Long,
         val lastChain: ChainInfo,
-        val lastPacketTime: Long,
         val totalBytesRead: Long,
         val totalBytesWritten: Long
 ) {
@@ -72,10 +71,9 @@ class PeerInfo(
                     connection.agent,
                     connection.state.name,
                     connection.dosScore(),
-                    connection.feeFilter,
+                    connection.feeFilter.toString(),
                     connection.connectedAt,
                     ChainInfo.get(connection.lastChain, forkCache),
-                    connection.lastPacketTime,
                     connection.totalBytesRead,
                     connection.totalBytesWritten
             )

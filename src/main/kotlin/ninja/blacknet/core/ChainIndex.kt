@@ -57,7 +57,7 @@ class ChainIndex(
                     encoder.encodeSerializableElement(descriptor, 1, Hash.serializer(), obj.next)
                     encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), obj.nextSize)
                     encoder.encodeSerializableElement(descriptor, 3, Int.serializer(), obj.height)
-                    encoder.encodeSerializableElement(descriptor, 4, Long.serializer(), obj.generated)
+                    encoder.encodeSerializableElement(descriptor, 4, String.serializer(), obj.generated.toString())
                     encoder.endStructure(descriptor)
                 }
                 else -> throw RuntimeException("Unsupported encoder")

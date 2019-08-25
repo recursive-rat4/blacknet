@@ -11,7 +11,7 @@ void function () {
 
     const Blacknet = {};
     const DEFAULT_CONFIRMATIONS = 10;
-    const blockListEl = $('#block-list'), apiVersion = "/api/v1", body = $("body");;
+    const blockListEl = $('#block-list'), apiVersion = "/api/v2", body = $("body");;
     const progressStats = $('.progress-stats, .progress-stats-text');
     const dialogPassword = $('.dialog.password'), dialogConfirm = $('.dialog.confirm'), mask = $('.mask');
     const account = localStorage.account;
@@ -71,8 +71,10 @@ void function () {
     };
 
     Blacknet.mnemonicToAddress = async function (mnemonic) {
-        let url = "/mnemonic/info/" + mnemonic + "/";
-        let mnemonicInfo = await Blacknet.postPromise(url, true);
+        let postdata = {
+            mnemonic: mnemonic
+        };
+        let mnemonicInfo = await Blacknet.postPromise("/mnemonic", postdata, true);
         mnemonicInfo = JSON.parse(mnemonicInfo);
         return mnemonicInfo.address;
     };
@@ -90,7 +92,7 @@ void function () {
             confirmedBalance = $('.overview_confirmed_balance'),
             stakingBalance = $('.overview_staking_balance');;
 
-        $.getJSON(apiVersion + '/ledger/get/' + account + '/', function (data) {
+        $.getJSON(apiVersion + '/account/' + account + '/', function (data) {
             balance.html(Blacknet.toBLNString(data.balance));
             confirmedBalance.html(Blacknet.toBLNString(data.confirmedBalance));
             stakingBalance.html(Blacknet.toBLNString(data.stakingBalance));
@@ -136,7 +138,9 @@ void function () {
             if (key == 'blockTime') {
                 value = Blacknet.unix_to_local_time(value);
                 Blacknet.renderProgressBar(ledger[key]);
-            } else if (key == 'supply') {
+            } else if(key == 'height' || key == 'blockHash'){
+                $('.overview_' + key).prop('href', 'https://www.blnscan.io/' + value);
+            }else if (key == 'supply') {
                 value = new BigNumber(value).dividedBy(1e8) + ' BLN';
             }
             $('.overview_' + key).text(value);
@@ -202,50 +206,75 @@ void function () {
 
         return type == 'json' ? $.getJSON(apiVersion + url) : $.get(apiVersion + url);
     };
-    Blacknet.post = function (url, callback, type) {
-        return $.post(apiVersion + url, {}, callback, type);
+
+    Blacknet.post = function (url, data, callback, fail) {
+
+        let options = {
+            url: apiVersion + url,
+            data: data,
+            type: 'POST',
+            success: callback,
+            fail: fail
+        };
+
+        return $.ajax(options);
     };
 
-    Blacknet.postPromise = function (url, isNeedAlert) {
-        return $.post(apiVersion + url, {}).fail(function (res) {
+    Blacknet.postPromise = function (url, data, isNeedAlert) {
+
+        return $.post(apiVersion + url, data).fail(function (res) {
             if (isNeedAlert && res.responseText) alert(res.responseText);
         });
     };
 
     Blacknet.sendMoney = function (mnemonic, amount, to, message, encrypted, callback) {
 
-        let fee = 100000, amountText, url;
+        let fee = 100000, amountText;
 
         amountText = new BigNumber(amount).toFixed(8);
         amount = new BigNumber(amount).times(1e8);
 
-        url = "/transfer/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + message + "/" + encrypted + "/";
-
         Blacknet.confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
         to + '\n\n0.001 BLN added as transaction fee?', function(flag){
             if(flag){
-                Blacknet.post(url, callback);
+
+                let postdata = {
+                    mnemonic: mnemonic,
+                    amount: amount,
+                    fee: fee,
+                    to: to,
+                    message: message,
+                    encrypted: encrypted
+                };
+
+                Blacknet.post('/transfer', postdata, callback);
             }
         })
     };
 
     Blacknet.lease = function (mnemonic, type, amount, to, height, callback) {
 
-        let fee = 100000, amountText, url, type_text = type == 'lease' ? 'lease' : 'cancel lease';
+        let fee = 100000, amountText, type_text = type == 'lease' ? 'lease' : 'cancel lease';
 
         amountText = new BigNumber(amount).toFixed(8);
         amount = new BigNumber(amount).times(1e8);
 
-        if (type == 'lease') {
-            url = "/" + type + "/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/";
-        } else {
-            url = "/cancellease/" + mnemonic + "/" + fee + "/" + amount + "/" + to + "/" + height + "/";
-        }
-
         Blacknet.confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
         ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?', function(flag){
             if(flag){
-                Blacknet.post(url, callback);
+
+                let postdata = {
+                    mnemonic: mnemonic,
+                    amount: amount,
+                    fee: fee,
+                    to: to
+                };
+
+                if(height) {
+                    postdata.height = height;
+                }
+
+                Blacknet.post('/' + type, postdata, callback);
             }
         })
     };
@@ -274,10 +303,9 @@ void function () {
 
     Blacknet.addBlock = async function (hash, height) {
 
-        let url = `/blockdb/get/${hash}`;
+        let url = `/block/${hash}`;
         let block = await Blacknet.getPromise(url, 'json');
 
-        block.txns = block.transactions.length;
         Blacknet.template.block(blockListEl, block, height, false);
 
         return block.previous
@@ -323,7 +351,7 @@ void function () {
 
     Blacknet.initRecentTransactions = async function () {
 
-        let data = await Blacknet.getPromise('/walletdb/getwallet/' + account, 'json');
+        let data = await Blacknet.getPromise('/wallet/transactions/' + account, 'json');
         let transactions = data.transactions;
         let array = [];
         
@@ -385,7 +413,7 @@ void function () {
             return;
         }
 
-        tx = await Blacknet.getPromise('/walletdb/gettransaction/' + data.hash + '/false', 'json');
+        tx = await Blacknet.getPromise('/wallet/transaction/' + data.hash + '/false', 'json');
         tx.height = data.height;
         tx.time = data.time;
         Blacknet.txdb[data.height + data.time] = tx;
@@ -407,7 +435,7 @@ void function () {
     Blacknet.renderLeaseOption = async function (txns) {
 
 
-        let outLeases = await Blacknet.getPromise('/walletdb/getoutleases/' + account, 'json');
+        let outLeases = await Blacknet.getPromise('/wallet/outleases/' + account, 'json');
         let accounts = [], aobj = {}, hobj = {}, height = [];
 
         if (outLeases.length == 0) return;
@@ -454,7 +482,7 @@ void function () {
         let confirmations = Blacknet.ledger.height - height + 1, statusText = 'Confirmed';
         if (height == 0) {
 
-            confirmations = await Blacknet.getPromise('/walletdb/getconfirmations/' + hash);
+            confirmations = await Blacknet.getPromise('/wallet/confirmations/' + hash);
             statusText = `${confirmations} Confirmations`;
 
         } else if (confirmations < DEFAULT_CONFIRMATIONS) {
@@ -559,7 +587,7 @@ void function () {
 
     async function getPeerInfo() {
 
-        let peers = await Blacknet.getPromise('/peerinfo', 'json');
+        let peers = await Blacknet.getPromise('/peers', 'json');
         $('#peer-list').html('');
         peers.map(Blacknet.template.peer);
     }
@@ -600,7 +628,7 @@ void function () {
     Blacknet.network = async function () {
 
         Blacknet.ledger = await Blacknet.getPromise('/ledger', 'json');
-        Blacknet.nodeinfo = await Blacknet.getPromise('/nodeinfo', 'json');
+        Blacknet.nodeinfo = await Blacknet.getPromise('/node', 'json');
 
         Blacknet.renderStatus();
         Blacknet.renderOverview();

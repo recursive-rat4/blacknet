@@ -14,6 +14,7 @@ import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.serialization.Json
 
 @Serializable
 class TransactionNotification(
@@ -40,4 +41,6 @@ class TransactionNotification(
             tx.type.toUByte().toInt(),
             Transaction.Info.data(tx.type, tx.data.array)
     )
+
+    fun toJson() = Json.toJson(serializer(), this)
 }

@@ -22,7 +22,7 @@ class LedgerInfo(
         val rollingCheckpoint: String,
         val difficulty: String,
         val cumulativeDifficulty: String,
-        val supply: Long,
+        val supply: String,
         val maxBlockSize: Int,
         val nxtrng: String
 ) {
@@ -35,7 +35,7 @@ class LedgerInfo(
                     LedgerDB.rollingCheckpoint().toString(),
                     LedgerDB.difficulty().toString(),
                     LedgerDB.cumulativeDifficulty().toString(),
-                    LedgerDB.supply(),
+                    LedgerDB.supply().toString(),
                     LedgerDB.maxBlockSize(),
                     LedgerDB.nxtrng().toString()
             )
