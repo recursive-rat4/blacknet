@@ -24,7 +24,6 @@ import net.i2p.data.Base64
 import ninja.blacknet.Config
 import ninja.blacknet.Config.i2psamhost
 import ninja.blacknet.Config.i2psamport
-import ninja.blacknet.Config.port
 import ninja.blacknet.crypto.SHA256
 import java.io.File
 import kotlin.random.Random
@@ -76,7 +75,7 @@ object I2PSAM {
         val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("SAM invalid response")
 
         val destination = lookup(connection, "ME")
-        localAddress = Address(Network.I2P, Config[port], hash(destination))
+        localAddress = Address(Network.I2P, Config.netPort, hash(destination))
 
         if (this.privateKey == "TRANSIENT")
             savePrivateKey(privateKey)
@@ -126,7 +125,7 @@ object I2PSAM {
                 connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
             } else {
                 val destination = message.takeWhile { it != ' ' }
-                val remoteAddress = Address(Network.I2P, Config[port], hash(destination))
+                val remoteAddress = Address(Network.I2P, Config.netPort, hash(destination))
                 return Accepted(connection.socket, connection.readChannel, connection.writeChannel, remoteAddress)
             }
         }

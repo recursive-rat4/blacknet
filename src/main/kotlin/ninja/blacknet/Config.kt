@@ -47,6 +47,7 @@ object Config {
     val portable by booleanType
     val datadir by stringType
     val logips by booleanType
+    val lowercasehex by booleanType
 
     object apiserver : PropertyGroup() {
         val jsonindented by booleanType
@@ -96,12 +97,22 @@ object Config {
 
     var debugCoroutines: Boolean
 
-    val incomingConnections: Int = Config[incomingconnections]
-    val outgoingConnections: Int = Config[outgoingconnections]
+    val netPort: Int = config[port]
+    val netListen: Boolean = config[listen]
+
+    val incomingConnections: Int = config[incomingconnections]
+    val outgoingConnections: Int = config[outgoingconnections]
 
     val logIPs: Boolean = {
         if (contains(logips))
             get(logips)
+        else
+            false
+    }()
+
+    val lowerCaseHex: Boolean = {
+        if (contains(lowercasehex))
+            get(lowercasehex)
         else
             false
     }()

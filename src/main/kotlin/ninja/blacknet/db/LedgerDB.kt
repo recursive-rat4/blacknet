@@ -85,7 +85,8 @@ object LedgerDB {
             fun deserialize(bytes: ByteArray): State? = BinaryDecoder.fromBytes(bytes).decode(serializer())
         }
     }
-    private var state: State = genesisState()
+
+    private lateinit var state: State
 
     private val blockSizes = ArrayDeque<Int>(PoS.BLOCK_SIZE_SPAN)
     const val DEFAULT_MAX_BLOCK_SIZE = 100000
@@ -93,6 +94,8 @@ object LedgerDB {
     private var maxBlockSize: Int
 
     private fun loadGenesisState() {
+        state = genesisState()
+
         val genesis = genesisBlock()
         val batch = LevelDB.createWriteBatch()
 
@@ -562,7 +565,6 @@ object LedgerDB {
         batch.write()
 
         blockSizes.clear()
-        state = genesisState()
 
         loadGenesisState()
     }

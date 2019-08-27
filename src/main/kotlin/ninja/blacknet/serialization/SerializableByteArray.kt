@@ -16,6 +16,9 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 
+/**
+ * Serializable [ByteArray]
+ */
 @Serializable
 class SerializableByteArray(
         val array: ByteArray

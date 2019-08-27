@@ -11,6 +11,7 @@ package ninja.blacknet.network
 
 import io.ktor.network.sockets.ASocket
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.io.*
@@ -25,8 +26,10 @@ import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
+import ninja.blacknet.util.delay
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -43,6 +46,10 @@ class Connection(
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     private val inventoryToSend = SynchronizedArrayList<InvType>()
     val connectedAt = Runtime.time()
+
+    private var pinger: Job? = null
+    private var peerAnnouncer: Job? = null
+    private var inventoryBroadcaster: Job? = null
 
     @Volatile
     var lastPacketTime: Long = 0
@@ -61,7 +68,7 @@ class Connection(
     @Volatile
     var ping: Long = 0
     @Volatile
-    internal var pingRequest: PingRequest? = null
+    internal var pingRequest: Pair<Int, Long>? = null
 
     var peerId: Long = 0
     var version: Int = 0
@@ -70,6 +77,9 @@ class Connection(
     var timeOffset: Long = 0
 
     fun launch() {
+        pinger = Runtime.launch { pinger() }
+        peerAnnouncer = Runtime.launch { peerAnnouncer() }
+        inventoryBroadcaster = Runtime.launch { inventoryBroadcaster() }
         Runtime.launch { receiver() }
         Runtime.launch { sender() }
     }
@@ -163,7 +173,7 @@ class Connection(
         }
     }
 
-    internal suspend fun sendInventory(time: Long) = inventoryToSend.mutex.withLock {
+    private suspend fun sendInventory(time: Long) = inventoryToSend.mutex.withLock {
         if (inventoryToSend.list.size != 0) {
             sendInventoryImpl(time)
         }
@@ -201,8 +211,14 @@ class Connection(
                 sendChannel.cancel()
             else
                 sendChannel.close()
+
             Runtime.launch {
                 Node.connections.remove(this@Connection)
+
+                pinger?.cancel()
+                peerAnnouncer?.cancel()
+                inventoryBroadcaster?.cancel()
+
                 when (state) {
                     State.INCOMING_CONNECTED, State.OUTGOING_CONNECTED -> {
                         ChainFetcher.disconnected(this@Connection)
@@ -232,8 +248,6 @@ class Connection(
             return "peer $peerId"
     }
 
-    class PingRequest(val id: Int, val time: Long)
-
     enum class State {
         INCOMING_CONNECTED,
         INCOMING_WAITING,
@@ -242,6 +256,71 @@ class Connection(
 
         fun isConnected(): Boolean {
             return this == INCOMING_CONNECTED || this == OUTGOING_CONNECTED
+        }
+    }
+
+    private suspend fun pinger() {
+        delay(Node.NETWORK_TIMEOUT)
+
+        if (state.isConnected()) {
+            sendPing()
+        } else {
+            close()
+            return
+        }
+
+        while (true) {
+            delay(Node.NETWORK_TIMEOUT)
+
+            if (pingRequest == null) {
+                if (Runtime.time() > lastPacketTime + Node.NETWORK_TIMEOUT) {
+                    sendPing()
+                }
+            } else {
+                logger.info("Disconnecting ${debugName()} on ping timeout")
+                close()
+                return
+            }
+        }
+    }
+
+    private fun sendPing() {
+        val id = Random.nextInt()
+        pingRequest = Pair(id, Runtime.timeMilli())
+        sendPacket(Ping(id))
+    }
+
+    private suspend fun peerAnnouncer() {
+        while (true) {
+            delay(10 * 60 + Random.nextInt(10 * 60))
+
+            val randomPeers = PeerDB.getRandom(Peers.MAX)
+            if (randomPeers.size == 0)
+                continue
+
+            val myAddress = Node.listenAddress.filterToList { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
+            if (myAddress.size != 0) {
+                val i = Random.nextInt(randomPeers.size * 10)
+                if (i < randomPeers.size) {
+                    randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
+                    logger.info("Announcing ${randomPeers[i]} to ${debugName()}")
+                }
+            }
+
+            sendPacket(Peers(randomPeers))
+        }
+    }
+
+    private suspend fun inventoryBroadcaster() {
+        while (!state.isConnected()) {
+            delay(Node.SEND_INV_TIMEOUT)
+        }
+        while (true) {
+            val currTime = Runtime.time()
+            if (currTime >= lastInvSentTime + Node.SEND_INV_TIMEOUT) {
+                sendInventory(currTime)
+            }
+            delay(Node.SEND_INV_TIMEOUT)
         }
     }
 }

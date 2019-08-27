@@ -83,6 +83,9 @@ object ChainFetcher {
                 val deferred = stakedBlock!!.third
 
                 val status = BlockDB.process(hash, bytes)
+                if (status == Status.ACCEPTED)
+                    Node.announceChain(hash, LedgerDB.cumulativeDifficulty())
+
                 stakedBlock = null
                 deferred.complete(status)
             }

@@ -148,11 +148,14 @@ object PeerDB {
         return candidates.take(x)
     }
 
-    suspend fun getRandom(n: Int): MutableList<Address> {
+    suspend fun getRandom(n: Int): ArrayList<Address> {
         val candidates = map.keys()
         candidates.shuffle()
-        val x = min(size(), n)
-        return candidates.asSequence().take(x).toMutableList()
+        val x = min(candidates.size, n)
+        val result = ArrayList<Address>(x)
+        for (i in 0 until x)
+            result.add(candidates[i])
+        return result
     }
 
     suspend fun add(peers: List<Address>, from: Address) {

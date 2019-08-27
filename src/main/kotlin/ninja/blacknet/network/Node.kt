@@ -18,9 +18,7 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
-import ninja.blacknet.Config.listen
 import ninja.blacknet.Config.mintxfee
-import ninja.blacknet.Config.port
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
@@ -28,6 +26,7 @@ import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
@@ -44,6 +43,7 @@ private val logger = KotlinLogging.logger {}
 object Node {
     const val DEFAULT_P2P_PORT = 28453
     const val NETWORK_TIMEOUT = 90
+    const val SEND_INV_TIMEOUT = 5
     const val magic = 0x17895E7D
     const val version = 9
     const val minVersion = 7
@@ -54,9 +54,9 @@ object Node {
     private val nextPeerId = AtomicLong(1)
 
     init {
-        if (Config[listen]) {
+        if (Config.netListen) {
             try {
-                Node.listenOnIP()
+                listenOnIP()
                 if (Config[upnp])
                     Runtime.launch { UPnP.forward() }
             } catch (e: Throwable) {
@@ -65,10 +65,7 @@ object Node {
         Runtime.launch { listenOnTor() }
         Runtime.launch { listenOnI2P() }
         Runtime.launch { connector() }
-        Runtime.launch { pinger() }
-        Runtime.launch { peerAnnouncer() }
         Runtime.launch { dnsSeeder(true) }
-        Runtime.launch { inventoryBroadcaster() }
     }
 
     fun isTooFarInFuture(time: Long): Boolean {
@@ -149,14 +146,14 @@ object Node {
         if (Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
             return
         if (Network.IPv4.isDisabled())
-            return listenOn(Address.IPv6_ANY(Config[port]))
-        listenOn(Address.IPv4_ANY(Config[port]))
+            return listenOn(Address.IPv6_ANY(Config.netPort))
+        listenOn(Address.IPv4_ANY(Config.netPort))
     }
 
     private suspend fun listenOnTor() {
         val address = Network.listenOnTor()
         if (address != null) {
-            if (!Config[listen] || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+            if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
                 listenOn(Address.LOOPBACK)
             logger.info("Listening on $address")
             listenAddress.add(address)
@@ -174,16 +171,20 @@ object Node {
 
     suspend fun connectTo(address: Address) {
         val connection = Network.connect(address)
-        connections.add(connection)
+        connections.mutex.withLock {
+            connections.list.add(connection)
+            connection.launch()
+        }
         sendVersion(connection, nonce)
-        connection.launch()
     }
 
-    fun sendVersion(connection: Connection, nonce: Long) {
-        val chain = if (!isInitialSynchronization()) {
-            ChainAnnounce(LedgerDB.blockHash(), LedgerDB.cumulativeDifficulty())
-        } else {
-            ChainAnnounce.GENESIS
+    suspend fun sendVersion(connection: Connection, nonce: Long) {
+        val chain = BlockDB.mutex.withLock {
+            if (!isInitialSynchronization()) {
+                ChainAnnounce(LedgerDB.blockHash(), LedgerDB.cumulativeDifficulty())
+            } else {
+                ChainAnnounce.GENESIS
+            }
         }
         val v = Version(magic, version, Runtime.time(), nonce, Bip14.agent, minTxFee, chain)
         connection.sendPacket(v)
@@ -192,14 +193,13 @@ object Node {
     suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null) {
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         broadcastPacket(ann) {
-            it != source && it.state.isConnected() && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
+            it != source && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
         }
     }
 
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val status = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Status.ACCEPTED) {
-            announceChain(hash, LedgerDB.cumulativeDifficulty())
             return true
         } else {
             logger.info("$status block $hash")
@@ -294,8 +294,10 @@ object Node {
             connection.close()
             return
         }
-        connections.add(connection)
-        connection.launch()
+        connections.mutex.withLock {
+            connections.list.add(connection)
+            connection.launch()
+        }
     }
 
     private suspend fun haveSlot(): Boolean {
@@ -362,61 +364,6 @@ object Node {
         }
     }
 
-    private suspend fun pinger() {
-        while (true) {
-            delay(NETWORK_TIMEOUT)
-
-            val currTime = Runtime.time()
-            connections.forEach {
-                if (it.state.isConnected()) {
-                    if (it.pingRequest == null) {
-                        if (it.ping != 0L && currTime > it.lastPacketTime + NETWORK_TIMEOUT) {
-                            logger.debug { "Sending ping to ${it.debugName()}" }
-                            sendPing(it)
-                        } else if (it.ping == 0L) {
-                            sendPing(it)
-                        }
-                    } else {
-                        logger.info("Disconnecting ${it.debugName()} on ping timeout")
-                        it.close()
-                    }
-                } else {
-                    if (currTime > it.connectedAt + NETWORK_TIMEOUT)
-                        it.close()
-                }
-            }
-        }
-    }
-    private fun sendPing(connection: Connection) {
-        val id = Random.nextInt()
-        connection.pingRequest = Connection.PingRequest(id, Runtime.timeMilli())
-        connection.sendPacket(Ping(id))
-    }
-
-    private suspend fun peerAnnouncer() {
-        while (true) {
-            delay(10 * 60 + Random.nextInt(10 * 60))
-
-            if (isOffline())
-                continue
-
-            val randomPeers = PeerDB.getRandom(Peers.MAX)
-            if (randomPeers.size == 0)
-                continue
-
-            val myAddress = listenAddress.filterToList { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
-            if (myAddress.size != 0) {
-                val i = Random.nextInt(randomPeers.size * 5)
-                if (i < randomPeers.size) {
-                    randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
-                    logger.info("Announcing ${randomPeers[i]}")
-                }
-            }
-
-            broadcastPacket(Peers(randomPeers))
-        }
-    }
-
     private const val DNS_TIMEOUT = 5
     private const val DNS_SEEDER_DELAY = 11
     private suspend fun dnsSeeder(delay: Boolean) {
@@ -438,19 +385,6 @@ object Node {
             val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT)
             PeerDB.add(peers, Address.LOOPBACK)
         } catch (e: Throwable) {
-        }
-    }
-
-    private const val INV_TIMEOUT = 5
-    private suspend fun inventoryBroadcaster() {
-        while (true) {
-            delay(INV_TIMEOUT)
-            val currTime = Runtime.time()
-            connections.forEach {
-                if (it.state.isConnected() && currTime >= it.lastInvSentTime + INV_TIMEOUT) {
-                    it.sendInventory(currTime)
-                }
-            }
         }
     }
 

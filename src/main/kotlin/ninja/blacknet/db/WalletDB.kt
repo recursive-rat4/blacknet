@@ -119,9 +119,12 @@ object WalletDB {
     }
 
     private suspend fun broadcaster() {
-        delay(Node.NETWORK_TIMEOUT)
-
         while (true) {
+            delay(DELAY)
+
+            if (Node.isOffline())
+                continue
+
             val inv = UnfilteredInvList()
 
             mutex.withLock {
@@ -155,8 +158,6 @@ object WalletDB {
                 logger.info("Broadcasting ${inv.size} transactions")
                 Node.broadcastInv(inv)
             }
-
-            delay(DELAY)
         }
     }
 
