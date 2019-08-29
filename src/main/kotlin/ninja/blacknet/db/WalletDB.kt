@@ -218,17 +218,12 @@ object WalletDB {
                 processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, block.time, height, batch, rescan)
             }
         } else {
-            val genesis = LedgerDB.genesisBlock()
-            for (i in genesis) {
-                val key = PublicKey.fromString(i.publicKey)!!
-                if (key == publicKey) {
-                    val tx = Transaction.generated(publicKey, height, hash, i.balance)
-                    val txBytes = tx.serialize()
-                    val txHash = Transaction.Hasher(txBytes)
-                    processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, LedgerDB.GENESIS_TIME, height, batch, rescan)
-                    break
-                }
-            }
+            val balance = LedgerDB.genesisBlock.get(publicKey) ?: return
+
+            val tx = Transaction.generated(publicKey, height, hash, balance)
+            val txBytes = tx.serialize()
+            val txHash = Transaction.Hasher(txBytes)
+            processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, LedgerDB.GENESIS_TIME, height, batch, rescan)
         }
     }
 

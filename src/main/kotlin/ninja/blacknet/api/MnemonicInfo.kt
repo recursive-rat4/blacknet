@@ -20,10 +20,10 @@ class MnemonicInfo(
         val publicKey: String
 ) {
     companion object {
-        fun new(): MnemonicInfo {
-            val pair = Mnemonic.generate()
-            val publicKey = pair.second.toPublicKey()
-            return MnemonicInfo(pair.first, Address.encode(publicKey), publicKey.toString())
+        fun new(wordlist: Array<String>): MnemonicInfo {
+            val (mnemonic, privateKey) = Mnemonic.generate(wordlist)
+            val publicKey = privateKey.toPublicKey()
+            return MnemonicInfo(mnemonic, Address.encode(publicKey), publicKey.toString())
         }
 
         fun fromString(string: String?): MnemonicInfo? {

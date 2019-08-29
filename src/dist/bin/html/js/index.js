@@ -147,7 +147,7 @@ $(document).ready(function () {
         }
         Blacknet.post('/mnemonic', postdata, function (data) {
             let html = '';
-            data.mnemonic = data.mnemonic.replace(/[a-z]/g, '*');
+            data.mnemonic = '[hidden]';
 
             html += 'mnemonic: ' + data.mnemonic;
             html += '\naddress: ' + data.address;
@@ -287,9 +287,9 @@ $(document).ready(function () {
     async function newAccount() {
         $('.account.dialog').hide();
         $('.newaccount.dialog').show();
-        let url = '/generateaccount';
-        let mnemonicInfo = await Blacknet.getPromise(url);
-        mnemonicInfo = JSON.parse(mnemonicInfo);
+        let wordlist = "english";
+        let url = '/generateaccount/' + wordlist;
+        let mnemonicInfo = await Blacknet.getPromise(url, 'json');
         $('#new_account_text').val(mnemonicInfo.address);
         $('#new_mnemonic').val(mnemonicInfo.mnemonic);
         window.isGenerated = true;

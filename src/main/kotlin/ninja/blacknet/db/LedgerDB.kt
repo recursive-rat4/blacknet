@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import com.google.common.io.Resources
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
@@ -17,7 +18,6 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.BigInt
-import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.network.Network
@@ -48,15 +48,21 @@ object LedgerDB {
     const val GENESIS_TIME = 1545555600L
     private fun genesisState() = State(0, Hash.ZERO, GENESIS_TIME, PoS.INITIAL_DIFFICULTY, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0)
 
-    fun genesisBlock(): List<GenesisEntry> {
-        val bytes = File(Config.dir, "genesis.json").readBytes()
-        logger.info("Loaded genesis.json ${Blake2b.hash(bytes)}")
-        val genesis = String(bytes)
-        return Json.parse(GenesisEntry.serializer().list, genesis)
+    val genesisBlock by lazy {
+        val map = HashMap<PublicKey, Long>()
+
+        val genesis = Resources.toString(Resources.getResource("genesis.json"), Charsets.UTF_8)
+        val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
+        entries.forEach {
+            val publicKey = PublicKey.fromString(it.publicKey)!!
+            map.put(publicKey, it.balance)
+        }
+
+        map
     }
 
     @Serializable
-    class GenesisEntry(val publicKey: String, val balance: Long)
+    private class GenesisJsonEntry(val publicKey: String, val balance: Long)
 
     @Serializable
     private class State(
@@ -96,15 +102,13 @@ object LedgerDB {
     private fun loadGenesisState() {
         state = genesisState()
 
-        val genesis = genesisBlock()
         val batch = LevelDB.createWriteBatch()
 
         var supply = 0L
-        for (i in genesis) {
-            val publicKey = PublicKey.fromString(i.publicKey)!!
-            val account = AccountState.create(i.balance)
+        genesisBlock.forEach { (publicKey, balance) ->
+            val account = AccountState.create(balance)
             batch.put(ACCOUNT_KEY, publicKey.bytes, account.serialize())
-            supply += i.balance
+            supply += balance
         }
 
         val chainIndex = ChainIndex(Hash.ZERO, Hash.ZERO, 0, 0, 0)
