@@ -33,10 +33,10 @@ class Socks5(private val proxy: Address) {
         writeChannel.writePacket(builder.build())
 
         if (readChannel.readByte() != VERSION) {
-            return error(socket, "unknown socks version")
+            return error(socket, "Unknown socks version")
         }
         if (readChannel.readByte() != NO_AUTHENTICATION) {
-            return error(socket, "socks auth not accepted")
+            return error(socket, "Socks auth not accepted")
         }
 
         builder.writeByte(VERSION)
@@ -54,31 +54,31 @@ class Socks5(private val proxy: Address) {
             Network.TORv2, Network.TORv3 -> {
                 val bytes = address.getAddressString().toByteArray(Charsets.US_ASCII)
                 if (bytes.size < 1 || bytes.size > 255)
-                    return error(socket, "invalid length of domain name")
+                    return error(socket, "Invalid length of domain name")
                 builder.writeByte(DOMAIN_NAME)
                 builder.writeByte(bytes.size.toByte())
                 builder.writeFully(bytes)
             }
-            else -> return error(socket, "not implemented for ${address.network}")
+            else -> return error(socket, "Not implemented for ${address.network}")
         }
         builder.writeShort(address.port.toShort())
         writeChannel.writePacket(builder.build())
 
         if (readChannel.readByte() != VERSION) {
-            return error(socket, "unknown socks version")
+            return error(socket, "Unknown socks version")
         }
         if (readChannel.readByte() != REQUEST_GRANTED) {
-            return error(socket, "connection failed")
+            return error(socket, "Connection failed")
         }
         if (readChannel.readByte() != 0.toByte()) {
-            return error(socket, "invalid socks response")
+            return error(socket, "Invalid socks response")
         }
         val addrType = readChannel.readByte()
         when (addrType) {
             IPv4_ADDRESS -> readChannel.skip(4 + 2)
             IPv6_ADDRESS -> readChannel.skip(16 + 2)
             DOMAIN_NAME -> readChannel.skip(readChannel.readByte().toInt() + 2)
-            else -> return error(socket, "unknown socks response")
+            else -> return error(socket, "Unknown socks response")
         }
 
         return Connection(socket, readChannel, writeChannel)

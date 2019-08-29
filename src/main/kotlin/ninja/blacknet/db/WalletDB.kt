@@ -39,7 +39,7 @@ private val logger = KotlinLogging.logger {}
 
 object WalletDB {
     private const val DELAY = 30 * 60
-    private const val VERSION = 3
+    private const val VERSION = 4
     internal val mutex = Mutex()
     private val KEYS_KEY = "keys".toByteArray()
     private val TX_KEY = "tx".toByteArray()
@@ -63,19 +63,27 @@ object WalletDB {
             1
         }
 
-        if (version == VERSION || version == 2) {
+        if (version == VERSION || version == 3 || version == 2) {
             if (keysBytes != null) {
+                var txns = 0
                 val decoder = BinaryDecoder.fromBytes(keysBytes)
                 for (i in 0 until keysBytes.size step PublicKey.SIZE) {
                     val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE))
-                    wallets.put(publicKey, Wallet.deserialize(LevelDB.get(WALLET_KEY, publicKey.bytes)!!))
+                    val wallet = Wallet.deserialize(LevelDB.get(WALLET_KEY, publicKey.bytes)!!)
+                    txns += wallet.transactions.size
+                    wallets.put(publicKey, wallet)
                 }
-                if (version == 2)
-                    updateV2()
+                if (version == 3) {
+                    updateV3()
+                } else if (version == 2) {
+                    val batch = LevelDB.createWriteBatch()
+                    setVersion(batch)
+                    batch.write()
+                }
                 if (wallets.size == 1)
-                    logger.info("Loaded wallet with ${wallets.values.first().transactions.size} transactions")
+                    logger.info("Loaded wallet with $txns transactions")
                 else
-                    logger.info("Loaded ${wallets.size} wallets")
+                    logger.info("Loaded ${wallets.size} wallets with $txns transactions")
             }
         } else if (version == 1) {
             val batch = LevelDB.createWriteBatch()
@@ -111,9 +119,12 @@ object WalletDB {
     }
 
     private suspend fun broadcaster() {
-        delay(Node.NETWORK_TIMEOUT)
-
         while (true) {
+            delay(DELAY)
+
+            if (Node.isOffline())
+                continue
+
             val inv = UnfilteredInvList()
 
             mutex.withLock {
@@ -147,8 +158,6 @@ object WalletDB {
                 logger.info("Broadcasting ${inv.size} transactions")
                 Node.broadcastInv(inv)
             }
-
-            delay(DELAY)
         }
     }
 
@@ -171,7 +180,7 @@ object WalletDB {
         return LevelDB.get(TX_KEY, hash.bytes)
     }
 
-    suspend fun disconnectBlock(blockHash: Hash, txHashes: ArrayList<Hash>) = mutex.withLock {
+    suspend fun disconnectBlock(blockHash: Hash, txHashes: ArrayList<Hash>, batch: LevelDB.WriteBatch) = mutex.withLock {
         val updated = HashMap<PublicKey, Wallet>(wallets.size)
         wallets.forEach { (publicKey, wallet) ->
             val generated = wallet.transactions.get(blockHash)
@@ -187,12 +196,10 @@ object WalletDB {
                 }
             }
         }
-        if (!updated.isEmpty()) {
-            val batch = LevelDB.createWriteBatch()
+        if (updated.size != 0) {
             updated.forEach { (publicKey, wallet) ->
                 batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
             }
-            batch.write()
         }
     }
 
@@ -207,7 +214,7 @@ object WalletDB {
             if (block!!.generator == publicKey) {
                 val tx = Transaction.generated(publicKey, height, hash, generated)
                 val txBytes = tx.serialize()
-                val txHash = Transaction.Hasher(txBytes)
+                val txHash = hash // re-use block hash as hash of Generated tx
                 processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, block.time, height, batch, rescan)
             }
         } else {
@@ -255,7 +262,7 @@ object WalletDB {
                 wallet.transactions.put(hash, TransactionData(time, height))
                 if (from && tx.type != TxType.Generated.type) {
                     if (tx.seq == wallet.seq)
-                        wallet.seq++
+                        wallet.seq += 1
                     else
                         logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} $hash")
                 }
@@ -421,15 +428,24 @@ object WalletDB {
         wallets.clear()
     }
 
-    private fun updateV2() {
-        val toUpdate = ArrayList<Triple<PublicKey, Hash, ByteArray>>()
+    private fun updateV3() {
+        class Update(val publicKey: PublicKey, val hash: Hash, val newHash: Hash, val bytes: ByteArray)
+
+        val toUpdate = ArrayList<Update>()
+
+        if (wallets.size != 0)
+            logger.info("Updating WalletDB...")
 
         wallets.forEach { (publicKey, wallet) ->
-            wallet.transactions.forEach { (hash, _) ->
+            wallet.transactions.forEach { (hash, txData) ->
                 val bytes = getTransaction(hash)!!
                 val tx = Transaction.deserialize(bytes)!!
-                if (tx.type == TxType.Generated.type)
-                    toUpdate.add(Triple(publicKey, hash, bytes))
+                if (tx.type == TxType.Generated.type && tx.blockHash != Hash.ZERO) {
+                    if (txData.height != 0 && !LedgerDB.chainContains(tx.blockHash))
+                        txData.height = 0
+
+                    toUpdate.add(Update(publicKey, hash, tx.blockHash, bytes))
+                }
             }
         }
 
@@ -437,13 +453,12 @@ object WalletDB {
         val updatedWallets = HashMap<PublicKey, Wallet>()
         val batch = LevelDB.createWriteBatch()
 
-        toUpdate.forEach { (publicKey, hash, bytes) ->
-            val newHash = Transaction.Hasher(bytes)
-            val wallet = wallets.get(publicKey)!!
-            val txData = wallet.transactions.remove(hash)!!
-            wallet.transactions.put(newHash, txData)
-            updatedTx.put(hash, Pair(newHash, bytes))
-            updatedWallets.put(publicKey, wallet)
+        toUpdate.forEach { update ->
+            val wallet = wallets.get(update.publicKey)!!
+            val txData = wallet.transactions.remove(update.hash)!!
+            wallet.transactions.put(update.newHash, txData)
+            updatedTx.put(update.hash, Pair(update.newHash, update.bytes))
+            updatedWallets.put(update.publicKey, wallet)
         }
 
         updatedTx.forEach { (hash, pair) ->
@@ -458,6 +473,6 @@ object WalletDB {
         batch.write()
 
         if (toUpdate.size != 0)
-            logger.info("Re-hashed ${toUpdate.size} Generated tx in ${updatedWallets.size} wallets")
+            logger.info("Updated ${toUpdate.size} Generated txns in ${updatedWallets.size} wallets")
     }
 }

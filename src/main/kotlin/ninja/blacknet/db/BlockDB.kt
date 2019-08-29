@@ -83,7 +83,7 @@ object BlockDB : DataDB() {
             return Status.NOT_ON_THIS_CHAIN
         }
         val batch = LevelDB.createWriteBatch()
-        val txDb = LedgerDB.Update(batch, block.version, hash, block.time, bytes.size, block.generator)
+        val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
         val txHashes = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
         if (txHashes != null) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)

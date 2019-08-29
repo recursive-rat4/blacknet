@@ -19,8 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import net.i2p.data.Base32
 import ninja.blacknet.Config
-import ninja.blacknet.Config.listen
-import ninja.blacknet.Config.port
 import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
 import ninja.blacknet.Config.torhost
@@ -150,7 +148,7 @@ enum class Network(val addrSize: Int) {
             return when (bytes.size) {
                 IPv6.addrSize -> Address(IPv6, port, bytes)
                 IPv4.addrSize -> Address(IPv4, port, bytes)
-                else -> throw RuntimeException("unknown ip address type")
+                else -> throw RuntimeException("Unknown ip address type")
             }
         }
 
@@ -164,13 +162,13 @@ enum class Network(val addrSize: Int) {
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
-                        if (Config[listen] && !localAddress.isLocal())
-                            Node.listenAddress.add(Address(localAddress.network, Config[port], localAddress.bytes))
+                        if (Config.netListen && !localAddress.isLocal())
+                            Node.listenAddress.add(Address(localAddress.network, Config.netPort, localAddress.bytes))
                         return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
                     }
                 }
                 TORv2, TORv3 -> {
-                    if (torProxy == null) throw RuntimeException("tor proxy is not set")
+                    if (torProxy == null) throw RuntimeException("Tor proxy is not set")
                     val c = Socks5(torProxy).connect(address)
                     return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }

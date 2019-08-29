@@ -7,16 +7,15 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api
+package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Block
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.serialization.Json
 
 @Serializable
-class BlockNotification(
+class BlockNotificationV1(
         val hash: String,
         val height: Int,
         val size: Int,
@@ -24,7 +23,7 @@ class BlockNotification(
         val previous: String,
         val time: Long,
         val generator: String,
-        val transactions: Int
+        val txns: Int
 ) {
     constructor(block: Block, hash: Hash, height: Int, size: Int) : this(
             hash.toString(),
@@ -36,6 +35,4 @@ class BlockNotification(
             Address.encode(block.generator),
             block.transactions.size
     )
-
-    fun toJson() = Json.toJson(serializer(), this)
 }

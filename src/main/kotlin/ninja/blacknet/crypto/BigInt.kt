@@ -63,7 +63,7 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
         override fun deserialize(decoder: Decoder): BigInt {
             return when (decoder) {
                 is BinaryDecoder -> BigInt(decoder.decodeByteArray())
-                else -> throw RuntimeException("unsupported decoder")
+                else -> throw RuntimeException("Unsupported decoder")
             }
         }
 
@@ -71,7 +71,7 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeByteArray(obj.toByteArray())
                 is JsonOutput -> encoder.encodeString(obj.int.toString())
-                else -> throw RuntimeException("unsupported encoder")
+                else -> throw RuntimeException("Unsupported encoder")
             }
         }
     }

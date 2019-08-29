@@ -25,71 +25,54 @@ Blacknet.template = {
             status = await Blacknet.getStatusText(tx.height, tx.hash);
         }
 
+        let txText = type, linkText = '';
+
+
+        if(tx.type == 0){
+            let text = account == tx.from ? "Sent to" : 'Received from';
+            txText = `<a target="_blank" href="https://www.blnscan.io/${tx.hash.toLowerCase()}">${text}</a>`
+        }
+
+        if(tx.type == 2 || tx.type == 3){
+            txText = `<a target="_blank" href="https://www.blnscan.io/${tx.hash.toLowerCase()}">${type} ${account == tx.from ? "to" : 'from'}</a>`;
+        }
+
+        if(tx.type < 254 && tx.type != 0 && tx.type != 2 && tx.type != 3){
+            txText = `<a target="_blank" href="https://www.blnscan.io/${tx.hash.toLowerCase()}">${type}</a>`;
+        }
+
+        if(tx.type == 0 || tx.type == 2 || tx.type == 3){
+
+            if(account == tx.from){
+                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.data.to}">${tx.data.to}</a>`;
+            }else{
+                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.from}">${tx.from}</a>`;
+            }
+        }
+
+        if(tx.type != 0 && tx.type != 2 && tx.type != 3){
+
+            if(tx.from != 'genesis'){
+                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.from}">${tx.from}</a>`;
+            }else{
+                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.to}">${tx.to}</a>`;
+            }
+        }
+
         amount = Blacknet.getFormatBalance(amount);
 
         tmpl =
-            `<tr class="preview txhash${tx.hash}" data-hash="${tx.height}${tx.time}"  data-height="${tx.height}">
+            `<tr class="preview txhash${tx.hash} tx-item" data-time="${tx.time}" data-hash="${tx.hash}"  data-height="${tx.height}">
                 <td class="narrow">${Blacknet.unix_to_local_time(tx.time)}</td>
-                <td class="narrow">${type}</td>
-                <td class="left">${txaccount}</td>
+                <td class="narrow">${txText}</td>
+                <td class="left">${linkText}</td>
                 <td class="right"><span class="strong">${amount}</span></td>
                 <td class="left status" data-height="${tx.height}">${status}</td>
-            </tr>
-            <tr class="undis tx-item" data-time="${tx.time}" data-hash="${tx.hash}"  data-height="${tx.height}">
-                <td colspan="5">
-                    <dl>
-                        <dt>Time</dt>
-                        <dd>${Blacknet.unix_to_local_time(tx.time)}</dd>
-                    </dl>
-                    <dl>
-                        <dt>Status</dt>
-                        <dd class="status">${status}</dd>
-                    </dl>
-                    <dl>
-                        <dt>From</dt>
-                        <dd class="${tx.from == account ? 'current' : ''}">${tx.from}</dd>
-                    </dl>
-                    <dl class="to">
-                        <dt>To</dt>
-                        <dd class="${tx.data.to == account ? 'current' : ''}">${tx.data.to || ''}</dd>
-                    </dl>
-                    <dl>
-                        <dt>Type</dt>
-                        <dd>${type.replace(' from', '')}</dd>
-                    </dl>
-                    <dl class="fee">
-                        <dt>Fee</dt>
-                        <dd><span class="strong">${txfee}</span></dd>
-                    </dl>
-                    <dl>
-                        <dt>Amount</dt>
-                        <dd><span class="strong">${amount}</span></dd>
-                    </dl>
-                    <dl>
-                        <dt>Size</dt>
-                        <dd>${tx.size}(bytes)</dd>
-                    </dl>
-                    <dl>
-                        <dt>Hash</dt>
-                        <dd>${tx.hash}</dd>
-                    </dl>
-                    <dl class="sign_text">
-                        <dt>Signature</dt>
-                        <dd>${tx.signature}</dd>
-                    </dl>
-                    <dl class="msg_text">
-                        <dt>Message</dt>
-                        <dd class="message"></dd>
-                    </dl>
-                    <dl>
-                        <dt>Block Height</dt>
-                        <dd>${tx.height}</dd>
-                    </dl>
-                </td>
             </tr>`;
 
 
         let node = $(tmpl), msgNode = node.find('.message'), message;
+
         if (tx.type == 0) {
             if (tx.data.message.type == 0) {
                 message = tx.data.message.message;
@@ -128,11 +111,15 @@ Blacknet.template = {
 
         let op = prepend ? 'prependTo' : 'appendTo';
 
-        let tmpl = `<tr><td class="narrow height">${height}</td>
+        let tmpl = `<tr><td class="narrow height">
+                        <a target="_blank" href="https://www.blnscan.io/${height}">${height}</a>
+                    </td>
                     <td class="size narrow">${block.size}</td>
                     <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
-                    <td class="txns narrow">${block.txns}</td>
-                    <td class="generator">${block.generator}</td></tr>`;
+                    <td class="txns narrow">${block.transactions}</td>
+                    <td class="generator">
+                        <a target="_blank" href="https://www.blnscan.io/${block.generator}">${block.generator}</a>
+                    </td></tr>`;
 
 
         $(tmpl)[op](blockListEl);

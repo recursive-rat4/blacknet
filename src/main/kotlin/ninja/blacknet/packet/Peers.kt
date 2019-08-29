@@ -17,7 +17,7 @@ import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-class Peers(private val list: List<Address>) : Packet {
+class Peers(private val list: ArrayList<Address>) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Peers

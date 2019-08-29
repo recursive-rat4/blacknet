@@ -22,16 +22,14 @@ internal class Pong(private val id: Int) : Packet {
     override fun getType() = PacketType.Pong
 
     override suspend fun process(connection: Connection) {
-        val request = connection.pingRequest
-        if (request == null) {
-            connection.dos("unexpected Pong")
-            return
-        }
-        if (request.id != id) {
+        val (pingId, pingTime) = connection.pingRequest ?: return connection.dos("unexpected Pong")
+
+        if (pingId != id) {
             connection.dos("invalid Pong id")
             return
         }
-        connection.ping = Runtime.timeMilli() - request.time
+
+        connection.ping = Runtime.timeMilli() - pingTime
         connection.pingRequest = null
     }
 }

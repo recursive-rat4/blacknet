@@ -46,8 +46,7 @@ interface TxData {
             logger.info("insufficient funds for tx fee")
             return DataDB.Status.INVALID
         }
-        account.prune(ledger.height())
-        account.seq++
+        account.seq += 1
         ledger.set(tx.from, account)
         return if (processImpl(tx, hash, ledger, undo))
             DataDB.Status.ACCEPTED

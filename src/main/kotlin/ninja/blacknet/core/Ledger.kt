@@ -18,7 +18,6 @@ private val logger = KotlinLogging.logger {}
 
 interface Ledger {
     fun addSupply(amount: Long)
-    fun addUndo(hash: Hash, undo: UndoBlock)
     fun checkBlockHash(hash: Hash): Boolean
     fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long

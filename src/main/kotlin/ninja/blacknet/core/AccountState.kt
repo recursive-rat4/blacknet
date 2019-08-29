@@ -91,8 +91,6 @@ class AccountState(
     }
 
     fun prune(height: Int) {
-        if (height < 0) return
-
         val mature = immature.sumByLong { it.matureBalance(height) }
         if (mature == 0L) return
 
@@ -153,7 +151,7 @@ class AccountState(
                         leases.add(Lease(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE)), decoder.decodeVarInt(), decoder.decodeVarLong()))
                     return AccountState(seq, stake, immature, leases)
                 }
-                else -> throw RuntimeException("unsupported decoder")
+                else -> throw RuntimeException("Unsupported decoder")
             }
         }
 
@@ -174,7 +172,7 @@ class AccountState(
                         encoder.encodeVarLong(obj.leases[i].amount)
                     }
                 }
-                else -> throw RuntimeException("unsupported encoder")
+                else -> throw RuntimeException("Unsupported encoder")
             }
         }
     }

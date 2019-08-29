@@ -17,6 +17,7 @@ import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
 import net.i2p.data.Base32
 import ninja.blacknet.Config
+import ninja.blacknet.Config.torcontrol
 import java.io.File
 
 private val logger = KotlinLogging.logger {}
@@ -36,14 +37,14 @@ object TorController {
     }
 
     fun listen(): Address? {
-        val s = java.net.Socket("localhost", Config[Config.torcontrol])
+        val s = java.net.Socket("localhost", Config[torcontrol])
         val tor = TorControlConnection(s)
         val thread = tor.launchThread(true)
         //TODO cookie, password
         tor.authenticate(ByteArray(0))
 
         val request = HashMap<Int, String?>()
-        request[Config[Config.port]] = null
+        request[Config.netPort] = null
 
         val response = tor.addOnion(privateKey, request)
         val string = response[TorControlCommands.HS_ADDRESS]!!
@@ -55,7 +56,7 @@ object TorController {
         if (privateKey == "NEW:RSA1024")
             savePrivateKey(response[TorControlCommands.HS_PRIVKEY]!!)
 
-        val address = Address(Network.TORv2, Config[Config.port], bytes)
+        val address = Address(Network.TORv2, Config.netPort, bytes)
 
         Runtime.launch {
             thread.join()

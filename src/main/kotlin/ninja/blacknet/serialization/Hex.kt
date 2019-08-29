@@ -9,6 +9,8 @@
 
 package ninja.blacknet.serialization
 
+import ninja.blacknet.Config
+
 private val HEX_CHARS = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
 private val HEX_CHARS_LOWER = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
 private val HEX_TABLE = byteArrayOf(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15)
@@ -20,11 +22,7 @@ private fun hexTable(element: Char): Int {
     return -1
 }
 
-/**
- * Returns hex-string representation of the [ByteArray]
- * @param lowerCase whether returned string is lower case (optional)
- */
-fun ByteArray.toHex(lowerCase: Boolean = false): String {
+fun ByteArray.toHex(lowerCase: Boolean): String {
     val table = if (!lowerCase) HEX_CHARS else HEX_CHARS_LOWER
     val result = StringBuilder(size * 2)
 
@@ -37,6 +35,13 @@ fun ByteArray.toHex(lowerCase: Boolean = false): String {
     }
 
     return result.toString()
+}
+
+/**
+ * Returns hex-string representation of the [ByteArray]
+ */
+fun ByteArray.toHex(): String {
+    return toHex(Config.lowerCaseHex)
 }
 
 /**

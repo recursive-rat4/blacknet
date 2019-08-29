@@ -20,6 +20,7 @@ object Json {
     private val json = Json(JsonConfiguration(prettyPrint = Config.jsonIndented(), indent = "    "))
 
     fun <T> parse(deserializer: DeserializationStrategy<T>, string: String): T = json.parse(deserializer, string)
+    fun parseJson(string: String): JsonElement = json.parseJson(string)
     fun <T> stringify(serializer: SerializationStrategy<T>, obj: T): String = json.stringify(serializer, obj)
     fun <T : Any?> toJson(serializer: SerializationStrategy<T>, obj: T): JsonElement = json.toJson(serializer, obj)
 }

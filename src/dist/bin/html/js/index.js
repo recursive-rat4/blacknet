@@ -9,7 +9,7 @@
 
 $(document).ready(function () {
 
-    const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v1", body = $("body");
+    const menu = $('.main-menu'), panel = $('.rightpanel'), apiVersion = "/api/v2", body = $("body");
     const hash = localStorage.hashIndex || 'overview';
     const dialogPassword = $('.dialog.password'),mask = $('.mask');
     let blockStack = [];
@@ -36,38 +36,45 @@ $(document).ready(function () {
                     dialogPassword.find('.mnemonic').focus()
                     return
                 }   
-                type == 'refresh_staking' ? refreshStaking(mnemonic) : post_staking(mnemonic, type);
+                type == 'isstaking' ? refreshStaking(mnemonic, type) : changeStaking(mnemonic, type);
             });
         }
     }
 
+    async function postStaking(mnemonic, type, callback){
 
-    async function post_staking(mnemonic, type) {
-
-        let url = apiVersion + "/" + type + "Staking/" + mnemonic + "/";
-
-        $.post(url, {}, function (ret) {
-
-            let msg = ret == 'false' ? type.toUpperCase() + ' FAILED!' : type.toUpperCase() + ' SUCCESS!';
-            clearPassWordDialog();
-            refreshStaking(mnemonic);
-            timeAlert(msg);
-        }).fail(function () {
+        let url = '/' + type;
+        let postdata = {
+            mnemonic: mnemonic
+        };
+        Blacknet.post(url, postdata, callback, function () {
             clearPassWordDialog();
             timeAlert('Invalid mnemonic');
         });
     }
 
-    async function refreshStaking(mnemonic) {
+    async function refreshStaking(mnemonic, type) {
 
-        let stakingText = $('.is_staking'), data;
-
+        let stakingText = $('.is_staking');
         stakingText.text('loading');
-        data = await Blacknet.postPromise('/isStaking/' + mnemonic);
-        localStorage.isStaking = data;
         clearPassWordDialog();
-        await Blacknet.wait(2000);
-        stakingText.text(data);
+        await Blacknet.wait(1000);
+        postStaking(mnemonic, type, function(ret){
+            localStorage.isStaking = ret;
+            stakingText.text(ret);
+        });
+    }
+
+    async function changeStaking(mnemonic, type) {
+
+        postStaking(mnemonic, type, function(ret){
+
+            let msg = ret == 'false' ? 'FAILED!' :'SUCCESS!';
+
+            timeAlert(type + ' ' + msg);
+            clearPassWordDialog();
+            refreshStaking(mnemonic, 'isstaking');
+        });
     }
 
     function menuSwitch() {
@@ -85,7 +92,6 @@ $(document).ready(function () {
         let mnemonic = $('#sign_mnemonic').val();
         mnemonic = $.trim(mnemonic);
         let message = $('#sign_message').val();
-        let url = "/signmessage/" + mnemonic + "/" + message + "/";
         if(!Blacknet.verifyMnemonic(mnemonic)){
             Blacknet.message("Invalid mnemonic", "warning")
             $('#sign_mnemonic').focus()
@@ -96,7 +102,11 @@ $(document).ready(function () {
             $('#sign_message').focus()
             return
         }
-        Blacknet.post(url, function (data) {
+        let postdata = {
+            mnemonic: mnemonic,
+            message: message
+        };
+        Blacknet.post('/signmessage', postdata, function(data){
             $('#sign_result').text(data).parent().removeClass("hidden")
         });
     }
@@ -120,29 +130,30 @@ $(document).ready(function () {
             $('#verify_message').focus()
             return
         }
-        Blacknet.get(url, function (data) {
+        Blacknet.get(url, function(data){
             $('#verify_result').text(data).parent().removeClass("hidden")
         });
     }
     function mnemonic_info() {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
         mnemonic = $.trim(mnemonic);
-        let url = "/mnemonic/info/" + mnemonic + "/";
+        let postdata = {
+            mnemonic: mnemonic
+        };
         if(!Blacknet.verifyMnemonic(mnemonic)){
             Blacknet.message("Invalid mnemonic", "warning")
             $('#mnemonic_info_mnemonic').focus()
             return
         }
-        Blacknet.post(url, function (data) {
+        Blacknet.post('/mnemonic', postdata, function (data) {
             let html = '';
-
             data.mnemonic = data.mnemonic.replace(/[a-z]/g, '*');
 
             html += 'mnemonic: ' + data.mnemonic;
             html += '\naddress: ' + data.address;
             html += '\npublicKey: ' + data.publicKey;
             $('#mnemonic_info_result').text(html).parent().removeClass("hidden")
-        }, 'json');
+        });
     }
 
     function transfer_click(type) {
@@ -175,7 +186,7 @@ $(document).ready(function () {
         let to = $('#transfer_to').val();
         let amount = $('#transfer_amount').val();
         let message = $('#transfer_message').val();
-        let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "";
+        let encrypted = message && $('#transfer_encrypted').prop('checked') ? "1" : "0";
         if(!Blacknet.verifyAccount(to)) {
             Blacknet.message("Invalid account", "warning")
             $('#transfer_to').focus()
@@ -187,6 +198,7 @@ $(document).ready(function () {
             return 
         }
         input_mnemonic(function (mnemonic) {
+
             Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
                 $('#transfer_result').text(data).parent().removeClass("hidden")
                 clearPassWordDialog();
@@ -275,7 +287,7 @@ $(document).ready(function () {
     async function newAccount() {
         $('.account.dialog').hide();
         $('.newaccount.dialog').show();
-        let url = '/account/generate';
+        let url = '/generateaccount';
         let mnemonicInfo = await Blacknet.getPromise(url);
         mnemonicInfo = JSON.parse(mnemonicInfo);
         $('#new_account_text').val(mnemonicInfo.address);
@@ -295,15 +307,6 @@ $(document).ready(function () {
         }
         return false;
     }
-
-    const block_request = function (message) {
-
-        if (message.data) {
-            let block = JSON.parse(message.data);
-
-            blockStack.push(block);
-        }
-    };
 
 
     async function blockStackProcess() {
@@ -354,24 +357,37 @@ $(document).ready(function () {
 
     Blacknet.ready(function () {
 
-        let blockNotify = new WebSocket("ws://" + location.host + "/api/v2/notify/block");
-        let transactionNotify = new WebSocket("ws://" + location.host + "/api/v1/notify/transaction");
-        
-        blockNotify.onmessage = block_request;
-        transactionNotify.onmessage = function(message){
-            if (message.data) {
-                let tx = JSON.parse(message.data);
-    
-                Blacknet.renderTransaction(tx, true);
-                if(tx.time * 1000 > Date.now() - 1000*60){
-                    Blacknet.newTransactionNotify(tx);
-                }
-            }
+        if (!localStorage.account) return;
+
+        let ws = new WebSocket("ws://" + location.host + "/api/v2/websocket");
+
+        ws.onopen = function(){
+            let blocks = {
+                command: "subscribe",
+                route: "block"
+            };
+            let transactions = {
+                command: "subscribe",
+                route: "transaction",
+                address: localStorage.account
+            };
+            ws.send(JSON.stringify(blocks));
+            ws.send(JSON.stringify(transactions));
         };
 
-        transactionNotify.onopen = function(){
+        ws.onmessage = function(message){
+            if (message.data) {
+                let response = JSON.parse(message.data);
 
-            transactionNotify.send(localStorage.account);
+                if (response.route == "block") {
+                    blockStack.push(response.message);
+                } else if (response.route == "transaction") {
+                    Blacknet.renderTransaction(response.message, true);
+                    if(tx.time * 1000 > Date.now() - 1000*60){
+                        Blacknet.newTransactionNotify(response.message);
+                    }
+                }
+            }
         };
         
     });
@@ -380,9 +396,9 @@ $(document).ready(function () {
     menu.on('click', 'li', menuSwitch);
     panel.find('.' + hash).show();
 
-    body.on("click", "#stop_staking", staking_click('stop'))
-        .on("click", "#start_staking", staking_click('start'))
-        .on("click", "#refresh_staking", staking_click('refresh_staking'))
+    body.on("click", "#stop_staking", staking_click('stopstaking'))
+        .on("click", "#start_staking", staking_click('startstaking'))
+        .on("click", "#refresh_staking", staking_click('isstaking'))
         .on("click", "#transfer", transfer_click('send'))
         .on("click", "#lease", transfer_click('lease'))
         .on("click", "#cancel_lease", transfer_click('cancel_lease'))
@@ -394,13 +410,10 @@ $(document).ready(function () {
         .on("click", "#new_account", newAccount)
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
         .on("click", "#new_account_next_step", newAccountNext)
-        .on("click", "tr.preview", function(){
-            $(this).next().toggle();
-            $(this).hide();
-        })
         .on("click", ".tx-foot .show_more_txs", function(){
             $(this).hide();
             Blacknet.showMoreTxs();
+            return false;
         });
 
 
