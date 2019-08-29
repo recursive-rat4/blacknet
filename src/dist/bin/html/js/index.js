@@ -392,6 +392,14 @@ $(document).ready(function () {
         
     });
 
+    async function disconnect(){
+
+        let ret = await Blacknet.getPromise('/disconnectpeer/' + this.dataset.peerid + '/true');
+        if(ret == 'Disconnected'){
+            await Blacknet.getPeerInfo();
+        }
+    }
+
 
     menu.on('click', 'li', menuSwitch);
     panel.find('.' + hash).show();
@@ -410,6 +418,7 @@ $(document).ready(function () {
         .on("click", "#new_account", newAccount)
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
         .on("click", "#new_account_next_step", newAccountNext)
+        .on("click", "#peer-table .disconnect", disconnect)
         .on("click", ".tx-foot .show_more_txs", function(){
             $(this).hide();
             Blacknet.showMoreTxs();

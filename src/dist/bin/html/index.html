@@ -43,12 +43,6 @@
                         <a href="#" data-index="overview" data-i18n="overview">Overview</a>
                     </li>
                     <li>
-                        <a href="#" data-index="transactions" data-i18n="transactions">Transactions</a>
-                    </li>
-                    <li>
-                        <a href="#" data-index="staking" data-i18n="staking">Staking</a>
-                    </li>
-                    <li>
                         <a href="#" data-index="send" data-i18n="send">Send</a>
                     </li>
                     <li>
@@ -56,6 +50,12 @@
                     </li>
                     <li class="cancel_lease_tab">
                         <a href="#" data-index="cancel_lease" data-i18n="cancel lease">Cancel Lease</a>
+                    </li>
+                    <li>
+                        <a href="#" data-index="transactions" data-i18n="transactions">Transactions</a>
+                    </li>
+                    <li>
+                        <a href="#" data-index="staking" data-i18n="staking">Staking</a>
                     </li>
                     <li>
                         <a href="#" data-index="sign" data-i18n="sign/verify message">Sign/Verify Message</a>
@@ -345,13 +345,14 @@
                 <table id="peer-table">
                     <thead>
                         <tr>
-                            <td data-i18n="id">Id</td>
+                            <td data-i18n="Index">Index</td>
                             <td class="narrow" data-i18n="address">Address</td>
                             <td data-i18n="user agent">User Agent</td>
                             <td class="narrow" data-i18n="ping">Ping</td>
                             <td class="narrow" data-i18n="time offset">Time Offset</td>
                             <td class="narrow" data-i18n="read">Read</td>
                             <td class="narrow" data-i18n="written">Written</td>
+                            <td class="narrow" data-i18n="Disconnect">Disconnect</td>
                         </tr>
                     </thead>
                     <tbody id="peer-list"></tbody>

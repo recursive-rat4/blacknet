@@ -585,7 +585,7 @@ void function () {
         }
     }
 
-    async function getPeerInfo() {
+    Blacknet.getPeerInfo = async function() {
 
         let peers = await Blacknet.getPromise('/peers', 'json');
         $('#peer-list').html('');
@@ -626,7 +626,7 @@ void function () {
         // }
     };
 
-    const timePeerInfo = Blacknet.throttle(getPeerInfo, 1000);
+    const timePeerInfo = Blacknet.throttle(Blacknet.getPeerInfo, 1000);
     Blacknet.network = async function () {
 
         Blacknet.ledger = await Blacknet.getPromise('/ledger', 'json');
