@@ -542,12 +542,16 @@ fun Application.APIServer() {
         }
 
         get("/api/v1/account/generate") {
-            call.respond(Json.stringify(MnemonicInfo.serializer(), MnemonicInfo.new()))
+            val wordlist = Bip39.wordlist("english")!!
+
+            call.respond(Json.stringify(MnemonicInfo.serializer(), MnemonicInfo.new(wordlist)))
         }
 
-        get("/api/v2/generateaccount") {
+        get("/api/v2/generateaccount/{wordlist?}") {
+            val wordlist = Bip39.wordlist(call.parameters["wordlist"] ?: "english") ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid wordlist")
+
             call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(MnemonicInfo.serializer(), MnemonicInfo.new())
+                Json.stringify(MnemonicInfo.serializer(), MnemonicInfo.new(wordlist))
             }
         }
 

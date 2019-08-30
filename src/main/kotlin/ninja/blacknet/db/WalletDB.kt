@@ -13,7 +13,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.serializer
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.mnemonics
@@ -39,7 +43,7 @@ private val logger = KotlinLogging.logger {}
 
 object WalletDB {
     private const val DELAY = 30 * 60
-    private const val VERSION = 4
+    private const val VERSION = 5
     internal val mutex = Mutex()
     private val KEYS_KEY = "keys".toByteArray()
     private val TX_KEY = "tx".toByteArray()
@@ -63,20 +67,25 @@ object WalletDB {
             1
         }
 
-        if (version == VERSION || version == 3 || version == 2) {
+        if (version == VERSION || version == 4 || version == 3 || version == 2) {
             if (keysBytes != null) {
                 var txns = 0
                 val decoder = BinaryDecoder.fromBytes(keysBytes)
                 for (i in 0 until keysBytes.size step PublicKey.SIZE) {
                     val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE))
-                    val wallet = Wallet.deserialize(LevelDB.get(WALLET_KEY, publicKey.bytes)!!)
+                    val walletBytes = LevelDB.get(WALLET_KEY, publicKey.bytes)!!
+                    val wallet = if (version >= 5) Wallet.deserialize(walletBytes) else Wallet.updateV1(walletBytes)
                     txns += wallet.transactions.size
                     wallets.put(publicKey, wallet)
                 }
-                if (version == 3) {
+                if (version == 3)
                     updateV3()
-                } else if (version == 2) {
+                if (version < 5) {
+                    logger.info("Updating WalletDB")
                     val batch = LevelDB.createWriteBatch()
+                    wallets.forEach { (publicKey, wallet) ->
+                        batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
+                    }
                     setVersion(batch)
                     batch.write()
                 }
@@ -84,6 +93,10 @@ object WalletDB {
                     logger.info("Loaded wallet with $txns transactions")
                 else
                     logger.info("Loaded ${wallets.size} wallets with $txns transactions")
+            } else if (version < VERSION) {
+                val batch = LevelDB.createWriteBatch()
+                setVersion(batch)
+                batch.write()
             }
         } else if (version == 1) {
             val batch = LevelDB.createWriteBatch()
@@ -132,12 +145,10 @@ object WalletDB {
                     val unconfirmed = ArrayList<Triple<Hash, ByteArray, Transaction>>()
 
                     wallet.transactions.forEach { (hash, txData) ->
-                        if (txData.height == 0) {
+                        if (txData.height == 0 && txData.type != TxType.Generated.type) {
                             val bytes = getTransaction(hash)!!
                             val tx = Transaction.deserialize(bytes)!!
-                            if (tx.type != TxType.Generated.type) {
-                                unconfirmed.add(Triple(hash, bytes, tx))
-                            }
+                            unconfirmed.add(Triple(hash, bytes, tx))
                         }
                     }
 
@@ -185,13 +196,13 @@ object WalletDB {
         wallets.forEach { (publicKey, wallet) ->
             val generated = wallet.transactions.get(blockHash)
             if (generated != null) {
-                wallet.transactions.put(blockHash, TransactionData(generated.time, 0))
+                generated.height = 0
                 updated.put(publicKey, wallet)
             }
             txHashes.forEach { hash ->
                 val tx = wallet.transactions.get(hash)
                 if (tx != null) {
-                    wallet.transactions.put(hash, TransactionData(tx.time, 0))
+                    tx.height = 0
                     updated.put(publicKey, wallet)
                 }
             }
@@ -218,17 +229,12 @@ object WalletDB {
                 processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, block.time, height, batch, rescan)
             }
         } else {
-            val genesis = LedgerDB.genesisBlock()
-            for (i in genesis) {
-                val key = PublicKey.fromString(i.publicKey)!!
-                if (key == publicKey) {
-                    val tx = Transaction.generated(publicKey, height, hash, i.balance)
-                    val txBytes = tx.serialize()
-                    val txHash = Transaction.Hasher(txBytes)
-                    processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, LedgerDB.GENESIS_TIME, height, batch, rescan)
-                    break
-                }
-            }
+            val balance = LedgerDB.genesisBlock.get(publicKey) ?: return
+
+            val tx = Transaction.generated(publicKey, height, hash, balance)
+            val txBytes = tx.serialize()
+            val txHash = Transaction.Hasher(txBytes)
+            processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, LedgerDB.GENESIS_TIME, height, batch, rescan)
         }
     }
 
@@ -259,7 +265,7 @@ object WalletDB {
         if (from || tx.data()!!.involves(publicKey)) {
             val txData = wallet.transactions.get(hash)
             if (txData == null) {
-                wallet.transactions.put(hash, TransactionData(time, height))
+                wallet.transactions.put(hash, TransactionData(tx.type, time, height))
                 if (from && tx.type != TxType.Generated.type) {
                     if (tx.seq == wallet.seq)
                         wallet.seq += 1
@@ -291,7 +297,28 @@ object WalletDB {
     }
 
     @Serializable
-    class TransactionData(val time: Long, var height: Int)
+    class TransactionData(
+            val type: Byte,
+            val time: Long,
+            var height: Int
+    ) {
+        @Serializer(forClass = TransactionData::class)
+        companion object {
+            override fun serialize(encoder: Encoder, obj: TransactionData) {
+                when (encoder) {
+                    is JsonOutput -> {
+                        @Suppress("NAME_SHADOWING")
+                        val encoder = encoder.beginStructure(descriptor)
+                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), obj.type.toUByte().toInt())
+                        encoder.encodeSerializableElement(descriptor, 1, Long.serializer(), obj.time)
+                        encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), obj.height)
+                        encoder.endStructure(descriptor)
+                    }
+                    else -> throw RuntimeException("Unsupported encoder")
+                }
+            }
+        }
+    }
 
     @Serializable
     class Wallet(
@@ -304,6 +331,7 @@ object WalletDB {
             encoder.encodeVarInt(transactions.size)
             for ((hash, data) in transactions) {
                 encoder.encodeFixedByteArray(hash.bytes)
+                encoder.encodeByte(data.type)
                 encoder.encodeVarLong(data.time)
                 encoder.encodeVarInt(data.height)
             }
@@ -317,7 +345,20 @@ object WalletDB {
                 val size = decoder.decodeVarInt()
                 val wallet = Wallet(seq, HashMap(size * 2))
                 for (i in 0 until size)
-                    wallet.transactions.put(Hash(decoder.decodeFixedByteArray(Hash.SIZE)), TransactionData(decoder.decodeVarLong(), decoder.decodeVarInt()))
+                    wallet.transactions.put(Hash(decoder.decodeFixedByteArray(Hash.SIZE)), TransactionData(decoder.decodeByte(), decoder.decodeVarLong(), decoder.decodeVarInt()))
+                return wallet
+            }
+
+            internal fun updateV1(bytes: ByteArray): Wallet {
+                val decoder = BinaryDecoder.fromBytes(bytes)
+                val seq = decoder.decodeVarInt()
+                val size = decoder.decodeVarInt()
+                val wallet = Wallet(seq, HashMap(size * 2))
+                for (i in 0 until size) {
+                    val hash = Hash(decoder.decodeFixedByteArray(Hash.SIZE))
+                    val tx = Transaction.deserialize(getTransaction(hash)!!)!!
+                    wallet.transactions.put(hash, TransactionData(tx.type, decoder.decodeVarLong(), decoder.decodeVarInt()))
+                }
                 return wallet
             }
         }
@@ -374,20 +415,29 @@ object WalletDB {
     suspend fun getOutLeases(publicKey: PublicKey): List<AccountState.Lease> = mutex.withLock {
         val wallet = getWalletImpl(publicKey)
         val leases = ArrayList<AccountState.Lease>()
-        val cancels = ArrayList<AccountState.Lease>()
+        val transactions = ArrayList<Pair<Transaction, TransactionData>>()
 
         wallet.transactions.forEach { (hash, txData) ->
-            val tx = Transaction.deserialize(getTransaction(hash)!!)!!
+            when (txData.type) {
+                TxType.Lease.type,
+                TxType.CancelLease.type -> {
+                    val tx = Transaction.deserialize(getTransaction(hash)!!)!!
+                    transactions.add(Pair(tx, txData))
+                }
+            }
+        }
+
+        transactions.sortBy { (tx, _) -> tx.seq }
+
+        transactions.forEach { (tx, txData) ->
             if (tx.type == TxType.Lease.type) {
                 val data = Lease.deserialize(tx.data.array)!!
                 leases.add(AccountState.Lease(data.to, txData.height, data.amount))
             } else if (tx.type == TxType.CancelLease.type) {
                 val data = CancelLease.deserialize(tx.data.array)!!
-                cancels.add(AccountState.Lease(data.to, data.height, data.amount))
+                leases.remove(AccountState.Lease(data.to, data.height, data.amount))
             }
         }
-
-        cancels.forEach { leases.remove(it) }
 
         return@withLock leases
     }
@@ -433,9 +483,6 @@ object WalletDB {
 
         val toUpdate = ArrayList<Update>()
 
-        if (wallets.size != 0)
-            logger.info("Updating WalletDB...")
-
         wallets.forEach { (publicKey, wallet) ->
             wallet.transactions.forEach { (hash, txData) ->
                 val bytes = getTransaction(hash)!!
@@ -449,8 +496,12 @@ object WalletDB {
             }
         }
 
+        if (toUpdate.isEmpty())
+            return
+
+        logger.info("Updating ${toUpdate.size} Generated transactions")
+
         val updatedTx = HashMap<Hash, Pair<Hash, ByteArray>>()
-        val updatedWallets = HashMap<PublicKey, Wallet>()
         val batch = LevelDB.createWriteBatch()
 
         toUpdate.forEach { update ->
@@ -458,21 +509,13 @@ object WalletDB {
             val txData = wallet.transactions.remove(update.hash)!!
             wallet.transactions.put(update.newHash, txData)
             updatedTx.put(update.hash, Pair(update.newHash, update.bytes))
-            updatedWallets.put(update.publicKey, wallet)
         }
 
         updatedTx.forEach { (hash, pair) ->
             batch.delete(TX_KEY, hash.bytes)
             batch.put(TX_KEY, pair.first.bytes, pair.second)
         }
-        updatedWallets.forEach { (publicKey, wallet) ->
-            batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
-        }
 
-        setVersion(batch)
         batch.write()
-
-        if (toUpdate.size != 0)
-            logger.info("Updated ${toUpdate.size} Generated txns in ${updatedWallets.size} wallets")
     }
 }

@@ -10,11 +10,7 @@
 package ninja.blacknet.network
 
 import com.google.common.io.Resources
-import io.ktor.util.error
-import mu.KotlinLogging
 import kotlin.math.min
-
-private val logger = KotlinLogging.logger {}
 
 object Bip14 {
     const val MIN_VERSION = 8
@@ -38,16 +34,6 @@ object Bip14 {
     private const val SAFE_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" + " .,;-_/:?@()"
 
     private fun loadVersion(): String {
-        val string = try {
-            Resources.toString(Resources.getResource("version.txt"), Charsets.US_ASCII)
-        } catch (e: Throwable) {
-            logger.error(e)
-            ""
-        }
-        if (string.isEmpty()) {
-            logger.warn("Running unknown version of $CLIENT")
-            return "unknown"
-        }
-        return string
+        return Resources.toString(Resources.getResource("version.txt"), Charsets.US_ASCII)
     }
 }

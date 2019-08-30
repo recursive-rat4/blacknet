@@ -12,16 +12,19 @@ package ninja.blacknet.crypto
 import java.security.SecureRandom
 
 object Mnemonic {
+    private const val WORDLIST_SIZE = 2048
     private const val WORDS = 12
     private val random = SecureRandom()
 
-    fun generate(): Pair<String, PrivateKey> {
-        val builder = StringBuilder(9 * WORDS)
+    fun generate(wordlist: Array<String>): Pair<String, PrivateKey> {
+        require(wordlist.size == WORDLIST_SIZE) { "Wordlist size must be $WORDLIST_SIZE" }
+
+        val builder = StringBuilder(12 * WORDS)
 
         while (true) {
             for (i in 1..WORDS) {
-                val rnd = random.nextInt(Bip39.ENGLISH.size)
-                builder.append(Bip39.ENGLISH[rnd])
+                val rnd = random.nextInt(WORDLIST_SIZE)
+                builder.append(wordlist[rnd])
                 if (i < WORDS) builder.append(' ')
             }
 
