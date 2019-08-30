@@ -197,6 +197,7 @@ $(document).ready(function () {
             $('#transfer_amount').focus()
             return 
         }
+
         input_mnemonic(function (mnemonic) {
 
             Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {

@@ -232,7 +232,7 @@ void function () {
         let fee = 100000, amountText;
 
         amountText = new BigNumber(amount).toFixed(8);
-        amount = new BigNumber(amount).times(1e8);
+        amount = new BigNumber(amount).times(1e8).toNumber();
 
         Blacknet.confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
         to + '\n\n0.001 BLN added as transaction fee?', function(flag){
@@ -246,7 +246,6 @@ void function () {
                     message: message,
                     encrypted: encrypted
                 };
-
                 Blacknet.post('/transfer', postdata, callback);
             }
         })
@@ -257,7 +256,7 @@ void function () {
         let fee = 100000, amountText, type_text = type == 'lease' ? 'lease' : 'cancel lease';
 
         amountText = new BigNumber(amount).toFixed(8);
-        amount = new BigNumber(amount).times(1e8);
+        amount = new BigNumber(amount).times(1e8).toNumber();
 
         Blacknet.confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
         ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?', function(flag){
