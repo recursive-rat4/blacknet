@@ -19,13 +19,17 @@ void function () {
     const notificationNode = $('.notification.tx').first();
     const txList = $('#tx-list');
 
-    /**
-     * init 
-     * @method init
-     * @for Blacknet
-     * @param {null} 
-     * @return {null}
-     */
+    Blacknet.explorer = {
+        host : 'https://blnscan.io',
+        block: '/',
+        tx: '/',
+        account: '/'
+    };
+
+    if(localStorage.explorer){
+        Blacknet.explorer = JSON.parse(localStorage.explorer);
+    }
+
     Blacknet.init = async function () {
 
         await Blacknet.wait(1000);
@@ -762,6 +766,9 @@ void function () {
             e.returnValue = '';
         }
     });
+
+
+    
 
     window.Blacknet = Blacknet;
 }();

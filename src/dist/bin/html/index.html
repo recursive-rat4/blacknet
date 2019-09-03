@@ -69,6 +69,9 @@
                     <li>
                         <a href="#" data-index="info" data-i18n="mnemonic info">Mnemonic info</a>
                     </li>
+                    <!-- <li>
+                        <a href="#" data-index="config" data-i18n="Config">Config</a>
+                    </li> -->
                     <li>
                         <a href="#" data-index="about" data-i18n="About Blacknet">About Blacknet</a>
                     </li>
@@ -369,6 +372,32 @@
                     </div>
                     <button id="add_peer_btn" data-i18n="add peer">Add Peer</button>
                 </fieldset>
+            </div>
+            <div class="config">
+                <fieldset>
+                    <legend data-i18n="explorer">Explorer</legend>
+                    <div class="field-row">
+                        <label data-i18n="Host">Host</label>
+                        <input type="text" id="host">
+                    </div>
+                    <div class="field-row">
+                        <label data-i18n="Block Path">Block Path</label>
+                        <input type="text" id="block_path">
+                    </div>
+                    <div class="field-row">
+                        <label data-i18n="Transaction Path">Transaction Path</label>
+                        <input type="text" id="tx_path">
+                    </div>
+                    <div class="field-row">
+                        <label data-i18n="Account Path">Account Path</label>
+                        <input type="text" id="account_path">
+                    </div>
+                    <button id="explorer_save" data-i18n="Save">Save</button>
+                </fieldset>
+                <div class="field-row field-row-outer hidden">
+                    <label data-i18n="result">Result</label>
+                    <pre id="mnemonic_info_result"></pre>
+                </div>
             </div>
             <div class="about">
                 <p>
