@@ -75,7 +75,7 @@ void function () {
             mnemonic: mnemonic
         };
         let mnemonicInfo = await Blacknet.postPromise("/mnemonic", postdata, true);
-        mnemonicInfo = JSON.parse(mnemonicInfo);
+        // mnemonicInfo = JSON.parse(mnemonicInfo);
         return mnemonicInfo.address;
     };
 
