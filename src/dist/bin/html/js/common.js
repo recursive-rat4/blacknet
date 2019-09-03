@@ -531,11 +531,11 @@ void function () {
         notification.find('.type').text(type);
         notification.find('.amount').text(amount);
 
-        notification.appendTo('body').show();
+        // notification.appendTo('body').show();
 
-        notification.delay(2000).animate({ top: "-100px", opacity: 0 }, 1000, function () {
-            notification.remove();
-        });
+        // notification.delay(2000).animate({ top: "-100px", opacity: 0 }, 1000, function () {
+        //     notification.remove();
+        // });
     };
     Blacknet.renderTxStatus = async function (index, el) {
 
