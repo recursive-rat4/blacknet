@@ -15,11 +15,10 @@ import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
+import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
-import ninja.blacknet.network.Node
-import java.io.File
 
 private val logger = KotlinLogging.logger {}
 
@@ -63,10 +62,14 @@ object BlockDB : DataDB() {
             logger.info("deserialization failed")
             return Status.INVALID
         }
-        if (block.version != 0 && block.version != 1) {
-            logger.info("unknown version ${block.version}")
+        if (block.version.toUInt() > Block.VERSION.toUInt()) {
+            val percent = 100 * LedgerDB.upgraded() / PoS.MATURITY
+            if (percent > 9)
+                logger.info("$percent% of blocks upgraded")
+            else
+                logger.info("unknown version ${block.version.toUInt()}")
         }
-        if (Node.isTooFarInFuture(block.time)) {
+        if (PoS.isTooFarInFuture(block.time)) {
             logger.info("too far in future ${block.time}")
             return Status.IN_FUTURE
         }

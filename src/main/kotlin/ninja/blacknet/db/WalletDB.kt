@@ -112,12 +112,12 @@ object WalletDB {
 
         if (Config.contains(mnemonics)) {
             runBlocking {
-                Config[mnemonics].forEach {
-                    val privateKey = Mnemonic.fromString(it)
+                Config[mnemonics].forEachIndexed { index, mnemonic ->
+                    val privateKey = Mnemonic.fromString(mnemonic)
                     if (privateKey != null) {
                         PoS.startStaking(privateKey)
                     } else {
-                        logger.warn("invalid mnemonic")
+                        logger.warn("Invalid mnemonic $index")
                     }
                 }
                 val n = PoS.stakersSize()
@@ -435,7 +435,8 @@ object WalletDB {
                 leases.add(AccountState.Lease(data.to, txData.height, data.amount))
             } else if (tx.type == TxType.CancelLease.type) {
                 val data = CancelLease.deserialize(tx.data.array)!!
-                leases.remove(AccountState.Lease(data.to, data.height, data.amount))
+                if (!leases.remove(AccountState.Lease(data.to, data.height, data.amount)))
+                    logger.warn("Lease not found")
             }
         }
 
