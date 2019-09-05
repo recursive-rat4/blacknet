@@ -262,6 +262,10 @@ object LedgerDB {
         return state.rollingCheckpoint
     }
 
+    fun upgraded(): Int {
+        return state.upgraded
+    }
+
     fun chainContains(hash: Hash): Boolean {
         return LevelDB.contains(CHAIN_KEY, hash.bytes)
     }

@@ -68,10 +68,6 @@ object Node {
         Runtime.launch { dnsSeeder(true) }
     }
 
-    fun isTooFarInFuture(time: Long): Boolean {
-        return time > Runtime.time() + PoS.MAX_FUTURE_DRIFT
-    }
-
     fun newPeerId(): Long {
         return nextPeerId.getAndIncrement()
     }

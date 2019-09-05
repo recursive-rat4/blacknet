@@ -77,11 +77,7 @@ object ChainFetcher {
         while (true) {
             val data = chains.receive()
 
-            if (stakedBlock != null) {
-                val hash = stakedBlock!!.first
-                val bytes = stakedBlock!!.second
-                val deferred = stakedBlock!!.third
-
+            stakedBlock?.let { (hash, bytes, deferred) ->
                 val status = BlockDB.process(hash, bytes)
                 if (status == Status.ACCEPTED)
                     Node.announceChain(hash, LedgerDB.cumulativeDifficulty())

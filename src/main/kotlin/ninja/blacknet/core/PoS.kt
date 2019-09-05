@@ -50,6 +50,10 @@ object PoS {
         return x < difficulty
     }
 
+    fun isTooFarInFuture(time: Long): Boolean {
+        return time > Runtime.time() + MAX_FUTURE_DRIFT
+    }
+
     fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
         val dTime = min(blockTime - prevBlockTime, TARGET_BLOCK_TIME * SPACING)
         return difficulty * (A2 + 2 * dTime) / A1
@@ -63,7 +67,19 @@ object PoS {
         return Runtime.time() > LedgerDB.blockTime() + TARGET_BLOCK_TIME * MATURITY
     }
 
-    private val stakers = SynchronizedArrayList<Pair<PrivateKey, PublicKey>>()
+    private class State(
+            val publicKey: PublicKey,
+            val privateKey: PrivateKey,
+            var lastBlock: Hash = Hash.ZERO,
+            var stake: Long = 0
+    ) {
+        fun update() {
+            lastBlock = LedgerDB.blockHash()
+            stake = LedgerDB.get(publicKey)?.stakingBalance(LedgerDB.height()) ?: 0
+        }
+    }
+
+    private val stakers = SynchronizedArrayList<State>()
     internal suspend fun stakersSize() = stakers.size()
 
     private var job: Job? = null
@@ -85,15 +101,15 @@ object PoS {
             val block = stakers.mutex.withLock {
                 BlockDB.mutex.withLock {
                     for (i in stakers.list.indices) {
-                        val privateKey = stakers.list[i].first
-                        val publicKey = stakers.list[i].second
+                        val state = stakers.list[i]
 
-                        val stake = LedgerDB.get(publicKey)?.stakingBalance(LedgerDB.height()) ?: 0
+                        if (state.lastBlock != LedgerDB.blockHash())
+                            state.update()
 
-                        if (stake > 0 && check(time, publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), stake)) {
-                            val block = Block.create(LedgerDB.blockHash(), time, publicKey)
+                        if (state.stake > 0 && check(time, state.publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), state.stake)) {
+                            val block = Block.create(LedgerDB.blockHash(), time, state.publicKey)
                             TxPool.fill(block)
-                            return@withLock block.sign(privateKey)
+                            return@withLock block.sign(state.privateKey)
                         }
                     }
                     return@withLock null
@@ -110,16 +126,19 @@ object PoS {
     suspend fun startStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
         val publicKey = privateKey.toPublicKey()
 
-        val pair = Pair(privateKey, publicKey)
-        if (stakers.list.contains(pair)) {
+        if (stakers.list.find { it.publicKey == publicKey } != null) {
             logger.info("${Address.encode(publicKey)} is already staking")
             return false
         }
 
-        if (LedgerDB.get(publicKey) == null)
-            logger.warn("${Address.encode(publicKey)} not found in LedgerDB")
+        val state = State(publicKey, privateKey)
+        BlockDB.mutex.withLock {
+            state.update()
+        }
+        if (state.stake == 0L)
+            logger.warn("${Address.encode(publicKey)} has 0 staking balance")
 
-        stakers.list.add(pair)
+        stakers.list.add(state)
         if (stakers.list.size == 1)
             job = Runtime.launch { staker() }
         return true
@@ -127,8 +146,10 @@ object PoS {
 
     suspend fun stopStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
         val publicKey = privateKey.toPublicKey()
-        val pair = Pair(privateKey, publicKey)
-        if (!stakers.list.remove(pair)) {
+        val i = stakers.list.indexOfFirst { it.publicKey == publicKey }
+        if (i != -1) {
+            stakers.list.removeAt(i)
+        } else {
             logger.info("${Address.encode(publicKey)} is not staking")
             return false
         }
@@ -140,7 +161,7 @@ object PoS {
     }
 
     suspend fun isStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
-        return stakers.list.find { it.first == privateKey } != null
+        return stakers.list.find { it.privateKey == privateKey } != null
     }
 
     /**
