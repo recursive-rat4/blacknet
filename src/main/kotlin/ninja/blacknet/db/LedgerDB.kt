@@ -9,11 +9,14 @@
 
 package ninja.blacknet.db
 
+import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import com.google.common.io.Resources
+import com.google.common.primitives.Ints
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.list
+import kotlinx.serialization.*
+import kotlinx.serialization.internal.HashMapSerializer
+import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.core.*
@@ -35,18 +38,20 @@ import kotlin.math.min
 private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
-    private const val VERSION = 4
+    private const val VERSION = 5
     private val ACCOUNT_KEY = "account".toByteArray()
     private val CHAIN_KEY = "chain".toByteArray()
     private val HTLC_KEY = "htlc".toByteArray()
     private val MULTISIG_KEY = "multisig".toByteArray()
     private val UNDO_KEY = "undo".toByteArray()
     private val SIZES_KEY = "ledgersizes".toByteArray()
+    private val SNAPSHOT_KEY = "ledgersnapshot".toByteArray()
+    private val SNAPSHOTHEIGHTS_KEY = "ledgersnapshotheights".toByteArray()
     private val STATE_KEY = "ledgerstate".toByteArray()
     private val VERSION_KEY = "ledgerversion".toByteArray()
 
     const val GENESIS_TIME = 1545555600L
-    private fun genesisState() = State(0, Hash.ZERO, GENESIS_TIME, PoS.INITIAL_DIFFICULTY, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0)
+    private fun genesisState() = State(0, Hash.ZERO, GENESIS_TIME, PoS.INITIAL_DIFFICULTY, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0)
 
     val genesisBlock by lazy {
         val map = HashMap<PublicKey, Long>()
@@ -83,7 +88,9 @@ object LedgerDB {
             @Volatile
             var rollingCheckpoint: Hash,
             @Volatile
-            var upgraded: Int
+            var upgraded: Int,
+            @Volatile
+            var forkV2: Int
     ) {
         fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
@@ -98,6 +105,7 @@ object LedgerDB {
     const val DEFAULT_MAX_BLOCK_SIZE = 100000
     const val MAX_BLOCK_SIZE = Int.MAX_VALUE - Network.RESERVED
     private var maxBlockSize: Int
+    private val snapshotHeights = HashSet<Int>()
 
     private fun loadGenesisState() {
         state = genesisState()
@@ -137,7 +145,23 @@ object LedgerDB {
         batch.put(SIZES_KEY, encoder.toBytes())
     }
 
+    private fun writeSnapshotHeights(batch: LevelDB.WriteBatch) {
+        val encoder = BinaryEncoder()
+        encoder.encodeVarInt(snapshotHeights.size)
+        for (height in snapshotHeights)
+            encoder.encodeVarInt(height)
+        batch.put(SNAPSHOTHEIGHTS_KEY, encoder.toBytes())
+    }
+
     init {
+        val snapshotHeightsBytes = LevelDB.get(SNAPSHOTHEIGHTS_KEY)
+        if (snapshotHeightsBytes != null) {
+            val decoder = BinaryDecoder.fromBytes(snapshotHeightsBytes)
+            val size = decoder.decodeVarInt()
+            for (i in 0 until size)
+                snapshotHeights.add(decoder.decodeVarInt())
+        }
+
         val blockSizesBytes = LevelDB.get(SIZES_KEY)
         if (blockSizesBytes != null) {
             val decoder = BinaryDecoder.fromBytes(blockSizesBytes)
@@ -155,17 +179,17 @@ object LedgerDB {
             if (version == VERSION) {
                 state = LedgerDB.State.deserialize(stateBytes)!!
                 logger.info("Blockchain height ${state.height}")
-            } else if (version == 3 || version == 2 || version == 1) {
-                logger.info("Reindexing chain...")
+            } else if (version in 1..4) {
+                logger.info("Reindexing blockchain...")
 
                 runBlocking {
-                    val blockHashes = ArrayList<Hash>(300000)
+                    val blockHashes = ArrayList<Hash>(400000)
                     var index = getChainIndex(Hash.ZERO)!!
                     while (index.next != Hash.ZERO) {
                         blockHashes.add(index.next)
                         index = getChainIndex(index.next)!!
                     }
-                    logger.info("${blockHashes.size} blocks")
+                    logger.info("Found ${blockHashes.size} blocks")
 
                     clear()
 
@@ -182,7 +206,11 @@ object LedgerDB {
                         }
                         pruneImpl(batch)
                         txDb.commitImpl()
+                        if (i != 0 && i % 50000 == 0)
+                            logger.info("Processed $i blocks")
                     }
+
+                    logger.info("Finished reindex at height ${state.height}")
                 }
             } else {
                 throw RuntimeException("Unknown database version $version")
@@ -268,6 +296,22 @@ object LedgerDB {
 
     fun chainContains(hash: Hash): Boolean {
         return LevelDB.contains(CHAIN_KEY, hash.bytes)
+    }
+
+    fun scheduleSnapshotImpl(height: Int): Boolean {
+        if (height <= state.height)
+            return false
+        if (snapshotHeights.add(height)) {
+            val batch = LevelDB.createWriteBatch()
+            writeSnapshotHeights(batch)
+            batch.write()
+        }
+        return true
+    }
+
+    fun getSnapshot(height: Int): Snapshot? {
+        val bytes = LevelDB.get(SNAPSHOT_KEY, Ints.toByteArray(height)) ?: return null
+        return Snapshot.deserialize(bytes)!!
     }
 
     internal fun getNextRollingCheckpoint(): Hash {
@@ -382,7 +426,8 @@ object LedgerDB {
                 state.rollingCheckpoint,
                 state.upgraded,
                 blockSizes.peekFirst(),
-                ArrayList(block.transactions.size))
+                ArrayList(block.transactions.size),
+                state.forkV2)
 
         if (!PoS.check(block.time, block.generator, undo.nxtrng, undo.difficulty, undo.blockTime, generator.stakingBalance(height))) {
             logger.info("invalid proof of stake")
@@ -450,6 +495,7 @@ object LedgerDB {
         state.nxtrng = undo.nxtrng
         state.rollingCheckpoint = undo.rollingCheckpoint
         state.upgraded = undo.upgraded
+        state.forkV2 = undo.forkV2
         batch.put(STATE_KEY, state.serialize())
         writeBlockSizes(batch)
 
@@ -564,6 +610,7 @@ object LedgerDB {
                     entry.key.startsWith(MULTISIG_KEY) ||
                     entry.key.startsWith(UNDO_KEY) ||
                     entry.key!!.contentEquals(SIZES_KEY) ||
+                    entry.key.startsWith(SNAPSHOT_KEY) ||
                     entry.key!!.contentEquals(STATE_KEY) ||
                     entry.key!!.contentEquals(VERSION_KEY)) {
                 batch.delete(entry.key)
@@ -587,22 +634,20 @@ object LedgerDB {
     suspend fun check(): Check = BlockDB.mutex.withLock {
         var supply = 0L
         val result = Check(false, 0, 0, 0)
-        val iterator = LevelDB.iterator()
-        iterator.seekToFirst()
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            if (entry.key.startsWith(ACCOUNT_KEY)) {
-                supply += AccountState.deserialize(entry.value)!!.totalBalance()
-                result.accounts += 1
-            } else if (entry.key.startsWith(HTLC_KEY)) {
-                supply += HTLC.deserialize(entry.value)!!.amount
-                result.htlcs += 1
-            } else if (entry.key.startsWith(MULTISIG_KEY)) {
-                supply += Multisig.deserialize(entry.value)!!.amount
-                result.multisigs += 1
-            }
-        }
-        iterator.close()
+        iterateImpl(
+                { _, account ->
+                    supply += account.totalBalance()
+                    result.accounts += 1
+                },
+                { _, htlc ->
+                    supply += htlc.amount
+                    result.htlcs += 1
+                },
+                { _, multisig ->
+                    supply += multisig.amount()
+                    result.multisigs += 1
+                }
+        )
         if (supply == state.supply)
             result.result = true
         return@withLock result
@@ -615,6 +660,42 @@ object LedgerDB {
             var htlcs: Int,
             var multisigs: Int
     )
+
+    private fun iterateImpl(
+            account: (PublicKey, AccountState) -> Unit,
+            htlc: (Hash, HTLC) -> Unit,
+            multisig: (Hash, Multisig) -> Unit
+    ) {
+        val iterator = LevelDB.iterator()
+        if (LevelDB.seek(iterator, ACCOUNT_KEY)) {
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                if (entry.key.startsWith(ACCOUNT_KEY))
+                    account(PublicKey(LevelDB.sliceKey(entry, ACCOUNT_KEY)), AccountState.deserialize(entry.value)!!)
+                else
+                    break
+            }
+        }
+        if (LevelDB.seek(iterator, HTLC_KEY)) {
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                if (entry.key.startsWith(HTLC_KEY))
+                    htlc(Hash(LevelDB.sliceKey(entry, HTLC_KEY)), HTLC.deserialize(entry.value)!!)
+                else
+                    break
+            }
+        }
+        if (LevelDB.seek(iterator, MULTISIG_KEY)) {
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                if (entry.key.startsWith(MULTISIG_KEY))
+                    multisig(Hash(LevelDB.sliceKey(entry, MULTISIG_KEY)), Multisig.deserialize(entry.value)!!)
+                else
+                    break
+            }
+        }
+        iterator.close()
+    }
 
     internal class Update(
             val batch: LevelDB.WriteBatch,
@@ -719,6 +800,7 @@ object LedgerDB {
             state.nxtrng = PoS.nxtrng(state.nxtrng, blockGenerator)
             state.rollingCheckpoint = rollingCheckpoint
             state.upgraded = if (blockVersion.toUInt() > Block.VERSION.toUInt()) min(++state.upgraded, PoS.MATURITY) else max(--state.upgraded, 0)
+            state.forkV2 = if (blockVersion.toUInt() >= 2.toUInt()) min(++state.forkV2, PoS.MATURITY) else max(--state.forkV2, 0)
             val difficulty = PoS.nextDifficulty(undo!!.difficulty, undo!!.blockTime, blockTime)
             state.difficulty = difficulty
             state.cumulativeDifficulty = PoS.cumulativeDifficulty(undo!!.cumulativeDifficulty, difficulty)
@@ -731,6 +813,98 @@ object LedgerDB {
             writeBlockSizes(batch)
 
             batch.write()
+
+            if (snapshotHeights.contains(height))
+                snapshotImpl()
         }
+    }
+
+    @Serializable
+    class Snapshot(
+            private val balances: HashMap<PublicKey, Long> = HashMap()
+    ) {
+        fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
+        fun supply(): Long {
+            var supply = 0L
+            balances.forEach { (_, balance) -> supply += balance }
+            return supply
+        }
+
+        fun credit(publicKey: PublicKey, amount: Long) {
+            if (amount != 0L) {
+                val balance = balances.get(publicKey) ?: 0
+                balances.put(publicKey, balance + amount)
+            }
+        }
+
+        @Serializer(forClass = Snapshot::class)
+        companion object {
+            fun deserialize(bytes: ByteArray): Snapshot? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+
+            override fun deserialize(decoder: Decoder): Snapshot {
+                return when (decoder) {
+                    is BinaryDecoder -> {
+                        val size = decoder.decodeVarInt()
+                        val balances = newHashMapWithExpectedSize<PublicKey, Long>(size)
+                        for (i in 0 until size)
+                            balances.put(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE)), decoder.decodeVarLong())
+                        Snapshot(balances)
+                    }
+                    else -> throw RuntimeException("Unsupported decoder")
+                }
+            }
+
+            override fun serialize(encoder: Encoder, obj: Snapshot) {
+                when (encoder) {
+                    is BinaryEncoder -> {
+                        encoder.encodeVarInt(obj.balances.size)
+                        obj.balances.forEach { (publicKey, balance) ->
+                            encoder.encodeFixedByteArray(publicKey.bytes)
+                            encoder.encodeVarLong(balance)
+                        }
+                    }
+                    is JsonOutput -> {
+                        val balances = newHashMapWithExpectedSize<String, String>(obj.balances.size)
+                        obj.balances.forEach { (publicKey, balance) ->
+                            balances.put(publicKey.toString(), balance.toString())
+                        }
+                        @Suppress("NAME_SHADOWING")
+                        val encoder = encoder.beginStructure(descriptor)
+                        encoder.encodeSerializableElement(descriptor, 0, HashMapSerializer(String.serializer(), String.serializer()), balances)
+                        encoder.endStructure(descriptor)
+                    }
+                    else -> throw RuntimeException("Unsupported encoder")
+                }
+            }
+        }
+    }
+
+    private fun snapshotImpl() {
+        val snapshot = Snapshot()
+
+        iterateImpl(
+                { publicKey, account ->
+                    snapshot.credit(publicKey, account.balance())
+                    account.leases.forEach { lease ->
+                        snapshot.credit(lease.publicKey, lease.amount)
+                    }
+                },
+                { _, htlc ->
+                    snapshot.credit(htlc.from, htlc.amount)
+                },
+                { _, multisig ->
+                    multisig.deposits.forEach { (publicKey, amount) ->
+                        snapshot.credit(publicKey, amount)
+                    }
+                }
+        )
+
+        if (snapshot.supply() != state.supply)
+            logger.error("Snapshot supply does not match ledger")
+
+        val batch = LevelDB.createWriteBatch()
+        batch.put(SNAPSHOT_KEY, Ints.toByteArray(state.height), snapshot.serialize())
+        batch.write()
     }
 }

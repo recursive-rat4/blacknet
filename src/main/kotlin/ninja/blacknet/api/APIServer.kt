@@ -531,6 +531,29 @@ fun Application.APIServer() {
             }
         }
 
+        get("/api/v2/ledger/schedulesnapshot/{height}") {
+            val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
+
+            val result = BlockDB.mutex.withLock {
+                LedgerDB.scheduleSnapshotImpl(height)
+            }
+
+            call.respond(result.toString())
+        }
+
+        get("/api/v2/ledger/snapshot/{height}") {
+            val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
+
+            val result = LedgerDB.getSnapshot(height)
+
+            if (result != null)
+                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
+                    Json.stringify(LedgerDB.Snapshot.serializer(), result)
+                }
+            else
+                call.respond(HttpStatusCode.BadRequest, "Snapshot not found")
+        }
+
         get("/api/v1/txpool") {
             call.respond(Json.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
         }

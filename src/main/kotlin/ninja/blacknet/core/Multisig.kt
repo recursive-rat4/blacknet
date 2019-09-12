@@ -13,15 +13,19 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.util.sumByLong
 
 @Serializable
-data class Multisig(
-        val amount: Long,
+class Multisig(
         val n: Byte,
-        val keys: ArrayList<PublicKey>
+        val deposits: ArrayList<Pair<PublicKey, Long>>
 ) {
-    fun involves(publicKey: PublicKey): Boolean = keys.contains(publicKey)
+    fun involves(publicKey: PublicKey): Boolean = deposits.find { it.first == publicKey } != null
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
+    fun amount(): Long {
+        return deposits.sumByLong { it.second }
+    }
 
     companion object {
         fun deserialize(bytes: ByteArray): Multisig? = BinaryDecoder.fromBytes(bytes).decode(serializer())

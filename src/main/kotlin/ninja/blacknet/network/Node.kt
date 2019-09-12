@@ -186,16 +186,17 @@ object Node {
         connection.sendPacket(v)
     }
 
-    suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null) {
+    suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null): Int {
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
-        broadcastPacket(ann) {
+        return broadcastPacket(ann) {
             it != source && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
         }
     }
 
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
-        val status = ChainFetcher.stakedBlock(hash, bytes)
+        val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Status.ACCEPTED) {
+            logger.info("Announced to $n peers")
             return true
         } else {
             logger.info("$status block $hash")
@@ -254,14 +255,18 @@ object Node {
         return emptyList()
     }
 
-    private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }) {
+    private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }): Int {
         logger.debug { "Broadcasting ${packet.getType()}" }
+        var n = 0
         val bytes = packet.build()
         connections.forEach {
-            if (it.state.isConnected() && filter(it))
+            if (it.state.isConnected() && filter(it)) {
                 it.sendPacket(bytes.copy())
+                n += 1
+            }
         }
         bytes.release()
+        return n
     }
 
     private suspend fun listener(server: ServerSocket) {

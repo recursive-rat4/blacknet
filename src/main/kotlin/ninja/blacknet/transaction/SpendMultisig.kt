@@ -45,7 +45,7 @@ class SpendMultisig(
         for (i in signatures) {
             if (signatures.count { it.first == i.first } != 1)
                 return false
-            val publicKey = multisig.keys.getOrNull(i.first.toInt()) ?: return false
+            val publicKey = multisig.deposits.getOrNull(i.first.toInt())?.first ?: return false
             if (!Ed25519.verify(i.second, multisigHash, publicKey))
                 return false
         }
@@ -64,7 +64,7 @@ class SpendMultisig(
             logger.info("multisig not found")
             return false
         }
-        if (amounts.size != multisig.keys.size) {
+        if (amounts.size != multisig.deposits.size) {
             logger.info("invalid number of amounts")
             return false
         }
@@ -74,11 +74,11 @@ class SpendMultisig(
             logger.info("invalid total amount: ${e.message}")
             return false
         }
-        if (amount != multisig.amount) {
+        if (amount != multisig.amount()) {
             logger.info("invalid total amount")
             return false
         }
-        if (!multisig.keys.contains(tx.from)) {
+        if (multisig.deposits.find { it.first == tx.from } == null) {
             logger.info("invalid sender")
             return false
         }
@@ -94,15 +94,16 @@ class SpendMultisig(
         val height = ledger.height()
         undo.addMultisig(id, multisig)
 
-        for (i in multisig.keys.indices) {
+        for (i in multisig.deposits.indices) {
             if (amounts[i] < 0) {
                 logger.info("negative amount")
                 return false
             } else if (amounts[i] != 0L) {
-                val toAccount = ledger.getOrCreate(multisig.keys[i])
-                undo.add(multisig.keys[i], toAccount)
+                val publicKey = multisig.deposits[i].first
+                val toAccount = ledger.getOrCreate(publicKey)
+                undo.add(publicKey, toAccount)
                 toAccount.debit(height, amounts[i])
-                ledger.set(multisig.keys[i], toAccount)
+                ledger.set(publicKey, toAccount)
             }
         }
 

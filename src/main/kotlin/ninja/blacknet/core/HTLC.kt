@@ -16,7 +16,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-data class HTLC(
+class HTLC(
         val height: Int,
         val time: Long,
         val amount: Long,
