@@ -130,7 +130,7 @@ class AccountState(
 
     @Serializer(forClass = AccountState::class)
     companion object {
-        fun deserialize(bytes: ByteArray): AccountState? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): AccountState = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
         fun create(stake: Long = 0): AccountState {
             return AccountState(0, stake, ArrayList(), ArrayList())

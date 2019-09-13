@@ -26,13 +26,15 @@ import kotlin.experimental.and
  * Decoder from the Blacknet Binary Format
  */
 class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
-    fun <T : Any?> decode(loader: DeserializationStrategy<T>): T? {
+    fun <T : Any?> decode(loader: DeserializationStrategy<T>): T {
         val v = loader.deserialize(this)
-        if (input.remaining > 0) {
+        val remaining = input.remaining
+        if (remaining == 0L) {
+            return v
+        } else {
             input.release()
-            return null
+            throw RuntimeException("$remaining trailing bytes")
         }
-        return v
     }
 
     override fun decodeByte(): Byte = input.readByte()

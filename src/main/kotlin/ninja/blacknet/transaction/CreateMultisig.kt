@@ -108,7 +108,7 @@ class CreateMultisig(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): CreateMultisig? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): CreateMultisig = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

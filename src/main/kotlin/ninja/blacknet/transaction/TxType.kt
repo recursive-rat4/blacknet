@@ -27,7 +27,7 @@ enum class TxType(val type: Byte) {
     ;
 
     companion object {
-        fun getSerializer(type: Byte): KSerializer<out TxData>? {
+        fun getSerializer(type: Byte): KSerializer<out TxData> {
             return when (type) {
                 Transfer.type -> ninja.blacknet.transaction.Transfer.serializer()
                 Burn.type -> ninja.blacknet.transaction.Burn.serializer()
@@ -40,7 +40,7 @@ enum class TxType(val type: Byte) {
                 SpendHTLC.type -> ninja.blacknet.transaction.SpendHTLC.serializer()
                 CreateMultisig.type -> ninja.blacknet.transaction.CreateMultisig.serializer()
                 SpendMultisig.type -> ninja.blacknet.transaction.SpendMultisig.serializer()
-                else -> null
+                else -> throw RuntimeException("Unknown transaction type $type")
             }
         }
     }

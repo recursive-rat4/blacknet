@@ -48,7 +48,7 @@ class Lease(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): Lease? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Lease = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

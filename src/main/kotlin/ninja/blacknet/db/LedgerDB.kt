@@ -95,7 +95,7 @@ object LedgerDB {
         fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
         companion object {
-            fun deserialize(bytes: ByteArray): State? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+            fun deserialize(bytes: ByteArray): State = BinaryDecoder.fromBytes(bytes).decode(serializer())
         }
     }
 
@@ -177,7 +177,7 @@ object LedgerDB {
             val version = BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
 
             if (version == VERSION) {
-                state = LedgerDB.State.deserialize(stateBytes)!!
+                state = LedgerDB.State.deserialize(stateBytes)
                 logger.info("Blockchain height ${state.height}")
             } else if (version in 1..4) {
                 logger.info("Reindexing blockchain...")
@@ -311,7 +311,7 @@ object LedgerDB {
 
     fun getSnapshot(height: Int): Snapshot? {
         val bytes = LevelDB.get(SNAPSHOT_KEY, Ints.toByteArray(height)) ?: return null
-        return Snapshot.deserialize(bytes)!!
+        return Snapshot.deserialize(bytes)
     }
 
     internal fun getNextRollingCheckpoint(): Hash {
@@ -331,16 +331,16 @@ object LedgerDB {
 
     fun get(key: PublicKey): AccountState? {
         val bytes = LevelDB.get(ACCOUNT_KEY, key.bytes) ?: return null
-        return AccountState.deserialize(bytes)!!
+        return AccountState.deserialize(bytes)
     }
 
     private fun getUndo(hash: Hash): UndoBlock {
-        return UndoBlock.deserialize(LevelDB.get(UNDO_KEY, hash.bytes)!!)!!
+        return UndoBlock.deserialize(LevelDB.get(UNDO_KEY, hash.bytes)!!)
     }
 
     fun getChainIndex(hash: Hash): ChainIndex? {
         val bytes = LevelDB.get(CHAIN_KEY, hash.bytes) ?: return null
-        return ChainIndex.deserialize(bytes)!!
+        return ChainIndex.deserialize(bytes)
     }
 
     fun checkBlockHash(hash: Hash): Boolean {
@@ -368,17 +368,17 @@ object LedgerDB {
 
     fun getBlockNumber(hash: Hash): Int? {
         val bytes = LevelDB.get(CHAIN_KEY, hash.bytes) ?: return null
-        return ChainIndex.deserialize(bytes)!!.height
+        return ChainIndex.deserialize(bytes).height
     }
 
     fun getHTLC(id: Hash): HTLC? {
         val bytes = LevelDB.get(HTLC_KEY, id.bytes) ?: return null
-        return HTLC.deserialize(bytes)!!
+        return HTLC.deserialize(bytes)
     }
 
     fun getMultisig(id: Hash): Multisig? {
         val bytes = LevelDB.get(MULTISIG_KEY, id.bytes) ?: return null
-        return Multisig.deserialize(bytes)!!
+        return Multisig.deserialize(bytes)
     }
 
     private fun calcMaxBlockSize(): Int {
@@ -439,10 +439,6 @@ object LedgerDB {
         var fees = 0L
         for (bytes in block.transactions) {
             val tx = Transaction.deserialize(bytes.array)
-            if (tx == null) {
-                logger.info("deserialization failed")
-                return null
-            }
             val txHash = Transaction.Hasher(bytes.array)
             val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)
             if (status != DataDB.Status.ACCEPTED) {
@@ -671,7 +667,7 @@ object LedgerDB {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 if (entry.key.startsWith(ACCOUNT_KEY))
-                    account(PublicKey(LevelDB.sliceKey(entry, ACCOUNT_KEY)), AccountState.deserialize(entry.value)!!)
+                    account(PublicKey(LevelDB.sliceKey(entry, ACCOUNT_KEY)), AccountState.deserialize(entry.value))
                 else
                     break
             }
@@ -680,7 +676,7 @@ object LedgerDB {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 if (entry.key.startsWith(HTLC_KEY))
-                    htlc(Hash(LevelDB.sliceKey(entry, HTLC_KEY)), HTLC.deserialize(entry.value)!!)
+                    htlc(Hash(LevelDB.sliceKey(entry, HTLC_KEY)), HTLC.deserialize(entry.value))
                 else
                     break
             }
@@ -689,7 +685,7 @@ object LedgerDB {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 if (entry.key.startsWith(MULTISIG_KEY))
-                    multisig(Hash(LevelDB.sliceKey(entry, MULTISIG_KEY)), Multisig.deserialize(entry.value)!!)
+                    multisig(Hash(LevelDB.sliceKey(entry, MULTISIG_KEY)), Multisig.deserialize(entry.value))
                 else
                     break
             }
@@ -840,7 +836,7 @@ object LedgerDB {
 
         @Serializer(forClass = Snapshot::class)
         companion object {
-            fun deserialize(bytes: ByteArray): Snapshot? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+            fun deserialize(bytes: ByteArray): Snapshot = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
             override fun deserialize(decoder: Decoder): Snapshot {
                 return when (decoder) {

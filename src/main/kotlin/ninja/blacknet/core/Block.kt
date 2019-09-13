@@ -66,7 +66,7 @@ class Block(
         const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE
         const val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE
 
-        fun deserialize(bytes: ByteArray): Block? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Block = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
         fun create(previous: Hash, time: Long, generator: PublicKey): Block {
             return Block(VERSION, previous, time, generator, Hash.ZERO, Signature.EMPTY, ArrayList())
@@ -103,7 +103,7 @@ class Block(
                 if (txdetail) {
                     return JsonArray(block.transactions.map {
                         val bytes = it.array
-                        val tx = Transaction.deserialize(bytes) ?: throw RuntimeException("Deserialization error")
+                        val tx = Transaction.deserialize(bytes)
                         val txHash = Transaction.Hasher(bytes)
                         return@map tx.toJson(txHash, bytes.size)
                     })

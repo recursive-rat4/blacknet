@@ -1067,7 +1067,7 @@ fun Application.APIServer() {
                 if (raw)
                     return@get call.respond(result.toHex())
 
-                val tx = Transaction.deserialize(result)!!
+                val tx = Transaction.deserialize(result)
                 call.respond(Json.stringify(Transaction.Info.serializer(), Transaction.Info(tx, hash, result.size)))
             } else {
                 call.respond(HttpStatusCode.NotFound, "transaction not found")
@@ -1083,7 +1083,7 @@ fun Application.APIServer() {
                 if (raw)
                     return@get call.respond(result.toHex())
 
-                val tx = Transaction.deserialize(result)!!
+                val tx = Transaction.deserialize(result)
                 call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
                     Json.stringify(Transaction.Info.serializer(), Transaction.Info(tx, hash, result.size))
                 }

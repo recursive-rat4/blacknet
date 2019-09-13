@@ -85,7 +85,7 @@ class HTLC(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): HTLC? = BinaryDecoder.fromBytes(bytes).decode(HTLC.serializer())
+        fun deserialize(bytes: ByteArray): HTLC = BinaryDecoder.fromBytes(bytes).decode(HTLC.serializer())
 
         fun isValidTimeLockType(type: Byte): Boolean = TimeLockType.get(type) != null
         fun isValidHashType(type: Byte): Boolean = HashType.get(type) != null

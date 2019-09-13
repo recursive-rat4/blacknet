@@ -38,7 +38,7 @@ class BlockInfoV1(
             block.signature.toString(),
             block.transactions.map {
                 if (txdetail)
-                    TransactionInfo.fromBytes(it.array)?.let { Json.stringify(TransactionInfo.serializer(), it) } ?: "Deserialization error"
+                    Json.stringify(TransactionInfo.serializer(), TransactionInfo.fromBytes(it.array))
                 else
                     Transaction.Hasher(it.array).toString()
             }
