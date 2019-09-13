@@ -900,12 +900,12 @@ fun Application.APIServer() {
                 val connection = Node.connections.find { it.remoteAddress == address }
                 if (force || connection == null) {
                     Node.connectTo(address)
-                    call.respond("Connected")
+                    call.respond(true.toString())
                 } else {
-                    call.respond("Already connected on ${connection.localAddress}")
+                    call.respond(HttpStatusCode.BadRequest, "Already connected on ${connection.localAddress}")
                 }
             } catch (e: Throwable) {
-                call.respond(e.message ?: "Unknown error")
+                call.respond(HttpStatusCode.BadRequest, e.message ?: "Unknown error")
             }
         }
 
@@ -931,9 +931,9 @@ fun Application.APIServer() {
             val connection = Node.connections.find { it.remoteAddress == address }
             if (connection != null) {
                 connection.close(force)
-                call.respond("Disconnected")
+                call.respond(true.toString())
             } else {
-                call.respond("Not connected to ${address}")
+                call.respond(false.toString())
             }
         }
 
@@ -957,9 +957,9 @@ fun Application.APIServer() {
             val connection = Node.connections.find { it.peerId == id }
             if (connection != null) {
                 connection.close(force)
-                call.respond("Disconnected")
+                call.respond(true.toString())
             } else {
-                call.respond("Not connected")
+                call.respond(false.toString())
             }
         }
 
