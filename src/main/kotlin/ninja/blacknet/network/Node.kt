@@ -240,17 +240,23 @@ object Node {
         }
     }
 
-    suspend fun warnings(): List<String> {
-        connections.mutex.withLock {
-            val size = connections.list.size
-            if (size >= 5) {
-                val offsets = Array(size) { connections.list[it].timeOffset }
-                offsets.sort()
-                val median = offsets[size / 2]
-                if (median > PoS.MAX_FUTURE_DRIFT || median < -PoS.MAX_FUTURE_DRIFT)
-                    return listOf("Please check your system clock. Many peers report different time.")
-            }
+    suspend fun timeOffset(): Long = connections.mutex.withLock {
+        val size = connections.list.size
+        if (size >= 5) {
+            val offsets = Array(size) { connections.list[it].timeOffset }
+            offsets.sort()
+            val median = offsets[size / 2]
+            return median
+        } else {
+            return 0
         }
+    }
+
+    suspend fun warnings(): List<String> {
+        val timeOffset = timeOffset()
+
+        if (timeOffset > PoS.MAX_FUTURE_DRIFT || timeOffset < -PoS.MAX_FUTURE_DRIFT)
+            return listOf("Please check your system clock. Many peers report different time.")
 
         return emptyList()
     }
