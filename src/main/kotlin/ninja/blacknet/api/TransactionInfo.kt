@@ -11,15 +11,17 @@ package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.json
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.transaction.TxData
+import ninja.blacknet.transaction.TxType
 
 @Serializable
-class TransactionNotification(
+class TransactionInfo(
         val hash: String,
-        val time: Long,
         val size: Int,
         val signature: String,
         val from: String,
@@ -29,9 +31,8 @@ class TransactionNotification(
         val type: Int,
         val data: JsonElement
 ) {
-    constructor(tx: Transaction, hash: Hash, time: Long, size: Int) : this(
+    constructor(tx: Transaction, hash: Hash, size: Int) : this(
             hash.toString(),
-            time,
             size,
             tx.signature.toString(),
             Address.encode(tx.from),
@@ -39,8 +40,16 @@ class TransactionNotification(
             tx.blockHash.toString(),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
-            TransactionInfo.data(tx.type, tx.data.array)
+            data(tx.type, tx.data.array)
     )
 
     fun toJson() = Json.toJson(serializer(), this)
+
+    companion object {
+        fun data(type: Byte, bytes: ByteArray): JsonElement {
+            if (type == TxType.Generated.type) return json {}
+            val txData = TxData.deserialize(type, bytes)
+            return txData.toJson()
+        }
+    }
 }

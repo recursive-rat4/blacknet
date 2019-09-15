@@ -17,7 +17,7 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.*
 
 @Serializable
-class TransactionInfo(
+class TransactionInfoV1(
         val hash: String,
         val size: Int,
         val signature: String,
@@ -41,9 +41,9 @@ class TransactionInfo(
     )
 
     companion object {
-        fun fromBytes(bytes: ByteArray): TransactionInfo {
+        fun fromBytes(bytes: ByteArray): TransactionInfoV1 {
             val hash = Transaction.Hasher(bytes)
-            return TransactionInfo(Transaction.deserialize(bytes), hash, bytes.size)
+            return TransactionInfoV1(Transaction.deserialize(bytes), hash, bytes.size)
         }
 
         private fun data(type: Byte, bytes: ByteArray): String {

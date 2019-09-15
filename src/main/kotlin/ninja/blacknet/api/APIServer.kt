@@ -11,6 +11,7 @@
 package ninja.blacknet.api
 
 import io.ktor.application.Application
+import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.DefaultHeaders
@@ -37,6 +38,7 @@ import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.list
 import ninja.blacknet.Config
 import ninja.blacknet.api.v1.BlockInfoV1
@@ -265,9 +267,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/peers") {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(PeerInfo.serializer().list, PeerInfo.getAll())
-            }
+            call.respondJson(PeerInfo.serializer().list, PeerInfo.getAll())
         }
 
         get("/api/v1/nodeinfo") {
@@ -275,9 +275,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/node") {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(NodeInfo.serializer(), NodeInfo.get())
-            }
+            call.respondJson(NodeInfo.serializer(), NodeInfo.get())
         }
 
         get("/api/v1/peerdb") {
@@ -285,9 +283,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/peerdb") {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get())
-            }
+            call.respondJson(PeerDBInfo.serializer(), PeerDBInfo.get())
         }
 
         get("/api/v1/peerdb/networkstat") {
@@ -295,9 +291,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/peerdb/networkstat") {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get(true))
-            }
+            call.respondJson(PeerDBInfo.serializer(), PeerDBInfo.get(true))
         }
 
         get("/api/v1/leveldb/stats") {
@@ -325,7 +319,7 @@ fun Application.APIServer() {
 
             val result = BlockDB.block(hash)
             if (result != null)
-                call.respond(Json.stringify(Block.Info.serializer(), Block.Info(result.first, hash, result.second, txdetail)))
+                call.respond(Json.stringify(BlockInfo.serializer(), BlockInfo(result.first, hash, result.second, txdetail)))
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
@@ -336,9 +330,7 @@ fun Application.APIServer() {
 
             val result = BlockDB.block(hash)
             if (result != null)
-                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                    Json.stringify(Block.Info.serializer(), Block.Info(result.first, hash, result.second, txdetail))
-                }
+                call.respondJson(BlockInfo.serializer(), BlockInfo(result.first, hash, result.second, txdetail))
             else
                 call.respond(HttpStatusCode.BadRequest, "Block not found")
         }
@@ -436,9 +428,7 @@ fun Application.APIServer() {
 
             val result = LedgerDB.getChainIndex(hash)
             if (result != null)
-                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                    Json.stringify(ChainIndex.serializer(), result)
-                }
+                call.respondJson(ChainIndex.serializer(), result)
             else
                 call.respond(HttpStatusCode.BadRequest, "Block not found")
         }
@@ -494,9 +484,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/ledger") {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(LedgerInfo.serializer(), LedgerInfo.get())
-            }
+            call.respondJson(LedgerInfo.serializer(), LedgerInfo.get())
         }
 
         get("/api/v1/ledger/get/{account}/{confirmations?}") {
@@ -514,9 +502,7 @@ fun Application.APIServer() {
             val confirmations = call.parameters["confirmations"]?.toIntOrNull() ?: PoS.DEFAULT_CONFIRMATIONS
             val result = AccountInfo.get(publicKey, confirmations)
             if (result != null)
-                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                    Json.stringify(AccountInfo.serializer(), result)
-                }
+                call.respondJson(AccountInfo.serializer(), result)
             else
                 call.respond(HttpStatusCode.BadRequest, "Account not found")
         }
@@ -526,9 +512,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/ledger/check") {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(LedgerDB.Check.serializer(), LedgerDB.check())
-            }
+            call.respondJson(LedgerDB.Check.serializer(), LedgerDB.check())
         }
 
         get("/api/v2/ledger/schedulesnapshot/{height}") {
@@ -547,9 +531,7 @@ fun Application.APIServer() {
             val result = LedgerDB.getSnapshot(height)
 
             if (result != null)
-                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                    Json.stringify(LedgerDB.Snapshot.serializer(), result)
-                }
+                call.respondJson(LedgerDB.Snapshot.serializer(), result)
             else
                 call.respond(HttpStatusCode.BadRequest, "Snapshot not found")
         }
@@ -559,8 +541,22 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/txpool") {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(TxPoolInfo.serializer(), TxPoolInfo.get())
+            call.respondJson(TxPoolInfo.serializer(), TxPoolInfo.get())
+        }
+
+        get("/api/v2/txpool/transaction/{hash}/{raw?}") {
+            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
+            val raw = call.parameters["raw"]?.toBoolean() ?: false
+
+            val result = TxPool.get(hash)
+            if (result != null) {
+                if (raw)
+                    return@get call.respond(result.toHex())
+
+                val tx = Transaction.deserialize(result)
+                call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Transaction not found")
             }
         }
 
@@ -573,9 +569,7 @@ fun Application.APIServer() {
         get("/api/v2/generateaccount/{wordlist?}") {
             val wordlist = Bip39.wordlist(call.parameters["wordlist"] ?: "english") ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid wordlist")
 
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(MnemonicInfo.serializer(), MnemonicInfo.new(wordlist))
-            }
+            call.respondJson(MnemonicInfo.serializer(), MnemonicInfo.new(wordlist))
         }
 
         get("/api/v1/address/info/{address}") {
@@ -587,9 +581,7 @@ fun Application.APIServer() {
         get("/api/v2/address/{address}") {
             val info = AddressInfo.fromString(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(AddressInfo.serializer(), info)
-            }
+            call.respondJson(AddressInfo.serializer(), info)
         }
         
         post("/api/v1/mnemonic/info/{mnemonic}") {
@@ -602,9 +594,7 @@ fun Application.APIServer() {
             val parameters = call.receiveParameters()
             val info = MnemonicInfo.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
 
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(MnemonicInfo.serializer(), info)
-            }
+            call.respondJson(MnemonicInfo.serializer(), info)
         }
 
         post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}/{blockHash?}/") {
@@ -1026,9 +1016,7 @@ fun Application.APIServer() {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
             WalletDB.mutex.withLock {
-                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                    Json.stringify(WalletDB.Wallet.serializer(), WalletDB.getWalletImpl(publicKey))
-                }
+                call.respondJson(WalletDB.Wallet.serializer(), WalletDB.getWalletImpl(publicKey))
             }
         }
 
@@ -1041,9 +1029,7 @@ fun Application.APIServer() {
         get("/api/v2/wallet/outleases/{address}") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(AccountState.Lease.serializer().list, WalletDB.getOutLeases(publicKey))
-            }
+            call.respondJson(AccountState.Lease.serializer().list, WalletDB.getOutLeases(publicKey))
         }
 
         get("/api/v1/walletdb/getsequence/{address}") {
@@ -1068,7 +1054,7 @@ fun Application.APIServer() {
                     return@get call.respond(result.toHex())
 
                 val tx = Transaction.deserialize(result)
-                call.respond(Json.stringify(Transaction.Info.serializer(), Transaction.Info(tx, hash, result.size)))
+                call.respond(Json.stringify(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size)))
             } else {
                 call.respond(HttpStatusCode.NotFound, "transaction not found")
             }
@@ -1084,9 +1070,7 @@ fun Application.APIServer() {
                     return@get call.respond(result.toHex())
 
                 val tx = Transaction.deserialize(result)
-                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                    Json.stringify(Transaction.Info.serializer(), Transaction.Info(tx, hash, result.size))
-                }
+                call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))
             } else {
                 call.respond(HttpStatusCode.BadRequest, "Transaction not found")
             }
@@ -1122,5 +1106,11 @@ fun Application.APIServer() {
                 call.respond(false.toString())
             }
         }
+    }
+}
+
+private suspend fun <T> ApplicationCall.respondJson(serializer: SerializationStrategy<T>, obj: T) {
+    respondText(ContentType.Application.Json, HttpStatusCode.OK) {
+        Json.stringify(serializer, obj)
     }
 }

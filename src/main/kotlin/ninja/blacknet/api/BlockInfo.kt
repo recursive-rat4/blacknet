@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Pavel Vasin
+ * Copyright (c) 2019 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -7,18 +7,21 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api.v1
+package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonLiteral
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.serialization.Json
 
 @Serializable
-class BlockInfoV1(
+class BlockInfo(
+        val hash: String,
         val size: Int,
         val version: Int,
         val previous: String,
@@ -26,9 +29,10 @@ class BlockInfoV1(
         val generator: String,
         val contentHash: String,
         val signature: String,
-        val transactions: List<String>
+        val transactions: JsonElement
 ) {
-    constructor(block: Block, size: Int, txdetail: Boolean) : this(
+    constructor(block: Block, hash: Hash, size: Int, txdetail: Boolean) : this(
+            hash.toString(),
             size,
             block.version,
             block.previous.toString(),
@@ -36,18 +40,22 @@ class BlockInfoV1(
             Address.encode(block.generator),
             block.contentHash.toString(),
             block.signature.toString(),
-            block.transactions.map {
-                if (txdetail)
-                    Json.stringify(TransactionInfoV1.serializer(), TransactionInfoV1.fromBytes(it.array))
-                else
-                    Transaction.Hasher(it.array).toString()
-            }
+            transactions(block, txdetail)
     )
 
+    fun toJson() = Json.toJson(serializer(), this)
+
     companion object {
-        suspend fun get(hash: Hash, txdetail: Boolean): BlockInfoV1? {
-            val block = BlockDB.block(hash) ?: return null
-            return BlockInfoV1(block.first, block.second, txdetail)
+        private fun transactions(block: Block, txdetail: Boolean): JsonElement {
+            if (txdetail) {
+                return JsonArray(block.transactions.map {
+                    val bytes = it.array
+                    val tx = Transaction.deserialize(bytes)
+                    val txHash = Transaction.Hasher(bytes)
+                    return@map TransactionInfo(tx, txHash, bytes.size).toJson()
+                })
+            }
+            return JsonLiteral(block.transactions.size)
         }
     }
 }
