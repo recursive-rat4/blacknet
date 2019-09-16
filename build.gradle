@@ -1,8 +1,8 @@
 buildscript {
     ext.kotlin_version = '1.3.41'
-    ext.coroutines_version = '1.2.2'
-    ext.serialization_version = '0.11.1'
-    ext.ktor_version = '1.2.3'
+    ext.coroutines_version = '1.3.1'
+    ext.serialization_version = '0.13.0'
+    ext.ktor_version = '1.2.4'
 
     repositories {
         jcenter()
@@ -36,20 +36,20 @@ dependencies {
     compile "io.ktor:ktor-network:$ktor_version"
     compile "io.ktor:ktor-server-cio:$ktor_version"
     compile "io.ktor:ktor-websockets:$ktor_version"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core-common:$coroutines_version"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutines_version"
     compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
     compile "net.i2p.crypto:eddsa:0.3.0"
     compile "com.rfksystems:blake2b:1.0.0"
     compile 'org.iq80.leveldb:leveldb:0.12'
-    compile "org.slf4j:slf4j-jdk14:1.7.25"
-    compile 'io.github.microutils:kotlin-logging:1.7.4'
+    compile "org.slf4j:slf4j-jdk14:1.7.28"
+    compile 'io.github.microutils:kotlin-logging:1.7.6'
     compile 'org.briarproject:jtorctl:0.3'
     compile 'com.natpryce:konfig:1.6.10.0'
-    compile 'com.google.guava:guava:28.0-jre'
+    compile 'com.google.guava:guava:28.1-jre'
     compile 'org.bitlet:weupnp:0.1.4'
-    compile 'org.bouncycastle:bcprov-jdk15on:1.62'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.63'
     compile 'org.ethereum:leveldbjni-all:1.18.3'
 }
 
