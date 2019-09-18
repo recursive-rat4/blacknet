@@ -157,7 +157,7 @@ enum class Network(val addrSize: Int) {
             when (address.network) {
                 IPv4, IPv6 -> {
                     if (socksProxy != null) {
-                        val c = Socks5(socksProxy).connect(address)
+                        val c = Socks5.connect(socksProxy, address)
                         return Connection(c.socket, c.readChannel, c.writeChannel, address, socksProxy, Connection.State.OUTGOING_WAITING)
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
@@ -169,7 +169,7 @@ enum class Network(val addrSize: Int) {
                 }
                 TORv2, TORv3 -> {
                     if (torProxy == null) throw RuntimeException("Tor proxy is not set")
-                    val c = Socks5(torProxy).connect(address)
+                    val c = Socks5.connect(torProxy, address)
                     return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
                 I2P -> {
