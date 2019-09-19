@@ -356,8 +356,7 @@ object Node {
 
             val currTime = Runtime.time()
 
-            addresses.forEach {
-                val address = it
+            addresses.forEach { address ->
                 Runtime.launch {
                     try {
                         connectTo(address)
