@@ -41,13 +41,13 @@ class TransactionInfo(
     )
 
     companion object {
-        fun fromBytes(bytes: ByteArray): TransactionInfo? {
+        fun fromBytes(bytes: ByteArray): TransactionInfo {
             val hash = Transaction.Hasher(bytes)
-            return Transaction.deserialize(bytes)?.let { TransactionInfo(it, hash, bytes.size) }
+            return TransactionInfo(Transaction.deserialize(bytes), hash, bytes.size)
         }
 
         private fun data(type: Byte, bytes: ByteArray): String {
-            val txData = TxData.deserialize(type, bytes) ?: return "Deserialization error"
+            val txData = TxData.deserialize(type, bytes)
             return when (type) {
                 TxType.Transfer.type -> Json.stringify(TransferInfo.serializer(), TransferInfo(txData as Transfer))
                 TxType.Burn.type -> Json.stringify(Burn.serializer(), txData as Burn)

@@ -53,10 +53,6 @@ interface Ledger {
             return DataDB.Status.INVALID
         }
         val data = tx.data()
-        if (data == null) {
-            logger.info("deserialization of tx data failed")
-            return DataDB.Status.INVALID
-        }
         return data.process(tx, hash, this, undo)
     }
 }

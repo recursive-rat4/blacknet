@@ -57,7 +57,7 @@ object PeerDB {
 
         val hashMap = if (version == VERSION) {
             if (stateBytes != null) {
-                BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), Entry.serializer()))!!
+                BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), Entry.serializer()))
             } else {
                 emptyMap<Address, Entry>()
             }
@@ -65,7 +65,7 @@ object PeerDB {
             val batch = LevelDB.createWriteBatch()
 
             val hashMapV1 = if (stateBytes != null) {
-                val stateV1 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), EntryV1.serializer()))!!
+                val stateV1 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), EntryV1.serializer()))
                 logger.info("Importing ${stateV1.size} addresses from PeerDB v1")
                 val result = HashMap<Address, Entry>(stateV1.size)
                 stateV1.forEach { (address, entryV1) ->

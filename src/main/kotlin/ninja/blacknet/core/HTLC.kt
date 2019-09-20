@@ -16,7 +16,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-data class HTLC(
+class HTLC(
         val height: Int,
         val time: Long,
         val amount: Long,
@@ -85,7 +85,7 @@ data class HTLC(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): HTLC? = BinaryDecoder.fromBytes(bytes).decode(HTLC.serializer())
+        fun deserialize(bytes: ByteArray): HTLC = BinaryDecoder.fromBytes(bytes).decode(HTLC.serializer())
 
         fun isValidTimeLockType(type: Byte): Boolean = TimeLockType.get(type) != null
         fun isValidHashType(type: Byte): Boolean = HashType.get(type) != null

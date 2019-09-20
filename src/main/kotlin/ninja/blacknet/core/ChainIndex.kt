@@ -27,7 +27,7 @@ class ChainIndex(
 
     @Serializer(forClass = ChainIndex::class)
     companion object {
-        fun deserialize(bytes: ByteArray): ChainIndex? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): ChainIndex = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
         override fun deserialize(decoder: Decoder): ChainIndex {
             return when (decoder) {

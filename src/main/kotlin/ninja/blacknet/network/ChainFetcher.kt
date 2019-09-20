@@ -35,7 +35,7 @@ object ChainFetcher {
     private var request: Deferred<Blocks>? = null
     private var connectedBlocks = 0
     @Volatile
-    private var stakedBlock: Triple<Hash, ByteArray, CompletableDeferred<Status>>? = null
+    private var stakedBlock: Triple<Hash, ByteArray, CompletableDeferred<Pair<Status, Int>>>? = null
     @Volatile
     private var syncChain: ChainData? = null
     private var originalChain: Hash? = null
@@ -65,12 +65,12 @@ object ChainFetcher {
         chains.offer(ChainData(connection, chain, cumulativeDifficulty))
     }
 
-    suspend fun stakedBlock(hash: Hash, bytes: ByteArray): Status {
-        val status = CompletableDeferred<Status>()
-        stakedBlock = Triple(hash, bytes, status)
+    suspend fun stakedBlock(hash: Hash, bytes: ByteArray): Pair<Status, Int> {
+        val deferred = CompletableDeferred<Pair<Status, Int>>()
+        stakedBlock = Triple(hash, bytes, deferred)
         request?.cancel(CancellationException("Staked new block"))
         chains.offer(null)
-        return status.await()
+        return deferred.await()
     }
 
     private suspend fun fetcher() {
@@ -79,11 +79,13 @@ object ChainFetcher {
 
             stakedBlock?.let { (hash, bytes, deferred) ->
                 val status = BlockDB.process(hash, bytes)
-                if (status == Status.ACCEPTED)
-                    Node.announceChain(hash, LedgerDB.cumulativeDifficulty())
+                val n = when (status) {
+                    Status.ACCEPTED -> Node.announceChain(hash, LedgerDB.cumulativeDifficulty())
+                    else -> 0
+                }
 
                 stakedBlock = null
-                deferred.complete(status)
+                deferred.complete(Pair(status, n))
             }
 
             if (data == null)

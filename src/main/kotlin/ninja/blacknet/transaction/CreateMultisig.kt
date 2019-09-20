@@ -102,15 +102,13 @@ class CreateMultisig(
 
         undo.addMultisig(hash, null)
 
-        val keys = ArrayList<PublicKey>(deposits.size)
-        deposits.mapTo(keys) { it.first }
-        val multisig = Multisig(total, n, keys)
+        val multisig = Multisig(n, deposits)
         ledger.addMultisig(hash, multisig)
         return true
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): CreateMultisig? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): CreateMultisig = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

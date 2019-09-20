@@ -33,7 +33,7 @@ class Transaction(
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
     fun toJson(hash: Hash, size: Int) = Json.toJson(Info.serializer(), Info(this, hash, size))
 
-    fun data(): TxData? {
+    fun data(): TxData {
         return TxData.deserialize(type, data.array)
     }
 
@@ -56,7 +56,7 @@ class Transaction(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): Transaction? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Transaction = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
         fun create(from: PublicKey, seq: Int, blockHash: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
             return Transaction(Signature.EMPTY, from, seq, blockHash, fee, type, SerializableByteArray(data))
@@ -114,7 +114,7 @@ class Transaction(
         companion object {
             fun data(type: Byte, bytes: ByteArray): JsonElement {
                 if (type == TxType.Generated.type) return json {}
-                val txData = TxData.deserialize(type, bytes) ?: throw RuntimeException("Deserialization error")
+                val txData = TxData.deserialize(type, bytes)
                 return txData.toJson()
             }
         }

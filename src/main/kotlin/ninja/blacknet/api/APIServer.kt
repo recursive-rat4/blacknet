@@ -531,6 +531,29 @@ fun Application.APIServer() {
             }
         }
 
+        get("/api/v2/ledger/schedulesnapshot/{height}") {
+            val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
+
+            val result = BlockDB.mutex.withLock {
+                LedgerDB.scheduleSnapshotImpl(height)
+            }
+
+            call.respond(result.toString())
+        }
+
+        get("/api/v2/ledger/snapshot/{height}") {
+            val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
+
+            val result = LedgerDB.getSnapshot(height)
+
+            if (result != null)
+                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
+                    Json.stringify(LedgerDB.Snapshot.serializer(), result)
+                }
+            else
+                call.respond(HttpStatusCode.BadRequest, "Snapshot not found")
+        }
+
         get("/api/v1/txpool") {
             call.respond(Json.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
         }
@@ -877,12 +900,12 @@ fun Application.APIServer() {
                 val connection = Node.connections.find { it.remoteAddress == address }
                 if (force || connection == null) {
                     Node.connectTo(address)
-                    call.respond("Connected")
+                    call.respond(true.toString())
                 } else {
-                    call.respond("Already connected on ${connection.localAddress}")
+                    call.respond(HttpStatusCode.BadRequest, "Already connected on ${connection.localAddress}")
                 }
             } catch (e: Throwable) {
-                call.respond(e.message ?: "Unknown error")
+                call.respond(HttpStatusCode.BadRequest, e.message ?: "Unknown error")
             }
         }
 
@@ -908,9 +931,9 @@ fun Application.APIServer() {
             val connection = Node.connections.find { it.remoteAddress == address }
             if (connection != null) {
                 connection.close(force)
-                call.respond("Disconnected")
+                call.respond(true.toString())
             } else {
-                call.respond("Not connected to ${address}")
+                call.respond(false.toString())
             }
         }
 
@@ -934,9 +957,9 @@ fun Application.APIServer() {
             val connection = Node.connections.find { it.peerId == id }
             if (connection != null) {
                 connection.close(force)
-                call.respond("Disconnected")
+                call.respond(true.toString())
             } else {
-                call.respond("Not connected")
+                call.respond(false.toString())
             }
         }
 
@@ -1044,7 +1067,7 @@ fun Application.APIServer() {
                 if (raw)
                     return@get call.respond(result.toHex())
 
-                val tx = Transaction.deserialize(result)!!
+                val tx = Transaction.deserialize(result)
                 call.respond(Json.stringify(Transaction.Info.serializer(), Transaction.Info(tx, hash, result.size)))
             } else {
                 call.respond(HttpStatusCode.NotFound, "transaction not found")
@@ -1060,7 +1083,7 @@ fun Application.APIServer() {
                 if (raw)
                     return@get call.respond(result.toHex())
 
-                val tx = Transaction.deserialize(result)!!
+                val tx = Transaction.deserialize(result)
                 call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
                     Json.stringify(Transaction.Info.serializer(), Transaction.Info(tx, hash, result.size))
                 }

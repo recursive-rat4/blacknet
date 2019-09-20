@@ -27,7 +27,7 @@ enum class PacketType {
     ;
 
     companion object {
-        fun getSerializer(type: Int): KSerializer<out Packet>? {
+        fun getSerializer(type: Int): KSerializer<out Packet> {
             return when (type) {
                 Version.ordinal -> ninja.blacknet.packet.Version.serializer()
                 Ping.ordinal -> ninja.blacknet.packet.Ping.serializer()
@@ -41,7 +41,7 @@ enum class PacketType {
                 Blocks.ordinal -> ninja.blacknet.packet.Blocks.serializer()
                 ChainAnnounce.ordinal -> ninja.blacknet.packet.ChainAnnounce.serializer()
                 ChainFork.ordinal -> ninja.blacknet.packet.ChainFork.serializer()
-                else -> null
+                else -> throw RuntimeException("Unknown packet type $type")
             }
         }
     }

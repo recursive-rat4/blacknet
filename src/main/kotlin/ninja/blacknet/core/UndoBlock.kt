@@ -29,12 +29,13 @@ class UndoBlock(
         val txHashes: ArrayList<Hash>,
         val accounts: UndoAccountList,
         val htlcs: UndoHTLCList,
-        val multisigs: UndoMultisigList
+        val multisigs: UndoMultisigList,
+        val forkV2: Int
 ) {
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
     companion object {
-        fun deserialize(bytes: ByteArray): UndoBlock? = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): UndoBlock = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 }
 
@@ -48,6 +49,7 @@ open class UndoBuilder(
         val upgraded: Int,
         val blockSize: Int,
         val txHashes: ArrayList<Hash>,
+        val forkV2: Int,
         private val accounts: HashMap<PublicKey, AccountState> = HashMap(),
         private val htlcs: HashMap<Hash, HTLC?> = HashMap(),
         private val multisigs: HashMap<Hash, Multisig?> = HashMap()
@@ -80,7 +82,8 @@ open class UndoBuilder(
                 txHashes,
                 accounts.toArrayList(),
                 htlcs.toArrayList(),
-                multisigs.toArrayList())
+                multisigs.toArrayList(),
+                forkV2)
     }
 }
 

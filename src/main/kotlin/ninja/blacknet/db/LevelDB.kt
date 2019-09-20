@@ -12,6 +12,7 @@ package ninja.blacknet.db
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dbcache
+import ninja.blacknet.util.startsWith
 import org.iq80.leveldb.*
 import java.io.File
 
@@ -25,12 +26,25 @@ object LevelDB {
         return db.iterator()
     }
 
+    internal fun seek(iterator: DBIterator, key: ByteArray): Boolean {
+        iterator.seek(key)
+        return if (iterator.hasNext())
+            iterator.peekNext().key.startsWith(key)
+        else
+            false
+    }
+
     fun getProperty(name: String): String? {
         return db.getProperty(name)
     }
 
     internal fun key(key1: ByteArray, key2: ByteArray): ByteArray {
         return key1 + key2
+    }
+
+    internal fun sliceKey(entry: Map.Entry<ByteArray, ByteArray>, key1: ByteArray): ByteArray {
+        val key = entry.key
+        return key.copyOfRange(key1.size, key.size)
     }
 
     internal fun get(key: ByteArray): ByteArray? {

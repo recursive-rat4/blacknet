@@ -147,7 +147,7 @@ object WalletDB {
                     wallet.transactions.forEach { (hash, txData) ->
                         if (txData.height == 0 && txData.type != TxType.Generated.type) {
                             val bytes = getTransaction(hash)!!
-                            val tx = Transaction.deserialize(bytes)!!
+                            val tx = Transaction.deserialize(bytes)
                             unconfirmed.add(Triple(hash, bytes, tx))
                         }
                     }
@@ -262,7 +262,7 @@ object WalletDB {
         var updated = false
 
         val from = tx.from == publicKey
-        if (from || tx.data()!!.involves(publicKey)) {
+        if (from || tx.data().involves(publicKey)) {
             val txData = wallet.transactions.get(hash)
             if (txData == null) {
                 wallet.transactions.put(hash, TransactionData(tx.type, time, height))
@@ -356,7 +356,7 @@ object WalletDB {
                 val wallet = Wallet(seq, HashMap(size * 2))
                 for (i in 0 until size) {
                     val hash = Hash(decoder.decodeFixedByteArray(Hash.SIZE))
-                    val tx = Transaction.deserialize(getTransaction(hash)!!)!!
+                    val tx = Transaction.deserialize(getTransaction(hash)!!)
                     wallet.transactions.put(hash, TransactionData(tx.type, decoder.decodeVarLong(), decoder.decodeVarInt()))
                 }
                 return wallet
@@ -421,7 +421,7 @@ object WalletDB {
             when (txData.type) {
                 TxType.Lease.type,
                 TxType.CancelLease.type -> {
-                    val tx = Transaction.deserialize(getTransaction(hash)!!)!!
+                    val tx = Transaction.deserialize(getTransaction(hash)!!)
                     transactions.add(Pair(tx, txData))
                 }
             }
@@ -431,10 +431,10 @@ object WalletDB {
 
         transactions.forEach { (tx, txData) ->
             if (tx.type == TxType.Lease.type) {
-                val data = Lease.deserialize(tx.data.array)!!
+                val data = Lease.deserialize(tx.data.array)
                 leases.add(AccountState.Lease(data.to, txData.height, data.amount))
             } else if (tx.type == TxType.CancelLease.type) {
-                val data = CancelLease.deserialize(tx.data.array)!!
+                val data = CancelLease.deserialize(tx.data.array)
                 if (!leases.remove(AccountState.Lease(data.to, data.height, data.amount)))
                     logger.warn("Lease not found")
             }
@@ -455,7 +455,7 @@ object WalletDB {
             val block = BlockDB.blockImpl(hash)!!.first
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
-                val tx = Transaction.deserialize(bytes.array)!!
+                val tx = Transaction.deserialize(bytes.array)
                 val txHash = Transaction.Hasher(bytes.array)
                 processTransactionImpl(publicKey, wallet, txHash, tx, bytes.array, block.time, height, batch, true)
             }
@@ -487,7 +487,7 @@ object WalletDB {
         wallets.forEach { (publicKey, wallet) ->
             wallet.transactions.forEach { (hash, txData) ->
                 val bytes = getTransaction(hash)!!
-                val tx = Transaction.deserialize(bytes)!!
+                val tx = Transaction.deserialize(bytes)
                 if (tx.type == TxType.Generated.type && tx.blockHash != Hash.ZERO) {
                     if (txData.height != 0 && !LedgerDB.chainContains(tx.blockHash))
                         txData.height = 0

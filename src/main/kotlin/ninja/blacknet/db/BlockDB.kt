@@ -33,10 +33,6 @@ object BlockDB : DataDB() {
     suspend fun blockImpl(hash: Hash): Pair<Block, Int>? {
         val bytes = getImpl(hash) ?: return null
         val block = Block.deserialize(bytes)
-        if (block == null) {
-            logger.error("$hash deserialization failed")
-            return null
-        }
         return Pair(block, bytes.size)
     }
 
@@ -58,10 +54,6 @@ object BlockDB : DataDB() {
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
         val block = Block.deserialize(bytes)
-        if (block == null) {
-            logger.info("deserialization failed")
-            return Status.INVALID
-        }
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
             val percent = 100 * LedgerDB.upgraded() / PoS.MATURITY
             if (percent > 9)

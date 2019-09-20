@@ -22,6 +22,7 @@ class NodeInfo(
         val protocolVersion: Int,
         val outgoing: Int,
         val incoming: Int,
+        val timeOffset: Long,
         val listening: List<String>,
         val warnings: List<String>
 ) {
@@ -35,6 +36,7 @@ class NodeInfo(
                     Node.version,
                     Node.outgoing(),
                     Node.incoming(),
+                    Node.timeOffset(),
                     listening,
                     warnings)
         }

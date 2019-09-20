@@ -12,6 +12,7 @@ package ninja.blacknet.packet
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.ByteReadPacket
 import ninja.blacknet.network.Connection
+import ninja.blacknet.serialization.BinaryDecoder
 
 const val PACKET_HEADER_SIZE = 4
 
@@ -27,5 +28,12 @@ interface Packet {
         b.writeInt(getType().ordinal)
         b.writePacket(s)
         return b.build()
+    }
+
+    companion object {
+        fun deserialize(type: Int, bytes: ByteReadPacket): Packet {
+            val serializer = PacketType.getSerializer(type)
+            return BinaryDecoder(bytes).decode(serializer)
+        }
     }
 }

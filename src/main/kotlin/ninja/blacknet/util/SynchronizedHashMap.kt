@@ -9,6 +9,7 @@
 
 package ninja.blacknet.util
 
+import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -19,7 +20,7 @@ class SynchronizedHashMap<K, V>(
         val mutex: Mutex = Mutex(),
         val map: HashMap<K, V> = HashMap()
 ) {
-    constructor(expectedSize: Int, loadFactor: Float = DEFAULT_LOAD_FACTOR) : this(map = HashMap(capacity(expectedSize, loadFactor), loadFactor))
+    constructor(expectedSize: Int) : this(map = newHashMapWithExpectedSize(expectedSize))
 
     suspend inline fun copy() = mutex.withLock { HashMap(map) }
 
@@ -61,11 +62,5 @@ class SynchronizedHashMap<K, V>(
             }
         }
         return@withLock result
-    }
-
-    companion object {
-        private const val DEFAULT_LOAD_FACTOR = 0.75f
-
-        private fun capacity(expectedSize: Int, loadFactor: Float) = (expectedSize / loadFactor + 1F).toInt()
     }
 }

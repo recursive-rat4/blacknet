@@ -118,10 +118,6 @@ object TxPool : MemPool(), Ledger {
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
         val tx = Transaction.deserialize(bytes)
-        if (tx == null) {
-            logger.info("deserialization failed")
-            return Status.INVALID
-        }
         val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
@@ -132,10 +128,6 @@ object TxPool : MemPool(), Ledger {
 
     internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Long {
         val tx = Transaction.deserialize(bytes)
-        if (tx == null) {
-            logger.info("deserialization failed")
-            return INVALID
-        }
         val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
@@ -152,7 +144,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0, ArrayList()) {
+    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0, ArrayList(), 0) {
         override fun add(publicKey: PublicKey, state: AccountState) {}
         override fun addHTLC(id: Hash, htlc: HTLC?) {}
         override fun addMultisig(id: Hash, multisig: Multisig?) {}

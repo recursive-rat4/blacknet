@@ -30,32 +30,32 @@ Blacknet.template = {
 
         if(tx.type == 0){
             let text = account == tx.from ? "Sent to" : 'Received from';
-            txText = `<a target="_blank" href="https://www.blnscan.io/${tx.hash.toLowerCase()}">${text}</a>`
+            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">${text}</a>`
         }
 
         if(tx.type == 2 || tx.type == 3){
-            txText = `<a target="_blank" href="https://www.blnscan.io/${tx.hash.toLowerCase()}">${type} ${account == tx.from ? "to" : 'from'}</a>`;
+            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">${type} ${account == tx.from ? "to" : 'from'}</a>`;
         }
 
         if(tx.type < 254 && tx.type != 0 && tx.type != 2 && tx.type != 3){
-            txText = `<a target="_blank" href="https://www.blnscan.io/${tx.hash.toLowerCase()}">${type}</a>`;
+            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">${type}</a>`;
         }
 
         if(tx.type == 0 || tx.type == 2 || tx.type == 3){
 
             if(account == tx.from){
-                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.data.to}">${tx.data.to}</a>`;
+                linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.data.to}">${tx.data.to}</a>`;
             }else{
-                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.from}">${tx.from}</a>`;
+                linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.from}">${tx.from}</a>`;
             }
         }
 
         if(tx.type != 0 && tx.type != 2 && tx.type != 3){
 
             if(tx.from != 'genesis'){
-                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.from}">${tx.from}</a>`;
+                linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.from}">${tx.from}</a>`;
             }else{
-                linkText = `<a target="_blank" href="https://www.blnscan.io/${tx.to}">${tx.to}</a>`;
+                linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.to}">${tx.to}</a>`;
             }
         }
 
@@ -91,17 +91,20 @@ Blacknet.template = {
         return node;
     },
 
-    peer: function (peer) {
+    peer: function (peer, index) {
 
         let tmpl =
             `<tr>
-                <td>${peer.peerId}</td>
+                <td>${index + 1}</td>
                 <td class="right">${peer.remoteAddress}</td>
                 <td>${peer.agent}</td>
                 <td class="right">${peer.ping} ms</td>
                 <td class="narrow">${peer.timeOffset} s</td>
                 <td class="narrow">${(peer.totalBytesRead/1048576).toFixed(2)} MiB</td>
                 <td class="narrow">${(peer.totalBytesWritten/1048576).toFixed(2)} MiB</td>
+                <td class="disconnect" data-peerid="${peer.peerId}">
+                    <a href="#">Disconnect</a>
+                </td>
             </tr>`;
 
         $(tmpl).appendTo("#peer-list");
@@ -112,13 +115,13 @@ Blacknet.template = {
         let op = prepend ? 'prependTo' : 'appendTo';
 
         let tmpl = `<tr><td class="narrow height">
-                        <a target="_blank" href="https://www.blnscan.io/${height}">${height}</a>
+                        <a target="_blank" href="${Blacknet.explorer.blockHeight + height}">${height}</a>
                     </td>
                     <td class="size narrow">${block.size}</td>
                     <td class="time narrow">${Blacknet.unix_to_local_time(block.time)}</td>
                     <td class="txns narrow">${block.transactions}</td>
                     <td class="generator">
-                        <a target="_blank" href="https://www.blnscan.io/${block.generator}">${block.generator}</a>
+                        <a target="_blank" href="${Blacknet.explorer.account + block.generator}">${block.generator}</a>
                     </td></tr>`;
 
 

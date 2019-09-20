@@ -98,14 +98,10 @@ class Connection(
                         break
                 }
 
-                val serializer = PacketType.getSerializer(type)
-                if (serializer == null) {
-                    dos("unknown packet type $type")
-                    continue
-                }
-                val packet = BinaryDecoder(bytes).decode(serializer)
-                if (packet == null) {
-                    dos("deserialization failed")
+                val packet = try {
+                    Packet.deserialize(type, bytes)
+                } catch (e: Throwable) {
+                    dos("deserialization failed: ${e.message}")
                     continue
                 }
                 logger.debug { "Received ${packet.getType()} from ${debugName()}" }
