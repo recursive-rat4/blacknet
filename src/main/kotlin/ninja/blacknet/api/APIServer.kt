@@ -376,7 +376,7 @@ fun Application.APIServer() {
                     hash = index.next
                     index = LedgerDB.getChainIndex(hash)!!
                 }
-                if (index.height < LedgerDB.height() - PoS.MATURITY - 1)
+                if (index.height < LedgerDB.height() - PoS.MATURITY + 1)
                     APIServer.lastIndex = Pair(hash, index)
                 call.respond(hash.toString())
             }
@@ -415,7 +415,7 @@ fun Application.APIServer() {
                     hash = index.next
                     index = LedgerDB.getChainIndex(hash)!!
                 }
-                if (index.height < LedgerDB.height() - PoS.MATURITY - 1)
+                if (index.height < LedgerDB.height() - PoS.MATURITY + 1)
                     APIServer.lastIndex = Pair(hash, index)
                 call.respond(hash.toString())
             }

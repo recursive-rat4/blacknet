@@ -115,6 +115,7 @@ object ChainFetcher {
                             data.connection.dos("unexpected rollback")
                             break
                         }
+                        val height = LedgerDB.height()
                         val checkpoint = LedgerDB.rollingCheckpoint()
                         var prev = checkpoint
                         for (hash in answer.hashes) {
@@ -125,7 +126,7 @@ object ChainFetcher {
                             val blockNumber = LedgerDB.getBlockNumber(hash)
                             if (blockNumber == null)
                                 break
-                            if (blockNumber < LedgerDB.height() - PoS.MATURITY - 1) {
+                            if (blockNumber < height - PoS.MATURITY) {
                                 data.connection.dos("rollback to $blockNumber")
                                 break@requestLoop
                             }

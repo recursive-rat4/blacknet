@@ -796,8 +796,8 @@ object LedgerDB {
             state.supply = supply
             state.nxtrng = PoS.nxtrng(state.nxtrng, blockGenerator)
             state.rollingCheckpoint = rollingCheckpoint
-            state.upgraded = if (blockVersion.toUInt() > Block.VERSION.toUInt()) min(++state.upgraded, PoS.MATURITY) else max(--state.upgraded, 0)
-            state.forkV2 = if (blockVersion.toUInt() >= 2.toUInt()) min(++state.forkV2, PoS.MATURITY) else max(--state.forkV2, 0)
+            state.upgraded = if (blockVersion.toUInt() > Block.VERSION.toUInt()) min(++state.upgraded, PoS.MATURITY + 1) else max(--state.upgraded, 0)
+            state.forkV2 = if (blockVersion.toUInt() >= 2.toUInt()) min(++state.forkV2, PoS.MATURITY + 1) else max(--state.forkV2, 0)
             val difficulty = PoS.nextDifficulty(undo!!.difficulty, undo!!.blockTime, blockTime)
             state.difficulty = difficulty
             state.cumulativeDifficulty = PoS.cumulativeDifficulty(undo!!.cumulativeDifficulty, difficulty)
