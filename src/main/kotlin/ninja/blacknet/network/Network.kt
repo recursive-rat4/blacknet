@@ -17,12 +17,12 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.util.error
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
-import net.i2p.data.Base32
 import ninja.blacknet.Config
 import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
+import ninja.blacknet.crypto.Base32
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.startsWith
 import java.net.ConnectException

@@ -12,6 +12,7 @@ package ninja.blacknet.core
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
+import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
@@ -19,7 +20,6 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.SerializableByteArray
 import kotlin.math.min
 

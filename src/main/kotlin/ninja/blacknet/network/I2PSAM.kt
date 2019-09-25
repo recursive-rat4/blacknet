@@ -20,10 +20,11 @@ import kotlinx.coroutines.io.readUTF8Line
 import kotlinx.coroutines.io.writeStringUtf8
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import net.i2p.data.Base64
 import ninja.blacknet.Config
 import ninja.blacknet.Config.i2psamhost
 import ninja.blacknet.Config.i2psamport
+import ninja.blacknet.Runtime
+import ninja.blacknet.crypto.Base64
 import ninja.blacknet.crypto.SHA256
 import java.io.File
 import kotlin.random.Random
@@ -147,7 +148,7 @@ object I2PSAM {
         return answer
     }
 
-    private fun hash(destination: String) = SHA256.hash(Base64.decode(destination))
+    private fun hash(destination: String) = SHA256.hash(Base64.decode(destination, i2p = true)!!)
 
     private fun generateId(): String {
         val size = 8

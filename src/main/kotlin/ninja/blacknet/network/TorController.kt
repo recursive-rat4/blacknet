@@ -15,9 +15,10 @@ import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands
 import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
-import net.i2p.data.Base32
 import ninja.blacknet.Config
 import ninja.blacknet.Config.torcontrol
+import ninja.blacknet.Runtime
+import ninja.blacknet.crypto.Base32
 import java.io.File
 
 private val logger = KotlinLogging.logger {}

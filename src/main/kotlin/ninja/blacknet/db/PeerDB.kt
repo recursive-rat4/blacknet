@@ -15,9 +15,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.internal.HashMapSerializer
 import mu.KotlinLogging
+import ninja.blacknet.Runtime
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json

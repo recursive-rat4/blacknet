@@ -11,8 +11,8 @@ package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Runtime
 import ninja.blacknet.network.Connection
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable

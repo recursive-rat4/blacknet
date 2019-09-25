@@ -16,6 +16,7 @@ import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.DefaultHeaders
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
@@ -41,6 +42,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.list
 import ninja.blacknet.Config
+import ninja.blacknet.Runtime
+import ninja.blacknet.Version
 import ninja.blacknet.api.v1.BlockInfoV1
 import ninja.blacknet.api.v1.BlockNotificationV1
 import ninja.blacknet.core.*
@@ -48,7 +51,6 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.serialization.fromHex
@@ -144,10 +146,16 @@ object APIServer {
             }
         }
     }
+
+    fun configureHeaders(config: DefaultHeaders.Configuration) {
+        config.header(HttpHeaders.Server, "${Version.NAME}/${Version.version}")
+    }
 }
 
 fun Application.APIServer() {
-    install(DefaultHeaders)
+    install(DefaultHeaders) {
+        APIServer.configureHeaders(this)
+    }
     install(WebSockets)
 
     routing {
@@ -956,52 +964,52 @@ fun Application.APIServer() {
         post("/api/v1/staker/start/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.startStaking(privateKey).toString())
+            call.respond(Staker.startStaking(privateKey).toString())
         }
 
         post("/api/v1/staker/stop/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.stopStaking(privateKey).toString())
+            call.respond(Staker.stopStaking(privateKey).toString())
         }
 
         post("/api/v1/startStaking/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.startStaking(privateKey).toString())
+            call.respond(Staker.startStaking(privateKey).toString())
         }
 
         post("/api/v1/stopStaking/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.stopStaking(privateKey).toString())
+            call.respond(Staker.stopStaking(privateKey).toString())
         }
 
         post("/api/v1/isStaking/{mnemonic}") {
             val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.isStaking(privateKey).toString())
+            call.respond(Staker.isStaking(privateKey).toString())
         }
 
         post("/api/v2/startstaking") {
             val parameters = call.receiveParameters()
             val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(PoS.startStaking(privateKey).toString())
+            call.respond(Staker.startStaking(privateKey).toString())
         }
 
         post("/api/v2/stopstaking") {
             val parameters = call.receiveParameters()
             val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
 
-            call.respond(PoS.stopStaking(privateKey).toString())
+            call.respond(Staker.stopStaking(privateKey).toString())
         }
 
         post("/api/v2/isstaking") {
             val parameters = call.receiveParameters()
             val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
 
-            call.respond(PoS.isStaking(privateKey).toString())
+            call.respond(Staker.isStaking(privateKey).toString())
         }
 
         get("/api/v1/walletdb/getwallet/{address}") {
@@ -1109,7 +1117,7 @@ fun Application.APIServer() {
     }
 }
 
-private suspend fun <T> ApplicationCall.respondJson(serializer: SerializationStrategy<T>, obj: T) {
+suspend fun <T> ApplicationCall.respondJson(serializer: SerializationStrategy<T>, obj: T) {
     respondText(ContentType.Application.Json, HttpStatusCode.OK) {
         Json.stringify(serializer, obj)
     }

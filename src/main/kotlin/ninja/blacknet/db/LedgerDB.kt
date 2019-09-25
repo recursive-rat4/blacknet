@@ -22,6 +22,7 @@ import ninja.blacknet.Config
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.network.Network
 import ninja.blacknet.serialization.BinaryDecoder
@@ -351,8 +352,8 @@ object LedgerDB {
         return maxBlockSize
     }
 
-    suspend fun getNextBlockHashes(start: Hash, max: Int): ArrayList<Hash> = BlockDB.mutex.withLock {
-        var chainIndex = getChainIndex(start) ?: return@withLock ArrayList()
+    suspend fun getNextBlockHashes(start: Hash, max: Int): List<Hash> = BlockDB.mutex.withLock {
+        var chainIndex = getChainIndex(start) ?: return@withLock emptyList()
         val result = ArrayList<Hash>(max)
         while (true) {
             val hash = chainIndex.next

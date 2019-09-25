@@ -14,11 +14,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import mu.KotlinLogging
+import ninja.blacknet.Runtime
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB.Status
-import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.packet.Blocks
@@ -208,7 +209,7 @@ object ChainFetcher {
         }
     }
 
-    suspend fun fetched(connection: Connection, blocks: Blocks) {
+    internal suspend fun fetched(connection: Connection, blocks: Blocks) {
         if (request == null || syncChain == null || syncChain!!.connection != connection) {
             // request may be cancelled
             //logger.info("Unexpected synchronization ${connection.debugName()}")

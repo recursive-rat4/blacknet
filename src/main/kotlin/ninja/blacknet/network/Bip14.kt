@@ -9,15 +9,13 @@
 
 package ninja.blacknet.network
 
-import com.google.common.io.Resources
+import ninja.blacknet.Version
 import kotlin.math.min
 
 object Bip14 {
     const val MIN_VERSION = 8
-    const val CLIENT = "Blacknet"
 
-    val version = loadVersion()
-    val agent = "/$CLIENT:$version/"
+    val agent = "/${Version.NAME}:${Version.version}/"
 
     fun sanitize(string: String): String {
         val length = min(string.length, MAX_LENGTH)
@@ -32,8 +30,4 @@ object Bip14 {
 
     private const val MAX_LENGTH = 256
     private const val SAFE_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" + " .,;-_/:?@()"
-
-    private fun loadVersion(): String {
-        return Resources.toString(Resources.getResource("version.txt"), Charsets.US_ASCII)
-    }
 }

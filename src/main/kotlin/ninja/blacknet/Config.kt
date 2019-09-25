@@ -13,7 +13,6 @@ package ninja.blacknet
 import com.natpryce.konfig.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Network
-import ninja.blacknet.network.Runtime
 import java.io.File
 
 object Config {

@@ -12,6 +12,8 @@ package ninja.blacknet.network
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
+import ninja.blacknet.Runtime
+import ninja.blacknet.Version
 import org.bitlet.weupnp.GatewayDevice
 import org.bitlet.weupnp.GatewayDiscover
 
@@ -32,7 +34,7 @@ object UPnP {
         }
 
         logger.info("Sending port mapping request")
-        if (!gateway.addPortMapping(Config.netPort, Config.netPort, gateway.localAddress.hostAddress, PROTOCOL, Bip14.CLIENT)) {
+        if (!gateway.addPortMapping(Config.netPort, Config.netPort, gateway.localAddress.hostAddress, PROTOCOL, Version.NAME)) {
             logger.info("Port mapping failed")
             return
         }

@@ -15,9 +15,9 @@ import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
-import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.Connection
 
 private val logger = KotlinLogging.logger {}

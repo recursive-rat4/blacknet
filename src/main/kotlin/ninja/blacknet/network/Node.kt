@@ -20,12 +20,13 @@ import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.upnp
+import ninja.blacknet.Runtime
 import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
-import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
@@ -371,17 +372,18 @@ object Node {
     }
 
     private const val DNS_TIMEOUT = 5
-    private const val DNS_SEEDER_DELAY = 11
+    private const val DNS_SEEDER_DELAY = 11 * 60
     private suspend fun dnsSeeder(delay: Boolean) {
         if (!Config[dnsseed])
             return
 
-        if (delay && !PeerDB.isEmpty()) {
+        if (delay && !PeerDB.isLow()) {
             delay(DNS_SEEDER_DELAY)
-            if (connected() >= 2) {
-                logger.info("P2P peers available. Skipped DNS seeding.")
-                return
-            }
+        }
+
+        if (connected() >= 2) {
+            logger.info("P2P peers available. Skipped DNS seeding.")
+            return
         }
 
         logger.info("Requesting DNS seeds.")

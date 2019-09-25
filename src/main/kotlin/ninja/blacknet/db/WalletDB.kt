@@ -21,14 +21,11 @@ import kotlinx.serialization.serializer
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.mnemonics
+import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.Mnemonic
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.*
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.packet.UnfilteredInvList
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -115,12 +112,12 @@ object WalletDB {
                 Config[mnemonics].forEachIndexed { index, mnemonic ->
                     val privateKey = Mnemonic.fromString(mnemonic)
                     if (privateKey != null) {
-                        PoS.startStaking(privateKey)
+                        Staker.startStaking(privateKey)
                     } else {
                         logger.warn("Invalid mnemonic $index")
                     }
                 }
-                val n = PoS.stakersSize()
+                val n = Staker.stakersSize()
                 if (n == 1)
                     logger.info("Started staking")
                 else if (n > 1)

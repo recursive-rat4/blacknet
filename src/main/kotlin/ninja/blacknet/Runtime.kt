@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.network
+package ninja.blacknet
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

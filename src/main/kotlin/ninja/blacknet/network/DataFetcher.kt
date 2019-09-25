@@ -11,6 +11,7 @@ package ninja.blacknet.network
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import ninja.blacknet.Runtime
 import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.packet.GetData

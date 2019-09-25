@@ -12,8 +12,8 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Connection
@@ -45,13 +45,13 @@ class GetBlocks(
 
         if (best != Hash.ZERO && !LedgerDB.chainContains(best)) {
             val response = LedgerDB.getNextBlockHashes(checkpoint, PoS.MATURITY)
-            connection.sendPacket(Blocks(response, ArrayList()))
+            connection.sendPacket(Blocks(response, emptyList()))
             return
         }
 
         var chainIndex = LedgerDB.getChainIndex(best)
         if (chainIndex == null) {
-            connection.sendPacket(Blocks(ArrayList(), ArrayList()))
+            connection.sendPacket(Blocks(emptyList(), emptyList()))
             return
         }
 
@@ -63,7 +63,7 @@ class GetBlocks(
             val hash = chainIndex!!.next
             if (hash == Hash.ZERO)
                 break
-            size += chainIndex.nextSize + 4 //TODO
+            size += chainIndex.nextSize + 4 //TODO VarInt
             if (response.isNotEmpty() && size >= maxSize)
                 break
             val bytes = BlockDB.get(hash)
@@ -73,6 +73,6 @@ class GetBlocks(
             chainIndex = LedgerDB.getChainIndex(chainIndex.next)
         }
 
-        connection.sendPacket(Blocks(ArrayList(), response))
+        connection.sendPacket(Blocks(emptyList(), response))
     }
 }
