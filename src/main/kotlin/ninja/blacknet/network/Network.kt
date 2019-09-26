@@ -24,11 +24,13 @@ import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
 import ninja.blacknet.crypto.Base32
 import ninja.blacknet.util.byteArrayOfInts
+import ninja.blacknet.util.delay
 import ninja.blacknet.util.startsWith
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import kotlin.experimental.and
+import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
@@ -173,36 +175,80 @@ enum class Network(val addrSize: Int) {
                     return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
                 I2P -> {
-                    if (!I2PSAM.haveSession()) throw RuntimeException("I2P SAM session is not available")
                     val c = I2PSAM.connect(address)
-                    return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.localAddress!!, Connection.State.OUTGOING_WAITING)
+                    return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.session().second, Connection.State.OUTGOING_WAITING)
                 }
             }
         }
 
-        fun listenOnTor(): Address? {
-            try {
-                return TorController.listen()
-            } catch (e: ConnectException) {
-                logger.info("Can't connect to tor controller")
-            } catch (e: Throwable) {
-                logger.info(e.message)
+        suspend fun listenOnTor() {
+            if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+                Node.listenOn(Address.LOOPBACK)
+
+            var timeout = 60
+
+            while (true) {
+                try {
+                    val (thread, localAddress) = TorController.listen()
+
+                    logger.info("Listening on $localAddress")
+                    Node.listenAddress.add(localAddress)
+
+                    thread.join()
+
+                    Node.listenAddress.remove(localAddress)
+                    logger.info("Lost connection to tor controller")
+
+                    timeout = 60
+                } catch (e: ConnectException) {
+                    logger.debug { "Can't connect to tor controller: ${e.message}" }
+                } catch (e: Throwable) {
+                    logger.info(e.message)
+                }
+
+                delay(timeout)
+                timeout = min(timeout * 2, 3840)
             }
-            return null
         }
 
-        suspend fun listenOnI2P(): Address? {
-            try {
-                I2PSAM.createSession()
-                return I2PSAM.localAddress
-            } catch (e: ConnectException) {
-                logger.info("Can't connect to I2P SAM")
-            } catch (e: I2PSAM.I2PException) {
-                logger.info("I2P ${e.message}")
-            } catch (e: Throwable) {
-                logger.error(e)
+        suspend fun listenOnI2P() {
+            var timeout = 60
+
+            while (true) {
+                try {
+                    val (_, localAddress) = I2PSAM.createSession()
+
+                    logger.info("Listening on $localAddress")
+                    Node.listenAddress.add(localAddress)
+
+                    while (true) {
+                        val a = try {
+                            I2PSAM.accept()
+                        } catch (e: Throwable) {
+                            break
+                        }
+                        val connection = Connection(a.socket, a.readChannel, a.writeChannel, a.remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+                        Node.addConnection(connection)
+                    }
+
+                    Node.listenAddress.remove(localAddress)
+                    logger.info("I2P SAM session closed")
+
+                    timeout = 60
+                } catch (e: I2PSAM.NotConfigured) {
+                    logger.info(e.message)
+                    return
+                } catch (e: I2PSAM.I2PException) {
+                    logger.info(e.message)
+                } catch (e: ConnectException) {
+                    logger.debug { "Can't connect to I2P SAM: ${e.message}" }
+                } catch (e: Throwable) {
+                    logger.error(e)
+                }
+
+                delay(timeout)
+                timeout = min(timeout * 2, 3840)
             }
-            return null
         }
 
         fun parse(string: String?, port: Int): Address? {

@@ -53,13 +53,14 @@ internal class Version(
         }
 
         if (connection.state == Connection.State.INCOMING_WAITING) {
-            if (nonce == Node.nonce) {
+            if (nonce != Node.nonce) {
+                Node.sendVersion(connection, nonce)
+                connection.state = Connection.State.INCOMING_CONNECTED
+                logger.info("Accepted connection from ${connection.debugName()} $agent")
+            } else {
                 connection.close()
                 return
             }
-            Node.sendVersion(connection, nonce)
-            connection.state = Connection.State.INCOMING_CONNECTED
-            logger.info("Accepted connection from ${connection.debugName()} $agent")
         } else {
             connection.state = Connection.State.OUTGOING_CONNECTED
             PeerDB.connected(connection.remoteAddress, connection.connectedAt, connection.agent)

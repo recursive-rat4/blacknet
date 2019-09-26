@@ -32,11 +32,10 @@ import kotlin.random.Random
 private val logger = KotlinLogging.logger {}
 
 object I2PSAM {
-    private val sessionId = generateId()
     private var privateKey = "TRANSIENT"
-    val sam: Address?
+    private val sam: Address?
     @Volatile
-    var localAddress: Address? = null
+    private var session: Pair<String, Address>? = null
 
     init {
         if (Config.contains(i2psamhost) && Config.contains(i2psamport))
@@ -54,12 +53,12 @@ object I2PSAM {
         }
     }
 
-    fun haveSession(): Boolean {
-        return localAddress != null
+    fun session(): Pair<String, Address> {
+        return session ?: throw I2PException("session is not available")
     }
 
     private suspend fun connectToSAM(): Connection {
-        val socket = aSocket(Network.selector).tcp().connect(sam?.getSocketAddress() ?: throw I2PException("SAM is not configured"))
+        val socket = aSocket(Network.selector).tcp().connect(sam?.getSocketAddress() ?: throw NotConfigured)
         val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true))
 
         val answer = request(connection, "HELLO VERSION MIN=3.2\n")
@@ -68,18 +67,23 @@ object I2PSAM {
         return connection
     }
 
-    suspend fun createSession() {
+    suspend fun createSession(): Pair<String, Address> {
         val connection = connectToSAM()
+
+        val sessionId = generateId()
 
         val answer = request(connection, "SESSION CREATE STYLE=STREAM ID=$sessionId DESTINATION=$privateKey SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n")
         connection.checkResult(answer)
-        val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("SAM invalid response")
+        val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("invalid response")
 
         val destination = lookup(connection, "ME")
-        localAddress = Address(Network.I2P, Config.netPort, hash(destination))
+        val localAddress = Address(Network.I2P, Config.netPort, hash(destination))
 
         if (this.privateKey == "TRANSIENT")
             savePrivateKey(privateKey)
+
+        val newSession = Pair(sessionId, localAddress)
+        session = newSession
 
         Runtime.launch {
             while (true) {
@@ -89,15 +93,15 @@ object I2PSAM {
                     connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
                 }
             }
-            Node.listenAddress.remove(localAddress!!)
-            localAddress = null
-            connection.socket.close()
-            logger.info("SAM SESSION closed")
-            //TODO reconnect
+            session = null
         }
+
+        return newSession
     }
 
     suspend fun connect(address: Address): Connection {
+        val (sessionId, _) = session()
+
         val connection = connectToSAM()
 
         val destination = lookup(connection, address.getAddressString())
@@ -108,7 +112,9 @@ object I2PSAM {
         return connection
     }
 
-    suspend fun accept(): Accepted? {
+    suspend fun accept(): Accepted {
+        val (sessionId, _) = session()
+
         val connection = connectToSAM()
 
         val answer = request(connection, "STREAM ACCEPT ID=$sessionId\n")
@@ -116,11 +122,11 @@ object I2PSAM {
             connection.checkResult(answer)
         } catch (e: Throwable) {
             logger.info("STREAM ACCEPT failed: ${e.message}")
-            return null
+            throw e
         }
 
         while (true) {
-            val message = connection.readChannel.readUTF8Line() ?: break
+            val message = connection.readChannel.readUTF8Line() ?: throw I2PException("connection closed")
 
             if (message.startsWith("PING")) {
                 connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
@@ -130,8 +136,6 @@ object I2PSAM {
                 return Accepted(connection.socket, connection.readChannel, connection.writeChannel, remoteAddress)
             }
         }
-
-        return null
     }
 
     private suspend fun lookup(connection: Connection, name: String): String {
@@ -181,18 +185,18 @@ object I2PSAM {
     class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel) {
         internal fun checkResult(answer: String?) {
             if (answer == null)
-                exception("SAM connection closed")
+                exception("connection closed")
             val result = getValue(answer, "RESULT")
-            if (result == null)
-                exception("SAM No RESULT")
-            if (result!!.isEmpty())
-                exception("SAM Empty RESULT")
-            if (result != "OK") {
+            if (result == null) {
+                exception("No RESULT")
+            } else if (result.isEmpty()) {
+                exception("Empty RESULT")
+            } else if (result != "OK") {
                 val message = getValue(answer, "MESSAGE")
                 if (message != null && !message.isEmpty())
-                    exception("SAM $result $message")
+                    exception("$result $message")
                 else
-                    exception("SAM $result")
+                    exception(result)
             }
         }
 
@@ -203,7 +207,8 @@ object I2PSAM {
     }
 
     class Accepted(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel, val remoteAddress: Address)
-    class I2PException(message: String) : RuntimeException(message)
+    open class I2PException(message: String) : RuntimeException("I2P SAM $message")
+    object NotConfigured : I2PException("is not configured")
 
     private fun savePrivateKey(dest: String) {
         privateKey = dest

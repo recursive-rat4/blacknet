@@ -63,14 +63,21 @@ object Node {
             } catch (e: Throwable) {
             }
         }
-        Runtime.launch { listenOnTor() }
-        Runtime.launch { listenOnI2P() }
+        if (!Config.isDisabled(Network.TORv2))
+            Runtime.launch { Network.listenOnTor() }
+        if (!Config.isDisabled(Network.I2P))
+            Runtime.launch { Network.listenOnI2P() }
         Runtime.launch { connector() }
         Runtime.launch { dnsSeeder(true) }
     }
 
     fun newPeerId(): Long {
         return nextPeerId.getAndIncrement()
+    }
+
+    private fun nonce(network: Network): Long = when (network) {
+        Network.IPv4, Network.IPv6 -> nonce
+        else -> Random.nextLong()
     }
 
     suspend fun outgoing(): Int {
@@ -147,32 +154,13 @@ object Node {
         listenOn(Address.IPv4_ANY(Config.netPort))
     }
 
-    private suspend fun listenOnTor() {
-        val address = Network.listenOnTor()
-        if (address != null) {
-            if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
-                listenOn(Address.LOOPBACK)
-            logger.info("Listening on $address")
-            listenAddress.add(address)
-        }
-    }
-
-    private suspend fun listenOnI2P() {
-        val address = Network.listenOnI2P()
-        if (address != null) {
-            logger.info("Listening on $address")
-            listenAddress.add(address)
-            i2plistener()
-        }
-    }
-
     suspend fun connectTo(address: Address) {
         val connection = Network.connect(address)
         connections.mutex.withLock {
             connections.list.add(connection)
             connection.launch()
         }
-        sendVersion(connection, nonce)
+        sendVersion(connection, nonce(address.network))
     }
 
     suspend fun sendVersion(connection: Connection, nonce: Long) {
@@ -288,15 +276,7 @@ object Node {
         }
     }
 
-    private suspend fun i2plistener() {
-        while (I2PSAM.haveSession()) {
-            val c = I2PSAM.accept() ?: continue
-            val connection = Connection(c.socket, c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
-            addConnection(connection)
-        }
-    }
-
-    private suspend fun addConnection(connection: Connection) {
+    suspend fun addConnection(connection: Connection) {
         if (!haveSlot()) {
             logger.info("Too many connections, dropping ${connection.debugName()}")
             connection.close()

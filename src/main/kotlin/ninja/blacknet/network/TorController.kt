@@ -10,14 +10,12 @@
 package ninja.blacknet.network
 
 import io.ktor.util.error
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands
 import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
 import ninja.blacknet.Config
 import ninja.blacknet.Config.torcontrol
-import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.Base32
 import java.io.File
 
@@ -37,7 +35,7 @@ object TorController {
         }
     }
 
-    fun listen(): Address? {
+    fun listen(): Pair<Thread, Address> {
         val s = java.net.Socket("localhost", Config[torcontrol])
         val tor = TorControlConnection(s)
         val thread = tor.launchThread(true)
@@ -59,14 +57,7 @@ object TorController {
 
         val address = Address(Network.TORv2, Config.netPort, bytes)
 
-        Runtime.launch {
-            thread.join()
-            Node.listenAddress.remove(address)
-            logger.info("lost connection to tor controller")
-            //TODO reconnect
-        }
-
-        return address
+        return Pair(thread, address)
     }
 
     private fun savePrivateKey(privKey: String) {
