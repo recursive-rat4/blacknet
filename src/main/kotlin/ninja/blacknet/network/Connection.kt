@@ -237,11 +237,13 @@ class Connection(
         return closed.get()
     }
 
-    fun debugName(): String {
-        if (Config.logIPs)
-            return remoteAddress.toString()
+    fun debugName(capitalize: Boolean = false): String {
+        return if (Config.logIPs)
+            remoteAddress.toString()
+        else if (capitalize)
+            "Peer $peerId"
         else
-            return "peer $peerId"
+            "peer $peerId"
     }
 
     enum class State {

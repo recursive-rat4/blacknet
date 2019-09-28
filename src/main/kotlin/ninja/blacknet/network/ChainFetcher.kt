@@ -96,7 +96,7 @@ object ChainFetcher {
             if (!BlockDB.isInteresting(data.chain))
                 continue
 
-            logger.info("Fetching ${data.chain} from ${data.connection.debugName()}")
+            logger.info("Fetching ${data.chain}")
             syncChain = data
             originalChain = LedgerDB.blockHash()
 
@@ -165,38 +165,42 @@ object ChainFetcher {
     }
 
     private suspend fun fetched() {
+        val request = request
+        val syncChain = syncChain!!
+        val undoRollback = undoRollback
+
         val cumulativeDifficulty = LedgerDB.cumulativeDifficulty()
         if (undoRollback != null) {
             if (undoDifficulty >= cumulativeDifficulty) {
-                logger.info("Reconnecting ${undoRollback!!.size} blocks")
-                val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
+                logger.info("Reconnecting ${undoRollback.size} blocks")
+                val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback)
                 BlockDB.remove(toRemove)
             } else {
-                logger.debug { "Removing ${undoRollback!!.size} blocks from db" }
-                BlockDB.remove(undoRollback!!)
+                logger.debug { "Removing ${undoRollback.size} blocks from db" }
+                BlockDB.remove(undoRollback)
             }
+            this.undoRollback = null
         }
 
         val newChain = LedgerDB.blockHash()
         if (newChain != originalChain) {
-            Node.announceChain(newChain, cumulativeDifficulty, syncChain!!.connection)
+            Node.announceChain(newChain, cumulativeDifficulty, syncChain.connection)
         }
 
-        if (syncChain!!.connection.isClosed())
-            logger.info("Peer disconnected. Fetched $connectedBlocks blocks")
+        if (syncChain.connection.isClosed())
+            logger.info("${syncChain.connection.debugName(true)} disconnected. Fetched $connectedBlocks blocks")
         else
-            logger.info("Finished fetching $connectedBlocks blocks")
+            logger.info("Finished fetching $connectedBlocks blocks from ${syncChain.connection.debugName()}")
 
         recvChannel.poll()
         if (request != null) {
-            request!!.cancel()
-            request = null
+            request.cancel()
+            this.request = null
         }
-        syncChain = null
+        this.syncChain = null
         connectedBlocks = 0
         originalChain = null
         rollbackTo = null
-        undoRollback = null
         undoDifficulty = BigInt.ZERO
     }
 

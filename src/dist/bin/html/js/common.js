@@ -330,26 +330,18 @@ void function () {
     }
 
     Blacknet.serializeTx = function (transactions) {
+        let txs = [];
 
-        let tx, txs = [];
-
-        while (transactions.length) {
-
-            let tmp = transactions.shift();
-
-            if (typeof tmp == 'string') {
-
-                tx = { hash: tmp };
-            } else {
-                tx.height = tmp.height;
-                tx.time = tmp.time;
-                txs.push(tx);
-            }
+        for (hash in transactions) {
+            let tx = transactions[hash];
+            tx.hash = hash;
+            txs.push(tx);
         }
 
         txs.sort(function (x, y) {
             return y.height - x.height;
         });
+
         return txs;
     }
 

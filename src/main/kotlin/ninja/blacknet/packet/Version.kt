@@ -47,7 +47,7 @@ internal class Version(
         connection.lastChain = chain
 
         if (version < Node.minVersion) {
-            logger.info("${connection.debugName()} obsolete protocol version $version $agent")
+            logger.info("${connection.debugName(true)} obsolete protocol version $version $agent")
             connection.close()
             return
         }

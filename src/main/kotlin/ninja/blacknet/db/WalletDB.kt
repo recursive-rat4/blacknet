@@ -9,15 +9,16 @@
 
 package ninja.blacknet.db
 
+import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
+import kotlinx.serialization.*
+import kotlinx.serialization.internal.HashMapSerializer
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
-import kotlinx.serialization.serializer
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.mnemonics
@@ -29,6 +30,7 @@ import ninja.blacknet.network.Node
 import ninja.blacknet.packet.UnfilteredInvList
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.CancelLease
 import ninja.blacknet.transaction.Lease
 import ninja.blacknet.transaction.TxType
@@ -299,6 +301,8 @@ object WalletDB {
             val time: Long,
             var height: Int
     ) {
+        fun toJson() = Json.toJson(serializer(), this)
+
         @Serializer(forClass = TransactionData::class)
         companion object {
             override fun serialize(encoder: Encoder, obj: TransactionData) {
@@ -322,28 +326,60 @@ object WalletDB {
             var seq: Int = 0,
             val transactions: HashMap<Hash, TransactionData> = HashMap()
     ) {
-        fun serialize(): ByteArray {
-            val encoder = BinaryEncoder()
-            encoder.encodeVarInt(seq)
-            encoder.encodeVarInt(transactions.size)
-            for ((hash, data) in transactions) {
-                encoder.encodeFixedByteArray(hash.bytes)
-                encoder.encodeByte(data.type)
-                encoder.encodeVarLong(data.time)
-                encoder.encodeVarInt(data.height)
+        fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
+        internal fun toV1(): WalletV1 {
+            val wallet = WalletV1(seq)
+            transactions.forEach { (hash, txData) ->
+                wallet.transactions.add(JsonLiteral(hash.toString()))
+                wallet.transactions.add(txData.toJson())
             }
-            return encoder.toBytes()
+            return wallet
         }
 
+        @Serializer(forClass = Wallet::class)
         companion object {
-            fun deserialize(bytes: ByteArray): Wallet {
-                val decoder = BinaryDecoder.fromBytes(bytes)
-                val seq = decoder.decodeVarInt()
-                val size = decoder.decodeVarInt()
-                val wallet = Wallet(seq, HashMap(size * 2))
-                for (i in 0 until size)
-                    wallet.transactions.put(Hash(decoder.decodeFixedByteArray(Hash.SIZE)), TransactionData(decoder.decodeByte(), decoder.decodeVarLong(), decoder.decodeVarInt()))
-                return wallet
+            fun deserialize(bytes: ByteArray): Wallet = BinaryDecoder.fromBytes(bytes).decode(serializer())
+
+            override fun deserialize(decoder: Decoder): Wallet {
+                return when (decoder) {
+                    is BinaryDecoder -> {
+                        val seq = decoder.decodeVarInt()
+                        val size = decoder.decodeVarInt()
+                        val wallet = Wallet(seq, HashMap(size * 2))
+                        for (i in 0 until size)
+                            wallet.transactions.put(Hash(decoder.decodeFixedByteArray(Hash.SIZE)), TransactionData(decoder.decodeByte(), decoder.decodeVarLong(), decoder.decodeVarInt()))
+                        wallet
+                    }
+                    else -> throw RuntimeException("Unsupported decoder")
+                }
+            }
+
+            override fun serialize(encoder: Encoder, obj: Wallet) {
+                when (encoder) {
+                    is BinaryEncoder -> {
+                        encoder.encodeVarInt(obj.seq)
+                        encoder.encodeVarInt(obj.transactions.size)
+                        for ((hash, data) in obj.transactions) {
+                            encoder.encodeFixedByteArray(hash.bytes)
+                            encoder.encodeByte(data.type)
+                            encoder.encodeVarLong(data.time)
+                            encoder.encodeVarInt(data.height)
+                        }
+                    }
+                    is JsonOutput -> {
+                        val transactions = newHashMapWithExpectedSize<String, JsonElement>(obj.transactions.size)
+                        obj.transactions.forEach { (hash, txData) ->
+                            transactions.put(hash.toString(), txData.toJson())
+                        }
+                        @Suppress("NAME_SHADOWING")
+                        val encoder = encoder.beginStructure(descriptor)
+                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), obj.seq)
+                        encoder.encodeSerializableElement(descriptor, 1, HashMapSerializer(String.serializer(), JsonElement.serializer()), transactions)
+                        encoder.endStructure(descriptor)
+                    }
+                    else -> throw RuntimeException("Unsupported encoder")
+                }
             }
 
             internal fun updateV1(bytes: ByteArray): Wallet {
@@ -360,6 +396,9 @@ object WalletDB {
             }
         }
     }
+
+    @Serializable
+    internal class WalletV1(val seq: Int, val transactions: ArrayList<JsonElement> = ArrayList())
 
     private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: PublicKey, wallet: Wallet) {
         wallets.put(publicKey, wallet)
