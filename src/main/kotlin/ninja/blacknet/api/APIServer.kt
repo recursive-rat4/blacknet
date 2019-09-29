@@ -66,9 +66,10 @@ object APIServer {
     internal var lastIndex: Pair<Hash, ChainIndex>? = null
     internal val blockNotifyV0 = SynchronizedArrayList<SendChannel<Frame>>()
     internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
-    internal val transactionNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
+    internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
-    internal val transactionNotify = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
+    internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
+    internal val walletNotify = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
 
     suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
         blockNotifyV0.forEach {
@@ -111,12 +112,29 @@ object APIServer {
         }
     }
 
-    suspend fun transactionNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey) {
-        transactionNotifyV1.mutex.withLock {
-            if (transactionNotifyV1.map.isNotEmpty()) {
+    suspend fun txPoolNotify(tx: Transaction, hash: Hash, time: Long, size: Int) {
+        txPoolNotify.mutex.withLock {
+            if (txPoolNotify.set.isNotEmpty()) {
+                val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
+                val message = Json.stringify(WebSocketNotification.serializer(), notification)
+                txPoolNotify.set.forEach {
+                    Runtime.launch {
+                        try {
+                            it.send(Frame.Text(message))
+                        } finally {
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey) {
+        walletNotifyV1.mutex.withLock {
+            if (walletNotifyV1.map.isNotEmpty()) {
                 val notification = TransactionNotification(tx, hash, time, size)
                 val message = Json.stringify(TransactionNotification.serializer(), notification)
-                transactionNotifyV1.map.forEach {
+                walletNotifyV1.map.forEach {
                     if (it.value.contains(publicKey)) {
                         Runtime.launch {
                             try {
@@ -129,11 +147,11 @@ object APIServer {
             }
         }
 
-        transactionNotify.mutex.withLock {
-            if (transactionNotify.map.isNotEmpty()) {
+        walletNotify.mutex.withLock {
+            if (walletNotify.map.isNotEmpty()) {
                 val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
                 val message = Json.stringify(WebSocketNotification.serializer(), notification)
-                transactionNotify.map.forEach {
+                walletNotify.map.forEach {
                     if (it.value.contains(publicKey)) {
                         Runtime.launch {
                             try {
@@ -197,13 +215,13 @@ fun Application.APIServer() {
                     val string = (incoming.receive() as Frame.Text).readText()
                     val publicKey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
 
-                    APIServer.transactionNotifyV1.mutex.withLock {
-                        val keys = APIServer.transactionNotifyV1.map.get(outgoing)
+                    APIServer.walletNotifyV1.mutex.withLock {
+                        val keys = APIServer.walletNotifyV1.map.get(outgoing)
                         if (keys == null) {
                             @Suppress("NAME_SHADOWING")
                             val keys = HashSet<PublicKey>()
                             keys.add(publicKey)
-                            APIServer.transactionNotifyV1.map.put(outgoing, keys)
+                            APIServer.walletNotifyV1.map.put(outgoing, keys)
                         } else {
                             keys.add(publicKey)
                         }
@@ -211,7 +229,7 @@ fun Application.APIServer() {
                 }
             } catch (e: ClosedReceiveChannelException) {
             } finally {
-                APIServer.transactionNotifyV1.remove(outgoing)
+                APIServer.walletNotifyV1.remove(outgoing)
             }
         }
 
@@ -227,17 +245,19 @@ fun Application.APIServer() {
 
                         if (route == "block") {
                             APIServer.blockNotify.add(outgoing)
-                        } else if (route == "transaction") {
+                        } else if (route == "txpool") {
+                            APIServer.txPoolNotify.add(outgoing)
+                        } else if (route == "wallet") {
                             val address = request.getPrimitive("address").content
                             val publicKey = Address.decode(address)!!
 
-                            APIServer.transactionNotify.mutex.withLock {
-                                val keys = APIServer.transactionNotify.map.get(outgoing)
+                            APIServer.walletNotify.mutex.withLock {
+                                val keys = APIServer.walletNotify.map.get(outgoing)
                                 if (keys == null) {
                                     @Suppress("NAME_SHADOWING")
                                     val keys = HashSet<PublicKey>()
                                     keys.add(publicKey)
-                                    APIServer.transactionNotify.map.put(outgoing, keys)
+                                    APIServer.walletNotify.map.put(outgoing, keys)
                                 } else {
                                     keys.add(publicKey)
                                 }
@@ -248,16 +268,18 @@ fun Application.APIServer() {
 
                         if (route == "block") {
                             APIServer.blockNotify.remove(outgoing)
-                        } else if (route == "transaction") {
+                        } else if (route == "txpool") {
+                            APIServer.txPoolNotify.remove(outgoing)
+                        } else if (route == "wallet") {
                             val address = request.getPrimitive("address").content
                             val publicKey = Address.decode(address)!!
 
-                            APIServer.transactionNotify.mutex.withLock {
-                                val keys = APIServer.transactionNotify.map.get(outgoing)
+                            APIServer.walletNotify.mutex.withLock {
+                                val keys = APIServer.walletNotify.map.get(outgoing)
                                 if (keys != null) {
                                     keys.remove(publicKey)
                                     if (keys.isEmpty())
-                                        APIServer.transactionNotify.map.remove(outgoing)
+                                        APIServer.walletNotify.map.remove(outgoing)
                                 }
                             }
                         }
@@ -266,7 +288,8 @@ fun Application.APIServer() {
             } catch (e: ClosedReceiveChannelException) {
             } finally {
                 APIServer.blockNotify.remove(outgoing)
-                APIServer.transactionNotify.remove(outgoing)
+                APIServer.txPoolNotify.remove(outgoing)
+                APIServer.walletNotify.remove(outgoing)
             }
         }
 

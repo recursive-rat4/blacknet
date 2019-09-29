@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
+import ninja.blacknet.api.APIServer
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
@@ -122,6 +123,7 @@ object TxPool : MemPool(), Ledger {
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
             transactions.add(hash)
+            APIServer.txPoolNotify(tx, hash, Runtime.time(), bytes.size)
         }
         return status
     }
@@ -135,6 +137,7 @@ object TxPool : MemPool(), Ledger {
             val currTime = connection?.lastPacketTime ?: Runtime.time()
             connection?.lastTxTime = currTime
             WalletDB.processTransaction(hash, tx, bytes, currTime)
+            APIServer.txPoolNotify(tx, hash, currTime, bytes.size)
             logger.debug { "Accepted $hash" }
             return tx.fee
         } else if (status == Status.IN_FUTURE) {

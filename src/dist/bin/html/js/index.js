@@ -368,13 +368,13 @@ $(document).ready(function () {
                 command: "subscribe",
                 route: "block"
             };
-            let transactions = {
+            let wallet = {
                 command: "subscribe",
-                route: "transaction",
+                route: "wallet",
                 address: localStorage.account
             };
             ws.send(JSON.stringify(blocks));
-            ws.send(JSON.stringify(transactions));
+            ws.send(JSON.stringify(wallet));
         };
 
         ws.onmessage = function(message){
