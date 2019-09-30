@@ -37,7 +37,7 @@ object PoS {
             return false
         }
         val hash = (Blake2b.Hasher() + nxtrng.bytes + prevTime + generator.bytes + time).hash()
-        val x = hash.toBigInt() / stake
+        val x = BigInt(hash) / stake
         return x < difficulty
     }
 

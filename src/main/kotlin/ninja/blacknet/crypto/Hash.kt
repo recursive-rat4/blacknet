@@ -19,7 +19,6 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.fromHex
 import ninja.blacknet.serialization.toHex
-import java.math.BigInteger
 
 /**
  * Blake2b hash
@@ -29,8 +28,6 @@ class Hash(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is Hash) && bytes.contentEquals(other.bytes)
     override fun hashCode(): Int = bytes.contentHashCode()
     override fun toString(): String = bytes.toHex()
-
-    fun toBigInt(): BigInt = BigInt(BigInteger(1, bytes))
 
     @Serializer(forClass = Hash::class)
     companion object {
