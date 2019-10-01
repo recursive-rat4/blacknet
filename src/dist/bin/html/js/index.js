@@ -419,6 +419,21 @@ $(document).ready(function () {
 
     }
 
+    function explorerSave(){
+
+        let obj = Blacknet.explorer, el = $('.config');
+
+        for(let key in obj){
+
+            let v = el.find('#' + key).val();
+
+            obj[key] = v;
+
+        }
+
+        localStorage.explorer = JSON.stringify(obj);
+    }
+
 
     menu.on('click', 'li', menuSwitch);
     panel.find('.' + hash).show();
@@ -439,7 +454,7 @@ $(document).ready(function () {
         .on("click", "#new_account_next_step", newAccountNext)
         .on("click", "#peer-table .disconnect", disconnect)
         .on("click", ".filter a", renderTx)
-        
+        .on('click', '#explorer_save', explorerSave)
         .on("click", ".tx-foot .show_more_txs", function(){
             $(this).hide();
             Blacknet.stopMore = false;

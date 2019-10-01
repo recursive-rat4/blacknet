@@ -615,6 +615,7 @@ void function () {
         } else if (lang.indexOf('de') !== -1) {
             i18n({ locale: 'de' });
         }
+        Blacknet.initExplorer();
 
         Blacknet.init();
         await Blacknet.balance();
@@ -624,16 +625,23 @@ void function () {
         if (account) {
             await Blacknet.initRecentTransactions();
         }
-
+        
         callback();
     };
 
     Blacknet.refreshBalance = async function () {
 
         await Blacknet.balance();
-        // if (account) {
-        //     await Blacknet.initRecentTransactions();
-        // }
+    };
+
+    Blacknet.initExplorer = function(){
+
+        let obj = Blacknet.explorer;
+        for(let key in obj){
+
+            $('.config').find('#' + key).val(obj[key]);
+        }
+
     };
 
     const timePeerInfo = Blacknet.throttle(Blacknet.getPeerInfo, 1000);
@@ -656,7 +664,8 @@ void function () {
      * @return {boolean} true/false
      */
     Blacknet.verifyMnemonic = function (mnemonic) {
-        if (Object.prototype.toString.call(mnemonic) === "[object String]" && mnemonic.split(" ").length == 12) {
+        if (Object.prototype.toString.call(mnemonic) === "[object String]" 
+            && mnemonic.split(" ").length == 12) {
             return true
         }
         return false
@@ -669,7 +678,8 @@ void function () {
      * @return {boolean} true/false
      */
     Blacknet.verifyAccount = function (account) {
-        if (Object.prototype.toString.call(account) === "[object String]" && account.length > 21 && /^blacknet[a-z0-9]{59}$/.test(account)) {
+        if (Object.prototype.toString.call(account) === "[object String]" && 
+                account.length > 21 && /^blacknet[a-z0-9]{59}$/.test(account)) {
             return true
         }
         return false
@@ -722,19 +732,13 @@ void function () {
      */
     Blacknet.verifyNetworkAddress = function (address) {
         // ipv4 | ipv6 | tor | i2p
-        if (Object.prototype.toString.call(address) === "[object String]" && address.length >= 7 && address.length <= 70) {
+        if (Object.prototype.toString.call(address) === "[object String]" && 
+                address.length >= 7 && address.length <= 70) {
             return true
         }
         return false
     }
-    /**
-     * confirm dialog
-     * @method confirm
-     * @for Blacknet
-     * @param {string} text
-     * @param {function} fn
-     * @return {null}
-     */
+
     Blacknet.confirm = function (text, fn) {
         mask.show();
         dialogConfirm.find(".body").html(text.replace(/\n/g, "<br/>"))
@@ -745,19 +749,10 @@ void function () {
             if (!dialogPassword.is(":visible")) {
                 mask.hide();
             }
-            dialogConfirm.hide().find('.confirm').unbind();
-            dialogConfirm.hide().find('.cancel').unbind();
+            dialogConfirm.hide().find('.confirm,.cancel').unbind();
         });
     }
 
-    /**
-     * message tips
-     * @method message
-     * @for Blacknet
-     * @param {string} msg
-     * @param {string} type
-     * @return {null}
-     */
     Blacknet.message = function (msg, type) {
         if (window.i18nData && window.i18nData[msg.toLocaleLowerCase()]) {
             msg = window.i18nData[msg.toLocaleLowerCase()]
