@@ -371,7 +371,7 @@ object Node {
         val seeds = "dnsseed.blacknet.ninja"
         try {
             val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT)
-            PeerDB.add(peers, Address.LOOPBACK)
+            PeerDB.add(peers, Address.LOOPBACK, true)
         } catch (e: Throwable) {
         }
     }

@@ -24,6 +24,7 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.delay
 import kotlin.math.exp
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
@@ -159,11 +160,20 @@ object PeerDB {
         return result
     }
 
-    suspend fun add(newPeers: List<Address>, from: Address) = peers.mutex.withLock {
-        if (peers.map.size >= MAX_SIZE)
-            return
-        newPeers.forEach {
-            addImpl(it, from)
+    suspend fun add(newPeers: List<Address>, from: Address, force: Boolean = false) = peers.mutex.withLock {
+        var added = 0
+        var i = 0
+        val newPeersSize = newPeers.size
+        val nToAdd = if (!force) {
+            val freeSlots = max(MAX_SIZE - peers.map.size, 0)
+            min(newPeersSize, freeSlots)
+        } else {
+            newPeersSize
+        }
+        while (i < newPeersSize && added < nToAdd) {
+            if (addImpl(newPeers[i], from))
+                added += 1
+            i += 1
         }
     }
 

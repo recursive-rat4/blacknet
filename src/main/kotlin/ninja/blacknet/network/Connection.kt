@@ -292,7 +292,9 @@ class Connection(
         while (true) {
             delay(10 * 60 + Random.nextInt(10 * 60))
 
-            val randomPeers = PeerDB.getRandom(Peers.MAX)
+            val n = Random.nextInt(Peers.MAX) + 1
+
+            val randomPeers = PeerDB.getRandom(n)
             if (randomPeers.size == 0)
                 continue
 
