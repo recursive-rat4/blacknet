@@ -442,6 +442,7 @@ $(document).ready(function () {
         
         .on("click", ".tx-foot .show_more_txs", function(){
             $(this).hide();
+            Blacknet.stopMore = false;
             Blacknet.showMoreTxs();
             return false;
         });
