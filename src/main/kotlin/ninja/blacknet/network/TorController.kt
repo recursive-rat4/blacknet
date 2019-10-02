@@ -17,6 +17,7 @@ import net.freehaven.tor.control.TorControlError
 import ninja.blacknet.Config
 import ninja.blacknet.Config.torcontrol
 import ninja.blacknet.crypto.Base32
+import ninja.blacknet.util.emptyByteArray
 import java.io.File
 
 private val logger = KotlinLogging.logger {}
@@ -40,7 +41,7 @@ object TorController {
         val tor = TorControlConnection(s)
         val thread = tor.launchThread(true)
         //TODO cookie, password
-        tor.authenticate(ByteArray(0))
+        tor.authenticate(emptyByteArray())
 
         val request = HashMap<Int, String?>()
         request[Config.netPort] = null
