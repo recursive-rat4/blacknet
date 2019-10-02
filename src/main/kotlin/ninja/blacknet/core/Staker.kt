@@ -12,8 +12,11 @@ package ninja.blacknet.core
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import ninja.blacknet.Config
+import ninja.blacknet.Config.mnemonics
 import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
@@ -38,7 +41,26 @@ object Staker {
     }
 
     private val stakers = SynchronizedArrayList<State>()
-    internal suspend fun stakersSize() = stakers.size()
+
+    init {
+        if (Config.contains(mnemonics)) {
+            runBlocking {
+                Config[mnemonics].forEachIndexed { index, mnemonic ->
+                    val privateKey = Mnemonic.fromString(mnemonic)
+                    if (privateKey != null) {
+                        startStaking(privateKey)
+                    } else {
+                        logger.warn("Invalid mnemonic $index")
+                    }
+                }
+                val n = stakers.list.size
+                if (n == 1)
+                    logger.info("Started staking")
+                else if (n > 1)
+                    logger.info("Started staking with $n accounts")
+            }
+        }
+    }
 
     private var job: Job? = null
     private suspend fun staker() {

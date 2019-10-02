@@ -17,6 +17,7 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.util.error
 import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
+import ninja.blacknet.core.Staker
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Node
 import java.io.File
@@ -66,6 +67,7 @@ object Main {
         LedgerDB
         PeerDB
         Node
+        Staker
 
         /* Launch Blacknet API web-server using Ktor.
          *

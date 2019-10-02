@@ -11,7 +11,6 @@ package ninja.blacknet.db
 
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.*
@@ -20,8 +19,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
-import ninja.blacknet.Config
-import ninja.blacknet.Config.mnemonics
 import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
@@ -107,24 +104,6 @@ object WalletDB {
             batch.write()
         } else {
             throw RuntimeException("Unknown database version $version")
-        }
-
-        if (Config.contains(mnemonics)) {
-            runBlocking {
-                Config[mnemonics].forEachIndexed { index, mnemonic ->
-                    val privateKey = Mnemonic.fromString(mnemonic)
-                    if (privateKey != null) {
-                        Staker.startStaking(privateKey)
-                    } else {
-                        logger.warn("Invalid mnemonic $index")
-                    }
-                }
-                val n = Staker.stakersSize()
-                if (n == 1)
-                    logger.info("Started staking")
-                else if (n > 1)
-                    logger.info("Started staking with $n accounts")
-            }
         }
 
         Runtime.launch { broadcaster() }
