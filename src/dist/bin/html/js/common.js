@@ -737,6 +737,19 @@ void function () {
         }
         return false
     }
+    /**
+     * verify network port
+     * @method verifyNetworkPort
+     * @for Blacknet
+     * @param {string} port
+     * @return {boolean} true/false
+     */
+    Blacknet.verifyNetworkPort = function (port) {
+        if (/\d+/.test(port) && port >= 0 && port <= 65535) {
+            return true
+        }
+        return false
+    }
 
     Blacknet.confirm = function (text, fn) {
         mask.show();

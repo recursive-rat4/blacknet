@@ -39,7 +39,7 @@ object I2PSAM {
 
     init {
         if (Config.contains(i2psamhost) && Config.contains(i2psamport))
-            sam = Network.resolve(Config[i2psamhost], Config[i2psamport])
+            sam = Network.resolve(Config[i2psamhost], Config[i2psamport].toPort())
         else
             sam = null
 

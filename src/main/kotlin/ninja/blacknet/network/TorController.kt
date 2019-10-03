@@ -37,7 +37,8 @@ object TorController {
     }
 
     fun listen(): Pair<Thread, Address> {
-        val s = java.net.Socket("localhost", Config[torcontrol])
+        //TODO configure host
+        val s = java.net.Socket("localhost", Config[torcontrol].toPort())
         val tor = TorControlConnection(s)
         val thread = tor.launchThread(true)
         //TODO cookie, password

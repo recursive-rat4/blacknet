@@ -29,10 +29,7 @@ class Peers(private val list: ArrayList<Address>) : Packet {
         }
 
         for (i in list) {
-            if (!i.checkSize()) {
-                connection.dos("invalid Address")
-                return
-            }
+            i.check()
         }
 
         PeerDB.add(list, connection.remoteAddress)

@@ -895,7 +895,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v1/addpeer/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.toIntOrNull() ?: Node.DEFAULT_P2P_PORT
+            val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: Node.DEFAULT_P2P_PORT
             val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
             val force = call.parameters["force"]?.toBoolean() ?: false
 
@@ -913,7 +913,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/addpeer/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.toIntOrNull() ?: Node.DEFAULT_P2P_PORT
+            val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid port") } ?: Node.DEFAULT_P2P_PORT
             val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
             val force = call.parameters["force"]?.toBoolean() ?: false
 
@@ -931,7 +931,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v1/disconnectpeer/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.toIntOrNull() ?: Node.DEFAULT_P2P_PORT
+            val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: Node.DEFAULT_P2P_PORT
             val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
             val force = call.parameters["force"]?.toBoolean() ?: false
 
@@ -945,7 +945,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/disconnectpeerbyaddress/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.toIntOrNull() ?: Node.DEFAULT_P2P_PORT
+            val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid port") } ?: Node.DEFAULT_P2P_PORT
             val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
             val force = call.parameters["force"]?.toBoolean() ?: false
 

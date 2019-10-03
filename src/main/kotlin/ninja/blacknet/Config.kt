@@ -13,6 +13,7 @@ package ninja.blacknet
 import com.natpryce.konfig.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Network
+import ninja.blacknet.network.toPort
 import java.io.File
 
 object Config {
@@ -96,7 +97,7 @@ object Config {
 
     var debugCoroutines: Boolean
 
-    val netPort: Int = config[port]
+    val netPort: Int = config[port].toPort()
     val netListen: Boolean = config[listen]
 
     val incomingConnections: Int = config[incomingconnections]

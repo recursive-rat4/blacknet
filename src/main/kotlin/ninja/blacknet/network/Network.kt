@@ -131,12 +131,12 @@ enum class Network(val addrSize: Int) {
 
         init {
             if (Config.contains(proxyhost) && Config.contains(proxyport))
-                socksProxy = Network.resolve(Config[proxyhost], Config[proxyport])
+                socksProxy = Network.resolve(Config[proxyhost], Config[proxyport].toPort())
             else
                 socksProxy = null
 
             if (Config.contains(torhost) && Config.contains(torport))
-                torProxy = Network.resolve(Config[torhost], Config[torport])
+                torProxy = Network.resolve(Config[torhost], Config[torport].toPort())
             else
                 torProxy = null
         }
@@ -287,6 +287,14 @@ enum class Network(val addrSize: Int) {
             return null
         }
 
+        fun parsePort(string: String): Int? {
+            return try {
+                string.toInt().toPort()
+            } catch (e: Throwable) {
+                null
+            }
+        }
+
         fun resolve(string: String, port: Int): Address? {
             return resolveAll(string, port).firstOrNull()
         }
@@ -305,4 +313,9 @@ enum class Network(val addrSize: Int) {
 
         val selector = ActorSelectorManager(Dispatchers.IO)
     }
+}
+
+internal fun Int.toPort(): Int {
+    require(this in 0..65535) { "Port must be in range 0..65535" }
+    return this
 }

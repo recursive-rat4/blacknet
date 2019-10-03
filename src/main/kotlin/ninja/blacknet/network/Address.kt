@@ -27,8 +27,9 @@ class Address(
 ) {
     constructor(network: Network, port: Int, bytes: ByteArray) : this(network, port, SerializableByteArray(bytes))
 
-    fun checkSize(): Boolean {
-        return bytes.array.size == network.addrSize
+    internal fun check() {
+        port.toPort()
+        require(bytes.array.size == network.addrSize) { "Invalid address size" }
     }
 
     fun isLocal(): Boolean {

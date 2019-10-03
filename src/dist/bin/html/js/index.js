@@ -346,6 +346,11 @@ $(document).ready(function () {
             $('#ip_address').focus()
             return 
         }
+        if(!Blacknet.verifyNetworkPort(port)) {
+            Blacknet.message("Invalid port", "warning")
+            $('#ip_port').focus()
+            return
+        }
 
         let result = await Blacknet.getPromise(`/addpeer/${address}/${port}/true`);
         if(result == 'true') result = "Connected";
