@@ -161,8 +161,12 @@ class Connection(
         if (newSize < DataType.MAX_INVENTORY) {
             inventoryToSend.list.addAll(inv)
         } else if (newSize > DataType.MAX_INVENTORY) {
+            val n = DataType.MAX_INVENTORY - inventoryToSend.list.size
+            for (i in 0 until n)
+                inventoryToSend.list.add(inv[i])
             sendInventoryImpl(Runtime.time())
-            inventoryToSend.list.addAll(inv)
+            for (i in n until inv.size)
+                inventoryToSend.list.add(inv[i])
         } else {
             inventoryToSend.list.addAll(inv)
             sendInventoryImpl(Runtime.time())
