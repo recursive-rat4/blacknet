@@ -345,9 +345,7 @@ void function () {
     }
 
     Blacknet.initRecentTransactions = async function () {
-
-        let data = await Blacknet.getPromise('/wallet/transactions/' + account, 'json');
-        let transactions = data.transactions;
+        let transactions = await Blacknet.getPromise('/wallet/transactions/' + account, 'json');
         let array = [];
 
         array = Blacknet.serializeTx(transactions);

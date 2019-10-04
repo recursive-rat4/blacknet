@@ -10,6 +10,7 @@
 
 package ninja.blacknet.api
 
+import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -40,7 +41,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.internal.HashMapSerializer
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.list
+import kotlinx.serialization.serializer
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
@@ -1046,9 +1050,15 @@ fun Application.APIServer() {
         get("/api/v2/wallet/transactions/{address}") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
-            WalletDB.mutex.withLock {
-                call.respondJson(WalletDB.Wallet.serializer(), WalletDB.getWalletImpl(publicKey))
+            val transactions = WalletDB.mutex.withLock {
+                val wallet = WalletDB.getWalletImpl(publicKey)
+                val transactions = newHashMapWithExpectedSize<String, JsonElement>(wallet.transactions.size)
+                wallet.transactions.forEach { (hash, txData) ->
+                    transactions.put(hash.toString(), txData.toJson())
+                }
+                transactions
             }
+            call.respondJson(HashMapSerializer(String.serializer(), JsonElement.serializer()), transactions)
         }
 
         get("/api/v1/walletdb/getoutleases/{address}") {

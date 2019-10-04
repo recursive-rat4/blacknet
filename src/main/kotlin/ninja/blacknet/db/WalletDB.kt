@@ -9,12 +9,10 @@
 
 package ninja.blacknet.db
 
-import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.HashMapSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
@@ -353,17 +351,6 @@ object WalletDB {
                             encoder.encodeVarLong(data.time)
                             encoder.encodeVarInt(data.height)
                         }
-                    }
-                    is JsonOutput -> {
-                        val transactions = newHashMapWithExpectedSize<String, JsonElement>(obj.transactions.size)
-                        obj.transactions.forEach { (hash, txData) ->
-                            transactions.put(hash.toString(), txData.toJson())
-                        }
-                        @Suppress("NAME_SHADOWING")
-                        val encoder = encoder.beginStructure(descriptor)
-                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), obj.seq)
-                        encoder.encodeSerializableElement(descriptor, 1, HashMapSerializer(String.serializer(), JsonElement.serializer()), transactions)
-                        encoder.endStructure(descriptor)
                     }
                     else -> throw RuntimeException("Unsupported encoder")
                 }
