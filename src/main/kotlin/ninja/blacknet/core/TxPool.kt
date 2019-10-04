@@ -147,7 +147,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0, ArrayList(), 0) {
+    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0, 0) {
         override fun add(publicKey: PublicKey, state: AccountState) {}
         override fun addHTLC(id: Hash, htlc: HTLC?) {}
         override fun addMultisig(id: Hash, multisig: Multisig?) {}

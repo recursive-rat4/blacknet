@@ -39,7 +39,7 @@ import kotlin.math.min
 private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
-    private const val VERSION = 5
+    private const val VERSION = 6
     private val ACCOUNT_KEY = "account".toByteArray()
     private val CHAIN_KEY = "chain".toByteArray()
     private val HTLC_KEY = "htlc".toByteArray()
@@ -180,11 +180,11 @@ object LedgerDB {
             if (version == VERSION) {
                 state = LedgerDB.State.deserialize(stateBytes)
                 logger.info("Blockchain height ${state.height}")
-            } else if (version in 1..4) {
+            } else if (version in 1..5) {
                 logger.info("Reindexing blockchain...")
 
                 runBlocking {
-                    val blockHashes = ArrayList<Hash>(400000)
+                    val blockHashes = ArrayList<Hash>(500000)
                     var index = getChainIndex(Hash.ZERO)!!
                     while (index.next != Hash.ZERO) {
                         blockHashes.add(index.next)
@@ -417,7 +417,7 @@ object LedgerDB {
             return null
         }
         val height = txDb.height()
-
+        val txHashes = ArrayList<Hash>(block.transactions.size)
         val undo = UndoBuilder(
                 state.blockTime,
                 state.difficulty,
@@ -427,7 +427,6 @@ object LedgerDB {
                 state.rollingCheckpoint,
                 state.upgraded,
                 blockSizes.peekFirst(),
-                ArrayList(block.transactions.size),
                 state.forkV2)
 
         if (!PoS.check(block.time, block.generator, undo.nxtrng, undo.difficulty, undo.blockTime, generator.stakingBalance(height))) {
@@ -446,7 +445,7 @@ object LedgerDB {
                 logger.info("$status tx $txHash")
                 return null
             }
-            undo.txHashes.add(txHash)
+            txHashes.add(txHash)
             fees += tx.fee
 
             WalletDB.processTransaction(txHash, tx, bytes.array, block.time, height, txDb.batch)
@@ -471,10 +470,10 @@ object LedgerDB {
 
         WalletDB.processBlock(hash, block, height, generated, txDb.batch)
 
-        return undo.txHashes
+        return txHashes
     }
 
-    private suspend fun undoBlock(): Hash {
+    private suspend fun undoBlockImpl(): Hash {
         val batch = LevelDB.createWriteBatch()
         val hash = state.blockHash
         val chainIndex = getChainIndex(hash)!!
@@ -529,7 +528,7 @@ object LedgerDB {
 
         batch.delete(UNDO_KEY, hash.bytes)
 
-        WalletDB.disconnectBlock(hash, undo.txHashes, batch)
+        WalletDB.disconnectBlock(hash, batch)
 
         batch.write()
 
@@ -548,7 +547,7 @@ object LedgerDB {
         if (n <= 0) throw RuntimeException("Rollback of $n blocks")
         val result = ArrayList<Hash>(n)
         while (n-- > 0)
-            result.add(undoBlock())
+            result.add(undoBlockImpl())
         return result
     }
 
