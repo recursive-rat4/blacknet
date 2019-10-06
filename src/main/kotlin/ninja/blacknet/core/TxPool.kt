@@ -126,7 +126,6 @@ object TxPool : MemPool(), Ledger {
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
             transactions.add(hash)
-            APIServer.txPoolNotify(tx, hash, Runtime.time(), bytes.size)
         }
         return status
     }

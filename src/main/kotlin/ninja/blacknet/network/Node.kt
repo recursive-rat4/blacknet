@@ -194,19 +194,19 @@ object Node {
     }
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Boolean {
-        val status = TxPool.processTx(hash, bytes)
-        if (status.first == Status.ACCEPTED) {
+        val (status, fee) = TxPool.processTx(hash, bytes)
+        if (status == Status.ACCEPTED) {
             val inv = Pair(DataType.Transaction, hash)
             connections.forEach {
-                if (it.state.isConnected() && it.feeFilter <= status.second)
+                if (it.state.isConnected() && it.feeFilter <= fee)
                     it.inventory(inv)
             }
             return true
-        } else if (status.first == Status.ALREADY_HAVE) {
+        } else if (status == Status.ALREADY_HAVE) {
             logger.info("Already in tx pool $hash")
             return true
         } else {
-            logger.info("${status.first} tx $hash")
+            logger.info("$status tx $hash")
             return false
         }
     }

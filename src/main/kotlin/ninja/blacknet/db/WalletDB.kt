@@ -118,22 +118,22 @@ object WalletDB {
 
             mutex.withLock {
                 wallets.forEach { (_, wallet) ->
-                    val unconfirmed = ArrayList<Triple<Hash, ByteArray, Transaction>>()
+                    val unconfirmed = ArrayList<Triple<Hash, ByteArray, Int>>()
 
                     wallet.transactions.forEach { (hash, txData) ->
                         if (txData.height == 0 && txData.type != TxType.Generated.type) {
                             val bytes = getTransactionImpl(hash)!!
                             val tx = Transaction.deserialize(bytes)
-                            unconfirmed.add(Triple(hash, bytes, tx))
+                            unconfirmed.add(Triple(hash, bytes, tx.seq))
                         }
                     }
 
-                    unconfirmed.sortBy { (_, _, tx) -> tx.seq }
+                    unconfirmed.sortBy { (_, _, seq) -> seq }
 
-                    unconfirmed.forEach { (hash, bytes, tx) ->
-                        val status = TxPool.process(hash, bytes)
+                    unconfirmed.forEach { (hash, bytes, _) ->
+                        val (status, fee) = TxPool.processTx(hash, bytes)
                         if (status == DataDB.Status.ACCEPTED || status == DataDB.Status.ALREADY_HAVE) {
-                            inv.add(Triple(DataType.Transaction, hash, tx.fee))
+                            inv.add(Triple(DataType.Transaction, hash, fee))
                         } else {
                             logger.debug { "$status tx $hash" }
                         }
