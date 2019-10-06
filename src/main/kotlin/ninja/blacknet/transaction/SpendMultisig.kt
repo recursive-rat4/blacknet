@@ -14,7 +14,9 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
 import mu.KotlinLogging
-import ninja.blacknet.core.*
+import ninja.blacknet.core.Ledger
+import ninja.blacknet.core.Multisig
+import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.BinaryEncoder
@@ -58,7 +60,7 @@ class SpendMultisig(
         return Blake2b.hash(bytes)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
         val multisig = ledger.getMultisig(id)
         if (multisig == null) {
             logger.info("multisig not found")
@@ -92,7 +94,6 @@ class SpendMultisig(
         }
 
         val height = ledger.height()
-        undo.addMultisig(id, multisig)
 
         for (i in multisig.deposits.indices) {
             if (amounts[i] < 0) {
@@ -101,7 +102,6 @@ class SpendMultisig(
             } else if (amounts[i] != 0L) {
                 val publicKey = multisig.deposits[i].first
                 val toAccount = ledger.getOrCreate(publicKey)
-                undo.add(publicKey, toAccount)
                 toAccount.debit(height, amounts[i])
                 ledger.set(publicKey, toAccount)
             }

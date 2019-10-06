@@ -14,7 +14,6 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
-import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
@@ -85,6 +84,10 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.get(key)
     }
 
+    override fun getOrCreate(key: PublicKey): AccountState {
+        return get(key) ?: AccountState.create()
+    }
+
     override fun set(key: PublicKey, state: AccountState) {
         accounts.put(key, state)
     }
@@ -119,7 +122,7 @@ object TxPool : MemPool(), Ledger {
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
         val tx = Transaction.deserialize(bytes)
-        val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
+        val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
             transactions.add(hash)
@@ -130,7 +133,7 @@ object TxPool : MemPool(), Ledger {
 
     internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Long {
         val tx = Transaction.deserialize(bytes)
-        val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
+        val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
             transactions.add(hash)
@@ -145,12 +148,6 @@ object TxPool : MemPool(), Ledger {
         } else {
             return INVALID
         }
-    }
-
-    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0, 0) {
-        override fun add(publicKey: PublicKey, state: AccountState) {}
-        override fun addHTLC(id: Hash, htlc: HTLC?) {}
-        override fun addMultisig(id: Hash, multisig: Multisig?) {}
     }
 
     internal suspend fun removeImpl(hashes: ArrayList<Hash>) {

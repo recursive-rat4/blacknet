@@ -14,7 +14,6 @@ import mu.KotlinLogging
 import ninja.blacknet.core.DataDB
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.core.UndoBuilder
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
@@ -26,9 +25,9 @@ interface TxData {
     fun involves(publicKey: PublicKey): Boolean
     fun serialize(): ByteArray
     fun toJson(): JsonElement
-    suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean
+    suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean
 
-    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): DataDB.Status {
+    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger): DataDB.Status {
         val account = ledger.get(tx.from)
         if (account == null) {
             logger.info("account not found")
@@ -41,14 +40,13 @@ interface TxData {
             logger.debug { "in future seq ${tx.seq}" }
             return DataDB.Status.IN_FUTURE
         }
-        undo.add(tx.from, account)
         if (!account.credit(tx.fee)) {
             logger.info("insufficient funds for tx fee")
             return DataDB.Status.INVALID
         }
         account.seq += 1
         ledger.set(tx.from, account)
-        return if (processImpl(tx, hash, ledger, undo))
+        return if (processImpl(tx, hash, ledger))
             DataDB.Status.ACCEPTED
         else
             DataDB.Status.INVALID

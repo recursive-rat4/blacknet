@@ -23,6 +23,7 @@ interface Ledger {
     fun blockTime(): Long
     fun height(): Int
     fun get(key: PublicKey): AccountState?
+    fun getOrCreate(key: PublicKey): AccountState
     fun set(key: PublicKey, state: AccountState)
     fun addHTLC(id: Hash, htlc: HTLC)
     fun getHTLC(id: Hash): HTLC?
@@ -31,11 +32,7 @@ interface Ledger {
     fun getMultisig(id: Hash): Multisig?
     fun removeMultisig(id: Hash)
 
-    suspend fun getOrCreate(key: PublicKey): AccountState {
-        return get(key) ?: AccountState.create()
-    }
-
-    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int, undo: UndoBuilder): DataDB.Status {
+    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int): DataDB.Status {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
             return DataDB.Status.INVALID
@@ -53,6 +50,6 @@ interface Ledger {
             return DataDB.Status.INVALID
         }
         val data = tx.data()
-        return data.process(tx, hash, this, undo)
+        return data.process(tx, hash, this)
     }
 }

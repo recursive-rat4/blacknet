@@ -418,18 +418,8 @@ object LedgerDB {
         }
         val height = txDb.height()
         val txHashes = ArrayList<Hash>(block.transactions.size)
-        val undo = UndoBuilder(
-                state.blockTime,
-                state.difficulty,
-                state.cumulativeDifficulty,
-                state.supply,
-                state.nxtrng,
-                state.rollingCheckpoint,
-                state.upgraded,
-                blockSizes.peekFirst(),
-                state.forkV2)
 
-        if (!PoS.check(block.time, block.generator, undo.nxtrng, undo.difficulty, undo.blockTime, generator.stakingBalance(height))) {
+        if (!PoS.check(block.time, block.generator, txDb.undo.nxtrng, txDb.undo.difficulty, txDb.undo.blockTime, generator.stakingBalance(height))) {
             logger.info("invalid proof of stake")
             return null
         }
@@ -440,7 +430,7 @@ object LedgerDB {
         for (bytes in block.transactions) {
             val tx = Transaction.deserialize(bytes.array)
             val txHash = Transaction.Hasher(bytes.array)
-            val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size, undo)
+            val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size)
             if (status != DataDB.Status.ACCEPTED) {
                 logger.info("$status tx $txHash")
                 return null
@@ -452,8 +442,6 @@ object LedgerDB {
         }
 
         generator = txDb.get(block.generator)!!
-        undo.add(block.generator, generator)
-        txDb.undo = undo.build()
 
         val reward = PoS.reward(state.supply)
         val generated = reward + fees
@@ -707,7 +695,17 @@ object LedgerDB {
             private val accounts: MutableMap<PublicKey, AccountState> = HashMap(),
             private val htlcs: MutableMap<Hash, HTLC?> = HashMap(),
             private val multisigs: MutableMap<Hash, Multisig?> = HashMap(),
-            var undo: UndoBlock? = null,
+            val undo: UndoBuilder = UndoBuilder(
+                    state.blockTime,
+                    state.difficulty,
+                    state.cumulativeDifficulty,
+                    state.supply,
+                    state.nxtrng,
+                    state.rollingCheckpoint,
+                    state.upgraded,
+                    blockSizes.peekFirst(),
+                    state.forkV2
+            ),
             var chainIndex: ChainIndex? = null,
             var prevIndex: ChainIndex? = null
     ) : Ledger {
@@ -733,11 +731,22 @@ object LedgerDB {
 
         override fun get(key: PublicKey): AccountState? {
             val account = accounts.get(key)
-            if (account != null)
+            if (account != null) {
+                undo.add(key, account)
                 return account
+            }
             val dbAccount = LedgerDB.get(key)
-            dbAccount?.prune(height)
+            if (dbAccount != null) {
+                dbAccount.prune(height)
+                undo.add(key, dbAccount)
+            }
             return dbAccount
+        }
+
+        override fun getOrCreate(key: PublicKey): AccountState {
+            val account = get(key) ?: AccountState.create()
+            undo.add(key, account)
+            return account
         }
 
         override fun set(key: PublicKey, state: AccountState) {
@@ -745,13 +754,17 @@ object LedgerDB {
         }
 
         override fun addHTLC(id: Hash, htlc: HTLC) {
+            undo.addHTLC(id, null)
             htlcs.put(id, htlc)
         }
 
         override fun getHTLC(id: Hash): HTLC? {
-            if (!htlcs.containsKey(id))
-                return LedgerDB.getHTLC(id)
-            return htlcs.get(id)
+            val htlc = if (!htlcs.containsKey(id))
+                LedgerDB.getHTLC(id)
+            else
+                htlcs.get(id)
+            undo.addHTLC(id, htlc)
+            return htlc
         }
 
         override fun removeHTLC(id: Hash) {
@@ -759,13 +772,17 @@ object LedgerDB {
         }
 
         override fun addMultisig(id: Hash, multisig: Multisig) {
+            undo.addMultisig(id, null)
             multisigs.put(id, multisig)
         }
 
         override fun getMultisig(id: Hash): Multisig? {
-            if (!multisigs.containsKey(id))
-                return LedgerDB.getMultisig(id)
-            return multisigs.get(id)
+            val multisig = if (!multisigs.containsKey(id))
+                LedgerDB.getMultisig(id)
+            else
+                multisigs.get(id)
+            undo.addMultisig(id, multisig)
+            return multisig
         }
 
         override fun removeMultisig(id: Hash) {
@@ -773,7 +790,7 @@ object LedgerDB {
         }
 
         fun commitImpl() {
-            batch.put(UNDO_KEY, blockHash.bytes, undo!!.serialize())
+            batch.put(UNDO_KEY, blockHash.bytes, undo.build().serialize())
             batch.put(CHAIN_KEY, blockPrevious.bytes, prevIndex!!.serialize())
             batch.put(CHAIN_KEY, blockHash.bytes, chainIndex!!.serialize())
             for (account in accounts)
@@ -797,9 +814,9 @@ object LedgerDB {
             state.rollingCheckpoint = rollingCheckpoint
             state.upgraded = if (blockVersion.toUInt() > Block.VERSION.toUInt()) min(++state.upgraded, PoS.MATURITY + 1) else max(--state.upgraded, 0)
             state.forkV2 = if (blockVersion.toUInt() >= 2.toUInt()) min(++state.forkV2, PoS.MATURITY + 1) else max(--state.forkV2, 0)
-            val difficulty = PoS.nextDifficulty(undo!!.difficulty, undo!!.blockTime, blockTime)
+            val difficulty = PoS.nextDifficulty(undo.difficulty, undo.blockTime, blockTime)
             state.difficulty = difficulty
-            state.cumulativeDifficulty = PoS.cumulativeDifficulty(undo!!.cumulativeDifficulty, difficulty)
+            state.cumulativeDifficulty = PoS.cumulativeDifficulty(undo.cumulativeDifficulty, difficulty)
             batch.put(STATE_KEY, state.serialize())
 
             if (blockSizes.size == PoS.BLOCK_SIZE_SPAN)

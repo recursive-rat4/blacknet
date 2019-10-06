@@ -38,7 +38,7 @@ class UndoBlock(
     }
 }
 
-open class UndoBuilder(
+class UndoBuilder(
         val blockTime: Long,
         val difficulty: BigInt,
         val cumulativeDifficulty: BigInt,
@@ -52,17 +52,17 @@ open class UndoBuilder(
         private val htlcs: HashMap<Hash, HTLC?> = HashMap(),
         private val multisigs: HashMap<Hash, Multisig?> = HashMap()
 ) {
-    open fun add(publicKey: PublicKey, state: AccountState) {
+    fun add(publicKey: PublicKey, state: AccountState) {
         if (!accounts.containsKey(publicKey))
             accounts.put(publicKey, state.copy())
     }
 
-    open fun addHTLC(id: Hash, htlc: HTLC?) {
+    fun addHTLC(id: Hash, htlc: HTLC?) {
         if (!htlcs.containsKey(id))
             htlcs.put(id, htlc)
     }
 
-    open fun addMultisig(id: Hash, multisig: Multisig?) {
+    fun addMultisig(id: Hash, multisig: Multisig?) {
         if (!multisigs.containsKey(id))
             multisigs.put(id, multisig)
     }

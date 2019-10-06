@@ -11,7 +11,8 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.core.*
+import ninja.blacknet.core.Ledger
+import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryEncoder
@@ -31,7 +32,7 @@ class Burn(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
         if (amount == 0L) {
             logger.info("invalid amount")
             return false

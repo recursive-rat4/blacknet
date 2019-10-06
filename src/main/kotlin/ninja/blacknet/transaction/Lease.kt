@@ -14,7 +14,6 @@ import mu.KotlinLogging
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.core.UndoBuilder
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
@@ -35,7 +34,7 @@ class Lease(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
         if (amount < PoS.MIN_LEASE) {
             logger.info("$amount less than minimal ${PoS.MIN_LEASE}")
             return false
@@ -45,7 +44,6 @@ class Lease(
             return false
         ledger.set(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
-        undo.add(to, toAccount)
         toAccount.leases.add(AccountState.Lease(tx.from, ledger.height(), amount))
         ledger.set(to, toAccount)
         return true
