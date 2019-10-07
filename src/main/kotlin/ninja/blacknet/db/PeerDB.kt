@@ -10,6 +10,7 @@
 
 package ninja.blacknet.db
 
+import com.google.common.collect.Sets.newHashSetWithExpectedSize
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
@@ -26,6 +27,7 @@ import ninja.blacknet.util.delay
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
@@ -134,20 +136,30 @@ object PeerDB {
         return peers.filterToKeyList { address, entry -> address.port == Node.DEFAULT_P2P_PORT && entry.isReliable() }
     }
 
-    suspend fun getCandidate(filter: List<Address>): Address? {
-        val candidates = peers.filterToKeyList { address, _ -> !filter.contains(address) }
-        if (candidates.isEmpty())
-            return null
-        return candidates[Random.nextInt(candidates.size)]
-    }
-
     suspend fun getCandidates(n: Int, filter: List<Address>): List<Address> {
-        val candidates = peers.filterToKeyList { address, _ -> !filter.contains(address) }
-        if (candidates.isEmpty())
+        val candidates = peers.mutex.withLock {
+            val candidates = ArrayList<Pair<Address, Float>>(peers.map.size)
+            val currTime = Runtime.time()
+            peers.map.forEach { (address, entry) ->
+                if (!filter.contains(address))
+                    candidates.add(Pair(address, entry.chance(currTime)))
+            }
+            candidates
+        }
+
+        if (candidates.size <= n)
+            return candidates.map { (address, _) -> address }
+        else if (candidates.size == 0)
             return emptyList()
-        candidates.shuffle()
+
         val x = min(candidates.size, n)
-        return candidates.take(x)
+        val result = newHashSetWithExpectedSize<Address>(x)
+        do {
+            val (address, chance) = candidates.random()
+            if (chance > Random.nextFloat())
+                result.add(address)
+        } while (result.size < x)
+        return result.toList()
     }
 
     suspend fun getRandom(n: Int): ArrayList<Address> {
@@ -273,6 +285,15 @@ object PeerDB {
             updateUptimeStat(stat!!, true, time)
             attempts = 0
             lastTry = time
+        }
+
+        fun chance(time: Long): Float {
+            val age = time - lastTry
+            val chance = 0.66f.pow(min(attempts, 8))
+            return if (age > 15 * 60)
+                chance
+            else
+                chance * 0.01f
         }
 
         fun isNew(): Boolean {
