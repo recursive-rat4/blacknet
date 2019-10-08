@@ -23,6 +23,7 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.DataType
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
 import ninja.blacknet.util.SynchronizedArrayList
@@ -44,7 +45,7 @@ class Connection(
     private val closed = AtomicBoolean()
     private val dosScore = AtomicInteger(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
-    private val inventoryToSend = SynchronizedArrayList<InvType>()
+    private val inventoryToSend = SynchronizedArrayList<Hash>()
     val connectedAt = Runtime.time()
 
     private var pinger: Job? = null
@@ -149,14 +150,14 @@ class Connection(
         }
     }
 
-    suspend fun inventory(inv: InvType) = inventoryToSend.mutex.withLock {
+    suspend fun inventory(inv: Hash) = inventoryToSend.mutex.withLock {
         inventoryToSend.list.add(inv)
         if (inventoryToSend.list.size == DataType.MAX_INVENTORY) {
             sendInventoryImpl(Runtime.time())
         }
     }
 
-    suspend fun inventory(inv: InvList): Unit = inventoryToSend.mutex.withLock {
+    suspend fun inventory(inv: ArrayList<Hash>): Unit = inventoryToSend.mutex.withLock {
         val newSize = inventoryToSend.list.size + inv.size
         if (newSize < DataType.MAX_INVENTORY) {
             inventoryToSend.list.addAll(inv)
@@ -180,7 +181,10 @@ class Connection(
     }
 
     private fun sendInventoryImpl(time: Long) {
-        sendPacket(Inventory(inventoryToSend.list))
+        if (version >= Inventory.MIN_VERSION)
+            sendPacket(Inventory(inventoryToSend.list))
+        else
+            sendPacket(InventoryV1(inventoryToSend.list.map { Pair(DataType.Transaction, it) }))
         inventoryToSend.list.clear()
         lastInvSentTime = time
     }

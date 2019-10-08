@@ -22,7 +22,6 @@ import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.DataDB.Status
-import ninja.blacknet.core.DataType
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
@@ -46,7 +45,7 @@ object Node {
     const val NETWORK_TIMEOUT = 90
     const val SEND_INV_TIMEOUT = 5
     const val magic = 0x17895E7D
-    const val version = 9
+    const val version = 10
     const val minVersion = 7
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
@@ -196,10 +195,9 @@ object Node {
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Boolean {
         val (status, fee) = TxPool.processTx(hash, bytes)
         if (status == Status.ACCEPTED) {
-            val inv = Pair(DataType.Transaction, hash)
             connections.forEach {
                 if (it.state.isConnected() && it.feeFilter <= fee)
-                    it.inventory(inv)
+                    it.inventory(hash)
             }
             return true
         } else if (status == Status.ALREADY_HAVE) {
@@ -212,14 +210,13 @@ object Node {
     }
 
     suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null) {
-        val invs = unfiltered.map { Pair(it.first, it.second) }
-        val toSend = InvList(invs.size)
+        val toSend = ArrayList<Hash>(unfiltered.size)
         connections.forEach {
             if (it != source && it.state.isConnected()) {
                 for (i in unfiltered.indices) {
-                    val inv = unfiltered[i]
-                    if (inv.first != DataType.Transaction || it.feeFilter <= inv.third)
-                        toSend.add(invs[i])
+                    val (hash, fee) = unfiltered[i]
+                    if (it.feeFilter <= fee)
+                        toSend.add(hash)
                 }
                 if (toSend.size != 0) {
                     it.inventory(toSend)

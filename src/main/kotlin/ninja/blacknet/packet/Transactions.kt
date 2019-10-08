@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
+import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
@@ -24,45 +25,45 @@ import ninja.blacknet.serialization.SerializableByteArray
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) : Packet {
+class Transactions(
+        private val list: ArrayList<SerializableByteArray>
+) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.Data
+    override fun getType() = PacketType.Transactions
 
     override suspend fun process(connection: Connection) {
         if (list.size > DataType.MAX_DATA) {
-            connection.dos("invalid Data size")
+            connection.dos("invalid Transactions size")
             return
         }
 
         val inv = UnfilteredInvList()
 
-        for (i in list) {
-            val type = i.first
-            val bytes = i.second
-
-            val hash = type.hash(bytes.array)
+        for (bytes in list) {
+            val hash = Transaction.Hasher(bytes.array)
 
             if (!TxFetcher.fetched(hash)) {
-                connection.dos("unrequested ${type.name} $hash")
+                connection.dos("unrequested $hash")
                 continue
             }
 
-            val status = if (type == DataType.Transaction)
-                TxPool.processTx(hash, bytes.array, connection)
-            else
-                Pair(type.db.process(hash, bytes.array, connection), 0L)
+            val (status, fee) = TxPool.processTx(hash, bytes.array, connection)
 
-            when (status.first) {
-                Status.ACCEPTED -> inv.add(Pair(hash, status.second))
-                Status.INVALID -> connection.dos("invalid ${type.name} $hash")
-                Status.IN_FUTURE -> logger.debug { "in future ${type.name} $hash" }
-                Status.NOT_ON_THIS_CHAIN -> logger.debug { "not on this chain ${type.name} $hash" }
-                Status.ALREADY_HAVE -> logger.debug { "already have  ${type.name} $hash" }
+            when (status) {
+                Status.ACCEPTED -> inv.add(Pair(hash, fee))
+                Status.INVALID -> connection.dos("invalid $hash")
+                Status.IN_FUTURE -> logger.debug { "In future $hash" }
+                Status.NOT_ON_THIS_CHAIN -> logger.debug { "Not on this chain $hash" }
+                Status.ALREADY_HAVE -> logger.debug { "Already have $hash" }
             }
         }
 
         if (!inv.isEmpty())
             Node.broadcastInv(inv, connection)
+    }
+
+    companion object {
+        const val MIN_VERSION = 10
     }
 }

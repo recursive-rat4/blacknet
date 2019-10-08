@@ -12,6 +12,7 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.DataType
+import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
@@ -19,50 +20,51 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-internal class GetData(private val list: List<Pair<DataType, Hash>>) : Packet {
+class GetTransactions(
+        private val list: ArrayList<Hash>
+) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.GetData
+    override fun getType() = PacketType.GetTransactions
 
     override suspend fun process(connection: Connection) {
         if (list.size > DataType.MAX_DATA) {
-            connection.dos("invalid GetData size")
+            connection.dos("invalid GetTransactions size")
             return
         }
 
         var size = PACKET_HEADER_SIZE + 2
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
-        val response = ArrayList<Pair<DataType, SerializableByteArray>>()
+        val response = ArrayList<SerializableByteArray>(list.size)
 
-        for (i in list) {
-            val type = i.first
-            val hash = i.second
-
-            val value = type.db.get(hash) ?: continue
+        for (hash in list) {
+            val value = TxPool.get(hash) ?: continue
             val newSize = size + value.size + 4
 
             if (response.isEmpty()) {
-                response.add(Pair(type, SerializableByteArray(value)))
+                response.add(SerializableByteArray(value))
                 size = newSize
                 if (size > maxSize) {
-                    connection.sendPacket(Data(response))
+                    connection.sendPacket(Transactions(response))
                     response.clear()
                     size = PACKET_HEADER_SIZE + 2
                 }
             } else {
                 if (newSize > maxSize) {
-                    connection.sendPacket(Data(response))
+                    connection.sendPacket(Transactions(response))
                     response.clear()
                     size = PACKET_HEADER_SIZE + 2
                 }
-                response.add(Pair(type, SerializableByteArray(value)))
+                response.add(SerializableByteArray(value))
                 size += value.size + 4
             }
         }
 
-        if (response.size == 0)
-            return
+        if (response.size != 0)
+            connection.sendPacket(Transactions(response))
+    }
 
-        connection.sendPacket(Data(response))
+    companion object {
+        const val MIN_VERSION = 10
     }
 }

@@ -133,7 +133,7 @@ object WalletDB {
                     unconfirmed.forEach { (hash, bytes, _) ->
                         val (status, fee) = TxPool.processTx(hash, bytes)
                         if (status == DataDB.Status.ACCEPTED || status == DataDB.Status.ALREADY_HAVE) {
-                            inv.add(Triple(DataType.Transaction, hash, fee))
+                            inv.add(Pair(hash, fee))
                         } else {
                             logger.debug { "$status tx $hash" }
                         }

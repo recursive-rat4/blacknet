@@ -20,7 +20,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-internal class Version(
+class Version(
         private val magic: Int,
         private val version: Int,
         private val time: Long,

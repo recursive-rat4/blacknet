@@ -18,7 +18,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-internal class Blocks(
+class Blocks(
         val hashes: List<Hash>,
         val blocks: List<SerializableByteArray>
 ) : Packet {

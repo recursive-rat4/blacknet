@@ -19,28 +19,27 @@ import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-class Inventory(
-        private val list: ArrayList<Hash>
-) : Packet {
+internal class InventoryV1(private val list: List<Pair<DataType, Hash>>) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.Inventory
+    override fun getType() = PacketType.InventoryV1
 
     override suspend fun process(connection: Connection) {
+        if (Node.isInitialSynchronization())
+            return
+
         if (list.size > DataType.MAX_INVENTORY) {
             connection.dos("invalid Inventory size")
             return
         }
 
-        if (Node.isInitialSynchronization())
-            return
+        for ((type, _) in list) {
+            if (type != DataType.Transaction) {
+                connection.dos("Inv type $type")
+                return
+            }
+        }
 
-        TxFetcher.offer(connection, list)
-    }
-
-    companion object {
-        const val MIN_VERSION = 10
+        TxFetcher.offer(connection, list.map { (_, hash) -> hash })
     }
 }
-
-typealias UnfilteredInvList = ArrayList<Pair<Hash, Long>>
