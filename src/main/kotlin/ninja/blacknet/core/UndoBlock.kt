@@ -26,9 +26,9 @@ class UndoBlock(
         val rollingCheckpoint: Hash,
         val upgraded: Int,
         val blockSize: Int,
-        val accounts: UndoAccountList,
-        val htlcs: UndoHTLCList,
-        val multisigs: UndoMultisigList,
+        val accounts: ArrayList<Pair<PublicKey, AccountState>>,
+        val htlcs: ArrayList<Pair<Hash, HTLC?>>,
+        val multisigs: ArrayList<Pair<Hash, Multisig?>>,
         val forkV2: Int
 ) {
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
@@ -87,7 +87,3 @@ class UndoBuilder(
 private fun <K, V> HashMap<K, V>.toArrayList(): ArrayList<Pair<K, V>> {
     return mapTo(ArrayList(size)) { Pair(it.key, it.value) }
 }
-
-typealias UndoAccountList = ArrayList<Pair<PublicKey, AccountState>>
-typealias UndoHTLCList = ArrayList<Pair<Hash, HTLC?>>
-typealias UndoMultisigList = ArrayList<Pair<Hash, Multisig?>>
