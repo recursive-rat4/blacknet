@@ -61,8 +61,8 @@ object TxPool : MemPool(), Ledger {
 
     override fun addSupply(amount: Long) {}
 
-    override fun checkBlockHash(hash: Hash): Boolean {
-        return LedgerDB.checkBlockHash(hash)
+    override fun checkReferenceChain(hash: Hash): Boolean {
+        return LedgerDB.checkReferenceChain(hash)
     }
 
     override fun checkFee(size: Int, amount: Long): Boolean {

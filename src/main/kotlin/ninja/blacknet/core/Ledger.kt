@@ -18,7 +18,7 @@ private val logger = KotlinLogging.logger {}
 
 interface Ledger {
     fun addSupply(amount: Long)
-    fun checkBlockHash(hash: Hash): Boolean
+    fun checkReferenceChain(hash: Hash): Boolean
     fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long
     fun height(): Int
@@ -37,7 +37,7 @@ interface Ledger {
             logger.info("invalid signature")
             return DataDB.Status.INVALID
         }
-        if (!checkBlockHash(tx.blockHash)) {
+        if (!checkReferenceChain(tx.referenceChain)) {
             logger.info("not valid on this chain")
             return DataDB.Status.NOT_ON_THIS_CHAIN
         }

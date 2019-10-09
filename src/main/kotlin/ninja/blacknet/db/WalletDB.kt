@@ -498,11 +498,11 @@ object WalletDB {
             wallet.transactions.forEach { (hash, txData) ->
                 val bytes = getTransactionImpl(hash)!!
                 val tx = Transaction.deserialize(bytes)
-                if (tx.type == TxType.Generated.type && tx.blockHash != Hash.ZERO) {
-                    if (txData.height != 0 && !LedgerDB.chainContains(tx.blockHash))
+                if (tx.type == TxType.Generated.type && tx.referenceChain != Hash.ZERO) {
+                    if (txData.height != 0 && !LedgerDB.chainContains(tx.referenceChain))
                         txData.height = 0
 
-                    toUpdate.add(Update(publicKey, hash, tx.blockHash, bytes))
+                    toUpdate.add(Update(publicKey, hash, tx.referenceChain, bytes))
                 }
             }
         }

@@ -344,7 +344,7 @@ object LedgerDB {
         return ChainIndex.deserialize(bytes)
     }
 
-    fun checkBlockHash(hash: Hash): Boolean {
+    fun checkReferenceChain(hash: Hash): Boolean {
         return hash == Hash.ZERO || chainContains(hash)
     }
 
@@ -713,8 +713,8 @@ object LedgerDB {
             supply += amount
         }
 
-        override fun checkBlockHash(hash: Hash): Boolean {
-            return LedgerDB.checkBlockHash(hash)
+        override fun checkReferenceChain(hash: Hash): Boolean {
+            return LedgerDB.checkReferenceChain(hash)
         }
 
         override fun checkFee(size: Int, amount: Long): Boolean {

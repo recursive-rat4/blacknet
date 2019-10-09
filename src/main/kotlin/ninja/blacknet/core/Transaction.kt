@@ -22,7 +22,7 @@ class Transaction(
         var signature: Signature,
         val from: PublicKey,
         val seq: Int,
-        val blockHash: Hash,
+        val referenceChain: Hash,
         val fee: Long,
         val type: Byte,
         val data: SerializableByteArray
@@ -54,8 +54,8 @@ class Transaction(
     companion object {
         fun deserialize(bytes: ByteArray): Transaction = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
-        fun create(from: PublicKey, seq: Int, blockHash: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
-            return Transaction(Signature.EMPTY, from, seq, blockHash, fee, type, SerializableByteArray(data))
+        fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
+            return Transaction(Signature.EMPTY, from, seq, referenceChain, fee, type, SerializableByteArray(data))
         }
 
         /**
@@ -67,7 +67,7 @@ class Transaction(
          *
          * [Transaction.seq] height of the block
          *
-         * [Transaction.blockHash] hash of the block
+         * [Transaction.referenceChain] hash of the block
          *
          * [Transaction.fee] the amount
          *
@@ -77,8 +77,8 @@ class Transaction(
          *
          * @return Transaction
          */
-        fun generated(from: PublicKey, height: Int, blockHash: Hash, amount: Long): Transaction {
-            return Transaction(Signature.EMPTY, from, height, blockHash, amount, TxType.Generated.type, SerializableByteArray.EMPTY)
+        fun generated(from: PublicKey, height: Int, referenceChain: Hash, amount: Long): Transaction {
+            return Transaction(Signature.EMPTY, from, height, referenceChain, amount, TxType.Generated.type, SerializableByteArray.EMPTY)
         }
     }
 }

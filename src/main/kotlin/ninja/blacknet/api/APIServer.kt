@@ -48,8 +48,7 @@ import kotlinx.serialization.serializer
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
-import ninja.blacknet.api.v1.BlockInfoV1
-import ninja.blacknet.api.v1.BlockNotificationV1
+import ninja.blacknet.api.v1.*
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.*
@@ -136,8 +135,8 @@ object APIServer {
     suspend fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey) {
         walletNotifyV1.mutex.withLock {
             if (walletNotifyV1.map.isNotEmpty()) {
-                val notification = TransactionNotification(tx, hash, time, size)
-                val message = Json.stringify(TransactionNotification.serializer(), notification)
+                val notification = TransactionNotificationV2(tx, hash, time, size)
+                val message = Json.stringify(TransactionNotificationV2.serializer(), notification)
                 walletNotifyV1.map.forEach {
                     if (it.value.contains(publicKey)) {
                         Runtime.launch {
@@ -354,7 +353,7 @@ fun Application.APIServer() {
 
             val result = BlockDB.block(hash)
             if (result != null)
-                call.respond(Json.stringify(BlockInfo.serializer(), BlockInfo(result.first, hash, result.second, txdetail)))
+                call.respond(Json.stringify(BlockInfoV2.serializer(), BlockInfoV2(result.first, hash, result.second, txdetail)))
             else
                 call.respond(HttpStatusCode.NotFound, "block not found")
         }
@@ -664,12 +663,12 @@ fun Application.APIServer() {
             val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
             val encrypted = parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid encrypted") }
             val message = Message.create(parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "Failed to create message")
-            val blockHash = parameters["blockhash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid blockhash") }
+            val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Transfer(amount, to, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
                 if (Node.broadcastTx(hash, bytes))
@@ -707,12 +706,12 @@ fun Application.APIServer() {
             val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
             val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
             val message = SerializableByteArray.fromString(parameters["message"].orEmpty()) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid message")
-            val blockHash = parameters["blockhash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid blockhash") }
+            val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Burn(amount, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Burn.type, data)
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Burn.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
                 if (Node.broadcastTx(hash, bytes))
@@ -750,12 +749,12 @@ fun Application.APIServer() {
             val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
             val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
             val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
-            val blockHash = parameters["blockhash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid blockhash") }
+            val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Lease(amount, to).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Lease.type, data)
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Lease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
                 if (Node.broadcastTx(hash, bytes))
@@ -795,12 +794,12 @@ fun Application.APIServer() {
             val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
             val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
             val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
-            val blockHash = parameters["blockhash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid blockhash") }
+            val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = CancelLease(amount, to, height).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.CancelLease.type, data)
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.CancelLease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
                 if (Node.broadcastTx(hash, bytes))
@@ -1095,7 +1094,7 @@ fun Application.APIServer() {
                     return@get call.respond(result.toHex())
 
                 val tx = Transaction.deserialize(result)
-                call.respond(Json.stringify(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size)))
+                call.respond(Json.stringify(TransactionInfoV2.serializer(), TransactionInfoV2(tx, hash, result.size)))
             } else {
                 call.respond(HttpStatusCode.NotFound, "transaction not found")
             }

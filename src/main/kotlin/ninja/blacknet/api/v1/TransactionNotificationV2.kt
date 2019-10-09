@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api
+package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -17,14 +17,14 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.Json
 
 @Serializable
-class TransactionNotification(
+class TransactionNotificationV2(
         val hash: String,
         val time: Long,
         val size: Int,
         val signature: String,
         val from: String,
         val seq: Int,
-        val referenceChain: String,
+        val blockHash: String,
         val fee: String,
         val type: Int,
         val data: JsonElement
@@ -39,7 +39,7 @@ class TransactionNotification(
             tx.referenceChain.toString(),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
-            TransactionInfo.data(tx.type, tx.data.array)
+            TransactionInfoV2.data(tx.type, tx.data.array)
     )
 
     fun toJson() = Json.toJson(serializer(), this)

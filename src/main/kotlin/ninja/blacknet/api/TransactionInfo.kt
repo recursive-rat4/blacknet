@@ -26,7 +26,7 @@ class TransactionInfo(
         val signature: String,
         val from: String,
         val seq: Int,
-        val blockHash: String,
+        val referenceChain: String,
         val fee: String,
         val type: Int,
         val data: JsonElement
@@ -37,7 +37,7 @@ class TransactionInfo(
             tx.signature.toString(),
             Address.encode(tx.from),
             tx.seq,
-            tx.blockHash.toString(),
+            tx.referenceChain.toString(),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
             data(tx.type, tx.data.array)

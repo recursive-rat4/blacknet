@@ -10,23 +10,26 @@
 package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.json
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.transaction.*
+import ninja.blacknet.transaction.TxData
+import ninja.blacknet.transaction.TxType
 
 @Serializable
-class TransactionInfoV1(
+class TransactionInfoV2(
         val hash: String,
         val size: Int,
         val signature: String,
         val from: String,
         val seq: Int,
         val blockHash: String,
-        val fee: Long,
+        val fee: String,
         val type: Int,
-        val data: String
+        val data: JsonElement
 ) {
     constructor(tx: Transaction, hash: Hash, size: Int) : this(
             hash.toString(),
@@ -35,27 +38,18 @@ class TransactionInfoV1(
             Address.encode(tx.from),
             tx.seq,
             tx.referenceChain.toString(),
-            tx.fee,
+            tx.fee.toString(),
             tx.type.toUByte().toInt(),
             data(tx.type, tx.data.array)
     )
 
-    companion object {
-        fun fromBytes(bytes: ByteArray): TransactionInfoV1 {
-            val hash = Transaction.Hasher(bytes)
-            return TransactionInfoV1(Transaction.deserialize(bytes), hash, bytes.size)
-        }
+    fun toJson() = Json.toJson(serializer(), this)
 
-        private fun data(type: Byte, bytes: ByteArray): String {
+    companion object {
+        fun data(type: Byte, bytes: ByteArray): JsonElement {
+            if (type == TxType.Generated.type) return json {}
             val txData = TxData.deserialize(type, bytes)
-            return when (type) {
-                TxType.Transfer.type -> Json.stringify(TransferInfo.serializer(), TransferInfo(txData as Transfer))
-                TxType.Burn.type -> Json.stringify(Burn.serializer(), txData as Burn)
-                TxType.Lease.type -> Json.stringify(Lease.serializer(), txData as Lease)
-                TxType.CancelLease.type -> Json.stringify(CancelLease.serializer(), txData as CancelLease)
-                TxType.Bundle.type -> Json.stringify(Bundle.serializer(), txData as Bundle)
-                else -> "Unknown type:$type data:$bytes"
-            }
+            return txData.toJson()
         }
     }
 }
