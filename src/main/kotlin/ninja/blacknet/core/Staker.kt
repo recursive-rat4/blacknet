@@ -18,12 +18,14 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.mnemonics
 import ninja.blacknet.Runtime
+import ninja.blacknet.api.StakingInfo
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.delay
+import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
 
@@ -143,5 +145,12 @@ object Staker {
 
     suspend fun isStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
         return stakers.list.find { it.privateKey == privateKey } != null
+    }
+
+    suspend fun info(): StakingInfo = stakers.mutex.withLock {
+        val weight = stakers.list.sumByLong { it.stake }
+        val networkWeight = (PoS.MAX_DIFFICULTY / LedgerDB.difficulty()).toLong() / PoS.TARGET_BLOCK_TIME * PoS.TIME_SLOT
+        val expectedTime = if (weight != 0L) PoS.TARGET_BLOCK_TIME * networkWeight / weight else 0L
+        return StakingInfo(stakers.list.size, weight.toString(), networkWeight.toString(), expectedTime)
     }
 }

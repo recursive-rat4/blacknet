@@ -9,6 +9,9 @@
 
 package ninja.blacknet.util
 
+/**
+ * Returns the sum of all values produced by [selector]. Throws [ArithmeticException] on overflow.
+ */
 inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
     var sum: Long = 0
     for (element in this) {
@@ -17,6 +20,9 @@ inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
     return sum
 }
 
+/**
+ * Returns the sum of all elements. Throws [ArithmeticException] on overflow.
+ */
 fun ArrayList<Long>.sumByLong(): Long {
     var sum: Long = 0
     for (i in this.indices) {
