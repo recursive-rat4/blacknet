@@ -73,8 +73,9 @@ object Staker {
             if (Node.isInitialSynchronization())
                 continue
 
-            val time = Runtime.time() and (PoS.TIMESTAMP_MASK xor -1L)
-            if (time <= LedgerDB.blockTime())
+            val currTime = Runtime.time()
+            val timeSlot = currTime - currTime % PoS.TIME_SLOT
+            if (timeSlot <= LedgerDB.blockTime())
                 continue
 
             @Suppress("LABEL_NAME_CLASH")
@@ -86,8 +87,8 @@ object Staker {
                         if (state.lastBlock != LedgerDB.blockHash())
                             state.update()
 
-                        if (state.stake > 0 && PoS.check(time, state.publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), state.stake)) {
-                            val block = Block.create(LedgerDB.blockHash(), time, state.publicKey)
+                        if (state.stake > 0 && PoS.check(timeSlot, state.publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), state.stake)) {
+                            val block = Block.create(LedgerDB.blockHash(), timeSlot, state.publicKey)
                             TxPool.fill(block)
                             return@withLock block.sign(state.privateKey)
                         }

@@ -241,7 +241,7 @@ object Node {
     suspend fun warnings(): List<String> {
         val timeOffset = timeOffset()
 
-        if (timeOffset > PoS.MAX_FUTURE_DRIFT || timeOffset < -PoS.MAX_FUTURE_DRIFT)
+        if (timeOffset >= PoS.TIME_SLOT || timeOffset <= -PoS.TIME_SLOT)
             return listOf("Please check your system clock. Many peers report different time.")
 
         return emptyList()

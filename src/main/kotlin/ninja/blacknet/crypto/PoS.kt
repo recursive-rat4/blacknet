@@ -32,8 +32,8 @@ object PoS {
             logger.info("invalid stake amount $stake")
             return false
         }
-        if (time and TIMESTAMP_MASK != 0L) {
-            logger.info("invalid timestamp mask")
+        if (time % TIME_SLOT != 0L) {
+            logger.info("invalid time slot")
             return false
         }
         val hash = (Blake2b.Hasher() + nxtrng.bytes + prevTime + generator.bytes + time).hash()
@@ -42,7 +42,7 @@ object PoS {
     }
 
     fun isTooFarInFuture(time: Long): Boolean {
-        return time > Runtime.time() + MAX_FUTURE_DRIFT
+        return time >= Runtime.time() + TIME_SLOT
     }
 
     fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
@@ -58,10 +58,11 @@ object PoS {
         return Runtime.time() > LedgerDB.blockTime() + TARGET_BLOCK_TIME * MATURITY
     }
 
+    const val TIME_SLOT = 16L
     /**
      * Expected block time
      */
-    const val TARGET_BLOCK_TIME = 64L
+    const val TARGET_BLOCK_TIME = 4 * TIME_SLOT
     /**
      * Default number of confirmations
      */
@@ -82,14 +83,14 @@ object PoS {
      * Minimum amount that can be leased out for cold staking
      */
     const val MIN_LEASE = 1000 * COIN
-
     const val TARGET_TIMESPAN = 960L
     const val INTERVAL = TARGET_TIMESPAN / TARGET_BLOCK_TIME
     const val SPACING = 10
-    const val TIMESTAMP_MASK = 15L
-    const val MAX_FUTURE_DRIFT = 15L
     val A1 = BigInt((INTERVAL + 1) * TARGET_BLOCK_TIME)
     val A2 = BigInt((INTERVAL - 1) * TARGET_BLOCK_TIME)
+    /**
+     * Difficulty of genesis block
+     */
     val INITIAL_DIFFICULTY = BigInt(byteArrayOfInts(0x00, 0xAF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
     val ONE_SHL_256 = BigInt.ONE shl 256
 }
