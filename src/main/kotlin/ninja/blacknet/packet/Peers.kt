@@ -30,14 +30,11 @@ class Peers(
             return
         }
 
-        for (i in list) {
-            i.check()
-        }
-
         PeerDB.add(list, connection.remoteAddress)
     }
 
     companion object {
+        const val MIN_VERSION = 11
         const val MAX = 1000
     }
 }

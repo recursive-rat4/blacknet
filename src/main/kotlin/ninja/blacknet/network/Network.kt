@@ -44,18 +44,18 @@ enum class Network(val addrSize: Int) {
 
     fun getAddressString(address: Address): String {
         return when (this) {
-            IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString()
-            IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString() + ']'
-            TORv2 -> Base32.encode(address.bytes.array) + TOR_SUFFIX
-            TORv3 -> Base32.encode(address.bytes.array) + TOR_SUFFIX //FIXME checksum
-            I2P -> Base32.encode(address.bytes.array) + I2P_SUFFIX
+            IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes), address.port.toPort()).getHostString()
+            IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes), address.port.toPort()).getHostString() + ']'
+            TORv2 -> Base32.encode(address.bytes) + TOR_SUFFIX
+            TORv3 -> Base32.encode(address.bytes) + TOR_SUFFIX //FIXME checksum
+            I2P -> Base32.encode(address.bytes) + I2P_SUFFIX
         }
     }
 
     fun isLocal(address: Address): Boolean {
         return when (this) {
-            IPv4 -> isLocalIPv4(address.bytes.array)
-            IPv6 -> isLocalIPv6(address.bytes.array)
+            IPv4 -> isLocalIPv4(address.bytes)
+            IPv6 -> isLocalIPv6(address.bytes)
             TORv2, TORv3 -> false
             I2P -> false
         }
@@ -63,8 +63,8 @@ enum class Network(val addrSize: Int) {
 
     fun isPrivate(address: Address): Boolean {
         return when (this) {
-            IPv4 -> isPrivateIPv4(address.bytes.array)
-            IPv6 -> isPrivateIPv6(address.bytes.array)
+            IPv4 -> isPrivateIPv4(address.bytes)
+            IPv6 -> isPrivateIPv6(address.bytes)
             TORv2, TORv3 -> false
             I2P -> false
         }
@@ -141,11 +141,22 @@ enum class Network(val addrSize: Int) {
                 torProxy = null
         }
 
-        fun address(inet: InetSocketAddress): Address {
-            return address(inet.getAddress(), inet.port)
+        fun fromInt(type: Int): Network {
+            return when (type) {
+                IPv4.ordinal -> IPv4
+                IPv6.ordinal -> IPv6
+                TORv2.ordinal -> TORv2
+                TORv3.ordinal -> TORv3
+                I2P.ordinal -> I2P
+                else -> throw RuntimeException("Unknown network type $type")
+            }
         }
 
-        fun address(inet: InetAddress, port: Int): Address {
+        fun address(inet: InetSocketAddress): Address {
+            return address(inet.getAddress(), inet.port.toPort())
+        }
+
+        fun address(inet: InetAddress, port: Short): Address {
             val bytes = inet.getAddress()
             return when (bytes.size) {
                 IPv6.addrSize -> Address(IPv6, port, bytes)
@@ -251,7 +262,7 @@ enum class Network(val addrSize: Int) {
             }
         }
 
-        fun parse(string: String?, port: Int): Address? {
+        fun parse(string: String?, port: Short): Address? {
             if (string == null) return null
             val host = string.toLowerCase()
 
@@ -287,7 +298,7 @@ enum class Network(val addrSize: Int) {
             return null
         }
 
-        fun parsePort(string: String): Int? {
+        fun parsePort(string: String): Short? {
             return try {
                 string.toInt().toPort()
             } catch (e: Throwable) {
@@ -295,11 +306,11 @@ enum class Network(val addrSize: Int) {
             }
         }
 
-        fun resolve(string: String, port: Int): Address? {
+        fun resolve(string: String, port: Short): Address? {
             return resolveAll(string, port).firstOrNull()
         }
 
-        fun resolveAll(string: String, port: Int): List<Address> {
+        fun resolveAll(string: String, port: Short): List<Address> {
             val parsed = parse(string, port)
             if (parsed != null)
                 return listOf(parsed)
@@ -315,7 +326,11 @@ enum class Network(val addrSize: Int) {
     }
 }
 
-internal fun Int.toPort(): Int {
+fun Int.toPort(): Short {
     require(this in 0..65535) { "Port must be in range 0..65535" }
-    return this
+    return toUShort().toShort()
+}
+
+fun Short.toPort(): Int {
+    return toUShort().toInt()
 }

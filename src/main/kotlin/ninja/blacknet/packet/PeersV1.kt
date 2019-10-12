@@ -12,27 +12,35 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-class GetPeers : Packet {
+internal class PeersV1(
+        private val list: List<AddressV1>
+) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
-    override fun getType() = PacketType.GetPeers
+    override fun getType() = PacketType.PeersV1
 
     override suspend fun process(connection: Connection) {
-        if (connection.state == Connection.State.OUTGOING_CONNECTED) {
-            connection.dos("GetPeers from outgoing connection")
+        if (list.size > MAX) {
+            connection.dos("invalid Peers size")
             return
         }
 
-        val randomPeers = PeerDB.getRandom(Peers.MAX)
+        val updated = ArrayList<Address>(list.size)
+        for (i in list) {
+            i.check()
+            updated.add(Address(i))
+        }
 
-        if (connection.version >= Peers.MIN_VERSION)
-            connection.sendPacket(Peers(randomPeers))
-        else
-            connection.sendPacket(PeersV1(randomPeers.map { AddressV1(it) }))
+        PeerDB.add(updated, connection.remoteAddress)
+    }
+
+    companion object {
+        const val MAX = 1000
     }
 }

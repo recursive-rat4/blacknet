@@ -97,7 +97,7 @@ object Config {
 
     var debugCoroutines: Boolean
 
-    val netPort: Int = config[port].toPort()
+    val netPort: Short = config[port].toPort()
     val netListen: Boolean = config[listen]
 
     val incomingConnections: Int = config[incomingconnections]

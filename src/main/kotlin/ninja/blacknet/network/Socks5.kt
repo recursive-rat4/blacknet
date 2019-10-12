@@ -45,11 +45,11 @@ object Socks5 {
         when (destination.network) {
             Network.IPv4 -> {
                 builder.writeByte(IPv4_ADDRESS)
-                builder.writeFully(destination.bytes.array)
+                builder.writeFully(destination.bytes)
             }
             Network.IPv6 -> {
                 builder.writeByte(IPv6_ADDRESS)
-                builder.writeFully(destination.bytes.array)
+                builder.writeFully(destination.bytes)
             }
             Network.TORv2, Network.TORv3 -> {
                 val bytes = destination.getAddressString().toByteArray(Charsets.US_ASCII)

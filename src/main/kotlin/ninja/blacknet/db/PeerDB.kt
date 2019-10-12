@@ -10,7 +10,9 @@
 
 package ninja.blacknet.db
 
+import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import com.google.common.collect.Sets.newHashSetWithExpectedSize
+import io.ktor.util.error
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
@@ -18,6 +20,7 @@ import kotlinx.serialization.internal.HashMapSerializer
 import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.network.Address
+import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -35,7 +38,7 @@ private val logger = KotlinLogging.logger {}
 object PeerDB {
     const val DELAY = 60 * 60
     private const val MAX_SIZE = 10000
-    private const val VERSION = 2
+    private const val VERSION = 3
     private val peers = SynchronizedHashMap<Address, Entry>(MAX_SIZE)
     private val PEER_KEY = "peer".toByteArray()
     private val STATE_KEY = "db".toByteArray()
@@ -63,15 +66,26 @@ object PeerDB {
             } else {
                 emptyMap<Address, Entry>()
             }
-        } else if (version == 1) {
+        } else if (version in 1..2) {
             val batch = LevelDB.createWriteBatch()
 
-            val hashMapV1 = if (stateBytes != null) {
-                val stateV1 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), EntryV1.serializer()))
-                logger.info("Importing ${stateV1.size} addresses from PeerDB v1")
-                val result = HashMap<Address, Entry>(stateV1.size)
-                stateV1.forEach { (address, entryV1) ->
-                    result.put(address, Entry.fromV1(entryV1))
+            val updatedHashMap = if (stateBytes != null) {
+                logger.info("Upgrading PeerDB...")
+                val result = newHashMapWithExpectedSize<Address, Entry>(MAX_SIZE)
+                try {
+                    if (version == 2) {
+                        val stateV2 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV2.serializer()))
+                        stateV2.forEach { (addressV1, entryV2) ->
+                            result.put(Address(addressV1), Entry(entryV2))
+                        }
+                    } else if (version == 1) {
+                        val stateV1 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV1.serializer()))
+                        stateV1.forEach { (addressV1, entryV1) ->
+                            result.put(Address(addressV1), Entry(entryV1))
+                        }
+                    }
+                } catch (e: Throwable) {
+                    logger.error(e)
                 }
                 result
             } else {
@@ -80,12 +94,12 @@ object PeerDB {
 
             setVersion(batch)
 
-            if (hashMapV1.isEmpty())
+            if (updatedHashMap.isEmpty())
                 batch.write()
             else
-                commitImpl(hashMapV1, batch, false)
+                commitImpl(updatedHashMap, batch, false)
 
-            hashMapV1
+            updatedHashMap
         } else {
             throw RuntimeException("Unknown database version $version")
         }
@@ -267,6 +281,9 @@ object PeerDB {
             var lastTry: Long,
             var stat: NetworkStat?
     ) {
+        internal constructor(entry: EntryV1) : this(Address(entry.from), entry.attempts, entry.lastTry, null)
+        internal constructor(entry: EntryV2) : this(Address(entry.from), entry.attempts, entry.lastTry, entry.stat)
+
         fun toJson(address: Address) = Json.toJson(Info.serializer(), Info(this, address))
 
         fun failed(time: Long) {
@@ -333,7 +350,6 @@ object PeerDB {
         }
 
         companion object {
-            internal fun fromV1(v1: EntryV1) = Entry(v1.from, v1.attempts, v1.lastTry, null)
             fun new(from: Address) = Entry(from, 0, 0, null)
             fun newConnected(time: Long, userAgent: String) = Entry(Address.LOOPBACK, 0, 0, NetworkStat(time, userAgent))
         }
@@ -370,5 +386,8 @@ object PeerDB {
     }
 
     @Serializable
-    internal class EntryV1(val from: Address, val attempts: Int, val lastTry: Long, val lastConnected: Long)
+    internal class EntryV1(val from: AddressV1, val attempts: Int, val lastTry: Long, val lastConnected: Long)
+
+    @Serializable
+    internal class EntryV2(val from: AddressV1, val attempts: Int, val lastTry: Long, val stat: NetworkStat?)
 }

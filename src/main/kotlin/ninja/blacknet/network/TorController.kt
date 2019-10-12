@@ -38,14 +38,14 @@ object TorController {
 
     fun listen(): Pair<Thread, Address> {
         //TODO configure host
-        val s = java.net.Socket("localhost", Config[torcontrol].toPort())
+        val s = java.net.Socket("localhost", Config[torcontrol].toPort().toPort())
         val tor = TorControlConnection(s)
         val thread = tor.launchThread(true)
         //TODO cookie, password
         tor.authenticate(emptyByteArray())
 
         val request = HashMap<Int, String?>()
-        request[Config.netPort] = null
+        request[Config.netPort.toPort()] = null
 
         val response = tor.addOnion(privateKey, request)
         val string = response[TorControlCommands.HS_ADDRESS]!!

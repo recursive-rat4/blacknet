@@ -16,7 +16,7 @@ enum class PacketType {
     Ping,
     Pong,
     GetPeers,
-    Peers,
+    PeersV1,
     InventoryV1,
     GetData,
     Data,
@@ -27,6 +27,7 @@ enum class PacketType {
     Inventory,
     GetTransactions,
     Transactions,
+    Peers,
     ;
 
     companion object {
@@ -36,7 +37,7 @@ enum class PacketType {
                 Ping.ordinal -> ninja.blacknet.packet.Ping.serializer()
                 Pong.ordinal -> ninja.blacknet.packet.Pong.serializer()
                 GetPeers.ordinal -> ninja.blacknet.packet.GetPeers.serializer()
-                Peers.ordinal -> ninja.blacknet.packet.Peers.serializer()
+                PeersV1.ordinal -> ninja.blacknet.packet.PeersV1.serializer()
                 InventoryV1.ordinal -> ninja.blacknet.packet.InventoryV1.serializer()
                 GetData.ordinal -> ninja.blacknet.packet.GetData.serializer()
                 Data.ordinal -> ninja.blacknet.packet.Data.serializer()
@@ -47,6 +48,7 @@ enum class PacketType {
                 Inventory.ordinal -> ninja.blacknet.packet.Inventory.serializer()
                 GetTransactions.ordinal -> ninja.blacknet.packet.GetTransactions.serializer()
                 Transactions.ordinal -> ninja.blacknet.packet.Transactions.serializer()
+                Peers.ordinal -> ninja.blacknet.packet.Peers.serializer()
                 else -> throw RuntimeException("Unknown packet type $type")
             }
         }

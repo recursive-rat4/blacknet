@@ -315,7 +315,10 @@ class Connection(
                 }
             }
 
-            sendPacket(Peers(randomPeers))
+            if (version >= Peers.MIN_VERSION)
+                sendPacket(Peers(randomPeers))
+            else
+                sendPacket(PeersV1(randomPeers.map { AddressV1(it) }))
         }
     }
 

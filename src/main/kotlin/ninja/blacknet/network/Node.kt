@@ -41,11 +41,11 @@ import kotlin.random.Random
 private val logger = KotlinLogging.logger {}
 
 object Node {
-    const val DEFAULT_P2P_PORT = 28453
+    const val DEFAULT_P2P_PORT: Short = 28453
     const val NETWORK_TIMEOUT = 90
     const val SEND_INV_TIMEOUT = 5
     const val magic = 0x17895E7D
-    const val version = 10
+    const val version = 11
     const val minVersion = 7
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
