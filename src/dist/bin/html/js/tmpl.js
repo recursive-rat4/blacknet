@@ -113,7 +113,7 @@ Blacknet.template = {
                 <td><a href="#" class="cancel_lease_btn"
                                 data-account="${tx.publicKey}" 
                                 data-amount="${amount.slice(0,-4)}"
-                                data-height="${tx.height}">Cancel Lease</a></td>
+                                data-height="${tx.height}">Cancel</a></td>
             </tr>`;
 
         $(tmpl).appendTo("#leases-list");
