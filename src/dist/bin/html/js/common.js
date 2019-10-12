@@ -132,7 +132,7 @@ void function () {
         }
     };
 
-    Blacknet.renderOverview = function () {
+    Blacknet.renderOverview = async function () {
 
         let ledger = Blacknet.ledger;
 
@@ -151,6 +151,14 @@ void function () {
             }
             $('.overview_' + key).text(value);
         }
+
+        let staking = await Blacknet.getPromise('/staking');
+
+        for(let key in staking){
+
+            $('.staking_info').find('.' + key).text(staking[key]);
+        }
+
     };
 
     Blacknet.renderProgressBar = async function (timestamp) {
