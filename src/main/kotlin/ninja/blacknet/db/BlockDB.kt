@@ -68,7 +68,7 @@ object BlockDB : DataDB() {
                 logger.info("unknown version ${block.version.toUInt()}")
         }
         if (PoS.isTooFarInFuture(block.time)) {
-            logger.info("too far in future ${block.time}")
+            logger.debug { "too far in future ${block.time}" }
             return Status.IN_FUTURE
         }
         if (!block.verifyContentHash(bytes)) {

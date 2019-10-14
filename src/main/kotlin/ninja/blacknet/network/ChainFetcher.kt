@@ -239,6 +239,7 @@ object ChainFetcher {
             }
             val status = BlockDB.process(hash, i.array, null)
             if (status == Status.IN_FUTURE) {
+                connection.dos("too far in future")
                 return false
             } else if (status == Status.NOT_ON_THIS_CHAIN) {
                 connection.close()
