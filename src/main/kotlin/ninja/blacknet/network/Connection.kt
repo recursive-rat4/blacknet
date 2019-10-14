@@ -308,7 +308,7 @@ class Connection(
 
             val myAddress = Node.listenAddress.filterToList { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
             if (myAddress.size != 0) {
-                val i = Random.nextInt(randomPeers.size * 10)
+                val i = Random.nextInt(randomPeers.size * 20)
                 if (i < randomPeers.size) {
                     randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
                     logger.info("Announcing ${randomPeers[i]} to ${debugName()}")
