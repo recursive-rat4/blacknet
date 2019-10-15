@@ -295,6 +295,10 @@ object LedgerDB {
         return state.upgraded
     }
 
+    fun forkV2(): Boolean {
+        return state.forkV2 == PoS.MATURITY + 1
+    }
+
     fun chainContains(hash: Hash): Boolean {
         return LevelDB.contains(CHAIN_KEY, hash.bytes)
     }
@@ -443,7 +447,7 @@ object LedgerDB {
 
         generator = txDb.get(block.generator)!!
 
-        val reward = PoS.reward(state.supply)
+        val reward = if (forkV2()) PoS.reward(txDb.undo.supply) else PoS.reward(state.supply)
         val generated = reward + fees
 
         val prevIndex = getChainIndex(block.previous)!!
