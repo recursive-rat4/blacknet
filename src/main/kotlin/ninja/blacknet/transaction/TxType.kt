@@ -23,6 +23,7 @@ enum class TxType(val type: Byte) {
     SpendHTLC(8),
     CreateMultisig(9),
     SpendMultisig(10),
+    WithdrawFromLease(11),
     Generated(254.toByte()),
     ;
 
@@ -40,6 +41,7 @@ enum class TxType(val type: Byte) {
                 SpendHTLC.type -> ninja.blacknet.transaction.SpendHTLC.serializer()
                 CreateMultisig.type -> ninja.blacknet.transaction.CreateMultisig.serializer()
                 SpendMultisig.type -> ninja.blacknet.transaction.SpendMultisig.serializer()
+                WithdrawFromLease.type -> ninja.blacknet.transaction.WithdrawFromLease.serializer()
                 else -> throw RuntimeException("Unknown transaction type $type")
             }
         }

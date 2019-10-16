@@ -12,6 +12,7 @@ package ninja.blacknet.core
 import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.transaction.TxType
 
 private val logger = KotlinLogging.logger {}
@@ -45,7 +46,12 @@ interface Ledger {
             logger.info("too low fee ${tx.fee}")
             return DataDB.Status.INVALID
         }
-        if (tx.type == TxType.Generated.type) {
+        if (tx.type == TxType.WithdrawFromLease.type) {
+            if (!forkV2()) {
+                logger.info("WithdrawFromLease before forkV2")
+                return DataDB.Status.INVALID
+            }
+        } else if (tx.type == TxType.Generated.type) {
             logger.info("Generated as individual tx")
             return DataDB.Status.INVALID
         }

@@ -29,6 +29,7 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.CancelLease
 import ninja.blacknet.transaction.Lease
 import ninja.blacknet.transaction.TxType
+import ninja.blacknet.transaction.WithdrawFromLease
 import ninja.blacknet.util.delay
 import ninja.blacknet.util.startsWith
 import ninja.blacknet.util.withUnlock
@@ -430,7 +431,8 @@ object WalletDB {
         wallet.transactions.forEach { (hash, txData) ->
             when (txData.type) {
                 TxType.Lease.type,
-                TxType.CancelLease.type -> {
+                TxType.CancelLease.type,
+                TxType.WithdrawFromLease.type -> {
                     val tx = Transaction.deserialize(getTransactionImpl(hash)!!)
                     transactions.add(Pair(tx, txData))
                 }
@@ -446,6 +448,13 @@ object WalletDB {
             } else if (tx.type == TxType.CancelLease.type) {
                 val data = CancelLease.deserialize(tx.data.array)
                 if (!leases.remove(AccountState.Lease(data.to, data.height, data.amount)))
+                    logger.warn("Lease not found")
+            } else if (tx.type == TxType.WithdrawFromLease.type) {
+                val data = WithdrawFromLease.deserialize(tx.data.array)
+                val lease = leases.find { it.publicKey == data.to && it.height == data.height && it.amount == data.amount }
+                if (lease != null)
+                    lease.amount -= data.withdraw
+                else
                     logger.warn("Lease not found")
             }
         }
