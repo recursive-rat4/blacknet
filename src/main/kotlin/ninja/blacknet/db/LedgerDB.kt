@@ -124,6 +124,7 @@ object LedgerDB {
         batch.put(CHAIN_KEY, Hash.ZERO.bytes, chainIndex.serialize())
 
         blockSizes.add(0)
+        writeBlockSizes(batch)
         state.supply = supply
         batch.put(STATE_KEY, state.serialize())
 
