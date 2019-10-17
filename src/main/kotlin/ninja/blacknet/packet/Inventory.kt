@@ -14,29 +14,33 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
-import ninja.blacknet.network.DataFetcher
+import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-internal class Inventory(private val list: InvList) : Packet {
+class Inventory(
+        private val list: ArrayList<Hash>
+) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Inventory
 
     override suspend fun process(connection: Connection) {
-        if (Node.isInitialSynchronization())
-            return
-
         if (list.size > DataType.MAX_INVENTORY) {
             connection.dos("invalid Inventory size")
             return
         }
 
-        DataFetcher.offer(connection, list)
+        if (Node.isInitialSynchronization())
+            return
+
+        TxFetcher.offer(connection, list)
+    }
+
+    companion object {
+        const val MIN_VERSION = 10
     }
 }
 
-typealias InvType = Pair<DataType, Hash>
-typealias InvList = ArrayList<InvType>
-typealias UnfilteredInvList = ArrayList<Triple<DataType, Hash, Long>>
+typealias UnfilteredInvList = ArrayList<Pair<Hash, Long>>

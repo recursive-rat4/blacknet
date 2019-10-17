@@ -69,7 +69,7 @@ class BinaryEncoder : ElementValueEncoder() {
     }
 
     fun encodeVarInt(value: Int) {
-        var shift = 31 - java.lang.Integer.numberOfLeadingZeros(value)
+        var shift = 31 - Integer.numberOfLeadingZeros(value)
         shift -= shift % 7 // round down to nearest multiple of 7
         while (shift != 0) {
             out.writeByte(value.ushr(shift).toByte() and 0x7F)

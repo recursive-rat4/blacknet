@@ -12,6 +12,7 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
 
@@ -29,6 +30,9 @@ class GetPeers : Packet {
 
         val randomPeers = PeerDB.getRandom(Peers.MAX)
 
-        connection.sendPacket(Peers(randomPeers))
+        if (connection.version >= Peers.MIN_VERSION)
+            connection.sendPacket(Peers(randomPeers))
+        else
+            connection.sendPacket(PeersV1(randomPeers.map { AddressV1(it) }))
     }
 }

@@ -10,28 +10,22 @@
 package ninja.blacknet.db
 
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
+import kotlinx.serialization.*
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
-import kotlinx.serialization.serializer
 import mu.KotlinLogging
-import ninja.blacknet.Config
-import ninja.blacknet.Config.mnemonics
+import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.Mnemonic
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.*
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.packet.UnfilteredInvList
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.CancelLease
 import ninja.blacknet.transaction.Lease
 import ninja.blacknet.transaction.TxType
@@ -110,24 +104,6 @@ object WalletDB {
             throw RuntimeException("Unknown database version $version")
         }
 
-        if (Config.contains(mnemonics)) {
-            runBlocking {
-                Config[mnemonics].forEachIndexed { index, mnemonic ->
-                    val privateKey = Mnemonic.fromString(mnemonic)
-                    if (privateKey != null) {
-                        PoS.startStaking(privateKey)
-                    } else {
-                        logger.warn("Invalid mnemonic $index")
-                    }
-                }
-                val n = PoS.stakersSize()
-                if (n == 1)
-                    logger.info("Started staking")
-                else if (n > 1)
-                    logger.info("Started staking with $n accounts")
-            }
-        }
-
         Runtime.launch { broadcaster() }
     }
 
@@ -142,22 +118,22 @@ object WalletDB {
 
             mutex.withLock {
                 wallets.forEach { (_, wallet) ->
-                    val unconfirmed = ArrayList<Triple<Hash, ByteArray, Transaction>>()
+                    val unconfirmed = ArrayList<Triple<Hash, ByteArray, Int>>()
 
                     wallet.transactions.forEach { (hash, txData) ->
                         if (txData.height == 0 && txData.type != TxType.Generated.type) {
-                            val bytes = getTransaction(hash)!!
+                            val bytes = getTransactionImpl(hash)!!
                             val tx = Transaction.deserialize(bytes)
-                            unconfirmed.add(Triple(hash, bytes, tx))
+                            unconfirmed.add(Triple(hash, bytes, tx.seq))
                         }
                     }
 
-                    unconfirmed.sortBy { (_, _, tx) -> tx.seq }
+                    unconfirmed.sortBy { (_, _, seq) -> seq }
 
-                    unconfirmed.forEach { (hash, bytes, tx) ->
-                        val status = TxPool.process(hash, bytes)
+                    unconfirmed.forEach { (hash, bytes, _) ->
+                        val (status, fee) = TxPool.processTx(hash, bytes)
                         if (status == DataDB.Status.ACCEPTED || status == DataDB.Status.ALREADY_HAVE) {
-                            inv.add(Triple(DataType.Transaction, hash, tx.fee))
+                            inv.add(Pair(hash, fee))
                         } else {
                             logger.debug { "$status tx $hash" }
                         }
@@ -187,11 +163,20 @@ object WalletDB {
         return@withLock getWalletImpl(publicKey).seq
     }
 
-    fun getTransaction(hash: Hash): ByteArray? {
+    suspend fun getTransaction(hash: Hash): ByteArray? = mutex.withLock {
+        return@withLock getTransactionImpl(hash)
+    }
+
+    private fun getTransactionImpl(hash: Hash): ByteArray? {
         return LevelDB.get(TX_KEY, hash.bytes)
     }
 
-    suspend fun disconnectBlock(blockHash: Hash, txHashes: ArrayList<Hash>, batch: LevelDB.WriteBatch) = mutex.withLock {
+    suspend fun disconnectBlock(blockHash: Hash, batch: LevelDB.WriteBatch) = mutex.withLock {
+        if (wallets.isEmpty()) return@withLock
+
+        val (block, _) = BlockDB.blockImpl(blockHash)!!
+        val txHashes = block.transactions.map { Transaction.Hasher(it.array) }
+
         val updated = HashMap<PublicKey, Wallet>(wallets.size)
         wallets.forEach { (publicKey, wallet) ->
             val generated = wallet.transactions.get(blockHash)
@@ -207,10 +192,9 @@ object WalletDB {
                 }
             }
         }
-        if (updated.size != 0) {
-            updated.forEach { (publicKey, wallet) ->
-                batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
-            }
+
+        updated.forEach { (publicKey, wallet) ->
+            batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
         }
     }
 
@@ -281,7 +265,7 @@ object WalletDB {
 
         if (added) {
             if (!rescan) {
-                APIServer.transactionNotify(tx, hash, time, bytes.size, publicKey)
+                APIServer.walletNotify(tx, hash, time, bytes.size, publicKey)
                 batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
             }
             if (store)
@@ -302,6 +286,8 @@ object WalletDB {
             val time: Long,
             var height: Int
     ) {
+        fun toJson() = Json.toJson(serializer(), this)
+
         @Serializer(forClass = TransactionData::class)
         companion object {
             override fun serialize(encoder: Encoder, obj: TransactionData) {
@@ -325,28 +311,49 @@ object WalletDB {
             var seq: Int = 0,
             val transactions: HashMap<Hash, TransactionData> = HashMap()
     ) {
-        fun serialize(): ByteArray {
-            val encoder = BinaryEncoder()
-            encoder.encodeVarInt(seq)
-            encoder.encodeVarInt(transactions.size)
-            for ((hash, data) in transactions) {
-                encoder.encodeFixedByteArray(hash.bytes)
-                encoder.encodeByte(data.type)
-                encoder.encodeVarLong(data.time)
-                encoder.encodeVarInt(data.height)
+        fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
+        internal fun toV1(): WalletV1 {
+            val wallet = WalletV1(seq)
+            transactions.forEach { (hash, txData) ->
+                wallet.transactions.add(JsonLiteral(hash.toString()))
+                wallet.transactions.add(txData.toJson())
             }
-            return encoder.toBytes()
+            return wallet
         }
 
+        @Serializer(forClass = Wallet::class)
         companion object {
-            fun deserialize(bytes: ByteArray): Wallet {
-                val decoder = BinaryDecoder.fromBytes(bytes)
-                val seq = decoder.decodeVarInt()
-                val size = decoder.decodeVarInt()
-                val wallet = Wallet(seq, HashMap(size * 2))
-                for (i in 0 until size)
-                    wallet.transactions.put(Hash(decoder.decodeFixedByteArray(Hash.SIZE)), TransactionData(decoder.decodeByte(), decoder.decodeVarLong(), decoder.decodeVarInt()))
-                return wallet
+            fun deserialize(bytes: ByteArray): Wallet = BinaryDecoder.fromBytes(bytes).decode(serializer())
+
+            override fun deserialize(decoder: Decoder): Wallet {
+                return when (decoder) {
+                    is BinaryDecoder -> {
+                        val seq = decoder.decodeVarInt()
+                        val size = decoder.decodeVarInt()
+                        val wallet = Wallet(seq, HashMap(size * 2))
+                        for (i in 0 until size)
+                            wallet.transactions.put(Hash(decoder.decodeFixedByteArray(Hash.SIZE)), TransactionData(decoder.decodeByte(), decoder.decodeVarLong(), decoder.decodeVarInt()))
+                        wallet
+                    }
+                    else -> throw RuntimeException("Unsupported decoder")
+                }
+            }
+
+            override fun serialize(encoder: Encoder, obj: Wallet) {
+                when (encoder) {
+                    is BinaryEncoder -> {
+                        encoder.encodeVarInt(obj.seq)
+                        encoder.encodeVarInt(obj.transactions.size)
+                        for ((hash, data) in obj.transactions) {
+                            encoder.encodeFixedByteArray(hash.bytes)
+                            encoder.encodeByte(data.type)
+                            encoder.encodeVarLong(data.time)
+                            encoder.encodeVarInt(data.height)
+                        }
+                    }
+                    else -> throw RuntimeException("Unsupported encoder")
+                }
             }
 
             internal fun updateV1(bytes: ByteArray): Wallet {
@@ -356,13 +363,16 @@ object WalletDB {
                 val wallet = Wallet(seq, HashMap(size * 2))
                 for (i in 0 until size) {
                     val hash = Hash(decoder.decodeFixedByteArray(Hash.SIZE))
-                    val tx = Transaction.deserialize(getTransaction(hash)!!)
+                    val tx = Transaction.deserialize(getTransactionImpl(hash)!!)
                     wallet.transactions.put(hash, TransactionData(tx.type, decoder.decodeVarLong(), decoder.decodeVarInt()))
                 }
                 return wallet
             }
         }
     }
+
+    @Serializable
+    internal class WalletV1(val seq: Int, val transactions: ArrayList<JsonElement> = ArrayList())
 
     private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: PublicKey, wallet: Wallet) {
         wallets.put(publicKey, wallet)
@@ -421,7 +431,7 @@ object WalletDB {
             when (txData.type) {
                 TxType.Lease.type,
                 TxType.CancelLease.type -> {
-                    val tx = Transaction.deserialize(getTransaction(hash)!!)
+                    val tx = Transaction.deserialize(getTransactionImpl(hash)!!)
                     transactions.add(Pair(tx, txData))
                 }
             }
@@ -486,13 +496,13 @@ object WalletDB {
 
         wallets.forEach { (publicKey, wallet) ->
             wallet.transactions.forEach { (hash, txData) ->
-                val bytes = getTransaction(hash)!!
+                val bytes = getTransactionImpl(hash)!!
                 val tx = Transaction.deserialize(bytes)
-                if (tx.type == TxType.Generated.type && tx.blockHash != Hash.ZERO) {
-                    if (txData.height != 0 && !LedgerDB.chainContains(tx.blockHash))
+                if (tx.type == TxType.Generated.type && tx.referenceChain != Hash.ZERO) {
+                    if (txData.height != 0 && !LedgerDB.chainContains(tx.referenceChain))
                         txData.height = 0
 
-                    toUpdate.add(Update(publicKey, hash, tx.blockHash, bytes))
+                    toUpdate.add(Update(publicKey, hash, tx.referenceChain, bytes))
                 }
             }
         }

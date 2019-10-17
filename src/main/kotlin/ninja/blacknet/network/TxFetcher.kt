@@ -11,15 +11,17 @@ package ninja.blacknet.network
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import ninja.blacknet.Runtime
 import ninja.blacknet.core.DataType
+import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.packet.GetData
-import ninja.blacknet.packet.InvList
+import ninja.blacknet.packet.GetTransactions
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.delay
 
-object DataFetcher {
-    private val inventoryChannel: Channel<Pair<Connection, InvList>> = Channel(Channel.UNLIMITED)
+object TxFetcher {
+    private val inventoryChannel: Channel<Pair<Connection, List<Hash>>> = Channel(Channel.UNLIMITED)
     private val requested = SynchronizedHashMap<Hash, Long>()
 
     init {
@@ -27,8 +29,8 @@ object DataFetcher {
         Runtime.launch { watchdog() }
     }
 
-    fun offer(from: Connection, list: InvList) {
-        inventoryChannel.offer(Pair(from, list))
+    fun offer(connection: Connection, list: List<Hash>) {
+        inventoryChannel.offer(Pair(connection, list))
     }
 
     suspend fun fetched(hash: Hash): Boolean {
@@ -36,41 +38,35 @@ object DataFetcher {
     }
 
     private suspend fun fetcher() {
-        for (inventory in inventoryChannel) {
-            val connection = inventory.first
-            val list = inventory.second
-
-            val request = InvList()
+        for ((connection, list) in inventoryChannel) {
+            val request = ArrayList<Hash>(list.size)
             val currTime = Runtime.time()
 
-            for (i in list) {
-                val type = i.first
-                val hash = i.second
-
-                if (type == DataType.Block) {
-                    connection.dos("Block Inv")
-                    continue
-                }
-
+            for (hash in list) {
                 if (requested.containsKey(hash))
                     continue
 
-                if (type.db.isInteresting(hash)) {
+                if (TxPool.isInteresting(hash)) {
                     requested.put(hash, currTime)
-                    request.add(Pair(type, hash))
+                    request.add(hash)
                 }
 
                 if (request.size == DataType.MAX_DATA) {
-                    connection.sendPacket(GetData(request))
+                    sendRequest(connection, request)
                     request.clear()
                 }
             }
 
-            if (request.size == 0)
-                continue
-
-            connection.sendPacket(GetData(request))
+            if (request.size != 0)
+                sendRequest(connection, request)
         }
+    }
+
+    private fun sendRequest(connection: Connection, request: ArrayList<Hash>) {
+        if (connection.version >= GetTransactions.MIN_VERSION)
+            connection.sendPacket(GetTransactions(request))
+        else
+            connection.sendPacket(GetData(request.map { Pair(DataType.Transaction, it) }))
     }
 
     private suspend fun watchdog() {

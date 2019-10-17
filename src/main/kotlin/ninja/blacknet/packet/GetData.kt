@@ -12,13 +12,14 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.DataType
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class GetData(private val list: InvList) : Packet {
+internal class GetData(private val list: List<Pair<DataType, Hash>>) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.GetData
@@ -31,7 +32,7 @@ class GetData(private val list: InvList) : Packet {
 
         var size = PACKET_HEADER_SIZE + 2
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
-        val response = DataList()
+        val response = ArrayList<Pair<DataType, SerializableByteArray>>()
 
         for (i in list) {
             val type = i.first

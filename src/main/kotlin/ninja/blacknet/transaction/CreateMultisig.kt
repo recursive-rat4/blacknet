@@ -13,7 +13,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.json
 import mu.KotlinLogging
-import ninja.blacknet.core.*
+import ninja.blacknet.core.Ledger
+import ninja.blacknet.core.Multisig
+import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -52,7 +54,7 @@ class CreateMultisig(
         return (Blake2b.Hasher() + from.bytes + seq + bytes).hash()
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger, undo: UndoBuilder): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
         if (n < 0 || n > deposits.size) {
             logger.info("invalid n")
             return false
@@ -93,14 +95,11 @@ class CreateMultisig(
                     logger.info("account not found")
                     return false
                 }
-                undo.add(deposits[i].first, depositAccount)
                 if (!depositAccount.credit(deposits[i].second))
                     return false
                 ledger.set(deposits[i].first, depositAccount)
             }
         }
-
-        undo.addMultisig(hash, null)
 
         val multisig = Multisig(n, deposits)
         ledger.addMultisig(hash, multisig)

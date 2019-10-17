@@ -12,14 +12,14 @@ package ninja.blacknet.core
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.crypto.BigInt
+import ninja.blacknet.Runtime
+import ninja.blacknet.api.APIServer
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.SerializableByteArray
 import kotlin.math.min
 
@@ -61,8 +61,8 @@ object TxPool : MemPool(), Ledger {
 
     override fun addSupply(amount: Long) {}
 
-    override fun checkBlockHash(hash: Hash): Boolean {
-        return LedgerDB.checkBlockHash(hash)
+    override fun checkReferenceChain(hash: Hash): Boolean {
+        return LedgerDB.checkReferenceChain(hash)
     }
 
     override fun checkFee(size: Int, amount: Long): Boolean {
@@ -82,6 +82,10 @@ object TxPool : MemPool(), Ledger {
         if (account != null)
             return account
         return LedgerDB.get(key)
+    }
+
+    override fun getOrCreate(key: PublicKey): AccountState {
+        return get(key) ?: AccountState.create()
     }
 
     override fun set(key: PublicKey, state: AccountState) {
@@ -118,7 +122,7 @@ object TxPool : MemPool(), Ledger {
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
         val tx = Transaction.deserialize(bytes)
-        val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
+        val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
             transactions.add(hash)
@@ -128,13 +132,14 @@ object TxPool : MemPool(), Ledger {
 
     internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Long {
         val tx = Transaction.deserialize(bytes)
-        val status = processTransactionImpl(tx, hash, bytes.size, TxUndoBuilder())
+        val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Status.ACCEPTED) {
             addImpl(hash, bytes)
             transactions.add(hash)
             val currTime = connection?.lastPacketTime ?: Runtime.time()
             connection?.lastTxTime = currTime
             WalletDB.processTransaction(hash, tx, bytes, currTime)
+            APIServer.txPoolNotify(tx, hash, currTime, bytes.size)
             logger.debug { "Accepted $hash" }
             return tx.fee
         } else if (status == Status.IN_FUTURE) {
@@ -142,12 +147,6 @@ object TxPool : MemPool(), Ledger {
         } else {
             return INVALID
         }
-    }
-
-    private class TxUndoBuilder : UndoBuilder(0, BigInt.ZERO, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0, ArrayList(), 0) {
-        override fun add(publicKey: PublicKey, state: AccountState) {}
-        override fun addHTLC(id: Hash, htlc: HTLC?) {}
-        override fun addMultisig(id: Hash, multisig: Multisig?) {}
     }
 
     internal suspend fun removeImpl(hashes: ArrayList<Hash>) {

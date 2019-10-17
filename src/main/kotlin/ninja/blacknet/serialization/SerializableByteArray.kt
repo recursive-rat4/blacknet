@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.util.emptyByteArray
 
 /**
  * Serializable [ByteArray]
@@ -37,7 +38,7 @@ class SerializableByteArray(
 
     @Serializer(forClass = SerializableByteArray::class)
     companion object {
-        val EMPTY = SerializableByteArray(ByteArray(0))
+        val EMPTY = SerializableByteArray(emptyByteArray())
 
         fun fromString(hex: String?): SerializableByteArray? {
             if (hex == null) return null

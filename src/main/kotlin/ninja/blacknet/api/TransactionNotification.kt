@@ -24,7 +24,7 @@ class TransactionNotification(
         val signature: String,
         val from: String,
         val seq: Int,
-        val blockHash: String,
+        val referenceChain: String,
         val fee: String,
         val type: Int,
         val data: JsonElement
@@ -36,10 +36,10 @@ class TransactionNotification(
             tx.signature.toString(),
             Address.encode(tx.from),
             tx.seq,
-            tx.blockHash.toString(),
+            tx.referenceChain.toString(),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
-            Transaction.Info.data(tx.type, tx.data.array)
+            TransactionInfo.data(tx.type, tx.data.array)
     )
 
     fun toJson() = Json.toJson(serializer(), this)

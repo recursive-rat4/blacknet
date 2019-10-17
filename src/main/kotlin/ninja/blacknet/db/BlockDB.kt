@@ -15,16 +15,19 @@ import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB
-import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.Connection
+import ninja.blacknet.util.emptyByteArray
 
 private val logger = KotlinLogging.logger {}
 
 object BlockDB : DataDB() {
     private const val MIN_DISK_SPACE = LedgerDB.MAX_BLOCK_SIZE * 2L
     private val BLOCK_KEY = "block".toByteArray()
+    private var cachedBlockHash = Hash.ZERO
+    private var cachedBlockBytes = emptyByteArray()
 
     suspend fun block(hash: Hash): Pair<Block, Int>? = mutex.withLock {
         return@withLock blockImpl(hash)
@@ -49,7 +52,10 @@ object BlockDB : DataDB() {
     }
 
     override suspend fun getImpl(hash: Hash): ByteArray? {
-        return LevelDB.get(BLOCK_KEY, hash.bytes)
+        return if (hash == cachedBlockHash)
+            cachedBlockBytes
+        else
+            LevelDB.get(BLOCK_KEY, hash.bytes)
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
@@ -88,6 +94,8 @@ object BlockDB : DataDB() {
                 TxPool.removeImpl(txHashes)
             }
             APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
+            cachedBlockHash = hash
+            cachedBlockBytes = bytes
             return Status.ACCEPTED
         } else {
             batch.close()

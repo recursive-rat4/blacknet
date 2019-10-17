@@ -11,12 +11,14 @@ package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Runtime
 import ninja.blacknet.network.Connection
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-internal class Pong(private val id: Int) : Packet {
+class Pong(
+        private val id: Int
+) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Pong

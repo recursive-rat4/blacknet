@@ -14,11 +14,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import mu.KotlinLogging
+import ninja.blacknet.Runtime
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.DataDB.Status
-import ninja.blacknet.core.PoS
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.packet.Blocks
@@ -95,7 +96,7 @@ object ChainFetcher {
             if (!BlockDB.isInteresting(data.chain))
                 continue
 
-            logger.info("Fetching ${data.chain} from ${data.connection.debugName()}")
+            logger.info("Fetching ${data.chain}")
             syncChain = data
             originalChain = LedgerDB.blockHash()
 
@@ -114,6 +115,7 @@ object ChainFetcher {
                             data.connection.dos("unexpected rollback")
                             break
                         }
+                        val height = LedgerDB.height()
                         val checkpoint = LedgerDB.rollingCheckpoint()
                         var prev = checkpoint
                         for (hash in answer.hashes) {
@@ -124,7 +126,7 @@ object ChainFetcher {
                             val blockNumber = LedgerDB.getBlockNumber(hash)
                             if (blockNumber == null)
                                 break
-                            if (blockNumber < LedgerDB.height() - PoS.MATURITY - 1) {
+                            if (blockNumber < height - PoS.MATURITY) {
                                 data.connection.dos("rollback to $blockNumber")
                                 break@requestLoop
                             }
@@ -163,38 +165,42 @@ object ChainFetcher {
     }
 
     private suspend fun fetched() {
+        val request = request
+        val syncChain = syncChain!!
+        val undoRollback = undoRollback
+
         val cumulativeDifficulty = LedgerDB.cumulativeDifficulty()
         if (undoRollback != null) {
             if (undoDifficulty >= cumulativeDifficulty) {
-                logger.info("Reconnecting ${undoRollback!!.size} blocks")
-                val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback!!)
+                logger.info("Reconnecting ${undoRollback.size} blocks")
+                val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback)
                 BlockDB.remove(toRemove)
             } else {
-                logger.debug { "Removing ${undoRollback!!.size} blocks from db" }
-                BlockDB.remove(undoRollback!!)
+                logger.debug { "Removing ${undoRollback.size} blocks from db" }
+                BlockDB.remove(undoRollback)
             }
+            this.undoRollback = null
         }
 
         val newChain = LedgerDB.blockHash()
         if (newChain != originalChain) {
-            Node.announceChain(newChain, cumulativeDifficulty, syncChain!!.connection)
+            Node.announceChain(newChain, cumulativeDifficulty, syncChain.connection)
         }
 
-        if (syncChain!!.connection.isClosed())
-            logger.info("Peer disconnected. Fetched $connectedBlocks blocks")
+        if (syncChain.connection.isClosed())
+            logger.info("${syncChain.connection.debugName(true)} disconnected. Fetched $connectedBlocks blocks")
         else
-            logger.info("Finished fetching $connectedBlocks blocks")
+            logger.info("Finished fetching $connectedBlocks blocks from ${syncChain.connection.debugName()}")
 
         recvChannel.poll()
         if (request != null) {
-            request!!.cancel()
-            request = null
+            request.cancel()
+            this.request = null
         }
-        syncChain = null
+        this.syncChain = null
         connectedBlocks = 0
         originalChain = null
         rollbackTo = null
-        undoRollback = null
         undoDifficulty = BigInt.ZERO
     }
 
@@ -208,7 +214,7 @@ object ChainFetcher {
         }
     }
 
-    suspend fun fetched(connection: Connection, blocks: Blocks) {
+    internal suspend fun fetched(connection: Connection, blocks: Blocks) {
         if (request == null || syncChain == null || syncChain!!.connection != connection) {
             // request may be cancelled
             //logger.info("Unexpected synchronization ${connection.debugName()}")

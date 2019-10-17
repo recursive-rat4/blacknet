@@ -26,10 +26,9 @@ class UndoBlock(
         val rollingCheckpoint: Hash,
         val upgraded: Int,
         val blockSize: Int,
-        val txHashes: ArrayList<Hash>,
-        val accounts: UndoAccountList,
-        val htlcs: UndoHTLCList,
-        val multisigs: UndoMultisigList,
+        val accounts: ArrayList<Pair<PublicKey, AccountState>>,
+        val htlcs: ArrayList<Pair<Hash, HTLC?>>,
+        val multisigs: ArrayList<Pair<Hash, Multisig?>>,
         val forkV2: Int
 ) {
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
@@ -39,7 +38,7 @@ class UndoBlock(
     }
 }
 
-open class UndoBuilder(
+class UndoBuilder(
         val blockTime: Long,
         val difficulty: BigInt,
         val cumulativeDifficulty: BigInt,
@@ -48,23 +47,22 @@ open class UndoBuilder(
         val rollingCheckpoint: Hash,
         val upgraded: Int,
         val blockSize: Int,
-        val txHashes: ArrayList<Hash>,
         val forkV2: Int,
         private val accounts: HashMap<PublicKey, AccountState> = HashMap(),
         private val htlcs: HashMap<Hash, HTLC?> = HashMap(),
         private val multisigs: HashMap<Hash, Multisig?> = HashMap()
 ) {
-    open fun add(publicKey: PublicKey, state: AccountState) {
+    fun add(publicKey: PublicKey, state: AccountState) {
         if (!accounts.containsKey(publicKey))
             accounts.put(publicKey, state.copy())
     }
 
-    open fun addHTLC(id: Hash, htlc: HTLC?) {
+    fun addHTLC(id: Hash, htlc: HTLC?) {
         if (!htlcs.containsKey(id))
             htlcs.put(id, htlc)
     }
 
-    open fun addMultisig(id: Hash, multisig: Multisig?) {
+    fun addMultisig(id: Hash, multisig: Multisig?) {
         if (!multisigs.containsKey(id))
             multisigs.put(id, multisig)
     }
@@ -79,7 +77,6 @@ open class UndoBuilder(
                 rollingCheckpoint,
                 upgraded,
                 blockSize,
-                txHashes,
                 accounts.toArrayList(),
                 htlcs.toArrayList(),
                 multisigs.toArrayList(),
@@ -90,7 +87,3 @@ open class UndoBuilder(
 private fun <K, V> HashMap<K, V>.toArrayList(): ArrayList<Pair<K, V>> {
     return mapTo(ArrayList(size)) { Pair(it.key, it.value) }
 }
-
-typealias UndoAccountList = ArrayList<Pair<PublicKey, AccountState>>
-typealias UndoHTLCList = ArrayList<Pair<Hash, HTLC?>>
-typealias UndoMultisigList = ArrayList<Pair<Hash, Multisig?>>

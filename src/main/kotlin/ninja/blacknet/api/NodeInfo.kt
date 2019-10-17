@@ -10,6 +10,7 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Version
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Bip14
@@ -32,7 +33,7 @@ class NodeInfo(
             val warnings = BlockDB.warnings() + LedgerDB.warnings() + Node.warnings()
             return NodeInfo(
                     Bip14.agent,
-                    Bip14.version,
+                    Version.version,
                     Node.version,
                     Node.outgoing(),
                     Node.incoming(),

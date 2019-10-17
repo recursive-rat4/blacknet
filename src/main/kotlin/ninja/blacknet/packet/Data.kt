@@ -16,7 +16,7 @@ import ninja.blacknet.core.DataDB.Status
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.network.Connection
-import ninja.blacknet.network.DataFetcher
+import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
@@ -24,7 +24,7 @@ import ninja.blacknet.serialization.SerializableByteArray
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-class Data(private val list: DataList) : Packet {
+internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Data
@@ -43,7 +43,7 @@ class Data(private val list: DataList) : Packet {
 
             val hash = type.hash(bytes.array)
 
-            if (!DataFetcher.fetched(hash)) {
+            if (!TxFetcher.fetched(hash)) {
                 connection.dos("unrequested ${type.name} $hash")
                 continue
             }
@@ -54,7 +54,7 @@ class Data(private val list: DataList) : Packet {
                 Pair(type.db.process(hash, bytes.array, connection), 0L)
 
             when (status.first) {
-                Status.ACCEPTED -> inv.add(Triple(type, hash, status.second))
+                Status.ACCEPTED -> inv.add(Pair(hash, status.second))
                 Status.INVALID -> connection.dos("invalid ${type.name} $hash")
                 Status.IN_FUTURE -> logger.debug { "in future ${type.name} $hash" }
                 Status.NOT_ON_THIS_CHAIN -> logger.debug { "not on this chain ${type.name} $hash" }
@@ -66,5 +66,3 @@ class Data(private val list: DataList) : Packet {
             Node.broadcastInv(inv, connection)
     }
 }
-
-typealias DataList = ArrayList<Pair<DataType, SerializableByteArray>>

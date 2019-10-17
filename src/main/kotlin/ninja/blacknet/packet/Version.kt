@@ -12,6 +12,7 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
+import ninja.blacknet.Runtime
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.*
 import ninja.blacknet.serialization.BinaryEncoder
@@ -19,7 +20,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-internal class Version(
+class Version(
         private val magic: Int,
         private val version: Int,
         private val time: Long,
@@ -46,19 +47,20 @@ internal class Version(
         connection.lastChain = chain
 
         if (version < Node.minVersion) {
-            logger.info("${connection.debugName()} obsolete protocol version $version $agent")
+            logger.info("${connection.debugName(true)} obsolete protocol version $version $agent")
             connection.close()
             return
         }
 
         if (connection.state == Connection.State.INCOMING_WAITING) {
-            if (nonce == Node.nonce) {
+            if (nonce != Node.nonce) {
+                Node.sendVersion(connection, nonce)
+                connection.state = Connection.State.INCOMING_CONNECTED
+                logger.info("Accepted connection from ${connection.debugName()} $agent")
+            } else {
                 connection.close()
                 return
             }
-            Node.sendVersion(connection, nonce)
-            connection.state = Connection.State.INCOMING_CONNECTED
-            logger.info("Accepted connection from ${connection.debugName()} $agent")
         } else {
             connection.state = Connection.State.OUTGOING_CONNECTED
             PeerDB.connected(connection.remoteAddress, connection.connectedAt, connection.agent)

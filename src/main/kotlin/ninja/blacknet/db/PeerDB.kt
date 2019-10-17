@@ -10,22 +10,27 @@
 
 package ninja.blacknet.db
 
+import com.google.common.collect.Maps.newHashMapWithExpectedSize
+import com.google.common.collect.Sets.newHashSetWithExpectedSize
+import io.ktor.util.error
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.internal.HashMapSerializer
 import mu.KotlinLogging
+import ninja.blacknet.Runtime
 import ninja.blacknet.network.Address
+import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.delay
 import kotlin.math.exp
+import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
@@ -33,8 +38,8 @@ private val logger = KotlinLogging.logger {}
 object PeerDB {
     const val DELAY = 60 * 60
     private const val MAX_SIZE = 10000
-    private const val VERSION = 2
-    private val map = SynchronizedHashMap<Address, Entry>(MAX_SIZE)
+    private const val VERSION = 3
+    private val peers = SynchronizedHashMap<Address, Entry>(MAX_SIZE)
     private val PEER_KEY = "peer".toByteArray()
     private val STATE_KEY = "db".toByteArray()
     private val VERSION_KEY = "version".toByteArray()
@@ -61,15 +66,26 @@ object PeerDB {
             } else {
                 emptyMap<Address, Entry>()
             }
-        } else if (version == 1) {
+        } else if (version in 1..2) {
             val batch = LevelDB.createWriteBatch()
 
-            val hashMapV1 = if (stateBytes != null) {
-                val stateV1 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), EntryV1.serializer()))
-                logger.info("Importing ${stateV1.size} addresses from PeerDB v1")
-                val result = HashMap<Address, Entry>(stateV1.size)
-                stateV1.forEach { (address, entryV1) ->
-                    result.put(address, Entry.fromV1(entryV1))
+            val updatedHashMap = if (stateBytes != null) {
+                logger.info("Upgrading PeerDB...")
+                val result = newHashMapWithExpectedSize<Address, Entry>(MAX_SIZE)
+                try {
+                    if (version == 2) {
+                        val stateV2 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV2.serializer()))
+                        stateV2.forEach { (addressV1, entryV2) ->
+                            result.put(Address(addressV1), Entry(entryV2))
+                        }
+                    } else if (version == 1) {
+                        val stateV1 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV1.serializer()))
+                        stateV1.forEach { (addressV1, entryV1) ->
+                            result.put(Address(addressV1), Entry(entryV1))
+                        }
+                    }
+                } catch (e: Throwable) {
+                    logger.error(e)
                 }
                 result
             } else {
@@ -78,78 +94,90 @@ object PeerDB {
 
             setVersion(batch)
 
-            if (hashMapV1.isEmpty())
+            if (updatedHashMap.isEmpty())
                 batch.write()
             else
-                commitImpl(hashMapV1, batch, false)
+                commitImpl(updatedHashMap, batch, false)
 
-            hashMapV1
+            updatedHashMap
         } else {
             throw RuntimeException("Unknown database version $version")
         }
 
         logger.info("Loaded ${hashMap.size} peer addresses")
 
-        runBlocking {
-            map.putAll(hashMap)
-        }
+        peers.map.putAll(hashMap)
 
         Runtime.addShutdownHook { commit(true) }
         Runtime.launch { oldEntriesRemover() }
     }
 
     suspend fun size(): Int {
-        return map.size()
+        return peers.size()
     }
 
     suspend fun isEmpty(): Boolean {
-        return map.isEmpty()
+        return peers.isEmpty()
     }
 
     suspend fun isLow(): Boolean {
-        return map.size() < 100
+        return peers.size() < 100
     }
 
     suspend fun connected(address: Address, time: Long, userAgent: String) {
         if (address.isLocal()) return
-        val entry = map.get(address)
-        if (entry != null)
-            entry.connected(time, userAgent)
-        else
-            map.put(address, Entry.newConnected(time, userAgent))
+        peers.mutex.withLock {
+            val entry = peers.map.get(address)
+            if (entry != null)
+                entry.connected(time, userAgent)
+            else
+                peers.map.put(address, Entry.newConnected(time, userAgent))
+        }
     }
 
     suspend fun failed(address: Address, time: Long) {
         if (Node.isOffline()) return
-        map.get(address)?.failed(time)
+        peers.mutex.withLock {
+            peers.map.get(address)?.failed(time)
+        }
     }
 
     suspend fun getAll(): ArrayList<Pair<Address, Entry>> {
-        return map.copyToArray()
+        return peers.copyToArray()
     }
 
     suspend fun getSeed(): List<Address> {
-        return map.filterToKeyList { address, entry -> address.port == Node.DEFAULT_P2P_PORT && entry.isReliable() }
-    }
-
-    suspend fun getCandidate(filter: List<Address>): Address? {
-        val candidates = map.filterToKeyList { address, _ -> !filter.contains(address) }
-        if (candidates.isEmpty())
-            return null
-        return candidates[Random.nextInt(candidates.size)]
+        return peers.filterToKeyList { address, entry -> address.port == Node.DEFAULT_P2P_PORT && entry.isReliable() }
     }
 
     suspend fun getCandidates(n: Int, filter: List<Address>): List<Address> {
-        val candidates = map.filterToKeyList { address, _ -> !filter.contains(address) }
-        if (candidates.isEmpty())
+        val candidates = peers.mutex.withLock {
+            val candidates = ArrayList<Pair<Address, Float>>(peers.map.size)
+            val currTime = Runtime.time()
+            peers.map.forEach { (address, entry) ->
+                if (!filter.contains(address))
+                    candidates.add(Pair(address, entry.chance(currTime)))
+            }
+            candidates
+        }
+
+        if (candidates.size <= n)
+            return candidates.map { (address, _) -> address }
+        else if (candidates.size == 0)
             return emptyList()
-        candidates.shuffle()
+
         val x = min(candidates.size, n)
-        return candidates.take(x)
+        val result = newHashSetWithExpectedSize<Address>(x)
+        do {
+            val (address, chance) = candidates.random()
+            if (chance > Random.nextFloat())
+                result.add(address)
+        } while (result.size < x)
+        return result.toList()
     }
 
     suspend fun getRandom(n: Int): ArrayList<Address> {
-        val candidates = map.keys()
+        val candidates = peers.keys()
         candidates.shuffle()
         val x = min(candidates.size, n)
         val result = ArrayList<Address>(x)
@@ -158,30 +186,38 @@ object PeerDB {
         return result
     }
 
-    suspend fun add(peers: List<Address>, from: Address) {
-        if (map.size() >= MAX_SIZE)
-            return
-        peers.forEach {
-            add(it, from)
+    suspend fun add(newPeers: List<Address>, from: Address, force: Boolean = false) = peers.mutex.withLock {
+        var added = 0
+        var i = 0
+        val newPeersSize = newPeers.size
+        val nToAdd = if (!force) {
+            val freeSlots = max(MAX_SIZE - peers.map.size, 0)
+            min(newPeersSize, freeSlots)
+        } else {
+            newPeersSize
+        }
+        while (i < newPeersSize && added < nToAdd) {
+            if (addImpl(newPeers[i], from))
+                added += 1
+            i += 1
         }
     }
 
-    private suspend fun add(peer: Address, from: Address): Boolean {
+    private fun addImpl(peer: Address, from: Address): Boolean {
         if (peer.network.isDisabled())
             return false
         if (peer.isLocal())
             return false
         if (peer.isPrivate() && !from.isPrivate())
             return false
-        if (!map.containsKey(peer)) {
-            map.put(peer, Entry.new(from))
-            return true
-        }
-        return false
+        if (peers.map.containsKey(peer))
+            return false
+        peers.map.put(peer, Entry.new(from))
+        return true
     }
 
     suspend fun contains(peer: Address): Boolean {
-        return map.containsKey(peer)
+        return peers.containsKey(peer)
     }
 
     private suspend fun oldEntriesRemover() {
@@ -190,22 +226,25 @@ object PeerDB {
             if (Node.isOffline()) continue
 
             val toRemove = ArrayList<Address>()
-            val currTime = Runtime.time()
-            map.forEach {
-                if (it.value.isOld(currTime))
-                    toRemove.add(it.key)
-            }
-            if (!toRemove.isEmpty()) {
-                toRemove.forEach { map.remove(it) }
-                commit()
-                logger.info("Removed ${toRemove.size} old entries from peer db")
+            peers.mutex.withLock {
+                val currTime = Runtime.time()
+                peers.map.forEach { (address, entry) ->
+                    if (entry.isOld(currTime))
+                        toRemove.add(address)
+                }
+                if (!toRemove.isEmpty()) {
+                    toRemove.forEach { peers.map.remove(it) }
+                    val batch = LevelDB.createWriteBatch()
+                    commitImpl(peers.map, batch, false)
+                    logger.info("Removed ${toRemove.size} old entries from peer db")
+                }
             }
         }
     }
 
-    private suspend fun commit(sync: Boolean = false) = map.mutex.withLock {
+    private suspend fun commit(sync: Boolean = false) = peers.mutex.withLock {
         val batch = LevelDB.createWriteBatch()
-        commitImpl(map.map, batch, sync)
+        commitImpl(peers.map, batch, sync)
     }
 
     private fun commitImpl(map: Map<Address, Entry>, batch: LevelDB.WriteBatch, sync: Boolean) {
@@ -242,6 +281,9 @@ object PeerDB {
             var lastTry: Long,
             var stat: NetworkStat?
     ) {
+        internal constructor(entry: EntryV1) : this(Address(entry.from), entry.attempts, entry.lastTry, null)
+        internal constructor(entry: EntryV2) : this(Address(entry.from), entry.attempts, entry.lastTry, entry.stat)
+
         fun toJson(address: Address) = Json.toJson(Info.serializer(), Info(this, address))
 
         fun failed(time: Long) {
@@ -260,6 +302,15 @@ object PeerDB {
             updateUptimeStat(stat!!, true, time)
             attempts = 0
             lastTry = time
+        }
+
+        fun chance(time: Long): Float {
+            val age = time - lastTry
+            val chance = 0.66f.pow(min(attempts, 8))
+            return if (age > 15 * 60)
+                chance
+            else
+                chance * 0.01f
         }
 
         fun isNew(): Boolean {
@@ -299,7 +350,6 @@ object PeerDB {
         }
 
         companion object {
-            internal fun fromV1(v1: EntryV1) = Entry(v1.from, v1.attempts, v1.lastTry, null)
             fun new(from: Address) = Entry(from, 0, 0, null)
             fun newConnected(time: Long, userAgent: String) = Entry(Address.LOOPBACK, 0, 0, NetworkStat(time, userAgent))
         }
@@ -336,5 +386,8 @@ object PeerDB {
     }
 
     @Serializable
-    internal class EntryV1(val from: Address, val attempts: Int, val lastTry: Long, val lastConnected: Long)
+    internal class EntryV1(val from: AddressV1, val attempts: Int, val lastTry: Long, val lastConnected: Long)
+
+    @Serializable
+    internal class EntryV2(val from: AddressV1, val attempts: Int, val lastTry: Long, val stat: NetworkStat?)
 }

@@ -13,21 +13,17 @@ import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.DefaultHeaders
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
-import ninja.blacknet.serialization.Json
 
 fun Application.PublicServer() {
-    install(DefaultHeaders)
+    install(DefaultHeaders) {
+        APIServer.configureHeaders(this)
+    }
 
     routing {
         get("/api/v1/supply") {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-                Json.stringify(SupplyInfo.serializer(), SupplyInfo.get())
-            }
+            call.respondJson(SupplyInfo.serializer(), SupplyInfo.get())
         }
     }
 }

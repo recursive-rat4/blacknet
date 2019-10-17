@@ -13,8 +13,8 @@ import com.rfksystems.blake2b.Blake2b
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.serialization.toHex
 import java.io.File
 

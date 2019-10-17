@@ -20,12 +20,12 @@ import ninja.blacknet.Config
 import ninja.blacknet.Config.dnsseed
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.upnp
+import ninja.blacknet.Runtime
 import ninja.blacknet.core.DataDB.Status
-import ninja.blacknet.core.DataType
-import ninja.blacknet.core.PoS
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
@@ -41,11 +41,11 @@ import kotlin.random.Random
 private val logger = KotlinLogging.logger {}
 
 object Node {
-    const val DEFAULT_P2P_PORT = 28453
+    const val DEFAULT_P2P_PORT: Short = 28453
     const val NETWORK_TIMEOUT = 90
     const val SEND_INV_TIMEOUT = 5
     const val magic = 0x17895E7D
-    const val version = 9
+    const val version = 11
     const val minVersion = 7
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
@@ -62,14 +62,21 @@ object Node {
             } catch (e: Throwable) {
             }
         }
-        Runtime.launch { listenOnTor() }
-        Runtime.launch { listenOnI2P() }
+        if (!Config.isDisabled(Network.TORv2))
+            Runtime.launch { Network.listenOnTor() }
+        if (!Config.isDisabled(Network.I2P))
+            Runtime.launch { Network.listenOnI2P() }
         Runtime.launch { connector() }
         Runtime.launch { dnsSeeder(true) }
     }
 
     fun newPeerId(): Long {
         return nextPeerId.getAndIncrement()
+    }
+
+    private fun nonce(network: Network): Long = when (network) {
+        Network.IPv4, Network.IPv6 -> nonce
+        else -> Random.nextLong()
     }
 
     suspend fun outgoing(): Int {
@@ -146,32 +153,13 @@ object Node {
         listenOn(Address.IPv4_ANY(Config.netPort))
     }
 
-    private suspend fun listenOnTor() {
-        val address = Network.listenOnTor()
-        if (address != null) {
-            if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
-                listenOn(Address.LOOPBACK)
-            logger.info("Listening on $address")
-            listenAddress.add(address)
-        }
-    }
-
-    private suspend fun listenOnI2P() {
-        val address = Network.listenOnI2P()
-        if (address != null) {
-            logger.info("Listening on $address")
-            listenAddress.add(address)
-            i2plistener()
-        }
-    }
-
     suspend fun connectTo(address: Address) {
         val connection = Network.connect(address)
         connections.mutex.withLock {
             connections.list.add(connection)
             connection.launch()
         }
-        sendVersion(connection, nonce)
+        sendVersion(connection, nonce(address.network))
     }
 
     suspend fun sendVersion(connection: Connection, nonce: Long) {
@@ -205,32 +193,30 @@ object Node {
     }
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Boolean {
-        val status = TxPool.processTx(hash, bytes)
-        if (status.first == Status.ACCEPTED) {
-            val inv = Pair(DataType.Transaction, hash)
+        val (status, fee) = TxPool.processTx(hash, bytes)
+        if (status == Status.ACCEPTED) {
             connections.forEach {
-                if (it.state.isConnected() && it.feeFilter <= status.second)
-                    it.inventory(inv)
+                if (it.state.isConnected() && it.feeFilter <= fee)
+                    it.inventory(hash)
             }
             return true
-        } else if (status.first == Status.ALREADY_HAVE) {
+        } else if (status == Status.ALREADY_HAVE) {
             logger.info("Already in tx pool $hash")
             return true
         } else {
-            logger.info("${status.first} tx $hash")
+            logger.info("$status tx $hash")
             return false
         }
     }
 
     suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null) {
-        val invs = unfiltered.map { Pair(it.first, it.second) }
-        val toSend = InvList(invs.size)
+        val toSend = ArrayList<Hash>(unfiltered.size)
         connections.forEach {
             if (it != source && it.state.isConnected()) {
                 for (i in unfiltered.indices) {
-                    val inv = unfiltered[i]
-                    if (inv.first != DataType.Transaction || it.feeFilter <= inv.third)
-                        toSend.add(invs[i])
+                    val (hash, fee) = unfiltered[i]
+                    if (it.feeFilter <= fee)
+                        toSend.add(hash)
                 }
                 if (toSend.size != 0) {
                     it.inventory(toSend)
@@ -255,7 +241,7 @@ object Node {
     suspend fun warnings(): List<String> {
         val timeOffset = timeOffset()
 
-        if (timeOffset > PoS.MAX_FUTURE_DRIFT || timeOffset < -PoS.MAX_FUTURE_DRIFT)
+        if (timeOffset >= PoS.TIME_SLOT || timeOffset <= -PoS.TIME_SLOT)
             return listOf("Please check your system clock. Many peers report different time.")
 
         return emptyList()
@@ -287,15 +273,7 @@ object Node {
         }
     }
 
-    private suspend fun i2plistener() {
-        while (I2PSAM.haveSession()) {
-            val c = I2PSAM.accept() ?: continue
-            val connection = Connection(c.socket, c.readChannel, c.writeChannel, c.remoteAddress, I2PSAM.localAddress!!, Connection.State.INCOMING_WAITING)
-            addConnection(connection)
-        }
-    }
-
-    private suspend fun addConnection(connection: Connection) {
+    suspend fun addConnection(connection: Connection) {
         if (!haveSlot()) {
             logger.info("Too many connections, dropping ${connection.debugName()}")
             connection.close()
@@ -356,8 +334,7 @@ object Node {
 
             val currTime = Runtime.time()
 
-            addresses.forEach {
-                val address = it
+            addresses.forEach { address ->
                 Runtime.launch {
                     try {
                         connectTo(address)
@@ -372,17 +349,18 @@ object Node {
     }
 
     private const val DNS_TIMEOUT = 5
-    private const val DNS_SEEDER_DELAY = 11
+    private const val DNS_SEEDER_DELAY = 11 * 60
     private suspend fun dnsSeeder(delay: Boolean) {
         if (!Config[dnsseed])
             return
 
-        if (delay && !PeerDB.isEmpty()) {
+        if (delay && !PeerDB.isLow()) {
             delay(DNS_SEEDER_DELAY)
-            if (connected() >= 2) {
-                logger.info("P2P peers available. Skipped DNS seeding.")
-                return
-            }
+        }
+
+        if (connected() >= 2) {
+            logger.info("P2P peers available. Skipped DNS seeding.")
+            return
         }
 
         logger.info("Requesting DNS seeds.")
@@ -390,7 +368,7 @@ object Node {
         val seeds = "dnsseed.blacknet.ninja"
         try {
             val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT)
-            PeerDB.add(peers, Address.LOOPBACK)
+            PeerDB.add(peers, Address.LOOPBACK, true)
         } catch (e: Throwable) {
         }
     }

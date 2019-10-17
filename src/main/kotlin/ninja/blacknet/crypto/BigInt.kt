@@ -24,6 +24,7 @@ import java.math.BigInteger
 class BigInt(private val int: BigInteger) : Comparable<BigInt> {
     constructor(bytes: ByteArray) : this(BigInteger(bytes))
     constructor(n: Long) : this(BigInteger.valueOf(n))
+    constructor(hash: Hash) : this(BigInteger(1, hash.bytes))
 
     override operator fun compareTo(other: BigInt): Int = int.compareTo(other.int)
     operator fun plus(other: BigInt): BigInt = BigInt(int.add(other.int))

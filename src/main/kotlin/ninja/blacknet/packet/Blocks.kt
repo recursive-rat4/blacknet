@@ -19,8 +19,8 @@ import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class Blocks(
-        internal val hashes: ArrayList<Hash>,
-        internal val blocks: ArrayList<SerializableByteArray>
+        val hashes: List<Hash>,
+        val blocks: List<SerializableByteArray>
 ) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 

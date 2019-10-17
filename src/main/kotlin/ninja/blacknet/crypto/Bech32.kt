@@ -14,27 +14,25 @@ import kotlin.experimental.and
 object Bech32 {
     private const val CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
-    class Data(val hrp: ByteArray, val data: ByteArray)
+    fun encode(hrp: ByteArray, data: ByteArray): String {
+        val converted = convertBits(data, 8, 5, true)!!
 
-    fun encode(bech32: Data): String {
-        val converted = convertBits(bech32.data, 8, 5, true)!!
+        val chk = createChecksum(hrp, converted)
 
-        val chk = createChecksum(bech32.hrp, converted)
-
-        val ret = ByteArray(bech32.hrp.size + 1 + converted.size + chk.size)
-        System.arraycopy(bech32.hrp, 0, ret, 0, bech32.hrp.size)
-        ret[bech32.hrp.size] = 0x31
+        val ret = ByteArray(hrp.size + 1 + converted.size + chk.size)
+        System.arraycopy(hrp, 0, ret, 0, hrp.size)
+        ret[hrp.size] = 0x31
         for (i in 0 until converted.size) {
-            ret[i + bech32.hrp.size + 1] = CHARSET[converted[i].toInt()].toByte()
+            ret[i + hrp.size + 1] = CHARSET[converted[i].toInt()].toByte()
         }
         for (i in 0 until chk.size) {
-            ret[i + bech32.hrp.size + 1 + converted.size] = CHARSET[chk[i].toInt()].toByte()
+            ret[i + hrp.size + 1 + converted.size] = CHARSET[chk[i].toInt()].toByte()
         }
 
         return String(ret, Charsets.US_ASCII)
     }
 
-    fun decode(bech: String): Data? {
+    fun decode(bech: String): Pair<ByteArray, ByteArray>? {
         if (bech.length < 8 || bech.length > 90)
             return null
 
@@ -86,7 +84,7 @@ object Bech32 {
         val ret = data.copyOf(data.size - 6)
         val converted = convertBits(ret, 5, 8, false) ?: return null
 
-        return Data(hrp, converted)
+        return Pair(hrp, converted)
     }
 
     private fun polymod(values: ByteArray): Int {
@@ -144,7 +142,7 @@ object Bech32 {
         return ret
     }
 
-    private fun convertBits(data: ByteArray, fromBits: Int, toBits: Int, pad: Boolean): ByteArray? {
+    fun convertBits(data: ByteArray, fromBits: Int, toBits: Int, pad: Boolean): ByteArray? {
         var acc = 0
         var bits = 0
         val maxv = (1 shl toBits) - 1

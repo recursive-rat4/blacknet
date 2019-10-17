@@ -12,61 +12,24 @@ package ninja.blacknet.core
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import ninja.blacknet.Config
+import ninja.blacknet.Config.mnemonics
+import ninja.blacknet.Runtime
+import ninja.blacknet.api.StakingInfo
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.Runtime
 import ninja.blacknet.util.SynchronizedArrayList
-import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.delay
-import kotlin.math.min
+import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
 
-object PoS {
-    fun reward(supply: Long): Long {
-        val blocks = 365 * 24 * 60 * 60 / TARGET_BLOCK_TIME
-        return supply / 100 / blocks
-    }
-
-    fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
-        return (Blake2b.Hasher() + nxtrng.bytes + generator.bytes).hash()
-    }
-
-    fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInt, prevTime: Long, stake: Long): Boolean {
-        if (stake <= 0) {
-            logger.info("invalid stake amount $stake")
-            return false
-        }
-        if (time and TIMESTAMP_MASK != 0L) {
-            logger.info("invalid timestamp mask")
-            return false
-        }
-        val hash = (Blake2b.Hasher() + nxtrng.bytes + prevTime + generator.bytes + time).hash()
-        val x = hash.toBigInt() / stake
-        return x < difficulty
-    }
-
-    fun isTooFarInFuture(time: Long): Boolean {
-        return time > Runtime.time() + MAX_FUTURE_DRIFT
-    }
-
-    fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
-        val dTime = min(blockTime - prevBlockTime, TARGET_BLOCK_TIME * SPACING)
-        return difficulty * (A2 + 2 * dTime) / A1
-    }
-
-    fun cumulativeDifficulty(cumulativeDifficulty: BigInt, difficulty: BigInt): BigInt {
-        return cumulativeDifficulty + ONE_SHL_256 / difficulty
-    }
-
-    fun guessInitialSynchronization(): Boolean {
-        return Runtime.time() > LedgerDB.blockTime() + TARGET_BLOCK_TIME * MATURITY
-    }
-
+object Staker {
     private class State(
             val publicKey: PublicKey,
             val privateKey: PrivateKey,
@@ -80,7 +43,26 @@ object PoS {
     }
 
     private val stakers = SynchronizedArrayList<State>()
-    internal suspend fun stakersSize() = stakers.size()
+
+    init {
+        if (Config.contains(mnemonics)) {
+            runBlocking {
+                Config[mnemonics].forEachIndexed { index, mnemonic ->
+                    val privateKey = Mnemonic.fromString(mnemonic)
+                    if (privateKey != null) {
+                        startStaking(privateKey)
+                    } else {
+                        logger.warn("Invalid mnemonic $index")
+                    }
+                }
+                val n = stakers.list.size
+                if (n == 1)
+                    logger.info("Started staking")
+                else if (n > 1)
+                    logger.info("Started staking with $n accounts")
+            }
+        }
+    }
 
     private var job: Job? = null
     private suspend fun staker() {
@@ -93,8 +75,9 @@ object PoS {
             if (Node.isInitialSynchronization())
                 continue
 
-            val time = Runtime.time() and (TIMESTAMP_MASK xor -1L)
-            if (time <= LedgerDB.blockTime())
+            val currTime = Runtime.time()
+            val timeSlot = currTime - currTime % PoS.TIME_SLOT
+            if (timeSlot <= LedgerDB.blockTime())
                 continue
 
             @Suppress("LABEL_NAME_CLASH")
@@ -106,8 +89,8 @@ object PoS {
                         if (state.lastBlock != LedgerDB.blockHash())
                             state.update()
 
-                        if (state.stake > 0 && check(time, state.publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), state.stake)) {
-                            val block = Block.create(LedgerDB.blockHash(), time, state.publicKey)
+                        if (state.stake > 0 && PoS.check(timeSlot, state.publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), state.stake)) {
+                            val block = Block.create(LedgerDB.blockHash(), timeSlot, state.publicKey)
                             TxPool.fill(block)
                             return@withLock block.sign(state.privateKey)
                         }
@@ -164,38 +147,10 @@ object PoS {
         return stakers.list.find { it.privateKey == privateKey } != null
     }
 
-    /**
-     * Expected block time
-     */
-    const val TARGET_BLOCK_TIME = 64L
-    /**
-     * Default number of confirmations
-     */
-    const val DEFAULT_CONFIRMATIONS = 10
-    /**
-     * Maximum number of blocks that can be rolled back
-     */
-    const val MATURITY = 1350
-    /**
-     * Number of blocks used to calculate the maximum block size
-     */
-    const val BLOCK_SIZE_SPAN = 1351
-    /**
-     * Satoshi
-     */
-    const val COIN = 100000000L
-    /**
-     * Minimum amount that can be leased out for cold staking
-     */
-    const val MIN_LEASE = 1000 * COIN
-
-    const val TARGET_TIMESPAN = 960L
-    const val INTERVAL = TARGET_TIMESPAN / TARGET_BLOCK_TIME
-    const val SPACING = 10
-    const val TIMESTAMP_MASK = 15L
-    const val MAX_FUTURE_DRIFT = 15L
-    val A1 = BigInt((INTERVAL + 1) * TARGET_BLOCK_TIME)
-    val A2 = BigInt((INTERVAL - 1) * TARGET_BLOCK_TIME)
-    val INITIAL_DIFFICULTY = BigInt(byteArrayOfInts(0x00, 0xAF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
-    val ONE_SHL_256 = BigInt.ONE shl 256
+    suspend fun info(): StakingInfo = stakers.mutex.withLock {
+        val weight = stakers.list.sumByLong { it.stake }
+        val networkWeight = (PoS.MAX_DIFFICULTY / LedgerDB.difficulty()).toLong() / PoS.TARGET_BLOCK_TIME * PoS.TIME_SLOT
+        val expectedTime = if (weight != 0L) PoS.TARGET_BLOCK_TIME * networkWeight / weight else 0L
+        return StakingInfo(stakers.list.size, weight.toString(), networkWeight.toString(), expectedTime)
+    }
 }

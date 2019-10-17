@@ -9,9 +9,13 @@
 
 package ninja.blacknet.network
 
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
 import ninja.blacknet.Config
-import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketAddress
@@ -22,14 +26,10 @@ import java.net.SocketAddress
 @Serializable
 class Address(
         val network: Network,
-        val port: Int,
-        val bytes: SerializableByteArray
+        val port: Short,
+        val bytes: ByteArray
 ) {
-    constructor(network: Network, port: Int, bytes: ByteArray) : this(network, port, SerializableByteArray(bytes))
-
-    fun checkSize(): Boolean {
-        return bytes.array.size == network.addrSize
-    }
+    internal constructor(address: AddressV1) : this(address.network, address.port.toPort(), address.bytes)
 
     fun isLocal(): Boolean {
         return network.isLocal(this)
@@ -44,27 +44,62 @@ class Address(
     }
 
     fun getSocketAddress(): SocketAddress {
-        return InetSocketAddress(InetAddress.getByAddress(bytes.array), port)
+        return InetSocketAddress(InetAddress.getByAddress(bytes), port.toPort())
     }
 
     override fun equals(other: Any?): Boolean {
-        return (other is Address) && network == other.network && port == other.port && bytes == other.bytes
+        return (other is Address) && network == other.network && port == other.port && bytes.contentEquals(other.bytes)
     }
 
     override fun hashCode(): Int {
-        return network.ordinal xor port xor bytes.hashCode()
+        return network.ordinal xor port.toInt() xor bytes.contentHashCode()
     }
 
     override fun toString(): String {
         return getAddressString() + ':' + port
     }
 
+    @Serializer(forClass = Address::class)
     companion object {
         val LOOPBACK = Address.IPv4_LOOPBACK(Config.netPort)
 
-        fun IPv4_ANY(port: Int) = Address(Network.IPv4, port, ByteArray(Network.IPv4.addrSize))
-        fun IPv4_LOOPBACK(port: Int) = Address(Network.IPv4, port, Network.IPv4_LOOPBACK_BYTES)
-        fun IPv6_ANY(port: Int) = Address(Network.IPv6, port, Network.IPv6_ANY_BYTES)
-        fun IPv6_LOOPBACK(port: Int) = Address(Network.IPv6, port, Network.IPv6_LOOPBACK_BYTES)
+        fun IPv4_ANY(port: Short) = Address(Network.IPv4, port, ByteArray(Network.IPv4.addrSize))
+        fun IPv4_LOOPBACK(port: Short) = Address(Network.IPv4, port, Network.IPv4_LOOPBACK_BYTES)
+        fun IPv6_ANY(port: Short) = Address(Network.IPv6, port, Network.IPv6_ANY_BYTES)
+        fun IPv6_LOOPBACK(port: Short) = Address(Network.IPv6, port, Network.IPv6_LOOPBACK_BYTES)
+
+        override fun deserialize(decoder: Decoder): Address {
+            return when (decoder) {
+                is BinaryDecoder -> {
+                    val network = Network.fromInt(decoder.decodeVarInt())
+                    Address(network,
+                            decoder.decodeShort(),
+                            decoder.decodeFixedByteArray(network.addrSize))
+                }
+                else -> throw RuntimeException("Unsupported decoder")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: Address) {
+            when (encoder) {
+                is BinaryEncoder -> {
+                    encoder.encodeVarInt(obj.network.ordinal)
+                    encoder.encodeShort(obj.port)
+                    encoder.encodeFixedByteArray(obj.bytes)
+                }
+                else -> throw RuntimeException("Unsupported encoder")
+            }
+        }
     }
+}
+
+@Serializable
+internal class AddressV1(
+        val network: Network,
+        val port: Int,
+        val bytes: ByteArray
+) {
+    constructor(address: Address) : this(address.network, address.port.toPort(), address.bytes)
+
+    fun check() = require(bytes.size == network.addrSize) { "Invalid address size" }
 }

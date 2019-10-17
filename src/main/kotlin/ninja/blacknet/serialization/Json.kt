@@ -17,7 +17,12 @@ import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.Config
 
 object Json {
-    private val json = Json(JsonConfiguration(prettyPrint = Config.jsonIndented(), indent = "    "))
+    private val json = Json(
+            JsonConfiguration(
+                    prettyPrint = Config.jsonIndented(),
+                    indent = "    "
+            )
+    )
 
     fun <T> parse(deserializer: DeserializationStrategy<T>, string: String): T = json.parse(deserializer, string)
     fun parseJson(string: String): JsonElement = json.parseJson(string)

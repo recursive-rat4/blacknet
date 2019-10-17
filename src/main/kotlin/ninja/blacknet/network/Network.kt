@@ -17,18 +17,20 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.util.error
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
-import net.i2p.data.Base32
 import ninja.blacknet.Config
 import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
+import ninja.blacknet.crypto.Base32
 import ninja.blacknet.util.byteArrayOfInts
+import ninja.blacknet.util.delay
 import ninja.blacknet.util.startsWith
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import kotlin.experimental.and
+import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
@@ -42,18 +44,18 @@ enum class Network(val addrSize: Int) {
 
     fun getAddressString(address: Address): String {
         return when (this) {
-            IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString()
-            IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes.array), address.port).getHostString() + ']'
-            TORv2 -> Base32.encode(address.bytes.array) + TOR_SUFFIX
-            TORv3 -> Base32.encode(address.bytes.array) + TOR_SUFFIX //FIXME checksum
-            I2P -> Base32.encode(address.bytes.array) + I2P_SUFFIX
+            IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes), address.port.toPort()).getHostString()
+            IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes), address.port.toPort()).getHostString() + ']'
+            TORv2 -> Base32.encode(address.bytes) + TOR_SUFFIX
+            TORv3 -> Base32.encode(address.bytes) + TOR_SUFFIX //FIXME checksum
+            I2P -> Base32.encode(address.bytes) + I2P_SUFFIX
         }
     }
 
     fun isLocal(address: Address): Boolean {
         return when (this) {
-            IPv4 -> isLocalIPv4(address.bytes.array)
-            IPv6 -> isLocalIPv6(address.bytes.array)
+            IPv4 -> isLocalIPv4(address.bytes)
+            IPv6 -> isLocalIPv6(address.bytes)
             TORv2, TORv3 -> false
             I2P -> false
         }
@@ -61,8 +63,8 @@ enum class Network(val addrSize: Int) {
 
     fun isPrivate(address: Address): Boolean {
         return when (this) {
-            IPv4 -> isPrivateIPv4(address.bytes.array)
-            IPv6 -> isPrivateIPv6(address.bytes.array)
+            IPv4 -> isPrivateIPv4(address.bytes)
+            IPv6 -> isPrivateIPv6(address.bytes)
             TORv2, TORv3 -> false
             I2P -> false
         }
@@ -129,21 +131,32 @@ enum class Network(val addrSize: Int) {
 
         init {
             if (Config.contains(proxyhost) && Config.contains(proxyport))
-                socksProxy = Network.resolve(Config[proxyhost], Config[proxyport])
+                socksProxy = Network.resolve(Config[proxyhost], Config[proxyport].toPort())
             else
                 socksProxy = null
 
             if (Config.contains(torhost) && Config.contains(torport))
-                torProxy = Network.resolve(Config[torhost], Config[torport])
+                torProxy = Network.resolve(Config[torhost], Config[torport].toPort())
             else
                 torProxy = null
         }
 
-        fun address(inet: InetSocketAddress): Address {
-            return address(inet.getAddress(), inet.port)
+        fun fromInt(type: Int): Network {
+            return when (type) {
+                IPv4.ordinal -> IPv4
+                IPv6.ordinal -> IPv6
+                TORv2.ordinal -> TORv2
+                TORv3.ordinal -> TORv3
+                I2P.ordinal -> I2P
+                else -> throw RuntimeException("Unknown network type $type")
+            }
         }
 
-        fun address(inet: InetAddress, port: Int): Address {
+        fun address(inet: InetSocketAddress): Address {
+            return address(inet.getAddress(), inet.port.toPort())
+        }
+
+        fun address(inet: InetAddress, port: Short): Address {
             val bytes = inet.getAddress()
             return when (bytes.size) {
                 IPv6.addrSize -> Address(IPv6, port, bytes)
@@ -157,7 +170,7 @@ enum class Network(val addrSize: Int) {
             when (address.network) {
                 IPv4, IPv6 -> {
                     if (socksProxy != null) {
-                        val c = Socks5(socksProxy).connect(address)
+                        val c = Socks5.connect(socksProxy, address)
                         return Connection(c.socket, c.readChannel, c.writeChannel, address, socksProxy, Connection.State.OUTGOING_WAITING)
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
@@ -169,43 +182,87 @@ enum class Network(val addrSize: Int) {
                 }
                 TORv2, TORv3 -> {
                     if (torProxy == null) throw RuntimeException("Tor proxy is not set")
-                    val c = Socks5(torProxy).connect(address)
+                    val c = Socks5.connect(torProxy, address)
                     return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
                 I2P -> {
-                    if (!I2PSAM.haveSession()) throw RuntimeException("I2P SAM session is not available")
                     val c = I2PSAM.connect(address)
-                    return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.localAddress!!, Connection.State.OUTGOING_WAITING)
+                    return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.session().second, Connection.State.OUTGOING_WAITING)
                 }
             }
         }
 
-        fun listenOnTor(): Address? {
-            try {
-                return TorController.listen()
-            } catch (e: ConnectException) {
-                logger.info("Can't connect to tor controller")
-            } catch (e: Throwable) {
-                logger.info(e.message)
+        suspend fun listenOnTor() {
+            if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+                Node.listenOn(Address.LOOPBACK)
+
+            var timeout = 60
+
+            while (true) {
+                try {
+                    val (thread, localAddress) = TorController.listen()
+
+                    logger.info("Listening on $localAddress")
+                    Node.listenAddress.add(localAddress)
+
+                    thread.join()
+
+                    Node.listenAddress.remove(localAddress)
+                    logger.info("Lost connection to tor controller")
+
+                    timeout = 60
+                } catch (e: ConnectException) {
+                    logger.debug { "Can't connect to tor controller: ${e.message}" }
+                } catch (e: Throwable) {
+                    logger.info(e.message)
+                }
+
+                delay(timeout)
+                timeout = min(timeout * 2, 3840)
             }
-            return null
         }
 
-        suspend fun listenOnI2P(): Address? {
-            try {
-                I2PSAM.createSession()
-                return I2PSAM.localAddress
-            } catch (e: ConnectException) {
-                logger.info("Can't connect to I2P SAM")
-            } catch (e: I2PSAM.I2PException) {
-                logger.info("I2P ${e.message}")
-            } catch (e: Throwable) {
-                logger.error(e)
+        suspend fun listenOnI2P() {
+            var timeout = 60
+
+            while (true) {
+                try {
+                    val (_, localAddress) = I2PSAM.createSession()
+
+                    logger.info("Listening on $localAddress")
+                    Node.listenAddress.add(localAddress)
+
+                    while (true) {
+                        val a = try {
+                            I2PSAM.accept()
+                        } catch (e: Throwable) {
+                            break
+                        }
+                        val connection = Connection(a.socket, a.readChannel, a.writeChannel, a.remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+                        Node.addConnection(connection)
+                    }
+
+                    Node.listenAddress.remove(localAddress)
+                    logger.info("I2P SAM session closed")
+
+                    timeout = 60
+                } catch (e: I2PSAM.NotConfigured) {
+                    logger.info(e.message)
+                    return
+                } catch (e: I2PSAM.I2PException) {
+                    logger.info(e.message)
+                } catch (e: ConnectException) {
+                    logger.debug { "Can't connect to I2P SAM: ${e.message}" }
+                } catch (e: Throwable) {
+                    logger.error(e)
+                }
+
+                delay(timeout)
+                timeout = min(timeout * 2, 3840)
             }
-            return null
         }
 
-        fun parse(string: String?, port: Int): Address? {
+        fun parse(string: String?, port: Short): Address? {
             if (string == null) return null
             val host = string.toLowerCase()
 
@@ -241,11 +298,19 @@ enum class Network(val addrSize: Int) {
             return null
         }
 
-        fun resolve(string: String, port: Int): Address? {
+        fun parsePort(string: String): Short? {
+            return try {
+                string.toInt().toPort()
+            } catch (e: Throwable) {
+                null
+            }
+        }
+
+        fun resolve(string: String, port: Short): Address? {
             return resolveAll(string, port).firstOrNull()
         }
 
-        fun resolveAll(string: String, port: Int): List<Address> {
+        fun resolveAll(string: String, port: Short): List<Address> {
             val parsed = parse(string, port)
             if (parsed != null)
                 return listOf(parsed)
@@ -259,4 +324,13 @@ enum class Network(val addrSize: Int) {
 
         val selector = ActorSelectorManager(Dispatchers.IO)
     }
+}
+
+fun Int.toPort(): Short {
+    require(this in 0..65535) { "Port must be in range 0..65535" }
+    return toUShort().toShort()
+}
+
+fun Short.toPort(): Int {
+    return toUShort().toInt()
 }

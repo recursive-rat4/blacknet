@@ -158,10 +158,12 @@ $(document).ready(function () {
 
     function transfer_click(type) {
         return function () {
+            let el = this;
+
             switch (type) {
                 case 'send': transfer(); break;
                 case 'lease': lease(); break;
-                case 'cancel_lease': cancel_lease(); break;
+                case 'cancel_lease': cancel_lease(el); break;
             }
         }
     }
@@ -235,34 +237,19 @@ $(document).ready(function () {
         })
     }
 
-    function leaseVerify(){
 
-    }
+    function cancel_lease(el) {
+        let data = el.dataset;
+        let to = data.account;
+        let amount = data.amount;
+        let height = data.height;
 
-    function cancel_lease(mnemonic) {
-
-        let to = $('#cancel_lease_to').val();
-        let amount = $('#cancel_lease_amount').val();
-        let height = $('#cancel_lease_height').val();
-        if(!Blacknet.verifyAccount(to)) {
-            Blacknet.message("Invalid account", "warning")
-            $('#cancel_lease_to').focus()
-            return 
-        }
-        if(!Blacknet.verifyAmount(amount)) {
-            Blacknet.message("Invalid amount", "warning")
-            $('#cancel_lease_amount').focus()
-            return 
-        }
-        if(+amount < Mini_Lease){
-            Blacknet.message("Lease amount must > 1000 BLN", "warning")
-            $('#cancel_lease_amount').focus()
-            return
-        }
         input_mnemonic(function (mnemonic) {
             Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
+                Blacknet.message("Cancel Lease Success", "success");
                 $('#cancel_lease_result').text(data).parent().removeClass("hidden")
                 clearPassWordDialog();
+                Blacknet.renderLease();
             });
         })
     }
@@ -346,6 +333,11 @@ $(document).ready(function () {
             $('#ip_address').focus()
             return 
         }
+        if(!Blacknet.verifyNetworkPort(port)) {
+            Blacknet.message("Invalid port", "warning")
+            $('#ip_port').focus()
+            return
+        }
 
         let result = await Blacknet.getPromise(`/addpeer/${address}/${port}/true`);
         if(result == 'true') result = "Connected";
@@ -368,13 +360,13 @@ $(document).ready(function () {
                 command: "subscribe",
                 route: "block"
             };
-            let transactions = {
+            let wallet = {
                 command: "subscribe",
-                route: "transaction",
+                route: "wallet",
                 address: localStorage.account
             };
             ws.send(JSON.stringify(blocks));
-            ws.send(JSON.stringify(transactions));
+            ws.send(JSON.stringify(wallet));
         };
 
         ws.onmessage = function(message){
@@ -403,6 +395,38 @@ $(document).ready(function () {
     }
 
 
+    async function renderTx(){
+
+        let type = this.dataset.type;
+        
+        Blacknet.stopMoreTxs = true;
+        $(this).addClass('active').siblings().removeClass('active');
+
+        if(type == 'all'){
+            await Blacknet.renderTxs(Blacknet.txIndex);
+        }else{
+            await Blacknet.renderTxs(Blacknet.txIndex, type);
+        }
+        Blacknet.stopMoreTxs = false;
+
+    }
+
+    function explorerSave(){
+
+        let obj = Blacknet.explorer, el = $('.config');
+
+        for(let key in obj){
+
+            let v = el.find('#' + key).val();
+
+            obj[key] = v;
+
+        }
+
+        localStorage.explorer = JSON.stringify(obj);
+    }
+
+
     menu.on('click', 'li', menuSwitch);
     panel.find('.' + hash).show();
 
@@ -411,7 +435,7 @@ $(document).ready(function () {
         .on("click", "#refresh_staking", staking_click('isstaking'))
         .on("click", "#transfer", transfer_click('send'))
         .on("click", "#lease", transfer_click('lease'))
-        .on("click", "#cancel_lease", transfer_click('cancel_lease'))
+        .on("click", ".cancel_lease_btn", transfer_click('cancel_lease'))
         .on("click", "#sign", sign)
         .on("click", "#verify", verify)
         .on("click", "#mnemonic_info", mnemonic_info)
@@ -421,8 +445,11 @@ $(document).ready(function () {
         .on("input", "#confirm_mnemonic_warning", confirm_mnemonic_warning)
         .on("click", "#new_account_next_step", newAccountNext)
         .on("click", "#peer-table .disconnect", disconnect)
+        .on("click", ".filter a", renderTx)
+        .on('click', '#explorer_save', explorerSave)
         .on("click", ".tx-foot .show_more_txs", function(){
             $(this).hide();
+            Blacknet.stopMore = false;
             Blacknet.showMoreTxs();
             return false;
         });

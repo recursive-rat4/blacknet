@@ -17,7 +17,9 @@ import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-class Peers(private val list: ArrayList<Address>) : Packet {
+class Peers(
+        private val list: ArrayList<Address>
+) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Peers
@@ -28,17 +30,11 @@ class Peers(private val list: ArrayList<Address>) : Packet {
             return
         }
 
-        for (i in list) {
-            if (!i.checkSize()) {
-                connection.dos("invalid Address")
-                return
-            }
-        }
-
         PeerDB.add(list, connection.remoteAddress)
     }
 
     companion object {
+        const val MIN_VERSION = 11
         const val MAX = 1000
     }
 }

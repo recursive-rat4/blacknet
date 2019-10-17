@@ -18,11 +18,12 @@ private val logger = KotlinLogging.logger {}
 
 interface Ledger {
     fun addSupply(amount: Long)
-    fun checkBlockHash(hash: Hash): Boolean
+    fun checkReferenceChain(hash: Hash): Boolean
     fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long
     fun height(): Int
     fun get(key: PublicKey): AccountState?
+    fun getOrCreate(key: PublicKey): AccountState
     fun set(key: PublicKey, state: AccountState)
     fun addHTLC(id: Hash, htlc: HTLC)
     fun getHTLC(id: Hash): HTLC?
@@ -31,16 +32,12 @@ interface Ledger {
     fun getMultisig(id: Hash): Multisig?
     fun removeMultisig(id: Hash)
 
-    suspend fun getOrCreate(key: PublicKey): AccountState {
-        return get(key) ?: AccountState.create()
-    }
-
-    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int, undo: UndoBuilder): DataDB.Status {
+    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int): DataDB.Status {
         if (!tx.verifySignature(hash)) {
             logger.info("invalid signature")
             return DataDB.Status.INVALID
         }
-        if (!checkBlockHash(tx.blockHash)) {
+        if (!checkReferenceChain(tx.referenceChain)) {
             logger.info("not valid on this chain")
             return DataDB.Status.NOT_ON_THIS_CHAIN
         }
@@ -53,6 +50,6 @@ interface Ledger {
             return DataDB.Status.INVALID
         }
         val data = tx.data()
-        return data.process(tx, hash, this, undo)
+        return data.process(tx, hash, this)
     }
 }

@@ -9,8 +9,21 @@
 
 package ninja.blacknet.util
 
-fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { pos -> ints[pos].toByte() }
+private val EMPTY_BYTE_ARRAY = ByteArray(0)
 
+/**
+ * Returns an empty [ByteArray]
+ */
+fun emptyByteArray() = EMPTY_BYTE_ARRAY
+
+/**
+ * Returns a [ByteArray] containing the specified bytes represented as [Int]s
+ */
+fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { index -> ints[index].toByte() }
+
+/**
+ * Returns `true` if this [ByteArray] starts with the specified bytes
+ */
 fun ByteArray.startsWith(bytes: ByteArray): Boolean {
     for (i in bytes.indices)
         if (this[i] != bytes[i])

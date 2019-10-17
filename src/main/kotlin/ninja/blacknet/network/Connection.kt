@@ -21,10 +21,11 @@ import kotlinx.io.IOException
 import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.Config
+import ninja.blacknet.Runtime
 import ninja.blacknet.core.DataType
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
-import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.delay
 import java.util.concurrent.atomic.AtomicBoolean
@@ -44,7 +45,7 @@ class Connection(
     private val closed = AtomicBoolean()
     private val dosScore = AtomicInteger(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
-    private val inventoryToSend = SynchronizedArrayList<InvType>()
+    private val inventoryToSend = SynchronizedArrayList<Hash>()
     val connectedAt = Runtime.time()
 
     private var pinger: Job? = null
@@ -149,20 +150,24 @@ class Connection(
         }
     }
 
-    suspend fun inventory(inv: InvType) = inventoryToSend.mutex.withLock {
+    suspend fun inventory(inv: Hash) = inventoryToSend.mutex.withLock {
         inventoryToSend.list.add(inv)
         if (inventoryToSend.list.size == DataType.MAX_INVENTORY) {
             sendInventoryImpl(Runtime.time())
         }
     }
 
-    suspend fun inventory(inv: InvList): Unit = inventoryToSend.mutex.withLock {
+    suspend fun inventory(inv: ArrayList<Hash>): Unit = inventoryToSend.mutex.withLock {
         val newSize = inventoryToSend.list.size + inv.size
         if (newSize < DataType.MAX_INVENTORY) {
             inventoryToSend.list.addAll(inv)
         } else if (newSize > DataType.MAX_INVENTORY) {
+            val n = DataType.MAX_INVENTORY - inventoryToSend.list.size
+            for (i in 0 until n)
+                inventoryToSend.list.add(inv[i])
             sendInventoryImpl(Runtime.time())
-            inventoryToSend.list.addAll(inv)
+            for (i in n until inv.size)
+                inventoryToSend.list.add(inv[i])
         } else {
             inventoryToSend.list.addAll(inv)
             sendInventoryImpl(Runtime.time())
@@ -176,7 +181,10 @@ class Connection(
     }
 
     private fun sendInventoryImpl(time: Long) {
-        sendPacket(Inventory(inventoryToSend.list))
+        if (version >= Inventory.MIN_VERSION)
+            sendPacket(Inventory(inventoryToSend.list))
+        else
+            sendPacket(InventoryV1(inventoryToSend.list.map { Pair(DataType.Transaction, it) }))
         inventoryToSend.list.clear()
         lastInvSentTime = time
     }
@@ -237,11 +245,13 @@ class Connection(
         return closed.get()
     }
 
-    fun debugName(): String {
-        if (Config.logIPs)
-            return remoteAddress.toString()
+    fun debugName(capitalize: Boolean = false): String {
+        return if (Config.logIPs)
+            remoteAddress.toString()
+        else if (capitalize)
+            "Peer $peerId"
         else
-            return "peer $peerId"
+            "peer $peerId"
     }
 
     enum class State {
@@ -290,7 +300,9 @@ class Connection(
         while (true) {
             delay(10 * 60 + Random.nextInt(10 * 60))
 
-            val randomPeers = PeerDB.getRandom(Peers.MAX)
+            val n = Random.nextInt(Peers.MAX) + 1
+
+            val randomPeers = PeerDB.getRandom(n)
             if (randomPeers.size == 0)
                 continue
 
@@ -303,7 +315,10 @@ class Connection(
                 }
             }
 
-            sendPacket(Peers(randomPeers))
+            if (version >= Peers.MIN_VERSION)
+                sendPacket(Peers(randomPeers))
+            else
+                sendPacket(PeersV1(randomPeers.map { AddressV1(it) }))
         }
     }
 
