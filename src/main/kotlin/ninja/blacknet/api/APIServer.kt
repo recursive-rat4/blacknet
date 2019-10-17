@@ -32,6 +32,7 @@ import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
+import io.ktor.util.hex
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -666,15 +667,32 @@ fun Application.APIServer() {
             val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
+                var seq = WalletDB.getSequence(from)
                 val data = Transfer(amount, to, message).serialize()
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
-
                 if (Node.broadcastTx(hash, bytes))
                     call.respond(hash.toString())
                 else
                     call.respond(HttpStatusCode.BadRequest, "Transaction rejected")
+            }
+        }
+
+        post("/api/v1/serialize/transfer") {
+            val parameters = call.receiveParameters()
+            val from = Address.decode(parameters["from"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid from")
+            val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+            // signed message does not supported currently
+            val message = Message.create(parameters["message"], Message.PLAIN, null, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "Failed to create message")
+            val blockHash = parameters["blockhash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid blockhash") }
+
+            APIServer.txMutex.withLock {
+                var seq = WalletDB.getSequence(from)
+                val data = Transfer(amount, to, message).serialize()
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
+                call.respond(HttpStatusCode.OK, hex(tx.serialize()))
             }
         }
 
