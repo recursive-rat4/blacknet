@@ -29,7 +29,6 @@ import ninja.blacknet.util.withTimeout
 private val logger = KotlinLogging.logger {}
 
 object ChainFetcher {
-    const val TIMEOUT = 5
     private val chains = Channel<ChainData?>(16)
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     @Volatile
@@ -104,7 +103,7 @@ object ChainFetcher {
                 requestBlocks(data.connection, originalChain!!, LedgerDB.rollingCheckpoint())
 
                 requestLoop@ while (true) {
-                    val answer = withTimeout(TIMEOUT) {
+                    val answer = withTimeout(timeout()) {
                         request!!.await()
                     }
                     if (answer.isEmpty()) {
@@ -262,6 +261,10 @@ object ChainFetcher {
     private fun requestBlocks(connection: Connection, hash: Hash, checkpoint: Hash) {
         request = Runtime.async { recvChannel.receive() }
         connection.sendPacket(GetBlocks(hash, checkpoint))
+    }
+
+    private fun timeout(): Int {
+        return if (!PoS.guessInitialSynchronization()) 5 else 10
     }
 
     private class ChainData(val connection: Connection, val chain: Hash, val cumulativeDifficulty: BigInt)
