@@ -16,8 +16,8 @@ import java.util.logging.SimpleFormatter
 
 class FileHandler : FileHandler(
         File(Config.dataDir, "debug.log").getPath(),
-        10000000,
-        1,
+        5000000,
+        2,
         true
 ) {
     init {
