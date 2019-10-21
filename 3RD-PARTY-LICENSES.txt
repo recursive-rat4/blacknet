@@ -12,6 +12,9 @@ Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 kotlinx.serialization library https://github.com/Kotlin/kotlinx.serialization is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
+Gradle https://gradle.org/ is licensed under the
+Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
 EdDSA-Java https://github.com/str4d/ed25519-java is licensed under the
 CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
 
