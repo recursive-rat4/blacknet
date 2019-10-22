@@ -23,7 +23,6 @@ object Config {
     private val config = ConfigurationProperties.fromFile(File(dir, "blacknet.conf"))
 
     val mintxfee by stringType
-    val dnsseed by booleanType
     val ipv4 by booleanType
     val ipv6 by booleanType
     val listen by booleanType

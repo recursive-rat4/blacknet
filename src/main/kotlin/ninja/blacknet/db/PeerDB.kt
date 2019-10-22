@@ -186,7 +186,7 @@ object PeerDB {
         return result
     }
 
-    suspend fun add(newPeers: List<Address>, from: Address, force: Boolean = false) = peers.mutex.withLock {
+    suspend fun add(newPeers: List<Address>, from: Address, force: Boolean = false): Int = peers.mutex.withLock {
         var added = 0
         var i = 0
         val newPeersSize = newPeers.size
@@ -201,6 +201,7 @@ object PeerDB {
                 added += 1
             i += 1
         }
+        return added
     }
 
     private fun addImpl(peer: Address, from: Address): Boolean {
