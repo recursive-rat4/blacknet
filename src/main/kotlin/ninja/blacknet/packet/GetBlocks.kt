@@ -50,17 +50,14 @@ class GetBlocks(
         }
 
         var chainIndex = LedgerDB.getChainIndex(best)
-        if (chainIndex == null) {
-            connection.sendPacket(Blocks(emptyList(), emptyList()))
-            return
-        }
-
         var size = PACKET_HEADER_SIZE + 2 + 1
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = ArrayList<SerializableByteArray>()
 
         while (true) {
-            val hash = chainIndex!!.next
+            if (chainIndex == null)
+                break
+            val hash = chainIndex.next
             if (hash == Hash.ZERO)
                 break
             size += chainIndex.nextSize + 4 //TODO VarInt
@@ -70,7 +67,7 @@ class GetBlocks(
             if (bytes == null)
                 break
             response.add(SerializableByteArray(bytes))
-            chainIndex = LedgerDB.getChainIndex(chainIndex.next)
+            chainIndex = LedgerDB.getChainIndex(hash)
         }
 
         connection.sendPacket(Blocks(emptyList(), response))
