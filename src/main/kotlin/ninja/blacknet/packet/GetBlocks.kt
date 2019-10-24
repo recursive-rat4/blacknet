@@ -33,8 +33,23 @@ class GetBlocks(
     override fun getType() = PacketType.GetBlocks
 
     override suspend fun process(connection: Connection) {
-        if (checkpoint != Hash.ZERO) {
-            if (!LedgerDB.chainContains(checkpoint)) {
+        val cachedBlock = BlockDB.cachedBlock
+        if (cachedBlock != null) {
+            val (previousHash, bytes) = cachedBlock
+            if (previousHash == best) {
+                connection.sendPacket(Blocks(emptyList(), listOf(SerializableByteArray(bytes))))
+                return
+            }
+        }
+
+        var chainIndex = LedgerDB.getChainIndex(best)
+
+        if (chainIndex == null) {
+            val nextBlockHashes = LedgerDB.getNextBlockHashes(checkpoint, PoS.MATURITY)
+            if (nextBlockHashes != null) {
+                connection.sendPacket(Blocks(nextBlockHashes, emptyList()))
+                return
+            } else {
                 logger.info("Chain fork ${connection.debugName()}")
                 if (connection.version >= ChainFork.MIN_VERSION)
                     connection.sendPacket(ChainFork())
@@ -43,13 +58,6 @@ class GetBlocks(
             }
         }
 
-        if (best != Hash.ZERO && !LedgerDB.chainContains(best)) {
-            val response = LedgerDB.getNextBlockHashes(checkpoint, PoS.MATURITY)
-            connection.sendPacket(Blocks(response, emptyList()))
-            return
-        }
-
-        var chainIndex = LedgerDB.getChainIndex(best)
         var size = PACKET_HEADER_SIZE + 2 + 1
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = ArrayList<SerializableByteArray>()

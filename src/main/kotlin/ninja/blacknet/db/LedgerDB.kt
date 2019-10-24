@@ -357,8 +357,8 @@ object LedgerDB {
         return maxBlockSize
     }
 
-    suspend fun getNextBlockHashes(start: Hash, max: Int): List<Hash> = BlockDB.mutex.withLock {
-        var chainIndex = getChainIndex(start) ?: return@withLock emptyList()
+    suspend fun getNextBlockHashes(start: Hash, max: Int): List<Hash>? = BlockDB.mutex.withLock {
+        var chainIndex = getChainIndex(start) ?: return@withLock null
         val result = ArrayList<Hash>(max)
         while (true) {
             val hash = chainIndex.next
