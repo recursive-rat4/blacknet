@@ -45,7 +45,7 @@ object Node {
     const val NETWORK_TIMEOUT = 90
     const val SEND_INV_TIMEOUT = 5
     const val magic = 0x17895E7D
-    const val version = 11
+    const val version = 12
     const val minVersion = 7
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
