@@ -89,7 +89,8 @@ object Staker {
                         if (state.lastBlock != LedgerDB.blockHash())
                             state.update()
 
-                        if (state.stake > 0 && PoS.check(timeSlot, state.publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), state.stake)) {
+                        val pos = PoS.check(timeSlot, state.publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), state.stake)
+                        if (pos == Accepted) {
                             val block = Block.create(LedgerDB.blockHash(), timeSlot, state.publicKey)
                             TxPool.fill(block)
                             return@withLock block.sign(state.privateKey)

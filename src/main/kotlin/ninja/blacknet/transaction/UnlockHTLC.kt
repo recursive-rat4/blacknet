@@ -10,16 +10,12 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import mu.KotlinLogging
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class UnlockHTLC(
@@ -47,25 +43,22 @@ class UnlockHTLC(
         return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
-            logger.info("htlc not found")
-            return false
+            return Invalid("HTLC not found")
         }
         if (!htlc.verifyHashLock(preimage)) {
-            logger.info("invalid hashlock")
-            return false
+            return Invalid("Invalid hashlock")
         }
         if (!verifySignature(htlc.to)) {
-            logger.info("invalid signature")
-            return false
+            return Invalid("Invalid signature")
         }
 
         val toAccount = ledger.getOrCreate(htlc.to)
         toAccount.debit(ledger.height(), htlc.amount)
         ledger.set(htlc.to, toAccount)
         ledger.removeHTLC(id)
-        return true
+        return Accepted
     }
 }

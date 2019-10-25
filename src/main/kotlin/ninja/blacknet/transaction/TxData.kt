@@ -11,9 +11,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.json.JsonElement
 import mu.KotlinLogging
-import ninja.blacknet.core.DataDB
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
@@ -25,31 +23,30 @@ interface TxData {
     fun involves(publicKey: PublicKey): Boolean
     fun serialize(): ByteArray
     fun toJson(): JsonElement
-    suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean
+    suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status
 
-    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger): DataDB.Status {
+    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val account = ledger.get(tx.from)
         if (account == null) {
-            logger.info("account not found")
-            return DataDB.Status.INVALID
+            return Invalid("Sender account not found")
         }
         if (tx.seq < account.seq) {
             logger.debug { "already have seq ${tx.seq}" }
-            return DataDB.Status.ALREADY_HAVE
+            return AlreadyHave
         } else if (tx.seq > account.seq) {
             logger.debug { "in future seq ${tx.seq}" }
-            return DataDB.Status.IN_FUTURE
+            return InFuture
         }
-        if (!account.credit(tx.fee)) {
-            logger.info("insufficient funds for tx fee")
-            return DataDB.Status.INVALID
+        val status = account.credit(tx.fee)
+        if (status != Accepted) {
+            return if (status is Invalid)
+                Invalid("${status.reason} for tx fee")
+            else
+                status
         }
         account.seq += 1
         ledger.set(tx.from, account)
-        return if (processImpl(tx, hash, ledger))
-            DataDB.Status.ACCEPTED
-        else
-            DataDB.Status.INVALID
+        return processImpl(tx, hash, ledger)
     }
 
     companion object {

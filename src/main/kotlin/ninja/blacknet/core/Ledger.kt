@@ -9,13 +9,10 @@
 
 package ninja.blacknet.core
 
-import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.transaction.TxType
-
-private val logger = KotlinLogging.logger {}
 
 interface Ledger {
     fun addSupply(amount: Long)
@@ -33,27 +30,22 @@ interface Ledger {
     fun getMultisig(id: Hash): Multisig?
     fun removeMultisig(id: Hash)
 
-    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int): DataDB.Status {
+    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int): Status {
         if (!tx.verifySignature(hash)) {
-            logger.info("invalid signature")
-            return DataDB.Status.INVALID
+            return Invalid("Invalid signature")
         }
         if (!checkReferenceChain(tx.referenceChain)) {
-            logger.info("not valid on this chain")
-            return DataDB.Status.NOT_ON_THIS_CHAIN
+            return NotOnThisChain
         }
         if (!checkFee(size, tx.fee)) {
-            logger.info("too low fee ${tx.fee}")
-            return DataDB.Status.INVALID
+            return Invalid("Too low fee ${tx.fee}")
         }
         if (tx.type == TxType.WithdrawFromLease.type) {
             if (!forkV2()) {
-                logger.info("WithdrawFromLease before forkV2")
-                return DataDB.Status.INVALID
+                return Invalid("WithdrawFromLease before forkV2")
             }
         } else if (tx.type == TxType.Generated.type) {
-            logger.info("Generated as individual tx")
-            return DataDB.Status.INVALID
+            return Invalid("Generated as individual tx")
         }
         val data = tx.data()
         return data.process(tx, hash, this)

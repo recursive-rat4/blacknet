@@ -21,7 +21,8 @@ import ninja.blacknet.Config
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.Runtime
-import ninja.blacknet.core.DataDB.Status
+import ninja.blacknet.core.Accepted
+import ninja.blacknet.core.Status
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
@@ -182,7 +183,7 @@ object Node {
 
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
-        if (status == Status.ACCEPTED) {
+        if (status == Accepted) {
             logger.info("Announced to $n peers")
             return true
         } else {
@@ -191,21 +192,15 @@ object Node {
         }
     }
 
-    suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Boolean {
+    suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
         val (status, fee) = TxPool.processTx(hash, bytes)
-        if (status == Status.ACCEPTED) {
+        if (status == Accepted) {
             connections.forEach {
                 if (it.state.isConnected() && it.feeFilter <= fee)
                     it.inventory(hash)
             }
-            return true
-        } else if (status == Status.ALREADY_HAVE) {
-            logger.info("Already in tx pool $hash")
-            return true
-        } else {
-            logger.info("$status tx $hash")
-            return false
         }
+        return status
     }
 
     suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null) {

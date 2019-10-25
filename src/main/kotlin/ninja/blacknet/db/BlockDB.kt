@@ -13,9 +13,7 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
-import ninja.blacknet.core.Block
-import ninja.blacknet.core.DataDB
-import ninja.blacknet.core.TxPool
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.Connection
@@ -64,38 +62,29 @@ object BlockDB : DataDB() {
                 logger.info("unknown version ${block.version.toUInt()}")
         }
         if (PoS.isTooFarInFuture(block.time)) {
-            logger.debug { "too far in future ${block.time}" }
-            return Status.IN_FUTURE
+            return InFuture
         }
         if (!block.verifyContentHash(bytes)) {
-            logger.info("invalid content hash")
-            return Status.INVALID
+            return Invalid("Invalid content hash")
         }
         if (!block.verifySignature(hash)) {
-            logger.info("invalid signature")
-            return Status.INVALID
+            return Invalid("Invalid signature")
         }
         if (block.previous != LedgerDB.blockHash()) {
-            logger.info("block $hash not on current chain prev ${block.previous}")
-            return Status.NOT_ON_THIS_CHAIN
+            return NotOnThisChain
         }
         val batch = LevelDB.createWriteBatch()
         val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
-        val txHashes = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
-        if (txHashes != null) {
+        val status = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
+        if (status == Accepted) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
-            TxPool.mutex.withLock {
-                TxPool.clearRejectsImpl()
-                TxPool.removeImpl(txHashes)
-            }
             APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
             cachedBlock = Pair(block.previous, bytes)
-            return Status.ACCEPTED
         } else {
             batch.close()
-            return Status.INVALID
         }
+        return status
     }
 
     fun warnings(): List<String> {

@@ -20,9 +20,6 @@ private val logger = KotlinLogging.logger {}
 
 abstract class DataDB {
     internal val mutex = Mutex()
-    private val TX_INVALID = Pair(Status.INVALID, 0L)
-    private val TX_ALREADY_HAVE = Pair(Status.ALREADY_HAVE, 0L)
-    private val TX_IN_FUTURE = Pair(Status.IN_FUTURE, 0L)
     private val rejects = HashSet<Hash>()
 
     internal fun clearRejectsImpl() {
@@ -43,47 +40,34 @@ abstract class DataDB {
 
     suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Status = mutex.withLock {
         if (rejects.contains(hash))
-            return Status.INVALID
+            return Invalid("Already rejected")
         if (containsImpl(hash))
-            return Status.ALREADY_HAVE
+            return AlreadyHave
         val status = processImpl(hash, bytes, connection)
-        if (status == Status.INVALID)
+        if (status is Invalid)
             rejects.add(hash)
         return status
     }
 
     suspend fun processTx(hash: Hash, bytes: ByteArray, connection: Connection? = null): Pair<Status, Long> = mutex.withLock {
         if (rejects.contains(hash))
-            return TX_INVALID
+            return Pair(Invalid("Already rejected"), 0)
         if (containsImpl(hash))
-            return TX_ALREADY_HAVE
+            return Pair(AlreadyHave, 0)
         if (TxPool.dataSizeImpl() + bytes.size > Config.txPoolSize) {
             if (connection != null)
-                return TX_IN_FUTURE
+                return Pair(InFuture, 0)
             else
                 logger.warn("TxPool is full")
         }
-        val fee = TxPool.processImplWithFee(hash, bytes, connection)
-        if (fee == TxPool.INVALID) {
+        val result = TxPool.processImplWithFee(hash, bytes, connection)
+        if (result.first is Invalid || result.first == InFuture) {
             rejects.add(hash)
-            return TX_INVALID
-        } else if (fee == TxPool.IN_FUTURE) {
-            rejects.add(hash)
-            return TX_IN_FUTURE
         }
-        return Pair(Status.ACCEPTED, fee)
+        return result
     }
 
     internal abstract suspend fun getImpl(hash: Hash): ByteArray?
     protected abstract suspend fun containsImpl(hash: Hash): Boolean
     protected abstract suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status
-
-    enum class Status {
-        ACCEPTED,
-        IN_FUTURE,
-        ALREADY_HAVE,
-        INVALID,
-        NOT_ON_THIS_CHAIN,
-        ;
-    }
 }

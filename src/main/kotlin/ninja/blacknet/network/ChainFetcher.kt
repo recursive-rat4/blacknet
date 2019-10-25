@@ -15,8 +15,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import mu.KotlinLogging
 import ninja.blacknet.Runtime
-import ninja.blacknet.core.Block
-import ninja.blacknet.core.DataDB.Status
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
@@ -78,7 +77,7 @@ object ChainFetcher {
             stakedBlock?.let { (hash, bytes, deferred) ->
                 val status = BlockDB.process(hash, bytes)
                 val n = when (status) {
-                    Status.ACCEPTED -> Node.announceChain(hash, LedgerDB.cumulativeDifficulty())
+                    Accepted -> Node.announceChain(hash, LedgerDB.cumulativeDifficulty())
                     else -> 0
                 }
 
@@ -234,20 +233,12 @@ object ChainFetcher {
         for (i in answer.blocks) {
             val hash = Block.Hasher(i.array)
             if (undoRollback?.contains(hash) == true) {
-                logger.info("Rollback contains $hash")
-                connection.close()
+                connection.dos("Rollback contains $hash")
                 return false
             }
             val status = BlockDB.process(hash, i.array, null)
-            if (status == Status.IN_FUTURE) {
-                connection.dos("too far in future")
-                return false
-            } else if (status == Status.NOT_ON_THIS_CHAIN) {
-                connection.close()
-                return false
-            } else if (status != Status.ACCEPTED && status != Status.ALREADY_HAVE) {
-                logger.info("$status block $hash")
-                connection.close()
+            if (status != Accepted) {
+                connection.dos(status.toString())
                 return false
             }
         }

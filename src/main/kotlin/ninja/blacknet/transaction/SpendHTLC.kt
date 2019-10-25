@@ -10,16 +10,12 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import mu.KotlinLogging
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.toHex
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class SpendHTLC(
@@ -48,33 +44,27 @@ class SpendHTLC(
         return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
-            logger.info("htlc not found")
-            return false
+            return Invalid("HTLC not found")
         }
         if (amountA < 0 || amountB < 0) {
-            logger.info("negative amount")
-            return false
+            return Invalid("Negative amount")
         }
         val amount = try {
             Math.addExact(amountA, amountB)
         } catch (e: ArithmeticException) {
-            logger.info("invalid amount: ${e.message}")
-            return false
+            return Invalid("Invalid amount: ${e.message}")
         }
         if (amount != htlc.amount) {
-            logger.info("invalid amount")
-            return false
+            return Invalid("Invalid amount")
         }
         if (tx.from != htlc.from) {
-            logger.info("invalid sender")
-            return false
+            return Invalid("Invalid sender")
         }
         if (!verifySignature(htlc.to)) {
-            logger.info("invalid signature")
-            return false
+            return Invalid("Invalid signature")
         }
 
         val height = ledger.height()
@@ -85,7 +75,7 @@ class SpendHTLC(
         account.debit(height, amountA)
         ledger.set(tx.from, account)
         ledger.removeHTLC(id)
-        return true
+        return Accepted
     }
 
     @Suppress("unused")

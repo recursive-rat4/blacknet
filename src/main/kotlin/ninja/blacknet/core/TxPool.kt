@@ -26,8 +26,6 @@ import kotlin.math.min
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
-    internal const val INVALID = -1L
-    internal const val IN_FUTURE = -2L
     private val accounts = HashMap<PublicKey, AccountState>()
     private val htlcs = HashMap<Hash, HTLC?>()
     private val multisigs = HashMap<Hash, Multisig?>()
@@ -123,17 +121,17 @@ object TxPool : MemPool(), Ledger {
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
-        if (status == Status.ACCEPTED) {
+        if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
         }
         return status
     }
 
-    internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Long {
+    internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Pair<Status, Long> {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
-        if (status == Status.ACCEPTED) {
+        if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
             val currTime = connection?.lastPacketTime ?: Runtime.time()
@@ -141,12 +139,8 @@ object TxPool : MemPool(), Ledger {
             WalletDB.processTransaction(hash, tx, bytes, currTime)
             APIServer.txPoolNotify(tx, hash, currTime, bytes.size)
             logger.debug { "Accepted $hash" }
-            return tx.fee
-        } else if (status == Status.IN_FUTURE) {
-            return IN_FUTURE
-        } else {
-            return INVALID
         }
+        return Pair(status, tx.fee)
     }
 
     internal suspend fun removeImpl(hashes: ArrayList<Hash>) {

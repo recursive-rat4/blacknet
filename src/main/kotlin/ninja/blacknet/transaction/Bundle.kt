@@ -10,7 +10,9 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Ledger
+import ninja.blacknet.core.Status
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
@@ -28,7 +30,7 @@ class Bundle(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
-        return true
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+        return Accepted
     }
 }

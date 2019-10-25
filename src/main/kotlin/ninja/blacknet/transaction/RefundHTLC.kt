@@ -12,8 +12,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
@@ -31,25 +30,22 @@ class RefundHTLC(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
-            logger.info("htlc not found")
-            return false
+            return Invalid("HTLC not found")
         }
         if (tx.from != htlc.from) {
-            logger.info("invalid sender")
-            return false
+            return Invalid("Invalid sender")
         }
         if (!htlc.verifyTimeLock(ledger)) {
-            logger.info("invalid timelock")
-            return false
+            return Invalid("Invalid timelock")
         }
 
         val account = ledger.get(tx.from)!!
         account.debit(ledger.height(), htlc.amount)
         ledger.set(tx.from, account)
         ledger.removeHTLC(id)
-        return true
+        return Accepted
     }
 }

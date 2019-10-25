@@ -11,8 +11,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.Message
@@ -31,15 +30,17 @@ class Transfer(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val account = ledger.get(tx.from)!!
-        if (!account.credit(amount))
-            return false
+        val status = account.credit(amount)
+        if (status != Accepted) {
+            return status
+        }
         ledger.set(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
         toAccount.debit(ledger.height(), amount)
         ledger.set(to, toAccount)
-        return true
+        return Accepted
     }
 
     @Suppress("unused")
