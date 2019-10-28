@@ -24,7 +24,6 @@ import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.network.Network
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -94,8 +93,6 @@ object LedgerDB {
     private lateinit var state: State
 
     private val blockSizes = ArrayDeque<Int>(PoS.BLOCK_SIZE_SPAN)
-    const val DEFAULT_MAX_BLOCK_SIZE = 100000
-    const val MAX_BLOCK_SIZE = Int.MAX_VALUE - Network.RESERVED
     private val snapshotHeights = HashSet<Int>()
 
     private fun loadGenesisState() {
@@ -123,7 +120,7 @@ object LedgerDB {
                 supply,
                 Hash.ZERO,
                 Hash.ZERO,
-                DEFAULT_MAX_BLOCK_SIZE,
+                PoS.DEFAULT_MAX_BLOCK_SIZE,
                 0,
                 0)
         batch.put(STATE_KEY, state.serialize())
@@ -369,22 +366,6 @@ object LedgerDB {
             bytes
     }
 
-    private fun calcMaxBlockSize(): Int {
-        if (blockSizes.size < PoS.BLOCK_SIZE_SPAN)
-            return DEFAULT_MAX_BLOCK_SIZE
-        val iterator = blockSizes.iterator()
-        val sizes = Array(PoS.BLOCK_SIZE_SPAN) { iterator.next() }
-        sizes.sort()
-        val median = sizes[PoS.BLOCK_SIZE_SPAN / 2]
-        val size = median * 2
-        if (size < 0 || size > MAX_BLOCK_SIZE)
-            return MAX_BLOCK_SIZE
-        else if (size < DEFAULT_MAX_BLOCK_SIZE)
-            return DEFAULT_MAX_BLOCK_SIZE
-        else
-            return size
-    }
-
     internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): Status {
         val state = state
         if (block.previous != state.blockHash) {
@@ -427,8 +408,8 @@ object LedgerDB {
 
         generator = txDb.get(block.generator)!!
 
-        val reward = if (forkV2()) PoS.reward(state.supply) else PoS.reward(this.state.supply)
-        val generated = reward + fees
+        val mint = if (forkV2()) PoS.mint(state.supply) else PoS.mint(this.state.supply)
+        val generated = mint + fees
 
         val prevIndex = getChainIndex(block.previous)!!
         prevIndex.next = hash
@@ -436,7 +417,7 @@ object LedgerDB {
         txDb.prevIndex = prevIndex
         txDb.chainIndex = ChainIndex(block.previous, Hash.ZERO, 0, height, generated)
 
-        txDb.addSupply(reward)
+        txDb.addSupply(mint)
         generator.debit(height, generated)
         txDb.set(block.generator, generator)
 
@@ -463,7 +444,7 @@ object LedgerDB {
 
         val height = state.height - 1
         val blockHash = chainIndex.previous
-        val maxBlockSize = calcMaxBlockSize()
+        val maxBlockSize = PoS.maxBlockSize(blockSizes)
         val newState = State(
                 height,
                 blockHash,
@@ -803,7 +784,7 @@ object LedgerDB {
             val difficulty = PoS.nextDifficulty(undo.difficulty, undo.blockTime, blockTime)
             val cumulativeDifficulty = PoS.cumulativeDifficulty(undo.cumulativeDifficulty, difficulty)
             val nxtrng = PoS.nxtrng(state.nxtrng, blockGenerator)
-            val maxBlockSize = calcMaxBlockSize()
+            val maxBlockSize = PoS.maxBlockSize(blockSizes)
             val upgraded = if (blockVersion.toUInt() > Block.VERSION.toUInt()) min(state.upgraded + 1, PoS.MATURITY + 1) else max(state.upgraded - 1, 0)
             val forkV2 = if (blockVersion.toUInt() >= 2.toUInt()) min(state.forkV2 + 1, PoS.MATURITY + 1) else max(state.forkV2 - 1, 0)
             val newState = State(

@@ -120,11 +120,11 @@ object Node {
     }
 
     fun getMaxPacketSize(): Int {
-        return LedgerDB.state().maxBlockSize + Network.RESERVED
+        return LedgerDB.state().maxBlockSize + PoS.BLOCK_RESERVED_SIZE
     }
 
     fun getMinPacketSize(): Int {
-        return LedgerDB.DEFAULT_MAX_BLOCK_SIZE + Network.RESERVED
+        return PoS.DEFAULT_MAX_BLOCK_SIZE + PoS.BLOCK_RESERVED_SIZE
     }
 
     fun isInitialSynchronization(): Boolean {

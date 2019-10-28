@@ -14,13 +14,16 @@ import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Invalid
 import ninja.blacknet.core.Status
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.util.byteArrayOfInts
 import kotlin.math.min
 
+/**
+ * Black proof of stake
+ */
 object PoS {
-    fun reward(supply: Long): Long {
-        val blocks = 365 * 24 * 60 * 60 / TARGET_BLOCK_TIME
-        return supply / 100 / blocks
+    fun mint(supply: Long): Long {
+        return supply / 100 / BLOCKS_IN_YEAR
     }
 
     fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
@@ -35,7 +38,7 @@ object PoS {
             return Invalid("Invalid time slot")
         }
         val hash = Blake2b.hasher { this + nxtrng.bytes + prevTime + generator.bytes + time }
-        val valid = BigInt(hash) / stake < difficulty
+        val valid = BigInt(hash) < difficulty * stake
         return if (valid)
             Accepted
         else
@@ -59,11 +62,36 @@ object PoS {
         return Runtime.time() > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * MATURITY
     }
 
-    const val TIME_SLOT = 16L
+    fun maxBlockSize(blockSizes: Collection<Int>): Int {
+        return if (blockSizes.size == BLOCK_SIZE_SPAN) {
+            val iterator = blockSizes.iterator()
+            val sizes = Array(BLOCK_SIZE_SPAN) { iterator.next() }
+            sizes.sort()
+            val median = sizes[BLOCK_SIZE_SPAN / 2]
+            val size = median * 2
+            if (size < 0 || size > MAX_BLOCK_SIZE)
+                MAX_BLOCK_SIZE
+            else if (size < DEFAULT_MAX_BLOCK_SIZE)
+                DEFAULT_MAX_BLOCK_SIZE
+            else
+                size
+        } else {
+            DEFAULT_MAX_BLOCK_SIZE
+        }
+    }
+
+    /**
+     * Length of time slot
+     */
+    val TIME_SLOT get() = if (forkV2()) 4L else 16L
     /**
      * Expected block time
      */
-    const val TARGET_BLOCK_TIME = 4 * TIME_SLOT
+    val TARGET_BLOCK_TIME get() = 4 * TIME_SLOT
+    /**
+     * Expected number of blocks in year
+     */
+    val BLOCKS_IN_YEAR get() = 365 * 24 * 60 * 60 / TARGET_BLOCK_TIME
     /**
      * Default number of confirmations
      */
@@ -84,11 +112,6 @@ object PoS {
      * Minimum amount that can be leased out for cold staking
      */
     const val MIN_LEASE = 1000 * COIN
-    const val TARGET_TIMESPAN = 960L
-    const val INTERVAL = TARGET_TIMESPAN / TARGET_BLOCK_TIME
-    const val SPACING = 10
-    val A1 = BigInt((INTERVAL + 1) * TARGET_BLOCK_TIME)
-    val A2 = BigInt((INTERVAL - 1) * TARGET_BLOCK_TIME)
     /**
      * Difficulty of genesis block
      */
@@ -97,5 +120,36 @@ object PoS {
      * Maximum value of difficulty
      */
     val MAX_DIFFICULTY = BigInt(byteArrayOfInts(0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
-    val ONE_SHL_256 = BigInt.ONE shl 256
+    /**
+     * Reserved from maximum block size
+     */
+    const val BLOCK_RESERVED_SIZE = 100
+    /**
+     * Minimum maximum block size
+     */
+    const val DEFAULT_MAX_BLOCK_SIZE = 100000
+    /**
+     * Maximum block size
+     */
+    const val MAX_BLOCK_SIZE = Int.MAX_VALUE - BLOCK_RESERVED_SIZE
+
+    private const val INTERVAL = 15
+    private const val SPACING = 10
+    private val A1 get() = (INTERVAL + 1) * TARGET_BLOCK_TIME
+    private val A2 get() = (INTERVAL - 1) * TARGET_BLOCK_TIME
+    private val ONE_SHL_256 = BigInt.ONE shl 256
 }
+
+/*
+ * History of changes
+ *
+ * Version 4:
+ * Switched to accounts
+ * Added cold staking
+ * Added dynamic block size
+ *
+ * Version 3:
+ * Switched to NXTRNG
+ * Removed coin age
+ * Added rolling checkpoint
+ */

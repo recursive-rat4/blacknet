@@ -22,7 +22,7 @@ import java.util.Collections
 private val logger = KotlinLogging.logger {}
 
 object BlockDB {
-    private const val MIN_DISK_SPACE = LedgerDB.MAX_BLOCK_SIZE * 2L
+    private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
     internal val mutex = Mutex()
     private val BLOCK_KEY = "block".toByteArray()
     @Volatile
