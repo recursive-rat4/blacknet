@@ -84,7 +84,7 @@ class Message(
         }
 
         private fun hash(message: String): Hash {
-            return (Blake2b.Hasher() + SIGN_MAGIC + message).hash()
+            return Blake2b.hasher { this + SIGN_MAGIC + message }
         }
     }
 
