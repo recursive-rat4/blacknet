@@ -10,7 +10,6 @@
 package ninja.blacknet.crypto
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.toUtf8Bytes
 import ninja.blacknet.crypto.Ed25519.x25519
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
@@ -42,7 +41,7 @@ class Message(
     }
 
     companion object {
-        private val SIGN_MAGIC = "Blacknet Signed Message:\n".toUtf8Bytes()
+        private const val SIGN_MAGIC = "Blacknet Signed Message:\n"
         const val PLAIN: Byte = 0
         const val ENCRYPTED: Byte = 1
         val EMPTY = Message(PLAIN, SerializableByteArray.EMPTY)
@@ -61,7 +60,7 @@ class Message(
         }
 
         fun plain(string: String): Message {
-            return Message(PLAIN, string.toUtf8Bytes())
+            return Message(PLAIN, string.toByteArray(Charsets.UTF_8))
         }
 
         fun encrypted(string: String, privateKey: PrivateKey, publicKey: PublicKey): Message {
