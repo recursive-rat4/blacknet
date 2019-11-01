@@ -879,14 +879,18 @@ fun Application.APIServer() {
 
         get("/api/v2/sendrawtransaction/{hex}/") {
             val bytes = call.parameters["hex"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hex")
-            val hash = Transaction.Hasher(bytes)
 
             APIServer.txMutex.withLock {
-                val status = Node.broadcastTx(hash, bytes)
-                if (status == Accepted)
-                    call.respond(hash.toString())
-                else
-                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                try {
+                    val hash = Transaction.Hasher(bytes)
+                    val status = Node.broadcastTx(hash, bytes)
+                    if (status == Accepted)
+                        call.respond(hash.toString())
+                    else
+                        call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                } catch (e: Throwable) {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid transaction: ${e.message}")
+                }
             }
         }
 
