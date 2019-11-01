@@ -46,6 +46,23 @@ class Message(
         const val ENCRYPTED: Byte = 1
         val EMPTY = Message(PLAIN, SerializableByteArray.EMPTY)
 
+        fun create(string: String?, type: Byte?): Message? {
+            if (string == null)
+                return EMPTY
+
+            if (type == null || type == PLAIN)
+                return plain(string)
+
+            if (type != ENCRYPTED)
+                return null
+
+            val encryptedBytes = fromHex(string)
+            if (encryptedBytes == null)
+                return null
+
+            return Message(ENCRYPTED, encryptedBytes)
+        }
+
         fun create(string: String?, type: Byte?, privateKey: PrivateKey?, publicKey: PublicKey?): Message? {
             if (string == null)
                 return EMPTY
