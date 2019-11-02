@@ -281,6 +281,14 @@ object WalletDB {
         }
     }
 
+    internal fun involves(id: Hash, publicKey: PublicKey): Boolean {
+        val bytes = getTransactionImpl(id)
+        return if (bytes != null)
+            Transaction.deserialize(bytes).data().involves(publicKey)
+        else
+            false
+    }
+
     @Serializable
     class TransactionData(
             val type: Byte,

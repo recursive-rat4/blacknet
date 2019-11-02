@@ -12,7 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
@@ -24,7 +24,7 @@ class UnlockHTLC(
         var signatureB: Signature
 ) : TxData {
     override fun getType() = TxType.UnlockHTLC
-    override fun involves(publicKey: PublicKey) = LedgerDB.getHTLC(id)!!.involves(publicKey)
+    override fun involves(publicKey: PublicKey) = WalletDB.involves(id, publicKey)
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
 

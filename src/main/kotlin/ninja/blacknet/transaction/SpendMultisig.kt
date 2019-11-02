@@ -15,7 +15,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
@@ -27,7 +27,7 @@ class SpendMultisig(
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
     override fun getType() = TxType.SpendMultisig
-    override fun involves(publicKey: PublicKey) = LedgerDB.getMultisig(id)!!.involves(publicKey)
+    override fun involves(publicKey: PublicKey) = WalletDB.involves(id, publicKey)
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
