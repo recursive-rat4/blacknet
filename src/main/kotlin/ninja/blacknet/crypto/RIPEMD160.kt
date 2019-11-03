@@ -13,9 +13,10 @@ import org.bouncycastle.crypto.digests.RIPEMD160Digest
 
 object RIPEMD160 : (ByteArray) -> ByteArray {
     const val DIGEST_SIZE = 160
+    const val HASH_SIZE = DIGEST_SIZE / 8
 
     fun hash(message: ByteArray): ByteArray {
-        val bytes = ByteArray(DIGEST_SIZE / 8)
+        val bytes = ByteArray(HASH_SIZE)
         val digest = RIPEMD160Digest()
         digest.update(message, 0, message.size)
         digest.doFinal(bytes, 0)

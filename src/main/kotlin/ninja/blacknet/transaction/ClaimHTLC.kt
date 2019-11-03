@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Pavel Vasin
- * Copyright (c) 2019 Blacknet Team
+ * Copyright (c) 2018 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -17,12 +16,14 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class RefundHTLC(
-        val id: Hash
+class ClaimHTLC(
+        val id: Hash,
+        val preimage: SerializableByteArray
 ) : TxData {
-    override fun getType() = TxType.RefundHTLC
+    override fun getType() = TxType.ClaimHTLC
     override fun involves(publicKey: PublicKey) = WalletDB.involves(id, publicKey)
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
@@ -32,11 +33,11 @@ class RefundHTLC(
         if (htlc == null) {
             return Invalid("HTLC not found")
         }
-        if (tx.from != htlc.from) {
+        if (tx.from != htlc.to) {
             return Invalid("Invalid sender")
         }
-        if (!htlc.verifyTimeLock(ledger)) {
-            return Invalid("Invalid time lock")
+        if (!htlc.verifyHashLock(preimage)) {
+            return Invalid("Invalid hash lock")
         }
 
         val account = ledger.get(tx.from)!!
