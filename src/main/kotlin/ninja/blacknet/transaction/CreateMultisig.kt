@@ -39,10 +39,6 @@ class CreateMultisig(
         return true
     }
 
-    fun verifySignature(signature: Signature, hash: Hash, publicKey: PublicKey): Boolean {
-        return Ed25519.verify(signature, hash, publicKey)
-    }
-
     private fun hash(from: PublicKey, seq: Int): Hash {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = copy.serialize()
@@ -73,18 +69,21 @@ class CreateMultisig(
             if (deposits[i].second != 0L) {
                 val signature = signatures.find { it.first == i.toByte() }?.second
                 if (signature == null) {
-                    return Invalid("Unsigned deposit")
+                    return Invalid("Unsigned deposit i $i")
                 }
-                if (!verifySignature(signature, multisigHash, deposits[i].first)) {
-                    return Invalid("Invalid signature")
+                if (!Ed25519.verify(signature, multisigHash, deposits[i].first)) {
+                    return Invalid("Invalid signature i $i")
                 }
                 val depositAccount = ledger.get(deposits[i].first)
                 if (depositAccount == null) {
-                    return Invalid("Account not found")
+                    return Invalid("Account not found i $i")
                 }
                 val status = depositAccount.credit(deposits[i].second)
                 if (status != Accepted) {
-                    return status
+                    return if (status is Invalid)
+                        Invalid("${status.reason} i $i")
+                    else
+                        status
                 }
                 ledger.set(deposits[i].first, depositAccount)
             }
