@@ -372,11 +372,6 @@ object LedgerDB {
         return result
     }
 
-    fun getBlockNumber(hash: Hash): Int? {
-        val bytes = LevelDB.get(CHAIN_KEY, hash.bytes) ?: return null
-        return ChainIndex.deserialize(bytes).height
-    }
-
     fun getHTLC(id: Hash): HTLC? {
         val bytes = LevelDB.get(HTLC_KEY, id.bytes) ?: return null
         return HTLC.deserialize(bytes)
@@ -529,29 +524,25 @@ object LedgerDB {
         return hash
     }
 
-    internal suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = BlockDB.mutex.withLock {
-        return@withLock rollbackToImpl(hash, false)
+    internal suspend fun rollbackTo(hash: Hash): List<Hash> = BlockDB.mutex.withLock {
+        return@withLock rollbackToImpl(hash)
     }
 
-    private suspend fun rollbackToImpl(hash: Hash, allowZero: Boolean): ArrayList<Hash> {
-        val i = getBlockNumber(hash) ?: return ArrayList()
-        var n = state.height - i
-        if (allowZero && n == 0)
-            return ArrayList()
-        if (n <= 0) throw RuntimeException("Rollback of $n blocks")
-        val result = ArrayList<Hash>(n)
-        while (n-- > 0)
+    private suspend fun rollbackToImpl(hash: Hash): List<Hash> {
+        val result = ArrayList<Hash>()
+        do {
             result.add(undoBlockImpl())
+        } while (state.blockHash != hash)
         return result
     }
 
-    internal suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = BlockDB.mutex.withLock {
-        val toRemove = rollbackToImpl(hash, true)
+    internal suspend fun undoRollback(hash: Hash, list: List<Hash>): List<Hash> = BlockDB.mutex.withLock {
+        val toRemove = if (state.blockHash != hash) rollbackToImpl(hash) else emptyList()
 
         list.asReversed().forEach { hash ->
             val block = BlockDB.blockImpl(hash)
             if (block == null) {
-                logger.error("block not found")
+                logger.error("$hash not found")
                 return@withLock toRemove
             }
 
@@ -560,7 +551,7 @@ object LedgerDB {
             val status = processBlockImpl(txDb, hash, block.first, block.second)
             if (status != Accepted) {
                 batch.close()
-                logger.error("process block failed")
+                logger.error("$status block $hash")
                 return@withLock toRemove
             }
             txDb.commitImpl()

@@ -40,7 +40,7 @@ object ChainFetcher {
     private var originalChain: Hash? = null
     private var rollbackTo: Hash? = null
     private var undoDifficulty = BigInt.ZERO
-    private var undoRollback: ArrayList<Hash>? = null
+    private var undoRollback: List<Hash>? = null
 
     init {
         Runtime.launch { fetcher() }
@@ -119,14 +119,14 @@ object ChainFetcher {
                         var prev = checkpoint
                         for (hash in answer.hashes) {
                             if (BlockDB.isRejected(hash)) {
-                                connection.dos("invalid chain")
+                                connection.dos("Rejected chain")
                                 break@requestLoop
                             }
-                            val blockNumber = LedgerDB.getBlockNumber(hash)
-                            if (blockNumber == null)
+                            val chainIndex = LedgerDB.getChainIndex(hash)
+                            if (chainIndex == null)
                                 break
-                            if (blockNumber < height - PoS.MATURITY) {
-                                connection.dos("rollback to $blockNumber")
+                            if (chainIndex.height < height - PoS.MATURITY) {
+                                connection.dos("Rollback to ${chainIndex.height}")
                                 break@requestLoop
                             }
                             prev = hash

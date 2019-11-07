@@ -36,10 +36,10 @@ object BlockDB : DataDB() {
         return Pair(block, bytes.size)
     }
 
-    suspend fun remove(list: ArrayList<Hash>) = mutex.withLock {
+    suspend fun remove(list: List<Hash>) = mutex.withLock {
         val txDb = LevelDB.createWriteBatch()
-        list.forEach {
-            txDb.delete(BLOCK_KEY, it.bytes)
+        list.forEach { hash ->
+            txDb.delete(BLOCK_KEY, hash.bytes)
         }
         txDb.write()
     }
