@@ -40,6 +40,8 @@ class Inventory(
 
     companion object {
         const val MIN_VERSION = 10
+        const val SEND_MAX = 512
+        const val SEND_TIMEOUT = 5
     }
 }
 
