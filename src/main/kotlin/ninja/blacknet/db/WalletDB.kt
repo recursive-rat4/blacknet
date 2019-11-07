@@ -149,15 +149,17 @@ object WalletDB {
         }
     }
 
-    suspend fun getConfirmations(hash: Hash): Int? = mutex.withLock {
-        wallets.forEach { (_, wallet) ->
-            val data = wallet.transactions.get(hash)
-            if (data != null) {
-                if (data.height == 0) return@withLock 0
-                return@withLock LedgerDB.height() - data.height
+    suspend fun getConfirmations(hash: Hash): Int? = BlockDB.mutex.withLock {
+        mutex.withLock {
+            wallets.forEach { (_, wallet) ->
+                val data = wallet.transactions.get(hash)
+                if (data != null) {
+                    if (data.height == 0) return 0
+                    return LedgerDB.height() - data.height + 1
+                }
             }
+            return null
         }
-        return@withLock null
     }
 
     suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
