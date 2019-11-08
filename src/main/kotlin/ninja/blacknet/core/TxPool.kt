@@ -12,13 +12,11 @@ package ninja.blacknet.core
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
 import kotlin.math.min
@@ -118,7 +116,7 @@ object TxPool : MemPool(), Ledger {
         multisigs.put(id, null)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
@@ -128,16 +126,14 @@ object TxPool : MemPool(), Ledger {
         return status
     }
 
-    internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Pair<Status, Long> {
+    internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, time: Long): Pair<Status, Long> {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
-            val currTime = connection?.lastPacketTime ?: Runtime.time()
-            connection?.lastTxTime = currTime
-            WalletDB.processTransaction(hash, tx, bytes, currTime)
-            APIServer.txPoolNotify(tx, hash, currTime, bytes.size)
+            WalletDB.processTransaction(hash, tx, bytes, time)
+            APIServer.txPoolNotify(tx, hash, time, bytes.size)
             logger.debug { "Accepted $hash" }
         }
         return Pair(status, tx.fee)
@@ -156,6 +152,6 @@ object TxPool : MemPool(), Ledger {
         clearImpl()
         for (hash in txs)
             if (!hashes.contains(hash))
-                processImpl(hash, map[hash]!!, null)
+                processImpl(hash, map[hash]!!)
     }
 }

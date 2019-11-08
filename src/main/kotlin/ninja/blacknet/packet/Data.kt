@@ -34,6 +34,7 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
         }
 
         val inv = UnfilteredInvList()
+        val time = connection.lastPacketTime
 
         for (i in list) {
             val type = i.first
@@ -47,9 +48,9 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
             }
 
             val (status, fee) = if (type == DataType.Transaction)
-                TxPool.processTx(hash, bytes.array, connection)
+                TxPool.processTx(hash, bytes.array, time, true)
             else
-                Pair(type.db.process(hash, bytes.array, connection), 0L)
+                Pair(type.db.process(hash, bytes.array), 0L)
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
@@ -60,7 +61,9 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
             }
         }
 
-        if (!inv.isEmpty())
+        if (inv.isNotEmpty()) {
             Node.broadcastInv(inv, connection)
+            connection.lastTxTime = time
+        }
     }
 }

@@ -36,6 +36,7 @@ class Transactions(
         }
 
         val inv = UnfilteredInvList()
+        val time = connection.lastPacketTime
 
         for (bytes in list) {
             val hash = Transaction.Hasher(bytes.array)
@@ -45,7 +46,7 @@ class Transactions(
                 continue
             }
 
-            val (status, fee) = TxPool.processTx(hash, bytes.array, connection)
+            val (status, fee) = TxPool.processTx(hash, bytes.array, time, true)
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
@@ -56,8 +57,10 @@ class Transactions(
             }
         }
 
-        if (!inv.isEmpty())
+        if (inv.isNotEmpty()) {
             Node.broadcastInv(inv, connection)
+            connection.lastTxTime = time
+        }
     }
 
     companion object {

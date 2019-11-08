@@ -184,6 +184,7 @@ object ChainFetcher {
         val newChain = LedgerDB.blockHash()
         if (newChain != originalChain) {
             Node.announceChain(newChain, cumulativeDifficulty, connection)
+            connection.lastBlockTime = Runtime.time()
         }
 
         if (connection.isClosed())
@@ -236,7 +237,7 @@ object ChainFetcher {
                 connection.dos("Rollback contains $hash")
                 return false
             }
-            val status = BlockDB.process(hash, i.array, null)
+            val status = BlockDB.process(hash, i.array)
             if (status != Accepted) {
                 connection.dos(status.toString())
                 return false
@@ -244,7 +245,6 @@ object ChainFetcher {
         }
         if (undoRollback == null)
             LedgerDB.prune()
-        connection.lastBlockTime = Runtime.time()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
             logger.info("Connected ${answer.blocks.size} blocks")

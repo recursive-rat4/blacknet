@@ -16,7 +16,6 @@ import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.network.Connection
 
 private val logger = KotlinLogging.logger {}
 
@@ -52,7 +51,7 @@ object BlockDB : DataDB() {
         return LevelDB.get(BLOCK_KEY, hash.bytes)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
+    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
         val block = Block.deserialize(bytes)
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
             val percent = 100 * LedgerDB.upgraded() / PoS.MATURITY

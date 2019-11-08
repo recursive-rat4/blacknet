@@ -115,6 +115,7 @@ object WalletDB {
             if (Node.isOffline())
                 continue
 
+            val currTime = Runtime.time()
             val inv = UnfilteredInvList()
 
             mutex.withLock {
@@ -132,7 +133,7 @@ object WalletDB {
                     unconfirmed.sortBy { (_, _, seq) -> seq }
 
                     unconfirmed.forEach { (hash, bytes, _) ->
-                        val (status, fee) = TxPool.processTx(hash, bytes)
+                        val (status, fee) = TxPool.processTx(hash, bytes, currTime, false)
                         if (status == Accepted || status == AlreadyHave) {
                             inv.add(Pair(hash, fee))
                         } else {

@@ -14,7 +14,6 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.network.Connection
 
 private val logger = KotlinLogging.logger {}
 
@@ -38,29 +37,29 @@ abstract class DataDB {
         return rejects.contains(hash)
     }
 
-    suspend fun process(hash: Hash, bytes: ByteArray, connection: Connection? = null): Status = mutex.withLock {
+    suspend fun process(hash: Hash, bytes: ByteArray): Status = mutex.withLock {
         if (rejects.contains(hash))
             return Invalid("Already rejected")
         if (containsImpl(hash))
             return AlreadyHave
-        val status = processImpl(hash, bytes, connection)
+        val status = processImpl(hash, bytes)
         if (status is Invalid)
             rejects.add(hash)
         return status
     }
 
-    suspend fun processTx(hash: Hash, bytes: ByteArray, connection: Connection? = null): Pair<Status, Long> = mutex.withLock {
+    suspend fun processTx(hash: Hash, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = mutex.withLock {
         if (rejects.contains(hash))
             return Pair(Invalid("Already rejected"), 0)
         if (containsImpl(hash))
             return Pair(AlreadyHave, 0)
         if (TxPool.dataSizeImpl() + bytes.size > Config.txPoolSize) {
-            if (connection != null)
+            if (remote)
                 return Pair(InFuture, 0)
             else
                 logger.warn("TxPool is full")
         }
-        val result = TxPool.processImplWithFee(hash, bytes, connection)
+        val result = TxPool.processImplWithFee(hash, bytes, time)
         if (result.first is Invalid || result.first == InFuture) {
             rejects.add(hash)
         }
@@ -69,5 +68,5 @@ abstract class DataDB {
 
     internal abstract suspend fun getImpl(hash: Hash): ByteArray?
     protected abstract suspend fun containsImpl(hash: Hash): Boolean
-    protected abstract suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status
+    protected abstract suspend fun processImpl(hash: Hash, bytes: ByteArray): Status
 }
