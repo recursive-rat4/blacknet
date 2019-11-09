@@ -17,6 +17,7 @@ import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
+import java.util.Collections
 
 private val logger = KotlinLogging.logger {}
 
@@ -26,7 +27,12 @@ object BlockDB {
     private val BLOCK_KEY = "block".toByteArray()
     @Volatile
     internal var cachedBlock: Pair<Hash, ByteArray>? = null
-    private val rejects = HashSet<Hash>()
+
+    private val rejects = Collections.newSetFromMap(object : LinkedHashMap<Hash, Boolean>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Hash, Boolean>): Boolean {
+            return size > PoS.MATURITY
+        }
+    })
 
     suspend fun isRejected(hash: Hash): Boolean = mutex.withLock {
         return rejects.contains(hash)
