@@ -9,19 +9,7 @@
 
 package ninja.blacknet.core
 
-import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.BlockDB
-
-enum class DataType(
-        val db: DataDB,
-        val hash: (ByteArray) -> Hash
-) {
-    Block(BlockDB, ninja.blacknet.core.Block.Hasher),
-    Transaction(TxPool, ninja.blacknet.core.Transaction.Hasher),
-    ;
-
-    companion object {
-        const val MAX_INVENTORY = 50000
-        const val MAX_DATA = 1000
-    }
+enum class DataType {
+    Block,
+    Transaction;
 }

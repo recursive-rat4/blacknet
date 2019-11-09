@@ -133,7 +133,7 @@ object WalletDB {
                     unconfirmed.sortBy { (_, _, seq) -> seq }
 
                     unconfirmed.forEach { (hash, bytes, _) ->
-                        val (status, fee) = TxPool.processTx(hash, bytes, currTime, false)
+                        val (status, fee) = TxPool.process(hash, bytes, currTime, false)
                         if (status == Accepted || status == AlreadyHave) {
                             inv.add(Pair(hash, fee))
                         } else {

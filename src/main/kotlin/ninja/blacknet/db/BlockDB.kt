@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
@@ -19,20 +20,30 @@ import ninja.blacknet.crypto.PoS
 
 private val logger = KotlinLogging.logger {}
 
-object BlockDB : DataDB() {
+object BlockDB {
     private const val MIN_DISK_SPACE = LedgerDB.MAX_BLOCK_SIZE * 2L
+    internal val mutex = Mutex()
     private val BLOCK_KEY = "block".toByteArray()
     @Volatile
     internal var cachedBlock: Pair<Hash, ByteArray>? = null
+    private val rejects = HashSet<Hash>()
+
+    suspend fun isRejected(hash: Hash): Boolean = mutex.withLock {
+        return rejects.contains(hash)
+    }
 
     suspend fun block(hash: Hash): Pair<Block, Int>? = mutex.withLock {
         return@withLock blockImpl(hash)
     }
 
-    suspend fun blockImpl(hash: Hash): Pair<Block, Int>? {
+    fun blockImpl(hash: Hash): Pair<Block, Int>? {
         val bytes = getImpl(hash) ?: return null
         val block = Block.deserialize(bytes)
         return Pair(block, bytes.size)
+    }
+
+    suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
+        return@withLock getImpl(hash)
     }
 
     suspend fun remove(list: List<Hash>) = mutex.withLock {
@@ -43,15 +54,15 @@ object BlockDB : DataDB() {
         txDb.write()
     }
 
-    override suspend fun containsImpl(hash: Hash): Boolean {
+    private fun containsImpl(hash: Hash): Boolean {
         return LedgerDB.chainContains(hash)
     }
 
-    override suspend fun getImpl(hash: Hash): ByteArray? {
+    internal fun getImpl(hash: Hash): ByteArray? {
         return LevelDB.get(BLOCK_KEY, hash.bytes)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+    private suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
         val block = Block.deserialize(bytes)
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
             val percent = 100 * LedgerDB.upgraded() / PoS.MATURITY
@@ -83,6 +94,17 @@ object BlockDB : DataDB() {
         } else {
             batch.close()
         }
+        return status
+    }
+
+    suspend fun process(hash: Hash, bytes: ByteArray): Status = mutex.withLock {
+        if (rejects.contains(hash))
+            return Invalid("Already rejected")
+        if (containsImpl(hash))
+            return AlreadyHave
+        val status = processImpl(hash, bytes)
+        if (status is Invalid)
+            rejects.add(hash)
         return status
     }
 

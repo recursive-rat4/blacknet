@@ -193,7 +193,7 @@ object Node {
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
         val currTime = Runtime.time()
-        val (status, fee) = TxPool.processTx(hash, bytes, currTime, false)
+        val (status, fee) = TxPool.process(hash, bytes, currTime, false)
         if (status == Accepted) {
             connections.forEach {
                 if (it.state.isConnected() && it.feeFilter <= fee)

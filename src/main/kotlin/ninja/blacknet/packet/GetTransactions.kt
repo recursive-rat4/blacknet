@@ -11,7 +11,6 @@ package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.DataType
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
@@ -28,8 +27,8 @@ class GetTransactions(
     override fun getType() = PacketType.GetTransactions
 
     override suspend fun process(connection: Connection) {
-        if (list.size > DataType.MAX_DATA) {
-            connection.dos("invalid GetTransactions size")
+        if (list.size > Transactions.MAX) {
+            connection.dos("Invalid GetTransactions size ${list.size}")
             return
         }
 

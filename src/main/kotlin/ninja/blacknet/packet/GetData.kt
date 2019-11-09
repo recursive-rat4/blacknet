@@ -12,7 +12,9 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.DataType
+import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.BlockDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
@@ -25,7 +27,7 @@ internal class GetData(private val list: List<Pair<DataType, Hash>>) : Packet {
     override fun getType() = PacketType.GetData
 
     override suspend fun process(connection: Connection) {
-        if (list.size > DataType.MAX_DATA) {
+        if (list.size > Transactions.MAX) {
             connection.dos("invalid GetData size")
             return
         }
@@ -34,11 +36,14 @@ internal class GetData(private val list: List<Pair<DataType, Hash>>) : Packet {
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = ArrayList<Pair<DataType, SerializableByteArray>>()
 
-        for (i in list) {
+        loop@ for (i in list) {
             val type = i.first
             val hash = i.second
 
-            val value = type.db.get(hash) ?: continue
+            val value = when (type) {
+                DataType.Transaction -> TxPool.get(hash) ?: continue@loop
+                DataType.Block -> BlockDB.get(hash) ?: continue@loop
+            }
             val newSize = size + value.size + 4
 
             if (response.isEmpty()) {

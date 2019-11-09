@@ -92,8 +92,10 @@ object ChainFetcher {
 
             if (cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
                 continue
-            if (!BlockDB.isInteresting(chain))
+            if (BlockDB.isRejected(chain)) {
+                connection.dos("Rejected chain")
                 continue
+            }
 
             logger.info("Fetching $chain")
             syncConnection = connection
@@ -111,7 +113,7 @@ object ChainFetcher {
                     }
                     if (!answer.hashes.isEmpty()) {
                         if (rollbackTo != null) {
-                            connection.dos("unexpected rollback")
+                            connection.dos("Unexpected rollback")
                             break
                         }
                         val height = LedgerDB.height()

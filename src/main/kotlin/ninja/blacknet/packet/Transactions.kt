@@ -30,8 +30,8 @@ class Transactions(
     override fun getType() = PacketType.Transactions
 
     override suspend fun process(connection: Connection) {
-        if (list.size > DataType.MAX_DATA) {
-            connection.dos("invalid Transactions size")
+        if (list.size > MAX) {
+            connection.dos("Invalid Transactions size ${list.size}")
             return
         }
 
@@ -46,7 +46,7 @@ class Transactions(
                 continue
             }
 
-            val (status, fee) = TxPool.processTx(hash, bytes.array, time, true)
+            val (status, fee) = TxPool.process(hash, bytes.array, time, true)
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
@@ -65,5 +65,6 @@ class Transactions(
 
     companion object {
         const val MIN_VERSION = 10
+        const val MAX = 1000
     }
 }

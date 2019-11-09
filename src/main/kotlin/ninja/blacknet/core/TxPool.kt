@@ -9,6 +9,7 @@
 
 package ninja.blacknet.core
 
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
@@ -24,6 +25,8 @@ import kotlin.math.min
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
+    internal val mutex = Mutex()
+    private val rejects = HashSet<Hash>()
     private val accounts = HashMap<PublicKey, AccountState>()
     private val htlcs = HashMap<Hash, HTLC?>()
     private val multisigs = HashMap<Hash, Multisig?>()
@@ -48,11 +51,23 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
+    internal fun clearRejectsImpl() {
+        rejects.clear()
+    }
+
+    suspend fun isInteresting(hash: Hash): Boolean = mutex.withLock {
+        return !rejects.contains(hash) && !containsImpl(hash)
+    }
+
     suspend fun getSequence(key: PublicKey): Int = mutex.withLock {
         val account = accounts.get(key)
         if (account != null)
             return account.seq
         return LedgerDB.get(key)?.seq ?: 0
+    }
+
+    suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
+        return@withLock getImpl(hash)
     }
 
     override fun addSupply(amount: Long) {}
@@ -116,7 +131,7 @@ object TxPool : MemPool(), Ledger {
         multisigs.put(id, null)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+    private suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
@@ -126,7 +141,7 @@ object TxPool : MemPool(), Ledger {
         return status
     }
 
-    internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, time: Long): Pair<Status, Long> {
+    private suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, time: Long): Pair<Status, Long> {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
@@ -137,6 +152,24 @@ object TxPool : MemPool(), Ledger {
             logger.debug { "Accepted $hash" }
         }
         return Pair(status, tx.fee)
+    }
+
+    suspend fun process(hash: Hash, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = mutex.withLock {
+        if (rejects.contains(hash))
+            return Pair(Invalid("Already rejected"), 0)
+        if (containsImpl(hash))
+            return Pair(AlreadyHave, 0)
+        if (TxPool.dataSizeImpl() + bytes.size > Config.txPoolSize) {
+            if (remote)
+                return Pair(InFuture, 0)
+            else
+                logger.warn("TxPool is full")
+        }
+        val result = TxPool.processImplWithFee(hash, bytes, time)
+        if (result.first is Invalid || result.first == InFuture) {
+            rejects.add(hash)
+        }
+        return result
     }
 
     internal suspend fun removeImpl(hashes: ArrayList<Hash>) {
