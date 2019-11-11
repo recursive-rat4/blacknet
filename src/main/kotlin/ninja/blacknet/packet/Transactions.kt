@@ -42,7 +42,7 @@ class Transactions(
             val hash = Transaction.Hasher(bytes.array)
 
             if (!TxFetcher.fetched(hash)) {
-                connection.dos("unrequested $hash")
+                connection.dos("Unrequested $hash")
                 continue
             }
 

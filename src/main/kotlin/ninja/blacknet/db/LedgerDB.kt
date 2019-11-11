@@ -235,11 +235,11 @@ object LedgerDB {
                         stream.readFully(bytes)
 
                         val hash = Block.Hasher(bytes)
-                        val status = BlockDB.process(hash, bytes)
+                        val status = BlockDB.processImpl(hash, bytes)
                         if (status == Accepted) {
                             if (++n % 50000 == 0)
                                 logger.info("Processed $n blocks")
-                            prune()
+                            pruneImpl()
                         } else if (status != AlreadyHave) {
                             logger.info("$status block $hash")
                             break
@@ -524,11 +524,7 @@ object LedgerDB {
         return hash
     }
 
-    internal suspend fun rollbackTo(hash: Hash): List<Hash> = BlockDB.mutex.withLock {
-        return@withLock rollbackToImpl(hash)
-    }
-
-    private suspend fun rollbackToImpl(hash: Hash): List<Hash> {
+    internal suspend fun rollbackToImpl(hash: Hash): List<Hash> {
         val result = ArrayList<Hash>()
         do {
             result.add(undoBlockImpl())
@@ -536,14 +532,14 @@ object LedgerDB {
         return result
     }
 
-    internal suspend fun undoRollback(hash: Hash, list: List<Hash>): List<Hash> = BlockDB.mutex.withLock {
-        val toRemove = if (state.blockHash != hash) rollbackToImpl(hash) else emptyList()
+    internal suspend fun undoRollbackImpl(rollbackTo: Hash, list: List<Hash>): List<Hash> {
+        val toRemove = if (state.blockHash != rollbackTo) rollbackToImpl(rollbackTo) else emptyList()
 
         list.asReversed().forEach { hash ->
             val block = BlockDB.blockImpl(hash)
             if (block == null) {
                 logger.error("$hash not found")
-                return@withLock toRemove
+                return toRemove
             }
 
             val batch = LevelDB.createWriteBatch()
@@ -552,21 +548,21 @@ object LedgerDB {
             if (status != Accepted) {
                 batch.close()
                 logger.error("$status block $hash")
-                return@withLock toRemove
+                return toRemove
             }
             txDb.commitImpl()
         }
 
-        return@withLock toRemove
+        return toRemove
     }
 
-    internal suspend fun prune() = BlockDB.mutex.withLock {
+    internal fun pruneImpl() {
         val batch = LevelDB.createWriteBatch()
         pruneImpl(batch)
         batch.write()
     }
 
-    internal fun pruneImpl(batch: LevelDB.WriteBatch) {
+    private fun pruneImpl(batch: LevelDB.WriteBatch) {
         var chainIndex = getChainIndex(state.rollingCheckpoint)!!
         while (true) {
             val hash = chainIndex.previous

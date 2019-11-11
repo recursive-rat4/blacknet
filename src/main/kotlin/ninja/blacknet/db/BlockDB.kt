@@ -34,7 +34,7 @@ object BlockDB {
         }
     })
 
-    suspend fun isRejected(hash: Hash): Boolean = mutex.withLock {
+    internal fun isRejectedImpl(hash: Hash): Boolean {
         return rejects.contains(hash)
     }
 
@@ -42,7 +42,7 @@ object BlockDB {
         return@withLock blockImpl(hash)
     }
 
-    fun blockImpl(hash: Hash): Pair<Block, Int>? {
+    internal fun blockImpl(hash: Hash): Pair<Block, Int>? {
         val bytes = getImpl(hash) ?: return null
         val block = Block.deserialize(bytes)
         return Pair(block, bytes.size)
@@ -52,7 +52,7 @@ object BlockDB {
         return@withLock getImpl(hash)
     }
 
-    suspend fun remove(list: List<Hash>) = mutex.withLock {
+    internal fun removeImpl(list: List<Hash>) {
         val txDb = LevelDB.createWriteBatch()
         list.forEach { hash ->
             txDb.delete(BLOCK_KEY, hash.bytes)
@@ -68,7 +68,7 @@ object BlockDB {
         return LevelDB.get(BLOCK_KEY, hash.bytes)
     }
 
-    private suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+    private suspend fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
         val block = Block.deserialize(bytes)
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
             val percent = 100 * LedgerDB.upgraded() / PoS.MATURITY
@@ -103,12 +103,12 @@ object BlockDB {
         return status
     }
 
-    suspend fun process(hash: Hash, bytes: ByteArray): Status = mutex.withLock {
+    internal suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
         if (rejects.contains(hash))
             return Invalid("Already rejected")
         if (containsImpl(hash))
             return AlreadyHave
-        val status = processImpl(hash, bytes)
+        val status = processBlockImpl(hash, bytes)
         if (status is Invalid)
             rejects.add(hash)
         return status

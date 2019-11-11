@@ -24,10 +24,10 @@ class Pong(
     override fun getType() = PacketType.Pong
 
     override suspend fun process(connection: Connection) {
-        val (pingId, pingTime) = connection.pingRequest ?: return connection.dos("unexpected Pong")
+        val (pingId, pingTime) = connection.pingRequest ?: return connection.dos("Unexpected Pong")
 
         if (pingId != id) {
-            connection.dos("invalid Pong id")
+            connection.dos("Invalid Pong id")
             return
         }
 

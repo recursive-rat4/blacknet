@@ -13,6 +13,7 @@ package ninja.blacknet.network
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
@@ -43,7 +44,11 @@ object ChainFetcher {
     private var undoRollback: List<Hash>? = null
 
     init {
-        Runtime.launch { fetcher() }
+        Runtime.launch {
+            while (true) {
+                fetcher()
+            }
+        }
     }
 
     fun isSynchronizing(): Boolean {
@@ -71,30 +76,33 @@ object ChainFetcher {
     }
 
     private suspend fun fetcher() {
-        while (true) {
-            val data = chains.receive()
+        val data = chains.receive()
 
-            stakedBlock?.let { (hash, bytes, deferred) ->
-                val status = BlockDB.process(hash, bytes)
-                val n = when (status) {
-                    Accepted -> Node.announceChain(hash, LedgerDB.cumulativeDifficulty())
-                    else -> 0
-                }
-
-                stakedBlock = null
-                deferred.complete(Pair(status, n))
+        stakedBlock?.let { (hash, bytes, deferred) ->
+            val status = BlockDB.mutex.withLock {
+                BlockDB.processImpl(hash, bytes)
+            }
+            val n = when (status) {
+                Accepted -> Node.announceChain(hash, LedgerDB.cumulativeDifficulty())
+                else -> 0
             }
 
-            if (data == null)
-                continue
+            stakedBlock = null
+            deferred.complete(Pair(status, n))
+        }
 
-            val (connection, chain, cumulativeDifficulty) = data
+        if (data == null)
+            return
 
-            if (cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
-                continue
-            if (BlockDB.isRejected(chain)) {
+        val (connection, chain, cumulativeDifficulty) = data
+
+        if (cumulativeDifficulty <= LedgerDB.cumulativeDifficulty())
+            return
+
+        BlockDB.mutex.withLock {
+            if (BlockDB.isRejectedImpl(chain)) {
                 connection.dos("Rejected chain")
-                continue
+                return
             }
 
             logger.info("Fetching $chain")
@@ -120,7 +128,7 @@ object ChainFetcher {
                         val checkpoint = LedgerDB.rollingCheckpoint()
                         var prev = checkpoint
                         for (hash in answer.hashes) {
-                            if (BlockDB.isRejected(hash)) {
+                            if (BlockDB.isRejectedImpl(hash)) {
                                 connection.dos("Rejected chain")
                                 break@requestLoop
                             }
@@ -154,6 +162,8 @@ object ChainFetcher {
                     }
                 }
             } catch (e: ClosedSendChannelException) {
+            } catch (e: TimeoutCancellationException) {
+                connection.dos("Fetching cancelled: ${e.message}")
             } catch (e: CancellationException) {
                 logger.info("Fetching cancelled: ${e.message}")
             } catch (e: Throwable) {
@@ -161,31 +171,23 @@ object ChainFetcher {
                 connection.close()
             }
 
-            fetched()
-        }
-    }
-
-    private suspend fun fetched() {
-        val request = request
-        val connection = syncConnection!!
-        val undoRollback = undoRollback
-
-        val cumulativeDifficulty = LedgerDB.cumulativeDifficulty()
-        if (undoRollback != null) {
-            if (undoDifficulty >= cumulativeDifficulty) {
-                logger.info("Reconnecting ${undoRollback.size} blocks")
-                val toRemove = LedgerDB.undoRollback(rollbackTo!!, undoRollback)
-                BlockDB.remove(toRemove)
-            } else {
-                logger.debug { "Removing ${undoRollback.size} blocks from db" }
-                BlockDB.remove(undoRollback)
+            undoRollback?.let {
+                if (undoDifficulty >= LedgerDB.cumulativeDifficulty()) {
+                    logger.info("Reconnecting ${it.size} blocks")
+                    val toRemove = LedgerDB.undoRollbackImpl(rollbackTo!!, it)
+                    BlockDB.removeImpl(toRemove)
+                } else {
+                    logger.debug { "Removing ${it.size} blocks from db" }
+                    BlockDB.removeImpl(it)
+                }
+                undoRollback = null
             }
-            this.undoRollback = null
         }
 
         val newChain = LedgerDB.blockHash()
         if (newChain != originalChain) {
-            Node.announceChain(newChain, cumulativeDifficulty, connection)
+            val newCumulativeDifficulty = LedgerDB.cumulativeDifficulty()
+            Node.announceChain(newChain, newCumulativeDifficulty, connection)
             connection.lastBlockTime = Runtime.time()
         }
 
@@ -195,9 +197,9 @@ object ChainFetcher {
             logger.info("Finished fetching $connectedBlocks blocks from ${connection.debugName()}")
 
         recvChannel.poll()
-        if (request != null) {
-            request.cancel()
-            this.request = null
+        request?.let {
+            it.cancel()
+            request = null
         }
         syncConnection = null
         connectedBlocks = 0
@@ -220,8 +222,6 @@ object ChainFetcher {
     suspend fun blocks(connection: Connection, blocks: Blocks) {
         if (request == null || syncConnection != connection) {
             // request may be cancelled
-            //logger.info("Unexpected synchronization ${connection.debugName()}")
-            //connection.close()
             return
         }
         recvChannel.send(blocks)
@@ -230,7 +230,7 @@ object ChainFetcher {
     private suspend fun processBlocks(connection: Connection, answer: Blocks): Boolean {
         if (rollbackTo != null && undoRollback == null) {
             undoDifficulty = LedgerDB.cumulativeDifficulty()
-            undoRollback = LedgerDB.rollbackTo(rollbackTo!!)
+            undoRollback = LedgerDB.rollbackToImpl(rollbackTo!!)
             logger.info("Disconnected ${undoRollback!!.size} blocks")
         }
         for (i in answer.blocks) {
@@ -239,14 +239,14 @@ object ChainFetcher {
                 connection.dos("Rollback contains $hash")
                 return false
             }
-            val status = BlockDB.process(hash, i.array)
+            val status = BlockDB.processImpl(hash, i.array)
             if (status != Accepted) {
                 connection.dos(status.toString())
                 return false
             }
         }
         if (undoRollback == null)
-            LedgerDB.prune()
+            LedgerDB.pruneImpl()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
             logger.info("Connected ${answer.blocks.size} blocks")
@@ -255,6 +255,7 @@ object ChainFetcher {
 
     private fun requestBlocks(connection: Connection, hash: Hash, checkpoint: Hash) {
         request = Runtime.async { recvChannel.receive() }
+        connection.requestedBlocks = true
         connection.sendPacket(GetBlocks(hash, checkpoint))
     }
 

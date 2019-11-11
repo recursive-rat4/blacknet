@@ -70,6 +70,8 @@ class Connection(
     var ping: Long = 0
     @Volatile
     internal var pingRequest: Pair<Int, Long>? = null
+    @Volatile
+    internal var requestedBlocks: Boolean = false
 
     var peerId: Long = 0
     var version: Int = 0
@@ -102,7 +104,7 @@ class Connection(
                 val packet = try {
                     Packet.deserialize(type, bytes)
                 } catch (e: Throwable) {
-                    dos("deserialization failed: ${e.message}")
+                    dos("Deserialization failed: ${e.message}")
                     continue
                 }
                 logger.debug { "Received ${packet.getType()} from ${debugName()}" }
@@ -120,7 +122,6 @@ class Connection(
 
     private suspend fun recvPacket(): ByteReadPacket {
         val size = readChannel.readInt()
-        totalBytesRead += 4
         if (size > Node.getMaxPacketSize()) {
             if (state.isConnected()) {
                 logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}")
@@ -128,8 +129,8 @@ class Connection(
             close()
         }
         val result = readChannel.readPacket(size)
-        totalBytesRead += size
         lastPacketTime = Runtime.time()
+        totalBytesRead += size + 4
         return result
     }
 
@@ -200,9 +201,9 @@ class Connection(
 
     fun dos(reason: String) {
         val score = dosScore.incrementAndGet()
-        logger.info("DoS: $score $reason ${debugName()}")
         if (score == 100)
             close()
+        logger.info("$reason ${debugName()} DoS $score")
     }
 
     fun dosScore(): Int {
