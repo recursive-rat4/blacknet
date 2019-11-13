@@ -56,7 +56,7 @@ object PoS {
     }
 
     fun guessInitialSynchronization(): Boolean {
-        return Runtime.time() > LedgerDB.blockTime() + TARGET_BLOCK_TIME * MATURITY
+        return Runtime.time() > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * MATURITY
     }
 
     const val TIME_SLOT = 16L

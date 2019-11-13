@@ -373,23 +373,24 @@ fun Application.APIServer() {
             val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
 
             BlockDB.mutex.withLock {
-                if (height < 0 || height > LedgerDB.height())
+                val state = LedgerDB.state()
+                if (height < 0 || height > state.height)
                     return@get call.respond(HttpStatusCode.NotFound, "block not found")
                 else if (height == 0)
                     return@get call.respond(Hash.ZERO.toString())
-                else if (height == LedgerDB.height())
-                    return@get call.respond(LedgerDB.blockHash().toString())
+                else if (height == state.height)
+                    return@get call.respond(state.blockHash.toString())
 
                 if (APIServer.lastIndex != null && APIServer.lastIndex!!.second.height == height)
                     return@get call.respond(APIServer.lastIndex!!.first.toString())
 
                 var hash: Hash
                 var index: ChainIndex
-                if (height < LedgerDB.height() / 2) {
+                if (height < state.height / 2) {
                     hash = Hash.ZERO
                     index = LedgerDB.getChainIndex(hash)!!
                 } else {
-                    hash = LedgerDB.blockHash()
+                    hash = state.blockHash
                     index = LedgerDB.getChainIndex(hash)!!
                 }
                 if (APIServer.lastIndex != null && abs(height - index.height) > abs(height - APIServer.lastIndex!!.second.height))
@@ -402,7 +403,7 @@ fun Application.APIServer() {
                     hash = index.next
                     index = LedgerDB.getChainIndex(hash)!!
                 }
-                if (index.height < LedgerDB.height() - PoS.MATURITY + 1)
+                if (index.height < state.height - PoS.MATURITY + 1)
                     APIServer.lastIndex = Pair(hash, index)
                 call.respond(hash.toString())
             }
@@ -412,27 +413,29 @@ fun Application.APIServer() {
             val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
 
             BlockDB.mutex.withLock {
-                if (height < 0 || height > LedgerDB.height())
+                val state = LedgerDB.state()
+                if (height < 0 || height > state.height)
                     return@get call.respond(HttpStatusCode.BadRequest, "Block not found")
                 else if (height == 0)
                     return@get call.respond(Hash.ZERO.toString())
-                else if (height == LedgerDB.height())
-                    return@get call.respond(LedgerDB.blockHash().toString())
+                else if (height == state.height)
+                    return@get call.respond(state.blockHash.toString())
 
-                if (APIServer.lastIndex != null && APIServer.lastIndex!!.second.height == height)
-                    return@get call.respond(APIServer.lastIndex!!.first.toString())
+                val lastIndex = APIServer.lastIndex
+                if (lastIndex != null && lastIndex.second.height == height)
+                    return@get call.respond(lastIndex.first.toString())
 
                 var hash: Hash
                 var index: ChainIndex
-                if (height < LedgerDB.height() / 2) {
+                if (height < state.height / 2) {
                     hash = Hash.ZERO
                     index = LedgerDB.getChainIndex(hash)!!
                 } else {
-                    hash = LedgerDB.blockHash()
+                    hash = state.blockHash
                     index = LedgerDB.getChainIndex(hash)!!
                 }
-                if (APIServer.lastIndex != null && abs(height - index.height) > abs(height - APIServer.lastIndex!!.second.height))
-                    index = APIServer.lastIndex!!.second
+                if (lastIndex != null && abs(height - index.height) > abs(height - lastIndex.second.height))
+                    index = lastIndex.second
                 while (index.height > height) {
                     hash = index.previous
                     index = LedgerDB.getChainIndex(hash)!!
@@ -441,7 +444,7 @@ fun Application.APIServer() {
                     hash = index.next
                     index = LedgerDB.getChainIndex(hash)!!
                 }
-                if (index.height < LedgerDB.height() - PoS.MATURITY + 1)
+                if (index.height < state.height - PoS.MATURITY + 1)
                     APIServer.lastIndex = Pair(hash, index)
                 call.respond(hash.toString())
             }
@@ -468,7 +471,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v1/blockdb/makebootstrap") {
-            val checkpoint = LedgerDB.rollingCheckpoint()
+            val checkpoint = LedgerDB.state().rollingCheckpoint
             if (checkpoint == Hash.ZERO)
                 return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
 
@@ -491,7 +494,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v2/makebootstrap") {
-            val checkpoint = LedgerDB.rollingCheckpoint()
+            val checkpoint = LedgerDB.state().rollingCheckpoint
             if (checkpoint == Hash.ZERO)
                 return@get call.respond(HttpStatusCode.BadRequest, "Not synchronized")
 
@@ -524,9 +527,9 @@ fun Application.APIServer() {
         get("/api/v1/ledger/get/{account}/{confirmations?}") {
             val publicKey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
             val confirmations = call.parameters["confirmations"]?.toIntOrNull() ?: PoS.DEFAULT_CONFIRMATIONS
-            val result = AccountInfo.get(publicKey, confirmations)
+            val result = AccountInfoV1.get(publicKey, confirmations)
             if (result != null)
-                call.respond(Json.stringify(AccountInfo.serializer(), result))
+                call.respond(Json.stringify(AccountInfoV1.serializer(), result))
             else
                 call.respond(HttpStatusCode.NotFound, "account not found")
         }

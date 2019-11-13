@@ -70,8 +70,9 @@ object BlockDB {
 
     private suspend fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
         val block = Block.deserialize(bytes)
+        val state = LedgerDB.state()
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
-            val percent = 100 * LedgerDB.upgraded() / PoS.MATURITY
+            val percent = 100 * state.upgraded / PoS.MATURITY
             if (percent > 9)
                 logger.info("$percent% of blocks upgraded")
             else
@@ -86,7 +87,7 @@ object BlockDB {
         if (!block.verifySignature(hash)) {
             return Invalid("Invalid signature")
         }
-        if (block.previous != LedgerDB.blockHash()) {
+        if (block.previous != state.blockHash) {
             return NotOnThisChain
         }
         val batch = LevelDB.createWriteBatch()
@@ -95,7 +96,7 @@ object BlockDB {
         if (status == Accepted) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
-            APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
+            APIServer.blockNotify(block, hash, state.height + 1, bytes.size)
             cachedBlock = Pair(block.previous, bytes)
         } else {
             batch.close()

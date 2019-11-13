@@ -120,7 +120,7 @@ object Node {
     }
 
     fun getMaxPacketSize(): Int {
-        return LedgerDB.maxBlockSize() + Network.RESERVED
+        return LedgerDB.state().maxBlockSize + Network.RESERVED
     }
 
     fun getMinPacketSize(): Int {
@@ -161,14 +161,9 @@ object Node {
         sendVersion(connection, nonce(address.network))
     }
 
-    suspend fun sendVersion(connection: Connection, nonce: Long) {
-        val chain = BlockDB.mutex.withLock {
-            if (!isInitialSynchronization()) {
-                ChainAnnounce(LedgerDB.blockHash(), LedgerDB.cumulativeDifficulty())
-            } else {
-                ChainAnnounce.GENESIS
-            }
-        }
+    fun sendVersion(connection: Connection, nonce: Long) {
+        val state = LedgerDB.state()
+        val chain = ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
         val v = Version(magic, version, Runtime.time(), nonce, Bip14.agent, minTxFee, chain)
         connection.sendPacket(v)
     }

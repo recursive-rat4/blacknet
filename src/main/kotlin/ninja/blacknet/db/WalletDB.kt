@@ -156,7 +156,7 @@ object WalletDB {
                 val data = wallet.transactions.get(hash)
                 if (data != null) {
                     if (data.height == 0) return 0
-                    return LedgerDB.height() - data.height + 1
+                    return LedgerDB.state().height - data.height + 1
                 }
             }
             return null
@@ -415,7 +415,7 @@ object WalletDB {
                 mutex.withLock {
                     var hash = Hash.ZERO
                     var index = LedgerDB.getChainIndex(hash)!!
-                    val height = LedgerDB.height()
+                    val height = LedgerDB.state().height
                     val n = height - index.height + 1
                     if (n > 0) {
                         logger.info("Rescanning $n blocks...")
@@ -475,7 +475,7 @@ object WalletDB {
 
     fun getCheckpoint(): Hash {
         return if (!PoS.guessInitialSynchronization())
-            LedgerDB.rollingCheckpoint()
+            LedgerDB.state().rollingCheckpoint
         else
             Hash.ZERO
     }

@@ -23,11 +23,12 @@ class SupplyInfo(
 ) {
     companion object {
         suspend fun get(): SupplyInfo = BlockDB.mutex.withLock {
+            val state = LedgerDB.state()
             return SupplyInfo(
-                    LedgerDB.height(),
-                    LedgerDB.blockHash().toString(),
-                    LedgerDB.blockTime(),
-                    LedgerDB.supply().toString()
+                    state.height,
+                    state.blockHash.toString(),
+                    state.blockTime,
+                    state.supply.toString()
             )
         }
     }

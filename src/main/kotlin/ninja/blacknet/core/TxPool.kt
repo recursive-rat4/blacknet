@@ -34,7 +34,7 @@ object TxPool : MemPool(), Ledger {
 
     suspend fun fill(block: Block) = mutex.withLock {
         val poolSize = sizeImpl()
-        var freeSize = min(LedgerDB.maxBlockSize(), Config.softBlockSizeLimit) - 176
+        var freeSize = min(LedgerDB.state().maxBlockSize, Config.softBlockSizeLimit) - 176
         var i = 0
         while (freeSize > 0 && i < poolSize) {
             val hash = transactions.get(i++)
@@ -81,11 +81,11 @@ object TxPool : MemPool(), Ledger {
     }
 
     override fun blockTime(): Long {
-        return LedgerDB.blockTime()
+        return LedgerDB.state().blockTime
     }
 
     override fun height(): Int {
-        return LedgerDB.height()
+        return LedgerDB.state().height
     }
 
     override fun get(key: PublicKey): AccountState? {

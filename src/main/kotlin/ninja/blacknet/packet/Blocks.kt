@@ -27,10 +27,6 @@ class Blocks(
 
     override fun getType() = PacketType.Blocks
 
-    fun isEmpty(): Boolean {
-        return hashes.isEmpty() && blocks.isEmpty()
-    }
-
     override suspend fun process(connection: Connection) {
         if (hashes.size > MAX_HASHES) {
             connection.dos("Invalid hashes size ${hashes.size}")
@@ -38,6 +34,10 @@ class Blocks(
         }
         if (blocks.size > MAX_BLOCKS) {
             connection.dos("Invalid blocks size ${blocks.size}")
+            return
+        }
+        if (hashes.isNotEmpty() && blocks.isNotEmpty()) {
+            connection.dos("Invalid blocks size ${blocks.size} hashes size ${hashes.size}")
             return
         }
 

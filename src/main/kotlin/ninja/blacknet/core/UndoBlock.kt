@@ -24,12 +24,12 @@ class UndoBlock(
         val supply: Long,
         val nxtrng: Hash,
         val rollingCheckpoint: Hash,
-        val upgraded: Int,
+        val upgraded: Short,
         val blockSize: Int,
         val accounts: ArrayList<Pair<PublicKey, AccountState>>,
         val htlcs: ArrayList<Pair<Hash, HTLC?>>,
         val multisigs: ArrayList<Pair<Hash, Multisig?>>,
-        val forkV2: Int
+        val forkV2: Short
 ) {
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
@@ -45,9 +45,9 @@ class UndoBuilder(
         val supply: Long,
         val nxtrng: Hash,
         val rollingCheckpoint: Hash,
-        val upgraded: Int,
+        val upgraded: Short,
         val blockSize: Int,
-        val forkV2: Int,
+        val forkV2: Short,
         private val accounts: HashMap<PublicKey, AccountState> = HashMap(),
         private val htlcs: HashMap<Hash, HTLC?> = HashMap(),
         private val multisigs: HashMap<Hash, Multisig?> = HashMap()
