@@ -174,14 +174,14 @@ header .network {
 .rightpanel .info p {
     margin: 0 0 5px;
 }
-fieldset .field-row{
+.form .field-row{
     display: flex;
     align-items: center;
 }
 
 .field-row {
-    margin-bottom: 1rem;
     max-width: 666px;
+    padding: 10px 15px;
 }
 
 .field-row p{
@@ -193,20 +193,22 @@ fieldset .field-row{
     visibility: hidden;
 }
 
-fieldset {
-    padding: 15px;
-    border: 1px groove;
-    border-color: var(--gold-text);
+.form {
+    border: 1px solid;
+    border-color: var(--darker-grey-bg);
     margin: 0 0 1em;
     width: 666px;
+    overflow: hidden;
+    padding-bottom: 15px;
 }
 
 legend {
     color: var(--grey-text);
-    font-size: 16px;
-    font-weight: bold;
-    padding-left: 4px;
-    padding-right: 4px;
+    font-size: 14px;
+    background: var(--darker-grey-bg);
+    padding: 10px 10px;
+    overflow: hidden;
+    width: 100%;
 }
 
 label {
@@ -272,11 +274,12 @@ button {
     -webkit-writing-mode: horizontal-tb !important;
 }
 
-fieldset button, .staking button{
+.form button, .staking button{
     color: var(--gold-text);
     background-color: var(--darker-grey-bg);
     border: none;
     float: right;
+    margin-right: 15px;
 }
 .staking button{
     margin-left: 12px;
@@ -514,7 +517,7 @@ input:focus, button:focus {
     display: none;
 }
 
-fieldset pre {
+.form pre {
     width: 80%;
     height: 55px;
     flex-grow: 8;
@@ -733,4 +736,8 @@ tr.undis{
 .blacknet-message-notice-content .fa-info-circle{
     color: yellow;
     margin-right: 3px;
+}
+
+#peer-table{
+    margin-bottom: 20px;
 }
