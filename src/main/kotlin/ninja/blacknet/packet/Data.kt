@@ -12,9 +12,7 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.core.DataDB.Status
-import ninja.blacknet.core.DataType
-import ninja.blacknet.core.TxPool
+import ninja.blacknet.core.*
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
@@ -48,17 +46,17 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
                 continue
             }
 
-            val status = if (type == DataType.Transaction)
+            val (status, fee) = if (type == DataType.Transaction)
                 TxPool.processTx(hash, bytes.array, connection)
             else
                 Pair(type.db.process(hash, bytes.array, connection), 0L)
 
-            when (status.first) {
-                Status.ACCEPTED -> inv.add(Pair(hash, status.second))
-                Status.INVALID -> connection.dos("invalid ${type.name} $hash")
-                Status.IN_FUTURE -> logger.debug { "in future ${type.name} $hash" }
-                Status.NOT_ON_THIS_CHAIN -> logger.debug { "not on this chain ${type.name} $hash" }
-                Status.ALREADY_HAVE -> logger.debug { "already have  ${type.name} $hash" }
+            when (status) {
+                Accepted -> inv.add(Pair(hash, fee))
+                is Invalid -> connection.dos("${status.reason} ${type.name} $hash")
+                InFuture -> logger.debug { "in future ${type.name} $hash" }
+                NotOnThisChain -> logger.debug { "not on this chain ${type.name} $hash" }
+                AlreadyHave -> logger.debug { "already have  ${type.name} $hash" }
             }
         }
 

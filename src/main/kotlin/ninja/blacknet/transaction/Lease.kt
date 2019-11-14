@@ -10,10 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import mu.KotlinLogging
-import ninja.blacknet.core.AccountState
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
@@ -21,8 +18,6 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Lease(
@@ -34,19 +29,20 @@ class Lease(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         if (amount < PoS.MIN_LEASE) {
-            logger.info("$amount less than minimal ${PoS.MIN_LEASE}")
-            return false
+            return Invalid("$amount less than minimal ${PoS.MIN_LEASE}")
         }
         val account = ledger.get(tx.from)!!
-        if (!account.credit(amount))
-            return false
+        val status = account.credit(amount)
+        if (status != Accepted) {
+            return status
+        }
         ledger.set(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
         toAccount.leases.add(AccountState.Lease(tx.from, ledger.height(), amount))
         ledger.set(to, toAccount)
-        return true
+        return Accepted
     }
 
     companion object {

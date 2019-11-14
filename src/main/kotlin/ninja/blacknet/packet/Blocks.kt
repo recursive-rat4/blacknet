@@ -31,6 +31,6 @@ class Blocks(
     }
 
     override suspend fun process(connection: Connection) {
-        ChainFetcher.fetched(connection, this)
+        ChainFetcher.blocks(connection, this)
     }
 }

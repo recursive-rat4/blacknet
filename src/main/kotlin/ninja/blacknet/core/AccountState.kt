@@ -13,14 +13,11 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
-import mu.KotlinLogging
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.util.sumByLong
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class AccountState(
@@ -55,20 +52,18 @@ class AccountState(
         return stake + immature.sumByLong { it.amount } + leases.sumByLong { it.amount }
     }
 
-    fun credit(amount: Long): Boolean {
+    fun credit(amount: Long): Status {
         if (amount < 0) {
-            logger.info("negative amount")
-            return false
+            return Invalid("Negative amount")
         }
 
         if (amount <= stake) {
             stake -= amount
-            return true
+            return Accepted
         }
 
         if (balance() < amount) {
-            logger.info("insufficient funds")
-            return false
+            return Invalid("Insufficient funds")
         }
 
         var r = amount - stake
@@ -83,7 +78,7 @@ class AccountState(
             }
         }
 
-        return true
+        return Accepted
     }
 
     fun debit(height: Int, amount: Long) {

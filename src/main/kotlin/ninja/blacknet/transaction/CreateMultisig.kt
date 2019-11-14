@@ -12,17 +12,12 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.json
-import mu.KotlinLogging
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Multisig
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class CreateMultisig(
@@ -51,31 +46,26 @@ class CreateMultisig(
     private fun hash(from: PublicKey, seq: Int): Hash {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = copy.serialize()
-        return (Blake2b.Hasher() + from.bytes + seq + bytes).hash()
+        return Blake2b.hasher { this + from.bytes + seq + bytes }
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         if (n < 0 || n > deposits.size) {
-            logger.info("invalid n")
-            return false
+            return Invalid("Invalid n")
         }
         if (deposits.size > 20) {
-            logger.info("too many deposits")
-            return false
+            return Invalid("Too many deposits")
         }
         if (signatures.size > deposits.size) {
-            logger.info("too many signatures")
-            return false
+            return Invalid("Too many signatures")
         }
         val total = try {
             deposits.sumByLong { it.second }
         } catch (e: ArithmeticException) {
-            logger.info("invalid total amount: ${e.message}")
-            return false
+            return Invalid("Invalid total amount: ${e.message}")
         }
         if (total <= 0) {
-            logger.info("invalid total amount")
-            return false
+            return Invalid("Invalid total amount")
         }
 
         val multisigHash = hash(tx.from, tx.seq)
@@ -83,27 +73,26 @@ class CreateMultisig(
             if (deposits[i].second != 0L) {
                 val signature = signatures.find { it.first == i.toByte() }?.second
                 if (signature == null) {
-                    logger.info("unsigned deposit")
-                    return false
+                    return Invalid("Unsigned deposit")
                 }
                 if (!verifySignature(signature, multisigHash, deposits[i].first)) {
-                    logger.info("invalid signature")
-                    return false
+                    return Invalid("Invalid signature")
                 }
                 val depositAccount = ledger.get(deposits[i].first)
                 if (depositAccount == null) {
-                    logger.info("account not found")
-                    return false
+                    return Invalid("Account not found")
                 }
-                if (!depositAccount.credit(deposits[i].second))
-                    return false
+                val status = depositAccount.credit(deposits[i].second)
+                if (status != Accepted) {
+                    return status
+                }
                 ledger.set(deposits[i].first, depositAccount)
             }
         }
 
         val multisig = Multisig(n, deposits)
         ledger.addMultisig(hash, multisig)
-        return true
+        return Accepted
     }
 
     companion object {

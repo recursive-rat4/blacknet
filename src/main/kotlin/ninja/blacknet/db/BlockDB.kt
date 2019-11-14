@@ -13,21 +13,18 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
-import ninja.blacknet.core.Block
-import ninja.blacknet.core.DataDB
-import ninja.blacknet.core.TxPool
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.Connection
-import ninja.blacknet.util.emptyByteArray
 
 private val logger = KotlinLogging.logger {}
 
 object BlockDB : DataDB() {
     private const val MIN_DISK_SPACE = LedgerDB.MAX_BLOCK_SIZE * 2L
     private val BLOCK_KEY = "block".toByteArray()
-    private var cachedBlockHash = Hash.ZERO
-    private var cachedBlockBytes = emptyByteArray()
+    @Volatile
+    internal var cachedBlock: Pair<Hash, ByteArray>? = null
 
     suspend fun block(hash: Hash): Pair<Block, Int>? = mutex.withLock {
         return@withLock blockImpl(hash)
@@ -52,10 +49,7 @@ object BlockDB : DataDB() {
     }
 
     override suspend fun getImpl(hash: Hash): ByteArray? {
-        return if (hash == cachedBlockHash)
-            cachedBlockBytes
-        else
-            LevelDB.get(BLOCK_KEY, hash.bytes)
+        return LevelDB.get(BLOCK_KEY, hash.bytes)
     }
 
     override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
@@ -68,39 +62,29 @@ object BlockDB : DataDB() {
                 logger.info("unknown version ${block.version.toUInt()}")
         }
         if (PoS.isTooFarInFuture(block.time)) {
-            logger.debug { "too far in future ${block.time}" }
-            return Status.IN_FUTURE
+            return InFuture
         }
         if (!block.verifyContentHash(bytes)) {
-            logger.info("invalid content hash")
-            return Status.INVALID
+            return Invalid("Invalid content hash")
         }
         if (!block.verifySignature(hash)) {
-            logger.info("invalid signature")
-            return Status.INVALID
+            return Invalid("Invalid signature")
         }
         if (block.previous != LedgerDB.blockHash()) {
-            logger.info("block $hash not on current chain prev ${block.previous}")
-            return Status.NOT_ON_THIS_CHAIN
+            return NotOnThisChain
         }
         val batch = LevelDB.createWriteBatch()
         val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
-        val txHashes = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
-        if (txHashes != null) {
+        val status = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
+        if (status == Accepted) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
-            TxPool.mutex.withLock {
-                TxPool.clearRejectsImpl()
-                TxPool.removeImpl(txHashes)
-            }
             APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
-            cachedBlockHash = hash
-            cachedBlockBytes = bytes
-            return Status.ACCEPTED
+            cachedBlock = Pair(block.previous, bytes)
         } else {
             batch.close()
-            return Status.INVALID
         }
+        return status
     }
 
     fun warnings(): List<String> {

@@ -11,8 +11,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
@@ -35,31 +34,27 @@ class WithdrawFromLease(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         if (withdraw <= 0 || withdraw > amount) {
-            logger.info("invalid withdraw amount")
-            return false
+            return Invalid("Invalid withdraw amount")
         }
         if (withdraw > amount - PoS.MIN_LEASE) {
-            logger.info("can not withdraw more than ${amount - PoS.MIN_LEASE}")
-            return false
+            return Invalid("Can not withdraw more than ${amount - PoS.MIN_LEASE}")
         }
         val toAccount = ledger.get(to)
         if (toAccount == null) {
-            logger.info("account not found")
-            return false
+            return Invalid("Account not found")
         }
         val lease = toAccount.leases.find { it.publicKey == tx.from && it.height == height && it.amount == amount }
         if (lease == null) {
-            logger.info("lease not found")
-            return false
+            return Invalid("Lease not found")
         }
         lease.amount -= withdraw
         ledger.set(to, toAccount)
         val account = ledger.get(tx.from)!!
         account.debit(ledger.height(), withdraw)
         ledger.set(tx.from, account)
-        return true
+        return Accepted
     }
 
     companion object {

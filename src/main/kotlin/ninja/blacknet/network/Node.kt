@@ -9,6 +9,7 @@
 
 package ninja.blacknet.network
 
+import com.google.common.io.Resources
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -17,11 +18,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Config.dnsseed
 import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.Runtime
-import ninja.blacknet.core.DataDB.Status
+import ninja.blacknet.core.Accepted
+import ninja.blacknet.core.Status
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
@@ -45,7 +46,7 @@ object Node {
     const val NETWORK_TIMEOUT = 90
     const val SEND_INV_TIMEOUT = 5
     const val magic = 0x17895E7D
-    const val version = 11
+    const val version = 12
     const val minVersion = 7
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
@@ -67,7 +68,6 @@ object Node {
         if (!Config.isDisabled(Network.I2P))
             Runtime.launch { Network.listenOnI2P() }
         Runtime.launch { connector() }
-        Runtime.launch { dnsSeeder(true) }
     }
 
     fun newPeerId(): Long {
@@ -183,7 +183,7 @@ object Node {
 
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
-        if (status == Status.ACCEPTED) {
+        if (status == Accepted) {
             logger.info("Announced to $n peers")
             return true
         } else {
@@ -192,21 +192,15 @@ object Node {
         }
     }
 
-    suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Boolean {
+    suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
         val (status, fee) = TxPool.processTx(hash, bytes)
-        if (status == Status.ACCEPTED) {
+        if (status == Accepted) {
             connections.forEach {
                 if (it.state.isConnected() && it.feeFilter <= fee)
                     it.inventory(hash)
             }
-            return true
-        } else if (status == Status.ALREADY_HAVE) {
-            logger.info("Already in tx pool $hash")
-            return true
-        } else {
-            logger.info("$status tx $hash")
-            return false
         }
+        return status
     }
 
     suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null) {
@@ -311,8 +305,8 @@ object Node {
     }
 
     private suspend fun connector() {
-        if (PeerDB.isEmpty()) {
-            delay(DNS_TIMEOUT)
+        if (PeerDB.isLow()) {
+            addBuiltinPeers()
         }
 
         while (true) {
@@ -327,8 +321,10 @@ object Node {
             val addresses = PeerDB.getCandidates(n, filter)
             if (addresses.isEmpty()) {
                 logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.outgoingConnections}")
-                delay(PeerDB.DELAY)
-                dnsSeeder(false)
+                if (!addBuiltinPeers()) {
+                    logger.info("Z-z-z")
+                    delay(PeerDB.DELAY)
+                }
                 continue
             }
 
@@ -348,28 +344,22 @@ object Node {
         }
     }
 
-    private const val DNS_TIMEOUT = 5
-    private const val DNS_SEEDER_DELAY = 11 * 60
-    private suspend fun dnsSeeder(delay: Boolean) {
-        if (!Config[dnsseed])
-            return
+    private suspend fun addBuiltinPeers(): Boolean {
+        val list = Resources.readLines(Resources.getResource("peers.txt"), Charsets.UTF_8)
 
-        if (delay && !PeerDB.isLow()) {
-            delay(DNS_SEEDER_DELAY)
+        val peers = ArrayList<Address>(list.size)
+        for (i in list) {
+            val address = Network.parse(i, DEFAULT_P2P_PORT)!!
+            peers.add(address)
         }
 
-        if (connected() >= 2) {
-            logger.info("P2P peers available. Skipped DNS seeding.")
-            return
-        }
+        val added = PeerDB.add(peers, Address.LOOPBACK, true)
 
-        logger.info("Requesting DNS seeds.")
-
-        val seeds = "dnsseed.blacknet.ninja"
-        try {
-            val peers = Network.resolveAll(seeds, DEFAULT_P2P_PORT)
-            PeerDB.add(peers, Address.LOOPBACK, true)
-        } catch (e: Throwable) {
+        if (added > 0) {
+            logger.info("Added $added built-in peer addresses to db")
+            return true
+        } else {
+            return false
         }
     }
 

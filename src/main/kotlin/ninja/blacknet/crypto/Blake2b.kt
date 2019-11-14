@@ -9,12 +9,15 @@
 
 package ninja.blacknet.crypto
 
-import com.google.common.primitives.Ints
-import com.google.common.primitives.Longs
 import com.rfksystems.blake2b.Blake2b
-import kotlinx.serialization.toUtf8Bytes
 
+/**
+ * BLAKE2b-256 hash function.
+ */
 object Blake2b : (ByteArray) -> ByteArray {
+    /**
+     * Returns a [Hash] of the [ByteArray].
+     */
     fun hash(message: ByteArray): Hash {
         val bytes = ByteArray(Hash.SIZE)
         val b = Blake2b(Hash.DIGEST_SIZE)
@@ -23,14 +26,24 @@ object Blake2b : (ByteArray) -> ByteArray {
         return Hash(bytes)
     }
 
-    fun hash(message: ByteArray, offset: Int, len: Int): Hash {
+    /**
+     * Returns a [Hash] of a block of bytes.
+     *
+     * @param message the [ByteArray] containing the data
+     * @param offset the offset of the data
+     * @param length the length of the data
+     */
+    fun hash(message: ByteArray, offset: Int, length: Int): Hash {
         val bytes = ByteArray(Hash.SIZE)
         val b = Blake2b(Hash.DIGEST_SIZE)
-        b.update(message, offset, len)
+        b.update(message, offset, length)
         b.digest(bytes, 0)
         return Hash(bytes)
     }
 
+    /**
+     * Returns a hash with given [digestSize].
+     */
     fun hash(digestSize: Int, message: ByteArray): ByteArray {
         val bytes = ByteArray(digestSize / 8)
         val b = Blake2b(digestSize)
@@ -39,29 +52,87 @@ object Blake2b : (ByteArray) -> ByteArray {
         return bytes
     }
 
-    fun utf8(string: String): Hash {
-        return hash(string.toUtf8Bytes())
+    /**
+     * Returns a [Hash] of the [String] using the UTF-8 charset.
+     */
+    fun hash(string: String): Hash {
+        return hash(string.toByteArray(Charsets.UTF_8))
     }
 
-    class Hasher(private val blake2b: Blake2b = Blake2b(Hash.DIGEST_SIZE)) {
+    /**
+     * Builds [Hash] with given [init] builder.
+     */
+    fun hasher(init: Hasher.() -> Unit): Hash {
+        val hasher = Hasher()
+        hasher.init()
+        return hasher.hash()
+    }
+
+    /**
+     * DSL builder for a [Hash].
+     */
+    class Hasher internal constructor(private val blake2b: Blake2b = Blake2b(Hash.DIGEST_SIZE)) {
+        /**
+         * Adds [Byte] value.
+         */
+        operator fun plus(byte: Byte): Hasher {
+            blake2b.update(byte)
+            return this
+        }
+
+        /**
+         * Adds [Short] value in big-endian byte order.
+         */
+        operator fun plus(short: Short): Hasher {
+            blake2b.update((short.toInt() shr 8).toByte())
+            blake2b.update(short.toByte())
+            return this
+        }
+
+        /**
+         * Adds [Int] value in big-endian byte order.
+         */
         operator fun plus(int: Int): Hasher {
-            return this.plus(Ints.toByteArray(int))
+            blake2b.update((int shr 24).toByte())
+            blake2b.update((int shr 16).toByte())
+            blake2b.update((int shr 8).toByte())
+            blake2b.update(int.toByte())
+            return this
         }
 
+        /**
+         * Adds [Long] value in big-endian byte order.
+         */
         operator fun plus(long: Long): Hasher {
-            return this.plus(Longs.toByteArray(long))
+            blake2b.update((long shr 56).toByte())
+            blake2b.update((long shr 48).toByte())
+            blake2b.update((long shr 40).toByte())
+            blake2b.update((long shr 32).toByte())
+            blake2b.update((long shr 24).toByte())
+            blake2b.update((long shr 16).toByte())
+            blake2b.update((long shr 8).toByte())
+            blake2b.update(long.toByte())
+            return this
         }
 
+        /**
+         * Adds [String] value using the UTF-8 charset.
+         */
         operator fun plus(string: String): Hasher {
-            return this.plus(string.toUtf8Bytes())
+            val bytes = string.toByteArray(Charsets.UTF_8)
+            blake2b.update(bytes, 0, bytes.size)
+            return this
         }
 
+        /**
+         * Adds [ByteArray] value.
+         */
         operator fun plus(bytes: ByteArray): Hasher {
             blake2b.update(bytes, 0, bytes.size)
             return this
         }
 
-        fun hash(): Hash {
+        internal fun hash(): Hash {
             val bytes = ByteArray(Hash.SIZE)
             blake2b.digest(bytes, 0)
             return Hash(bytes)

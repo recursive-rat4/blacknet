@@ -10,10 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import mu.KotlinLogging
-import ninja.blacknet.core.HTLC
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
@@ -21,8 +18,6 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.serialization.toHex
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class CreateHTLC(
@@ -38,29 +33,28 @@ class CreateHTLC(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         if (!HTLC.isValidTimeLockType(timeLockType)) {
-            logger.info("unknown timelock type $timeLockType")
-            return false
+            return Invalid("Unknown timelock type $timeLockType")
         }
         if (!HTLC.isValidHashType(hashType)) {
-            logger.info("unknown hash type $hashType")
-            return false
+            return Invalid("Unknown hash type $hashType")
         }
 
         if (amount == 0L) {
-            logger.info("invalid amount")
-            return false
+            return Invalid("Invalid amount")
         }
 
         val account = ledger.get(tx.from)!!
-        if (!account.credit(amount))
-            return false
+        val status = account.credit(amount)
+        if (status != Accepted) {
+            return status
+        }
 
         val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLockType, timeLock, hashType, hashLock)
         ledger.set(tx.from, account)
         ledger.addHTLC(hash, htlc)
-        return true
+        return Accepted
     }
 
     @Suppress("unused")

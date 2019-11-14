@@ -12,10 +12,7 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.core.DataDB.Status
-import ninja.blacknet.core.DataType
-import ninja.blacknet.core.Transaction
-import ninja.blacknet.core.TxPool
+import ninja.blacknet.core.*
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
@@ -51,11 +48,11 @@ class Transactions(
             val (status, fee) = TxPool.processTx(hash, bytes.array, connection)
 
             when (status) {
-                Status.ACCEPTED -> inv.add(Pair(hash, fee))
-                Status.INVALID -> connection.dos("invalid $hash")
-                Status.IN_FUTURE -> logger.debug { "In future $hash" }
-                Status.NOT_ON_THIS_CHAIN -> logger.debug { "Not on this chain $hash" }
-                Status.ALREADY_HAVE -> logger.debug { "Already have $hash" }
+                Accepted -> inv.add(Pair(hash, fee))
+                is Invalid -> connection.dos("${status.reason} $hash")
+                InFuture -> logger.debug { "In future $hash" }
+                NotOnThisChain -> logger.debug { "Not on this chain $hash" }
+                AlreadyHave -> logger.debug { "Already have $hash" }
             }
         }
 

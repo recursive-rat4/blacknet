@@ -13,17 +13,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
-import mu.KotlinLogging
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Multisig
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class SpendMultisig(
@@ -60,45 +55,37 @@ class SpendMultisig(
         return Blake2b.hash(bytes)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Boolean {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val multisig = ledger.getMultisig(id)
         if (multisig == null) {
-            logger.info("multisig not found")
-            return false
+            return Invalid("Multisig not found")
         }
         if (amounts.size != multisig.deposits.size) {
-            logger.info("invalid number of amounts")
-            return false
+            return Invalid("Invalid number of amounts")
         }
         val amount = try {
             amounts.sumByLong()
         } catch (e: ArithmeticException) {
-            logger.info("invalid total amount: ${e.message}")
-            return false
+            return Invalid("Invalid total amount: ${e.message}")
         }
         if (amount != multisig.amount()) {
-            logger.info("invalid total amount")
-            return false
+            return Invalid("Invalid total amount")
         }
         if (multisig.deposits.find { it.first == tx.from } == null) {
-            logger.info("invalid sender")
-            return false
+            return Invalid("Invalid sender")
         }
         if (signatures.size + 1 < multisig.n) {
-            logger.info("invalid number of signatures")
-            return false
+            return Invalid("Invalid number of signatures")
         }
         if (!verifySignatures(multisig)) {
-            logger.info("invalid signature")
-            return false
+            return Invalid("Invalid signature")
         }
 
         val height = ledger.height()
 
         for (i in multisig.deposits.indices) {
             if (amounts[i] < 0) {
-                logger.info("negative amount")
-                return false
+                return Invalid("Negative amount")
             } else if (amounts[i] != 0L) {
                 val publicKey = multisig.deposits[i].first
                 val toAccount = ledger.getOrCreate(publicKey)
@@ -108,7 +95,7 @@ class SpendMultisig(
         }
 
         ledger.removeMultisig(id)
-        return true
+        return Accepted
     }
 
     @Suppress("unused")

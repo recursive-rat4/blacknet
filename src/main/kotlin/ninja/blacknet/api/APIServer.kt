@@ -647,7 +647,7 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second))
+                if (Node.broadcastTx(signed.first, signed.second) == Accepted)
                     call.respond(signed.first.toString())
                 else
                     call.respond("Transaction rejected")
@@ -671,11 +671,23 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
-                if (Node.broadcastTx(hash, bytes))
+                val status = Node.broadcastTx(hash, bytes)
+                if (status == Accepted)
                     call.respond(hash.toString())
                 else
-                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected")
+                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
             }
+        }
+
+        get("/api/v2/serialize/transfer") {
+            val parameters = call.parameters
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val to = Address.decode(parameters["to"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid to")
+            val encrypted = parameters["encrypted"]?.let { it.toByteOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid encrypted") }
+            val message = Message.create(parameters["message"], encrypted) ?: return@get call.respond(HttpStatusCode.BadRequest, "Failed to create message")
+
+            val data = Transfer(amount, to, message).serialize()
+            call.respond(data.toHex())
         }
 
         post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/{blockHash?}/") {
@@ -692,7 +704,7 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Burn.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second))
+                if (Node.broadcastTx(signed.first, signed.second) == Accepted)
                     call.respond(signed.first.toString())
                 else
                     call.respond("Transaction rejected")
@@ -714,11 +726,21 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Burn.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
-                if (Node.broadcastTx(hash, bytes))
+                val status = Node.broadcastTx(hash, bytes)
+                if (status == Accepted)
                     call.respond(hash.toString())
                 else
-                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected")
+                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
             }
+        }
+
+        get("/api/v2/serialize/burn") {
+            val parameters = call.parameters
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val message = SerializableByteArray.fromString(parameters["message"].orEmpty()) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid message")
+
+            val data = Burn(amount, message).serialize()
+            call.respond(data.toHex())
         }
 
         post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}/{blockHash?}/") {
@@ -735,7 +757,7 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Lease.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second))
+                if (Node.broadcastTx(signed.first, signed.second) == Accepted)
                     call.respond(signed.first.toString())
                 else
                     call.respond("Transaction rejected")
@@ -757,11 +779,21 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Lease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
-                if (Node.broadcastTx(hash, bytes))
+                val status = Node.broadcastTx(hash, bytes)
+                if (status == Accepted)
                     call.respond(hash.toString())
                 else
-                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected")
+                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
             }
+        }
+
+        get("/api/v2/serialize/lease") {
+            val parameters = call.parameters
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val to = Address.decode(parameters["to"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid to")
+
+            val data = Lease(amount, to).serialize()
+            call.respond(data.toHex())
         }
 
         post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}/{blockHash?}/") {
@@ -779,7 +811,7 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.CancelLease.type, data)
                 val signed = tx.sign(privateKey)
 
-                if (Node.broadcastTx(signed.first, signed.second))
+                if (Node.broadcastTx(signed.first, signed.second) == Accepted)
                     call.respond(signed.first.toString())
                 else
                     call.respond("Transaction rejected")
@@ -802,11 +834,35 @@ fun Application.APIServer() {
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.CancelLease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
-                if (Node.broadcastTx(hash, bytes))
+                val status = Node.broadcastTx(hash, bytes)
+                if (status == Accepted)
                     call.respond(hash.toString())
                 else
-                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected")
+                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
             }
+        }
+
+        get("/api/v2/serialize/cancellease") {
+            val parameters = call.parameters
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val to = Address.decode(parameters["to"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid to")
+            val height = parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
+
+            val data = CancelLease(amount, to, height).serialize()
+            call.respond(data.toHex())
+        }
+
+        get("/api/v2/serialize/transaction") {
+            val parameters = call.parameters
+            val seq = parameters["seq"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid seq")
+            val from = Address.decode(parameters["from"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid from")
+            val fee = parameters["fee"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid fee")
+            val type = parameters["type"]?.toByteOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid type")
+            val data = parameters["data"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid data")
+            val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+
+            val tx = Transaction.create(from, seq, referenceChain ?: Hash.ZERO, fee, type, data)
+            call.respond(tx.serialize().toHex())
         }
 
         get("/api/v1/transaction/raw/send/{serialized}/") {
@@ -814,7 +870,7 @@ fun Application.APIServer() {
             val hash = Transaction.Hasher(serialized.array)
 
             APIServer.txMutex.withLock {
-                if (Node.broadcastTx(hash, serialized.array))
+                if (Node.broadcastTx(hash, serialized.array) == Accepted)
                     call.respond(hash.toString())
                 else
                     call.respond("Transaction rejected")
@@ -823,13 +879,18 @@ fun Application.APIServer() {
 
         get("/api/v2/sendrawtransaction/{hex}/") {
             val bytes = call.parameters["hex"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hex")
-            val hash = Transaction.Hasher(bytes)
 
             APIServer.txMutex.withLock {
-                if (Node.broadcastTx(hash, bytes))
-                    call.respond(hash.toString())
-                else
-                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected")
+                try {
+                    val hash = Transaction.Hasher(bytes)
+                    val status = Node.broadcastTx(hash, bytes)
+                    if (status == Accepted)
+                        call.respond(hash.toString())
+                    else
+                        call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                } catch (e: Throwable) {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid transaction: ${e.message}")
+                }
             }
         }
 

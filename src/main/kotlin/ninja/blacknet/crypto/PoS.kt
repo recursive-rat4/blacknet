@@ -9,13 +9,13 @@
 
 package ninja.blacknet.crypto
 
-import mu.KotlinLogging
 import ninja.blacknet.Runtime
+import ninja.blacknet.core.Accepted
+import ninja.blacknet.core.Invalid
+import ninja.blacknet.core.Status
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.util.byteArrayOfInts
 import kotlin.math.min
-
-private val logger = KotlinLogging.logger {}
 
 object PoS {
     fun reward(supply: Long): Long {
@@ -24,21 +24,22 @@ object PoS {
     }
 
     fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
-        return (Blake2b.Hasher() + nxtrng.bytes + generator.bytes).hash()
+        return Blake2b.hasher { this + nxtrng.bytes + generator.bytes }
     }
 
-    fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInt, prevTime: Long, stake: Long): Boolean {
+    fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInt, prevTime: Long, stake: Long): Status {
         if (stake <= 0) {
-            logger.info("invalid stake amount $stake")
-            return false
+            return Invalid("Invalid stake amount")
         }
         if (time % TIME_SLOT != 0L) {
-            logger.info("invalid time slot")
-            return false
+            return Invalid("Invalid time slot")
         }
-        val hash = (Blake2b.Hasher() + nxtrng.bytes + prevTime + generator.bytes + time).hash()
-        val x = BigInt(hash) / stake
-        return x < difficulty
+        val hash = Blake2b.hasher { this + nxtrng.bytes + prevTime + generator.bytes + time }
+        val valid = BigInt(hash) / stake < difficulty
+        return if (valid)
+            Accepted
+        else
+            Invalid("Invalid proof of stake hash")
     }
 
     fun isTooFarInFuture(time: Long): Boolean {

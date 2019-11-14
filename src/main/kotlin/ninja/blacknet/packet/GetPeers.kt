@@ -23,6 +23,11 @@ class GetPeers : Packet {
     override fun getType() = PacketType.GetPeers
 
     override suspend fun process(connection: Connection) {
+        if (connection.version > MAX_VERSION) {
+            connection.dos("GetPeers disabled")
+            return
+        }
+
         if (connection.state == Connection.State.OUTGOING_CONNECTED) {
             connection.dos("GetPeers from outgoing connection")
             return
@@ -34,5 +39,9 @@ class GetPeers : Packet {
             connection.sendPacket(Peers(randomPeers))
         else
             connection.sendPacket(PeersV1(randomPeers.map { AddressV1(it) }))
+    }
+
+    companion object {
+        const val MAX_VERSION = 11
     }
 }
