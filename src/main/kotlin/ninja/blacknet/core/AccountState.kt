@@ -86,19 +86,21 @@ class AccountState(
             immature.add(Input(height, amount))
     }
 
-    fun prune(height: Int) {
+    fun prune(height: Int): Boolean {
         val mature = immature.sumByLong { it.matureBalance(height) }
-        if (mature == 0L) return
-
-        stake += mature
-        immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
+        return if (mature == 0L) {
+            false
+        } else {
+            stake += mature
+            immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
+            true
+        }
     }
 
     @Serializable
     class Input(val height: Int, var amount: Long) {
         override fun equals(other: Any?): Boolean = (other is Input) && height == other.height && amount == other.amount
         override fun hashCode(): Int = height xor amount.hashCode()
-        fun copy(): Input = Input(height, amount)
         fun isConfirmed(height: Int, confirmations: Int): Boolean = height > this.height + confirmations
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun confirmedBalance(height: Int, confirmations: Int): Long = if (isConfirmed(height, confirmations)) amount else 0
@@ -109,23 +111,8 @@ class AccountState(
     class Lease(val publicKey: PublicKey, val height: Int, var amount: Long) {
         override fun equals(other: Any?): Boolean = (other is Lease) && publicKey == other.publicKey && height == other.height && amount == other.amount
         override fun hashCode(): Int = publicKey.hashCode() xor height xor amount.hashCode()
-        fun copy(): Lease = Lease(publicKey, height, amount)
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
-    }
-
-    fun copy(): AccountState {
-        val copyImmature = ArrayList<Input>(immature.size)
-        for (i in 0 until immature.size)
-            copyImmature.add(immature[i].copy())
-        val copyLeases = ArrayList<Lease>(leases.size)
-        for (i in 0 until leases.size)
-            copyLeases.add(leases[i].copy())
-        return AccountState(seq, stake, copyImmature, copyLeases)
-    }
-
-    fun isEmpty(): Boolean {
-        return seq == 0 && stake == 0L && immature.isEmpty() && leases.isEmpty()
     }
 
     @Serializer(forClass = AccountState::class)

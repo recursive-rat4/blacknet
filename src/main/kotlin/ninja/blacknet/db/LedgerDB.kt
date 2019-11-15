@@ -39,7 +39,7 @@ import kotlin.math.min
 private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
-    private const val VERSION = 7
+    private const val VERSION = 8
     private val ACCOUNT_KEY = "account".toByteArray()
     private val CHAIN_KEY = "chain".toByteArray()
     private val HTLC_KEY = "htlc".toByteArray()
@@ -182,7 +182,7 @@ object LedgerDB {
                 val state = LedgerDB.State.deserialize(stateBytes)
                 logger.info("Blockchain height ${state.height}")
                 this.state = state
-            } else if (version in 1..6) {
+            } else if (version in 1 until VERSION) {
                 logger.info("Reindexing blockchain...")
 
                 runBlocking {
@@ -305,9 +305,16 @@ object LedgerDB {
         }
     }
 
+    private fun getAccountBytes(key: PublicKey): ByteArray? {
+        return LevelDB.get(ACCOUNT_KEY, key.bytes)
+    }
+
     fun get(key: PublicKey): AccountState? {
-        val bytes = LevelDB.get(ACCOUNT_KEY, key.bytes) ?: return null
-        return AccountState.deserialize(bytes)
+        val bytes = getAccountBytes(key)
+        return if (bytes != null)
+            AccountState.deserialize(bytes)
+        else
+            bytes
     }
 
     private fun getUndo(hash: Hash): UndoBlock {
@@ -338,14 +345,28 @@ object LedgerDB {
         return result
     }
 
+    private fun getHTLCBytes(id: Hash): ByteArray? {
+        return LevelDB.get(HTLC_KEY, id.bytes)
+    }
+
     fun getHTLC(id: Hash): HTLC? {
-        val bytes = LevelDB.get(HTLC_KEY, id.bytes) ?: return null
-        return HTLC.deserialize(bytes)
+        val bytes = getHTLCBytes(id)
+        return if (bytes != null)
+            HTLC.deserialize(bytes)
+        else
+            bytes
+    }
+
+    private fun getMultisigBytes(id: Hash): ByteArray? {
+        return LevelDB.get(MULTISIG_KEY, id.bytes)
     }
 
     fun getMultisig(id: Hash): Multisig? {
-        val bytes = LevelDB.get(MULTISIG_KEY, id.bytes) ?: return null
-        return Multisig.deserialize(bytes)
+        val bytes = getMultisigBytes(id)
+        return if (bytes != null)
+            Multisig.deserialize(bytes)
+        else
+            bytes
     }
 
     private fun calcMaxBlockSize(): Int {
@@ -383,7 +404,7 @@ object LedgerDB {
         val height = txDb.height()
         val txHashes = ArrayList<Hash>(block.transactions.size)
 
-        val pos = PoS.check(block.time, block.generator, txDb.undo.nxtrng, txDb.undo.difficulty, txDb.undo.blockTime, generator.stakingBalance(height))
+        val pos = PoS.check(block.time, block.generator, state.nxtrng, state.difficulty, state.blockTime, generator.stakingBalance(height))
         if (pos != Accepted) {
             return pos
         }
@@ -406,7 +427,7 @@ object LedgerDB {
 
         generator = txDb.get(block.generator)!!
 
-        val reward = if (forkV2()) PoS.reward(txDb.undo.supply) else PoS.reward(state.supply)
+        val reward = if (forkV2()) PoS.reward(state.supply) else PoS.reward(this.state.supply)
         val generated = reward + fees
 
         val prevIndex = getChainIndex(block.previous)!!
@@ -464,27 +485,21 @@ object LedgerDB {
         batch.put(CHAIN_KEY, chainIndex.previous.bytes, prevIndex.serialize())
         batch.delete(CHAIN_KEY, hash.bytes)
 
-        undo.accounts.forEach {
-            val key = it.first
-            val account = it.second
-            if (!account.isEmpty())
-                batch.put(ACCOUNT_KEY, key.bytes, account.serialize())
+        undo.accounts.forEach { (key, bytes) ->
+            if (bytes.array.isNotEmpty())
+                batch.put(ACCOUNT_KEY, key.bytes, bytes.array)
             else
                 batch.delete(ACCOUNT_KEY, key.bytes)
         }
-        undo.htlcs.forEach {
-            val id = it.first
-            val htlc = it.second
-            if (htlc != null)
-                batch.put(HTLC_KEY, id.bytes, htlc.serialize())
+        undo.htlcs.forEach { (id, bytes) ->
+            if (bytes.array.isNotEmpty())
+                batch.put(HTLC_KEY, id.bytes, bytes.array)
             else
                 batch.delete(HTLC_KEY, id.bytes)
         }
-        undo.multisigs.forEach {
-            val id = it.first
-            val multisig = it.second
-            if (multisig != null)
-                batch.put(MULTISIG_KEY, id.bytes, multisig.serialize())
+        undo.multisigs.forEach { (id, bytes) ->
+            if (bytes.array.isNotEmpty())
+                batch.put(MULTISIG_KEY, id.bytes, bytes.array)
             else
                 batch.delete(MULTISIG_KEY, id.bytes)
         }
@@ -663,7 +678,7 @@ object LedgerDB {
             private val accounts: MutableMap<PublicKey, AccountState> = HashMap(),
             private val htlcs: MutableMap<Hash, HTLC?> = HashMap(),
             private val multisigs: MutableMap<Hash, Multisig?> = HashMap(),
-            val undo: UndoBuilder = UndoBuilder(
+            private val undo: UndoBlock = UndoBlock(
                     state.blockTime,
                     state.difficulty,
                     state.cumulativeDifficulty,
@@ -672,6 +687,9 @@ object LedgerDB {
                     state.rollingCheckpoint,
                     state.upgraded,
                     blockSizes.peekFirst(),
+                    ArrayList(),
+                    ArrayList(),
+                    ArrayList(),
                     state.forkV2
             ),
             var chainIndex: ChainIndex? = null,
@@ -699,22 +717,31 @@ object LedgerDB {
 
         override fun get(key: PublicKey): AccountState? {
             val account = accounts.get(key)
-            if (account != null) {
-                undo.add(key, account)
-                return account
+            return if (account != null) {
+                account
+            } else {
+                val bytes = getAccountBytes(key)
+                return if (bytes != null) {
+                    val dbAccount = AccountState.deserialize(bytes)
+                    if (!dbAccount.prune(height))
+                        undo.add(key, bytes)
+                    else
+                        undo.add(key, dbAccount.serialize())
+                    dbAccount
+                } else {
+                    bytes
+                }
             }
-            val dbAccount = LedgerDB.get(key)
-            if (dbAccount != null) {
-                dbAccount.prune(height)
-                undo.add(key, dbAccount)
-            }
-            return dbAccount
         }
 
         override fun getOrCreate(key: PublicKey): AccountState {
-            val account = get(key) ?: AccountState.create()
-            undo.add(key, account)
-            return account
+            val account = get(key)
+            return if (account != null) {
+                account
+            } else {
+                undo.add(key, null)
+                AccountState.create()
+            }
         }
 
         override fun set(key: PublicKey, state: AccountState) {
@@ -727,12 +754,16 @@ object LedgerDB {
         }
 
         override fun getHTLC(id: Hash): HTLC? {
-            val htlc = if (!htlcs.containsKey(id))
-                LedgerDB.getHTLC(id)
-            else
+            return if (!htlcs.containsKey(id)) {
+                val bytes = getHTLCBytes(id)
+                undo.addHTLC(id, bytes)
+                if (bytes != null)
+                    HTLC.deserialize(bytes)
+                else
+                    bytes
+            } else {
                 htlcs.get(id)
-            undo.addHTLC(id, htlc)
-            return htlc
+            }
         }
 
         override fun removeHTLC(id: Hash) {
@@ -745,12 +776,16 @@ object LedgerDB {
         }
 
         override fun getMultisig(id: Hash): Multisig? {
-            val multisig = if (!multisigs.containsKey(id))
-                LedgerDB.getMultisig(id)
-            else
+            return if (!multisigs.containsKey(id)) {
+                val bytes = getMultisigBytes(id)
+                undo.addMultisig(id, bytes)
+                if (bytes != null)
+                    Multisig.deserialize(bytes)
+                else
+                    bytes
+            } else {
                 multisigs.get(id)
-            undo.addMultisig(id, multisig)
-            return multisig
+            }
         }
 
         override fun removeMultisig(id: Hash) {
@@ -786,7 +821,7 @@ object LedgerDB {
             LedgerDB.state = newState
             batch.put(STATE_KEY, newState.serialize())
 
-            batch.put(UNDO_KEY, blockHash.bytes, undo.build().serialize())
+            batch.put(UNDO_KEY, blockHash.bytes, undo.serialize())
             batch.put(CHAIN_KEY, blockPrevious.bytes, prevIndex!!.serialize())
             batch.put(CHAIN_KEY, blockHash.bytes, chainIndex!!.serialize())
             for (account in accounts)
