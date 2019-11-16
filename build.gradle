@@ -43,13 +43,13 @@ dependencies {
     implementation "net.i2p.crypto:eddsa:0.3.0"
     implementation "com.rfksystems:blake2b:1.0.0"
     implementation "org.iq80.leveldb:leveldb:0.12"
-    implementation "org.slf4j:slf4j-jdk14:1.7.28"
-    implementation "io.github.microutils:kotlin-logging:1.7.6"
+    implementation "org.slf4j:slf4j-jdk14:1.7.29"
+    implementation "io.github.microutils:kotlin-logging:1.7.7"
     implementation "org.briarproject:jtorctl:0.3"
     implementation "com.natpryce:konfig:1.6.10.0"
     implementation "com.google.guava:guava:28.1-jre"
     implementation "org.bitlet:weupnp:0.1.4"
-    implementation "org.bouncycastle:bcprov-jdk15on:1.63"
+    implementation "org.bouncycastle:bcprov-jdk15on:1.64"
     implementation "org.ethereum:leveldbjni-all:1.18.3"
 }
 
