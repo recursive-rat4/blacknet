@@ -27,6 +27,7 @@ private val logger = KotlinLogging.logger {}
 object TxPool : MemPool(), Ledger {
     internal val mutex = Mutex()
     private val rejects = HashSet<Hash>()
+    private val undoAccounts = HashMap<PublicKey, AccountState?>()
     private val accounts = HashMap<PublicKey, AccountState>()
     private val htlcs = HashMap<Hash, HTLC?>()
     private val multisigs = HashMap<Hash, Multisig?>()
@@ -90,13 +91,25 @@ object TxPool : MemPool(), Ledger {
 
     override fun get(key: PublicKey): AccountState? {
         val account = accounts.get(key)
-        if (account != null)
+        if (account != null) {
+            if (!undoAccounts.containsKey(key))
+                undoAccounts.put(key, account.copy())
             return account
-        return LedgerDB.get(key)
+        } else {
+            val dbAccount = LedgerDB.get(key)
+            undoAccounts.put(key, null)
+            return dbAccount
+        }
     }
 
     override fun getOrCreate(key: PublicKey): AccountState {
-        return get(key) ?: AccountState.create()
+        val account = get(key)
+        return if (account != null) {
+            account
+        } else {
+            undoAccounts.put(key, null)
+            AccountState.create()
+        }
     }
 
     override fun set(key: PublicKey, state: AccountState) {
@@ -137,7 +150,15 @@ object TxPool : MemPool(), Ledger {
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
+        } else {
+            undoAccounts.forEach { (key, account) ->
+                if (account != null)
+                    accounts.put(key, account)
+                else
+                    accounts.remove(key)
+            }
         }
+        undoAccounts.clear()
         return status
     }
 
@@ -150,7 +171,15 @@ object TxPool : MemPool(), Ledger {
             WalletDB.processTransaction(hash, tx, bytes, time)
             APIServer.txPoolNotify(tx, hash, time, bytes.size)
             logger.debug { "Accepted $hash" }
+        } else {
+            undoAccounts.forEach { (key, account) ->
+                if (account != null)
+                    accounts.put(key, account)
+                else
+                    accounts.remove(key)
+            }
         }
+        undoAccounts.clear()
         return Pair(status, tx.fee)
     }
 
