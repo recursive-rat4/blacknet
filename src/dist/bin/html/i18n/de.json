@@ -58,6 +58,8 @@
     "User Agent": "Benutzer Vertreter",
     "Ping": "Ping",
     "Time Offset": "Zeitverschiebung",
+    "Ban Score": "Sperrpunktzahl",
+    "Direction": "Richtung",
     "Bytes Read": "Gelesene Bytes",
     "Bytes Written": "Geschriebene Bytes",
     "Lease BLN": "Verlease BLN",

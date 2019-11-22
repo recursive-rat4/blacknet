@@ -57,6 +57,8 @@
     "Node": "网络节点",
     "User Agent": "用户端版本",
     "Time Offset": "延迟偏移",
+    "Ban Score": "封禁记分",
+    "Direction": "方向",
     "Bytes Read": "读取总量",
     "Bytes Written": "写入总量",
     "Lease BLN": "委托租赁",

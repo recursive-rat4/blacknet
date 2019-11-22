@@ -297,7 +297,7 @@ fun Application.APIServer() {
         }
 
         get("/api/v1/peerinfo") {
-            call.respond(Json.stringify(PeerInfo.serializer().list, PeerInfo.getAll()))
+            call.respond(Json.stringify(PeerInfoV1.serializer().list, PeerInfoV1.getAll()))
         }
 
         get("/api/v2/peers") {

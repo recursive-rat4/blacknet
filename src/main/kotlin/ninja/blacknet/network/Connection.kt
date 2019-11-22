@@ -264,6 +264,10 @@ class Connection(
         fun isConnected(): Boolean {
             return this == INCOMING_CONNECTED || this == OUTGOING_CONNECTED
         }
+
+        fun isOutgoing(): Boolean {
+            return this == OUTGOING_CONNECTED || this == OUTGOING_WAITING
+        }
     }
 
     private suspend fun pinger() {

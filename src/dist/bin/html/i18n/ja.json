@@ -50,6 +50,8 @@
     "User Agent": "ユーザーエージェント",
     "Ping": "Ping",
     "Time Offset": "時間オフセット",
+    "Ban Score": "Banスコア",
+    "Direction": "方向",
     "Bytes Read": "読み込みバイト数",
     "Bytes Written": "書き込みバイト数",
     "Lease BLN": "リースBLN",

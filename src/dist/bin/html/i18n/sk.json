@@ -47,6 +47,8 @@
     "User Agent": "Agent používateľa",
     "Ping": "Odozva",
     "Time Offset": "Časový posun",
+    "Ban Score": "Skóre zákazu",
+    "Direction": "Smer",
     "Bytes Read": "Načítaných bajtov",
     "Bytes Written": "Zapísaných bajtov",
     "Lease BLN": "Prenajať BLN",
