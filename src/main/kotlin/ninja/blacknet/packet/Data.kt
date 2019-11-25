@@ -28,28 +28,30 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
     override fun getType() = PacketType.Data
 
     override suspend fun process(connection: Connection) {
-        if (list.size > DataType.MAX_DATA) {
+        if (list.size > Transactions.MAX) {
             connection.dos("invalid Data size")
             return
         }
 
         val inv = UnfilteredInvList()
+        val time = connection.lastPacketTime
 
         for (i in list) {
             val type = i.first
             val bytes = i.second
 
-            val hash = type.hash(bytes.array)
+            if (type != DataType.Transaction) {
+                connection.dos("Unexpected $type")
+                continue
+            }
+            val hash = Transaction.Hasher(bytes.array)
 
             if (!TxFetcher.fetched(hash)) {
                 connection.dos("unrequested ${type.name} $hash")
                 continue
             }
 
-            val (status, fee) = if (type == DataType.Transaction)
-                TxPool.processTx(hash, bytes.array, connection)
-            else
-                Pair(type.db.process(hash, bytes.array, connection), 0L)
+            val (status, fee) = TxPool.process(hash, bytes.array, time, true)
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
@@ -60,7 +62,9 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
             }
         }
 
-        if (!inv.isEmpty())
+        if (inv.isNotEmpty()) {
             Node.broadcastInv(inv, connection)
+            connection.lastTxTime = time
+        }
     }
 }

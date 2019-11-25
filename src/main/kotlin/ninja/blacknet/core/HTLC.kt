@@ -27,7 +27,6 @@ class HTLC(
         val hashType: Byte,
         val hashLock: SerializableByteArray
 ) {
-    fun involves(publicKey: PublicKey): Boolean = from == publicKey || to == publicKey
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
     fun verifyTimeLock(ledger: Ledger): Boolean {
@@ -41,12 +40,13 @@ class HTLC(
     }
 
     enum class HashType(
-            val hash: (ByteArray) -> ByteArray
+            val hash: (ByteArray) -> ByteArray,
+            val hashSize: Int
     ) {
-        BLAKE256(ninja.blacknet.crypto.Blake2b),
-        SHA256(ninja.blacknet.crypto.SHA256),
-        KECCAK256(ninja.blacknet.crypto.Keccak256),
-        RIPEMD160(ninja.blacknet.crypto.RIPEMD160),
+        BLAKE256(ninja.blacknet.crypto.Blake2b, ninja.blacknet.crypto.Blake2b.HASH_SIZE),
+        SHA256(ninja.blacknet.crypto.SHA256, ninja.blacknet.crypto.SHA256.HASH_SIZE),
+        KECCAK256(ninja.blacknet.crypto.Keccak256, ninja.blacknet.crypto.Keccak256.HASH_SIZE),
+        RIPEMD160(ninja.blacknet.crypto.RIPEMD160, ninja.blacknet.crypto.RIPEMD160.HASH_SIZE),
         ;
 
         fun verify(htlc: HTLC, preimage: SerializableByteArray): Boolean {
@@ -70,7 +70,7 @@ class HTLC(
         TIME({ htlc, ledger -> htlc.timeLock < ledger.blockTime() }),
         HEIGHT({ htlc, ledger -> htlc.timeLock < ledger.height() }),
         RELATIVE_TIME({ htlc, ledger -> htlc.time + htlc.timeLock < ledger.blockTime() }),
-        RELATIBE_HEIGHT({ htlc, ledger -> htlc.height + htlc.timeLock < ledger.height() }),
+        RELATIVE_HEIGHT({ htlc, ledger -> htlc.height + htlc.timeLock < ledger.height() }),
         ;
 
         companion object {
@@ -78,16 +78,24 @@ class HTLC(
                 TimeLockType.TIME.ordinal.toByte() -> TIME
                 TimeLockType.HEIGHT.ordinal.toByte() -> HEIGHT
                 TimeLockType.RELATIVE_TIME.ordinal.toByte() -> RELATIVE_TIME
-                TimeLockType.RELATIBE_HEIGHT.ordinal.toByte() -> RELATIBE_HEIGHT
+                TimeLockType.RELATIVE_HEIGHT.ordinal.toByte() -> RELATIVE_HEIGHT
                 else -> null
             }
         }
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): HTLC = BinaryDecoder.fromBytes(bytes).decode(HTLC.serializer())
+        fun deserialize(bytes: ByteArray): HTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
         fun isValidTimeLockType(type: Byte): Boolean = TimeLockType.get(type) != null
         fun isValidHashType(type: Byte): Boolean = HashType.get(type) != null
+
+        fun isValidHashLock(hashType: Byte, hashLock: SerializableByteArray): Boolean {
+            val type = HashType.get(hashType)
+            return if (type != null)
+                hashLock.array.size == type.hashSize
+            else
+                false
+        }
     }
 }

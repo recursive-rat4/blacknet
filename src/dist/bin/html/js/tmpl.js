@@ -120,6 +120,11 @@ Blacknet.template = {
     },
 
     peer: function (peer, index) {
+        let direction;
+        if (peer.outgoing)
+            direction = "Outgoing";
+        else
+            direction = "Incoming";
 
         let tmpl =
             `<tr>
@@ -128,6 +133,8 @@ Blacknet.template = {
                 <td>${peer.agent}</td>
                 <td class="right">${peer.ping} ms</td>
                 <td class="narrow">${peer.timeOffset} s</td>
+                <td class="narrow">${peer.banScore}</td>
+                <td class="narrow">${direction}</td>
                 <td class="narrow">${(peer.totalBytesRead/1048576).toFixed(2)} MiB</td>
                 <td class="narrow">${(peer.totalBytesWritten/1048576).toFixed(2)} MiB</td>
                 <td class="disconnect" data-peerid="${peer.peerId}">

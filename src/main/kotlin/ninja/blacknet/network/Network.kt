@@ -118,7 +118,6 @@ enum class Network(val addrSize: Int) {
     }
 
     companion object {
-        const val RESERVED = 100
         const val TOR_SUFFIX = ".onion"
         const val I2P_SUFFIX = ".b32.i2p"
         val IPv4_LOOPBACK_BYTES = byteArrayOf(127, 0, 0, 1)

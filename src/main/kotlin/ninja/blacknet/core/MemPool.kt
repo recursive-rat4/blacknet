@@ -11,7 +11,7 @@ package ninja.blacknet.core
 
 import ninja.blacknet.crypto.Hash
 
-abstract class MemPool : DataDB() {
+abstract class MemPool {
     private val map = HashMap<Hash, ByteArray>()
     private var dataSize = 0
 
@@ -41,16 +41,17 @@ abstract class MemPool : DataDB() {
         dataSize += bytes.size
     }
 
-    override suspend fun containsImpl(hash: Hash): Boolean {
+    protected fun containsImpl(hash: Hash): Boolean {
         return map.containsKey(hash)
     }
 
-    override suspend fun getImpl(hash: Hash): ByteArray? {
+    protected fun getImpl(hash: Hash): ByteArray? {
         return map.get(hash)
     }
 
-    fun removeImpl(hash: Hash) {
+    protected fun removeImpl(hash: Hash) {
         val bytes = map.remove(hash)
-        dataSize -= bytes?.size ?: 0
+        if (bytes != null)
+            dataSize -= bytes.size
     }
 }

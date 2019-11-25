@@ -28,7 +28,7 @@ internal class InventoryV1(private val list: List<Pair<DataType, Hash>>) : Packe
         if (Node.isInitialSynchronization())
             return
 
-        if (list.size > DataType.MAX_INVENTORY) {
+        if (list.size > Inventory.MAX) {
             connection.dos("invalid Inventory size")
             return
         }

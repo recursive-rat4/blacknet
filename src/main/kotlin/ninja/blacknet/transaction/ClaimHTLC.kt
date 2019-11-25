@@ -11,53 +11,38 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.*
+import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class UnlockHTLC(
+class ClaimHTLC(
         val id: Hash,
-        val preimage: SerializableByteArray,
-        var signatureB: Signature
+        val preimage: SerializableByteArray
 ) : TxData {
-    override fun getType() = TxType.UnlockHTLC
+    override fun getType() = TxType.ClaimHTLC
     override fun involves(publicKey: PublicKey) = WalletDB.involves(id, publicKey)
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
-
-    fun sign(privateKey: PrivateKey) {
-        val bytes = serialize()
-        signatureB = Ed25519.sign(hash(bytes), privateKey)
-        System.arraycopy(signatureB.bytes, 0, bytes, 0, Signature.SIZE)
-    }
-
-    fun verifySignature(publicKey: PublicKey): Boolean {
-        val bytes = serialize()
-        return Ed25519.verify(signatureB, hash(bytes), publicKey)
-    }
-
-    private fun hash(bytes: ByteArray): Hash {
-        return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
-    }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             return Invalid("HTLC not found")
         }
-        if (!htlc.verifyHashLock(preimage)) {
-            return Invalid("Invalid hashlock")
+        if (tx.from != htlc.to) {
+            return Invalid("Invalid sender")
         }
-        if (!verifySignature(htlc.to)) {
-            return Invalid("Invalid signature")
+        if (!htlc.verifyHashLock(preimage)) {
+            return Invalid("Invalid hash lock")
         }
 
-        val toAccount = ledger.getOrCreate(htlc.to)
-        toAccount.debit(ledger.height(), htlc.amount)
-        ledger.set(htlc.to, toAccount)
+        val account = ledger.get(tx.from)!!
+        account.debit(ledger.height(), htlc.amount)
+        ledger.set(tx.from, account)
         ledger.removeHTLC(id)
         return Accepted
     }

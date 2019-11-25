@@ -31,8 +31,7 @@ class Hash(val bytes: ByteArray) {
 
     @Serializer(forClass = Hash::class)
     companion object {
-        const val SIZE = 32
-        const val DIGEST_SIZE = SIZE * 8
+        const val SIZE = Blake2b.HASH_SIZE
         val ZERO = Hash(ByteArray(SIZE))
 
         fun fromString(hex: String?): Hash? {

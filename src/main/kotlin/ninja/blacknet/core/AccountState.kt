@@ -86,12 +86,15 @@ class AccountState(
             immature.add(Input(height, amount))
     }
 
-    fun prune(height: Int) {
+    fun prune(height: Int): Boolean {
         val mature = immature.sumByLong { it.matureBalance(height) }
-        if (mature == 0L) return
-
-        stake += mature
-        immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
+        return if (mature == 0L) {
+            false
+        } else {
+            stake += mature
+            immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
+            true
+        }
     }
 
     @Serializable
@@ -122,10 +125,6 @@ class AccountState(
         for (i in 0 until leases.size)
             copyLeases.add(leases[i].copy())
         return AccountState(seq, stake, copyImmature, copyLeases)
-    }
-
-    fun isEmpty(): Boolean {
-        return seq == 0 && stake == 0L && immature.isEmpty() && leases.isEmpty()
     }
 
     @Serializer(forClass = AccountState::class)

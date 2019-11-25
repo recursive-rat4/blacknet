@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api
+package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Hash
@@ -17,7 +17,7 @@ import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 
 @Serializable
-class PeerInfo(
+class PeerInfoV1(
         val peerId: Long,
         val remoteAddress: String,
         val localAddress: String,
@@ -25,8 +25,8 @@ class PeerInfo(
         val ping: Long,
         val protocolVersion: Int,
         val agent: String,
-        val outgoing: Boolean,
-        val banScore: Int,
+        val state: String,
+        val dosScore: Int,
         val feeFilter: String,
         val connectedAt: Long,
         val lastChain: ChainInfo,
@@ -60,8 +60,8 @@ class PeerInfo(
     }
 
     companion object {
-        fun get(connection: Connection, forkCache: HashMap<Hash, Boolean>): PeerInfo {
-            return PeerInfo(
+        fun get(connection: Connection, forkCache: HashMap<Hash, Boolean>): PeerInfoV1 {
+            return PeerInfoV1(
                     connection.peerId,
                     connection.remoteAddress.toString(),
                     connection.localAddress.toString(),
@@ -69,7 +69,7 @@ class PeerInfo(
                     connection.ping,
                     connection.version,
                     connection.agent,
-                    connection.state.isOutgoing(),
+                    connection.state.name,
                     connection.dosScore(),
                     connection.feeFilter.toString(),
                     connection.connectedAt,
@@ -79,10 +79,9 @@ class PeerInfo(
             )
         }
 
-        suspend fun getAll(): List<PeerInfo> {
+        suspend fun getAll(): List<PeerInfoV1> {
             val forkCache = HashMap<Hash, Boolean>()
-            forkCache.put(Hash.ZERO, false)
-            return Node.connections.map { PeerInfo.get(it, forkCache) }
+            return Node.connections.map { PeerInfoV1.get(it, forkCache) }
         }
     }
 }

@@ -24,7 +24,6 @@ import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.network.Network
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -39,7 +38,7 @@ import kotlin.math.min
 private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
-    private const val VERSION = 6
+    private const val VERSION = 8
     private val ACCOUNT_KEY = "account".toByteArray()
     private val CHAIN_KEY = "chain".toByteArray()
     private val HTLC_KEY = "htlc".toByteArray()
@@ -52,7 +51,6 @@ object LedgerDB {
     private val VERSION_KEY = "ledgerversion".toByteArray()
 
     const val GENESIS_TIME = 1545555600L
-    private fun genesisState() = State(0, Hash.ZERO, GENESIS_TIME, PoS.INITIAL_DIFFICULTY, BigInt.ZERO, 0, Hash.ZERO, Hash.ZERO, 0, 0)
 
     val genesisBlock by lazy {
         val map = HashMap<PublicKey, Long>()
@@ -71,27 +69,18 @@ object LedgerDB {
     private class GenesisJsonEntry(val publicKey: String, val balance: Long)
 
     @Serializable
-    private class State(
-            @Volatile
-            var height: Int,
-            @Volatile
-            var blockHash: Hash,
-            @Volatile
-            var blockTime: Long,
-            @Volatile
-            var difficulty: BigInt,
-            @Volatile
-            var cumulativeDifficulty: BigInt,
-            @Volatile
-            var supply: Long,
-            @Volatile
-            var nxtrng: Hash,
-            @Volatile
-            var rollingCheckpoint: Hash,
-            @Volatile
-            var upgraded: Int,
-            @Volatile
-            var forkV2: Int
+    internal class State(
+            val height: Int,
+            val blockHash: Hash,
+            val blockTime: Long,
+            val difficulty: BigInt,
+            val cumulativeDifficulty: BigInt,
+            val supply: Long,
+            val nxtrng: Hash,
+            val rollingCheckpoint: Hash,
+            val maxBlockSize: Int,
+            val upgraded: Short,
+            val forkV2: Short
     ) {
         fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
@@ -100,17 +89,13 @@ object LedgerDB {
         }
     }
 
+    @Volatile
     private lateinit var state: State
 
     private val blockSizes = ArrayDeque<Int>(PoS.BLOCK_SIZE_SPAN)
-    const val DEFAULT_MAX_BLOCK_SIZE = 100000
-    const val MAX_BLOCK_SIZE = Int.MAX_VALUE - Network.RESERVED
-    private var maxBlockSize: Int
     private val snapshotHeights = HashSet<Int>()
 
     private fun loadGenesisState() {
-        state = genesisState()
-
         val batch = LevelDB.createWriteBatch()
 
         var supply = 0L
@@ -125,8 +110,21 @@ object LedgerDB {
 
         blockSizes.add(0)
         writeBlockSizes(batch)
-        state.supply = supply
+
+        val state = State(
+                0,
+                Hash.ZERO,
+                GENESIS_TIME,
+                PoS.INITIAL_DIFFICULTY,
+                BigInt.ZERO,
+                supply,
+                Hash.ZERO,
+                Hash.ZERO,
+                PoS.DEFAULT_MAX_BLOCK_SIZE,
+                0,
+                0)
         batch.put(STATE_KEY, state.serialize())
+        this.state = state
 
         setVersion(batch)
 
@@ -171,7 +169,6 @@ object LedgerDB {
             for (i in 0 until size)
                 blockSizes.addLast(decoder.decodeVarInt())
         }
-        maxBlockSize = calcMaxBlockSize()
 
         val stateBytes = LevelDB.get(STATE_KEY)
         if (stateBytes != null) {
@@ -179,9 +176,10 @@ object LedgerDB {
             val version = BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
 
             if (version == VERSION) {
-                state = LedgerDB.State.deserialize(stateBytes)
+                val state = LedgerDB.State.deserialize(stateBytes)
                 logger.info("Blockchain height ${state.height}")
-            } else if (version in 1..5) {
+                this.state = state
+            } else if (version in 1 until VERSION) {
                 logger.info("Reindexing blockchain...")
 
                 runBlocking {
@@ -235,11 +233,11 @@ object LedgerDB {
                         stream.readFully(bytes)
 
                         val hash = Block.Hasher(bytes)
-                        val status = BlockDB.process(hash, bytes)
+                        val status = BlockDB.processImpl(hash, bytes)
                         if (status == Accepted) {
                             if (++n % 50000 == 0)
                                 logger.info("Processed $n blocks")
-                            prune()
+                            pruneImpl()
                         } else if (status != AlreadyHave) {
                             logger.info("$status block $hash")
                             break
@@ -260,44 +258,12 @@ object LedgerDB {
         }
     }
 
-    fun height(): Int {
-        return state.height
-    }
-
-    fun blockHash(): Hash {
-        return state.blockHash
-    }
-
-    fun blockTime(): Long {
-        return state.blockTime
-    }
-
-    fun difficulty(): BigInt {
-        return state.difficulty
-    }
-
-    fun cumulativeDifficulty(): BigInt {
-        return state.cumulativeDifficulty
-    }
-
-    fun supply(): Long {
-        return state.supply
-    }
-
-    fun nxtrng(): Hash {
-        return state.nxtrng
-    }
-
-    fun rollingCheckpoint(): Hash {
-        return state.rollingCheckpoint
-    }
-
-    fun upgraded(): Int {
-        return state.upgraded
+    internal fun state(): State {
+        return state
     }
 
     fun forkV2(): Boolean {
-        return state.forkV2 == PoS.MATURITY + 1
+        return state.forkV2 == (PoS.MATURITY + 1).toShort()
     }
 
     fun chainContains(hash: Hash): Boolean {
@@ -321,6 +287,7 @@ object LedgerDB {
     }
 
     internal fun getNextRollingCheckpoint(): Hash {
+        val state = state
         if (state.rollingCheckpoint != Hash.ZERO) {
             val chainIndex = getChainIndex(state.rollingCheckpoint)!!
             return chainIndex.next
@@ -335,9 +302,16 @@ object LedgerDB {
         }
     }
 
+    private fun getAccountBytes(key: PublicKey): ByteArray? {
+        return LevelDB.get(ACCOUNT_KEY, key.bytes)
+    }
+
     fun get(key: PublicKey): AccountState? {
-        val bytes = LevelDB.get(ACCOUNT_KEY, key.bytes) ?: return null
-        return AccountState.deserialize(bytes)
+        val bytes = getAccountBytes(key)
+        return if (bytes != null)
+            AccountState.deserialize(bytes)
+        else
+            bytes
     }
 
     private fun getUndo(hash: Hash): UndoBlock {
@@ -351,10 +325,6 @@ object LedgerDB {
 
     fun checkReferenceChain(hash: Hash): Boolean {
         return hash == Hash.ZERO || chainContains(hash)
-    }
-
-    fun maxBlockSize(): Int {
-        return maxBlockSize
     }
 
     suspend fun getNextBlockHashes(start: Hash, max: Int): List<Hash>? = BlockDB.mutex.withLock {
@@ -372,44 +342,38 @@ object LedgerDB {
         return result
     }
 
-    fun getBlockNumber(hash: Hash): Int? {
-        val bytes = LevelDB.get(CHAIN_KEY, hash.bytes) ?: return null
-        return ChainIndex.deserialize(bytes).height
+    private fun getHTLCBytes(id: Hash): ByteArray? {
+        return LevelDB.get(HTLC_KEY, id.bytes)
     }
 
     fun getHTLC(id: Hash): HTLC? {
-        val bytes = LevelDB.get(HTLC_KEY, id.bytes) ?: return null
-        return HTLC.deserialize(bytes)
+        val bytes = getHTLCBytes(id)
+        return if (bytes != null)
+            HTLC.deserialize(bytes)
+        else
+            bytes
+    }
+
+    private fun getMultisigBytes(id: Hash): ByteArray? {
+        return LevelDB.get(MULTISIG_KEY, id.bytes)
     }
 
     fun getMultisig(id: Hash): Multisig? {
-        val bytes = LevelDB.get(MULTISIG_KEY, id.bytes) ?: return null
-        return Multisig.deserialize(bytes)
-    }
-
-    private fun calcMaxBlockSize(): Int {
-        if (blockSizes.size < PoS.BLOCK_SIZE_SPAN)
-            return DEFAULT_MAX_BLOCK_SIZE
-        val iterator = blockSizes.iterator()
-        val sizes = Array(PoS.BLOCK_SIZE_SPAN) { iterator.next() }
-        sizes.sort()
-        val median = sizes[PoS.BLOCK_SIZE_SPAN / 2]
-        val size = median * 2
-        if (size < 0 || size > MAX_BLOCK_SIZE)
-            return MAX_BLOCK_SIZE
-        else if (size < DEFAULT_MAX_BLOCK_SIZE)
-            return DEFAULT_MAX_BLOCK_SIZE
+        val bytes = getMultisigBytes(id)
+        return if (bytes != null)
+            Multisig.deserialize(bytes)
         else
-            return size
+            bytes
     }
 
     internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): Status {
+        val state = state
         if (block.previous != state.blockHash) {
             logger.error("$hash not on current chain ${state.blockHash} previous ${block.previous}")
             return NotOnThisChain
         }
-        if (size > maxBlockSize) {
-            return Invalid("Too large block $size bytes, maximum $maxBlockSize")
+        if (size > state.maxBlockSize) {
+            return Invalid("Too large block $size bytes, maximum ${state.maxBlockSize}")
         }
         if (block.time <= state.blockTime) {
             return Invalid("Timestamp is too early")
@@ -421,7 +385,7 @@ object LedgerDB {
         val height = txDb.height()
         val txHashes = ArrayList<Hash>(block.transactions.size)
 
-        val pos = PoS.check(block.time, block.generator, txDb.undo.nxtrng, txDb.undo.difficulty, txDb.undo.blockTime, generator.stakingBalance(height))
+        val pos = PoS.check(block.time, block.generator, state.nxtrng, state.difficulty, state.blockTime, generator.stakingBalance(height))
         if (pos != Accepted) {
             return pos
         }
@@ -444,8 +408,8 @@ object LedgerDB {
 
         generator = txDb.get(block.generator)!!
 
-        val reward = if (forkV2()) PoS.reward(txDb.undo.supply) else PoS.reward(state.supply)
-        val generated = reward + fees
+        val mint = if (forkV2()) PoS.mint(state.supply) else PoS.mint(this.state.supply)
+        val generated = mint + fees
 
         val prevIndex = getChainIndex(block.previous)!!
         prevIndex.next = hash
@@ -453,7 +417,7 @@ object LedgerDB {
         txDb.prevIndex = prevIndex
         txDb.chainIndex = ChainIndex(block.previous, Hash.ZERO, 0, height, generated)
 
-        txDb.addSupply(reward)
+        txDb.addSupply(mint)
         generator.debit(height, generated)
         txDb.set(block.generator, generator)
 
@@ -468,26 +432,33 @@ object LedgerDB {
     }
 
     private suspend fun undoBlockImpl(): Hash {
+        val state = state
         val batch = LevelDB.createWriteBatch()
         val hash = state.blockHash
         val chainIndex = getChainIndex(hash)!!
         val undo = getUndo(hash)
 
-        val height = state.height
-        state.height = height - 1
-        state.cumulativeDifficulty = undo.cumulativeDifficulty
-        state.supply = undo.supply
-        state.blockHash = chainIndex.previous
-        state.blockTime = undo.blockTime
-        state.difficulty = undo.difficulty
         blockSizes.removeLast()
         blockSizes.addFirst(undo.blockSize)
-        state.nxtrng = undo.nxtrng
-        state.rollingCheckpoint = undo.rollingCheckpoint
-        state.upgraded = undo.upgraded
-        state.forkV2 = undo.forkV2
-        batch.put(STATE_KEY, state.serialize())
         writeBlockSizes(batch)
+
+        val height = state.height - 1
+        val blockHash = chainIndex.previous
+        val maxBlockSize = PoS.maxBlockSize(blockSizes)
+        val newState = State(
+                height,
+                blockHash,
+                undo.blockTime,
+                undo.difficulty,
+                undo.cumulativeDifficulty,
+                undo.supply,
+                undo.nxtrng,
+                undo.rollingCheckpoint,
+                maxBlockSize,
+                undo.upgraded,
+                undo.forkV2)
+        this.state = newState
+        batch.put(STATE_KEY, newState.serialize())
 
         val prevIndex = getChainIndex(chainIndex.previous)!!
         prevIndex.next = Hash.ZERO
@@ -495,27 +466,21 @@ object LedgerDB {
         batch.put(CHAIN_KEY, chainIndex.previous.bytes, prevIndex.serialize())
         batch.delete(CHAIN_KEY, hash.bytes)
 
-        undo.accounts.forEach {
-            val key = it.first
-            val state = it.second
-            if (!state.isEmpty())
-                batch.put(ACCOUNT_KEY, key.bytes, state.serialize())
+        undo.accounts.forEach { (key, bytes) ->
+            if (bytes.array.isNotEmpty())
+                batch.put(ACCOUNT_KEY, key.bytes, bytes.array)
             else
                 batch.delete(ACCOUNT_KEY, key.bytes)
         }
-        undo.htlcs.forEach {
-            val id = it.first
-            val htlc = it.second
-            if (htlc != null)
-                batch.put(HTLC_KEY, id.bytes, htlc.serialize())
+        undo.htlcs.forEach { (id, bytes) ->
+            if (bytes.array.isNotEmpty())
+                batch.put(HTLC_KEY, id.bytes, bytes.array)
             else
                 batch.delete(HTLC_KEY, id.bytes)
         }
-        undo.multisigs.forEach {
-            val id = it.first
-            val multisig = it.second
-            if (multisig != null)
-                batch.put(MULTISIG_KEY, id.bytes, multisig.serialize())
+        undo.multisigs.forEach { (id, bytes) ->
+            if (bytes.array.isNotEmpty())
+                batch.put(MULTISIG_KEY, id.bytes, bytes.array)
             else
                 batch.delete(MULTISIG_KEY, id.bytes)
         }
@@ -529,30 +494,22 @@ object LedgerDB {
         return hash
     }
 
-    internal suspend fun rollbackTo(hash: Hash): ArrayList<Hash> = BlockDB.mutex.withLock {
-        return@withLock rollbackToImpl(hash, false)
-    }
-
-    private suspend fun rollbackToImpl(hash: Hash, allowZero: Boolean): ArrayList<Hash> {
-        val i = getBlockNumber(hash) ?: return ArrayList()
-        var n = state.height - i
-        if (allowZero && n == 0)
-            return ArrayList()
-        if (n <= 0) throw RuntimeException("Rollback of $n blocks")
-        val result = ArrayList<Hash>(n)
-        while (n-- > 0)
+    internal suspend fun rollbackToImpl(hash: Hash): List<Hash> {
+        val result = ArrayList<Hash>()
+        do {
             result.add(undoBlockImpl())
+        } while (state.blockHash != hash)
         return result
     }
 
-    internal suspend fun undoRollback(hash: Hash, list: ArrayList<Hash>): ArrayList<Hash> = BlockDB.mutex.withLock {
-        val toRemove = rollbackToImpl(hash, true)
+    internal suspend fun undoRollbackImpl(rollbackTo: Hash, list: List<Hash>): List<Hash> {
+        val toRemove = if (state.blockHash != rollbackTo) rollbackToImpl(rollbackTo) else emptyList()
 
         list.asReversed().forEach { hash ->
             val block = BlockDB.blockImpl(hash)
             if (block == null) {
-                logger.error("block not found")
-                return@withLock toRemove
+                logger.error("$hash not found")
+                return toRemove
             }
 
             val batch = LevelDB.createWriteBatch()
@@ -560,22 +517,22 @@ object LedgerDB {
             val status = processBlockImpl(txDb, hash, block.first, block.second)
             if (status != Accepted) {
                 batch.close()
-                logger.error("process block failed")
-                return@withLock toRemove
+                logger.error("$status block $hash")
+                return toRemove
             }
             txDb.commitImpl()
         }
 
-        return@withLock toRemove
+        return toRemove
     }
 
-    internal suspend fun prune() = BlockDB.mutex.withLock {
+    internal fun pruneImpl() {
         val batch = LevelDB.createWriteBatch()
         pruneImpl(batch)
         batch.write()
     }
 
-    internal fun pruneImpl(batch: LevelDB.WriteBatch) {
+    private fun pruneImpl(batch: LevelDB.WriteBatch) {
         var chainIndex = getChainIndex(state.rollingCheckpoint)!!
         while (true) {
             val hash = chainIndex.previous
@@ -695,13 +652,14 @@ object LedgerDB {
             private val blockTime: Long,
             private val blockSize: Int,
             private val blockGenerator: PublicKey,
+            private val state: State = LedgerDB.state,
             private val height: Int = state.height + 1,
             private var supply: Long = state.supply,
             private val rollingCheckpoint: Hash = LedgerDB.getNextRollingCheckpoint(),
             private val accounts: MutableMap<PublicKey, AccountState> = HashMap(),
             private val htlcs: MutableMap<Hash, HTLC?> = HashMap(),
             private val multisigs: MutableMap<Hash, Multisig?> = HashMap(),
-            val undo: UndoBuilder = UndoBuilder(
+            private val undo: UndoBlock = UndoBlock(
                     state.blockTime,
                     state.difficulty,
                     state.cumulativeDifficulty,
@@ -710,6 +668,9 @@ object LedgerDB {
                     state.rollingCheckpoint,
                     state.upgraded,
                     blockSizes.peekFirst(),
+                    ArrayList(),
+                    ArrayList(),
+                    ArrayList(),
                     state.forkV2
             ),
             var chainIndex: ChainIndex? = null,
@@ -737,22 +698,31 @@ object LedgerDB {
 
         override fun get(key: PublicKey): AccountState? {
             val account = accounts.get(key)
-            if (account != null) {
-                undo.add(key, account)
-                return account
+            return if (account != null) {
+                account
+            } else {
+                val bytes = getAccountBytes(key)
+                return if (bytes != null) {
+                    val dbAccount = AccountState.deserialize(bytes)
+                    if (!dbAccount.prune(height))
+                        undo.add(key, bytes)
+                    else
+                        undo.add(key, dbAccount.serialize())
+                    dbAccount
+                } else {
+                    bytes
+                }
             }
-            val dbAccount = LedgerDB.get(key)
-            if (dbAccount != null) {
-                dbAccount.prune(height)
-                undo.add(key, dbAccount)
-            }
-            return dbAccount
         }
 
         override fun getOrCreate(key: PublicKey): AccountState {
-            val account = get(key) ?: AccountState.create()
-            undo.add(key, account)
-            return account
+            val account = get(key)
+            return if (account != null) {
+                account
+            } else {
+                undo.add(key, null)
+                AccountState.create()
+            }
         }
 
         override fun set(key: PublicKey, state: AccountState) {
@@ -765,12 +735,16 @@ object LedgerDB {
         }
 
         override fun getHTLC(id: Hash): HTLC? {
-            val htlc = if (!htlcs.containsKey(id))
-                LedgerDB.getHTLC(id)
-            else
+            return if (!htlcs.containsKey(id)) {
+                val bytes = getHTLCBytes(id)
+                undo.addHTLC(id, bytes)
+                if (bytes != null)
+                    HTLC.deserialize(bytes)
+                else
+                    bytes
+            } else {
                 htlcs.get(id)
-            undo.addHTLC(id, htlc)
-            return htlc
+            }
         }
 
         override fun removeHTLC(id: Hash) {
@@ -783,12 +757,16 @@ object LedgerDB {
         }
 
         override fun getMultisig(id: Hash): Multisig? {
-            val multisig = if (!multisigs.containsKey(id))
-                LedgerDB.getMultisig(id)
-            else
+            return if (!multisigs.containsKey(id)) {
+                val bytes = getMultisigBytes(id)
+                undo.addMultisig(id, bytes)
+                if (bytes != null)
+                    Multisig.deserialize(bytes)
+                else
+                    bytes
+            } else {
                 multisigs.get(id)
-            undo.addMultisig(id, multisig)
-            return multisig
+            }
         }
 
         override fun removeMultisig(id: Hash) {
@@ -796,7 +774,35 @@ object LedgerDB {
         }
 
         fun commitImpl() {
-            batch.put(UNDO_KEY, blockHash.bytes, undo.build().serialize())
+            val state = state
+
+            if (blockSizes.size == PoS.BLOCK_SIZE_SPAN)
+                blockSizes.removeFirst()
+            blockSizes.addLast(blockSize)
+            writeBlockSizes(batch)
+
+            val difficulty = PoS.nextDifficulty(undo.difficulty, undo.blockTime, blockTime)
+            val cumulativeDifficulty = PoS.cumulativeDifficulty(undo.cumulativeDifficulty, difficulty)
+            val nxtrng = PoS.nxtrng(state.nxtrng, blockGenerator)
+            val maxBlockSize = PoS.maxBlockSize(blockSizes)
+            val upgraded = if (blockVersion.toUInt() > Block.VERSION.toUInt()) min(state.upgraded + 1, PoS.MATURITY + 1) else max(state.upgraded - 1, 0)
+            val forkV2 = if (blockVersion.toUInt() >= 2.toUInt()) min(state.forkV2 + 1, PoS.MATURITY + 1) else max(state.forkV2 - 1, 0)
+            val newState = State(
+                    height,
+                    blockHash,
+                    blockTime,
+                    difficulty,
+                    cumulativeDifficulty,
+                    supply,
+                    nxtrng,
+                    rollingCheckpoint,
+                    maxBlockSize,
+                    upgraded.toShort(),
+                    forkV2.toShort())
+            LedgerDB.state = newState
+            batch.put(STATE_KEY, newState.serialize())
+
+            batch.put(UNDO_KEY, blockHash.bytes, undo.serialize())
             batch.put(CHAIN_KEY, blockPrevious.bytes, prevIndex!!.serialize())
             batch.put(CHAIN_KEY, blockHash.bytes, chainIndex!!.serialize())
             for (account in accounts)
@@ -811,25 +817,6 @@ object LedgerDB {
                     batch.put(MULTISIG_KEY, multisig.key.bytes, multisig.value!!.serialize())
                 else
                     batch.delete(MULTISIG_KEY, multisig.key.bytes)
-
-            state.blockHash = blockHash
-            state.blockTime = blockTime
-            state.height = height
-            state.supply = supply
-            state.nxtrng = PoS.nxtrng(state.nxtrng, blockGenerator)
-            state.rollingCheckpoint = rollingCheckpoint
-            state.upgraded = if (blockVersion.toUInt() > Block.VERSION.toUInt()) min(++state.upgraded, PoS.MATURITY + 1) else max(--state.upgraded, 0)
-            state.forkV2 = if (blockVersion.toUInt() >= 2.toUInt()) min(++state.forkV2, PoS.MATURITY + 1) else max(--state.forkV2, 0)
-            val difficulty = PoS.nextDifficulty(undo.difficulty, undo.blockTime, blockTime)
-            state.difficulty = difficulty
-            state.cumulativeDifficulty = PoS.cumulativeDifficulty(undo.cumulativeDifficulty, difficulty)
-            batch.put(STATE_KEY, state.serialize())
-
-            if (blockSizes.size == PoS.BLOCK_SIZE_SPAN)
-                blockSizes.removeFirst()
-            blockSizes.addLast(blockSize)
-            maxBlockSize = calcMaxBlockSize()
-            writeBlockSizes(batch)
 
             batch.write()
 
@@ -900,6 +887,7 @@ object LedgerDB {
     }
 
     private fun snapshotImpl() {
+        val state = state
         val snapshot = Snapshot()
 
         iterateImpl(

@@ -15,6 +15,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class UndoBlock(
@@ -24,66 +25,40 @@ class UndoBlock(
         val supply: Long,
         val nxtrng: Hash,
         val rollingCheckpoint: Hash,
-        val upgraded: Int,
+        val upgraded: Short,
         val blockSize: Int,
-        val accounts: ArrayList<Pair<PublicKey, AccountState>>,
-        val htlcs: ArrayList<Pair<Hash, HTLC?>>,
-        val multisigs: ArrayList<Pair<Hash, Multisig?>>,
-        val forkV2: Int
+        val accounts: ArrayList<Pair<PublicKey, SerializableByteArray>>,
+        val htlcs: ArrayList<Pair<Hash, SerializableByteArray>>,
+        val multisigs: ArrayList<Pair<Hash, SerializableByteArray>>,
+        val forkV2: Short
 ) {
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
+
+    fun add(publicKey: PublicKey, account: ByteArray?) {
+        val bytes = if (account != null)
+            SerializableByteArray(account)
+        else
+            SerializableByteArray.EMPTY
+        accounts.add(Pair(publicKey, bytes))
+    }
+
+    fun addHTLC(id: Hash, htlc: ByteArray?) {
+        val bytes = if (htlc != null)
+            SerializableByteArray(htlc)
+        else
+            SerializableByteArray.EMPTY
+        htlcs.add(Pair(id, bytes))
+    }
+
+    fun addMultisig(id: Hash, multisig: ByteArray?) {
+        val bytes = if (multisig != null)
+            SerializableByteArray(multisig)
+        else
+            SerializableByteArray.EMPTY
+        multisigs.add(Pair(id, bytes))
+    }
 
     companion object {
         fun deserialize(bytes: ByteArray): UndoBlock = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
-}
-
-class UndoBuilder(
-        val blockTime: Long,
-        val difficulty: BigInt,
-        val cumulativeDifficulty: BigInt,
-        val supply: Long,
-        val nxtrng: Hash,
-        val rollingCheckpoint: Hash,
-        val upgraded: Int,
-        val blockSize: Int,
-        val forkV2: Int,
-        private val accounts: HashMap<PublicKey, AccountState> = HashMap(),
-        private val htlcs: HashMap<Hash, HTLC?> = HashMap(),
-        private val multisigs: HashMap<Hash, Multisig?> = HashMap()
-) {
-    fun add(publicKey: PublicKey, state: AccountState) {
-        if (!accounts.containsKey(publicKey))
-            accounts.put(publicKey, state.copy())
-    }
-
-    fun addHTLC(id: Hash, htlc: HTLC?) {
-        if (!htlcs.containsKey(id))
-            htlcs.put(id, htlc)
-    }
-
-    fun addMultisig(id: Hash, multisig: Multisig?) {
-        if (!multisigs.containsKey(id))
-            multisigs.put(id, multisig)
-    }
-
-    fun build(): UndoBlock {
-        return UndoBlock(
-                blockTime,
-                difficulty,
-                cumulativeDifficulty,
-                supply,
-                nxtrng,
-                rollingCheckpoint,
-                upgraded,
-                blockSize,
-                accounts.toArrayList(),
-                htlcs.toArrayList(),
-                multisigs.toArrayList(),
-                forkV2)
-    }
-}
-
-private fun <K, V> HashMap<K, V>.toArrayList(): ArrayList<Pair<K, V>> {
-    return mapTo(ArrayList(size)) { Pair(it.key, it.value) }
 }

@@ -44,7 +44,23 @@ interface Ledger {
             if (!forkV2()) {
                 return Invalid("WithdrawFromLease before forkV2")
             }
-        } else if (tx.type == TxType.Generated.type) {
+        }
+        if (tx.type == TxType.ClaimHTLC.type) {
+            if (!forkV2()) {
+                return Invalid("ClaimHTLC before forkV2")
+            }
+        }
+        if (tx.type == TxType.UnlockHTLC.type) {
+            if (forkV2()) {
+                return Invalid("UnlockHTLC after forkV2")
+            }
+        }
+        if (tx.type == TxType.SpendHTLC.type) {
+            if (forkV2()) {
+                return Invalid("SpendHTLC after forkV2")
+            }
+        }
+        if (tx.type == TxType.Generated.type) {
             return Invalid("Generated as individual tx")
         }
         val data = tx.data()

@@ -44,7 +44,6 @@ private val logger = KotlinLogging.logger {}
 object Node {
     const val DEFAULT_P2P_PORT: Short = 28453
     const val NETWORK_TIMEOUT = 90
-    const val SEND_INV_TIMEOUT = 5
     const val magic = 0x17895E7D
     const val version = 12
     const val minVersion = 7
@@ -121,11 +120,11 @@ object Node {
     }
 
     fun getMaxPacketSize(): Int {
-        return LedgerDB.maxBlockSize() + Network.RESERVED
+        return LedgerDB.state().maxBlockSize + PoS.BLOCK_RESERVED_SIZE
     }
 
     fun getMinPacketSize(): Int {
-        return LedgerDB.DEFAULT_MAX_BLOCK_SIZE + Network.RESERVED
+        return PoS.DEFAULT_MAX_BLOCK_SIZE + PoS.BLOCK_RESERVED_SIZE
     }
 
     fun isInitialSynchronization(): Boolean {
@@ -162,14 +161,9 @@ object Node {
         sendVersion(connection, nonce(address.network))
     }
 
-    suspend fun sendVersion(connection: Connection, nonce: Long) {
-        val chain = BlockDB.mutex.withLock {
-            if (!isInitialSynchronization()) {
-                ChainAnnounce(LedgerDB.blockHash(), LedgerDB.cumulativeDifficulty())
-            } else {
-                ChainAnnounce.GENESIS
-            }
-        }
+    fun sendVersion(connection: Connection, nonce: Long) {
+        val state = LedgerDB.state()
+        val chain = ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
         val v = Version(magic, version, Runtime.time(), nonce, Bip14.agent, minTxFee, chain)
         connection.sendPacket(v)
     }
@@ -193,7 +187,8 @@ object Node {
     }
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
-        val (status, fee) = TxPool.processTx(hash, bytes)
+        val currTime = Runtime.time()
+        val (status, fee) = TxPool.process(hash, bytes, currTime, false)
         if (status == Accepted) {
             connections.forEach {
                 if (it.state.isConnected() && it.feeFilter <= fee)
@@ -220,15 +215,15 @@ object Node {
         }
     }
 
-    suspend fun timeOffset(): Long = connections.mutex.withLock {
+    private suspend fun timeOffset(): Long = connections.mutex.withLock {
         val size = connections.list.size
-        if (size >= 5) {
+        return if (size >= 5) {
             val offsets = Array(size) { connections.list[it].timeOffset }
             offsets.sort()
             val median = offsets[size / 2]
-            return median
+            median
         } else {
-            return 0
+            0
         }
     }
 

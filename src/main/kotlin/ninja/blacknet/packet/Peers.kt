@@ -26,7 +26,7 @@ class Peers(
 
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {
-            connection.dos("invalid Peers size")
+            connection.dos("Invalid Peers size")
             return
         }
 

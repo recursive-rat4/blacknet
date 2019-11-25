@@ -17,6 +17,7 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.packet.GetData
 import ninja.blacknet.packet.GetTransactions
+import ninja.blacknet.packet.Transactions
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.delay
 
@@ -51,7 +52,7 @@ object TxFetcher {
                     request.add(hash)
                 }
 
-                if (request.size == DataType.MAX_DATA) {
+                if (request.size == Transactions.MAX) {
                     sendRequest(connection, request)
                     request.clear()
                 }

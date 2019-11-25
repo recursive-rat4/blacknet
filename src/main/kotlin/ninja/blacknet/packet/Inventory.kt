@@ -11,7 +11,6 @@ package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
@@ -27,8 +26,8 @@ class Inventory(
     override fun getType() = PacketType.Inventory
 
     override suspend fun process(connection: Connection) {
-        if (list.size > DataType.MAX_INVENTORY) {
-            connection.dos("invalid Inventory size")
+        if (list.size > MAX) {
+            connection.dos("Invalid Inventory size ${list.size}")
             return
         }
 
@@ -40,6 +39,9 @@ class Inventory(
 
     companion object {
         const val MIN_VERSION = 10
+        const val MAX = 50000
+        const val SEND_MAX = 512
+        const val SEND_TIMEOUT = 5
     }
 }
 

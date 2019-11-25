@@ -11,7 +11,7 @@
 package ninja.blacknet
 
 import com.natpryce.konfig.*
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.toPort
 import java.io.File
@@ -120,7 +120,7 @@ object Config {
         if (contains(softblocksizelimit))
             get(softblocksizelimit)
         else
-            LedgerDB.MAX_BLOCK_SIZE
+            PoS.MAX_BLOCK_SIZE
     }()
 
     val txPoolSize: Int = {

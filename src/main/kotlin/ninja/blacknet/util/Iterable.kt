@@ -10,7 +10,9 @@
 package ninja.blacknet.util
 
 /**
- * Returns the sum of all values produced by [selector]. Throws [ArithmeticException] on overflow.
+ * Returns the sum of all values produced by [selector].
+ *
+ * @throws ArithmeticException on overflow.
  */
 inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
     var sum: Long = 0
@@ -21,7 +23,9 @@ inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
 }
 
 /**
- * Returns the sum of all elements. Throws [ArithmeticException] on overflow.
+ * Returns the sum of all elements.
+ *
+ * @throws ArithmeticException on overflow.
  */
 fun ArrayList<Long>.sumByLong(): Long {
     var sum: Long = 0

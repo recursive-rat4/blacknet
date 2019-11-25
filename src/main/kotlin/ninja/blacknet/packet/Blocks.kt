@@ -12,6 +12,7 @@ package ninja.blacknet.packet
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
@@ -26,11 +27,31 @@ class Blocks(
 
     override fun getType() = PacketType.Blocks
 
-    fun isEmpty(): Boolean {
-        return hashes.isEmpty() && blocks.isEmpty()
+    override suspend fun process(connection: Connection) {
+        if (hashes.size > MAX_HASHES) {
+            connection.dos("Invalid hashes size ${hashes.size}")
+            return
+        }
+        if (blocks.size > MAX_BLOCKS) {
+            connection.dos("Invalid blocks size ${blocks.size}")
+            return
+        }
+        if (hashes.isNotEmpty() && blocks.isNotEmpty()) {
+            connection.dos("Invalid blocks size ${blocks.size} hashes size ${hashes.size}")
+            return
+        }
+
+        if (!connection.requestedBlocks) {
+            connection.dos("Unexpected Blocks")
+            return
+        }
+
+        connection.requestedBlocks = false
+        ChainFetcher.blocks(connection, this)
     }
 
-    override suspend fun process(connection: Connection) {
-        ChainFetcher.blocks(connection, this)
+    companion object {
+        const val MAX_BLOCKS = 1000
+        const val MAX_HASHES = PoS.MATURITY
     }
 }

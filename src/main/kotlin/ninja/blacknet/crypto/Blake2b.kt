@@ -15,12 +15,15 @@ import com.rfksystems.blake2b.Blake2b
  * BLAKE2b-256 hash function.
  */
 object Blake2b : (ByteArray) -> ByteArray {
+    const val DIGEST_SIZE = 256
+    const val HASH_SIZE = DIGEST_SIZE / 8
+
     /**
      * Returns a [Hash] of the [ByteArray].
      */
     fun hash(message: ByteArray): Hash {
         val bytes = ByteArray(Hash.SIZE)
-        val b = Blake2b(Hash.DIGEST_SIZE)
+        val b = Blake2b(DIGEST_SIZE)
         b.update(message, 0, message.size)
         b.digest(bytes, 0)
         return Hash(bytes)
@@ -35,7 +38,7 @@ object Blake2b : (ByteArray) -> ByteArray {
      */
     fun hash(message: ByteArray, offset: Int, length: Int): Hash {
         val bytes = ByteArray(Hash.SIZE)
-        val b = Blake2b(Hash.DIGEST_SIZE)
+        val b = Blake2b(DIGEST_SIZE)
         b.update(message, offset, length)
         b.digest(bytes, 0)
         return Hash(bytes)
@@ -71,7 +74,7 @@ object Blake2b : (ByteArray) -> ByteArray {
     /**
      * DSL builder for a [Hash].
      */
-    class Hasher internal constructor(private val blake2b: Blake2b = Blake2b(Hash.DIGEST_SIZE)) {
+    class Hasher internal constructor(private val blake2b: Blake2b = Blake2b(DIGEST_SIZE)) {
         /**
          * Adds [Byte] value.
          */

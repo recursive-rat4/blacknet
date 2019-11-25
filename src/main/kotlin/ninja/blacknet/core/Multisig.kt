@@ -20,7 +20,6 @@ class Multisig(
         val n: Byte,
         val deposits: ArrayList<Pair<PublicKey, Long>>
 ) {
-    fun involves(publicKey: PublicKey): Boolean = deposits.find { it.first == publicKey } != null
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
     fun amount(): Long {

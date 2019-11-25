@@ -10,7 +10,6 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
@@ -19,8 +18,6 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class WithdrawFromLease(

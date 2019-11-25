@@ -115,6 +115,7 @@ object WalletDB {
             if (Node.isOffline())
                 continue
 
+            val currTime = Runtime.time()
             val inv = UnfilteredInvList()
 
             mutex.withLock {
@@ -132,7 +133,7 @@ object WalletDB {
                     unconfirmed.sortBy { (_, _, seq) -> seq }
 
                     unconfirmed.forEach { (hash, bytes, _) ->
-                        val (status, fee) = TxPool.processTx(hash, bytes)
+                        val (status, fee) = TxPool.process(hash, bytes, currTime, false)
                         if (status == Accepted || status == AlreadyHave) {
                             inv.add(Pair(hash, fee))
                         } else {
@@ -149,15 +150,17 @@ object WalletDB {
         }
     }
 
-    suspend fun getConfirmations(hash: Hash): Int? = mutex.withLock {
-        wallets.forEach { (_, wallet) ->
-            val data = wallet.transactions.get(hash)
-            if (data != null) {
-                if (data.height == 0) return@withLock 0
-                return@withLock LedgerDB.height() - data.height
+    suspend fun getConfirmations(hash: Hash): Int? = BlockDB.mutex.withLock {
+        mutex.withLock {
+            wallets.forEach { (_, wallet) ->
+                val data = wallet.transactions.get(hash)
+                if (data != null) {
+                    if (data.height == 0) return 0
+                    return LedgerDB.state().height - data.height + 1
+                }
             }
+            return null
         }
-        return@withLock null
     }
 
     suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
@@ -279,6 +282,14 @@ object WalletDB {
         } else {
             return false
         }
+    }
+
+    internal fun involves(id: Hash, publicKey: PublicKey): Boolean {
+        val bytes = getTransactionImpl(id)
+        return if (bytes != null)
+            Transaction.deserialize(bytes).data().involves(publicKey)
+        else
+            false
     }
 
     @Serializable
@@ -404,7 +415,7 @@ object WalletDB {
                 mutex.withLock {
                     var hash = Hash.ZERO
                     var index = LedgerDB.getChainIndex(hash)!!
-                    val height = LedgerDB.height()
+                    val height = LedgerDB.state().height
                     val n = height - index.height + 1
                     if (n > 0) {
                         logger.info("Rescanning $n blocks...")
@@ -464,7 +475,7 @@ object WalletDB {
 
     fun getCheckpoint(): Hash {
         return if (!PoS.guessInitialSynchronization())
-            LedgerDB.rollingCheckpoint()
+            LedgerDB.state().rollingCheckpoint
         else
             Hash.ZERO
     }

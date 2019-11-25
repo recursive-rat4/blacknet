@@ -39,7 +39,7 @@ class Version(
             return
         }
 
-        connection.timeOffset = Runtime.time() - time
+        connection.timeOffset = time - Runtime.time()
         connection.peerId = Node.newPeerId()
         connection.version = version
         connection.agent = Bip14.sanitize(agent)

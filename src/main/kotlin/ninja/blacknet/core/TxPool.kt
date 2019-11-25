@@ -9,16 +9,15 @@
 
 package ninja.blacknet.core
 
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
 import kotlin.math.min
@@ -26,6 +25,9 @@ import kotlin.math.min
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
+    internal val mutex = Mutex()
+    private val rejects = HashSet<Hash>()
+    private val undoAccounts = HashMap<PublicKey, AccountState?>()
     private val accounts = HashMap<PublicKey, AccountState>()
     private val htlcs = HashMap<Hash, HTLC?>()
     private val multisigs = HashMap<Hash, Multisig?>()
@@ -33,7 +35,7 @@ object TxPool : MemPool(), Ledger {
 
     suspend fun fill(block: Block) = mutex.withLock {
         val poolSize = sizeImpl()
-        var freeSize = min(LedgerDB.maxBlockSize(), Config.softBlockSizeLimit) - 176
+        var freeSize = min(LedgerDB.state().maxBlockSize, Config.softBlockSizeLimit) - 176
         var i = 0
         while (freeSize > 0 && i < poolSize) {
             val hash = transactions.get(i++)
@@ -50,11 +52,23 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
+    internal fun clearRejectsImpl() {
+        rejects.clear()
+    }
+
+    suspend fun isInteresting(hash: Hash): Boolean = mutex.withLock {
+        return !rejects.contains(hash) && !containsImpl(hash)
+    }
+
     suspend fun getSequence(key: PublicKey): Int = mutex.withLock {
         val account = accounts.get(key)
         if (account != null)
             return account.seq
         return LedgerDB.get(key)?.seq ?: 0
+    }
+
+    suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
+        return@withLock getImpl(hash)
     }
 
     override fun addSupply(amount: Long) {}
@@ -68,22 +82,34 @@ object TxPool : MemPool(), Ledger {
     }
 
     override fun blockTime(): Long {
-        return LedgerDB.blockTime()
+        return LedgerDB.state().blockTime
     }
 
     override fun height(): Int {
-        return LedgerDB.height()
+        return LedgerDB.state().height
     }
 
     override fun get(key: PublicKey): AccountState? {
         val account = accounts.get(key)
-        if (account != null)
+        if (account != null) {
+            if (!undoAccounts.containsKey(key))
+                undoAccounts.put(key, account.copy())
             return account
-        return LedgerDB.get(key)
+        } else {
+            val dbAccount = LedgerDB.get(key)
+            undoAccounts.put(key, null)
+            return dbAccount
+        }
     }
 
     override fun getOrCreate(key: PublicKey): AccountState {
-        return get(key) ?: AccountState.create()
+        val account = get(key)
+        return if (account != null) {
+            account
+        } else {
+            undoAccounts.put(key, null)
+            AccountState.create()
+        }
     }
 
     override fun set(key: PublicKey, state: AccountState) {
@@ -118,29 +144,61 @@ object TxPool : MemPool(), Ledger {
         multisigs.put(id, null)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
+    private suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
+        } else {
+            undoAccounts.forEach { (key, account) ->
+                if (account != null)
+                    accounts.put(key, account)
+                else
+                    accounts.remove(key)
+            }
         }
+        undoAccounts.clear()
         return status
     }
 
-    internal suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, connection: Connection?): Pair<Status, Long> {
+    private suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, time: Long): Pair<Status, Long> {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
-            val currTime = connection?.lastPacketTime ?: Runtime.time()
-            connection?.lastTxTime = currTime
-            WalletDB.processTransaction(hash, tx, bytes, currTime)
-            APIServer.txPoolNotify(tx, hash, currTime, bytes.size)
+            WalletDB.processTransaction(hash, tx, bytes, time)
+            APIServer.txPoolNotify(tx, hash, time, bytes.size)
             logger.debug { "Accepted $hash" }
+        } else {
+            undoAccounts.forEach { (key, account) ->
+                if (account != null)
+                    accounts.put(key, account)
+                else
+                    accounts.remove(key)
+            }
         }
+        undoAccounts.clear()
         return Pair(status, tx.fee)
+    }
+
+    suspend fun process(hash: Hash, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = mutex.withLock {
+        if (rejects.contains(hash))
+            return Pair(Invalid("Already rejected"), 0)
+        if (containsImpl(hash))
+            return Pair(AlreadyHave, 0)
+        if (TxPool.dataSizeImpl() + bytes.size > Config.txPoolSize) {
+            if (remote)
+                return Pair(InFuture, 0)
+            else
+                logger.warn("TxPool is full")
+        }
+        val result = TxPool.processImplWithFee(hash, bytes, time)
+        if (result.first is Invalid || result.first == InFuture) {
+            rejects.add(hash)
+        }
+        return result
     }
 
     internal suspend fun removeImpl(hashes: ArrayList<Hash>) {
@@ -156,6 +214,6 @@ object TxPool : MemPool(), Ledger {
         clearImpl()
         for (hash in txs)
             if (!hashes.contains(hash))
-                processImpl(hash, map[hash]!!, null)
+                processImpl(hash, map[hash]!!)
     }
 }

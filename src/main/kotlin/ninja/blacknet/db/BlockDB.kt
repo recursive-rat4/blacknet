@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
@@ -16,46 +17,62 @@ import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.network.Connection
+import java.util.Collections
 
 private val logger = KotlinLogging.logger {}
 
-object BlockDB : DataDB() {
-    private const val MIN_DISK_SPACE = LedgerDB.MAX_BLOCK_SIZE * 2L
+object BlockDB {
+    private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
+    internal val mutex = Mutex()
     private val BLOCK_KEY = "block".toByteArray()
     @Volatile
     internal var cachedBlock: Pair<Hash, ByteArray>? = null
+
+    private val rejects = Collections.newSetFromMap(object : LinkedHashMap<Hash, Boolean>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Hash, Boolean>): Boolean {
+            return size > PoS.MATURITY
+        }
+    })
+
+    internal fun isRejectedImpl(hash: Hash): Boolean {
+        return rejects.contains(hash)
+    }
 
     suspend fun block(hash: Hash): Pair<Block, Int>? = mutex.withLock {
         return@withLock blockImpl(hash)
     }
 
-    suspend fun blockImpl(hash: Hash): Pair<Block, Int>? {
+    internal fun blockImpl(hash: Hash): Pair<Block, Int>? {
         val bytes = getImpl(hash) ?: return null
         val block = Block.deserialize(bytes)
         return Pair(block, bytes.size)
     }
 
-    suspend fun remove(list: ArrayList<Hash>) = mutex.withLock {
+    suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
+        return@withLock getImpl(hash)
+    }
+
+    internal fun removeImpl(list: List<Hash>) {
         val txDb = LevelDB.createWriteBatch()
-        list.forEach {
-            txDb.delete(BLOCK_KEY, it.bytes)
+        list.forEach { hash ->
+            txDb.delete(BLOCK_KEY, hash.bytes)
         }
         txDb.write()
     }
 
-    override suspend fun containsImpl(hash: Hash): Boolean {
+    private fun containsImpl(hash: Hash): Boolean {
         return LedgerDB.chainContains(hash)
     }
 
-    override suspend fun getImpl(hash: Hash): ByteArray? {
+    internal fun getImpl(hash: Hash): ByteArray? {
         return LevelDB.get(BLOCK_KEY, hash.bytes)
     }
 
-    override suspend fun processImpl(hash: Hash, bytes: ByteArray, connection: Connection?): Status {
+    private suspend fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
         val block = Block.deserialize(bytes)
+        val state = LedgerDB.state()
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
-            val percent = 100 * LedgerDB.upgraded() / PoS.MATURITY
+            val percent = 100 * state.upgraded / PoS.MATURITY
             if (percent > 9)
                 logger.info("$percent% of blocks upgraded")
             else
@@ -70,7 +87,7 @@ object BlockDB : DataDB() {
         if (!block.verifySignature(hash)) {
             return Invalid("Invalid signature")
         }
-        if (block.previous != LedgerDB.blockHash()) {
+        if (block.previous != state.blockHash) {
             return NotOnThisChain
         }
         val batch = LevelDB.createWriteBatch()
@@ -79,11 +96,22 @@ object BlockDB : DataDB() {
         if (status == Accepted) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
-            APIServer.blockNotify(block, hash, LedgerDB.height(), bytes.size)
+            APIServer.blockNotify(block, hash, state.height + 1, bytes.size)
             cachedBlock = Pair(block.previous, bytes)
         } else {
             batch.close()
         }
+        return status
+    }
+
+    internal suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+        if (rejects.contains(hash))
+            return Invalid("Already rejected")
+        if (containsImpl(hash))
+            return AlreadyHave
+        val status = processBlockImpl(hash, bytes)
+        if (status is Invalid)
+            rejects.add(hash)
         return status
     }
 

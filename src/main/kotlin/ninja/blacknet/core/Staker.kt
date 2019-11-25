@@ -30,19 +30,19 @@ import ninja.blacknet.util.sumByLong
 private val logger = KotlinLogging.logger {}
 
 object Staker {
-    private class State(
+    private class StakerState(
             val publicKey: PublicKey,
             val privateKey: PrivateKey,
             var lastBlock: Hash = Hash.ZERO,
             var stake: Long = 0
     ) {
-        fun update() {
-            lastBlock = LedgerDB.blockHash()
-            stake = LedgerDB.get(publicKey)?.stakingBalance(LedgerDB.height()) ?: 0
+        fun updateImpl(state: LedgerDB.State) {
+            lastBlock = state.blockHash
+            stake = LedgerDB.get(publicKey)?.stakingBalance(state.height) ?: 0
         }
     }
 
-    private val stakers = SynchronizedArrayList<State>()
+    private val stakers = SynchronizedArrayList<StakerState>()
 
     init {
         if (Config.contains(mnemonics)) {
@@ -75,29 +75,32 @@ object Staker {
             if (Node.isInitialSynchronization())
                 continue
 
+            var state = LedgerDB.state()
             val currTime = Runtime.time()
             val timeSlot = currTime - currTime % PoS.TIME_SLOT
-            if (timeSlot <= LedgerDB.blockTime())
+            if (timeSlot <= state.blockTime)
                 continue
 
             @Suppress("LABEL_NAME_CLASH")
             val block = stakers.mutex.withLock {
-                BlockDB.mutex.withLock {
-                    for (i in stakers.list.indices) {
-                        val state = stakers.list[i]
+                for (i in stakers.list.indices) {
+                    val staker = stakers.list[i]
 
-                        if (state.lastBlock != LedgerDB.blockHash())
-                            state.update()
-
-                        val pos = PoS.check(timeSlot, state.publicKey, LedgerDB.nxtrng(), LedgerDB.difficulty(), LedgerDB.blockTime(), state.stake)
-                        if (pos == Accepted) {
-                            val block = Block.create(LedgerDB.blockHash(), timeSlot, state.publicKey)
-                            TxPool.fill(block)
-                            return@withLock block.sign(state.privateKey)
+                    if (staker.lastBlock != state.blockHash) {
+                        BlockDB.mutex.withLock {
+                            state = LedgerDB.state()
+                            staker.updateImpl(state)
                         }
                     }
-                    return@withLock null
+
+                    val pos = PoS.check(timeSlot, staker.publicKey, state.nxtrng, state.difficulty, state.blockTime, staker.stake)
+                    if (pos == Accepted) {
+                        val block = Block.create(state.blockHash, timeSlot, staker.publicKey)
+                        TxPool.fill(block)
+                        return@withLock block.sign(staker.privateKey)
+                    }
                 }
+                return@withLock null
             }
 
             if (block != null) {
@@ -115,14 +118,15 @@ object Staker {
             return false
         }
 
-        val state = State(publicKey, privateKey)
+        val staker = StakerState(publicKey, privateKey)
         BlockDB.mutex.withLock {
-            state.update()
+            val state = LedgerDB.state()
+            staker.updateImpl(state)
         }
-        if (state.stake == 0L)
+        if (staker.stake == 0L)
             logger.warn("${Address.encode(publicKey)} has 0 staking balance")
 
-        stakers.list.add(state)
+        stakers.list.add(staker)
         if (stakers.list.size == 1)
             job = Runtime.launch { staker() }
         return true
@@ -149,8 +153,9 @@ object Staker {
     }
 
     suspend fun info(): StakingInfo = stakers.mutex.withLock {
+        val state = LedgerDB.state()
         val weight = stakers.list.sumByLong { it.stake }
-        val networkWeight = (PoS.MAX_DIFFICULTY / LedgerDB.difficulty()).toLong() / PoS.TARGET_BLOCK_TIME * PoS.TIME_SLOT
+        val networkWeight = (PoS.MAX_DIFFICULTY / state.difficulty).toLong() / PoS.TARGET_BLOCK_TIME * PoS.TIME_SLOT
         val expectedTime = if (weight != 0L) PoS.TARGET_BLOCK_TIME * networkWeight / weight else 0L
         return StakingInfo(stakers.list.size, weight.toString(), networkWeight.toString(), expectedTime)
     }

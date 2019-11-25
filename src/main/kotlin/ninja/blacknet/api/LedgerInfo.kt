@@ -9,9 +9,7 @@
 
 package ninja.blacknet.api
 
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 
 @Serializable
@@ -27,17 +25,18 @@ class LedgerInfo(
         val nxtrng: String
 ) {
     companion object {
-        suspend fun get(): LedgerInfo = BlockDB.mutex.withLock {
+        fun get(): LedgerInfo {
+            val state = LedgerDB.state()
             return LedgerInfo(
-                    LedgerDB.height(),
-                    LedgerDB.blockHash().toString(),
-                    LedgerDB.blockTime(),
-                    LedgerDB.rollingCheckpoint().toString(),
-                    LedgerDB.difficulty().toString(),
-                    LedgerDB.cumulativeDifficulty().toString(),
-                    LedgerDB.supply().toString(),
-                    LedgerDB.maxBlockSize(),
-                    LedgerDB.nxtrng().toString()
+                    state.height,
+                    state.blockHash.toString(),
+                    state.blockTime,
+                    state.rollingCheckpoint.toString(),
+                    state.difficulty.toString(),
+                    state.cumulativeDifficulty.toString(),
+                    state.supply.toString(),
+                    state.maxBlockSize,
+                    state.nxtrng.toString()
             )
         }
     }

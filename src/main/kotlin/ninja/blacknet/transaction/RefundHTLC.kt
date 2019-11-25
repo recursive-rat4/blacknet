@@ -11,22 +11,19 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class RefundHTLC(
         val id: Hash
 ) : TxData {
     override fun getType() = TxType.RefundHTLC
-    override fun involves(publicKey: PublicKey) = LedgerDB.getHTLC(id)!!.involves(publicKey)
+    override fun involves(publicKey: PublicKey) = WalletDB.involves(id, publicKey)
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
 
@@ -39,7 +36,7 @@ class RefundHTLC(
             return Invalid("Invalid sender")
         }
         if (!htlc.verifyTimeLock(ledger)) {
-            return Invalid("Invalid timelock")
+            return Invalid("Invalid time lock")
         }
 
         val account = ledger.get(tx.from)!!

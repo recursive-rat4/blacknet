@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api
+package ninja.blacknet.api.v1
 
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
@@ -16,21 +16,21 @@ import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 
 @Serializable
-class AccountInfo(
+class AccountInfoV1(
         val seq: Int,
-        val balance: String,
-        val confirmedBalance: String,
-        val stakingBalance: String
+        val balance: Long,
+        val confirmedBalance: Long,
+        val stakingBalance: Long
 ) {
     companion object {
-        suspend fun get(publicKey: PublicKey, confirmations: Int): AccountInfo? = BlockDB.mutex.withLock {
+        suspend fun get(publicKey: PublicKey, confirmations: Int): AccountInfoV1? = BlockDB.mutex.withLock {
             val account = LedgerDB.get(publicKey) ?: return null
             val state = LedgerDB.state()
-            return AccountInfo(
+            return AccountInfoV1(
                     account.seq,
-                    account.balance().toString(),
-                    account.confirmedBalance(state.height, confirmations).toString(),
-                    account.stakingBalance(state.height).toString())
+                    account.balance(),
+                    account.confirmedBalance(state.height, confirmations),
+                    account.stakingBalance(state.height))
         }
     }
 }

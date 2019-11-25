@@ -45,7 +45,7 @@ class Connection(
     private val closed = AtomicBoolean()
     private val dosScore = AtomicInteger(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
-    private val inventoryToSend = SynchronizedArrayList<Hash>()
+    private val inventoryToSend = SynchronizedArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = Runtime.time()
 
     private var pinger: Job? = null
@@ -70,6 +70,8 @@ class Connection(
     var ping: Long = 0
     @Volatile
     internal var pingRequest: Pair<Int, Long>? = null
+    @Volatile
+    internal var requestedBlocks: Boolean = false
 
     var peerId: Long = 0
     var version: Int = 0
@@ -102,7 +104,7 @@ class Connection(
                 val packet = try {
                     Packet.deserialize(type, bytes)
                 } catch (e: Throwable) {
-                    dos("deserialization failed: ${e.message}")
+                    dos("Deserialization failed: ${e.message}")
                     continue
                 }
                 logger.debug { "Received ${packet.getType()} from ${debugName()}" }
@@ -120,7 +122,6 @@ class Connection(
 
     private suspend fun recvPacket(): ByteReadPacket {
         val size = readChannel.readInt()
-        totalBytesRead += 4
         if (size > Node.getMaxPacketSize()) {
             if (state.isConnected()) {
                 logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}")
@@ -128,8 +129,8 @@ class Connection(
             close()
         }
         val result = readChannel.readPacket(size)
-        totalBytesRead += size
         lastPacketTime = Runtime.time()
+        totalBytesRead += size + 4
         return result
     }
 
@@ -152,17 +153,17 @@ class Connection(
 
     suspend fun inventory(inv: Hash) = inventoryToSend.mutex.withLock {
         inventoryToSend.list.add(inv)
-        if (inventoryToSend.list.size == DataType.MAX_INVENTORY) {
+        if (inventoryToSend.list.size == Inventory.SEND_MAX) {
             sendInventoryImpl(Runtime.time())
         }
     }
 
     suspend fun inventory(inv: ArrayList<Hash>): Unit = inventoryToSend.mutex.withLock {
         val newSize = inventoryToSend.list.size + inv.size
-        if (newSize < DataType.MAX_INVENTORY) {
+        if (newSize < Inventory.SEND_MAX) {
             inventoryToSend.list.addAll(inv)
-        } else if (newSize > DataType.MAX_INVENTORY) {
-            val n = DataType.MAX_INVENTORY - inventoryToSend.list.size
+        } else if (newSize > Inventory.SEND_MAX) {
+            val n = Inventory.SEND_MAX - inventoryToSend.list.size
             for (i in 0 until n)
                 inventoryToSend.list.add(inv[i])
             sendInventoryImpl(Runtime.time())
@@ -200,9 +201,9 @@ class Connection(
 
     fun dos(reason: String) {
         val score = dosScore.incrementAndGet()
-        logger.info("DoS: $score $reason ${debugName()}")
         if (score == 100)
             close()
+        logger.info("$reason ${debugName()} DoS $score")
     }
 
     fun dosScore(): Int {
@@ -262,6 +263,10 @@ class Connection(
 
         fun isConnected(): Boolean {
             return this == INCOMING_CONNECTED || this == OUTGOING_CONNECTED
+        }
+
+        fun isOutgoing(): Boolean {
+            return this == OUTGOING_CONNECTED || this == OUTGOING_WAITING
         }
     }
 
@@ -324,14 +329,14 @@ class Connection(
 
     private suspend fun inventoryBroadcaster() {
         while (!state.isConnected()) {
-            delay(Node.SEND_INV_TIMEOUT)
+            delay(Inventory.SEND_TIMEOUT)
         }
         while (true) {
             val currTime = Runtime.time()
-            if (currTime >= lastInvSentTime + Node.SEND_INV_TIMEOUT) {
+            if (currTime >= lastInvSentTime + Inventory.SEND_TIMEOUT) {
                 sendInventory(currTime)
             }
-            delay(Node.SEND_INV_TIMEOUT)
+            delay(Inventory.SEND_TIMEOUT)
         }
     }
 }

@@ -14,6 +14,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
@@ -35,10 +36,16 @@ class CreateHTLC(
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         if (!HTLC.isValidTimeLockType(timeLockType)) {
-            return Invalid("Unknown timelock type $timeLockType")
+            return Invalid("Unknown time lock type $timeLockType")
         }
-        if (!HTLC.isValidHashType(hashType)) {
-            return Invalid("Unknown hash type $hashType")
+        if (forkV2()) {
+            if (!HTLC.isValidHashLock(hashType, hashLock)) {
+                return Invalid("Invalid hash lock type $hashType size ${hashLock.array.size}")
+            }
+        } else {
+            if (!HTLC.isValidHashType(hashType)) {
+                return Invalid("Unknown hash type $hashType")
+            }
         }
 
         if (amount == 0L) {
