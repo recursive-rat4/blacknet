@@ -64,7 +64,7 @@
                         <a href="#" data-index="peerinfo" data-i18n="peers">Peers</a>
                     </li>
                     <li>
-                        <a href="#" data-index="recentblocks" data-i18n="recent blocks">Recent Blocks</a>
+                        <a href="#" data-index="recentblocks" data-i18n="blocks">Blocks</a>
                     </li>
                     <li>
                         <a href="#" data-index="info" data-i18n="mnemonic info">Mnemonic info</a>
@@ -257,11 +257,11 @@
                     </table>
                 </div>
                 <div class="send">
-                    <fieldset>
+                    <div class="form">
                         <legend data-i18n="send bln">Send BLN</legend>
                         <div class="field-row">
                             <label data-i18n="pay to">Pay To</label>
-                            <input type="text" id="transfer_to">
+                            <input type="text" id="transfer_to" placeholder="Blacknet account...">
                         </div>
 
                         <div class="field-row">
@@ -269,12 +269,12 @@
                                 <span data-i18n="amount">Amount</span>
                                 <strong>(BLN)</strong>
                             </label>
-                            <input type="number" step="0.00000001" min="1" id="transfer_amount">
+                            <input type="number" step="0.00000001" min="1" placeholder="Amount" id="transfer_amount">
                         </div>
 
                         <div class="field-row">
                             <label data-i18n="message">Message</label>
-                            <input type="text" id="transfer_message">
+                            <input type="text" id="transfer_message" placeholder="Transfer message">
                         </div>
                         <div class="field-row">
                             <label data-i18n="encrypted">Encrypted</label>
@@ -288,14 +288,14 @@
                             <input type="text" id="transfer_fee" value='0.001'>
                         </div>
                         <button id="transfer" data-i18n="send">Send</button>
-                    </fieldset>
+                    </div>
                     <div class="field-row field-row-outer hidden">
                         <label data-i18n="result">Result</label>
                         <p id="transfer_result"></p>
                     </div>
                 </div>
                 <div class="sign">
-                    <fieldset>
+                    <div class="form">
                         <legend data-i18n="sign message">Sign message</legend>
                         <div class="field-row">
                             <label data-i18n="mnemonic">Mnemonic</label>
@@ -306,12 +306,12 @@
                             <input type="text" id="sign_message">
                         </div>
                         <button id="sign" data-i18n="sign message">Sign message</button>
-                    </fieldset>
+                    </div>
                     <div class="field-row field-row-outer hidden">
                         <label data-i18n="result">Result</label>
                         <p id="sign_result"></p>
                     </div>
-                    <fieldset>
+                    <div class="form">
                         <legend data-i18n="verify message">Verify message</legend>
                         <div class="field-row">
                             <label data-i18n="account">Account</label>
@@ -326,14 +326,14 @@
                             <input type="text" id="verify_message">
                         </div>
                         <button id="verify" data-i18n="verify message">Verify message</button>
-                    </fieldset>
+                    </div>
                     <div class="field-row field-row-outer hidden">
                         <label data-i18n="result">Result</label>
                         <p id="verify_result"></p>
                     </div>
                 </div>
                 <div class="info">
-                    <fieldset>
+                    <div class="form">
                         <legend data-i18n="mnemonic info">Mnemonic Info</legend>
                         <div class="field-row">
                             <label data-i18n="mnemonic">Mnemonic</label>
@@ -341,7 +341,7 @@
                         </div>
 
                         <button id="mnemonic_info" data-i18n="mnemonic info">Mnemonic info</button>
-                    </fieldset>
+                    </div>
                     <div class="field-row field-row-outer hidden">
                         <label data-i18n="result">Result</label>
                         <pre id="mnemonic_info_result"></pre>
@@ -349,7 +349,7 @@
                 </div>
                 <div class="generate"></div>
                 <div class="recentblocks">
-                    <h3 data-i18n="recent blocks">Recent Blocks</h3>
+                    <h3 data-i18n="blocks">Blocks</h3>
                     <table id="block-table">
                         <thead>
                             <tr>
@@ -382,7 +382,7 @@
                         </thead>
                         <tbody id="peer-list"></tbody>
                     </table>
-                    <fieldset class="add-peer">
+                    <div class="form" class="add-peer">
                         <legend data-i18n="add peer">Add Peer</legend>
                         <div class="field-row">
                             <label data-i18n="address">Address</label>
@@ -393,10 +393,10 @@
                             <input type="text" id="ip_port" value="28453">
                         </div>
                         <button id="add_peer_btn" data-i18n="add peer">Add Peer</button>
-                    </fieldset>
+                    </div>
                 </div>
                 <div class="config">
-                    <fieldset>
+                    <div class="form">
                         <legend data-i18n="explorer">Explorer</legend>
                         <div class="field-row">
                             <label data-i18n="Block">Block</label>
@@ -415,7 +415,7 @@
                             <input type="text" id="account">
                         </div>
                         <button id="explorer_save" data-i18n="Save">Local Save</button>
-                    </fieldset>
+                    </div>
                 </div>
                 <div class="about">
                     <p>
@@ -433,11 +433,11 @@
                     </p>
                 </div>
                 <div class="lease">
-                    <fieldset>
+                    <div class="form">
                         <legend data-i18n="lease bln">Lease BLN</legend>
                         <div class="field-row">
                             <label data-i18n="lease to">Lease To</label>
-                            <input type="text" id="lease_to">
+                            <input type="text" id="lease_to" placeholder="Blacknet account...">
                         </div>
 
                         <div class="field-row">
@@ -445,7 +445,7 @@
                                 <span data-i18n="amount">Amount</span>
                                 <strong>(BLN)</strong>
                             </label>
-                            <input type="number" step="0.00000001" min="1" id="lease_amount">
+                            <input type="number" placeholder="Amount" step="0.00000001" min="1" id="lease_amount">
                         </div>
                         <div class="field-row">
                             <label>
@@ -455,7 +455,7 @@
                             <input type="text" id="lease_fee" value='0.001'>
                         </div>
                         <button id="lease" data-i18n="lease">Lease</button>
-                    </fieldset>
+                    </div>
                     <div class="field-row field-row-outer hidden">
                         <label data-i18n="result">Result</label>
                         <p id="lease_result"></p>
@@ -542,7 +542,7 @@
                     <div class="rect5"></div>
                 </div>
                 <p class="account-input">
-                    <input type="password" class='account_text' placeholder="your account or mnemonic...">
+                    <input type="password" class='account_text' placeholder="Your account or mnemonic...">
                 </p>
             </div>
             <div class="account-input">
@@ -557,7 +557,7 @@
             <div class="body"></div>
             <div class="body">
                 <h1>Your automatically generated Mnemonic is:</h1>
-                <fieldset>
+                <div class="form">
 
                     <div class="field-row">
                         <label data-i18n="mnemonic">Mnemonic</label>
@@ -568,7 +568,7 @@
                         <input type="text" id="new_account_text" readonly>
                     </div>
 
-                </fieldset>
+                </div>
                 <div id="confirm_mnemonic_warning_container">
                     <input type="checkbox" id="confirm_mnemonic_warning" value="0">
                     <span></span>

@@ -16,14 +16,19 @@
 :root {
     --darker-grey-bg: #2D2D2D;
     --lighter-grey-bg: #3B3B3B;
+    --lighter-grey-border: #2f2f2f;
     --gold-text: #E8BA3F;
     --grey-text: #ADADAD;
 }
 
 body {
-    background: #3B3B3B;
+    background: var(--darker-grey-bg);
 }
 
+.container{
+    
+    overflow: hidden;
+}
 header {
     display: table;
     background: linear-gradient(to bottom, #2D2D2D, #323232);
@@ -79,9 +84,9 @@ header .network {
 .main-menu {
     width: 220px;
     float: left;
-    background: #3B3B3B;
     overflow: hidden;
     color: var(--grey-text);
+    font-size: 14px;
     background: linear-gradient(left right, #3d3d3d, #222);
 }
 
@@ -107,13 +112,13 @@ header .network {
 }
 
 .menu li.active {
-    background-color: var(--gold-text);
+    background-color: var(--lighter-grey-bg);
     overflow: hidden;
-    border-right: 1px solid var(--gold-text);
+    border-right: 1px solid var(--lighter-grey-bg);
 }
 
 .menu li.active a {
-    color: #fff;
+    color: var(--gold-text);
 }
 
 .menu .cancel_lease_tab{
@@ -128,7 +133,9 @@ header .network {
     right: 0;
     bottom: 0;
     top: 64px;
-    border-left: 1px solid #222;
+    background: var(--lighter-grey-bg);
+    margin-top: 1px;
+    /* border-left: 1px solid var(--lighter-grey-border); */
     overflow-y: scroll;
 }
 .rightpanel::-webkit-scrollbar {
@@ -167,14 +174,14 @@ header .network {
 .rightpanel .info p {
     margin: 0 0 5px;
 }
-fieldset .field-row{
+.form .field-row{
     display: flex;
     align-items: center;
 }
 
 .field-row {
-    margin-bottom: 1rem;
     max-width: 666px;
+    padding: 10px 15px;
 }
 
 .field-row p{
@@ -186,20 +193,22 @@ fieldset .field-row{
     visibility: hidden;
 }
 
-fieldset {
-    padding: 15px;
-    border: 1px groove;
-    border-color: var(--gold-text);
+.form {
+    border: 1px solid;
+    border-color: var(--darker-grey-bg);
     margin: 0 0 1em;
     width: 666px;
+    overflow: hidden;
+    padding-bottom: 15px;
 }
 
 legend {
     color: var(--grey-text);
-    font-size: 18px;
-    font-weight: bold;
-    padding-left: 4px;
-    padding-right: 4px;
+    font-size: 14px;
+    background: var(--darker-grey-bg);
+    padding: 10px 10px;
+    overflow: hidden;
+    width: 100%;
 }
 
 label {
@@ -265,11 +274,12 @@ button {
     -webkit-writing-mode: horizontal-tb !important;
 }
 
-fieldset button, .staking button{
+.form button, .staking button{
     color: var(--gold-text);
     background-color: var(--darker-grey-bg);
     border: none;
     float: right;
+    margin-right: 15px;
 }
 .staking button{
     margin-left: 12px;
@@ -321,7 +331,7 @@ thead td{
     color: var(--grey-text);
     padding: 10px;
     text-align: center;
-    font-size: 16px;
+    font-size: 14px;
     background-color: var(--darker-grey-bg);
 }
 
@@ -507,7 +517,7 @@ input:focus, button:focus {
     display: none;
 }
 
-fieldset pre {
+.form pre {
     width: 80%;
     height: 55px;
     flex-grow: 8;
@@ -648,6 +658,7 @@ a, a:active {
 .about{
     padding-left: 180px;
     background: url("../images/logo.png") no-repeat;
+    padding-bottom: 100px;
 }
 p{
     line-height: 1.8;
@@ -725,4 +736,8 @@ tr.undis{
 .blacknet-message-notice-content .fa-info-circle{
     color: yellow;
     margin-right: 3px;
+}
+
+#peer-table{
+    margin-bottom: 20px;
 }
