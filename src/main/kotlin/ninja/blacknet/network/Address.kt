@@ -56,7 +56,7 @@ class Address(
     }
 
     override fun toString(): String {
-        return getAddressString() + ':' + port
+        return getAddressString() + ':' + port.toPort()
     }
 
     @Serializer(forClass = Address::class)
