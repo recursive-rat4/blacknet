@@ -13,17 +13,15 @@ import kotlinx.serialization.json.JsonElement
 import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 
 private val logger = KotlinLogging.logger {}
 
 interface TxData {
     fun getType(): TxType
-    fun involves(publicKey: PublicKey): Boolean
     fun serialize(): ByteArray
     fun toJson(): JsonElement
-    suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status
+    suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status
 
     suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val account = ledger.get(tx.from)
@@ -39,14 +37,11 @@ interface TxData {
         }
         val status = account.credit(tx.fee)
         if (status != Accepted) {
-            return if (status is Invalid)
-                Invalid("${status.reason} for tx fee")
-            else
-                status
+            return notAccepted("Transaction fee", status)
         }
         account.seq += 1
         ledger.set(tx.from, account)
-        return processImpl(tx, hash, ledger)
+        return processImpl(tx, hash, 0, ledger)
     }
 
     companion object {

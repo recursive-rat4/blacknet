@@ -132,7 +132,7 @@ object APIServer {
         }
     }
 
-    suspend fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey) {
+    suspend fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey, filter: List<WalletDB.TransactionDataType>) {
         walletNotifyV1.mutex.withLock {
             if (walletNotifyV1.map.isNotEmpty()) {
                 val notification = TransactionNotificationV2(tx, hash, time, size)
@@ -152,7 +152,7 @@ object APIServer {
 
         walletNotify.mutex.withLock {
             if (walletNotify.map.isNotEmpty()) {
-                val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
+                val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size, filter))
                 val message = Json.stringify(WebSocketNotification.serializer(), notification)
                 walletNotify.map.forEach {
                     if (it.value.contains(publicKey)) {
@@ -1079,13 +1079,19 @@ fun Application.APIServer() {
         get("/api/v1/walletdb/getoutleases/{address}") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
 
-            call.respond(Json.stringify(AccountState.Lease.serializer().list, WalletDB.getOutLeases(publicKey)))
+            WalletDB.mutex.withLock {
+                val wallet = WalletDB.getWalletImpl(publicKey)
+                call.respond(Json.stringify(AccountState.Lease.serializer().list, wallet.outLeases))
+            }
         }
 
         get("/api/v2/wallet/outleases/{address}") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
-            call.respondJson(AccountState.Lease.serializer().list, WalletDB.getOutLeases(publicKey))
+            WalletDB.mutex.withLock {
+                val wallet = WalletDB.getWalletImpl(publicKey)
+                call.respondJson(AccountState.Lease.serializer().list, wallet.outLeases)
+            }
         }
 
         get("/api/v1/walletdb/getsequence/{address}") {
@@ -1104,7 +1110,9 @@ fun Application.APIServer() {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
             val raw = call.parameters["raw"]?.toBoolean() ?: false
 
-            val result = WalletDB.getTransaction(hash)
+            val result = WalletDB.mutex.withLock {
+                WalletDB.getTransactionImpl(hash)
+            }
             if (result != null) {
                 if (raw)
                     return@get call.respond(result.toHex())
@@ -1116,19 +1124,29 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v2/wallet/transaction/{hash}/{raw?}") {
+        get("/api/v2/wallet/transaction/{address}/{hash}/{raw?}") {
+            val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
             val raw = call.parameters["raw"]?.toBoolean() ?: false
 
-            val result = WalletDB.getTransaction(hash)
-            if (result != null) {
-                if (raw)
-                    return@get call.respond(result.toHex())
-
-                val tx = Transaction.deserialize(result)
-                call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Transaction not found")
+            WalletDB.mutex.withLock {
+                val wallet = WalletDB.getWalletImpl(publicKey)
+                val txData = wallet.transactions.get(hash)
+                if (txData != null) {
+                    val bytes = WalletDB.getTransactionImpl(hash)
+                    if (bytes != null) {
+                        if (raw) {
+                            call.respond(bytes.toHex())
+                        } else {
+                            val tx = Transaction.deserialize(bytes)
+                            call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, bytes.size, txData.types))
+                        }
+                    } else {
+                        call.respond(HttpStatusCode.BadRequest, "Transaction not found")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Transaction not found")
+                }
             }
         }
 
@@ -1142,10 +1160,11 @@ fun Application.APIServer() {
                 call.respond(HttpStatusCode.NotFound, "transaction not found")
         }
 
-        get("/api/v2/wallet/confirmations/{hash}") {
+        get("/api/v2/wallet/confirmations/{address}/{hash}") {
+            val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
 
-            val result = WalletDB.getConfirmations(hash)
+            val result = WalletDB.getConfirmations(publicKey, hash)
             if (result != null)
                 call.respond(result.toString())
             else

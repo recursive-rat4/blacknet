@@ -17,6 +17,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
@@ -26,19 +27,15 @@ import ninja.blacknet.packet.UnfilteredInvList
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.transaction.CancelLease
-import ninja.blacknet.transaction.Lease
-import ninja.blacknet.transaction.TxType
-import ninja.blacknet.transaction.WithdrawFromLease
-import ninja.blacknet.util.delay
-import ninja.blacknet.util.startsWith
-import ninja.blacknet.util.withUnlock
+import ninja.blacknet.transaction.*
+import ninja.blacknet.util.*
+import java.io.File
 
 private val logger = KotlinLogging.logger {}
 
 object WalletDB {
     private const val DELAY = 30 * 60
-    private const val VERSION = 5
+    private const val VERSION = 6
     internal val mutex = Mutex()
     private val KEYS_KEY = "keys".toByteArray()
     private val TX_KEY = "tx".toByteArray()
@@ -62,41 +59,25 @@ object WalletDB {
             1
         }
 
-        if (version == VERSION || version == 4 || version == 3 || version == 2) {
+        if (version == VERSION) {
             if (keysBytes != null) {
                 var txns = 0
                 val decoder = BinaryDecoder.fromBytes(keysBytes)
                 for (i in 0 until keysBytes.size step PublicKey.SIZE) {
                     val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE))
                     val walletBytes = LevelDB.get(WALLET_KEY, publicKey.bytes)!!
-                    val wallet = if (version >= 5) Wallet.deserialize(walletBytes) else Wallet.updateV1(walletBytes)
+                    val wallet = Wallet.deserialize(walletBytes)
                     txns += wallet.transactions.size
                     wallets.put(publicKey, wallet)
-                }
-                if (version == 3)
-                    updateV3()
-                if (version < 5) {
-                    logger.info("Updating WalletDB")
-                    val batch = LevelDB.createWriteBatch()
-                    wallets.forEach { (publicKey, wallet) ->
-                        batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
-                    }
-                    setVersion(batch)
-                    batch.write()
                 }
                 if (wallets.size == 1)
                     logger.info("Loaded wallet with $txns transactions")
                 else
                     logger.info("Loaded ${wallets.size} wallets with $txns transactions")
-            } else if (version < VERSION) {
-                val batch = LevelDB.createWriteBatch()
-                setVersion(batch)
-                batch.write()
             }
-        } else if (version == 1) {
+        } else if (version in 1 until VERSION) {
             val batch = LevelDB.createWriteBatch()
             if (keysBytes != null) {
-                logger.info("Clearing WalletDB...")
                 clear(batch)
             }
             setVersion(batch)
@@ -123,7 +104,7 @@ object WalletDB {
                     val unconfirmed = ArrayList<Triple<Hash, ByteArray, Int>>()
 
                     wallet.transactions.forEach { (hash, txData) ->
-                        if (txData.height == 0 && txData.type != TxType.Generated.type) {
+                        if (txData.height == 0 && txData.types[0].type != TxType.Generated.type) {
                             val bytes = getTransactionImpl(hash)!!
                             val tx = Transaction.deserialize(bytes)
                             unconfirmed.add(Triple(hash, bytes, tx.seq))
@@ -163,15 +144,30 @@ object WalletDB {
         }
     }
 
+    suspend fun getConfirmations(publicKey: PublicKey, hash: Hash): Int? = BlockDB.mutex.withLock {
+        return mutex.withLock {
+            val wallet = wallets.get(publicKey)
+            if (wallet != null) {
+                val txData = wallet.transactions.get(hash)
+                if (txData != null) {
+                    if (txData.height != 0)
+                        LedgerDB.state().height - txData.height + 1
+                    else
+                        0
+                } else {
+                    txData
+                }
+            } else {
+                wallet
+            }
+        }
+    }
+
     suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
         return@withLock getWalletImpl(publicKey).seq
     }
 
-    suspend fun getTransaction(hash: Hash): ByteArray? = mutex.withLock {
-        return@withLock getTransactionImpl(hash)
-    }
-
-    private fun getTransactionImpl(hash: Hash): ByteArray? {
+    internal fun getTransactionImpl(hash: Hash): ByteArray? {
         return LevelDB.get(TX_KEY, hash.bytes)
     }
 
@@ -245,64 +241,182 @@ object WalletDB {
         }
     }
 
-    private suspend fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
-        var added = false
-        var updated = false
+    private fun processTransactionDataImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, dataIndex: Int, type: Byte, bytes: ByteArray, height: Int, from: Boolean): Boolean {
+        return when (type) {
+            TxType.Transfer.type -> {
+                if (from) {
+                    true
+                } else {
+                    Transfer.deserialize(bytes).involves(publicKey)
+                }
+            }
+            TxType.Burn.type -> {
+                from
+            }
+            TxType.Lease.type -> {
+                val data = Lease.deserialize(bytes)
+                if (from) {
+                    wallet.outLeases.add(AccountState.Lease(data.to, height, data.amount))
+                    true
+                } else {
+                    data.involves(publicKey)
+                }
+            }
+            TxType.CancelLease.type -> {
+                val data = CancelLease.deserialize(bytes)
+                if (from) {
+                    if (!wallet.outLeases.remove(AccountState.Lease(data.to, data.height, data.amount)))
+                        logger.warn("Lease not found")
+                    true
+                } else {
+                    data.involves(publicKey)
+                }
+            }
+            TxType.Bundle.type -> {
+                from
+            }
+            TxType.CreateHTLC.type -> {
+                val data = CreateHTLC.deserialize(bytes)
+                if (from || data.involves(publicKey)) {
+                    wallet.involvesIds.add(data.id(hash, dataIndex))
+                    true
+                } else {
+                    false
+                }
+            }
+            TxType.UnlockHTLC.type -> {
+                if (from) {
+                    true
+                } else {
+                    UnlockHTLC.deserialize(bytes).involves(wallet.involvesIds)
+                }
+            }
+            TxType.RefundHTLC.type -> {
+                if (from) {
+                    true
+                } else {
+                    RefundHTLC.deserialize(bytes).involves(wallet.involvesIds)
+                }
+            }
+            TxType.SpendHTLC.type -> {
+                if (from) {
+                    true
+                } else {
+                    SpendHTLC.deserialize(bytes).involves(wallet.involvesIds)
+                }
+            }
+            TxType.CreateMultisig.type -> {
+                val data = CreateMultisig.deserialize(bytes)
+                if (from || data.involves(publicKey)) {
+                    wallet.involvesIds.add(data.id(hash, dataIndex))
+                    true
+                } else {
+                    false
+                }
+            }
+            TxType.SpendMultisig.type -> {
+                if (from) {
+                    true
+                } else {
+                    SpendMultisig.deserialize(bytes).involves(wallet.involvesIds)
+                }
+            }
+            TxType.WithdrawFromLease.type -> {
+                val data = WithdrawFromLease.deserialize(bytes)
+                if (from) {
+                    val lease = wallet.outLeases.find { it.publicKey == data.to && it.height == data.height && it.amount == data.amount }
+                    if (lease != null)
+                        lease.amount -= data.withdraw
+                    else
+                        logger.warn("Lease not found")
+                    true
+                } else {
+                    data.involves(publicKey)
+                }
+            }
+            TxType.ClaimHTLC.type -> {
+                if (from) {
+                    true
+                } else {
+                    ClaimHTLC.deserialize(bytes).involves(wallet.involvesIds)
+                }
+            }
+            else -> {
+                logger.warn("Unexpected TxType $type")
+                from
+            }
+        }
+    }
 
-        val from = tx.from == publicKey
-        if (from || tx.data().involves(publicKey)) {
-            val txData = wallet.transactions.get(hash)
-            if (txData == null) {
-                wallet.transactions.put(hash, TransactionData(tx.type, time, height))
-                if (from && tx.type != TxType.Generated.type) {
+    private suspend fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
+        val txData = wallet.transactions.get(hash)
+        if (txData == null) {
+            val from = tx.from == publicKey
+            val types = if (tx.type == TxType.Generated.type) {
+                listOf(TransactionDataType(tx.type, 0))
+            } else {
+                if (from) {
                     if (tx.seq == wallet.seq)
                         wallet.seq += 1
                     else
                         logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} $hash")
                 }
-                added = true
-            } else if (txData.height != height) {
-                txData.height = height
-                updated = true
+                if (tx.type != TxType.MultiData.type) {
+                    if (processTransactionDataImpl(publicKey, wallet, hash, 0, tx.type, tx.data.array, height, from))
+                        listOf(TransactionDataType(tx.type, 0))
+                    else
+                        emptyList()
+                } else {
+                    val data = MultiData.deserialize(bytes)
+                    val types = ArrayList<TransactionDataType>(data.multiData.size)
+                    for (index in 0 until data.multiData.size) {
+                        val (dataType, dataBytes) = data.multiData[index]
+                        val dataIndex = index + 1
+                        if (processTransactionDataImpl(publicKey, wallet, hash, dataIndex, dataType, dataBytes.array, height, from))
+                            types.add(TransactionDataType(dataType, dataIndex.toByte()))
+                    }
+                    types
+                }
             }
-        }
+            if (types.isNotEmpty()) {
+                wallet.transactions.put(hash, TransactionData(types, time, height))
 
-        if (added) {
+                if (!rescan) {
+                    APIServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
+                    batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
+                }
+                if (store) {
+                    batch.put(TX_KEY, hash.bytes, bytes)
+                }
+
+                return true
+            } else {
+                return false
+            }
+        } else if (txData.height != height) {
+            txData.height = height
+
             if (!rescan) {
-                APIServer.walletNotify(tx, hash, time, bytes.size, publicKey)
                 batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
             }
-            if (store)
-                batch.put(TX_KEY, hash.bytes, bytes)
-            return true
-        } else if (updated) {
-            if (!rescan)
-                batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
+
             return true
         } else {
             return false
         }
     }
 
-    internal fun involves(id: Hash, publicKey: PublicKey): Boolean {
-        val bytes = getTransactionImpl(id)
-        return if (bytes != null)
-            Transaction.deserialize(bytes).data().involves(publicKey)
-        else
-            false
-    }
-
     @Serializable
-    class TransactionData(
+    internal class TransactionDataV1(
             val type: Byte,
             val time: Long,
             var height: Int
     ) {
         fun toJson() = Json.toJson(serializer(), this)
 
-        @Serializer(forClass = TransactionData::class)
+        @Serializer(forClass = TransactionDataV1::class)
         companion object {
-            override fun serialize(encoder: Encoder, obj: TransactionData) {
+            override fun serialize(encoder: Encoder, obj: TransactionDataV1) {
                 when (encoder) {
                     is JsonOutput -> {
                         @Suppress("NAME_SHADOWING")
@@ -319,8 +433,61 @@ object WalletDB {
     }
 
     @Serializable
+    class TransactionDataType(
+            val type: Byte,
+            val dataIndex: Byte
+    ) {
+        @Serializer(forClass = TransactionDataType::class)
+        companion object {
+            override fun deserialize(decoder: Decoder): TransactionDataType {
+                return when (decoder) {
+                    is BinaryDecoder -> {
+                        TransactionDataType(
+                                decoder.decodeByte(),
+                                decoder.decodeByte()
+                        )
+                    }
+                    else -> throw RuntimeException("Unsupported decoder")
+                }
+            }
+
+            override fun serialize(encoder: Encoder, obj: TransactionDataType) {
+                when (encoder) {
+                    is BinaryEncoder -> {
+                        encoder.encodeByte(obj.type)
+                        encoder.encodeByte(obj.dataIndex)
+                    }
+                    is JsonOutput -> {
+                        @Suppress("NAME_SHADOWING")
+                        val encoder = encoder.beginStructure(descriptor)
+                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), obj.type.toUByte().toInt())
+                        encoder.encodeSerializableElement(descriptor, 1, Int.serializer(), obj.dataIndex.toInt())
+                        encoder.endStructure(descriptor)
+                    }
+                    else -> throw RuntimeException("Unsupported encoder")
+                }
+            }
+        }
+    }
+
+    @Serializable
+    class TransactionData(
+            val types: List<TransactionDataType>,
+            val time: Long,
+            var height: Int
+    ) {
+        fun toJson() = Json.toJson(serializer(), this)
+
+        internal fun toV1(): TransactionDataV1 {
+            return TransactionDataV1(types[0].type, time, height)
+        }
+    }
+
+    @Serializable
     class Wallet(
             var seq: Int = 0,
+            val involvesIds: HashSet<Hash> = HashSet(),
+            val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
             val transactions: HashMap<Hash, TransactionData> = HashMap()
     ) {
         fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
@@ -329,57 +496,13 @@ object WalletDB {
             val wallet = WalletV1(seq)
             transactions.forEach { (hash, txData) ->
                 wallet.transactions.add(JsonLiteral(hash.toString()))
-                wallet.transactions.add(txData.toJson())
+                wallet.transactions.add(txData.toV1().toJson())
             }
             return wallet
         }
 
-        @Serializer(forClass = Wallet::class)
         companion object {
             fun deserialize(bytes: ByteArray): Wallet = BinaryDecoder.fromBytes(bytes).decode(serializer())
-
-            override fun deserialize(decoder: Decoder): Wallet {
-                return when (decoder) {
-                    is BinaryDecoder -> {
-                        val seq = decoder.decodeVarInt()
-                        val size = decoder.decodeVarInt()
-                        val wallet = Wallet(seq, HashMap(size * 2))
-                        for (i in 0 until size)
-                            wallet.transactions.put(Hash(decoder.decodeFixedByteArray(Hash.SIZE)), TransactionData(decoder.decodeByte(), decoder.decodeVarLong(), decoder.decodeVarInt()))
-                        wallet
-                    }
-                    else -> throw RuntimeException("Unsupported decoder")
-                }
-            }
-
-            override fun serialize(encoder: Encoder, obj: Wallet) {
-                when (encoder) {
-                    is BinaryEncoder -> {
-                        encoder.encodeVarInt(obj.seq)
-                        encoder.encodeVarInt(obj.transactions.size)
-                        for ((hash, data) in obj.transactions) {
-                            encoder.encodeFixedByteArray(hash.bytes)
-                            encoder.encodeByte(data.type)
-                            encoder.encodeVarLong(data.time)
-                            encoder.encodeVarInt(data.height)
-                        }
-                    }
-                    else -> throw RuntimeException("Unsupported encoder")
-                }
-            }
-
-            internal fun updateV1(bytes: ByteArray): Wallet {
-                val decoder = BinaryDecoder.fromBytes(bytes)
-                val seq = decoder.decodeVarInt()
-                val size = decoder.decodeVarInt()
-                val wallet = Wallet(seq, HashMap(size * 2))
-                for (i in 0 until size) {
-                    val hash = Hash(decoder.decodeFixedByteArray(Hash.SIZE))
-                    val tx = Transaction.deserialize(getTransactionImpl(hash)!!)
-                    wallet.transactions.put(hash, TransactionData(tx.type, decoder.decodeVarLong(), decoder.decodeVarInt()))
-                }
-                return wallet
-            }
         }
     }
 
@@ -395,7 +518,7 @@ object WalletDB {
         batch.put(WALLET_KEY, KEYS_KEY, keysBytes)
     }
 
-    internal suspend fun getWalletImpl(publicKey: PublicKey, rescan: Boolean = true): Wallet {
+    internal suspend fun getWalletImpl(publicKey: PublicKey): Wallet {
         var wallet = wallets.get(publicKey)
         if (wallet != null)
             return wallet
@@ -403,12 +526,6 @@ object WalletDB {
         logger.debug { "Creating new wallet for ${Address.encode(publicKey)}" }
         val batch = LevelDB.createWriteBatch()
         wallet = Wallet()
-
-        if (!rescan) {
-            addWalletImpl(batch, publicKey, wallet)
-            batch.write()
-            return wallet
-        }
 
         mutex.withUnlock {
             BlockDB.mutex.withLock {
@@ -424,6 +541,7 @@ object WalletDB {
                             hash = index.next
                             index = LedgerDB.getChainIndex(hash)!!
                         } while (index.height != height)
+                        logger.info("Finished rescan")
                     }
                 }
             }
@@ -432,45 +550,6 @@ object WalletDB {
         addWalletImpl(batch, publicKey, wallet)
         batch.write()
         return wallet
-    }
-
-    suspend fun getOutLeases(publicKey: PublicKey): List<AccountState.Lease> = mutex.withLock {
-        val wallet = getWalletImpl(publicKey)
-        val leases = ArrayList<AccountState.Lease>()
-        val transactions = ArrayList<Pair<Transaction, TransactionData>>()
-
-        wallet.transactions.forEach { (hash, txData) ->
-            when (txData.type) {
-                TxType.Lease.type,
-                TxType.CancelLease.type,
-                TxType.WithdrawFromLease.type -> {
-                    val tx = Transaction.deserialize(getTransactionImpl(hash)!!)
-                    transactions.add(Pair(tx, txData))
-                }
-            }
-        }
-
-        transactions.sortBy { (tx, _) -> tx.seq }
-
-        transactions.forEach { (tx, txData) ->
-            if (tx.type == TxType.Lease.type) {
-                val data = Lease.deserialize(tx.data.array)
-                leases.add(AccountState.Lease(data.to, txData.height, data.amount))
-            } else if (tx.type == TxType.CancelLease.type) {
-                val data = CancelLease.deserialize(tx.data.array)
-                if (!leases.remove(AccountState.Lease(data.to, data.height, data.amount)))
-                    logger.warn("Lease not found")
-            } else if (tx.type == TxType.WithdrawFromLease.type) {
-                val data = WithdrawFromLease.deserialize(tx.data.array)
-                val lease = leases.find { it.publicKey == data.to && it.height == data.height && it.amount == data.amount }
-                if (lease != null)
-                    lease.amount -= data.withdraw
-                else
-                    logger.warn("Lease not found")
-            }
-        }
-
-        return@withLock leases
     }
 
     fun getCheckpoint(): Hash {
@@ -494,59 +573,55 @@ object WalletDB {
         }
     }
 
-    private fun clear(batch: LevelDB.WriteBatch = LevelDB.createWriteBatch()) {
-        val iterator = LevelDB.iterator()
-        iterator.seekToFirst()
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            if (entry.key.startsWith(WALLET_KEY) ||
-                    entry.key.startsWith(TX_KEY)) {
-                batch.delete(entry.key)
-            }
-        }
-        iterator.close()
-
+    private fun clear(batch: LevelDB.WriteBatch) {
+        val backupDir = File(Config.dataDir, "walletdb.backup.${Runtime.time()}")
+        backupDir.mkdir()
+        logger.info("Saving backup to $backupDir")
         wallets.clear()
-    }
 
-    private fun updateV3() {
-        class Update(val publicKey: PublicKey, val hash: Hash, val newHash: Hash, val bytes: ByteArray)
+        val iterator = LevelDB.iterator()
 
-        val toUpdate = ArrayList<Update>()
+        if (LevelDB.seek(iterator, TX_KEY)) {
+            val file = File(backupDir, "transactions")
+            val stream = file.outputStream().buffered().data()
 
-        wallets.forEach { (publicKey, wallet) ->
-            wallet.transactions.forEach { (hash, txData) ->
-                val bytes = getTransactionImpl(hash)!!
-                val tx = Transaction.deserialize(bytes)
-                if (tx.type == TxType.Generated.type && tx.referenceChain != Hash.ZERO) {
-                    if (txData.height != 0 && !LedgerDB.chainContains(tx.referenceChain))
-                        txData.height = 0
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                if (entry.key.startsWith(TX_KEY)) {
+                    val bytes = entry.value
+                    stream.writeInt(bytes.size)
+                    stream.write(bytes, 0, bytes.size)
+                    batch.delete(entry.key)
+                } else {
+                    break
+                }
+            }
 
-                    toUpdate.add(Update(publicKey, hash, tx.referenceChain, bytes))
+            stream.close()
+        }
+
+        if (LevelDB.seek(iterator, WALLET_KEY)) {
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                if (entry.key.startsWith(WALLET_KEY)) {
+                    if (entry.key.size != 38)
+                        continue
+
+                    val publicKey = PublicKey(LevelDB.sliceKey(entry, WALLET_KEY))
+                    val file = File(backupDir, Address.encode(publicKey))
+                    val stream = file.outputStream().buffered().data()
+
+                    val bytes = entry.value
+                    stream.write(bytes, 0, bytes.size)
+                    batch.delete(entry.key)
+
+                    stream.close()
+                } else {
+                    break
                 }
             }
         }
 
-        if (toUpdate.isEmpty())
-            return
-
-        logger.info("Updating ${toUpdate.size} Generated transactions")
-
-        val updatedTx = HashMap<Hash, Pair<Hash, ByteArray>>()
-        val batch = LevelDB.createWriteBatch()
-
-        toUpdate.forEach { update ->
-            val wallet = wallets.get(update.publicKey)!!
-            val txData = wallet.transactions.remove(update.hash)!!
-            wallet.transactions.put(update.newHash, txData)
-            updatedTx.put(update.hash, Pair(update.newHash, update.bytes))
-        }
-
-        updatedTx.forEach { (hash, pair) ->
-            batch.delete(TX_KEY, hash.bytes)
-            batch.put(TX_KEY, pair.first.bytes, pair.second)
-        }
-
-        batch.write()
+        iterator.close()
     }
 }

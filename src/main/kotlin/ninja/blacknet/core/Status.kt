@@ -23,10 +23,18 @@ object InFuture : Status() {
     override fun toString() = "Too far in future"
 }
 
-class Invalid(val reason: String) : Status() {
-    override fun toString() = reason
+class Invalid(private val message: String) : Status() {
+    override fun toString() = message
 }
 
 object NotOnThisChain : Status() {
     override fun toString() = "Not on this chain"
+}
+
+fun notAccepted(message: String, status: Status): Status {
+    return when (status) {
+        is Invalid -> Invalid("$message $status")
+        Accepted -> throw IllegalArgumentException(status.toString())
+        else -> status
+    }
 }

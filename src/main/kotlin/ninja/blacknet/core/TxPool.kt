@@ -28,6 +28,8 @@ object TxPool : MemPool(), Ledger {
     internal val mutex = Mutex()
     private val rejects = HashSet<Hash>()
     private val undoAccounts = HashMap<PublicKey, AccountState?>()
+    private val undoHtlcs = HashMap<Hash, Pair<Boolean, HTLC?>>()
+    private val undoMultisigs = HashMap<Hash, Pair<Boolean, Multisig?>>()
     private val accounts = HashMap<PublicKey, AccountState>()
     private val htlcs = HashMap<Hash, HTLC?>()
     private val multisigs = HashMap<Hash, Multisig?>()
@@ -117,13 +119,19 @@ object TxPool : MemPool(), Ledger {
     }
 
     override fun addHTLC(id: Hash, htlc: HTLC) {
+        undoHtlcs.put(id, Pair(false, null))
         htlcs.put(id, htlc)
     }
 
     override fun getHTLC(id: Hash): HTLC? {
-        if (!htlcs.containsKey(id))
-            return LedgerDB.getHTLC(id)
-        return htlcs.get(id)
+        return if (!htlcs.containsKey(id)) {
+            undoHtlcs.put(id, Pair(false, null))
+            LedgerDB.getHTLC(id)
+        } else {
+            val htlc = htlcs.get(id)
+            undoHtlcs.putIfAbsent(id, Pair(true, htlc))
+            htlc
+        }
     }
 
     override fun removeHTLC(id: Hash) {
@@ -131,17 +139,51 @@ object TxPool : MemPool(), Ledger {
     }
 
     override fun addMultisig(id: Hash, multisig: Multisig) {
+        undoMultisigs.put(id, Pair(false, null))
         multisigs.put(id, multisig)
     }
 
     override fun getMultisig(id: Hash): Multisig? {
-        if (!multisigs.containsKey(id))
-            return LedgerDB.getMultisig(id)
-        return multisigs.get(id)
+        return if (!multisigs.containsKey(id)) {
+            undoMultisigs.put(id, Pair(false, null))
+            LedgerDB.getMultisig(id)
+        } else {
+            val multisig = multisigs.get(id)
+            undoMultisigs.putIfAbsent(id, Pair(true, multisig))
+            multisig
+        }
     }
 
     override fun removeMultisig(id: Hash) {
         multisigs.put(id, null)
+    }
+
+    private fun undoImpl(status: Status) {
+        if (status != Accepted) {
+            undoAccounts.forEach { (key, account) ->
+                if (account != null)
+                    accounts.put(key, account)
+                else
+                    accounts.remove(key)
+            }
+            undoHtlcs.forEach { (id, pair) ->
+                val (put, htlc) = pair
+                if (put)
+                    htlcs.put(id, htlc)
+                else
+                    htlcs.remove(id)
+            }
+            undoMultisigs.forEach { (id, pair) ->
+                val (put, multisig) = pair
+                if (put)
+                    multisigs.put(id, multisig)
+                else
+                    multisigs.remove(id)
+            }
+        }
+        undoAccounts.clear()
+        undoHtlcs.clear()
+        undoMultisigs.clear()
     }
 
     private suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
@@ -150,15 +192,8 @@ object TxPool : MemPool(), Ledger {
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
-        } else {
-            undoAccounts.forEach { (key, account) ->
-                if (account != null)
-                    accounts.put(key, account)
-                else
-                    accounts.remove(key)
-            }
         }
-        undoAccounts.clear()
+        undoImpl(status)
         return status
     }
 
@@ -171,15 +206,8 @@ object TxPool : MemPool(), Ledger {
             WalletDB.processTransaction(hash, tx, bytes, time)
             APIServer.txPoolNotify(tx, hash, time, bytes.size)
             logger.debug { "Accepted $hash" }
-        } else {
-            undoAccounts.forEach { (key, account) ->
-                if (account != null)
-                    accounts.put(key, account)
-                else
-                    accounts.remove(key)
-            }
         }
-        undoAccounts.clear()
+        undoImpl(status)
         return Pair(status, tx.fee)
     }
 

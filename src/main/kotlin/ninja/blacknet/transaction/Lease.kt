@@ -25,11 +25,10 @@ class Lease(
         val to: PublicKey
 ) : TxData {
     override fun getType() = TxType.Lease
-    override fun involves(publicKey: PublicKey) = to == publicKey
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (amount < PoS.MIN_LEASE) {
             return Invalid("$amount less than minimal ${PoS.MIN_LEASE}")
         }
@@ -44,6 +43,8 @@ class Lease(
         ledger.set(to, toAccount)
         return Accepted
     }
+
+    fun involves(publicKey: PublicKey) = to == publicKey
 
     companion object {
         fun deserialize(bytes: ByteArray): Lease = BinaryDecoder.fromBytes(bytes).decode(serializer())

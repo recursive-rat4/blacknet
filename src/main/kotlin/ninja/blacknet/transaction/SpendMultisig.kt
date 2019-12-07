@@ -17,7 +17,7 @@ import kotlinx.serialization.json.json
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB.forkV2
-import ninja.blacknet.db.WalletDB
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
@@ -29,7 +29,6 @@ class SpendMultisig(
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
     override fun getType() = TxType.SpendMultisig
-    override fun involves(publicKey: PublicKey) = WalletDB.involves(id, publicKey)
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
@@ -70,7 +69,7 @@ class SpendMultisig(
         return Blake2b.hash(bytes)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val multisig = ledger.getMultisig(id)
         if (multisig == null) {
             return Invalid("Multisig not found")
@@ -114,6 +113,12 @@ class SpendMultisig(
 
         ledger.removeMultisig(id)
         return Accepted
+    }
+
+    fun involves(ids: Set<Hash>) = ids.contains(id)
+
+    companion object {
+        fun deserialize(bytes: ByteArray): SpendMultisig = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

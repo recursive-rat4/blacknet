@@ -10,12 +10,15 @@
 package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.JsonObject
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.transaction.MultiData
 import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
 
@@ -28,10 +31,9 @@ class TransactionInfo(
         val seq: Int,
         val referenceChain: String,
         val fee: String,
-        val type: Int,
-        val data: JsonElement
+        val data: JsonArray
 ) {
-    constructor(tx: Transaction, hash: Hash, size: Int) : this(
+    constructor(tx: Transaction, hash: Hash, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
             hash.toString(),
             size,
             tx.signature.toString(),
@@ -39,17 +41,44 @@ class TransactionInfo(
             tx.seq,
             tx.referenceChain.toString(),
             tx.fee.toString(),
-            tx.type.toUByte().toInt(),
-            data(tx.type, tx.data.array)
+            data(tx.type, tx.data.array, filter)
     )
 
     fun toJson() = Json.toJson(serializer(), this)
 
+    @Serializable
+    class DataInfo(
+            val type: Int,
+            val dataIndex: Int,
+            val data: JsonElement
+    ) {
+        fun toJson() = Json.toJson(serializer(), this)
+    }
+
     companion object {
-        fun data(type: Byte, bytes: ByteArray): JsonElement {
-            if (type == TxType.Generated.type) return json {}
-            val txData = TxData.deserialize(type, bytes)
-            return txData.toJson()
+        fun data(type: Byte, bytes: ByteArray, filter: List<WalletDB.TransactionDataType>?): JsonArray {
+            val data = if (type == TxType.Generated.type) {
+                listOf(DataInfo(type.toUByte().toInt(), 0, JsonObject(emptyMap())).toJson())
+            } else if (type != TxType.MultiData.type) {
+                listOf(DataInfo(type.toUByte().toInt(), 0, TxData.deserialize(type, bytes).toJson()).toJson())
+            } else {
+                val multiData = MultiData.deserialize(bytes)
+                val list = ArrayList<JsonElement>(multiData.multiData.size)
+                if (filter == null) {
+                    for (index in 0 until multiData.multiData.size) {
+                        val (dataType, dataBytes) = multiData.multiData[index]
+                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, TxData.deserialize(dataType, dataBytes.array).toJson()).toJson())
+                    }
+                } else {
+                    for (i in 0 until filter.size) {
+                        val dataIndex = filter[i].dataIndex.toInt()
+                        val (dataType, dataBytes) = multiData.multiData[dataIndex - 1]
+                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, TxData.deserialize(dataType, dataBytes.array).toJson()).toJson())
+                    }
+                }
+                list
+            }
+            return JsonArray(data)
         }
     }
 }

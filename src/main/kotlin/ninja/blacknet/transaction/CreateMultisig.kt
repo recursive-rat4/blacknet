@@ -14,6 +14,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.json
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -26,26 +27,30 @@ class CreateMultisig(
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
     override fun getType() = TxType.CreateMultisig
-    override fun involves(publicKey: PublicKey) = deposits.find { it.first == publicKey } != null
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    fun sign(from: PublicKey, seq: Int, privateKey: PrivateKey): Boolean {
+    fun id(hash: Hash, dataIndex: Int) = if (forkV2()) Blake2b.hasher { this + hash.bytes + dataIndex } else hash
+
+    fun sign(from: PublicKey, seq: Int, dataIndex: Int, privateKey: PrivateKey): Boolean {
         val publicKey = privateKey.toPublicKey()
-        val i = deposits.indexOfFirst { it.first == publicKey }
-        if (i == -1) return false
-        val signature = Ed25519.sign(hash(from, seq), privateKey)
-        signatures.add(Pair(i.toByte(), signature))
+        val index = deposits.indexOfFirst { it.first == publicKey }
+        if (index == -1) return false
+        val signature = Ed25519.sign(hash(from, seq, dataIndex), privateKey)
+        signatures.add(Pair(index.toByte(), signature))
         return true
     }
 
-    private fun hash(from: PublicKey, seq: Int): Hash {
+    private fun hash(from: PublicKey, seq: Int, dataIndex: Int): Hash {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = copy.serialize()
-        return Blake2b.hasher { this + from.bytes + seq + bytes }
+        return if (forkV2())
+            Blake2b.hasher { this + from.bytes + seq + dataIndex + bytes }
+        else
+            Blake2b.hasher { this + from.bytes + seq + bytes }
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (n < 0 || n > deposits.size) {
             return Invalid("Invalid n")
         }
@@ -64,35 +69,36 @@ class CreateMultisig(
             return Invalid("Invalid total amount")
         }
 
-        val multisigHash = hash(tx.from, tx.seq)
-        for (i in deposits.indices) {
-            if (deposits[i].second != 0L) {
-                val signature = signatures.find { it.first == i.toByte() }?.second
+        val multisigHash = hash(tx.from, tx.seq, dataIndex)
+        for (index in deposits.indices) {
+            val (publicKey, amount) = deposits[index]
+            if (amount != 0L) {
+                val signature = signatures.find { it.first == index.toByte() }?.second
                 if (signature == null) {
-                    return Invalid("Unsigned deposit i $i")
+                    return Invalid("Unsigned deposit $index")
                 }
-                if (!Ed25519.verify(signature, multisigHash, deposits[i].first)) {
-                    return Invalid("Invalid signature i $i")
+                if (!Ed25519.verify(signature, multisigHash, publicKey)) {
+                    return Invalid("Invalid signature $index")
                 }
-                val depositAccount = ledger.get(deposits[i].first)
+                val depositAccount = ledger.get(publicKey)
                 if (depositAccount == null) {
-                    return Invalid("Account not found i $i")
+                    return Invalid("Account not found $index")
                 }
-                val status = depositAccount.credit(deposits[i].second)
+                val status = depositAccount.credit(amount)
                 if (status != Accepted) {
-                    return if (status is Invalid)
-                        Invalid("${status.reason} i $i")
-                    else
-                        status
+                    return notAccepted("CreateMultisig $index", status)
                 }
-                ledger.set(deposits[i].first, depositAccount)
+                ledger.set(publicKey, depositAccount)
             }
         }
 
+        val id = id(hash, dataIndex)
         val multisig = Multisig(n, deposits)
-        ledger.addMultisig(hash, multisig)
+        ledger.addMultisig(id, multisig)
         return Accepted
     }
+
+    fun involves(publicKey: PublicKey) = deposits.find { it.first == publicKey } != null
 
     companion object {
         fun deserialize(bytes: ByteArray): CreateMultisig = BinaryDecoder.fromBytes(bytes).decode(serializer())
@@ -113,9 +119,9 @@ class CreateMultisig(
                         "amount" to amount.toString()
                     }
                 }),
-                JsonArray(data.signatures.map { (i, signature) ->
+                JsonArray(data.signatures.map { (index, signature) ->
                     json {
-                        "i" to i.toUByte().toInt()
+                        "index" to index.toUByte().toInt()
                         "signature" to signature.toString()
                     }
                 })

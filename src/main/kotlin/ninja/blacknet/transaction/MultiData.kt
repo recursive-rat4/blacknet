@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Pavel Vasin
+ * Copyright (c) 2019 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -10,10 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.Accepted
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Status
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -21,19 +18,34 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-class Bundle(
-        val magic: Int,
-        val data: SerializableByteArray
+class MultiData(
+        val multiData: ArrayList<Pair<Byte, SerializableByteArray>>
 ) : TxData {
-    override fun getType() = TxType.Bundle
+    override fun getType() = TxType.MultiData
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+        if (dataIndex != 0) {
+            return Invalid("Recursive MultiData is not permitted")
+        }
+        if (multiData.size < 2 || multiData.size > 20) {
+            return Invalid("Invalid MultiData size ${multiData.size}")
+        }
+
+        for (index in 0 until multiData.size) {
+            val (type, bytes) = multiData[index]
+            val data = TxData.deserialize(type, bytes.array)
+            val status = data.processImpl(tx, hash, index + 1, ledger)
+            if (status != Accepted) {
+                return notAccepted("MultiData ${index + 1}", status)
+            }
+        }
+
         return Accepted
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): Bundle = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): MultiData = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 }

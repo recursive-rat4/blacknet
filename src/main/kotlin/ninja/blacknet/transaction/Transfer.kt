@@ -16,6 +16,7 @@ import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.Message
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
@@ -26,11 +27,10 @@ class Transfer(
         val message: Message
 ) : TxData {
     override fun getType() = TxType.Transfer
-    override fun involves(publicKey: PublicKey) = to == publicKey
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val account = ledger.get(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
@@ -41,6 +41,12 @@ class Transfer(
         toAccount.debit(ledger.height(), amount)
         ledger.set(to, toAccount)
         return Accepted
+    }
+
+    fun involves(publicKey: PublicKey) = to == publicKey
+
+    companion object {
+        fun deserialize(bytes: ByteArray): Transfer = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

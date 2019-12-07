@@ -14,6 +14,7 @@ import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.Json
 
 @Serializable
@@ -29,7 +30,7 @@ class TransactionNotification(
         val type: Int,
         val data: JsonElement
 ) {
-    constructor(tx: Transaction, hash: Hash, time: Long, size: Int) : this(
+    constructor(tx: Transaction, hash: Hash, time: Long, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
             hash.toString(),
             time,
             size,
@@ -39,7 +40,7 @@ class TransactionNotification(
             tx.referenceChain.toString(),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
-            TransactionInfo.data(tx.type, tx.data.array)
+            TransactionInfo.data(tx.type, tx.data.array, filter)
     )
 
     fun toJson() = Json.toJson(serializer(), this)

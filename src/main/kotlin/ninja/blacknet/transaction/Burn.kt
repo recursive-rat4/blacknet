@@ -12,11 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
-import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.serialization.toHex
+import ninja.blacknet.serialization.*
 
 @Serializable
 class Burn(
@@ -24,11 +20,10 @@ class Burn(
         val message: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.Burn
-    override fun involves(publicKey: PublicKey) = false
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (amount == 0L) {
             return Invalid("Invalid amount")
         }
@@ -40,6 +35,10 @@ class Burn(
         ledger.set(tx.from, account)
         ledger.addSupply(-amount)
         return Accepted
+    }
+
+    companion object {
+        fun deserialize(bytes: ByteArray): Burn = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

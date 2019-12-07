@@ -12,7 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.WalletDB
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
@@ -24,7 +24,6 @@ class UnlockHTLC(
         var signatureB: Signature
 ) : TxData {
     override fun getType() = TxType.UnlockHTLC
-    override fun involves(publicKey: PublicKey) = WalletDB.involves(id, publicKey)
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
 
@@ -43,7 +42,7 @@ class UnlockHTLC(
         return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             return Invalid("HTLC not found")
@@ -60,5 +59,11 @@ class UnlockHTLC(
         ledger.set(htlc.to, toAccount)
         ledger.removeHTLC(id)
         return Accepted
+    }
+
+    fun involves(ids: Set<Hash>) = ids.contains(id)
+
+    companion object {
+        fun deserialize(bytes: ByteArray): UnlockHTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 }

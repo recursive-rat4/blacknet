@@ -12,13 +12,11 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
+import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB.forkV2
-import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
-import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.serialization.toHex
+import ninja.blacknet.serialization.*
 
 @Serializable
 class CreateHTLC(
@@ -30,11 +28,12 @@ class CreateHTLC(
         val hashLock: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.CreateHTLC
-    override fun involves(publicKey: PublicKey) = to == publicKey
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+    fun id(hash: Hash, dataIndex: Int) = if (forkV2()) Blake2b.hasher { this + hash.bytes + dataIndex } else hash
+
+    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (!HTLC.isValidTimeLockType(timeLockType)) {
             return Invalid("Unknown time lock type $timeLockType")
         }
@@ -58,10 +57,17 @@ class CreateHTLC(
             return status
         }
 
+        val id = id(hash, dataIndex)
         val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLockType, timeLock, hashType, hashLock)
         ledger.set(tx.from, account)
-        ledger.addHTLC(hash, htlc)
+        ledger.addHTLC(id, htlc)
         return Accepted
+    }
+
+    fun involves(publicKey: PublicKey) = to == publicKey
+
+    companion object {
+        fun deserialize(bytes: ByteArray): CreateHTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
     }
 
     @Suppress("unused")

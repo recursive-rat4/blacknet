@@ -50,7 +50,7 @@ class Transactions(
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
-                is Invalid -> connection.dos("${status.reason} $hash")
+                is Invalid -> connection.dos("$status $hash")
                 InFuture -> logger.debug { "In future $hash" }
                 NotOnThisChain -> logger.debug { "Not on this chain $hash" }
                 AlreadyHave -> logger.debug { "Already have $hash" }

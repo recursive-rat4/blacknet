@@ -14,17 +14,21 @@ Blacknet.template = {
 
     transaction: async function (tx, account) {
 
-        let amount = tx.data.amount, tmpl, txfee, type, status, txaccount = tx.from;
+        //TODO MultiData
+        let dataType = tx.data[0].type;
+        let txData = tx.data[0].data;
 
-        type = Blacknet.getTxType(tx);
+        let amount = txData.amount, tmpl, txfee, type, status, txaccount = tx.from;
+
+        type = Blacknet.getTxTypeName(dataType);
         txfee = Blacknet.getFormatBalance(tx.fee);
 
-        if (tx.type == 254) {
+        if (dataType == 254) {
             amount = tx.fee;
             txfee = '';
         }
-        if (tx.type == 0 && tx.from == account) {
-            txaccount = tx.data.to;
+        if (dataType == 0 && tx.from == account) {
+            txaccount = txData.to;
         }
 
         if (tx.time * 1000 < Date.now() - 1000 * 10) {
@@ -36,30 +40,30 @@ Blacknet.template = {
         let txText = type, linkText = '';
 
 
-        if(tx.type == 0){
+        if(dataType == 0){
             let text = account == tx.from ? "Sent to" : 'Received from';
             txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">${text}</a>`
         }
 
-        if(tx.type == 2 || tx.type == 3){
+        if(dataType == 2 || dataType == 3){
             txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">
             ${type} ${account == tx.from ? "to" : 'from'}</a>`;
         }
 
-        if(tx.type < 254 && tx.type != 0 && tx.type != 2 && tx.type != 3){
+        if(dataType != 254 && dataType != 0 && dataType != 2 && dataType != 3){
             txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">${type}</a>`;
         }
 
-        if(tx.type == 0 || tx.type == 2 || tx.type == 3){
+        if(dataType == 0 || dataType == 2 || dataType == 3){
 
             if(account == tx.from){
-                linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.data.to}">${tx.data.to}</a>`;
+                linkText = `<a target="_blank" href="${Blacknet.explorer.account + txData.to}">${txData.to}</a>`;
             }else{
                 linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.from}">${tx.from}</a>`;
             }
         }
 
-        if(tx.type != 0 && tx.type != 2 && tx.type != 3){
+        if(dataType != 0 && dataType != 2 && dataType != 3){
 
             if(tx.from != 'genesis'){
                 linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.from}">${tx.from}</a>`;
@@ -82,10 +86,10 @@ Blacknet.template = {
 
         let node = $(tmpl), msgNode = node.find('.message'), message;
 
-        if (tx.type == 0) {
-            if (tx.data.message.type == 0) {
-                message = tx.data.message.message;
-            } else if (tx.data.message.type == 1) {
+        if (dataType == 0) {
+            if (txData.message.type == 0) {
+                message = txData.message.message;
+            } else if (txData.message.type == 1) {
                 message = "Encrypted message";
             } else {
                 message = "Non-standard message";
@@ -94,7 +98,7 @@ Blacknet.template = {
         }
 
         if (!message) node.find('.msg_text').hide();
-        if (tx.type == 254) {
+        if (dataType == 254) {
             node.find('.sign_text,.to,.fee').hide();
         }
         return node;

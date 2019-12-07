@@ -40,6 +40,11 @@ interface Ledger {
         if (!checkFee(size, tx.fee)) {
             return Invalid("Too low fee ${tx.fee}")
         }
+        if (tx.type == TxType.MultiData.type) {
+            if (!forkV2()) {
+                return Invalid("MultiData before forkV2")
+            }
+        }
         if (tx.type == TxType.WithdrawFromLease.type) {
             if (!forkV2()) {
                 return Invalid("WithdrawFromLease before forkV2")

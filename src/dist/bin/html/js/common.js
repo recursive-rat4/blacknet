@@ -375,7 +375,8 @@ void function () {
 
         if (type) {
             renderArray = txArray.filter(function (tx) {
-                return tx.type == type && tx.height > 0;
+                //TODO MultiData
+                return tx.types[0].type == type && tx.height > 0;
             });
         }
 
@@ -422,7 +423,7 @@ void function () {
             return;
         }
 
-        tx = await Blacknet.getPromise('/wallet/transaction/' + data.hash + '/false', 'json');
+        tx = await Blacknet.getPromise('/wallet/transaction/' + account + '/' + data.hash + '/false', 'json');
         tx.height = data.height;
         tx.time = data.time;
         Blacknet.txdb[data.height + data.time] = tx;
@@ -482,7 +483,7 @@ void function () {
         let confirmations = Blacknet.ledger.height - height + 1, statusText = 'Confirmed';
         if (height == 0) {
 
-            confirmations = await Blacknet.getPromise('/wallet/confirmations/' + hash);
+            confirmations = await Blacknet.getPromise('/wallet/confirmations/' + account + '/' + hash);
             statusText = `${confirmations} Confirmations`;
 
         } else if (confirmations < DEFAULT_CONFIRMATIONS) {
@@ -492,25 +493,37 @@ void function () {
         return statusText;
     };
 
-    Blacknet.getTxType = function (tx) {
+    Blacknet.getTxTypeName = function (type) {
+        let typeNames = [
+            "Transfer",
+            "Burn",
+            "Lease",
+            "CancelLease",
+            "Bundle",
+            "CreateHTLC",
+            "UnlockHTLC",
+            "RefundHTLC",
+            "SpendHTLC",
+            "CreateMultisig",
+            "SpendMultisig",
+            "WithdrawFromLease",
+            "ClaimHTLC"
+        ];
 
-        let txType = ["Transfer", "Burn", "Lease", "CancelLease", "Bundle", "CreateHTLC",
-            "UnlockHTLC", "RefundHTLC", "SpendHTLC", "CreateMultisig", "SpendMultisig"];
+        let name = typeNames[type];
 
-        let type = txType[tx.type];
-
-        if (tx.type == 254) {
-            type = 'Generated';
-        }
-
-        if (tx.type == 0) {
+        if (type == 16) {
+            name = "MultiData";
+        } else if (type == 254) {
+            name = "Generated";
+        } else if (type == 0) {
             if (tx.from == account) {
-                type = "Sent to";
+                name = "Sent to";
             } else {
-                type = "Received from";
+                name = "Received from";
             }
         }
-        return type;
+        return name;
     };
 
     Blacknet.getFormatBalance = function (balance) {
@@ -522,7 +535,12 @@ void function () {
 
         let notification = notificationNode.clone();
         let time = Blacknet.unix_to_local_time(tx.time);
-        let type = Blacknet.getTxType(tx), amount = Blacknet.getFormatBalance(tx.data.amount);;
+
+        //TODO MultiData
+        let dataType = tx.data[0].type;
+        let txData = tx.data[0].data;
+
+        let type = Blacknet.getTxTypeName(dataType), amount = Blacknet.getFormatBalance(txData.amount);;
 
         if (type == 'Generated') {
             amount = Blacknet.getFormatBalance(tx.fee);

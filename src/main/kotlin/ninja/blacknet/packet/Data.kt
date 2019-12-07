@@ -55,7 +55,7 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
-                is Invalid -> connection.dos("${status.reason} ${type.name} $hash")
+                is Invalid -> connection.dos("$status ${type.name} $hash")
                 InFuture -> logger.debug { "in future ${type.name} $hash" }
                 NotOnThisChain -> logger.debug { "not on this chain ${type.name} $hash" }
                 AlreadyHave -> logger.debug { "already have  ${type.name} $hash" }
