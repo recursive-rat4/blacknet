@@ -15,6 +15,7 @@ $(document).ready(function () {
     let blockStack = [];
     let Mini_Lease = 1000;
 
+
     menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
     
     
@@ -102,19 +103,14 @@ $(document).ready(function () {
             $('#sign_message').focus()
             return
         }
-        let postdata = {
-            mnemonic: mnemonic,
-            message: message
-        };
-        Blacknet.post('/signmessage', postdata, function(data){
-            $('#sign_result').text(data).parent().removeClass("hidden")
-        });
+
+        let signedMessage = blacknetjs.SignMessage(mnemonic, message);
+        $('#sign_result').text(signedMessage).parent().removeClass("hidden")
     }
     function verify() {
         let account = $('#verify_account').val();
         let signature = $('#verify_signature').val();
         let message = $('#verify_message').val();
-        let url = "/verifymessage/" + account + "/" + signature + "/" + message + "/";
         if(!Blacknet.verifyAccount(account)) {
             Blacknet.message("Invalid account", "warning")
             $('#verify_account').focus()
@@ -130,9 +126,9 @@ $(document).ready(function () {
             $('#verify_message').focus()
             return
         }
-        Blacknet.get(url, function(data){
-            $('#verify_result').text(data).parent().removeClass("hidden")
-        });
+
+        let result = blacknetjs.VerifyMessage(account, signature, message);
+        $('#verify_result').text(result).parent().removeClass("hidden")
     }
     function mnemonic_info() {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
