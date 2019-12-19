@@ -271,11 +271,12 @@ $(document).ready(function () {
     async function newAccount() {
         $('.account.dialog').hide();
         $('.newaccount.dialog').show();
-        let wordlist = "english";
-        let url = '/generateaccount/' + wordlist;
-        let mnemonicInfo = await Blacknet.getPromise(url, 'json');
-        $('#new_account_text').val(mnemonicInfo.address);
-        $('#new_mnemonic').val(mnemonicInfo.mnemonic);
+
+        let mnemonic = blacknetjs.Mnemonic();
+        let address = blacknetjs.Address(mnemonic);
+
+        $('#new_account_text').val(address);
+        $('#new_mnemonic').val(mnemonic);
         window.isGenerated = true;
     }
 
