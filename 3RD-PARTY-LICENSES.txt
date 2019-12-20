@@ -61,3 +61,6 @@ MIT license: https://github.com/MikeMcl/bignumber.js/blob/master/LICENCE
 
 Font Awesome https://fontawesome.com/v4.7.0/ is licensed under the
 Font Awesome Free License: https://github.com/FortAwesome/Font-Awesome/blob/master/LICENSE.txt
+
+The buffer module from node.js, for the browser https://github.com/feross/buffer
+MIT license: https://github.com/feross/buffer/blob/master/LICENSE
