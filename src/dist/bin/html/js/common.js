@@ -20,6 +20,9 @@ void function () {
     const notificationNode = $('.notification.tx').first();
     const txList = $('#tx-list');
 
+    const bln = new blacknetjs();
+    bln.jsonrpc.endpoint = 'http://'+ location.host;
+
     Blacknet.explorer = {
         block: 'https://blnscan.io/',
         blockHeight: 'https://blnscan.io/',
@@ -59,12 +62,14 @@ void function () {
 
                 let account = dialogAccount.find('.account_text').val();
                 account = $.trim(account);
+                let getaccount = blacknetjs.Address(account);
 
                 if (Blacknet.verifyAccount(account)) {
                     localStorage.account = account;
                 } else if (Blacknet.verifyMnemonic(account)) {
-                    account = await Blacknet.mnemonicToAddress(account);
-                    localStorage.account = account;
+                    if(getaccount){
+                        localStorage.account = getaccount;
+                    }
                 } else {
                     Blacknet.message("Invalid account/mnemonic", "warning")
                     dialogAccount.find('.account_text').focus()
@@ -239,7 +244,7 @@ void function () {
         });
     };
 
-    Blacknet.sendMoney = function (mnemonic, amount, to, message, encrypted, callback) {
+    Blacknet.sendMoney = function (mnemonic, amount, to, message, encrypted) {
 
         let fee = 100000, amountText;
 
@@ -248,46 +253,71 @@ void function () {
 
         Blacknet.confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
             to + '\n\n0.001 BLN added as transaction fee?', function (flag) {
-                if (flag) {
+                if (!flag)  return;
 
-                    let postdata = {
-                        mnemonic: mnemonic,
-                        amount: amount,
-                        fee: fee,
-                        to: to,
-                        message: message,
-                        encrypted: encrypted
-                    };
-                    Blacknet.post('/transfer', postdata, callback);
-                }
+                
+                let from = blacknetjs.Address(mnemonic);
+                
+                bln.jsonrpc.transfer(mnemonic, {
+                    fee: fee,
+                    amount: amount,
+                    message: message,
+                    from: from,
+                    to: to,
+                    encrypted: encrypted
+                }).then((res)=>{
+
+                    if(res.body.length == 64){
+                        $('#transfer_result').text(res.body).parent().removeClass("hidden");
+                    }else{
+                        Blacknet.message(res.body, "warning");
+                    }
+                    Blacknet.clearPassWordDialog();
+                });
             })
     };
+    Blacknet.clearPassWordDialog = function() {
+        mask.hide();
+        dialogPassword.hide().find('.confirm').unbind();
+        dialogPassword.find('.mnemonic').val('');
+    }
 
-    Blacknet.lease = function (mnemonic, type, amount, to, height, callback) {
+    Blacknet.lease = function (mnemonic, type, amount, to, height) {
 
         let fee = 100000, amountText, type_text = type == 'lease' ? 'lease' : 'cancel lease';
 
+        let from = blacknetjs.Address(mnemonic);
+
         amountText = new BigNumber(amount).toFixed(8);
         amount = new BigNumber(amount).times(1e8).toNumber();
+        let data = {
+            fee: fee,
+            amount: amount,
+            from: from,
+            to: to
+        };
 
         Blacknet.confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
             ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?', function (flag) {
-                if (flag) {
+                if (!flag) return;
+                
+                if(type == 'cancelLease') data.height = height;
+                
+                bln.jsonrpc[type](mnemonic, data).then((res)=>{
 
-                    let postdata = {
-                        mnemonic: mnemonic,
-                        amount: amount,
-                        fee: fee,
-                        to: to
-                    };
-
-                    if (height) {
-                        postdata.height = height;
+                    if(res.body.length == 64 && type == 'cancelLease' ){
+                        Blacknet.message("Cancel Lease Success", "success");
+                        $('#cancel_lease_result').text(res.body).parent().removeClass("hidden")
+                        Blacknet.renderLease();
+                    }else if(res.body.length == 64 && type == 'lease'){
+                        Blacknet.message("Lease Success", "success");
+                        $('#lease_result').text(res.body).parent().removeClass("hidden")
+                    }else{
+                        Blacknet.message(res.body, "warning");
                     }
-
-                    Blacknet.post('/' + type, postdata, callback);
-                }
-            })
+                    Blacknet.clearPassWordDialog();
+                });
+            });
     };
 
     Blacknet.wait = function (timeout) {

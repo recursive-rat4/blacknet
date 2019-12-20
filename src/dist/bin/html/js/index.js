@@ -15,6 +15,7 @@ $(document).ready(function () {
     let blockStack = [];
     let Mini_Lease = 1000;
 
+
     menu.find('a[data-index="' + hash + '"]').parent().addClass('active');
     
     
@@ -102,19 +103,14 @@ $(document).ready(function () {
             $('#sign_message').focus()
             return
         }
-        let postdata = {
-            mnemonic: mnemonic,
-            message: message
-        };
-        Blacknet.post('/signmessage', postdata, function(data){
-            $('#sign_result').text(data).parent().removeClass("hidden")
-        });
+
+        let signedMessage = blacknetjs.SignMessage(mnemonic, message);
+        $('#sign_result').text(signedMessage).parent().removeClass("hidden")
     }
     function verify() {
         let account = $('#verify_account').val();
         let signature = $('#verify_signature').val();
         let message = $('#verify_message').val();
-        let url = "/verifymessage/" + account + "/" + signature + "/" + message + "/";
         if(!Blacknet.verifyAccount(account)) {
             Blacknet.message("Invalid account", "warning")
             $('#verify_account').focus()
@@ -130,9 +126,9 @@ $(document).ready(function () {
             $('#verify_message').focus()
             return
         }
-        Blacknet.get(url, function(data){
-            $('#verify_result').text(data).parent().removeClass("hidden")
-        });
+
+        let result = blacknetjs.VerifyMessage(account, signature, message);
+        $('#verify_result').text(result).parent().removeClass("hidden")
     }
     function mnemonic_info() {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
@@ -202,11 +198,8 @@ $(document).ready(function () {
 
         input_mnemonic(function (mnemonic) {
 
-            Blacknet.sendMoney(mnemonic, amount, to, message, encrypted, function (data) {
-                $('#transfer_result').text(data).parent().removeClass("hidden")
-                clearPassWordDialog();
-            });
-        })
+            Blacknet.sendMoney(mnemonic, amount, to, message, encrypted);
+        });
     }
 
     function lease() {
@@ -230,11 +223,8 @@ $(document).ready(function () {
         }
 
         input_mnemonic(function (mnemonic) {
-            Blacknet.lease(mnemonic, 'lease', amount, to, 0, function (data) {
-                $('#lease_result').text(data).parent().removeClass("hidden")
-                clearPassWordDialog();
-            });
-        })
+            Blacknet.lease(mnemonic, 'lease', amount, to, 0);
+        });
     }
 
 
@@ -245,12 +235,7 @@ $(document).ready(function () {
         let height = data.height;
 
         input_mnemonic(function (mnemonic) {
-            Blacknet.lease(mnemonic, 'cancellease', amount, to, height, function (data) {
-                Blacknet.message("Cancel Lease Success", "success");
-                $('#cancel_lease_result').text(data).parent().removeClass("hidden")
-                clearPassWordDialog();
-                Blacknet.renderLease();
-            });
+            Blacknet.lease(mnemonic, 'cancelLease', amount, to, height);
         })
     }
 
@@ -275,11 +260,13 @@ $(document).ready(function () {
     async function newAccount() {
         $('.account.dialog').hide();
         $('.newaccount.dialog').show();
-        let wordlist = "english";
-        let url = '/generateaccount/' + wordlist;
-        let mnemonicInfo = await Blacknet.getPromise(url, 'json');
-        $('#new_account_text').val(mnemonicInfo.address);
-        $('#new_mnemonic').val(mnemonicInfo.mnemonic);
+
+        let mnemonic = blacknetjs.Mnemonic();
+        let address = blacknetjs.Address(mnemonic);
+
+        $('#new_account_text').val(address);
+        $('#new_mnemonic').val(mnemonic);
+        localStorage.account = address;
         window.isGenerated = true;
     }
 

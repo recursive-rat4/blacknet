@@ -29,6 +29,7 @@ import io.ktor.request.receiveParameters
 import io.ktor.response.respond
 import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
+import io.ktor.util.hex
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
@@ -1181,6 +1182,58 @@ fun Application.APIServer() {
                 call.respond(false.toString())
             }
         }
+        post("/api/v2/serialize/transfer") {
+            val parameters = call.receiveParameters()
+            val from = Address.decode(parameters["from"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid from")
+            val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+            // signed message does not supported currently
+            val message = Message.create(parameters["message"], Message.PLAIN, null, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "Failed to create message")
+            val blockHash = parameters["blockhash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid blockhash") }
+
+            APIServer.txMutex.withLock {
+                val seq = WalletDB.getSequence(from)
+                val data = Transfer(amount, to, message).serialize()
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
+                call.respond(HttpStatusCode.OK, hex(tx.serialize()))
+            }
+        }
+
+        post("/api/v2/serialize/lease") {
+            val parameters = call.receiveParameters()
+            val from = Address.decode(parameters["from"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid from")
+            val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+            val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+
+            APIServer.txMutex.withLock {
+                val seq = WalletDB.getSequence(from)
+                val data = Lease(amount, to).serialize()
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Lease.type, data)
+                call.respond(HttpStatusCode.OK, hex(tx.serialize()))
+            }
+        }   
+
+        post("/api/v2/serialize/cancellease") {
+            val parameters = call.receiveParameters()
+            val from = Address.decode(parameters["from"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid from")
+            val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+            val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
+            val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+
+            APIServer.txMutex.withLock {
+                val seq = WalletDB.getSequence(from)
+                val data = CancelLease(amount, to, height).serialize()
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.CancelLease.type, data)
+                call.respond(HttpStatusCode.OK, hex(tx.serialize()))
+            }
+        }
+
+
     }
 }
 
