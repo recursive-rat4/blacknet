@@ -14,7 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ninja.blacknet.Runtime
-import ninja.blacknet.serialization.toHex
+import ninja.blacknet.serialization.hex
 import java.io.File
 
 object B2Sum {
@@ -46,7 +46,7 @@ object B2Sum {
                 stream.close()
                 val bytes = ByteArray(ninja.blacknet.crypto.Blake2b.HASH_SIZE)
                 b2.digest(bytes, 0)
-                println("${bytes.toHex(true)} $arg")
+                println("${hex(bytes, false)} $arg")
             }
 
             jobs.add(job)

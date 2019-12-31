@@ -12,10 +12,13 @@ package ninja.blacknet.network
 import ninja.blacknet.Version
 import kotlin.math.min
 
-object Bip14 {
-    const val MIN_VERSION = 8
-
-    val agent = "/${Version.NAME}:${Version.version}/"
+/**
+ * 用户代理字符串
+ *
+ * Bitcoin improvement proposal 14 "Protocol Version and User Agent"
+ */
+object UserAgent {
+    val string = "/${Version.name}:${Version.version}/"
 
     fun sanitize(string: String): String {
         val length = min(string.length, MAX_LENGTH)

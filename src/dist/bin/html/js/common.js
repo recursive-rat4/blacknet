@@ -346,14 +346,14 @@ void function () {
         }
 
         txs.sort(function (x, y) {
-            return y.height - x.height;
+            return y.time - x.time;
         });
 
         return txs;
     }
 
     Blacknet.initRecentTransactions = async function () {
-        let transactions = await Blacknet.getPromise('/wallet/transactions/' + account, 'json');
+        let transactions = await Blacknet.getPromise('/wallet/' + account + '/transactions', 'json');
         let array = [];
 
         array = Blacknet.serializeTx(transactions);
@@ -423,7 +423,7 @@ void function () {
             return;
         }
 
-        tx = await Blacknet.getPromise('/wallet/transaction/' + account + '/' + data.hash + '/false', 'json');
+        tx = await Blacknet.getPromise('/wallet/' + account + '/transaction/' + data.hash + '/false', 'json');
         tx.height = data.height;
         tx.time = data.time;
         Blacknet.txdb[data.height + data.time] = tx;
@@ -467,7 +467,7 @@ void function () {
 
     Blacknet.renderLease = async function () {
 
-        let outLeases = await Blacknet.getPromise('/wallet/outleases/' + account);
+        let outLeases = await Blacknet.getPromise('/wallet/' + account + '/outleases');
         $('.cancel_lease_tab').show();
 
         if (outLeases.length > 0) {
@@ -483,9 +483,8 @@ void function () {
         let confirmations = Blacknet.ledger.height - height + 1, statusText = 'Confirmed';
         if (height == 0) {
 
-            confirmations = await Blacknet.getPromise('/wallet/confirmations/' + account + '/' + hash);
+            confirmations = await Blacknet.getPromise('/wallet/' + account + '/confirmations/' + hash);
             statusText = `${confirmations} Confirmations`;
-
         } else if (confirmations < DEFAULT_CONFIRMATIONS) {
 
             statusText = `${confirmations} Confirmations`;

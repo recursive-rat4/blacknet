@@ -11,8 +11,13 @@ package ninja.blacknet.crypto
 
 import com.google.common.io.Resources
 
-object Bip39 {
-    fun wordlist(name: String): Array<String>? {
+/**
+ * Wordlists for mnemonic.
+ *
+ * Bitcoin improvement proposal 39 "Mnemonic code for generating deterministic keys"
+ */
+object Wordlists {
+    fun get(name: String): Array<String>? {
         return when (name) {
             "english" -> ENGLISH
             "chinese_simplified" -> CHINESE_SIMPLIFIED

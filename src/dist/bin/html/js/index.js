@@ -143,11 +143,8 @@ $(document).ready(function () {
         }
         Blacknet.post('/mnemonic', postdata, function (data) {
             let html = '';
-            data.mnemonic = '[hidden]';
-
-            html += 'mnemonic: ' + data.mnemonic;
-            html += '\naddress: ' + data.address;
-            html += '\npublicKey: ' + data.publicKey;
+            html += 'Address: ' + data.address;
+            html += '\nPublic Key: ' + data.publicKey;
             $('#mnemonic_info_result').text(html).parent().removeClass("hidden")
         });
     }

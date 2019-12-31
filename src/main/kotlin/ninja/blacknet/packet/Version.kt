@@ -27,7 +27,7 @@ class Version(
         private val nonce: Long,
         private val agent: String,
         private val feeFilter: Long,
-        private val chain: ChainAnnounce
+        private val chainAnnounce: ChainAnnounce
 ) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
@@ -42,12 +42,12 @@ class Version(
         connection.timeOffset = time - Runtime.time()
         connection.peerId = Node.newPeerId()
         connection.version = version
-        connection.agent = Bip14.sanitize(agent)
+        connection.agent = UserAgent.sanitize(agent)
         connection.feeFilter = feeFilter
-        connection.lastChain = chain
+        connection.lastChain = chainAnnounce
 
         if (version < Node.minVersion) {
-            logger.info("${connection.debugName(true)} obsolete protocol version $version $agent")
+            logger.info("Obsolete protocol version $version ${connection.debugName()} $agent")
             connection.close()
             return
         }
@@ -67,6 +67,6 @@ class Version(
             logger.info("Connected to ${connection.debugName()} $agent")
         }
 
-        ChainFetcher.offer(connection, chain.chain, chain.cumulativeDifficulty)
+        ChainFetcher.offer(connection, chainAnnounce)
     }
 }

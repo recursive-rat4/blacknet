@@ -27,7 +27,6 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
@@ -46,7 +45,7 @@ object Node {
     const val NETWORK_TIMEOUT = 90
     const val magic = 0x17895E7D
     const val version = 12
-    const val minVersion = 7
+    const val minVersion = 8
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
@@ -164,7 +163,7 @@ object Node {
     fun sendVersion(connection: Connection, nonce: Long) {
         val state = LedgerDB.state()
         val chain = ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
-        val v = Version(magic, version, Runtime.time(), nonce, Bip14.agent, minTxFee, chain)
+        val v = Version(magic, version, Runtime.time(), nonce, UserAgent.string, minTxFee, chain)
         connection.sendPacket(v)
     }
 

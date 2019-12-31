@@ -9,7 +9,6 @@
 
 package ninja.blacknet.db
 
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.*
@@ -86,48 +85,46 @@ object WalletDB {
             throw RuntimeException("Unknown database version $version")
         }
 
-        Runtime.launch { broadcaster() }
+        Runtime.rotate(::broadcaster)
     }
 
     private suspend fun broadcaster() {
-        while (true) {
-            delay(DELAY)
+        delay(DELAY)
 
-            if (Node.isOffline())
-                continue
+        if (Node.isOffline())
+            return
 
-            val currTime = Runtime.time()
-            val inv = UnfilteredInvList()
+        val currTime = Runtime.time()
+        val inv = UnfilteredInvList()
 
-            mutex.withLock {
-                wallets.forEach { (_, wallet) ->
-                    val unconfirmed = ArrayList<Triple<Hash, ByteArray, Int>>()
+        mutex.withLock {
+            wallets.forEach { (_, wallet) ->
+                val unconfirmed = ArrayList<Triple<Hash, ByteArray, Int>>()
 
-                    wallet.transactions.forEach { (hash, txData) ->
-                        if (txData.height == 0 && txData.types[0].type != TxType.Generated.type) {
-                            val bytes = getTransactionImpl(hash)!!
-                            val tx = Transaction.deserialize(bytes)
-                            unconfirmed.add(Triple(hash, bytes, tx.seq))
-                        }
+                wallet.transactions.forEach { (hash, txData) ->
+                    if (txData.height == 0 && txData.types[0].type != TxType.Generated.type) {
+                        val bytes = getTransactionImpl(hash)!!
+                        val tx = Transaction.deserialize(bytes)
+                        unconfirmed.add(Triple(hash, bytes, tx.seq))
                     }
+                }
 
-                    unconfirmed.sortBy { (_, _, seq) -> seq }
+                unconfirmed.sortBy { (_, _, seq) -> seq }
 
-                    unconfirmed.forEach { (hash, bytes, _) ->
-                        val (status, fee) = TxPool.process(hash, bytes, currTime, false)
-                        if (status == Accepted || status == AlreadyHave) {
-                            inv.add(Pair(hash, fee))
-                        } else {
-                            logger.debug { "$status tx $hash" }
-                        }
+                unconfirmed.forEach { (hash, bytes, _) ->
+                    val (status, fee) = TxPool.process(hash, bytes, currTime, false)
+                    if (status == Accepted || status == AlreadyHave) {
+                        inv.add(Pair(hash, fee))
+                    } else {
+                        logger.debug { "$status tx $hash" }
                     }
                 }
             }
+        }
 
-            if (inv.isNotEmpty()) {
-                logger.info("Broadcasting ${inv.size} transactions")
-                Node.broadcastInv(inv)
-            }
+        if (inv.isNotEmpty()) {
+            logger.info("Broadcasting ${inv.size} transactions")
+            Node.broadcastInv(inv)
         }
     }
 
@@ -552,7 +549,7 @@ object WalletDB {
         return wallet
     }
 
-    fun getCheckpoint(): Hash {
+    fun referenceChain(): Hash {
         return if (!PoS.guessInitialSynchronization())
             LedgerDB.state().rollingCheckpoint
         else

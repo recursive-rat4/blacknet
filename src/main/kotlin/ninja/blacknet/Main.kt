@@ -39,7 +39,7 @@ object Main {
         LogManager.getLogManager().readConfiguration(inStream)
         inStream.close()
 
-        logger.info("Starting Blacknet node")
+        logger.info("Starting ${Version.name} node")
         logger.info("CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}")
         logger.info("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}")
         logger.info("VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}")

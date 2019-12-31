@@ -30,7 +30,7 @@ class CreateMultisig(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    fun id(hash: Hash, dataIndex: Int) = if (forkV2()) Blake2b.hasher { this + hash.bytes + dataIndex } else hash
+    fun id(hash: Hash, dataIndex: Int) = if (forkV2()) Blake2b.hasher { this + hash + dataIndex } else hash
 
     fun sign(from: PublicKey, seq: Int, dataIndex: Int, privateKey: PrivateKey): Boolean {
         val publicKey = privateKey.toPublicKey()
@@ -45,9 +45,9 @@ class CreateMultisig(
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = copy.serialize()
         return if (forkV2())
-            Blake2b.hasher { this + from.bytes + seq + dataIndex + bytes }
+            Blake2b.hasher { this + from + seq + dataIndex + bytes }
         else
-            Blake2b.hasher { this + from.bytes + seq + bytes }
+            Blake2b.hasher { this + from + seq + bytes }
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {

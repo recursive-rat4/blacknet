@@ -13,8 +13,8 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.Version
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.network.Bip14
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.UserAgent
 
 @Serializable
 class NodeInfo(
@@ -31,7 +31,7 @@ class NodeInfo(
             val listening = Node.listenAddress.mapToList { it.toString() }
             val warnings = BlockDB.warnings() + LedgerDB.warnings() + Node.warnings()
             return NodeInfo(
-                    Bip14.agent,
+                    UserAgent.string,
                     Version.version,
                     Node.version,
                     Node.outgoing(),

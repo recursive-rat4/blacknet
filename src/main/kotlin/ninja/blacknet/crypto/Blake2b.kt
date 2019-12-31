@@ -135,6 +135,22 @@ object Blake2b : (ByteArray) -> ByteArray {
             return this
         }
 
+        /**
+         * Adds [Hash] value.
+         */
+        operator fun plus(hash: Hash): Hasher {
+            blake2b.update(hash.bytes, 0, Hash.SIZE)
+            return this
+        }
+
+        /**
+         * Adds [PublicKey] value.
+         */
+        operator fun plus(publicKey: PublicKey): Hasher {
+            blake2b.update(publicKey.bytes, 0, PublicKey.SIZE)
+            return this
+        }
+
         internal fun hash(): Hash {
             val bytes = ByteArray(Hash.SIZE)
             blake2b.digest(bytes, 0)

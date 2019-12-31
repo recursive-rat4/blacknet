@@ -11,6 +11,11 @@ package ninja.blacknet.crypto
 
 import kotlin.experimental.and
 
+/**
+ * Bech32 address format.
+ *
+ * Bitcoin improvement proposal 173 "Base32 address format for native v0-16 witness outputs"
+ */
 object Bech32 {
     private const val CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 

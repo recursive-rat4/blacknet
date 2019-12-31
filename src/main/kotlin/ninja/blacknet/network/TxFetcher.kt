@@ -10,7 +10,6 @@
 package ninja.blacknet.network
 
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.DataType
 import ninja.blacknet.core.TxPool
@@ -26,8 +25,8 @@ object TxFetcher {
     private val requested = SynchronizedHashMap<Hash, Long>()
 
     init {
-        Runtime.launch { fetcher() }
-        Runtime.launch { watchdog() }
+        Runtime.rotate(::implementation)
+        Runtime.rotate(::watchdog)
     }
 
     fun offer(connection: Connection, list: List<Hash>) {
@@ -38,28 +37,30 @@ object TxFetcher {
         return requested.remove(hash) != null
     }
 
-    private suspend fun fetcher() {
-        for ((connection, list) in inventoryChannel) {
-            val request = ArrayList<Hash>(list.size)
-            val currTime = Runtime.time()
+    private suspend fun implementation() {
+        val (connection, inventory) = inventoryChannel.receive()
 
-            for (hash in list) {
-                if (requested.containsKey(hash))
-                    continue
+        val request = ArrayList<Hash>(inventory.size)
+        val currTime = Runtime.time()
 
-                if (TxPool.isInteresting(hash)) {
-                    requested.put(hash, currTime)
-                    request.add(hash)
-                }
-
-                if (request.size == Transactions.MAX) {
-                    sendRequest(connection, request)
-                    request.clear()
-                }
+        for (hash in inventory) {
+            if (requested.containsKey(hash)) {
+                continue
             }
 
-            if (request.size != 0)
+            if (TxPool.isInteresting(hash)) {
+                requested.put(hash, currTime)
+                request.add(hash)
+            }
+
+            if (request.size == Transactions.MAX) {
                 sendRequest(connection, request)
+                request.clear()
+            }
+        }
+
+        if (request.size != 0) {
+            sendRequest(connection, request)
         }
     }
 
@@ -71,12 +72,10 @@ object TxFetcher {
     }
 
     private suspend fun watchdog() {
-        while (true) {
-            delay(Node.NETWORK_TIMEOUT)
+        delay(Node.NETWORK_TIMEOUT)
 
-            val currTime = Runtime.time()
-            val timeouted = requested.filterToKeyList { _, time -> currTime > time + Node.NETWORK_TIMEOUT }
-            requested.removeAll(timeouted)
-        }
+        val currTime = Runtime.time()
+        val timeouted = requested.filterToKeyList { _, time -> currTime > time + Node.NETWORK_TIMEOUT }
+        requested.removeAll(timeouted)
     }
 }

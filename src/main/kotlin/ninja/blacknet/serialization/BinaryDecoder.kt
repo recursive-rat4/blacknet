@@ -65,26 +65,39 @@ class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
     }
 
     fun decodeVarInt(): Int {
-        var ret = 0
+        var c = VARINT_MAX_SIZE + 1
+        var result = 0
         var v: Byte
         do {
-            v = input.readByte()
-            ret = ret shl 7 or (v and 0x7F.toByte()).toInt()
+            if (--c != 0) {
+                v = input.readByte()
+                result = result shl 7 or (v and 0x7F.toByte()).toInt()
+            } else {
+                throw RuntimeException("Too long VarInt")
+            }
         } while (v and 0x80.toByte() == 0.toByte())
-        return ret
+        return result
     }
 
     fun decodeVarLong(): Long {
-        var ret = 0L
+        var c = VARLONG_MAX_SIZE + 1
+        var result = 0L
         var v: Byte
         do {
-            v = input.readByte()
-            ret = ret shl 7 or (v and 0x7F.toByte()).toLong()
+            if (--c != 0) {
+                v = input.readByte()
+                result = result shl 7 or (v and 0x7F.toByte()).toLong()
+            } else {
+                throw RuntimeException("Too long VarLong")
+            }
         } while (v and 0x80.toByte() == 0.toByte())
-        return ret
+        return result
     }
 
     companion object {
+        const val VARINT_MAX_SIZE = 5
+        const val VARLONG_MAX_SIZE = 10
+
         fun fromBytes(bytes: ByteArray): BinaryDecoder {
             val buf = IoBuffer(ByteBuffer.wrap(bytes))
             buf.resetForRead()

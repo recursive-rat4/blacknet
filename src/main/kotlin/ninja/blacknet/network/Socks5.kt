@@ -20,6 +20,9 @@ import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.Closeable
 import kotlinx.io.core.writeFully
 
+/**
+ * 代理客户端
+ */
 object Socks5 {
     suspend fun connect(proxy: Address, destination: Address): Connection {
         val socket = aSocket(Network.selector).tcp().connect(proxy.getSocketAddress())

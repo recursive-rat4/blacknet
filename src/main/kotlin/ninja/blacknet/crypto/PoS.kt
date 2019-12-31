@@ -19,7 +19,7 @@ import ninja.blacknet.util.byteArrayOfInts
 import kotlin.math.min
 
 /**
- * Black proof of stake
+ * 黑网持有量證明
  */
 object PoS {
     fun mint(supply: Long): Long {
@@ -27,7 +27,7 @@ object PoS {
     }
 
     fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
-        return Blake2b.hasher { this + nxtrng.bytes + generator.bytes }
+        return Blake2b.hasher { this + nxtrng + generator }
     }
 
     fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInt, prevTime: Long, stake: Long): Status {
@@ -37,7 +37,7 @@ object PoS {
         if (time % TIME_SLOT != 0L) {
             return Invalid("Invalid time slot")
         }
-        val hash = Blake2b.hasher { this + nxtrng.bytes + prevTime + generator.bytes + time }
+        val hash = Blake2b.hasher { this + nxtrng + prevTime + generator + time }
         val valid = BigInt(hash) < difficulty * stake
         return if (valid)
             Accepted

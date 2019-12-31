@@ -42,16 +42,16 @@ Blacknet.template = {
 
         if(dataType == 0){
             let text = account == tx.from ? "Sent to" : 'Received from';
-            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">${text}</a>`
+            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash}">${text}</a>`
         }
 
         if(dataType == 2 || dataType == 3){
-            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">
+            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash}">
             ${type} ${account == tx.from ? "to" : 'from'}</a>`;
         }
 
         if(dataType != 254 && dataType != 0 && dataType != 2 && dataType != 3){
-            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash.toLowerCase()}">${type}</a>`;
+            txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash}">${type}</a>`;
         }
 
         if(dataType == 0 || dataType == 2 || dataType == 3){

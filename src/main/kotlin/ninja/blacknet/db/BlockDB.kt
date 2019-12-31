@@ -17,6 +17,7 @@ import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
+import ninja.blacknet.db.LedgerDB.forkV2
 import java.util.Collections
 
 private val logger = KotlinLogging.logger {}
@@ -74,9 +75,18 @@ object BlockDB {
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
             val percent = 100 * state.upgraded / PoS.MATURITY
             if (percent > 9)
-                logger.info("$percent% of blocks upgraded")
+                logger.info("$percent% upgraded to unknown version")
             else
-                logger.info("unknown version ${block.version.toUInt()}")
+                logger.info("Unknown version ${block.version.toUInt()}")
+        }
+        if (forkV2()) {
+            if (block.version.toUInt() < 2.toUInt()) {
+                return Invalid("Block version ${block.version.toUInt()} is no longer accepted")
+            }
+        } else {
+            val percent = 100 * state.forkV2 / PoS.MATURITY
+            if (percent > 9)
+                logger.info("$percent% upgraded to fork v2")
         }
         if (PoS.isTooFarInFuture(block.time)) {
             return InFuture

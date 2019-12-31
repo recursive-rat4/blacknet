@@ -12,7 +12,11 @@ package ninja.blacknet
 import com.google.common.io.Resources
 
 object Version {
-    const val NAME = "Blacknet"
+    const val name = "Blacknet"
 
     val version: String = Resources.toString(Resources.getResource("version.txt"), Charsets.US_ASCII)
+
+    const val http_server = "ktor"
+
+    val http_server_version: String = Resources.toString(Resources.getResource("ktor_version.txt"), Charsets.US_ASCII)
 }

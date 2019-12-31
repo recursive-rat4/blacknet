@@ -23,13 +23,14 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.packet.Blocks
+import ninja.blacknet.packet.ChainAnnounce
 import ninja.blacknet.packet.GetBlocks
 import ninja.blacknet.util.withTimeout
 
 private val logger = KotlinLogging.logger {}
 
 object ChainFetcher {
-    private val chains = Channel<Triple<Connection, Hash, BigInt>?>(16)
+    private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     @Volatile
     private var request: Deferred<Blocks>? = null
@@ -44,11 +45,7 @@ object ChainFetcher {
     private var undoRollback: List<Hash>? = null
 
     init {
-        Runtime.launch {
-            while (true) {
-                fetcher()
-            }
-        }
+        Runtime.rotate(::implementation)
     }
 
     fun isSynchronizing(): Boolean {
@@ -60,23 +57,23 @@ object ChainFetcher {
             request?.cancel(CancellationException("Connection closed"))
     }
 
-    fun offer(connection: Connection, chain: Hash, cumulativeDifficulty: BigInt) {
-        if (cumulativeDifficulty <= LedgerDB.state().cumulativeDifficulty)
+    fun offer(connection: Connection, announce: ChainAnnounce) {
+        if (announce.cumulativeDifficulty <= LedgerDB.state().cumulativeDifficulty)
             return
 
-        chains.offer(Triple(connection, chain, cumulativeDifficulty))
+        announces.offer(Pair(connection, announce))
     }
 
     suspend fun stakedBlock(hash: Hash, bytes: ByteArray): Pair<Status, Int> {
         val deferred = CompletableDeferred<Pair<Status, Int>>()
         stakedBlock = Triple(hash, bytes, deferred)
         request?.cancel(CancellationException("Staked new block"))
-        chains.offer(null)
+        announces.offer(null)
         return deferred.await()
     }
 
-    private suspend fun fetcher() {
-        val data = chains.receive()
+    private suspend fun implementation() {
+        val data = announces.receive()
 
         stakedBlock?.let { (hash, bytes, deferred) ->
             val status = BlockDB.mutex.withLock {
@@ -94,19 +91,19 @@ object ChainFetcher {
         if (data == null)
             return
 
-        val (connection, chain, cumulativeDifficulty) = data
+        val (connection, announce) = data
 
         var state = LedgerDB.state()
-        if (cumulativeDifficulty <= state.cumulativeDifficulty)
+        if (announce.cumulativeDifficulty <= state.cumulativeDifficulty)
             return
 
         BlockDB.mutex.withLock {
-            if (BlockDB.isRejectedImpl(chain)) {
+            if (BlockDB.isRejectedImpl(announce.chain)) {
                 connection.dos("Rejected chain")
                 return
             }
 
-            logger.info("Fetching $chain")
+            logger.info("Fetching ${announce.chain}")
             syncConnection = connection
             originalChain = state.blockHash
 
@@ -124,14 +121,10 @@ object ChainFetcher {
 
                         state = LedgerDB.state()
 
-                        if (chain == state.blockHash) {
-                            break
+                        if (announce.cumulativeDifficulty > state.cumulativeDifficulty) {
+                            requestBlocks(connection, state.blockHash, state.rollingCheckpoint)
                         } else {
-                            if (cumulativeDifficulty > state.cumulativeDifficulty) {
-                                requestBlocks(connection, state.blockHash, state.rollingCheckpoint)
-                            } else {
-                                break
-                            }
+                            break
                         }
                     } else if (answer.hashes.isNotEmpty()) {
                         if (rollbackTo != null || connectedBlocks != 0) {
@@ -185,13 +178,13 @@ object ChainFetcher {
         state = LedgerDB.state()
         if (state.blockHash != originalChain) {
             Node.announceChain(state.blockHash, state.cumulativeDifficulty, connection)
-            connection.lastBlockTime = Runtime.time()
+            connection.lastBlockTime = connection.lastPacketTime
         }
 
         if (connection.isClosed())
-            logger.info("${connection.debugName(true)} disconnected. Fetched $connectedBlocks blocks")
+            logger.info("Fetched $connectedBlocks blocks from disconnected ${connection.debugName()}")
         else
-            logger.info("Finished fetching $connectedBlocks blocks from ${connection.debugName()}")
+            logger.info("Fetched $connectedBlocks blocks from ${connection.debugName()}")
 
         recvChannel.poll()
         request?.let {
@@ -257,6 +250,6 @@ object ChainFetcher {
     }
 
     private fun timeout(): Int {
-        return if (!PoS.guessInitialSynchronization()) 5 else 10
+        return if (!PoS.guessInitialSynchronization()) 4 else 10
     }
 }

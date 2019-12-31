@@ -34,7 +34,7 @@ object UPnP {
         }
 
         logger.info("Sending port mapping request")
-        if (!gateway.addPortMapping(Config.netPort.toPort(), Config.netPort.toPort(), gateway.localAddress.hostAddress, PROTOCOL, Version.NAME)) {
+        if (!gateway.addPortMapping(Config.netPort.toPort(), Config.netPort.toPort(), gateway.localAddress.hostAddress, PROTOCOL, Version.name)) {
             logger.info("Port mapping failed")
             return
         }

@@ -11,7 +11,6 @@
 package ninja.blacknet.core
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
@@ -29,6 +28,9 @@ import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * 持有工
+ */
 object Staker {
     private class StakerState(
             val publicKey: PublicKey,
@@ -65,48 +67,46 @@ object Staker {
     }
 
     private var job: Job? = null
-    private suspend fun staker() {
-        while (true) {
-            delay(1)
+    private suspend fun implementation() {
+        delay(1)
 
-            if (Node.isOffline())
-                continue
+        if (Node.isOffline())
+            return
 
-            if (Node.isInitialSynchronization())
-                continue
+        if (Node.isInitialSynchronization())
+            return
 
-            var state = LedgerDB.state()
-            val currTime = Runtime.time()
-            val timeSlot = currTime - currTime % PoS.TIME_SLOT
-            if (timeSlot <= state.blockTime)
-                continue
+        var state = LedgerDB.state()
+        val currTime = Runtime.time()
+        val timeSlot = currTime - currTime % PoS.TIME_SLOT
+        if (timeSlot <= state.blockTime)
+            return
 
-            @Suppress("LABEL_NAME_CLASH")
-            val block = stakers.mutex.withLock {
-                for (i in stakers.list.indices) {
-                    val staker = stakers.list[i]
+        @Suppress("LABEL_NAME_CLASH")
+        val block = stakers.mutex.withLock {
+            for (i in stakers.list.indices) {
+                val staker = stakers.list[i]
 
-                    if (staker.lastBlock != state.blockHash) {
-                        BlockDB.mutex.withLock {
-                            state = LedgerDB.state()
-                            staker.updateImpl(state)
-                        }
-                    }
-
-                    val pos = PoS.check(timeSlot, staker.publicKey, state.nxtrng, state.difficulty, state.blockTime, staker.stake)
-                    if (pos == Accepted) {
-                        val block = Block.create(state.blockHash, timeSlot, staker.publicKey)
-                        TxPool.fill(block)
-                        return@withLock block.sign(staker.privateKey)
+                if (staker.lastBlock != state.blockHash) {
+                    BlockDB.mutex.withLock {
+                        state = LedgerDB.state()
+                        staker.updateImpl(state)
                     }
                 }
-                return@withLock null
-            }
 
-            if (block != null) {
-                logger.info("Staked ${block.first}")
-                Node.broadcastBlock(block.first, block.second)
+                val pos = PoS.check(timeSlot, staker.publicKey, state.nxtrng, state.difficulty, state.blockTime, staker.stake)
+                if (pos == Accepted) {
+                    val block = Block.create(state.blockHash, timeSlot, staker.publicKey)
+                    TxPool.fill(block)
+                    return@withLock block.sign(staker.privateKey)
+                }
             }
+            return@withLock null
+        }
+
+        if (block != null) {
+            logger.info("Staked ${block.first}")
+            Node.broadcastBlock(block.first, block.second)
         }
     }
 
@@ -123,12 +123,14 @@ object Staker {
             val state = LedgerDB.state()
             staker.updateImpl(state)
         }
-        if (staker.stake == 0L)
-            logger.warn("${Address.encode(publicKey)} has 0 staking balance")
+        if (staker.stake == 0L) {
+            logger.warn("${Address.encode(publicKey)} has zero staking balance")
+        }
 
         stakers.list.add(staker)
-        if (stakers.list.size == 1)
-            job = Runtime.launch { staker() }
+        if (stakers.list.size == 1) {
+            job = Runtime.rotate(::implementation)
+        }
         return true
     }
 

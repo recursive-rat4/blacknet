@@ -29,7 +29,7 @@ class ChainAnnounce(
     override suspend fun process(connection: Connection) {
         connection.lastChain = this
 
-        ChainFetcher.offer(connection, chain, cumulativeDifficulty)
+        ChainFetcher.offer(connection, this)
     }
 
     companion object {

@@ -169,7 +169,7 @@ object APIServer {
     }
 
     fun configureHeaders(config: DefaultHeaders.Configuration) {
-        config.header(HttpHeaders.Server, "${Version.NAME}/${Version.version}")
+        config.header(HttpHeaders.Server, "${Version.name}/${Version.version} ${Version.http_server}/${Version.http_server_version}")
     }
 }
 
@@ -598,15 +598,15 @@ fun Application.APIServer() {
         }
 
         get("/api/v1/account/generate") {
-            val wordlist = Bip39.wordlist("english")!!
+            val wordlist = Wordlists.get("english")!!
 
-            call.respond(Json.stringify(MnemonicInfo.serializer(), MnemonicInfo.new(wordlist)))
+            call.respond(Json.stringify(NewMnemonicInfo.serializer(), NewMnemonicInfo.new(wordlist)))
         }
 
         get("/api/v2/generateaccount/{wordlist?}") {
-            val wordlist = Bip39.wordlist(call.parameters["wordlist"] ?: "english") ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid wordlist")
+            val wordlist = Wordlists.get(call.parameters["wordlist"] ?: "english") ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid wordlist")
 
-            call.respondJson(MnemonicInfo.serializer(), MnemonicInfo.new(wordlist))
+            call.respondJson(NewMnemonicInfo.serializer(), NewMnemonicInfo.new(wordlist))
         }
 
         get("/api/v1/address/info/{address}") {
@@ -622,9 +622,9 @@ fun Application.APIServer() {
         }
         
         post("/api/v1/mnemonic/info/{mnemonic}") {
-            val info = MnemonicInfo.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+            val info = NewMnemonicInfo.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
-            call.respond(Json.stringify(MnemonicInfo.serializer(), info))
+            call.respond(Json.stringify(NewMnemonicInfo.serializer(), info))
         }
 
         post("/api/v2/mnemonic") {
@@ -647,7 +647,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Transfer(amount, to, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
                 val signed = tx.sign(privateKey)
 
                 if (Node.broadcastTx(signed.first, signed.second) == Accepted)
@@ -671,7 +671,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Transfer(amount, to, message).serialize()
-                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Transfer.type, data)
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
                 val status = Node.broadcastTx(hash, bytes)
@@ -693,7 +693,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Burn(amount, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Burn.type, data)
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
                 val signed = tx.sign(privateKey)
 
                 if (Node.broadcastTx(signed.first, signed.second) == Accepted)
@@ -715,7 +715,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Burn(amount, message).serialize()
-                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Burn.type, data)
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
                 val status = Node.broadcastTx(hash, bytes)
@@ -737,7 +737,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Lease(amount, to).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.Lease.type, data)
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
                 val signed = tx.sign(privateKey)
 
                 if (Node.broadcastTx(signed.first, signed.second) == Accepted)
@@ -759,7 +759,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = Lease(amount, to).serialize()
-                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.Lease.type, data)
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
                 val status = Node.broadcastTx(hash, bytes)
@@ -782,7 +782,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = CancelLease(amount, to, height).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.getCheckpoint(), fee, TxType.CancelLease.type, data)
+                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
                 val signed = tx.sign(privateKey)
 
                 if (Node.broadcastTx(signed.first, signed.second) == Accepted)
@@ -805,7 +805,7 @@ fun Application.APIServer() {
             APIServer.txMutex.withLock {
                 val seq = WalletDB.getSequence(from)
                 val data = CancelLease(amount, to, height).serialize()
-                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.getCheckpoint(), fee, TxType.CancelLease.type, data)
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
 
                 val status = Node.broadcastTx(hash, bytes)
@@ -1062,7 +1062,7 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v2/wallet/transactions/{address}") {
+        get("/api/v2/wallet/{address}/transactions") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
             val transactions = WalletDB.mutex.withLock {
@@ -1085,7 +1085,7 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v2/wallet/outleases/{address}") {
+        get("/api/v2/wallet/{address}/outleases") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
             WalletDB.mutex.withLock {
@@ -1100,7 +1100,7 @@ fun Application.APIServer() {
             call.respond(WalletDB.getSequence(publicKey).toString())
         }
 
-        get("/api/v2/wallet/sequence/{address}") {
+        get("/api/v2/wallet/{address}/sequence") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
             call.respond(WalletDB.getSequence(publicKey).toString())
@@ -1124,7 +1124,7 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v2/wallet/transaction/{address}/{hash}/{raw?}") {
+        get("/api/v2/wallet/{address}/transaction/{hash}/{raw?}") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
             val raw = call.parameters["raw"]?.toBoolean() ?: false
@@ -1160,7 +1160,7 @@ fun Application.APIServer() {
                 call.respond(HttpStatusCode.NotFound, "transaction not found")
         }
 
-        get("/api/v2/wallet/confirmations/{address}/{hash}") {
+        get("/api/v2/wallet/{address}/confirmations/{hash}") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
 
@@ -1169,6 +1169,14 @@ fun Application.APIServer() {
                 call.respond(result.toString())
             else
                 call.respond(HttpStatusCode.BadRequest, "Transaction not found")
+        }
+
+        get("/api/v2/wallet/{address}/referencechain") {
+            @Suppress("UNUSED_VARIABLE")
+            val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
+
+            val result = WalletDB.referenceChain()
+            call.respond(result.toString())
         }
 
         get("/api/dumpcoroutines") {

@@ -14,16 +14,23 @@ import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Mnemonic
 
 @Serializable
-class MnemonicInfo(
+class NewMnemonicInfo(
+        val mnemonic: String,
         val address: String,
         val publicKey: String
 ) {
     companion object {
-        fun fromString(string: String?): MnemonicInfo? {
+        fun new(wordlist: Array<String>): NewMnemonicInfo {
+            val (mnemonic, privateKey) = Mnemonic.generate(wordlist)
+            val publicKey = privateKey.toPublicKey()
+            return NewMnemonicInfo(mnemonic, Address.encode(publicKey), publicKey.toString())
+        }
+
+        fun fromString(string: String?): NewMnemonicInfo? {
             if (string == null) return null
             val privateKey = Mnemonic.fromString(string) ?: return null
             val publicKey = privateKey.toPublicKey()
-            return MnemonicInfo(Address.encode(publicKey), publicKey.toString())
+            return NewMnemonicInfo(string, Address.encode(publicKey), publicKey.toString())
         }
     }
 }

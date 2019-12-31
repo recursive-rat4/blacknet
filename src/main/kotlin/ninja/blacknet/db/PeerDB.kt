@@ -13,7 +13,6 @@ package ninja.blacknet.db
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import com.google.common.collect.Sets.newHashSetWithExpectedSize
 import io.ktor.util.error
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.internal.HashMapSerializer
@@ -108,8 +107,10 @@ object PeerDB {
 
         peers.map.putAll(hashMap)
 
-        Runtime.addShutdownHook { commit(true) }
-        Runtime.launch { oldEntriesRemover() }
+        Runtime.addShutdownHook {
+            commit(true)
+        }
+        Runtime.rotate(::oldEntriesRemover)
     }
 
     suspend fun size(): Int {
@@ -205,11 +206,9 @@ object PeerDB {
     }
 
     private fun addImpl(peer: Address, from: Address): Boolean {
-        if (peer.network.isDisabled())
-            return false
         if (peer.isLocal())
             return false
-        if (peer.isPrivate() && !from.isPrivate())
+        if (peer.isPrivate())
             return false
         if (peers.map.containsKey(peer))
             return false
@@ -222,23 +221,23 @@ object PeerDB {
     }
 
     private suspend fun oldEntriesRemover() {
-        while (true) {
-            delay(DELAY)
-            if (Node.isOffline()) continue
+        delay(DELAY)
 
-            val toRemove = ArrayList<Address>()
-            peers.mutex.withLock {
-                val currTime = Runtime.time()
-                peers.map.forEach { (address, entry) ->
-                    if (entry.isOld(currTime))
-                        toRemove.add(address)
-                }
-                if (!toRemove.isEmpty()) {
-                    toRemove.forEach { peers.map.remove(it) }
-                    val batch = LevelDB.createWriteBatch()
-                    commitImpl(peers.map, batch, false)
-                    logger.info("Removed ${toRemove.size} old entries from peer db")
-                }
+        if (Node.isOffline())
+            return
+
+        val toRemove = ArrayList<Address>()
+        peers.mutex.withLock {
+            val currTime = Runtime.time()
+            peers.map.forEach { (address, entry) ->
+                if (entry.isOld(currTime))
+                    toRemove.add(address)
+            }
+            if (!toRemove.isEmpty()) {
+                toRemove.forEach { peers.map.remove(it) }
+                val batch = LevelDB.createWriteBatch()
+                commitImpl(peers.map, batch, false)
+                logger.info("Removed ${toRemove.size} old entries from peer db")
             }
         }
     }

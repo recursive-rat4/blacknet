@@ -9,9 +9,7 @@
 
 package ninja.blacknet
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import ninja.blacknet.util.SynchronizedArrayList
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
@@ -26,12 +24,12 @@ object Runtime : CoroutineScope {
     val availableProcessors = java.lang.Runtime.getRuntime().availableProcessors()
 
     /**
-     * Running on macOS
+     * Running on macOS.
      */
     val macOS: Boolean
 
     /**
-     * Running on Windows
+     * Running on Windows.
      */
     val windowsOS: Boolean
 
@@ -72,5 +70,16 @@ object Runtime : CoroutineScope {
         val osName = System.getProperty("os.name")
         macOS = osName.startsWith("Mac")
         windowsOS = osName.startsWith("Windows")
+    }
+
+    /**
+     * Rotate [wheel].
+     */
+    inline fun rotate(crossinline wheel: suspend () -> Unit): Job {
+        return launch {
+            while (true) {
+                wheel()
+            }
+        }
     }
 }

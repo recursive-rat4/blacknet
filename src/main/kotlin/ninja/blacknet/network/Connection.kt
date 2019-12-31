@@ -246,11 +246,9 @@ class Connection(
         return closed.get()
     }
 
-    fun debugName(capitalize: Boolean = false): String {
+    fun debugName(): String {
         return if (Config.logIPs)
             remoteAddress.toString()
-        else if (capitalize)
-            "Peer $peerId"
         else
             "peer $peerId"
     }
