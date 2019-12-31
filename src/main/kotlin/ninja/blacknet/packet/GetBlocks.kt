@@ -51,8 +51,7 @@ class GetBlocks(
                 return
             } else {
                 logger.info("Chain fork ${connection.debugName()}")
-                if (connection.version >= ChainFork.MIN_VERSION)
-                    connection.sendPacket(ChainFork())
+                connection.sendPacket(ChainFork())
                 connection.close(false)
                 return
             }

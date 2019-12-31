@@ -25,8 +25,4 @@ class ChainFork(
     override suspend fun process(connection: Connection) {
         ChainFetcher.chainFork(connection)
     }
-
-    companion object {
-        const val MIN_VERSION = 9
-    }
 }
