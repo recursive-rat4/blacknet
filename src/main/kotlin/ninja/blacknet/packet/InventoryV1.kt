@@ -19,7 +19,7 @@ import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
-internal class InventoryV1(private val list: List<Pair<DataType, Hash>>) : Packet {
+internal class InventoryV1(private val list: List<Pair<Byte, Hash>>) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.InventoryV1

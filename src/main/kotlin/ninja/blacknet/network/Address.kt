@@ -71,7 +71,7 @@ class Address(
         override fun deserialize(decoder: Decoder): Address {
             return when (decoder) {
                 is BinaryDecoder -> {
-                    val network = Network.fromInt(decoder.decodeVarInt())
+                    val network = Network.get(decoder.decodeByte())
                     Address(network,
                             decoder.decodeShort(),
                             decoder.decodeFixedByteArray(network.addrSize))
@@ -83,7 +83,7 @@ class Address(
         override fun serialize(encoder: Encoder, obj: Address) {
             when (encoder) {
                 is BinaryEncoder -> {
-                    encoder.encodeVarInt(obj.network.ordinal)
+                    encoder.encodeByte(obj.network.type)
                     encoder.encodeShort(obj.port)
                     encoder.encodeFixedByteArray(obj.bytes)
                 }

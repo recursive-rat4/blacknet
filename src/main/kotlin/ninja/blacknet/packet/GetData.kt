@@ -21,7 +21,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
-internal class GetData(private val list: List<Pair<DataType, Hash>>) : Packet {
+internal class GetData(private val list: List<Pair<Byte, Hash>>) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.GetData
@@ -34,7 +34,7 @@ internal class GetData(private val list: List<Pair<DataType, Hash>>) : Packet {
 
         var size = PACKET_HEADER_SIZE + 2
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
-        val response = ArrayList<Pair<DataType, SerializableByteArray>>()
+        val response = ArrayList<Pair<Byte, SerializableByteArray>>()
 
         loop@ for (i in list) {
             val type = i.first
@@ -43,6 +43,7 @@ internal class GetData(private val list: List<Pair<DataType, Hash>>) : Packet {
             val value = when (type) {
                 DataType.Transaction -> TxPool.get(hash) ?: continue@loop
                 DataType.Block -> BlockDB.get(hash) ?: continue@loop
+                else -> continue@loop
             }
             val newSize = size + value.size + 4
 

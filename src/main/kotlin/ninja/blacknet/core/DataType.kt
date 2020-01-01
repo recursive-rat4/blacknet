@@ -9,7 +9,7 @@
 
 package ninja.blacknet.core
 
-enum class DataType {
-    Block,
-    Transaction;
+object DataType {
+    val Block = 128.toByte()
+    val Transaction = 129.toByte()
 }

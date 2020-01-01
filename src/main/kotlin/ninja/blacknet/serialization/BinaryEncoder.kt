@@ -51,8 +51,6 @@ class BinaryEncoder : ElementValueEncoder() {
         out.writeFully(bytes, 0, bytes.size)
     }
 
-    override fun encodeEnum(enumDescription: EnumDescriptor, ordinal: Int) = encodeVarInt(ordinal)
-
     override fun beginCollection(desc: SerialDescriptor, collectionSize: Int, vararg typeParams: KSerializer<*>): CompositeEncoder {
         return super.beginCollection(desc, collectionSize, *typeParams).also {
             encodeVarInt(collectionSize)

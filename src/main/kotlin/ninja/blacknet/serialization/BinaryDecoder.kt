@@ -52,7 +52,6 @@ class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
         return String(input.readBytes(size))
     }
 
-    override fun decodeEnum(enumDescription: EnumDescriptor): Int = decodeVarInt()
     override fun decodeCollectionSize(desc: SerialDescriptor): Int = decodeVarInt()
 
     fun decodeByteArray(): ByteArray {

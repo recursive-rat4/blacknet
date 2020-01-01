@@ -34,13 +34,15 @@ import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
-enum class Network(val addrSize: Int) {
-    IPv4(4),
-    IPv6(16),
-    TORv2(10),
-    TORv3(32),
-    I2P(32),
+enum class Network(val type: Byte, val addrSize: Int) {
+    IPv4(128, 4),
+    IPv6(129, 16),
+    TORv2(130, 10),
+    TORv3(131, 32),
+    I2P(132, 32),
     ;
+
+    constructor(type: Int, addrSize: Int) : this(type.toByte(), addrSize)
 
     fun getAddressString(address: Address): String {
         return when (this) {
@@ -140,13 +142,13 @@ enum class Network(val addrSize: Int) {
                 torProxy = null
         }
 
-        fun fromInt(type: Int): Network {
+        fun get(type: Byte): Network {
             return when (type) {
-                IPv4.ordinal -> IPv4
-                IPv6.ordinal -> IPv6
-                TORv2.ordinal -> TORv2
-                TORv3.ordinal -> TORv3
-                I2P.ordinal -> I2P
+                IPv4.type -> IPv4
+                IPv6.type -> IPv6
+                TORv2.type -> TORv2
+                TORv3.type -> TORv3
+                I2P.type -> I2P
                 else -> throw RuntimeException("Unknown network type $type")
             }
         }

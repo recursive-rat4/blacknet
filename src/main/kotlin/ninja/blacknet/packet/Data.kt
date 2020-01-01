@@ -22,7 +22,7 @@ import ninja.blacknet.serialization.SerializableByteArray
 private val logger = KotlinLogging.logger {}
 
 @Serializable
-internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteArray>>) : Packet {
+internal class Data(private val list: ArrayList<Pair<Byte, SerializableByteArray>>) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
     override fun getType() = PacketType.Data
@@ -47,7 +47,7 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
             val hash = Transaction.Hasher(bytes.array)
 
             if (!TxFetcher.fetched(hash)) {
-                connection.dos("unrequested ${type.name} $hash")
+                connection.dos("unrequested ${type} $hash")
                 continue
             }
 
@@ -55,10 +55,10 @@ internal class Data(private val list: ArrayList<Pair<DataType, SerializableByteA
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
-                is Invalid -> connection.dos("$status ${type.name} $hash")
-                InFuture -> logger.debug { "in future ${type.name} $hash" }
-                NotOnThisChain -> logger.debug { "not on this chain ${type.name} $hash" }
-                AlreadyHave -> logger.debug { "already have  ${type.name} $hash" }
+                is Invalid -> connection.dos("$status ${type} $hash")
+                InFuture -> logger.debug { "in future ${type} $hash" }
+                NotOnThisChain -> logger.debug { "not on this chain ${type} $hash" }
+                AlreadyHave -> logger.debug { "already have  ${type} $hash" }
             }
         }
 
