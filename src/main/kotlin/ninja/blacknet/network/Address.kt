@@ -29,7 +29,7 @@ class Address(
         val port: Short,
         val bytes: ByteArray
 ) {
-    internal constructor(address: AddressV1) : this(address.network, address.port.toPort(), address.bytes)
+    internal constructor(address: AddressV1) : this(Network.get(address.network), address.port.toPort(), address.bytes)
 
     fun isLocal(): Boolean {
         return network.isLocal(this)
@@ -95,11 +95,11 @@ class Address(
 
 @Serializable
 internal class AddressV1(
-        val network: Network,
+        val network: Byte,
         val port: Int,
         val bytes: ByteArray
 ) {
-    constructor(address: Address) : this(address.network, address.port.toPort(), address.bytes)
+    constructor(address: Address) : this(address.network.type, address.port.toPort(), address.bytes)
 
-    fun check() = require(bytes.size == network.addrSize) { "Invalid address size" }
+    fun check() = require(bytes.size == Network.get(network).addrSize) { "Invalid address size" }
 }
