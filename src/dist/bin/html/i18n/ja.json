@@ -82,5 +82,22 @@
     "Invalid mnemonic": "無効なニーモニック",
     "Invalid message": "無効なメッセージ",
     "Invalid signature": "無効な署名",
-    "Invalid account/mnemonic": "無効なアカウント/ニーモニック"
+    "Invalid account/mnemonic": "無効なアカウント/ニーモニック",
+    "add peer":"add peer",
+    "address":"address",
+    "Port":"Port",
+    "Transaction":"取引",
+    "Block":"ブロック",
+    "Explorer":"エクスプローラ",
+    "Blocks":"ブロック",
+    "Config":"設定",
+    "Disconnect":"切断する",
+    "PoS Generated":"PoS 生成",
+    "genesis":"発生",
+    "Transfer":"転移    ",
+    "All":"全部の",
+    "Out Leases":"アウトリース",
+    "weight":"重量",
+    "networkWeight":"ネットワーク重量",
+    "expectedTime":"予想時間"
 }

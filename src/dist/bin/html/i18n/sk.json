@@ -69,5 +69,22 @@
     "Invalid mnemonic": "Neplatná mnemotechnika",
     "Invalid message": "Neplatná správa",
     "Invalid signature": "Neplatný podpis",
-    "Invalid account/mnemonic": "Neplatný účet / mnemotechnika"
+    "Invalid account/mnemonic": "Neplatný účet / mnemotechnika",
+    "add peer":"add peer",
+    "address":"address",
+    "Port":"Port",
+    "Transaction":"Transakcija",
+    "Block":"Blok",
+    "Explorer":"Raziskovalec",
+    "Blocks":"Bloki",
+    "Config":"Nastavitve",
+    "Disconnect":"Odklopi",
+    "PoS Generated":"PoS Generiran",
+    "genesis":"geneza",
+    "Transfer":"Prenos",
+    "All":"VSE",
+    "Out Leases":"Izven najem",
+    "weight":"teža",
+    "networkWeight":"Omrežna masa",
+    "expectedTime":"Pričakovan čas"
 }
