@@ -47,6 +47,7 @@ object Config {
     val datadir by stringType
     val logips by booleanType
     val lowercasehex by booleanType
+    val regtest by booleanType
 
     object apiserver : PropertyGroup() {
         val jsonindented by booleanType
@@ -116,6 +117,13 @@ object Config {
             false
     }()
 
+    val regTest: Boolean = {
+        if (contains(regtest))
+            get(regtest)
+        else
+            false
+    }()
+
     val softBlockSizeLimit: Int = {
         if (contains(softblocksizelimit))
             get(softblocksizelimit)
@@ -131,18 +139,19 @@ object Config {
     }()
 
     val dataDir: File = {
-        val dir = if (portable()) {
+        var dir = if (portable()) {
             File("db")
         } else if (!contains(datadir)) {
-            val userHome = System.getProperty("user.home")
-
-            File(userHome, when {
+            File(System.getProperty("user.home"), when {
                 Runtime.macOS -> "Library/Application Support/Blacknet"
                 Runtime.windowsOS -> "AppData\\Roaming\\Blacknet"
                 else -> ".blacknet"
             })
         } else {
             File(get(datadir))
+        }
+        if (regTest) {
+            dir = File(dir, "regtest")
         }
         dir.mkdirs()
         dir

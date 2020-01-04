@@ -20,10 +20,7 @@ import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.BigInt
-import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -55,11 +52,20 @@ object LedgerDB {
     val genesisBlock by lazy {
         val map = HashMap<PublicKey, Long>()
 
-        val genesis = Resources.toString(Resources.getResource("genesis.json"), Charsets.UTF_8)
-        val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
-        entries.forEach {
-            val publicKey = PublicKey.fromString(it.publicKey)!!
-            map.put(publicKey, it.balance)
+        if (Config.regTest) {
+            val mnemonic1 = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖"
+            val publicKey1 = Mnemonic.fromString(mnemonic1)!!.toPublicKey()
+            map.put(publicKey1, 1000000000 * PoS.COIN)
+            val mnemonic2 = "胡 允 空 桥 料 状 纱 角 钠 灌 绝 件"
+            val publicKey2 = Mnemonic.fromString(mnemonic2)!!.toPublicKey()
+            map.put(publicKey2, 10101010 * PoS.COIN)
+        } else {
+            val genesis = Resources.toString(Resources.getResource("genesis.json"), Charsets.UTF_8)
+            val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
+            entries.forEach {
+                val publicKey = PublicKey.fromString(it.publicKey)!!
+                map.put(publicKey, it.balance)
+            }
         }
 
         map
@@ -263,7 +269,10 @@ object LedgerDB {
     }
 
     fun forkV2(): Boolean {
-        return state.forkV2 == (PoS.MATURITY + 1).toShort()
+        return if (Config.regTest)
+            true
+        else
+            state.forkV2 == (PoS.MATURITY + 1).toShort()
     }
 
     fun chainContains(hash: Hash): Boolean {

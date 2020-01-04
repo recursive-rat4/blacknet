@@ -9,11 +9,18 @@
 
 package ninja.blacknet.crypto
 
+import ninja.blacknet.Config
+
 /**
- * Blacknet address
+ * Account address encoding using [Bech32].
+ *
+ * SatoshiLabs Improvement Proposal 173 "Registered human-readable parts for BIP-0173"
  */
 object Address {
-    private val HRP = "blacknet".toByteArray(Charsets.US_ASCII)
+    private val HRP_MAINNET = "blacknet".toByteArray(Charsets.US_ASCII)
+    private val HRP_REGTEST = "rblacknet".toByteArray(Charsets.US_ASCII)
+
+    private val HRP = if (Config.regTest) HRP_REGTEST else HRP_MAINNET
 
     fun encode(publicKey: PublicKey): String {
         return Bech32.encode(HRP, publicKey.bytes)

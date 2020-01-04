@@ -19,6 +19,7 @@ import ninja.blacknet.network.UserAgent
 @Serializable
 class NodeInfo(
         val agent: String,
+        val name: String,
         val version: String,
         val protocolVersion: Int,
         val outgoing: Int,
@@ -32,6 +33,7 @@ class NodeInfo(
             val warnings = BlockDB.warnings() + LedgerDB.warnings() + Node.warnings()
             return NodeInfo(
                     UserAgent.string,
+                    Version.name,
                     Version.version,
                     Node.version,
                     Node.outgoing(),

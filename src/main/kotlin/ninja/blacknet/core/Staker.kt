@@ -70,11 +70,13 @@ object Staker {
     private suspend fun implementation() {
         delay(1)
 
-        if (Node.isOffline())
-            return
+        if (!Config.regTest) {
+            if (Node.isOffline())
+                return
 
-        if (Node.isInitialSynchronization())
-            return
+            if (Node.isInitialSynchronization())
+                return
+        }
 
         var state = LedgerDB.state()
         val currTime = Runtime.time()

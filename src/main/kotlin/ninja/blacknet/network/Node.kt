@@ -53,19 +53,21 @@ object Node {
     private val nextPeerId = AtomicLong(1)
 
     init {
-        if (Config.netListen) {
-            try {
-                listenOnIP()
-                if (Config[upnp])
-                    Runtime.launch { UPnP.forward() }
-            } catch (e: Throwable) {
+        if (!Config.regTest) {
+            if (Config.netListen) {
+                try {
+                    listenOnIP()
+                    if (Config[upnp])
+                        Runtime.launch { UPnP.forward() }
+                } catch (e: Throwable) {
+                }
             }
+            if (!Config.isDisabled(Network.TORv2))
+                Runtime.launch { Network.listenOnTor() }
+            if (!Config.isDisabled(Network.I2P))
+                Runtime.launch { Network.listenOnI2P() }
+            Runtime.launch { connector() }
         }
-        if (!Config.isDisabled(Network.TORv2))
-            Runtime.launch { Network.listenOnTor() }
-        if (!Config.isDisabled(Network.I2P))
-            Runtime.launch { Network.listenOnI2P() }
-        Runtime.launch { connector() }
     }
 
     fun newPeerId(): Long {
@@ -177,7 +179,8 @@ object Node {
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
-            logger.info("Announced to $n peers")
+            if (!Config.regTest)
+                logger.info("Announced to $n peers")
             return true
         } else {
             logger.info("$status block $hash")

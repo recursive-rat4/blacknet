@@ -87,6 +87,9 @@ object Main {
          */
         if (Config.publicAPI())
             embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "ktor.conf")))).start(wait = false)
-        embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "rpc.conf")))).start(wait = true)
+        if (Config.regTest)
+            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "regtest.conf")))).start(wait = true)
+        else
+            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "rpc.conf")))).start(wait = true)
     }
 }
