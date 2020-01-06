@@ -213,17 +213,17 @@ object TxPool : MemPool(), Ledger {
 
     suspend fun process(hash: Hash, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = mutex.withLock {
         if (rejects.contains(hash))
-            return Pair(Invalid("Already rejected"), 0)
+            return Pair(Invalid("Already rejected tx"), 0)
         if (containsImpl(hash))
-            return Pair(AlreadyHave, 0)
+            return Pair(AlreadyHave(hash.toString()), 0)
         if (TxPool.dataSizeImpl() + bytes.size > Config.txPoolSize) {
             if (remote)
-                return Pair(InFuture, 0)
+                return Pair(InFuture("TxPool is full"), 0)
             else
                 logger.warn("TxPool is full")
         }
         val result = TxPool.processImplWithFee(hash, bytes, time)
-        if (result.first is Invalid || result.first == InFuture) {
+        if (result.first is Invalid || result.first is InFuture) {
             rejects.add(hash)
         }
         return result

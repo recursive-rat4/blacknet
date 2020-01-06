@@ -123,7 +123,7 @@ object WalletDB {
                         poolAccepted += 1
                         inv.add(Pair(hash, fee))
                     }
-                    AlreadyHave -> {
+                    is AlreadyHave -> {
                         inv.add(Pair(hash, fee))
                     }
                     else -> {

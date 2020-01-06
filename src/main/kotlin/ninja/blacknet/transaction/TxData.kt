@@ -10,12 +10,9 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.json.JsonElement
-import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
-
-private val logger = KotlinLogging.logger {}
 
 interface TxData {
     fun getType(): TxType
@@ -29,11 +26,9 @@ interface TxData {
             return Invalid("Sender account not found")
         }
         if (tx.seq < account.seq) {
-            logger.debug { "already have seq ${tx.seq}" }
-            return AlreadyHave
+            return AlreadyHave("sequence ${tx.seq} expected ${account.seq}")
         } else if (tx.seq > account.seq) {
-            logger.debug { "in future seq ${tx.seq}" }
-            return InFuture
+            return InFuture("sequence ${tx.seq} expected ${account.seq}")
         }
         val status = account.credit(tx.fee)
         if (status != Accepted) {

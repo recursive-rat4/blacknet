@@ -15,26 +15,28 @@ object Accepted : Status() {
     override fun toString() = "Accepted"
 }
 
-object AlreadyHave : Status() {
-    override fun toString() = "Already have"
+class AlreadyHave(private val message: String) : Status() {
+    override fun toString() = "Already have $message"
 }
 
-object InFuture : Status() {
-    override fun toString() = "Too far in future"
+class InFuture(private val message: String) : Status() {
+    override fun toString() = "Too far in future $message"
 }
 
 class Invalid(private val message: String) : Status() {
     override fun toString() = message
 }
 
-object NotOnThisChain : Status() {
-    override fun toString() = "Not on this chain"
+class NotOnThisChain(private val message: String) : Status() {
+    override fun toString() = "Not on this chain $message"
 }
 
 fun notAccepted(message: String, status: Status): Status {
     return when (status) {
         is Invalid -> Invalid("$message $status")
-        Accepted -> throw IllegalArgumentException(status.toString())
-        else -> status
+        is InFuture -> InFuture("$message $status")
+        is NotOnThisChain -> NotOnThisChain("$message $status")
+        is AlreadyHave -> AlreadyHave("$message $status")
+        Accepted -> throw IllegalArgumentException("Already accepted")
     }
 }

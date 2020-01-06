@@ -89,7 +89,7 @@ object BlockDB {
                 logger.info("$percent% upgraded to fork v2")
         }
         if (PoS.isTooFarInFuture(block.time)) {
-            return InFuture
+            return InFuture(block.time.toString())
         }
         if (!block.verifyContentHash(bytes)) {
             return Invalid("Invalid content hash")
@@ -98,7 +98,7 @@ object BlockDB {
             return Invalid("Invalid signature")
         }
         if (block.previous != state.blockHash) {
-            return NotOnThisChain
+            return NotOnThisChain(block.previous.toString())
         }
         val batch = LevelDB.createWriteBatch()
         val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
@@ -116,9 +116,9 @@ object BlockDB {
 
     internal suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
         if (rejects.contains(hash))
-            return Invalid("Already rejected")
+            return Invalid("Already rejected block")
         if (containsImpl(hash))
-            return AlreadyHave
+            return AlreadyHave(hash.toString())
         val status = processBlockImpl(hash, bytes)
         if (status is Invalid)
             rejects.add(hash)

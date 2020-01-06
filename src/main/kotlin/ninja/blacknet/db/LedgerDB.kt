@@ -244,7 +244,7 @@ object LedgerDB {
                             if (++n % 50000 == 0)
                                 logger.info("Processed $n blocks")
                             pruneImpl()
-                        } else if (status != AlreadyHave) {
+                        } else if (status !is AlreadyHave) {
                             logger.info("$status block $hash")
                             break
                         }
@@ -379,7 +379,7 @@ object LedgerDB {
         val state = state
         if (block.previous != state.blockHash) {
             logger.error("$hash not on current chain ${state.blockHash} previous ${block.previous}")
-            return NotOnThisChain
+            return NotOnThisChain(block.previous.toString())
         }
         if (size > state.maxBlockSize) {
             return Invalid("Too large block $size bytes, maximum ${state.maxBlockSize}")

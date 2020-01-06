@@ -35,7 +35,7 @@ interface Ledger {
             return Invalid("Invalid signature")
         }
         if (!checkReferenceChain(tx.referenceChain)) {
-            return NotOnThisChain
+            return NotOnThisChain(tx.referenceChain.toString())
         }
         if (!checkFee(size, tx.fee)) {
             return Invalid("Too low fee ${tx.fee}")
