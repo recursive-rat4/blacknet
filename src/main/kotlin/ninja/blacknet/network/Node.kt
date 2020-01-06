@@ -200,11 +200,12 @@ object Node {
         return status
     }
 
-    suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null) {
+    suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null): Int {
+        var n = 0
         val toSend = ArrayList<Hash>(unfiltered.size)
         connections.forEach {
             if (it != source && it.state.isConnected()) {
-                for (i in unfiltered.indices) {
+                for (i in 0 until unfiltered.size) {
                     val (hash, fee) = unfiltered[i]
                     if (it.feeFilter <= fee)
                         toSend.add(hash)
@@ -212,9 +213,11 @@ object Node {
                 if (toSend.size != 0) {
                     it.inventory(toSend)
                     toSend.clear()
+                    n += 1
                 }
             }
         }
+        return n
     }
 
     private suspend fun timeOffset(): Long = connections.mutex.withLock {

@@ -85,17 +85,11 @@ object WalletDB {
             throw RuntimeException("Unknown database version $version")
         }
 
-        Runtime.rotate(::broadcaster)
+        Runtime.rotate(::announcer)
     }
 
-    private suspend fun broadcaster() {
-        delay(DELAY)
-
-        if (Node.isOffline())
-            return
-
-        val currTime = Runtime.time()
-        val inv = UnfilteredInvList()
+    private suspend fun announcer() {
+        val allUnconfirmed = ArrayList<ArrayList<Triple<Hash, ByteArray, Int>>>()
 
         mutex.withLock {
             wallets.forEach { (_, wallet) ->
@@ -109,23 +103,46 @@ object WalletDB {
                     }
                 }
 
-                unconfirmed.sortBy { (_, _, seq) -> seq }
+                if (unconfirmed.isNotEmpty()) {
+                    allUnconfirmed.add(unconfirmed)
+                }
+            }
+        }
 
-                unconfirmed.forEach { (hash, bytes, _) ->
-                    val (status, fee) = TxPool.process(hash, bytes, currTime, false)
-                    if (status == Accepted || status == AlreadyHave) {
+        val currTime = Runtime.time()
+        val inv = UnfilteredInvList()
+        var poolAccepted = 0
+
+        allUnconfirmed.forEach { unconfirmed ->
+            unconfirmed.sortBy { (_, _, seq) -> seq }
+
+            unconfirmed.forEach { (hash, bytes, _) ->
+                val (status, fee) = TxPool.process(hash, bytes, currTime, false)
+                when (status) {
+                    Accepted -> {
+                        poolAccepted += 1
                         inv.add(Pair(hash, fee))
-                    } else {
-                        logger.debug { "$status tx $hash" }
+                    }
+                    AlreadyHave -> {
+                        inv.add(Pair(hash, fee))
+                    }
+                    else -> {
+                        logger.debug { "$status $hash" }
                     }
                 }
             }
         }
 
-        if (inv.isNotEmpty()) {
-            logger.info("Broadcasting ${inv.size} transactions")
-            Node.broadcastInv(inv)
+        if (poolAccepted != 0) {
+            logger.info("Added ${inv.size} transactions to pool")
         }
+
+        if (inv.isNotEmpty()) {
+            val n = Node.broadcastInv(inv)
+            logger.info("Announced ${inv.size} transactions to $n peers")
+        }
+
+        delay(DELAY)
     }
 
     suspend fun getConfirmations(hash: Hash): Int? = BlockDB.mutex.withLock {
