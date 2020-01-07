@@ -204,7 +204,7 @@ object LedgerDB {
                         val (block, size) = BlockDB.blockImpl(hash)!!
                         val batch = LevelDB.createWriteBatch()
                         val txDb = Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
-                        val status = processBlockImpl(txDb, hash, block, size)
+                        val (status, _) = processBlockImpl(txDb, hash, block, size)
                         if (status != Accepted) {
                             batch.close()
                             logger.error("process block failed")
@@ -375,28 +375,28 @@ object LedgerDB {
             bytes
     }
 
-    internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): Status {
+    internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): Pair<Status, List<Hash>> {
         val state = state
         if (block.previous != state.blockHash) {
             logger.error("$hash not on current chain ${state.blockHash} previous ${block.previous}")
-            return NotOnThisChain(block.previous.toString())
+            return Pair(NotOnThisChain(block.previous.toString()), emptyList())
         }
         if (size > state.maxBlockSize) {
-            return Invalid("Too large block $size bytes, maximum ${state.maxBlockSize}")
+            return Pair(Invalid("Too large block $size bytes, maximum ${state.maxBlockSize}"), emptyList())
         }
         if (block.time <= state.blockTime) {
-            return Invalid("Timestamp is too early")
+            return Pair(Invalid("Timestamp is too early"), emptyList())
         }
         var generator = txDb.get(block.generator)
         if (generator == null) {
-            return Invalid("Block generator not found")
+            return Pair(Invalid("Block generator not found"), emptyList())
         }
         val height = txDb.height()
         val txHashes = ArrayList<Hash>(block.transactions.size)
 
         val pos = PoS.check(block.time, block.generator, state.nxtrng, state.difficulty, state.blockTime, generator.stakingBalance(height))
         if (pos != Accepted) {
-            return pos
+            return Pair(pos, emptyList())
         }
 
         txDb.set(block.generator, generator)
@@ -407,7 +407,7 @@ object LedgerDB {
             val txHash = Transaction.Hasher(bytes.array)
             val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size)
             if (status != Accepted) {
-                return status
+                return Pair(status, emptyList())
             }
             txHashes.add(txHash)
             fees += tx.fee
@@ -430,14 +430,9 @@ object LedgerDB {
         generator.debit(height, generated)
         txDb.set(block.generator, generator)
 
-        TxPool.mutex.withLock {
-            TxPool.clearRejectsImpl()
-            TxPool.removeImpl(txHashes)
-        }
-
         WalletDB.processBlock(hash, block, height, generated, txDb.batch)
 
-        return Accepted
+        return Pair(Accepted, txHashes)
     }
 
     private suspend fun undoBlockImpl(): Hash {
@@ -523,7 +518,7 @@ object LedgerDB {
 
             val batch = LevelDB.createWriteBatch()
             val txDb = LedgerDB.Update(batch, block.first.version, hash, block.first.previous, block.first.time, block.second, block.first.generator)
-            val status = processBlockImpl(txDb, hash, block.first, block.second)
+            val (status, _) = processBlockImpl(txDb, hash, block.first, block.second)
             if (status != Accepted) {
                 batch.close()
                 logger.error("$status block $hash")

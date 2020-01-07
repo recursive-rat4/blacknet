@@ -102,10 +102,14 @@ object BlockDB {
         }
         val batch = LevelDB.createWriteBatch()
         val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
-        val status = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
+        val (status, txHashes) = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
         if (status == Accepted) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
+            TxPool.mutex.withLock {
+                TxPool.clearRejectsImpl()
+                TxPool.removeImpl(txHashes)
+            }
             APIServer.blockNotify(block, hash, state.height + 1, bytes.size)
             cachedBlock = Pair(block.previous, bytes)
         } else {

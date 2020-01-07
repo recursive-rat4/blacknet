@@ -229,7 +229,7 @@ object TxPool : MemPool(), Ledger {
         return result
     }
 
-    internal suspend fun removeImpl(hashes: ArrayList<Hash>) {
+    internal suspend fun removeImpl(hashes: List<Hash>) {
         if (hashes.isEmpty() || transactions.isEmpty())
             return
 
