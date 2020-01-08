@@ -402,12 +402,13 @@ object LedgerDB {
         txDb.set(block.generator, generator)
 
         var fees = 0L
-        for (bytes in block.transactions) {
+        for (index in 0 until block.transactions.size) {
+            val bytes = block.transactions[index]
             val tx = Transaction.deserialize(bytes.array)
             val txHash = Transaction.Hasher(bytes.array)
             val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size)
             if (status != Accepted) {
-                return Pair(status, emptyList())
+                return Pair(notAccepted("Transaction $index", status), emptyList())
             }
             txHashes.add(txHash)
             fees += tx.fee

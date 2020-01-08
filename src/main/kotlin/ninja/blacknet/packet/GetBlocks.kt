@@ -50,7 +50,7 @@ class GetBlocks(
                 connection.sendPacket(Blocks(nextBlockHashes, emptyList()))
                 return
             } else {
-                logger.info("Chain fork ${connection.debugName()}")
+                logger.info("Chain fork disconnecting ${connection.debugName()}")
                 connection.sendPacket(ChainFork())
                 connection.close(false)
                 return
