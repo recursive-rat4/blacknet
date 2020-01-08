@@ -14,6 +14,7 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
@@ -247,8 +248,12 @@ object Node {
         val bytes = packet.build()
         connections.forEach {
             if (it.state.isConnected() && filter(it)) {
-                it.sendPacket(bytes.copy())
-                n += 1
+                try {
+                    it.sendPacket(bytes.copy())
+                    n += 1
+                } catch (e: ClosedSendChannelException) {
+                    //FIXME 骂人用语
+                }
             }
         }
         bytes.release()
