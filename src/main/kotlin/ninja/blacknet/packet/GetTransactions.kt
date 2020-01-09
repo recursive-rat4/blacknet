@@ -62,8 +62,4 @@ class GetTransactions(
         if (response.size != 0)
             connection.sendPacket(Transactions(response))
     }
-
-    companion object {
-        const val MIN_VERSION = 10
-    }
 }

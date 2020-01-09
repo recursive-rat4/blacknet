@@ -11,10 +11,8 @@ package ninja.blacknet.network
 
 import kotlinx.coroutines.channels.Channel
 import ninja.blacknet.Runtime
-import ninja.blacknet.core.DataType
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.packet.GetData
 import ninja.blacknet.packet.GetTransactions
 import ninja.blacknet.packet.Transactions
 import ninja.blacknet.util.SynchronizedHashMap
@@ -65,10 +63,7 @@ object TxFetcher {
     }
 
     private fun sendRequest(connection: Connection, request: ArrayList<Hash>) {
-        if (connection.version >= GetTransactions.MIN_VERSION)
-            connection.sendPacket(GetTransactions(request))
-        else
-            connection.sendPacket(GetData(request.map { Pair(DataType.Transaction, it) }))
+        connection.sendPacket(GetTransactions(request))
     }
 
     private suspend fun watchdog() {

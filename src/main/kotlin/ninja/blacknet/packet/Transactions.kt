@@ -64,7 +64,6 @@ class Transactions(
     }
 
     companion object {
-        const val MIN_VERSION = 10
         const val MAX = 1000
     }
 }

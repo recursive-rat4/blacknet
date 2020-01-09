@@ -22,7 +22,6 @@ import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.core.DataType
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
@@ -182,10 +181,7 @@ class Connection(
     }
 
     private fun sendInventoryImpl(time: Long) {
-        if (version >= Inventory.MIN_VERSION)
-            sendPacket(Inventory(inventoryToSend.list))
-        else
-            sendPacket(InventoryV1(inventoryToSend.list.map { Pair(DataType.Transaction, it) }))
+        sendPacket(Inventory(inventoryToSend.list))
         inventoryToSend.list.clear()
         lastInvSentTime = time
     }
