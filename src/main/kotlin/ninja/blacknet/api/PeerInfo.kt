@@ -66,7 +66,7 @@ class PeerInfo(
                     connection.remoteAddress.toString(),
                     connection.localAddress.toString(),
                     connection.timeOffset,
-                    connection.ping,
+                    connection.ping.milliseconds,
                     connection.version,
                     connection.agent,
                     connection.state.isOutgoing(),

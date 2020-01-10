@@ -25,7 +25,9 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.packet.Blocks
 import ninja.blacknet.packet.ChainAnnounce
 import ninja.blacknet.packet.GetBlocks
-import ninja.blacknet.util.withTimeout
+import ninja.blacknet.time.milliseconds.MilliSeconds
+import ninja.blacknet.time.milliseconds.seconds
+import ninja.blacknet.time.withTimeout
 
 private val logger = KotlinLogging.logger {}
 
@@ -249,7 +251,10 @@ object ChainFetcher {
         connection.sendPacket(GetBlocks(hash, checkpoint))
     }
 
-    private fun timeout(): Int {
-        return if (!PoS.guessInitialSynchronization()) 4 else 10
+    private fun timeout(): MilliSeconds {
+        return if (!PoS.guessInitialSynchronization())
+            4.seconds
+        else
+            10.seconds
     }
 }

@@ -31,9 +31,13 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
+import ninja.blacknet.time.SystemClock
+import ninja.blacknet.time.delay
+import ninja.blacknet.time.milliseconds.MilliSeconds
+import ninja.blacknet.time.milliseconds.minutes
+import ninja.blacknet.time.milliseconds.seconds
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
-import ninja.blacknet.util.delay
 import java.math.BigDecimal
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicLong
@@ -43,7 +47,7 @@ private val logger = KotlinLogging.logger {}
 
 object Node {
     const val DEFAULT_P2P_PORT: Short = 28453
-    const val NETWORK_TIMEOUT = 90
+    val NETWORK_TIMEOUT = 90.seconds
     const val magic = 0x17895E7D
     const val version = 12
     const val minVersion = 10
@@ -166,7 +170,7 @@ object Node {
     fun sendVersion(connection: Connection, nonce: Long) {
         val state = LedgerDB.state()
         val chain = ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
-        val v = Version(magic, version, Runtime.time(), nonce, UserAgent.string, minTxFee, chain)
+        val v = Version(magic, version, SystemClock.seconds, nonce, UserAgent.string, minTxFee, chain)
         connection.sendPacket(v)
     }
 
@@ -190,7 +194,7 @@ object Node {
     }
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
-        val currTime = Runtime.time()
+        val currTime = SystemClock.seconds
         val (status, fee) = TxPool.process(hash, bytes, currTime, false)
         if (status == Accepted) {
             connections.forEach {
@@ -293,7 +297,7 @@ object Node {
 
     private suspend fun evictConnection(): Boolean {
         val candidates = connections.filter { it.state.isIncoming() }.asSequence()
-                .sortedBy { if (it.ping != 0L) it.ping else Long.MAX_VALUE }.drop(4)
+                .sortedBy { if (it.ping != MilliSeconds.ZERO) it.ping else MilliSeconds.MAX_VALUE }.drop(4)
                 .sortedByDescending { it.lastTxTime }.drop(4)
                 .sortedByDescending { it.lastBlockTime }.drop(4)
                 .sortedBy { it.connectedAt }.drop(4)
@@ -329,12 +333,12 @@ object Node {
                 logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.outgoingConnections}")
                 if (!addBuiltinPeers()) {
                     logger.info("Z-z-z")
-                    delay(PeerDB.DELAY)
+                    delay(15.minutes)
                 }
                 continue
             }
 
-            val currTime = Runtime.time()
+            val currTime = SystemClock.seconds
 
             addresses.forEach { address ->
                 Runtime.launch {

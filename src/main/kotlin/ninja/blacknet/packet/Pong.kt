@@ -11,9 +11,9 @@ package ninja.blacknet.packet
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.Runtime
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.time.SystemClock
 
 @Serializable
 class Pong(
@@ -31,7 +31,7 @@ class Pong(
             return
         }
 
-        connection.ping = Runtime.timeMilli() - pingTime
+        connection.ping = SystemClock.milliseconds - pingTime
         connection.pingRequest = null
     }
 }

@@ -9,12 +9,14 @@
 
 package ninja.blacknet.crypto
 
-import ninja.blacknet.Runtime
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Invalid
 import ninja.blacknet.core.Status
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LedgerDB.forkV2
+import ninja.blacknet.time.SystemClock
+import ninja.blacknet.time.seconds.days
+import ninja.blacknet.time.seconds.seconds
 import ninja.blacknet.util.byteArrayOfInts
 import kotlin.math.min
 
@@ -46,7 +48,7 @@ object PoS {
     }
 
     fun isTooFarInFuture(time: Long): Boolean {
-        return time >= Runtime.time() + TIME_SLOT
+        return time >= SystemClock.seconds + TIME_SLOT
     }
 
     fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
@@ -59,7 +61,7 @@ object PoS {
     }
 
     fun guessInitialSynchronization(): Boolean {
-        return Runtime.time() > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * MATURITY
+        return SystemClock.seconds > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * MATURITY
     }
 
     fun maxBlockSize(blockSizes: Collection<Int>): Int {
@@ -83,7 +85,7 @@ object PoS {
     /**
      * Length of time slot
      */
-    val TIME_SLOT get() = if (forkV2()) 4L else 16L
+    val TIME_SLOT get() = if (forkV2()) 4.seconds else 16.seconds
     /**
      * Expected block time
      */
@@ -91,7 +93,7 @@ object PoS {
     /**
      * Expected number of blocks in year
      */
-    val BLOCKS_IN_YEAR get() = 365 * 24 * 60 * 60 / TARGET_BLOCK_TIME
+    val BLOCKS_IN_YEAR get() = 365.days / TARGET_BLOCK_TIME
     /**
      * Default number of confirmations
      */

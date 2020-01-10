@@ -24,8 +24,10 @@ import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.time.SystemClock
+import ninja.blacknet.time.delay
+import ninja.blacknet.time.milliseconds.hours
 import ninja.blacknet.util.SynchronizedHashMap
-import ninja.blacknet.util.delay
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
@@ -35,7 +37,6 @@ import kotlin.random.Random
 private val logger = KotlinLogging.logger {}
 
 object PeerDB {
-    const val DELAY = 60 * 60
     private const val MAX_SIZE = 10000
     private const val VERSION = 3
     private val peers = SynchronizedHashMap<Address, Entry>(MAX_SIZE)
@@ -154,7 +155,7 @@ object PeerDB {
     suspend fun getCandidates(n: Int, filter: List<Address>): List<Address> {
         val candidates = peers.mutex.withLock {
             val candidates = ArrayList<Pair<Address, Float>>(peers.map.size)
-            val currTime = Runtime.time()
+            val currTime = SystemClock.seconds
             peers.map.forEach { (address, entry) ->
                 if (!filter.contains(address))
                     candidates.add(Pair(address, entry.chance(currTime)))
@@ -221,14 +222,14 @@ object PeerDB {
     }
 
     private suspend fun oldEntriesRemover() {
-        delay(DELAY)
+        delay(1.hours)
 
         if (Node.isOffline())
             return
 
         val toRemove = ArrayList<Address>()
         peers.mutex.withLock {
-            val currTime = Runtime.time()
+            val currTime = SystemClock.seconds
             peers.map.forEach { (address, entry) ->
                 if (entry.isOld(currTime))
                     toRemove.add(address)

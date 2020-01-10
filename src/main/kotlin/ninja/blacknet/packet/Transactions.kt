@@ -46,7 +46,7 @@ class Transactions(
                 continue
             }
 
-            val (status, fee) = TxPool.process(hash, bytes.array, time, true)
+            val (status, fee) = TxPool.process(hash, bytes.array, time.seconds, true)
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))

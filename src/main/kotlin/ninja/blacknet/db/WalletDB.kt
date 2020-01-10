@@ -26,6 +26,9 @@ import ninja.blacknet.packet.UnfilteredInvList
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.time.SystemClock
+import ninja.blacknet.time.delay
+import ninja.blacknet.time.milliseconds.minutes
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 import java.io.File
@@ -33,7 +36,6 @@ import java.io.File
 private val logger = KotlinLogging.logger {}
 
 object WalletDB {
-    private const val DELAY = 30 * 60
     private const val VERSION = 6
     internal val mutex = Mutex()
     private val KEYS_KEY = "keys".toByteArray()
@@ -109,7 +111,7 @@ object WalletDB {
             }
         }
 
-        val currTime = Runtime.time()
+        val currTime = SystemClock.seconds
         val inv = UnfilteredInvList()
         var poolAccepted = 0
 
@@ -142,7 +144,7 @@ object WalletDB {
             logger.info("Announced ${inv.size} transactions to $n peers")
         }
 
-        delay(DELAY)
+        delay(30.minutes)
     }
 
     suspend fun getConfirmations(hash: Hash): Int? = BlockDB.mutex.withLock {
@@ -588,7 +590,7 @@ object WalletDB {
     }
 
     private fun clear(batch: LevelDB.WriteBatch) {
-        val backupDir = File(Config.dataDir, "walletdb.backup.${Runtime.time()}")
+        val backupDir = File(Config.dataDir, "walletdb.backup.${SystemClock.seconds}")
         backupDir.mkdir()
         logger.info("Saving backup to $backupDir")
         wallets.clear()

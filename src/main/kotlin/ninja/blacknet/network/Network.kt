@@ -23,14 +23,15 @@ import ninja.blacknet.Config.proxyport
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
 import ninja.blacknet.crypto.Base32
+import ninja.blacknet.time.delay
+import ninja.blacknet.time.milliseconds.hours
+import ninja.blacknet.time.milliseconds.minutes
 import ninja.blacknet.util.byteArrayOfInts
-import ninja.blacknet.util.delay
 import ninja.blacknet.util.startsWith
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import kotlin.experimental.and
-import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
@@ -193,11 +194,14 @@ enum class Network(val type: Byte, val addrSize: Int) {
             }
         }
 
+        private val INIT_TIMEOUT = 1.minutes
+        private val MAX_TIMEOUT = 2.hours
+
         suspend fun listenOnTor() {
             if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
                 Node.listenOn(Address.LOOPBACK)
 
-            var timeout = 60
+            var timeout = INIT_TIMEOUT
 
             while (true) {
                 try {
@@ -211,7 +215,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                     Node.listenAddress.remove(localAddress)
                     logger.info("Lost connection to tor controller")
 
-                    timeout = 60
+                    timeout = INIT_TIMEOUT
                 } catch (e: ConnectException) {
                     logger.debug { "Can't connect to tor controller: ${e.message}" }
                 } catch (e: Throwable) {
@@ -219,12 +223,12 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 }
 
                 delay(timeout)
-                timeout = min(timeout * 2, 3840)
+                timeout = minOf(timeout * 2, MAX_TIMEOUT)
             }
         }
 
         suspend fun listenOnI2P() {
-            var timeout = 60
+            var timeout = INIT_TIMEOUT
 
             while (true) {
                 try {
@@ -246,7 +250,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                     Node.listenAddress.remove(localAddress)
                     logger.info("I2P SAM session closed")
 
-                    timeout = 60
+                    timeout = INIT_TIMEOUT
                 } catch (e: I2PSAM.NotConfigured) {
                     logger.info(e.message)
                     return
@@ -259,7 +263,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 }
 
                 delay(timeout)
-                timeout = min(timeout * 2, 3840)
+                timeout = minOf(timeout * 2, MAX_TIMEOUT)
             }
         }
 

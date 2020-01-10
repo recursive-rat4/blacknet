@@ -58,6 +58,7 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.serialization.fromHex
 import ninja.blacknet.serialization.toHex
+import ninja.blacknet.time.SystemClock
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 import java.io.File
@@ -1181,7 +1182,7 @@ fun Application.APIServer() {
 
         get("/api/dumpcoroutines") {
             if (Config.debugCoroutines) {
-                val stream = PrintStream(File(Config.dataDir, "coroutines_${Runtime.time()}.log"))
+                val stream = PrintStream(File(Config.dataDir, "coroutines_${SystemClock.seconds}.log"))
                 DebugProbes.dumpCoroutines(stream)
                 stream.close()
                 call.respond(true.toString())

@@ -22,8 +22,10 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Node
+import ninja.blacknet.time.SystemClock
+import ninja.blacknet.time.delay
+import ninja.blacknet.time.milliseconds.seconds
 import ninja.blacknet.util.SynchronizedArrayList
-import ninja.blacknet.util.delay
 import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
@@ -68,7 +70,7 @@ object Staker {
 
     private var job: Job? = null
     private suspend fun implementation() {
-        delay(1)
+        delay(1.seconds)
 
         if (!Config.regTest) {
             if (Node.isOffline())
@@ -79,7 +81,7 @@ object Staker {
         }
 
         var state = LedgerDB.state()
-        val currTime = Runtime.time()
+        val currTime = SystemClock.seconds
         val timeSlot = currTime - currTime % PoS.TIME_SLOT
         if (timeSlot <= state.blockTime)
             return
