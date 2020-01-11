@@ -817,6 +817,31 @@ fun Application.APIServer() {
             }
         }
 
+        post("/api/v2/withdrawfromlease") {
+            val parameters = call.receiveParameters()
+            val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+            val from = privateKey.toPublicKey()
+            val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
+            val withdraw = parameters["withdraw"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid withdraw")
+            val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
+            val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+            val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
+            val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+
+            APIServer.txMutex.withLock {
+                val seq = WalletDB.getSequence(from)
+                val data = WithdrawFromLease(withdraw, amount, to, height).serialize()
+                val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.WithdrawFromLease.type, data)
+                val (hash, bytes) = tx.sign(privateKey)
+
+                val status = Node.broadcastTx(hash, bytes)
+                if (status == Accepted)
+                    call.respond(hash.toString())
+                else
+                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+            }
+        }
+
         get("/api/v1/transaction/raw/send/{serialized}/") {
             val serialized = SerializableByteArray.fromString(call.parameters["serialized"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
             val hash = Transaction.Hasher(serialized.array)
