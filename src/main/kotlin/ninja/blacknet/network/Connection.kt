@@ -29,6 +29,7 @@ import ninja.blacknet.time.SystemClock
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.MilliSeconds
 import ninja.blacknet.time.milliseconds.minutes
+import ninja.blacknet.time.milliseconds.nextTime
 import ninja.blacknet.util.SynchronizedArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -82,7 +83,7 @@ class Connection(
     var timeOffset: Long = 0
 
     fun launch() {
-        pinger = Runtime.launch { pinger() }
+        pinger = Runtime.launch { Pinger.implementation(this@Connection) }
         peerAnnouncer = Runtime.launch { peerAnnouncer() }
         inventoryBroadcaster = Runtime.launch { inventoryBroadcaster() }
         Runtime.launch { receiver() }
@@ -271,40 +272,9 @@ class Connection(
         }
     }
 
-    private suspend fun pinger() {
-        delay(Node.NETWORK_TIMEOUT)
-
-        if (state.isConnected()) {
-            sendPing()
-        } else {
-            close()
-            return
-        }
-
-        while (true) {
-            delay(Node.NETWORK_TIMEOUT)
-
-            if (pingRequest == null) {
-                if (SystemClock.milliseconds > lastPacketTime + Node.NETWORK_TIMEOUT) {
-                    sendPing()
-                }
-            } else {
-                logger.info("Disconnecting ${debugName()} on ping timeout")
-                close()
-                return
-            }
-        }
-    }
-
-    private fun sendPing() {
-        val id = Random.nextInt()
-        pingRequest = Pair(id, SystemClock.milliseconds)
-        sendPacket(Ping(id))
-    }
-
     private suspend fun peerAnnouncer() {
         while (true) {
-            delay(10.minutes + Random.nextInt(11).minutes)
+            delay(Random.nextTime(10.minutes, 20.minutes))
 
             val n = Random.nextInt(Peers.MAX) + 1
 

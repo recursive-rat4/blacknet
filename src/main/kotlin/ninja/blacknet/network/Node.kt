@@ -49,7 +49,7 @@ object Node {
     const val DEFAULT_P2P_PORT: Short = 28453
     val NETWORK_TIMEOUT = 90.seconds
     const val magic = 0x17895E7D
-    const val version = 12
+    const val version = 13
     const val minVersion = 10
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
