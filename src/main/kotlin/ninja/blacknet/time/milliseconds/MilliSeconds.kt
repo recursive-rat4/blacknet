@@ -52,3 +52,14 @@ operator fun Int.times(time: MilliSeconds) = MilliSeconds(this * time.millisecon
 //operator fun Int.div(time: MilliSeconds) = MinusMilliSeconds(this / time.milliseconds)
 //operator fun Int.mod(time: MilliSeconds) = (this   time.milliseconds).toAntiInt()
 operator fun Int.rem(time: MilliSeconds) = (this % time.milliseconds).toInt()
+
+val Long.milliseconds get() = MilliSeconds(this)
+val Long.seconds get() = milliseconds * 1000
+val Long.minutes get() = seconds * 60
+val Long.hours get() = minutes * 60
+val Long.days get() = hours * 24
+
+operator fun Long.times(time: MilliSeconds) = MilliSeconds(this * time.milliseconds)
+//operator fun Long.div(time: MilliSeconds) = MinusMilliSeconds(this / time.milliseconds)
+//operator fun Long.mod(time: MilliSeconds): AntiLong = this   time.milliseconds
+operator fun Long.rem(time: MilliSeconds) = this % time.milliseconds

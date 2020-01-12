@@ -23,6 +23,7 @@ import ninja.blacknet.Config.mintxfee
 import ninja.blacknet.Config.upnp
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.Accepted
+import ninja.blacknet.core.Staker
 import ninja.blacknet.core.Status
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.BigInt
@@ -175,6 +176,7 @@ object Node {
     }
 
     suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null): Int {
+        Staker.awaitNextTimeSlot?.cancel()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         return broadcastPacket(ann) {
             it != source && it.lastChain.cumulativeDifficulty < cumulativeDifficulty

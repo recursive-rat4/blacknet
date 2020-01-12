@@ -11,6 +11,7 @@
 package ninja.blacknet.core
 
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
@@ -68,9 +69,18 @@ object Staker {
         }
     }
 
-    private var job: Job? = null
+    @Volatile
+    internal var awaitNextTimeSlot: Job? = null
+    private var stakerJob: Job? = null
     private suspend fun implementation() {
-        delay(1.seconds)
+        val job = Runtime.launch {
+            val currTime = SystemClock.seconds
+            val nextTimeSlot = currTime - currTime % PoS.TIME_SLOT + PoS.TIME_SLOT
+            delay(nextTimeSlot.seconds - SystemClock.milliseconds)
+        }
+        awaitNextTimeSlot = job
+        job.join()
+        awaitNextTimeSlot = null
 
         if (!Config.regTest) {
             if (Node.isOffline())
@@ -133,7 +143,7 @@ object Staker {
 
         stakers.list.add(staker)
         if (stakers.list.size == 1) {
-            job = Runtime.rotate(::implementation)
+            stakerJob = Runtime.rotate(::implementation)
         }
         return true
     }
@@ -148,8 +158,9 @@ object Staker {
             return false
         }
         if (stakers.list.size == 0) {
-            job!!.cancel()
-            job = null
+            stakerJob!!.cancel()
+            stakerJob = null
+            awaitNextTimeSlot = null
         }
         return true
     }
