@@ -14,6 +14,14 @@ import com.google.common.io.Resources
 object Version {
     val name = if (Config.regTest) "Blacknet-regtest" else "Blacknet"
 
+    val revision: String = {
+        val string = Resources.toString(Resources.getResource("revision.txt"), Charsets.US_ASCII)
+        if (string.isNotEmpty())
+            string
+        else
+            "unknown revision"
+    }()
+
     val version: String = Resources.toString(Resources.getResource("version.txt"), Charsets.US_ASCII)
 
     const val http_server = "ktor"

@@ -62,9 +62,20 @@ distributions {
     }
 }
 
+task getGitRevision(type:Exec) {
+    commandLine 'git', 'describe', '--dirty'
+    ignoreExitValue = true
+    standardOutput = new ByteArrayOutputStream()
+    ext.output = {
+        return standardOutput.toString()
+    }
+}
+
 task createVersionTxt {
     dependsOn processResources
+    dependsOn getGitRevision
     doLast {
+        new File("$buildDir/resources/main/revision.txt").write(getGitRevision.output())
         new File("$buildDir/resources/main/version.txt").write(project.version.toString())
         new File("$buildDir/resources/main/ktor_version.txt").write("$ktor_version")
     }

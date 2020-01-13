@@ -1210,12 +1210,14 @@ fun Application.APIServer() {
 
         get("/api/dumpcoroutines") {
             if (Config.debugCoroutines) {
-                val stream = PrintStream(File(Config.dataDir, "coroutines_${SystemClock.seconds}.log"))
+                val file = File(Config.dataDir, "coroutines_${SystemClock.seconds}.log")
+                val stream = PrintStream(file)
+                stream.println("${Version.name} ${Version.revision}")
                 DebugProbes.dumpCoroutines(stream)
                 stream.close()
-                call.respond(true.toString())
+                call.respond(file.absolutePath)
             } else {
-                call.respond(false.toString())
+                call.respond(HttpStatusCode.BadRequest, "Not enabled in config or failed at runtime")
             }
         }
 
