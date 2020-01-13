@@ -152,7 +152,7 @@ void function () {
             $('.overview_' + key).text(value);
         }
 
-        let staking = await Blacknet.getPromise('/staking');
+        let staking = await Blacknet.getPromise('/staking/' + account);
 
         for (let key in staking) {
 

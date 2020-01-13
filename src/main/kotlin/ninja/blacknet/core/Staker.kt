@@ -169,11 +169,21 @@ object Staker {
         return stakers.list.find { it.privateKey == privateKey } != null
     }
 
-    suspend fun info(): StakingInfo = stakers.mutex.withLock {
+    suspend fun info(publicKey: PublicKey?): StakingInfo {
+        val (nAccounts, weight) = stakers.mutex.withLock {
+            if (publicKey == null) {
+                Pair(stakers.list.size, stakers.list.sumByLong { it.stake })
+            } else {
+                val staker = stakers.list.find { it.publicKey == publicKey }
+                if (staker != null)
+                    Pair(1, staker.stake)
+                else
+                    Pair(0, 0L)
+            }
+        }
         val state = LedgerDB.state()
-        val weight = stakers.list.sumByLong { it.stake }
         val networkWeight = (PoS.MAX_DIFFICULTY / state.difficulty).toLong() / PoS.TARGET_BLOCK_TIME * PoS.TIME_SLOT
         val expectedTime = if (weight != 0L) PoS.TARGET_BLOCK_TIME * networkWeight / weight else 0L
-        return StakingInfo(stakers.list.size, weight.toString(), networkWeight.toString(), expectedTime)
+        return StakingInfo(nAccounts, weight.toString(), networkWeight.toString(), expectedTime)
     }
 }

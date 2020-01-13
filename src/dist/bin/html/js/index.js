@@ -26,6 +26,12 @@ $(document).ready(function () {
     function staking_click(type) {
 
         return function () {
+
+            if (type == 'isstaking') {
+                refreshStaking();
+                return;
+            }
+
             mask.show();
             dialogPassword.show().find('.confirm').unbind().on('click', function () {
 
@@ -37,7 +43,7 @@ $(document).ready(function () {
                     dialogPassword.find('.mnemonic').focus()
                     return
                 }   
-                type == 'isstaking' ? refreshStaking(mnemonic, type) : changeStaking(mnemonic, type);
+                changeStaking(mnemonic, type);
             });
         }
     }
@@ -54,16 +60,23 @@ $(document).ready(function () {
         });
     }
 
-    async function refreshStaking(mnemonic, type) {
+    async function refreshStaking() {
 
         let stakingText = $('.is_staking');
         stakingText.text('loading');
         clearPassWordDialog();
         await Blacknet.wait(1000);
-        postStaking(mnemonic, type, function(ret){
-            localStorage.isStaking = ret;
-            stakingText.text(ret);
-        });
+
+        let ret;
+        let staking = await Blacknet.getPromise('/staking/' + localStorage.account);
+        if (staking.stakingAccounts != 0)
+            ret = true;
+        else
+            ret = false;
+
+        localStorage.isStaking = ret;
+        stakingText.text(ret);
+
     }
 
     async function changeStaking(mnemonic, type) {
@@ -74,7 +87,7 @@ $(document).ready(function () {
 
             timeAlert(type + ' ' + msg);
             clearPassWordDialog();
-            refreshStaking(mnemonic, 'isstaking');
+            refreshStaking();
         });
     }
 

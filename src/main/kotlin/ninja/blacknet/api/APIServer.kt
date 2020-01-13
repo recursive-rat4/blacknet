@@ -1079,8 +1079,10 @@ fun Application.APIServer() {
             call.respond(Staker.isStaking(privateKey).toString())
         }
 
-        get("/api/v2/staking") {
-            call.respondJson(StakingInfo.serializer(), Staker.info())
+        get("/api/v2/staking/{address?}") {
+            val publicKey = call.parameters["address"]?.let { Address.decode(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address") }
+
+            call.respondJson(StakingInfo.serializer(), Staker.info(publicKey))
         }
 
         get("/api/v1/walletdb/getwallet/{address}") {
