@@ -34,7 +34,6 @@ class Peers(
     }
 
     companion object {
-        const val MIN_VERSION = 11
         const val MAX = 1000
     }
 }

@@ -98,8 +98,4 @@ internal class AddressV1(
         val network: Byte,
         val port: Int,
         val bytes: ByteArray
-) {
-    constructor(address: Address) : this(address.network.type, address.port.toPort(), address.bytes)
-
-    fun check() = require(bytes.size == Network.get(network).addrSize) { "Invalid address size" }
-}
+)
