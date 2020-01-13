@@ -45,6 +45,7 @@ import kotlinx.serialization.internal.HashMapSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.list
 import kotlinx.serialization.serializer
+import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
@@ -64,6 +65,8 @@ import ninja.blacknet.util.*
 import java.io.File
 import java.io.PrintStream
 import kotlin.math.abs
+
+private val logger = KotlinLogging.logger {}
 
 object APIServer {
     internal val txMutex = Mutex()
@@ -1214,6 +1217,14 @@ fun Application.APIServer() {
             } else {
                 call.respond(false.toString())
             }
+        }
+
+        get("/api/关机") {
+            logger.warn("正在关机着私人应用程序接口服务器。これはわたすのパソコンです。")
+            Runtime.launch {
+                call.respond(HttpStatusCode.Gone)
+            }.join()
+            kotlin.system.exitProcess(0)
         }
     }
 }
