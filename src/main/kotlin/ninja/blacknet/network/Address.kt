@@ -14,6 +14,7 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import ninja.blacknet.Config
+import ninja.blacknet.crypto.Salt
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import java.net.InetAddress
@@ -52,7 +53,7 @@ class Address(
     }
 
     override fun hashCode(): Int {
-        return network.ordinal xor port.toInt() xor bytes.contentHashCode()
+        return Salt.hashCode(network.ordinal xor port.toInt() xor bytes.contentHashCode())
     }
 
     override fun toString(): String {

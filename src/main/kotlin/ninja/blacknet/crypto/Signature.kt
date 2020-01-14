@@ -26,7 +26,7 @@ import ninja.blacknet.serialization.toHex
 @Serializable
 class Signature(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is Signature) && bytes.contentEquals(other.bytes)
-    override fun hashCode(): Int = bytes.contentHashCode()
+    override fun hashCode(): Int = Salt.hashCode(bytes.contentHashCode())
     override fun toString(): String = bytes.toHex()
 
     @Serializer(forClass = Signature::class)

@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.crypto.Salt
 import ninja.blacknet.util.emptyByteArray
 
 /**
@@ -29,7 +30,7 @@ class SerializableByteArray(
     }
 
     override fun hashCode(): Int {
-        return array.contentHashCode()
+        return Salt.hashCode(array.contentHashCode())
     }
 
     override fun toString(): String {
