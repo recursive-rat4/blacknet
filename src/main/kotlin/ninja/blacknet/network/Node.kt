@@ -51,7 +51,7 @@ object Node {
     val NETWORK_TIMEOUT = 90.seconds
     const val magic = 0x17895E7D
     const val version = 13
-    const val minVersion = 11
+    const val minVersion = 12
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
@@ -176,7 +176,7 @@ object Node {
     }
 
     suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null): Int {
-        Staker.awaitNextTimeSlot?.cancel()
+        Staker.awaitsNextTimeSlot?.cancel()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         return broadcastPacket(ann) {
             it != source && it.lastChain.cumulativeDifficulty < cumulativeDifficulty

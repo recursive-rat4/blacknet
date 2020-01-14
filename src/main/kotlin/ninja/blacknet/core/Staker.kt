@@ -70,17 +70,17 @@ object Staker {
     }
 
     @Volatile
-    internal var awaitNextTimeSlot: Job? = null
-    private var stakerJob: Job? = null
+    var awaitsNextTimeSlot: Job? = null
+    private var coroutine: Job? = null
     private suspend fun implementation() {
         val job = Runtime.launch {
             val currTime = SystemClock.seconds
             val nextTimeSlot = currTime - currTime % PoS.TIME_SLOT + PoS.TIME_SLOT
             delay(nextTimeSlot.seconds - SystemClock.milliseconds)
         }
-        awaitNextTimeSlot = job
+        awaitsNextTimeSlot = job
         job.join()
-        awaitNextTimeSlot = null
+        awaitsNextTimeSlot = null
 
         if (!Config.regTest) {
             if (Node.isOffline())
@@ -143,7 +143,7 @@ object Staker {
 
         stakers.list.add(staker)
         if (stakers.list.size == 1) {
-            stakerJob = Runtime.rotate(::implementation)
+            coroutine = Runtime.rotate(::implementation)
         }
         return true
     }
@@ -158,9 +158,9 @@ object Staker {
             return false
         }
         if (stakers.list.size == 0) {
-            stakerJob!!.cancel()
-            stakerJob = null
-            awaitNextTimeSlot = null
+            coroutine!!.cancel()
+            coroutine = null
+            awaitsNextTimeSlot = null
         }
         return true
     }

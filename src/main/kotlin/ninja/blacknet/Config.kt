@@ -50,6 +50,7 @@ object Config {
     val regtest by booleanType
 
     object apiserver : PropertyGroup() {
+        val enabled by booleanType
         val jsonindented by booleanType
         val publicserver by booleanType
     }
@@ -86,6 +87,13 @@ object Config {
             return get(portable)
         else
             return false
+    }
+
+    fun APIenabled(): Boolean {
+        if (contains(apiserver.enabled))
+            return get(apiserver.enabled)
+        else
+            return true
     }
 
     fun publicAPI(): Boolean {

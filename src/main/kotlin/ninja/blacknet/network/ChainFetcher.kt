@@ -31,6 +31,9 @@ import ninja.blacknet.time.withTimeout
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * 链获取工
+ */
 object ChainFetcher {
     private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
@@ -46,8 +49,13 @@ object ChainFetcher {
     private var undoDifficulty = BigInt.ZERO
     private var undoRollback: List<Hash>? = null
 
-    init {
-        Runtime.rotate(::implementation)
+    private val coroutine = Runtime.rotate(::implementation)
+    /**
+     * 走吧
+     */
+    fun run(): Nothing = runBlocking {
+        coroutine.join()
+        throw RuntimeException("ChainFetcher exited")
     }
 
     fun isSynchronizing(): Boolean {

@@ -19,6 +19,7 @@ import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.core.Staker
 import ninja.blacknet.db.*
+import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
 import java.io.File
 import java.io.FileInputStream
@@ -80,16 +81,20 @@ object Main {
          * https://ktor.io/
          *
          * Ktor configuration is stored in
-         * config/ktor.conf public server
          * config/rpc.conf private server
+         * config/ktor.conf public server
          * https://ktor.io/servers/engine.html
          *
          */
+        if (Config.APIenabled()) {
+            if (Config.regTest)
+                embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "regtest.conf")))).start(wait = false)
+            else
+                embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "rpc.conf")))).start(wait = false)
+        }
         if (Config.publicAPI())
             embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "ktor.conf")))).start(wait = false)
-        if (Config.regTest)
-            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "regtest.conf")))).start(wait = true)
-        else
-            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "rpc.conf")))).start(wait = true)
+
+        ChainFetcher.run()
     }
 }
