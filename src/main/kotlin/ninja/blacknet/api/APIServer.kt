@@ -847,7 +847,7 @@ fun Application.APIServer() {
 
         get("/api/v1/transaction/raw/send/{serialized}/") {
             val serialized = SerializableByteArray.fromString(call.parameters["serialized"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
-            val hash = Transaction.Hasher(serialized.array)
+            val hash = Transaction.hash(serialized.array)
 
             APIServer.txMutex.withLock {
                 if (Node.broadcastTx(hash, serialized.array) == Accepted)
@@ -862,7 +862,7 @@ fun Application.APIServer() {
 
             APIServer.txMutex.withLock {
                 try {
-                    val hash = Transaction.Hasher(bytes)
+                    val hash = Transaction.hash(bytes)
                     val status = Node.broadcastTx(hash, bytes)
                     if (status == Accepted)
                         call.respond(hash.toString())

@@ -31,7 +31,7 @@ class Block(
         val bytes = serialize()
         contentHash = contentHash(bytes)
         System.arraycopy(contentHash.bytes, 0, bytes, CONTENT_HASH_POS, Hash.SIZE)
-        val hash = Hasher(bytes)
+        val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
         System.arraycopy(signature.bytes, 0, bytes, SIGNATURE_POS, Signature.SIZE)
         return Pair(hash, bytes)
@@ -46,13 +46,7 @@ class Block(
     }
 
     private fun contentHash(bytes: ByteArray): Hash {
-        return Blake2b.hash(bytes, HEADER_SIZE, bytes.size - HEADER_SIZE)
-    }
-
-    object Hasher : (ByteArray) -> Hash {
-        override fun invoke(bytes: ByteArray): Hash {
-            return Blake2b.hash(bytes, 0, HEADER_SIZE - Signature.SIZE)
-        }
+        return Blake2b.hasher { x(bytes, HEADER_SIZE, bytes.size - HEADER_SIZE) }
     }
 
     companion object {
@@ -62,6 +56,8 @@ class Block(
         const val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE
 
         fun deserialize(bytes: ByteArray): Block = BinaryDecoder.fromBytes(bytes).decode(serializer())
+
+        fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, 0, HEADER_SIZE - Signature.SIZE) }
 
         fun create(previous: Hash, time: Long, generator: PublicKey): Block {
             return Block(VERSION, previous, time, generator, Hash.ZERO, Signature.EMPTY, ArrayList())

@@ -238,7 +238,7 @@ object LedgerDB {
                         val bytes = ByteArray(size)
                         stream.readFully(bytes)
 
-                        val hash = Block.Hasher(bytes)
+                        val hash = Block.hash(bytes)
                         val status = BlockDB.processImpl(hash, bytes)
                         if (status == Accepted) {
                             if (++n % 50000 == 0)
@@ -405,7 +405,7 @@ object LedgerDB {
         for (index in 0 until block.transactions.size) {
             val bytes = block.transactions[index]
             val tx = Transaction.deserialize(bytes.array)
-            val txHash = Transaction.Hasher(bytes.array)
+            val txHash = Transaction.hash(bytes.array)
             val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size)
             if (status != Accepted) {
                 return Pair(notAccepted("Transaction $index", status), emptyList())

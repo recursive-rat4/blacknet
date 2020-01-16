@@ -32,7 +32,7 @@ class AccountState(
     }
 
     override fun hashCode(): Int {
-        return Salt.hashCode(seq xor stake.hashCode() xor immature.hashCode() xor leases.hashCode())
+        return Salt.hashCode { x(seq); x(stake); x(immature.hashCode()); x(leases.hashCode()); }
     }
 
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
@@ -101,7 +101,7 @@ class AccountState(
     @Serializable
     class Input(val height: Int, var amount: Long) {
         override fun equals(other: Any?): Boolean = (other is Input) && height == other.height && amount == other.amount
-        override fun hashCode(): Int = Salt.hashCode(height xor amount.hashCode())
+        override fun hashCode(): Int = Salt.hashCode { x(height); x(amount); }
         fun copy(): Input = Input(height, amount)
         fun isConfirmed(height: Int, confirmations: Int): Boolean = height > this.height + confirmations
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
@@ -112,7 +112,7 @@ class AccountState(
     @Serializable
     class Lease(val publicKey: PublicKey, val height: Int, var amount: Long) {
         override fun equals(other: Any?): Boolean = (other is Lease) && publicKey == other.publicKey && height == other.height && amount == other.amount
-        override fun hashCode(): Int = Salt.hashCode(publicKey.hashCode() xor height xor amount.hashCode())
+        override fun hashCode(): Int = Salt.hashCode { x(publicKey.bytes); x(height); x(amount); }
         fun copy(): Lease = Lease(publicKey, height, amount)
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0

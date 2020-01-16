@@ -53,7 +53,11 @@ class Address(
     }
 
     override fun hashCode(): Int {
-        return Salt.hashCode(network.ordinal xor port.toInt() xor bytes.contentHashCode())
+        return Salt.hashCode {
+            x(network.type)
+            x(port)
+            x(bytes)
+        }
     }
 
     override fun toString(): String {

@@ -51,7 +51,7 @@ class BlockInfoV2(
                 return JsonArray(block.transactions.map {
                     val bytes = it.array
                     val tx = Transaction.deserialize(bytes)
-                    val txHash = Transaction.Hasher(bytes)
+                    val txHash = Transaction.hash(bytes)
                     return@map TransactionInfoV2(tx, txHash, bytes.size).toJson()
                 })
             }

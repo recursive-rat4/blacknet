@@ -84,7 +84,10 @@ object Pinger {
     }
 
     private fun solve(challenge: Int): Int {
-        val hash = Blake2b.hasher { this + Node.magic + challenge }
+        val hash = Blake2b.hasher {
+            x(Node.magic)
+            x(challenge)
+        }
         return Ints.fromBytes(hash.bytes[0], hash.bytes[1], hash.bytes[2], hash.bytes[3])
     }
 

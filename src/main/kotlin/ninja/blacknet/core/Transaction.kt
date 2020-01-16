@@ -35,7 +35,7 @@ class Transaction(
 
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
         val bytes = serialize()
-        val hash = Hasher(bytes)
+        val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
         System.arraycopy(signature.bytes, 0, bytes, 0, Signature.SIZE)
         return Pair(hash, bytes)
@@ -45,14 +45,10 @@ class Transaction(
         return Ed25519.verify(signature, hash, from)
     }
 
-    object Hasher : (ByteArray) -> Hash {
-        override fun invoke(bytes: ByteArray): Hash {
-            return Blake2b.hash(bytes, Signature.SIZE, bytes.size - Signature.SIZE)
-        }
-    }
-
     companion object {
         fun deserialize(bytes: ByteArray): Transaction = BinaryDecoder.fromBytes(bytes).decode(serializer())
+
+        fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, Signature.SIZE, bytes.size - Signature.SIZE) }
 
         fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
             return Transaction(Signature.EMPTY, from, seq, referenceChain, fee, type, SerializableByteArray(data))

@@ -17,7 +17,7 @@ import ninja.blacknet.serialization.toHex
  */
 class PrivateKey(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is PrivateKey) && bytes.contentEquals(other.bytes)
-    override fun hashCode(): Int = bytes.contentHashCode()
+    override fun hashCode(): Int = Salt.hashCode { x(bytes) }
     override fun toString(): String = bytes.toHex()
 
     fun toPublicKey(): PublicKey {

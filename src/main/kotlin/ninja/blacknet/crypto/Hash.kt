@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.SystemService
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.fromHex
@@ -23,10 +24,11 @@ import ninja.blacknet.serialization.toHex
 /**
  * Blake2b hash
  */
+@SystemService
 @Serializable
 class Hash(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is Hash) && bytes.contentEquals(other.bytes)
-    override fun hashCode(): Int = Salt.hashCode(bytes.contentHashCode())
+    override fun hashCode(): Int = Salt.hashCode { x(bytes) }
     override fun toString(): String = bytes.toHex()
 
     @Serializer(forClass = Hash::class)

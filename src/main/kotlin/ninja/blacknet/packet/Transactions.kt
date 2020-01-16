@@ -39,7 +39,7 @@ class Transactions(
         val time = connection.lastPacketTime
 
         for (bytes in list) {
-            val hash = Transaction.Hasher(bytes.array)
+            val hash = Transaction.hash(bytes.array)
 
             if (!TxFetcher.fetched(hash)) {
                 connection.dos("Unrequested $hash")

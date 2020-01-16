@@ -234,7 +234,7 @@ object ChainFetcher {
             logger.info("Disconnected ${undoRollback!!.size} blocks")
         }
         for (i in answer.blocks) {
-            val hash = Block.Hasher(i.array)
+            val hash = Block.hash(i.array)
             if (undoRollback?.contains(hash) == true) {
                 connection.dos("Rollback contains $hash")
                 return false

@@ -42,7 +42,7 @@ class TransactionInfoV1(
 
     companion object {
         fun fromBytes(bytes: ByteArray): TransactionInfoV1 {
-            val hash = Transaction.Hasher(bytes)
+            val hash = Transaction.hash(bytes)
             return TransactionInfoV1(Transaction.deserialize(bytes), hash, bytes.size)
         }
 

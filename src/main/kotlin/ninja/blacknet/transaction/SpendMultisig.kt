@@ -66,7 +66,7 @@ class SpendMultisig(
     private fun hash(): Hash {
         val copy = SpendMultisig(id, amounts, ArrayList())
         val bytes = copy.serialize()
-        return Blake2b.hash(bytes)
+        return Blake2b.hasher { x(bytes) }
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {

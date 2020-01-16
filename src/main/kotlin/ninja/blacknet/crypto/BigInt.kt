@@ -43,7 +43,7 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
     infix fun shr(n: Int): BigInt = BigInt(int.shiftRight(n))
 
     override fun equals(other: Any?): Boolean = (other is BigInt) && int == other.int
-    override fun hashCode(): Int = Salt.hashCode(int.hashCode())
+    override fun hashCode(): Int = Salt.hashCode { x(int.hashCode()) }
     override fun toString(): String = int.toString()
 
     fun toByteArray(): ByteArray = int.toByteArray()

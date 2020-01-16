@@ -39,7 +39,7 @@ class UnlockHTLC(
     }
 
     private fun hash(bytes: ByteArray): Hash {
-        return Blake2b.hash(bytes, 0, bytes.size - Signature.SIZE)
+        return Blake2b.hasher { x(bytes, 0, bytes.size - Signature.SIZE) }
     }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {

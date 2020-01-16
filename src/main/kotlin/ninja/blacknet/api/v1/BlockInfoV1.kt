@@ -40,7 +40,7 @@ class BlockInfoV1(
                 if (txdetail)
                     Json.stringify(TransactionInfoV1.serializer(), TransactionInfoV1.fromBytes(it.array))
                 else
-                    Transaction.Hasher(it.array).toString()
+                    Transaction.hash(it.array).toString()
             }
     )
 

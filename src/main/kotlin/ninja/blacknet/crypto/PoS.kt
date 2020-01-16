@@ -29,7 +29,10 @@ object PoS {
     }
 
     fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
-        return Blake2b.hasher { this + nxtrng + generator }
+        return Blake2b.hasher {
+            x(nxtrng)
+            x(generator)
+        }
     }
 
     fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInt, prevTime: Long, stake: Long): Status {
@@ -39,7 +42,12 @@ object PoS {
         if (time % TIME_SLOT != 0L) {
             return Invalid("Invalid time slot")
         }
-        val hash = Blake2b.hasher { this + nxtrng + prevTime + generator + time }
+        val hash = Blake2b.hasher {
+            x(nxtrng)
+            x(prevTime)
+            x(generator)
+            x(time)
+        }
         val valid = BigInt(hash) < difficulty * stake
         return if (valid)
             Accepted

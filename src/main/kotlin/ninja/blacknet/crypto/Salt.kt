@@ -16,5 +16,63 @@ import kotlin.random.Random
 object Salt {
     private val salt = Random.nextInt()
 
-    fun hashCode(x: Int): Int = 31 * x + salt
+    /**
+     * Builds a hash code with given [init] builder.
+     */
+    fun hashCode(init: HashCoder.() -> Unit): Int {
+        val coder = HashCoder()
+        coder.init()
+        return coder.result()
+    }
+
+    /**
+     * DSL builder for a hash code.
+     */
+    class HashCoder(private var x: Int) {
+        internal constructor() : this(salt)
+
+        /**
+         * Adds [Byte] value.
+         */
+        fun x(byte: Byte) {
+            f(byte.toInt())
+        }
+
+        /**
+         * Adds [Short] value.
+         */
+        fun x(short: Short) {
+            f(short.toInt())
+        }
+
+        /**
+         * Adds [Int] value.
+         */
+        fun x(int: Int) {
+            f(int)
+        }
+
+        /**
+         * Adds [Long] value.
+         */
+        fun x(long: Long) {
+            f((long / 4294967296L + long).toInt())
+        }
+
+        /**
+         * Adds [ByteArray] value.
+         */
+        fun x(bytes: ByteArray) {
+            for (i in 0 until bytes.size)
+                f(bytes[i].toInt())
+        }
+
+        internal fun result(): Int {
+            return x
+        }
+
+        private fun f(x: Int) {
+            this.x = 31 * this.x + x;
+        }
+    }
 }

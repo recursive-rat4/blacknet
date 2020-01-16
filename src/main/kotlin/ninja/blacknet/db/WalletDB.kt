@@ -191,7 +191,7 @@ object WalletDB {
         if (wallets.isEmpty()) return@withLock
 
         val (block, _) = BlockDB.blockImpl(blockHash)!!
-        val txHashes = block.transactions.map { Transaction.Hasher(it.array) }
+        val txHashes = block.transactions.map { Transaction.hash(it.array) }
 
         val updated = HashMap<PublicKey, Wallet>(wallets.size)
         wallets.forEach { (publicKey, wallet) ->
@@ -233,7 +233,7 @@ object WalletDB {
 
             val tx = Transaction.generated(publicKey, height, hash, balance)
             val txBytes = tx.serialize()
-            val txHash = Transaction.Hasher(txBytes)
+            val txHash = Transaction.hash(txBytes)
             processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, LedgerDB.GENESIS_TIME, height, batch, rescan)
         }
     }
@@ -581,7 +581,7 @@ object WalletDB {
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
                 val tx = Transaction.deserialize(bytes.array)
-                val txHash = Transaction.Hasher(bytes.array)
+                val txHash = Transaction.hash(bytes.array)
                 processTransactionImpl(publicKey, wallet, txHash, tx, bytes.array, block.time, height, batch, true)
             }
         } else {

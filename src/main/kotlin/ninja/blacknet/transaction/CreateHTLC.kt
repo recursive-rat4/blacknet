@@ -31,7 +31,7 @@ class CreateHTLC(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    fun id(hash: Hash, dataIndex: Int) = if (forkV2()) Blake2b.hasher { this + hash + dataIndex } else hash
+    fun id(hash: Hash, dataIndex: Int) = if (forkV2()) Blake2b.hasher { x(hash); x(dataIndex); } else hash
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (!HTLC.isValidTimeLockType(timeLockType)) {

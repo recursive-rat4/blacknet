@@ -51,6 +51,6 @@ object Mnemonic {
     }
 
     private fun hash(string: String): Hash {
-        return Blake2b.hash(string)
+        return Blake2b.hasher { x(string) }
     }
 }

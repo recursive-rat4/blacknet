@@ -30,7 +30,7 @@ class SerializableByteArray(
     }
 
     override fun hashCode(): Int {
-        return Salt.hashCode(array.contentHashCode())
+        return Salt.hashCode { x(array) }
     }
 
     override fun toString(): String {
