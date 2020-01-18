@@ -28,6 +28,7 @@ import ninja.blacknet.time.SystemClock
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.hours
 import ninja.blacknet.util.SynchronizedHashMap
+import ninja.blacknet.util.emptyByteArray
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
@@ -40,19 +41,18 @@ object PeerDB {
     private const val MAX_SIZE = 10000
     private const val VERSION = 3
     private val peers = SynchronizedHashMap<Address, Entry>(MAX_SIZE)
-    private val PEER_KEY = "peer".toByteArray()
-    private val STATE_KEY = "db".toByteArray()
-    private val VERSION_KEY = "version".toByteArray()
+    private val STATE_KEY = DBKey(0x80.toByte(), 0)
+    private val VERSION_KEY = DBKey(0x81.toByte(), 0)
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
         version.encodeVarInt(VERSION)
-        batch.put(PEER_KEY, VERSION_KEY, version.toBytes())
+        batch.put(VERSION_KEY, emptyByteArray(), version.toBytes())
     }
 
     init {
-        val stateBytes = LevelDB.get(PEER_KEY, STATE_KEY)
-        val versionBytes = LevelDB.get(PEER_KEY, VERSION_KEY)
+        val stateBytes = LevelDB.get(STATE_KEY, emptyByteArray())
+        val versionBytes = LevelDB.get(VERSION_KEY, emptyByteArray())
 
         val version = if (versionBytes != null) {
             BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
@@ -250,7 +250,7 @@ object PeerDB {
 
     private fun commitImpl(map: Map<Address, Entry>, batch: LevelDB.WriteBatch, sync: Boolean) {
         val bytes = BinaryEncoder.toBytes(HashMapSerializer(Address.serializer(), Entry.serializer()), map)
-        batch.put(PEER_KEY, STATE_KEY, bytes)
+        batch.put(STATE_KEY, emptyByteArray(), bytes)
         batch.write(sync)
     }
 

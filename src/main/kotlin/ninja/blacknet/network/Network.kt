@@ -26,8 +26,6 @@ import ninja.blacknet.crypto.Base32
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.hours
 import ninja.blacknet.time.milliseconds.minutes
-import ninja.blacknet.util.byteArrayOfInts
-import ninja.blacknet.util.startsWith
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -94,7 +92,22 @@ enum class Network(val type: Byte, val addrSize: Int) {
         // ::1
         if (bytes.contentEquals(IPv6_LOOPBACK_BYTES)) return true
         // fe80:: - febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-        if (bytes.startsWith(IPv6_LINKLOCAL_BYTES)) return true
+        if (bytes[0] == 0xFE.toByte()
+                &&
+                bytes[1] == 0x80.toByte()
+                &&
+                bytes[2] == 0.toByte()
+                &&
+                bytes[3] == 0.toByte()
+                &&
+                bytes[4] == 0.toByte()
+                &&
+                bytes[5] == 0.toByte()
+                &&
+                bytes[6] == 0.toByte()
+                &&
+                bytes[7] == 0.toByte()
+        ) return true
 
         return false
     }
@@ -126,7 +139,6 @@ enum class Network(val type: Byte, val addrSize: Int) {
         val IPv4_LOOPBACK_BYTES = byteArrayOf(127, 0, 0, 1)
         val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
         val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
-        val IPv6_LINKLOCAL_BYTES = byteArrayOfInts(0xFE, 0x80, 0, 0, 0, 0, 0, 0)
 
         private val socksProxy: Address?
         private val torProxy: Address?

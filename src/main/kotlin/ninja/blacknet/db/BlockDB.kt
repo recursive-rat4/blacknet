@@ -25,7 +25,7 @@ private val logger = KotlinLogging.logger {}
 object BlockDB {
     private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
     internal val mutex = Mutex()
-    private val BLOCK_KEY = "block".toByteArray()
+    private val BLOCK_KEY = DBKey(0xC0.toByte(), Hash.SIZE)
     @Volatile
     internal var cachedBlock: Pair<Hash, ByteArray>? = null
 
@@ -54,11 +54,11 @@ object BlockDB {
     }
 
     internal fun removeImpl(list: List<Hash>) {
-        val txDb = LevelDB.createWriteBatch()
+        val batch = LevelDB.createWriteBatch()
         list.forEach { hash ->
-            txDb.delete(BLOCK_KEY, hash.bytes)
+            batch.delete(BLOCK_KEY, hash.bytes)
         }
-        txDb.write()
+        batch.write()
     }
 
     private fun containsImpl(hash: Hash): Boolean {

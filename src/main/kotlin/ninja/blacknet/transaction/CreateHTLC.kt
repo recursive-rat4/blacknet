@@ -10,6 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.contract.HashTimeLock
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Blake2b
@@ -20,7 +21,7 @@ import ninja.blacknet.serialization.*
 
 @Serializable
 class CreateHTLC(
-        val amount: Long,
+        val lot: Long,
         val to: PublicKey,
         val timeLockType: Byte,
         val timeLock: Long,
@@ -34,31 +35,31 @@ class CreateHTLC(
     fun id(hash: Hash, dataIndex: Int) = if (forkV2()) Blake2b.hasher { x(hash); x(dataIndex); } else hash
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
-        if (!HTLC.isValidTimeLockType(timeLockType)) {
+        if (!HashTimeLock.isValidTimeLockType(timeLockType)) {
             return Invalid("Unknown time lock type $timeLockType")
         }
         if (forkV2()) {
-            if (!HTLC.isValidHashLock(hashType, hashLock)) {
+            if (!HashTimeLock.isValidHashLock(hashType, hashLock)) {
                 return Invalid("Invalid hash lock type $hashType size ${hashLock.array.size}")
             }
         } else {
-            if (!HTLC.isValidHashType(hashType)) {
+            if (!HashTimeLock.isValidHashType(hashType)) {
                 return Invalid("Unknown hash type $hashType")
             }
         }
 
-        if (amount == 0L) {
+        if (lot == 0L) {
             return Invalid("Invalid amount")
         }
 
         val account = ledger.get(tx.from)!!
-        val status = account.credit(amount)
+        val status = account.credit(lot)
         if (status != Accepted) {
             return status
         }
 
         val id = id(hash, dataIndex)
-        val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLockType, timeLock, hashType, hashLock)
+        val htlc = HTLC(ledger.height(), ledger.blockTime(), lot, tx.from, to, timeLockType, timeLock, hashType, hashLock)
         ledger.set(tx.from, account)
         ledger.addHTLC(id, htlc)
         return Accepted
@@ -73,7 +74,7 @@ class CreateHTLC(
     @Suppress("unused")
     @Serializable
     class Info(
-            val amount: String,
+            val lot: String,
             val to: String,
             val timeLockType: Int,
             val timeLock: Long,
@@ -81,7 +82,7 @@ class CreateHTLC(
             val hashLock: String
     ) {
         constructor(data: CreateHTLC) : this(
-                data.amount.toString(),
+                data.lot.toString(),
                 Address.encode(data.to),
                 data.timeLockType.toUByte().toInt(),
                 data.timeLock,

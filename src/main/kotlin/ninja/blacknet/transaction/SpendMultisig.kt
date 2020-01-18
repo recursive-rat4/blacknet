@@ -100,13 +100,13 @@ class SpendMultisig(
 
         val height = ledger.height()
 
-        for (i in multisig.deposits.indices) {
-            if (amounts[i] < 0) {
-                return Invalid("Negative amount i $i")
-            } else if (amounts[i] != 0L) {
-                val publicKey = multisig.deposits[i].first
+        for (index in 0 until multisig.deposits.size) {
+            if (amounts[index] < 0) {
+                return Invalid("Negative amount index $index")
+            } else if (amounts[index] != 0L) {
+                val publicKey = multisig.deposits[index].first
                 val toAccount = ledger.getOrCreate(publicKey)
-                toAccount.debit(height, amounts[i])
+                toAccount.debit(height, amounts[index])
                 ledger.set(publicKey, toAccount)
             }
         }
@@ -129,13 +129,13 @@ class SpendMultisig(
             val signatures: JsonArray
     ) {
         constructor(data: SpendMultisig) : this(
-                data.id.toString(),
+                Address.encodeId(Address.MULTISIG, data.id),
                 JsonArray(data.amounts.map { amount ->
                     JsonPrimitive(amount.toString())
                 }),
-                JsonArray(data.signatures.map { (i, signature) ->
+                JsonArray(data.signatures.map { (index, signature) ->
                     json {
-                        "i" to i.toUByte().toInt()
+                        "index" to index.toUByte().toInt()
                         "signature" to signature.toString()
                     }
                 })

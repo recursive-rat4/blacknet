@@ -9,93 +9,40 @@
 
 package ninja.blacknet.core
 
-import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
+import kotlinx.serialization.serializer
+import ninja.blacknet.contract.HashTimeLock
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.SerializableByteArray
 
-@Serializable
 class HTLC(
-        val height: Int,
-        val time: Long,
-        val amount: Long,
-        val from: PublicKey,
-        val to: PublicKey,
-        val timeLockType: Byte,
-        val timeLock: Long,
-        val hashType: Byte,
-        val hashLock: SerializableByteArray
+        height: Int,
+        time: Long,
+        lot: Long,
+        from: PublicKey,
+        to: PublicKey,
+        timeLockType: Byte,
+        timeLock: Long,
+        hashType: Byte,
+        hashLock: SerializableByteArray
+) : HashTimeLock<PublicKey, Long>(
+        height,
+        time,
+        lot,
+        from,
+        to,
+        timeLockType,
+        timeLock,
+        hashType,
+        hashLock
 ) {
-    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
-
-    fun verifyTimeLock(ledger: Ledger): Boolean {
-        val type = TimeLockType.get(timeLockType) ?: return false
-        return type.verify(this, ledger)
-    }
-
-    fun verifyHashLock(preimage: SerializableByteArray): Boolean {
-        val type = HashType.get(hashType) ?: return false
-        return type.verify(this, preimage)
-    }
-
-    enum class HashType(
-            val hash: (ByteArray) -> ByteArray,
-            val hashSize: Int
-    ) {
-        BLAKE256(ninja.blacknet.crypto.Blake2b, ninja.blacknet.crypto.Blake2b.HASH_SIZE),
-        SHA256(ninja.blacknet.crypto.SHA256, ninja.blacknet.crypto.SHA256.HASH_SIZE),
-        KECCAK256(ninja.blacknet.crypto.Keccak256, ninja.blacknet.crypto.Keccak256.HASH_SIZE),
-        RIPEMD160(ninja.blacknet.crypto.RIPEMD160, ninja.blacknet.crypto.RIPEMD160.HASH_SIZE),
-        ;
-
-        fun verify(htlc: HTLC, preimage: SerializableByteArray): Boolean {
-            return hash(preimage.array).contentEquals(htlc.hashLock.array)
-        }
-
-        companion object {
-            fun get(type: Byte): HashType? = when (type) {
-                HashType.BLAKE256.ordinal.toByte() -> BLAKE256
-                HashType.SHA256.ordinal.toByte() -> SHA256
-                HashType.KECCAK256.ordinal.toByte() -> KECCAK256
-                HashType.RIPEMD160.ordinal.toByte() -> RIPEMD160
-                else -> null
-            }
-        }
-    }
-
-    enum class TimeLockType(
-            val verify: (HTLC, Ledger) -> Boolean
-    ) {
-        TIME({ htlc, ledger -> htlc.timeLock < ledger.blockTime() }),
-        HEIGHT({ htlc, ledger -> htlc.timeLock < ledger.height() }),
-        RELATIVE_TIME({ htlc, ledger -> htlc.time + htlc.timeLock < ledger.blockTime() }),
-        RELATIVE_HEIGHT({ htlc, ledger -> htlc.height + htlc.timeLock < ledger.height() }),
-        ;
-
-        companion object {
-            fun get(type: Byte): TimeLockType? = when (type) {
-                TimeLockType.TIME.ordinal.toByte() -> TIME
-                TimeLockType.HEIGHT.ordinal.toByte() -> HEIGHT
-                TimeLockType.RELATIVE_TIME.ordinal.toByte() -> RELATIVE_TIME
-                TimeLockType.RELATIVE_HEIGHT.ordinal.toByte() -> RELATIVE_HEIGHT
-                else -> null
-            }
-        }
+    fun serialize(): ByteArray {
+        return serialize(PublicKey.serializer(), Long.serializer())
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): HTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
-
-        fun isValidTimeLockType(type: Byte): Boolean = TimeLockType.get(type) != null
-        fun isValidHashType(type: Byte): Boolean = HashType.get(type) != null
-
-        fun isValidHashLock(hashType: Byte, hashLock: SerializableByteArray): Boolean {
-            val type = HashType.get(hashType)
-            return if (type != null)
-                hashLock.array.size == type.hashSize
-            else
-                false
+        fun deserialize(bytes: ByteArray): HTLC {
+            val obj = deserialize(bytes, PublicKey.serializer(), Long.serializer())
+            return HTLC(obj.height, obj.time, obj.lot, obj.from, obj.to, obj.timeLockType, obj.timeLock, obj.hashType, obj.hashLock)
         }
     }
 }

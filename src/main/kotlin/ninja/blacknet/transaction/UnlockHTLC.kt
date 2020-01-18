@@ -25,7 +25,7 @@ class UnlockHTLC(
 ) : TxData {
     override fun getType() = TxType.UnlockHTLC
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
+    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
     fun sign(privateKey: PrivateKey) {
         val bytes = serialize()
@@ -55,7 +55,7 @@ class UnlockHTLC(
         }
 
         val toAccount = ledger.getOrCreate(htlc.to)
-        toAccount.debit(ledger.height(), htlc.amount)
+        toAccount.debit(ledger.height(), htlc.lot)
         ledger.set(htlc.to, toAccount)
         ledger.removeHTLC(id)
         return Accepted
@@ -65,5 +65,19 @@ class UnlockHTLC(
 
     companion object {
         fun deserialize(bytes: ByteArray): UnlockHTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
+    }
+
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val id: String,
+            val preimage: String,
+            val signatureB: String
+    ) {
+        constructor(data: UnlockHTLC) : this(
+                Address.encodeId(Address.HTLC, data.id),
+                data.preimage.toString(),
+                data.signatureB.toString()
+        )
     }
 }

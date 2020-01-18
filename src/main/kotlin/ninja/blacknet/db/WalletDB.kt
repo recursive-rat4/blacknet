@@ -38,21 +38,21 @@ private val logger = KotlinLogging.logger {}
 object WalletDB {
     private const val VERSION = 6
     internal val mutex = Mutex()
-    private val KEYS_KEY = "keys".toByteArray()
-    private val TX_KEY = "tx".toByteArray()
-    private val VERSION_KEY = "version".toByteArray()
-    private val WALLET_KEY = "wallet".toByteArray()
+    private val KEYS_KEY = DBKey(64, 0)
+    private val TX_KEY = DBKey(65, Hash.SIZE)
+    private val VERSION_KEY = DBKey(66, 0)
+    private val WALLET_KEY = DBKey(67, Hash.SIZE)
     private val wallets = HashMap<PublicKey, Wallet>()
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
         version.encodeVarInt(VERSION)
-        batch.put(WALLET_KEY, VERSION_KEY, version.toBytes())
+        batch.put(VERSION_KEY, emptyByteArray(), version.toBytes())
     }
 
     init {
-        val keysBytes = LevelDB.get(WALLET_KEY, KEYS_KEY)
-        val versionBytes = LevelDB.get(WALLET_KEY, VERSION_KEY)
+        val keysBytes = LevelDB.get(KEYS_KEY, emptyByteArray())
+        val versionBytes = LevelDB.get(VERSION_KEY, emptyByteArray())
 
         val version = if (versionBytes != null) {
             BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
@@ -531,7 +531,7 @@ object WalletDB {
         val encoder = BinaryEncoder()
         wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey.bytes) }
         val keysBytes = encoder.toBytes()
-        batch.put(WALLET_KEY, KEYS_KEY, keysBytes)
+        batch.put(KEYS_KEY, emptyByteArray(), keysBytes)
     }
 
     internal suspend fun getWalletImpl(publicKey: PublicKey): Wallet {
@@ -603,7 +603,7 @@ object WalletDB {
 
             while (iterator.hasNext()) {
                 val entry = iterator.next()
-                if (entry.key.startsWith(TX_KEY)) {
+                if (TX_KEY % entry) {
                     val bytes = entry.value
                     stream.writeInt(bytes.size)
                     stream.write(bytes, 0, bytes.size)
@@ -619,22 +619,15 @@ object WalletDB {
         if (LevelDB.seek(iterator, WALLET_KEY)) {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
-                if (entry.key.startsWith(WALLET_KEY)) {
-                    if (entry.key.size != 38)
-                        continue
+                val key = WALLET_KEY - entry ?: break
+                val file = File(backupDir, Address.encode(PublicKey(key)))
+                val stream = file.outputStream().buffered().data()
 
-                    val publicKey = PublicKey(LevelDB.sliceKey(entry, WALLET_KEY))
-                    val file = File(backupDir, Address.encode(publicKey))
-                    val stream = file.outputStream().buffered().data()
+                val bytes = entry.value
+                stream.write(bytes, 0, bytes.size)
+                batch.delete(entry.key)
 
-                    val bytes = entry.value
-                    stream.write(bytes, 0, bytes.size)
-                    batch.delete(entry.key)
-
-                    stream.close()
-                } else {
-                    break
-                }
+                stream.close()
             }
         }
 

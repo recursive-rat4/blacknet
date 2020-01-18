@@ -18,6 +18,7 @@ import io.ktor.util.error
 import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.core.Staker
+import ninja.blacknet.crypto.Salt
 import ninja.blacknet.db.*
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
@@ -63,6 +64,7 @@ object Main {
         logger.info("Using data directory ${Config.dataDir.getAbsolutePath()}")
 
         LevelDB
+        Salt
         BlockDB
         WalletDB
         LedgerDB

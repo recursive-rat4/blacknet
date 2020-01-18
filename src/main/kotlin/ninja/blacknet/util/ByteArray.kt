@@ -9,24 +9,33 @@
 
 package ninja.blacknet.util
 
+import ninja.blacknet.SystemService
+
 private val EMPTY_BYTE_ARRAY = ByteArray(0)
 
 /**
- * Returns an empty [ByteArray]
+ * Returns an empty [ByteArray].
  */
-fun emptyByteArray() = EMPTY_BYTE_ARRAY
+@SystemService
+fun emptyByteArray(): ByteArray {
+    return EMPTY_BYTE_ARRAY
+}
 
 /**
- * Returns a [ByteArray] containing the specified bytes represented as [Int]s
+ * Returns a [ByteArray] containing the specified bytes represented as [Int]s.
  */
-fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { index -> ints[index].toByte() }
+@SystemService
+fun byteArrayOfInts(vararg ints: Int): ByteArray {
+    return ByteArray(ints.size) { index -> ints[index].toByte() }
+}
 
 /**
- * Returns `true` if this [ByteArray] starts with the specified bytes
+ * Returns an array containing this byte and then the given [ByteArray].
  */
-fun ByteArray.startsWith(bytes: ByteArray): Boolean {
-    for (i in bytes.indices)
-        if (this[i] != bytes[i])
-            return false
-    return true
+@SystemService
+operator fun Byte.plus(bytes: ByteArray): ByteArray {
+    val result = ByteArray(Byte.SIZE_BYTES + bytes.size)
+    result[0] = this
+    System.arraycopy(bytes, 0, result, Byte.SIZE_BYTES, bytes.size)
+    return result
 }

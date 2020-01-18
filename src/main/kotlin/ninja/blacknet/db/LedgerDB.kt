@@ -26,7 +26,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
-import ninja.blacknet.util.startsWith
+import ninja.blacknet.util.emptyByteArray
 import java.io.File
 import java.util.ArrayDeque
 import kotlin.math.max
@@ -36,16 +36,16 @@ private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
     private const val VERSION = 8
-    private val ACCOUNT_KEY = "account".toByteArray()
-    private val CHAIN_KEY = "chain".toByteArray()
-    private val HTLC_KEY = "htlc".toByteArray()
-    private val MULTISIG_KEY = "multisig".toByteArray()
-    private val UNDO_KEY = "undo".toByteArray()
-    private val SIZES_KEY = "ledgersizes".toByteArray()
-    private val SNAPSHOT_KEY = "ledgersnapshot".toByteArray()
-    private val SNAPSHOTHEIGHTS_KEY = "ledgersnapshotheights".toByteArray()
-    private val STATE_KEY = "ledgerstate".toByteArray()
-    private val VERSION_KEY = "ledgerversion".toByteArray()
+    private val ACCOUNT_KEY = DBKey(1, PublicKey.SIZE)
+    private val CHAIN_KEY = DBKey(2, Hash.SIZE)
+    private val HTLC_KEY = DBKey(3, Hash.SIZE)
+    private val MULTISIG_KEY = DBKey(4, Hash.SIZE)
+    private val UNDO_KEY = DBKey(5, Hash.SIZE)
+    private val SIZES_KEY = DBKey(6, 0)
+    private val SNAPSHOT_KEY = DBKey(7, Int.SIZE_BYTES)
+    private val SNAPSHOTHEIGHTS_KEY = DBKey(8, 0)
+    private val STATE_KEY = DBKey(9, 0)
+    private val VERSION_KEY = DBKey(10, 0)
 
     const val GENESIS_TIME = 1545555600L
 
@@ -129,7 +129,7 @@ object LedgerDB {
                 PoS.DEFAULT_MAX_BLOCK_SIZE,
                 0,
                 0)
-        batch.put(STATE_KEY, state.serialize())
+        batch.put(STATE_KEY, emptyByteArray(), state.serialize())
         this.state = state
 
         setVersion(batch)
@@ -140,7 +140,7 @@ object LedgerDB {
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
         version.encodeVarInt(VERSION)
-        batch.put(VERSION_KEY, version.toBytes())
+        batch.put(VERSION_KEY, emptyByteArray(), version.toBytes())
     }
 
     private fun writeBlockSizes(batch: LevelDB.WriteBatch) {
@@ -148,7 +148,7 @@ object LedgerDB {
         encoder.encodeVarInt(blockSizes.size)
         for (size in blockSizes)
             encoder.encodeVarInt(size)
-        batch.put(SIZES_KEY, encoder.toBytes())
+        batch.put(SIZES_KEY, emptyByteArray(), encoder.toBytes())
     }
 
     private fun writeSnapshotHeights(batch: LevelDB.WriteBatch) {
@@ -156,11 +156,11 @@ object LedgerDB {
         encoder.encodeVarInt(snapshotHeights.size)
         for (height in snapshotHeights)
             encoder.encodeVarInt(height)
-        batch.put(SNAPSHOTHEIGHTS_KEY, encoder.toBytes())
+        batch.put(SNAPSHOTHEIGHTS_KEY, emptyByteArray(), encoder.toBytes())
     }
 
     init {
-        val snapshotHeightsBytes = LevelDB.get(SNAPSHOTHEIGHTS_KEY)
+        val snapshotHeightsBytes = LevelDB.get(SNAPSHOTHEIGHTS_KEY, emptyByteArray())
         if (snapshotHeightsBytes != null) {
             val decoder = BinaryDecoder.fromBytes(snapshotHeightsBytes)
             val size = decoder.decodeVarInt()
@@ -168,7 +168,7 @@ object LedgerDB {
                 snapshotHeights.add(decoder.decodeVarInt())
         }
 
-        val blockSizesBytes = LevelDB.get(SIZES_KEY)
+        val blockSizesBytes = LevelDB.get(SIZES_KEY, emptyByteArray())
         if (blockSizesBytes != null) {
             val decoder = BinaryDecoder.fromBytes(blockSizesBytes)
             val size = decoder.decodeVarInt()
@@ -176,9 +176,9 @@ object LedgerDB {
                 blockSizes.addLast(decoder.decodeVarInt())
         }
 
-        val stateBytes = LevelDB.get(STATE_KEY)
+        val stateBytes = LevelDB.get(STATE_KEY, emptyByteArray())
         if (stateBytes != null) {
-            val versionBytes = LevelDB.get(VERSION_KEY)!!
+            val versionBytes = LevelDB.get(VERSION_KEY, emptyByteArray())!!
             val version = BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
 
             if (version == VERSION) {
@@ -463,7 +463,7 @@ object LedgerDB {
                 undo.upgraded,
                 undo.forkV2)
         this.state = newState
-        batch.put(STATE_KEY, newState.serialize())
+        batch.put(STATE_KEY, emptyByteArray(), newState.serialize())
 
         val prevIndex = getChainIndex(chainIndex.previous)!!
         prevIndex.next = Hash.ZERO
@@ -556,15 +556,15 @@ object LedgerDB {
         iterator.seekToFirst()
         while (iterator.hasNext()) {
             val entry = iterator.next()
-            if (entry.key.startsWith(ACCOUNT_KEY) ||
-                    entry.key.startsWith(CHAIN_KEY) ||
-                    entry.key.startsWith(HTLC_KEY) ||
-                    entry.key.startsWith(MULTISIG_KEY) ||
-                    entry.key.startsWith(UNDO_KEY) ||
-                    entry.key!!.contentEquals(SIZES_KEY) ||
-                    entry.key.startsWith(SNAPSHOT_KEY) ||
-                    entry.key!!.contentEquals(STATE_KEY) ||
-                    entry.key!!.contentEquals(VERSION_KEY)) {
+            if (ACCOUNT_KEY % entry ||
+                    CHAIN_KEY % entry ||
+                    HTLC_KEY % entry ||
+                    MULTISIG_KEY % entry ||
+                    UNDO_KEY % entry ||
+                    SIZES_KEY % entry ||
+                    SNAPSHOT_KEY % entry ||
+                    STATE_KEY % entry ||
+                    VERSION_KEY % entry) {
                 batch.delete(entry.key)
             }
         }
@@ -592,7 +592,7 @@ object LedgerDB {
                     result.accounts += 1
                 },
                 { _, htlc ->
-                    supply += htlc.amount
+                    supply += htlc.lot
                     result.htlcs += 1
                 },
                 { _, multisig ->
@@ -622,28 +622,22 @@ object LedgerDB {
         if (LevelDB.seek(iterator, ACCOUNT_KEY)) {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
-                if (entry.key.startsWith(ACCOUNT_KEY))
-                    account(PublicKey(LevelDB.sliceKey(entry, ACCOUNT_KEY)), AccountState.deserialize(entry.value))
-                else
-                    break
+                val key = ACCOUNT_KEY - entry ?: break
+                account(PublicKey(key), AccountState.deserialize(entry.value))
             }
         }
         if (LevelDB.seek(iterator, HTLC_KEY)) {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
-                if (entry.key.startsWith(HTLC_KEY))
-                    htlc(Hash(LevelDB.sliceKey(entry, HTLC_KEY)), HTLC.deserialize(entry.value))
-                else
-                    break
+                val key = HTLC_KEY - entry ?: break
+                htlc(Hash(key), HTLC.deserialize(entry.value))
             }
         }
         if (LevelDB.seek(iterator, MULTISIG_KEY)) {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
-                if (entry.key.startsWith(MULTISIG_KEY))
-                    multisig(Hash(LevelDB.sliceKey(entry, MULTISIG_KEY)), Multisig.deserialize(entry.value))
-                else
-                    break
+                val key = MULTISIG_KEY - entry ?: break
+                multisig(Hash(key), Multisig.deserialize(entry.value))
             }
         }
         iterator.close()
@@ -805,7 +799,7 @@ object LedgerDB {
                     upgraded.toShort(),
                     forkV2.toShort())
             LedgerDB.state = newState
-            batch.put(STATE_KEY, newState.serialize())
+            batch.put(STATE_KEY, emptyByteArray(), newState.serialize())
 
             batch.put(UNDO_KEY, blockHash.bytes, undo.serialize())
             batch.put(CHAIN_KEY, blockPrevious.bytes, prevIndex!!.serialize())
@@ -903,7 +897,7 @@ object LedgerDB {
                     }
                 },
                 { _, htlc ->
-                    snapshot.credit(htlc.from, htlc.amount)
+                    snapshot.credit(htlc.from, htlc.lot)
                 },
                 { _, multisig ->
                     multisig.deposits.forEach { (publicKey, amount) ->

@@ -56,7 +56,7 @@ class SpendHTLC(
         } catch (e: ArithmeticException) {
             return Invalid("Invalid amount: ${e.message}")
         }
-        if (amount != htlc.amount) {
+        if (amount != htlc.lot) {
             return Invalid("Invalid amount")
         }
         if (tx.from != htlc.from) {
@@ -92,7 +92,7 @@ class SpendHTLC(
             val signatureB: String
     ) {
         constructor(data: SpendHTLC) : this(
-                data.id.bytes.toHex(),
+                Address.encodeId(Address.HTLC, data.id),
                 data.amountA.toString(),
                 data.amountB.toString(),
                 data.signatureB.bytes.toHex()

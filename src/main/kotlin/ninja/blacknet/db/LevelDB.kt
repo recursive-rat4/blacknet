@@ -12,7 +12,6 @@ package ninja.blacknet.db
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dbcache
-import ninja.blacknet.util.startsWith
 import org.iq80.leveldb.*
 import java.io.File
 
@@ -26,10 +25,10 @@ object LevelDB {
         return db.iterator()
     }
 
-    internal fun seek(iterator: DBIterator, key: ByteArray): Boolean {
-        iterator.seek(key)
+    internal fun seek(iterator: DBIterator, dbKey: DBKey): Boolean {
+        iterator.seek(byteArrayOf(dbKey.prefix))
         return if (iterator.hasNext())
-            iterator.peekNext().key.startsWith(key)
+            dbKey % iterator.peekNext()
         else
             false
     }
@@ -38,33 +37,24 @@ object LevelDB {
         return db.getProperty(name)
     }
 
-    internal fun key(key1: ByteArray, key2: ByteArray): ByteArray {
-        return key1 + key2
+    fun get(dbKey: DBKey, key: ByteArray): ByteArray? {
+        return db.get(dbKey + key)
     }
 
-    internal fun sliceKey(entry: Map.Entry<ByteArray, ByteArray>, key1: ByteArray): ByteArray {
-        val key = entry.key
-        return key.copyOfRange(key1.size, key.size)
+    internal fun get(unkey: ByteArray): ByteArray? {
+        return db.get(unkey)
     }
 
-    internal fun get(key: ByteArray): ByteArray? {
-        return db.get(key)
+    fun contains(dbKey: DBKey, key: ByteArray): Boolean {
+        return get(dbKey, key) != null
     }
 
-    fun get(key1: ByteArray, key2: ByteArray): ByteArray? {
-        return db.get(key(key1, key2))
+    fun put(dbKey: DBKey, key: ByteArray, bytes: ByteArray) {
+        db.put(dbKey + key, bytes)
     }
 
-    fun contains(key1: ByteArray, key2: ByteArray): Boolean {
-        return get(key1, key2) != null
-    }
-
-    fun put(key1: ByteArray, key2: ByteArray, bytes: ByteArray) {
-        db.put(key(key1, key2), bytes)
-    }
-
-    fun delete(key1: ByteArray, key2: ByteArray) {
-        db.delete(key(key1, key2))
+    fun delete(dbKey: DBKey, key: ByteArray) {
+        db.delete(dbKey + key)
     }
 
     fun createWriteBatch(): WriteBatch {
@@ -72,20 +62,16 @@ object LevelDB {
     }
 
     class WriteBatch internal constructor(private val batch: org.iq80.leveldb.WriteBatch) {
-        internal fun put(key: ByteArray, bytes: ByteArray) {
-            batch.put(key, bytes)
+        fun put(dbKey: DBKey, key: ByteArray, bytes: ByteArray) {
+            batch.put(dbKey + key, bytes)
         }
 
-        fun put(key1: ByteArray, key2: ByteArray, bytes: ByteArray) {
-            batch.put(key(key1, key2), bytes)
+        fun delete(dbKey: DBKey, key: ByteArray) {
+            batch.delete(dbKey + key)
         }
 
-        internal fun delete(key: ByteArray) {
-            batch.delete(key)
-        }
-
-        fun delete(key1: ByteArray, key2: ByteArray) {
-            batch.delete(key(key1, key2))
+        internal fun delete(unkey: ByteArray) {
+            batch.delete(unkey)
         }
 
         fun write(sync: Boolean = false) {

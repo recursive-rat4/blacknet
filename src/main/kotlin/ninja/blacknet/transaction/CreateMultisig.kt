@@ -75,7 +75,7 @@ class CreateMultisig(
         }
 
         val multisigHash = hash(tx.from, tx.seq, dataIndex)
-        for (index in deposits.indices) {
+        for (index in 0 until deposits.size) {
             val (publicKey, amount) = deposits[index]
             if (amount != 0L) {
                 val signature = signatures.find { it.first == index.toByte() }?.second

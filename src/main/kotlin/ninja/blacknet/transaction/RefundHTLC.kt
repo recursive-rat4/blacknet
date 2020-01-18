@@ -12,6 +12,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
+import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -23,7 +24,7 @@ class RefundHTLC(
 ) : TxData {
     override fun getType() = TxType.RefundHTLC
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
+    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
@@ -38,7 +39,7 @@ class RefundHTLC(
         }
 
         val account = ledger.get(tx.from)!!
-        account.debit(ledger.height(), htlc.amount)
+        account.debit(ledger.height(), htlc.lot)
         ledger.set(tx.from, account)
         ledger.removeHTLC(id)
         return Accepted
@@ -48,5 +49,15 @@ class RefundHTLC(
 
     companion object {
         fun deserialize(bytes: ByteArray): RefundHTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
+    }
+
+    @Suppress("unused")
+    @Serializable
+    class Info(
+            val id: String
+    ) {
+        constructor(data: RefundHTLC) : this(
+                Address.encodeId(Address.HTLC, data.id)
+        )
     }
 }
