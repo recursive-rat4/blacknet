@@ -14,7 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ninja.blacknet.Runtime
-import ninja.blacknet.serialization.hex
+import ninja.blacknet.coding.hex
 import java.io.File
 
 object B2Sum {

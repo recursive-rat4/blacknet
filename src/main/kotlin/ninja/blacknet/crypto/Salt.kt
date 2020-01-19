@@ -12,9 +12,9 @@ package ninja.blacknet.crypto
 import com.google.common.primitives.Ints
 import mu.KotlinLogging
 import ninja.blacknet.SystemService
+import ninja.blacknet.coding.toHex
 import ninja.blacknet.db.DBKey
 import ninja.blacknet.db.LevelDB
-import ninja.blacknet.serialization.toHex
 import ninja.blacknet.util.emptyByteArray
 import kotlin.random.Random
 

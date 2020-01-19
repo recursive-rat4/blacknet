@@ -10,6 +10,7 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.Config
+import ninja.blacknet.coding.Bech32
 import ninja.blacknet.util.plus
 
 /**

@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.crypto
+package ninja.blacknet.coding
 
 import kotlin.experimental.and
 

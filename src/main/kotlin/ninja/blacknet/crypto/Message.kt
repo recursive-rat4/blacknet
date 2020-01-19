@@ -10,11 +10,11 @@
 package ninja.blacknet.crypto
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.coding.fromHex
+import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.Ed25519.x25519
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.serialization.fromHex
-import ninja.blacknet.serialization.toHex
 
 @Serializable
 class Message(

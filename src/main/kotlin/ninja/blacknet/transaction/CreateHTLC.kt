@@ -17,7 +17,10 @@ import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB.forkV2
-import ninja.blacknet.serialization.*
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class CreateHTLC(
@@ -87,7 +90,7 @@ class CreateHTLC(
                 data.timeLockType.toUByte().toInt(),
                 data.timeLock,
                 data.hashType.toUByte().toInt(),
-                data.hashLock.array.toHex()
+                data.hashLock.toString()
         )
     }
 }

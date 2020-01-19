@@ -16,6 +16,8 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.SystemService
+import ninja.blacknet.coding.fromHex
+import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.Salt
 import ninja.blacknet.util.emptyByteArray
 

@@ -50,6 +50,8 @@ import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
 import ninja.blacknet.api.v1.*
+import ninja.blacknet.coding.fromHex
+import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.*
@@ -57,8 +59,6 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.serialization.fromHex
-import ninja.blacknet.serialization.toHex
 import ninja.blacknet.time.SystemClock
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*

@@ -9,8 +9,8 @@
 
 package ninja.blacknet.crypto
 
-import ninja.blacknet.serialization.fromHex
-import ninja.blacknet.serialization.toHex
+import ninja.blacknet.coding.fromHex
+import ninja.blacknet.coding.toHex
 
 /**
  * Ed25519 private key

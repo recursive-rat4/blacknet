@@ -24,7 +24,7 @@ import ninja.blacknet.Config
 import ninja.blacknet.Config.i2psamhost
 import ninja.blacknet.Config.i2psamport
 import ninja.blacknet.Runtime
-import ninja.blacknet.crypto.Base64
+import ninja.blacknet.coding.Base64
 import ninja.blacknet.crypto.SHA256
 import java.io.File
 import kotlin.random.Random

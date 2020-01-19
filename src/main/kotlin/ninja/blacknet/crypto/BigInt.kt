@@ -14,10 +14,10 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.coding.fromHex
+import ninja.blacknet.coding.toHex
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.fromHex
-import ninja.blacknet.serialization.toHex
 import java.math.BigInteger
 
 @Serializable

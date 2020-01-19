@@ -12,7 +12,10 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.serialization.*
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class Burn(
@@ -49,7 +52,7 @@ class Burn(
     ) {
         constructor(data: Burn) : this(
                 data.amount.toString(),
-                data.message.array.toHex()
+                data.message.toString()
         )
     }
 }

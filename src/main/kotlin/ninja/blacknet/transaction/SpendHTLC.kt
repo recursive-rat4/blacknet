@@ -15,7 +15,6 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.serialization.toHex
 
 @Serializable
 class SpendHTLC(
@@ -95,7 +94,7 @@ class SpendHTLC(
                 Address.encodeId(Address.HTLC, data.id),
                 data.amountA.toString(),
                 data.amountB.toString(),
-                data.signatureB.bytes.toHex()
+                data.signatureB.toString()
         )
     }
 }

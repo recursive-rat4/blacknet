@@ -22,7 +22,7 @@ import ninja.blacknet.Config.proxyhost
 import ninja.blacknet.Config.proxyport
 import ninja.blacknet.Config.torhost
 import ninja.blacknet.Config.torport
-import ninja.blacknet.crypto.Base32
+import ninja.blacknet.coding.Base32
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.hours
 import ninja.blacknet.time.milliseconds.minutes
