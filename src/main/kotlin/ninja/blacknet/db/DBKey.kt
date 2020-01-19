@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import ninja.blacknet.util.SIZE
 import ninja.blacknet.util.plus
 
 class DBKey(
@@ -21,13 +22,13 @@ class DBKey(
     }
 
     operator fun rem(entry: Map.Entry<ByteArray, *>): Boolean {
-        return Byte.SIZE_BYTES + keyLength == entry.key.size && entry.key[0] == prefix
+        return Byte.SIZE + keyLength == entry.key.size && entry.key[0] == prefix
     }
 
     operator fun minus(entry: Map.Entry<ByteArray, *>): ByteArray? {
         return if (this % entry) {
             val bytes = ByteArray(keyLength)
-            System.arraycopy(entry.key, Byte.SIZE_BYTES, bytes, 0, keyLength)
+            System.arraycopy(entry.key, Byte.SIZE, bytes, 0, keyLength)
             bytes
         } else {
             null

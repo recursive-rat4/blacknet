@@ -25,6 +25,9 @@ class PrivateKey(val bytes: ByteArray) {
     }
 
     companion object {
+        /**
+         * The number of bytes in a binary representation of a [PrivateKey].
+         */
         const val SIZE = 32
 
         fun fromString(hex: String?): PrivateKey? {

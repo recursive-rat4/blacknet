@@ -33,6 +33,9 @@ class Hash(val bytes: ByteArray) {
 
     @Serializer(forClass = Hash::class)
     companion object {
+        /**
+         * The number of bytes in a binary representation of a [Hash].
+         */
         const val SIZE = Blake2b.HASH_SIZE
         val ZERO = Hash(ByteArray(SIZE))
 

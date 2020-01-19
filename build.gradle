@@ -67,7 +67,7 @@ task getGitRevision(type:Exec) {
     ignoreExitValue = true
     standardOutput = new ByteArrayOutputStream()
     ext.output = {
-        return standardOutput.toString()
+        return standardOutput.toString().trim()
     }
 }
 

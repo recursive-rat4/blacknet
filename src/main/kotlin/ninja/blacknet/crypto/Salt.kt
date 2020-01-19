@@ -15,6 +15,7 @@ import ninja.blacknet.SystemService
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.db.DBKey
 import ninja.blacknet.db.LevelDB
+import ninja.blacknet.util.SIZE
 import ninja.blacknet.util.emptyByteArray
 import kotlin.random.Random
 
@@ -34,7 +35,7 @@ object Salt {
             if (LevelDB.get(OLD_VERSION_KEY) != null)
                 nibbler()
 
-            val bytes = Random.nextBytes(Int.SIZE_BYTES + Hash.SIZE)
+            val bytes = Random.nextBytes(Int.SIZE + Hash.SIZE)
 
             val batch = LevelDB.createWriteBatch()
             batch.put(SALT_KEY, emptyByteArray(), bytes)
@@ -118,7 +119,7 @@ object Salt {
             key = Pair("multisig", Hash.SIZE) - entry; if (key != null) { nibble(batch, entry, key, DBKey(4, Hash.SIZE)); continue }
             key = Pair("undo", Hash.SIZE) - entry; if (key != null) { nibble(batch, entry, key, DBKey(5, Hash.SIZE)); continue }
             key = Pair("ledgersizes", 0) - entry; if (key != null) { nibble(batch, entry, key, DBKey(6, 0)); continue }
-            key = Pair("ledgersnapshot", Int.SIZE_BYTES) - entry; if (key != null) { nibble(batch, entry, key, DBKey(7, Int.SIZE_BYTES)); continue }
+            key = Pair("ledgersnapshot", Int.SIZE) - entry; if (key != null) { nibble(batch, entry, key, DBKey(7, Int.SIZE)); continue }
             key = Pair("ledgersnapshotheights", 0) - entry; if (key != null) { nibble(batch, entry, key, DBKey(8, 0)); continue }
             key = Pair("ledgerstate", 0) - entry; if (key != null) { nibble(batch, entry, key, DBKey(9, 0)); continue }
             key = Pair("ledgerversion", 0) - entry; if (key != null) { nibble(batch, entry, key, DBKey(10, 0)); continue }

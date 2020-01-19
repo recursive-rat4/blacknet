@@ -31,6 +31,9 @@ class PublicKey(val bytes: ByteArray) {
 
     @Serializer(forClass = PublicKey::class)
     companion object {
+        /**
+         * The number of bytes in a binary representation of a [PublicKey].
+         */
         const val SIZE = 32
 
         fun fromString(hex: String?): PublicKey? {

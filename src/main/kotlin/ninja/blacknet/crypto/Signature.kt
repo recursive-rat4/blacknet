@@ -31,6 +31,9 @@ class Signature(val bytes: ByteArray) {
 
     @Serializer(forClass = Signature::class)
     companion object {
+        /**
+         * The number of bytes in a binary representation of a [Signature].
+         */
         const val SIZE = 64
         val EMPTY = Signature(ByteArray(SIZE))
 

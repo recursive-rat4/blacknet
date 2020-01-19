@@ -14,6 +14,7 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.util.SIZE
 
 @Serializable
 class Block(
@@ -51,9 +52,9 @@ class Block(
 
     companion object {
         const val VERSION = 2
-        const val CONTENT_HASH_POS = Int.SIZE_BYTES + Hash.SIZE + Long.SIZE_BYTES + PublicKey.SIZE
-        const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE
-        const val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE
+        val CONTENT_HASH_POS = Int.SIZE + Hash.SIZE + Long.SIZE + PublicKey.SIZE
+        val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE
+        val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE
 
         fun deserialize(bytes: ByteArray): Block = BinaryDecoder.fromBytes(bytes).decode(serializer())
 

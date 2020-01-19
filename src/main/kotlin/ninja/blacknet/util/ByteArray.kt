@@ -34,8 +34,8 @@ fun byteArrayOfInts(vararg ints: Int): ByteArray {
  */
 @SystemService
 operator fun Byte.plus(bytes: ByteArray): ByteArray {
-    val result = ByteArray(Byte.SIZE_BYTES + bytes.size)
+    val result = ByteArray(Byte.SIZE + bytes.size)
     result[0] = this
-    System.arraycopy(bytes, 0, result, Byte.SIZE_BYTES, bytes.size)
+    System.arraycopy(bytes, 0, result, Byte.SIZE, bytes.size)
     return result
 }

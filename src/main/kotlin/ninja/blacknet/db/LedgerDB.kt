@@ -24,6 +24,7 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.util.SIZE
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.emptyByteArray
@@ -42,7 +43,7 @@ object LedgerDB {
     private val MULTISIG_KEY = DBKey(4, Hash.SIZE)
     private val UNDO_KEY = DBKey(5, Hash.SIZE)
     private val SIZES_KEY = DBKey(6, 0)
-    private val SNAPSHOT_KEY = DBKey(7, Int.SIZE_BYTES)
+    private val SNAPSHOT_KEY = DBKey(7, Int.SIZE)
     private val SNAPSHOTHEIGHTS_KEY = DBKey(8, 0)
     private val STATE_KEY = DBKey(9, 0)
     private val VERSION_KEY = DBKey(10, 0)
