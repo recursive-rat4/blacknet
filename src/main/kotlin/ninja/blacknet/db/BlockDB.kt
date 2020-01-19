@@ -83,10 +83,6 @@ object BlockDB {
             if (block.version.toUInt() < 2.toUInt()) {
                 return Invalid("Block version ${block.version.toUInt()} is no longer accepted")
             }
-        } else {
-            val percent = 100 * state.forkV2 / PoS.MATURITY
-            if (percent > 9)
-                logger.info("$percent% upgraded to fork v2")
         }
         if (PoS.isTooFarInFuture(block.time)) {
             return InFuture(block.time.toString())

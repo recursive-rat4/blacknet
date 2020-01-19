@@ -16,7 +16,6 @@ import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -35,20 +34,14 @@ class CreateHTLC(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    fun id(hash: Hash, dataIndex: Int) = if (forkV2()) Blake2b.hasher { x(hash); x(dataIndex); } else hash
+    fun id(hash: Hash, dataIndex: Int) = Blake2b.hasher { x(hash); x(dataIndex); }
 
     override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (!HashTimeLock.isValidTimeLockType(timeLockType)) {
             return Invalid("Unknown time lock type $timeLockType")
         }
-        if (forkV2()) {
-            if (!HashTimeLock.isValidHashLock(hashType, hashLock)) {
-                return Invalid("Invalid hash lock type $hashType size ${hashLock.array.size}")
-            }
-        } else {
-            if (!HashTimeLock.isValidHashType(hashType)) {
-                return Invalid("Unknown hash type $hashType")
-            }
+        if (!HashTimeLock.isValidHashLock(hashType, hashLock)) {
+            return Invalid("Invalid hash lock type $hashType size ${hashLock.array.size}")
         }
 
         if (lot == 0L) {

@@ -12,8 +12,6 @@ package ninja.blacknet.core
 import ninja.blacknet.contract.HashTimeLock
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.LedgerDB.forkV2
-import ninja.blacknet.transaction.TxType
 
 interface Ledger : HashTimeLock.Processor {
     fun addSupply(amount: Long)
@@ -43,34 +41,6 @@ interface Ledger : HashTimeLock.Processor {
         }
         if (!checkFee(size, tx.fee)) {
             return Invalid("Too low fee ${tx.fee}")
-        }
-        if (tx.type == TxType.MultiData.type) {
-            if (!forkV2()) {
-                return Invalid("MultiData before forkV2")
-            }
-        }
-        if (tx.type == TxType.WithdrawFromLease.type) {
-            if (!forkV2()) {
-                return Invalid("WithdrawFromLease before forkV2")
-            }
-        }
-        if (tx.type == TxType.ClaimHTLC.type) {
-            if (!forkV2()) {
-                return Invalid("ClaimHTLC before forkV2")
-            }
-        }
-        if (tx.type == TxType.UnlockHTLC.type) {
-            if (forkV2()) {
-                return Invalid("UnlockHTLC after forkV2")
-            }
-        }
-        if (tx.type == TxType.SpendHTLC.type) {
-            if (forkV2()) {
-                return Invalid("SpendHTLC after forkV2")
-            }
-        }
-        if (tx.type == TxType.Generated.type) {
-            return Invalid("Generated as individual tx")
         }
         val data = tx.data()
         return data.process(tx, hash, this)

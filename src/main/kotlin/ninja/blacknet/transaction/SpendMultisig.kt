@@ -16,7 +16,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -53,14 +52,10 @@ class SpendMultisig(
                 return Invalid("Invalid signature i $i")
         }
 
-        if (forkV2()) {
-            return if (unsigned.containsValue(sender))
-                Accepted
-            else
-                Invalid("Invalid sender")
-        } else {
-            return Accepted
-        }
+        return if (unsigned.containsValue(sender))
+            Accepted
+        else
+            Invalid("Invalid sender")
     }
 
     private fun hash(): Hash {
@@ -84,11 +79,6 @@ class SpendMultisig(
         }
         if (amount != multisig.amount()) {
             return Invalid("Invalid total amount")
-        }
-        if (!forkV2()) {
-            if (multisig.deposits.find { it.first == tx.from } == null) {
-                return Invalid("Invalid sender")
-            }
         }
         if (signatures.size + 1 < multisig.n) {
             return Invalid("Invalid number of signatures")

@@ -300,25 +300,11 @@ object WalletDB {
                     false
                 }
             }
-            TxType.UnlockHTLC.type -> {
-                if (from) {
-                    true
-                } else {
-                    UnlockHTLC.deserialize(bytes).involves(wallet.involvesIds)
-                }
-            }
             TxType.RefundHTLC.type -> {
                 if (from) {
                     true
                 } else {
                     RefundHTLC.deserialize(bytes).involves(wallet.involvesIds)
-                }
-            }
-            TxType.SpendHTLC.type -> {
-                if (from) {
-                    true
-                } else {
-                    SpendHTLC.deserialize(bytes).involves(wallet.involvesIds)
                 }
             }
             TxType.CreateMultisig.type -> {

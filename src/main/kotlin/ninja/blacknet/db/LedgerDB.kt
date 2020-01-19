@@ -419,7 +419,7 @@ object LedgerDB {
 
         generator = txDb.get(block.generator)!!
 
-        val mint = if (forkV2()) PoS.mint(state.supply) else PoS.mint(this.state.supply)
+        val mint = PoS.mint(state.supply)
         val generated = mint + fees
 
         val prevIndex = getChainIndex(block.previous)!!
