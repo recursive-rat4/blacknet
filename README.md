@@ -1,6 +1,7 @@
-## Blacknet
+## Blacknet Reference Software
 
 Blacknet is an experimental peer-to-peer network based on blockchain technology.
+[Website](https://blacknet.ninja/).
 
 ## Contribution
 

@@ -62,7 +62,7 @@ distributions {
     }
 }
 
-task getGitRevision(type:Exec) {
+task dirtyDescribeGit(type:Exec) {
     commandLine 'git', 'describe', '--dirty'
     ignoreExitValue = true
     standardOutput = new ByteArrayOutputStream()
@@ -73,9 +73,9 @@ task getGitRevision(type:Exec) {
 
 task createVersionTxt {
     dependsOn processResources
-    dependsOn getGitRevision
+    dependsOn dirtyDescribeGit
     doLast {
-        new File("$buildDir/resources/main/revision.txt").write(getGitRevision.output())
+        new File("$buildDir/resources/main/revision.txt").write(dirtyDescribeGit.output())
         new File("$buildDir/resources/main/version.txt").write(project.version.toString())
         new File("$buildDir/resources/main/ktor_version.txt").write("$ktor_version")
     }

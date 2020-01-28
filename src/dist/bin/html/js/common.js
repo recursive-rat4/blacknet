@@ -685,8 +685,9 @@ void function () {
      * @return {boolean} true/false
      */
     Blacknet.verifyAccount = function (account) {
+        // TODO Bech32验证、回归测试模式
         if (Object.prototype.toString.call(account) === "[object String]" &&
-            account.length > 21 && /^blacknet[a-z0-9]{59}$/.test(account)) {
+            account.length > 21 && (/^blacknet[a-z0-9]{59}$/.test(account) || /^rblacknet[a-z0-9]{59}$/.test(account))) {
             return true
         }
         return false
