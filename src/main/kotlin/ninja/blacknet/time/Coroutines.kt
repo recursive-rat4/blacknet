@@ -28,6 +28,7 @@ suspend inline fun <T> withTimeoutOrNull(time: MilliSeconds, noinline block: sus
     return withTimeoutOrNull(time.milliseconds, block)
 }
 
-fun <R> SelectBuilder<R>.onTimeout(time: MilliSeconds, block: suspend () -> R) {
+@Suppress("NOTHING_TO_INLINE")
+inline fun <R> SelectBuilder<R>.onTimeout(time: MilliSeconds, noinline block: suspend () -> R) {
     return onTimeout(time.milliseconds, block)
 }

@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.internal.HashMapSerializer
 import mu.KotlinLogging
 import ninja.blacknet.Runtime
+import ninja.blacknet.core.VehicleRing
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Node
@@ -28,7 +29,6 @@ import ninja.blacknet.time.SystemClock
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.hours
 import ninja.blacknet.util.SynchronizedHashMap
-import ninja.blacknet.util.emptyByteArray
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
@@ -38,8 +38,8 @@ import kotlin.random.Random
 private val logger = KotlinLogging.logger {}
 
 object PeerDB {
-    private const val MAX_SIZE = 10000
-    private const val VERSION = 3
+    private const val MAX_SIZE = 8192
+    private const val VERSION = 4
     private val peers = SynchronizedHashMap<Address, Entry>(MAX_SIZE)
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)
@@ -47,12 +47,12 @@ object PeerDB {
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
         version.encodeVarInt(VERSION)
-        batch.put(VERSION_KEY, emptyByteArray(), version.toBytes())
+        batch.put(VERSION_KEY, version.toBytes())
     }
 
     init {
-        val stateBytes = LevelDB.get(STATE_KEY, emptyByteArray())
-        val versionBytes = LevelDB.get(VERSION_KEY, emptyByteArray())
+        val stateBytes = LevelDB.get(STATE_KEY)
+        val versionBytes = LevelDB.get(VERSION_KEY)
 
         val version = if (versionBytes != null) {
             BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
@@ -66,14 +66,19 @@ object PeerDB {
             } else {
                 emptyMap<Address, Entry>()
             }
-        } else if (version in 1..2) {
+        } else if (version in 1 until VERSION) {
             val batch = LevelDB.createWriteBatch()
 
             val updatedHashMap = if (stateBytes != null) {
                 logger.info("Upgrading PeerDB...")
                 val result = newHashMapWithExpectedSize<Address, Entry>(MAX_SIZE)
                 try {
-                    if (version == 2) {
+                    if (version == 3) {
+                        val stateV3 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), EntryV3.serializer()))
+                        stateV3.forEach { (address, entryV3) ->
+                            result.put(address, Entry(entryV3))
+                        }
+                    } else if (version == 2) {
                         val stateV2 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV2.serializer()))
                         stateV2.forEach { (addressV1, entryV2) ->
                             result.put(Address(addressV1), Entry(entryV2))
@@ -142,6 +147,20 @@ object PeerDB {
         peers.mutex.withLock {
             peers.map.get(address)?.failed(time)
         }
+    }
+
+    suspend fun bundlerAnnounce(address: Address, announce: List<VehicleRing>): Unit = peers.mutex.withLock {
+        peers.map.get(address)?.stat?.bundler?.let { bundler ->
+            announce.forEach { ring ->
+                if (DAppDB.isInteresting(ring)) {
+                    bundler.add(ring)
+                }
+            }
+        }
+    }
+
+    suspend fun getBundlers(ring: VehicleRing): List<Address> {
+        return peers.filterToKeyList { _, entry -> entry.stat?.bundler?.contains(ring) ?: false }
     }
 
     suspend fun getAll(): ArrayList<Pair<Address, Entry>> {
@@ -250,7 +269,7 @@ object PeerDB {
 
     private fun commitImpl(map: Map<Address, Entry>, batch: LevelDB.WriteBatch, sync: Boolean) {
         val bytes = BinaryEncoder.toBytes(HashMapSerializer(Address.serializer(), Entry.serializer()), map)
-        batch.put(STATE_KEY, emptyByteArray(), bytes)
+        batch.put(STATE_KEY, bytes)
         batch.write(sync)
     }
 
@@ -262,17 +281,20 @@ object PeerDB {
             val stat8H: UptimeStat,
             val stat1D: UptimeStat,
             val stat1W: UptimeStat,
-            val stat1M: UptimeStat
+            val stat1M: UptimeStat,
+            val bundler: HashSet<VehicleRing>
     ) {
-        internal constructor(lastConnected: Long, userAgent: String) : this(
+        constructor(lastConnected: Long, userAgent: String) : this(
                 lastConnected,
                 userAgent,
                 UptimeStat(),
                 UptimeStat(),
                 UptimeStat(),
                 UptimeStat(),
-                UptimeStat()
+                UptimeStat(),
+                newHashSetWithExpectedSize(0)
         )
+        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, newHashSetWithExpectedSize(0))
     }
 
     @Serializable
@@ -283,7 +305,8 @@ object PeerDB {
             var stat: NetworkStat?
     ) {
         internal constructor(entry: EntryV1) : this(Address(entry.from), entry.attempts, entry.lastTry, null)
-        internal constructor(entry: EntryV2) : this(Address(entry.from), entry.attempts, entry.lastTry, entry.stat)
+        internal constructor(entry: EntryV2) : this(Address(entry.from), entry.attempts, entry.lastTry, entry.stat?.let { NetworkStat(it) })
+        internal constructor(entry: EntryV3) : this(entry.from, entry.attempts, entry.lastTry, entry.stat?.let { NetworkStat(it) })
 
         fun toJson(address: Address) = Json.toJson(Info.serializer(), Info(this, address))
 
@@ -294,13 +317,18 @@ object PeerDB {
         }
 
         fun connected(time: Long, userAgent: String) {
+            val stat = stat
             if (stat != null) {
-                stat!!.lastConnected = time
-                stat!!.userAgent = userAgent
+                stat.lastConnected = time
+                stat.userAgent = userAgent
+                stat.bundler.clear()
+                updateUptimeStat(stat, true, time)
             } else {
-                stat = NetworkStat(time, userAgent)
+                @Suppress("NAME_SHADOWING")
+                val stat = NetworkStat(time, userAgent)
+                updateUptimeStat(stat, true, time)
+                this.stat = stat
             }
-            updateUptimeStat(stat!!, true, time)
             attempts = 0
             lastTry = time
         }
@@ -390,5 +418,11 @@ object PeerDB {
     internal class EntryV1(val from: AddressV1, val attempts: Int, val lastTry: Long, val lastConnected: Long)
 
     @Serializable
-    internal class EntryV2(val from: AddressV1, val attempts: Int, val lastTry: Long, val stat: NetworkStat?)
+    internal class EntryV2(val from: AddressV1, val attempts: Int, val lastTry: Long, val stat: NetworkStatV1?)
+
+    @Serializable
+    internal class EntryV3(val from: Address, val attempts: Int, val lastTry: Long, val stat: NetworkStatV1?)
+
+    @Serializable
+    internal class NetworkStatV1(var lastConnected: Long, var userAgent: String, val stat2H: UptimeStat, val stat8H: UptimeStat, val stat1D: UptimeStat, val stat1W: UptimeStat, val stat1M: UptimeStat)
 }

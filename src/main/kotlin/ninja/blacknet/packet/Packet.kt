@@ -14,7 +14,7 @@ import kotlinx.io.core.ByteReadPacket
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryDecoder
 
-const val PACKET_HEADER_SIZE = 4
+const val PACKET_HEADER_SIZE_BYTES = 4
 
 interface Packet {
     fun serialize(): ByteReadPacket

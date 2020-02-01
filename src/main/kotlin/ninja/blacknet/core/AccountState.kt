@@ -148,7 +148,7 @@ class AccountState(
                     val leasesSize = decoder.decodeVarInt()
                     val leases = ArrayList<Lease>(leasesSize)
                     for (i in 0 until leasesSize)
-                        leases.add(Lease(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE)), decoder.decodeVarInt(), decoder.decodeVarLong()))
+                        leases.add(Lease(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES)), decoder.decodeVarInt(), decoder.decodeVarLong()))
                     return AccountState(seq, stake, immature, leases)
                 }
                 else -> throw RuntimeException("Unsupported decoder")

@@ -32,7 +32,7 @@ interface Ledger : HashTimeLock.Processor {
     override fun HashTimeLockGetBlockTime(): Long = blockTime()
     override fun HashTimeLockGetHeight(): Int = height()
 
-    suspend fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int): Status {
+    fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int): Status {
         if (!tx.verifySignature(hash)) {
             return Invalid("Invalid signature")
         }

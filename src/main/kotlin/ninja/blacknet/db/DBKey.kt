@@ -9,26 +9,30 @@
 
 package ninja.blacknet.db
 
-import ninja.blacknet.util.SIZE
-import ninja.blacknet.util.plus
+import ninja.blacknet.byte.plus
 
 class DBKey(
         val prefix: Byte,
         val keyLength: Int
 ) {
+    operator fun unaryPlus(): ByteArray {
+        require(keyLength == 0)
+        return byteArrayOf(prefix)
+    }
+
     operator fun plus(key: ByteArray): ByteArray {
         require(keyLength == key.size)
         return prefix + key
     }
 
     operator fun rem(entry: Map.Entry<ByteArray, *>): Boolean {
-        return Byte.SIZE + keyLength == entry.key.size && entry.key[0] == prefix
+        return Byte.SIZE_BYTES + keyLength == entry.key.size && entry.key[0] == prefix
     }
 
     operator fun minus(entry: Map.Entry<ByteArray, *>): ByteArray? {
         return if (this % entry) {
             val bytes = ByteArray(keyLength)
-            System.arraycopy(entry.key, Byte.SIZE, bytes, 0, keyLength)
+            System.arraycopy(entry.key, Byte.SIZE_BYTES, bytes, 0, keyLength)
             bytes
         } else {
             null

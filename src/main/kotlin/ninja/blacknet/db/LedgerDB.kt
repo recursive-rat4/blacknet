@@ -11,7 +11,6 @@ package ninja.blacknet.db
 
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import com.google.common.io.Resources
-import com.google.common.primitives.Ints
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.*
@@ -19,15 +18,14 @@ import kotlinx.serialization.internal.HashMapSerializer
 import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
 import ninja.blacknet.Config
+import ninja.blacknet.byte.toByteArray
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.util.SIZE
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
-import ninja.blacknet.util.emptyByteArray
 import java.io.File
 import java.util.ArrayDeque
 import kotlin.math.max
@@ -37,13 +35,13 @@ private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
     private const val VERSION = 8
-    private val ACCOUNT_KEY = DBKey(1, PublicKey.SIZE)
-    private val CHAIN_KEY = DBKey(2, Hash.SIZE)
-    private val HTLC_KEY = DBKey(3, Hash.SIZE)
-    private val MULTISIG_KEY = DBKey(4, Hash.SIZE)
-    private val UNDO_KEY = DBKey(5, Hash.SIZE)
+    private val ACCOUNT_KEY = DBKey(1, PublicKey.SIZE_BYTES)
+    private val CHAIN_KEY = DBKey(2, Hash.SIZE_BYTES)
+    private val HTLC_KEY = DBKey(3, Hash.SIZE_BYTES)
+    private val MULTISIG_KEY = DBKey(4, Hash.SIZE_BYTES)
+    private val UNDO_KEY = DBKey(5, Hash.SIZE_BYTES)
     private val SIZES_KEY = DBKey(6, 0)
-    private val SNAPSHOT_KEY = DBKey(7, Int.SIZE)
+    private val SNAPSHOT_KEY = DBKey(7, Int.SIZE_BYTES)
     private val SNAPSHOTHEIGHTS_KEY = DBKey(8, 0)
     private val STATE_KEY = DBKey(9, 0)
     private val VERSION_KEY = DBKey(10, 0)
@@ -132,7 +130,7 @@ object LedgerDB {
                 PoS.DEFAULT_MAX_BLOCK_SIZE,
                 0,
                 0)
-        batch.put(STATE_KEY, emptyByteArray(), state.serialize())
+        batch.put(STATE_KEY, state.serialize())
         this.state = state
 
         setVersion(batch)
@@ -143,7 +141,7 @@ object LedgerDB {
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
         version.encodeVarInt(VERSION)
-        batch.put(VERSION_KEY, emptyByteArray(), version.toBytes())
+        batch.put(VERSION_KEY, version.toBytes())
     }
 
     private fun writeBlockSizes(batch: LevelDB.WriteBatch) {
@@ -151,7 +149,7 @@ object LedgerDB {
         encoder.encodeVarInt(blockSizes.size)
         for (size in blockSizes)
             encoder.encodeVarInt(size)
-        batch.put(SIZES_KEY, emptyByteArray(), encoder.toBytes())
+        batch.put(SIZES_KEY, encoder.toBytes())
     }
 
     private fun writeSnapshotHeights(batch: LevelDB.WriteBatch) {
@@ -159,11 +157,11 @@ object LedgerDB {
         encoder.encodeVarInt(snapshotHeights.size)
         for (height in snapshotHeights)
             encoder.encodeVarInt(height)
-        batch.put(SNAPSHOTHEIGHTS_KEY, emptyByteArray(), encoder.toBytes())
+        batch.put(SNAPSHOTHEIGHTS_KEY, encoder.toBytes())
     }
 
     init {
-        val snapshotHeightsBytes = LevelDB.get(SNAPSHOTHEIGHTS_KEY, emptyByteArray())
+        val snapshotHeightsBytes = LevelDB.get(SNAPSHOTHEIGHTS_KEY)
         if (snapshotHeightsBytes != null) {
             val decoder = BinaryDecoder.fromBytes(snapshotHeightsBytes)
             val size = decoder.decodeVarInt()
@@ -171,7 +169,7 @@ object LedgerDB {
                 snapshotHeights.add(decoder.decodeVarInt())
         }
 
-        val blockSizesBytes = LevelDB.get(SIZES_KEY, emptyByteArray())
+        val blockSizesBytes = LevelDB.get(SIZES_KEY)
         if (blockSizesBytes != null) {
             val decoder = BinaryDecoder.fromBytes(blockSizesBytes)
             val size = decoder.decodeVarInt()
@@ -179,9 +177,9 @@ object LedgerDB {
                 blockSizes.addLast(decoder.decodeVarInt())
         }
 
-        val stateBytes = LevelDB.get(STATE_KEY, emptyByteArray())
+        val stateBytes = LevelDB.get(STATE_KEY)
         if (stateBytes != null) {
-            val versionBytes = LevelDB.get(VERSION_KEY, emptyByteArray())!!
+            val versionBytes = LevelDB.get(VERSION_KEY)!!
             val version = BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
 
             if (version == VERSION) {
@@ -294,7 +292,7 @@ object LedgerDB {
     }
 
     fun getSnapshot(height: Int): Snapshot? {
-        val bytes = LevelDB.get(SNAPSHOT_KEY, Ints.toByteArray(height)) ?: return null
+        val bytes = LevelDB.get(SNAPSHOT_KEY, height.toByteArray()) ?: return null
         return Snapshot.deserialize(bytes)
     }
 
@@ -466,7 +464,7 @@ object LedgerDB {
                 undo.upgraded,
                 undo.forkV2)
         this.state = newState
-        batch.put(STATE_KEY, emptyByteArray(), newState.serialize())
+        batch.put(STATE_KEY, newState.serialize())
 
         val prevIndex = getChainIndex(chainIndex.previous)!!
         prevIndex.next = Hash.ZERO
@@ -580,10 +578,10 @@ object LedgerDB {
     }
 
     fun warnings(): List<String> {
-        if (state.upgraded > PoS.MATURITY / 2)
-            return listOf("This version is obsolete, upgrade required!")
-
-        return emptyList()
+        return if (state.upgraded < PoS.MATURITY / 2)
+            emptyList()
+        else
+            listOf("This version is obsolete, upgrade required!")
     }
 
     suspend fun check(): Check = BlockDB.mutex.withLock {
@@ -802,7 +800,7 @@ object LedgerDB {
                     upgraded.toShort(),
                     forkV2.toShort())
             LedgerDB.state = newState
-            batch.put(STATE_KEY, emptyByteArray(), newState.serialize())
+            batch.put(STATE_KEY, newState.serialize())
 
             batch.put(UNDO_KEY, blockHash.bytes, undo.serialize())
             batch.put(CHAIN_KEY, blockPrevious.bytes, prevIndex!!.serialize())
@@ -856,7 +854,7 @@ object LedgerDB {
                         val size = decoder.decodeVarInt()
                         val balances = newHashMapWithExpectedSize<PublicKey, Long>(size)
                         for (i in 0 until size)
-                            balances.put(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE)), decoder.decodeVarLong())
+                            balances.put(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES)), decoder.decodeVarLong())
                         Snapshot(balances)
                     }
                     else -> throw RuntimeException("Unsupported decoder")
@@ -913,7 +911,7 @@ object LedgerDB {
             logger.error("Snapshot supply does not match ledger")
 
         val batch = LevelDB.createWriteBatch()
-        batch.put(SNAPSHOT_KEY, Ints.toByteArray(state.height), snapshot.serialize())
+        batch.put(SNAPSHOT_KEY, state.height.toByteArray(), snapshot.serialize())
         batch.write()
     }
 }

@@ -18,9 +18,9 @@ interface TxData {
     fun getType(): TxType
     fun serialize(): ByteArray
     fun toJson(): JsonElement
-    suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status
+    fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status
 
-    suspend fun process(tx: Transaction, hash: Hash, ledger: Ledger): Status {
+    fun process(tx: Transaction, hash: Hash, ledger: Ledger): Status {
         val account = ledger.get(tx.from)
         if (account == null) {
             return Invalid("Sender account not found")

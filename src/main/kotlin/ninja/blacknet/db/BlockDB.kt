@@ -25,7 +25,7 @@ private val logger = KotlinLogging.logger {}
 object BlockDB {
     private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
     internal val mutex = Mutex()
-    private val BLOCK_KEY = DBKey(0xC0.toByte(), Hash.SIZE)
+    private val BLOCK_KEY = DBKey(0xC0.toByte(), Hash.SIZE_BYTES)
     @Volatile
     internal var cachedBlock: Pair<Hash, ByteArray>? = null
 
@@ -126,9 +126,9 @@ object BlockDB {
     }
 
     fun warnings(): List<String> {
-        if (Config.dataDir.getUsableSpace() < MIN_DISK_SPACE)
-            return listOf("Disk space is low!")
-
-        return emptyList()
+        return if (Config.dataDir.getUsableSpace() > MIN_DISK_SPACE)
+            emptyList()
+        else
+            listOf("Disk space is low!")
     }
 }

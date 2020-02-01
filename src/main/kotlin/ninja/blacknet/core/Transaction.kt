@@ -37,7 +37,7 @@ class Transaction(
         val bytes = serialize()
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature.bytes, 0, bytes, 0, Signature.SIZE)
+        System.arraycopy(signature.bytes, 0, bytes, 0, Signature.SIZE_BYTES)
         return Pair(hash, bytes)
     }
 
@@ -48,7 +48,7 @@ class Transaction(
     companion object {
         fun deserialize(bytes: ByteArray): Transaction = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
-        fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, Signature.SIZE, bytes.size - Signature.SIZE) }
+        fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, Signature.SIZE_BYTES, bytes.size - Signature.SIZE_BYTES) }
 
         fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
             return Transaction(Signature.EMPTY, from, seq, referenceChain, fee, type, SerializableByteArray(data))

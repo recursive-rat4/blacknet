@@ -27,10 +27,10 @@ import kotlin.experimental.and
  */
 class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
     fun <T : Any?> decode(loader: DeserializationStrategy<T>): T {
-        val v = loader.deserialize(this)
+        val value = loader.deserialize(this)
         val remaining = input.remaining
-        if (remaining == 0L) {
-            return v
+        return if (remaining == 0L) {
+            value
         } else {
             input.release()
             throw RuntimeException("$remaining trailing bytes")
@@ -42,10 +42,23 @@ class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
     override fun decodeInt(): Int = input.readInt()
     override fun decodeLong(): Long = input.readLong()
 
-    override fun decodeNotNullMark(): Boolean = input.readByte() != 0.toByte()
-    override fun decodeBoolean(): Boolean = input.readByte() != 0.toByte()
     override fun decodeFloat(): Float = input.readFloat()
     override fun decodeDouble(): Double = input.readDouble()
+
+    override fun decodeNotNullMark(): Boolean {
+        return when (val byte = input.readByte()) {
+            0.toByte() -> false
+            1.toByte() -> true
+            else -> throw RuntimeException("Unexpected value for NotNullMark $byte")
+        }
+    }
+    override fun decodeBoolean(): Boolean {
+        return when (val byte = input.readByte()) {
+            0.toByte() -> false
+            1.toByte() -> true
+            else -> throw RuntimeException("Unexpected value for Boolean $byte")
+        }
+    }
 
     override fun decodeString(): String {
         val size = decodeVarInt()

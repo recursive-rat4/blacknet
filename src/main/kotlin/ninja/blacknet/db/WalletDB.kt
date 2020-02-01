@@ -39,20 +39,20 @@ object WalletDB {
     private const val VERSION = 6
     internal val mutex = Mutex()
     private val KEYS_KEY = DBKey(64, 0)
-    private val TX_KEY = DBKey(65, Hash.SIZE)
+    private val TX_KEY = DBKey(65, Hash.SIZE_BYTES)
     private val VERSION_KEY = DBKey(66, 0)
-    private val WALLET_KEY = DBKey(67, Hash.SIZE)
+    private val WALLET_KEY = DBKey(67, Hash.SIZE_BYTES)
     private val wallets = HashMap<PublicKey, Wallet>()
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
         version.encodeVarInt(VERSION)
-        batch.put(VERSION_KEY, emptyByteArray(), version.toBytes())
+        batch.put(VERSION_KEY, version.toBytes())
     }
 
     init {
-        val keysBytes = LevelDB.get(KEYS_KEY, emptyByteArray())
-        val versionBytes = LevelDB.get(VERSION_KEY, emptyByteArray())
+        val keysBytes = LevelDB.get(KEYS_KEY)
+        val versionBytes = LevelDB.get(VERSION_KEY)
 
         val version = if (versionBytes != null) {
             BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
@@ -64,8 +64,8 @@ object WalletDB {
             if (keysBytes != null) {
                 var txns = 0
                 val decoder = BinaryDecoder.fromBytes(keysBytes)
-                for (i in 0 until keysBytes.size step PublicKey.SIZE) {
-                    val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE))
+                for (i in 0 until keysBytes.size step PublicKey.SIZE_BYTES) {
+                    val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES))
                     val walletBytes = LevelDB.get(WALLET_KEY, publicKey.bytes)!!
                     val wallet = Wallet.deserialize(walletBytes)
                     txns += wallet.transactions.size
@@ -517,7 +517,7 @@ object WalletDB {
         val encoder = BinaryEncoder()
         wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey.bytes) }
         val keysBytes = encoder.toBytes()
-        batch.put(KEYS_KEY, emptyByteArray(), keysBytes)
+        batch.put(KEYS_KEY, keysBytes)
     }
 
     internal suspend fun getWalletImpl(publicKey: PublicKey): Wallet {
