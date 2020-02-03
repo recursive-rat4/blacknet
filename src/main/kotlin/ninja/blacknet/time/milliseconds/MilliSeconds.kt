@@ -27,10 +27,10 @@ inline class MilliSeconds(
     //operator fun mod(long: Long) = AntiMilliSeconds(milliseconds   long)
     operator fun rem(long: Long) = MilliSeconds(milliseconds % long)
 
-    val seconds get() = milliseconds / 1000
-    val minutes get() = seconds / 60
-    val hours get() = minutes / 60
-    val days get() = hours / 24
+    val seconds get() = milliseconds / (1000 * 1L)
+    val minutes get() = milliseconds / (60 * 1000 * 1L)
+    val hours get() = milliseconds / (60 * 60 * 1000 * 1L)
+    val days get() = milliseconds / (24 * 60 * 60 * 1000 * 1L)
 
     override fun compareTo(other: MilliSeconds) = milliseconds.compareTo(other.milliseconds)
     override fun toString() = milliseconds.toString()
@@ -43,10 +43,10 @@ inline class MilliSeconds(
 }
 
 val Int.milliseconds get() = MilliSeconds(toLong())
-val Int.seconds get() = milliseconds * 1000
-val Int.minutes get() = seconds * 60
-val Int.hours get() = minutes * 60
-val Int.days get() = hours * 24
+val Int.seconds get() = MilliSeconds(this * (1000 * 1L))
+val Int.minutes get() = MilliSeconds(this * (60 * 1000 * 1L))
+val Int.hours get() = MilliSeconds(this * (60 * 60 * 1000 * 1L))
+val Int.days get() = MilliSeconds(this * (24 * 60 * 60 * 1000 * 1L))
 
 operator fun Int.times(time: MilliSeconds) = MilliSeconds(this * time.milliseconds)
 //operator fun Int.div(time: MilliSeconds) = MinusMilliSeconds(this / time.milliseconds)
@@ -54,10 +54,10 @@ operator fun Int.times(time: MilliSeconds) = MilliSeconds(this * time.millisecon
 operator fun Int.rem(time: MilliSeconds) = (this % time.milliseconds).toInt()
 
 val Long.milliseconds get() = MilliSeconds(this)
-val Long.seconds get() = milliseconds * 1000
-val Long.minutes get() = seconds * 60
-val Long.hours get() = minutes * 60
-val Long.days get() = hours * 24
+val Long.seconds get() = MilliSeconds(this * (1000 * 1L))
+val Long.minutes get() = MilliSeconds(this * (60 * 1000 * 1L))
+val Long.hours get() = MilliSeconds(this * (60 * 60 * 1000 * 1L))
+val Long.days get() = MilliSeconds(this * (24 * 60 * 60 * 1000 * 1L))
 
 operator fun Long.times(time: MilliSeconds) = MilliSeconds(this * time.milliseconds)
 //operator fun Long.div(time: MilliSeconds) = MinusMilliSeconds(this / time.milliseconds)

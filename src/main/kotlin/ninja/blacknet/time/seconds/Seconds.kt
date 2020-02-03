@@ -9,8 +9,8 @@
 
 package ninja.blacknet.time.seconds
 
-val Int.milliseconds get() = seconds / 1000
+val Int.milliseconds get() = this / (1000 * 1L)
 val Int.seconds get() = toLong()
-val Int.minutes get() = seconds * 60
-val Int.hours get() = minutes * 60
-val Int.days get() = hours * 24
+val Int.minutes get() = this * (60 * 1L)
+val Int.hours get() = this * (60 * 60 * 1L)
+val Int.days get() = this * (24 * 60 * 60 * 1L)
