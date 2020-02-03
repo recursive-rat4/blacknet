@@ -55,7 +55,7 @@ class Transaction(
         }
 
         /**
-         * Returns a new Generated [Transaction]
+         * Returns a new transaction of the [TxType.Generated].
          *
          * [Transaction.signature] the empty signature
          *
@@ -71,7 +71,7 @@ class Transaction(
          *
          * [Transaction.data] the empty object
          *
-         * @return Transaction
+         * @return the constructed [Transaction]
          */
         fun generated(from: PublicKey, height: Int, referenceChain: Hash, amount: Long): Transaction {
             return Transaction(Signature.EMPTY, from, height, referenceChain, amount, TxType.Generated.type, SerializableByteArray.EMPTY)

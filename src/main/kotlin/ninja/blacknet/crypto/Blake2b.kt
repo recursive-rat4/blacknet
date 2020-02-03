@@ -11,7 +11,7 @@ package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.Blake2b
 import ninja.blacknet.SystemService
-import ninja.blacknet.byte.*
+import ninja.blacknet.byte.components
 
 /**
  * BLAKE2b-256 hash function.
@@ -22,7 +22,10 @@ object Blake2b : (ByteArray) -> ByteArray {
     const val DIGEST_SIZE_BITS = DIGEST_SIZE_BYTES * Byte.SIZE_BITS
 
     /**
-     * Returns a hash with given [digestSize].
+     * Returns a hash with the given [digestSize].
+     *
+     * @param digestSize the digest size of the hash
+     * @return the [ByteArray] containing the hash value
      */
     internal fun hash(digestSize: Int, message: ByteArray): ByteArray {
         val bytes = ByteArray(digestSize / 8)
@@ -33,7 +36,10 @@ object Blake2b : (ByteArray) -> ByteArray {
     }
 
     /**
-     * Builds [Hash] with given [init] builder.
+     * Builds a hash value with the given [init] builder.
+     *
+     * @param init the initialization function with the [Hasher] receiver
+     * @return the built [Hash] value
      */
     fun hasher(init: Hasher.() -> Unit): Hash {
         val hasher = Hasher()
@@ -42,52 +48,68 @@ object Blake2b : (ByteArray) -> ByteArray {
     }
 
     /**
-     * DSL builder for a [Hash].
+     * DSL builder for a [Hash] value.
      */
     class Hasher(private val blake2b: Blake2b) {
         internal constructor() : this(Blake2b(DIGEST_SIZE_BITS))
 
         /**
-         * Adds [Byte] value.
+         * Adds a [byte] value.
+         *
+         * @param byte the [Byte] containing the data
          */
         fun x(byte: Byte) {
             blake2b.update(byte)
         }
 
         /**
-         * Adds [Short] value in big-endian byte order.
+         * Adds a [short] value in the big-endian byte order.
+         *
+         * @param short the [Short] containing the data
          */
         fun x(short: Short) {
-            blake2b.update(short.component1())
-            blake2b.update(short.component2())
+            short.components { b1, b2 ->
+                blake2b.update(b1)
+                blake2b.update(b2)
+            }
         }
 
         /**
-         * Adds [Int] value in big-endian byte order.
+         * Adds an [int] value in the big-endian byte order.
+         *
+         * @param int the [Int] containing the data
          */
         fun x(int: Int) {
-            blake2b.update(int.component1())
-            blake2b.update(int.component2())
-            blake2b.update(int.component3())
-            blake2b.update(int.component4())
+            int.components { b1, b2, b3, b4 ->
+                blake2b.update(b1)
+                blake2b.update(b2)
+                blake2b.update(b3)
+                blake2b.update(b4)
+            }
         }
 
         /**
-         * Adds [Long] value in big-endian byte order.
+         * Adds a [long] value in the big-endian byte order.
+         *
+         * @param long the [Long] containing the data
          */
         fun x(long: Long) {
-            blake2b.update(long.component1())
-            blake2b.update(long.component2())
-            blake2b.update(long.component3())
-            blake2b.update(long.component4())
-            blake2b.update(long.component5())
-            blake2b.update(long.component6())
-            blake2b.update(long.component7())
-            blake2b.update(long.component8())
+            long.components { b1, b2, b3, b4, b5, b6, b7, b8 ->
+                blake2b.update(b1)
+                blake2b.update(b2)
+                blake2b.update(b3)
+                blake2b.update(b4)
+                blake2b.update(b5)
+                blake2b.update(b6)
+                blake2b.update(b7)
+                blake2b.update(b8)
+            }
         }
 
         /**
-         * Adds [String] value using the UTF-8 charset.
+         * Adds a [string] value using the UTF-8 charset.
+         *
+         * @param string the [String] containing the data
          */
         fun x(string: String) {
             val bytes = string.toByteArray(Charsets.UTF_8)
@@ -95,14 +117,16 @@ object Blake2b : (ByteArray) -> ByteArray {
         }
 
         /**
-         * Adds [ByteArray] value.
+         * Adds a [bytes] value.
+         *
+         * @param bytes the [ByteArray] containing the data
          */
         fun x(bytes: ByteArray) {
             blake2b.update(bytes, 0, bytes.size)
         }
 
         /**
-         * Adds a block of bytes.
+         * Adds some bytes of a [bytes] value.
          *
          * @param bytes the [ByteArray] containing the data
          * @param offset the offset of the data
@@ -113,14 +137,18 @@ object Blake2b : (ByteArray) -> ByteArray {
         }
 
         /**
-         * Adds [Hash] value.
+         * Adds a [hash] value.
+         *
+         * @param hash the [Hash] containing the data
          */
         fun x(hash: Hash) {
             blake2b.update(hash.bytes, 0, Hash.SIZE_BYTES)
         }
 
         /**
-         * Adds [PublicKey] value.
+         * Adds a [publicKey] value.
+         *
+         * @param publicKey the [PublicKey] containing the data
          */
         fun x(publicKey: PublicKey) {
             blake2b.update(publicKey.bytes, 0, PublicKey.SIZE_BYTES)

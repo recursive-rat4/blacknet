@@ -42,7 +42,9 @@ fun hex(bytes: ByteArray, lowerCase: Boolean): String {
 }
 
 /**
- * Returns hex-string representation of the [ByteArray].
+ * Returns the hex-string representation of this byte array.
+ *
+ * @return the encoded [String]
  */
 @SystemService
 fun ByteArray.toHex(): String {
@@ -50,10 +52,10 @@ fun ByteArray.toHex(): String {
 }
 
 /**
- * Returns [ByteArray] representation of the hex-string.
+ * Returns the byte array representation of a hex-[string].
  * @param string the hex-string
  * @param size expected size in bytes (optional)
- * @return ByteArray or `null` if hex is not valid
+ * @return the decoded [ByteArray] or `null` if hex is not valid
  */
 @SystemService
 fun fromHex(string: String, size: Int = 0): ByteArray? {
