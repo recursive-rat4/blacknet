@@ -19,9 +19,7 @@ import io.ktor.features.DefaultHeaders
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.close
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.content.files
 import io.ktor.http.content.static
@@ -192,54 +190,6 @@ fun Application.APIServer() {
             files(Config.htmlDir)
         }
 
-        webSocket("/api/v1/notify/block") {
-            try {
-                APIServer.blockNotifyV0.add(outgoing)
-                while (true) {
-                    incoming.receive()
-                }
-            } catch (e: ClosedReceiveChannelException) {
-            } finally {
-                APIServer.blockNotifyV0.remove(outgoing)
-            }
-        }
-
-        webSocket("/api/v2/notify/block") {
-            try {
-                APIServer.blockNotifyV1.add(outgoing)
-                while (true) {
-                    incoming.receive()
-                }
-            } catch (e: ClosedReceiveChannelException) {
-            } finally {
-                APIServer.blockNotifyV1.remove(outgoing)
-            }
-        }
-
-        webSocket("/api/v1/notify/transaction") {
-            try {
-                while (true) {
-                    val string = (incoming.receive() as Frame.Text).readText()
-                    val publicKey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
-
-                    APIServer.walletNotifyV1.mutex.withLock {
-                        val keys = APIServer.walletNotifyV1.map.get(outgoing)
-                        if (keys == null) {
-                            @Suppress("NAME_SHADOWING")
-                            val keys = HashSet<PublicKey>()
-                            keys.add(publicKey)
-                            APIServer.walletNotifyV1.map.put(outgoing, keys)
-                        } else {
-                            keys.add(publicKey)
-                        }
-                    }
-                }
-            } catch (e: ClosedReceiveChannelException) {
-            } finally {
-                APIServer.walletNotifyV1.remove(outgoing)
-            }
-        }
-
         webSocket("/api/v2/websocket") {
             try {
                 while (true) {
@@ -300,66 +250,24 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v1/peerinfo") {
-            call.respond(Json.stringify(PeerInfoV1.serializer().list, PeerInfoV1.getAll()))
-        }
-
         get("/api/v2/peers") {
             call.respondJson(PeerInfo.serializer().list, PeerInfo.getAll())
-        }
-
-        get("/api/v1/nodeinfo") {
-            call.respond(Json.stringify(NodeInfo.serializer(), NodeInfo.get()))
         }
 
         get("/api/v2/node") {
             call.respondJson(NodeInfo.serializer(), NodeInfo.get())
         }
 
-        get("/api/v1/peerdb") {
-            call.respond(Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get()))
-        }
-
         get("/api/v2/peerdb") {
             call.respondJson(PeerDBInfo.serializer(), PeerDBInfo.get())
-        }
-
-        get("/api/v1/peerdb/networkstat") {
-            call.respond(Json.stringify(PeerDBInfo.serializer(), PeerDBInfo.get(true)))
         }
 
         get("/api/v2/peerdb/networkstat") {
             call.respondJson(PeerDBInfo.serializer(), PeerDBInfo.get(true))
         }
 
-        get("/api/v1/leveldb/stats") {
-            call.respond(LevelDB.getProperty("leveldb.stats") ?: "Not implemented")
-        }
-
         get("/api/v2/leveldb/stats") {
             call.respond(LevelDB.getProperty("leveldb.stats") ?: "Not implemented")
-        }
-
-        get("/api/v1/blockdb/get/{hash}/{txdetail?}") {
-            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
-            val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
-
-            val result = BlockInfoV1.get(hash, txdetail)
-            if (result != null)
-                call.respond(Json.stringify(BlockInfoV1.serializer(), result))
-            else
-                call.respond(HttpStatusCode.NotFound, "block not found")
-        }
-
-        get("/api/v2/blockdb/get/{hash}/{txdetail?}") {
-            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
-            val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
-
-            val result = BlockDB.block(hash)
-            if (result != null)
-                call.respond(Json.stringify(BlockInfoV2.serializer(), BlockInfoV2(result.first, hash, result.second, txdetail)))
-            else
-                call.respond(HttpStatusCode.NotFound, "block not found")
         }
 
         get("/api/v2/block/{hash}/{txdetail?}") {
@@ -371,46 +279,6 @@ fun Application.APIServer() {
                 call.respondJson(BlockInfo.serializer(), BlockInfo(result.first, hash, result.second, txdetail))
             else
                 call.respond(HttpStatusCode.BadRequest, "Block not found")
-        }
-
-        get("/api/v1/blockdb/getblockhash/{height}") {
-            val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
-
-            BlockDB.mutex.withLock {
-                val state = LedgerDB.state()
-                if (height < 0 || height > state.height)
-                    return@get call.respond(HttpStatusCode.NotFound, "block not found")
-                else if (height == 0)
-                    return@get call.respond(Hash.ZERO.toString())
-                else if (height == state.height)
-                    return@get call.respond(state.blockHash.toString())
-
-                if (APIServer.lastIndex != null && APIServer.lastIndex!!.second.height == height)
-                    return@get call.respond(APIServer.lastIndex!!.first.toString())
-
-                var hash: Hash
-                var index: ChainIndex
-                if (height < state.height / 2) {
-                    hash = Hash.ZERO
-                    index = LedgerDB.getChainIndex(hash)!!
-                } else {
-                    hash = state.blockHash
-                    index = LedgerDB.getChainIndex(hash)!!
-                }
-                if (APIServer.lastIndex != null && abs(height - index.height) > abs(height - APIServer.lastIndex!!.second.height))
-                    index = APIServer.lastIndex!!.second
-                while (index.height > height) {
-                    hash = index.previous
-                    index = LedgerDB.getChainIndex(hash)!!
-                }
-                while (index.height < height) {
-                    hash = index.next
-                    index = LedgerDB.getChainIndex(hash)!!
-                }
-                if (index.height < state.height - PoS.MATURITY + 1)
-                    APIServer.lastIndex = Pair(hash, index)
-                call.respond(hash.toString())
-            }
         }
 
         get("/api/v2/blockhash/{height}") {
@@ -454,16 +322,6 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v1/blockdb/getblockindex/{hash}/") {
-            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
-
-            val result = LedgerDB.getChainIndex(hash)
-            if (result != null)
-                call.respond(Json.stringify(ChainIndex.serializer(), result))
-            else
-                call.respond(HttpStatusCode.NotFound, "block not found")
-        }
-
         get("/api/v2/blockindex/{hash}/") {
             val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
 
@@ -472,29 +330,6 @@ fun Application.APIServer() {
                 call.respondJson(ChainIndex.serializer(), result)
             else
                 call.respond(HttpStatusCode.BadRequest, "Block not found")
-        }
-
-        get("/api/v1/blockdb/makebootstrap") {
-            val checkpoint = LedgerDB.state().rollingCheckpoint
-            if (checkpoint == Hash.ZERO)
-                return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
-
-            val file = File(Config.dataDir, "bootstrap.dat.new")
-            val stream = file.outputStream().buffered().data()
-
-            var hash = Hash.ZERO
-            var index = LedgerDB.getChainIndex(hash)!!
-            do {
-                hash = index.next
-                index = LedgerDB.getChainIndex(hash)!!
-                val bytes = BlockDB.getImpl(hash)!!
-                stream.writeInt(bytes.size)
-                stream.write(bytes, 0, bytes.size)
-            } while (hash != checkpoint)
-
-            stream.close()
-
-            call.respond(file.absolutePath)
         }
 
         get("/api/v2/makebootstrap") {
@@ -520,22 +355,8 @@ fun Application.APIServer() {
             call.respond(file.absolutePath)
         }
 
-        get("/api/v1/ledger") {
-            call.respond(Json.stringify(LedgerInfo.serializer(), LedgerInfo.get()))
-        }
-
         get("/api/v2/ledger") {
             call.respondJson(LedgerInfo.serializer(), LedgerInfo.get())
-        }
-
-        get("/api/v1/ledger/get/{account}/{confirmations?}") {
-            val publicKey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
-            val confirmations = call.parameters["confirmations"]?.toIntOrNull() ?: PoS.DEFAULT_CONFIRMATIONS
-            val result = AccountInfoV1.get(publicKey, confirmations)
-            if (result != null)
-                call.respond(Json.stringify(AccountInfoV1.serializer(), result))
-            else
-                call.respond(HttpStatusCode.NotFound, "account not found")
         }
 
         get("/api/v2/account/{address}/{confirmations?}") {
@@ -546,10 +367,6 @@ fun Application.APIServer() {
                 call.respondJson(AccountInfo.serializer(), result)
             else
                 call.respond(HttpStatusCode.BadRequest, "Account not found")
-        }
-
-        get("/api/v1/ledger/check") {
-            call.respond(Json.stringify(LedgerDB.Check.serializer(), LedgerDB.check()))
         }
 
         get("/api/v2/ledger/check") {
@@ -577,10 +394,6 @@ fun Application.APIServer() {
                 call.respond(HttpStatusCode.BadRequest, "Snapshot not found")
         }
 
-        get("/api/v1/txpool") {
-            call.respond(Json.stringify(TxPoolInfo.serializer(), TxPoolInfo.get()))
-        }
-
         get("/api/v2/txpool") {
             call.respondJson(TxPoolInfo.serializer(), TxPoolInfo.get())
         }
@@ -601,22 +414,10 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v1/account/generate") {
-            val wordlist = Wordlists.get("english")!!
-
-            call.respond(Json.stringify(NewMnemonicInfo.serializer(), NewMnemonicInfo.new(wordlist)))
-        }
-
         get("/api/v2/generateaccount/{wordlist?}") {
             val wordlist = Wordlists.get(call.parameters["wordlist"] ?: "english") ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid wordlist")
 
             call.respondJson(NewMnemonicInfo.serializer(), NewMnemonicInfo.new(wordlist))
-        }
-
-        get("/api/v1/address/info/{address}") {
-            val info = AddressInfo.fromString(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
-
-            call.respond(Json.stringify(AddressInfo.serializer(), info))
         }
 
         get("/api/v2/address/{address}") {
@@ -624,41 +425,12 @@ fun Application.APIServer() {
 
             call.respondJson(AddressInfo.serializer(), info)
         }
-        
-        post("/api/v1/mnemonic/info/{mnemonic}") {
-            val info = NewMnemonicInfo.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(Json.stringify(NewMnemonicInfo.serializer(), info))
-        }
 
         post("/api/v2/mnemonic") {
             val parameters = call.receiveParameters()
             val info = MnemonicInfo.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
 
             call.respondJson(MnemonicInfo.serializer(), info)
-        }
-
-        post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}/{blockHash?}/") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val from = privateKey.toPublicKey()
-            val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val encrypted = call.parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid encrypted") }
-            val message = Message.create(call.parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
-            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
-
-            APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
-                val data = Transfer(amount, to, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
-                val signed = tx.sign(privateKey)
-
-                if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
-            }
         }
 
         post("/api/v2/transfer") {
@@ -686,27 +458,6 @@ fun Application.APIServer() {
             }
         }
 
-        post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/{blockHash?}/") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val from = privateKey.toPublicKey()
-            val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val message = SerializableByteArray.fromString(call.parameters["message"].orEmpty()) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
-            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
-
-            APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
-                val data = Burn(amount, message).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
-                val signed = tx.sign(privateKey)
-
-                if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
-            }
-        }
-
         post("/api/v2/burn") {
             val parameters = call.receiveParameters()
             val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
@@ -730,27 +481,6 @@ fun Application.APIServer() {
             }
         }
 
-        post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}/{blockHash?}/") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val from = privateKey.toPublicKey()
-            val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
-
-            APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
-                val data = Lease(amount, to).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
-                val signed = tx.sign(privateKey)
-
-                if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
-            }
-        }
-
         post("/api/v2/lease") {
             val parameters = call.receiveParameters()
             val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
@@ -771,28 +501,6 @@ fun Application.APIServer() {
                     call.respond(hash.toString())
                 else
                     call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
-            }
-        }
-
-        post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}/{blockHash?}/") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val from = privateKey.toPublicKey()
-            val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
-            val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-            val to = Address.decode(call.parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-            val height = call.parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
-            val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
-
-            APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
-                val data = CancelLease(amount, to, height).serialize()
-                val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
-                val signed = tx.sign(privateKey)
-
-                if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                    call.respond(signed.first.toString())
-                else
-                    call.respond("Transaction rejected")
             }
         }
 
@@ -845,18 +553,6 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v1/transaction/raw/send/{serialized}/") {
-            val serialized = SerializableByteArray.fromString(call.parameters["serialized"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
-            val hash = Transaction.hash(serialized.array)
-
-            APIServer.txMutex.withLock {
-                if (Node.broadcastTx(hash, serialized.array) == Accepted)
-                    call.respond(hash.toString())
-                else
-                    call.respond("Transaction rejected")
-            }
-        }
-
         get("/api/v2/sendrawtransaction/{hex}/") {
             val bytes = call.parameters["hex"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hex")
 
@@ -874,18 +570,6 @@ fun Application.APIServer() {
             }
         }
 
-        post("/api/v1/decryptmessage/{mnemonic}/{from}/{message}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val publicKey = Address.decode(call.parameters["from"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid from")
-            val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
-
-            val decrypted = Message.decrypt(privateKey, publicKey, message)
-            if (decrypted != null)
-                call.respond(decrypted)
-            else
-                call.respond(HttpStatusCode.NotFound, "Decryption failed")
-        }
-
         post("/api/v2/decryptmessage") {
             val parameters = call.receiveParameters()
             val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
@@ -899,15 +583,6 @@ fun Application.APIServer() {
                 call.respond(HttpStatusCode.BadRequest, "Decryption failed")
         }
 
-        post("/api/v1/signmessage/{mnemonic}/{message}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-            val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
-
-            val signature = Message.sign(privateKey, message)
-
-            call.respond(signature.toString())
-        }
-
         post("/api/v2/signmessage") {
             val parameters = call.receiveParameters()
             val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
@@ -918,16 +593,6 @@ fun Application.APIServer() {
             call.respond(signature.toString())
         }
 
-        get("/api/v1/verifymessage/{account}/{signature}/{message}") {
-            val publicKey = Address.decode(call.parameters["account"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
-            val signature = Signature.fromString(call.parameters["signature"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid signature")
-            val message = call.parameters["message"] ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid message")
-
-            val result = Message.verify(publicKey, signature, message)
-
-            call.respond(result.toString())
-        }
-
         get("/api/v2/verifymessage/{from}/{signature}/{message}") {
             val publicKey = Address.decode(call.parameters["from"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid from")
             val signature = Signature.fromString(call.parameters["signature"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid signature")
@@ -936,24 +601,6 @@ fun Application.APIServer() {
             val result = Message.verify(publicKey, signature, message)
 
             call.respond(result.toString())
-        }
-
-        get("/api/v1/addpeer/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: Node.DEFAULT_P2P_PORT
-            val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
-            val force = call.parameters["force"]?.toBoolean() ?: false
-
-            try {
-                val connection = Node.connections.find { it.remoteAddress == address }
-                if (force || connection == null) {
-                    Node.connectTo(address)
-                    call.respond("Connected")
-                } else {
-                    call.respond("Already connected on ${connection.localAddress}")
-                }
-            } catch (e: Throwable) {
-                call.respond(e.message ?: "unknown error")
-            }
         }
 
         get("/api/v2/addpeer/{address}/{port?}/{force?}") {
@@ -974,20 +621,6 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v1/disconnectpeer/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: Node.DEFAULT_P2P_PORT
-            val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
-            val force = call.parameters["force"]?.toBoolean() ?: false
-
-            val connection = Node.connections.find { it.remoteAddress == address }
-            if (connection != null) {
-                connection.close(force)
-                call.respond("Disconnected")
-            } else {
-                call.respond("Not connected to ${address}")
-            }
-        }
-
         get("/api/v2/disconnectpeerbyaddress/{address}/{port?}/{force?}") {
             val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid port") } ?: Node.DEFAULT_P2P_PORT
             val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
@@ -1002,19 +635,6 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v1/disconnectpeerbyid/{id}/{force?}") {
-            val id = call.parameters["id"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid id")
-            val force = call.parameters["force"]?.toBoolean() ?: false
-
-            val connection = Node.connections.find { it.peerId == id }
-            if (connection != null) {
-                connection.close(force)
-                call.respond("Disconnected")
-            } else {
-                call.respond("Not connected")
-            }
-        }
-
         get("/api/v2/disconnectpeer/{id}/{force?}") {
             val id = call.parameters["id"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid id")
             val force = call.parameters["force"]?.toBoolean() ?: false
@@ -1026,36 +646,6 @@ fun Application.APIServer() {
             } else {
                 call.respond(false.toString())
             }
-        }
-
-        post("/api/v1/staker/start/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(Staker.startStaking(privateKey).toString())
-        }
-
-        post("/api/v1/staker/stop/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(Staker.stopStaking(privateKey).toString())
-        }
-
-        post("/api/v1/startStaking/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(Staker.startStaking(privateKey).toString())
-        }
-
-        post("/api/v1/stopStaking/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(Staker.stopStaking(privateKey).toString())
-        }
-
-        post("/api/v1/isStaking/{mnemonic}") {
-            val privateKey = Mnemonic.fromString(call.parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(Staker.isStaking(privateKey).toString())
         }
 
         post("/api/v2/startstaking") {
@@ -1085,14 +675,6 @@ fun Application.APIServer() {
             call.respondJson(StakingInfo.serializer(), Staker.info(publicKey))
         }
 
-        get("/api/v1/walletdb/getwallet/{address}") {
-            val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
-
-            WalletDB.mutex.withLock {
-                call.respond(Json.stringify(WalletDB.WalletV1.serializer(), WalletDB.getWalletImpl(publicKey).toV1()))
-            }
-        }
-
         get("/api/v2/wallet/{address}/transactions") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
@@ -1107,15 +689,6 @@ fun Application.APIServer() {
             call.respondJson(HashMapSerializer(String.serializer(), JsonElement.serializer()), transactions)
         }
 
-        get("/api/v1/walletdb/getoutleases/{address}") {
-            val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
-
-            WalletDB.mutex.withLock {
-                val wallet = WalletDB.getWalletImpl(publicKey)
-                call.respond(Json.stringify(AccountState.Lease.serializer().list, wallet.outLeases))
-            }
-        }
-
         get("/api/v2/wallet/{address}/outleases") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
@@ -1125,34 +698,10 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v1/walletdb/getsequence/{address}") {
-            val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
-
-            call.respond(WalletDB.getSequence(publicKey).toString())
-        }
-
         get("/api/v2/wallet/{address}/sequence") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
             call.respond(WalletDB.getSequence(publicKey).toString())
-        }
-
-        get("/api/v1/walletdb/gettransaction/{hash}/{raw?}") {
-            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
-            val raw = call.parameters["raw"]?.toBoolean() ?: false
-
-            val result = WalletDB.mutex.withLock {
-                WalletDB.getTransactionImpl(hash)
-            }
-            if (result != null) {
-                if (raw)
-                    return@get call.respond(result.toHex())
-
-                val tx = Transaction.deserialize(result)
-                call.respond(Json.stringify(TransactionInfoV2.serializer(), TransactionInfoV2(tx, hash, result.size)))
-            } else {
-                call.respond(HttpStatusCode.NotFound, "transaction not found")
-            }
         }
 
         get("/api/v2/wallet/{address}/transaction/{hash}/{raw?}") {
@@ -1179,16 +728,6 @@ fun Application.APIServer() {
                     call.respond(HttpStatusCode.BadRequest, "Transaction not found")
                 }
             }
-        }
-
-        get("/api/v1/walletdb/getconfirmations/{hash}") {
-            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
-
-            val result = WalletDB.getConfirmations(hash)
-            if (result != null)
-                call.respond(result.toString())
-            else
-                call.respond(HttpStatusCode.NotFound, "transaction not found")
         }
 
         get("/api/v2/wallet/{address}/confirmations/{hash}") {
@@ -1230,9 +769,17 @@ fun Application.APIServer() {
             }.join()
             kotlin.system.exitProcess(0)
         }
+
+        APIV1()
     }
 }
 
+/**
+ * Responds to a client with an [obj]ect, using provided [serializer] and the [ContentType.Application.Json].
+ *
+ * @param serializer the serialization strategy
+ * @param obj the object serializable to JSON
+ */
 suspend fun <T> ApplicationCall.respondJson(serializer: SerializationStrategy<T>, obj: T) {
     respondText(ContentType.Application.Json, HttpStatusCode.OK) {
         Json.stringify(serializer, obj)
