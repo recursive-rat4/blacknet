@@ -19,3 +19,22 @@ procedures quick and simple.
 
 This program is distributed under the terms of the Jelurida Public License
 version 1.1 for the Blacknet Public Blockchain Platform. See [LICENSE.txt](LICENSE.txt).
+
+## Linux Build
+
+1.Update packages
+
+`sudo apt-get update`
+
+2.Install Java JDK not Jre(java8 or high)
+
+`sudo apt-get install openjdk-8-jdk`
+
+3.Clone the source 
+
+`sudo git clone https://gitlab.com/blacknet-ninja/blacknet`
+
+4.Run development version
+
+`cd blacknet
+sudo ./gradlew run`
