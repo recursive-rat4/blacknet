@@ -48,6 +48,9 @@ GNU LGPL 2.1 or later: https://www.gnu.org/licenses/lgpl-2.1.html
 Bouncy Castle https://bouncycastle.org/ is licensed under the
 MIT license: https://bouncycastle.org/licence.html
 
+TestNG https://testng.org/ is licensed under the
+Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
 The licenses for third party works used by the web UI code:
 
 Normalize.css https://necolas.github.io/normalize.css/ is licensed under the
