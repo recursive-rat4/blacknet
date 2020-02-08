@@ -39,11 +39,12 @@ class BinaryEncoder : ElementValueEncoder() {
     override fun encodeInt(value: Int) = out.writeInt(value)
     override fun encodeLong(value: Long) = out.writeLong(value)
 
+    override fun encodeFloat(value: Float) = out.writeFloat(value)
+    override fun encodeDouble(value: Double) = out.writeDouble(value)
+
     override fun encodeNull() = out.writeByte(0)
     override fun encodeNotNullMark() = out.writeByte(1)
     override fun encodeBoolean(value: Boolean) = out.writeByte(if (value) 1 else 0)
-    override fun encodeFloat(value: Float) = out.writeFloat(value)
-    override fun encodeDouble(value: Double) = out.writeDouble(value)
 
     override fun encodeString(value: String) {
         val bytes = value.toByteArray()

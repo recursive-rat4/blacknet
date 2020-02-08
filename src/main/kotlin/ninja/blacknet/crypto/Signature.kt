@@ -34,18 +34,18 @@ class Signature(val bytes: ByteArray) {
         /**
          * The number of bytes in a binary representation of a [Signature].
          */
-        const val SIZE = 64
-        val EMPTY = Signature(ByteArray(SIZE))
+        const val SIZE_BYTES = 64
+        val EMPTY = Signature(ByteArray(SIZE_BYTES))
 
         fun fromString(hex: String?): Signature? {
             if (hex == null) return null
-            val bytes = fromHex(hex, SIZE) ?: return null
+            val bytes = fromHex(hex, SIZE_BYTES) ?: return null
             return Signature(bytes)
         }
 
         override fun deserialize(decoder: Decoder): Signature {
             return when (decoder) {
-                is BinaryDecoder -> Signature(decoder.decodeFixedByteArray(SIZE))
+                is BinaryDecoder -> Signature(decoder.decodeFixedByteArray(SIZE_BYTES))
                 is JsonInput -> Signature.fromString(decoder.decodeString())!!
                 else -> throw RuntimeException("Unsupported decoder")
             }

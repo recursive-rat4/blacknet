@@ -9,6 +9,7 @@
 
 package ninja.blacknet.crypto
 
+import ninja.blacknet.byte.byteArrayOfInts
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Invalid
 import ninja.blacknet.core.Status
@@ -17,7 +18,6 @@ import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.time.SystemClock
 import ninja.blacknet.time.seconds.days
 import ninja.blacknet.time.seconds.seconds
-import ninja.blacknet.util.byteArrayOfInts
 import kotlin.math.min
 
 /**

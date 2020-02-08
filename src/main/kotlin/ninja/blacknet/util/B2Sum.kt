@@ -31,7 +31,7 @@ object B2Sum {
                     println("B2Sum: ${e.message}")
                     return@launch
                 }
-                val b2 = Blake2b(ninja.blacknet.crypto.Blake2b.DIGEST_SIZE)
+                val b2 = Blake2b(ninja.blacknet.crypto.Blake2b.DIGEST_SIZE_BITS)
                 val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
                 while (true) {
@@ -44,7 +44,7 @@ object B2Sum {
                 }
 
                 stream.close()
-                val bytes = ByteArray(ninja.blacknet.crypto.Blake2b.HASH_SIZE)
+                val bytes = ByteArray(ninja.blacknet.crypto.Blake2b.DIGEST_SIZE_BYTES)
                 b2.digest(bytes, 0)
                 println("${hex(bytes, false)} $arg")
             }

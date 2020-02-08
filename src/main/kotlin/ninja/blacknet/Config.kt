@@ -12,7 +12,6 @@ package ninja.blacknet
 
 import com.natpryce.konfig.*
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.network.Network
 import ninja.blacknet.network.toPort
 import java.io.File
 
@@ -62,18 +61,10 @@ object Config {
     operator fun <T> get(key: Key<T>): T = config[key]
     fun <T> contains(key: Key<T>): Boolean = config.contains(key)
 
-    private val disabledIPv4 = !config[ipv4]
-    private val disabledIPv6 = !config[ipv6]
-    private val disabledTOR = !config[tor]
-    private val disabledI2P = !config[i2p]
-
-    fun isDisabled(network: Network): Boolean = when (network) {
-        Network.IPv4 -> disabledIPv4
-        Network.IPv6 -> disabledIPv6
-        Network.TORv2 -> disabledTOR
-        Network.TORv3 -> disabledTOR
-        Network.I2P -> disabledI2P
-    }
+    val disabledIPv4 = !config[ipv4]
+    val disabledIPv6 = !config[ipv6]
+    val disabledTOR = !config[tor]
+    val disabledI2P = !config[i2p]
 
     fun jsonIndented(): Boolean {
         if (contains(apiserver.jsonindented))

@@ -10,28 +10,31 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.Accepted
-import ninja.blacknet.core.Ledger
-import ninja.blacknet.core.Status
-import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 
+/**
+ * 包
+ */
 @Serializable
 class Bundle(
-        val magic: Int,
+        val ring: VehicleRing,
         val data: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.Bundle
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         return Accepted
     }
+
+    operator fun component1() = ring
+    operator fun component2() = data.array
 
     companion object {
         fun deserialize(bytes: ByteArray): Bundle = BinaryDecoder.fromBytes(bytes).decode(serializer())

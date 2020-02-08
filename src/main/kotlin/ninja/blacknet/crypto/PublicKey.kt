@@ -34,17 +34,17 @@ class PublicKey(val bytes: ByteArray) {
         /**
          * The number of bytes in a binary representation of a [PublicKey].
          */
-        const val SIZE = 32
+        const val SIZE_BYTES = 32
 
         fun fromString(hex: String?): PublicKey? {
             if (hex == null) return null
-            val bytes = fromHex(hex, SIZE) ?: return null
+            val bytes = fromHex(hex, SIZE_BYTES) ?: return null
             return PublicKey(bytes)
         }
 
         override fun deserialize(decoder: Decoder): PublicKey {
             return when (decoder) {
-                is BinaryDecoder -> PublicKey(decoder.decodeFixedByteArray(SIZE))
+                is BinaryDecoder -> PublicKey(decoder.decodeFixedByteArray(SIZE_BYTES))
                 is JsonInput -> Address.decode(decoder.decodeString())!!
                 else -> throw RuntimeException("Unsupported decoder")
             }

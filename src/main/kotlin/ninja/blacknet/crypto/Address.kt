@@ -10,9 +10,8 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.Config
+import ninja.blacknet.byte.plus
 import ninja.blacknet.coding.Bech32
-import ninja.blacknet.util.SIZE
-import ninja.blacknet.util.plus
 
 /**
  * Address encoding using [Bech32].
@@ -39,7 +38,7 @@ object Address {
         val (hrp, data) = Bech32.decode(string) ?: return null
         if (!HRP.contentEquals(hrp))
             return null
-        if (data.size != PublicKey.SIZE)
+        if (data.size != PublicKey.SIZE_BYTES)
             return null
         return PublicKey(data)
     }
@@ -56,12 +55,12 @@ object Address {
         val (hrp, data) = Bech32.decode(string) ?: return null
         if (!HRP.contentEquals(hrp))
             return null
-        if (data.size != Byte.SIZE + Hash.SIZE)
+        if (data.size != Byte.SIZE_BYTES + Hash.SIZE_BYTES)
             return null
         if (data[0] != version)
             return null
-        val bytes = ByteArray(Hash.SIZE)
-        System.arraycopy(data, Byte.SIZE, bytes, 0, Hash.SIZE)
+        val bytes = ByteArray(Hash.SIZE_BYTES)
+        System.arraycopy(data, Byte.SIZE_BYTES, bytes, 0, Hash.SIZE_BYTES)
         return Hash(bytes)
     }
 }

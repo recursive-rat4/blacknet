@@ -46,8 +46,12 @@ object Runtime : CoroutineScope {
     init {
         java.lang.Runtime.getRuntime().addShutdownHook(Thread {
             runBlocking {
-                shutdownHooks.reversedForEach {
-                    it()
+                shutdownHooks.reversedForEach { hook ->
+                    try {
+                        hook()
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                    }
                 }
             }
         })

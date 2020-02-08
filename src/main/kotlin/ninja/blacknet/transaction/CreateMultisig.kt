@@ -51,7 +51,7 @@ class CreateMultisig(
             }
     }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (n < 0 || n > deposits.size) {
             return Invalid("Invalid n")
         }

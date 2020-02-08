@@ -16,8 +16,8 @@ import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
 import ninja.blacknet.Config
 import ninja.blacknet.Config.torcontrol
+import ninja.blacknet.byte.emptyByteArray
 import ninja.blacknet.coding.Base32
-import ninja.blacknet.util.emptyByteArray
 import java.io.File
 
 private val logger = KotlinLogging.logger {}

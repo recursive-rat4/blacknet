@@ -37,6 +37,10 @@ object LevelDB {
         return db.getProperty(name)
     }
 
+    fun get(dbKey: DBKey): ByteArray? {
+        return db.get(+dbKey)
+    }
+
     fun get(dbKey: DBKey, key: ByteArray): ByteArray? {
         return db.get(dbKey + key)
     }
@@ -62,8 +66,16 @@ object LevelDB {
     }
 
     class WriteBatch internal constructor(private val batch: org.iq80.leveldb.WriteBatch) {
+        fun put(dbKey: DBKey, bytes: ByteArray) {
+            batch.put(+dbKey, bytes)
+        }
+
         fun put(dbKey: DBKey, key: ByteArray, bytes: ByteArray) {
             batch.put(dbKey + key, bytes)
+        }
+
+        fun delete(dbKey: DBKey) {
+            batch.delete(+dbKey)
         }
 
         fun delete(dbKey: DBKey, key: ByteArray) {

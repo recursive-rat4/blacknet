@@ -36,7 +36,7 @@ class CreateHTLC(
 
     fun id(hash: Hash, dataIndex: Int) = Blake2b.hasher { x(hash); x(dataIndex); }
 
-    override suspend fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (!HashTimeLock.isValidTimeLockType(timeLockType)) {
             return Invalid("Unknown time lock type $timeLockType")
         }

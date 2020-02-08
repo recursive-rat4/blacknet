@@ -186,7 +186,7 @@ object TxPool : MemPool(), Ledger {
         undoMultisigs.clear()
     }
 
-    private suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+    private fun processImpl(hash: Hash, bytes: ByteArray): Status {
         val tx = Transaction.deserialize(bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {

@@ -72,7 +72,12 @@ enum class Network(val type: Byte, val addrSize: Int) {
     }
 
     fun isDisabled(): Boolean {
-        return Config.isDisabled(this)
+        return when (this) {
+            IPv4 -> Config.disabledIPv4
+            IPv6 -> Config.disabledIPv6
+            TORv2, TORv3 -> Config.disabledTOR
+            I2P -> Config.disabledI2P
+        }
     }
 
     private fun isLocalIPv4(bytes: ByteArray): Boolean {

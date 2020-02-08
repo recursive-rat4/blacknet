@@ -32,8 +32,8 @@ class ChainIndex(
         override fun deserialize(decoder: Decoder): ChainIndex {
             return when (decoder) {
                 is BinaryDecoder -> ChainIndex(
-                        Hash(decoder.decodeFixedByteArray(Hash.SIZE)),
-                        Hash(decoder.decodeFixedByteArray(Hash.SIZE)),
+                        Hash(decoder.decodeFixedByteArray(Hash.SIZE_BYTES)),
+                        Hash(decoder.decodeFixedByteArray(Hash.SIZE_BYTES)),
                         decoder.decodeVarInt(),
                         decoder.decodeVarInt(),
                         decoder.decodeVarLong())

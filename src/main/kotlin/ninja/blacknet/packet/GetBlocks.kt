@@ -57,7 +57,7 @@ class GetBlocks(
             }
         }
 
-        var size = PACKET_HEADER_SIZE + 2 + 1
+        var size = PACKET_HEADER_SIZE_BYTES + 2 + 1
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = ArrayList<SerializableByteArray>()
 

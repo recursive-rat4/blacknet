@@ -11,14 +11,15 @@ package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.Blake2b
 import ninja.blacknet.SystemService
+import ninja.blacknet.byte.*
 
 /**
  * BLAKE2b-256 hash function.
  */
 @SystemService
 object Blake2b : (ByteArray) -> ByteArray {
-    const val DIGEST_SIZE = 256
-    const val HASH_SIZE = DIGEST_SIZE / 8
+    const val DIGEST_SIZE_BYTES = 32
+    const val DIGEST_SIZE_BITS = DIGEST_SIZE_BYTES * Byte.SIZE_BITS
 
     /**
      * Returns a hash with given [digestSize].
@@ -44,7 +45,7 @@ object Blake2b : (ByteArray) -> ByteArray {
      * DSL builder for a [Hash].
      */
     class Hasher(private val blake2b: Blake2b) {
-        internal constructor() : this(Blake2b(DIGEST_SIZE))
+        internal constructor() : this(Blake2b(DIGEST_SIZE_BITS))
 
         /**
          * Adds [Byte] value.
@@ -57,32 +58,32 @@ object Blake2b : (ByteArray) -> ByteArray {
          * Adds [Short] value in big-endian byte order.
          */
         fun x(short: Short) {
-            blake2b.update((short.toInt() shr 8).toByte())
-            blake2b.update(short.toByte())
+            blake2b.update(short.component1())
+            blake2b.update(short.component2())
         }
 
         /**
          * Adds [Int] value in big-endian byte order.
          */
         fun x(int: Int) {
-            blake2b.update((int shr 24).toByte())
-            blake2b.update((int shr 16).toByte())
-            blake2b.update((int shr 8).toByte())
-            blake2b.update(int.toByte())
+            blake2b.update(int.component1())
+            blake2b.update(int.component2())
+            blake2b.update(int.component3())
+            blake2b.update(int.component4())
         }
 
         /**
          * Adds [Long] value in big-endian byte order.
          */
         fun x(long: Long) {
-            blake2b.update((long shr 56).toByte())
-            blake2b.update((long shr 48).toByte())
-            blake2b.update((long shr 40).toByte())
-            blake2b.update((long shr 32).toByte())
-            blake2b.update((long shr 24).toByte())
-            blake2b.update((long shr 16).toByte())
-            blake2b.update((long shr 8).toByte())
-            blake2b.update(long.toByte())
+            blake2b.update(long.component1())
+            blake2b.update(long.component2())
+            blake2b.update(long.component3())
+            blake2b.update(long.component4())
+            blake2b.update(long.component5())
+            blake2b.update(long.component6())
+            blake2b.update(long.component7())
+            blake2b.update(long.component8())
         }
 
         /**
@@ -115,18 +116,18 @@ object Blake2b : (ByteArray) -> ByteArray {
          * Adds [Hash] value.
          */
         fun x(hash: Hash) {
-            blake2b.update(hash.bytes, 0, Hash.SIZE)
+            blake2b.update(hash.bytes, 0, Hash.SIZE_BYTES)
         }
 
         /**
          * Adds [PublicKey] value.
          */
         fun x(publicKey: PublicKey) {
-            blake2b.update(publicKey.bytes, 0, PublicKey.SIZE)
+            blake2b.update(publicKey.bytes, 0, PublicKey.SIZE_BYTES)
         }
 
         internal fun result(): Hash {
-            val bytes = ByteArray(Hash.SIZE)
+            val bytes = ByteArray(Hash.SIZE_BYTES)
             blake2b.digest(bytes, 0)
             return Hash(bytes)
         }

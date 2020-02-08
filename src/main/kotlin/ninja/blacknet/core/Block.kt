@@ -14,7 +14,6 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.util.SIZE
 
 @Serializable
 class Block(
@@ -31,10 +30,10 @@ class Block(
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
         val bytes = serialize()
         contentHash = contentHash(bytes)
-        System.arraycopy(contentHash.bytes, 0, bytes, CONTENT_HASH_POS, Hash.SIZE)
+        System.arraycopy(contentHash.bytes, 0, bytes, CONTENT_HASH_POS, Hash.SIZE_BYTES)
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature.bytes, 0, bytes, SIGNATURE_POS, Signature.SIZE)
+        System.arraycopy(signature.bytes, 0, bytes, SIGNATURE_POS, Signature.SIZE_BYTES)
         return Pair(hash, bytes)
     }
 
@@ -47,18 +46,18 @@ class Block(
     }
 
     private fun contentHash(bytes: ByteArray): Hash {
-        return Blake2b.hasher { x(bytes, HEADER_SIZE, bytes.size - HEADER_SIZE) }
+        return Blake2b.hasher { x(bytes, HEADER_SIZE_BYTES, bytes.size - HEADER_SIZE_BYTES) }
     }
 
     companion object {
         const val VERSION = 2
-        val CONTENT_HASH_POS = Int.SIZE + Hash.SIZE + Long.SIZE + PublicKey.SIZE
-        val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE
-        val HEADER_SIZE = SIGNATURE_POS + Signature.SIZE
+        const val CONTENT_HASH_POS = Int.SIZE_BYTES + Hash.SIZE_BYTES + Long.SIZE_BYTES + PublicKey.SIZE_BYTES
+        const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE_BYTES
+        const val HEADER_SIZE_BYTES = SIGNATURE_POS + Signature.SIZE_BYTES
 
         fun deserialize(bytes: ByteArray): Block = BinaryDecoder.fromBytes(bytes).decode(serializer())
 
-        fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, 0, HEADER_SIZE - Signature.SIZE) }
+        fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, 0, HEADER_SIZE_BYTES - Signature.SIZE_BYTES) }
 
         fun create(previous: Hash, time: Long, generator: PublicKey): Block {
             return Block(VERSION, previous, time, generator, Hash.ZERO, Signature.EMPTY, ArrayList())

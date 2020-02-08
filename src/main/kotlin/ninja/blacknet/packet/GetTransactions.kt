@@ -32,7 +32,7 @@ class GetTransactions(
             return
         }
 
-        var size = PACKET_HEADER_SIZE + 2
+        var size = PACKET_HEADER_SIZE_BYTES + 2
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
         val response = ArrayList<SerializableByteArray>(list.size)
 
@@ -46,13 +46,13 @@ class GetTransactions(
                 if (size > maxSize) {
                     connection.sendPacket(Transactions(response))
                     response.clear()
-                    size = PACKET_HEADER_SIZE + 2
+                    size = PACKET_HEADER_SIZE_BYTES + 2
                 }
             } else {
                 if (newSize > maxSize) {
                     connection.sendPacket(Transactions(response))
                     response.clear()
-                    size = PACKET_HEADER_SIZE + 2
+                    size = PACKET_HEADER_SIZE_BYTES + 2
                 }
                 response.add(SerializableByteArray(value))
                 size += value.size + 4

@@ -36,18 +36,18 @@ class Hash(val bytes: ByteArray) {
         /**
          * The number of bytes in a binary representation of a [Hash].
          */
-        const val SIZE = Blake2b.HASH_SIZE
-        val ZERO = Hash(ByteArray(SIZE))
+        const val SIZE_BYTES = Blake2b.DIGEST_SIZE_BYTES
+        val ZERO = Hash(ByteArray(SIZE_BYTES))
 
         fun fromString(hex: String?): Hash? {
             if (hex == null) return null
-            val bytes = fromHex(hex, SIZE) ?: return null
+            val bytes = fromHex(hex, SIZE_BYTES) ?: return null
             return Hash(bytes)
         }
 
         override fun deserialize(decoder: Decoder): Hash {
             return when (decoder) {
-                is BinaryDecoder -> Hash(decoder.decodeFixedByteArray(SIZE))
+                is BinaryDecoder -> Hash(decoder.decodeFixedByteArray(SIZE_BYTES))
                 is JsonInput -> Hash.fromString(decoder.decodeString())!!
                 else -> throw RuntimeException("Unsupported decoder")
             }

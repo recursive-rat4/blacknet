@@ -68,9 +68,9 @@ object Node {
                 } catch (e: Throwable) {
                 }
             }
-            if (!Config.isDisabled(Network.TORv2))
+            if (!Config.disabledTOR)
                 Runtime.launch { Network.listenOnTor() }
-            if (!Config.isDisabled(Network.I2P))
+            if (!Config.disabledI2P)
                 Runtime.launch { Network.listenOnI2P() }
             Runtime.launch { connector() }
         }
@@ -227,7 +227,7 @@ object Node {
         return n
     }
 
-    private suspend fun timeOffset(): Long = connections.mutex.withLock {
+    private suspend inline fun timeOffset(): Long = connections.mutex.withLock {
         val size = connections.list.size
         return if (size >= 5) {
             val offsets = Array(size) { connections.list[it].timeOffset }
@@ -242,10 +242,10 @@ object Node {
     suspend fun warnings(): List<String> {
         val timeOffset = timeOffset()
 
-        if (timeOffset >= PoS.TIME_SLOT || timeOffset <= -PoS.TIME_SLOT)
-            return listOf("Please check your system clock. Many peers report different time.")
-
-        return emptyList()
+        return if (timeOffset >- PoS.TIME_SLOT && timeOffset <+ PoS.TIME_SLOT)
+            emptyList()
+        else
+            listOf("Please check your system clock. Many peers report different time.")
     }
 
     private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }): Int {

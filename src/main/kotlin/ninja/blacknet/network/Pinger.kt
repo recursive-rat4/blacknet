@@ -9,8 +9,8 @@
 
 package ninja.blacknet.network
 
-import com.google.common.primitives.Ints
 import mu.KotlinLogging
+import ninja.blacknet.byte.fromBytes
 import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.packet.Ping
 import ninja.blacknet.packet.Pong
@@ -88,7 +88,7 @@ object Pinger {
             x(Node.magic)
             x(challenge)
         }
-        return Ints.fromBytes(hash.bytes[0], hash.bytes[1], hash.bytes[2], hash.bytes[3])
+        return Int.fromBytes(hash.bytes[0], hash.bytes[1], hash.bytes[2], hash.bytes[3])
     }
 
     const val MIN_VERSION = 13

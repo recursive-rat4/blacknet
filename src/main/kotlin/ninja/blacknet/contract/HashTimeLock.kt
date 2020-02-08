@@ -46,10 +46,10 @@ open class HashTimeLock<K, L>(
             val hash: (ByteArray) -> ByteArray,
             val hashSize: Int
     ) {
-        BLAKE256(ninja.blacknet.crypto.Blake2b, ninja.blacknet.crypto.Blake2b.HASH_SIZE),
-        SHA256(ninja.blacknet.crypto.SHA256, ninja.blacknet.crypto.SHA256.HASH_SIZE),
-        KECCAK256(ninja.blacknet.crypto.Keccak256, ninja.blacknet.crypto.Keccak256.HASH_SIZE),
-        RIPEMD160(ninja.blacknet.crypto.RIPEMD160, ninja.blacknet.crypto.RIPEMD160.HASH_SIZE),
+        BLAKE256(ninja.blacknet.crypto.Blake2b, ninja.blacknet.crypto.Blake2b.DIGEST_SIZE_BYTES),
+        SHA256(ninja.blacknet.crypto.SHA256, ninja.blacknet.crypto.SHA256.DIGEST_SIZE_BYTES),
+        KECCAK256(ninja.blacknet.crypto.Keccak256, ninja.blacknet.crypto.Keccak256.DIGEST_SIZE_BYTES),
+        RIPEMD160(ninja.blacknet.crypto.RIPEMD160, ninja.blacknet.crypto.RIPEMD160.DIGEST_SIZE_BYTES),
         ;
 
         fun verify(htlc: HashTimeLock<*, *>, preimage: SerializableByteArray): Boolean {

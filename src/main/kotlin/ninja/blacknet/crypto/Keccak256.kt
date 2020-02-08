@@ -12,12 +12,12 @@ package ninja.blacknet.crypto
 import org.bouncycastle.crypto.digests.KeccakDigest
 
 object Keccak256 : (ByteArray) -> ByteArray {
-    const val DIGEST_SIZE = 256
-    const val HASH_SIZE = DIGEST_SIZE / 8
+    const val DIGEST_SIZE_BYTES = 32
+    const val DIGEST_SIZE_BITS = DIGEST_SIZE_BYTES * Byte.SIZE_BITS
 
     fun hash(message: ByteArray): ByteArray {
-        val bytes = ByteArray(HASH_SIZE)
-        val digest = KeccakDigest(DIGEST_SIZE)
+        val bytes = ByteArray(DIGEST_SIZE_BYTES)
+        val digest = KeccakDigest(DIGEST_SIZE_BITS)
         digest.update(message, 0, message.size)
         digest.doFinal(bytes, 0)
         return bytes
