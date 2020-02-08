@@ -36,5 +36,8 @@ version 1.1 for the Blacknet Public Blockchain Platform. See [LICENSE.txt](LICEN
 
 4.Run development version
 
-`cd blacknet
-sudo ./gradlew run`
+`cd blacknet`
+
+`sudo ./gradlew run`
+
+5.Wait Building
