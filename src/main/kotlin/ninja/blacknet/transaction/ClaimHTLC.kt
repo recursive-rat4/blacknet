@@ -49,7 +49,7 @@ class ClaimHTLC(
     fun involves(ids: Set<Hash>) = ids.contains(id)
 
     companion object {
-        fun deserialize(bytes: ByteArray): ClaimHTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): ClaimHTLC = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")

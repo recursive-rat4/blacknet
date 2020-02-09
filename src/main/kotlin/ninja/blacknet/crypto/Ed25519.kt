@@ -23,7 +23,7 @@ import net.i2p.crypto.eddsa.math.ed25519.Ed25519ScalarOps
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec
 import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec
-import ninja.blacknet.byte.byteArrayOfInts
+import ninja.blacknet.util.byteArrayOfInts
 import java.security.MessageDigest
 import kotlin.experimental.and
 import kotlin.experimental.or

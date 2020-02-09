@@ -48,7 +48,7 @@ class RefundHTLC(
     fun involves(ids: Set<Hash>) = ids.contains(id)
 
     companion object {
-        fun deserialize(bytes: ByteArray): RefundHTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): RefundHTLC = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")

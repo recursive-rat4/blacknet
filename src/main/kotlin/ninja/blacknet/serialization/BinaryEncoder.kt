@@ -12,9 +12,7 @@
 
 package ninja.blacknet.serialization
 
-import kotlinx.io.core.BytePacketBuilder
-import kotlinx.io.core.ByteReadPacket
-import kotlinx.io.core.readBytes
+import io.ktor.utils.io.core.*
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.EnumDescriptor
 import kotlin.experimental.and

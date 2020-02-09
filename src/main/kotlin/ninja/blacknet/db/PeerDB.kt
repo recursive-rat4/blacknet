@@ -55,14 +55,14 @@ object PeerDB {
         val versionBytes = LevelDB.get(VERSION_KEY)
 
         val version = if (versionBytes != null) {
-            BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
+            BinaryDecoder(versionBytes).decodeVarInt()
         } else {
             1
         }
 
         val hashMap = if (version == VERSION) {
             if (stateBytes != null) {
-                BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), Entry.serializer()))
+                BinaryDecoder(stateBytes).decode(HashMapSerializer(Address.serializer(), Entry.serializer()))
             } else {
                 emptyMap<Address, Entry>()
             }
@@ -74,17 +74,17 @@ object PeerDB {
                 val result = newHashMapWithExpectedSize<Address, Entry>(MAX_SIZE)
                 try {
                     if (version == 3) {
-                        val stateV3 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(Address.serializer(), EntryV3.serializer()))
+                        val stateV3 = BinaryDecoder(stateBytes).decode(HashMapSerializer(Address.serializer(), EntryV3.serializer()))
                         stateV3.forEach { (address, entryV3) ->
                             result.put(address, Entry(entryV3))
                         }
                     } else if (version == 2) {
-                        val stateV2 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV2.serializer()))
+                        val stateV2 = BinaryDecoder(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV2.serializer()))
                         stateV2.forEach { (addressV1, entryV2) ->
                             result.put(Address(addressV1), Entry(entryV2))
                         }
                     } else if (version == 1) {
-                        val stateV1 = BinaryDecoder.fromBytes(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV1.serializer()))
+                        val stateV1 = BinaryDecoder(stateBytes).decode(HashMapSerializer(AddressV1.serializer(), EntryV1.serializer()))
                         stateV1.forEach { (addressV1, entryV1) ->
                             result.put(Address(addressV1), Entry(entryV1))
                         }

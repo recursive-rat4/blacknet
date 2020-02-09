@@ -10,13 +10,13 @@
 package ninja.blacknet.network
 
 import mu.KotlinLogging
-import ninja.blacknet.byte.fromBytes
 import ninja.blacknet.crypto.Blake2b
 import ninja.blacknet.packet.Ping
 import ninja.blacknet.packet.Pong
 import ninja.blacknet.time.SystemClock
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.nextTime
+import ninja.blacknet.util.fromBytes
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}

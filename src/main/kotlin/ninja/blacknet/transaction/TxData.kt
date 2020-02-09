@@ -42,7 +42,7 @@ interface TxData {
     companion object {
         fun deserialize(type: Byte, bytes: ByteArray): TxData {
             val serializer = TxType.getSerializer(type)
-            return BinaryDecoder.fromBytes(bytes).decode(serializer)
+            return BinaryDecoder(bytes).decode(serializer)
         }
     }
 }

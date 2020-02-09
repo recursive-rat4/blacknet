@@ -95,7 +95,7 @@ open class HashTimeLock<K, L>(
 
     companion object {
         fun <K, L> deserialize(bytes: ByteArray, kSerializer: KSerializer<K>, lSerializer: KSerializer<L>): HashTimeLock<K, L> {
-            return BinaryDecoder.fromBytes(bytes).decode(serializer(kSerializer, lSerializer))
+            return BinaryDecoder(bytes).decode(serializer(kSerializer, lSerializer))
         }
 
         fun isValidTimeLockType(type: Byte): Boolean = TimeLockType.get(type) != null

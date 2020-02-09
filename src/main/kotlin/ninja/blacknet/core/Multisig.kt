@@ -27,6 +27,6 @@ class Multisig(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): Multisig = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Multisig = BinaryDecoder(bytes).decode(serializer())
     }
 }

@@ -9,7 +9,7 @@
 
 package ninja.blacknet.packet
 
-import kotlinx.io.core.ByteReadPacket
+import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.*

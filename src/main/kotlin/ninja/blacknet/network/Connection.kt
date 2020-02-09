@@ -10,15 +10,18 @@
 package ninja.blacknet.network
 
 import io.ktor.network.sockets.ASocket
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.ClosedWriteChannelException
+import io.ktor.utils.io.core.ByteReadPacket
+import io.ktor.utils.io.core.readInt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.io.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
-import kotlinx.io.core.ByteReadPacket
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
@@ -131,7 +134,7 @@ class Connection(
             }
             close()
         }
-        val result = readChannel.readPacket(size)
+        val result = readChannel.readPacket(size, 0)
         lastPacketTime = SystemClock.milliseconds
         totalBytesRead += size + 4
         return result

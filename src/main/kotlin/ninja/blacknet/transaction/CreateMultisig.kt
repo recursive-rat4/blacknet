@@ -102,7 +102,7 @@ class CreateMultisig(
     fun involves(publicKey: PublicKey) = deposits.find { it.first == publicKey } != null
 
     companion object {
-        fun deserialize(bytes: ByteArray): CreateMultisig = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): CreateMultisig = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")

@@ -55,7 +55,7 @@ object WalletDB {
         val versionBytes = LevelDB.get(VERSION_KEY)
 
         val version = if (versionBytes != null) {
-            BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
+            BinaryDecoder(versionBytes).decodeVarInt()
         } else {
             1
         }
@@ -63,7 +63,7 @@ object WalletDB {
         if (version == VERSION) {
             if (keysBytes != null) {
                 var txns = 0
-                val decoder = BinaryDecoder.fromBytes(keysBytes)
+                val decoder = BinaryDecoder(keysBytes)
                 for (i in 0 until keysBytes.size step PublicKey.SIZE_BYTES) {
                     val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES))
                     val walletBytes = LevelDB.get(WALLET_KEY, publicKey.bytes)!!
@@ -504,7 +504,7 @@ object WalletDB {
         }
 
         companion object {
-            fun deserialize(bytes: ByteArray): Wallet = BinaryDecoder.fromBytes(bytes).decode(serializer())
+            fun deserialize(bytes: ByteArray): Wallet = BinaryDecoder(bytes).decode(serializer())
         }
     }
 

@@ -46,6 +46,6 @@ class MultiData(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): MultiData = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): MultiData = BinaryDecoder(bytes).decode(serializer())
     }
 }

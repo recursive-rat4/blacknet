@@ -7,11 +7,14 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.Blake2b
+import io.ktor.utils.io.bits.*
 import ninja.blacknet.SystemService
-import ninja.blacknet.byte.components
+import ninja.blacknet.util.highByte
 
 /**
  * BLAKE2b-256 hash function.
@@ -68,9 +71,9 @@ object Blake2b : (ByteArray) -> ByteArray {
          * @param short the [Short] containing the data
          */
         fun x(short: Short) {
-            short.components { b1, b2 ->
-                blake2b.update(b1)
-                blake2b.update(b2)
+            short.let {
+                blake2b.update(it.highByte)
+                blake2b.update(it.lowByte)
             }
         }
 
@@ -80,11 +83,13 @@ object Blake2b : (ByteArray) -> ByteArray {
          * @param int the [Int] containing the data
          */
         fun x(int: Int) {
-            int.components { b1, b2, b3, b4 ->
-                blake2b.update(b1)
-                blake2b.update(b2)
-                blake2b.update(b3)
-                blake2b.update(b4)
+            int.highShort.let {
+                blake2b.update(it.highByte)
+                blake2b.update(it.lowByte)
+            }
+            int.lowShort.let {
+                blake2b.update(it.highByte)
+                blake2b.update(it.lowByte)
             }
         }
 
@@ -94,15 +99,25 @@ object Blake2b : (ByteArray) -> ByteArray {
          * @param long the [Long] containing the data
          */
         fun x(long: Long) {
-            long.components { b1, b2, b3, b4, b5, b6, b7, b8 ->
-                blake2b.update(b1)
-                blake2b.update(b2)
-                blake2b.update(b3)
-                blake2b.update(b4)
-                blake2b.update(b5)
-                blake2b.update(b6)
-                blake2b.update(b7)
-                blake2b.update(b8)
+            long.highInt.let {
+                it.highShort.let {
+                    blake2b.update(it.highByte)
+                    blake2b.update(it.lowByte)
+                }
+                it.lowShort.let {
+                    blake2b.update(it.highByte)
+                    blake2b.update(it.lowByte)
+                }
+            }
+            long.lowInt.let {
+                it.highShort.let {
+                    blake2b.update(it.highByte)
+                    blake2b.update(it.lowByte)
+                }
+                it.lowShort.let {
+                    blake2b.update(it.highByte)
+                    blake2b.update(it.lowByte)
+                }
             }
         }
 

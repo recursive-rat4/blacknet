@@ -41,7 +41,7 @@ class Burn(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): Burn = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Burn = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")

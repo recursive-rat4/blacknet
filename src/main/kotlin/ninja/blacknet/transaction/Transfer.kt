@@ -46,7 +46,7 @@ class Transfer(
     fun involves(publicKey: PublicKey) = to == publicKey
 
     companion object {
-        fun deserialize(bytes: ByteArray): Transfer = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Transfer = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")

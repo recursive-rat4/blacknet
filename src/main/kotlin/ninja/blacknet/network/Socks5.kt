@@ -13,12 +13,12 @@ import io.ktor.network.sockets.ASocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import kotlinx.coroutines.io.ByteReadChannel
-import kotlinx.coroutines.io.ByteWriteChannel
-import kotlinx.coroutines.io.readFully
-import kotlinx.io.core.BytePacketBuilder
-import kotlinx.io.core.Closeable
-import kotlinx.io.core.writeFully
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.core.BytePacketBuilder
+import io.ktor.utils.io.core.Closeable
+import io.ktor.utils.io.core.writeFully
+import io.ktor.utils.io.core.writeShort
 
 /**
  * 代理客户端
@@ -104,5 +104,5 @@ object Socks5 {
 }
 
 private suspend fun ByteReadChannel.skip(num: Int) {
-    readFully(ByteArray(num))
+    readFully(ByteArray(num), 0, num)
 }

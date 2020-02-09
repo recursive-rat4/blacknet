@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.byte
+package ninja.blacknet.util
 
 import ninja.blacknet.SystemService
 

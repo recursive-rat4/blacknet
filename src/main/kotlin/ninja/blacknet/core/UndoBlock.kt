@@ -59,6 +59,6 @@ class UndoBlock(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): UndoBlock = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): UndoBlock = BinaryDecoder(bytes).decode(serializer())
     }
 }

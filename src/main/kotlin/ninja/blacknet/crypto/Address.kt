@@ -10,8 +10,8 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.Config
-import ninja.blacknet.byte.plus
 import ninja.blacknet.coding.Bech32
+import ninja.blacknet.util.plus
 
 /**
  * Address encoding using [Bech32].

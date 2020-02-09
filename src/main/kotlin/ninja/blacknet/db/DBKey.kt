@@ -9,7 +9,7 @@
 
 package ninja.blacknet.db
 
-import ninja.blacknet.byte.plus
+import ninja.blacknet.util.plus
 
 class DBKey(
         val prefix: Byte,

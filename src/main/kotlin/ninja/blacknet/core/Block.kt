@@ -55,7 +55,7 @@ class Block(
         const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE_BYTES
         const val HEADER_SIZE_BYTES = SIGNATURE_POS + Signature.SIZE_BYTES
 
-        fun deserialize(bytes: ByteArray): Block = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Block = BinaryDecoder(bytes).decode(serializer())
 
         fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, 0, HEADER_SIZE_BYTES - Signature.SIZE_BYTES) }
 

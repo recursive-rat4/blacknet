@@ -64,7 +64,7 @@ class CreateHTLC(
     fun involves(publicKey: PublicKey) = to == publicKey
 
     companion object {
-        fun deserialize(bytes: ByteArray): CreateHTLC = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): CreateHTLC = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")

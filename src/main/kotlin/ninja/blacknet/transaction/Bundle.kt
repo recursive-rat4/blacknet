@@ -37,6 +37,6 @@ class Bundle(
     operator fun component2() = data.array
 
     companion object {
-        fun deserialize(bytes: ByteArray): Bundle = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Bundle = BinaryDecoder(bytes).decode(serializer())
     }
 }

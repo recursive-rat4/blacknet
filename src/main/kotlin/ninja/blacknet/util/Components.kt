@@ -7,7 +7,12 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.byte
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
+package ninja.blacknet.util
+
+import io.ktor.utils.io.bits.*
+import ninja.blacknet.util.highByte
 
 /**
  * Byte components of primitive types.
@@ -71,9 +76,12 @@ fun Long.Companion.fromBytes(b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b
  * @return the yielded [ByteArray]
  */
 fun Short.toByteArray(): ByteArray {
-    components { b1, b2 ->
-        return byteArrayOf(b1, b2)
+    val result = ByteArray(Short.SIZE_BYTES)
+    this.let {
+        result[0] = it.highByte
+        result[1] = it.lowByte
     }
+    return result
 }
 
 /**
@@ -82,9 +90,16 @@ fun Short.toByteArray(): ByteArray {
  * @return the yielded [ByteArray]
  */
 fun Int.toByteArray(): ByteArray {
-    components { b1, b2, b3, b4 ->
-        return byteArrayOf(b1, b2, b3, b4)
+    val result = ByteArray(Int.SIZE_BYTES)
+    highShort.let {
+        result[0] = it.highByte
+        result[1] = it.lowByte
     }
+    lowShort.let {
+        result[2] = it.highByte
+        result[3] = it.lowByte
+    }
+    return result
 }
 
 /**
@@ -93,54 +108,28 @@ fun Int.toByteArray(): ByteArray {
  * @return the yielded [ByteArray]
  */
 fun Long.toByteArray(): ByteArray {
-    components { b1, b2, b3, b4, b5, b6, b7, b8 ->
-        return byteArrayOf(b1, b2, b3, b4, b5, b6, b7, b8)
+    val result = ByteArray(Long.SIZE_BYTES)
+    highInt.let {
+        it.highShort.let {
+            result[0] = it.highByte
+            result[1] = it.lowByte
+        }
+        it.lowShort.let {
+            result[2] = it.highByte
+            result[3] = it.lowByte
+        }
     }
+    lowInt.let {
+        it.highShort.let {
+            result[4] = it.highByte
+            result[5] = it.lowByte
+        }
+        it.lowShort.let {
+            result[6] = it.highByte
+            result[7] = it.lowByte
+        }
+    }
+    return result
 }
 
-/**
- * Rotates the bytes of the big-endian representation of this [Short] value with the given [wheel].
- *
- * @param wheel the wheel function
- * @return the result of the [wheel]
- */
-inline fun <T> Short.components(wheel: (b1: Byte, b2: Byte) -> T): T {
-    return wheel(
-            (this.toInt()  shr 1 * Byte.SIZE_BITS  ).toByte(),
-            (this.toInt()/*shr 0 * Byte.SIZE_BITS*/).toByte()
-    )
-}
-
-/**
- * Rotates the bytes of the big-endian representation of this [Int] value with the given [wheel].
- *
- * @param wheel the wheel function
- * @return the result of the [wheel]
- */
-inline fun <T> Int.components(wheel: (b1: Byte, b2: Byte, b3: Byte, b4: Byte) -> T): T {
-    return wheel(
-            (this  shr 3 * Byte.SIZE_BITS  ).toByte(),
-            (this  shr 2 * Byte.SIZE_BITS  ).toByte(),
-            (this  shr 1 * Byte.SIZE_BITS  ).toByte(),
-            (this/*shr 0 * Byte.SIZE_BITS*/).toByte()
-    )
-}
-
-/**
- * Rotates the bytes of the big-endian representation of this [Long] value with the given [wheel].
- *
- * @param wheel the wheel function
- * @return the result of the [wheel]
- */
-inline fun <T> Long.components(wheel: (b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte, b8: Byte) -> T): T {
-    return wheel(
-            (this  shr 7 * Byte.SIZE_BITS  ).toByte(),
-            (this  shr 6 * Byte.SIZE_BITS  ).toByte(),
-            (this  shr 5 * Byte.SIZE_BITS  ).toByte(),
-            (this  shr 4 * Byte.SIZE_BITS  ).toByte(),
-            (this  shr 3 * Byte.SIZE_BITS  ).toByte(),
-            (this  shr 2 * Byte.SIZE_BITS  ).toByte(),
-            (this  shr 1 * Byte.SIZE_BITS  ).toByte(),
-            (this/*shr 0 * Byte.SIZE_BITS*/).toByte()
-    )
-}
+inline val Short.highByte: Byte get() = (toInt() ushr 8).toByte()

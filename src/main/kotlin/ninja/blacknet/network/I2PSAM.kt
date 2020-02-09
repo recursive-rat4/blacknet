@@ -14,10 +14,10 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.util.error
-import kotlinx.coroutines.io.ByteReadChannel
-import kotlinx.coroutines.io.ByteWriteChannel
-import kotlinx.coroutines.io.readUTF8Line
-import kotlinx.coroutines.io.writeStringUtf8
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
@@ -31,6 +31,7 @@ import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
+// https://geti2p.net/en/docs/api/samv3
 object I2PSAM {
     private var privateKey = "TRANSIENT"
     private val sam: Address?

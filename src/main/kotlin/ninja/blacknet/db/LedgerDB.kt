@@ -18,7 +18,6 @@ import kotlinx.serialization.internal.HashMapSerializer
 import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.byte.toByteArray
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.serialization.BinaryDecoder
@@ -26,6 +25,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
+import ninja.blacknet.util.toByteArray
 import java.io.File
 import java.util.ArrayDeque
 import kotlin.math.max
@@ -92,7 +92,7 @@ object LedgerDB {
         fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
         companion object {
-            fun deserialize(bytes: ByteArray): State = BinaryDecoder.fromBytes(bytes).decode(serializer())
+            fun deserialize(bytes: ByteArray): State = BinaryDecoder(bytes).decode(serializer())
         }
     }
 
@@ -163,7 +163,7 @@ object LedgerDB {
     init {
         val snapshotHeightsBytes = LevelDB.get(SNAPSHOTHEIGHTS_KEY)
         if (snapshotHeightsBytes != null) {
-            val decoder = BinaryDecoder.fromBytes(snapshotHeightsBytes)
+            val decoder = BinaryDecoder(snapshotHeightsBytes)
             val size = decoder.decodeVarInt()
             for (i in 0 until size)
                 snapshotHeights.add(decoder.decodeVarInt())
@@ -171,7 +171,7 @@ object LedgerDB {
 
         val blockSizesBytes = LevelDB.get(SIZES_KEY)
         if (blockSizesBytes != null) {
-            val decoder = BinaryDecoder.fromBytes(blockSizesBytes)
+            val decoder = BinaryDecoder(blockSizesBytes)
             val size = decoder.decodeVarInt()
             for (i in 0 until size)
                 blockSizes.addLast(decoder.decodeVarInt())
@@ -180,7 +180,7 @@ object LedgerDB {
         val stateBytes = LevelDB.get(STATE_KEY)
         if (stateBytes != null) {
             val versionBytes = LevelDB.get(VERSION_KEY)!!
-            val version = BinaryDecoder.fromBytes(versionBytes).decodeVarInt()
+            val version = BinaryDecoder(versionBytes).decodeVarInt()
 
             if (version == VERSION) {
                 val state = LedgerDB.State.deserialize(stateBytes)
@@ -846,7 +846,7 @@ object LedgerDB {
 
         @Serializer(forClass = Snapshot::class)
         companion object {
-            fun deserialize(bytes: ByteArray): Snapshot = BinaryDecoder.fromBytes(bytes).decode(serializer())
+            fun deserialize(bytes: ByteArray): Snapshot = BinaryDecoder(bytes).decode(serializer())
 
             override fun deserialize(decoder: Decoder): Snapshot {
                 return when (decoder) {

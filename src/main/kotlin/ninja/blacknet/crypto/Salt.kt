@@ -11,10 +11,10 @@ package ninja.blacknet.crypto
 
 import mu.KotlinLogging
 import ninja.blacknet.SystemService
-import ninja.blacknet.byte.fromBytes
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.db.DBKey
 import ninja.blacknet.db.LevelDB
+import ninja.blacknet.util.fromBytes
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}

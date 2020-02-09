@@ -9,7 +9,7 @@
 
 package ninja.blacknet.crypto
 
-import ninja.blacknet.byte.byteArrayOfInts
+import ninja.blacknet.util.byteArrayOfInts
 import org.testng.Assert.assertEquals
 import org.testng.annotations.Test
 

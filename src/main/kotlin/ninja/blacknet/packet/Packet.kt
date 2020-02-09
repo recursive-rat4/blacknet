@@ -9,8 +9,9 @@
 
 package ninja.blacknet.packet
 
-import kotlinx.io.core.BytePacketBuilder
-import kotlinx.io.core.ByteReadPacket
+import io.ktor.utils.io.core.BytePacketBuilder
+import io.ktor.utils.io.core.ByteReadPacket
+import io.ktor.utils.io.core.writeInt
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryDecoder
 

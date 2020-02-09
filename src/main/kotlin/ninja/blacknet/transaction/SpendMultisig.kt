@@ -108,7 +108,7 @@ class SpendMultisig(
     fun involves(ids: Set<Hash>) = ids.contains(id)
 
     companion object {
-        fun deserialize(bytes: ByteArray): SpendMultisig = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): SpendMultisig = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")

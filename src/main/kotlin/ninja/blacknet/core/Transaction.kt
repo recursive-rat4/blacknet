@@ -46,7 +46,7 @@ class Transaction(
     }
 
     companion object {
-        fun deserialize(bytes: ByteArray): Transaction = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Transaction = BinaryDecoder(bytes).decode(serializer())
 
         fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, Signature.SIZE_BYTES, bytes.size - Signature.SIZE_BYTES) }
 

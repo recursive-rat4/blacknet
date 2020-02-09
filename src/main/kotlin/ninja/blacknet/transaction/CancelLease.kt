@@ -46,7 +46,7 @@ class CancelLease(
     fun involves(publicKey: PublicKey) = to == publicKey
 
     companion object {
-        fun deserialize(bytes: ByteArray): CancelLease = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): CancelLease = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")

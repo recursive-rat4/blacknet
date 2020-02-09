@@ -12,20 +12,21 @@
 
 package ninja.blacknet.serialization
 
-import kotlinx.io.core.ByteReadPacket
-import kotlinx.io.core.IoBuffer
-import kotlinx.io.core.readBytes
+import io.ktor.utils.io.core.*
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ElementValueDecoder
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.internal.EnumDescriptor
-import java.nio.ByteBuffer
 import kotlin.experimental.and
 
 /**
  * Decoder from the Blacknet Binary Format
  */
-class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
+class BinaryDecoder(
+        private val input: ByteReadPacket
+) : ElementValueDecoder() {
+    constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
+
     fun <T : Any?> decode(loader: DeserializationStrategy<T>): T {
         val value = loader.deserialize(this)
         val remaining = input.remaining
@@ -109,12 +110,5 @@ class BinaryDecoder(private val input: ByteReadPacket) : ElementValueDecoder() {
     companion object {
         const val VARINT_MAX_SIZE = 5
         const val VARLONG_MAX_SIZE = 10
-
-        fun fromBytes(bytes: ByteArray): BinaryDecoder {
-            val buf = IoBuffer(ByteBuffer.wrap(bytes))
-            buf.resetForRead()
-            val input = ByteReadPacket(buf, IoBuffer.NoPool)
-            return BinaryDecoder(input)
-        }
     }
 }

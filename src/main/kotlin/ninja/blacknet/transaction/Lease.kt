@@ -47,7 +47,7 @@ class Lease(
     fun involves(publicKey: PublicKey) = to == publicKey
 
     companion object {
-        fun deserialize(bytes: ByteArray): Lease = BinaryDecoder.fromBytes(bytes).decode(serializer())
+        fun deserialize(bytes: ByteArray): Lease = BinaryDecoder(bytes).decode(serializer())
     }
 
     @Suppress("unused")
