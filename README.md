@@ -3,17 +3,39 @@
 Blacknet is an experimental peer-to-peer network based on blockchain technology.
 [Website](https://blacknet.ninja/).
 
-## Contribution
 
-Thank you for considering to help out with the source code! We welcome contributions from
-anyone on the internet, and are grateful for even the smallest of fixes!
+## How to build
 
-If you'd like to contribute, please fork, fix, commit and send a pull request
-for the maintainers to review and merge into the main code base. If you wish to submit more
-complex changes though, please check up with the core developers first
-to ensure those changes are in line with the general philosophy of the project and/or get some
-early feedback which can make both your efforts much lighter as well as our review and merge
-procedures quick and simple.
+#### Setup the environment
+
+Install the Java JDK (not only JRE) version 8th number or greater.
+
+- Debian & Ubuntu: `sudo apt-get install default-jdk`
+- Gentoo: `sudo emerge -av1 --noreplace virtual/jdk`
+- Arch Linux: `sudo pacman -S --needed jdk-openjdk`
+
+#### Get the source code
+
+```
+git clone https://gitlab.com/blacknet-ninja/blacknet
+cd blacknet
+```
+
+#### Make the build
+
+```
+./gradlew build
+```
+
+To run the built program, use `./gradlew run`
+- Windows: use `gradlew.bat` in place of `./gradlew`
+
+
+## How to contribute
+
+We accept contributions from anyone in the Universe.
+File a theoretical or practical [issue](https://gitlab.com/blacknet-ninja/blacknet/issues), or send changes as a [pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests).
+
 
 ## License
 
