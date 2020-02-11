@@ -215,11 +215,6 @@ class Connection(
 
     fun close(cancel: Boolean = true) {
         if (closed.compareAndSet(false, true)) {
-            if (cancel)
-                sendChannel.cancel()
-            else
-                sendChannel.close()
-
             Runtime.launch {
                 Node.connections.remove(this@Connection)
 
@@ -237,6 +232,11 @@ class Connection(
                     State.INCOMING_WAITING -> {
                     }
                 }
+
+                if (cancel)
+                    sendChannel.cancel()
+                else
+                    sendChannel.close()
             }
         }
     }
