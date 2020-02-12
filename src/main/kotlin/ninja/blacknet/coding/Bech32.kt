@@ -20,21 +20,19 @@ object Bech32 {
     private const val CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
     fun encode(hrp: ByteArray, data: ByteArray): String {
-        val converted = convertBits(data, 8, 5, true)!!
+        val checksum = createChecksum(hrp, data)
 
-        val chk = createChecksum(hrp, converted)
-
-        val ret = ByteArray(hrp.size + 1 + converted.size + chk.size)
-        System.arraycopy(hrp, 0, ret, 0, hrp.size)
-        ret[hrp.size] = 0x31
-        for (i in 0 until converted.size) {
-            ret[i + hrp.size + 1] = CHARSET[converted[i].toInt()].toByte()
+        val result = ByteArray(hrp.size + 1 + data.size + checksum.size)
+        System.arraycopy(hrp, 0, result, 0, hrp.size)
+        result[hrp.size] = 0x31
+        for (i in 0 until data.size) {
+            result[i + hrp.size + 1] = CHARSET[data[i].toInt()].toByte()
         }
-        for (i in 0 until chk.size) {
-            ret[i + hrp.size + 1 + converted.size] = CHARSET[chk[i].toInt()].toByte()
+        for (i in 0 until checksum.size) {
+            result[i + hrp.size + 1 + data.size] = CHARSET[checksum[i].toInt()].toByte()
         }
 
-        return String(ret, Charsets.US_ASCII)
+        return String(result, Charsets.US_ASCII)
     }
 
     fun decode(bech: String): Pair<ByteArray, ByteArray>? {
@@ -86,38 +84,35 @@ object Bech32 {
             return null
         }
 
-        val ret = data.copyOf(data.size - 6)
-        val converted = convertBits(ret, 5, 8, false) ?: return null
-
-        return Pair(hrp, converted)
+        return Pair(hrp, data.copyOf(data.size - 6))
     }
 
     private fun polymod(values: ByteArray): Int {
         val GENERATORS = intArrayOf(0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3)
 
-        var chk = 1
+        var checksum = 1
 
         for (b in values) {
-            val top = (chk shr 0x19).toByte()
-            chk = b.toInt() xor (chk and 0x1ffffff shl 5)
+            val top = (checksum shr 0x19).toByte()
+            checksum = b.toInt() xor (checksum and 0x1ffffff shl 5)
             for (i in 0..4) {
-                chk = chk xor if (top.toInt() shr i and 1 == 1) GENERATORS[i] else 0
+                checksum = checksum xor if (top.toInt() shr i and 1 == 1) GENERATORS[i] else 0
             }
         }
 
-        return chk
+        return checksum
     }
 
     private fun hrpExpand(hrp: ByteArray): ByteArray {
-        val ret = ByteArray(hrp.size * 2 + 1)
+        val result = ByteArray(hrp.size * 2 + 1)
 
         for (i in 0 until hrp.size) {
-            ret[i] = hrp[i] shr 5
-            ret[i + hrp.size + 1] = hrp[i] and 0x1f
+            result[i] = hrp[i] shr 5
+            result[i + hrp.size + 1] = hrp[i] and 0x1f
         }
-        ret[hrp.size] = 0
+        result[hrp.size] = 0
 
-        return ret
+        return result
     }
 
     private fun verifyChecksum(hrp: ByteArray, data: ByteArray): Boolean {
@@ -139,19 +134,19 @@ object Bech32 {
         System.arraycopy(data, 0, values, expanded.size, data.size)
 
         val polymod = polymod(values) xor 1
-        val ret = ByteArray(6)
-        for (i in ret.indices) {
-            ret[i] = (polymod shr 5 * (5 - i) and 0x1f).toByte()
+        val result = ByteArray(6)
+        for (i in result.indices) {
+            result[i] = (polymod shr 5 * (5 - i) and 0x1f).toByte()
         }
 
-        return ret
+        return result
     }
 
     fun convertBits(data: ByteArray, fromBits: Int, toBits: Int, pad: Boolean): ByteArray? {
         var acc = 0
         var bits = 0
         val maxv = (1 shl toBits) - 1
-        val ret = ArrayList<Byte>(32)
+        val result = ArrayList<Byte>(64)
 
         for (value in data) {
             val b = value.toInt() and 0xff
@@ -166,17 +161,17 @@ object Bech32 {
             bits += fromBits
             while (bits >= toBits) {
                 bits -= toBits
-                ret.add((acc shr bits and maxv).toByte())
+                result.add((acc shr bits and maxv).toByte())
             }
         }
 
         if (pad && bits > 0) {
-            ret.add((acc shl toBits - bits and maxv).toByte())
+            result.add((acc shl toBits - bits and maxv).toByte())
         } else if (bits >= fromBits || (acc shl toBits - bits and maxv).toByte().toInt() != 0) {
             return null
         }
 
-        return ret.toByteArray()
+        return result.toByteArray()
     }
 
     private infix fun Byte.shr(other: Byte): Byte = (this.toInt() shr other.toInt()).toByte()

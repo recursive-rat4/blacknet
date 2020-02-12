@@ -29,7 +29,9 @@ object Address {
     private val HRP = if (Config.regTest) HRP_REGTEST else HRP_MAINNET
 
     fun encode(publicKey: PublicKey): String {
-        return Bech32.encode(HRP, publicKey.bytes)
+        val bytes = publicKey.bytes
+        val data = Bech32.convertBits(bytes, 8, 5, true)!!
+        return Bech32.encode(HRP, data)
     }
 
     fun decode(string: String?): PublicKey? {
@@ -38,14 +40,17 @@ object Address {
         val (hrp, data) = Bech32.decode(string) ?: return null
         if (!HRP.contentEquals(hrp))
             return null
-        if (data.size != PublicKey.SIZE_BYTES)
+        val bytes = Bech32.convertBits(data, 5, 8, false) ?: return null
+        if (bytes.size != PublicKey.SIZE_BYTES)
             return null
-        return PublicKey(data)
+        return PublicKey(bytes)
     }
 
     fun encodeId(version: Byte, hash: Hash): String {
         require(version == HTLC || version == MULTISIG)
-        return Bech32.encode(HRP, version + hash.bytes)
+        val bytes = version + hash.bytes
+        val data = Bech32.convertBits(bytes, 8, 5, true)!!
+        return Bech32.encode(HRP, data)
     }
 
     fun decodeId(version: Byte, string: String?): Hash? {
@@ -55,12 +60,11 @@ object Address {
         val (hrp, data) = Bech32.decode(string) ?: return null
         if (!HRP.contentEquals(hrp))
             return null
-        if (data.size != Byte.SIZE_BYTES + Hash.SIZE_BYTES)
+        val bytes = Bech32.convertBits(data, 5, 8, false) ?: return null
+        if (bytes.size != Byte.SIZE_BYTES + Hash.SIZE_BYTES)
             return null
-        if (data[0] != version)
+        if (bytes[0] != version)
             return null
-        val bytes = ByteArray(Hash.SIZE_BYTES)
-        System.arraycopy(data, Byte.SIZE_BYTES, bytes, 0, Hash.SIZE_BYTES)
-        return Hash(bytes)
+        return Hash(bytes.copyOfRange(Byte.SIZE_BYTES, Byte.SIZE_BYTES + Hash.SIZE_BYTES))
     }
 }
