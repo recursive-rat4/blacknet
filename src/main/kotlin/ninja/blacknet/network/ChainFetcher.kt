@@ -216,6 +216,7 @@ object ChainFetcher {
             return
         }
 
+        connection.close()
         request.cancel(CancellationException("Fork longer than the rolling checkpoint"))
     }
 

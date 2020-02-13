@@ -396,11 +396,12 @@ fun Route.APIV1() {
     get("/api/v1/disconnectpeer/{address}/{port?}/{force?}") {
         val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: Node.DEFAULT_P2P_PORT
         val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
+        @Suppress("UNUSED_VARIABLE")
         val force = call.parameters["force"]?.toBoolean() ?: false
 
         val connection = Node.connections.find { it.remoteAddress == address }
         if (connection != null) {
-            connection.close(force)
+            connection.close()
             call.respond("Disconnected")
         } else {
             call.respond("Not connected to ${address}")
@@ -409,11 +410,12 @@ fun Route.APIV1() {
 
     get("/api/v1/disconnectpeerbyid/{id}/{force?}") {
         val id = call.parameters["id"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid id")
+        @Suppress("UNUSED_VARIABLE")
         val force = call.parameters["force"]?.toBoolean() ?: false
 
         val connection = Node.connections.find { it.peerId == id }
         if (connection != null) {
-            connection.close(force)
+            connection.close()
             call.respond("Disconnected")
         } else {
             call.respond("Not connected")

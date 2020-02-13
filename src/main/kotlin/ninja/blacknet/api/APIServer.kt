@@ -624,11 +624,12 @@ fun Application.APIServer() {
         get("/api/v2/disconnectpeerbyaddress/{address}/{port?}/{force?}") {
             val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid port") } ?: Node.DEFAULT_P2P_PORT
             val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
+            @Suppress("UNUSED_VARIABLE")
             val force = call.parameters["force"]?.toBoolean() ?: false
 
             val connection = Node.connections.find { it.remoteAddress == address }
             if (connection != null) {
-                connection.close(force)
+                connection.close()
                 call.respond(true.toString())
             } else {
                 call.respond(false.toString())
@@ -637,11 +638,12 @@ fun Application.APIServer() {
 
         get("/api/v2/disconnectpeer/{id}/{force?}") {
             val id = call.parameters["id"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid id")
+            @Suppress("UNUSED_VARIABLE")
             val force = call.parameters["force"]?.toBoolean() ?: false
 
             val connection = Node.connections.find { it.peerId == id }
             if (connection != null) {
-                connection.close(force)
+                connection.close()
                 call.respond(true.toString())
             } else {
                 call.respond(false.toString())

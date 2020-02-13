@@ -11,7 +11,6 @@ package ninja.blacknet.packet
 
 import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import mu.KotlinLogging
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
@@ -20,8 +19,6 @@ import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
-
-private val logger = KotlinLogging.logger {}
 
 @Serializable
 class GetBlocks(
@@ -50,9 +47,8 @@ class GetBlocks(
                 connection.sendPacket(Blocks(nextBlockHashes, emptyList()))
                 return
             } else {
-                logger.info("Chain fork disconnecting ${connection.debugName()}")
                 connection.sendPacket(ChainFork())
-                connection.close(false)
+                connection.dos("Chain fork")
                 return
             }
         }

@@ -10,16 +10,13 @@
 package ninja.blacknet.network
 
 import io.ktor.network.sockets.ASocket
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.ClosedWriteChannelException
+import io.ktor.utils.io.*
 import io.ktor.utils.io.core.ByteReadPacket
 import io.ktor.utils.io.core.readInt
+import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import mu.KotlinLogging
@@ -36,6 +33,7 @@ import ninja.blacknet.time.milliseconds.nextTime
 import ninja.blacknet.util.SynchronizedArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
@@ -47,16 +45,14 @@ class Connection(
         val remoteAddress: Address,
         val localAddress: Address,
         var state: State
-) {
+) : CoroutineScope {
+    override val coroutineContext: CoroutineContext = Runtime.coroutineContext + Job()
+
     private val closed = AtomicBoolean()
     private val dosScore = AtomicInteger(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     private val inventoryToSend = SynchronizedArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = SystemClock.seconds
-
-    private var pinger: Job? = null
-    private var peerAnnouncer: Job? = null
-    private var inventoryBroadcaster: Job? = null
 
     @Volatile
     var lastPacketTime: MilliSeconds = MilliSeconds.ZERO
@@ -86,11 +82,11 @@ class Connection(
     var timeOffset: Long = 0
 
     fun launch() {
-        pinger = Runtime.launch { Pinger.implementation(this@Connection) }
-        peerAnnouncer = Runtime.launch { peerAnnouncer() }
-        inventoryBroadcaster = Runtime.launch { inventoryBroadcaster() }
-        Runtime.launch { receiver() }
-        Runtime.launch { sender() }
+        launch { Pinger.implementation(this@Connection) }
+        launch { peerAnnouncer() }
+        launch { inventoryBroadcaster() }
+        launch { receiver() }
+        launch { sender() }
     }
 
     private suspend fun receiver() {
@@ -122,7 +118,7 @@ class Connection(
         } catch (e: Throwable) {
             logger.error("Exception in receiver ${debugName()}", e)
         } finally {
-            close(false)
+            close()
         }
     }
 
@@ -152,8 +148,7 @@ class Connection(
         } catch (e: Throwable) {
             logger.error("Exception in sender ${debugName()}", e)
         } finally {
-            close(false)
-            closeSocket()
+            close()
         }
     }
 
@@ -213,14 +208,13 @@ class Connection(
         return dosScore.get()
     }
 
-    fun close(cancel: Boolean = true) {
+    fun close() {
         if (closed.compareAndSet(false, true)) {
+            socket.close()
+            readChannel.cancel()
+            writeChannel.close()
             Runtime.launch {
                 Node.connections.remove(this@Connection)
-
-                pinger?.cancel()
-                peerAnnouncer?.cancel()
-                inventoryBroadcaster?.cancel()
 
                 when (state) {
                     State.INCOMING_CONNECTED, State.OUTGOING_CONNECTED -> {
@@ -233,16 +227,10 @@ class Connection(
                     }
                 }
 
-                if (cancel)
-                    sendChannel.cancel()
-                else
-                    sendChannel.close()
+                cancel()
+                sendChannel.cancel()
             }
         }
-    }
-
-    private fun closeSocket() {
-        socket.close()
     }
 
     fun isClosed(): Boolean {
