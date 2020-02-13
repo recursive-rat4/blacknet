@@ -190,7 +190,7 @@ object Node {
                 logger.info("Announced to $n peers")
             return true
         } else {
-            logger.info("$status block $hash")
+            logger.info(status.toString())
             return false
         }
     }
