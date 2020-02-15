@@ -214,74 +214,66 @@ enum class Network(val type: Byte, val addrSize: Int) {
         private val INIT_TIMEOUT = 1.minutes
         private val MAX_TIMEOUT = 2.hours
 
+        private var torTimeout = INIT_TIMEOUT
+        private var i2pTimeout = INIT_TIMEOUT
+
         suspend fun listenOnTor() {
-            if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
-                Node.listenOn(Address.LOOPBACK)
+            try {
+                val (thread, localAddress) = TorController.listen()
 
-            var timeout = INIT_TIMEOUT
+                logger.info("Listening on $localAddress")
+                Node.listenAddress.add(localAddress)
 
-            while (true) {
-                try {
-                    val (thread, localAddress) = TorController.listen()
+                thread.join()
 
-                    logger.info("Listening on $localAddress")
-                    Node.listenAddress.add(localAddress)
+                Node.listenAddress.remove(localAddress)
+                logger.info("Lost connection to tor controller")
 
-                    thread.join()
-
-                    Node.listenAddress.remove(localAddress)
-                    logger.info("Lost connection to tor controller")
-
-                    timeout = INIT_TIMEOUT
-                } catch (e: ConnectException) {
-                    logger.debug { "Can't connect to tor controller: ${e.message}" }
-                } catch (e: Throwable) {
-                    logger.info(e.message)
-                }
-
-                delay(timeout)
-                timeout = minOf(timeout * 2, MAX_TIMEOUT)
+                torTimeout = INIT_TIMEOUT
+            } catch (e: ConnectException) {
+                logger.debug { "Can't connect to tor controller: ${e.message}" }
+            } catch (e: Throwable) {
+                logger.info(e.message)
             }
+
+            delay(torTimeout)
+            torTimeout = minOf(torTimeout * 2, MAX_TIMEOUT)
         }
 
         suspend fun listenOnI2P() {
-            var timeout = INIT_TIMEOUT
+            try {
+                val (_, localAddress) = I2PSAM.createSession()
 
-            while (true) {
-                try {
-                    val (_, localAddress) = I2PSAM.createSession()
+                logger.info("Listening on $localAddress")
+                Node.listenAddress.add(localAddress)
 
-                    logger.info("Listening on $localAddress")
-                    Node.listenAddress.add(localAddress)
-
-                    while (true) {
-                        val a = try {
-                            I2PSAM.accept()
-                        } catch (e: Throwable) {
-                            break
-                        }
-                        val connection = Connection(a.socket, a.readChannel, a.writeChannel, a.remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
-                        Node.addConnection(connection)
+                while (true) {
+                    val a = try {
+                        I2PSAM.accept()
+                    } catch (e: Throwable) {
+                        break
                     }
-
-                    Node.listenAddress.remove(localAddress)
-                    logger.info("I2P SAM session closed")
-
-                    timeout = INIT_TIMEOUT
-                } catch (e: I2PSAM.NotConfigured) {
-                    logger.info(e.message)
-                    return
-                } catch (e: I2PSAM.I2PException) {
-                    logger.info(e.message)
-                } catch (e: ConnectException) {
-                    logger.debug { "Can't connect to I2P SAM: ${e.message}" }
-                } catch (e: Throwable) {
-                    logger.error(e)
+                    val connection = Connection(a.socket, a.readChannel, a.writeChannel, a.remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+                    Node.addConnection(connection)
                 }
 
-                delay(timeout)
-                timeout = minOf(timeout * 2, MAX_TIMEOUT)
+                Node.listenAddress.remove(localAddress)
+                logger.info("I2P SAM session closed")
+
+                i2pTimeout = INIT_TIMEOUT
+            } catch (e: I2PSAM.NotConfigured) {
+                logger.info(e.message)
+                return
+            } catch (e: I2PSAM.I2PException) {
+                logger.info(e.message)
+            } catch (e: ConnectException) {
+                logger.debug { "Can't connect to I2P SAM: ${e.message}" }
+            } catch (e: Throwable) {
+                logger.error(e)
             }
+
+            delay(i2pTimeout)
+            i2pTimeout = minOf(i2pTimeout * 2, MAX_TIMEOUT)
         }
 
         fun parse(string: String?, port: Short): Address? {

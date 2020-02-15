@@ -12,7 +12,9 @@ package ninja.blacknet.db
 
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import com.google.common.collect.Sets.newHashSetWithExpectedSize
+import com.google.common.io.Resources
 import io.ktor.util.error
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.internal.HashMapSerializer
@@ -21,6 +23,7 @@ import ninja.blacknet.Runtime
 import ninja.blacknet.core.VehicleRing
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
+import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -113,10 +116,26 @@ object PeerDB {
 
         peers.map.putAll(hashMap)
 
+        if (peers.map.size < 100) {
+            val added = runBlocking {
+                add(listBuiltinPeers(), Address.LOOPBACK)
+            }
+            if (added > 0) {
+                logger.info("Added $added built-in peer addresses to db")
+            }
+        }
+
         Runtime.addShutdownHook {
             commit(true)
         }
         Runtime.rotate(::oldEntriesRemover)
+    }
+
+    private fun listBuiltinPeers(): List<Address> {
+        return Resources.readLines(Resources.getResource("peers.txt"), Charsets.UTF_8)
+                .map {
+                    Network.parse(it, Node.DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
+                }
     }
 
     suspend fun size(): Int {
@@ -125,10 +144,6 @@ object PeerDB {
 
     suspend fun isEmpty(): Boolean {
         return peers.isEmpty()
-    }
-
-    suspend fun isLow(): Boolean {
-        return peers.size() < 100
     }
 
     suspend fun connected(address: Address, time: Long, userAgent: String) {
@@ -171,7 +186,7 @@ object PeerDB {
         return peers.filterToKeyList { address, entry -> address.port == Node.DEFAULT_P2P_PORT && entry.isReliable() }
     }
 
-    suspend fun getCandidates(n: Int, filter: List<Address>): List<Address> {
+    suspend fun getCandidate(filter: Set<Address>): Address? {
         val candidates = peers.mutex.withLock {
             val candidates = ArrayList<Pair<Address, Float>>(peers.map.size)
             val currTime = SystemClock.seconds
@@ -181,20 +196,15 @@ object PeerDB {
             }
             candidates
         }
-
-        if (candidates.size <= n)
-            return candidates.map { (address, _) -> address }
-        else if (candidates.size == 0)
-            return emptyList()
-
-        val x = min(candidates.size, n)
-        val result = newHashSetWithExpectedSize<Address>(x)
-        do {
-            val (address, chance) = candidates.random()
-            if (chance > Random.nextFloat())
-                result.add(address)
-        } while (result.size < x)
-        return result.toList()
+        if (candidates.isNotEmpty()) {
+            while (true) {
+                val (address, chance) = candidates.random()
+                if (chance > Random.nextFloat())
+                    return address
+            }
+        } else {
+            return null
+        }
     }
 
     suspend fun getRandom(n: Int): ArrayList<Address> {

@@ -46,7 +46,8 @@ class Connection(
         val localAddress: Address,
         var state: State
 ) : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Runtime.coroutineContext + Job()
+    val job = Job()
+    override val coroutineContext: CoroutineContext = Runtime.coroutineContext + job
 
     private val closed = AtomicBoolean()
     private val dosScore = AtomicInteger(0)
@@ -229,6 +230,7 @@ class Connection(
 
                 cancel()
                 sendChannel.cancel()
+                job.cancel()
             }
         }
     }

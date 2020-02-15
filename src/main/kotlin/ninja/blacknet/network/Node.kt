@@ -9,12 +9,11 @@
 
 package ninja.blacknet.network
 
-import com.google.common.io.Resources
+import com.google.common.collect.Sets.newHashSetWithExpectedSize
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
@@ -63,16 +62,23 @@ object Node {
             if (Config.netListen) {
                 try {
                     listenOnIP()
-                    if (Config[upnp])
+                    if (Config[upnp]) {
                         Runtime.launch { UPnP.forward() }
+                    }
                 } catch (e: Throwable) {
                 }
             }
-            if (!Config.disabledTOR)
-                Runtime.launch { Network.listenOnTor() }
-            if (!Config.disabledI2P)
-                Runtime.launch { Network.listenOnI2P() }
-            Runtime.launch { connector() }
+            if (!Config.disabledTOR) {
+                if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+                    listenOn(Address.LOOPBACK)
+                Runtime.rotate(Network.Companion::listenOnTor)
+            }
+            if (!Config.disabledI2P) {
+                Runtime.rotate(Network.Companion::listenOnI2P)
+            }
+            repeat(Config.outgoingConnections) {
+                Runtime.rotate(::connector)
+            }
         }
     }
 
@@ -159,13 +165,14 @@ object Node {
         listenOn(Address.IPv4_ANY(Config.netPort))
     }
 
-    suspend fun connectTo(address: Address) {
+    suspend fun connectTo(address: Address): Connection {
         val connection = Network.connect(address)
         connections.mutex.withLock {
             connections.list.add(connection)
             connection.launch()
         }
         sendVersion(connection, nonce(address.network))
+        return connection
     }
 
     fun sendVersion(connection: Connection, nonce: Long) {
@@ -313,62 +320,28 @@ object Node {
     }
 
     private suspend fun connector() {
-        if (PeerDB.isLow()) {
-            addBuiltinPeers()
+        val filter = newHashSetWithExpectedSize<Address>(connections.size() + listenAddress.size())
+        connections.forEach { filter.add(it.remoteAddress) }
+        listenAddress.forEach { filter.add(it) }
+
+        val address = PeerDB.getCandidate(filter)
+        if (address == null) {
+            logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.outgoingConnections}")
+            delay(15.minutes)
+            return
         }
 
-        while (true) {
-            val n = Config.outgoingConnections - outgoing()
-            if (n <= 0) {
-                delay(NETWORK_TIMEOUT)
-                continue
-            }
+        val time = SystemClock.milliseconds
 
-            val filter = connections.map { it.remoteAddress }.plus(listenAddress.toList())
-
-            val addresses = PeerDB.getCandidates(n, filter)
-            if (addresses.isEmpty()) {
-                logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.outgoingConnections}")
-                if (!addBuiltinPeers()) {
-                    logger.info("Z-z-z")
-                    delay(15.minutes)
-                }
-                continue
-            }
-
-            val currTime = SystemClock.seconds
-
-            addresses.forEach { address ->
-                Runtime.launch {
-                    try {
-                        connectTo(address)
-                    } catch (e: Throwable) {
-                        PeerDB.failed(address, currTime)
-                    }
-                }
-            }
-
-            delay(NETWORK_TIMEOUT)
-        }
-    }
-
-    private suspend fun addBuiltinPeers(): Boolean {
-        val list = Resources.readLines(Resources.getResource("peers.txt"), Charsets.UTF_8)
-
-        val peers = ArrayList<Address>(list.size)
-        for (i in list) {
-            val address = Network.parse(i, DEFAULT_P2P_PORT)!!
-            peers.add(address)
+        try {
+            connectTo(address).job.join()
+        } catch (e: Throwable) {
+            PeerDB.failed(address, time.seconds)
         }
 
-        val added = PeerDB.add(peers, Address.LOOPBACK, true)
-
-        if (added > 0) {
-            logger.info("Added $added built-in peer addresses to db")
-            return true
-        } else {
-            return false
-        }
+        val x = 4.seconds - (SystemClock.milliseconds - time)
+        if (x > MilliSeconds.ZERO)
+            delay(x) // 请在继续之前等待或延迟
     }
 
     private fun parseAmount(string: String): Long {
