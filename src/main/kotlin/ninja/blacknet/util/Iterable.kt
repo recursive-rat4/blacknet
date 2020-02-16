@@ -11,6 +11,17 @@ package ninja.blacknet.util
 
 /**
  * Returns the sum of all values produced by [selector].
+ */
+inline fun <T> Iterable<T>.sumByFloat(selector: (T) -> Float): Float {
+    var sum: Float = 0f
+    for (element in this) {
+        sum += selector(element)
+    }
+    return sum
+}
+
+/**
+ * Returns the sum of all values produced by [selector].
  *
  * @throws ArithmeticException on overflow.
  */
@@ -29,7 +40,7 @@ inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
  */
 fun ArrayList<Long>.sumByLong(): Long {
     var sum: Long = 0
-    for (i in this.indices) {
+    for (i in 0 until size) {
         sum = Math.addExact(sum, this[i])
     }
     return sum
