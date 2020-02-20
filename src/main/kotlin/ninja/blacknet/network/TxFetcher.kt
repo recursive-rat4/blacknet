@@ -21,7 +21,7 @@ import ninja.blacknet.time.milliseconds.MilliSeconds
 import ninja.blacknet.util.SynchronizedHashMap
 
 /**
- * 交易获取工
+ * 交易获取器
  */
 object TxFetcher {
     private val inventoryChannel: Channel<Pair<Connection, List<Hash>>> = Channel(Channel.UNLIMITED)

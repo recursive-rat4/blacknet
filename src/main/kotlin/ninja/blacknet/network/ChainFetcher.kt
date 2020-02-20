@@ -32,7 +32,7 @@ import ninja.blacknet.time.withTimeout
 private val logger = KotlinLogging.logger {}
 
 /**
- * 链获取工
+ * 链获取器
  */
 object ChainFetcher {
     private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
