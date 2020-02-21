@@ -34,7 +34,6 @@ import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,7 +42,6 @@ import kotlinx.serialization.internal.HashMapSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.list
 import kotlinx.serialization.serializer
-import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
@@ -57,14 +55,10 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
-import ninja.blacknet.time.SystemClock
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 import java.io.File
-import java.io.PrintStream
 import kotlin.math.abs
-
-private val logger = KotlinLogging.logger {}
 
 object APIServer {
     internal val txMutex = Mutex()
@@ -751,27 +745,9 @@ fun Application.APIServer() {
             call.respond(result.toString())
         }
 
-        get("/api/dumpcoroutines") {
-            if (Config.debugCoroutines) {
-                val file = File(Config.dataDir, "coroutines_${SystemClock.seconds}.log")
-                val stream = PrintStream(file)
-                stream.println("${Version.name} ${Version.revision}")
-                DebugProbes.dumpCoroutines(stream)
-                stream.close()
-                call.respond(file.absolutePath)
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Not enabled in config or failed at runtime")
-            }
-        }
+        debug()
 
-        get("/api/关机") {
-            logger.warn("正在关机着私人应用程序接口服务器。これはわたすのパソコンです。")
-            Runtime.launch {
-                call.respond(HttpStatusCode.Gone)
-            }.join()
-            kotlin.system.exitProcess(0)
-        }
-
+        // 已被弃用
         APIV1()
     }
 }
