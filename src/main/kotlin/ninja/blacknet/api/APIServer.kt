@@ -445,7 +445,7 @@ fun Application.APIServer() {
             val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
+                val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
                 val data = Transfer(amount, to, message).serialize()
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
@@ -468,7 +468,7 @@ fun Application.APIServer() {
             val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
+                val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
                 val data = Burn(amount, message).serialize()
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
@@ -491,7 +491,7 @@ fun Application.APIServer() {
             val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
+                val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
                 val data = Lease(amount, to).serialize()
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
@@ -515,7 +515,7 @@ fun Application.APIServer() {
             val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
+                val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
                 val data = CancelLease(amount, to, height).serialize()
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)
@@ -540,7 +540,7 @@ fun Application.APIServer() {
             val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
             APIServer.txMutex.withLock {
-                val seq = WalletDB.getSequence(from)
+                val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
                 val data = WithdrawFromLease(withdraw, amount, to, height).serialize()
                 val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.WithdrawFromLease.type, data)
                 val (hash, bytes) = tx.sign(privateKey)

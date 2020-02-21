@@ -58,6 +58,10 @@ object Config {
         val debugcoroutines by booleanType
     }
 
+    object wallet : PropertyGroup() {
+        val seqthreshold by intType
+    }
+
     operator fun <T> get(key: Key<T>): T = config[key]
     fun <T> contains(key: Key<T>): Boolean = config.contains(key)
 
@@ -121,6 +125,13 @@ object Config {
             get(regtest)
         else
             false
+    }()
+
+    val seqThreshold: Int = {
+        if (contains(wallet.seqthreshold))
+            get(wallet.seqthreshold)
+        else
+            Int.MAX_VALUE - 1
     }()
 
     val softBlockSizeLimit: Int = {

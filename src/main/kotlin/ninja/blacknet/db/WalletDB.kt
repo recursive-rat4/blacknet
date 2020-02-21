@@ -179,8 +179,13 @@ object WalletDB {
         }
     }
 
-    suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
-        return@withLock getWalletImpl(publicKey).seq
+    suspend fun getSequence(publicKey: PublicKey): Int? = mutex.withLock {
+        val wallet = getWalletImpl(publicKey)
+        val seq = wallet.seq
+        return@withLock if (seq < Config.seqThreshold)
+            seq
+        else
+            null
     }
 
     internal fun getTransactionImpl(hash: Hash): ByteArray? {

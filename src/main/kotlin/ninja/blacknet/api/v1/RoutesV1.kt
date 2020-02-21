@@ -254,7 +254,7 @@ fun Route.APIV1() {
         val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from)
+            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
             val data = Transfer(amount, to, message).serialize()
             val tx = Transaction.create(from, seq, blockHash
                     ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
@@ -276,7 +276,7 @@ fun Route.APIV1() {
         val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from)
+            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
             val data = Burn(amount, message).serialize()
             val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
             val signed = tx.sign(privateKey)
@@ -297,7 +297,7 @@ fun Route.APIV1() {
         val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from)
+            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
             val data = Lease(amount, to).serialize()
             val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
             val signed = tx.sign(privateKey)
@@ -319,7 +319,7 @@ fun Route.APIV1() {
         val blockHash = call.parameters["blockHash"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from)
+            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
             val data = CancelLease(amount, to, height).serialize()
             val tx = Transaction.create(from, seq, blockHash
                     ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)

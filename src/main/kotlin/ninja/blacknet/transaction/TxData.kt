@@ -25,10 +25,13 @@ interface TxData {
         if (account == null) {
             return Invalid("Sender account not found")
         }
-        if (tx.seq < account.seq) {
-            return AlreadyHave("sequence ${tx.seq} expected ${account.seq}")
-        } else if (tx.seq > account.seq) {
-            return InFuture("sequence ${tx.seq} expected ${account.seq}")
+        if (tx.seq != account.seq) {
+            if (tx.seq.toUInt() < account.seq.toUInt()) {
+                return AlreadyHave("sequence ${tx.seq} expected ${account.seq}")
+            } else {
+                require(tx.seq.toUInt() > account.seq.toUInt())
+                return InFuture("sequence ${tx.seq} expected ${account.seq}")
+            }
         }
         val status = account.credit(tx.fee)
         if (status != Accepted) {
