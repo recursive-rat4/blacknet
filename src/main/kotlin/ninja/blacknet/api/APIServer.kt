@@ -16,6 +16,7 @@ import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.DefaultHeaders
+import io.ktor.features.StatusPages
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -172,6 +173,13 @@ object APIServer {
 fun Application.APIServer() {
     install(DefaultHeaders) {
         APIServer.configureHeaders(this)
+    }
+    install(StatusPages) {
+        exception<Throwable> { cause ->
+            val status = HttpStatusCode.InternalServerError
+            call.respond(status, cause.message ?: cause::class.simpleName ?: status.description)
+            throw cause // 日志记录
+        }
     }
     install(WebSockets)
 

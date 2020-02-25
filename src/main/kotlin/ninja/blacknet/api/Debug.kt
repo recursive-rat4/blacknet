@@ -46,4 +46,9 @@ fun Route.debug() {
         }.join()
         kotlin.system.exitProcess(0)
     }
+
+    get("/api/抛出") {
+        application.log.warn("正在抛出着私人应用程序接口服务器异常。")
+        throw RuntimeException("一条测试异常消息")
+    }
 }
