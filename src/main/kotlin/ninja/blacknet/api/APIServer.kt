@@ -512,33 +512,6 @@ fun Application.APIServer() {
             }
         }
 
-        post("/api/v2/startstaking") {
-            val parameters = call.receiveParameters()
-            val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
-
-            call.respond(Staker.startStaking(privateKey).toString())
-        }
-
-        post("/api/v2/stopstaking") {
-            val parameters = call.receiveParameters()
-            val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-
-            call.respond(Staker.stopStaking(privateKey).toString())
-        }
-
-        post("/api/v2/isstaking") {
-            val parameters = call.receiveParameters()
-            val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-
-            call.respond(Staker.isStaking(privateKey).toString())
-        }
-
-        get("/api/v2/staking/{address?}") {
-            val publicKey = call.parameters["address"]?.let { Address.decode(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address") }
-
-            call.respondJson(StakingInfo.serializer(), Staker.info(publicKey))
-        }
-
         get("/api/v2/wallet/{address}/transactions") {
             val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
 
@@ -614,6 +587,7 @@ fun Application.APIServer() {
         }
 
         sendTransaction()
+        staking()
         debug()
 
         // 已被弃用
