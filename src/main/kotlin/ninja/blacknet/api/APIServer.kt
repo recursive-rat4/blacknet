@@ -20,7 +20,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.readText
 import io.ktor.http.content.files
 import io.ktor.http.content.static
 import io.ktor.response.respond
@@ -29,8 +28,6 @@ import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.websocket.WebSockets
-import io.ktor.websocket.webSocket
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -39,12 +36,19 @@ import kotlinx.serialization.SerializationStrategy
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
-import ninja.blacknet.api.v1.*
-import ninja.blacknet.core.*
-import ninja.blacknet.crypto.*
-import ninja.blacknet.db.*
+import ninja.blacknet.api.v1.APIV1
+import ninja.blacknet.api.v1.BlockNotificationV1
+import ninja.blacknet.api.v1.TransactionNotificationV2
+import ninja.blacknet.core.Block
+import ninja.blacknet.core.ChainIndex
+import ninja.blacknet.core.Transaction
+import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.util.*
+import ninja.blacknet.util.SynchronizedArrayList
+import ninja.blacknet.util.SynchronizedHashMap
+import ninja.blacknet.util.SynchronizedHashSet
 
 object APIServer {
     internal val txMutex = Mutex()
@@ -177,72 +181,13 @@ fun Application.APIServer() {
             files(Config.htmlDir)
         }
 
-        webSocket("/api/v2/websocket") {
-            try {
-                while (true) {
-                    val string = (incoming.receive() as Frame.Text).readText()
-                    val request = Json.parseJson(string).jsonObject
-                    val command = request.getPrimitive("command").content
-
-                    if (command == "subscribe") {
-                        val route = request.getPrimitive("route").content
-
-                        if (route == "block") {
-                            APIServer.blockNotify.add(outgoing)
-                        } else if (route == "txpool") {
-                            APIServer.txPoolNotify.add(outgoing)
-                        } else if (route == "wallet") {
-                            val address = request.getPrimitive("address").content
-                            val publicKey = Address.decode(address)!!
-
-                            APIServer.walletNotify.mutex.withLock {
-                                val keys = APIServer.walletNotify.map.get(outgoing)
-                                if (keys == null) {
-                                    @Suppress("NAME_SHADOWING")
-                                    val keys = HashSet<PublicKey>()
-                                    keys.add(publicKey)
-                                    APIServer.walletNotify.map.put(outgoing, keys)
-                                } else {
-                                    keys.add(publicKey)
-                                }
-                            }
-                        }
-                    } else if (command == "unsubscribe") {
-                        val route = request.getPrimitive("route").content
-
-                        if (route == "block") {
-                            APIServer.blockNotify.remove(outgoing)
-                        } else if (route == "txpool") {
-                            APIServer.txPoolNotify.remove(outgoing)
-                        } else if (route == "wallet") {
-                            val address = request.getPrimitive("address").content
-                            val publicKey = Address.decode(address)!!
-
-                            APIServer.walletNotify.mutex.withLock {
-                                val keys = APIServer.walletNotify.map.get(outgoing)
-                                if (keys != null) {
-                                    keys.remove(publicKey)
-                                    if (keys.isEmpty())
-                                        APIServer.walletNotify.map.remove(outgoing)
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e: ClosedReceiveChannelException) {
-            } finally {
-                APIServer.blockNotify.remove(outgoing)
-                APIServer.txPoolNotify.remove(outgoing)
-                APIServer.walletNotify.remove(outgoing)
-            }
-        }
-
         dataBase()
         debug()
         sendTransaction()
         staking()
         node()
         wallet()
+        webSocket()
 
         // 已被弃用
         APIV1()
