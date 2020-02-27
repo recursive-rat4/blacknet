@@ -51,8 +51,6 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.*
-import ninja.blacknet.network.Network
-import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.*
 import java.io.File
@@ -249,14 +247,6 @@ fun Application.APIServer() {
             }
         }
 
-        get("/api/v2/peers") {
-            call.respondJson(PeerInfo.serializer().list, PeerInfo.getAll())
-        }
-
-        get("/api/v2/node") {
-            call.respondJson(NodeInfo.serializer(), NodeInfo.get())
-        }
-
         get("/api/v2/peerdb") {
             call.respondJson(PeerDBInfo.serializer(), PeerDBInfo.get())
         }
@@ -393,26 +383,6 @@ fun Application.APIServer() {
                 call.respond(HttpStatusCode.BadRequest, "Snapshot not found")
         }
 
-        get("/api/v2/txpool") {
-            call.respondJson(TxPoolInfo.serializer(), TxPoolInfo.get())
-        }
-
-        get("/api/v2/txpool/transaction/{hash}/{raw?}") {
-            val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
-            val raw = call.parameters["raw"]?.toBoolean() ?: false
-
-            val result = TxPool.get(hash)
-            if (result != null) {
-                if (raw)
-                    return@get call.respond(result.toHex())
-
-                val tx = Transaction.deserialize(result)
-                call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Transaction not found")
-            }
-        }
-
         get("/api/v2/generateaccount/{wordlist?}") {
             val wordlist = Wordlists.get(call.parameters["wordlist"] ?: "english") ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid wordlist")
 
@@ -463,53 +433,6 @@ fun Application.APIServer() {
             val result = Message.verify(publicKey, signature, message)
 
             call.respond(result.toString())
-        }
-
-        get("/api/v2/addpeer/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid port") } ?: Node.DEFAULT_P2P_PORT
-            val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
-            val force = call.parameters["force"]?.toBoolean() ?: false
-
-            try {
-                val connection = Node.connections.find { it.remoteAddress == address }
-                if (force || connection == null) {
-                    Node.connectTo(address)
-                    call.respond(true.toString())
-                } else {
-                    call.respond(HttpStatusCode.BadRequest, "Already connected on ${connection.localAddress}")
-                }
-            } catch (e: Throwable) {
-                call.respond(HttpStatusCode.BadRequest, e.message ?: "Unknown error")
-            }
-        }
-
-        get("/api/v2/disconnectpeerbyaddress/{address}/{port?}/{force?}") {
-            val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid port") } ?: Node.DEFAULT_P2P_PORT
-            val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
-            @Suppress("UNUSED_VARIABLE")
-            val force = call.parameters["force"]?.toBoolean() ?: false
-
-            val connection = Node.connections.find { it.remoteAddress == address }
-            if (connection != null) {
-                connection.close()
-                call.respond(true.toString())
-            } else {
-                call.respond(false.toString())
-            }
-        }
-
-        get("/api/v2/disconnectpeer/{id}/{force?}") {
-            val id = call.parameters["id"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid id")
-            @Suppress("UNUSED_VARIABLE")
-            val force = call.parameters["force"]?.toBoolean() ?: false
-
-            val connection = Node.connections.find { it.peerId == id }
-            if (connection != null) {
-                connection.close()
-                call.respond(true.toString())
-            } else {
-                call.respond(false.toString())
-            }
         }
 
         get("/api/v2/wallet/{address}/transactions") {
@@ -586,9 +509,10 @@ fun Application.APIServer() {
             call.respond(result.toString())
         }
 
+        debug()
         sendTransaction()
         staking()
-        debug()
+        node()
 
         // 已被弃用
         APIV1()
