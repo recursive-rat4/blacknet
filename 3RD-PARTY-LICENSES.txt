@@ -48,6 +48,9 @@ GNU LGPL 2.1 or later: https://www.gnu.org/licenses/lgpl-2.1.html
 Bouncy Castle https://bouncycastle.org/ is licensed under the
 MIT license: https://bouncycastle.org/licence.html
 
+JGit https://www.eclipse.org/jgit/ is licensed under the
+EDL license 1.0: https://www.eclipse.org/org/documents/edl-v10.php
+
 TestNG https://testng.org/ is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 

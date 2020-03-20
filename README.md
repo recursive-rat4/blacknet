@@ -1,8 +1,8 @@
 ## Blacknet Reference Software
 
-Blacknet is an experimental peer-to-peer network based on blockchain technology.
-[Website](https://blacknet.ninja/).
+[![Pipeline Status](https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg)](https://gitlab.com/blacknet-ninja/blacknet/pipelines) [Website](https://blacknet.ninja/)
 
+Blacknet is an experimental peer-to-peer network based on blockchain technology.
 
 ## How to build
 
@@ -10,9 +10,12 @@ Blacknet is an experimental peer-to-peer network based on blockchain technology.
 
 Install the Java JDK (not only JRE) version 8th number or greater.
 
-- Debian & Ubuntu: `sudo apt-get install default-jdk`
-- Gentoo: `sudo emerge -av1 --noreplace virtual/jdk`
-- Arch Linux: `sudo pacman -S --needed jdk-openjdk`
+- Debian & Ubuntu: `sudo apt-get install default-jdk git`
+- Red Hat & Oracle: `sudo yum install java-11-openjdk git`
+- SUSE: `sudo zypper install java-11-openjdk git`
+- FreeBSD: `sudo pkg install openjdk11 git`
+- Gentoo: `sudo emerge -av1 --noreplace virtual/jdk dev-vcs/git`
+- Arch Linux: `sudo pacman -S --needed jdk-openjdk git`
 
 #### Get the source code
 
@@ -28,7 +31,7 @@ cd blacknet
 ```
 
 To run the built program, use `./gradlew run`
-- Windows: use `gradlew.bat` in place of `./gradlew`
+- Windows: use `.\gradlew.bat` in place of `./gradlew`
 
 
 ## How to contribute
