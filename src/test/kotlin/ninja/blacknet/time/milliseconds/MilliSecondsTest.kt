@@ -29,11 +29,14 @@ class MilliSecondsTest {
         assertEquals(4.seconds, 4000.milliseconds)
 
         assertEquals( 4.days, ( 4).days)
+        assertEquals( 4.days, ( 4).days)
         assertEquals(+4.days, (+4).days)
         assertEquals(-4.days, (-4).days)
 
         assertEquals(0.days + 4.days, +4.days)
         assertEquals(0.days - 4.days, -4.days)
+        assertEquals(4.days + 0.days, +4.days)
+        assertEquals(4.days - 0.days, +4.days)
 
         assertEquals(4.days / 2.days, 2)
         assertEquals(4.days % 3.days, 1.days)

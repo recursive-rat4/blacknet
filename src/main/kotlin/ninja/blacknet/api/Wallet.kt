@@ -19,10 +19,8 @@ import io.ktor.routing.Route
 import io.ktor.routing.get
 import io.ktor.routing.post
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.internal.HashMapSerializer
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.list
-import kotlinx.serialization.serializer
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
@@ -93,7 +91,7 @@ fun Route.wallet() {
             }
             transactions
         }
-        call.respondJson(HashMapSerializer(String.serializer(), JsonElement.serializer()), transactions)
+        call.respondJson(MapSerializer(String.serializer(), JsonElement.serializer()), transactions)
     }
 
     get("/api/v2/wallet/{address}/outleases") {

@@ -15,7 +15,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.SystemService
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.serialization.BinaryDecoder
@@ -24,7 +23,6 @@ import ninja.blacknet.serialization.BinaryEncoder
 /**
  * Blake2b hash
  */
-@SystemService
 @Serializable
 class Hash(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is Hash) && bytes.contentEquals(other.bytes)
@@ -53,10 +51,10 @@ class Hash(val bytes: ByteArray) {
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: Hash) {
+        override fun serialize(encoder: Encoder, value: Hash) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeFixedByteArray(obj.bytes)
-                is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
+                is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
+                is JsonOutput -> encoder.encodeString(value.bytes.toHex())
                 else -> throw RuntimeException("Unsupported encoder")
             }
         }

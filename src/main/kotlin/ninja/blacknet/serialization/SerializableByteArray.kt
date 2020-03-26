@@ -15,7 +15,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.SystemService
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.Salt
@@ -24,7 +23,6 @@ import ninja.blacknet.util.emptyByteArray
 /**
  * Serializable [ByteArray]
  */
-@SystemService
 @Serializable
 class SerializableByteArray(
         val array: ByteArray
@@ -59,10 +57,10 @@ class SerializableByteArray(
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: SerializableByteArray) {
+        override fun serialize(encoder: Encoder, value: SerializableByteArray) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeByteArray(obj.array)
-                is JsonOutput -> encoder.encodeString(obj.array.toHex())
+                is BinaryEncoder -> encoder.encodeByteArray(value.array)
+                is JsonOutput -> encoder.encodeString(value.array.toHex())
                 else -> throw RuntimeException("Unsupported encoder")
             }
         }

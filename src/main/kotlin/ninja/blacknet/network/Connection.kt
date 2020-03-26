@@ -13,12 +13,12 @@ import io.ktor.network.sockets.ASocket
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.ByteReadPacket
 import io.ktor.utils.io.core.readInt
+import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
-import kotlinx.io.IOException
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime

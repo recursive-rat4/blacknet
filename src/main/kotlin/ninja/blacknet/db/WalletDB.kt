@@ -12,6 +12,7 @@ package ninja.blacknet.db
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
@@ -423,14 +424,14 @@ object WalletDB {
 
         @Serializer(forClass = TransactionDataV1::class)
         companion object {
-            override fun serialize(encoder: Encoder, obj: TransactionDataV1) {
+            override fun serialize(encoder: Encoder, value: TransactionDataV1) {
                 when (encoder) {
                     is JsonOutput -> {
                         @Suppress("NAME_SHADOWING")
                         val encoder = encoder.beginStructure(descriptor)
-                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), obj.type.toUByte().toInt())
-                        encoder.encodeSerializableElement(descriptor, 1, Long.serializer(), obj.time)
-                        encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), obj.height)
+                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), value.type.toUByte().toInt())
+                        encoder.encodeSerializableElement(descriptor, 1, Long.serializer(), value.time)
+                        encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), value.height)
                         encoder.endStructure(descriptor)
                     }
                     else -> throw RuntimeException("Unsupported encoder")
@@ -458,17 +459,17 @@ object WalletDB {
                 }
             }
 
-            override fun serialize(encoder: Encoder, obj: TransactionDataType) {
+            override fun serialize(encoder: Encoder, value: TransactionDataType) {
                 when (encoder) {
                     is BinaryEncoder -> {
-                        encoder.encodeByte(obj.type)
-                        encoder.encodeByte(obj.dataIndex)
+                        encoder.encodeByte(value.type)
+                        encoder.encodeByte(value.dataIndex)
                     }
                     is JsonOutput -> {
                         @Suppress("NAME_SHADOWING")
                         val encoder = encoder.beginStructure(descriptor)
-                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), obj.type.toUByte().toInt())
-                        encoder.encodeSerializableElement(descriptor, 1, Int.serializer(), obj.dataIndex.toInt())
+                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), value.type.toUByte().toInt())
+                        encoder.encodeSerializableElement(descriptor, 1, Int.serializer(), value.dataIndex.toInt())
                         encoder.endStructure(descriptor)
                     }
                     else -> throw RuntimeException("Unsupported encoder")

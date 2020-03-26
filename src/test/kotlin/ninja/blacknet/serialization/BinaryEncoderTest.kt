@@ -9,15 +9,16 @@
 
 package ninja.blacknet.serialization
 
+import kotlinx.serialization.Serializable
 import ninja.blacknet.util.byteArrayOfInts
 import org.testng.Assert.assertEquals
 import org.testng.annotations.Test
 
 class BinaryEncoderTest {
-    @Test
-    fun test() {
-        val encoder = BinaryEncoder()
+    private val encoder = BinaryEncoder()
 
+    @Test
+    fun element() {
         encoder.encodeByte(0)
         assertEquals(encoder.toBytes(), byteArrayOf(0))
 
@@ -35,5 +36,38 @@ class BinaryEncoderTest {
 
         encoder.encodeString("八")
         assertEquals(encoder.toBytes(), byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB))
+    }
+
+    @Test
+    fun structure() {
+        @Serializable
+        class Structure(
+                val a: Byte,
+                val b: Short,
+                val c: Int,
+                val d: Long,
+                val e: Unit,
+                val f: String
+        )
+
+        val value = Structure(
+                0,
+                0x01FF,
+                0x0201FFFE,
+                0x04030201FFFEFDFC,
+                Unit,
+                "八"
+        )
+
+        Structure.serializer().serialize(encoder, value)
+
+        assertEquals(encoder.toBytes(), byteArrayOfInts(
+                0,
+                1, -1,
+                2, 1, -1, -2,
+                4, 3, 2, 1, -1, -2, -3, -4,
+                // Unit //
+                0x83, 0xE5, 0x85, 0xAB
+        ))
     }
 }

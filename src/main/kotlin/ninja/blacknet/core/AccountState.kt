@@ -155,21 +155,21 @@ class AccountState(
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: AccountState) {
+        override fun serialize(encoder: Encoder, value: AccountState) {
             when (encoder) {
                 is BinaryEncoder -> {
-                    encoder.encodeVarInt(obj.seq)
-                    encoder.encodeVarLong(obj.stake)
-                    encoder.encodeVarInt(obj.immature.size)
-                    for (i in 0 until obj.immature.size) {
-                        encoder.encodeVarInt(obj.immature[i].height)
-                        encoder.encodeVarLong(obj.immature[i].amount)
+                    encoder.encodeVarInt(value.seq)
+                    encoder.encodeVarLong(value.stake)
+                    encoder.encodeVarInt(value.immature.size)
+                    for (i in 0 until value.immature.size) {
+                        encoder.encodeVarInt(value.immature[i].height)
+                        encoder.encodeVarLong(value.immature[i].amount)
                     }
-                    encoder.encodeVarInt(obj.leases.size)
-                    for (i in 0 until obj.leases.size) {
-                        encoder.encodeFixedByteArray(obj.leases[i].publicKey.bytes)
-                        encoder.encodeVarInt(obj.leases[i].height)
-                        encoder.encodeVarLong(obj.leases[i].amount)
+                    encoder.encodeVarInt(value.leases.size)
+                    for (i in 0 until value.leases.size) {
+                        encoder.encodeFixedByteArray(value.leases[i].publicKey.bytes)
+                        encoder.encodeVarInt(value.leases[i].height)
+                        encoder.encodeVarLong(value.leases[i].amount)
                     }
                 }
                 else -> throw RuntimeException("Unsupported encoder")

@@ -85,12 +85,12 @@ class Address(
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: Address) {
+        override fun serialize(encoder: Encoder, value: Address) {
             when (encoder) {
                 is BinaryEncoder -> {
-                    encoder.encodeByte(obj.network.type)
-                    encoder.encodeShort(obj.port)
-                    encoder.encodeFixedByteArray(obj.bytes)
+                    encoder.encodeByte(value.network.type)
+                    encoder.encodeShort(value.port)
+                    encoder.encodeFixedByteArray(value.bytes)
                 }
                 else -> throw RuntimeException("Unsupported encoder")
             }

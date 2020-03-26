@@ -23,7 +23,7 @@ import io.ktor.routing.post
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.list
+import kotlinx.serialization.builtins.*
 import ninja.blacknet.Config
 import ninja.blacknet.api.*
 import ninja.blacknet.coding.toHex

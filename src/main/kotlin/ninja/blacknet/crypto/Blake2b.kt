@@ -13,13 +13,10 @@ package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.Blake2b
 import io.ktor.utils.io.bits.*
-import ninja.blacknet.SystemService
-import ninja.blacknet.util.highByte
 
 /**
  * BLAKE2b-256 hash function.
  */
-@SystemService
 object Blake2b : (ByteArray) -> ByteArray {
     const val DIGEST_SIZE_BYTES = 32
     const val DIGEST_SIZE_BITS = DIGEST_SIZE_BYTES * Byte.SIZE_BITS

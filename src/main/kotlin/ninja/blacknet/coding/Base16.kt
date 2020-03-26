@@ -10,7 +10,6 @@
 package ninja.blacknet.coding
 
 import ninja.blacknet.Config
-import ninja.blacknet.SystemService
 
 private val HEX_CHARS = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
 private val HEX_CHARS_LOWER = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
@@ -46,7 +45,6 @@ fun hex(bytes: ByteArray, lowerCase: Boolean): String {
  *
  * @return the encoded [String]
  */
-@SystemService
 fun ByteArray.toHex(): String {
     return hex(this, Config.lowerCaseHex)
 }
@@ -57,7 +55,6 @@ fun ByteArray.toHex(): String {
  * @param size expected size in bytes (optional)
  * @return the decoded [ByteArray] or `null` if hex is not valid
  */
-@SystemService
 fun fromHex(string: String, size: Int = 0): ByteArray? {
     val length = string.length
     if (size == 0) {

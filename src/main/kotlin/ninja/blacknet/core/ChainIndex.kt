@@ -10,6 +10,7 @@
 package ninja.blacknet.core
 
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
@@ -41,23 +42,23 @@ class ChainIndex(
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: ChainIndex) {
+        override fun serialize(encoder: Encoder, value: ChainIndex) {
             when (encoder) {
                 is BinaryEncoder -> {
-                    encoder.encodeFixedByteArray(obj.previous.bytes)
-                    encoder.encodeFixedByteArray(obj.next.bytes)
-                    encoder.encodeVarInt(obj.nextSize)
-                    encoder.encodeVarInt(obj.height)
-                    encoder.encodeVarLong(obj.generated)
+                    encoder.encodeFixedByteArray(value.previous.bytes)
+                    encoder.encodeFixedByteArray(value.next.bytes)
+                    encoder.encodeVarInt(value.nextSize)
+                    encoder.encodeVarInt(value.height)
+                    encoder.encodeVarLong(value.generated)
                 }
                 is JsonOutput -> {
                     @Suppress("NAME_SHADOWING")
                     val encoder = encoder.beginStructure(descriptor)
-                    encoder.encodeSerializableElement(descriptor, 0, Hash.serializer(), obj.previous)
-                    encoder.encodeSerializableElement(descriptor, 1, Hash.serializer(), obj.next)
-                    encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), obj.nextSize)
-                    encoder.encodeSerializableElement(descriptor, 3, Int.serializer(), obj.height)
-                    encoder.encodeSerializableElement(descriptor, 4, String.serializer(), obj.generated.toString())
+                    encoder.encodeSerializableElement(descriptor, 0, Hash.serializer(), value.previous)
+                    encoder.encodeSerializableElement(descriptor, 1, Hash.serializer(), value.next)
+                    encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), value.nextSize)
+                    encoder.encodeSerializableElement(descriptor, 3, Int.serializer(), value.height)
+                    encoder.encodeSerializableElement(descriptor, 4, String.serializer(), value.generated.toString())
                     encoder.endStructure(descriptor)
                 }
                 else -> throw RuntimeException("Unsupported encoder")

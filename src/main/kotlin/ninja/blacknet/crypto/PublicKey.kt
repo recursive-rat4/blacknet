@@ -50,10 +50,10 @@ class PublicKey(val bytes: ByteArray) {
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: PublicKey) {
+        override fun serialize(encoder: Encoder, value: PublicKey) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeFixedByteArray(obj.bytes)
-                is JsonOutput -> encoder.encodeString(Address.encode(obj))
+                is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
+                is JsonOutput -> encoder.encodeString(Address.encode(value))
                 else -> throw RuntimeException("Unsupported encoder")
             }
         }

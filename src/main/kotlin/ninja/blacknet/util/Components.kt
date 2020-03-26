@@ -12,7 +12,6 @@
 package ninja.blacknet.util
 
 import io.ktor.utils.io.bits.*
-import ninja.blacknet.util.highByte
 
 /**
  * Byte components of primitive types.
@@ -131,5 +130,3 @@ fun Long.toByteArray(): ByteArray {
     }
     return result
 }
-
-inline val Short.highByte: Byte get() = (toInt() ushr 8).toByte()

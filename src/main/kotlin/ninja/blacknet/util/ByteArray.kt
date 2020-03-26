@@ -9,8 +9,6 @@
 
 package ninja.blacknet.util
 
-import ninja.blacknet.SystemService
-
 /**
  * Byte array utilities.
  */
@@ -20,7 +18,6 @@ private val EMPTY_BYTE_ARRAY = ByteArray(0)
 /**
  * Returns an empty [ByteArray].
  */
-@SystemService
 fun emptyByteArray(): ByteArray {
     return EMPTY_BYTE_ARRAY
 }
@@ -28,7 +25,6 @@ fun emptyByteArray(): ByteArray {
 /**
  * Returns a [ByteArray] containing the specified bytes represented as [Int]s.
  */
-@SystemService
 fun byteArrayOfInts(vararg ints: Int): ByteArray {
     return ByteArray(ints.size) { index -> ints[index].toByte() }
 }
@@ -36,7 +32,6 @@ fun byteArrayOfInts(vararg ints: Int): ByteArray {
 /**
  * Returns an array containing this byte and then the given [ByteArray].
  */
-@SystemService
 operator fun Byte.plus(bytes: ByteArray): ByteArray {
     val result = ByteArray(Byte.SIZE_BYTES + bytes.size)
     result[0] = this

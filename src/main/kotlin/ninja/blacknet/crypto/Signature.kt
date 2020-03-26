@@ -51,10 +51,10 @@ class Signature(val bytes: ByteArray) {
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: Signature) {
+        override fun serialize(encoder: Encoder, value: Signature) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeFixedByteArray(obj.bytes)
-                is JsonOutput -> encoder.encodeString(obj.bytes.toHex())
+                is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
+                is JsonOutput -> encoder.encodeString(value.bytes.toHex())
                 else -> throw RuntimeException("Unsupported encoder")
             }
         }

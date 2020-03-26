@@ -14,7 +14,7 @@ import com.google.common.io.Resources
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.HashMapSerializer
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
 import ninja.blacknet.Config
@@ -861,23 +861,23 @@ object LedgerDB {
                 }
             }
 
-            override fun serialize(encoder: Encoder, obj: Snapshot) {
+            override fun serialize(encoder: Encoder, value: Snapshot) {
                 when (encoder) {
                     is BinaryEncoder -> {
-                        encoder.encodeVarInt(obj.balances.size)
-                        obj.balances.forEach { (publicKey, balance) ->
+                        encoder.encodeVarInt(value.balances.size)
+                        value.balances.forEach { (publicKey, balance) ->
                             encoder.encodeFixedByteArray(publicKey.bytes)
                             encoder.encodeVarLong(balance)
                         }
                     }
                     is JsonOutput -> {
-                        val balances = newHashMapWithExpectedSize<String, String>(obj.balances.size)
-                        obj.balances.forEach { (publicKey, balance) ->
+                        val balances = newHashMapWithExpectedSize<String, String>(value.balances.size)
+                        value.balances.forEach { (publicKey, balance) ->
                             balances.put(publicKey.toString(), balance.toString())
                         }
                         @Suppress("NAME_SHADOWING")
                         val encoder = encoder.beginStructure(descriptor)
-                        encoder.encodeSerializableElement(descriptor, 0, HashMapSerializer(String.serializer(), String.serializer()), balances)
+                        encoder.encodeSerializableElement(descriptor, 0, MapSerializer(String.serializer(), String.serializer()), balances)
                         encoder.endStructure(descriptor)
                     }
                     else -> throw RuntimeException("Unsupported encoder")

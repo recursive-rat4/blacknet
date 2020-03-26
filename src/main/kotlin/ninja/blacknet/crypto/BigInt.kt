@@ -68,10 +68,10 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: BigInt) {
+        override fun serialize(encoder: Encoder, value: BigInt) {
             when (encoder) {
-                is BinaryEncoder -> encoder.encodeByteArray(obj.toByteArray())
-                is JsonOutput -> encoder.encodeString(obj.int.toString())
+                is BinaryEncoder -> encoder.encodeByteArray(value.toByteArray())
+                is JsonOutput -> encoder.encodeString(value.int.toString())
                 else -> throw RuntimeException("Unsupported encoder")
             }
         }

@@ -14,14 +14,14 @@ package ninja.blacknet.serialization
 
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.EnumDescriptor
+import kotlinx.serialization.builtins.AbstractEncoder
 import kotlin.experimental.and
 import kotlin.experimental.or
 
 /**
  * Encoder to the Blacknet Binary Format
  */
-class BinaryEncoder : ElementValueEncoder() {
+class BinaryEncoder : AbstractEncoder() {
     private val out = BytePacketBuilder()
 
     fun toPacket(): ByteReadPacket {
@@ -50,11 +50,13 @@ class BinaryEncoder : ElementValueEncoder() {
         out.writeFully(bytes, 0, bytes.size)
     }
 
-    override fun beginCollection(desc: SerialDescriptor, collectionSize: Int, vararg typeParams: KSerializer<*>): CompositeEncoder {
-        return super.beginCollection(desc, collectionSize, *typeParams).also {
+    override fun beginCollection(descriptor: SerialDescriptor, collectionSize: Int, vararg typeSerializers: KSerializer<*>): CompositeEncoder {
+        return super.beginCollection(descriptor, collectionSize, *typeSerializers).also {
             encodeVarInt(collectionSize)
         }
     }
+
+    override fun endStructure(descriptor: SerialDescriptor) = Unit
 
     fun encodeByteArray(value: ByteArray) {
         encodeVarInt(value.size)
@@ -86,15 +88,15 @@ class BinaryEncoder : ElementValueEncoder() {
     }
 
     companion object {
-        fun <T : Any?> toBytes(strategy: SerializationStrategy<T>, obj: T): ByteArray {
+        fun <T : Any?> toBytes(strategy: SerializationStrategy<T>, value: T): ByteArray {
             val encoder = BinaryEncoder()
-            strategy.serialize(encoder, obj)
+            strategy.serialize(encoder, value)
             return encoder.toBytes()
         }
 
-        fun <T : Any?> toPacket(strategy: SerializationStrategy<T>, obj: T): ByteReadPacket {
+        fun <T : Any?> toPacket(strategy: SerializationStrategy<T>, value: T): ByteReadPacket {
             val encoder = BinaryEncoder()
-            strategy.serialize(encoder, obj)
+            strategy.serialize(encoder, value)
             return encoder.toPacket()
         }
     }

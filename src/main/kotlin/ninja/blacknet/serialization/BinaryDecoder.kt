@@ -14,9 +14,8 @@ package ninja.blacknet.serialization
 
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.ElementValueDecoder
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.internal.EnumDescriptor
+import kotlinx.serialization.builtins.AbstractDecoder
 import kotlin.experimental.and
 
 /**
@@ -24,7 +23,7 @@ import kotlin.experimental.and
  */
 class BinaryDecoder(
         private val input: ByteReadPacket
-) : ElementValueDecoder() {
+) : AbstractDecoder() {
     constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
 
     fun <T : Any?> decode(loader: DeserializationStrategy<T>): T {
@@ -66,7 +65,11 @@ class BinaryDecoder(
         return String(input.readBytes(size))
     }
 
-    override fun decodeCollectionSize(desc: SerialDescriptor): Int = decodeVarInt()
+    override fun decodeCollectionSize(descriptor: SerialDescriptor): Int = decodeVarInt()
+
+    override fun decodeElementIndex(descriptor: SerialDescriptor): Int = throw RuntimeException("Non-sequential decoding is not supported")
+
+    override fun decodeSequentially(): Boolean = true
 
     fun decodeByteArray(): ByteArray {
         val size = decodeVarInt()

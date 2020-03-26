@@ -10,7 +10,6 @@
 package ninja.blacknet.crypto
 
 import mu.KotlinLogging
-import ninja.blacknet.SystemService
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.db.DBKey
 import ninja.blacknet.db.LevelDB
@@ -19,7 +18,6 @@ import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
-@SystemService
 object Salt {
     private val OLD_VERSION_KEY = "ledgerversion".toByteArray()
     private val SALT_KEY = DBKey(11, 0)
