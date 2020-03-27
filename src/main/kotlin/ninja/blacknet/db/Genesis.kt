@@ -1,0 +1,50 @@
+/*
+ * Copyright (c) 2018-2020 Pavel Vasin
+ *
+ * Licensed under the Jelurida Public License version 1.1
+ * for the Blacknet Public Blockchain Platform (the "License");
+ * you may not use this file except in compliance with the License.
+ * See the LICENSE.txt file at the top-level directory of this distribution.
+ */
+
+package ninja.blacknet.db
+
+import com.google.common.io.Resources
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.list
+import ninja.blacknet.Config
+import ninja.blacknet.crypto.Mnemonic
+import ninja.blacknet.crypto.PoS
+import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.Json
+
+object Genesis {
+    const val TIME: Long = 1545555600
+
+    val balances by lazy {
+        val map = HashMap<PublicKey, Long>()
+
+        if (Config.regTest) {
+            // rblacknet1y73v0n57axhsgkyrypusz7jlhwclz4gextzvhyqnj6awjhmapu9qklf7u2
+            val mnemonic1 = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖"
+            val publicKey1 = Mnemonic.fromString(mnemonic1)!!.toPublicKey()
+            map.put(publicKey1, 1000000000 * PoS.COIN)
+            // rblacknet15edw70jp9qp39pdlqdncxtpc45fkdg0g6h3et0xu0gtu8v5t4vwspmsgfx
+            val mnemonic2 = "胡 允 空 桥 料 状 纱 角 钠 灌 绝 件"
+            val publicKey2 = Mnemonic.fromString(mnemonic2)!!.toPublicKey()
+            map.put(publicKey2, 10101010 * PoS.COIN)
+        } else {
+            val genesis = Resources.toString(Resources.getResource("genesis.json"), Charsets.UTF_8)
+            val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
+            entries.forEach { entry ->
+                val publicKey = PublicKey.fromString(entry.publicKey)!!
+                map.put(publicKey, entry.balance)
+            }
+        }
+
+        map
+    }
+
+    @Serializable
+    private class GenesisJsonEntry(val publicKey: String, val balance: Long)
+}

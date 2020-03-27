@@ -9,7 +9,7 @@
 
 package ninja.blacknet.time
 
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.Genesis
 import ninja.blacknet.time.milliseconds.MilliSeconds
 import ninja.blacknet.time.milliseconds.seconds
 import org.testng.Assert.assertTrue
@@ -19,11 +19,11 @@ class SystemClockTest {
     @Test
     fun test() {
         val seconds = SystemClock.seconds
-        assertTrue(seconds >= LedgerDB.GENESIS_TIME)
+        assertTrue(seconds >= Genesis.TIME)
         assertTrue(seconds <= Long.MAX_VALUE)
 
         val milliseconds = SystemClock.milliseconds
-        assertTrue(milliseconds >= LedgerDB.GENESIS_TIME.seconds)
+        assertTrue(milliseconds >= Genesis.TIME.seconds)
         assertTrue(milliseconds <= MilliSeconds.MAX_VALUE)
     }
 }

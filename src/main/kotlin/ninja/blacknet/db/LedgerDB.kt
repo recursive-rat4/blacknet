@@ -10,7 +10,6 @@
 package ninja.blacknet.db
 
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
-import com.google.common.io.Resources
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.*
@@ -20,12 +19,15 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.*
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderException
+import ninja.blacknet.serialization.notSupportedEncoderException
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.toByteArray
 import java.io.File
-import java.util.ArrayDeque
+import java.util.ArrayDeque //TODO check kotlin.collections.ArrayDeque
 import kotlin.math.max
 import kotlin.math.min
 
@@ -43,35 +45,6 @@ object LedgerDB {
     private val SNAPSHOTHEIGHTS_KEY = DBKey(8, 0)
     private val STATE_KEY = DBKey(9, 0)
     private val VERSION_KEY = DBKey(10, 0)
-
-    const val GENESIS_TIME = 1545555600L
-
-    val genesisBlock by lazy {
-        val map = HashMap<PublicKey, Long>()
-
-        if (Config.regTest) {
-            // rblacknet1y73v0n57axhsgkyrypusz7jlhwclz4gextzvhyqnj6awjhmapu9qklf7u2
-            val mnemonic1 = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖"
-            val publicKey1 = Mnemonic.fromString(mnemonic1)!!.toPublicKey()
-            map.put(publicKey1, 1000000000 * PoS.COIN)
-            // rblacknet15edw70jp9qp39pdlqdncxtpc45fkdg0g6h3et0xu0gtu8v5t4vwspmsgfx
-            val mnemonic2 = "胡 允 空 桥 料 状 纱 角 钠 灌 绝 件"
-            val publicKey2 = Mnemonic.fromString(mnemonic2)!!.toPublicKey()
-            map.put(publicKey2, 10101010 * PoS.COIN)
-        } else {
-            val genesis = Resources.toString(Resources.getResource("genesis.json"), Charsets.UTF_8)
-            val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
-            entries.forEach {
-                val publicKey = PublicKey.fromString(it.publicKey)!!
-                map.put(publicKey, it.balance)
-            }
-        }
-
-        map
-    }
-
-    @Serializable
-    private class GenesisJsonEntry(val publicKey: String, val balance: Long)
 
     @Serializable
     internal class State(
@@ -104,7 +77,7 @@ object LedgerDB {
         val batch = LevelDB.createWriteBatch()
 
         var supply = 0L
-        genesisBlock.forEach { (publicKey, balance) ->
+        Genesis.balances.forEach { (publicKey, balance) ->
             val account = AccountState.create(balance)
             batch.put(ACCOUNT_KEY, publicKey.bytes, account.serialize())
             supply += balance
@@ -119,7 +92,7 @@ object LedgerDB {
         val state = State(
                 0,
                 Hash.ZERO,
-                GENESIS_TIME,
+                Genesis.TIME,
                 PoS.INITIAL_DIFFICULTY,
                 BigInt.ZERO,
                 supply,

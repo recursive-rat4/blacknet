@@ -233,12 +233,12 @@ object WalletDB {
                 processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, block.time, height, batch, rescan)
             }
         } else {
-            val balance = LedgerDB.genesisBlock.get(publicKey) ?: return
+            val balance = Genesis.balances.get(publicKey) ?: return
 
             val tx = Transaction.generated(publicKey, height, hash, balance)
             val txBytes = tx.serialize()
             val txHash = Transaction.hash(txBytes)
-            processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, LedgerDB.GENESIS_TIME, height, batch, rescan)
+            processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, Genesis.TIME, height, batch, rescan)
         }
     }
 
