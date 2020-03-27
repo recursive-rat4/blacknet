@@ -18,6 +18,8 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.crypto.Salt
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderException
+import ninja.blacknet.serialization.notSupportedEncoderException
 import ninja.blacknet.util.sumByLong
 
 @Serializable
@@ -151,7 +153,7 @@ class AccountState(
                         leases.add(Lease(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES)), decoder.decodeVarInt(), decoder.decodeVarLong()))
                     return AccountState(seq, stake, immature, leases)
                 }
-                else -> throw RuntimeException("Unsupported decoder")
+                else -> throw notSupportedDecoderException(decoder, this)
             }
         }
 
@@ -172,7 +174,7 @@ class AccountState(
                         encoder.encodeVarLong(value.leases[i].amount)
                     }
                 }
-                else -> throw RuntimeException("Unsupported encoder")
+                else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }

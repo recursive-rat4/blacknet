@@ -20,9 +20,7 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.*
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.toByteArray
@@ -857,7 +855,7 @@ object LedgerDB {
                             balances.put(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES)), decoder.decodeVarLong())
                         Snapshot(balances)
                     }
-                    else -> throw RuntimeException("Unsupported decoder")
+                    else -> throw notSupportedDecoderException(decoder, this)
                 }
             }
 
@@ -880,7 +878,7 @@ object LedgerDB {
                         encoder.encodeSerializableElement(descriptor, 0, MapSerializer(String.serializer(), String.serializer()), balances)
                         encoder.endStructure(descriptor)
                     }
-                    else -> throw RuntimeException("Unsupported encoder")
+                    else -> throw notSupportedEncoderException(encoder, this)
                 }
             }
         }

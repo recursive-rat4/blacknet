@@ -53,7 +53,7 @@ class SerializableByteArray(
             return when (decoder) {
                 is BinaryDecoder -> SerializableByteArray(decoder.decodeByteArray())
                 is JsonInput -> fromString(decoder.decodeString())!!
-                else -> throw RuntimeException("Unsupported decoder")
+                else -> throw notSupportedDecoderException(decoder, this)
             }
         }
 
@@ -61,7 +61,7 @@ class SerializableByteArray(
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeByteArray(value.array)
                 is JsonOutput -> encoder.encodeString(value.array.toHex())
-                else -> throw RuntimeException("Unsupported encoder")
+                else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }

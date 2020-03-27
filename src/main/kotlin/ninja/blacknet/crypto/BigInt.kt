@@ -18,6 +18,8 @@ import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderException
+import ninja.blacknet.serialization.notSupportedEncoderException
 import java.math.BigInteger
 
 @Serializable
@@ -64,7 +66,7 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
         override fun deserialize(decoder: Decoder): BigInt {
             return when (decoder) {
                 is BinaryDecoder -> BigInt(decoder.decodeByteArray())
-                else -> throw RuntimeException("Unsupported decoder")
+                else -> throw notSupportedDecoderException(decoder, this)
             }
         }
 
@@ -72,7 +74,7 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeByteArray(value.toByteArray())
                 is JsonOutput -> encoder.encodeString(value.int.toString())
-                else -> throw RuntimeException("Unsupported encoder")
+                else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }

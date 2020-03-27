@@ -17,6 +17,8 @@ import ninja.blacknet.Config
 import ninja.blacknet.crypto.Salt
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderException
+import ninja.blacknet.serialization.notSupportedEncoderException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketAddress
@@ -81,7 +83,7 @@ class Address(
                             decoder.decodeShort(),
                             decoder.decodeFixedByteArray(network.addrSize))
                 }
-                else -> throw RuntimeException("Unsupported decoder")
+                else -> throw notSupportedDecoderException(decoder, this)
             }
         }
 
@@ -92,7 +94,7 @@ class Address(
                     encoder.encodeShort(value.port)
                     encoder.encodeFixedByteArray(value.bytes)
                 }
-                else -> throw RuntimeException("Unsupported encoder")
+                else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }

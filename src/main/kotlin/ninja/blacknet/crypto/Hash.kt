@@ -19,6 +19,8 @@ import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderException
+import ninja.blacknet.serialization.notSupportedEncoderException
 
 /**
  * Blake2b hash
@@ -47,7 +49,7 @@ class Hash(val bytes: ByteArray) {
             return when (decoder) {
                 is BinaryDecoder -> Hash(decoder.decodeFixedByteArray(SIZE_BYTES))
                 is JsonInput -> Hash.fromString(decoder.decodeString())!!
-                else -> throw RuntimeException("Unsupported decoder")
+                else -> throw notSupportedDecoderException(decoder, this)
             }
         }
 
@@ -55,7 +57,7 @@ class Hash(val bytes: ByteArray) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
                 is JsonOutput -> encoder.encodeString(value.bytes.toHex())
-                else -> throw RuntimeException("Unsupported encoder")
+                else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }

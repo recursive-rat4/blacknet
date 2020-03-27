@@ -15,6 +15,8 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderException
+import ninja.blacknet.serialization.notSupportedEncoderException
 
 @Serializable
 class ChainIndex(
@@ -38,7 +40,7 @@ class ChainIndex(
                         decoder.decodeVarInt(),
                         decoder.decodeVarInt(),
                         decoder.decodeVarLong())
-                else -> throw RuntimeException("Unsupported decoder")
+                else -> throw notSupportedDecoderException(decoder, this)
             }
         }
 
@@ -61,7 +63,7 @@ class ChainIndex(
                     encoder.encodeSerializableElement(descriptor, 4, String.serializer(), value.generated.toString())
                     encoder.endStructure(descriptor)
                 }
-                else -> throw RuntimeException("Unsupported encoder")
+                else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }

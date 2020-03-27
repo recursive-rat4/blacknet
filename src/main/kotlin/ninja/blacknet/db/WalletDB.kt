@@ -24,9 +24,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.network.Node
 import ninja.blacknet.packet.UnfilteredInvList
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.*
 import ninja.blacknet.time.SystemClock
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.minutes
@@ -434,7 +432,7 @@ object WalletDB {
                         encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), value.height)
                         encoder.endStructure(descriptor)
                     }
-                    else -> throw RuntimeException("Unsupported encoder")
+                    else -> throw notSupportedEncoderException(encoder, this)
                 }
             }
         }
@@ -455,7 +453,7 @@ object WalletDB {
                                 decoder.decodeByte()
                         )
                     }
-                    else -> throw RuntimeException("Unsupported decoder")
+                    else -> throw notSupportedDecoderException(decoder, this)
                 }
             }
 
@@ -472,7 +470,7 @@ object WalletDB {
                         encoder.encodeSerializableElement(descriptor, 1, Int.serializer(), value.dataIndex.toInt())
                         encoder.endStructure(descriptor)
                     }
-                    else -> throw RuntimeException("Unsupported encoder")
+                    else -> throw notSupportedEncoderException(encoder, this)
                 }
             }
         }

@@ -19,6 +19,8 @@ import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderException
+import ninja.blacknet.serialization.notSupportedEncoderException
 
 /**
  * Ed25519 public key
@@ -46,7 +48,7 @@ class PublicKey(val bytes: ByteArray) {
             return when (decoder) {
                 is BinaryDecoder -> PublicKey(decoder.decodeFixedByteArray(SIZE_BYTES))
                 is JsonInput -> Address.decode(decoder.decodeString())!!
-                else -> throw RuntimeException("Unsupported decoder")
+                else -> throw notSupportedDecoderException(decoder, this)
             }
         }
 
@@ -54,7 +56,7 @@ class PublicKey(val bytes: ByteArray) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
                 is JsonOutput -> encoder.encodeString(Address.encode(value))
-                else -> throw RuntimeException("Unsupported encoder")
+                else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }
