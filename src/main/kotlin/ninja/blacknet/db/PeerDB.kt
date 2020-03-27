@@ -118,7 +118,7 @@ object PeerDB {
 
         if (peers.map.size < 100) {
             val added = runBlocking {
-                add(listBuiltinPeers(), Address.LOOPBACK)
+                add(listBuiltinPeers(), Network.LOOPBACK)
             }
             if (added > 0) {
                 logger.info("Added $added built-in peer addresses to db")
@@ -390,7 +390,7 @@ object PeerDB {
 
         companion object {
             fun new(from: Address) = Entry(from, 0, 0, null)
-            fun newConnected(time: Long, userAgent: String) = Entry(Address.LOOPBACK, 0, 0, NetworkStat(time, userAgent))
+            fun newConnected(time: Long, userAgent: String) = Entry(Network.LOOPBACK, 0, 0, NetworkStat(time, userAgent))
         }
 
         @Suppress("unused")

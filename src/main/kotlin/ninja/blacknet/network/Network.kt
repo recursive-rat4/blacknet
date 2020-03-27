@@ -29,7 +29,6 @@ import ninja.blacknet.time.milliseconds.minutes
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import kotlin.experimental.and
 
 private val logger = KotlinLogging.logger {}
 
@@ -43,34 +42,6 @@ enum class Network(val type: Byte, val addrSize: Int) {
 
     constructor(type: Int, addrSize: Int) : this(type.toByte(), addrSize)
 
-    fun getAddressString(address: Address): String {
-        return when (this) {
-            IPv4 -> InetSocketAddress(InetAddress.getByAddress(address.bytes), address.port.toPort()).getHostString()
-            IPv6 -> '[' + InetSocketAddress(InetAddress.getByAddress(address.bytes), address.port.toPort()).getHostString() + ']'
-            TORv2 -> Base32.encode(address.bytes) + TOR_SUFFIX
-            TORv3 -> Base32.encode(address.bytes + TorController.checksum(address.bytes, TorController.V3) + TorController.V3) + TOR_SUFFIX
-            I2P -> Base32.encode(address.bytes) + I2P_SUFFIX
-        }
-    }
-
-    fun isLocal(address: Address): Boolean {
-        return when (this) {
-            IPv4 -> isLocalIPv4(address.bytes)
-            IPv6 -> isLocalIPv6(address.bytes)
-            TORv2, TORv3 -> false
-            I2P -> false
-        }
-    }
-
-    fun isPrivate(address: Address): Boolean {
-        return when (this) {
-            IPv4 -> isPrivateIPv4(address.bytes)
-            IPv6 -> isPrivateIPv6(address.bytes)
-            TORv2, TORv3 -> false
-            I2P -> false
-        }
-    }
-
     fun isDisabled(): Boolean {
         return when (this) {
             IPv4 -> Config.disabledIPv4
@@ -80,70 +51,13 @@ enum class Network(val type: Byte, val addrSize: Int) {
         }
     }
 
-    private fun isLocalIPv4(bytes: ByteArray): Boolean {
-        // 0.0.0.0 – 0.255.255.255
-        if (bytes[0] == 0.toByte()) return true
-        // 127.0.0.0 – 127.255.255.255
-        if (bytes[0] == 127.toByte()) return true
-        // 169.254.0.0 – 169.254.255.255
-        if (bytes[0] == 169.toByte() && bytes[1] == 254.toByte()) return true
-
-        return false
-    }
-
-    private fun isLocalIPv6(bytes: ByteArray): Boolean {
-        // ::
-        if (bytes.contentEquals(IPv6_ANY_BYTES)) return true
-        // ::1
-        if (bytes.contentEquals(IPv6_LOOPBACK_BYTES)) return true
-        // fe80:: - febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-        if (bytes[0] == 0xFE.toByte()
-                &&
-                bytes[1] == 0x80.toByte()
-                &&
-                bytes[2] == 0.toByte()
-                &&
-                bytes[3] == 0.toByte()
-                &&
-                bytes[4] == 0.toByte()
-                &&
-                bytes[5] == 0.toByte()
-                &&
-                bytes[6] == 0.toByte()
-                &&
-                bytes[7] == 0.toByte()
-        ) return true
-
-        return false
-    }
-
-    private fun isPrivateIPv4(bytes: ByteArray): Boolean {
-        // 10.0.0.0 – 10.255.255.255
-        if (bytes[0] == 10.toByte()) return true
-        // 100.64.0.0 – 100.127.255.255
-        if (bytes[0] == 100.toByte() && bytes[1] >= 64 && bytes[1] <= 127) return true
-        // 172.16.0.0 – 172.31.255.255
-        if (bytes[0] == 172.toByte() && bytes[1] >= 16 && bytes[1] <= 31) return true
-        // 192.0.0.0 – 192.0.0.255
-        if (bytes[0] == 192.toByte() && bytes[1] == 0.toByte() && bytes[2] == 0.toByte()) return true
-        // 192.168.0.0 – 192.168.255.255
-        if (bytes[0] == 192.toByte() && bytes[1] == 168.toByte()) return true
-        // 198.18.0.0 – 198.19.255.255
-        if (bytes[0] == 198.toByte() && bytes[1] >= 18 && bytes[1] <= 19) return true
-
-        return false
-    }
-
-    private fun isPrivateIPv6(bytes: ByteArray): Boolean {
-        return bytes[0] and 0xFE.toByte() == 0xFC.toByte()
-    }
-
     companion object {
         const val TOR_SUFFIX = ".onion"
         const val I2P_SUFFIX = ".b32.i2p"
         val IPv4_LOOPBACK_BYTES = byteArrayOf(127, 0, 0, 1)
         val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
         val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+        val LOOPBACK = Address.IPv4_LOOPBACK(Config.netPort)
 
         private val socksProxy: Address?
         private val torProxy: Address?

@@ -70,7 +70,7 @@ object Node {
             }
             if (!Config.disabledTOR) {
                 if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
-                    listenOn(Address.LOOPBACK)
+                    listenOn(Network.LOOPBACK)
                 Runtime.rotate(Network.Companion::listenOnTor)
             }
             if (!Config.disabledI2P) {
