@@ -12,7 +12,13 @@ package ninja.blacknet.db
 import ninja.blacknet.core.VehicleRing
 
 object DAppDB {
+    private val dapps: Map<VehicleRing, *> = emptyMap<VehicleRing, Unit>()
+
+    init {
+
+    }
+
     fun isInteresting(ring: VehicleRing): Boolean {
-        return false
+        return dapps.containsKey(ring)
     }
 }
