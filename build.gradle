@@ -12,26 +12,21 @@ buildscript {
     ext.coroutines_version = '1.3.5'
     ext.serialization_version = '0.20.0'
     ext.ktor_version = '1.3.2'
-
-    repositories {
-        jcenter()
-        maven { url "https://dl.bintray.com/kotlin/kotlinx" }
-    }
+    ext.weupnp_version = '0.1.4'
+    ext.bouncycastle_version = '1.64'
+    ext.leveldbjni_version = '1.18.3'
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
         classpath "org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r"
     }
 }
 
 plugins {
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
+    id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
+    id "application"
     id "com.github.hierynomus.license-report" version "0.15.0"
 }
-
-apply plugin: 'kotlin'
-apply plugin: 'kotlinx-serialization'
-apply plugin: 'application'
 
 mainClassName = "ninja.blacknet.Main"
 
@@ -62,9 +57,9 @@ dependencies {
     implementation "org.briarproject:jtorctl:0.3"
     implementation "com.natpryce:konfig:1.6.10.0"
     implementation "com.google.guava:guava:28.2-jre"
-    implementation "org.bitlet:weupnp:0.1.4"
-    implementation "org.bouncycastle:bcprov-jdk15on:1.64"
-    implementation "org.ethereum:leveldbjni-all:1.18.3"
+    implementation "org.bitlet:weupnp:$weupnp_version"
+    implementation "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version"
+    implementation "org.ethereum:leveldbjni-all:$leveldbjni_version"
     testImplementation "org.testng:testng:7.1.1"
 }
 
@@ -105,9 +100,9 @@ tasks.withType(nl.javadude.gradle.plugins.license.DownloadLicenses).all {
         configurations.create("xonfigurations").extendsFrom(konfigurations)
     }
     licenses = [
-        "org.bitlet:weupnp:0.1.4" : downloadLicenses.license("GNU LESSER GENERAL PUBLIC LICENSE 2.1", "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html"),
-        "org.bouncycastle:bcprov-jdk15on:1.64" : downloadLicenses.license("MIT License", "https://opensource.org/licenses/MIT"),
-        "org.ethereum:leveldbjni-all:1.18.3" : downloadLicenses.license("BSD-3-clause", "https://opensource.org/licenses/BSD-3-Clause")
+        "org.bitlet:weupnp:$weupnp_version" : downloadLicenses.license("GNU LESSER GENERAL PUBLIC LICENSE 2.1", "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html"),
+        "org.bouncycastle:bcprov-jdk15on:$bouncycastle_version" : downloadLicenses.license("MIT License", "https://opensource.org/licenses/MIT"),
+        "org.ethereum:leveldbjni-all:$leveldbjni_version" : downloadLicenses.license("BSD-3-clause", "https://opensource.org/licenses/BSD-3-Clause")
     ]
     dependencyConfiguration "xonfigurations"
 }
