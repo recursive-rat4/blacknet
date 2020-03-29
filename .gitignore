@@ -1,6 +1,6 @@
 # Gradle
 .gradle
-/build
+build/
 
 # IDEA
 .idea
@@ -9,7 +9,7 @@
 # MacOS
 .DS_store
 
-#dev
+# Eclipse
 /bin
 .project
 .classpath
