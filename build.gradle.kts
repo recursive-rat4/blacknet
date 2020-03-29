@@ -57,7 +57,9 @@ dependencies {
     "implementation"("org.bitlet:weupnp:${Versions.weupnp}")
     "implementation"("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
     "implementation"("org.ethereum:leveldbjni-all:${Versions.leveldbjni}")
-    "testImplementation"("org.testng:testng:7.1.1")
+    "testImplementation"("org.testng:testng:7.1.1") {
+        exclude("junit", "junit")
+    }
 }
 
 application {
