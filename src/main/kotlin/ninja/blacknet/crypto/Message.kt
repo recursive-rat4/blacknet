@@ -30,7 +30,7 @@ class Message(
     }
 
     fun decrypt(privateKey: PrivateKey, publicKey: PublicKey): String? {
-        val sharedKey = x25519(privateKey, publicKey)
+        val sharedKey = sharedKey(privateKey, publicKey)
         return ChaCha20.decryptUtf8(sharedKey, message.array)
     }
 
@@ -64,14 +64,21 @@ class Message(
         }
 
         fun encrypted(string: String, privateKey: PrivateKey, publicKey: PublicKey): Message {
-            val sharedKey = x25519(privateKey, publicKey)
+            val sharedKey = sharedKey(privateKey, publicKey)
             return Message(ENCRYPTED, ChaCha20.encryptUtf8(sharedKey, string))
         }
 
         fun decrypt(privateKey: PrivateKey, publicKey: PublicKey, hex: String): String? {
-            val sharedKey = x25519(privateKey, publicKey)
+            val sharedKey = sharedKey(privateKey, publicKey)
             val bytes = fromHex(hex) ?: return null
             return ChaCha20.decryptUtf8(sharedKey, bytes)
+        }
+
+        fun sharedKey(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {
+            val sharedSecret = x25519(privateKey, publicKey)
+            return Blake2b.hasher {
+                x(sharedSecret)
+            }.bytes
         }
 
         fun sign(privateKey: PrivateKey, message: String): Signature {

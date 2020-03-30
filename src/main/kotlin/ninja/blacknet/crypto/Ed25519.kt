@@ -124,8 +124,7 @@ object Ed25519 {
         z2 = z2.invert()
         x2 = x2 * z2
 
-        val q = x2.toByteArray()
-        return Blake2b.hasher { x(q) }.bytes
+        return x2.toByteArray()
     }
 
     private fun toCurve25519(publicKey: PublicKey): ByteArray {
