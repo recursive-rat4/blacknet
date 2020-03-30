@@ -1,6 +1,8 @@
 ## Blacknet Reference Software
 
-[![Pipeline Status](https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg)](https://gitlab.com/blacknet-ninja/blacknet/pipelines) [Website](https://blacknet.ninja/)
+[![Pipeline Status](https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg)](https://gitlab.com/blacknet-ninja/blacknet/pipelines)
+[![Matrix](https://img.shields.io/matrix/blacknet:matrix.org)](https://riot.im/app/#/room/#blacknet:matrix.org)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja)](https://blacknet.ninja)
 
 Blacknet is an experimental peer-to-peer network based on blockchain technology.
 
