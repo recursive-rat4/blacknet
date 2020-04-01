@@ -9,8 +9,11 @@
 
 package ninja.blacknet.contract
 
+import com.rfksystems.blake2b.Blake2b.BLAKE2_B_256
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.HashCoder.Companion.buildHash
+import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
@@ -43,17 +46,17 @@ open class HashTimeLock<K, L>(
     }
 
     enum class HashType(
-            val hash: (ByteArray) -> ByteArray,
-            val hashSize: Int
+            val algorithm: String,
+            val hashSizeBytes: Int
     ) {
-        BLAKE256(ninja.blacknet.crypto.Blake2b, ninja.blacknet.crypto.Blake2b.DIGEST_SIZE_BYTES),
-        SHA256(ninja.blacknet.crypto.SHA256, ninja.blacknet.crypto.SHA256.DIGEST_SIZE_BYTES),
-        KECCAK256(ninja.blacknet.crypto.Keccak256, ninja.blacknet.crypto.Keccak256.DIGEST_SIZE_BYTES),
-        RIPEMD160(ninja.blacknet.crypto.RIPEMD160, ninja.blacknet.crypto.RIPEMD160.DIGEST_SIZE_BYTES),
+        BLAKE256(BLAKE2_B_256, 32),
+        SHA256("SHA-256", 32),
+        KECCAK256("KECCAK-256", 32),
+        RIPEMD160("RIPEMD160", 20),
         ;
 
         fun verify(htlc: HashTimeLock<*, *>, preimage: SerializableByteArray): Boolean {
-            return hash(preimage.array).contentEquals(htlc.hashLock.array)
+            return buildHash(algorithm) { encodeByteArray(preimage.array) }.contentEquals(htlc.hashLock.array)
         }
 
         companion object {
@@ -104,7 +107,7 @@ open class HashTimeLock<K, L>(
         fun isValidHashLock(hashType: Byte, hashLock: SerializableByteArray): Boolean {
             val type = HashType.get(hashType)
             return if (type != null)
-                hashLock.array.size == type.hashSize
+                hashLock.array.size == type.hashSizeBytes
             else
                 false
         }

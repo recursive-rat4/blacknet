@@ -71,7 +71,7 @@ object ChaCha20 {
     }
 }
 
-private fun SecureRandom.nextBytes(n: Int): ByteArray {
+internal fun SecureRandom.nextBytes(n: Int): ByteArray {
     val bytes = ByteArray(n)
     nextBytes(bytes)
     return bytes

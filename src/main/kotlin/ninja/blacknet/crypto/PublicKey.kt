@@ -17,18 +17,19 @@ import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
+import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderException
 import ninja.blacknet.serialization.notSupportedEncoderException
 
 /**
- * Ed25519 public key
+ * Represents an Ed25519 public key.
  */
 @Serializable
 class PublicKey(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is PublicKey) && bytes.contentEquals(other.bytes)
-    override fun hashCode(): Int = Salt.hashCode { x(bytes) }
+    override fun hashCode(): Int = hashCode(serializer(), this)
     override fun toString(): String = bytes.toHex()
 
     @Serializer(forClass = PublicKey::class)
@@ -55,9 +56,19 @@ class PublicKey(val bytes: ByteArray) {
         override fun serialize(encoder: Encoder, value: PublicKey) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
+                is HashCoder -> encoder.encodePublicKey(value)
                 is JsonOutput -> encoder.encodeString(Address.encode(value))
                 else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }
+}
+
+/**
+ * Encodes a public key value.
+ *
+ * @param value the [PublicKey] containing the data
+ */
+fun HashCoder.encodePublicKey(value: PublicKey) {
+    writer.writeByteArray(value.bytes)
 }

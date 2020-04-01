@@ -14,7 +14,9 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import ninja.blacknet.coding.Base32
-import ninja.blacknet.crypto.Salt
+import ninja.blacknet.crypto.HashCoder
+import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderException
@@ -65,11 +67,7 @@ class Address(
     }
 
     override fun hashCode(): Int {
-        return Salt.hashCode {
-            x(byte = network.type)
-            x(short = port)
-            x(bytes = bytes)
-        }
+        return hashCode(serializer(), this)
     }
 
     override fun toString(): String {
@@ -155,6 +153,11 @@ class Address(
                     encoder.encodeByte(value.network.type)
                     encoder.encodeShort(value.port)
                     encoder.encodeFixedByteArray(value.bytes)
+                }
+                is HashCoder -> {
+                    encoder.encodeByte(value.network.type)
+                    encoder.encodeShort(value.port)
+                    encoder.encodeByteArray(value.bytes)
                 }
                 else -> throw notSupportedEncoderException(encoder, this)
             }

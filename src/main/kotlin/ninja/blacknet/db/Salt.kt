@@ -7,97 +7,38 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.crypto
+package ninja.blacknet.db
 
 import mu.KotlinLogging
 import ninja.blacknet.coding.toHex
-import ninja.blacknet.db.DBKey
-import ninja.blacknet.db.LevelDB
-import ninja.blacknet.util.fromBytes
-import kotlin.random.Random
+import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.nextBytes
+import java.security.SecureRandom
 
 private val logger = KotlinLogging.logger {}
 
 object Salt {
     private val OLD_VERSION_KEY = "ledgerversion".toByteArray()
     private val SALT_KEY = DBKey(11, 0)
-    private val salt: Int
+
+    val salt: ByteArray
 
     init {
         val saltBytes = LevelDB.get(SALT_KEY)
-        salt = if (saltBytes != null) {
-            Int.fromBytes(saltBytes[0], saltBytes[1], saltBytes[2], saltBytes[3])
+        salt = if (saltBytes != null && saltBytes.size == 16) {
+            saltBytes
         } else {
             if (LevelDB.get(OLD_VERSION_KEY) != null)
                 nibbler()
 
-            val bytes = Random.nextBytes(Int.SIZE_BYTES + Hash.SIZE_BYTES)
+            val bytes = SecureRandom().nextBytes(16)
 
             val batch = LevelDB.createWriteBatch()
             batch.put(SALT_KEY, bytes)
             batch.write()
 
-            Int.fromBytes(bytes[0], bytes[1], bytes[2], bytes[3])
-        }
-    }
-
-    /**
-     * Builds a hash code with given [init] builder.
-     */
-    fun hashCode(init: HashCoder.() -> Unit): Int {
-        val coder = HashCoder()
-        coder.init()
-        return coder.result()
-    }
-
-    /**
-     * DSL builder for a hash code.
-     */
-    class HashCoder(private var x: Int) {
-        internal constructor() : this(salt)
-
-        /**
-         * Adds [Byte] value.
-         */
-        fun x(byte: Byte) {
-            f(byte.toInt())
-        }
-
-        /**
-         * Adds [Short] value.
-         */
-        fun x(short: Short) {
-            f(short.toInt())
-        }
-
-        /**
-         * Adds [Int] value.
-         */
-        fun x(int: Int) {
-            f(int)
-        }
-
-        /**
-         * Adds [Long] value.
-         */
-        fun x(long: Long) {
-            f((long / 4294967296L + long).toInt())
-        }
-
-        /**
-         * Adds [ByteArray] value.
-         */
-        fun x(bytes: ByteArray) {
-            for (i in 0 until bytes.size)
-                f(bytes[i].toInt())
-        }
-
-        internal fun result(): Int {
-            return x
-        }
-
-        private fun f(x: Int) {
-            this.x = 31 * this.x + x;
+            bytes
         }
     }
 

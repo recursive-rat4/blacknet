@@ -11,6 +11,7 @@ package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
+import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
@@ -46,7 +47,9 @@ class Block(
     }
 
     private fun contentHash(bytes: ByteArray): Hash {
-        return Blake2b.hasher { x(bytes, HEADER_SIZE_BYTES, bytes.size - HEADER_SIZE_BYTES) }
+        return buildHash {
+            encodeByteArray(bytes, HEADER_SIZE_BYTES, bytes.size - HEADER_SIZE_BYTES)
+        }
     }
 
     companion object {
@@ -57,7 +60,11 @@ class Block(
 
         fun deserialize(bytes: ByteArray): Block = BinaryDecoder(bytes).decode(serializer())
 
-        fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, 0, HEADER_SIZE_BYTES - Signature.SIZE_BYTES) }
+        fun hash(bytes: ByteArray): Hash {
+            return buildHash {
+                encodeByteArray(bytes, 0, HEADER_SIZE_BYTES - Signature.SIZE_BYTES)
+            }
+        }
 
         fun create(previous: Hash, time: Long, generator: PublicKey): Block {
             return Block(VERSION, previous, time, generator, Hash.ZERO, Signature.EMPTY, ArrayList())

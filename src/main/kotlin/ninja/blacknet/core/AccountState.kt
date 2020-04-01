@@ -13,9 +13,11 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
+import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.crypto.Salt
+import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.crypto.encodePublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderException
@@ -34,7 +36,7 @@ class AccountState(
     }
 
     override fun hashCode(): Int {
-        return Salt.hashCode { x(seq); x(stake); x(immature.hashCode()); x(leases.hashCode()); }
+        return hashCode(serializer(), this)
     }
 
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
@@ -103,7 +105,7 @@ class AccountState(
     @Serializable
     class Input(val height: Int, var amount: Long) {
         override fun equals(other: Any?): Boolean = (other is Input) && height == other.height && amount == other.amount
-        override fun hashCode(): Int = Salt.hashCode { x(height); x(amount); }
+        override fun hashCode(): Int = hashCode(serializer(), this)
         fun copy(): Input = Input(height, amount)
         fun isConfirmed(height: Int, confirmations: Int): Boolean = height > this.height + confirmations
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
@@ -114,7 +116,7 @@ class AccountState(
     @Serializable
     class Lease(val publicKey: PublicKey, val height: Int, var amount: Long) {
         override fun equals(other: Any?): Boolean = (other is Lease) && publicKey == other.publicKey && height == other.height && amount == other.amount
-        override fun hashCode(): Int = Salt.hashCode { x(publicKey.bytes); x(height); x(amount); }
+        override fun hashCode(): Int = hashCode(serializer(), this)
         fun copy(): Lease = Lease(publicKey, height, amount)
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
         fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
@@ -172,6 +174,20 @@ class AccountState(
                         encoder.encodeFixedByteArray(value.leases[i].publicKey.bytes)
                         encoder.encodeVarInt(value.leases[i].height)
                         encoder.encodeVarLong(value.leases[i].amount)
+                    }
+                }
+                is HashCoder -> {
+                    encoder.encodeInt(value.seq)
+                    encoder.encodeLong(value.stake)
+                    encoder.encodeInt(value.immature.size)
+                    for (i in 0 until value.immature.size) {
+                        encoder.encodeInt(value.immature[i].height)
+                        encoder.encodeLong(value.immature[i].amount)
+                    }
+                    for (i in 0 until value.leases.size) {
+                        encoder.encodePublicKey(value.leases[i].publicKey)
+                        encoder.encodeInt(value.leases[i].height)
+                        encoder.encodeLong(value.leases[i].amount)
                     }
                 }
                 else -> throw notSupportedEncoderException(encoder, this)

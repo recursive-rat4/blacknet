@@ -18,10 +18,10 @@ import io.ktor.util.error
 import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.core.Staker
-import ninja.blacknet.crypto.Salt
 import ninja.blacknet.db.*
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.io.File
 import java.io.FileInputStream
 import java.security.Security
@@ -33,6 +33,7 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         Security.addProvider(Blake2bProvider())
+        Security.addProvider(BouncyCastleProvider())
 
         Runtime
         Config

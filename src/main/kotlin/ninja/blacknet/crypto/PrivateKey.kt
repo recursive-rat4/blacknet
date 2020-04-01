@@ -9,31 +9,60 @@
 
 package ninja.blacknet.crypto
 
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
+import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.serialization.notSupportedDecoderException
+import ninja.blacknet.serialization.notSupportedEncoderException
 
 /**
- * Ed25519 private key
+ * Represents an Ed25519 private key.
  */
+@Serializable
 class PrivateKey(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is PrivateKey) && bytes.contentEquals(other.bytes)
-    override fun hashCode(): Int = Salt.hashCode { x(bytes) }
+    override fun hashCode(): Int = hashCode(serializer(), this)
     override fun toString(): String = bytes.toHex()
 
     fun toPublicKey(): PublicKey {
         return Ed25519.publicKey(this)
     }
 
+    @Serializer(forClass = PrivateKey::class)
     companion object {
         /**
          * The number of bytes in a binary representation of a [PrivateKey].
          */
-        const val SIZE = 32
+        const val SIZE_BYTES = 32
 
         fun fromString(hex: String?): PrivateKey? {
             if (hex == null) return null
-            val bytes = fromHex(hex, SIZE) ?: return null
+            val bytes = fromHex(hex, SIZE_BYTES) ?: return null
             return PrivateKey(bytes)
         }
+
+        override fun deserialize(decoder: Decoder): PrivateKey {
+            throw notSupportedDecoderException(decoder, this)
+        }
+
+        override fun serialize(encoder: Encoder, value: PrivateKey) {
+            when (encoder) {
+                is HashCoder -> encoder.encodePrivateKey(value)
+                else -> throw notSupportedEncoderException(encoder, this)
+            }
+        }
     }
+}
+
+/**
+ * Encodes a private key value.
+ *
+ * @param value the [PrivateKey] containing the data
+ */
+fun HashCoder.encodePrivateKey(value: PrivateKey) {
+    writer.writeByteArray(value.bytes)
 }

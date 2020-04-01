@@ -17,7 +17,9 @@ import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
-import ninja.blacknet.crypto.Salt
+import ninja.blacknet.crypto.HashCoder
+import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.util.emptyByteArray
 
 /**
@@ -32,7 +34,7 @@ class SerializableByteArray(
     }
 
     override fun hashCode(): Int {
-        return Salt.hashCode { x(array) }
+        return hashCode(serializer(), this)
     }
 
     override fun toString(): String {
@@ -60,6 +62,7 @@ class SerializableByteArray(
         override fun serialize(encoder: Encoder, value: SerializableByteArray) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeByteArray(value.array)
+                is HashCoder -> encoder.encodeByteArray(value.array)
                 is JsonOutput -> encoder.encodeString(value.array.toHex())
                 else -> throw notSupportedEncoderException(encoder, this)
             }

@@ -17,18 +17,19 @@ import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
+import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderException
 import ninja.blacknet.serialization.notSupportedEncoderException
 
 /**
- * Blake2b hash
+ * Represents a BLAKE2b-256 hash.
  */
 @Serializable
 class Hash(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is Hash) && bytes.contentEquals(other.bytes)
-    override fun hashCode(): Int = Salt.hashCode { x(bytes) }
+    override fun hashCode(): Int = hashCode(serializer(), this)
     override fun toString(): String = bytes.toHex()
 
     @Serializer(forClass = Hash::class)
@@ -36,7 +37,7 @@ class Hash(val bytes: ByteArray) {
         /**
          * The number of bytes in a binary representation of a [Hash].
          */
-        const val SIZE_BYTES = Blake2b.DIGEST_SIZE_BYTES
+        const val SIZE_BYTES = 32
         val ZERO = Hash(ByteArray(SIZE_BYTES))
 
         fun fromString(hex: String?): Hash? {
@@ -56,9 +57,19 @@ class Hash(val bytes: ByteArray) {
         override fun serialize(encoder: Encoder, value: Hash) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
+                is HashCoder -> encoder.encodeHash(value)
                 is JsonOutput -> encoder.encodeString(value.bytes.toHex())
                 else -> throw notSupportedEncoderException(encoder, this)
             }
         }
     }
+}
+
+/**
+ * Encodes a hash value.
+ *
+ * @param value the [Hash] containing the data
+ */
+fun HashCoder.encodeHash(value: Hash) {
+    writer.writeByteArray(value.bytes)
 }

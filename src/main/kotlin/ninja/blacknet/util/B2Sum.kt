@@ -22,6 +22,9 @@ object B2Sum {
     fun main(args: Array<String>) {
         val jobs = ArrayList<Job>(args.size)
 
+        val DIGEST_SIZE_BITS = 256
+        val DIGEST_SIZE_BYTES = DIGEST_SIZE_BITS / Byte.SIZE_BITS
+
         args.forEach { arg ->
             val job = Runtime.launch {
                 val file = File(arg)
@@ -31,7 +34,7 @@ object B2Sum {
                     println("B2Sum: ${e.message}")
                     return@launch
                 }
-                val b2 = Blake2b(ninja.blacknet.crypto.Blake2b.DIGEST_SIZE_BITS)
+                val b2 = Blake2b(DIGEST_SIZE_BITS)
                 val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
                 while (true) {
@@ -44,7 +47,7 @@ object B2Sum {
                 }
 
                 stream.close()
-                val bytes = ByteArray(ninja.blacknet.crypto.Blake2b.DIGEST_SIZE_BYTES)
+                val bytes = ByteArray(DIGEST_SIZE_BYTES)
                 b2.digest(bytes, 0)
                 println("${hex(bytes, false)} $arg")
             }

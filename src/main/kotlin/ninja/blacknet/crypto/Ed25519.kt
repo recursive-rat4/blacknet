@@ -23,6 +23,7 @@ import net.i2p.crypto.eddsa.math.ed25519.Ed25519ScalarOps
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec
 import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec
+import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.util.byteArrayOfInts
 import java.security.MessageDigest
 import kotlin.experimental.and
@@ -135,8 +136,8 @@ object Ed25519 {
     }
 
     private fun toCurve25519(privateKey: PrivateKey): ByteArray {
-        val hash = Blake2b.hash(512, privateKey.bytes)
-        val h = hash.copyOf(PrivateKey.SIZE)
+        val hash = buildHash(BLAKE2_B_512) { encodePrivateKey(privateKey) }
+        val h = hash.copyOf(PrivateKey.SIZE_BYTES)
         h[0] = h[0] and 248.toByte()
         h[31] = h[31] and 127
         h[31] = h[31] or 64

@@ -11,6 +11,7 @@ package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
+import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
@@ -48,7 +49,11 @@ class Transaction(
     companion object {
         fun deserialize(bytes: ByteArray): Transaction = BinaryDecoder(bytes).decode(serializer())
 
-        fun hash(bytes: ByteArray): Hash = Blake2b.hasher { x(bytes, Signature.SIZE_BYTES, bytes.size - Signature.SIZE_BYTES) }
+        fun hash(bytes: ByteArray): Hash {
+            return buildHash {
+                encodeByteArray(bytes, Signature.SIZE_BYTES, bytes.size - Signature.SIZE_BYTES)
+            }
+        }
 
         fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
             return Transaction(Signature.EMPTY, from, seq, referenceChain, fee, type, SerializableByteArray(data))

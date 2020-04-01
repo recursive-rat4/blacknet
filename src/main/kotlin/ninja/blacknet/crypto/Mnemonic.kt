@@ -9,6 +9,7 @@
 
 package ninja.blacknet.crypto
 
+import ninja.blacknet.crypto.Blake2b.buildHash
 import java.security.SecureRandom
 
 object Mnemonic {
@@ -51,6 +52,8 @@ object Mnemonic {
     }
 
     private fun hash(string: String): Hash {
-        return Blake2b.hasher { x(string) }
+        return buildHash {
+            encodeString(string)
+        }
     }
 }

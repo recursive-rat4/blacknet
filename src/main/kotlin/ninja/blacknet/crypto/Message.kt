@@ -12,6 +12,7 @@ package ninja.blacknet.crypto
 import kotlinx.serialization.Serializable
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
+import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.Ed25519.x25519
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
@@ -76,8 +77,8 @@ class Message(
 
         fun sharedKey(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {
             val sharedSecret = x25519(privateKey, publicKey)
-            return Blake2b.hasher {
-                x(sharedSecret)
+            return buildHash {
+                encodeByteArray(sharedSecret)
             }.bytes
         }
 
@@ -90,9 +91,9 @@ class Message(
         }
 
         private fun hash(message: String): Hash {
-            return Blake2b.hasher {
-                x(SIGN_MAGIC)
-                x(message)
+            return buildHash {
+                encodeString(SIGN_MAGIC)
+                encodeString(message)
             }
         }
     }

@@ -12,6 +12,7 @@ package ninja.blacknet.crypto
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Invalid
 import ninja.blacknet.core.Status
+import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.time.SystemClock
@@ -29,9 +30,9 @@ object PoS {
     }
 
     fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
-        return Blake2b.hasher {
-            x(nxtrng)
-            x(generator)
+        return buildHash {
+            encodeHash(nxtrng)
+            encodePublicKey(generator)
         }
     }
 
@@ -42,17 +43,16 @@ object PoS {
         if (time % TIME_SLOT != 0L) {
             return Invalid("Invalid time slot")
         }
-        val hash = Blake2b.hasher {
-            x(nxtrng)
-            x(prevTime)
-            x(generator)
-            x(time)
+        val hash = buildHash {
+            encodeHash(nxtrng)
+            encodeLong(prevTime)
+            encodePublicKey(generator)
+            encodeLong(time)
         }
-        val valid = BigInt(hash) < difficulty * stake
-        return if (valid)
+        return if (BigInt(hash) < difficulty * stake)
             Accepted
         else
-            Invalid("Invalid proof of stake hash")
+            Invalid("Proof of stake doesn't match difficulty")
     }
 
     fun isTooFarInFuture(time: Long): Boolean {

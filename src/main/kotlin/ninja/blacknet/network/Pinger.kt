@@ -10,7 +10,7 @@
 package ninja.blacknet.network
 
 import mu.KotlinLogging
-import ninja.blacknet.crypto.Blake2b
+import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.packet.Ping
 import ninja.blacknet.packet.Pong
 import ninja.blacknet.time.SystemClock
@@ -84,9 +84,9 @@ object Pinger {
     }
 
     private fun solve(challenge: Int): Int {
-        val hash = Blake2b.hasher {
-            x(Node.magic)
-            x(challenge)
+        val hash = buildHash {
+            encodeInt(Node.magic)
+            encodeInt(challenge)
         }
         return Int.fromBytes(hash.bytes[0], hash.bytes[1], hash.bytes[2], hash.bytes[3])
     }

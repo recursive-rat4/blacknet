@@ -17,18 +17,19 @@ import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
+import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderException
 import ninja.blacknet.serialization.notSupportedEncoderException
 
 /**
- * Ed25519 signature
+ * Represents an Ed25519 signature.
  */
 @Serializable
 class Signature(val bytes: ByteArray) {
     override fun equals(other: Any?): Boolean = (other is Signature) && bytes.contentEquals(other.bytes)
-    override fun hashCode(): Int = Salt.hashCode { x(bytes) }
+    override fun hashCode(): Int = hashCode(serializer(), this)
     override fun toString(): String = bytes.toHex()
 
     @Serializer(forClass = Signature::class)
@@ -56,6 +57,7 @@ class Signature(val bytes: ByteArray) {
         override fun serialize(encoder: Encoder, value: Signature) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
+                is HashCoder -> encoder.encodeByteArray(value.bytes)
                 is JsonOutput -> encoder.encodeString(value.bytes.toHex())
                 else -> throw notSupportedEncoderException(encoder, this)
             }

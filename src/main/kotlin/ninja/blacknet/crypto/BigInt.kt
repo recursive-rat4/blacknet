@@ -16,6 +16,7 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
+import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderException
@@ -45,7 +46,7 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
     infix fun shr(n: Int): BigInt = BigInt(int.shiftRight(n))
 
     override fun equals(other: Any?): Boolean = (other is BigInt) && int == other.int
-    override fun hashCode(): Int = Salt.hashCode { x(int.hashCode()) }
+    override fun hashCode(): Int = hashCode(serializer(), this)
     override fun toString(): String = int.toString()
 
     fun toByteArray(): ByteArray = int.toByteArray()
@@ -73,6 +74,7 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
         override fun serialize(encoder: Encoder, value: BigInt) {
             when (encoder) {
                 is BinaryEncoder -> encoder.encodeByteArray(value.toByteArray())
+                is HashCoder -> encoder.encodeByteArray(value.toByteArray())
                 is JsonOutput -> encoder.encodeString(value.int.toString())
                 else -> throw notSupportedEncoderException(encoder, this)
             }

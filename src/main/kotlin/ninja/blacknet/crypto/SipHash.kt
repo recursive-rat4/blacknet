@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Pavel Vasin
+ * Copyright (c) 2018-2020 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,25 +9,29 @@
 
 package ninja.blacknet.crypto
 
-import com.rfksystems.blake2b.Blake2b.BLAKE2_B_256
+import io.ktor.utils.io.bits.Memory
+import io.ktor.utils.io.bits.loadIntAt
+import io.ktor.utils.io.bits.of
 import io.ktor.utils.io.pool.DefaultPool
+import kotlinx.serialization.SerializationStrategy
 import ninja.blacknet.Runtime
+import ninja.blacknet.db.Salt
 
 /**
- * BLAKE2b-256 hash function.
+ * SipHash-2-4 keyed hash function.
  */
-object Blake2b {
+object SipHash {
     /**
-     * Builds a hash value with the given [input] builder.
+     * Computes a hash code value with given serializer and value.
      *
-     * @param input the initialization function with the [HashCoder] receiver
-     * @return the built [Hash] value
+     * @param serializer the serialization strategy
+     * @param value the object serializable to [HashCoder]
      */
-    inline fun buildHash(input: HashCoder.() -> Unit): Hash {
+    fun <T> hashCode(serializer: SerializationStrategy<T>, value: T): Int {
         val coder = pool.borrow()
         return try {
-            coder.input()
-            Hash(coder.writer.finish())
+            serializer.serialize(coder, value)
+            Memory.of(coder.writer.finish()).loadIntAt(4)
         } catch (e: Throwable) {
             coder.writer.reset()
             throw e
@@ -36,9 +40,13 @@ object Blake2b {
         }
     }
 
-    val pool = object : DefaultPool<HashCoder>(Runtime.availableProcessors) {
+    private val pool = object : DefaultPool<HashCoder>(Runtime.availableProcessors) {
         override fun produceInstance(): HashCoder {
-            return HashCoder(HashWriterJvm(BLAKE2_B_256))
+            return HashCoder(
+                    KeyedHashWriterJvm("SIPHASH-2-4", Salt.salt),
+                    charset = null,
+                    allowFloatingPointValues = true
+            )
         }
 
         override fun clearInstance(instance: HashCoder): HashCoder {

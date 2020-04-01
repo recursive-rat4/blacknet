@@ -16,8 +16,9 @@ import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
 import ninja.blacknet.Config
 import ninja.blacknet.Config.torcontrol
+import ninja.blacknet.crypto.HashCoder.Companion.buildHash
+import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.util.emptyByteArray
-import org.bouncycastle.crypto.digests.SHA3Digest
 import java.io.File
 
 private val logger = KotlinLogging.logger {}
@@ -75,16 +76,14 @@ object TorController {
         }
     }
 
-    private val CHECKSUM_CONST = ".onion checksum".toByteArray()
+    private const val CHECKSUM_CONST = ".onion checksum"
     const val V3: Byte = 3
 
     fun checksum(bytes: ByteArray, version: Byte): ByteArray {
-        val digest = SHA3Digest(256)
-        digest.update(CHECKSUM_CONST, 0, CHECKSUM_CONST.size)
-        digest.update(bytes, 0, bytes.size)
-        digest.update(version)
-        val result = ByteArray(32)
-        digest.doFinal(result, 0)
-        return result.copyOf(2)
+        return buildHash("SHA3-256") {
+            encodeString(CHECKSUM_CONST)
+            encodeByteArray(bytes)
+            encodeByte(version)
+        }.copyOf(2)
     }
 }

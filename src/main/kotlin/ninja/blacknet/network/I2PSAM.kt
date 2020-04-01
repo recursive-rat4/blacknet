@@ -25,7 +25,8 @@ import ninja.blacknet.Config.i2psamhost
 import ninja.blacknet.Config.i2psamport
 import ninja.blacknet.Runtime
 import ninja.blacknet.coding.Base64
-import ninja.blacknet.crypto.SHA256
+import ninja.blacknet.crypto.HashCoder.Companion.buildHash
+import ninja.blacknet.crypto.encodeByteArray
 import java.io.File
 import kotlin.random.Random
 
@@ -156,7 +157,10 @@ object I2PSAM {
         return answer
     }
 
-    private fun hash(destination: String) = SHA256.hash(Base64.decode(destination, i2p = true)!!)
+    private fun hash(destination: String): ByteArray {
+        val decoded = Base64.decode(destination, i2p = true)!!
+        return buildHash("SHA-256") { encodeByteArray(decoded) }
+    }
 
     private fun generateId(): String {
         val size = 8

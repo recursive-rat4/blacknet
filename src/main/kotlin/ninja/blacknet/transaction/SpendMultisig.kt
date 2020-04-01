@@ -16,6 +16,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -61,7 +62,7 @@ class SpendMultisig(
     private fun hash(): Hash {
         val copy = SpendMultisig(id, amounts, ArrayList())
         val bytes = copy.serialize()
-        return Blake2b.hasher { x(bytes) }
+        return buildHash { encodeByteArray(bytes) }
     }
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {

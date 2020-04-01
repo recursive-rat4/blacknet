@@ -10,7 +10,7 @@
 package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.Salt
+import ninja.blacknet.crypto.SipHash.hashCode
 
 /**
  * 树车年轮「樹車年輪」
@@ -18,6 +18,6 @@ import ninja.blacknet.crypto.Salt
 @Serializable
 class VehicleRing(private val int: Int) {
     override fun equals(other: Any?): Boolean = (other is VehicleRing) && int == other.int
-    override fun hashCode(): Int = Salt.hashCode { x(int) }
+    override fun hashCode(): Int = hashCode(serializer(), this)
     override fun toString(): String = int.toString()
 }
