@@ -33,7 +33,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerializationStrategy
-import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
 import ninja.blacknet.api.v1.APIV1
@@ -45,6 +44,7 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
+import ninja.blacknet.htmlDir
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
@@ -178,7 +178,7 @@ fun Application.APIServer() {
         }
 
         static("static") {
-            files(Config.htmlDir)
+            files(htmlDir)
         }
 
         dataBase()
@@ -195,13 +195,13 @@ fun Application.APIServer() {
 }
 
 /**
- * Responds to a client with an [obj]ect, using provided [serializer] and the [ContentType.Application.Json].
+ * Responds to a client with a [value], using provided [serializer] and the [ContentType.Application.Json].
  *
  * @param serializer the serialization strategy
- * @param obj the object serializable to JSON
+ * @param value the object serializable to JSON
  */
-suspend fun <T> ApplicationCall.respondJson(serializer: SerializationStrategy<T>, obj: T) {
+suspend fun <T> ApplicationCall.respondJson(serializer: SerializationStrategy<T>, value: T) {
     respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-        Json.stringify(serializer, obj)
+        Json.stringify(serializer, value)
     }
 }

@@ -12,11 +12,11 @@ package ninja.blacknet.db
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
-import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
+import ninja.blacknet.dataDir
 import ninja.blacknet.db.LedgerDB.forkV2
 import java.util.Collections
 
@@ -126,7 +126,7 @@ object BlockDB {
     }
 
     fun warnings(): List<String> {
-        return if (Config.dataDir.getUsableSpace() > MIN_DISK_SPACE)
+        return if (dataDir.getUsableSpace() > MIN_DISK_SPACE)
             emptyList()
         else
             listOf("Disk space is low!")

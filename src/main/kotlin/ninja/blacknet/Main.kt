@@ -38,7 +38,7 @@ object Main {
         Runtime
         Config
 
-        val inStream = FileInputStream(File(Config.dir, "logging.properties"))
+        val inStream = FileInputStream(File(configDir, "logging.properties"))
         LogManager.getLogManager().readConfiguration(inStream)
         inStream.close()
 
@@ -62,7 +62,7 @@ object Main {
 
         if (Config.portable())
             logger.info("Portable mode")
-        logger.info("Using data directory ${Config.dataDir.getAbsolutePath()}")
+        logger.info("Using data directory ${dataDir.absolutePath}")
 
         LevelDB
         Salt
@@ -91,12 +91,12 @@ object Main {
          */
         if (Config.APIenabled()) {
             if (Config.regTest)
-                embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "regtest.conf")))).start(wait = false)
+                embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(configDir, "regtest.conf")))).start(wait = false)
             else
-                embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "rpc.conf")))).start(wait = false)
+                embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(configDir, "rpc.conf")))).start(wait = false)
         }
         if (Config.publicAPI())
-            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(Config.dir, "ktor.conf")))).start(wait = false)
+            embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(configDir, "ktor.conf")))).start(wait = false)
 
         ChainFetcher.run()
     }

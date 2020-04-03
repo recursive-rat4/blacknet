@@ -9,13 +9,13 @@
 
 package ninja.blacknet.util
 
-import ninja.blacknet.Config
+import ninja.blacknet.dataDir
 import java.io.File
 import java.util.logging.FileHandler
 import java.util.logging.SimpleFormatter
 
 class FileHandler : FileHandler(
-        File(Config.dataDir, "debug.log").getPath(),
+        File(dataDir, "debug.log").getPath(),
         5000000,
         2,
         true

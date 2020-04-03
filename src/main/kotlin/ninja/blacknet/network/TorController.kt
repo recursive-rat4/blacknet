@@ -18,6 +18,7 @@ import ninja.blacknet.Config
 import ninja.blacknet.Config.torcontrol
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
+import ninja.blacknet.dataDir
 import ninja.blacknet.util.emptyByteArray
 import java.io.File
 
@@ -28,10 +29,10 @@ object TorController {
 
     init {
         try {
-            val file = File(Config.dataDir, "privateKey.tor")
+            val file = File(dataDir, "privateKey.tor")
             val lastModified = file.lastModified()
-            if (lastModified != 0L && lastModified < 1566666666000) {
-                if (file.renameTo(File(Config.dataDir, "privateKey.$lastModified.tor")))
+            if (lastModified != 0L && lastModified < 1566666789000) {
+                if (file.renameTo(File(dataDir, "privateKey.$lastModified.tor")))
                     logger.info("Renamed private key file to privateKey.$lastModified.tor")
             } else {
                 privateKey = file.readText()
@@ -70,7 +71,7 @@ object TorController {
         privateKey = privKey
         logger.info("Saving Tor private key")
         try {
-            File(Config.dataDir, "privateKey.tor").writeText(privateKey)
+            File(dataDir, "privateKey.tor").writeText(privateKey)
         } catch (e: Throwable) {
             logger.error(e)
         }

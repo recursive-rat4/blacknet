@@ -16,11 +16,11 @@ import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
 import kotlinx.coroutines.sync.withLock
-import ninja.blacknet.Config
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
+import ninja.blacknet.dataDir
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LevelDB
@@ -109,7 +109,7 @@ fun Route.dataBase() {
         if (checkpoint == Hash.ZERO)
             return@get call.respond(HttpStatusCode.BadRequest, "Not synchronized")
 
-        val file = File(Config.dataDir, "bootstrap.dat.new")
+        val file = File(dataDir, "bootstrap.dat.new")
         val stream = file.outputStream().buffered().data()
 
         var hash = Hash.ZERO

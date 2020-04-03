@@ -22,6 +22,7 @@ import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.dataDir
 import ninja.blacknet.network.Node
 import ninja.blacknet.packet.UnfilteredInvList
 import ninja.blacknet.serialization.*
@@ -580,7 +581,7 @@ object WalletDB {
     }
 
     private fun clear(batch: LevelDB.WriteBatch) {
-        val backupDir = File(Config.dataDir, "walletdb.backup.${SystemClock.seconds}")
+        val backupDir = File(dataDir, "walletdb.backup.${SystemClock.seconds}")
         backupDir.mkdir()
         logger.info("Saving backup to $backupDir")
         wallets.clear()

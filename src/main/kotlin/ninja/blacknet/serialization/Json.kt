@@ -27,8 +27,8 @@ object Json {
             )
     )
 
-    fun <T> stringify(serializer: SerializationStrategy<T>, obj: T): String = instance.stringify(serializer, obj)
-    fun <T : Any?> toJson(serializer: SerializationStrategy<T>, obj: T): JsonElement = instance.toJson(serializer, obj)
+    fun <T> stringify(serializer: SerializationStrategy<T>, value: T): String = instance.stringify(serializer, value)
+    fun <T : Any?> toJson(serializer: SerializationStrategy<T>, value: T): JsonElement = instance.toJson(serializer, value)
     fun <T> parse(deserializer: DeserializationStrategy<T>, string: String): T = instance.parse(deserializer, string)
     fun parseJson(string: String): JsonElement = instance.parseJson(string)
     fun <T> fromJson(deserializer: DeserializationStrategy<T>, json: JsonElement): T = instance.fromJson(deserializer, json)

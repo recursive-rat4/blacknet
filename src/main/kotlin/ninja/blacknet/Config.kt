@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2018-2019 Pavel Vasin
- * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -16,10 +15,7 @@ import ninja.blacknet.network.toPort
 import java.io.File
 
 object Config {
-    val dir: File = File(path("config"))
-    val htmlDir: String = path("html")
-
-    private val config = ConfigurationProperties.fromFile(File(dir, "blacknet.conf"))
+    private val config = ConfigurationProperties.fromFile(File(configDir, "blacknet.conf"))
 
     val mintxfee by stringType
     val ipv4 by booleanType
@@ -148,25 +144,6 @@ object Config {
             128 * MiB
     }()
 
-    val dataDir: File = {
-        var dir = if (portable()) {
-            File("db")
-        } else if (!contains(datadir)) {
-            File(System.getProperty("user.home"), when {
-                Runtime.macOS -> "Library/Application Support/Blacknet"
-                Runtime.windowsOS -> "AppData\\Roaming\\Blacknet"
-                else -> ".blacknet"
-            })
-        } else {
-            File(get(datadir))
-        }
-        if (regTest) {
-            dir = File(dir, "regtest")
-        }
-        dir.mkdirs()
-        dir
-    }()
-
     private const val MiB = 1024 * 1024
 
     init {
@@ -175,16 +152,5 @@ object Config {
                     get(runtime.debugcoroutines)
                 else
                     false
-    }
-
-    private fun path(path: String): String {
-        if (Runtime.windowsOS) {
-            val file = File(path)
-            if (file.isFile()) {
-                // git symlink
-                return file.readText()
-            }
-        }
-        return path
     }
 }

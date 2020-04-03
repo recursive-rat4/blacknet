@@ -13,6 +13,7 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Config.dbcache
 import ninja.blacknet.Runtime
+import ninja.blacknet.dataDir
 import org.iq80.leveldb.*
 import java.io.File
 
@@ -20,7 +21,7 @@ private val logger = KotlinLogging.logger {}
 
 object LevelDB {
     private val factory: DBFactory = loadFactory()
-    private val db: DB = factory.open(File(Config.dataDir, "leveldb"), options())
+    private val db: DB = factory.open(File(dataDir, "leveldb"), options())
 
     internal fun iterator(): DBIterator {
         return db.iterator()

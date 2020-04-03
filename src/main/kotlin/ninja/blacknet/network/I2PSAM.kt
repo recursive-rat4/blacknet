@@ -27,6 +27,7 @@ import ninja.blacknet.Runtime
 import ninja.blacknet.coding.Base64
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
+import ninja.blacknet.dataDir
 import java.io.File
 import kotlin.random.Random
 
@@ -46,10 +47,10 @@ object I2PSAM {
             sam = null
 
         try {
-            val file = File(Config.dataDir, "privateKey.i2p")
+            val file = File(dataDir, "privateKey.i2p")
             val lastModified = file.lastModified()
             if (lastModified != 0L && lastModified < 1550000000000) {
-                if (file.renameTo(File(Config.dataDir, "privateKey.$lastModified.i2p")))
+                if (file.renameTo(File(dataDir, "privateKey.$lastModified.i2p")))
                     logger.info("Renamed private key file to privateKey.$lastModified.i2p")
             } else {
                 privateKey = file.readText()
@@ -222,7 +223,7 @@ object I2PSAM {
         privateKey = dest
         logger.info("Saving I2P private key")
         try {
-            File(Config.dataDir, "privateKey.i2p").writeText(privateKey)
+            File(dataDir, "privateKey.i2p").writeText(privateKey)
         } catch (e: Throwable) {
             logger.error(e)
         }

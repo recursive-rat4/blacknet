@@ -24,11 +24,11 @@ import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
-import ninja.blacknet.Config
 import ninja.blacknet.api.*
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.dataDir
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
@@ -185,7 +185,7 @@ fun Route.APIV1() {
         if (checkpoint == Hash.ZERO)
             return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
 
-        val file = File(Config.dataDir, "bootstrap.dat.new")
+        val file = File(dataDir, "bootstrap.dat.new")
         val stream = file.outputStream().buffered().data()
 
         var hash = Hash.ZERO

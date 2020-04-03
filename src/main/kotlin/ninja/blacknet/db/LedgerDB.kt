@@ -19,6 +19,7 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.dataDir
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderException
@@ -197,7 +198,7 @@ object LedgerDB {
             loadGenesisState()
         }
 
-        val bootstrap = File(Config.dataDir, "bootstrap.dat")
+        val bootstrap = File(dataDir, "bootstrap.dat")
         if (bootstrap.exists()) {
             runBlocking {
                 logger.info("Found bootstrap")
@@ -227,7 +228,7 @@ object LedgerDB {
                     stream.close()
                 }
 
-                val f = File(Config.dataDir, "bootstrap.dat.old")
+                val f = File(dataDir, "bootstrap.dat.old")
                 f.delete()
                 bootstrap.renameTo(f)
 
