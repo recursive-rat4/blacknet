@@ -14,10 +14,7 @@ import org.testng.annotations.Test
 
 class Base16Test {
     @Test
-    fun test() {
-        assertEquals(hex(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), false), "01020A0B")
-        assertEquals(hex(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), true), "01020a0b")
-
+    fun decode() {
         assertEquals(fromHex(""), ByteArray(0))
         assertEquals(fromHex("01020A0B"), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
         assertEquals(fromHex("01020a0b"), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
@@ -29,5 +26,11 @@ class Base16Test {
         assertNull(fromHex("01020A0B", 5))
         assertNull(fromHex("01020A0B", 3))
         assertNull(fromHex("01020A0B", 2))
+    }
+
+    @Test
+    fun encode() {
+        assertEquals(hex(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), false), "01020A0B")
+        assertEquals(hex(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), true), "01020a0b")
     }
 }
