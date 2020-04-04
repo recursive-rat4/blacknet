@@ -18,7 +18,7 @@ version = "0.2.6"
 
 buildscript {
     dependencies {
-        "classpath"("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.3")
+        "classpath"("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.2")
         "classpath"("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
     }
 }
