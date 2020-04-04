@@ -18,6 +18,7 @@ version = "0.2.6"
 
 buildscript {
     dependencies {
+        "classpath"("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.3")
         "classpath"("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
     }
 }
@@ -29,6 +30,8 @@ plugins {
     distribution
     id("com.github.hierynomus.license-report") version "0.15.0"
 }
+
+apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
 
 repositories {
     jcenter()

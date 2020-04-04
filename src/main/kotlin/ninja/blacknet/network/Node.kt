@@ -14,6 +14,7 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
@@ -40,7 +41,6 @@ import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import java.math.BigDecimal
 import java.net.InetSocketAddress
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
@@ -55,7 +55,7 @@ object Node {
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
     var minTxFee = parseAmount(Config[mintxfee])
-    private val nextPeerId = AtomicLong(1)
+    private val nextPeerId = atomic(1L)
 
     init {
         if (!Config.regTest) {

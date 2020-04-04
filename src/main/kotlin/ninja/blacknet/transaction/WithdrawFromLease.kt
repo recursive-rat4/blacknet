@@ -19,6 +19,9 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
+/**
+ * 提款金额
+ */
 @Serializable
 class WithdrawFromLease(
         val withdraw: Long,

@@ -18,6 +18,9 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
+/**
+ * 取消合约
+ */
 @Serializable
 class CancelLease(
         val amount: Long,

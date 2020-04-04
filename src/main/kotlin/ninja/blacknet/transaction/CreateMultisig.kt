@@ -20,6 +20,9 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
 
+/**
+ * 创建合约
+ */
 @Serializable
 class CreateMultisig(
         val n: Byte,

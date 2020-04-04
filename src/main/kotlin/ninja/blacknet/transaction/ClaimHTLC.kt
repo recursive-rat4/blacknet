@@ -18,6 +18,9 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 
+/**
+ * 宣称合约
+ */
 @Serializable
 class ClaimHTLC(
         val id: Hash,

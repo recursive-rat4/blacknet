@@ -19,6 +19,9 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
+/**
+ * 创建合约
+ */
 @Serializable
 class Lease(
         val amount: Long,

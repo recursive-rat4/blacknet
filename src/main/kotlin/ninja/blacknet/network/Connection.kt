@@ -14,6 +14,7 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.ByteReadPacket
 import io.ktor.utils.io.core.readInt
 import io.ktor.utils.io.errors.IOException
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
@@ -31,8 +32,6 @@ import ninja.blacknet.time.milliseconds.MilliSeconds
 import ninja.blacknet.time.milliseconds.minutes
 import ninja.blacknet.time.milliseconds.nextTime
 import ninja.blacknet.util.SynchronizedArrayList
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
@@ -49,8 +48,8 @@ class Connection(
     val job = Job()
     override val coroutineContext: CoroutineContext = Runtime.coroutineContext + job
 
-    private val closed = AtomicBoolean()
-    private val dosScore = AtomicInteger(0)
+    private val closed = atomic(false)
+    private val dosScore = atomic(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     private val inventoryToSend = SynchronizedArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = SystemClock.seconds
@@ -206,7 +205,7 @@ class Connection(
     }
 
     fun dosScore(): Int {
-        return dosScore.get()
+        return dosScore.value
     }
 
     fun close() {
@@ -236,7 +235,7 @@ class Connection(
     }
 
     fun isClosed(): Boolean {
-        return closed.get()
+        return closed.value
     }
 
     fun debugName(): String {

@@ -22,6 +22,9 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 
+/**
+ * 创建合约
+ */
 @Serializable
 class CreateHTLC(
         val lot: Long,

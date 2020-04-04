@@ -18,6 +18,9 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
+/**
+ * 偿还合约
+ */
 @Serializable
 class RefundHTLC(
         val id: Hash

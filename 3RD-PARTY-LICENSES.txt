@@ -6,6 +6,9 @@ Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 Ktor https://ktor.io/ is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
+kotlinx.atomicfu library https://github.com/Kotlin/kotlinx.atomicfu is licensed under the
+Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
 kotlinx.coroutines library https://github.com/Kotlin/kotlinx.coroutines is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
