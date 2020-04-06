@@ -9,148 +9,67 @@
 
 package ninja.blacknet
 
-import com.natpryce.konfig.*
+import com.typesafe.config.ConfigFactory
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.config.ConfigParser
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.network.toPort
 import java.io.File
 
-object Config {
-    private val config = ConfigurationProperties.fromFile(File(configDir, "blacknet.conf"))
+@Serializable
+class Config(
+        val mintxfee: String,
+        val ipv4: Boolean,
+        val ipv6: Boolean,
+        val listen: Boolean,
+        val port: Int,
+        val tor: Boolean,
+        val i2p: Boolean,
+        val upnp: Boolean,
+        val incomingconnections: Int,
+        val outgoingconnections: Int,
+        val proxyhost: String? = null,
+        val proxyport: Int? = null,
+        val torhost: String? = null,
+        val torport: Int? = null,
+        val torcontrol: Int,
+        val i2psamhost: String? = null,
+        val i2psamport: Int? = null,
+        val dbcache: Size,
+        var mnemonics: List<String>? = null,
+        val softblocksizelimit: Size = Size(PoS.MAX_BLOCK_SIZE),
+        val txpoolsize: Size = Size(128 * 1024 * 1024),
+        val portable: Boolean = false,
+        val datadir: String? = null,
+        val logips: Boolean = false,
+        val lowercasehex: Boolean = false,
+        val regtest: Boolean = false,
+        val debugcoroutines: Boolean = false,
 
-    val mintxfee by stringType
-    val ipv4 by booleanType
-    val ipv6 by booleanType
-    val listen by booleanType
-    val port by intType
-    val tor by booleanType
-    val i2p by booleanType
-    val upnp by booleanType
-    val incomingconnections by intType
-    val outgoingconnections by intType
-    val proxyhost by stringType
-    val proxyport by intType
-    val torhost by stringType
-    val torport by intType
-    val torcontrol by intType
-    val i2psamhost by stringType
-    val i2psamport by intType
-    val dbcache by intType
-    val mnemonics by listType(stringType)
-    val softblocksizelimit by intType
-    val txpoolsize by intType
-    val portable by booleanType
-    val datadir by stringType
-    val logips by booleanType
-    val lowercasehex by booleanType
-    val regtest by booleanType
+        val apiserver: APIServerConfig = APIServerConfig(),
+        val wallet: WalletConfig = WalletConfig(),
 
-    object apiserver : PropertyGroup() {
-        val enabled by booleanType
-        val jsonindented by booleanType
-        val publicserver by booleanType
-    }
-
-    object runtime : PropertyGroup() {
-        val debugcoroutines by booleanType
-    }
-
-    object wallet : PropertyGroup() {
-        val seqthreshold by intType
-    }
-
-    operator fun <T> get(key: Key<T>): T = config[key]
-    fun <T> contains(key: Key<T>): Boolean = config.contains(key)
-
-    val disabledIPv4 = !config[ipv4]
-    val disabledIPv6 = !config[ipv6]
-    val disabledTOR = !config[tor]
-    val disabledI2P = !config[i2p]
-
-    fun jsonIndented(): Boolean {
-        if (contains(apiserver.jsonindented))
-            return get(apiserver.jsonindented)
-        else
-            return false
-    }
-
-    fun portable(): Boolean {
-        if (contains(portable))
-            return get(portable)
-        else
-            return false
-    }
-
-    fun APIenabled(): Boolean {
-        if (contains(apiserver.enabled))
-            return get(apiserver.enabled)
-        else
-            return true
-    }
-
-    fun publicAPI(): Boolean {
-        if (contains(apiserver.publicserver))
-            return get(apiserver.publicserver)
-        else
-            return false
-    }
-
-    var debugCoroutines: Boolean
-
-    val netPort: Short = config[port].toPort()
-    val netListen: Boolean = config[listen]
-
-    val incomingConnections: Int = config[incomingconnections]
-    val outgoingConnections: Int = config[outgoingconnections]
-
-    val logIPs: Boolean = {
-        if (contains(logips))
-            get(logips)
-        else
-            false
-    }()
-
-    val lowerCaseHex: Boolean = {
-        if (contains(lowercasehex))
-            get(lowercasehex)
-        else
-            false
-    }()
-
-    val regTest: Boolean = {
-        if (contains(regtest))
-            get(regtest)
-        else
-            false
-    }()
-
-    val seqThreshold: Int = {
-        if (contains(wallet.seqthreshold))
-            get(wallet.seqthreshold)
-        else
-            Int.MAX_VALUE - 1
-    }()
-
-    val softBlockSizeLimit: Int = {
-        if (contains(softblocksizelimit))
-            get(softblocksizelimit)
-        else
-            PoS.MAX_BLOCK_SIZE
-    }()
-
-    val txPoolSize: Int = {
-        if (contains(txpoolsize))
-            get(txpoolsize) * MiB
-        else
-            128 * MiB
-    }()
-
-    private const val MiB = 1024 * 1024
-
-    init {
-        debugCoroutines =
-                if (contains(runtime.debugcoroutines))
-                    get(runtime.debugcoroutines)
-                else
-                    false
+        val unit: Unit? // 游戏结束
+         = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
+) {
+    companion object {
+        val instance = ConfigParser.parse(ConfigFactory.parseFile(File(configDir, "blacknet.conf")), serializer())
     }
 }
+
+@Serializable
+class APIServerConfig(
+        val enabled: Boolean = true,
+        val jsonindented: Boolean = false,
+        val publicserver: Boolean = false,
+
+        val unit: Unit? // 游戏结束
+         = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
+)
+
+@Serializable
+class WalletConfig(
+        val seqthreshold: Int = Int.MAX_VALUE - 1,
+
+        val unit: Unit? // 游戏结束
+         = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
+)

@@ -26,7 +26,7 @@ object Address {
     const val HTLC: Byte = 1
     const val MULTISIG: Byte = 2
 
-    private val HRP = if (Config.regTest) HRP_REGTEST else HRP_MAINNET
+    private val HRP = if (Config.instance.regtest) HRP_REGTEST else HRP_MAINNET
 
     fun encode(publicKey: PublicKey): String {
         val bytes = publicKey.bytes

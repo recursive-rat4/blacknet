@@ -14,7 +14,6 @@ import com.rfksystems.blake2b.security.Blake2bProvider
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
-import io.ktor.util.error
 import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.core.Staker
@@ -36,7 +35,7 @@ object Main {
         Security.addProvider(BouncyCastleProvider())
 
         Runtime
-        Config
+        Config.instance
 
         val inStream = FileInputStream(File(configDir, "logging.properties"))
         LogManager.getLogManager().readConfiguration(inStream)
@@ -50,17 +49,15 @@ object Main {
         if (!Runtime.windowsOS && System.getProperty("user.name") == "root")
             logger.warn("Running as root")
 
-        if (Config.debugCoroutines) {
-            logger.warn("Installing debug probes, node may work slower")
-            try {
-                DebugProbes.install()
-            } catch (e: Throwable) {
-                logger.error(e)
-                Config.debugCoroutines = false
-            }
+        if (Config.instance.debugcoroutines) {
+            logger.warn("Installing debug probes...")
+            if (DebugProbes.install() == kotlin.Unit)
+                logger.warn("Node may work significally slower")
+            else
+                logger.warn("Achtung")
         }
 
-        if (Config.portable())
+        if (Config.instance.portable)
             logger.info("Portable mode")
         logger.info("Using data directory ${dataDir.absolutePath}")
 
@@ -89,13 +86,13 @@ object Main {
          * https://ktor.io/servers/engine.html
          *
          */
-        if (Config.APIenabled()) {
-            if (Config.regTest)
+        if (Config.instance.apiserver.enabled) {
+            if (Config.instance.regtest)
                 embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(configDir, "regtest.conf")))).start(wait = false)
             else
                 embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(configDir, "rpc.conf")))).start(wait = false)
         }
-        if (Config.publicAPI())
+        if (Config.instance.apiserver.publicserver)
             embeddedServer(CIO, commandLineEnvironment(arrayOf("-config=" + File(configDir, "ktor.conf")))).start(wait = false)
 
         ChainFetcher.run()

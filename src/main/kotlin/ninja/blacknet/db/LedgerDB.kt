@@ -242,7 +242,7 @@ object LedgerDB {
     }
 
     fun forkV2(): Boolean {
-        return if (Config.regTest)
+        return if (Config.instance.regtest)
             true
         else
             state.forkV2 == (PoS.MATURITY + 1).toShort()

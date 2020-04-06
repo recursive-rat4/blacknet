@@ -15,7 +15,6 @@ import net.freehaven.tor.control.TorControlCommands
 import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
 import ninja.blacknet.Config
-import ninja.blacknet.Config.torcontrol
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.dataDir
@@ -43,18 +42,18 @@ object TorController {
 
     fun listen(): Pair<Thread, Address> {
         //TODO configure host
-        val s = java.net.Socket("localhost", Config[torcontrol].toPort().toPort())
+        val s = java.net.Socket("localhost", Config.instance.torcontrol.toPort().toPort())
         val tor = TorControlConnection(s)
         val thread = tor.launchThread(true)
         //TODO cookie, password
         tor.authenticate(emptyByteArray())
 
         val request = HashMap<Int, String?>()
-        request[Config.netPort.toPort()] = null
+        request[Config.instance.port.toPort().toPort()] = null
 
         val response = tor.addOnion(privateKey, request)
         val string = response[TorControlCommands.HS_ADDRESS] ?: throw TorControlError("Failed to get address")
-        val address = Network.parse(string + Network.TOR_SUFFIX, Config.netPort) ?: throw TorControlError("Failed to parse address $string")
+        val address = Network.parse(string + Network.TOR_SUFFIX, Config.instance.port.toPort()) ?: throw TorControlError("Failed to parse address $string")
 
         when (address.network) {
             Network.TORv2, Network.TORv3 -> Unit

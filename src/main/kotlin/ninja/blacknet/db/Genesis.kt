@@ -24,7 +24,7 @@ object Genesis {
     val balances by lazy {
         val map = HashMap<PublicKey, Long>()
 
-        if (Config.regTest) {
+        if (Config.instance.regtest) {
             map.put(RegTest.publicKey1, 1000000000 * PoS.COIN)
             map.put(RegTest.publicKey2, 10101010 * PoS.COIN)
         } else {

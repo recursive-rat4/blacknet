@@ -21,8 +21,6 @@ import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Config.i2psamhost
-import ninja.blacknet.Config.i2psamport
 import ninja.blacknet.Runtime
 import ninja.blacknet.coding.Base64
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
@@ -41,8 +39,8 @@ object I2PSAM {
     private var session: Pair<String, Address>? = null
 
     init {
-        if (Config.contains(i2psamhost) && Config.contains(i2psamport))
-            sam = Network.resolve(Config[i2psamhost], Config[i2psamport].toPort())
+        if (Config.instance.i2psamhost != null && Config.instance.i2psamport != null)
+            sam = Network.resolve(Config.instance.i2psamhost, Config.instance.i2psamport.toPort())
         else
             sam = null
 
@@ -83,7 +81,7 @@ object I2PSAM {
         val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("invalid response")
 
         val destination = lookup(connection, "ME")
-        val localAddress = Address(Network.I2P, Config.netPort, hash(destination))
+        val localAddress = Address(Network.I2P, Config.instance.port.toPort(), hash(destination))
 
         if (this.privateKey == "TRANSIENT")
             savePrivateKey(privateKey)
@@ -138,7 +136,7 @@ object I2PSAM {
                 connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
             } else {
                 val destination = message.takeWhile { it != ' ' }
-                val remoteAddress = Address(Network.I2P, Config.netPort, hash(destination))
+                val remoteAddress = Address(Network.I2P, Config.instance.port.toPort(), hash(destination))
                 return Accepted(connection.socket, connection.readChannel, connection.writeChannel, remoteAddress)
             }
         }

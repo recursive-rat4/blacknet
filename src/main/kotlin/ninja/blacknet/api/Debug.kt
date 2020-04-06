@@ -28,7 +28,7 @@ import java.io.PrintStream
 
 fun Route.debug() {
     get("/api/dumpcoroutines") {
-        if (Config.debugCoroutines) {
+        if (Config.instance.debugcoroutines) {
             val file = File(dataDir, "coroutines_${SystemClock.seconds}.log")
             val stream = PrintStream(file)
             stream.println("${Version.name} ${Version.revision}")

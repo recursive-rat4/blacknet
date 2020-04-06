@@ -48,7 +48,7 @@ object TxPool : MemPool(), Ledger {
 
     suspend fun fill(block: Block) = mutex.withLock {
         val poolSize = sizeImpl()
-        var freeBlockSize = min(LedgerDB.state().maxBlockSize, Config.softBlockSizeLimit) - 176
+        var freeBlockSize = min(LedgerDB.state().maxBlockSize, Config.instance.softblocksizelimit.bytes) - 176
         var i = 0
         while (freeBlockSize > 0 && i < poolSize) {
             val hash = transactions.get(i++)
@@ -227,7 +227,7 @@ object TxPool : MemPool(), Ledger {
             return Pair(Invalid("Already rejected tx"), 0)
         if (containsImpl(hash))
             return Pair(AlreadyHave(hash.toString()), 0)
-        if (TxPool.dataSizeImpl() + bytes.size > Config.txPoolSize) {
+        if (TxPool.dataSizeImpl() + bytes.size > Config.instance.txpoolsize.bytes) {
             if (remote)
                 return Pair(InFuture("TxPool is full"), 0)
             else

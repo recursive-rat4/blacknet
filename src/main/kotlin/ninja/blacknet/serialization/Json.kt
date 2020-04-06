@@ -22,7 +22,7 @@ import ninja.blacknet.Config
 object Json {
     private val instance = Json(
             JsonConfiguration(
-                    prettyPrint = Config.jsonIndented(),
+                    prettyPrint = Config.instance.apiserver.jsonindented,
                     indent = "    "
             )
     )

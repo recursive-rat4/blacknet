@@ -239,7 +239,7 @@ class Connection(
     }
 
     fun debugName(): String {
-        return if (Config.logIPs)
+        return if (Config.instance.logips)
             remoteAddress.toString()
         else
             "peer $peerId"

@@ -12,7 +12,7 @@ package ninja.blacknet
 import com.google.common.io.Resources
 
 object Version {
-    val name = if (Config.regTest) "Blacknet-regtest" else "Blacknet"
+    val name = if (Config.instance.regtest) "Blacknet-regtest" else "Blacknet"
 
     val revision: String = {
         val string = Resources.toString(Resources.getResource("revision.txt"), Charsets.US_ASCII)

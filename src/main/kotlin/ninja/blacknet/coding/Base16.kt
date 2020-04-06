@@ -46,7 +46,7 @@ fun hex(bytes: ByteArray, lowerCase: Boolean): String {
  * @return the encoded [String]
  */
 fun ByteArray.toHex(): String {
-    return hex(this, Config.lowerCaseHex)
+    return hex(this, Config.instance.lowercasehex)
 }
 
 /**

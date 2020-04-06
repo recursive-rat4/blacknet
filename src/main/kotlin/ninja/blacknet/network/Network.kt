@@ -18,10 +18,6 @@ import io.ktor.util.error
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Config.proxyhost
-import ninja.blacknet.Config.proxyport
-import ninja.blacknet.Config.torhost
-import ninja.blacknet.Config.torport
 import ninja.blacknet.coding.Base32
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.hours
@@ -43,11 +39,11 @@ enum class Network(val type: Byte, val addrSize: Int) {
     constructor(type: Int, addrSize: Int) : this(type.toByte(), addrSize)
 
     fun isDisabled(): Boolean {
-        return when (this) {
-            IPv4 -> Config.disabledIPv4
-            IPv6 -> Config.disabledIPv6
-            TORv2, TORv3 -> Config.disabledTOR
-            I2P -> Config.disabledI2P
+        return !when (this) {
+            IPv4 -> Config.instance.ipv4
+            IPv6 -> Config.instance.ipv6
+            TORv2, TORv3 -> Config.instance.tor
+            I2P -> Config.instance.i2p
         }
     }
 
@@ -57,19 +53,19 @@ enum class Network(val type: Byte, val addrSize: Int) {
         val IPv4_LOOPBACK_BYTES = byteArrayOf(127, 0, 0, 1)
         val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
         val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
-        val LOOPBACK = Address.IPv4_LOOPBACK(Config.netPort)
+        val LOOPBACK = Address.IPv4_LOOPBACK(Config.instance.port.toPort())
 
         private val socksProxy: Address?
         private val torProxy: Address?
 
         init {
-            if (Config.contains(proxyhost) && Config.contains(proxyport))
-                socksProxy = Network.resolve(Config[proxyhost], Config[proxyport].toPort())
+            if (Config.instance.proxyhost != null && Config.instance.proxyport != null)
+                socksProxy = Network.resolve(Config.instance.proxyhost, Config.instance.proxyport.toPort())
             else
                 socksProxy = null
 
-            if (Config.contains(torhost) && Config.contains(torport))
-                torProxy = Network.resolve(Config[torhost], Config[torport].toPort())
+            if (Config.instance.torhost != null && Config.instance.torport != null)
+                torProxy = Network.resolve(Config.instance.torhost, Config.instance.torport.toPort())
             else
                 torProxy = null
         }
@@ -108,8 +104,8 @@ enum class Network(val type: Byte, val addrSize: Int) {
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
-                        if (Config.netListen && !localAddress.isLocal())
-                            Node.listenAddress.add(Address(localAddress.network, Config.netPort, localAddress.bytes))
+                        if (Config.instance.listen && !localAddress.isLocal())
+                            Node.listenAddress.add(Address(localAddress.network, Config.instance.port.toPort(), localAddress.bytes))
                         return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
                     }
                 }

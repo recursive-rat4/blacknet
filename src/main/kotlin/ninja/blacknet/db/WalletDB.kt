@@ -182,7 +182,7 @@ object WalletDB {
     suspend fun getSequence(publicKey: PublicKey): Int? = mutex.withLock {
         val wallet = getWalletImpl(publicKey)
         val seq = wallet.seq
-        return@withLock if (seq < Config.seqThreshold)
+        return@withLock if (seq < Config.instance.wallet.seqthreshold)
             seq
         else
             null

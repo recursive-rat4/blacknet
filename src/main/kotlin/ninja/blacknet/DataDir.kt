@@ -13,9 +13,9 @@ package ninja.blacknet
 import java.io.File
 
 val dataDir: File = {
-    var dir = if (Config.portable()) {
+    var dir = if (Config.instance.portable) {
         File("db")
-    } else if (!Config.contains(Config.datadir)) {
+    } else if (Config.instance.datadir == null) {
         if (Runtime.macOS) {
             File(System.getProperty("user.home"), "Library/Application Support/Blacknet")
         } else if (Runtime.windowsOS) {
@@ -37,9 +37,9 @@ val dataDir: File = {
             new
         }
     } else {
-        File(Config.get(Config.datadir))
+        File(Config.instance.datadir)
     }
-    if (Config.regTest) {
+    if (Config.instance.regtest) {
         dir = File(dir, "regtest")
     }
     dir.mkdirs()

@@ -19,8 +19,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Config.mintxfee
-import ninja.blacknet.Config.upnp
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Staker
@@ -54,29 +52,29 @@ object Node {
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
-    var minTxFee = parseAmount(Config[mintxfee])
+    var minTxFee = parseAmount(Config.instance.mintxfee)
     private val nextPeerId = atomic(1L)
 
     init {
-        if (!Config.regTest) {
-            if (Config.netListen) {
+        if (!Config.instance.regtest) {
+            if (Config.instance.listen) {
                 try {
                     listenOnIP()
-                    if (Config[upnp]) {
+                    if (Config.instance.upnp) {
                         Runtime.launch { UPnP.forward() }
                     }
                 } catch (e: Throwable) {
                 }
             }
-            if (!Config.disabledTOR) {
-                if (!Config.netListen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+            if (Config.instance.tor) {
+                if (!Config.instance.listen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
                     listenOn(Network.LOOPBACK)
                 Runtime.rotate(Network.Companion::listenOnTor)
             }
-            if (!Config.disabledI2P) {
+            if (Config.instance.i2p) {
                 Runtime.rotate(Network.Companion::listenOnI2P)
             }
-            repeat(Config.outgoingConnections) {
+            repeat(Config.instance.outgoingconnections) {
                 Runtime.rotate(::connector)
             }
         }
@@ -161,8 +159,8 @@ object Node {
         if (Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
             return
         if (Network.IPv4.isDisabled())
-            return listenOn(Address.IPv6_ANY(Config.netPort))
-        listenOn(Address.IPv4_ANY(Config.netPort))
+            return listenOn(Address.IPv6_ANY(Config.instance.port.toPort()))
+        listenOn(Address.IPv4_ANY(Config.instance.port.toPort()))
     }
 
     suspend fun connectTo(address: Address): Connection {
@@ -193,7 +191,7 @@ object Node {
     suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
-            if (!Config.regTest)
+            if (!Config.instance.regtest)
                 logger.info("Announced to $n peers")
             return true
         } else {
@@ -294,7 +292,7 @@ object Node {
     }
 
     private suspend fun haveSlot(): Boolean {
-        return if (incoming(true) < Config.incomingConnections)
+        return if (incoming(true) < Config.instance.incomingconnections)
             true
         else
             evictConnection()
@@ -326,7 +324,7 @@ object Node {
 
         val address = PeerDB.getCandidate(filter)
         if (address == null) {
-            logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.outgoingConnections}")
+            logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.instance.outgoingconnections}")
             delay(15.minutes)
             return
         }

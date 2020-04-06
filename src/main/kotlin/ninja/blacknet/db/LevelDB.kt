@@ -11,7 +11,6 @@ package ninja.blacknet.db
 
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Config.dbcache
 import ninja.blacknet.Runtime
 import ninja.blacknet.dataDir
 import org.iq80.leveldb.*
@@ -99,7 +98,7 @@ object LevelDB {
     }
 
     private fun options(): Options {
-        val cacheSize = Config[dbcache] * 1048576
+        val cacheSize = Config.instance.dbcache.bytes
         val options = Options()
                 .createIfMissing(true)
                 .paranoidChecks(true)
@@ -108,7 +107,7 @@ object LevelDB {
                 .writeBufferSize(cacheSize / 4)
                 .xMaxOpenFiles()
                 .logger(DBLogger)
-        logger.info("LevelDB cache ${Config[dbcache]} MiB, max open files ${options.maxOpenFiles()}")
+        logger.info("LevelDB cache ${Config.instance.dbcache.hrp(false)}, max open files ${options.maxOpenFiles()}")
         return options
     }
 
