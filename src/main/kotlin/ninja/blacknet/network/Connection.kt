@@ -29,6 +29,7 @@ import ninja.blacknet.packet.*
 import ninja.blacknet.time.SystemClock
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.MilliSeconds
+import ninja.blacknet.time.milliseconds.hours
 import ninja.blacknet.time.milliseconds.minutes
 import ninja.blacknet.time.milliseconds.nextTime
 import ninja.blacknet.util.SynchronizedArrayList
@@ -265,9 +266,9 @@ class Connection(
     }
 
     private suspend fun peerAnnouncer() {
-        while (true) {
-            delay(Random.nextTime(10.minutes, 20.minutes))
+        delay(Random.nextTime(10.minutes, 20.minutes))
 
+        while (true) {
             val n = Random.nextInt(Peers.MAX) + 1
 
             val randomPeers = PeerDB.getRandom(n)
@@ -276,14 +277,16 @@ class Connection(
 
             val myAddress = Node.listenAddress.filterToList { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
             if (myAddress.size != 0) {
-                val i = Random.nextInt(randomPeers.size * 20)
+                val i = Random.nextInt(randomPeers.size * 4)
                 if (i < randomPeers.size) {
                     randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
-                    logger.info("Announcing ${randomPeers[i]} to ${debugName()}")
+                    logger.info("Whispering ${randomPeers[i].debugName()} to ${debugName()}")
                 }
             }
 
             sendPacket(Peers(randomPeers))
+
+            delay(Random.nextTime(4.hours, 20.hours))
         }
     }
 

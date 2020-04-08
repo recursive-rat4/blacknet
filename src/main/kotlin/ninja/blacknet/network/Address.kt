@@ -13,6 +13,7 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
+import ninja.blacknet.Config
 import ninja.blacknet.coding.Base32
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.SipHash.hashCode
@@ -60,6 +61,13 @@ class Address(
 
     fun getSocketAddress(): SocketAddress {
         return InetSocketAddress(InetAddress.getByAddress(bytes), port.toPort())
+    }
+
+    fun debugName(): String {
+        return if (Config.instance.logips)
+            toString()
+        else
+            "$network address"
     }
 
     override fun equals(other: Any?): Boolean {
