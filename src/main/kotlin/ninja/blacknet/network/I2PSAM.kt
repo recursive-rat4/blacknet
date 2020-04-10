@@ -13,7 +13,6 @@ import io.ktor.network.sockets.ASocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import io.ktor.util.error
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readUTF8Line
@@ -26,6 +25,7 @@ import ninja.blacknet.coding.Base64
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.dataDir
+import ninja.blacknet.error
 import java.io.File
 import kotlin.random.Random
 

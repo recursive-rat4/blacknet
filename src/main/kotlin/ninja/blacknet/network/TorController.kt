@@ -9,7 +9,6 @@
 
 package ninja.blacknet.network
 
-import io.ktor.util.error
 import mu.KotlinLogging
 import net.freehaven.tor.control.TorControlCommands
 import net.freehaven.tor.control.TorControlConnection
@@ -18,6 +17,7 @@ import ninja.blacknet.Config
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.dataDir
+import ninja.blacknet.error
 import ninja.blacknet.util.emptyByteArray
 import java.io.File
 

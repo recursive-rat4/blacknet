@@ -19,6 +19,7 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.messageOrDefault
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 
@@ -65,7 +66,7 @@ fun Route.node() {
                 call.respond(HttpStatusCode.BadRequest, "Already connected on ${connection.localAddress}")
             }
         } catch (e: Throwable) {
-            call.respond(HttpStatusCode.BadRequest, e.message ?: "Unknown error")
+            call.respond(HttpStatusCode.BadRequest, e.messageOrDefault())
         }
     }
 

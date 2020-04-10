@@ -10,8 +10,12 @@
 package ninja.blacknet
 
 import kotlinx.coroutines.*
+import mu.KotlinLogging
+import ninja.blacknet.error
 import ninja.blacknet.util.SynchronizedArrayList
 import kotlin.coroutines.CoroutineContext
+
+private val logger = KotlinLogging.logger {}
 
 object Runtime : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
@@ -43,14 +47,24 @@ object Runtime : CoroutineScope {
         }
     }
 
+    /**
+     * Returns `true` if no shutdown hooks have been registered yet.
+     */
+    fun hasNoShutdownHooks(): Boolean {
+        return runBlocking {
+            shutdownHooks.isEmpty()
+        }
+    }
+
     init {
         java.lang.Runtime.getRuntime().addShutdownHook(Thread {
+            logger.info("Shutdown is in progress...")
             runBlocking {
                 shutdownHooks.reversedForEach { hook ->
                     try {
                         hook()
                     } catch (e: Throwable) {
-                        e.printStackTrace()
+                        logger.error(e)
                     }
                 }
             }

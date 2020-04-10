@@ -13,14 +13,15 @@ package ninja.blacknet.db
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import com.google.common.collect.Sets.newHashSetWithExpectedSize
 import com.google.common.io.Resources
-import io.ktor.util.error
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
+import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.VehicleRing
+import ninja.blacknet.error
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Network
@@ -132,10 +133,13 @@ object PeerDB {
     }
 
     private fun listBuiltinPeers(): List<Address> {
-        return Resources.readLines(Resources.getResource("peers.txt"), Charsets.UTF_8)
-                .map {
-                    Network.parse(it, Node.DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
-                }
+        return if (Config.instance.regtest)
+            emptyList()
+        else
+            Resources.readLines(Resources.getResource("peers.txt"), Charsets.UTF_8)
+                    .map {
+                        Network.parse(it, Node.DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
+                    }
     }
 
     suspend fun size(): Int {

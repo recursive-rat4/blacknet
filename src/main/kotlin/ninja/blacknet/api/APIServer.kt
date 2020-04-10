@@ -45,6 +45,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.htmlDir
+import ninja.blacknet.messageOrDefault
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
@@ -166,7 +167,7 @@ fun Application.APIServer() {
     install(StatusPages) {
         exception<Throwable> { cause ->
             val status = HttpStatusCode.InternalServerError
-            call.respond(status, cause.message ?: cause::class.simpleName ?: status.description)
+            call.respond(status, cause.messageOrDefault())
             throw cause // 日志记录
         }
     }

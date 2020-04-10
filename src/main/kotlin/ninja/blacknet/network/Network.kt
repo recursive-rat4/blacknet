@@ -14,11 +14,11 @@ import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import io.ktor.util.error
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.coding.Base32
+import ninja.blacknet.error
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.hours
 import ninja.blacknet.time.milliseconds.minutes
