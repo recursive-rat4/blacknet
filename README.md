@@ -15,9 +15,10 @@ Install the Java JDK (not only JRE) version 8th number or greater.
 - Debian & Ubuntu: `sudo apt-get install default-jdk git`
 - Red Hat & Oracle: `sudo yum install java-11-openjdk git`
 - SUSE: `sudo zypper install java-11-openjdk git`
-- FreeBSD: `sudo pkg install openjdk11 git`
+- Arch GNU/Linux: `sudo pacman -S --needed jdk-openjdk git`
 - Gentoo: `sudo emerge -av1 --noreplace virtual/jdk dev-vcs/git`
-- Arch Linux: `sudo pacman -S --needed jdk-openjdk git`
+- FreeBSD: `sudo pkg install openjdk11 git`
+- OpenBSD: `sudo pkg_add jdk git`
 
 #### Get the source code
 
