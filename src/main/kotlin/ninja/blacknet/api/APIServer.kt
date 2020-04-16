@@ -59,7 +59,7 @@ object APIServer {
     internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
-    internal val walletNotify = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
+    internal val walletNotify = SynchronizedHashMap<PublicKey, ArrayList<SendChannel<Frame>>>()
 
     suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
         blockNotifyV0.forEach {
@@ -138,14 +138,15 @@ object APIServer {
         }
 
         walletNotify.mutex.withLock {
-            if (walletNotify.map.isNotEmpty()) {
-                val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size, filter))
-                val message = Json.stringify(WebSocketNotification.serializer(), notification)
-                walletNotify.map.forEach {
-                    if (it.value.contains(publicKey)) {
+            val subscribers = walletNotify.map.get(publicKey)
+            if (subscribers != null) {
+                if (subscribers.isNotEmpty()) {
+                    val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size, filter))
+                    val message = Json.stringify(WebSocketNotification.serializer(), notification)
+                    subscribers.forEach {
                         Runtime.launch {
                             try {
-                                it.key.send(Frame.Text(message))
+                                it.send(Frame.Text(message))
                             } finally {
                             }
                         }

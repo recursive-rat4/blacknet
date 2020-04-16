@@ -14,9 +14,9 @@ import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.Route
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.Json
 
 fun Route.webSocket() {
@@ -39,14 +39,14 @@ fun Route.webSocket() {
                         val publicKey = Address.decode(address)!!
 
                         APIServer.walletNotify.mutex.withLock {
-                            val keys = APIServer.walletNotify.map.get(outgoing)
-                            if (keys == null) {
+                            val subscribers = APIServer.walletNotify.map.get(publicKey)
+                            if (subscribers == null) {
                                 @Suppress("NAME_SHADOWING")
-                                val keys = HashSet<PublicKey>()
-                                keys.add(publicKey)
-                                APIServer.walletNotify.map.put(outgoing, keys)
+                                val subscribers = ArrayList<SendChannel<Frame>>()
+                                subscribers.add(outgoing)
+                                APIServer.walletNotify.map.put(publicKey, subscribers)
                             } else {
-                                keys.add(publicKey)
+                                subscribers.add(outgoing)
                             }
                         }
                     }
@@ -62,11 +62,11 @@ fun Route.webSocket() {
                         val publicKey = Address.decode(address)!!
 
                         APIServer.walletNotify.mutex.withLock {
-                            val keys = APIServer.walletNotify.map.get(outgoing)
-                            if (keys != null) {
-                                keys.remove(publicKey)
-                                if (keys.isEmpty())
-                                    APIServer.walletNotify.map.remove(outgoing)
+                            val subscribers = APIServer.walletNotify.map.get(publicKey)
+                            if (subscribers != null) {
+                                subscribers.remove(outgoing)
+                                if (subscribers.isEmpty())
+                                    APIServer.walletNotify.map.remove(publicKey)
                             }
                         }
                     }
@@ -76,7 +76,9 @@ fun Route.webSocket() {
         } finally {
             APIServer.blockNotify.remove(outgoing)
             APIServer.txPoolNotify.remove(outgoing)
-            APIServer.walletNotify.remove(outgoing)
+            APIServer.walletNotify.forEach { (_, subscribers) ->
+                subscribers.remove(outgoing)
+            } // 移除空
         }
     }
 }
