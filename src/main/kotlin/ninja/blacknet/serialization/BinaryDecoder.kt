@@ -26,14 +26,14 @@ class BinaryDecoder(
 ) : AbstractDecoder() {
     constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
 
-    fun <T : Any?> decode(loader: DeserializationStrategy<T>): T {
-        val value = loader.deserialize(this)
+    fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
+        val value = strategy.deserialize(this)
         val remaining = input.remaining
         return if (remaining == 0L) {
             value
         } else {
             input.release()
-            throw RuntimeException("$remaining trailing bytes")
+            throw DecoderException("$remaining trailing bytes")
         }
     }
 
@@ -49,14 +49,14 @@ class BinaryDecoder(
         return when (val byte = input.readByte()) {
             0.toByte() -> false
             1.toByte() -> true
-            else -> throw RuntimeException("Unexpected value for NotNullMark $byte")
+            else -> throw DecoderException("Unexpected value for NotNullMark $byte")
         }
     }
     override fun decodeBoolean(): Boolean {
         return when (val byte = input.readByte()) {
             0.toByte() -> false
             1.toByte() -> true
-            else -> throw RuntimeException("Unexpected value for Boolean $byte")
+            else -> throw DecoderException("Unexpected value for Boolean $byte")
         }
     }
 
@@ -67,7 +67,7 @@ class BinaryDecoder(
 
     override fun decodeCollectionSize(descriptor: SerialDescriptor): Int = decodeVarInt()
 
-    override fun decodeElementIndex(descriptor: SerialDescriptor): Int = throw RuntimeException("Non-sequential decoding is not supported")
+    override fun decodeElementIndex(descriptor: SerialDescriptor): Int = throw DecoderException("Non-sequential decoding is not supported")
 
     override fun decodeSequentially(): Boolean = true
 
@@ -89,7 +89,7 @@ class BinaryDecoder(
                 v = input.readByte()
                 result = result shl 7 or (v and 0x7F.toByte()).toInt()
             } else {
-                throw RuntimeException("Too long VarInt")
+                throw DecoderException("Too long VarInt")
             }
         } while (v and 0x80.toByte() == 0.toByte())
         return result
@@ -104,7 +104,7 @@ class BinaryDecoder(
                 v = input.readByte()
                 result = result shl 7 or (v and 0x7F.toByte()).toLong()
             } else {
-                throw RuntimeException("Too long VarLong")
+                throw DecoderException("Too long VarLong")
             }
         } while (v and 0x80.toByte() == 0.toByte())
         return result
