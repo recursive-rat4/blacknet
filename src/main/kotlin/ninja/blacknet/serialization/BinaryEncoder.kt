@@ -14,14 +14,13 @@ package ninja.blacknet.serialization
 
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.*
-import kotlinx.serialization.builtins.AbstractEncoder
 import kotlin.experimental.and
 import kotlin.experimental.or
 
 /**
  * Encoder to the Blacknet Binary Format
  */
-class BinaryEncoder : AbstractEncoder() {
+class BinaryEncoder : AdaptorEncoder() {
     private val out = BytePacketBuilder()
 
     fun toPacket(): ByteReadPacket {
@@ -55,8 +54,6 @@ class BinaryEncoder : AbstractEncoder() {
             encodeVarInt(collectionSize)
         }
     }
-
-    override fun endStructure(descriptor: SerialDescriptor) = Unit
 
     fun encodeByteArray(value: ByteArray) {
         encodeVarInt(value.size)

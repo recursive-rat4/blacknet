@@ -15,7 +15,6 @@ package ninja.blacknet.serialization
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.builtins.AbstractDecoder
 import kotlin.experimental.and
 
 /**
@@ -23,7 +22,7 @@ import kotlin.experimental.and
  */
 class BinaryDecoder(
         private val input: ByteReadPacket
-) : AbstractDecoder() {
+) : AdaptorDecoder() {
     constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
 
     fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {

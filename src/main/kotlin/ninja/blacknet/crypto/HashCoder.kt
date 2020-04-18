@@ -11,15 +11,14 @@ package ninja.blacknet.crypto
 
 import io.ktor.utils.io.bits.*
 import io.ktor.utils.io.charsets.Charset
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.builtins.AbstractEncoder
+import ninja.blacknet.serialization.AdaptorEncoder
 import ninja.blacknet.serialization.EncoderException
 
 class HashCoder(
         val writer: HashWriter,
         val charset: Charset? = Charsets.UTF_8,
         val allowFloatingPointValues: Boolean = false
-) : AbstractEncoder() {
+) : AdaptorEncoder() {
     private val buffer = ByteArray(Long.SIZE_BYTES)
     private val memory = Memory.of(buffer)
 
@@ -93,8 +92,6 @@ class HashCoder(
             }
         }
     }
-
-    override fun endStructure(descriptor: SerialDescriptor) = Unit
 
     private fun floatingPointValueException(): Throwable {
         return EncoderException("You can enable floating point number values with 'allowFloatingPointNumbers' flag in HashCoder.")

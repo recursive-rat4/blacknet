@@ -12,9 +12,8 @@ package ninja.blacknet.core
 import kotlinx.serialization.builtins.serializer
 import ninja.blacknet.contract.HashTimeLock
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.Serializable
 import ninja.blacknet.serialization.SerializableByteArray
-
-private annotation class Serializable
 
 @Serializable
 class HTLC(
