@@ -9,10 +9,10 @@
 
 package ninja.blacknet
 
-import com.typesafe.config.ConfigFactory
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.config.ConfigParser
 import ninja.blacknet.crypto.PoS
+import ninja.blacknet.serialization.ConfigDecoder
+import ninja.blacknet.serialization.ConfigReader
 import java.io.File
 
 @Serializable
@@ -52,7 +52,10 @@ class Config(
          = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
 ) {
     companion object {
-        val instance = ConfigParser.parse(ConfigFactory.parseFile(File(configDir, "blacknet.conf")), serializer())
+        val instance = ConfigDecoder(ConfigReader(File(configDir, "blacknet.conf"))).decode(serializer()).also {
+            if (it.dbcache.bytes < 1024 * 1024) throw ConfigError("dbcache ${it.dbcache.hrp(false)} is unrealistically low")
+            if (it.txpoolsize.bytes < 1024 * 1024) throw ConfigError("txpoolsize ${it.txpoolsize.hrp(false)} is unrealistically low")
+        }
     }
 }
 
@@ -73,3 +76,5 @@ class WalletConfig(
         val unit: Unit? // 游戏结束
          = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
 )
+
+private class ConfigError(message: String) : Error(message)

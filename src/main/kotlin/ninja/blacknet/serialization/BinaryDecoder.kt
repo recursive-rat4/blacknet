@@ -66,10 +66,6 @@ class BinaryDecoder(
 
     override fun decodeCollectionSize(descriptor: SerialDescriptor): Int = decodeVarInt()
 
-    override fun decodeElementIndex(descriptor: SerialDescriptor): Int = throw DecoderException("Non-sequential decoding is not supported")
-
-    override fun decodeSequentially(): Boolean = true
-
     fun decodeByteArray(): ByteArray {
         val size = decodeVarInt()
         return input.readBytes(size)

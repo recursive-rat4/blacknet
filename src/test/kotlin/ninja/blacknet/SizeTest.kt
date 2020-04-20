@@ -39,9 +39,11 @@ class SizeTest {
         for ((bytes, hrp, decimal) in arrayOf(
                 Triple(5737956, "5.74 MB", true),
                 Triple(2494885, "2.49 MB", true),
+                Triple(1025, "1.02 kB", true),
                 Triple(33554432, "32 MiB", false),
                 Triple(97516, "95.23 KiB", false),
-                Triple(1024, "1 KiB", false)
+                Triple(1024, "1 KiB", false),
+                Triple(1023, "1023 B", false)
         )) {
             assertEquals(Size(bytes).hrp(decimal, Locale.CHINESE), hrp)
         }

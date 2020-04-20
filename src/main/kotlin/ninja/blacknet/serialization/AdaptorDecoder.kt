@@ -40,6 +40,9 @@ constructor() : Decoder, CompositeDecoder {
     override fun beginStructure(descriptor: SerialDescriptor, vararg typeParams: KSerializer<*>): CompositeDecoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
 
+    override fun decodeSequentially(): Boolean = true
+    override fun decodeElementIndex(descriptor: SerialDescriptor): Int = throw notImplementedException("non-sequential mode")
+
     override fun decodeUnitElement(descriptor: SerialDescriptor, index: Int) = decodeUnit()
     override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean = decodeBoolean()
     override fun decodeByteElement(descriptor: SerialDescriptor, index: Int): Byte = decodeByte()

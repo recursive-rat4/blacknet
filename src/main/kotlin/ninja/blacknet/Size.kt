@@ -13,7 +13,7 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
-//import kotlinx.serialization.config.ConfigParser.ConfigReader
+import ninja.blacknet.serialization.ConfigDecoder
 import ninja.blacknet.serialization.DecoderException
 import ninja.blacknet.serialization.notSupportedDecoderException
 import ninja.blacknet.serialization.notSupportedEncoderException
@@ -43,6 +43,7 @@ class Size(
         val value = bytes / multiplier.toFloat()
         val format = DecimalFormat.getInstance(locale)
         format.maximumFractionDigits = 2
+        format.isGroupingUsed = false
         return "${format.format(value)} $symbol"
     }
 
@@ -69,8 +70,7 @@ class Size(
 
         override fun deserialize(decoder: Decoder): Size {
             return when (decoder) {
-                // Cannot access 'ConfigReader': it is private in 'ConfigParser'
-                is Decoder -> parse(decoder.decodeString())
+                is ConfigDecoder -> parse(decoder.decodeString())
                 else -> throw notSupportedDecoderException(decoder, this)
             }
         }

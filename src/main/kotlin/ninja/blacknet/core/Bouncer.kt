@@ -13,5 +13,7 @@ package ninja.blacknet.core
  * 面子控制
  */
 object Bouncer {
-    private class BouncerException(message: String) : RuntimeException(message)
+
 }
+
+private class BouncerException(message: String) : RuntimeException(message)
