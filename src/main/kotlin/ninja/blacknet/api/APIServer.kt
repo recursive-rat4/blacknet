@@ -20,13 +20,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.content.files
-import io.ktor.http.content.static
 import io.ktor.response.respond
-import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
-import io.ktor.routing.get
-import io.ktor.routing.routing
+import io.ktor.routing.Routing
 import io.ktor.websocket.WebSockets
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
@@ -44,7 +40,6 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.htmlDir
 import ninja.blacknet.messageOrDefault
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.SynchronizedArrayList
@@ -174,14 +169,8 @@ fun Application.APIServer() {
     }
     install(WebSockets)
 
-    routing {
-        get("/") {
-            call.respondRedirect("static/index.html")
-        }
-
-        static("static") {
-            files(htmlDir)
-        }
+    install(Routing) {
+        html()
 
         dataBase()
         debug()
