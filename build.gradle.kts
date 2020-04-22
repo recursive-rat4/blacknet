@@ -55,7 +55,7 @@ dependencies {
     "implementation"("org.slf4j:slf4j-jdk14:1.7.30")
     "implementation"("io.github.microutils:kotlin-logging:1.7.9")
     "implementation"("org.briarproject:jtorctl:0.3")
-    "implementation"("com.google.guava:guava:28.2-jre")
+    "implementation"("com.google.guava:guava:29.0-jre")
     "implementation"("org.bitlet:weupnp:${Versions.weupnp}")
     "implementation"("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
     "implementation"("org.ethereum:leveldbjni-all:${Versions.leveldbjni}")
