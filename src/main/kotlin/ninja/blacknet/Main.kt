@@ -121,7 +121,7 @@ object Main {
          * https://ktor.io/servers/engine.html
          *
          */
-        (if (Config.instance.apiserver.enabled) {
+        (if (Config.instance.apiserver_enabled) {
             (if (Config.instance.regtest)
                 (embeddedServer
                 (CIO,
@@ -137,7 +137,7 @@ object Main {
                         ("-config=${File(configDir, "rpc.conf")}")))).start
                 (wait = false)))
         })
-        (if (Config.instance.apiserver.publicserver)
+        (if (Config.instance.apiserver_publicserver)
             (embeddedServer
             (CIO,
                     (commandLineEnvironment

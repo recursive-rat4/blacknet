@@ -45,8 +45,11 @@ class Config(
         val regtest: Boolean = false,
         val debugcoroutines: Boolean = false,
 
-        val apiserver: APIServerConfig = APIServerConfig(),
-        val wallet: WalletConfig = WalletConfig(),
+        val apiserver_enabled: Boolean = true,
+        val apiserver_jsonindented: Boolean = false,
+        val apiserver_publicserver: Boolean = false,
+
+        val wallet_seqthreshold: Int = Int.MAX_VALUE - 1,
 
         val unit: Unit? // 游戏结束
          = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
@@ -58,23 +61,5 @@ class Config(
         }
     }
 }
-
-@Serializable
-class APIServerConfig(
-        val enabled: Boolean = true,
-        val jsonindented: Boolean = false,
-        val publicserver: Boolean = false,
-
-        val unit: Unit? // 游戏结束
-         = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
-)
-
-@Serializable
-class WalletConfig(
-        val seqthreshold: Int = Int.MAX_VALUE - 1,
-
-        val unit: Unit? // 游戏结束
-         = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
-)
 
 private class ConfigError(message: String) : Error(message)
