@@ -21,7 +21,7 @@ $(document).ready(function () {
     
     function getMnemoic(){
         
-        return $.trim(dialogPassword.find('.mnemonic').val());
+	return dialogPassword.find('.mnemonic').val().trim();
     }
     function staking_click(type) {
 
@@ -104,7 +104,7 @@ $(document).ready(function () {
 
     function sign() {
         let mnemonic = $('#sign_mnemonic').val();
-        mnemonic = $.trim(mnemonic);
+	mnemonic = mnemonic.trim();
         let message = $('#sign_message').val();
         if(!Blacknet.verifyMnemonic(mnemonic)){
             Blacknet.message("Invalid mnemonic", "warning")
@@ -145,7 +145,7 @@ $(document).ready(function () {
     }
     function mnemonic_info() {
         let mnemonic = $('#mnemonic_info_mnemonic').val();
-        mnemonic = $.trim(mnemonic);
+	mnemonic = mnemonic.trim();
         let postdata = {
             mnemonic: mnemonic
         };

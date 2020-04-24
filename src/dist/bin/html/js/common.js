@@ -58,7 +58,7 @@ void function () {
             dialogAccount.find('.enter').unbind().on('click', async function () {
 
                 let account = dialogAccount.find('.account_text').val();
-                account = $.trim(account);
+                account = account.trim();
 
                 if (Blacknet.verifyAccount(account)) {
                     localStorage.account = account;
