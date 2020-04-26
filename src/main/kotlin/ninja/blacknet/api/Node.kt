@@ -19,7 +19,6 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.messageOrDefault
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 
@@ -57,16 +56,12 @@ fun Route.node() {
         val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
         val force = call.parameters["force"]?.toBoolean() ?: false
 
-        try {
-            val connection = Node.connections.find { it.remoteAddress == address }
-            if (force || connection == null) {
-                Node.connectTo(address)
-                call.respond(true.toString())
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Already connected on ${connection.localAddress}")
-            }
-        } catch (e: Throwable) {
-            call.respond(HttpStatusCode.BadRequest, e.messageOrDefault())
+        val connection = Node.connections.find { it.remoteAddress == address }
+        if (force || connection == null) {
+            Node.connectTo(address)
+            call.respond(true.toString())
+        } else {
+            call.respond(HttpStatusCode.BadRequest, "Already connected on ${connection.localAddress}")
         }
     }
 

@@ -20,8 +20,8 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderException
-import ninja.blacknet.serialization.notSupportedEncoderException
+import ninja.blacknet.serialization.notSupportedDecoderError
+import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
  * Represents a BLAKE2b-256 hash.
@@ -50,7 +50,7 @@ class Hash(val bytes: ByteArray) {
             return when (decoder) {
                 is BinaryDecoder -> Hash(decoder.decodeFixedByteArray(SIZE_BYTES))
                 is JsonInput -> Hash.fromString(decoder.decodeString())!!
-                else -> throw notSupportedDecoderException(decoder, this)
+                else -> throw notSupportedDecoderError(decoder, this)
             }
         }
 
@@ -59,7 +59,7 @@ class Hash(val bytes: ByteArray) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
                 is HashCoder -> encoder.encodeHash(value)
                 is JsonOutput -> encoder.encodeString(value.bytes.toHex())
-                else -> throw notSupportedEncoderException(encoder, this)
+                else -> throw notSupportedEncoderError(encoder, this)
             }
         }
     }

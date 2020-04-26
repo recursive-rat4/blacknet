@@ -20,8 +20,14 @@ class LogManager() : LogManager() {
     fun shutDown() = super.reset()
 }
 
-fun KLogger.error(error: Throwable) = error(error) {
-    error.messageOrDefault()
+fun KLogger.debug(throwable: Throwable) = debug(throwable) {
+    throwable.debugMessage()
 }
 
-fun Throwable.messageOrDefault() = message ?: "Messageless error of ${this::class}"
+fun KLogger.error(throwable: Throwable) = error(throwable) {
+    throwable.debugMessage()
+}
+
+fun Throwable.debugMessage() = message?.let { message ->
+    "${this::class.simpleName ?: this::class}: $message"
+} ?: "Messageless throwable of ${this::class}"

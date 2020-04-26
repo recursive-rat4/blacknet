@@ -20,8 +20,8 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderException
-import ninja.blacknet.serialization.notSupportedEncoderException
+import ninja.blacknet.serialization.notSupportedDecoderError
+import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
  * Represents an Ed25519 public key.
@@ -49,7 +49,7 @@ class PublicKey(val bytes: ByteArray) {
             return when (decoder) {
                 is BinaryDecoder -> PublicKey(decoder.decodeFixedByteArray(SIZE_BYTES))
                 is JsonInput -> Address.decode(decoder.decodeString())!!
-                else -> throw notSupportedDecoderException(decoder, this)
+                else -> throw notSupportedDecoderError(decoder, this)
             }
         }
 
@@ -58,7 +58,7 @@ class PublicKey(val bytes: ByteArray) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
                 is HashCoder -> encoder.encodePublicKey(value)
                 is JsonOutput -> encoder.encodeString(Address.encode(value))
-                else -> throw notSupportedEncoderException(encoder, this)
+                else -> throw notSupportedEncoderError(encoder, this)
             }
         }
     }

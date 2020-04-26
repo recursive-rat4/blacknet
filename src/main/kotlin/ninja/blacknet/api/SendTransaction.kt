@@ -155,16 +155,12 @@ fun Route.sendTransaction() {
         val bytes = call.parameters["hex"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hex")
 
         APIServer.txMutex.withLock {
-            try {
-                val hash = Transaction.hash(bytes)
-                val status = Node.broadcastTx(hash, bytes)
-                if (status == Accepted)
-                    call.respond(hash.toString())
-                else
-                    call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
-            } catch (e: Throwable) {
-                call.respond(HttpStatusCode.BadRequest, "Invalid transaction: ${e.message}")
-            }
+            val hash = Transaction.hash(bytes)
+            val status = Node.broadcastTx(hash, bytes)
+            if (status == Accepted)
+                call.respond(hash.toString())
+            else
+                call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
         }
     }
 }

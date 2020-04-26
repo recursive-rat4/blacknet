@@ -20,8 +20,8 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderException
-import ninja.blacknet.serialization.notSupportedEncoderException
+import ninja.blacknet.serialization.notSupportedDecoderError
+import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
  * Represents an Ed25519 signature.
@@ -50,7 +50,7 @@ class Signature(val bytes: ByteArray) {
             return when (decoder) {
                 is BinaryDecoder -> Signature(decoder.decodeFixedByteArray(SIZE_BYTES))
                 is JsonInput -> Signature.fromString(decoder.decodeString())!!
-                else -> throw notSupportedDecoderException(decoder, this)
+                else -> throw notSupportedDecoderError(decoder, this)
             }
         }
 
@@ -59,7 +59,7 @@ class Signature(val bytes: ByteArray) {
                 is BinaryEncoder -> encoder.encodeFixedByteArray(value.bytes)
                 is HashCoder -> encoder.encodeByteArray(value.bytes)
                 is JsonOutput -> encoder.encodeString(value.bytes.toHex())
-                else -> throw notSupportedEncoderException(encoder, this)
+                else -> throw notSupportedEncoderError(encoder, this)
             }
         }
     }

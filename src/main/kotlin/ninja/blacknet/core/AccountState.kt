@@ -20,8 +20,8 @@ import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodePublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderException
-import ninja.blacknet.serialization.notSupportedEncoderException
+import ninja.blacknet.serialization.notSupportedDecoderError
+import ninja.blacknet.serialization.notSupportedEncoderError
 import ninja.blacknet.util.sumByLong
 
 @Serializable
@@ -155,7 +155,7 @@ class AccountState(
                         leases.add(Lease(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES)), decoder.decodeVarInt(), decoder.decodeVarLong()))
                     return AccountState(seq, stake, immature, leases)
                 }
-                else -> throw notSupportedDecoderException(decoder, this)
+                else -> throw notSupportedDecoderError(decoder, this)
             }
         }
 
@@ -190,7 +190,7 @@ class AccountState(
                         encoder.encodeLong(value.leases[i].amount)
                     }
                 }
-                else -> throw notSupportedEncoderException(encoder, this)
+                else -> throw notSupportedEncoderError(encoder, this)
             }
         }
     }

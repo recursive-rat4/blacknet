@@ -9,15 +9,14 @@
 
 package ninja.blacknet.api
 
-import io.ktor.application.application
 import io.ktor.application.call
-import io.ktor.application.log
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
@@ -25,6 +24,8 @@ import ninja.blacknet.dataDir
 import ninja.blacknet.time.SystemClock
 import java.io.File
 import java.io.PrintStream
+
+private val logger = KotlinLogging.logger {}
 
 fun Route.debug() {
     get("/api/dumpcoroutines") {
@@ -41,7 +42,7 @@ fun Route.debug() {
     }
 
     get("/api/关机") {
-        application.log.warn("正在关机着私人应用程序接口服务器。これはわたすのパソコンです。")
+        logger.warn("正在关机着私人应用程序接口服务器。これはわたすのパソコンです。")
         Runtime.launch {
             call.respond(HttpStatusCode.Gone)
         }.join()
@@ -49,7 +50,7 @@ fun Route.debug() {
     }
 
     get("/api/抛出") {
-        application.log.warn("正在抛出着私人应用程序接口服务器异常。")
+        logger.warn("正在抛出着私人应用程序接口服务器异常。")
         throw RuntimeException("一条测试异常消息")
     }
 }

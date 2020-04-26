@@ -17,31 +17,31 @@ import kotlinx.serialization.modules.SerialModule
 abstract class AdaptorEncoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Encoder, CompositeEncoder {
-    private fun notImplementedException(four: String): Throwable = EncoderException("${this::class} is not implemented for $four")
+    private fun notImplementedError(four: String): Throwable = EncoderError("${this::class} is not implemented for $four")
 
     override val context: SerialModule = EmptyModule
     open val updateMode: UpdateMode = UpdateMode.BANNED
 
-    override fun encodeNotNullMark(): Unit = throw notImplementedException("NotNullMark")
-    override fun encodeNull(): Unit = throw notImplementedException("Null")
+    override fun encodeNotNullMark(): Unit = throw notImplementedError("NotNullMark")
+    override fun encodeNull(): Unit = throw notImplementedError("Null")
     override fun encodeUnit(): Unit = UnitSerializer().serialize(this, Unit)
 
-    override fun encodeBoolean(value: Boolean): Unit = throw notImplementedException("Boolean")
-    override fun encodeByte(value: Byte): Unit = throw notImplementedException("Byte")
-    override fun encodeShort(value: Short): Unit = throw notImplementedException("Short")
-    override fun encodeInt(value: Int): Unit = throw notImplementedException("Int")
-    override fun encodeLong(value: Long): Unit = throw notImplementedException("Long")
-    override fun encodeFloat(value: Float): Unit = throw notImplementedException("Float")
-    override fun encodeDouble(value: Double): Unit = throw notImplementedException("Double")
-    override fun encodeChar(value: Char): Unit = throw notImplementedException("Char")
-    override fun encodeString(value: String): Unit = throw notImplementedException("String")
-    override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int): Unit = throw notImplementedException("Enum")
+    override fun encodeBoolean(value: Boolean): Unit = throw notImplementedError("Boolean")
+    override fun encodeByte(value: Byte): Unit = throw notImplementedError("Byte")
+    override fun encodeShort(value: Short): Unit = throw notImplementedError("Short")
+    override fun encodeInt(value: Int): Unit = throw notImplementedError("Int")
+    override fun encodeLong(value: Long): Unit = throw notImplementedError("Long")
+    override fun encodeFloat(value: Float): Unit = throw notImplementedError("Float")
+    override fun encodeDouble(value: Double): Unit = throw notImplementedError("Double")
+    override fun encodeChar(value: Char): Unit = throw notImplementedError("Char")
+    override fun encodeString(value: String): Unit = throw notImplementedError("String")
+    override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int): Unit = throw notImplementedError("Enum")
 
     override fun beginStructure(descriptor: SerialDescriptor, vararg typeSerializers: KSerializer<*>): CompositeEncoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
 
     open fun encodeSequentially(): Boolean = true
-    open fun encodeElementIndex(descriptor: SerialDescriptor, index: Int): Unit = throw notImplementedException("non-sequential mode")
+    open fun encodeElementIndex(descriptor: SerialDescriptor, index: Int): Unit = throw notImplementedError("non-sequential mode")
 
     override fun encodeUnitElement(descriptor: SerialDescriptor, index: Int): Unit = encodeUnit()
     override fun encodeBooleanElement(descriptor: SerialDescriptor, index: Int, value: Boolean): Unit = encodeBoolean(value)

@@ -22,8 +22,8 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderException
-import ninja.blacknet.serialization.notSupportedEncoderException
+import ninja.blacknet.serialization.notSupportedDecoderError
+import ninja.blacknet.serialization.notSupportedEncoderError
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.toByteArray
@@ -829,7 +829,7 @@ object LedgerDB {
                             balances.put(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES)), decoder.decodeVarLong())
                         Snapshot(balances)
                     }
-                    else -> throw notSupportedDecoderException(decoder, this)
+                    else -> throw notSupportedDecoderError(decoder, this)
                 }
             }
 
@@ -852,7 +852,7 @@ object LedgerDB {
                         encoder.encodeSerializableElement(descriptor, 0, MapSerializer(String.serializer(), String.serializer()), balances)
                         encoder.endStructure(descriptor)
                     }
-                    else -> throw notSupportedEncoderException(encoder, this)
+                    else -> throw notSupportedEncoderError(encoder, this)
                 }
             }
         }

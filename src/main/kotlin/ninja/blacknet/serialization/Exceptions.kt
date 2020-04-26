@@ -9,6 +9,7 @@
 
 package ninja.blacknet.serialization
 
+import kotlin.Error
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.SerializationException
@@ -19,10 +20,16 @@ open class DecoderException(message: String, cause: Throwable? = null)
 open class EncoderException(message: String, cause: Throwable? = null)
     : SerializationException(message, cause)
 
-fun notSupportedDecoderException(decoder: Decoder, obj: Any): Throwable {
-    return DecoderException("Decoder ${decoder::class} is not supported by ${obj::class}")
+open class DecoderError(message: String, cause: Throwable? = null)
+    : Error(message, cause)
+
+open class EncoderError(message: String, cause: Throwable? = null)
+    : Error(message, cause)
+
+fun notSupportedDecoderError(decoder: Decoder, obj: Any): Throwable {
+    return DecoderError("Decoder ${decoder::class} is not supported by ${obj::class}")
 }
 
-fun notSupportedEncoderException(encoder: Encoder, obj: Any): Throwable {
-    return EncoderException("Encoder ${encoder::class} is not supported by ${obj::class}")
+fun notSupportedEncoderError(encoder: Encoder, obj: Any): Throwable {
+    return EncoderError("Encoder ${encoder::class} is not supported by ${obj::class}")
 }

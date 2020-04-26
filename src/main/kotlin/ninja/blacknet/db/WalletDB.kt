@@ -436,7 +436,7 @@ object WalletDB {
                         encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), value.height)
                         encoder.endStructure(descriptor)
                     }
-                    else -> throw notSupportedEncoderException(encoder, this)
+                    else -> throw notSupportedEncoderError(encoder, this)
                 }
             }
         }
@@ -457,7 +457,7 @@ object WalletDB {
                                 decoder.decodeByte()
                         )
                     }
-                    else -> throw notSupportedDecoderException(decoder, this)
+                    else -> throw notSupportedDecoderError(decoder, this)
                 }
             }
 
@@ -474,7 +474,7 @@ object WalletDB {
                         encoder.encodeSerializableElement(descriptor, 1, Int.serializer(), value.dataIndex.toInt())
                         encoder.endStructure(descriptor)
                     }
-                    else -> throw notSupportedEncoderException(encoder, this)
+                    else -> throw notSupportedEncoderError(encoder, this)
                 }
             }
         }

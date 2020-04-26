@@ -17,31 +17,31 @@ import kotlinx.serialization.modules.SerialModule
 abstract class AdaptorDecoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Decoder, CompositeDecoder {
-    private fun notImplementedException(four: String): Throwable = DecoderException("${this::class} is not implemented for $four")
+    private fun notImplementedError(four: String): Throwable = DecoderError("${this::class} is not implemented for $four")
 
     override val context: SerialModule = EmptyModule
     override val updateMode: UpdateMode = UpdateMode.BANNED
 
-    override fun decodeNotNullMark(): Boolean = throw notImplementedException("NotNullMark")
+    override fun decodeNotNullMark(): Boolean = throw notImplementedError("NotNullMark")
     override fun decodeNull(): Nothing? = null
     override fun decodeUnit(): Unit = UnitSerializer().deserialize(this)
 
-    override fun decodeBoolean(): Boolean = throw notImplementedException("Boolean")
-    override fun decodeByte(): Byte = throw notImplementedException("Byte")
-    override fun decodeShort(): Short = throw notImplementedException("Short")
-    override fun decodeInt(): Int = throw notImplementedException("Int")
-    override fun decodeLong(): Long = throw notImplementedException("Long")
-    override fun decodeFloat(): Float = throw notImplementedException("Float")
-    override fun decodeDouble(): Double = throw notImplementedException("Double")
-    override fun decodeChar(): Char = throw notImplementedException("Char")
-    override fun decodeString(): String = throw notImplementedException("String")
-    override fun decodeEnum(enumDescriptor: SerialDescriptor): Int = throw notImplementedException("Enum")
+    override fun decodeBoolean(): Boolean = throw notImplementedError("Boolean")
+    override fun decodeByte(): Byte = throw notImplementedError("Byte")
+    override fun decodeShort(): Short = throw notImplementedError("Short")
+    override fun decodeInt(): Int = throw notImplementedError("Int")
+    override fun decodeLong(): Long = throw notImplementedError("Long")
+    override fun decodeFloat(): Float = throw notImplementedError("Float")
+    override fun decodeDouble(): Double = throw notImplementedError("Double")
+    override fun decodeChar(): Char = throw notImplementedError("Char")
+    override fun decodeString(): String = throw notImplementedError("String")
+    override fun decodeEnum(enumDescriptor: SerialDescriptor): Int = throw notImplementedError("Enum")
 
     override fun beginStructure(descriptor: SerialDescriptor, vararg typeParams: KSerializer<*>): CompositeDecoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
 
     override fun decodeSequentially(): Boolean = true
-    override fun decodeElementIndex(descriptor: SerialDescriptor): Int = throw notImplementedException("non-sequential mode")
+    override fun decodeElementIndex(descriptor: SerialDescriptor): Int = throw notImplementedError("non-sequential mode")
 
     override fun decodeUnitElement(descriptor: SerialDescriptor, index: Int) = decodeUnit()
     override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean = decodeBoolean()

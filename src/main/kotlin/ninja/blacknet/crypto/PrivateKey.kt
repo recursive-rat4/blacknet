@@ -16,8 +16,8 @@ import kotlinx.serialization.Serializer
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
-import ninja.blacknet.serialization.notSupportedDecoderException
-import ninja.blacknet.serialization.notSupportedEncoderException
+import ninja.blacknet.serialization.notSupportedDecoderError
+import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
  * Represents an Ed25519 private key.
@@ -46,13 +46,13 @@ class PrivateKey(val bytes: ByteArray) {
         }
 
         override fun deserialize(decoder: Decoder): PrivateKey {
-            throw notSupportedDecoderException(decoder, this)
+            throw notSupportedDecoderError(decoder, this)
         }
 
         override fun serialize(encoder: Encoder, value: PrivateKey) {
             when (encoder) {
                 is HashCoder -> encoder.encodePrivateKey(value)
-                else -> throw notSupportedEncoderException(encoder, this)
+                else -> throw notSupportedEncoderError(encoder, this)
             }
         }
     }

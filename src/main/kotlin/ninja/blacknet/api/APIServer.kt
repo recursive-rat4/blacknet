@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerializationStrategy
+import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
 import ninja.blacknet.api.v1.APIV1
@@ -40,11 +41,15 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.messageOrDefault
+import ninja.blacknet.debug
+import ninja.blacknet.debugMessage
+import ninja.blacknet.error
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.SynchronizedHashSet
+
+private val logger = KotlinLogging.logger {}
 
 object APIServer {
     internal val txMutex = Mutex()
@@ -161,14 +166,17 @@ fun Application.APIServer() {
         APIServer.configureHeaders(this)
     }
     install(StatusPages) {
+        exception<Exception> { cause ->
+            call.respond(HttpStatusCode.BadRequest, cause.debugMessage())
+            logger.debug(cause)
+        }
         exception<Throwable> { cause ->
-            val status = HttpStatusCode.InternalServerError
-            call.respond(status, cause.messageOrDefault())
-            throw cause // 日志记录
+            call.respond(HttpStatusCode.InternalServerError, cause.debugMessage())
+            logger.error(cause)
         }
     }
     install(WebSockets)
-
+    //install(Requests)
     install(Routing) {
         html()
 

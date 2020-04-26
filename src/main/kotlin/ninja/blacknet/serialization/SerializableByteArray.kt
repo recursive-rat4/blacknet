@@ -55,7 +55,7 @@ class SerializableByteArray(
             return when (decoder) {
                 is BinaryDecoder -> SerializableByteArray(decoder.decodeByteArray())
                 is JsonInput -> fromString(decoder.decodeString())!!
-                else -> throw notSupportedDecoderException(decoder, this)
+                else -> throw notSupportedDecoderError(decoder, this)
             }
         }
 
@@ -64,7 +64,7 @@ class SerializableByteArray(
                 is BinaryEncoder -> encoder.encodeByteArray(value.array)
                 is HashCoder -> encoder.encodeByteArray(value.array)
                 is JsonOutput -> encoder.encodeString(value.array.toHex())
-                else -> throw notSupportedEncoderException(encoder, this)
+                else -> throw notSupportedEncoderError(encoder, this)
             }
         }
     }
