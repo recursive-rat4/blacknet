@@ -19,7 +19,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
 /**
- * 偿还合约
+ * 償還合約
  */
 @Serializable
 class RefundHTLC(

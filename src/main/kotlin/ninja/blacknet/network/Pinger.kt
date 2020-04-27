@@ -22,7 +22,7 @@ import kotlin.random.Random
 private val logger = KotlinLogging.logger {}
 
 /**
- * 游戏护卫
+ * 遊戲護衛
  */
 object Pinger {
     suspend fun implementation(connection: Connection) {

@@ -20,7 +20,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
 /**
- * 创建合约
+ * 創建合約
  */
 @Serializable
 class Lease(

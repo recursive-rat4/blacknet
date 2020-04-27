@@ -21,7 +21,7 @@ import ninja.blacknet.time.milliseconds.MilliSeconds
 import ninja.blacknet.util.SynchronizedHashMap
 
 /**
- * 交易获取器
+ * 交易獲取器
  */
 object TxFetcher {
     private val inventoryChannel: Channel<Pair<Connection, List<Hash>>> = Channel(Channel.UNLIMITED)
@@ -72,7 +72,7 @@ object TxFetcher {
     }
 
     /**
-     * 看门狗计时器
+     * 看門狗計時器
      */
     private suspend fun watchdog() {
         delay(Node.NETWORK_TIMEOUT)

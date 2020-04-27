@@ -19,7 +19,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
 /**
- * 取消合约
+ * 取消合約
  */
 @Serializable
 class CancelLease(

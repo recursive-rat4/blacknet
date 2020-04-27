@@ -41,16 +41,16 @@ fun Route.debug() {
         }
     }
 
-    get("/api/关机") {
-        logger.warn("正在关机着私人应用程序接口服务器。これはわたすのパソコンです。")
+    get("/api/關機") {
+        logger.warn("正在關機著私人應用程序接口服務器。これはわたすのパソコンです。")
         Runtime.launch {
             call.respond(HttpStatusCode.Gone)
         }.join()
         kotlin.system.exitProcess(0)
     }
 
-    get("/api/抛出") {
-        logger.warn("正在抛出着私人应用程序接口服务器异常。")
-        throw RuntimeException("一条测试异常消息")
+    get("/api/拋出") {
+        logger.warn("正在拋出著私人應用程序接口服務器異常。")
+        throw RuntimeException("一條測試異常消息")
     }
 }

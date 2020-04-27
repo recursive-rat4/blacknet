@@ -20,7 +20,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 
 /**
- * 提款金额
+ * 提款金額
  */
 @Serializable
 class WithdrawFromLease(

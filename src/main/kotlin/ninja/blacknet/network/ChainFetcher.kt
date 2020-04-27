@@ -32,7 +32,7 @@ import ninja.blacknet.time.withTimeout
 private val logger = KotlinLogging.logger {}
 
 /**
- * 链获取器
+ * 區塊鏈獲取器
  */
 object ChainFetcher {
     private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
@@ -222,7 +222,7 @@ object ChainFetcher {
 
     suspend fun blocks(connection: Connection, blocks: Blocks) {
         if (request == null || syncConnection != connection) {
-            // request may be cancelled
+            // 請求 may be 取消 -ed
             return
         }
         recvChannel.send(blocks)

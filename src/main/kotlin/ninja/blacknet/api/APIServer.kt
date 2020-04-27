@@ -188,7 +188,7 @@ fun Application.APIServer() {
         wallet()
         webSocket()
 
-        // 已被弃用
+        // 已被棄用
         APIV1()
     }
 }

@@ -19,7 +19,7 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 
 /**
- * 宣称合约
+ * 宣稱合約
  */
 @Serializable
 class ClaimHTLC(

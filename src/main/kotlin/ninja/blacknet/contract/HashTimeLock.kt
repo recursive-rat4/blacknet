@@ -93,7 +93,7 @@ open class HashTimeLock<K, L>(
     interface Processor {
         fun HashTimeLockGetBlockTime(): Long
         fun HashTimeLockGetHeight(): Int
-        //TODO 骂人用语
+        // 罵人用語
     }
 
     companion object {

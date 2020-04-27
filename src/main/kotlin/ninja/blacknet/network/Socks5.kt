@@ -21,7 +21,8 @@ import io.ktor.utils.io.core.writeFully
 import io.ktor.utils.io.core.writeShort
 
 /**
- * 代理客户端
+ * 短襪五
+ * 代理客戶端
  */
 object Socks5 {
     suspend fun connect(proxy: Address, destination: Address): Connection {

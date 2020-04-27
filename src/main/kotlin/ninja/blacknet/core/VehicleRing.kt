@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.SipHash.hashCode
 
 /**
- * 树车年轮「樹車年輪」
+ * 樹車年輪「树车年轮」
  */
 @Serializable
 class VehicleRing(private val int: Int) {

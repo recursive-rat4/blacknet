@@ -23,7 +23,7 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 
 /**
- * 创建合约
+ * 創建合約
  */
 @Serializable
 class CreateHTLC(

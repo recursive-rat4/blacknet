@@ -260,5 +260,5 @@ object TxPool : MemPool(), Ledger {
         return Pair(txs, map)
     }
 
-    // 复活吗？
+    // 復活
 }

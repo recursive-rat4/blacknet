@@ -339,7 +339,7 @@ object Node {
 
         val x = 4.seconds - (SystemClock.milliseconds - time)
         if (x > MilliSeconds.ZERO)
-            delay(x) // 请在继续之前等待或延迟
+            delay(x) // 請在繼續之前等待或延遲
     }
 
     private fun parseAmount(string: String): Long {

@@ -23,7 +23,7 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.sumByLong
 
 /**
- * 花费合约
+ * 花費合約
  */
 @Serializable
 class SpendMultisig(

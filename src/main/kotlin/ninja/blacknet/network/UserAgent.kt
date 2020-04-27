@@ -13,7 +13,7 @@ import ninja.blacknet.Version
 import kotlin.math.min
 
 /**
- * 用户代理字符串
+ * 用戶代理字符串
  *
  * Bitcoin improvement proposal 14 "Protocol Version and User Agent"
  */

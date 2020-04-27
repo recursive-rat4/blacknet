@@ -51,7 +51,7 @@ class Config(
 
         val wallet_seqthreshold: Int = Int.MAX_VALUE - 1,
 
-        val unit: Unit? // 游戏结束
+        val unit: Unit? // 遊戲結束
          = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
 ) {
     companion object {
