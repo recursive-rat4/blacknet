@@ -155,7 +155,7 @@ object Staker {
         val publicKey = privateKey.toPublicKey()
 
         if (stakers.list.find { it.publicKey == publicKey } != null) {
-            logger.info("${Address.encode(publicKey)} is already staking")
+            logger.info("Stakeholder is already active")
             return false
         }
 
@@ -165,7 +165,7 @@ object Staker {
             staker.updateImpl(state)
         }
         if (staker.stake == 0L) {
-            logger.warn("${Address.encode(publicKey)} has zero staking balance")
+            logger.warn("Stakeholder has zero active balance")
         }
 
         stakers.list.add(staker)
@@ -181,7 +181,7 @@ object Staker {
         if (i != -1) {
             stakers.list.removeAt(i)
         } else {
-            logger.info("${Address.encode(publicKey)} is not staking")
+            logger.info("Stakeholder is not active")
             return false
         }
         if (stakers.list.size == 0) {
