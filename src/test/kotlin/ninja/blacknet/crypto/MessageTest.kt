@@ -21,23 +21,38 @@ class MessageTest {
     }
 
     @Test
-    fun authentication() {
-        val message = "Crab Rave"
-        val signature1 = Signature.fromString("A64576A3CADFEBC2350542CC22ACF7EE3FF90AA90B0684C3C90A03FA03F67C653BE20DF0DF87A2E205C79A17719D2E1E46E9763DF016A3EE28414AB31DF96A0E")!!
-        val signature2 = Message.sign(RegTest.privateKey1, message)
-        val signature3 = Signature.EMPTY
+    fun sign() {
+        val message = "Crab Beat"
+        val signature = Message.sign(RegTest.privateKey1, message)
 
-        assertTrue(Message.verify(RegTest.publicKey1, signature1, message))
-        assertTrue(Message.verify(RegTest.publicKey1, signature2, message))
-        assertFalse(Message.verify(RegTest.publicKey1, signature3, message))
+        assertTrue(Message.verify(RegTest.publicKey1, signature, message))
     }
 
     @Test
-    fun encryption() {
-        val message = "Top secret information"
-        val obj = Message.encrypted(message, RegTest.privateKey1, RegTest.publicKey2)
+    fun verify() {
+        val message = "Crab Rave"
+        val signature1 = Signature.fromString("A64576A3CADFEBC2350542CC22ACF7EE3FF90AA90B0684C3C90A03FA03F67C653BE20DF0DF87A2E205C79A17719D2E1E46E9763DF016A3EE28414AB31DF96A0E")!!
+        val signature2 = Signature.EMPTY
+
+        assertTrue(Message.verify(RegTest.publicKey1, signature1, message))
+        assertFalse(Message.verify(RegTest.publicKey1, signature2, message))
+    }
+
+    @Test
+    fun encrypt() {
+        val id = "1000000"
+        val obj = Message.encrypted(id, RegTest.privateKey1, RegTest.publicKey2)
         val decrypted = obj.decrypt(RegTest.privateKey2, RegTest.publicKey1)
 
-        assertEquals(decrypted, message)
+        assertEquals(decrypted, id)
+    }
+
+    @Test
+    fun decrypt() {
+        val id = "\u0072\u0061\u0074\u0034"
+        val encrypted = "E81A8A93583291A7C0472DD6A961B8DE"
+        val decrypted = Message.decrypt(RegTest.privateKey2, RegTest.publicKey1, encrypted)
+
+        assertEquals(decrypted, id)
     }
 }

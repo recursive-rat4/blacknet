@@ -13,6 +13,6 @@ object Versions {
     const val serialization = "0.20.0"
     const val ktor = "1.3.2"
     const val weupnp = "0.1.4"
-    const val bouncycastle = "1.64"
+    const val bouncycastle = "1.65"
     const val leveldbjni = "1.18.3"
 }
