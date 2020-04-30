@@ -20,4 +20,8 @@ class VehicleRing(private val int: Int) {
     override fun equals(other: Any?): Boolean = (other is VehicleRing) && int == other.int
     override fun hashCode(): Int = hashCode(serializer(), this)
     override fun toString(): String = int.toString()
+
+    companion object {
+        const val SIZE_BYTES = 4 // 32
+    }
 }

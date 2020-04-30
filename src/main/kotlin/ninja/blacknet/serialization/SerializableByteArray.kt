@@ -45,8 +45,7 @@ class SerializableByteArray(
     companion object {
         val EMPTY = SerializableByteArray(emptyByteArray())
 
-        fun fromString(hex: String?): SerializableByteArray? {
-            if (hex == null) return null
+        fun fromString(hex: String): SerializableByteArray? {
             val bytes = fromHex(hex) ?: return null
             return SerializableByteArray(bytes)
         }

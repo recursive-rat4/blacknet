@@ -34,9 +34,7 @@ object Address {
         return Bech32.encode(HRP, data)
     }
 
-    fun decode(string: String?): PublicKey? {
-        if (string == null)
-            return null
+    fun decode(string: String): PublicKey? {
         val (hrp, data) = Bech32.decode(string) ?: return null
         if (!HRP.contentEquals(hrp))
             return null
@@ -53,10 +51,8 @@ object Address {
         return Bech32.encode(HRP, data)
     }
 
-    fun decodeId(version: Byte, string: String?): Hash? {
+    fun decodeId(version: Byte, string: String): Hash? {
         require(version == HTLC || version == MULTISIG)
-        if (string == null)
-            return null
         val (hrp, data) = Bech32.decode(string) ?: return null
         if (!HRP.contentEquals(hrp))
             return null

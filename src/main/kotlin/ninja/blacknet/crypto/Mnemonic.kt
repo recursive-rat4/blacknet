@@ -38,9 +38,7 @@ object Mnemonic {
         }
     }
 
-    fun fromString(string: String?): PrivateKey? {
-        if (string == null)
-            return null
+    fun fromString(string: String): PrivateKey? {
         val hash = hash(string)
         if (checkVersion(hash.bytes))
             return PrivateKey(hash.bytes)

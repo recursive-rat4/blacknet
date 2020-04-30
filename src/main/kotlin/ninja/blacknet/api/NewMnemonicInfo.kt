@@ -26,8 +26,7 @@ class NewMnemonicInfo(
             return NewMnemonicInfo(mnemonic, Address.encode(publicKey), publicKey.toString())
         }
 
-        fun fromString(string: String?): NewMnemonicInfo? {
-            if (string == null) return null
+        fun fromString(string: String): NewMnemonicInfo? {
             val privateKey = Mnemonic.fromString(string) ?: return null
             val publicKey = privateKey.toPublicKey()
             return NewMnemonicInfo(string, Address.encode(publicKey), publicKey.toString())

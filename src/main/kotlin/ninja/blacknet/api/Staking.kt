@@ -24,21 +24,21 @@ import ninja.blacknet.crypto.Mnemonic
 fun Route.staking() {
     post("/api/v2/startstaking") {
         val parameters = call.receiveParameters()
-        val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
+        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
 
         call.respond(Staker.startStaking(privateKey).toString())
     }
 
     post("/api/v2/stopstaking") {
         val parameters = call.receiveParameters()
-        val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
 
         call.respond(Staker.stopStaking(privateKey).toString())
     }
 
     post("/api/v2/isstaking") {
         val parameters = call.receiveParameters()
-        val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
 
         call.respond(Staker.isStaking(privateKey).toString())
     }

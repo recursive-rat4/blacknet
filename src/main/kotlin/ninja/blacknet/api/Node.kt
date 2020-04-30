@@ -36,7 +36,7 @@ fun Route.node() {
     }
 
     get("/api/v2/txpool/transaction/{hash}/{raw?}") {
-        val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
+        val hash = call.parameters["hash"]?.let { Hash.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
         val raw = call.parameters["raw"]?.toBoolean() ?: false
 
         val result = TxPool.get(hash)

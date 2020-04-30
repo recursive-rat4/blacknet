@@ -39,8 +39,7 @@ class PublicKey(val bytes: ByteArray) {
          */
         const val SIZE_BYTES = 32
 
-        fun fromString(hex: String?): PublicKey? {
-            if (hex == null) return null
+        fun fromString(hex: String): PublicKey? {
             val bytes = fromHex(hex, SIZE_BYTES) ?: return null
             return PublicKey(bytes)
         }

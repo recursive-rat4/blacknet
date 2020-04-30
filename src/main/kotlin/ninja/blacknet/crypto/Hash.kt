@@ -40,8 +40,7 @@ class Hash(val bytes: ByteArray) {
         const val SIZE_BYTES = 32
         val ZERO = Hash(ByteArray(SIZE_BYTES))
 
-        fun fromString(hex: String?): Hash? {
-            if (hex == null) return null
+        fun fromString(hex: String): Hash? {
             val bytes = fromHex(hex, SIZE_BYTES) ?: return null
             return Hash(bytes)
         }

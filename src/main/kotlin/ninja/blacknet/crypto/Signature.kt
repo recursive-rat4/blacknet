@@ -40,8 +40,7 @@ class Signature(val bytes: ByteArray) {
         const val SIZE_BYTES = 64
         val EMPTY = Signature(ByteArray(SIZE_BYTES))
 
-        fun fromString(hex: String?): Signature? {
-            if (hex == null) return null
+        fun fromString(hex: String): Signature? {
             val bytes = fromHex(hex, SIZE_BYTES) ?: return null
             return Signature(bytes)
         }

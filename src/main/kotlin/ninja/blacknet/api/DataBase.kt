@@ -43,7 +43,7 @@ fun Route.dataBase() {
     }
 
     get("/api/v2/block/{hash}/{txdetail?}") {
-        val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
+        val hash = call.parameters["hash"]?.let { Hash.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
         val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
 
         val result = BlockDB.block(hash)
@@ -95,7 +95,7 @@ fun Route.dataBase() {
     }
 
     get("/api/v2/blockindex/{hash}/") {
-        val hash = Hash.fromString(call.parameters["hash"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
+        val hash = call.parameters["hash"]?.let { Hash.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
 
         val result = LedgerDB.getChainIndex(hash)
         if (result != null)
@@ -132,7 +132,7 @@ fun Route.dataBase() {
     }
 
     get("/api/v2/account/{address}/{confirmations?}") {
-        val publicKey = Address.decode(call.parameters["address"]) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
+        val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
         val confirmations = call.parameters["confirmations"]?.toIntOrNull() ?: PoS.DEFAULT_CONFIRMATIONS
         val result = AccountInfo.get(publicKey, confirmations)
         if (result != null)

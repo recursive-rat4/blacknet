@@ -33,11 +33,11 @@ import ninja.blacknet.transaction.*
 fun Route.sendTransaction() {
     post("/api/v2/transfer") {
         val parameters = call.receiveParameters()
-        val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
         val from = privateKey.toPublicKey()
         val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+        val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
         val encrypted = parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid encrypted") }
         val message = Message.create(parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "Failed to create message")
         val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
@@ -58,7 +58,7 @@ fun Route.sendTransaction() {
 
     post("/api/v2/burn") {
         val parameters = call.receiveParameters()
-        val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
         val from = privateKey.toPublicKey()
         val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
@@ -81,11 +81,11 @@ fun Route.sendTransaction() {
 
     post("/api/v2/lease") {
         val parameters = call.receiveParameters()
-        val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
         val from = privateKey.toPublicKey()
         val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+        val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
         val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
         APIServer.txMutex.withLock {
@@ -104,11 +104,11 @@ fun Route.sendTransaction() {
 
     post("/api/v2/cancellease") {
         val parameters = call.receiveParameters()
-        val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
         val from = privateKey.toPublicKey()
         val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+        val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
         val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
         val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
@@ -128,12 +128,12 @@ fun Route.sendTransaction() {
 
     post("/api/v2/withdrawfromlease") {
         val parameters = call.receiveParameters()
-        val privateKey = Mnemonic.fromString(parameters["mnemonic"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
         val from = privateKey.toPublicKey()
         val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
         val withdraw = parameters["withdraw"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid withdraw")
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val to = Address.decode(parameters["to"]) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
+        val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
         val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
         val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
