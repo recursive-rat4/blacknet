@@ -30,37 +30,39 @@ object Address {
 
     fun encode(publicKey: PublicKey): String {
         val bytes = publicKey.bytes
-        val data = Bech32.convertBits(bytes, 8, 5, true)!!
+        val data = Bech32.convertBits(bytes, 8, 5, true)
         return Bech32.encode(HRP, data)
     }
 
-    fun decode(string: String): PublicKey? {
-        val (hrp, data) = Bech32.decode(string) ?: return null
+    fun decode(string: String): PublicKey {
+        val (hrp, data) = Bech32.decode(string)
         if (!HRP.contentEquals(hrp))
-            return null
-        val bytes = Bech32.convertBits(data, 5, 8, false) ?: return null
-        if (bytes.size != PublicKey.SIZE_BYTES)
-            return null
+            throw Exception("Expected HRP ${String(HRP, Charsets.US_ASCII)} actual ${String(hrp, Charsets.US_ASCII)}")
+        val bytes = Bech32.convertBits(data, 5, 8, false)
+        if (PublicKey.SIZE_BYTES != bytes.size)
+            throw Exception("Expected size ${PublicKey.SIZE_BYTES} actual ${bytes.size}")
         return PublicKey(bytes)
     }
 
     fun encodeId(version: Byte, hash: Hash): String {
         require(version == HTLC || version == MULTISIG)
         val bytes = version + hash.bytes
-        val data = Bech32.convertBits(bytes, 8, 5, true)!!
+        val data = Bech32.convertBits(bytes, 8, 5, true)
         return Bech32.encode(HRP, data)
     }
 
-    fun decodeId(version: Byte, string: String): Hash? {
+    fun decodeId(version: Byte, string: String): Hash {
         require(version == HTLC || version == MULTISIG)
-        val (hrp, data) = Bech32.decode(string) ?: return null
+        val (hrp, data) = Bech32.decode(string)
         if (!HRP.contentEquals(hrp))
-            return null
-        val bytes = Bech32.convertBits(data, 5, 8, false) ?: return null
-        if (bytes.size != Byte.SIZE_BYTES + Hash.SIZE_BYTES)
-            return null
+            throw Exception("Expected HRP ${String(HRP, Charsets.US_ASCII)} actual ${String(hrp, Charsets.US_ASCII)}")
+        val bytes = Bech32.convertBits(data, 5, 8, false)
+        if (Byte.SIZE_BYTES + Hash.SIZE_BYTES != bytes.size)
+            throw Exception("Expected size ${Byte.SIZE_BYTES + Hash.SIZE_BYTES} actual ${bytes.size}")
         if (bytes[0] != version)
-            return null
+            throw Exception("Expected version ${bytes[0].toUByte()} actual ${version.toUByte()}")
         return Hash(bytes.copyOfRange(Byte.SIZE_BYTES, Byte.SIZE_BYTES + Hash.SIZE_BYTES))
     }
+
+    private class Exception constructor(message: String) : RuntimeException(message)
 }

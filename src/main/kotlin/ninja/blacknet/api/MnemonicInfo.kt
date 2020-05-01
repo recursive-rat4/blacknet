@@ -19,8 +19,9 @@ class MnemonicInfo(
         val publicKey: String
 ) {
     companion object {
-        fun fromString(string: String): MnemonicInfo? {
-            val privateKey = Mnemonic.fromString(string) ?: return null
+        fun fromString(string: String): MnemonicInfo {
+
+            val privateKey = Mnemonic.fromString(string)
             val publicKey = privateKey.toPublicKey()
             return MnemonicInfo(Address.encode(publicKey), publicKey.toString())
         }

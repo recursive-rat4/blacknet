@@ -38,11 +38,12 @@ object Mnemonic {
         }
     }
 
-    fun fromString(string: String): PrivateKey? {
+    fun fromString(string: String): PrivateKey {
         val hash = hash(string)
-        if (checkVersion(hash.bytes))
-            return PrivateKey(hash.bytes)
-        return null
+        return if (checkVersion(hash.bytes))
+            PrivateKey(hash.bytes)
+        else
+            throw Exception("Check version failed")
     }
 
     private fun checkVersion(bytes: ByteArray): Boolean {
@@ -54,4 +55,6 @@ object Mnemonic {
             encodeString(string)
         }
     }
+
+    private class Exception constructor(message: String) : RuntimeException(message)
 }

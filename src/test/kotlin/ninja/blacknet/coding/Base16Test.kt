@@ -21,11 +21,11 @@ class Base16Test {
         assertEquals(fromHex("01020A0b"), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
         assertEquals(fromHex("01020A0B", 4), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
 
-        assertNull(fromHex("0"))
-        assertNull(fromHex("0Z"))
-        assertNull(fromHex("01020A0B", 5))
-        assertNull(fromHex("01020A0B", 3))
-        assertNull(fromHex("01020A0B", 2))
+        assertThrows(HexFormatException::class.java) { fromHex("0") }
+        assertThrows(HexFormatException::class.java) { fromHex("0Z") }
+        assertThrows(HexFormatException::class.java) { fromHex("01020A0B", 5) }
+        assertThrows(HexFormatException::class.java) { fromHex("01020A0B", 3) }
+        assertThrows(HexFormatException::class.java) { fromHex("01020A0B", 2) }
     }
 
     @Test

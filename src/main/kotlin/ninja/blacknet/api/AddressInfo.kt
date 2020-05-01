@@ -17,9 +17,9 @@ class AddressInfo(
         val publicKey: String
 ) {
     companion object {
-        fun fromString(string: String): AddressInfo? {
+        fun fromString(string: String): AddressInfo {
 
-            val publicKey = Address.decode(string) ?: return null
+            val publicKey = Address.decode(string)
             return AddressInfo(publicKey.toString())
         }
     }

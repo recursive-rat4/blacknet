@@ -31,7 +31,7 @@ class MessageTest {
     @Test
     fun verify() {
         val message = "Crab Rave"
-        val signature1 = Signature.fromString("A64576A3CADFEBC2350542CC22ACF7EE3FF90AA90B0684C3C90A03FA03F67C653BE20DF0DF87A2E205C79A17719D2E1E46E9763DF016A3EE28414AB31DF96A0E")!!
+        val signature1 = Signature.fromString("A64576A3CADFEBC2350542CC22ACF7EE3FF90AA90B0684C3C90A03FA03F67C653BE20DF0DF87A2E205C79A17719D2E1E46E9763DF016A3EE28414AB31DF96A0E")
         val signature2 = Signature.EMPTY
 
         assertTrue(Message.verify(RegTest.publicKey1, signature1, message))

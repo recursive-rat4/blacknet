@@ -17,6 +17,7 @@ class Bech32Test {
     fun test1() {
         // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#Test_vectors
 
+        @Suppress("USELESS_ELVIS")
         for (string in arrayOf(
                 "A12UEL5L",
                 "a12uel5l",
@@ -44,9 +45,14 @@ class Bech32Test {
                 Pair("10a06t8", "Empty HRP"),
                 Pair("1qzzfhee", "Empty HRP")
         )) {
-            assertNull(Bech32.decode(string), reason)
+            try {
+                assertThrows { Bech32.decode(string) }
+            } catch (e: AssertionError) {
+                throw AssertionError(reason)
+            }
         }
 
+        @Suppress("USELESS_ELVIS")
         for (string in arrayOf(
                 "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",
                 "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
@@ -79,6 +85,7 @@ class Bech32Test {
 
     @Test
     fun test2() {
+        @Suppress("USELESS_ELVIS")
         for (string in arrayOf(
                 "blacknet1qqqsyqcyq5rqwzqfpg9scrgwpugpzysnzs23v9ccrydpk8qarc0s209j2k",
                 "blacknet1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tpwxqergd3c8g7ruszz3fzfj8",

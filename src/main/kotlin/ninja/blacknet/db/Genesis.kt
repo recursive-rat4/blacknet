@@ -31,7 +31,7 @@ object Genesis {
             val genesis = Resources.toString(Resources.getResource("genesis.json"), Charsets.UTF_8)
             val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
             entries.forEach { entry ->
-                val publicKey = PublicKey.fromString(entry.publicKey)!!
+                val publicKey = PublicKey.fromString(entry.publicKey)
                 map.put(publicKey, entry.balance)
             }
         }
@@ -45,12 +45,12 @@ object Genesis {
     object RegTest {
         // rblacknet1y73v0n57axhsgkyrypusz7jlhwclz4gextzvhyqnj6awjhmapu9qklf7u2
         val mnemonic1 = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖"
-        val privateKey1 = Mnemonic.fromString(mnemonic1)!!
+        val privateKey1 = Mnemonic.fromString(mnemonic1)
         val publicKey1 = privateKey1.toPublicKey()
 
         // rblacknet15edw70jp9qp39pdlqdncxtpc45fkdg0g6h3et0xu0gtu8v5t4vwspmsgfx
         val mnemonic2 = "胡 允 空 桥 料 状 纱 角 钠 灌 绝 件"
-        val privateKey2 = Mnemonic.fromString(mnemonic2)!!
+        val privateKey2 = Mnemonic.fromString(mnemonic2)
         val publicKey2 = privateKey2.toPublicKey()
     }
 }

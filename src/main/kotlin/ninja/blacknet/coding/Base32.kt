@@ -22,7 +22,7 @@ object Base32 {
     )
 
     fun encode(bytes: ByteArray, pad: Boolean = false): String {
-        val converted = Bech32.convertBits(bytes, 8, 5, true)!!
+        val converted = Bech32.convertBits(bytes, 8, 5, true)
 
         val builder = StringBuilder(converted.size)
         for (byte in converted)
@@ -52,6 +52,10 @@ object Base32 {
                 return null
         }
 
-        return Bech32.convertBits(bytes, 5, 8, false)
+        return try {
+            Bech32.convertBits(bytes, 5, 8, false)
+        } catch (e: Throwable) {
+            null
+        }
     }
 }

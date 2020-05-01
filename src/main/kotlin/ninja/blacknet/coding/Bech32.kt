@@ -35,9 +35,9 @@ object Bech32 {
         return String(result, Charsets.US_ASCII)
     }
 
-    fun decode(bech: String): Pair<ByteArray, ByteArray>? {
+    fun decode(bech: String): Pair<ByteArray, ByteArray> {
         if (bech.length < 8 || bech.length > 90)
-            return null
+            throw Exception()
 
         var lower = false
         var upper = false
@@ -45,7 +45,7 @@ object Bech32 {
 
         for (i in bech.indices) {
             when (bech[i]) {
-                !in '!'..'~' -> return null
+                !in '!'..'~' -> throw Exception()
                 in 'a'..'z' -> lower = true
                 in 'A'..'Z' -> upper = true
                 '1' -> pos = i
@@ -53,12 +53,12 @@ object Bech32 {
         }
 
         if (lower && upper)
-            return null
+            throw Exception()
 
         if (pos < 1) {
-            return null
+            throw Exception()
         } else if (pos + 7 > bech.length) {
-            return null
+            throw Exception()
         }
 
         val bechLow = when (upper) {
@@ -74,14 +74,14 @@ object Bech32 {
         while (i < bechLow.length) {
             val b = CHARSET.indexOf(bechLow[i])
             if (b == -1)
-                return null
+                throw Exception()
             data[j] = b.toByte()
             i += 1
             j += 1
         }
 
         if (!verifyChecksum(hrp, data)) {
-            return null
+            throw Exception()
         }
 
         return Pair(hrp, data.copyOf(data.size - 6))
@@ -142,7 +142,7 @@ object Bech32 {
         return result
     }
 
-    fun convertBits(data: ByteArray, fromBits: Int, toBits: Int, pad: Boolean): ByteArray? {
+    fun convertBits(data: ByteArray, fromBits: Int, toBits: Int, pad: Boolean): ByteArray {
         var acc = 0
         var bits = 0
         val maxv = (1 shl toBits) - 1
@@ -152,9 +152,9 @@ object Bech32 {
             val b = value.toInt() and 0xff
 
             if (b < 0) {
-                return null
+                throw Exception()
             } else if (b shr fromBits > 0) {
-                return null
+                throw Exception()
             }
 
             acc = acc shl fromBits or b
@@ -168,11 +168,13 @@ object Bech32 {
         if (pad && bits > 0) {
             result.add((acc shl toBits - bits and maxv).toByte())
         } else if (bits >= fromBits || (acc shl toBits - bits and maxv).toByte().toInt() != 0) {
-            return null
+            throw Exception()
         }
 
         return result.toByteArray()
     }
 
     private infix fun Byte.shr(other: Byte): Byte = (this.toInt() shr other.toInt()).toByte()
+    @Suppress("RemoveEmptyPrimaryConstructor")
+    private class Exception constructor() : RuntimeException()
 }

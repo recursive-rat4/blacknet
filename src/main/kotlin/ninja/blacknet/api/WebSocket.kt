@@ -36,7 +36,7 @@ fun Route.webSocket() {
                         APIServer.txPoolNotify.add(outgoing)
                     } else if (route == "wallet") {
                         val address = request.getPrimitive("address").content
-                        val publicKey = Address.decode(address)!!
+                        val publicKey = Address.decode(address)
 
                         APIServer.walletNotify.mutex.withLock {
                             val subscribers = APIServer.walletNotify.map.get(publicKey)
@@ -59,7 +59,7 @@ fun Route.webSocket() {
                         APIServer.txPoolNotify.remove(outgoing)
                     } else if (route == "wallet") {
                         val address = request.getPrimitive("address").content
-                        val publicKey = Address.decode(address)!!
+                        val publicKey = Address.decode(address)
 
                         APIServer.walletNotify.mutex.withLock {
                             val subscribers = APIServer.walletNotify.map.get(publicKey)

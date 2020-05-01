@@ -32,7 +32,7 @@ object Base64 {
     )
 
     fun encode(bytes: ByteArray, i2p: Boolean = false): String {
-        val converted = Bech32.convertBits(bytes, 8, 6, true)!!
+        val converted = Bech32.convertBits(bytes, 8, 6, true)
 
         val builder = StringBuilder(converted.size)
         val charset = if (!i2p) CHARSET else CHARSET_I2P
@@ -63,6 +63,10 @@ object Base64 {
                 return null
         }
 
-        return Bech32.convertBits(bytes, 6, 8, false)
+        return try {
+            Bech32.convertBits(bytes, 6, 8, false)
+        } catch (e: Throwable) {
+            null
+        }
     }
 }

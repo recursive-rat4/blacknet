@@ -71,7 +71,11 @@ class Message(
 
         fun decrypt(privateKey: PrivateKey, publicKey: PublicKey, hex: String): String? {
             val sharedKey = sharedKey(privateKey, publicKey)
-            val bytes = fromHex(hex) ?: return null
+            val bytes = try {
+                fromHex(hex)
+            } catch (e: Throwable) {
+                return null
+            }
             return ChaCha20.decryptUtf8(sharedKey, bytes)
         }
 

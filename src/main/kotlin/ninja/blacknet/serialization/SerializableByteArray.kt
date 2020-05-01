@@ -45,15 +45,15 @@ class SerializableByteArray(
     companion object {
         val EMPTY = SerializableByteArray(emptyByteArray())
 
-        fun fromString(hex: String): SerializableByteArray? {
-            val bytes = fromHex(hex) ?: return null
+        fun fromString(hex: String): SerializableByteArray {
+            val bytes = fromHex(hex)
             return SerializableByteArray(bytes)
         }
 
         override fun deserialize(decoder: Decoder): SerializableByteArray {
             return when (decoder) {
                 is BinaryDecoder -> SerializableByteArray(decoder.decodeByteArray())
-                is JsonInput -> fromString(decoder.decodeString())!!
+                is JsonInput -> fromString(decoder.decodeString())
                 else -> throw notSupportedDecoderError(decoder, this)
             }
         }

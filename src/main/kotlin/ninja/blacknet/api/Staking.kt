@@ -44,7 +44,7 @@ fun Route.staking() {
     }
 
     get("/api/v2/staking/{address?}") {
-        val publicKey = call.parameters["address"]?.let { Address.decode(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address") }
+        val publicKey = call.parameters["address"]?.let @Suppress("USELESS_ELVIS") { Address.decode(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address") }
 
         call.respondJson(StakingInfo.serializer(), Staker.info(publicKey))
     }

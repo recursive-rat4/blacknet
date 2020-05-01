@@ -39,15 +39,15 @@ class PublicKey(val bytes: ByteArray) {
          */
         const val SIZE_BYTES = 32
 
-        fun fromString(hex: String): PublicKey? {
-            val bytes = fromHex(hex, SIZE_BYTES) ?: return null
+        fun fromString(hex: String): PublicKey {
+            val bytes = fromHex(hex, SIZE_BYTES)
             return PublicKey(bytes)
         }
 
         override fun deserialize(decoder: Decoder): PublicKey {
             return when (decoder) {
                 is BinaryDecoder -> PublicKey(decoder.decodeFixedByteArray(SIZE_BYTES))
-                is JsonInput -> Address.decode(decoder.decodeString())!!
+                is JsonInput -> Address.decode(decoder.decodeString())
                 else -> throw notSupportedDecoderError(decoder, this)
             }
         }

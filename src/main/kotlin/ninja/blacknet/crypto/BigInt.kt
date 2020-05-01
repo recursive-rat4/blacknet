@@ -58,8 +58,8 @@ class BigInt(private val int: BigInteger) : Comparable<BigInt> {
         val ZERO = BigInt(BigInteger.ZERO)
         val ONE = BigInt(BigInteger.ONE)
 
-        fun fromString(hex: String): BigInt? {
-            val bytes = fromHex(hex) ?: return null
+        fun fromString(hex: String): BigInt {
+            val bytes = fromHex(hex)
             return BigInt(bytes)
         }
 

@@ -40,7 +40,7 @@ fun Route.sendTransaction() {
         val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
         val encrypted = parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid encrypted") }
         val message = Message.create(parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "Failed to create message")
-        val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
         APIServer.txMutex.withLock {
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
@@ -62,8 +62,8 @@ fun Route.sendTransaction() {
         val from = privateKey.toPublicKey()
         val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val message = SerializableByteArray.fromString(parameters["message"].orEmpty()) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid message")
-        val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+        val message = parameters["message"]?.let { SerializableByteArray.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid message")
+        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
         APIServer.txMutex.withLock {
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
@@ -86,7 +86,7 @@ fun Route.sendTransaction() {
         val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
         val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
-        val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
         APIServer.txMutex.withLock {
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
@@ -110,7 +110,7 @@ fun Route.sendTransaction() {
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
         val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
         val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
-        val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
         APIServer.txMutex.withLock {
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
@@ -135,7 +135,7 @@ fun Route.sendTransaction() {
         val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
         val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
         val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
-        val referenceChain = parameters["referenceChain"]?.let { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
 
         APIServer.txMutex.withLock {
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")

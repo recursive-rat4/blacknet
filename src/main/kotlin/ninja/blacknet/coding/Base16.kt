@@ -17,10 +17,14 @@ private val HEX_DECODE_TABLE = byteArrayOf(-1, -1, -1, -1, -1, -1, -1, -1, -1, -
 
 private fun decodeTable(character: Char): Int {
     val index = character.toInt()
-    return if (index > 0 && index < HEX_DECODE_TABLE.size)
-        HEX_DECODE_TABLE[index].toInt()
-    else
-        -1
+    try {
+        val v = HEX_DECODE_TABLE[index].toInt()
+        if (v != -1)
+            return v
+    } catch (e: ArrayIndexOutOfBoundsException) {
+
+    }
+    throw HexFormatException("$character is not a hexadecimal digit")
 }
 
 fun hex(bytes: ByteArray, lowerCase: Boolean): String {
@@ -50,19 +54,20 @@ fun ByteArray.toHex(): String {
 }
 
 /**
- * Returns the byte array representation of a hex-[string].
+ * Returns the byte array representation of a hex-string.
  * @param string the hex-string
  * @param size expected size in bytes (optional)
- * @return the decoded [ByteArray] or `null` if hex is not valid
+ * @return the decoded [ByteArray]
+ * @throws HexFormatException if the string is not a hexadecimal number
  */
-fun fromHex(string: String, size: Int = 0): ByteArray? {
+fun fromHex(string: String, size: Int = 0): ByteArray {
     val length = string.length
     if (size == 0) {
         if (length % 2 == 1)
-            return null
+            throw HexFormatException("Odd length ${string.length}")
     } else {
         if (length != size * 2)
-            return null
+            throw HexFormatException("Expected length ${size * 2} actual ${string.length}")
     }
 
     val result = ByteArray(length / 2)
@@ -72,12 +77,14 @@ fun fromHex(string: String, size: Int = 0): ByteArray? {
         val firstIndex = decodeTable(string[i])
         val secondIndex = decodeTable(string[i + 1])
 
-        if (firstIndex == -1 || secondIndex == -1)
-            return null
-
         val v = firstIndex.shl(4).or(secondIndex)
         result[resultIndex++] = v.toByte()
     }
 
     return result
 }
+
+/**
+ * Thrown to indicate that the given string does not have the appropriate format.
+ */
+class HexFormatException(message: String) : RuntimeException(message)
