@@ -9,7 +9,6 @@
 
 import nl.javadude.gradle.plugins.license.DownloadLicenses
 import nl.javadude.gradle.plugins.license.LicenseMetadata
-import org.eclipse.jgit.api.Git
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
@@ -19,7 +18,6 @@ version = "0.2.6"
 buildscript {
     dependencies {
         "classpath"("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.2")
-        "classpath"("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
     }
 }
 
@@ -29,6 +27,7 @@ plugins {
     application
     distribution
     id("com.github.hierynomus.license-report") version "0.15.0"
+    gitignore
 }
 
 apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
@@ -87,24 +86,10 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
     }
 }
 
-val dirtyDescribeGit by tasks.registering {
-    doLast {
-        val git = Git.open(buildDir.getParentFile())
-        val describtion = git.describe().call()
-        val status = git.status().call()
-        project.extra["revision"] =
-            if (status.hasUncommittedChanges())
-                "$describtion-dirty"
-            else
-                describtion
-    }
-}
-
 val createVersionTxt by tasks.registering {
     dependsOn(processResources)
-    dependsOn(dirtyDescribeGit)
     doLast {
-        File("$buildDir/resources/main/revision.txt").writeText("${project.extra["revision"]}")
+        File("$buildDir/resources/main/revision.txt").writeText(dirtyDescribeGit(buildDir.getParentFile()))
         File("$buildDir/resources/main/version.txt").writeText(project.version.toString())
         File("$buildDir/resources/main/ktor_version.txt").writeText(Versions.ktor)
     }
