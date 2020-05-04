@@ -11,113 +11,179 @@
 package ninja.blacknet.api
 
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
-import io.ktor.application.call
+import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.receiveParameters
 import io.ktor.response.respond
 import io.ktor.routing.Route
-import io.ktor.routing.get
-import io.ktor.routing.post
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.builtins.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.WalletDB
+import ninja.blacknet.ktor.requests.Request
+import ninja.blacknet.ktor.requests.get
+import ninja.blacknet.ktor.requests.post
 
 fun Route.wallet() {
-    get("/api/v2/generateaccount/{wordlist?}") {
-        val wordlist = Wordlists.get(call.parameters["wordlist"] ?: "english") ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid wordlist")
+    @Serializable
+    class GenerateAccount(
+            val wordlist: String = "english"
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val wordlist = Wordlists.get(wordlist)
 
-        call.respondJson(NewMnemonicInfo.serializer(), NewMnemonicInfo.new(wordlist))
+            return call.respondJson(NewMnemonicInfo.serializer(), NewMnemonicInfo.new(wordlist))
+        }
     }
 
-    get("/api/v2/address/{address}") {
-        val info = call.parameters["address"]?.let { AddressInfo.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
+    //get(GenerateAccount.serializer(), "/api/v2/generateaccount")
+    get(GenerateAccount.serializer(), "/api/v2/generateaccount/{wordlist?}")
 
-        call.respondJson(AddressInfo.serializer(), info)
+    @Serializable
+    class Address(
+            val address: String
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val info = AddressInfo.fromString(address)
+
+            return call.respondJson(AddressInfo.serializer(), info)
+        }
     }
 
-    post("/api/v2/mnemonic") {
-        val parameters = call.receiveParameters()
-        val info = parameters["mnemonic"]?.let { MnemonicInfo.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
+    get(Address.serializer(), "/api/v2/address")
+    get(Address.serializer(), "/api/v2/address/{address}")
 
-        call.respondJson(MnemonicInfo.serializer(), info)
+    @Serializable
+    class Mnemonic(
+            val mnemonic: String
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val info = MnemonicInfo.fromString(mnemonic)
+
+            return call.respondJson(MnemonicInfo.serializer(), info)
+        }
     }
 
-    post("/api/v2/decryptmessage") {
-        val parameters = call.receiveParameters()
-        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-        val publicKey = parameters["from"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid from")
-        val message = parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid message")
+    post(Mnemonic.serializer(), "/api/v2/mnemonic")
 
-        val decrypted = Message.decrypt(privateKey, publicKey, message)
-        if (decrypted != null)
-            call.respond(decrypted)
-        else
-            call.respond(HttpStatusCode.BadRequest, "Decryption failed")
+    @Serializable
+    class DecryptMessage(
+            val mnemonic: PrivateKey,
+            val from: PublicKey,
+            val message: String
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val privateKey = mnemonic
+            val decrypted = Message.decrypt(privateKey, from, message)
+
+            return if (decrypted != null)
+                call.respond(decrypted)
+            else
+                call.respond(HttpStatusCode.BadRequest, "Decryption failed")
+        }
     }
 
-    post("/api/v2/signmessage") {
-        val parameters = call.receiveParameters()
-        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-        val message = parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid message")
+    post(DecryptMessage.serializer(), "/api/v2/decryptmessage")
 
-        val signature = Message.sign(privateKey, message)
+    @Serializable
+    class SignMessage(
+            val mnemonic: PrivateKey,
+            val message: String
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val privateKey = mnemonic
+            val signature = Message.sign(privateKey, message)
 
-        call.respond(signature.toString())
+            return call.respond(signature.toString())
+        }
     }
 
-    get("/api/v2/verifymessage/{from}/{signature}/{message}") {
-        val publicKey = call.parameters["from"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid from")
-        val signature = call.parameters["signature"]?.let { Signature.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid signature")
-        val message = call.parameters["message"] ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid message")
+    post(SignMessage.serializer(), "/api/v2/signmessage")
 
-        val result = Message.verify(publicKey, signature, message)
+    @Serializable
+    class VerifyMessage(
+            val from: PublicKey,
+            val signature: Signature,
+            val message: String
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val result = Message.verify(from, signature, message)
 
-        call.respond(result.toString())
+            return call.respond(result.toString())
+        }
     }
 
-    get("/api/v2/wallet/{address}/transactions") {
-        val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
+    get(VerifyMessage.serializer(), "/api/v2/verifymessage")
+    get(VerifyMessage.serializer(), "/api/v2/verifymessage/{from}/{signature}/{message}")
 
-        val transactions = WalletDB.mutex.withLock {
+    @Serializable
+    class Transactions(
+            val address: PublicKey
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
+            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             val transactions = newHashMapWithExpectedSize<String, JsonElement>(wallet.transactions.size)
             wallet.transactions.forEach { (hash, txData) ->
                 transactions.put(hash.toString(), txData.toJson())
             }
-            transactions
+
+            return call.respondJson(MapSerializer(String.serializer(), JsonElement.serializer()), transactions)
         }
-        call.respondJson(MapSerializer(String.serializer(), JsonElement.serializer()), transactions)
     }
 
-    get("/api/v2/wallet/{address}/outleases") {
-        val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
+    //get(Transactions.serializer(), "/api/v2/wallet/transactions")
+    //get(Transactions.serializer(), "/api/v2/wallet/transactions/{address}")
+    get(Transactions.serializer(), "/api/v2/wallet/{address}/transactions")
 
-        WalletDB.mutex.withLock {
+    @Serializable
+    class OutLeases(
+            val address: PublicKey
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
+            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
-            call.respondJson(AccountState.Lease.serializer().list, wallet.outLeases)
+
+            return call.respondJson(AccountState.Lease.serializer().list, wallet.outLeases)
         }
     }
 
-    get("/api/v2/wallet/{address}/sequence") {
-        val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
+    //get(OutLeases.serializer(), "/api/v2/wallet/outleases")
+    //get(OutLeases.serializer(), "/api/v2/wallet/outleases/{address}")
+    get(OutLeases.serializer(), "/api/v2/wallet/{address}/outleases")
 
-        call.respond(WalletDB.getSequence(publicKey).toString())
+    @Serializable
+    class Sequence(
+            val address: PublicKey
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
+            val publicKey = address
+
+            return call.respond(WalletDB.getSequence(publicKey).toString())
+        }
     }
 
-    get("/api/v2/wallet/{address}/transaction/{hash}/{raw?}") {
-        val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
-        val hash = call.parameters["hash"]?.let { Hash.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
-        val raw = call.parameters["raw"]?.toBoolean() ?: false
+    //get(Sequence.serializer(), "/api/v2/wallet/sequence")
+    //get(Sequence.serializer(), "/api/v2/wallet/sequence/{address}")
+    get(Sequence.serializer(), "/api/v2/wallet/{address}/sequence")
 
-        WalletDB.mutex.withLock {
+    @Serializable
+    class TransactionRequest(
+            val address: PublicKey,
+            val hash: Hash,
+            val raw: Boolean = false
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
+            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             val txData = wallet.transactions.get(hash)
-            if (txData != null) {
+            return if (txData != null) {
                 val bytes = WalletDB.getTransactionImpl(hash)
                 if (bytes != null) {
                     if (raw) {
@@ -135,22 +201,42 @@ fun Route.wallet() {
         }
     }
 
-    get("/api/v2/wallet/{address}/confirmations/{hash}") {
-        val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
-        val hash = call.parameters["hash"]?.let { Hash.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
+    //get(TransactionRequest.serializer(), "/api/v2/wallet/transaction")
+    //get(TransactionRequest.serializer(), "/api/v2/wallet/transaction/{address}/{hash}/{raw?}")
+    get(TransactionRequest.serializer(), "/api/v2/wallet/{address}/transaction/{hash}/{raw?}")
 
-        val result = WalletDB.getConfirmations(publicKey, hash)
-        if (result != null)
-            call.respond(result.toString())
-        else
-            call.respond(HttpStatusCode.BadRequest, "Transaction not found")
+    @Serializable
+    class Confirmations(
+            val address: PublicKey,
+            val hash: Hash
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val publicKey = address
+            val result = WalletDB.getConfirmations(publicKey, hash)
+            return if (result != null)
+                call.respond(result.toString())
+            else
+                call.respond(HttpStatusCode.BadRequest, "Transaction not found")
+        }
     }
 
-    get("/api/v2/wallet/{address}/referencechain") {
-        @Suppress("UNUSED_VARIABLE")
-        val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
+    //get(Confirmations.serializer(), "/api/v2/wallet/confirmations")
+    //get(Confirmations.serializer(), "/api/v2/wallet/confirmations/{address}/{hash}")
+    get(Confirmations.serializer(), "/api/v2/wallet/{address}/confirmations/{hash}")
 
-        val result = WalletDB.referenceChain()
-        call.respond(result.toString())
+    @Serializable
+    class ReferenceChain(
+            val address: PublicKey
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            @Suppress("UNUSED_VARIABLE")
+            val publicKey = address
+            val result = WalletDB.referenceChain()
+            return call.respond(result.toString())
+        }
     }
+
+    //get(ReferenceChain.serializer(), "/api/v2/wallet/referencechain")
+    //get(ReferenceChain.serializer(), "/api/v2/wallet/referencechain/{address}")
+    get(ReferenceChain.serializer(), "/api/v2/wallet/{address}/referencechain")
 }

@@ -18,6 +18,7 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderError
@@ -40,15 +41,16 @@ class Signature(val bytes: ByteArray) {
         const val SIZE_BYTES = 64
         val EMPTY = Signature(ByteArray(SIZE_BYTES))
 
-        fun fromString(hex: String): Signature {
-            val bytes = fromHex(hex, SIZE_BYTES)
+        fun parse(string: String): Signature {
+            val bytes = fromHex(string, SIZE_BYTES)
             return Signature(bytes)
         }
 
         override fun deserialize(decoder: Decoder): Signature {
             return when (decoder) {
                 is BinaryDecoder -> Signature(decoder.decodeFixedByteArray(SIZE_BYTES))
-                is JsonInput -> Signature.fromString(decoder.decodeString())
+                is RequestDecoder -> Signature.parse(decoder.decodeString())
+                is JsonInput -> Signature.parse(decoder.decodeString())
                 else -> throw notSupportedDecoderError(decoder, this)
             }
         }

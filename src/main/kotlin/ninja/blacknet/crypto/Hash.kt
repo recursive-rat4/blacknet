@@ -18,6 +18,7 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderError
@@ -40,15 +41,16 @@ class Hash(val bytes: ByteArray) {
         const val SIZE_BYTES = 32
         val ZERO = Hash(ByteArray(SIZE_BYTES))
 
-        fun fromString(hex: String): Hash {
-            val bytes = fromHex(hex, SIZE_BYTES)
+        fun parse(string: String): Hash {
+            val bytes = fromHex(string, SIZE_BYTES)
             return Hash(bytes)
         }
 
         override fun deserialize(decoder: Decoder): Hash {
             return when (decoder) {
                 is BinaryDecoder -> Hash(decoder.decodeFixedByteArray(SIZE_BYTES))
-                is JsonInput -> Hash.fromString(decoder.decodeString())
+                is RequestDecoder -> Hash.parse(decoder.decodeString())
+                is JsonInput -> Hash.parse(decoder.decodeString())
                 else -> throw notSupportedDecoderError(decoder, this)
             }
         }

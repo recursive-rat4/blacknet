@@ -44,6 +44,7 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.debug
 import ninja.blacknet.debugMessage
 import ninja.blacknet.error
+import ninja.blacknet.ktor.requests.Requests
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
@@ -176,7 +177,7 @@ fun Application.APIServer() {
         }
     }
     install(WebSockets)
-    //install(Requests)
+    install(Requests)
     install(Routing) {
         html()
 

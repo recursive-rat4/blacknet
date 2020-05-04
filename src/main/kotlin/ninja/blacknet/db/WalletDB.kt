@@ -182,13 +182,13 @@ object WalletDB {
         }
     }
 
-    suspend fun getSequence(publicKey: PublicKey): Int? = mutex.withLock {
+    suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
         val wallet = getWalletImpl(publicKey)
         val seq = wallet.seq
         return@withLock if (seq < Config.instance.wallet_seqthreshold)
             seq
         else
-            null
+            throw RuntimeException("Wallet reached sequence threshold")
     }
 
     internal fun getTransactionImpl(hash: Hash): ByteArray? {

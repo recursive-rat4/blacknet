@@ -31,8 +31,7 @@ object Genesis {
             val genesis = Resources.toString(Resources.getResource("genesis.json"), Charsets.UTF_8)
             val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
             entries.forEach { entry ->
-                val publicKey = PublicKey.fromString(entry.publicKey)
-                map.put(publicKey, entry.balance)
+                map.put(entry.publicKey, entry.balance)
             }
         }
 
@@ -40,7 +39,7 @@ object Genesis {
     }
 
     @Serializable
-    private class GenesisJsonEntry(val publicKey: String, val balance: Long)
+    private class GenesisJsonEntry(val publicKey: PublicKey, val balance: Long)
 
     object RegTest {
         // rblacknet1y73v0n57axhsgkyrypusz7jlhwclz4gextzvhyqnj6awjhmapu9qklf7u2

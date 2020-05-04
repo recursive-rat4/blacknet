@@ -10,157 +10,178 @@
 
 package ninja.blacknet.api
 
-import io.ktor.application.call
+import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.receiveParameters
 import io.ktor.response.respond
 import io.ktor.routing.Route
-import io.ktor.routing.get
-import io.ktor.routing.post
 import kotlinx.coroutines.sync.withLock
-import ninja.blacknet.coding.fromHex
+import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.Message
-import ninja.blacknet.crypto.Mnemonic
+import ninja.blacknet.crypto.PrivateKey
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
+import ninja.blacknet.ktor.requests.Request
+import ninja.blacknet.ktor.requests.get
+import ninja.blacknet.ktor.requests.post
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.*
 
 fun Route.sendTransaction() {
-    post("/api/v2/transfer") {
-        val parameters = call.receiveParameters()
-        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-        val from = privateKey.toPublicKey()
-        val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
-        val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
-        val encrypted = parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid encrypted") }
-        val message = Message.create(parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "Failed to create message")
-        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
-
-        APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
+    @Serializable
+    class Transfer(
+            val mnemonic: PrivateKey,
+            val fee: Long,
+            val amount: Long,
+            val to: PublicKey,
+            val encrypted: Byte? = null,
+            val message: String? = null,
+            val referenceChain: Hash? = null
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+            val privateKey = mnemonic
+            val message = Message.create(message, encrypted, privateKey, to) ?: return call.respond(HttpStatusCode.BadRequest, "Failed to create message")
+            val from = privateKey.toPublicKey()
+            val seq = WalletDB.getSequence(from)
             val data = Transfer(amount, to, message).serialize()
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
             val status = Node.broadcastTx(hash, bytes)
-            if (status == Accepted)
+            return if (status == Accepted)
                 call.respond(hash.toString())
             else
                 call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
         }
     }
 
-    post("/api/v2/burn") {
-        val parameters = call.receiveParameters()
-        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-        val from = privateKey.toPublicKey()
-        val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
-        val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val message = parameters["message"]?.let { SerializableByteArray.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid message")
-        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+    post(Transfer.serializer(), "/api/v2/transfer")
 
-        APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
+    @Serializable
+    class Burn(
+            val mnemonic: PrivateKey,
+            val fee: Long,
+            val amount: Long,
+            val message: SerializableByteArray,
+            val referenceChain: Hash? = null
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+            val privateKey = mnemonic
+            val from = privateKey.toPublicKey()
+            val seq = WalletDB.getSequence(from)
             val data = Burn(amount, message).serialize()
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
             val status = Node.broadcastTx(hash, bytes)
-            if (status == Accepted)
+            return if (status == Accepted)
                 call.respond(hash.toString())
             else
                 call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
         }
     }
 
-    post("/api/v2/lease") {
-        val parameters = call.receiveParameters()
-        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-        val from = privateKey.toPublicKey()
-        val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
-        val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
-        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+    post(Burn.serializer(), "/api/v2/burn")
 
-        APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
+    @Serializable
+    class Lease(
+            val mnemonic: PrivateKey,
+            val fee: Long,
+            val amount: Long,
+            val to: PublicKey,
+            val referenceChain: Hash? = null
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+            val privateKey = mnemonic
+            val from = privateKey.toPublicKey()
+            val seq = WalletDB.getSequence(from)
             val data = Lease(amount, to).serialize()
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
             val status = Node.broadcastTx(hash, bytes)
-            if (status == Accepted)
+            return if (status == Accepted)
                 call.respond(hash.toString())
             else
                 call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
         }
     }
 
-    post("/api/v2/cancellease") {
-        val parameters = call.receiveParameters()
-        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-        val from = privateKey.toPublicKey()
-        val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
-        val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
-        val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
-        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+    post(Lease.serializer(), "/api/v2/lease")
 
-        APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
+    @Serializable
+    class CancelLease(
+            val mnemonic: PrivateKey,
+            val fee: Long,
+            val amount: Long,
+            val to: PublicKey,
+            val height: Int,
+            val referenceChain: Hash? = null
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+            val privateKey = mnemonic
+            val from = privateKey.toPublicKey()
+            val seq = WalletDB.getSequence(from)
             val data = CancelLease(amount, to, height).serialize()
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
             val status = Node.broadcastTx(hash, bytes)
-            if (status == Accepted)
+            return if (status == Accepted)
                 call.respond(hash.toString())
             else
                 call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
         }
     }
 
-    post("/api/v2/withdrawfromlease") {
-        val parameters = call.receiveParameters()
-        val privateKey = parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid mnemonic")
-        val from = privateKey.toPublicKey()
-        val fee = parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid fee")
-        val withdraw = parameters["withdraw"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid withdraw")
-        val amount = parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid amount")
-        val to = parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid to")
-        val height = parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid height")
-        val referenceChain = parameters["referenceChain"]?.let @Suppress("USELESS_ELVIS") { Hash.fromString(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid reference chain") }
+    post(CancelLease.serializer(), "/api/v2/cancellease")
 
-        APIServer.txMutex.withLock {
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "Wallet reached sequence threshold")
+    @Serializable
+    class WithdrawFromLease(
+            val mnemonic: PrivateKey,
+            val fee: Long,
+            val withdraw: Long,
+            val amount: Long,
+            val to: PublicKey,
+            val height: Int,
+            val referenceChain: Hash? = null
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+            val privateKey = mnemonic
+            val from = privateKey.toPublicKey()
+            val seq = WalletDB.getSequence(from)
             val data = WithdrawFromLease(withdraw, amount, to, height).serialize()
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.WithdrawFromLease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
             val status = Node.broadcastTx(hash, bytes)
-            if (status == Accepted)
+            return if (status == Accepted)
                 call.respond(hash.toString())
             else
                 call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
         }
     }
 
-    get("/api/v2/sendrawtransaction/{hex}/") {
-        val bytes = call.parameters["hex"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hex")
+    post(WithdrawFromLease.serializer(), "/api/v2/withdrawfromlease")
 
-        APIServer.txMutex.withLock {
+    @Serializable
+    class SendRawTransaction(
+            val hex: SerializableByteArray
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+            val bytes = hex.array
             val hash = Transaction.hash(bytes)
+
             val status = Node.broadcastTx(hash, bytes)
-            if (status == Accepted)
+            return if (status == Accepted)
                 call.respond(hash.toString())
             else
                 call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
         }
     }
+
+    get(SendRawTransaction.serializer(), "/api/v2/sendrawtransaction/{hex}/")
 }

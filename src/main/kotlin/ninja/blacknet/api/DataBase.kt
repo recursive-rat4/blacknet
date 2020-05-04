@@ -10,20 +10,24 @@
 
 package ninja.blacknet.api
 
+import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.Serializable
 import ninja.blacknet.core.ChainIndex
-import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LevelDB
+import ninja.blacknet.ktor.requests.Request
+import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import java.io.File
@@ -42,32 +46,37 @@ fun Route.dataBase() {
         call.respond(LevelDB.getProperty("leveldb.stats") ?: "Not implemented")
     }
 
-    get("/api/v2/block/{hash}/{txdetail?}") {
-        val hash = call.parameters["hash"]?.let { Hash.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
-        val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
-
-        val result = BlockDB.block(hash)
-        if (result != null)
-            call.respondJson(BlockInfo.serializer(), BlockInfo(result.first, hash, result.second, txdetail))
-        else
-            call.respond(HttpStatusCode.BadRequest, "Block not found")
+    @Serializable
+    class Block(
+            val hash: Hash,
+            val txdetail: Boolean = false
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val (block, size) = BlockDB.block(hash)
+                    ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
+            return call.respondJson(BlockInfo.serializer(), BlockInfo(block, hash, size, txdetail))
+        }
     }
 
-    get("/api/v2/blockhash/{height}") {
-        val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
+    get(Block.serializer(), "/api/v2/block")
+    get(Block.serializer(), "/api/v2/block/{hash}/{txdetail?}")
 
-        BlockDB.mutex.withLock {
+    @Serializable
+    class BlockHash(
+            val height: Int
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = BlockDB.mutex.withLock {
             val state = LedgerDB.state()
             if (height < 0 || height > state.height)
-                return@get call.respond(HttpStatusCode.BadRequest, "Block not found")
+                return call.respond(HttpStatusCode.BadRequest, "Block not found")
             else if (height == 0)
-                return@get call.respond(Hash.ZERO.toString())
+                return call.respond(Hash.ZERO.toString())
             else if (height == state.height)
-                return@get call.respond(state.blockHash.toString())
+                return call.respond(state.blockHash.toString())
 
             val lastIndex = APIServer.lastIndex
             if (lastIndex != null && lastIndex.second.height == height)
-                return@get call.respond(lastIndex.first.toString())
+                return call.respond(lastIndex.first.toString())
 
             var hash: Hash
             var index: ChainIndex
@@ -90,19 +99,29 @@ fun Route.dataBase() {
             }
             if (index.height < state.height - PoS.MATURITY + 1)
                 APIServer.lastIndex = Pair(hash, index)
-            call.respond(hash.toString())
+
+            return call.respond(hash.toString())
         }
     }
 
-    get("/api/v2/blockindex/{hash}/") {
-        val hash = call.parameters["hash"]?.let { Hash.fromString(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid hash")
+    get(BlockHash.serializer(), "/api/v2/blockhash")
+    get(BlockHash.serializer(), "/api/v2/blockhash/{height}")
 
-        val result = LedgerDB.getChainIndex(hash)
-        if (result != null)
-            call.respondJson(ChainIndex.serializer(), result)
-        else
-            call.respond(HttpStatusCode.BadRequest, "Block not found")
+    @Serializable
+    class BlockIndex(
+            val hash: Hash
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val index = LedgerDB.getChainIndex(hash)
+            return if (index != null)
+                call.respondJson(ChainIndex.serializer(), index)
+            else
+                call.respond(HttpStatusCode.BadRequest, "Block not found")
+        }
     }
+
+    get(BlockIndex.serializer(), "/api/v2/blockindex")
+    get(BlockIndex.serializer(), "/api/v2/blockindex/{hash}/")
 
     get("/api/v2/makebootstrap") {
         val checkpoint = LedgerDB.state().rollingCheckpoint
@@ -131,38 +150,53 @@ fun Route.dataBase() {
         call.respondJson(LedgerInfo.serializer(), LedgerInfo.get())
     }
 
-    get("/api/v2/account/{address}/{confirmations?}") {
-        val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid address")
-        val confirmations = call.parameters["confirmations"]?.toIntOrNull() ?: PoS.DEFAULT_CONFIRMATIONS
-        val result = AccountInfo.get(publicKey, confirmations)
-        if (result != null)
-            call.respondJson(AccountInfo.serializer(), result)
-        else
-            call.respond(HttpStatusCode.BadRequest, "Account not found")
+    @Serializable
+    class Account(
+            val address: PublicKey,
+            val confirmations: Int = PoS.DEFAULT_CONFIRMATIONS
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val info = AccountInfo.get(address, confirmations)
+            return if (info != null)
+                call.respondJson(AccountInfo.serializer(), info)
+            else
+                call.respond(HttpStatusCode.BadRequest, "Account not found")
+        }
     }
+
+    get(Account.serializer(), "/api/v2/account")
+    get(Account.serializer(), "/api/v2/account/{address}/{confirmations?}")
 
     get("/api/v2/ledger/check") {
         call.respondJson(LedgerDB.Check.serializer(), LedgerDB.check())
     }
 
-    get("/api/v2/ledger/schedulesnapshot/{height}") {
-        val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
-
-        val result = BlockDB.mutex.withLock {
-            LedgerDB.scheduleSnapshotImpl(height)
+    @Serializable
+    class ScheduleSnapshot(
+            val height: Int
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = BlockDB.mutex.withLock {
+            val scheduled = LedgerDB.scheduleSnapshotImpl(height)
+            return call.respond(scheduled.toString())
         }
-
-        call.respond(result.toString())
     }
 
-    get("/api/v2/ledger/snapshot/{height}") {
-        val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid height")
+    get(ScheduleSnapshot.serializer(), "/api/v2/ledger/schedulesnapshot")
+    get(ScheduleSnapshot.serializer(), "/api/v2/ledger/schedulesnapshot/{height}")
 
-        val result = LedgerDB.getSnapshot(height)
-
-        if (result != null)
-            call.respondJson(LedgerDB.Snapshot.serializer(), result)
-        else
-            call.respond(HttpStatusCode.BadRequest, "Snapshot not found")
+    @Serializable
+    class Snapshot(
+            val height: Int
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit {
+            val snapshot = LedgerDB.getSnapshot(height)
+            return if (snapshot != null)
+                call.respondJson(LedgerDB.Snapshot.serializer(), snapshot)
+            else
+                call.respond(HttpStatusCode.BadRequest, "Snapshot not found")
+        }
     }
+
+    get(Snapshot.serializer(), "/api/v2/ledger/snapshot")
+    get(Snapshot.serializer(), "/api/v2/ledger/snapshot/{height}")
 }

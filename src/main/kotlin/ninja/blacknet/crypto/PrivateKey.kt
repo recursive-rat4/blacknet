@@ -17,6 +17,7 @@ import ninja.blacknet.coding.HexFormatException
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.ConfigInput
 import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
@@ -57,6 +58,7 @@ class PrivateKey(val bytes: ByteArray) {
         override fun deserialize(decoder: Decoder): PrivateKey {
             return when (decoder) {
                 is ConfigInput -> PrivateKey.parse(decoder.decodeString())
+                is RequestDecoder -> PrivateKey.parse(decoder.decodeString())
                 else -> throw notSupportedDecoderError(decoder, this)
             }
         }

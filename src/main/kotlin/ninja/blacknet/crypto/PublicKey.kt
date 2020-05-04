@@ -15,9 +15,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.coding.HexFormatException
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderError
@@ -39,15 +41,24 @@ class PublicKey(val bytes: ByteArray) {
          */
         const val SIZE_BYTES = 32
 
-        fun fromString(hex: String): PublicKey {
-            val bytes = fromHex(hex, SIZE_BYTES)
-            return PublicKey(bytes)
+        fun parse(string: String): PublicKey {
+            return try {
+                val bytes = fromHex(string, SIZE_BYTES)
+                PublicKey(bytes)
+            } catch (e: HexFormatException) {
+                try {
+                    Address.decode(string)
+                } catch (e: Throwable) {
+                    throw e
+                }
+            }
         }
 
         override fun deserialize(decoder: Decoder): PublicKey {
             return when (decoder) {
                 is BinaryDecoder -> PublicKey(decoder.decodeFixedByteArray(SIZE_BYTES))
-                is JsonInput -> Address.decode(decoder.decodeString())
+                is RequestDecoder -> PublicKey.parse(decoder.decodeString())
+                is JsonInput -> PublicKey.parse(decoder.decodeString())
                 else -> throw notSupportedDecoderError(decoder, this)
             }
         }

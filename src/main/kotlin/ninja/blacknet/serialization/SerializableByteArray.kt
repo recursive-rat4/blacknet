@@ -20,6 +20,7 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
+import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.util.emptyByteArray
 
 /**
@@ -45,15 +46,16 @@ class SerializableByteArray(
     companion object {
         val EMPTY = SerializableByteArray(emptyByteArray())
 
-        fun fromString(hex: String): SerializableByteArray {
-            val bytes = fromHex(hex)
+        fun parse(string: String): SerializableByteArray {
+            val bytes = fromHex(string)
             return SerializableByteArray(bytes)
         }
 
         override fun deserialize(decoder: Decoder): SerializableByteArray {
             return when (decoder) {
                 is BinaryDecoder -> SerializableByteArray(decoder.decodeByteArray())
-                is JsonInput -> fromString(decoder.decodeString())
+                is RequestDecoder -> SerializableByteArray.parse(decoder.decodeString())
+                is JsonInput -> SerializableByteArray.parse(decoder.decodeString())
                 else -> throw notSupportedDecoderError(decoder, this)
             }
         }

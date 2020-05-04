@@ -107,8 +107,8 @@ class ConfigDecoder(
         return READ_DONE
     }
 
-    private fun SerialDescriptor.getConfigElementName(counter: Int): String {
-        return getElementName(counter).replace('_', '.')
+    private fun SerialDescriptor.getConfigElementName(sleeper: Int): String {
+        return getElementName(sleeper).replace('_', '.')
     }
 
     private class ListDecoder(

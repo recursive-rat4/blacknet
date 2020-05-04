@@ -17,14 +17,14 @@ import com.google.common.io.Resources
  * Bitcoin improvement proposal 39 "Mnemonic code for generating deterministic keys"
  */
 object Wordlists {
-    fun get(name: String): Array<String>? {
+    fun get(name: String): Array<String> {
         return when (name) {
             "english" -> ENGLISH
             "chinese_simplified" -> CHINESE_SIMPLIFIED
             "chinese_traditional" -> CHINESE_TRADITIONAL
             "italian" -> ITALIAN
             "korean" -> KOREAN
-            else -> null
+            else -> throw RuntimeException("Unknown wordlist $name")
         }
     }
 
