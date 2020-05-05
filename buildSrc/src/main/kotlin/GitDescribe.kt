@@ -9,13 +9,25 @@
 
 import org.eclipse.jgit.api.Git
 import java.io.File
+import java.io.IOException
 
 fun dirtyDescribeGit(directory: File): String {
-    val git = Git.open(directory)
+    @Suppress("UNUSED_VARIABLE")
+    val description = "Describes the state of the Git repository"
+    val git = try {
+        Git.open(directory)
+    } catch (e: IOException) {
+        println("Execution failed for task ':dirtyDescribeGit'.")
+        println("\u001B[33m>\u001B[39m ${e::class.qualifiedName}: ${e.message}")
+        return ""
+    }
     val describe = git.describe().call()
     val status = git.status().call()
-    return (if (status.hasUncommittedChanges())
+    return (if (status.hasUncommittedChanges()) {
         "$describe-dirty"
-    else
-        describe).also { git.close() }
+    } else {
+        describe
+    }).also {
+        git.close()
+    }
 }
