@@ -11,6 +11,7 @@ package ninja.blacknet
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
+import ninja.blacknet.crypto.PrivateKey
 import ninja.blacknet.serialization.ConfigDecoder
 import ninja.blacknet.serialization.ConfigReader
 import java.io.File
@@ -35,7 +36,7 @@ class Config(
         val i2psamhost: String? = null,
         val i2psamport: Int? = null,
         val dbcache: Size,
-        var mnemonics: List<String>? = null,
+        var mnemonics: List<PrivateKey>? = null,
         val softblocksizelimit: Size = Size(PoS.MAX_BLOCK_SIZE),
         val txpoolsize: Size = Size(128 * 1024 * 1024),
         val portable: Boolean = false,

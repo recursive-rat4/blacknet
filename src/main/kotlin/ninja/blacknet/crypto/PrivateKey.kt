@@ -13,9 +13,11 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
+import ninja.blacknet.coding.HexFormatException
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.serialization.ConfigInput
 import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 
@@ -39,13 +41,24 @@ class PrivateKey(val bytes: ByteArray) {
          */
         const val SIZE_BYTES = 32
 
-        fun fromString(hex: String): PrivateKey {
-            val bytes = fromHex(hex, SIZE_BYTES)
-            return PrivateKey(bytes)
+        fun parse(string: String): PrivateKey {
+            return try {
+                val bytes = fromHex(string, SIZE_BYTES)
+                PrivateKey(bytes)
+            } catch (e: HexFormatException) {
+                try {
+                    Mnemonic.fromString(string)
+                } catch (e: Throwable) {
+                    throw e
+                }
+            }
         }
 
         override fun deserialize(decoder: Decoder): PrivateKey {
-            throw notSupportedDecoderError(decoder, this)
+            return when (decoder) {
+                is ConfigInput -> PrivateKey.parse(decoder.decodeString())
+                else -> throw notSupportedDecoderError(decoder, this)
+            }
         }
 
         override fun serialize(encoder: Encoder, value: PrivateKey) {

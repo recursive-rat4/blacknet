@@ -64,8 +64,8 @@ object Staker {
     init {
         Config.instance.mnemonics?.let { mnemonics ->
             runBlocking {
-                mnemonics.forEachIndexed @Suppress("UNUSED_ANONYMOUS_PARAMETER") { index, mnemonic ->
-                    val privateKey = Mnemonic.fromString(mnemonic)
+                mnemonics.forEach { mnemonic ->
+                    val privateKey = mnemonic
                     startStaking(privateKey)
                 }
                 val n = stakers.list.size

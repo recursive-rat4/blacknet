@@ -1,6 +1,6 @@
 {
     "Overview": "概要",
-    "Staking": "ステーク機",
+    "Staking": "ステーク持",
     "Send": "発送",
     "Lease": "リース",
     "Cancel Lease": "リースの取り消し",
@@ -19,7 +19,7 @@
     "Difficulty": "難易度",
     "Cumulative Difficulty": "累積難易度",
     "Supply": "総量",
-    "Staking Info": "ステーク情報",
+    "Staking Info": "ステークの情報",
     "Is Staking": "ステーク中かどうか",
     "Start/Stop/Refresh": "スタート/ストップ/リフレッシュ",
     "Start Staking": "スタートステーク",
