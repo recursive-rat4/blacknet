@@ -162,7 +162,7 @@ fun Route.wallet() {
     class Sequence(
             val address: PublicKey
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
+        override suspend fun handle(call: ApplicationCall): Unit {
             val publicKey = address
 
             return call.respond(WalletDB.getSequence(publicKey).toString())
@@ -239,4 +239,20 @@ fun Route.wallet() {
     //get(ReferenceChain.serializer(), "/api/v2/wallet/referencechain")
     //get(ReferenceChain.serializer(), "/api/v2/wallet/referencechain/{address}")
     get(ReferenceChain.serializer(), "/api/v2/wallet/{address}/referencechain")
+
+    @Serializable
+    class TxCount(
+            val address: PublicKey
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
+            val publicKey = address
+            val wallet = WalletDB.getWalletImpl(publicKey)
+            val count = wallet.transactions.size
+            return call.respond(count.toString())
+        }
+    }
+
+    //get(TxCount.serializer(), "/api/v2/wallet/txcount")
+    //get(TxCount.serializer(), "/api/v2/wallet/txcount/{address}")
+    get(TxCount.serializer(), "/api/v2/wallet/{address}/txcount")
 }

@@ -482,8 +482,11 @@ object WalletDB {
 
     @Serializable
     class TransactionData(
+            // 交易數據類型和交易數據索引號列表
             val types: List<TransactionDataType>,
+            // 交易被接收了的時間戳
             val time: Long,
+            // 包含交易的區塊的高度
             var height: Int
     ) {
         fun toJson() = Json.toJson(serializer(), this)
