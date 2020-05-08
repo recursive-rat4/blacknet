@@ -12,7 +12,7 @@ package ninja.blacknet.crypto
 import io.ktor.utils.io.bits.*
 import io.ktor.utils.io.charsets.Charset
 import ninja.blacknet.serialization.AdaptorEncoder
-import ninja.blacknet.serialization.EncoderException
+import ninja.blacknet.serialization.EncoderError
 
 class HashCoder(
         val writer: HashWriter,
@@ -61,7 +61,7 @@ class HashCoder(
         if (allowFloatingPointValues) {
             encodeInt(value.toBits())
         } else {
-            throw floatingPointValueException()
+            throw floatingPointValueError()
         }
     }
 
@@ -69,7 +69,7 @@ class HashCoder(
         if (allowFloatingPointValues) {
             encodeLong(value.toBits())
         } else {
-            throw floatingPointValueException()
+            throw floatingPointValueError()
         }
     }
 
@@ -93,8 +93,8 @@ class HashCoder(
         }
     }
 
-    private fun floatingPointValueException(): Throwable {
-        return EncoderException("You can enable floating point number values with 'allowFloatingPointNumbers' flag in HashCoder.")
+    private fun floatingPointValueError(): Throwable {
+        return EncoderError("You can enable floating point number values with 'allowFloatingPointNumbers' flag in HashCoder.")
     }
 
     companion object {

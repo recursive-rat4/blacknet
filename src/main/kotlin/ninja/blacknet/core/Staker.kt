@@ -45,12 +45,12 @@ object Staker {
         var lastBlock = Hash.ZERO
         var stake = 0L
 
-        fun hashRate(): Float {
+        fun hashRate(): Double {
             val time = SystemClock.milliseconds - startTime
             return if (time != MilliSeconds.ZERO)
-                hashCounter.toFloat() / time.seconds
+                hashCounter.toDouble() / time.seconds
             else
-                0f
+                0.0
         }
 
         fun updateImpl(state: LedgerDB.State) {
@@ -197,7 +197,7 @@ object Staker {
             if (publicKey == null) {
                 Triple(
                         stakers.list.size,
-                        stakers.list.sumByFloat { it.hashRate() },
+                        stakers.list.sumByDouble { it.hashRate() },
                         stakers.list.sumByLong { it.stake }
                 )
             } else {
@@ -205,7 +205,7 @@ object Staker {
                 if (staker != null)
                     Triple(1, staker.hashRate(), staker.stake)
                 else
-                    Triple(0, 0f, 0L)
+                    Triple(0, 0.0, 0L)
             }
         }
         val state = LedgerDB.state()
