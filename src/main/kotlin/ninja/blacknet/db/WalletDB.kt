@@ -155,8 +155,9 @@ object WalletDB {
             wallets.forEach { (_, wallet) ->
                 val data = wallet.transactions.get(hash)
                 if (data != null) {
-                    if (data.height == 0) return 0
-                    return LedgerDB.state().height - data.height + 1
+                    return data.confirmationsImpl(LedgerDB.state())
+                } else {
+                    Unit
                 }
             }
             return null
@@ -169,10 +170,7 @@ object WalletDB {
             if (wallet != null) {
                 val txData = wallet.transactions.get(hash)
                 if (txData != null) {
-                    if (txData.height != 0)
-                        LedgerDB.state().height - txData.height + 1
-                    else
-                        0
+                    txData.confirmationsImpl(LedgerDB.state())
                 } else {
                     txData
                 }
@@ -490,6 +488,13 @@ object WalletDB {
             var height: Int
     ) {
         fun toJson() = Json.toJson(serializer(), this)
+
+        internal fun confirmationsImpl(ledger: LedgerDB.State): Int {
+            return if (height != 0)
+                ledger.height - height + 1
+            else
+                0
+        }
 
         internal fun toV1(): TransactionDataV1 {
             return TransactionDataV1(types[0].type, time, height)

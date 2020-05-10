@@ -15,6 +15,7 @@ import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.Route
+import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
@@ -25,6 +26,8 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.*
+import ninja.blacknet.db.BlockDB
+import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
@@ -184,16 +187,12 @@ fun Route.wallet() {
             val wallet = WalletDB.getWalletImpl(publicKey)
             val txData = wallet.transactions.get(hash)
             return if (txData != null) {
-                val bytes = WalletDB.getTransactionImpl(hash)
-                if (bytes != null) {
-                    if (raw) {
-                        call.respond(bytes.toHex())
-                    } else {
-                        val tx = Transaction.deserialize(bytes)
-                        call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, bytes.size, txData.types))
-                    }
+                val bytes = WalletDB.getTransactionImpl(hash)!!
+                if (raw) {
+                    call.respond(bytes.toHex())
                 } else {
-                    call.respond(HttpStatusCode.BadRequest, "Transaction not found")
+                    val tx = Transaction.deserialize(bytes)
+                    call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, bytes.size, txData.types))
                 }
             } else {
                 call.respond(HttpStatusCode.BadRequest, "Transaction not found")
@@ -255,4 +254,80 @@ fun Route.wallet() {
     //get(TxCount.serializer(), "/api/v2/wallet/txcount")
     //get(TxCount.serializer(), "/api/v2/wallet/txcount/{address}")
     get(TxCount.serializer(), "/api/v2/wallet/{address}/txcount")
+
+    @Serializable
+    class ListTransactions(
+            val address: PublicKey,
+            val offset: Int = 0,
+            val max: Int = 100
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = BlockDB.mutex.withLock { WalletDB.mutex.withLock {
+            val publicKey = address
+            val wallet = WalletDB.getWalletImpl(publicKey)
+            val size = wallet.transactions.size
+            if (offset < 0 || offset > size)
+                return call.respond(HttpStatusCode.BadRequest, "Invalid offset")
+            if (max < 0 || max > Int.MAX_VALUE)
+                return call.respond(HttpStatusCode.BadRequest, "Invalid max")
+            val toIndex = min(offset + max, size)
+            val expectedSize = min(max, size)
+            val transactions = ArrayList<WalletTransactionInfo>(expectedSize)
+            val state = LedgerDB.state()
+            wallet.transactions.entries
+                    .sortedByDescending { (_, txData) -> txData.time }
+                    .subList(offset, toIndex)
+                    .forEach { (hash, txData) ->
+                        val bytes = WalletDB.getTransactionImpl(hash)!!
+                        val tx = Transaction.deserialize(bytes)
+                        transactions.add(WalletTransactionInfo(
+                                TransactionInfo(tx, hash, bytes.size, txData.types),
+                                txData.confirmationsImpl(state),
+                                txData.time
+                        ))
+                    }
+            return call.respondJson(WalletTransactionInfo.serializer().list, transactions)
+        }}
+    }
+
+    //get(ListTransactions.serializer(), "/api/v2/wallet/listtransactions")
+    //get(ListTransactions.serializer(), "/api/v2/wallet/listtransactions/{address}/{offset?}/{max?}")
+    get(ListTransactions.serializer(), "/api/v2/wallet/{address}/listtransactions/{offset?}/{max?}")
+
+    @Serializable
+    class ListSinceBlockInfo(
+            val transactions: List<WalletTransactionInfo>,
+            val lastBlockHash: Hash
+    )
+
+    @Serializable
+    class ListSinceBlock(
+            val address: PublicKey,
+            val hash: Hash = Hash.ZERO
+    ) : Request {
+        override suspend fun handle(call: ApplicationCall): Unit = BlockDB.mutex.withLock { WalletDB.mutex.withLock {
+            val publicKey = address
+            val height = LedgerDB.getChainIndex(hash)?.height ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
+            val state = LedgerDB.state()
+            if (height >= state.height - PoS.MATURITY)
+                return call.respond(HttpStatusCode.BadRequest, "Block not finalized")
+            val wallet = WalletDB.getWalletImpl(publicKey)
+            val transactions = ArrayList<WalletTransactionInfo>()
+            wallet.transactions.forEach { (hash, txData) ->
+                if (txData.height != 0 && height >= txData.height) {
+                    val bytes = WalletDB.getTransactionImpl(hash)!!
+                    val tx = Transaction.deserialize(bytes)
+                    transactions.add(WalletTransactionInfo(
+                            TransactionInfo(tx, hash, bytes.size, txData.types),
+                            txData.confirmationsImpl(state),
+                            txData.time
+                    ))
+                }
+            }
+            return call.respondJson(ListSinceBlockInfo.serializer(), ListSinceBlockInfo(transactions, state.rollingCheckpoint))
+        }}
+    }
+
+    //get(ListSinceBlock.serializer(), "/api/v2/wallet/listsinceblock")
+    //get(ListSinceBlock.serializer(), "/api/v2/wallet/listsinceblock/{address}/{hash?}")
+    get(ListSinceBlock.serializer(), "/api/v2/wallet/{address}/listsinceblock/{hash?}")
 }
