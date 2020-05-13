@@ -58,7 +58,7 @@ object Salt {
             key = Pair("ledgersnapshot", Int.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(7, Int.SIZE_BYTES)); continue }
             key = Pair("ledgersnapshotheights", 0) - entry; if (key != null) { nibble(entry, key, DBKey(8, 0)); continue }
             key = Pair("ledgerstate", 0) - entry; if (key != null) { nibble(entry, key, DBKey(9, 0)); continue }
-            key = Pair("ledgerversion", 0) - entry; if (key != null) { nibble(entry, key, DBKey(10, 0)); continue }
+            key = Pair("ledgerversion", 0) - entry; if (key != null) { continue; }
             key = Pair("walletkeys", 0) - entry; if (key != null) { nibble(entry, key, DBKey(64, 0)); continue }
             key = Pair("tx", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(65, Hash.SIZE_BYTES)); continue }
             key = Pair("walletversion", 0) - entry; if (key != null) { nibble(entry, key, DBKey(66, 0)); continue }
@@ -69,6 +69,11 @@ object Salt {
             logger.debug { "Unknown key ${entry.key.toHex()}" }
         }
         iterator.close()
+        val batch = LevelDB.createWriteBatch()
+        val value = LevelDB.get(OLD_VERSION_KEY)!!
+        batch.put(DBKey(10, 0), value)
+        batch.delete(OLD_VERSION_KEY)
+        batch.write()
     }
 
     private fun nibble(entry: Map.Entry<ByteArray, ByteArray>, key: ByteArray, dbKey: DBKey) {

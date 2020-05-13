@@ -565,6 +565,8 @@ object WalletDB {
             }
         }
 
+        // 重掃描交易池
+
         addWalletImpl(batch, publicKey, wallet)
         batch.write()
         return wallet
