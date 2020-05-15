@@ -10,6 +10,8 @@
 package ninja.blacknet.core
 
 import ninja.blacknet.contract.HashTimeLock
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 
@@ -22,12 +24,12 @@ interface Ledger : HashTimeLock.Processor {
     fun get(key: PublicKey): AccountState?
     fun getOrCreate(key: PublicKey): AccountState
     fun set(key: PublicKey, state: AccountState)
-    fun addHTLC(id: Hash, htlc: HTLC)
-    fun getHTLC(id: Hash): HTLC?
-    fun removeHTLC(id: Hash)
-    fun addMultisig(id: Hash, multisig: Multisig)
-    fun getMultisig(id: Hash): Multisig?
-    fun removeMultisig(id: Hash)
+    fun addHTLC(id: HashTimeLockContractId, htlc: HTLC)
+    fun getHTLC(id: HashTimeLockContractId): HTLC?
+    fun removeHTLC(id: HashTimeLockContractId)
+    fun addMultisig(id: MultiSignatureLockContractId, multisig: Multisig)
+    fun getMultisig(id: MultiSignatureLockContractId): Multisig?
+    fun removeMultisig(id: MultiSignatureLockContractId)
 
     override fun HashTimeLockGetBlockTime(): Long = blockTime()
     override fun HashTimeLockGetHeight(): Int = height()

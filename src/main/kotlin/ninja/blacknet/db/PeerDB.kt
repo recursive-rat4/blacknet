@@ -20,7 +20,7 @@ import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.core.VehicleRing
+import ninja.blacknet.contract.DAppId
 import ninja.blacknet.error
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
@@ -168,18 +168,18 @@ object PeerDB {
         }
     }
 
-    suspend fun bundlerAnnounce(address: Address, announce: List<VehicleRing>): Unit = peers.mutex.withLock {
+    suspend fun bundlerAnnounce(address: Address, announce: List<DAppId>): Unit = peers.mutex.withLock {
         peers.map.get(address)?.stat?.bundler?.let { bundler ->
-            announce.forEach { ring ->
-                if (DAppDB.isInteresting(ring)) {
-                    bundler.add(ring)
+            announce.forEach { id ->
+                if (DAppDB.isInteresting(id)) {
+                    bundler.add(id)
                 }
             }
         }
     }
 
-    suspend fun getBundlers(ring: VehicleRing): List<Address> {
-        return peers.filterToKeyList { _, entry -> entry.stat?.bundler?.contains(ring) ?: false }
+    suspend fun getBundlers(id: DAppId): List<Address> {
+        return peers.filterToKeyList { _, entry -> entry.stat?.bundler?.contains(id) ?: false }
     }
 
     suspend fun getAll(): ArrayList<Pair<Address, Entry>> {
@@ -296,7 +296,7 @@ object PeerDB {
             val stat1D: UptimeStat,
             val stat1W: UptimeStat,
             val stat1M: UptimeStat,
-            val bundler: HashSet<VehicleRing>
+            val bundler: HashSet<DAppId>
     ) {
         constructor(lastConnected: Long, userAgent: String) : this(
                 lastConnected,

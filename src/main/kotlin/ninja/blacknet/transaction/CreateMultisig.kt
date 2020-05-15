@@ -12,6 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.json
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
@@ -33,7 +34,10 @@ class CreateMultisig(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    fun id(hash: Hash, dataIndex: Int) = buildHash { encodeHash(hash); encodeInt(dataIndex); }
+    fun id(hash: Hash, dataIndex: Int) =
+        MultiSignatureLockContractId(
+            buildHash { encodeHash(hash); encodeInt(dataIndex); }
+        )
 
     fun sign(from: PublicKey, seq: Int, dataIndex: Int, privateKey: PrivateKey): Boolean {
         val publicKey = privateKey.toPublicKey()

@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
@@ -27,7 +28,7 @@ import ninja.blacknet.util.sumByLong
  */
 @Serializable
 class SpendMultisig(
-        val id: Hash,
+        val id: MultiSignatureLockContractId,
         val amounts: ArrayList<Long>,
         val signatures: ArrayList<Pair<Byte, Signature>>
 ) : TxData {
@@ -109,7 +110,7 @@ class SpendMultisig(
         return Accepted
     }
 
-    fun involves(ids: Set<Hash>) = ids.contains(id)
+    fun involves(ids: Set<Hash>) = ids.contains(id.hash)
 
     companion object {
         fun deserialize(bytes: ByteArray): SpendMultisig = BinaryDecoder(bytes).decode(serializer())
@@ -123,7 +124,7 @@ class SpendMultisig(
             val signatures: JsonArray
     ) {
         constructor(data: SpendMultisig) : this(
-                Address.encodeId(Address.MULTISIG, data.id),
+                data.id.toString(),
                 JsonArray(data.amounts.map { amount ->
                     JsonPrimitive(amount.toString())
                 }),

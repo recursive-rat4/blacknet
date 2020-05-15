@@ -300,7 +300,7 @@ object WalletDB {
             TxType.CreateHTLC.type -> {
                 val data = CreateHTLC.deserialize(bytes)
                 if (from || data.involves(publicKey)) {
-                    wallet.involvesIds.add(data.id(hash, dataIndex))
+                    wallet.involvesIds.add(data.id(hash, dataIndex).hash)
                     true
                 } else {
                     false
@@ -316,7 +316,7 @@ object WalletDB {
             TxType.CreateMultisig.type -> {
                 val data = CreateMultisig.deserialize(bytes)
                 if (from || data.involves(publicKey)) {
-                    wallet.involvesIds.add(data.id(hash, dataIndex))
+                    wallet.involvesIds.add(data.id(hash, dataIndex).hash)
                     true
                 } else {
                     false
@@ -504,7 +504,7 @@ object WalletDB {
     @Serializable
     class Wallet(
             var seq: Int = 0,
-            val involvesIds: HashSet<Hash> = HashSet(),
+            val involvesIds: HashSet<Hash> = HashSet(), // 拆分
             val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
             val transactions: HashMap<Hash, TransactionData> = HashMap()
     ) {

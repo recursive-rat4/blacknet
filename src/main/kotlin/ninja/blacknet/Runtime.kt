@@ -57,7 +57,16 @@ object Runtime : CoroutineScope {
     }
 
     init {
-        java.lang.Runtime.getRuntime().addShutdownHook(Thread {
+        java.lang.Runtime.getRuntime().addShutdownHook(ShutdownHooks())
+
+        System.getProperty("os.name").let { os_name ->
+            macOS = os_name.startsWith("Mac")
+            windowsOS = os_name.startsWith("Windows")
+        }
+    }
+
+    private class ShutdownHooks() : Thread() {
+        override fun run() {
             logger.info("Shutdown is in progress...")
             runBlocking {
                 shutdownHooks.reversedForEach { hook ->
@@ -68,11 +77,7 @@ object Runtime : CoroutineScope {
                     }
                 }
             }
-        })
-
-        val osName = System.getProperty("os.name")
-        macOS = osName.startsWith("Mac")
-        windowsOS = osName.startsWith("Windows")
+        }
     }
 
     /**

@@ -222,7 +222,7 @@ object ChainFetcher {
 
     suspend fun blocks(connection: Connection, blocks: Blocks) {
         if (request == null || syncConnection != connection) {
-            // 請求 may be 取消 -ed
+            // 請求能被取消
             return
         }
         recvChannel.send(blocks)

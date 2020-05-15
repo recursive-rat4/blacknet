@@ -10,6 +10,8 @@
 package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
@@ -28,8 +30,8 @@ class UndoBlock(
         val upgraded: Short,
         val blockSize: Int,
         val accounts: ArrayList<Pair<PublicKey, SerializableByteArray>>,
-        val htlcs: ArrayList<Pair<Hash, SerializableByteArray>>,
-        val multisigs: ArrayList<Pair<Hash, SerializableByteArray>>,
+        val htlcs: ArrayList<Pair<HashTimeLockContractId, SerializableByteArray>>,
+        val multisigs: ArrayList<Pair<MultiSignatureLockContractId, SerializableByteArray>>,
         val forkV2: Short
 ) {
     fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
@@ -42,7 +44,7 @@ class UndoBlock(
         accounts.add(Pair(publicKey, bytes))
     }
 
-    fun addHTLC(id: Hash, htlc: ByteArray?) {
+    fun addHTLC(id: HashTimeLockContractId, htlc: ByteArray?) {
         val bytes = if (htlc != null)
             SerializableByteArray(htlc)
         else
@@ -50,7 +52,7 @@ class UndoBlock(
         htlcs.add(Pair(id, bytes))
     }
 
-    fun addMultisig(id: Hash, multisig: ByteArray?) {
+    fun addMultisig(id: MultiSignatureLockContractId, multisig: ByteArray?) {
         val bytes = if (multisig != null)
             SerializableByteArray(multisig)
         else

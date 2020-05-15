@@ -10,6 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
@@ -23,12 +24,12 @@ import ninja.blacknet.serialization.SerializableByteArray
  */
 @Serializable
 class ClaimHTLC(
-        val id: Hash,
+        val id: HashTimeLockContractId,
         val preimage: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.ClaimHTLC
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
@@ -49,21 +50,9 @@ class ClaimHTLC(
         return Accepted
     }
 
-    fun involves(ids: Set<Hash>) = ids.contains(id)
+    fun involves(ids: Set<Hash>) = ids.contains(id.hash)
 
     companion object {
         fun deserialize(bytes: ByteArray): ClaimHTLC = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val id: String,
-            val preimage: String
-    ) {
-        constructor(data: ClaimHTLC) : this(
-                Address.encodeId(Address.HTLC, data.id),
-                data.preimage.toString()
-        )
     }
 }

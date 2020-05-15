@@ -10,6 +10,9 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.Config
+import ninja.blacknet.contract.DAppId
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.coding.Bech32
 import ninja.blacknet.util.plus
 
@@ -22,9 +25,11 @@ object Address {
     private val HRP_MAINNET = "blacknet".toByteArray(Charsets.US_ASCII)
     private val HRP_REGTEST = "rblacknet".toByteArray(Charsets.US_ASCII)
 
-    const val ACCOUNT: Byte = 0
+    val ACCOUNT: Byte? = null
+    const val STAKER: Byte = 0
     const val HTLC: Byte = 1
     const val MULTISIG: Byte = 2
+    const val DAPP: Byte = 3
 
     private val HRP = if (Config.instance.regtest) HRP_REGTEST else HRP_MAINNET
 
@@ -44,24 +49,33 @@ object Address {
         return PublicKey(bytes)
     }
 
-    fun encodeId(version: Byte, hash: Hash): String {
-        require(version == HTLC || version == MULTISIG)
-        val bytes = version + hash.bytes
+    fun encode(version: Byte, bytes: ByteArray): String {
+        @Suppress("NAME_SHADOWING")
+        val bytes = version + bytes
+        if (expectedSize(version) != bytes.size)
+            throw Exception("Expected size ${expectedSize(version)} actual ${bytes.size}")
         val data = Bech32.convertBits(bytes, 8, 5, true)
         return Bech32.encode(HRP, data)
     }
 
-    fun decodeId(version: Byte, string: String): Hash {
-        require(version == HTLC || version == MULTISIG)
+    fun decode(version: Byte, string: String): ByteArray {
         val (hrp, data) = Bech32.decode(string)
         if (!HRP.contentEquals(hrp))
             throw Exception("Expected HRP ${String(HRP, Charsets.US_ASCII)} actual ${String(hrp, Charsets.US_ASCII)}")
         val bytes = Bech32.convertBits(data, 5, 8, false)
-        if (Byte.SIZE_BYTES + Hash.SIZE_BYTES != bytes.size)
-            throw Exception("Expected size ${Byte.SIZE_BYTES + Hash.SIZE_BYTES} actual ${bytes.size}")
+        if (expectedSize(version) != bytes.size)
+            throw Exception("Expected size ${expectedSize(version)} actual ${bytes.size}")
         if (bytes[0] != version)
             throw Exception("Expected version ${bytes[0].toUByte()} actual ${version.toUByte()}")
-        return Hash(bytes.copyOfRange(Byte.SIZE_BYTES, Byte.SIZE_BYTES + Hash.SIZE_BYTES))
+        return bytes.copyOfRange(Byte.SIZE_BYTES, bytes.size)
+    }
+
+    private fun expectedSize(version: Byte): Int = Byte.SIZE_BYTES + when (version) {
+        STAKER -> throw Exception("保留地址版本字節")
+        HTLC -> HashTimeLockContractId.SIZE_BYTES
+        MULTISIG -> MultiSignatureLockContractId.SIZE_BYTES
+        DAPP -> DAppId.SIZE_BYTES
+        else -> throw Exception("Unknown address version $version")
     }
 
     private class Exception constructor(message: String) : RuntimeException(message)

@@ -17,6 +17,8 @@ import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
 import ninja.blacknet.Config
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
@@ -38,8 +40,8 @@ object LedgerDB {
     private const val VERSION = 8
     private val ACCOUNT_KEY = DBKey(1, PublicKey.SIZE_BYTES)
     private val CHAIN_KEY = DBKey(2, Hash.SIZE_BYTES)
-    private val HTLC_KEY = DBKey(3, Hash.SIZE_BYTES)
-    private val MULTISIG_KEY = DBKey(4, Hash.SIZE_BYTES)
+    private val HTLC_KEY = DBKey(3, HashTimeLockContractId.SIZE_BYTES)
+    private val MULTISIG_KEY = DBKey(4, MultiSignatureLockContractId.SIZE_BYTES)
     private val UNDO_KEY = DBKey(5, Hash.SIZE_BYTES)
     private val SIZES_KEY = DBKey(6, 0)
     private val SNAPSHOT_KEY = DBKey(7, Int.SIZE_BYTES)
@@ -324,11 +326,11 @@ object LedgerDB {
         return result
     }
 
-    private fun getHTLCBytes(id: Hash): ByteArray? {
-        return LevelDB.get(HTLC_KEY, id.bytes)
+    private fun getHTLCBytes(id: HashTimeLockContractId): ByteArray? {
+        return LevelDB.get(HTLC_KEY, id.hash.bytes)
     }
 
-    fun getHTLC(id: Hash): HTLC? {
+    fun getHTLC(id: HashTimeLockContractId): HTLC? {
         val bytes = getHTLCBytes(id)
         return if (bytes != null)
             HTLC.deserialize(bytes)
@@ -336,11 +338,11 @@ object LedgerDB {
             bytes
     }
 
-    private fun getMultisigBytes(id: Hash): ByteArray? {
-        return LevelDB.get(MULTISIG_KEY, id.bytes)
+    private fun getMultisigBytes(id: MultiSignatureLockContractId): ByteArray? {
+        return LevelDB.get(MULTISIG_KEY, id.hash.bytes)
     }
 
-    fun getMultisig(id: Hash): Multisig? {
+    fun getMultisig(id: MultiSignatureLockContractId): Multisig? {
         val bytes = getMultisigBytes(id)
         return if (bytes != null)
             Multisig.deserialize(bytes)
@@ -452,15 +454,15 @@ object LedgerDB {
         }
         undo.htlcs.forEach { (id, bytes) ->
             if (bytes.array.isNotEmpty())
-                batch.put(HTLC_KEY, id.bytes, bytes.array)
+                batch.put(HTLC_KEY, id.hash.bytes, bytes.array)
             else
-                batch.delete(HTLC_KEY, id.bytes)
+                batch.delete(HTLC_KEY, id.hash.bytes)
         }
         undo.multisigs.forEach { (id, bytes) ->
             if (bytes.array.isNotEmpty())
-                batch.put(MULTISIG_KEY, id.bytes, bytes.array)
+                batch.put(MULTISIG_KEY, id.hash.bytes, bytes.array)
             else
-                batch.delete(MULTISIG_KEY, id.bytes)
+                batch.delete(MULTISIG_KEY, id.hash.bytes)
         }
 
         batch.delete(UNDO_KEY, hash.bytes)
@@ -588,8 +590,8 @@ object LedgerDB {
 
     private fun iterateImpl(
             account: (PublicKey, AccountState) -> Unit,
-            htlc: (Hash, HTLC) -> Unit,
-            multisig: (Hash, Multisig) -> Unit
+            htlc: (HashTimeLockContractId, HTLC) -> Unit,
+            multisig: (MultiSignatureLockContractId, Multisig) -> Unit
     ) {
         val iterator = LevelDB.iterator()
         if (LevelDB.seek(iterator, ACCOUNT_KEY)) {
@@ -603,14 +605,14 @@ object LedgerDB {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 val key = HTLC_KEY - entry ?: break
-                htlc(Hash(key), HTLC.deserialize(entry.value))
+                htlc(HashTimeLockContractId(key), HTLC.deserialize(entry.value))
             }
         }
         if (LevelDB.seek(iterator, MULTISIG_KEY)) {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 val key = MULTISIG_KEY - entry ?: break
-                multisig(Hash(key), Multisig.deserialize(entry.value))
+                multisig(MultiSignatureLockContractId(key), Multisig.deserialize(entry.value))
             }
         }
         iterator.close()
@@ -629,8 +631,8 @@ object LedgerDB {
             private var supply: Long = state.supply,
             private val rollingCheckpoint: Hash = LedgerDB.getNextRollingCheckpoint(),
             private val accounts: MutableMap<PublicKey, AccountState> = HashMap(),
-            private val htlcs: MutableMap<Hash, HTLC?> = HashMap(),
-            private val multisigs: MutableMap<Hash, Multisig?> = HashMap(),
+            private val htlcs: MutableMap<HashTimeLockContractId, HTLC?> = HashMap(),
+            private val multisigs: MutableMap<MultiSignatureLockContractId, Multisig?> = HashMap(),
             private val undo: UndoBlock = UndoBlock(
                     state.blockTime,
                     state.difficulty,
@@ -701,12 +703,12 @@ object LedgerDB {
             accounts.set(key, state)
         }
 
-        override fun addHTLC(id: Hash, htlc: HTLC) {
+        override fun addHTLC(id: HashTimeLockContractId, htlc: HTLC) {
             undo.addHTLC(id, null)
             htlcs.put(id, htlc)
         }
 
-        override fun getHTLC(id: Hash): HTLC? {
+        override fun getHTLC(id: HashTimeLockContractId): HTLC? {
             return if (!htlcs.containsKey(id)) {
                 val bytes = getHTLCBytes(id)
                 undo.addHTLC(id, bytes)
@@ -719,16 +721,16 @@ object LedgerDB {
             }
         }
 
-        override fun removeHTLC(id: Hash) {
+        override fun removeHTLC(id: HashTimeLockContractId) {
             htlcs.put(id, null)
         }
 
-        override fun addMultisig(id: Hash, multisig: Multisig) {
+        override fun addMultisig(id: MultiSignatureLockContractId, multisig: Multisig) {
             undo.addMultisig(id, null)
             multisigs.put(id, multisig)
         }
 
-        override fun getMultisig(id: Hash): Multisig? {
+        override fun getMultisig(id: MultiSignatureLockContractId): Multisig? {
             return if (!multisigs.containsKey(id)) {
                 val bytes = getMultisigBytes(id)
                 undo.addMultisig(id, bytes)
@@ -741,7 +743,7 @@ object LedgerDB {
             }
         }
 
-        override fun removeMultisig(id: Hash) {
+        override fun removeMultisig(id: MultiSignatureLockContractId) {
             multisigs.put(id, null)
         }
 
@@ -779,16 +781,16 @@ object LedgerDB {
             batch.put(CHAIN_KEY, blockHash.bytes, chainIndex!!.serialize())
             for (account in accounts)
                 batch.put(ACCOUNT_KEY, account.key.bytes, account.value.serialize())
-            for (htlc in htlcs)
-                if (htlc.value != null)
-                    batch.put(HTLC_KEY, htlc.key.bytes, htlc.value!!.serialize())
+            for ((id, htlc) in htlcs)
+                if (htlc != null)
+                    batch.put(HTLC_KEY, id.hash.bytes, htlc.serialize())
                 else
-                    batch.delete(HTLC_KEY, htlc.key.bytes)
-            for (multisig in multisigs)
-                if (multisig.value != null)
-                    batch.put(MULTISIG_KEY, multisig.key.bytes, multisig.value!!.serialize())
+                    batch.delete(HTLC_KEY, id.hash.bytes)
+            for ((id, multisig) in multisigs)
+                if (multisig != null)
+                    batch.put(MULTISIG_KEY, id.hash.bytes, multisig.serialize())
                 else
-                    batch.delete(MULTISIG_KEY, multisig.key.bytes)
+                    batch.delete(MULTISIG_KEY, id.hash.bytes)
 
             batch.write()
 

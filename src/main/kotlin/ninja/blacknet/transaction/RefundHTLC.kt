@@ -11,6 +11,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
@@ -23,11 +24,11 @@ import ninja.blacknet.serialization.Json
  */
 @Serializable
 class RefundHTLC(
-        val id: Hash
+        val id: HashTimeLockContractId
 ) : TxData {
     override fun getType() = TxType.RefundHTLC
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
@@ -48,19 +49,9 @@ class RefundHTLC(
         return Accepted
     }
 
-    fun involves(ids: Set<Hash>) = ids.contains(id)
+    fun involves(ids: Set<Hash>) = ids.contains(id.hash)
 
     companion object {
         fun deserialize(bytes: ByteArray): RefundHTLC = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val id: String
-    ) {
-        constructor(data: RefundHTLC) : this(
-                Address.encodeId(Address.HTLC, data.id)
-        )
     }
 }

@@ -9,16 +9,16 @@
 
 package ninja.blacknet.db
 
-import ninja.blacknet.core.VehicleRing
+import ninja.blacknet.contract.DAppId
 
 object DAppDB {
-    private val dapps: Map<VehicleRing, *> = emptyMap<VehicleRing, Unit>()
+    private val dapps: Map<DAppId, *> = emptyMap<DAppId, Unit>()
 
     init {
 
     }
 
-    fun isInteresting(ring: VehicleRing): Boolean {
-        return dapps.containsKey(ring)
+    fun isInteresting(id: DAppId): Boolean {
+        return dapps.containsKey(id)
     }
 }

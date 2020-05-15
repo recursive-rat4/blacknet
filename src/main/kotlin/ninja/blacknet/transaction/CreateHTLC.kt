@@ -11,6 +11,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashTimeLock
+import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Blake2b.buildHash
@@ -38,7 +39,10 @@ class CreateHTLC(
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(Info.serializer(), Info(this))
 
-    fun id(hash: Hash, dataIndex: Int) = buildHash { encodeHash(hash); encodeInt(dataIndex); }
+    fun id(hash: Hash, dataIndex: Int) =
+        HashTimeLockContractId(
+            buildHash { encodeHash(hash); encodeInt(dataIndex); }
+        )
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (!HashTimeLock.isValidTimeLockType(timeLockType)) {

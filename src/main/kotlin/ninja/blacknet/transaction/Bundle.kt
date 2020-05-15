@@ -10,7 +10,11 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.*
+import ninja.blacknet.contract.DAppId
+import ninja.blacknet.core.Accepted
+import ninja.blacknet.core.Ledger
+import ninja.blacknet.core.Status
+import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -18,11 +22,11 @@ import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 
 /**
- * 包
+ * 分散式應用程序交易包
  */
 @Serializable
 class Bundle(
-        val ring: VehicleRing,
+        val id: DAppId,
         val data: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.Bundle
@@ -33,7 +37,7 @@ class Bundle(
         return Accepted
     }
 
-    operator fun component1() = ring
+    operator fun component1() = id
     operator fun component2() = data.array
 
     companion object {
