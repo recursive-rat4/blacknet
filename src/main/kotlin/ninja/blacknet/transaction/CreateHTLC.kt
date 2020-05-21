@@ -10,7 +10,8 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.HashTimeLock
+import ninja.blacknet.contract.HashLock
+import ninja.blacknet.contract.TimeLock
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
@@ -28,12 +29,10 @@ import ninja.blacknet.serialization.SerializableByteArray
  */
 @Serializable
 class CreateHTLC(
-        val lot: Long,
+        val amount: Long,
         val to: PublicKey,
-        val timeLockType: Byte,
-        val timeLock: Long,
-        val hashType: Byte,
-        val hashLock: SerializableByteArray
+        val timeLock: TimeLock,
+        val hashLock: HashLock
 ) : TxData {
     override fun getType() = TxType.CreateHTLC
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
@@ -45,25 +44,29 @@ class CreateHTLC(
         )
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
-        if (!HashTimeLock.isValidTimeLockType(timeLockType)) {
-            return Invalid("Unknown time lock type $timeLockType")
+        try {
+            timeLock.validate()
+        } catch (e: Throwable) {
+            return Invalid("Invalid time lock ${e.message}")
         }
-        if (!HashTimeLock.isValidHashLock(hashType, hashLock)) {
-            return Invalid("Invalid hash lock type $hashType size ${hashLock.array.size}")
+        try {
+            hashLock.validate()
+        } catch (e: Throwable) {
+            return Invalid("Invalid hash lock ${e.message}")
         }
 
-        if (lot == 0L) {
+        if (amount == 0L) {
             return Invalid("Invalid amount")
         }
 
         val account = ledger.get(tx.from)!!
-        val status = account.credit(lot)
+        val status = account.credit(amount)
         if (status != Accepted) {
             return status
         }
 
         val id = id(hash, dataIndex)
-        val htlc = HTLC(ledger.height(), ledger.blockTime(), lot, tx.from, to, timeLockType, timeLock, hashType, hashLock)
+        val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLock, hashLock)
         ledger.set(tx.from, account)
         ledger.addHTLC(id, htlc)
         return Accepted
@@ -78,20 +81,16 @@ class CreateHTLC(
     @Suppress("unused")
     @Serializable
     class Info(
-            val lot: String,
-            val to: String,
-            val timeLockType: Int,
-            val timeLock: Long,
-            val hashType: Int,
-            val hashLock: String
+            val amount: String,
+            val to: PublicKey,
+            val timeLock: TimeLock,
+            val hashLock: HashLock
     ) {
         constructor(data: CreateHTLC) : this(
-                data.lot.toString(),
-                Address.encode(data.to),
-                data.timeLockType.toUByte().toInt(),
+                data.amount.toString(),
+                data.to,
                 data.timeLock,
-                data.hashType.toUByte().toInt(),
-                data.hashLock.toString()
+                data.hashLock
         )
     }
 }

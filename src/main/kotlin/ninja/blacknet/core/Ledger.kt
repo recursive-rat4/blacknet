@@ -9,13 +9,12 @@
 
 package ninja.blacknet.core
 
-import ninja.blacknet.contract.HashTimeLock
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 
-interface Ledger : HashTimeLock.Processor {
+interface Ledger {
     fun addSupply(amount: Long)
     fun checkReferenceChain(hash: Hash): Boolean
     fun checkFee(size: Int, amount: Long): Boolean
@@ -30,9 +29,6 @@ interface Ledger : HashTimeLock.Processor {
     fun addMultisig(id: MultiSignatureLockContractId, multisig: Multisig)
     fun getMultisig(id: MultiSignatureLockContractId): Multisig?
     fun removeMultisig(id: MultiSignatureLockContractId)
-
-    override fun HashTimeLockGetBlockTime(): Long = blockTime()
-    override fun HashTimeLockGetHeight(): Int = height()
 
     fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int): Status {
         if (!tx.verifySignature(hash)) {

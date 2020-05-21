@@ -39,12 +39,12 @@ class ClaimHTLC(
         if (tx.from != htlc.to) {
             return Invalid("Invalid sender")
         }
-        if (!htlc.verifyHashLock(preimage)) {
+        if (!htlc.hashLock.verify(preimage)) {
             return Invalid("Invalid hash lock")
         }
 
         val account = ledger.get(tx.from)!!
-        account.debit(ledger.height(), htlc.lot)
+        account.debit(ledger.height(), htlc.amount)
         ledger.set(tx.from, account)
         ledger.removeHTLC(id)
         return Accepted

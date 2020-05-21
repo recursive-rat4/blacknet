@@ -9,42 +9,30 @@
 
 package ninja.blacknet.core
 
-import kotlinx.serialization.builtins.serializer
-import ninja.blacknet.contract.HashTimeLock
+import kotlinx.serialization.Serializable
+import ninja.blacknet.contract.HashLock
+import ninja.blacknet.contract.TimeLock
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.Serializable
-import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
 class HTLC(
-        height: Int,
-        time: Long,
-        lot: Long,
-        from: PublicKey,
-        to: PublicKey,
-        timeLockType: Byte,
-        timeLock: Long,
-        hashType: Byte,
-        hashLock: SerializableByteArray
-) : HashTimeLock<PublicKey, Long>(
-        height,
-        time,
-        lot,
-        from,
-        to,
-        timeLockType,
-        timeLock,
-        hashType,
-        hashLock
+        val height: Int,
+        val time: Long,
+        val amount: Long,
+        val from: PublicKey,
+        val to: PublicKey,
+        val timeLock: TimeLock,
+        val hashLock: HashLock
 ) {
     fun serialize(): ByteArray {
-        return serialize(PublicKey.serializer(), Long.serializer())
+        return BinaryEncoder.toBytes(serializer(), this)
     }
 
     companion object {
         fun deserialize(bytes: ByteArray): HTLC {
-            val value = deserialize(bytes, PublicKey.serializer(), Long.serializer())
-            return HTLC(value.height, value.time, value.lot, value.from, value.to, value.timeLockType, value.timeLock, value.hashType, value.hashLock)
+            return BinaryDecoder(bytes).decode(serializer())
         }
     }
 }

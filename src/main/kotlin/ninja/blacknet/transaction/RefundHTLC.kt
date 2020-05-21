@@ -38,12 +38,12 @@ class RefundHTLC(
         if (tx.from != htlc.from) {
             return Invalid("Invalid sender")
         }
-        if (!htlc.verifyTimeLock(ledger)) {
+        if (!htlc.timeLock.verify(htlc.height, htlc.time, ledger.height(), ledger.blockTime())) {
             return Invalid("Invalid time lock")
         }
 
         val account = ledger.get(tx.from)!!
-        account.debit(ledger.height(), htlc.lot)
+        account.debit(ledger.height(), htlc.amount)
         ledger.set(tx.from, account)
         ledger.removeHTLC(id)
         return Accepted

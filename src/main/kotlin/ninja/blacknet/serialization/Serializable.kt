@@ -9,7 +9,12 @@
 
 package ninja.blacknet.serialization
 
-// Thou cannot access Kotlin serialization: it is internal in io.ktor
+// Inline classes are supported by serialization still
 
 @Target(AnnotationTarget.CLASS)
 annotation class Serializable
+
+@Target(AnnotationTarget.PROPERTY)
+annotation class FixedSize(
+    val size: Int
+)

@@ -567,7 +567,7 @@ object LedgerDB {
                     result.accounts += 1
                 },
                 { _, htlc ->
-                    supply += htlc.lot
+                    supply += htlc.amount
                     result.htlcs += 1
                 },
                 { _, multisig ->
@@ -872,7 +872,7 @@ object LedgerDB {
                     }
                 },
                 { _, htlc ->
-                    snapshot.credit(htlc.from, htlc.lot)
+                    snapshot.credit(htlc.from, htlc.amount)
                 },
                 { _, multisig ->
                     multisig.deposits.forEach { (publicKey, amount) ->
