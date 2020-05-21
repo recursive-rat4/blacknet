@@ -35,6 +35,7 @@ stages:
 
 license_scanning:
   stage: license_scanning
+  allow_failure: false
   artifacts:
     reports:
       license_scanning: gl-license-scanning-report.json

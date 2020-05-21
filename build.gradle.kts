@@ -59,6 +59,7 @@ dependencies {
     "implementation"("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
     "implementation"("org.ethereum:leveldbjni-all:${Versions.leveldbjni}")
     "testImplementation"("org.testng:testng:7.1.1") {
+        exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
     }
 }
@@ -116,4 +117,10 @@ val processResources by tasks.existing(ProcessResources::class)
 
 val test by tasks.existing(Test::class) {
     useTestNG()
+}
+
+val wrapper by tasks.existing(Wrapper::class) {
+    gradleVersion = "6.4.1"
+    distributionType = Wrapper.DistributionType.BIN
+    distributionSha256Sum = "e58cdff0cee6d9b422dcd08ebeb3177bc44eaa09bd9a2e838ff74c408fe1cbcd"
 }
