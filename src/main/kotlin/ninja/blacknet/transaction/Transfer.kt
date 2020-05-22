@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.Message
+import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -24,7 +24,7 @@ import ninja.blacknet.serialization.Json
 class Transfer(
         val amount: Long,
         val to: PublicKey,
-        val message: Message
+        val message: PaymentId
 ) : TxData {
     override fun getType() = TxType.Transfer
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
@@ -53,13 +53,13 @@ class Transfer(
     @Serializable
     class Info(
             val amount: String,
-            val to: String,
-            val message: JsonElement
+            val to: PublicKey,
+            val message: PaymentId
     ) {
         constructor(data: Transfer) : this(
                 data.amount.toString(),
-                Address.encode(data.to),
-                data.message.toJson()
+                data.to,
+                data.message
         )
     }
 }

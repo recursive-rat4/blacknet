@@ -11,6 +11,7 @@ package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Address
+import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.transaction.Transfer
 
 @Serializable
@@ -22,6 +23,10 @@ class TransferInfo(
     constructor(data: Transfer) : this(
             data.amount,
             Address.encode(data.to),
-            data.message.toString()
+            when (data.message.type) {
+                PaymentId.PLAIN -> String(data.message.message)
+                PaymentId.ENCRYPTED -> "ENCRYPTED:${data.message.message}"
+                else -> "UNKNOWN TYPE:${data.message.type} DATA:${data.message.message}"
+            }
     )
 }

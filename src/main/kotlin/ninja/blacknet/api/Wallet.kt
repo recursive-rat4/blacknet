@@ -76,14 +76,14 @@ fun Route.wallet() {
     post(Mnemonic.serializer(), "/api/v2/mnemonic")
 
     @Serializable
-    class DecryptMessage(
+    class DecryptPaymentId(
             val mnemonic: PrivateKey,
             val from: PublicKey,
             val message: String
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val privateKey = mnemonic
-            val decrypted = Message.decrypt(privateKey, from, message)
+            val decrypted = PaymentId.decrypt(privateKey, from, message)
 
             return if (decrypted != null)
                 call.respond(decrypted)
@@ -92,7 +92,8 @@ fun Route.wallet() {
         }
     }
 
-    post(DecryptMessage.serializer(), "/api/v2/decryptmessage")
+    post(DecryptPaymentId.serializer(), "/api/v2/decryptpaymentid")
+    post(DecryptPaymentId.serializer(), "/api/v2/decryptmessage")
 
     @Serializable
     class SignMessage(

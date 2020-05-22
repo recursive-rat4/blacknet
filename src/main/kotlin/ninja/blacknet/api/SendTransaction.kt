@@ -19,7 +19,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.Message
+import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PrivateKey
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
@@ -43,7 +43,7 @@ fun Route.sendTransaction() {
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
             val privateKey = mnemonic
-            val message = Message.create(message, encrypted, privateKey, to) ?: return call.respond(HttpStatusCode.BadRequest, "Failed to create message")
+            val message = PaymentId.create(message, encrypted, privateKey, to) ?: return call.respond(HttpStatusCode.BadRequest, "Failed to create payment id")
             val from = privateKey.toPublicKey()
             val seq = WalletDB.getSequence(from)
             val data = Transfer(amount, to, message).serialize()

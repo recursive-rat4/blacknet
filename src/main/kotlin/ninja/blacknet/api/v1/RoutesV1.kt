@@ -251,7 +251,7 @@ fun Route.APIV1() {
         val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
         val to = call.parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
         val encrypted = call.parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid encrypted") }
-        val message = Message.create(call.parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
+        val message = PaymentId.create(call.parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
@@ -354,7 +354,7 @@ fun Route.APIV1() {
         val publicKey = call.parameters["from"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid from")
         val message = call.parameters["message"] ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
 
-        val decrypted = Message.decrypt(privateKey, publicKey, message)
+        val decrypted = PaymentId.decrypt(privateKey, publicKey, message)
         if (decrypted != null)
             call.respond(decrypted)
         else

@@ -37,22 +37,4 @@ class MessageTest {
         assertTrue(Message.verify(RegTest.publicKey1, signature1, message))
         assertFalse(Message.verify(RegTest.publicKey1, signature2, message))
     }
-
-    @Test
-    fun encrypt() {
-        val id = "1000000"
-        val obj = Message.encrypted(id, RegTest.privateKey1, RegTest.publicKey2)
-        val decrypted = obj.decrypt(RegTest.privateKey2, RegTest.publicKey1)
-
-        assertEquals(decrypted, id)
-    }
-
-    @Test
-    fun decrypt() {
-        val id = "\u0072\u0061\u0074\u0034"
-        val encrypted = "E81A8A93583291A7C0472DD6A961B8DE"
-        val decrypted = Message.decrypt(RegTest.privateKey2, RegTest.publicKey1, encrypted)
-
-        assertEquals(decrypted, id)
-    }
 }

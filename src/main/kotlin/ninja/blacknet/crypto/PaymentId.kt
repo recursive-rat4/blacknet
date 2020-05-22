@@ -1,0 +1,111 @@
+/*
+ * Copyright (c) 2018-2019 Pavel Vasin
+ *
+ * Licensed under the Jelurida Public License version 1.1
+ * for the Blacknet Public Blockchain Platform (the "License");
+ * you may not use this file except in compliance with the License.
+ * See the LICENSE.txt file at the top-level directory of this distribution.
+ */
+
+package ninja.blacknet.crypto
+
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.coding.fromHex
+import ninja.blacknet.coding.toHex
+import ninja.blacknet.crypto.Blake2b.buildHash
+import ninja.blacknet.crypto.Ed25519.x25519
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderError
+import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.util.emptyByteArray
+
+@Serializable
+class PaymentId(
+        val type: Byte,
+        val message: ByteArray
+) {
+    fun isEmpty(): Boolean {
+        return type == PLAIN && message.isEmpty()
+    }
+
+    fun decrypt(privateKey: PrivateKey, publicKey: PublicKey): String? {
+        val sharedKey = sharedKey(privateKey, publicKey)
+        return ChaCha20.decryptUtf8(sharedKey, message)
+    }
+
+    @Serializer(forClass = PaymentId::class)
+    companion object {
+        const val PLAIN: Byte = 0
+        const val ENCRYPTED: Byte = 1
+        val EMPTY = PaymentId(PLAIN, emptyByteArray())
+
+        fun create(string: String?, type: Byte?, privateKey: PrivateKey?, publicKey: PublicKey?): PaymentId? {
+            if (string == null)
+                return EMPTY
+
+            if (type == null || type == PLAIN)
+                return plain(string)
+
+            if (type != ENCRYPTED || privateKey == null || publicKey == null)
+                return null
+
+            return encrypted(string, privateKey, publicKey)
+        }
+
+        fun plain(string: String): PaymentId {
+            return PaymentId(PLAIN, string.toByteArray(Charsets.UTF_8))
+        }
+
+        fun encrypted(string: String, privateKey: PrivateKey, publicKey: PublicKey): PaymentId {
+            val sharedKey = sharedKey(privateKey, publicKey)
+            return PaymentId(ENCRYPTED, ChaCha20.encryptUtf8(sharedKey, string))
+        }
+
+        fun decrypt(privateKey: PrivateKey, publicKey: PublicKey, hex: String): String? {
+            val sharedKey = sharedKey(privateKey, publicKey)
+            val bytes = try {
+                fromHex(hex)
+            } catch (e: Throwable) {
+                return null
+            }
+            return ChaCha20.decryptUtf8(sharedKey, bytes)
+        }
+
+        private fun sharedKey(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {
+            val sharedSecret = x25519(privateKey, publicKey)
+            return buildHash {
+                encodeByteArray(sharedSecret)
+            }.bytes
+        }
+
+        override fun deserialize(decoder: Decoder): PaymentId {
+            return when (decoder) {
+                is BinaryDecoder -> PaymentId(decoder.decodeByte(), decoder.decodeByteArray())
+                else -> throw notSupportedDecoderError(decoder, this)
+            }
+        }
+
+        override fun serialize(encoder: Encoder, value: PaymentId) {
+            when (encoder) {
+                is BinaryEncoder -> {
+                    encoder.encodeByte(value.type)
+                    encoder.encodeByteArray(value.message)
+                }
+                is JsonOutput -> {
+                    @Suppress("NAME_SHADOWING")
+                    val encoder = encoder.beginStructure(descriptor)
+                    encoder.encodeSerializableElement(descriptor, 0, Byte.serializer(), value.type)
+                    encoder.encodeSerializableElement(descriptor, 1, String.serializer(), if (value.type == PLAIN) String(value.message) else value.message.toHex())
+                    encoder.endStructure(descriptor)
+                }
+                else -> throw notSupportedEncoderError(encoder, this)
+            }
+        }
+    }
+}
