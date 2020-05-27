@@ -14,7 +14,7 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import ninja.blacknet.serialization.ConfigInput
-import ninja.blacknet.serialization.DecoderException
+import ninja.blacknet.serialization.ParserException
 import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 import java.text.DecimalFormat
@@ -64,7 +64,7 @@ class Size(
                 "MiB" -> 1048576
                 // "GB" -> 1000000000
                 // "GiB" -> 1073741824
-                else -> throw DecoderException("Unknown unit symbol $unit")
+                else -> throw ParserException("Unknown unit symbol $unit")
             }))
         }
 

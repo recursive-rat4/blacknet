@@ -14,6 +14,8 @@ import ninja.blacknet.contract.DAppId
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.coding.Bech32
+import ninja.blacknet.serialization.ParserError
+import ninja.blacknet.serialization.ParserException
 import ninja.blacknet.util.plus
 
 /**
@@ -71,12 +73,13 @@ object Address {
     }
 
     private fun expectedSize(version: Byte): Int = Byte.SIZE_BYTES + when (version) {
-        STAKER -> throw Exception("保留地址版本字節")
+        STAKER -> throw Error("保留地址版本字節")
         HTLC -> HashTimeLockContractId.SIZE_BYTES
         MULTISIG -> MultiSignatureLockContractId.SIZE_BYTES
         DAPP -> DAppId.SIZE_BYTES
         else -> throw Exception("Unknown address version $version")
     }
 
-    private class Exception constructor(message: String) : RuntimeException(message)
+    private class Error     constructor(message: String) : ParserError    (message)
+    private class Exception constructor(message: String) : ParserException(message)
 }

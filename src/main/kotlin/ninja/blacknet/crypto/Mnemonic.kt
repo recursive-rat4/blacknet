@@ -10,6 +10,7 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.crypto.Blake2b.buildHash
+import ninja.blacknet.serialization.ParserException
 import java.security.SecureRandom
 
 object Mnemonic {
@@ -56,5 +57,5 @@ object Mnemonic {
         }
     }
 
-    private class Exception constructor(message: String) : RuntimeException(message)
+    private class Exception constructor(message: String) : ParserException(message)
 }
