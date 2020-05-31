@@ -461,7 +461,7 @@ fun Route.APIV1() {
         val publicKey = call.parameters["address"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
 
         WalletDB.mutex.withLock {
-            call.respond(Json.stringify(WalletDB.WalletV1.serializer(), WalletDB.getWalletImpl(publicKey).toV1()))
+            call.respond(Json.stringify(WalletV1.serializer(), WalletV1(WalletDB.getWalletImpl(publicKey))))
         }
     }
 

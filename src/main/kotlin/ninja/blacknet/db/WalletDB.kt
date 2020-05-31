@@ -16,8 +16,6 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
 import ninja.blacknet.Config
@@ -415,32 +413,6 @@ object WalletDB {
     }
 
     @Serializable
-    internal class TransactionDataV1(
-            val type: Byte,
-            val time: Long,
-            var height: Int
-    ) {
-        fun toJson() = Json.toJson(serializer(), this)
-
-        @Serializer(forClass = TransactionDataV1::class)
-        companion object {
-            override fun serialize(encoder: Encoder, value: TransactionDataV1) {
-                when (encoder) {
-                    is JsonOutput -> {
-                        @Suppress("NAME_SHADOWING")
-                        val encoder = encoder.beginStructure(descriptor)
-                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), value.type.toUByte().toInt())
-                        encoder.encodeSerializableElement(descriptor, 1, Long.serializer(), value.time)
-                        encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), value.height)
-                        encoder.endStructure(descriptor)
-                    }
-                    else -> throw notSupportedEncoderError(encoder, this)
-                }
-            }
-        }
-    }
-
-    @Serializable
     class TransactionDataType(
             val type: Byte,
             val dataIndex: Byte
@@ -495,10 +467,6 @@ object WalletDB {
             else
                 0
         }
-
-        internal fun toV1(): TransactionDataV1 {
-            return TransactionDataV1(types[0].type, time, height)
-        }
     }
 
     @Serializable
@@ -510,22 +478,10 @@ object WalletDB {
     ) {
         fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
 
-        internal fun toV1(): WalletV1 {
-            val wallet = WalletV1(seq)
-            transactions.forEach { (hash, txData) ->
-                wallet.transactions.add(JsonLiteral(hash.toString()))
-                wallet.transactions.add(txData.toV1().toJson())
-            }
-            return wallet
-        }
-
         companion object {
             fun deserialize(bytes: ByteArray): Wallet = BinaryDecoder(bytes).decode(serializer())
         }
     }
-
-    @Serializable
-    internal class WalletV1(val seq: Int, val transactions: ArrayList<JsonElement> = ArrayList())
 
     private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: PublicKey, wallet: Wallet) {
         wallets.put(publicKey, wallet)
