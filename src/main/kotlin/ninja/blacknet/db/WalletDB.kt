@@ -21,6 +21,8 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
@@ -37,7 +39,7 @@ import java.io.File
 private val logger = KotlinLogging.logger {}
 
 object WalletDB {
-    private const val VERSION = 6
+    private const val VERSION = 7
     internal val mutex = Mutex()
     private val KEYS_KEY = DBKey(64, 0)
     private val TX_KEY = DBKey(65, Hash.SIZE_BYTES)
@@ -298,33 +300,37 @@ object WalletDB {
             TxType.CreateHTLC.type -> {
                 val data = CreateHTLC.deserialize(bytes)
                 if (from || data.involves(publicKey)) {
-                    wallet.involvesIds.add(data.id(hash, dataIndex).hash)
+                    wallet.htlcs.add(data.id(hash, dataIndex))
                     true
                 } else {
                     false
                 }
             }
             TxType.RefundHTLC.type -> {
-                if (from) {
+                val data = RefundHTLC.deserialize(bytes)
+                if (from || data.involves(wallet.htlcs)) {
+                    wallet.htlcs.remove(data.id)
                     true
                 } else {
-                    RefundHTLC.deserialize(bytes).involves(wallet.involvesIds)
+                    false
                 }
             }
             TxType.CreateMultisig.type -> {
                 val data = CreateMultisig.deserialize(bytes)
                 if (from || data.involves(publicKey)) {
-                    wallet.involvesIds.add(data.id(hash, dataIndex).hash)
+                    wallet.multisigs.add(data.id(hash, dataIndex))
                     true
                 } else {
                     false
                 }
             }
             TxType.SpendMultisig.type -> {
-                if (from) {
+                val data = SpendMultisig.deserialize(bytes)
+                if (from || data.involves(wallet.multisigs)) {
+                    wallet.multisigs.remove(data.id)
                     true
                 } else {
-                    SpendMultisig.deserialize(bytes).involves(wallet.involvesIds)
+                    false
                 }
             }
             TxType.WithdrawFromLease.type -> {
@@ -341,10 +347,12 @@ object WalletDB {
                 }
             }
             TxType.ClaimHTLC.type -> {
-                if (from) {
+                val data = ClaimHTLC.deserialize(bytes)
+                if (from || data.involves(wallet.htlcs)) {
+                    wallet.htlcs.remove(data.id)
                     true
                 } else {
-                    ClaimHTLC.deserialize(bytes).involves(wallet.involvesIds)
+                    false
                 }
             }
             else -> {
@@ -472,7 +480,8 @@ object WalletDB {
     @Serializable
     class Wallet(
             var seq: Int = 0,
-            val involvesIds: HashSet<Hash> = HashSet(), // 拆分
+            val htlcs: HashSet<HashTimeLockContractId> = HashSet(),
+            val multisigs: HashSet<MultiSignatureLockContractId> = HashSet(),
             val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
             val transactions: HashMap<Hash, TransactionData> = HashMap()
     ) {

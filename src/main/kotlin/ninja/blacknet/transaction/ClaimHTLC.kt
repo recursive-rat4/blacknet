@@ -50,7 +50,7 @@ class ClaimHTLC(
         return Accepted
     }
 
-    fun involves(ids: Set<Hash>) = ids.contains(id.hash)
+    fun involves(ids: Set<HashTimeLockContractId>) = ids.contains(id)
 
     companion object {
         fun deserialize(bytes: ByteArray): ClaimHTLC = BinaryDecoder(bytes).decode(serializer())

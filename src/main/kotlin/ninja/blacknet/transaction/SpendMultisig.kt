@@ -110,7 +110,7 @@ class SpendMultisig(
         return Accepted
     }
 
-    fun involves(ids: Set<Hash>) = ids.contains(id.hash)
+    fun involves(ids: Set<MultiSignatureLockContractId>) = ids.contains(id)
 
     companion object {
         fun deserialize(bytes: ByteArray): SpendMultisig = BinaryDecoder(bytes).decode(serializer())
