@@ -14,3 +14,7 @@ System.getProperty("idea.active")?.let { idea_active ->
         Unit
     }
 }
+
+System.getenv("VIMRUNTIME")?.let { _ ->
+    println("> Task :beep\u0007")
+}

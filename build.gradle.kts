@@ -17,7 +17,7 @@ version = "0.2.6"
 
 buildscript {
     dependencies {
-        "classpath"("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.2")
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.2")
     }
 }
 
@@ -40,25 +40,25 @@ repositories {
 }
 
 dependencies {
-    "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}")
-    "implementation"("io.ktor:ktor-network:${Versions.ktor}")
-    "implementation"("io.ktor:ktor-server-cio:${Versions.ktor}")
-    "implementation"("io.ktor:ktor-websockets:${Versions.ktor}")
-    "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:${Versions.coroutines}")
-    "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.coroutines}")
-    "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.coroutines}")
-    "implementation"("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serialization}")
-    "implementation"("net.i2p.crypto:eddsa:0.3.0")
-    "implementation"("com.rfksystems:blake2b:1.0.0")
-    "implementation"("org.iq80.leveldb:leveldb:0.12")
-    "implementation"("org.slf4j:slf4j-jdk14:1.7.30")
-    "implementation"("io.github.microutils:kotlin-logging:1.7.9")
-    "implementation"("org.briarproject:jtorctl:0.3")
-    "implementation"("com.google.guava:guava:29.0-jre")
-    "implementation"("org.bitlet:weupnp:${Versions.weupnp}")
-    "implementation"("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
-    "implementation"("org.ethereum:leveldbjni-all:${Versions.leveldbjni}")
-    "testImplementation"("org.testng:testng:7.1.1") {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}")
+    implementation("io.ktor:ktor-network:${Versions.ktor}")
+    implementation("io.ktor:ktor-server-cio:${Versions.ktor}")
+    implementation("io.ktor:ktor-websockets:${Versions.ktor}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:${Versions.coroutines}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.coroutines}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.coroutines}")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serialization}")
+    implementation("net.i2p.crypto:eddsa:0.3.0")
+    implementation("com.rfksystems:blake2b:1.0.0")
+    implementation("org.iq80.leveldb:leveldb:0.12")
+    implementation("org.slf4j:slf4j-jdk14:1.7.30")
+    implementation("io.github.microutils:kotlin-logging:1.7.9")
+    implementation("org.briarproject:jtorctl:0.3")
+    implementation("com.google.guava:guava:29.0-jre")
+    implementation("org.bitlet:weupnp:${Versions.weupnp}")
+    implementation("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
+    implementation("org.ethereum:leveldbjni-all:${Versions.leveldbjni}")
+    testImplementation("org.testng:testng:7.1.1") {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
     }
@@ -120,7 +120,7 @@ val test by tasks.existing(Test::class) {
 }
 
 val wrapper by tasks.existing(Wrapper::class) {
-    gradleVersion = "6.4.1"
+    gradleVersion = "6.5"
     distributionType = Wrapper.DistributionType.BIN
-    distributionSha256Sum = "e58cdff0cee6d9b422dcd08ebeb3177bc44eaa09bd9a2e838ff74c408fe1cbcd"
+    distributionSha256Sum = "23e7d37e9bb4f8dabb8a3ea7fdee9dd0428b9b1a71d298aefd65b11dccea220f"
 }

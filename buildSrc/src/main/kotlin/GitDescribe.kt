@@ -18,7 +18,7 @@ fun dirtyDescribeGit(directory: File): String {
         Git.open(directory)
     } catch (e: IOException) {
         println("Execution failed for task ':dirtyDescribeGit'.")
-        println("\u001B[33m>\u001B[39m ${e::class.qualifiedName}: ${e.message}")
+        println("> ${e::class.qualifiedName}: ${e.message}")
         return ""
     }
     val describe = git.describe().call()
