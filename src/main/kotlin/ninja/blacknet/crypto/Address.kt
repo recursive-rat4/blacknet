@@ -14,8 +14,6 @@ import ninja.blacknet.contract.DAppId
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.coding.Bech32
-import ninja.blacknet.serialization.ParserError
-import ninja.blacknet.serialization.ParserException
 import ninja.blacknet.util.plus
 
 /**
@@ -80,6 +78,6 @@ object Address {
         else -> throw Exception("Unknown address version $version")
     }
 
-    private class Error     constructor(message: String) : ParserError    (message)
-    private class Exception constructor(message: String) : ParserException(message)
+    private class Error     constructor(message: String) : kotlin.Error    (message)
+    private class Exception constructor(message: String) : kotlin.Exception(message)
 }

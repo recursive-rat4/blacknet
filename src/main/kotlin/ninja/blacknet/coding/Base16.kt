@@ -10,7 +10,6 @@
 package ninja.blacknet.coding
 
 import ninja.blacknet.Config
-import ninja.blacknet.serialization.ParserException
 
 private val HEX_CHARS = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
 private val HEX_CHARS_LOWER = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
@@ -88,4 +87,4 @@ fun fromHex(string: String, size: Int = 0): ByteArray {
 /**
  * Thrown to indicate that the given string does not have the appropriate format.
  */
-class HexFormatException(message: String) : ParserException(message)
+class HexFormatException(message: String) : RuntimeException(message)

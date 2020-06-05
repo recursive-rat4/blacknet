@@ -46,6 +46,7 @@ import ninja.blacknet.debugMessage
 import ninja.blacknet.error
 import ninja.blacknet.ktor.requests.Requests
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.statusMessage
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.SynchronizedHashSet
@@ -168,7 +169,7 @@ fun Application.APIServer() {
     }
     install(StatusPages) {
         exception<Exception> { cause ->
-            call.respond(HttpStatusCode.BadRequest, cause.debugMessage())
+            call.respond(HttpStatusCode.BadRequest, cause.statusMessage())
             logger.debug(cause)
         }
         exception<Throwable> { cause ->

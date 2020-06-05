@@ -10,7 +10,6 @@
 package ninja.blacknet.coding
 
 import kotlin.experimental.and
-import ninja.blacknet.serialization.ParserException
 
 /**
  * Bech32 address format.
@@ -177,5 +176,5 @@ object Bech32 {
 
     private infix fun Byte.shr(other: Byte): Byte = (this.toInt() shr other.toInt()).toByte()
     @Suppress("RemoveEmptyPrimaryConstructor")
-    private class Exception constructor() : ParserException("")
+    private class Exception constructor() : RuntimeException("")
 }
