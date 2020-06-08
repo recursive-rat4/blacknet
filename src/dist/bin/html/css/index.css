@@ -353,6 +353,7 @@ tbody td, tfoot td {
 
 #tx-table{
     margin-top: 0;
+    margin-bottom: 100px;
 }
 
 .filter a{
@@ -683,10 +684,6 @@ dl dt, dl dd{
 
 tr.undis{
     display: none;
-}
-
-#tx-list tr.preview{
-    cursor: pointer;
 }
 
 

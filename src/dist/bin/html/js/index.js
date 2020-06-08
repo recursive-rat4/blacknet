@@ -376,12 +376,13 @@ $(document).ready(function () {
 
                 if (response.route == "block") {
                     blockStack.push(response.message);
-                } else if (response.route == "transaction") {
-                    Blacknet.renderTransaction(response.message, true);
-                    if (tx.time * 1000 > Date.now() - 1000 * 60) {
-                        Blacknet.newTransactionNotify(response.message);
-                    }
-                }
+                } 
+                // else if (response.route == "transaction") {
+                //     Blacknet.renderTransaction(response.message, true);
+                //     if (tx.time * 1000 > Date.now() - 1000 * 60) {
+                //         Blacknet.newTransactionNotify(response.message);
+                //     }
+                // }
             }
         };
 
@@ -403,11 +404,7 @@ $(document).ready(function () {
         Blacknet.stopMoreTxs = true;
         $(this).addClass('active').siblings().removeClass('active');
 
-        if (type == 'all') {
-            await Blacknet.renderTxs(Blacknet.txIndex);
-        } else {
-            await Blacknet.renderTxs(Blacknet.txIndex, type);
-        }
+        await Blacknet.switchTxRender(type);
         Blacknet.stopMoreTxs = false;
 
     }
@@ -450,7 +447,7 @@ $(document).ready(function () {
         .on("click", ".tx-foot .show_more_txs", function () {
             $(this).hide();
             Blacknet.stopMore = false;
-            Blacknet.showMoreTxs();
+            Blacknet.moreTransactions();
             return false;
         });
 

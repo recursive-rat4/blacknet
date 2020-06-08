@@ -353,97 +353,77 @@ void function () {
     }
 
     Blacknet.initRecentTransactions = async function () {
-        let transactions = await Blacknet.getPromise('/wallet/' + account + '/transactions', 'json');
-        let array = [];
+        Blacknet.txtype = "all";
 
-        array = Blacknet.serializeTx(transactions);
-        Blacknet.txdb = {};
-        Blacknet.txIndex = array;
-
-        await Blacknet.renderTxs(array);
+        let array = await Blacknet.getTxDataList(0);
+        Blacknet.renderTxs(array);
+        Blacknet.txpage = 0;
         await Blacknet.renderLease();
     };
 
-    Blacknet.renderTxs = async function (txArray, type) {
+    Blacknet.getTxDataList = async function (page) {
 
-        let defaultTxAmount = 100, txProgress = $('.tx-progress'),
+        let url = '/wallet/' + account + `/listtransactions/${page * 100}/100`;
+
+        if (Blacknet.txtype != 'all') {
+            url += '/' + Blacknet.txtype;
+        }
+
+        let transactions = await Blacknet.getPromise(url, 'json');
+        let array = [];
+        array = transactions.map(function (tx) {
+            let obj = tx.transaction;
+            obj.confirmations = tx.confirmations;
+            obj.time = tx.receiveTime;
+            return obj;
+        });
+        return array;
+    };
+
+    Blacknet.moreTransactions = async function () {
+        Blacknet.txpage++;
+        let array = await Blacknet.getTxDataList(Blacknet.txpage, Blacknet.txtype);
+        Blacknet.renderTxs(array);
+    }
+
+    Blacknet.switchTxRender = async function (type) {
+
+        Blacknet.txpage = 0;
+        Blacknet.txtype = type;
+
+        $('tr.preview').remove();
+        $('#tx-progress').show();
+        $('.tx-foot .no_tx_yet').hide();
+        let more = $('.tx-foot .show_more_txs');
+        more.hide();
+
+        let array = await Blacknet.getTxDataList(Blacknet.txpage);
+
+        Blacknet.renderTxs(array);
+        Blacknet.txpage = 0;
+        
+
+        if (array.length < 100) more.hide();
+        else more.show();
+
+    };
+
+    Blacknet.renderTxs = async function (txArray) {
+
+        let txamount = txArray.length, txProgress = $('#tx-progress'),
             showMore = $('.tx-foot .show_more_txs'),
             noTxYet = $('.tx-foot .no_tx_yet');
 
-
-        let renderArray = txArray;
-
-        if (type) {
-            renderArray = txArray.filter(function (tx) {
-                //TODO MultiData
-                return tx.types[0].type == type && tx.height > 0;
-            });
-        }
-
-        if ('genesis' == type) {
-            renderArray = txArray.filter(function (tx) {
-                return tx.time == GENESIS_TIME;
-            });
-        }
-
-        if (renderArray.length == 0) {
-            noTxYet.show();
-            showMore.hide();
-        } else {
-            noTxYet.hide();
-        }
-
+        txArray.length == 0 ? noTxYet.show() : noTxYet.hide();
         txProgress.hide();
-        txList.html('');
 
-        Blacknet.currentTxIndex = renderArray;
-
-        for (let tx of renderArray) {
-
-            if (defaultTxAmount-- < 1) {
-                break;
-            }
-            await Blacknet.processTransaction(tx);
-        }
-
-        if (defaultTxAmount < 0) {
-            showMore.show();
-        } else {
-            showMore.hide();
-        }
-
-    };
-
-    Blacknet.processTransaction = async function (data) {
-
-        let tx = Blacknet.txdb[data.height + data.time];
-
-        if (tx) {
+        for (let tx of txArray) {
             await Blacknet.renderTransaction(tx);
-            return;
         }
 
-        tx = await Blacknet.getPromise('/wallet/' + account + '/transaction/' + data.hash + '/false', 'json');
-        tx.height = data.height;
-        tx.time = data.time;
-        Blacknet.txdb[data.height + data.time] = tx;
-        await Blacknet.renderTransaction(tx);
+        txamount == 100 ? showMore.show() : showMore.hide();
     };
 
-    Blacknet.showMoreTxs = async function () {
-
-        let transactions = Blacknet.currentTxIndex.slice(100);
-        let node = $('.tx-item:last-child');
-
-        time = +node[0].dataset.time || 0;
-
-        for (let tx of transactions) {
-
-            if (Blacknet.stopMore == false) {
-                await Blacknet.processTransaction(tx);
-            }
-        }
-    };
     Blacknet.stopMoreTxs = function () {
         Blacknet.stopMore = true;
     }
@@ -456,12 +436,14 @@ void function () {
         }
         // if tx already render, update status
         if (node.html()) {
-            await Blacknet.renderTxStatus(0, node[0]);
+            node.find('.status').html(tx.confirmations > 10 ? 'Confirmed' : `${tx.confirmations} confirmations`)
+            // await Blacknet.renderTxStatus(0, node[0]);
             return;
         }
 
         node = await Blacknet.template.transaction(tx, account);
-        prepend ? node.prependTo(txList) : node.appendTo(txList);
+        node.appendTo(txList);
+        // prepend ? node.prependTo(txList) : node.appendTo(txList);
 
     };
 
@@ -474,7 +456,6 @@ void function () {
 
             $('#leases-list').html('');
             outLeases.map(Blacknet.template.lease);
-
         }
     };
 
@@ -555,22 +536,8 @@ void function () {
         //     notification.remove();
         // });
     };
-    Blacknet.renderTxStatus = async function (index, el) {
-
-        let statusText, node = $(el).find('.status');
-
-        if (node.text() == 'Confirmed') return;
-
-        statusText = await Blacknet.getStatusText(el.dataset.height, el.dataset.hash);
-        node.text(statusText);
-    };
 
 
-
-    Blacknet.refreshTxConfirmations = function () {
-
-        $.each($('#tx-list tr'), Blacknet.renderTxStatus);
-    };
 
     Blacknet.renderBlock = async function (block, height, prepend = true) {
 

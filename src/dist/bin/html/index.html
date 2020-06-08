@@ -218,7 +218,7 @@
                     <div class="filter" ng-init="type='all'">
                             <a href="#" data-type="all" class="active" data-i18n="All">All</a>
                         <a href="#" data-type="0" data-i18n="Transfer">Transfer</a>
-                        <a href="#" data-type="genesis" data-i18n="genesis">Genesis</a>
+                        <!-- <a href="#" data-type="genesis" data-i18n="genesis">Genesis</a>-->
                         <a href="#" data-type="2" data-i18n="Lease">Lease</a>
                         <a href="#" data-type="3" data-i18n="Cancel Lease">Cancel Lease</a>
                         <a href="#" data-type="254" data-i18n="PoS Generated">PoS Generated</a>
@@ -234,7 +234,7 @@
                             </tr>
                         </thead>
                         <tbody id="tx-list">
-                            <tr>
+                            <tr id="tx-progress">
                                 <td colspan="5">
                                     <div class="spinner">
                                         <div class="rect1"></div>
@@ -255,8 +255,8 @@
                             </tr>
                             <tr class="show_more_txs">
                                 <td colspan="5" class="text-center">
-                                    <a href="#" class="full_transaction_history"
-                                        data-i18n="Show Full Transaction History">Show Full Transaction History</a>
+                                    <a href="#" class="More_transaction_history"
+                                        data-i18n="Show More">Show More</a>
                                 </td>
                             </tr>
                         </tfoot>

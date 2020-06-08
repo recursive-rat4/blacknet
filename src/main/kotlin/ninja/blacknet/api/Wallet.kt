@@ -260,7 +260,8 @@ fun Route.wallet() {
     class ListTransactions(
             val address: PublicKey,
             val offset: Int = 0,
-            val max: Int = 100
+            val max: Int = 100,
+            val type: Int = -1
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = BlockDB.mutex.withLock { WalletDB.mutex.withLock {
             val publicKey = address
@@ -271,12 +272,13 @@ fun Route.wallet() {
             if (max < 0 || max > Int.MAX_VALUE)
                 return call.respond(HttpStatusCode.BadRequest, "Invalid max")
             val toIndex = min(offset + max, size)
-            val expectedSize = min(max, size)
+            var expectedSize = min(max, size)
             val transactions = ArrayList<WalletTransactionInfo>(expectedSize)
             val state = LedgerDB.state()
-            wallet.transactions.entries
-                    .sortedByDescending { (_, txData) -> txData.time }
-                    .subList(offset, toIndex)
+            val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time }
+
+            if (type == -1) {
+                list.subList(offset, toIndex)
                     .forEach { (hash, txData) ->
                         val bytes = WalletDB.getTransactionImpl(hash)!!
                         val tx = Transaction.deserialize(bytes)
@@ -286,13 +288,38 @@ fun Route.wallet() {
                                 txData.time
                         ))
                     }
+            } else {
+                var offsetNumber = offset
+                for ( (hash, txData) in list ) {
+
+                    val bytes = WalletDB.getTransactionImpl(hash)!!
+                    val tx = Transaction.deserialize(bytes)
+                    if(type == -1 || tx.type.toUByte().toInt() == type){
+
+                        if(offsetNumber > 0) {
+                            offsetNumber--
+                            continue
+                        }
+
+                        transactions.add(WalletTransactionInfo(
+                                TransactionInfo(tx, hash, bytes.size, txData.types),
+                                txData.confirmationsImpl(state),
+                                txData.time
+                        ))
+                        expectedSize--
+                    }
+
+                    if (expectedSize == 0) break
+
+                }
+            }
             return call.respondJson(WalletTransactionInfo.serializer().list, transactions)
         }}
     }
 
     //get(ListTransactions.serializer(), "/api/v2/wallet/listtransactions")
     //get(ListTransactions.serializer(), "/api/v2/wallet/listtransactions/{address}/{offset?}/{max?}")
-    get(ListTransactions.serializer(), "/api/v2/wallet/{address}/listtransactions/{offset?}/{max?}")
+    get(ListTransactions.serializer(), "/api/v2/wallet/{address}/listtransactions/{offset?}/{max?}/{type?}")
 
     @Serializable
     class ListSinceBlockInfo(

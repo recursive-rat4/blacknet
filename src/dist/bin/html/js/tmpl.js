@@ -31,10 +31,10 @@ Blacknet.template = {
             txaccount = txData.to;
         }
 
-        if (tx.time * 1000 < Date.now() - 1000 * 10) {
+        if (tx.confirmations > 10) {
             status = 'Confirmed';
         } else {
-            status = await Blacknet.getStatusText(tx.height, tx.hash);
+            status = tx.confirmations + ' confirmations';
         }
 
         let txText = type, linkText = '';
