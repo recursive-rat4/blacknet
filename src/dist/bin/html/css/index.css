@@ -282,7 +282,7 @@ button {
     margin-right: 15px;
 }
 .staking button{
-    margin-left: 12px;
+    float: none;
 }
 .newaccount button{
     color: var(--gold-text);
