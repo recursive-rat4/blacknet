@@ -39,15 +39,19 @@ Blacknet.template = {
 
         let txText = type, linkText = '';
 
+        let spent = false;
+        if(account == tx.from) spent = true;
 
         if(dataType == 0){
             let text = account == tx.from ? "Sent to" : 'Received from';
+
             txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash}">${text}</a>`
         }
 
         if(dataType == 2 || dataType == 3){
             txText = `<a target="_blank" href="${Blacknet.explorer.tx + tx.hash}">
             ${type} ${account == tx.from ? "to" : 'from'}</a>`;
+
         }
 
         if(dataType != 254 && dataType != 0 && dataType != 2 && dataType != 3){
@@ -66,11 +70,15 @@ Blacknet.template = {
         if(dataType != 0 && dataType != 2 && dataType != 3){
 
             if(tx.from != 'genesis'){
+                spent = false;
                 linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.from}">${tx.from}</a>`;
             }else{
+                spent = true;
                 linkText = `<a target="_blank" href="${Blacknet.explorer.account + tx.to}">${tx.to}</a>`;
             }
         }
+        if(dataType == 3) spent = account != tx.from;
+
 
         amount = Blacknet.getFormatBalance(amount);
 
@@ -79,7 +87,7 @@ Blacknet.template = {
                 <td class="narrow">${Blacknet.unix_to_local_time(tx.time)}</td>
                 <td class="narrow">${txText}</td>
                 <td class="left">${linkText}</td>
-                <td class="right"><span class="strong">${amount}</span></td>
+                <td class="right"><span class="strong ${spent ? 'spent': 'recieved'}">${spent ? '-': '+'} ${amount}</span></td>
                 <td class="left status" data-height="${tx.height}">${status}</td>
             </tr>`;
 

@@ -80,6 +80,12 @@ header .network {
 .strong {
     color: var(--gold-text);
 }
+.strong.spent {
+    color: #c02a1d;
+}
+.strong.recieved {
+    color: #27892f;
+}
 
 .main-menu {
     width: 220px;
