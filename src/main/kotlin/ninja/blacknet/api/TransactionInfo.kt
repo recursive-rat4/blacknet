@@ -31,7 +31,7 @@ class TransactionInfo(
         val seq: Int,
         val referenceChain: String,
         val fee: String,
-        val data: JsonArray
+        val data: List<DataInfo>
 ) {
     constructor(tx: Transaction, hash: Hash, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
             hash.toString(),
@@ -51,34 +51,32 @@ class TransactionInfo(
             val type: Int,
             val dataIndex: Int,
             val data: JsonElement
-    ) {
-        fun toJson() = Json.toJson(serializer(), this)
-    }
+    )
 
     companion object {
-        fun data(type: Byte, bytes: ByteArray, filter: List<WalletDB.TransactionDataType>?): JsonArray {
+        fun data(type: Byte, bytes: ByteArray, filter: List<WalletDB.TransactionDataType>?): List<DataInfo> {
             val data = if (type == TxType.Generated.type) {
-                listOf(DataInfo(type.toUByte().toInt(), 0, JsonObject(emptyMap())).toJson())
+                listOf(DataInfo(type.toUByte().toInt(), 0, JsonObject(emptyMap())))
             } else if (type != TxType.MultiData.type) {
-                listOf(DataInfo(type.toUByte().toInt(), 0, TxData.deserialize(type, bytes).toJson()).toJson())
+                listOf(DataInfo(type.toUByte().toInt(), 0, TxData.deserialize(type, bytes).toJson()))
             } else {
                 val multiData = MultiData.deserialize(bytes)
-                val list = ArrayList<JsonElement>(multiData.multiData.size)
+                val list = ArrayList<DataInfo>(multiData.multiData.size)
                 if (filter == null) {
                     for (index in 0 until multiData.multiData.size) {
                         val (dataType, dataBytes) = multiData.multiData[index]
-                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, TxData.deserialize(dataType, dataBytes.array).toJson()).toJson())
+                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, TxData.deserialize(dataType, dataBytes.array).toJson()))
                     }
                 } else {
                     for (i in 0 until filter.size) {
                         val dataIndex = filter[i].dataIndex.toInt()
                         val (dataType, dataBytes) = multiData.multiData[dataIndex - 1]
-                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, TxData.deserialize(dataType, dataBytes.array).toJson()).toJson())
+                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, TxData.deserialize(dataType, dataBytes.array).toJson()))
                     }
                 }
                 list
             }
-            return JsonArray(data)
+            return data
         }
     }
 }

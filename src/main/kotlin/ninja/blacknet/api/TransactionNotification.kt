@@ -28,7 +28,7 @@ class TransactionNotification(
         val referenceChain: String,
         val fee: String,
         val type: Int,
-        val data: JsonElement
+        val data: List<TransactionInfo.DataInfo>
 ) {
     constructor(tx: Transaction, hash: Hash, time: Long, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
             hash.toString(),
