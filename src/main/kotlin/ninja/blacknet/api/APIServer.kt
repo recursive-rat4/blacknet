@@ -35,6 +35,7 @@ import ninja.blacknet.Version
 import ninja.blacknet.api.v1.APIV1
 import ninja.blacknet.api.v1.BlockNotificationV1
 import ninja.blacknet.api.v1.TransactionNotificationV2
+import ninja.blacknet.api.v2.TransactionNotification
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.core.Transaction

@@ -11,6 +11,7 @@ package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import ninja.blacknet.api.v2.TransactionNotification
 
 @Serializable
 class WebSocketNotification(

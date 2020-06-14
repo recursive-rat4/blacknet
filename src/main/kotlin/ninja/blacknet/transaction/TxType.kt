@@ -26,6 +26,7 @@ enum class TxType(val type: Byte) {
     WithdrawFromLease(11),
     ClaimHTLC(12),
     MultiData(16),
+    // Genesis(125),
     Generated(254.toByte()),
     ;
 

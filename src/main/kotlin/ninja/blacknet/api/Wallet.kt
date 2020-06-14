@@ -32,6 +32,7 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.ktor.requests.post
+import ninja.blacknet.transaction.TxType
 
 fun Route.wallet() {
     @Serializable
@@ -260,7 +261,8 @@ fun Route.wallet() {
     class ListTransactions(
             val address: PublicKey,
             val offset: Int = 0,
-            val max: Int = 100
+            val max: Int = 100,
+            val type: Int? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = BlockDB.mutex.withLock { WalletDB.mutex.withLock {
             val publicKey = address
@@ -271,28 +273,51 @@ fun Route.wallet() {
             if (max < 0 || max > Int.MAX_VALUE)
                 return call.respond(HttpStatusCode.BadRequest, "Invalid max")
             val toIndex = min(offset + max, size)
-            val expectedSize = min(max, size)
-            val transactions = ArrayList<WalletTransactionInfo>(expectedSize)
+            val transactions = ArrayList<WalletTransactionInfo>(min(max, size))
             val state = LedgerDB.state()
-            wallet.transactions.entries
-                    .sortedByDescending { (_, txData) -> txData.time }
-                    .subList(offset, toIndex)
-                    .forEach { (hash, txData) ->
-                        val bytes = WalletDB.getTransactionImpl(hash)!!
-                        val tx = Transaction.deserialize(bytes)
-                        transactions.add(WalletTransactionInfo(
-                                TransactionInfo(tx, hash, bytes.size, txData.types),
-                                txData.confirmationsImpl(state),
-                                txData.time
-                        ))
+            val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time }
+            if (type == null) {
+                for (index in offset until toIndex) {
+                    val (hash, txData) = list[index]
+                    val bytes = WalletDB.getTransactionImpl(hash)!!
+                    val tx = Transaction.deserialize(bytes)
+                    transactions.add(WalletTransactionInfo(
+                            TransactionInfo(tx, hash, bytes.size, txData.types),
+                            txData.confirmationsImpl(state),
+                            txData.time
+                    ))
+                }
+            } else {
+                require(offset >= 0) { "偏移不能为负数" }
+                var offsetNumber = offset
+                val type = type.toUByte().toByte().also { TxType.getSerializer(it) /* 请校验请求引数 */ }
+                for (index in 0 until list.size) {
+                    val (hash, txData) = list[index]
+                    val filter = txData.types.filter { it.type == type }
+                    if (filter.size == 0)
+                        continue
+                    if (offsetNumber != 0) {
+                        offsetNumber -= 1
+                        continue
                     }
+                    val bytes = WalletDB.getTransactionImpl(hash)!!
+                    val tx = Transaction.deserialize(bytes)
+                    transactions.add(WalletTransactionInfo(
+                        TransactionInfo(tx, hash, bytes.size, filter),
+                        txData.confirmationsImpl(state),
+                        txData.time
+                    ))
+                    if (transactions.size == max)
+                        break
+                }
+            }
             return call.respondJson(WalletTransactionInfo.serializer().list, transactions)
         }}
     }
 
     //get(ListTransactions.serializer(), "/api/v2/wallet/listtransactions")
-    //get(ListTransactions.serializer(), "/api/v2/wallet/listtransactions/{address}/{offset?}/{max?}")
-    get(ListTransactions.serializer(), "/api/v2/wallet/{address}/listtransactions/{offset?}/{max?}")
+    //get(ListTransactions.serializer(), "/api/v2/wallet/listtransactions/{address}/{offset?}/{max?}/{type?}")
+    get(ListTransactions.serializer(), "/api/v2/wallet/{address}/listtransactions/{offset?}/{max?}/{type?}")
 
     @Serializable
     class ListSinceBlockInfo(

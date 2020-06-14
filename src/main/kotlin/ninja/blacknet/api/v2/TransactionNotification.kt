@@ -7,10 +7,11 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.api
+package ninja.blacknet.api.v2
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import ninja.blacknet.api.TransactionInfo
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash

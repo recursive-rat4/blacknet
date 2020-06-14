@@ -37,11 +37,14 @@ class Config(
         val i2psamport: Int? = null,
         val dbcache: Size,
         var mnemonics: List<PrivateKey>? = null,
+        // 主從模式
         val softblocksizelimit: Size = Size(PoS.MAX_BLOCK_SIZE),
         val txpoolsize: Size = Size(128 * 1024 * 1024),
         val portable: Boolean = false,
         val datadir: String? = null,
         val logips: Boolean = false,
+        // 白名單
+        // 黑名單
         val lowercasehex: Boolean = false,
         val regtest: Boolean = false,
         val debugcoroutines: Boolean = false,

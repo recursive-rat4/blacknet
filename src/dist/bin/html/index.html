@@ -191,13 +191,19 @@
                     <table>
                         <tbody>
                             <tr>
-                                <td data-i18n="is staking">Is Staking</td>
-                                <td class="is_staking">Press Refresh</td>
+                                <td data-i18n="weight">Weight</td>
+                                <td id="staking_weight">0.00000000 BLN</td>
                             </tr>
                             <tr>
-                                <td data-i18n="start/stop/refresh">
-                                    Start/Stop/Refresh
-                                </td>
+                                <td data-i18n="networkWeight">Network Weight</td>
+                                <td id="network_weight">0.00000000 BLN</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="expectedTime">ExpectedTime</td>
+                                <td id="expectedTime">0 seconds</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="Toggle Staking">Toggle Staking</td>
                                 <td>
                                     <button id="refresh_staking" data-i18n="refresh">Refresh</button>
                                     <button id="stop_staking" data-i18n="stop staking">Stop staking</button>
@@ -212,7 +218,7 @@
                     <div class="filter" ng-init="type='all'">
                             <a href="#" data-type="all" class="active" data-i18n="All">All</a>
                         <a href="#" data-type="0" data-i18n="Transfer">Transfer</a>
-                        <a href="#" data-type="genesis" data-i18n="genesis">Genesis</a>
+                        <!-- <a href="#" data-type="genesis" data-i18n="genesis">Genesis</a>-->
                         <a href="#" data-type="2" data-i18n="Lease">Lease</a>
                         <a href="#" data-type="3" data-i18n="Cancel Lease">Cancel Lease</a>
                         <a href="#" data-type="254" data-i18n="PoS Generated">PoS Generated</a>
@@ -228,7 +234,7 @@
                             </tr>
                         </thead>
                         <tbody id="tx-list">
-                            <tr>
+                            <tr id="tx-progress">
                                 <td colspan="5">
                                     <div class="spinner">
                                         <div class="rect1"></div>
@@ -249,8 +255,8 @@
                             </tr>
                             <tr class="show_more_txs">
                                 <td colspan="5" class="text-center">
-                                    <a href="#" class="full_transaction_history"
-                                        data-i18n="Show Full Transaction History">Show Full Transaction History</a>
+                                    <a href="#" class="More_transaction_history"
+                                        data-i18n="Show More">Show More</a>
                                 </td>
                             </tr>
                         </tfoot>
