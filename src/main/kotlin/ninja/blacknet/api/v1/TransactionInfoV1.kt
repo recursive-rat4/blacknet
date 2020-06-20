@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.*
 
@@ -43,7 +44,7 @@ class TransactionInfoV1(
     companion object {
         fun fromBytes(bytes: ByteArray): TransactionInfoV1 {
             val hash = Transaction.hash(bytes)
-            return TransactionInfoV1(Transaction.deserialize(bytes), hash, bytes.size)
+            return TransactionInfoV1(BinaryDecoder(bytes).decode(Transaction.serializer()), hash, bytes.size)
         }
 
         private fun data(type: Byte, bytes: ByteArray): String {

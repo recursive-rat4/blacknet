@@ -26,12 +26,8 @@ class ChainIndex(
         val height: Int,
         val generated: Long
 ) {
-    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
-
     @Serializer(forClass = ChainIndex::class)
     companion object {
-        fun deserialize(bytes: ByteArray): ChainIndex = BinaryDecoder(bytes).decode(serializer())
-
         override fun deserialize(decoder: Decoder): ChainIndex {
             return when (decoder) {
                 is BinaryDecoder -> ChainIndex(

@@ -70,7 +70,7 @@ object WalletDB {
                 for (i in 0 until keysBytes.size step PublicKey.SIZE_BYTES) {
                     val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES))
                     val walletBytes = LevelDB.get(WALLET_KEY, publicKey.bytes)!!
-                    val wallet = Wallet.deserialize(walletBytes)
+                    val wallet = BinaryDecoder(walletBytes).decode(Wallet.serializer())
                     txns += wallet.transactions.size
                     wallets.put(publicKey, wallet)
                 }
@@ -103,7 +103,7 @@ object WalletDB {
                 wallet.transactions.forEach { (hash, txData) ->
                     if (txData.height == 0 && txData.types[0].type != TxType.Generated.type) {
                         val bytes = getTransactionImpl(hash)!!
-                        val tx = Transaction.deserialize(bytes)
+                        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                         unconfirmed.add(Triple(hash, bytes, tx.seq))
                     }
                 }
@@ -216,7 +216,7 @@ object WalletDB {
         }
 
         updated.forEach { (publicKey, wallet) ->
-            batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
+            batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
         }
     }
 
@@ -230,7 +230,7 @@ object WalletDB {
         if (height != 0) {
             if (block!!.generator == publicKey) {
                 val tx = Transaction.generated(publicKey, height, hash, generated)
-                val txBytes = tx.serialize()
+                val txBytes = BinaryEncoder.toBytes(Transaction.serializer(), tx)
                 val txHash = hash // re-use block hash as hash of Generated tx
                 processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, block.time, height, batch, rescan)
             }
@@ -238,7 +238,7 @@ object WalletDB {
             val balance = Genesis.balances.get(publicKey) ?: return
 
             val tx = Transaction.generated(publicKey, height, hash, balance)
-            val txBytes = tx.serialize()
+            val txBytes = BinaryEncoder.toBytes(Transaction.serializer(), tx)
             val txHash = Transaction.hash(txBytes)
             processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, Genesis.TIME, height, batch, rescan)
         }
@@ -397,7 +397,7 @@ object WalletDB {
 
                 if (!rescan) {
                     APIServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
-                    batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
+                    batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
                 }
                 if (store) {
                     batch.put(TX_KEY, hash.bytes, bytes)
@@ -411,7 +411,7 @@ object WalletDB {
             txData.height = height
 
             if (!rescan) {
-                batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
+                batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
             }
 
             return true
@@ -485,16 +485,11 @@ object WalletDB {
             val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
             val transactions: HashMap<Hash, TransactionData> = HashMap()
     ) {
-        fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
-
-        companion object {
-            fun deserialize(bytes: ByteArray): Wallet = BinaryDecoder(bytes).decode(serializer())
-        }
     }
 
     private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: PublicKey, wallet: Wallet) {
         wallets.put(publicKey, wallet)
-        batch.put(WALLET_KEY, publicKey.bytes, wallet.serialize())
+        batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
         val encoder = BinaryEncoder()
         wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey.bytes) }
         val keysBytes = encoder.toBytes()
@@ -549,7 +544,7 @@ object WalletDB {
             val block = BlockDB.blockImpl(hash)!!.first
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
-                val tx = Transaction.deserialize(bytes.array)
+                val tx = BinaryDecoder(bytes.array).decode(Transaction.serializer())
                 val txHash = Transaction.hash(bytes.array)
                 processTransactionImpl(publicKey, wallet, txHash, tx, bytes.array, block.time, height, batch, true)
             }

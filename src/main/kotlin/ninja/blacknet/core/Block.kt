@@ -12,7 +12,6 @@ package ninja.blacknet.core
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
-import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
@@ -26,10 +25,8 @@ class Block(
         var signature: Signature,
         val transactions: ArrayList<SerializableByteArray>
 ) {
-    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
-
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
-        val bytes = serialize()
+        val bytes = BinaryEncoder.toBytes(serializer(), this)
         contentHash = contentHash(bytes)
         System.arraycopy(contentHash.bytes, 0, bytes, CONTENT_HASH_POS, Hash.SIZE_BYTES)
         val hash = hash(bytes)
@@ -57,8 +54,6 @@ class Block(
         const val CONTENT_HASH_POS = Int.SIZE_BYTES + Hash.SIZE_BYTES + Long.SIZE_BYTES + PublicKey.SIZE_BYTES
         const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE_BYTES
         const val HEADER_SIZE_BYTES = SIGNATURE_POS + Signature.SIZE_BYTES
-
-        fun deserialize(bytes: ByteArray): Block = BinaryDecoder(bytes).decode(serializer())
 
         fun hash(bytes: ByteArray): Hash {
             return buildHash {

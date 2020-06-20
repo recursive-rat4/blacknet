@@ -18,6 +18,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.LedgerDB.forkV2
+import ninja.blacknet.serialization.BinaryDecoder
 import java.util.Collections
 
 private val logger = KotlinLogging.logger {}
@@ -45,7 +46,7 @@ object BlockDB {
 
     internal fun blockImpl(hash: Hash): Pair<Block, Int>? {
         val bytes = getImpl(hash) ?: return null
-        val block = Block.deserialize(bytes)
+        val block = BinaryDecoder(bytes).decode(Block.serializer())
         return Pair(block, bytes.size)
     }
 
@@ -70,7 +71,7 @@ object BlockDB {
     }
 
     private suspend fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
-        val block = Block.deserialize(bytes)
+        val block = BinaryDecoder(bytes).decode(Block.serializer())
         val state = LedgerDB.state()
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
             val percent = 100 * state.upgraded / PoS.MATURITY

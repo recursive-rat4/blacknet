@@ -63,11 +63,6 @@ object LedgerDB {
             val upgraded: Short,
             val forkV2: Short
     ) {
-        fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
-
-        companion object {
-            fun deserialize(bytes: ByteArray): State = BinaryDecoder(bytes).decode(serializer())
-        }
     }
 
     @Volatile
@@ -82,12 +77,12 @@ object LedgerDB {
         var supply = 0L
         Genesis.balances.forEach { (publicKey, balance) ->
             val account = AccountState.create(balance)
-            batch.put(ACCOUNT_KEY, publicKey.bytes, account.serialize())
+            batch.put(ACCOUNT_KEY, publicKey.bytes, BinaryEncoder.toBytes(AccountState.serializer(), account))
             supply += balance
         }
 
         val chainIndex = ChainIndex(Hash.ZERO, Hash.ZERO, 0, 0, 0)
-        batch.put(CHAIN_KEY, Hash.ZERO.bytes, chainIndex.serialize())
+        batch.put(CHAIN_KEY, Hash.ZERO.bytes, BinaryEncoder.toBytes(ChainIndex.serializer(), chainIndex))
 
         blockSizes.add(0)
         writeBlockSizes(batch)
@@ -104,7 +99,7 @@ object LedgerDB {
                 PoS.DEFAULT_MAX_BLOCK_SIZE,
                 0,
                 0)
-        batch.put(STATE_KEY, state.serialize())
+        batch.put(STATE_KEY, BinaryEncoder.toBytes(State.serializer(), state))
         this.state = state
 
         setVersion(batch)
@@ -157,7 +152,7 @@ object LedgerDB {
             val version = BinaryDecoder(versionBytes).decodeVarInt()
 
             if (version == VERSION) {
-                val state = LedgerDB.State.deserialize(stateBytes)
+                val state = BinaryDecoder(stateBytes).decode(LedgerDB.State.serializer())
                 logger.info("Blockchain height ${state.height}")
                 this.state = state
             } else if (version in 1 until VERSION) {
@@ -266,8 +261,9 @@ object LedgerDB {
     }
 
     fun getSnapshot(height: Int): Snapshot? {
-        val bytes = LevelDB.get(SNAPSHOT_KEY, height.toByteArray()) ?: return null
-        return Snapshot.deserialize(bytes)
+        return LevelDB.get(SNAPSHOT_KEY, height.toByteArray())?.let { bytes ->
+            BinaryDecoder(bytes).decode(Snapshot.serializer())
+        }
     }
 
     internal fun getNextRollingCheckpoint(): Hash {
@@ -291,20 +287,19 @@ object LedgerDB {
     }
 
     fun get(key: PublicKey): AccountState? {
-        val bytes = getAccountBytes(key)
-        return if (bytes != null)
-            AccountState.deserialize(bytes)
-        else
-            bytes
+        return getAccountBytes(key)?.let { bytes ->
+            BinaryDecoder(bytes).decode(AccountState.serializer())
+        }
     }
 
     private fun getUndo(hash: Hash): UndoBlock {
-        return UndoBlock.deserialize(LevelDB.get(UNDO_KEY, hash.bytes)!!)
+        return BinaryDecoder(LevelDB.get(UNDO_KEY, hash.bytes)!!).decode(UndoBlock.serializer())
     }
 
     fun getChainIndex(hash: Hash): ChainIndex? {
-        val bytes = LevelDB.get(CHAIN_KEY, hash.bytes) ?: return null
-        return ChainIndex.deserialize(bytes)
+        return LevelDB.get(CHAIN_KEY, hash.bytes)?.let { bytes ->
+            BinaryDecoder(bytes).decode(ChainIndex.serializer())
+        }
     }
 
     fun checkReferenceChain(hash: Hash): Boolean {
@@ -331,11 +326,9 @@ object LedgerDB {
     }
 
     fun getHTLC(id: HashTimeLockContractId): HTLC? {
-        val bytes = getHTLCBytes(id)
-        return if (bytes != null)
-            HTLC.deserialize(bytes)
-        else
-            bytes
+        return getHTLCBytes(id)?.let { bytes ->
+            BinaryDecoder(bytes).decode(HTLC.serializer())
+        }
     }
 
     private fun getMultisigBytes(id: MultiSignatureLockContractId): ByteArray? {
@@ -343,11 +336,9 @@ object LedgerDB {
     }
 
     fun getMultisig(id: MultiSignatureLockContractId): Multisig? {
-        val bytes = getMultisigBytes(id)
-        return if (bytes != null)
-            Multisig.deserialize(bytes)
-        else
-            bytes
+        return getMultisigBytes(id)?.let { bytes ->
+            BinaryDecoder(bytes).decode(Multisig.serializer())
+        }
     }
 
     internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): Pair<Status, List<Hash>> {
@@ -379,7 +370,7 @@ object LedgerDB {
         var fees = 0L
         for (index in 0 until block.transactions.size) {
             val bytes = block.transactions[index]
-            val tx = Transaction.deserialize(bytes.array)
+            val tx = BinaryDecoder(bytes.array).decode(Transaction.serializer())
             val txHash = Transaction.hash(bytes.array)
             val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size)
             if (status != Accepted) {
@@ -438,12 +429,12 @@ object LedgerDB {
                 undo.upgraded,
                 undo.forkV2)
         this.state = newState
-        batch.put(STATE_KEY, newState.serialize())
+        batch.put(STATE_KEY, BinaryEncoder.toBytes(State.serializer(), newState))
 
         val prevIndex = getChainIndex(chainIndex.previous)!!
         prevIndex.next = Hash.ZERO
         prevIndex.nextSize = 0
-        batch.put(CHAIN_KEY, chainIndex.previous.bytes, prevIndex.serialize())
+        batch.put(CHAIN_KEY, chainIndex.previous.bytes, BinaryEncoder.toBytes(ChainIndex.serializer(), prevIndex))
         batch.delete(CHAIN_KEY, hash.bytes)
 
         undo.accounts.forEach { (key, bytes) ->
@@ -598,21 +589,21 @@ object LedgerDB {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 val key = ACCOUNT_KEY - entry ?: break
-                account(PublicKey(key), AccountState.deserialize(entry.value))
+                account(PublicKey(key), BinaryDecoder(entry.value).decode(AccountState.serializer()))
             }
         }
         if (LevelDB.seek(iterator, HTLC_KEY)) {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 val key = HTLC_KEY - entry ?: break
-                htlc(HashTimeLockContractId(key), HTLC.deserialize(entry.value))
+                htlc(HashTimeLockContractId(key), BinaryDecoder(entry.value).decode(HTLC.serializer()))
             }
         }
         if (LevelDB.seek(iterator, MULTISIG_KEY)) {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 val key = MULTISIG_KEY - entry ?: break
-                multisig(MultiSignatureLockContractId(key), Multisig.deserialize(entry.value))
+                multisig(MultiSignatureLockContractId(key), BinaryDecoder(entry.value).decode(Multisig.serializer()))
             }
         }
         iterator.close()
@@ -677,11 +668,11 @@ object LedgerDB {
             } else {
                 val bytes = getAccountBytes(key)
                 return if (bytes != null) {
-                    val dbAccount = AccountState.deserialize(bytes)
+                    val dbAccount = BinaryDecoder(bytes).decode(AccountState.serializer())
                     if (!dbAccount.prune(height))
                         undo.add(key, bytes)
                     else
-                        undo.add(key, dbAccount.serialize())
+                        undo.add(key, BinaryEncoder.toBytes(AccountState.serializer(), dbAccount))
                     dbAccount
                 } else {
                     bytes
@@ -710,12 +701,11 @@ object LedgerDB {
 
         override fun getHTLC(id: HashTimeLockContractId): HTLC? {
             return if (!htlcs.containsKey(id)) {
-                val bytes = getHTLCBytes(id)
-                undo.addHTLC(id, bytes)
-                if (bytes != null)
-                    HTLC.deserialize(bytes)
-                else
-                    bytes
+                getHTLCBytes(id).also { bytes ->
+                    undo.addHTLC(id, bytes)
+                }?.let { bytes ->
+                    BinaryDecoder(bytes).decode(HTLC.serializer())
+                }
             } else {
                 htlcs.get(id)
             }
@@ -732,12 +722,11 @@ object LedgerDB {
 
         override fun getMultisig(id: MultiSignatureLockContractId): Multisig? {
             return if (!multisigs.containsKey(id)) {
-                val bytes = getMultisigBytes(id)
-                undo.addMultisig(id, bytes)
-                if (bytes != null)
-                    Multisig.deserialize(bytes)
-                else
-                    bytes
+                getMultisigBytes(id).also { bytes ->
+                    undo.addMultisig(id, bytes)
+                }?.let { bytes ->
+                    BinaryDecoder(bytes).decode(Multisig.serializer())
+                }
             } else {
                 multisigs.get(id)
             }
@@ -774,21 +763,21 @@ object LedgerDB {
                     upgraded.toShort(),
                     forkV2.toShort())
             LedgerDB.state = newState
-            batch.put(STATE_KEY, newState.serialize())
+            batch.put(STATE_KEY, BinaryEncoder.toBytes(State.serializer(), newState))
 
-            batch.put(UNDO_KEY, blockHash.bytes, undo.serialize())
-            batch.put(CHAIN_KEY, blockPrevious.bytes, prevIndex!!.serialize())
-            batch.put(CHAIN_KEY, blockHash.bytes, chainIndex!!.serialize())
-            for (account in accounts)
-                batch.put(ACCOUNT_KEY, account.key.bytes, account.value.serialize())
+            batch.put(UNDO_KEY, blockHash.bytes, BinaryEncoder.toBytes(UndoBlock.serializer(), undo))
+            batch.put(CHAIN_KEY, blockPrevious.bytes, BinaryEncoder.toBytes(ChainIndex.serializer(), prevIndex!!))
+            batch.put(CHAIN_KEY, blockHash.bytes, BinaryEncoder.toBytes(ChainIndex.serializer(), chainIndex!!))
+            for ((key, account) in accounts)
+                batch.put(ACCOUNT_KEY, key.bytes, BinaryEncoder.toBytes(AccountState.serializer(), account))
             for ((id, htlc) in htlcs)
                 if (htlc != null)
-                    batch.put(HTLC_KEY, id.hash.bytes, htlc.serialize())
+                    batch.put(HTLC_KEY, id.hash.bytes, BinaryEncoder.toBytes(HTLC.serializer(), htlc))
                 else
                     batch.delete(HTLC_KEY, id.hash.bytes)
             for ((id, multisig) in multisigs)
                 if (multisig != null)
-                    batch.put(MULTISIG_KEY, id.hash.bytes, multisig.serialize())
+                    batch.put(MULTISIG_KEY, id.hash.bytes, BinaryEncoder.toBytes(Multisig.serializer(), multisig))
                 else
                     batch.delete(MULTISIG_KEY, id.hash.bytes)
 
@@ -803,8 +792,6 @@ object LedgerDB {
     class Snapshot(
             private val balances: HashMap<PublicKey, Long> = HashMap()
     ) {
-        fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
-
         fun supply(): Long {
             var supply = 0L
             balances.forEach { (_, balance) -> supply += balance }
@@ -820,8 +807,6 @@ object LedgerDB {
 
         @Serializer(forClass = Snapshot::class)
         companion object {
-            fun deserialize(bytes: ByteArray): Snapshot = BinaryDecoder(bytes).decode(serializer())
-
             override fun deserialize(decoder: Decoder): Snapshot {
                 return when (decoder) {
                     is BinaryDecoder -> {
@@ -885,7 +870,7 @@ object LedgerDB {
             logger.error("Snapshot supply does not match ledger")
 
         val batch = LevelDB.createWriteBatch()
-        batch.put(SNAPSHOT_KEY, state.height.toByteArray(), snapshot.serialize())
+        batch.put(SNAPSHOT_KEY, state.height.toByteArray(), BinaryEncoder.toBytes(Snapshot.serializer(), snapshot))
         batch.write()
     }
 }

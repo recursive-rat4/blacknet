@@ -21,6 +21,7 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.SerializableByteArray
 import kotlin.math.min
 
@@ -200,7 +201,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     private fun processImpl(hash: Hash, bytes: ByteArray): Status {
-        val tx = Transaction.deserialize(bytes)
+        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
             addImpl(hash, bytes)
@@ -211,7 +212,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     private suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, time: Long): Pair<Status, Long> {
-        val tx = Transaction.deserialize(bytes)
+        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
             addImpl(hash, bytes)

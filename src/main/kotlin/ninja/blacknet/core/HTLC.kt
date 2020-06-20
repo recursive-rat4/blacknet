@@ -13,8 +13,6 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashLock
 import ninja.blacknet.contract.TimeLock
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
 class HTLC(
@@ -26,13 +24,5 @@ class HTLC(
         val timeLock: TimeLock,
         val hashLock: HashLock
 ) {
-    fun serialize(): ByteArray {
-        return BinaryEncoder.toBytes(serializer(), this)
-    }
 
-    companion object {
-        fun deserialize(bytes: ByteArray): HTLC {
-            return BinaryDecoder(bytes).decode(serializer())
-        }
-    }
 }

@@ -39,8 +39,6 @@ class AccountState(
         return hashCode(serializer(), this)
     }
 
-    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
-
     fun balance(): Long {
         return stake + immature.sumByLong { it.amount }
     }
@@ -134,8 +132,6 @@ class AccountState(
 
     @Serializer(forClass = AccountState::class)
     companion object {
-        fun deserialize(bytes: ByteArray): AccountState = BinaryDecoder(bytes).decode(serializer())
-
         fun create(stake: Long = 0): AccountState {
             return AccountState(0, stake, ArrayList(), ArrayList())
         }

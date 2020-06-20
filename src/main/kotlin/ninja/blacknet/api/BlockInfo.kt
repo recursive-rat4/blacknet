@@ -17,6 +17,7 @@ import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.Json
 
 @Serializable
@@ -50,7 +51,7 @@ class BlockInfo(
             if (txdetail) {
                 return JsonArray(block.transactions.map {
                     val bytes = it.array
-                    val tx = Transaction.deserialize(bytes)
+                    val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                     val txHash = Transaction.hash(bytes)
                     return@map TransactionInfo(tx, txHash, bytes.size).toJson()
                 })

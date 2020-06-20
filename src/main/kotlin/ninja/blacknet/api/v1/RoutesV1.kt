@@ -32,6 +32,7 @@ import ninja.blacknet.dataDir
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.*
@@ -491,7 +492,7 @@ fun Route.APIV1() {
             if (raw)
                 return@get call.respond(result.toHex())
 
-            val tx = Transaction.deserialize(result)
+            val tx = BinaryDecoder(result).decode(Transaction.serializer())
             call.respond(Json.stringify(TransactionInfoV2.serializer(), TransactionInfoV2(tx, hash, result.size)))
         } else {
             call.respond(HttpStatusCode.NotFound, "transaction not found")

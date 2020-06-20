@@ -15,8 +15,6 @@ import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
@@ -34,8 +32,6 @@ class UndoBlock(
         val multisigs: ArrayList<Pair<MultiSignatureLockContractId, SerializableByteArray>>,
         val forkV2: Short
 ) {
-    fun serialize(): ByteArray = BinaryEncoder.toBytes(serializer(), this)
-
     fun add(publicKey: PublicKey, account: ByteArray?) {
         val bytes = if (account != null)
             SerializableByteArray(account)
@@ -58,9 +54,5 @@ class UndoBlock(
         else
             SerializableByteArray.EMPTY
         multisigs.add(Pair(id, bytes))
-    }
-
-    companion object {
-        fun deserialize(bytes: ByteArray): UndoBlock = BinaryDecoder(bytes).decode(serializer())
     }
 }

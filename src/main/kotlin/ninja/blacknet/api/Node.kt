@@ -26,6 +26,7 @@ import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.toPort
+import ninja.blacknet.serialization.BinaryDecoder
 
 fun Route.node() {
     get("/api/v2/peers") {
@@ -51,7 +52,7 @@ fun Route.node() {
                 if (raw)
                     return call.respond(result.toHex())
 
-                val tx = Transaction.deserialize(result)
+                val tx = BinaryDecoder(result).decode(Transaction.serializer())
                 call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))
             } else {
                 call.respond(HttpStatusCode.BadRequest, "Transaction not found")
