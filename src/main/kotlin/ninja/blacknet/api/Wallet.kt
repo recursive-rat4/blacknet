@@ -265,55 +265,57 @@ fun Route.wallet() {
             val max: Int = 100,
             val type: Int? = null
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = BlockDB.mutex.withLock { WalletDB.mutex.withLock {
+        override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
             val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
-            val size = wallet.transactions.size
-            if (offset < 0 || offset > size)
-                return call.respond(HttpStatusCode.BadRequest, "Invalid offset")
-            if (max < 0 || max > Int.MAX_VALUE)
-                return call.respond(HttpStatusCode.BadRequest, "Invalid max")
-            val toIndex = min(offset + max, size)
-            val transactions = ArrayList<WalletTransactionInfo>(min(max, size))
-            val state = LedgerDB.state()
-            val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time }
-            if (type == null) {
-                for (index in offset until toIndex) {
-                    val (hash, txData) = list[index]
-                    val bytes = WalletDB.getTransactionImpl(hash)!!
-                    val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
-                    transactions.add(WalletTransactionInfo(
-                            TransactionInfo(tx, hash, bytes.size, txData.types),
+            BlockDB.mutex.withLock {
+                val size = wallet.transactions.size
+                if (offset < 0 || offset > size)
+                    return call.respond(HttpStatusCode.BadRequest, "Invalid offset")
+                if (max < 0 || max > Int.MAX_VALUE)
+                    return call.respond(HttpStatusCode.BadRequest, "Invalid max")
+                val toIndex = min(offset + max, size)
+                val transactions = ArrayList<WalletTransactionInfo>(min(max, size))
+                val state = LedgerDB.state()
+                val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time }
+                if (type == null) {
+                    for (index in offset until toIndex) {
+                        val (hash, txData) = list[index]
+                        val bytes = WalletDB.getTransactionImpl(hash)!!
+                        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                        transactions.add(WalletTransactionInfo(
+                                TransactionInfo(tx, hash, bytes.size, txData.types),
+                                txData.confirmationsImpl(state),
+                                txData.time
+                        ))
+                    }
+                } else {
+                    require(offset >= 0) { "偏移不能为负数" }
+                    var offsetNumber = offset
+                    val type = type.toUByte().toByte().also { TxType.getSerializer(it) /* 请校验请求引数 */ }
+                    for (index in 0 until list.size) {
+                        val (hash, txData) = list[index]
+                        val filter = txData.types.filter { it.type == type }
+                        if (filter.size == 0)
+                            continue
+                        if (offsetNumber != 0) {
+                            offsetNumber -= 1
+                            continue
+                        }
+                        val bytes = WalletDB.getTransactionImpl(hash)!!
+                        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                        transactions.add(WalletTransactionInfo(
+                            TransactionInfo(tx, hash, bytes.size, filter),
                             txData.confirmationsImpl(state),
                             txData.time
-                    ))
-                }
-            } else {
-                require(offset >= 0) { "偏移不能为负数" }
-                var offsetNumber = offset
-                val type = type.toUByte().toByte().also { TxType.getSerializer(it) /* 请校验请求引数 */ }
-                for (index in 0 until list.size) {
-                    val (hash, txData) = list[index]
-                    val filter = txData.types.filter { it.type == type }
-                    if (filter.size == 0)
-                        continue
-                    if (offsetNumber != 0) {
-                        offsetNumber -= 1
-                        continue
+                        ))
+                        if (transactions.size == max)
+                            break
                     }
-                    val bytes = WalletDB.getTransactionImpl(hash)!!
-                    val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
-                    transactions.add(WalletTransactionInfo(
-                        TransactionInfo(tx, hash, bytes.size, filter),
-                        txData.confirmationsImpl(state),
-                        txData.time
-                    ))
-                    if (transactions.size == max)
-                        break
                 }
+                return call.respondJson(WalletTransactionInfo.serializer().list, transactions)
             }
-            return call.respondJson(WalletTransactionInfo.serializer().list, transactions)
-        }}
+        }
     }
 
     //get(ListTransactions.serializer(), "/api/v2/wallet/listtransactions")
@@ -331,27 +333,29 @@ fun Route.wallet() {
             val address: PublicKey,
             val hash: Hash = Hash.ZERO
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = BlockDB.mutex.withLock { WalletDB.mutex.withLock {
+        override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
             val publicKey = address
-            val height = LedgerDB.getChainIndex(hash)?.height ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
-            val state = LedgerDB.state()
-            if (height >= state.height - PoS.MATURITY)
-                return call.respond(HttpStatusCode.BadRequest, "Block not finalized")
             val wallet = WalletDB.getWalletImpl(publicKey)
-            val transactions = ArrayList<WalletTransactionInfo>()
-            wallet.transactions.forEach { (hash, txData) ->
-                if (txData.height != 0 && height >= txData.height) {
-                    val bytes = WalletDB.getTransactionImpl(hash)!!
-                    val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
-                    transactions.add(WalletTransactionInfo(
-                            TransactionInfo(tx, hash, bytes.size, txData.types),
-                            txData.confirmationsImpl(state),
-                            txData.time
-                    ))
+            BlockDB.mutex.withLock {
+                val height = LedgerDB.getChainIndex(hash)?.height ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
+                val state = LedgerDB.state()
+                if (height >= state.height - PoS.MATURITY)
+                    return call.respond(HttpStatusCode.BadRequest, "Block not finalized")
+                val transactions = ArrayList<WalletTransactionInfo>()
+                wallet.transactions.forEach { (hash, txData) ->
+                    if (txData.height != 0 && height >= txData.height) {
+                        val bytes = WalletDB.getTransactionImpl(hash)!!
+                        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                        transactions.add(WalletTransactionInfo(
+                                TransactionInfo(tx, hash, bytes.size, txData.types),
+                                txData.confirmationsImpl(state),
+                                txData.time
+                        ))
+                    }
                 }
+                return call.respondJson(ListSinceBlockInfo.serializer(), ListSinceBlockInfo(transactions, state.rollingCheckpoint))
             }
-            return call.respondJson(ListSinceBlockInfo.serializer(), ListSinceBlockInfo(transactions, state.rollingCheckpoint))
-        }}
+        }
     }
 
     //get(ListSinceBlock.serializer(), "/api/v2/wallet/listsinceblock")
