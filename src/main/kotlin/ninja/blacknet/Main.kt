@@ -13,7 +13,7 @@ package ninja.blacknet
 import com.rfksystems.blake2b.security.Blake2bProvider
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.jetty.Jetty
+import io.ktor.server.netty.Netty
 import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.core.Staker
@@ -124,14 +124,14 @@ object Main {
         (if (Config.instance.apiserver_enabled) {
             (if (Config.instance.regtest)
                 (embeddedServer
-                (Jetty,
+                (Netty,
                         (commandLineEnvironment
                         (arrayOf
                         ("-config=${File(configDir, "regtest.conf")}")))).start
                 (wait = false))
             else
                 (embeddedServer
-                (Jetty,
+                (Netty,
                         (commandLineEnvironment
                         (arrayOf
                         ("-config=${File(configDir, "rpc.conf")}")))).start
@@ -139,7 +139,7 @@ object Main {
         })
         (if (Config.instance.apiserver_publicserver)
             (embeddedServer
-            (Jetty,
+            (Netty,
                     (commandLineEnvironment
                     (arrayOf
                     ("-config=${File(configDir, "ktor.conf")}")))).start
