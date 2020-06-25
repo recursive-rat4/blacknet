@@ -24,7 +24,11 @@ object Version {
 
     val version: String = Resources.toString(Resources.getResource("version.txt"), Charsets.US_ASCII)
 
-    const val http_server = "ktor"
+    const val http_server = "Ktor"
 
     val http_server_version: String = Resources.toString(Resources.getResource("ktor_version.txt"), Charsets.US_ASCII)
+
+    const val http_server_engine = "Netty"
+
+    const val http_server_engine_version = "4.1.44.Final"
 }

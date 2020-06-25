@@ -160,7 +160,7 @@ object APIServer {
     }
 
     fun configureHeaders(config: DefaultHeaders.Configuration) {
-        config.header(HttpHeaders.Server, "${Version.name}/${Version.version} ${Version.http_server}/${Version.http_server_version}")
+        config.header(HttpHeaders.Server, "${Version.name}/${Version.version} ${Version.http_server}/${Version.http_server_version} ${Version.http_server_engine}/${Version.http_server_engine_version}")
     }
 }
 

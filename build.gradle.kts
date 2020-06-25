@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
 group = "ninja.blacknet"
-version = "0.2.6"
+version = "0.3-SNAPSHOT"
 
 buildscript {
     dependencies {
