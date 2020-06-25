@@ -79,8 +79,8 @@ object TxPool : MemPool(), Ledger {
     suspend fun getSequence(key: PublicKey): Int = mutex.withLock {
         val account = accounts.get(key)
         if (account != null)
-            return account.seq
-        return LedgerDB.get(key)?.seq ?: 0
+            return account.seq.int
+        return LedgerDB.get(key)?.seq?.int ?: 0
     }
 
     suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
@@ -124,7 +124,7 @@ object TxPool : MemPool(), Ledger {
             account
         } else {
             undoAccounts.put(key, null)
-            AccountState.create()
+            AccountState()
         }
     }
 

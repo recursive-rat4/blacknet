@@ -28,7 +28,8 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.decodeVarInt
+import ninja.blacknet.serialization.encodeVarInt
 import ninja.blacknet.time.SystemClock
 import ninja.blacknet.time.delay
 import ninja.blacknet.time.milliseconds.hours
@@ -321,8 +322,6 @@ object PeerDB {
         internal constructor(entry: EntryV1) : this(Address(entry.from), entry.attempts, entry.lastTry, null)
         internal constructor(entry: EntryV2) : this(Address(entry.from), entry.attempts, entry.lastTry, entry.stat?.let { NetworkStat(it) })
         internal constructor(entry: EntryV3) : this(entry.from, entry.attempts, entry.lastTry, entry.stat?.let { NetworkStat(it) })
-
-        fun toJson(address: Address) = Json.toJson(Info.serializer(), Info(this, address))
 
         fun failed(time: Long) {
             stat?.let { updateUptimeStat(it, false, time) }

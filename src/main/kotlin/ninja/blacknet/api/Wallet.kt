@@ -32,6 +32,7 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.ktor.requests.post
+import ninja.blacknet.serialization.VarInt
 import ninja.blacknet.transaction.TxType
 import ninja.blacknet.serialization.BinaryDecoder
 
@@ -135,12 +136,12 @@ fun Route.wallet() {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
             val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
-            val transactions = newHashMapWithExpectedSize<String, JsonElement>(wallet.transactions.size)
+            val transactions = newHashMapWithExpectedSize<String, TransactionDataInfo>(wallet.transactions.size)
             wallet.transactions.forEach { (hash, txData) ->
-                transactions.put(hash.toString(), txData.toJson())
+                transactions.put(hash.toString(), TransactionDataInfo(txData))
             }
 
-            return call.respondJson(MapSerializer(String.serializer(), JsonElement.serializer()), transactions)
+            return call.respondJson(MapSerializer(String.serializer(), TransactionDataInfo.serializer()), transactions)
         }
     }
 
@@ -277,7 +278,7 @@ fun Route.wallet() {
                 val toIndex = min(offset + max, size)
                 val transactions = ArrayList<WalletTransactionInfo>(min(max, size))
                 val state = LedgerDB.state()
-                val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time }
+                val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time.long }
                 if (type == null) {
                     for (index in offset until toIndex) {
                         val (hash, txData) = list[index]
@@ -286,13 +287,13 @@ fun Route.wallet() {
                         transactions.add(WalletTransactionInfo(
                                 TransactionInfo(tx, hash, bytes.size, txData.types),
                                 txData.confirmationsImpl(state),
-                                txData.time
+                                txData.time.long
                         ))
                     }
                 } else {
                     require(offset >= 0) { "偏移不能为负数" }
                     var offsetNumber = offset
-                    val type = type.toUByte().toByte().also { TxType.getSerializer(it) /* 请校验请求引数 */ }
+                    val type = type.toUByte().toByte().also { if (it != TxType.Generated.type) TxType.getSerializer(it) /* 请校验请求引数 */ }
                     for (index in 0 until list.size) {
                         val (hash, txData) = list[index]
                         val filter = txData.types.filter { it.type == type }
@@ -307,7 +308,7 @@ fun Route.wallet() {
                         transactions.add(WalletTransactionInfo(
                             TransactionInfo(tx, hash, bytes.size, filter),
                             txData.confirmationsImpl(state),
-                            txData.time
+                            txData.time.long
                         ))
                         if (transactions.size == max)
                             break
@@ -337,19 +338,19 @@ fun Route.wallet() {
             val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             BlockDB.mutex.withLock {
-                val height = LedgerDB.getChainIndex(hash)?.height ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
+                val height = LedgerDB.getChainIndex(hash)?.height?.int ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
                 val state = LedgerDB.state()
                 if (height >= state.height - PoS.MATURITY)
                     return call.respond(HttpStatusCode.BadRequest, "Block not finalized")
                 val transactions = ArrayList<WalletTransactionInfo>()
                 wallet.transactions.forEach { (hash, txData) ->
-                    if (txData.height != 0 && height >= txData.height) {
+                    if (txData.height != VarInt.ZERO && height >= txData.height.int) {
                         val bytes = WalletDB.getTransactionImpl(hash)!!
                         val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                         transactions.add(WalletTransactionInfo(
                                 TransactionInfo(tx, hash, bytes.size, txData.types),
                                 txData.confirmationsImpl(state),
-                                txData.time
+                                txData.time.long
                         ))
                     }
                 }

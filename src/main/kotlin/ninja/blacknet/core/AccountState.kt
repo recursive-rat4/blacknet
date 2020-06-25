@@ -9,27 +9,22 @@
 
 package ninja.blacknet.core
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
-import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.crypto.SipHash.hashCode
-import ninja.blacknet.crypto.encodePublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderError
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.VarInt
+import ninja.blacknet.serialization.VarLong
 import ninja.blacknet.util.sumByLong
 
 @Serializable
 class AccountState(
-        var seq: Int,
-        var stake: Long,
-        var immature: MutableList<Input>,
-        var leases: MutableList<Lease>
+        var seq: VarInt = VarInt.ZERO,
+        var stake: VarLong = VarLong.ZERO,
+        var immature: MutableList<Input> = ArrayList(),
+        var leases: MutableList<Lease> = ArrayList()
 ) {
     override fun equals(other: Any?): Boolean {
         return (other is AccountState) && seq == other.seq && stake == other.stake && immature == other.immature && leases == other.leases
@@ -40,19 +35,19 @@ class AccountState(
     }
 
     fun balance(): Long {
-        return stake + immature.sumByLong { it.amount }
+        return stake.long + immature.sumByLong { it.amount.long }
     }
 
     fun confirmedBalance(height: Int, confirmations: Int): Long {
-        return stake + immature.sumByLong { it.confirmedBalance(height, confirmations) }
+        return stake.long + immature.sumByLong { it.confirmedBalance(height, confirmations) }
     }
 
     fun stakingBalance(height: Int): Long {
-        return stake + immature.sumByLong { it.matureBalance(height) } + leases.sumByLong { it.matureBalance(height) }
+        return stake.long + immature.sumByLong { it.matureBalance(height) } + leases.sumByLong { it.matureBalance(height) }
     }
 
     fun totalBalance(): Long {
-        return stake + immature.sumByLong { it.amount } + leases.sumByLong { it.amount }
+        return stake.long + immature.sumByLong { it.amount.long } + leases.sumByLong { it.amount.long }
     }
 
     fun credit(amount: Long): Status {
@@ -60,8 +55,8 @@ class AccountState(
             return Invalid("Negative amount")
         }
 
-        if (amount <= stake) {
-            stake -= amount
+        if (amount <= stake.long) {
+            stake = VarLong(stake.long - amount)
             return Accepted
         }
 
@@ -69,14 +64,14 @@ class AccountState(
             return Invalid("Insufficient funds")
         }
 
-        var r = amount - stake
-        stake = 0
+        var r = amount - stake.long
+        stake = VarLong.ZERO
         while (r > 0) {
-            if (r < immature[0].amount) {
-                immature[0].amount -= r
+            if (r < immature[0].amount.long) {
+                immature[0].amount = VarLong(immature[0].amount.long - r)
                 break
             } else {
-                r -= immature[0].amount
+                r -= immature[0].amount.long
                 immature.removeAt(0)
             }
         }
@@ -86,7 +81,7 @@ class AccountState(
 
     fun debit(height: Int, amount: Long) {
         if (amount != 0L)
-            immature.add(Input(height, amount))
+            immature.add(Input(VarInt(height), VarLong(amount)))
     }
 
     fun prune(height: Int): Boolean {
@@ -94,30 +89,30 @@ class AccountState(
         return if (mature == 0L) {
             false
         } else {
-            stake += mature
+            stake = VarLong(stake.long + mature)
             immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
             true
         }
     }
 
     @Serializable
-    class Input(val height: Int, var amount: Long) {
+    class Input(val height: VarInt, var amount: VarLong) {
         override fun equals(other: Any?): Boolean = (other is Input) && height == other.height && amount == other.amount
         override fun hashCode(): Int = hashCode(serializer(), this)
         fun copy(): Input = Input(height, amount)
-        fun isConfirmed(height: Int, confirmations: Int): Boolean = height > this.height + confirmations
-        fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
-        fun confirmedBalance(height: Int, confirmations: Int): Long = if (isConfirmed(height, confirmations)) amount else 0
-        fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
+        fun isConfirmed(height: Int, confirmations: Int): Boolean = height > this.height.int + confirmations
+        fun isMature(height: Int): Boolean = height > this.height.int + PoS.MATURITY
+        fun confirmedBalance(height: Int, confirmations: Int): Long = if (isConfirmed(height, confirmations)) amount.long else 0
+        fun matureBalance(height: Int): Long = if (isMature(height)) amount.long else 0
     }
 
     @Serializable
-    class Lease(val publicKey: PublicKey, val height: Int, var amount: Long) {
+    class Lease(val publicKey: PublicKey, val height: VarInt, var amount: VarLong) {
         override fun equals(other: Any?): Boolean = (other is Lease) && publicKey == other.publicKey && height == other.height && amount == other.amount
         override fun hashCode(): Int = hashCode(serializer(), this)
         fun copy(): Lease = Lease(publicKey, height, amount)
-        fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
-        fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0
+        fun isMature(height: Int): Boolean = height > this.height.int + PoS.MATURITY
+        fun matureBalance(height: Int): Long = if (isMature(height)) amount.long else 0
     }
 
     fun copy(): AccountState {
@@ -128,66 +123,5 @@ class AccountState(
         for (i in 0 until leases.size)
             copyLeases.add(leases[i].copy())
         return AccountState(seq, stake, copyImmature, copyLeases)
-    }
-
-    @Serializer(forClass = AccountState::class)
-    companion object {
-        fun create(stake: Long = 0): AccountState {
-            return AccountState(0, stake, ArrayList(), ArrayList())
-        }
-
-        override fun deserialize(decoder: Decoder): AccountState {
-            when (decoder) {
-                is BinaryDecoder -> {
-                    val seq = decoder.decodeVarInt()
-                    val stake = decoder.decodeVarLong()
-                    val immatureSize = decoder.decodeVarInt()
-                    val immature = ArrayList<Input>(immatureSize)
-                    for (i in 0 until immatureSize)
-                        immature.add(Input(decoder.decodeVarInt(), decoder.decodeVarLong()))
-                    val leasesSize = decoder.decodeVarInt()
-                    val leases = ArrayList<Lease>(leasesSize)
-                    for (i in 0 until leasesSize)
-                        leases.add(Lease(PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES)), decoder.decodeVarInt(), decoder.decodeVarLong()))
-                    return AccountState(seq, stake, immature, leases)
-                }
-                else -> throw notSupportedDecoderError(decoder, this)
-            }
-        }
-
-        override fun serialize(encoder: Encoder, value: AccountState) {
-            when (encoder) {
-                is BinaryEncoder -> {
-                    encoder.encodeVarInt(value.seq)
-                    encoder.encodeVarLong(value.stake)
-                    encoder.encodeVarInt(value.immature.size)
-                    for (i in 0 until value.immature.size) {
-                        encoder.encodeVarInt(value.immature[i].height)
-                        encoder.encodeVarLong(value.immature[i].amount)
-                    }
-                    encoder.encodeVarInt(value.leases.size)
-                    for (i in 0 until value.leases.size) {
-                        encoder.encodeFixedByteArray(value.leases[i].publicKey.bytes)
-                        encoder.encodeVarInt(value.leases[i].height)
-                        encoder.encodeVarLong(value.leases[i].amount)
-                    }
-                }
-                is HashCoder -> {
-                    encoder.encodeInt(value.seq)
-                    encoder.encodeLong(value.stake)
-                    encoder.encodeInt(value.immature.size)
-                    for (i in 0 until value.immature.size) {
-                        encoder.encodeInt(value.immature[i].height)
-                        encoder.encodeLong(value.immature[i].amount)
-                    }
-                    for (i in 0 until value.leases.size) {
-                        encoder.encodePublicKey(value.leases[i].publicKey)
-                        encoder.encodeInt(value.leases[i].height)
-                        encoder.encodeLong(value.leases[i].amount)
-                    }
-                }
-                else -> throw notSupportedEncoderError(encoder, this)
-            }
-        }
     }
 }

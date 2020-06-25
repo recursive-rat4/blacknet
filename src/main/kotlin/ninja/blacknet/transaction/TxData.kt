@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.VarInt
 
 interface TxData {
     fun getType(): TxType
@@ -25,11 +26,11 @@ interface TxData {
         if (account == null) {
             return Invalid("Sender account not found")
         }
-        if (tx.seq != account.seq) {
-            if (tx.seq.toUInt() < account.seq.toUInt()) {
+        if (tx.seq != account.seq.int) {
+            if (tx.seq.toUInt() < account.seq.int.toUInt()) {
                 return AlreadyHave("sequence ${tx.seq} expected ${account.seq}")
             } else {
-                require(tx.seq.toUInt() > account.seq.toUInt())
+                require(tx.seq.toUInt() > account.seq.int.toUInt())
                 return InFuture("sequence ${tx.seq} expected ${account.seq}")
             }
         }
@@ -37,7 +38,7 @@ interface TxData {
         if (status != Accepted) {
             return notAccepted("Transaction fee", status)
         }
-        account.seq += 1
+        account.seq = VarInt(account.seq.int + 1)
         ledger.set(tx.from, account)
         return processImpl(tx, hash, 0, ledger)
     }

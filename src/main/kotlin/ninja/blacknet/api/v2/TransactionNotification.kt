@@ -16,7 +16,6 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.serialization.Json
 
 @Serializable
 class TransactionNotification(
@@ -43,6 +42,4 @@ class TransactionNotification(
             tx.type.toUByte().toInt(),
             TransactionInfo.data(tx.type, tx.data.array, filter)
     )
-
-    fun toJson() = Json.toJson(serializer(), this)
 }

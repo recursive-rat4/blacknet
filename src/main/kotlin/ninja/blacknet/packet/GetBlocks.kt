@@ -63,7 +63,7 @@ class GetBlocks(
             val hash = chainIndex.next
             if (hash == Hash.ZERO)
                 break
-            size += chainIndex.nextSize + 4 //TODO VarInt
+            size += chainIndex.nextSize.int + 4 //TODO VarInt.size()
             if (response.isNotEmpty() && size >= maxSize)
                 break
             val bytes = BlockDB.get(hash)

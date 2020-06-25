@@ -12,6 +12,7 @@ package ninja.blacknet.api
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.api.v2.TransactionNotification
+import ninja.blacknet.serialization.Json
 
 @Serializable
 class WebSocketNotification(
@@ -20,11 +21,11 @@ class WebSocketNotification(
 ) {
     constructor(notification: BlockNotification) : this(
             "block",
-            notification.toJson()
+            Json.toJson(BlockNotification.serializer(), notification)
     )
 
     constructor(notification: TransactionNotification) : this(
             "transaction",
-            notification.toJson()
+            Json.toJson(TransactionNotification.serializer(), notification)
     )
 }

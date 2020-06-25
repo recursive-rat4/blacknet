@@ -5,17 +5,12 @@
  * for the Blacknet Public Blockchain Platform (the "License");
  * you may not use this file except in compliance with the License.
  * See the LICENSE.txt file at the top-level directory of this distribution.
- *
- * encodeVarInt, encodeVarLong originally come from MapDB http://www.mapdb.org/
- * licensed under the Apache License, Version 2.0
  */
 
 package ninja.blacknet.serialization
 
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.*
-import kotlin.experimental.and
-import kotlin.experimental.or
 
 /**
  * Encoder to the Blacknet Binary Format
@@ -62,26 +57,6 @@ class BinaryEncoder : AdaptorEncoder() {
 
     fun encodeFixedByteArray(value: ByteArray) {
         out.writeFully(value, 0, value.size)
-    }
-
-    fun encodeVarInt(value: Int) {
-        var shift = 31 - Integer.numberOfLeadingZeros(value)
-        shift -= shift % 7 // round down to nearest multiple of 7
-        while (shift != 0) {
-            out.writeByte(value.ushr(shift).toByte() and 0x7F)
-            shift -= 7
-        }
-        out.writeByte(value.toByte() and 0x7F or 0x80.toByte())
-    }
-
-    fun encodeVarLong(value: Long) {
-        var shift = 63 - java.lang.Long.numberOfLeadingZeros(value)
-        shift -= shift % 7 // round down to nearest multiple of 7
-        while (shift != 0) {
-            out.writeByte(value.ushr(shift).toByte() and 0x7F)
-            shift -= 7
-        }
-        out.writeByte(value.toByte() and 0x7F or 0x80.toByte())
     }
 
     companion object {

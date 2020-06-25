@@ -39,7 +39,7 @@ import java.io.File
 private val logger = KotlinLogging.logger {}
 
 object WalletDB {
-    private const val VERSION = 7
+    private const val VERSION = 8
     internal val mutex = Mutex()
     private val KEYS_KEY = DBKey(64, 0)
     private val TX_KEY = DBKey(65, Hash.SIZE_BYTES)
@@ -101,7 +101,7 @@ object WalletDB {
                 val unconfirmed = ArrayList<Triple<Hash, ByteArray, Int>>()
 
                 wallet.transactions.forEach { (hash, txData) ->
-                    if (txData.height == 0 && txData.types[0].type != TxType.Generated.type) {
+                    if (txData.height.int == 0 && txData.types[0].type != TxType.Generated.type) {
                         val bytes = getTransactionImpl(hash)!!
                         val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                         unconfirmed.add(Triple(hash, bytes, tx.seq))
@@ -182,7 +182,7 @@ object WalletDB {
 
     suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
         val wallet = getWalletImpl(publicKey)
-        val seq = wallet.seq
+        val seq = wallet.seq.int
         return@withLock if (seq < Config.instance.wallet_seqthreshold)
             seq
         else
@@ -203,13 +203,13 @@ object WalletDB {
         wallets.forEach { (publicKey, wallet) ->
             val generated = wallet.transactions.get(blockHash)
             if (generated != null) {
-                generated.height = 0
+                generated.height = VarInt.ZERO
                 updated.put(publicKey, wallet)
             }
             txHashes.forEach { hash ->
                 val tx = wallet.transactions.get(hash)
                 if (tx != null) {
-                    tx.height = 0
+                    tx.height = VarInt.ZERO
                     updated.put(publicKey, wallet)
                 }
             }
@@ -278,7 +278,7 @@ object WalletDB {
             TxType.Lease.type -> {
                 val data = Lease.deserialize(bytes)
                 if (from) {
-                    wallet.outLeases.add(AccountState.Lease(data.to, height, data.amount))
+                    wallet.outLeases.add(AccountState.Lease(data.to, VarInt(height), VarLong(data.amount)))
                     true
                 } else {
                     data.involves(publicKey)
@@ -287,7 +287,7 @@ object WalletDB {
             TxType.CancelLease.type -> {
                 val data = CancelLease.deserialize(bytes)
                 if (from) {
-                    if (!wallet.outLeases.remove(AccountState.Lease(data.to, data.height, data.amount)))
+                    if (!wallet.outLeases.remove(AccountState.Lease(data.to, VarInt(data.height), VarLong(data.amount))))
                         logger.warn("Lease not found")
                     true
                 } else {
@@ -336,9 +336,9 @@ object WalletDB {
             TxType.WithdrawFromLease.type -> {
                 val data = WithdrawFromLease.deserialize(bytes)
                 if (from) {
-                    val lease = wallet.outLeases.find { it.publicKey == data.to && it.height == data.height && it.amount == data.amount }
+                    val lease = wallet.outLeases.find { it.publicKey == data.to && it.height.int == data.height && it.amount.long == data.amount }
                     if (lease != null)
-                        lease.amount -= data.withdraw
+                        lease.amount = VarLong(lease.amount.long - data.withdraw)
                     else
                         logger.warn("Lease not found")
                     true
@@ -370,8 +370,8 @@ object WalletDB {
                 listOf(TransactionDataType(tx.type, 0))
             } else {
                 if (from) {
-                    if (tx.seq == wallet.seq)
-                        wallet.seq += 1
+                    if (tx.seq == wallet.seq.int)
+                        wallet.seq = VarInt(wallet.seq.int + 1)
                     else
                         logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} $hash")
                 }
@@ -393,7 +393,7 @@ object WalletDB {
                 }
             }
             if (types.isNotEmpty()) {
-                wallet.transactions.put(hash, TransactionData(types, time, height))
+                wallet.transactions.put(hash, TransactionData(types, VarLong(time), VarInt(height)))
 
                 if (!rescan) {
                     APIServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
@@ -407,8 +407,8 @@ object WalletDB {
             } else {
                 return false
             }
-        } else if (txData.height != height) {
-            txData.height = height
+        } else if (txData.height.int != height) {
+            txData.height = VarInt(height)
 
             if (!rescan) {
                 batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
@@ -463,15 +463,13 @@ object WalletDB {
             // 交易數據類型和交易數據索引號列表
             val types: List<TransactionDataType>,
             // 交易被接收了的時間戳
-            val time: Long,
+            val time: VarLong,
             // 包含交易的區塊的高度
-            var height: Int
+            var height: VarInt
     ) {
-        fun toJson() = Json.toJson(serializer(), this)
-
         internal fun confirmationsImpl(ledger: LedgerDB.State): Int {
-            return if (height != 0)
-                ledger.height - height + 1
+            return if (height != VarInt.ZERO)
+                ledger.height - height.int + 1
             else
                 0
         }
@@ -479,7 +477,7 @@ object WalletDB {
 
     @Serializable
     class Wallet(
-            var seq: Int = 0,
+            var seq: VarInt = VarInt.ZERO,
             val htlcs: HashSet<HashTimeLockContractId> = HashSet(),
             val multisigs: HashSet<MultiSignatureLockContractId> = HashSet(),
             val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
@@ -511,14 +509,14 @@ object WalletDB {
                     var hash = Hash.ZERO
                     var index = LedgerDB.getChainIndex(hash)!!
                     val height = LedgerDB.state().height
-                    val n = height - index.height + 1
+                    val n = height - index.height.int + 1
                     if (n > 0) {
                         logger.info("Rescanning $n blocks...")
                         do {
-                            rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
+                            rescanBlockImpl(publicKey, wallet, hash, index.height.int, index.generated.long, batch)
                             hash = index.next
                             index = LedgerDB.getChainIndex(hash)!!
-                        } while (index.height != height)
+                        } while (index.height.int != height)
                         logger.info("Finished rescan")
                     }
                 }

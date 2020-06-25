@@ -150,7 +150,7 @@ object ChainFetcher {
                             val chainIndex = LedgerDB.getChainIndex(hash)
                             if (chainIndex == null)
                                 break
-                            if (chainIndex.height < state.height - PoS.MATURITY) {
+                            if (chainIndex.height.int < state.height - PoS.MATURITY) {
                                 connection.dos("Rollback to ${chainIndex.height}")
                                 break@requestLoop
                             }
@@ -222,7 +222,7 @@ object ChainFetcher {
 
     suspend fun blocks(connection: Connection, blocks: Blocks) {
         if (request == null || syncConnection != connection) {
-            // 請求能被取消
+            // 請求可能被取消
             return
         }
         recvChannel.send(blocks)
@@ -257,6 +257,7 @@ object ChainFetcher {
     private fun requestBlocks(connection: Connection, hash: Hash, checkpoint: Hash) {
         request = Runtime.async { recvChannel.receive() }
         connection.requestedBlocks = true
+        // 緊湊型區塊轉發
         connection.sendPacket(GetBlocks(hash, checkpoint))
     }
 

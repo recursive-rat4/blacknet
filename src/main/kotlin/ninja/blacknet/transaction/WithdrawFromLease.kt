@@ -18,6 +18,7 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.VarLong
 
 /**
  * 提款金額
@@ -44,11 +45,11 @@ class WithdrawFromLease(
         if (toAccount == null) {
             return Invalid("Account not found")
         }
-        val lease = toAccount.leases.find { it.publicKey == tx.from && it.height == height && it.amount == amount }
+        val lease = toAccount.leases.find { it.publicKey == tx.from && it.height.int == height && it.amount.long == amount }
         if (lease == null) {
             return Invalid("Lease not found")
         }
-        lease.amount -= withdraw
+        lease.amount = VarLong(lease.amount.long - withdraw)
         ledger.set(to, toAccount)
         val account = ledger.get(tx.from)!!
         account.debit(ledger.height(), withdraw)

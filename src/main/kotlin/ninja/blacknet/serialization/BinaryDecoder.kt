@@ -5,9 +5,6 @@
  * for the Blacknet Public Blockchain Platform (the "License");
  * you may not use this file except in compliance with the License.
  * See the LICENSE.txt file at the top-level directory of this distribution.
- *
- * decodeVarInt, decodeVarLong originally come from MapDB http://www.mapdb.org/
- * licensed under the Apache License, Version 2.0
  */
 
 package ninja.blacknet.serialization
@@ -15,7 +12,6 @@ package ninja.blacknet.serialization
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialDescriptor
-import kotlin.experimental.and
 
 /**
  * Decoder from the Blacknet Binary Format
@@ -73,40 +69,5 @@ class BinaryDecoder(
 
     fun decodeFixedByteArray(size: Int): ByteArray {
         return input.readBytes(size)
-    }
-
-    fun decodeVarInt(): Int {
-        var c = VARINT_MAX_SIZE + 1
-        var result = 0
-        var v: Byte
-        do {
-            if (--c != 0) {
-                v = input.readByte()
-                result = result shl 7 or (v and 0x7F.toByte()).toInt()
-            } else {
-                throw DecoderException("Too long VarInt")
-            }
-        } while (v and 0x80.toByte() == 0.toByte())
-        return result
-    }
-
-    fun decodeVarLong(): Long {
-        var c = VARLONG_MAX_SIZE + 1
-        var result = 0L
-        var v: Byte
-        do {
-            if (--c != 0) {
-                v = input.readByte()
-                result = result shl 7 or (v and 0x7F.toByte()).toLong()
-            } else {
-                throw DecoderException("Too long VarLong")
-            }
-        } while (v and 0x80.toByte() == 0.toByte())
-        return result
-    }
-
-    companion object {
-        const val VARINT_MAX_SIZE = 5
-        const val VARLONG_MAX_SIZE = 10
     }
 }

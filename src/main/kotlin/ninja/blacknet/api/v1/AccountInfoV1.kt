@@ -27,7 +27,7 @@ class AccountInfoV1(
             val account = LedgerDB.get(publicKey) ?: return null
             val state = LedgerDB.state()
             return AccountInfoV1(
-                    account.seq,
+                    account.seq.int,
                     account.balance(),
                     account.confirmedBalance(state.height, confirmations),
                     account.stakingBalance(state.height))

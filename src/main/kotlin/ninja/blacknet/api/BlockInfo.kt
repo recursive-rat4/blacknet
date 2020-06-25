@@ -44,8 +44,6 @@ class BlockInfo(
             transactions(block, txdetail)
     )
 
-    fun toJson() = Json.toJson(serializer(), this)
-
     companion object {
         private fun transactions(block: Block, txdetail: Boolean): JsonElement {
             if (txdetail) {
@@ -53,7 +51,7 @@ class BlockInfo(
                     val bytes = it.array
                     val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                     val txHash = Transaction.hash(bytes)
-                    return@map TransactionInfo(tx, txHash, bytes.size).toJson()
+                    return@map Json.toJson(TransactionInfo.serializer(), TransactionInfo(tx, txHash, bytes.size))
                 })
             }
             return JsonLiteral(block.transactions.size)

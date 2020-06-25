@@ -9,58 +9,20 @@
 
 package ninja.blacknet.core
 
-import kotlinx.serialization.*
-import kotlinx.serialization.builtins.*
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderError
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.VarInt
+import ninja.blacknet.serialization.VarLong
 
 @Serializable
 class ChainIndex(
         val previous: Hash,
         var next: Hash,
-        var nextSize: Int,
-        val height: Int,
-        val generated: Long
+        var nextSize: VarInt,
+        val height: VarInt,
+        val generated: VarLong
 ) {
-    @Serializer(forClass = ChainIndex::class)
-    companion object {
-        override fun deserialize(decoder: Decoder): ChainIndex {
-            return when (decoder) {
-                is BinaryDecoder -> ChainIndex(
-                        Hash(decoder.decodeFixedByteArray(Hash.SIZE_BYTES)),
-                        Hash(decoder.decodeFixedByteArray(Hash.SIZE_BYTES)),
-                        decoder.decodeVarInt(),
-                        decoder.decodeVarInt(),
-                        decoder.decodeVarLong())
-                else -> throw notSupportedDecoderError(decoder, this)
-            }
-        }
 
-        override fun serialize(encoder: Encoder, value: ChainIndex) {
-            when (encoder) {
-                is BinaryEncoder -> {
-                    encoder.encodeFixedByteArray(value.previous.bytes)
-                    encoder.encodeFixedByteArray(value.next.bytes)
-                    encoder.encodeVarInt(value.nextSize)
-                    encoder.encodeVarInt(value.height)
-                    encoder.encodeVarLong(value.generated)
-                }
-                is JsonOutput -> {
-                    @Suppress("NAME_SHADOWING")
-                    val encoder = encoder.beginStructure(descriptor)
-                    encoder.encodeSerializableElement(descriptor, 0, Hash.serializer(), value.previous)
-                    encoder.encodeSerializableElement(descriptor, 1, Hash.serializer(), value.next)
-                    encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), value.nextSize)
-                    encoder.encodeSerializableElement(descriptor, 3, Int.serializer(), value.height)
-                    encoder.encodeSerializableElement(descriptor, 4, String.serializer(), value.generated.toString())
-                    encoder.endStructure(descriptor)
-                }
-                else -> throw notSupportedEncoderError(encoder, this)
-            }
-        }
-    }
 }

@@ -17,6 +17,8 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.VarInt
+import ninja.blacknet.serialization.VarLong
 
 /**
  * 取消合約
@@ -36,7 +38,7 @@ class CancelLease(
         if (toAccount == null) {
             return Invalid("Account not found")
         }
-        if (toAccount.leases.remove(AccountState.Lease(tx.from, height, amount))) {
+        if (toAccount.leases.remove(AccountState.Lease(tx.from, VarInt(height), VarLong(amount)))) {
             ledger.set(to, toAccount)
             val account = ledger.get(tx.from)!!
             account.debit(ledger.height(), amount)

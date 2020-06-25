@@ -18,6 +18,8 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.VarInt
+import ninja.blacknet.serialization.VarLong
 
 /**
  * 創建合約
@@ -42,7 +44,7 @@ class Lease(
         }
         ledger.set(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
-        toAccount.leases.add(AccountState.Lease(tx.from, ledger.height(), amount))
+        toAccount.leases.add(AccountState.Lease(tx.from, VarInt(ledger.height()), VarLong(amount)))
         ledger.set(to, toAccount)
         return Accepted
     }

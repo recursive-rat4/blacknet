@@ -75,7 +75,7 @@ fun Route.dataBase() {
                 return call.respond(state.blockHash.toString())
 
             val lastIndex = APIServer.lastIndex
-            if (lastIndex != null && lastIndex.second.height == height)
+            if (lastIndex != null && lastIndex.second.height.int == height)
                 return call.respond(lastIndex.first.toString())
 
             var hash: Hash
@@ -87,17 +87,17 @@ fun Route.dataBase() {
                 hash = state.blockHash
                 index = LedgerDB.getChainIndex(hash)!!
             }
-            if (lastIndex != null && abs(height - index.height) > abs(height - lastIndex.second.height))
+            if (lastIndex != null && abs(height - index.height.int) > abs(height - lastIndex.second.height.int))
                 index = lastIndex.second
-            while (index.height > height) {
+            while (index.height.int > height) {
                 hash = index.previous
                 index = LedgerDB.getChainIndex(hash)!!
             }
-            while (index.height < height) {
+            while (index.height.int < height) {
                 hash = index.next
                 index = LedgerDB.getChainIndex(hash)!!
             }
-            if (index.height < state.height - PoS.MATURITY + 1)
+            if (index.height.int < state.height - PoS.MATURITY + 1)
                 APIServer.lastIndex = Pair(hash, index)
 
             return call.respond(hash.toString())

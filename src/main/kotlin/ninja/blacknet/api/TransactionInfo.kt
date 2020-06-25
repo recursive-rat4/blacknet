@@ -44,8 +44,6 @@ class TransactionInfo(
             data(tx.type, tx.data.array, filter)
     )
 
-    fun toJson() = Json.toJson(serializer(), this)
-
     @Serializable
     class DataInfo(
             val type: Int,
