@@ -20,7 +20,7 @@ class TransactionDataInfo(
 ) {
     constructor(txData: WalletDB.TransactionData) : this(
             txData.types,
-            txData.time.long,
-            txData.height.int
+            txData.time,
+            txData.height
     )
 }

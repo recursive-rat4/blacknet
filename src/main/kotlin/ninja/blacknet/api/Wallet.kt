@@ -32,7 +32,6 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.ktor.requests.post
-import ninja.blacknet.serialization.VarInt
 import ninja.blacknet.transaction.TxType
 import ninja.blacknet.serialization.BinaryDecoder
 
@@ -278,7 +277,7 @@ fun Route.wallet() {
                 val toIndex = min(offset + max, size)
                 val transactions = ArrayList<WalletTransactionInfo>(min(max, size))
                 val state = LedgerDB.state()
-                val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time.long }
+                val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time }
                 if (type == null) {
                     for (index in offset until toIndex) {
                         val (hash, txData) = list[index]
@@ -287,7 +286,7 @@ fun Route.wallet() {
                         transactions.add(WalletTransactionInfo(
                                 TransactionInfo(tx, hash, bytes.size, txData.types),
                                 txData.confirmationsImpl(state),
-                                txData.time.long
+                                txData.time
                         ))
                     }
                 } else {
@@ -308,7 +307,7 @@ fun Route.wallet() {
                         transactions.add(WalletTransactionInfo(
                             TransactionInfo(tx, hash, bytes.size, filter),
                             txData.confirmationsImpl(state),
-                            txData.time.long
+                            txData.time
                         ))
                         if (transactions.size == max)
                             break
@@ -338,19 +337,19 @@ fun Route.wallet() {
             val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             BlockDB.mutex.withLock {
-                val height = LedgerDB.getChainIndex(hash)?.height?.int ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
+                val height = LedgerDB.getChainIndex(hash)?.height ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
                 val state = LedgerDB.state()
                 if (height >= state.height - PoS.MATURITY)
                     return call.respond(HttpStatusCode.BadRequest, "Block not finalized")
                 val transactions = ArrayList<WalletTransactionInfo>()
                 wallet.transactions.forEach { (hash, txData) ->
-                    if (txData.height != VarInt.ZERO && height >= txData.height.int) {
+                    if (txData.height != 0 && height >= txData.height) {
                         val bytes = WalletDB.getTransactionImpl(hash)!!
                         val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                         transactions.add(WalletTransactionInfo(
                                 TransactionInfo(tx, hash, bytes.size, txData.types),
                                 txData.confirmationsImpl(state),
-                                txData.time.long
+                                txData.time
                         ))
                     }
                 }

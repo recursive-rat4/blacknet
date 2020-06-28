@@ -13,16 +13,19 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.VarInt
-import ninja.blacknet.serialization.VarLong
+import ninja.blacknet.serialization.VarIntSerializer
+import ninja.blacknet.serialization.VarLongSerializer
 
 @Serializable
 class ChainIndex(
         val previous: Hash,
         var next: Hash,
-        var nextSize: VarInt,
-        val height: VarInt,
-        val generated: VarLong
+        @Serializable(with = VarIntSerializer::class)
+        var nextSize: Int,
+        @Serializable(with = VarIntSerializer::class)
+        val height: Int,
+        @Serializable(with = VarLongSerializer::class)
+        val generated: Long
 ) {
 
 }

@@ -11,7 +11,9 @@ package ninja.blacknet.db
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.contract.HashTimeLockContractId
@@ -23,8 +25,8 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.decodeVarInt
 import ninja.blacknet.serialization.encodeVarInt
-import ninja.blacknet.serialization.VarInt
-import ninja.blacknet.serialization.VarLong
+import ninja.blacknet.serialization.VarIntSerializer
+import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.toByteArray
@@ -76,12 +78,12 @@ object LedgerDB {
         var supply = 0L
         Genesis.balances.forEach { (publicKey, balance) ->
             val account = AccountState()
-            account.stake = VarLong(balance)
+            account.stake = balance
             batch.put(ACCOUNT_KEY, publicKey.bytes, BinaryEncoder.toBytes(AccountState.serializer(), account))
             supply += balance
         }
 
-        val chainIndex = ChainIndex(Hash.ZERO, Hash.ZERO, VarInt.ZERO, VarInt.ZERO, VarLong.ZERO)
+        val chainIndex = ChainIndex(Hash.ZERO, Hash.ZERO, 0, 0, 0L)
         batch.put(CHAIN_KEY, Hash.ZERO.bytes, BinaryEncoder.toBytes(ChainIndex.serializer(), chainIndex))
 
         blockSizes.add(0)
@@ -276,7 +278,7 @@ object LedgerDB {
                 return Hash.ZERO
             val checkpoint = state.height - PoS.MATURITY
             var chainIndex = getChainIndex(state.blockHash)!!
-            while (chainIndex.height.int != checkpoint + 1)
+            while (chainIndex.height != checkpoint + 1)
                 chainIndex = getChainIndex(chainIndex.previous)!!
             return chainIndex.previous
         }
@@ -389,9 +391,9 @@ object LedgerDB {
 
         val prevIndex = getChainIndex(block.previous)!!
         prevIndex.next = hash
-        prevIndex.nextSize = VarInt(size)
+        prevIndex.nextSize = size
         txDb.prevIndex = prevIndex
-        txDb.chainIndex = ChainIndex(block.previous, Hash.ZERO, VarInt.ZERO, VarInt(height), VarLong(generated))
+        txDb.chainIndex = ChainIndex(block.previous, Hash.ZERO, 0, height, generated)
 
         txDb.addSupply(mint)
         generator.debit(height, generated)
@@ -433,7 +435,7 @@ object LedgerDB {
 
         val prevIndex = getChainIndex(chainIndex.previous)!!
         prevIndex.next = Hash.ZERO
-        prevIndex.nextSize = VarInt.ZERO
+        prevIndex.nextSize = 0
         batch.put(CHAIN_KEY, chainIndex.previous.bytes, BinaryEncoder.toBytes(ChainIndex.serializer(), prevIndex))
         batch.delete(CHAIN_KEY, hash.bytes)
 
@@ -790,20 +792,23 @@ object LedgerDB {
 
     @Serializable
     class Snapshot(
-            private val balances: HashMap<PublicKey, VarLong> = HashMap()
+            @Serializable(with = BalancesSerializer::class)
+            private val balances: HashMap<PublicKey, Long> = HashMap()
     ) {
         fun supply(): Long {
             var supply = 0L
-            balances.forEach { (_, balance) -> supply += balance.long }
+            balances.forEach { (_, balance) -> supply += balance }
             return supply
         }
 
         fun credit(publicKey: PublicKey, amount: Long) {
             if (amount != 0L) {
-                val balance = balances.get(publicKey)?.long ?: 0L
-                balances.put(publicKey, VarLong(balance + amount))
+                val balance = balances.get(publicKey) ?: 0L
+                balances.put(publicKey, balance + amount)
             }
         }
+
+        private object BalancesSerializer : KSerializer<Map<PublicKey, Long>> by MapSerializer(PublicKey.Companion, VarLongSerializer)
     }
 
     private fun snapshotImpl() {
@@ -814,7 +819,7 @@ object LedgerDB {
                 { publicKey, account ->
                     snapshot.credit(publicKey, account.balance())
                     account.leases.forEach { lease ->
-                        snapshot.credit(lease.publicKey, lease.amount.long)
+                        snapshot.credit(lease.publicKey, lease.amount)
                     }
                 },
                 { _, htlc ->

@@ -15,14 +15,16 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.VarInt
-import ninja.blacknet.serialization.VarLong
+import ninja.blacknet.serialization.VarIntSerializer
+import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.sumByLong
 
 @Serializable
 class AccountState(
-        var seq: VarInt = VarInt.ZERO,
-        var stake: VarLong = VarLong.ZERO,
+        @Serializable(with = VarIntSerializer::class)
+        var seq: Int = 0,
+        @Serializable(with = VarLongSerializer::class)
+        var stake: Long = 0L,
         var immature: MutableList<Input> = ArrayList(),
         var leases: MutableList<Lease> = ArrayList()
 ) {
@@ -35,19 +37,19 @@ class AccountState(
     }
 
     fun balance(): Long {
-        return stake.long + immature.sumByLong { it.amount.long }
+        return stake + immature.sumByLong { it.amount }
     }
 
     fun confirmedBalance(height: Int, confirmations: Int): Long {
-        return stake.long + immature.sumByLong { it.confirmedBalance(height, confirmations) }
+        return stake + immature.sumByLong { it.confirmedBalance(height, confirmations) }
     }
 
     fun stakingBalance(height: Int): Long {
-        return stake.long + immature.sumByLong { it.matureBalance(height) } + leases.sumByLong { it.matureBalance(height) }
+        return stake + immature.sumByLong { it.matureBalance(height) } + leases.sumByLong { it.matureBalance(height) }
     }
 
     fun totalBalance(): Long {
-        return stake.long + immature.sumByLong { it.amount.long } + leases.sumByLong { it.amount.long }
+        return stake + immature.sumByLong { it.amount } + leases.sumByLong { it.amount }
     }
 
     fun credit(amount: Long): Status {
@@ -55,8 +57,8 @@ class AccountState(
             return Invalid("Negative amount")
         }
 
-        if (amount <= stake.long) {
-            stake = VarLong(stake.long - amount)
+        if (amount <= stake) {
+            stake -= amount
             return Accepted
         }
 
@@ -64,14 +66,14 @@ class AccountState(
             return Invalid("Insufficient funds")
         }
 
-        var r = amount - stake.long
-        stake = VarLong.ZERO
+        var r = amount - stake
+        stake = 0L
         while (r > 0) {
-            if (r < immature[0].amount.long) {
-                immature[0].amount = VarLong(immature[0].amount.long - r)
+            if (r < immature[0].amount) {
+                immature[0].amount -= r
                 break
             } else {
-                r -= immature[0].amount.long
+                r -= immature[0].amount
                 immature.removeAt(0)
             }
         }
@@ -81,7 +83,7 @@ class AccountState(
 
     fun debit(height: Int, amount: Long) {
         if (amount != 0L)
-            immature.add(Input(VarInt(height), VarLong(amount)))
+            immature.add(Input(height, amount))
     }
 
     fun prune(height: Int): Boolean {
@@ -89,30 +91,41 @@ class AccountState(
         return if (mature == 0L) {
             false
         } else {
-            stake = VarLong(stake.long + mature)
+            stake += mature
             immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
             true
         }
     }
 
     @Serializable
-    class Input(val height: VarInt, var amount: VarLong) {
+    class Input(
+        @Serializable(with = VarIntSerializer::class)
+        val height: Int,
+        @Serializable(with = VarLongSerializer::class)
+        var amount: Long
+    ) {
         override fun equals(other: Any?): Boolean = (other is Input) && height == other.height && amount == other.amount
         override fun hashCode(): Int = hashCode(serializer(), this)
         fun copy(): Input = Input(height, amount)
-        fun isConfirmed(height: Int, confirmations: Int): Boolean = height > this.height.int + confirmations
-        fun isMature(height: Int): Boolean = height > this.height.int + PoS.MATURITY
-        fun confirmedBalance(height: Int, confirmations: Int): Long = if (isConfirmed(height, confirmations)) amount.long else 0
-        fun matureBalance(height: Int): Long = if (isMature(height)) amount.long else 0
+        fun isConfirmed(height: Int, confirmations: Int): Boolean = height > this.height + confirmations
+        fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
+        fun confirmedBalance(height: Int, confirmations: Int): Long = if (isConfirmed(height, confirmations)) amount else 0L
+        fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0L
     }
 
     @Serializable
-    class Lease(val publicKey: PublicKey, val height: VarInt, var amount: VarLong) {
+    class Lease(
+        val publicKey: PublicKey,
+        @Serializable(with = VarIntSerializer::class)
+        val height: Int,
+        @Serializable(with = VarLongSerializer::class)
+        var amount: Long
+    ) {
         override fun equals(other: Any?): Boolean = (other is Lease) && publicKey == other.publicKey && height == other.height && amount == other.amount
         override fun hashCode(): Int = hashCode(serializer(), this)
         fun copy(): Lease = Lease(publicKey, height, amount)
-        fun isMature(height: Int): Boolean = height > this.height.int + PoS.MATURITY
-        fun matureBalance(height: Int): Long = if (isMature(height)) amount.long else 0
+        fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY
+        fun matureBalance(height: Int): Long = if (isMature(height)) amount else 0L
     }
 
     fun copy(): AccountState {

@@ -14,47 +14,44 @@ package ninja.blacknet.serialization
 
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.PrimitiveDescriptor
+import kotlinx.serialization.PrimitiveKind
+import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import kotlin.experimental.and
 import kotlin.experimental.or
 import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.ktor.requests.RequestDecoder
 
 /**
- * Represents an int with variable number of bytes in a binary representation.
+ * Serializes an int with variable number of bytes in a binary representation.
  */
-@Serializable
-class VarInt(val int: Int) {
-    override fun equals(other: Any?): Boolean = (other is VarInt) && int == other.int
-    override fun hashCode(): Int = hashCode(serializer(), this)
-    override fun toString(): String = int.toString()
+object VarIntSerializer : KSerializer<Int> {
+    /**
+     * The maximum number of bytes in a binary representation of a [Int].
+     */
+    const val MAX_SIZE_BYTES = 5
 
-    @Serializer(forClass = VarInt::class)
-    companion object {
-        /**
-         * The maximum number of bytes in a binary representation of a [VarInt].
-         */
-        const val MAX_SIZE_BYTES = 5
-        val ZERO = VarInt(0)
+    override val descriptor: SerialDescriptor = PrimitiveDescriptor(
+        "ninja.blacknet.serialization.VarIntSerializer",
+        PrimitiveKind.INT
+    )
 
-        override fun deserialize(decoder: Decoder): VarInt {
-            return when (decoder) {
-                is BinaryDecoder -> VarInt(decoder.decodeVarInt())
-                is JsonInput, is RequestDecoder -> VarInt(decoder.decodeInt())
-                else -> throw notSupportedDecoderError(decoder, this)
-            }
+    override fun deserialize(decoder: Decoder): Int {
+        return when (decoder) {
+            is BinaryDecoder -> decoder.decodeVarInt()
+            is JsonInput, is RequestDecoder -> decoder.decodeInt()
+            else -> throw notSupportedDecoderError(decoder, this)
         }
+    }
 
-        override fun serialize(encoder: Encoder, value: VarInt) {
-            when (encoder) {
-                is BinaryEncoder -> encoder.encodeVarInt(value.int)
-                is HashCoder, is JsonOutput -> encoder.encodeInt(value.int)
-                else -> throw notSupportedEncoderError(encoder, this)
-            }
+    override fun serialize(encoder: Encoder, value: Int) {
+        when (encoder) {
+            is BinaryEncoder -> encoder.encodeVarInt(value)
+            is HashCoder, is JsonOutput -> encoder.encodeInt(value)
+            else -> throw notSupportedEncoderError(encoder, this)
         }
     }
 }
@@ -65,7 +62,7 @@ class VarInt(val int: Int) {
  * @return the [Int] value containing the data
  */
 fun Decoder.decodeVarInt(): Int {
-    var c = VarInt.MAX_SIZE_BYTES + 1
+    var c = VarIntSerializer.MAX_SIZE_BYTES + 1
     var result = 0
     var v: Byte
     do {

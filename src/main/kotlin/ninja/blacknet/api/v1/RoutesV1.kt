@@ -144,7 +144,7 @@ fun Route.APIV1() {
             else if (height == state.height)
                 return@get call.respond(state.blockHash.toString())
 
-            if (APIServer.lastIndex != null && APIServer.lastIndex!!.second.height.int == height)
+            if (APIServer.lastIndex != null && APIServer.lastIndex!!.second.height == height)
                 return@get call.respond(APIServer.lastIndex!!.first.toString())
 
             var hash: Hash
@@ -156,17 +156,17 @@ fun Route.APIV1() {
                 hash = state.blockHash
                 index = LedgerDB.getChainIndex(hash)!!
             }
-            if (APIServer.lastIndex != null && abs(height - index.height.int) > abs(height - APIServer.lastIndex!!.second.height.int))
+            if (APIServer.lastIndex != null && abs(height - index.height) > abs(height - APIServer.lastIndex!!.second.height))
                 index = APIServer.lastIndex!!.second
-            while (index.height.int > height) {
+            while (index.height > height) {
                 hash = index.previous
                 index = LedgerDB.getChainIndex(hash)!!
             }
-            while (index.height.int < height) {
+            while (index.height < height) {
                 hash = index.next
                 index = LedgerDB.getChainIndex(hash)!!
             }
-            if (index.height.int < state.height - PoS.MATURITY + 1)
+            if (index.height < state.height - PoS.MATURITY + 1)
                 APIServer.lastIndex = Pair(hash, index)
             call.respond(hash.toString())
         }

@@ -22,7 +22,7 @@ import ninja.blacknet.serialization.notSupportedEncoderError
 
 @Serializable
 class WalletV1(val seq: Int, val transactions: ArrayList<JsonElement>) {
-    constructor(wallet: WalletDB.Wallet) : this(wallet.seq.int, ArrayList(wallet.transactions.size)) {
+    constructor(wallet: WalletDB.Wallet) : this(wallet.seq, ArrayList(wallet.transactions.size)) {
         wallet.transactions.forEach { (hash, txData) ->
             transactions.add(JsonLiteral(hash.toString()))
             transactions.add(TransactionDataV1(txData).toJson())
@@ -36,7 +36,7 @@ class TransactionDataV1(
         val time: Long,
         var height: Int
 ) {
-    constructor(txData: WalletDB.TransactionData) : this(txData.types[0].type, txData.time.long, txData.height.int)
+    constructor(txData: WalletDB.TransactionData) : this(txData.types[0].type, txData.time, txData.height)
     fun toJson() = Json.toJson(serializer(), this)
 
     @Serializer(forClass = TransactionDataV1::class)

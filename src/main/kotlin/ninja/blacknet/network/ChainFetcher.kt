@@ -150,7 +150,7 @@ object ChainFetcher {
                             val chainIndex = LedgerDB.getChainIndex(hash)
                             if (chainIndex == null)
                                 break
-                            if (chainIndex.height.int < state.height - PoS.MATURITY) {
+                            if (chainIndex.height < state.height - PoS.MATURITY) {
                                 connection.dos("Rollback to ${chainIndex.height}")
                                 break@requestLoop
                             }
