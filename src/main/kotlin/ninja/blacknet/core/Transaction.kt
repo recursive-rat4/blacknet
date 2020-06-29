@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
@@ -23,6 +24,7 @@ class Transaction(
         val from: PublicKey,
         val seq: Int,
         val referenceChain: Hash,
+        @Serializable(with = LongSerializer::class)
         val fee: Long,
         val type: Byte,
         val data: SerializableByteArray

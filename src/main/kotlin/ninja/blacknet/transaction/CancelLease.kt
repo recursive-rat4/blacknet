@@ -17,19 +17,21 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 
 /**
  * 取消合約
  */
 @Serializable
 class CancelLease(
+        @Serializable(with = LongSerializer::class)
         val amount: Long,
         val to: PublicKey,
         val height: Int
 ) : TxData {
     override fun getType() = TxType.CancelLease
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val toAccount = ledger.get(to)
@@ -50,19 +52,5 @@ class CancelLease(
 
     companion object {
         fun deserialize(bytes: ByteArray): CancelLease = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val amount: String,
-            val to: String,
-            val height: Int
-    ) {
-        constructor(data: CancelLease) : this(
-                data.amount.toString(),
-                Address.encode(data.to),
-                data.height
-        )
     }
 }

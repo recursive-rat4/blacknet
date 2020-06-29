@@ -18,20 +18,23 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 
 /**
  * 提款金額
  */
 @Serializable
 class WithdrawFromLease(
+        @Serializable(with = LongSerializer::class)
         val withdraw: Long,
+        @Serializable(with = LongSerializer::class)
         val amount: Long,
         val to: PublicKey,
         val height: Int
 ) : TxData {
     override fun getType() = TxType.WithdrawFromLease
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (withdraw <= 0 || withdraw > amount) {
@@ -60,21 +63,5 @@ class WithdrawFromLease(
 
     companion object {
         fun deserialize(bytes: ByteArray): WithdrawFromLease = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val withdraw: String,
-            val amount: String,
-            val to: String,
-            val height: Int
-    ) {
-        constructor(data: WithdrawFromLease) : this(
-                data.withdraw.toString(),
-                data.amount.toString(),
-                Address.encode(data.to),
-                data.height
-        )
     }
 }

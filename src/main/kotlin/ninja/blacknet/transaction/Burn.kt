@@ -15,16 +15,18 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class Burn(
+        @Serializable(with = LongSerializer::class)
         val amount: Long,
         val message: SerializableByteArray
 ) : TxData {
     override fun getType() = TxType.Burn
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (amount == 0L) {
@@ -42,17 +44,5 @@ class Burn(
 
     companion object {
         fun deserialize(bytes: ByteArray): Burn = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val amount: String,
-            val message: String
-    ) {
-        constructor(data: Burn) : this(
-                data.amount.toString(),
-                data.message.toString()
-        )
     }
 }

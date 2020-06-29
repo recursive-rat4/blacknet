@@ -10,8 +10,6 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.json
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -19,6 +17,7 @@ import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.util.sumByLong
 
 /**
@@ -27,12 +26,31 @@ import ninja.blacknet.util.sumByLong
 @Serializable
 class CreateMultisig(
         val n: Byte,
-        val deposits: ArrayList<Pair<PublicKey, Long>>,
-        val signatures: ArrayList<Pair<Byte, Signature>>
+        val deposits: ArrayList<DepositElement>,
+        val signatures: ArrayList<SignatureElement>
 ) : TxData {
     override fun getType() = TxType.CreateMultisig
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
+
+    @Serializable
+    class DepositElement(
+            val from: PublicKey,
+            @Serializable(with = LongSerializer::class)
+            val amount: Long
+    ) {
+        operator fun component1() = from
+        operator fun component2() = amount
+    }
+
+    @Serializable
+    class SignatureElement(
+            val index: Byte,
+            val signature: Signature
+    ) {
+        operator fun component1() = index
+        operator fun component2() = signature
+    }
 
     fun id(hash: Hash, dataIndex: Int) =
         MultiSignatureLockContractId(
@@ -41,10 +59,10 @@ class CreateMultisig(
 
     fun sign(from: PublicKey, seq: Int, dataIndex: Int, privateKey: PrivateKey): Boolean {
         val publicKey = privateKey.toPublicKey()
-        val index = deposits.indexOfFirst { it.first == publicKey }
+        val index = deposits.indexOfFirst { it.from == publicKey }
         if (index == -1) return false
         val signature = Ed25519.sign(hash(from, seq, dataIndex), privateKey)
-        signatures.add(Pair(index.toByte(), signature))
+        signatures.add(SignatureElement(index.toByte(), signature))
         return true
     }
 
@@ -70,7 +88,7 @@ class CreateMultisig(
             return Invalid("Too many signatures")
         }
         val total = try {
-            deposits.sumByLong { it.second }
+            deposits.sumByLong { it.amount }
         } catch (e: ArithmeticException) {
             return Invalid("Invalid total amount: ${e.message}")
         }
@@ -82,7 +100,7 @@ class CreateMultisig(
         for (index in 0 until deposits.size) {
             val (publicKey, amount) = deposits[index]
             if (amount != 0L) {
-                val signature = signatures.find { it.first == index.toByte() }?.second
+                val signature = signatures.find { it.index == index.toByte() }?.signature
                 if (signature == null) {
                     return Invalid("Unsigned deposit $index")
                 }
@@ -102,38 +120,14 @@ class CreateMultisig(
         }
 
         val id = id(hash, dataIndex)
-        val multisig = Multisig(n, deposits)
+        val multisig = Multisig(n, deposits.map { (from, amount) -> Pair(from, amount) })
         ledger.addMultisig(id, multisig)
         return Accepted
     }
 
-    fun involves(publicKey: PublicKey) = deposits.find { it.first == publicKey } != null
+    fun involves(publicKey: PublicKey) = deposits.find { it.from == publicKey } != null
 
     companion object {
         fun deserialize(bytes: ByteArray): CreateMultisig = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val n: Int,
-            val deposits: JsonArray,
-            val signatures: JsonArray
-    ) {
-        constructor(data: CreateMultisig) : this(
-                data.n.toUByte().toInt(),
-                JsonArray(data.deposits.map { (publicKey, amount) ->
-                    json {
-                        "from" to Address.encode(publicKey)
-                        "amount" to amount.toString()
-                    }
-                }),
-                JsonArray(data.signatures.map { (index, signature) ->
-                    json {
-                        "index" to index.toUByte().toInt()
-                        "signature" to signature.toString()
-                    }
-                })
-        )
     }
 }

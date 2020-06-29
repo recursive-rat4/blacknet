@@ -10,10 +10,9 @@
 package ninja.blacknet.transaction
 
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.json
+import kotlinx.serialization.builtins.ListSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -21,6 +20,7 @@ import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.util.sumByLong
 
 /**
@@ -29,16 +29,26 @@ import ninja.blacknet.util.sumByLong
 @Serializable
 class SpendMultisig(
         val id: MultiSignatureLockContractId,
+        @Serializable(with = AmountsSerializer::class)
         val amounts: ArrayList<Long>,
-        val signatures: ArrayList<Pair<Byte, Signature>>
+        val signatures: ArrayList<SignatureElement>
 ) : TxData {
     override fun getType() = TxType.SpendMultisig
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
+
+    @Serializable
+    class SignatureElement(
+            val index: Byte,
+            val signature: Signature
+    ) {
+        operator fun component1() = index
+        operator fun component2() = signature
+    }
 
     fun sign(i: Int, privateKey: PrivateKey): Boolean {
         val signature = Ed25519.sign(hash(), privateKey)
-        signatures.add(Pair(i.toByte(), signature))
+        signatures.add(SignatureElement(i.toByte(), signature))
         return true
     }
 
@@ -116,24 +126,5 @@ class SpendMultisig(
         fun deserialize(bytes: ByteArray): SpendMultisig = BinaryDecoder(bytes).decode(serializer())
     }
 
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val id: String,
-            val amounts: JsonArray,
-            val signatures: JsonArray
-    ) {
-        constructor(data: SpendMultisig) : this(
-                data.id.toString(),
-                JsonArray(data.amounts.map { amount ->
-                    JsonPrimitive(amount.toString())
-                }),
-                JsonArray(data.signatures.map { (index, signature) ->
-                    json {
-                        "index" to index.toUByte().toInt()
-                        "signature" to signature.toString()
-                    }
-                })
-        )
-    }
+    private object AmountsSerializer : KSerializer<List<Long>> by ListSerializer(LongSerializer)
 }

@@ -16,7 +16,7 @@ import ninja.blacknet.util.sumByLong
 @Serializable
 class Multisig(
         val n: Byte,
-        val deposits: ArrayList<Pair<PublicKey, Long>>
+        val deposits: List<Pair<PublicKey, Long>>
 ) {
 
     fun amount(): Long {

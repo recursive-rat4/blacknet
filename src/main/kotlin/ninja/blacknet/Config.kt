@@ -55,8 +55,7 @@ class Config(
 
         val wallet_seqthreshold: Int = Int.MAX_VALUE - 1,
 
-        val unit: Unit? // 遊戲結束
-         = kotlin.Unit  // The feature "trailing commas" is only available since language version 1.4
+        val unit: Unit? = kotlin.Unit /* XXX 1.4 */
 ) {
     companion object {
         val instance = ConfigDecoder(ConfigReader(File(configDir, "blacknet.conf"))).decode(serializer()).also {

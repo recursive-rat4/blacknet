@@ -18,18 +18,20 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 
 /**
  * 創建合約
  */
 @Serializable
 class Lease(
+        @Serializable(with = LongSerializer::class)
         val amount: Long,
         val to: PublicKey
 ) : TxData {
     override fun getType() = TxType.Lease
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (amount < PoS.MIN_LEASE) {
@@ -51,17 +53,5 @@ class Lease(
 
     companion object {
         fun deserialize(bytes: ByteArray): Lease = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val amount: String,
-            val to: String
-    ) {
-        constructor(data: Lease) : this(
-                data.amount.toString(),
-                Address.encode(data.to)
-        )
     }
 }

@@ -22,6 +22,7 @@ import ninja.blacknet.crypto.encodeHash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.serialization.SerializableByteArray
 
 /**
@@ -29,6 +30,7 @@ import ninja.blacknet.serialization.SerializableByteArray
  */
 @Serializable
 class CreateHTLC(
+        @Serializable(with = LongSerializer::class)
         val amount: Long,
         val to: PublicKey,
         val timeLock: TimeLock,
@@ -36,7 +38,7 @@ class CreateHTLC(
 ) : TxData {
     override fun getType() = TxType.CreateHTLC
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
 
     fun id(hash: Hash, dataIndex: Int) =
         HashTimeLockContractId(
@@ -76,21 +78,5 @@ class CreateHTLC(
 
     companion object {
         fun deserialize(bytes: ByteArray): CreateHTLC = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val amount: String,
-            val to: PublicKey,
-            val timeLock: TimeLock,
-            val hashLock: HashLock
-    ) {
-        constructor(data: CreateHTLC) : this(
-                data.amount.toString(),
-                data.to,
-                data.timeLock,
-                data.hashLock
-        )
     }
 }

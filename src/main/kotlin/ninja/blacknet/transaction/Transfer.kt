@@ -19,16 +19,18 @@ import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 
 @Serializable
 class Transfer(
+        @Serializable(with = LongSerializer::class)
         val amount: Long,
         val to: PublicKey,
         val message: PaymentId
 ) : TxData {
     override fun getType() = TxType.Transfer
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(Info.serializer(), Info(this))
+    override fun toJson() = Json.toJson(serializer(), this)
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val account = ledger.get(tx.from)!!
@@ -47,19 +49,5 @@ class Transfer(
 
     companion object {
         fun deserialize(bytes: ByteArray): Transfer = BinaryDecoder(bytes).decode(serializer())
-    }
-
-    @Suppress("unused")
-    @Serializable
-    class Info(
-            val amount: String,
-            val to: PublicKey,
-            val message: PaymentId
-    ) {
-        constructor(data: Transfer) : this(
-                data.amount.toString(),
-                data.to,
-                data.message
-        )
     }
 }
