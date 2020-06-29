@@ -12,6 +12,11 @@ package ninja.blacknet.util
 import kotlinx.coroutines.sync.Mutex
 
 suspend inline fun <T> Mutex.withUnlock(owner: Any? = null, action: () -> T): T {
+    // Experimental contracts
+    // import kotlin.contracts.*
+    // contract {
+    //     callsInPlace(action, InvocationKind.EXACTLY_ONCE)
+    // }
     unlock(owner)
     try {
         return action()
