@@ -27,7 +27,6 @@ plugins {
     application
     distribution
     id("com.github.hierynomus.license-report") version "0.15.0"
-    gitignore
 }
 
 apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
@@ -123,7 +122,7 @@ val test by tasks.existing(Test::class) {
 }
 
 val wrapper by tasks.existing(Wrapper::class) {
-    gradleVersion = "6.5"
+    gradleVersion = "6.5.1"
     distributionType = Wrapper.DistributionType.BIN
-    distributionSha256Sum = "23e7d37e9bb4f8dabb8a3ea7fdee9dd0428b9b1a71d298aefd65b11dccea220f"
+    distributionSha256Sum = "50a7d30529fa939721fe9268a0205142f3f2302bcac5fb45b27a3902e58db54a"
 }
