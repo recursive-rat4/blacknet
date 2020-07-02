@@ -11,9 +11,11 @@ package ninja.blacknet.packet
 
 import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.network.Connection
-import ninja.blacknet.network.Pinger
+import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.util.fromBytes
 
 @Serializable
 class Ping(
@@ -24,6 +26,21 @@ class Ping(
     override fun getType() = PacketType.Ping
 
     override suspend fun process(connection: Connection) {
-        Pinger.ping(connection, this)
+        connection.sendPacket(Pong(if (connection.version >= 13) solve(challenge) else challenge))
+        val lastPacketTime = connection.lastPacketTime
+        val lastPingTime = connection.lastPingTime
+        connection.lastPingTime = lastPacketTime
+        if (lastPacketTime > lastPingTime + Node.NETWORK_TIMEOUT / 2)
+            Unit
+        else
+            connection.dos("Too many ping requests")
     }
+}
+
+fun solve(challenge: Int): Int {
+    val hash = buildHash {
+        encodeInt(Node.magic)
+        encodeInt(challenge)
+    }
+    return Int.fromBytes(hash.bytes[0], hash.bytes[1], hash.bytes[2], hash.bytes[3])
 }

@@ -12,7 +12,6 @@ package ninja.blacknet.packet
 import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.network.Connection
-import ninja.blacknet.network.Pinger
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
@@ -24,6 +23,19 @@ class Pong(
     override fun getType() = PacketType.Pong
 
     override suspend fun process(connection: Connection) {
-        Pinger.pong(connection, this)
+        val (challenge, requestTime) = connection.pingRequest ?: return connection.dos("Unexpected Pong")
+
+        val solution = if (connection.version >= 13)
+            solve(challenge)
+        else
+            challenge
+
+        if (response != solution) {
+            connection.dos("Invalid Pong")
+            return
+        }
+
+        connection.ping = connection.lastPacketTime - requestTime
+        connection.pingRequest = null
     }
 }
