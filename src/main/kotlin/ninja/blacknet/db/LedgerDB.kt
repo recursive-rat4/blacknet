@@ -372,16 +372,16 @@ object LedgerDB {
         var fees = 0L
         for (index in 0 until block.transactions.size) {
             val bytes = block.transactions[index]
-            val tx = BinaryDecoder(bytes.array).decode(Transaction.serializer())
-            val txHash = Transaction.hash(bytes.array)
-            val status = txDb.processTransactionImpl(tx, txHash, bytes.array.size)
+            val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+            val txHash = Transaction.hash(bytes)
+            val status = txDb.processTransactionImpl(tx, txHash, bytes.size)
             if (status != Accepted) {
                 return Pair(notAccepted("Transaction $index", status), emptyList())
             }
             txHashes.add(txHash)
             fees += tx.fee
 
-            WalletDB.processTransaction(txHash, tx, bytes.array, block.time, height, txDb.batch)
+            WalletDB.processTransaction(txHash, tx, bytes, block.time, height, txDb.batch)
         }
 
         generator = txDb.get(block.generator)!!
@@ -440,20 +440,20 @@ object LedgerDB {
         batch.delete(CHAIN_KEY, hash.bytes)
 
         undo.accounts.forEach { (key, bytes) ->
-            if (bytes.array.isNotEmpty())
-                batch.put(ACCOUNT_KEY, key.bytes, bytes.array)
+            if (bytes.isNotEmpty())
+                batch.put(ACCOUNT_KEY, key.bytes, bytes)
             else
                 batch.delete(ACCOUNT_KEY, key.bytes)
         }
         undo.htlcs.forEach { (id, bytes) ->
-            if (bytes.array.isNotEmpty())
-                batch.put(HTLC_KEY, id.hash.bytes, bytes.array)
+            if (bytes.isNotEmpty())
+                batch.put(HTLC_KEY, id.hash.bytes, bytes)
             else
                 batch.delete(HTLC_KEY, id.hash.bytes)
         }
         undo.multisigs.forEach { (id, bytes) ->
-            if (bytes.array.isNotEmpty())
-                batch.put(MULTISIG_KEY, id.hash.bytes, bytes.array)
+            if (bytes.isNotEmpty())
+                batch.put(MULTISIG_KEY, id.hash.bytes, bytes)
             else
                 batch.delete(MULTISIG_KEY, id.hash.bytes)
         }

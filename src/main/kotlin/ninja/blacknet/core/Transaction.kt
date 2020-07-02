@@ -13,10 +13,11 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.LongSerializer
-import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
+import ninja.blacknet.util.emptyByteArray
 
 @Serializable
 class Transaction(
@@ -27,10 +28,11 @@ class Transaction(
         @Serializable(with = LongSerializer::class)
         val fee: Long,
         val type: Byte,
-        val data: SerializableByteArray
+        @Serializable(with = ByteArraySerializer::class)
+        val data: ByteArray
 ) {
     fun data(): TxData {
-        return TxData.deserialize(type, data.array)
+        return TxData.deserialize(type, data)
     }
 
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
@@ -53,7 +55,7 @@ class Transaction(
         }
 
         fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
-            return Transaction(Signature.EMPTY, from, seq, referenceChain, fee, type, SerializableByteArray(data))
+            return Transaction(Signature.EMPTY, from, seq, referenceChain, fee, type, data)
         }
 
         /**
@@ -76,7 +78,7 @@ class Transaction(
          * @return the constructed [Transaction]
          */
         fun generated(from: PublicKey, height: Int, referenceChain: Hash, amount: Long): Transaction {
-            return Transaction(Signature.EMPTY, from, height, referenceChain, amount, TxType.Generated.type, SerializableByteArray.EMPTY)
+            return Transaction(Signature.EMPTY, from, height, referenceChain, amount, TxType.Generated.type, emptyByteArray())
         }
     }
 }

@@ -28,7 +28,7 @@ import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.ktor.requests.RequestDecoder
 
 /**
- * Serializes a long with variable number of bytes in a binary representation.
+ * Serializes a [Long] with variable number of bytes in a binary representation.
  */
 object VarLongSerializer : KSerializer<Long> {
     /**

@@ -39,7 +39,7 @@ class TransactionNotificationV2(
             tx.referenceChain.toString(),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
-            TransactionInfoV2.data(tx.type, tx.data.array)
+            TransactionInfoV2.data(tx.type, tx.data)
     )
 
     fun toJson() = Json.toJson(serializer(), this)

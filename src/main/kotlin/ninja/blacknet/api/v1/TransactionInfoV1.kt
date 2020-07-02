@@ -38,7 +38,7 @@ class TransactionInfoV1(
             tx.referenceChain.toString(),
             tx.fee,
             tx.type.toUByte().toInt(),
-            data(tx.type, tx.data.array)
+            data(tx.type, tx.data)
     )
 
     companion object {

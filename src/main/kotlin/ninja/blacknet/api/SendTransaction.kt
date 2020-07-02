@@ -27,7 +27,7 @@ import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.ktor.requests.post
 import ninja.blacknet.network.Node
-import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.transaction.*
 
 fun Route.sendTransaction() {
@@ -65,7 +65,8 @@ fun Route.sendTransaction() {
             val mnemonic: PrivateKey,
             val fee: Long,
             val amount: Long,
-            val message: SerializableByteArray,
+            @Serializable(with = ByteArraySerializer::class)
+            val message: ByteArray,
             val referenceChain: Hash? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
@@ -169,10 +170,11 @@ fun Route.sendTransaction() {
 
     @Serializable
     class SendRawTransaction(
-            val hex: SerializableByteArray
+            @Serializable(with = ByteArraySerializer::class)
+            val hex: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
-            val bytes = hex.array
+            val bytes = hex
             val hash = Transaction.hash(bytes)
 
             val status = Node.broadcastTx(hash, bytes)

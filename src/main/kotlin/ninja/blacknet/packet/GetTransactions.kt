@@ -16,7 +16,6 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class GetTransactions(
@@ -34,14 +33,14 @@ class GetTransactions(
 
         var size = PACKET_HEADER_SIZE_BYTES + 2
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
-        val response = ArrayList<SerializableByteArray>(list.size)
+        val response = ArrayList<ByteArray>(list.size)
 
         for (hash in list) {
             val value = TxPool.get(hash) ?: continue
             val newSize = size + value.size + 4
 
             if (response.isEmpty()) {
-                response.add(SerializableByteArray(value))
+                response.add(value)
                 size = newSize
                 if (size > maxSize) {
                     connection.sendPacket(Transactions(response))
@@ -54,7 +53,7 @@ class GetTransactions(
                     response.clear()
                     size = PACKET_HEADER_SIZE_BYTES + 2
                 }
-                response.add(SerializableByteArray(value))
+                response.add(value)
                 size += value.size + 4
             }
         }

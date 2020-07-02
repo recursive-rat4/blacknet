@@ -40,6 +40,6 @@ class TransactionNotification(
             tx.referenceChain.toString(),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
-            TransactionInfo.data(tx.type, tx.data.array, filter)
+            TransactionInfo.data(tx.type, tx.data, filter)
     )
 }

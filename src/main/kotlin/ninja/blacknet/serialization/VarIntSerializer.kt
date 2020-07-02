@@ -26,7 +26,7 @@ import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.ktor.requests.RequestDecoder
 
 /**
- * Serializes an int with variable number of bytes in a binary representation.
+ * Serializes an [Int] with variable number of bytes in a binary representation.
  */
 object VarIntSerializer : KSerializer<Int> {
     /**

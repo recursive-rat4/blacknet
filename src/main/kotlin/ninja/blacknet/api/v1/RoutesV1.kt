@@ -25,6 +25,7 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.api.*
+import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -34,7 +35,6 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.serialization.SerializableByteArray
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 import java.io.File
@@ -275,7 +275,7 @@ fun Route.APIV1() {
         val from = privateKey.toPublicKey()
         val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
         val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
-        val message = call.parameters["message"]?.let { SerializableByteArray.parse(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
+        val message = call.parameters["message"]?.let { fromHex(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
@@ -339,11 +339,11 @@ fun Route.APIV1() {
     }
 
     get("/api/v1/transaction/raw/send/{serialized}/") {
-        val serialized = call.parameters["serialized"]?.let { SerializableByteArray.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
-        val hash = Transaction.hash(serialized.array)
+        val serialized = call.parameters["serialized"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
+        val hash = Transaction.hash(serialized)
 
         APIServer.txMutex.withLock {
-            if (Node.broadcastTx(hash, serialized.array) == Accepted)
+            if (Node.broadcastTx(hash, serialized) == Accepted)
                 call.respond(hash.toString())
             else
                 call.respond("Transaction rejected")

@@ -16,8 +16,8 @@ import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.serialization.SerializableByteArray
 
 /**
  * 宣稱合約
@@ -25,7 +25,8 @@ import ninja.blacknet.serialization.SerializableByteArray
 @Serializable
 class ClaimHTLC(
         val id: HashTimeLockContractId,
-        val preimage: SerializableByteArray
+        @Serializable(with = ByteArraySerializer::class)
+        val preimage: ByteArray
 ) : TxData {
     override fun getType() = TxType.ClaimHTLC
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)

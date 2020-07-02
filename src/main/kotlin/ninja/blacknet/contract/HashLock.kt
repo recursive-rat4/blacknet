@@ -16,7 +16,7 @@ import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.serialization.ByteArraySerializer
 
 const val BLAKE256: Byte = 0
 const val SHA256: Byte = 1
@@ -26,17 +26,18 @@ const val RIPEMD160: Byte = 3
 @Serializable
 class HashLock(
         val type: Byte,
-        val data: SerializableByteArray
+        @Serializable(with = ByteArraySerializer::class)
+        val data: ByteArray
 ) {
     fun validate(): Unit {
-        if (hashSizeBytes() == data.array.size)
+        if (hashSizeBytes() == data.size)
             Unit
         else
-            throw RuntimeException("Expected hash lock size ${hashSizeBytes()} actual ${data.array.size}")
+            throw RuntimeException("Expected hash lock size ${hashSizeBytes()} actual ${data.size}")
     }
 
-    fun verify(preimage: SerializableByteArray): Boolean {
-        return buildHash(algorithm()) { encodeByteArray(preimage.array) }.contentEquals(data.array)
+    fun verify(preimage: ByteArray): Boolean {
+        return buildHash(algorithm()) { encodeByteArray(preimage) }.contentEquals(data)
     }
 
     private fun algorithm(): String = when (type) {

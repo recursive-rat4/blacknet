@@ -38,9 +38,9 @@ class BlockInfoV1(
             block.signature.toString(),
             block.transactions.map {
                 if (txdetail)
-                    Json.stringify(TransactionInfoV1.serializer(), TransactionInfoV1.fromBytes(it.array))
+                    Json.stringify(TransactionInfoV1.serializer(), TransactionInfoV1.fromBytes(it))
                 else
-                    Transaction.hash(it.array).toString()
+                    Transaction.hash(it).toString()
             }
     )
 

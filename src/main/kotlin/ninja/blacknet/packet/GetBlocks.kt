@@ -18,7 +18,6 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class GetBlocks(
@@ -34,7 +33,7 @@ class GetBlocks(
         if (cachedBlock != null) {
             val (previousHash, bytes) = cachedBlock
             if (previousHash == best) {
-                connection.sendPacket(Blocks(emptyList(), listOf(SerializableByteArray(bytes))))
+                connection.sendPacket(Blocks(emptyList(), listOf(bytes)))
                 return
             }
         }
@@ -55,7 +54,7 @@ class GetBlocks(
 
         var size = PACKET_HEADER_SIZE_BYTES + 2 + 1
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
-        val response = ArrayList<SerializableByteArray>()
+        val response = ArrayList<ByteArray>()
 
         while (true) {
             if (chainIndex == null)
@@ -69,7 +68,7 @@ class GetBlocks(
             val bytes = BlockDB.get(hash)
             if (bytes == null)
                 break
-            response.add(SerializableByteArray(bytes))
+            response.add(bytes)
             chainIndex = LedgerDB.getChainIndex(hash)
         }
 

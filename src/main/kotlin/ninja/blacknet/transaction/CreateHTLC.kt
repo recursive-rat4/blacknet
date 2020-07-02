@@ -23,7 +23,6 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.LongSerializer
-import ninja.blacknet.serialization.SerializableByteArray
 
 /**
  * 創建合約

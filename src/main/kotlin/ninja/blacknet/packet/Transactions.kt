@@ -17,13 +17,14 @@ import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.serialization.ByteArrayListSerializer
 
 private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Transactions(
-        private val list: ArrayList<SerializableByteArray>
+        @Serializable(with = ByteArrayListSerializer::class)
+        private val list: ArrayList<ByteArray>
 ) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 
@@ -39,14 +40,14 @@ class Transactions(
         val time = connection.lastPacketTime
 
         for (bytes in list) {
-            val hash = Transaction.hash(bytes.array)
+            val hash = Transaction.hash(bytes)
 
             if (!TxFetcher.fetched(hash)) {
                 connection.dos("Unrequested $hash")
                 continue
             }
 
-            val (status, fee) = TxPool.process(hash, bytes.array, time.seconds, true)
+            val (status, fee) = TxPool.process(hash, bytes, time.seconds, true)
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))

@@ -41,7 +41,7 @@ class TransactionInfo(
             tx.seq,
             tx.referenceChain.toString(),
             tx.fee.toString(),
-            data(tx.type, tx.data.array, filter)
+            data(tx.type, tx.data, filter)
     )
 
     @Serializable
@@ -63,13 +63,13 @@ class TransactionInfo(
                 if (filter == null) {
                     for (index in 0 until multiData.multiData.size) {
                         val (dataType, dataBytes) = multiData.multiData[index]
-                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, TxData.deserialize(dataType, dataBytes.array).toJson()))
+                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, TxData.deserialize(dataType, dataBytes).toJson()))
                     }
                 } else {
                     for (i in 0 until filter.size) {
                         val dataIndex = filter[i].dataIndex.toInt()
                         val (dataType, dataBytes) = multiData.multiData[dataIndex - 1]
-                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, TxData.deserialize(dataType, dataBytes.array).toJson()))
+                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, TxData.deserialize(dataType, dataBytes).toJson()))
                     }
                 }
                 list

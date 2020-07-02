@@ -21,7 +21,7 @@ import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.ktor.requests.RequestDecoder
 
 /**
- * Serializes a long with a transformation to a string in a json representation.
+ * Serializes a [Long] with a transformation to a string in a json representation.
  */
 object LongSerializer : KSerializer<Long> {
     /**

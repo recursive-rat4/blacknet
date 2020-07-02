@@ -14,16 +14,26 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class MultiData(
-        val multiData: ArrayList<Pair<Byte, SerializableByteArray>>
+        val multiData: ArrayList<TxDataData>
 ) : TxData {
     override fun getType() = TxType.MultiData
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
     override fun toJson() = Json.toJson(serializer(), this)
+
+    @Serializable
+    class TxDataData(
+            val type: Byte,
+            @Serializable(with = ByteArraySerializer::class)
+            val data: ByteArray
+    ) {
+        operator fun component1() = type
+        operator fun component2() = data
+    }
 
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (dataIndex != 0) {
@@ -35,7 +45,7 @@ class MultiData(
 
         for (index in 0 until multiData.size) {
             val (type, bytes) = multiData[index]
-            val data = TxData.deserialize(type, bytes.array)
+            val data = TxData.deserialize(type, bytes)
             val status = data.processImpl(tx, hash, index + 1, ledger)
             if (status != Accepted) {
                 return notAccepted("MultiData ${index + 1}", status)

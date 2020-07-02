@@ -50,7 +50,7 @@ class BlockInfoV2(
         private fun transactions(block: Block, txdetail: Boolean): JsonElement {
             if (txdetail) {
                 return JsonArray(block.transactions.map {
-                    val bytes = it.array
+                    val bytes = it
                     val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                     val txHash = Transaction.hash(bytes)
                     return@map TransactionInfoV2(tx, txHash, bytes.size).toJson()

@@ -197,7 +197,7 @@ object WalletDB {
         if (wallets.isEmpty()) return@withLock
 
         val (block, _) = BlockDB.blockImpl(blockHash)!!
-        val txHashes = block.transactions.map { Transaction.hash(it.array) }
+        val txHashes = block.transactions.map { Transaction.hash(it) }
 
         val updated = HashMap<PublicKey, Wallet>(wallets.size)
         wallets.forEach { (publicKey, wallet) ->
@@ -376,7 +376,7 @@ object WalletDB {
                         logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} $hash")
                 }
                 if (tx.type != TxType.MultiData.type) {
-                    if (processTransactionDataImpl(publicKey, wallet, hash, 0, tx.type, tx.data.array, height, from))
+                    if (processTransactionDataImpl(publicKey, wallet, hash, 0, tx.type, tx.data, height, from))
                         listOf(TransactionDataType(tx.type, 0))
                     else
                         emptyList()
@@ -386,7 +386,7 @@ object WalletDB {
                     for (index in 0 until data.multiData.size) {
                         val (dataType, dataBytes) = data.multiData[index]
                         val dataIndex = index + 1
-                        if (processTransactionDataImpl(publicKey, wallet, hash, dataIndex, dataType, dataBytes.array, height, from))
+                        if (processTransactionDataImpl(publicKey, wallet, hash, dataIndex, dataType, dataBytes, height, from))
                             types.add(TransactionDataType(dataType, dataIndex.toByte()))
                     }
                     types
@@ -545,9 +545,9 @@ object WalletDB {
             val block = BlockDB.blockImpl(hash)!!.first
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
-                val tx = BinaryDecoder(bytes.array).decode(Transaction.serializer())
-                val txHash = Transaction.hash(bytes.array)
-                processTransactionImpl(publicKey, wallet, txHash, tx, bytes.array, block.time, height, batch, true)
+                val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                val txHash = Transaction.hash(bytes)
+                processTransactionImpl(publicKey, wallet, txHash, tx, bytes, block.time, height, batch, true)
             }
         } else {
             processBlockImpl(publicKey, wallet, hash, null, height, generated, batch, true)

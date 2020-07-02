@@ -16,12 +16,13 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.SerializableByteArray
+import ninja.blacknet.serialization.ByteArrayListSerializer
 
 @Serializable
 class Blocks(
         val hashes: List<Hash>,
-        val blocks: List<SerializableByteArray>
+        @Serializable(with = ByteArrayListSerializer::class)
+        val blocks: List<ByteArray>
 ) : Packet {
     override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
 

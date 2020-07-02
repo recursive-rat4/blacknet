@@ -18,8 +18,8 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.serialization.SerializableByteArray
 
 /**
  * 分散式應用程序交易包
@@ -27,7 +27,8 @@ import ninja.blacknet.serialization.SerializableByteArray
 @Serializable
 class Bundle(
         val id: DAppId,
-        val data: SerializableByteArray
+        @Serializable(with = ByteArraySerializer::class)
+        val data: ByteArray
 ) : TxData {
     override fun getType() = TxType.Bundle
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
@@ -38,7 +39,7 @@ class Bundle(
     }
 
     operator fun component1() = id
-    operator fun component2() = data.array
+    operator fun component2() = data
 
     companion object {
         fun deserialize(bytes: ByteArray): Bundle = BinaryDecoder(bytes).decode(serializer())

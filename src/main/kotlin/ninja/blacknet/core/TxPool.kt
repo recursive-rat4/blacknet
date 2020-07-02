@@ -22,7 +22,6 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.SerializableByteArray
 import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
@@ -64,7 +63,7 @@ object TxPool : MemPool(), Ledger {
                 break
 
             freeBlockSize -= bytes.size + 4
-            block.transactions.add(SerializableByteArray(bytes))
+            block.transactions.add(bytes)
         }
     }
 

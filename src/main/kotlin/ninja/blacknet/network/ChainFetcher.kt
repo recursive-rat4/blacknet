@@ -235,12 +235,12 @@ object ChainFetcher {
             logger.info("Disconnected ${undoRollback!!.size} blocks")
         }
         for (i in answer.blocks) {
-            val hash = Block.hash(i.array)
+            val hash = Block.hash(i)
             if (undoRollback?.contains(hash) == true) {
                 connection.dos("Rollback contains $hash")
                 return false
             }
-            val status = BlockDB.processImpl(hash, i.array)
+            val status = BlockDB.processImpl(hash, i)
             if (status != Accepted) {
                 connection.dos(status.toString())
                 return false

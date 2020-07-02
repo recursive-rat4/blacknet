@@ -14,15 +14,16 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.LongSerializer
-import ninja.blacknet.serialization.SerializableByteArray
 
 @Serializable
 class Burn(
         @Serializable(with = LongSerializer::class)
         val amount: Long,
-        val message: SerializableByteArray
+        @Serializable(with = ByteArraySerializer::class)
+        val message: ByteArray
 ) : TxData {
     override fun getType() = TxType.Burn
     override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
