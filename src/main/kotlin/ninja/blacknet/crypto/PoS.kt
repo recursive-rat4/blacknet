@@ -12,12 +12,10 @@ package ninja.blacknet.crypto
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Invalid
 import ninja.blacknet.core.Status
+import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LedgerDB.forkV2
-import ninja.blacknet.time.SystemClock
-import ninja.blacknet.time.seconds.days
-import ninja.blacknet.time.seconds.seconds
 import ninja.blacknet.util.byteArrayOfInts
 import kotlin.math.min
 
@@ -25,7 +23,8 @@ import kotlin.math.min
  * 黑網權益證明算法
  * 黑網是點對點技術
  * 權益又譯為持有量
- * 證明不能同步時鐘
+ * 證明依賴當前時間
+ * 算法不能同步時鐘
  */
 object PoS {
     fun mint(supply: Long): Long {
@@ -59,7 +58,7 @@ object PoS {
     }
 
     fun isTooFarInFuture(time: Long): Boolean {
-        return time >= SystemClock.seconds + TIME_SLOT
+        return time >= currentTimeSeconds() + TIME_SLOT
     }
 
     fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
@@ -72,7 +71,7 @@ object PoS {
     }
 
     fun guessInitialSynchronization(): Boolean {
-        return SystemClock.seconds > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * MATURITY
+        return currentTimeSeconds() > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * MATURITY
     }
 
     fun maxBlockSize(blockSizes: Collection<Int>): Int {
@@ -96,7 +95,7 @@ object PoS {
     /**
      * Length of time slot
      */
-    val TIME_SLOT get() = if (forkV2()) 4.seconds else 16.seconds
+    val TIME_SLOT get() = if (forkV2()) 4L else 16L
     /**
      * Expected block time
      */
@@ -104,7 +103,7 @@ object PoS {
     /**
      * Expected number of blocks in year
      */
-    val BLOCKS_IN_YEAR get() = 365.days / TARGET_BLOCK_TIME
+    val BLOCKS_IN_YEAR get() = 365 * 24 * 60 * 60 / TARGET_BLOCK_TIME
     /**
      * Default number of confirmations
      */

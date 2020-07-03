@@ -9,8 +9,6 @@
 
 package ninja.blacknet.serialization
 
-// Inline classes are not supported by kotlinx.serialization yet
-
 @Target(AnnotationTarget.CLASS)
 annotation class Serializable
 

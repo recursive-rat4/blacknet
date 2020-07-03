@@ -14,14 +14,12 @@ import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.coding.Base32
 import ninja.blacknet.error
-import ninja.blacknet.time.delay
-import ninja.blacknet.time.milliseconds.hours
-import ninja.blacknet.time.milliseconds.minutes
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -121,8 +119,8 @@ enum class Network(val type: Byte, val addrSize: Int) {
             }
         }
 
-        private val INIT_TIMEOUT = 1.minutes
-        private val MAX_TIMEOUT = 2.hours
+        private const val INIT_TIMEOUT = 1 * 60 * 1000L
+        private const val MAX_TIMEOUT = 2 * 60 * 60 * 1000L
 
         private var torTimeout = INIT_TIMEOUT
         private var i2pTimeout = INIT_TIMEOUT

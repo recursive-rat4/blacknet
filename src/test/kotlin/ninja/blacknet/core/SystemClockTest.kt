@@ -7,23 +7,21 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.time
+package ninja.blacknet.core
 
 import ninja.blacknet.db.Genesis
-import ninja.blacknet.time.milliseconds.MilliSeconds
-import ninja.blacknet.time.milliseconds.seconds
 import org.testng.Assert.assertTrue
 import org.testng.annotations.Test
 
 class SystemClockTest {
     @Test
     fun test() {
-        val seconds = SystemClock.seconds
+        val seconds = currentTimeSeconds()
         assertTrue(seconds >= Genesis.TIME)
         assertTrue(seconds <= Long.MAX_VALUE)
 
-        val milliseconds = SystemClock.milliseconds
-        assertTrue(milliseconds >= Genesis.TIME.seconds)
-        assertTrue(milliseconds <= MilliSeconds.MAX_VALUE)
+        val milliseconds = currentTimeMillis()
+        assertTrue(milliseconds >= Genesis.TIME * 1000L)
+        assertTrue(milliseconds <= Long.MAX_VALUE)
     }
 }

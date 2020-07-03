@@ -16,7 +16,6 @@ import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.time.milliseconds.seconds
 
 @Serializable
 class Inventory(
@@ -41,7 +40,7 @@ class Inventory(
     companion object {
         const val MAX = 50000
         const val SEND_MAX = 512
-        val SEND_TIMEOUT = 5.seconds
+        const val SEND_TIMEOUT = 5 * 1000L
     }
 }
 

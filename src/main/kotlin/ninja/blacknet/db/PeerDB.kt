@@ -13,6 +13,7 @@ package ninja.blacknet.db
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import com.google.common.collect.Sets.newHashSetWithExpectedSize
 import com.google.common.io.Resources
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
@@ -20,8 +21,9 @@ import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.contract.DAppId
 import ninja.blacknet.error
+import ninja.blacknet.contract.DAppId
+import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Network
@@ -30,9 +32,6 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.decodeVarInt
 import ninja.blacknet.serialization.encodeVarInt
-import ninja.blacknet.time.SystemClock
-import ninja.blacknet.time.delay
-import ninja.blacknet.time.milliseconds.hours
 import ninja.blacknet.util.SynchronizedHashMap
 import kotlin.math.exp
 import kotlin.math.max
@@ -194,7 +193,7 @@ object PeerDB {
     suspend fun getCandidate(filter: Set<Address>): Address? {
         val candidates = peers.mutex.withLock {
             val candidates = ArrayList<Pair<Address, Float>>(peers.map.size)
-            val currTime = SystemClock.seconds
+            val currTime = currentTimeSeconds()
             peers.map.forEach { (address, entry) ->
                 if (!filter.contains(address))
                     candidates.add(Pair(address, entry.chance(currTime)))
@@ -256,14 +255,14 @@ object PeerDB {
     }
 
     private suspend fun oldEntriesRemover() {
-        delay(1.hours)
+        delay(1 * 60 * 60 * 1000L)
 
         if (Node.isOffline())
             return
 
         val toRemove = ArrayList<Address>()
         peers.mutex.withLock {
-            val currTime = SystemClock.seconds
+            val currTime = currentTimeSeconds()
             peers.map.forEach { (address, entry) ->
                 if (entry.isOld(currTime))
                     toRemove.add(address)

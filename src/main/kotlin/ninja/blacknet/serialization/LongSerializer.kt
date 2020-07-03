@@ -7,6 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+@file:Suppress("DUPLICATE_LABEL_IN_WHEN")
+
 package ninja.blacknet.serialization
 
 import kotlinx.serialization.Decoder

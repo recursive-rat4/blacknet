@@ -23,15 +23,11 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
+import ninja.blacknet.core.currentTimeMillis
+import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
-import ninja.blacknet.time.SystemClock
-import ninja.blacknet.time.delay
-import ninja.blacknet.time.milliseconds.MilliSeconds
-import ninja.blacknet.time.milliseconds.hours
-import ninja.blacknet.time.milliseconds.minutes
-import ninja.blacknet.time.milliseconds.nextTime
 import ninja.blacknet.util.SynchronizedArrayList
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
@@ -53,10 +49,10 @@ class Connection(
     private val dosScore = atomic(0)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     private val inventoryToSend = SynchronizedArrayList<Hash>(Inventory.SEND_MAX)
-    val connectedAt = SystemClock.seconds
+    val connectedAt = currentTimeSeconds()
 
     @Volatile
-    var lastPacketTime: MilliSeconds = MilliSeconds.ZERO
+    var lastPacketTime: Long = 0
     @Volatile
     var totalBytesRead: Long = 0
     @Volatile
@@ -64,19 +60,19 @@ class Connection(
     @Volatile
     var lastChain: ChainAnnounce = ChainAnnounce.GENESIS
     @Volatile
-    var lastBlockTime: MilliSeconds = MilliSeconds.ZERO
+    var lastBlockTime: Long = 0
     @Volatile
-    var lastTxTime: MilliSeconds = MilliSeconds.ZERO
+    var lastTxTime: Long = 0
     @Volatile
-    var lastPingTime: MilliSeconds = MilliSeconds.ZERO
+    var lastPingTime: Long = 0
     @Volatile
-    var lastInvSentTime: MilliSeconds = MilliSeconds.ZERO
+    var lastInvSentTime: Long = 0
     @Volatile
-    var ping: MilliSeconds = MilliSeconds.ZERO
+    var ping: Long = 0
     @Volatile
-    internal var pingRequest: Pair<Int, MilliSeconds>? = null
+    var pingRequest: Pair<Int, Long>? = null
     @Volatile
-    internal var requestedBlocks: Boolean = false
+    var requestedBlocks: Boolean = false
 
     var peerId: Long = 0
     var version: Int = 0
@@ -134,7 +130,7 @@ class Connection(
             close()
         }
         val result = readChannel.readPacket(size, 0)
-        lastPacketTime = SystemClock.milliseconds
+        lastPacketTime = currentTimeMillis()
         totalBytesRead += size + 4
         return result
     }
@@ -158,7 +154,7 @@ class Connection(
     suspend fun inventory(inv: Hash) = inventoryToSend.mutex.withLock {
         inventoryToSend.list.add(inv)
         if (inventoryToSend.list.size == Inventory.SEND_MAX) {
-            sendInventoryImpl(SystemClock.milliseconds)
+            sendInventoryImpl(currentTimeMillis())
         }
     }
 
@@ -170,22 +166,22 @@ class Connection(
             val n = Inventory.SEND_MAX - inventoryToSend.list.size
             for (i in 0 until n)
                 inventoryToSend.list.add(inv[i])
-            sendInventoryImpl(SystemClock.milliseconds)
+            sendInventoryImpl(currentTimeMillis())
             for (i in n until inv.size)
                 inventoryToSend.list.add(inv[i])
         } else {
             inventoryToSend.list.addAll(inv)
-            sendInventoryImpl(SystemClock.milliseconds)
+            sendInventoryImpl(currentTimeMillis())
         }
     }
 
-    private suspend fun sendInventory(time: MilliSeconds) = inventoryToSend.mutex.withLock {
+    private suspend fun sendInventory(time: Long) = inventoryToSend.mutex.withLock {
         if (inventoryToSend.list.size != 0) {
             sendInventoryImpl(time)
         }
     }
 
-    private fun sendInventoryImpl(time: MilliSeconds) {
+    private fun sendInventoryImpl(time: Long) {
         sendPacket(Inventory(inventoryToSend.list))
         inventoryToSend.list.clear()
         lastInvSentTime = time
@@ -271,7 +267,7 @@ class Connection(
         delay(Node.NETWORK_TIMEOUT)
 
         if (state.isConnected()) {
-            delay(Random.nextTime(Node.NETWORK_TIMEOUT))
+            delay(Random.nextLong(Node.NETWORK_TIMEOUT))
             sendPing()
         } else {
             close()
@@ -282,7 +278,7 @@ class Connection(
             delay(Node.NETWORK_TIMEOUT)
 
             if (pingRequest == null) {
-                if (SystemClock.milliseconds > lastPacketTime + Node.NETWORK_TIMEOUT) {
+                if (currentTimeMillis() > lastPacketTime + Node.NETWORK_TIMEOUT) {
                     sendPing()
                 }
             } else {
@@ -295,12 +291,12 @@ class Connection(
 
     private fun sendPing() {
         val challenge = Random.nextInt()
-        pingRequest = Pair(challenge, SystemClock.milliseconds)
+        pingRequest = Pair(challenge, currentTimeMillis())
         sendPacket(Ping(challenge))
     }
 
     private suspend fun peerAnnouncer() {
-        delay(Random.nextTime(10.minutes, 20.minutes))
+        delay(Random.nextLong(10 * 60 * 1000L, 20 * 60 * 1000L))
 
         while (true) {
             val n = Random.nextInt(Peers.MAX) + 1
@@ -320,7 +316,7 @@ class Connection(
 
             sendPacket(Peers(randomPeers))
 
-            delay(Random.nextTime(4.hours, 20.hours))
+            delay(Random.nextLong(4 * 60 * 60 * 1000L, 20 * 60 * 60 * 1000L))
         }
     }
 
@@ -329,7 +325,7 @@ class Connection(
             delay(Inventory.SEND_TIMEOUT)
         }
         while (true) {
-            val currTime = SystemClock.milliseconds
+            val currTime = currentTimeMillis()
             if (currTime >= lastInvSentTime + Inventory.SEND_TIMEOUT) {
                 sendInventory(currTime)
             }

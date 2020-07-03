@@ -66,7 +66,7 @@ class PeerInfoV1(
                     connection.remoteAddress.toString(),
                     connection.localAddress.toString(),
                     connection.timeOffset,
-                    connection.ping.milliseconds,
+                    connection.ping,
                     connection.version,
                     connection.agent,
                     connection.state.name,

@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Decoder
@@ -29,9 +30,6 @@ import ninja.blacknet.dataDir
 import ninja.blacknet.network.Node
 import ninja.blacknet.packet.UnfilteredInvList
 import ninja.blacknet.serialization.*
-import ninja.blacknet.time.SystemClock
-import ninja.blacknet.time.delay
-import ninja.blacknet.time.milliseconds.minutes
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 import java.io.File
@@ -114,7 +112,7 @@ object WalletDB {
             }
         }
 
-        val currTime = SystemClock.seconds
+        val currTime = currentTimeSeconds()
         val inv = UnfilteredInvList()
         var poolAccepted = 0
 
@@ -147,7 +145,7 @@ object WalletDB {
             logger.info("Announced ${inv.size} transactions to $n peers")
         }
 
-        delay(30.minutes)
+        delay(30 * 60 * 1000L)
     }
 
     suspend fun getConfirmations(hash: Hash): Int? = BlockDB.mutex.withLock {
@@ -555,7 +553,7 @@ object WalletDB {
     }
 
     private fun clear(batch: LevelDB.WriteBatch) {
-        val backupDir = File(dataDir, "walletdb.backup.${SystemClock.seconds}")
+        val backupDir = File(dataDir, "walletdb.backup.${currentTimeSeconds()}")
         backupDir.mkdir()
         logger.info("Saving backup to $backupDir")
         wallets.clear()

@@ -11,6 +11,7 @@
 package ninja.blacknet.core
 
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
@@ -22,12 +23,7 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Node
-import ninja.blacknet.time.SystemClock
-import ninja.blacknet.time.delay
-import ninja.blacknet.time.milliseconds.MilliSeconds
-import ninja.blacknet.time.milliseconds.seconds
 import ninja.blacknet.util.SynchronizedArrayList
-import ninja.blacknet.util.sumByFloat
 import ninja.blacknet.util.sumByLong
 
 private val logger = KotlinLogging.logger {}
@@ -40,15 +36,15 @@ object Staker {
             val publicKey: PublicKey,
             val privateKey: PrivateKey
     ) {
-        val startTime = SystemClock.milliseconds
+        val startTime = currentTimeMillis()
         var hashCounter = 0
         var lastBlock = Hash.ZERO
         var stake = 0L
 
         fun hashRate(): Double {
-            val time = SystemClock.milliseconds - startTime
-            return if (time != MilliSeconds.ZERO)
-                hashCounter.toDouble() / time.seconds
+            val time = currentTimeMillis() - startTime
+            return if (time != 0L)
+                hashCounter.toDouble() / (time / 1000L)
             else
                 0.0
         }
@@ -83,9 +79,9 @@ object Staker {
     private var coroutine: Job? = null
     private suspend fun implementation() {
         val job = Runtime.launch {
-            val currTime = SystemClock.seconds
+            val currTime = currentTimeSeconds()
             val nextTimeSlot = currTime - currTime % PoS.TIME_SLOT + PoS.TIME_SLOT
-            delay(nextTimeSlot.seconds - SystemClock.milliseconds)
+            delay(nextTimeSlot * 1000L - currentTimeMillis())
         }
         awaitsNextTimeSlot = job
         job.join()
@@ -100,7 +96,7 @@ object Staker {
         }
 
         var state = LedgerDB.state()
-        val currTime = SystemClock.seconds
+        val currTime = currentTimeSeconds()
         val timeSlot = currTime - currTime % PoS.TIME_SLOT
         if (timeSlot <= state.blockTime)
             return

@@ -9,15 +9,14 @@
 
 package ninja.blacknet.network
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.TxPool
+import ninja.blacknet.core.currentTimeMillis
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.packet.GetTransactions
 import ninja.blacknet.packet.Transactions
-import ninja.blacknet.time.SystemClock
-import ninja.blacknet.time.delay
-import ninja.blacknet.time.milliseconds.MilliSeconds
 import ninja.blacknet.util.SynchronizedHashMap
 
 /**
@@ -25,7 +24,7 @@ import ninja.blacknet.util.SynchronizedHashMap
  */
 object TxFetcher {
     private val inventoryChannel: Channel<Pair<Connection, List<Hash>>> = Channel(Channel.UNLIMITED)
-    private val requested = SynchronizedHashMap<Hash, MilliSeconds>()
+    private val requested = SynchronizedHashMap<Hash, Long>()
 
     init {
         Runtime.rotate(::implementation)
@@ -44,7 +43,7 @@ object TxFetcher {
         val (connection, inventory) = inventoryChannel.receive()
 
         val request = ArrayList<Hash>(inventory.size)
-        val currTime = SystemClock.milliseconds
+        val currTime = currentTimeMillis()
 
         for (hash in inventory) {
             if (requested.containsKey(hash)) {
@@ -77,7 +76,7 @@ object TxFetcher {
     private suspend fun watchdog() {
         delay(Node.NETWORK_TIMEOUT)
 
-        val currTime = SystemClock.milliseconds
+        val currTime = currentTimeMillis()
         val timeouted = requested.filterToKeyList { _, time -> currTime > time + Node.NETWORK_TIMEOUT }
         requested.removeAll(timeouted)
     }

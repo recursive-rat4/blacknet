@@ -12,10 +12,10 @@ package ninja.blacknet.packet
 import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
+import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.*
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.time.SystemClock
 
 private val logger = KotlinLogging.logger {}
 
@@ -39,7 +39,7 @@ class Version(
             return
         }
 
-        connection.timeOffset = time - SystemClock.seconds
+        connection.timeOffset = time - currentTimeSeconds()
         connection.peerId = Node.newPeerId()
         connection.version = version
         connection.agent = UserAgent.sanitize(agent)

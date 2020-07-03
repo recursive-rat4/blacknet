@@ -15,26 +15,19 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.core.Accepted
-import ninja.blacknet.core.Staker
-import ninja.blacknet.core.Status
-import ninja.blacknet.core.TxPool
+import ninja.blacknet.core.*
 import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
-import ninja.blacknet.time.SystemClock
-import ninja.blacknet.time.delay
-import ninja.blacknet.time.milliseconds.MilliSeconds
-import ninja.blacknet.time.milliseconds.minutes
-import ninja.blacknet.time.milliseconds.seconds
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import java.math.BigDecimal
@@ -45,7 +38,7 @@ private val logger = KotlinLogging.logger {}
 
 object Node {
     const val DEFAULT_P2P_PORT: Short = 28453
-    val NETWORK_TIMEOUT = 90.seconds
+    const val NETWORK_TIMEOUT = 90 * 1000L
     const val magic = 0x17895E7D
     const val version = 13
     const val minVersion = 12
@@ -176,7 +169,7 @@ object Node {
     fun sendVersion(connection: Connection, nonce: Long) {
         val state = LedgerDB.state()
         val chain = ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
-        val v = Version(magic, version, SystemClock.seconds, nonce, UserAgent.string, minTxFee, chain)
+        val v = Version(magic, version, currentTimeSeconds(), nonce, UserAgent.string, minTxFee, chain)
         connection.sendPacket(v)
     }
 
@@ -201,7 +194,7 @@ object Node {
     }
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
-        val currTime = SystemClock.seconds
+        val currTime = currentTimeSeconds()
         val (status, fee) = TxPool.process(hash, bytes, currTime, false)
         if (status == Accepted) {
             connections.forEach {
@@ -300,7 +293,7 @@ object Node {
 
     private suspend fun evictConnection(): Boolean {
         val candidates = connections.filter { it.state.isIncoming() }.asSequence()
-                .sortedBy { if (it.ping != MilliSeconds.ZERO) it.ping else MilliSeconds.MAX_VALUE }.drop(4)
+                .sortedBy { if (it.ping != 0L) it.ping else Long.MAX_VALUE }.drop(4)
                 .sortedByDescending { it.lastTxTime }.drop(4)
                 .sortedByDescending { it.lastBlockTime }.drop(4)
                 .sortedBy { it.connectedAt }.drop(4)
@@ -325,20 +318,20 @@ object Node {
         val address = PeerDB.getCandidate(filter)
         if (address == null) {
             logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.instance.outgoingconnections}")
-            delay(15.minutes)
+            delay(15 * 60 * 1000L)
             return
         }
 
-        val time = SystemClock.milliseconds
+        val time = currentTimeMillis()
 
         try {
             connectTo(address).job.join()
         } catch (e: Throwable) {
-            PeerDB.failed(address, time.seconds)
+            PeerDB.failed(address, time / 1000L)
         }
 
-        val x = 4.seconds - (SystemClock.milliseconds - time)
-        if (x > MilliSeconds.ZERO)
+        val x = 4 * 1000L - (currentTimeMillis() - time)
+        if (x > 0L)
             delay(x) // 請在繼續之前等待或延遲
     }
 

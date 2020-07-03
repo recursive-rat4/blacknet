@@ -83,9 +83,14 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
     kotlinOptions {
         jvmTarget = "1.8"
         freeCompilerArgs += listOf(
-                "-Xinline-classes",
                 "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
         )
+    }
+}
+
+val compileTestKotlin by tasks.existing(KotlinCompile::class) {
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
