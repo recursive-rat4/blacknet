@@ -9,6 +9,7 @@
 
 package ninja.blacknet.api
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -17,6 +18,7 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.WalletDB
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.MultiData
 import ninja.blacknet.transaction.TxData
@@ -56,20 +58,29 @@ class TransactionInfo(
             val data = if (type == TxType.Generated.type) {
                 listOf(DataInfo(type.toUByte().toInt(), 0, JsonObject(emptyMap())))
             } else if (type != TxType.MultiData.type) {
-                listOf(DataInfo(type.toUByte().toInt(), 0, TxData.deserialize(type, bytes).toJson()))
+                @Suppress("UNCHECKED_CAST")
+                val serializer = TxType.getSerializer(type) as KSerializer<TxData>
+                val data = BinaryDecoder(bytes).decode(serializer)
+                listOf(DataInfo(type.toUByte().toInt(), 0, Json.toJson(serializer, data)))
             } else {
-                val multiData = MultiData.deserialize(bytes)
+                val multiData = BinaryDecoder(bytes).decode(MultiData.serializer())
                 val list = ArrayList<DataInfo>(multiData.multiData.size)
                 if (filter == null) {
                     for (index in 0 until multiData.multiData.size) {
                         val (dataType, dataBytes) = multiData.multiData[index]
-                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, TxData.deserialize(dataType, dataBytes).toJson()))
+                        @Suppress("UNCHECKED_CAST")
+                        val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
+                        val data = BinaryDecoder(dataBytes).decode(serializer)
+                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, Json.toJson(serializer, data)))
                     }
                 } else {
                     for (i in 0 until filter.size) {
                         val dataIndex = filter[i].dataIndex.toInt()
                         val (dataType, dataBytes) = multiData.multiData[dataIndex - 1]
-                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, TxData.deserialize(dataType, dataBytes).toJson()))
+                        @Suppress("UNCHECKED_CAST")
+                        val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
+                        val data = BinaryDecoder(dataBytes).decode(serializer)
+                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, Json.toJson(serializer, data)))
                     }
                 }
                 list

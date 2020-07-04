@@ -21,10 +21,6 @@ import ninja.blacknet.serialization.Json
 class MultiData(
         val multiData: ArrayList<TxDataData>
 ) : TxData {
-    override fun getType() = TxType.MultiData
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     @Serializable
     class TxDataData(
             val type: Byte,
@@ -45,7 +41,8 @@ class MultiData(
 
         for (index in 0 until multiData.size) {
             val (type, bytes) = multiData[index]
-            val data = TxData.deserialize(type, bytes)
+            val serializer = TxType.getSerializer(type)
+            val data = BinaryDecoder(bytes).decode(serializer)
             val status = data.processImpl(tx, hash, index + 1, ledger)
             if (status != Accepted) {
                 return notAccepted("MultiData ${index + 1}", status)
@@ -53,9 +50,5 @@ class MultiData(
         }
 
         return Accepted
-    }
-
-    companion object {
-        fun deserialize(bytes: ByteArray): MultiData = BinaryDecoder(bytes).decode(serializer())
     }
 }

@@ -21,12 +21,8 @@ import ninja.blacknet.util.fromBytes
 class Ping(
         val challenge: Int
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.Ping
-
     override suspend fun process(connection: Connection) {
-        connection.sendPacket(Pong(if (connection.version >= 13) solve(challenge) else challenge))
+        connection.sendPacket(PacketType.Pong, Pong(if (connection.version >= 13) solve(challenge) else challenge))
         val lastPacketTime = connection.lastPacketTime
         val lastPingTime = connection.lastPingTime
         connection.lastPingTime = lastPacketTime

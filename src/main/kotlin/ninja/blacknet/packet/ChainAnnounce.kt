@@ -22,10 +22,6 @@ class ChainAnnounce(
         internal val chain: Hash,
         internal val cumulativeDifficulty: BigInt
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.ChainAnnounce
-
     override suspend fun process(connection: Connection) {
         connection.lastChain = this
 

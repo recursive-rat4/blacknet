@@ -12,12 +12,8 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.serialization.BinaryDecoder
 
 interface TxData {
-    fun getType(): TxType
-    fun serialize(): ByteArray
-    fun toJson(): JsonElement
     fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status
 
     fun process(tx: Transaction, hash: Hash, ledger: Ledger): Status {
@@ -40,12 +36,5 @@ interface TxData {
         account.seq += 1
         ledger.set(tx.from, account)
         return processImpl(tx, hash, 0, ledger)
-    }
-
-    companion object {
-        fun deserialize(type: Byte, bytes: ByteArray): TxData {
-            val serializer = TxType.getSerializer(type)
-            return BinaryDecoder(bytes).decode(serializer)
-        }
     }
 }

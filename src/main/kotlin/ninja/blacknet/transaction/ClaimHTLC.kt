@@ -28,10 +28,6 @@ class ClaimHTLC(
         @Serializable(with = ByteArraySerializer::class)
         val preimage: ByteArray
 ) : TxData {
-    override fun getType() = TxType.ClaimHTLC
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
@@ -52,8 +48,4 @@ class ClaimHTLC(
     }
 
     fun involves(ids: Set<HashTimeLockContractId>) = ids.contains(id)
-
-    companion object {
-        fun deserialize(bytes: ByteArray): ClaimHTLC = BinaryDecoder(bytes).decode(serializer())
-    }
 }

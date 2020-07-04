@@ -35,10 +35,6 @@ class CreateHTLC(
         val timeLock: TimeLock,
         val hashLock: HashLock
 ) : TxData {
-    override fun getType() = TxType.CreateHTLC
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     fun id(hash: Hash, dataIndex: Int) =
         HashTimeLockContractId(
             buildHash { encodeHash(hash); encodeInt(dataIndex); }
@@ -74,8 +70,4 @@ class CreateHTLC(
     }
 
     fun involves(publicKey: PublicKey) = to == publicKey
-
-    companion object {
-        fun deserialize(bytes: ByteArray): CreateHTLC = BinaryDecoder(bytes).decode(serializer())
-    }
 }

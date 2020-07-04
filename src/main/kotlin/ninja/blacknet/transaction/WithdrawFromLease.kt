@@ -32,10 +32,6 @@ class WithdrawFromLease(
         val to: PublicKey,
         val height: Int
 ) : TxData {
-    override fun getType() = TxType.WithdrawFromLease
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (withdraw <= 0 || withdraw > amount) {
             return Invalid("Invalid withdraw amount")
@@ -60,8 +56,4 @@ class WithdrawFromLease(
     }
 
     fun involves(publicKey: PublicKey) = to == publicKey
-
-    companion object {
-        fun deserialize(bytes: ByteArray): WithdrawFromLease = BinaryDecoder(bytes).decode(serializer())
-    }
 }

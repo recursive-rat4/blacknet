@@ -27,12 +27,13 @@ import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.ktor.requests.post
 import ninja.blacknet.network.Node
+import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.transaction.*
 
 fun Route.sendTransaction() {
     @Serializable
-    class Transfer(
+    class TransferRequest(
             val mnemonic: PrivateKey,
             val fee: Long,
             val amount: Long,
@@ -46,7 +47,7 @@ fun Route.sendTransaction() {
             val message = PaymentId.create(message, encrypted, privateKey, to) ?: return call.respond(HttpStatusCode.BadRequest, "Failed to create payment id")
             val from = privateKey.toPublicKey()
             val seq = WalletDB.getSequence(from)
-            val data = Transfer(amount, to, message).serialize()
+            val data = BinaryEncoder.toBytes(Transfer.serializer(), Transfer(amount, to, message))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -58,10 +59,10 @@ fun Route.sendTransaction() {
         }
     }
 
-    post(Transfer.serializer(), "/api/v2/transfer")
+    post(TransferRequest.serializer(), "/api/v2/transfer")
 
     @Serializable
-    class Burn(
+    class BurnRequest(
             val mnemonic: PrivateKey,
             val fee: Long,
             val amount: Long,
@@ -73,7 +74,7 @@ fun Route.sendTransaction() {
             val privateKey = mnemonic
             val from = privateKey.toPublicKey()
             val seq = WalletDB.getSequence(from)
-            val data = Burn(amount, message).serialize()
+            val data = BinaryEncoder.toBytes(Burn.serializer(), Burn(amount, message))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -85,10 +86,10 @@ fun Route.sendTransaction() {
         }
     }
 
-    post(Burn.serializer(), "/api/v2/burn")
+    post(BurnRequest.serializer(), "/api/v2/burn")
 
     @Serializable
-    class Lease(
+    class LeaseRequest(
             val mnemonic: PrivateKey,
             val fee: Long,
             val amount: Long,
@@ -99,7 +100,7 @@ fun Route.sendTransaction() {
             val privateKey = mnemonic
             val from = privateKey.toPublicKey()
             val seq = WalletDB.getSequence(from)
-            val data = Lease(amount, to).serialize()
+            val data = BinaryEncoder.toBytes(Lease.serializer(), Lease(amount, to))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -111,10 +112,10 @@ fun Route.sendTransaction() {
         }
     }
 
-    post(Lease.serializer(), "/api/v2/lease")
+    post(LeaseRequest.serializer(), "/api/v2/lease")
 
     @Serializable
-    class CancelLease(
+    class CancelLeaseRequest(
             val mnemonic: PrivateKey,
             val fee: Long,
             val amount: Long,
@@ -126,7 +127,7 @@ fun Route.sendTransaction() {
             val privateKey = mnemonic
             val from = privateKey.toPublicKey()
             val seq = WalletDB.getSequence(from)
-            val data = CancelLease(amount, to, height).serialize()
+            val data = BinaryEncoder.toBytes(CancelLease.serializer(), CancelLease(amount, to, height))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -138,10 +139,10 @@ fun Route.sendTransaction() {
         }
     }
 
-    post(CancelLease.serializer(), "/api/v2/cancellease")
+    post(CancelLeaseRequest.serializer(), "/api/v2/cancellease")
 
     @Serializable
-    class WithdrawFromLease(
+    class WithdrawFromLeaseRequest(
             val mnemonic: PrivateKey,
             val fee: Long,
             val withdraw: Long,
@@ -154,7 +155,7 @@ fun Route.sendTransaction() {
             val privateKey = mnemonic
             val from = privateKey.toPublicKey()
             val seq = WalletDB.getSequence(from)
-            val data = WithdrawFromLease(withdraw, amount, to, height).serialize()
+            val data = BinaryEncoder.toBytes(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.WithdrawFromLease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -166,7 +167,7 @@ fun Route.sendTransaction() {
         }
     }
 
-    post(WithdrawFromLease.serializer(), "/api/v2/withdrawfromlease")
+    post(WithdrawFromLeaseRequest.serializer(), "/api/v2/withdrawfromlease")
 
     @Serializable
     class SendRawTransaction(

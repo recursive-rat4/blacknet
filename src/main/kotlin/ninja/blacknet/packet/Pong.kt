@@ -18,10 +18,6 @@ import ninja.blacknet.serialization.BinaryEncoder
 class Pong(
         val response: Int
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.Pong
-
     override suspend fun process(connection: Connection) {
         val (challenge, requestTime) = connection.pingRequest ?: return connection.dos("Unexpected Pong")
 

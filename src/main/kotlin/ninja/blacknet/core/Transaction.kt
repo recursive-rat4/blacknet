@@ -12,6 +12,7 @@ package ninja.blacknet.core
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.LongSerializer
@@ -32,7 +33,8 @@ class Transaction(
         val data: ByteArray
 ) {
     fun data(): TxData {
-        return TxData.deserialize(type, data)
+        val serializer = TxType.getSerializer(type)
+        return BinaryDecoder(data).decode(serializer)
     }
 
     fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {

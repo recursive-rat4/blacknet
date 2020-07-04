@@ -30,18 +30,10 @@ class Bundle(
         @Serializable(with = ByteArraySerializer::class)
         val data: ByteArray
 ) : TxData {
-    override fun getType() = TxType.Bundle
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         return Accepted
     }
 
     operator fun component1() = id
     operator fun component2() = data
-
-    companion object {
-        fun deserialize(bytes: ByteArray): Bundle = BinaryDecoder(bytes).decode(serializer())
-    }
 }

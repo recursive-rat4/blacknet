@@ -9,12 +9,14 @@
 
 package ninja.blacknet.api.v1
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.json
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
@@ -48,8 +50,10 @@ class TransactionInfoV2(
     companion object {
         fun data(type: Byte, bytes: ByteArray): JsonElement {
             if (type == TxType.Generated.type) return json {}
-            val txData = TxData.deserialize(type, bytes)
-            return txData.toJson()
+            @Suppress("UNCHECKED_CAST")
+            val serializer = TxType.getSerializer(type) as KSerializer<TxData>
+            val txData = BinaryDecoder(bytes).decode(serializer)
+            return Json.toJson(serializer, txData)
         }
     }
 }

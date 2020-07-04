@@ -23,10 +23,6 @@ private val logger = KotlinLogging.logger {}
 class Peers(
         private val list: ArrayList<Address>
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.Peers
-
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {
             connection.dos("Invalid Peers size")

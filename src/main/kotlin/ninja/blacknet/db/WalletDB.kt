@@ -267,14 +267,14 @@ object WalletDB {
                 if (from) {
                     true
                 } else {
-                    Transfer.deserialize(bytes).involves(publicKey)
+                    BinaryDecoder(bytes).decode(Transfer.serializer()).involves(publicKey)
                 }
             }
             TxType.Burn.type -> {
                 from
             }
             TxType.Lease.type -> {
-                val data = Lease.deserialize(bytes)
+                val data = BinaryDecoder(bytes).decode(Lease.serializer())
                 if (from) {
                     wallet.outLeases.add(AccountState.Lease(data.to, height, data.amount))
                     true
@@ -283,7 +283,7 @@ object WalletDB {
                 }
             }
             TxType.CancelLease.type -> {
-                val data = CancelLease.deserialize(bytes)
+                val data = BinaryDecoder(bytes).decode(CancelLease.serializer())
                 if (from) {
                     if (!wallet.outLeases.remove(AccountState.Lease(data.to, data.height, data.amount)))
                         logger.warn("Lease not found")
@@ -296,7 +296,7 @@ object WalletDB {
                 from
             }
             TxType.CreateHTLC.type -> {
-                val data = CreateHTLC.deserialize(bytes)
+                val data = BinaryDecoder(bytes).decode(CreateHTLC.serializer())
                 if (from || data.involves(publicKey)) {
                     wallet.htlcs.add(data.id(hash, dataIndex))
                     true
@@ -305,7 +305,7 @@ object WalletDB {
                 }
             }
             TxType.RefundHTLC.type -> {
-                val data = RefundHTLC.deserialize(bytes)
+                val data = BinaryDecoder(bytes).decode(RefundHTLC.serializer())
                 if (from || data.involves(wallet.htlcs)) {
                     wallet.htlcs.remove(data.id)
                     true
@@ -314,7 +314,7 @@ object WalletDB {
                 }
             }
             TxType.CreateMultisig.type -> {
-                val data = CreateMultisig.deserialize(bytes)
+                val data = BinaryDecoder(bytes).decode(CreateMultisig.serializer())
                 if (from || data.involves(publicKey)) {
                     wallet.multisigs.add(data.id(hash, dataIndex))
                     true
@@ -323,7 +323,7 @@ object WalletDB {
                 }
             }
             TxType.SpendMultisig.type -> {
-                val data = SpendMultisig.deserialize(bytes)
+                val data = BinaryDecoder(bytes).decode(SpendMultisig.serializer())
                 if (from || data.involves(wallet.multisigs)) {
                     wallet.multisigs.remove(data.id)
                     true
@@ -332,7 +332,7 @@ object WalletDB {
                 }
             }
             TxType.WithdrawFromLease.type -> {
-                val data = WithdrawFromLease.deserialize(bytes)
+                val data = BinaryDecoder(bytes).decode(WithdrawFromLease.serializer())
                 if (from) {
                     val lease = wallet.outLeases.find { it.publicKey == data.to && it.height == data.height && it.amount == data.amount }
                     if (lease != null)
@@ -345,7 +345,7 @@ object WalletDB {
                 }
             }
             TxType.ClaimHTLC.type -> {
-                val data = ClaimHTLC.deserialize(bytes)
+                val data = BinaryDecoder(bytes).decode(ClaimHTLC.serializer())
                 if (from || data.involves(wallet.htlcs)) {
                     wallet.htlcs.remove(data.id)
                     true
@@ -379,7 +379,7 @@ object WalletDB {
                     else
                         emptyList()
                 } else {
-                    val data = MultiData.deserialize(bytes)
+                    val data = BinaryDecoder(bytes).decode(MultiData.serializer())
                     val types = ArrayList<TransactionDataType>(data.multiData.size)
                     for (index in 0 until data.multiData.size) {
                         val (dataType, dataBytes) = data.multiData[index]

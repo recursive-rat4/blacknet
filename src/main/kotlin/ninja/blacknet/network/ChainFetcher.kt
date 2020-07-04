@@ -25,6 +25,7 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.packet.Blocks
 import ninja.blacknet.packet.ChainAnnounce
 import ninja.blacknet.packet.GetBlocks
+import ninja.blacknet.packet.PacketType
 
 private val logger = KotlinLogging.logger {}
 
@@ -255,7 +256,7 @@ object ChainFetcher {
         request = Runtime.async { recvChannel.receive() }
         connection.requestedBlocks = true
         // 緊湊型區塊轉發
-        connection.sendPacket(GetBlocks(hash, checkpoint))
+        connection.sendPacket(PacketType.GetBlocks, GetBlocks(hash, checkpoint))
     }
 
     private fun timeout(): Long {

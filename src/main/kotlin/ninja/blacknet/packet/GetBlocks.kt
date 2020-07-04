@@ -24,16 +24,12 @@ class GetBlocks(
         private val best: Hash,
         private val checkpoint: Hash
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.GetBlocks
-
     override suspend fun process(connection: Connection) {
         val cachedBlock = BlockDB.cachedBlock
         if (cachedBlock != null) {
             val (previousHash, bytes) = cachedBlock
             if (previousHash == best) {
-                connection.sendPacket(Blocks(emptyList(), listOf(bytes)))
+                connection.sendPacket(PacketType.Blocks, Blocks(emptyList(), listOf(bytes)))
                 return
             }
         }
@@ -43,10 +39,10 @@ class GetBlocks(
         if (chainIndex == null) {
             val nextBlockHashes = LedgerDB.getNextBlockHashes(checkpoint, PoS.MATURITY)
             if (nextBlockHashes != null) {
-                connection.sendPacket(Blocks(nextBlockHashes, emptyList()))
+                connection.sendPacket(PacketType.Blocks, Blocks(nextBlockHashes, emptyList()))
                 return
             } else {
-                connection.sendPacket(ChainFork())
+                connection.sendPacket(PacketType.ChainFork, ChainFork())
                 connection.dos("Chain fork")
                 return
             }
@@ -72,6 +68,6 @@ class GetBlocks(
             chainIndex = LedgerDB.getChainIndex(hash)
         }
 
-        connection.sendPacket(Blocks(emptyList(), response))
+        connection.sendPacket(PacketType.Blocks, Blocks(emptyList(), response))
     }
 }

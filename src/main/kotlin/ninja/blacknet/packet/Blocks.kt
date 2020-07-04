@@ -24,10 +24,6 @@ class Blocks(
         @Serializable(with = ByteArrayListSerializer::class)
         val blocks: List<ByteArray>
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.Blocks
-
     override suspend fun process(connection: Connection) {
         if (hashes.size > MAX_HASHES) {
             connection.dos("Invalid hashes size ${hashes.size}")

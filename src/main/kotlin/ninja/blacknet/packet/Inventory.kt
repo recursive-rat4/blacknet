@@ -21,10 +21,6 @@ import ninja.blacknet.serialization.BinaryEncoder
 class Inventory(
         private val list: ArrayList<Hash>
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.Inventory
-
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {
             connection.dos("Invalid Inventory size ${list.size}")

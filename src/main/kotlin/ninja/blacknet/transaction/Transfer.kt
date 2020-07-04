@@ -28,10 +28,6 @@ class Transfer(
         val to: PublicKey,
         val message: PaymentId
 ) : TxData {
-    override fun getType() = TxType.Transfer
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val account = ledger.get(tx.from)!!
         val status = account.credit(amount)
@@ -46,8 +42,4 @@ class Transfer(
     }
 
     fun involves(publicKey: PublicKey) = to == publicKey
-
-    companion object {
-        fun deserialize(bytes: ByteArray): Transfer = BinaryDecoder(bytes).decode(serializer())
-    }
 }

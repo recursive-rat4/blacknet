@@ -29,10 +29,6 @@ class CreateMultisig(
         val deposits: ArrayList<DepositElement>,
         val signatures: ArrayList<SignatureElement>
 ) : TxData {
-    override fun getType() = TxType.CreateMultisig
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     @Serializable
     class DepositElement(
             val from: PublicKey,
@@ -68,7 +64,7 @@ class CreateMultisig(
 
     private fun hash(from: PublicKey, seq: Int, dataIndex: Int): Hash {
         val copy = CreateMultisig(n, deposits, ArrayList())
-        val bytes = copy.serialize()
+        val bytes = BinaryEncoder.toBytes(serializer(), copy)
         return buildHash {
             encodePublicKey(from)
             encodeInt(seq)
@@ -126,8 +122,4 @@ class CreateMultisig(
     }
 
     fun involves(publicKey: PublicKey) = deposits.find { it.from == publicKey } != null
-
-    companion object {
-        fun deserialize(bytes: ByteArray): CreateMultisig = BinaryDecoder(bytes).decode(serializer())
-    }
 }

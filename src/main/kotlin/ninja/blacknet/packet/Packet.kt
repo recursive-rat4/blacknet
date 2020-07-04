@@ -12,29 +12,23 @@ package ninja.blacknet.packet
 import io.ktor.utils.io.core.BytePacketBuilder
 import io.ktor.utils.io.core.ByteReadPacket
 import io.ktor.utils.io.core.writeInt
+import kotlinx.serialization.SerializationStrategy
 import ninja.blacknet.network.Connection
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
 
 const val PACKET_HEADER_SIZE_BYTES = 4
 
 interface Packet {
-    fun serialize(): ByteReadPacket
-    fun getType(): PacketType
     suspend fun process(connection: Connection)
+}
 
-    fun build(): ByteReadPacket {
-        val s = serialize()
-        val b = BytePacketBuilder()
-        b.writeInt(s.remaining.toInt() + 4)
-        b.writeInt(getType().ordinal)
-        b.writePacket(s)
-        return b.build()
-    }
-
-    companion object {
-        fun deserialize(type: Int, bytes: ByteReadPacket): Packet {
-            val serializer = PacketType.getSerializer(type)
-            return BinaryDecoder(bytes).decode(serializer)
-        }
-    }
+fun <T> buildPacket(type: PacketType, packet: T): ByteReadPacket {
+    @Suppress("UNCHECKED_CAST")
+    val serializer = PacketType.getSerializer(type.ordinal) as SerializationStrategy<T>
+    val payload = BinaryEncoder.toPacket(serializer, packet)
+    val builder = BytePacketBuilder()
+    builder.writeInt(payload.remaining.toInt() + 4)
+    builder.writeInt(type.ordinal)
+    builder.writePacket(payload)
+    return builder.build()
 }

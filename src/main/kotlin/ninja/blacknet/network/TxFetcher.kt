@@ -16,6 +16,7 @@ import ninja.blacknet.core.TxPool
 import ninja.blacknet.core.currentTimeMillis
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.packet.GetTransactions
+import ninja.blacknet.packet.PacketType
 import ninja.blacknet.packet.Transactions
 import ninja.blacknet.util.SynchronizedHashMap
 
@@ -67,7 +68,7 @@ object TxFetcher {
     }
 
     private fun sendRequest(connection: Connection, request: ArrayList<Hash>) {
-        connection.sendPacket(GetTransactions(request))
+        connection.sendPacket(PacketType.GetTransactions, GetTransactions(request))
     }
 
     /**

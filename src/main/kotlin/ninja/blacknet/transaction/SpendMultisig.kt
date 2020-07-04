@@ -33,10 +33,6 @@ class SpendMultisig(
         val amounts: ArrayList<Long>,
         val signatures: ArrayList<SignatureElement>
 ) : TxData {
-    override fun getType() = TxType.SpendMultisig
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     @Serializable
     class SignatureElement(
             val index: Byte,
@@ -75,7 +71,7 @@ class SpendMultisig(
 
     private fun hash(): Hash {
         val copy = SpendMultisig(id, amounts, ArrayList())
-        val bytes = copy.serialize()
+        val bytes = BinaryEncoder.toBytes(serializer(), copy)
         return buildHash { encodeByteArray(bytes) }
     }
 
@@ -121,10 +117,6 @@ class SpendMultisig(
     }
 
     fun involves(ids: Set<MultiSignatureLockContractId>) = ids.contains(id)
-
-    companion object {
-        fun deserialize(bytes: ByteArray): SpendMultisig = BinaryDecoder(bytes).decode(serializer())
-    }
 
     private object AmountsSerializer : KSerializer<List<Long>> by ListSerializer(LongSerializer)
 }

@@ -18,10 +18,6 @@ import ninja.blacknet.serialization.BinaryEncoder
 @Serializable
 class ChainFork(
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.ChainFork
-
     override suspend fun process(connection: Connection) {
         ChainFetcher.chainFork(connection)
     }

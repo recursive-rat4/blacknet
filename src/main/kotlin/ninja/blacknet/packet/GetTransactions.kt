@@ -21,10 +21,6 @@ import ninja.blacknet.serialization.BinaryEncoder
 class GetTransactions(
         private val list: ArrayList<Hash>
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.GetTransactions
-
     override suspend fun process(connection: Connection) {
         if (list.size > Transactions.MAX) {
             connection.dos("Invalid GetTransactions size ${list.size}")
@@ -43,13 +39,13 @@ class GetTransactions(
                 response.add(value)
                 size = newSize
                 if (size > maxSize) {
-                    connection.sendPacket(Transactions(response))
+                    connection.sendPacket(PacketType.Transactions, Transactions(response))
                     response.clear()
                     size = PACKET_HEADER_SIZE_BYTES + 2
                 }
             } else {
                 if (newSize > maxSize) {
-                    connection.sendPacket(Transactions(response))
+                    connection.sendPacket(PacketType.Transactions, Transactions(response))
                     response.clear()
                     size = PACKET_HEADER_SIZE_BYTES + 2
                 }
@@ -59,6 +55,6 @@ class GetTransactions(
         }
 
         if (response.size != 0)
-            connection.sendPacket(Transactions(response))
+            connection.sendPacket(PacketType.Transactions, Transactions(response))
     }
 }

@@ -28,6 +28,7 @@ import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
+import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
@@ -103,12 +104,13 @@ class Connection(
                 }
 
                 val packet = try {
-                    Packet.deserialize(type, bytes)
+                    val serializer = PacketType.getSerializer(type)
+                    BinaryDecoder(bytes).decode(serializer)
                 } catch (e: Throwable) {
                     dos("Deserialization failed: ${e.message}")
                     continue
                 }
-                logger.debug { "Received ${packet.getType()} from ${debugName()}" }
+                logger.debug { "Received ${packet::class.simpleName} from ${debugName()}" }
                 packet.process(this)
             }
         } catch (e: ClosedReceiveChannelException) {
@@ -182,14 +184,14 @@ class Connection(
     }
 
     private fun sendInventoryImpl(time: Long) {
-        sendPacket(Inventory(inventoryToSend.list))
+        sendPacket(PacketType.Inventory, Inventory(inventoryToSend.list))
         inventoryToSend.list.clear()
         lastInvSentTime = time
     }
 
-    fun sendPacket(packet: Packet) {
-        logger.debug { "Sending ${packet.getType()} to ${debugName()}" }
-        sendChannel.offer(packet.build())
+    fun sendPacket(type: PacketType, packet: Packet) {
+        logger.debug { "Sending $type to ${debugName()}" }
+        sendChannel.offer(buildPacket(type, packet))
     }
 
     internal fun sendPacket(bytes: ByteReadPacket) {
@@ -292,7 +294,7 @@ class Connection(
     private fun sendPing() {
         val challenge = Random.nextInt()
         pingRequest = Pair(challenge, currentTimeMillis())
-        sendPacket(Ping(challenge))
+        sendPacket(PacketType.Ping, Ping(challenge))
     }
 
     private suspend fun peerAnnouncer() {
@@ -314,7 +316,7 @@ class Connection(
                 }
             }
 
-            sendPacket(Peers(randomPeers))
+            sendPacket(PacketType.Peers, Peers(randomPeers))
 
             delay(Random.nextLong(4 * 60 * 60 * 1000L, 20 * 60 * 60 * 1000L))
         }

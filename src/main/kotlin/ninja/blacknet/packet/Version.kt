@@ -29,10 +29,6 @@ class Version(
         private val feeFilter: Long,
         private val chainAnnounce: ChainAnnounce
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.Version
-
     override suspend fun process(connection: Connection) {
         if (magic != Node.magic) {
             connection.close()

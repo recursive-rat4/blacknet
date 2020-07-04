@@ -25,10 +25,6 @@ class Burn(
         @Serializable(with = ByteArraySerializer::class)
         val message: ByteArray
 ) : TxData {
-    override fun getType() = TxType.Burn
-    override fun serialize() = BinaryEncoder.toBytes(serializer(), this)
-    override fun toJson() = Json.toJson(serializer(), this)
-
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (amount == 0L) {
             return Invalid("Invalid amount")
@@ -41,9 +37,5 @@ class Burn(
         ledger.set(tx.from, account)
         ledger.addSupply(-amount)
         return Accepted
-    }
-
-    companion object {
-        fun deserialize(bytes: ByteArray): Burn = BinaryDecoder(bytes).decode(serializer())
     }
 }

@@ -170,13 +170,13 @@ object Node {
         val state = LedgerDB.state()
         val chain = ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
         val v = Version(magic, version, currentTimeSeconds(), nonce, UserAgent.string, minTxFee, chain)
-        connection.sendPacket(v)
+        connection.sendPacket(PacketType.Version, v)
     }
 
     suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null): Int {
         Staker.awaitsNextTimeSlot?.cancel()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
-        return broadcastPacket(ann) {
+        return broadcastPacket(PacketType.ChainAnnounce, ann) {
             it != source && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
         }
     }
@@ -246,10 +246,10 @@ object Node {
             listOf("Please check your system clock. Many peers report different time.")
     }
 
-    private suspend fun broadcastPacket(packet: Packet, filter: (Connection) -> Boolean = { true }): Int {
-        logger.debug { "Broadcasting ${packet.getType()}" }
+    private suspend fun broadcastPacket(type: PacketType, packet: Packet, filter: (Connection) -> Boolean = { true }): Int {
+        logger.debug { "Broadcasting $type" }
         var n = 0
-        val bytes = packet.build()
+        val bytes = buildPacket(type, packet)
         connections.forEach {
             if (it.state.isConnected() && filter(it)) {
                 it.sendPacket(bytes.copy())

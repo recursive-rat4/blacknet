@@ -26,10 +26,6 @@ class Transactions(
         @Serializable(with = ByteArrayListSerializer::class)
         private val list: ArrayList<ByteArray>
 ) : Packet {
-    override fun serialize(): ByteReadPacket = BinaryEncoder.toPacket(serializer(), this)
-
-    override fun getType() = PacketType.Transactions
-
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {
             connection.dos("Invalid Transactions size ${list.size}")
