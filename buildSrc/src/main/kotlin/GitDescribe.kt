@@ -8,14 +8,16 @@
  */
 
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.util.FS
 import java.io.File
 import java.io.IOException
 
 fun dirtyDescribeGit(directory: File): String {
     @Suppress("UNUSED_VARIABLE")
     val description = "Describes the state of the Git repository"
+    FS.DETECTED.setUserHome(File(directory, "buildSrc/build"))
     val git = try {
-        Git.open(directory)
+        Git.open(directory, FS.DETECTED)
     } catch (e: IOException) {
         println("Execution failed for task ':dirtyDescribeGit'.")
         println("> ${e::class.qualifiedName}: ${e.message}")
@@ -28,6 +30,8 @@ fun dirtyDescribeGit(directory: File): String {
     } else {
         describe
     }).also {
-        git.close()
+        git.close().also {
+            Git.shutdown()
+        }
     }
 }
