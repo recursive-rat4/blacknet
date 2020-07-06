@@ -9,23 +9,26 @@
 
 package ninja.blacknet.core
 
+import java.math.BigInteger
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.PairSerializer
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
-import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.serialization.BigIntegerSerializer
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.util.emptyByteArray
 
 @Serializable
 class UndoBlock(
         val blockTime: Long,
-        val difficulty: BigInt,
-        val cumulativeDifficulty: BigInt,
+        @Serializable(with = BigIntegerSerializer::class)
+        val difficulty: BigInteger,
+        @Serializable(with = BigIntegerSerializer::class)
+        val cumulativeDifficulty: BigInteger,
         val supply: Long,
         val nxtrng: Hash,
         val rollingCheckpoint: Hash,

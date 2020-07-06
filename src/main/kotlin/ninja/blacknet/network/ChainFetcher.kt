@@ -10,6 +10,7 @@
 
 package ninja.blacknet.network
 
+import java.math.BigInteger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
@@ -17,7 +18,6 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
@@ -44,7 +44,7 @@ object ChainFetcher {
     private var syncConnection: Connection? = null
     private var originalChain: Hash? = null
     private var rollbackTo: Hash? = null
-    private var undoDifficulty = BigInt.ZERO
+    private var undoDifficulty = BigInteger.ZERO
     private var undoRollback: List<Hash>? = null
 
     private val coroutine = Runtime.rotate(::implementation)
@@ -203,7 +203,7 @@ object ChainFetcher {
         connectedBlocks = 0
         originalChain = null
         rollbackTo = null
-        undoDifficulty = BigInt.ZERO
+        undoDifficulty = BigInteger.ZERO
     }
 
     fun chainFork(connection: Connection) {

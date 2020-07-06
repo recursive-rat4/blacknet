@@ -9,6 +9,11 @@
 
 package ninja.blacknet.db
 
+import java.io.File
+import java.math.BigInteger
+import java.util.ArrayDeque //TODO check kotlin.collections.ArrayDeque
+import kotlin.math.max
+import kotlin.math.min
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
@@ -21,6 +26,7 @@ import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
+import ninja.blacknet.serialization.BigIntegerSerializer
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.decodeVarInt
@@ -30,10 +36,6 @@ import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.toByteArray
-import java.io.File
-import java.util.ArrayDeque //TODO check kotlin.collections.ArrayDeque
-import kotlin.math.max
-import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
@@ -55,8 +57,10 @@ object LedgerDB {
             val height: Int,
             val blockHash: Hash,
             val blockTime: Long,
-            val difficulty: BigInt,
-            val cumulativeDifficulty: BigInt,
+            @Serializable(with = BigIntegerSerializer::class)
+            val difficulty: BigInteger,
+            @Serializable(with = BigIntegerSerializer::class)
+            val cumulativeDifficulty: BigInteger,
             val supply: Long,
             val nxtrng: Hash,
             val rollingCheckpoint: Hash,
@@ -94,7 +98,7 @@ object LedgerDB {
                 Hash.ZERO,
                 Genesis.TIME,
                 PoS.INITIAL_DIFFICULTY,
-                BigInt.ZERO,
+                BigInteger.ZERO,
                 supply,
                 Hash.ZERO,
                 Hash.ZERO,

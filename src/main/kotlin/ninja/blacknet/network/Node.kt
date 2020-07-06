@@ -14,6 +14,10 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import java.math.BigDecimal
+import java.math.BigInteger
+import java.net.InetSocketAddress
+import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -22,7 +26,6 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
@@ -30,9 +33,6 @@ import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
-import java.math.BigDecimal
-import java.net.InetSocketAddress
-import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -173,7 +173,7 @@ object Node {
         connection.sendPacket(PacketType.Version, v)
     }
 
-    suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInt, source: Connection? = null): Int {
+    suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
         Staker.awaitsNextTimeSlot?.cancel()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         return broadcastPacket(PacketType.ChainAnnounce, ann) {

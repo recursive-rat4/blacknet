@@ -10,17 +10,19 @@
 package ninja.blacknet.packet
 
 import io.ktor.utils.io.core.ByteReadPacket
+import java.math.BigInteger
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.BigInt
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
+import ninja.blacknet.serialization.BigIntegerSerializer
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
 class ChainAnnounce(
         internal val chain: Hash,
-        internal val cumulativeDifficulty: BigInt
+        @Serializable(with = BigIntegerSerializer::class)
+        internal val cumulativeDifficulty: BigInteger
 ) : Packet {
     override suspend fun process(connection: Connection) {
         connection.lastChain = this
@@ -29,6 +31,6 @@ class ChainAnnounce(
     }
 
     companion object {
-        val GENESIS = ChainAnnounce(Hash.ZERO, BigInt.ZERO)
+        val GENESIS = ChainAnnounce(Hash.ZERO, BigInteger.ZERO)
     }
 }

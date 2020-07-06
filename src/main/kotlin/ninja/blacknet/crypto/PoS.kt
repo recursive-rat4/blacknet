@@ -9,6 +9,8 @@
 
 package ninja.blacknet.crypto
 
+import java.math.BigInteger
+import kotlin.math.min
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Invalid
 import ninja.blacknet.core.Status
@@ -17,7 +19,6 @@ import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.util.byteArrayOfInts
-import kotlin.math.min
 
 /**
  * 黑網權益證明算法
@@ -38,7 +39,7 @@ object PoS {
         }
     }
 
-    fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInt, prevTime: Long, stake: Long): Status {
+    fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInteger, prevTime: Long, stake: Long): Status {
         if (stake <= 0) {
             return Invalid("Invalid stake amount")
         }
@@ -51,7 +52,7 @@ object PoS {
             encodePublicKey(generator)
             encodeLong(time)
         }
-        return if (BigInt(hash) < difficulty * stake)
+        return if (BigInteger(hash) < difficulty * stake)
             Accepted
         else
             Invalid("Proof of stake doesn't match difficulty")
@@ -61,12 +62,12 @@ object PoS {
         return time >= currentTimeSeconds() + TIME_SLOT
     }
 
-    fun nextDifficulty(difficulty: BigInt, prevBlockTime: Long, blockTime: Long): BigInt {
+    fun nextDifficulty(difficulty: BigInteger, prevBlockTime: Long, blockTime: Long): BigInteger {
         val dTime = min(blockTime - prevBlockTime, TARGET_BLOCK_TIME * SPACING)
         return difficulty * (A2 + 2 * dTime) / A1
     }
 
-    fun cumulativeDifficulty(cumulativeDifficulty: BigInt, difficulty: BigInt): BigInt {
+    fun cumulativeDifficulty(cumulativeDifficulty: BigInteger, difficulty: BigInteger): BigInteger {
         return cumulativeDifficulty + ONE_SHL_256 / difficulty
     }
 
@@ -127,11 +128,11 @@ object PoS {
     /**
      * Difficulty of genesis block
      */
-    val INITIAL_DIFFICULTY = BigInt(byteArrayOfInts(0x00, 0xAF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
+    val INITIAL_DIFFICULTY = BigInteger(byteArrayOfInts(0x00, 0xAF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
     /**
      * Maximum value of difficulty
      */
-    val MAX_DIFFICULTY = BigInt(byteArrayOfInts(0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
+    val MAX_DIFFICULTY = BigInteger(byteArrayOfInts(0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
     /**
      * Reserved from maximum block size
      */
@@ -149,7 +150,23 @@ object PoS {
     private const val SPACING = 10
     private val A1 get() = (INTERVAL + 1) * TARGET_BLOCK_TIME
     private val A2 get() = (INTERVAL - 1) * TARGET_BLOCK_TIME
-    private val ONE_SHL_256 = BigInt.ONE shl 256
+    private val ONE_SHL_256 = BigInteger.ONE shl 256
+
+    /**
+     * 散列為高精度整數
+     */
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun BigInteger(hash: Hash): BigInteger = BigInteger(1, hash.bytes)
+    /**
+     * 高精度整數乘法
+     */
+    @Suppress("NOTHING_TO_INLINE")
+    private inline operator fun BigInteger.times(other: Long): BigInteger = multiply(BigInteger.valueOf(other))
+    /**
+     * 高精度整數除法
+     */
+    @Suppress("NOTHING_TO_INLINE")
+    private inline operator fun BigInteger.div(other: Long): BigInteger = divide(BigInteger.valueOf(other))
 }
 
 /*
