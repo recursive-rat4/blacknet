@@ -47,8 +47,6 @@ object Main {
         (Security.addProvider
         (BouncyCastleProvider()))
 
-        (require
-        (Runtime.hasNoShutdownHooks()))
         (Runtime.addShutdownHook
         ({
             (logger.debug

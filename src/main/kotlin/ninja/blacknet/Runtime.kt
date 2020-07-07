@@ -10,6 +10,7 @@
 package ninja.blacknet
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.error
 import ninja.blacknet.util.SynchronizedArrayList
@@ -43,22 +44,16 @@ object Runtime : CoroutineScope {
      */
     fun addShutdownHook(hook: suspend () -> Unit) {
         runBlocking {
-            shutdownHooks.add(hook)
-        }
-    }
-
-    /**
-     * Returns `true` if no shutdown hooks have been registered yet.
-     */
-    fun hasNoShutdownHooks(): Boolean {
-        return runBlocking {
-            shutdownHooks.isEmpty()
+            shutdownHooks.mutex.withLock {
+                shutdownHooks.list.add(hook)
+                if (shutdownHooks.list.size == 1) {
+                    java.lang.Runtime.getRuntime().addShutdownHook(ShutdownHooks())
+                }
+            }
         }
     }
 
     init {
-        java.lang.Runtime.getRuntime().addShutdownHook(ShutdownHooks())
-
         System.getProperty("os.name").let { os_name ->
             macOS = os_name.startsWith("Mac")
             windowsOS = os_name.startsWith("Windows")
