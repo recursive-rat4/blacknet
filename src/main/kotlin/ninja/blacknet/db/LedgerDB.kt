@@ -26,7 +26,6 @@ import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
-import ninja.blacknet.serialization.BigIntegerSerializer
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.decodeVarInt

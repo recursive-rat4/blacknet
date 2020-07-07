@@ -36,7 +36,8 @@ class SpendMultisig(
     @Serializable
     class SignatureElement(
             val index: Byte,
-            val signature: Signature
+            @Serializable(with = SignatureSerializer::class)
+            val signature: ByteArray
     ) {
         operator fun component1() = index
         operator fun component2() = signature

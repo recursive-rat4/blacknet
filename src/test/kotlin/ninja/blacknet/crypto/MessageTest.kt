@@ -22,7 +22,7 @@ class MessageTest {
 
     @Test
     fun sign() {
-        val message = "Crab Beat"
+        val message = "Blacknet test message 1"
         val signature = Message.sign(RegTest.privateKey1, message)
 
         assertTrue(Message.verify(RegTest.publicKey1, signature, message))
@@ -30,9 +30,9 @@ class MessageTest {
 
     @Test
     fun verify() {
-        val message = "Crab Rave"
-        val signature1 = Signature.parse("A64576A3CADFEBC2350542CC22ACF7EE3FF90AA90B0684C3C90A03FA03F67C653BE20DF0DF87A2E205C79A17719D2E1E46E9763DF016A3EE28414AB31DF96A0E")
-        val signature2 = Signature.EMPTY
+        val message = "Blacknet test message 2"
+        val signature1 = SignatureSerializer.parse("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
+        val signature2 = EMPTY_SIGNATURE
 
         assertTrue(Message.verify(RegTest.publicKey1, signature1, message))
         assertFalse(Message.verify(RegTest.publicKey1, signature2, message))

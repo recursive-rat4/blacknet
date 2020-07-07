@@ -58,17 +58,17 @@ object Ed25519 {
         return PublicKey(key.getA().toByteArray())
     }
 
-    fun sign(hash: Hash, privateKey: PrivateKey): Signature {
+    fun sign(hash: Hash, privateKey: PrivateKey): ByteArray {
         val edDSAPrivateKeySpec = EdDSAPrivateKeySpec(privateKey.bytes, spec)
         val edDSAPrivateKey = EdDSAPrivateKey(edDSAPrivateKeySpec)
         val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         edDSAEngine.initSign(edDSAPrivateKey)
         edDSAEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE)
         edDSAEngine.update(hash.bytes)
-        return Signature(edDSAEngine.sign())
+        return edDSAEngine.sign()
     }
 
-    fun verify(signature: Signature, hash: Hash, publicKey: PublicKey): Boolean {
+    fun verify(signature: ByteArray, hash: Hash, publicKey: PublicKey): Boolean {
         val A = toGroupElement(publicKey)
         val edDSAPublicKeySpec = EdDSAPublicKeySpec(A, spec)
         val edDSAPublicKey = EdDSAPublicKey(edDSAPublicKeySpec)
@@ -76,7 +76,7 @@ object Ed25519 {
         edDSAEngine.initVerify(edDSAPublicKey)
         edDSAEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE)
         edDSAEngine.update(hash.bytes)
-        return edDSAEngine.verify(signature.bytes)
+        return edDSAEngine.verify(signature)
     }
 
     fun x25519(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {

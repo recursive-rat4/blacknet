@@ -22,7 +22,8 @@ import ninja.blacknet.util.emptyByteArray
 
 @Serializable
 class Transaction(
-        var signature: Signature,
+        @Serializable(with = SignatureSerializer::class)
+        var signature: ByteArray,
         val from: PublicKey,
         val seq: Int,
         val referenceChain: Hash,
@@ -41,7 +42,7 @@ class Transaction(
         val bytes = BinaryEncoder.toBytes(serializer(), this)
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature.bytes, 0, bytes, 0, Signature.SIZE_BYTES)
+        System.arraycopy(signature, 0, bytes, 0, SIGNATURE_SIZE_BYTES)
         return Pair(hash, bytes)
     }
 
@@ -52,12 +53,12 @@ class Transaction(
     companion object {
         fun hash(bytes: ByteArray): Hash {
             return buildHash {
-                encodeByteArray(bytes, Signature.SIZE_BYTES, bytes.size - Signature.SIZE_BYTES)
+                encodeByteArray(bytes, SIGNATURE_SIZE_BYTES, bytes.size - SIGNATURE_SIZE_BYTES)
             }
         }
 
         fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
-            return Transaction(Signature.EMPTY, from, seq, referenceChain, fee, type, data)
+            return Transaction(EMPTY_SIGNATURE, from, seq, referenceChain, fee, type, data)
         }
 
         /**
@@ -80,7 +81,7 @@ class Transaction(
          * @return the constructed [Transaction]
          */
         fun generated(from: PublicKey, height: Int, referenceChain: Hash, amount: Long): Transaction {
-            return Transaction(Signature.EMPTY, from, height, referenceChain, amount, TxType.Generated.type, emptyByteArray())
+            return Transaction(EMPTY_SIGNATURE, from, height, referenceChain, amount, TxType.Generated.type, emptyByteArray())
         }
     }
 }

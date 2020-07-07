@@ -374,7 +374,7 @@ fun Route.APIV1() {
 
     get("/api/v1/verifymessage/{account}/{signature}/{message}") {
         val publicKey = call.parameters["account"]?.let { Address.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid account")
-        val signature = call.parameters["signature"]?.let { Signature.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid signature")
+        val signature = call.parameters["signature"]?.let { SignatureSerializer.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid signature")
         val message = call.parameters["message"] ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid message")
 
         val result = Message.verify(publicKey, signature, message)

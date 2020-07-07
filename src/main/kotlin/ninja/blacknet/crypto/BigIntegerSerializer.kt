@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization
+package ninja.blacknet.crypto
 
 import java.math.BigInteger
 import kotlinx.serialization.Decoder
@@ -18,9 +18,11 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.StructureKind
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.ktor.requests.RequestDecoder
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.notSupportedDecoderError
+import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
  * Serializes a [BigInteger] with a transformation to a decimal string in some representations.

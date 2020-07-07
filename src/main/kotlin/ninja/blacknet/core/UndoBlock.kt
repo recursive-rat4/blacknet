@@ -16,9 +16,9 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.PairSerializer
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
+import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.serialization.BigIntegerSerializer
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.util.emptyByteArray
 

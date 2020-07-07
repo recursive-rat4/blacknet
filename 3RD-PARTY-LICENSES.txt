@@ -39,7 +39,7 @@ Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 jtorctl https://github.com/akwizgran/jtorctl is licensed under the
 3-Clause BSD License: https://github.com/akwizgran/jtorctl/blob/master/LICENSE
 
-Configuration library for JVM languages https://github.com/lightbend/config is licensed under the
+Netty https://netty.io/ is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
 Guava https://github.com/google/guava is licensed under the

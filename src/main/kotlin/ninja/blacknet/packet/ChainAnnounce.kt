@@ -12,10 +12,10 @@ package ninja.blacknet.packet
 import io.ktor.utils.io.core.ByteReadPacket
 import java.math.BigInteger
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
-import ninja.blacknet.serialization.BigIntegerSerializer
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable

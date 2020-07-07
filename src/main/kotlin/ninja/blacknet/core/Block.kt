@@ -22,7 +22,8 @@ class Block(
         val time: Long,
         val generator: PublicKey,
         var contentHash: Hash,
-        var signature: Signature,
+        @Serializable(with = SignatureSerializer::class)
+        var signature: ByteArray,
         @Serializable(with = ByteArrayListSerializer::class)
         val transactions: ArrayList<ByteArray>
 ) {
@@ -32,7 +33,7 @@ class Block(
         System.arraycopy(contentHash.bytes, 0, bytes, CONTENT_HASH_POS, Hash.SIZE_BYTES)
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature.bytes, 0, bytes, SIGNATURE_POS, Signature.SIZE_BYTES)
+        System.arraycopy(signature, 0, bytes, SIGNATURE_POS, SIGNATURE_SIZE_BYTES)
         return Pair(hash, bytes)
     }
 
@@ -54,16 +55,16 @@ class Block(
         const val VERSION = 2
         const val CONTENT_HASH_POS = Int.SIZE_BYTES + Hash.SIZE_BYTES + Long.SIZE_BYTES + PublicKey.SIZE_BYTES
         const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE_BYTES
-        const val HEADER_SIZE_BYTES = SIGNATURE_POS + Signature.SIZE_BYTES
+        const val HEADER_SIZE_BYTES = SIGNATURE_POS + SIGNATURE_SIZE_BYTES
 
         fun hash(bytes: ByteArray): Hash {
             return buildHash {
-                encodeByteArray(bytes, 0, HEADER_SIZE_BYTES - Signature.SIZE_BYTES)
+                encodeByteArray(bytes, 0, HEADER_SIZE_BYTES - SIGNATURE_SIZE_BYTES)
             }
         }
 
         fun create(previous: Hash, time: Long, generator: PublicKey): Block {
-            return Block(VERSION, previous, time, generator, Hash.ZERO, Signature.EMPTY, ArrayList())
+            return Block(VERSION, previous, time, generator, Hash.ZERO, EMPTY_SIGNATURE, ArrayList())
         }
     }
 }

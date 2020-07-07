@@ -14,11 +14,11 @@ import ninja.blacknet.crypto.Blake2b.buildHash
 object Message {
     private const val SIGN_MAGIC = "Blacknet Signed Message:\n"
 
-    fun sign(privateKey: PrivateKey, message: String): Signature {
+    fun sign(privateKey: PrivateKey, message: String): ByteArray {
         return Ed25519.sign(hash(message), privateKey)
     }
 
-    fun verify(publicKey: PublicKey, signature: Signature, message: String): Boolean {
+    fun verify(publicKey: PublicKey, signature: ByteArray, message: String): Boolean {
         return Ed25519.verify(signature, hash(message), publicKey)
     }
 

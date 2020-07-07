@@ -26,14 +26,14 @@ import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.ktor.requests.RequestDecoder
 
 /**
+ * The maximum number of bytes in a binary representation of an [Int].
+ */
+const val VAR_INT_MAX_SIZE_BYTES = 5
+
+/**
  * Serializes an [Int] with variable number of bytes in a binary representation.
  */
 object VarIntSerializer : KSerializer<Int> {
-    /**
-     * The maximum number of bytes in a binary representation of a [Int].
-     */
-    const val MAX_SIZE_BYTES = 5
-
     override val descriptor: SerialDescriptor = PrimitiveDescriptor(
         "ninja.blacknet.serialization.VarIntSerializer",
         PrimitiveKind.INT
@@ -62,7 +62,7 @@ object VarIntSerializer : KSerializer<Int> {
  * @return the [Int] value containing the data
  */
 fun Decoder.decodeVarInt(): Int {
-    var c = VarIntSerializer.MAX_SIZE_BYTES + 1
+    var c = VAR_INT_MAX_SIZE_BYTES + 1
     var result = 0
     var v: Byte
     do {

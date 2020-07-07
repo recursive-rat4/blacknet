@@ -115,7 +115,8 @@ fun Route.wallet() {
     @Serializable
     class VerifyMessage(
             val from: PublicKey,
-            val signature: Signature,
+            @Serializable(with = SignatureSerializer::class)
+            val signature: ByteArray,
             val message: String
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
