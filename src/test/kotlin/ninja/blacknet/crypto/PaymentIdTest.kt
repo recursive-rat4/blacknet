@@ -31,8 +31,8 @@ class PaymentIdTest {
 
     @Test
     fun decrypt() {
-        val id = "\u0072\u0061\u0074\u0034"
-        val encrypted = "E81A8A93583291A7C0472DD6A961B8DE"
+        val id = "id"
+        val encrypted = "CDCEF8D208A645DB78358859C10F"
         val decrypted = PaymentId.decrypt(RegTest.privateKey2, RegTest.publicKey1, encrypted)
 
         assertEquals(decrypted, id)
