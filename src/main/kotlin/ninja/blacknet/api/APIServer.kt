@@ -59,7 +59,7 @@ object APIServer {
     internal var lastIndex: Pair<Hash, ChainIndex>? = null
     internal val blockNotifyV0 = SynchronizedArrayList<SendChannel<Frame>>()
     internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
-    internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
+    internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, MutableSet<PublicKey>>()
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val walletNotify = SynchronizedHashMap<PublicKey, ArrayList<SendChannel<Frame>>>()

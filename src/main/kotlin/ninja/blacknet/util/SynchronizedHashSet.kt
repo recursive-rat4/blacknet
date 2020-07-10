@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class SynchronizedHashSet<T>(
         val mutex: Mutex = Mutex(),
-        val set: HashSet<T> = HashSet()
+        val set: MutableSet<T> = HashSet()
 ) {
     constructor(expectedSize: Int) : this(set = newHashSetWithExpectedSize(expectedSize))
 

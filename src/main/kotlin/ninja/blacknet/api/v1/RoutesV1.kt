@@ -73,7 +73,7 @@ fun Route.APIV1() {
                 @Suppress("USELESS_ELVIS")
                 val publicKey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
 
-                APIServer.walletNotifyV1.mutex.withLock {
+                APIServer.walletNotifyV1.mutex.withLock<Unit> {
                     val keys = APIServer.walletNotifyV1.map.get(outgoing)
                     if (keys == null) {
                         @Suppress("NAME_SHADOWING")

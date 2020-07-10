@@ -68,10 +68,10 @@ class UndoBlock(
 }
 
 private object AccountsSerializer : KSerializer<List<Pair<PublicKey, ByteArray>>>
-    by ListSerializer(PairSerializer(PublicKey.Companion, ByteArraySerializer))
+    by ListSerializer(PairSerializer(PublicKey.serializer(), ByteArraySerializer))
 
 private object HTLCsSerializer : KSerializer<List<Pair<HashTimeLockContractId, ByteArray>>>
-    by ListSerializer(PairSerializer(HashTimeLockContractId.Companion, ByteArraySerializer))
+    by ListSerializer(PairSerializer(HashTimeLockContractId.serializer(), ByteArraySerializer))
 
 private object MultisigsSerializer : KSerializer<List<Pair<MultiSignatureLockContractId, ByteArray>>>
-    by ListSerializer(PairSerializer(MultiSignatureLockContractId.Companion, ByteArraySerializer))
+    by ListSerializer(PairSerializer(MultiSignatureLockContractId.serializer(), ByteArraySerializer))

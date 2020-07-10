@@ -21,24 +21,29 @@ private val logger = KotlinLogging.logger {}
 object Salt {
     private val OLD_VERSION_KEY = "ledgerversion".toByteArray()
     private val SALT_KEY = DBKey(11, 0)
-
+    private const val SALT_SIZE_BYTES = 16
     val salt: ByteArray
 
     init {
-        val saltBytes = LevelDB.get(SALT_KEY)
-        salt = if (saltBytes != null && saltBytes.size == 16) {
-            saltBytes
+        if (System.getProperty("org.gradle.test.worker") == null) {
+            val saltBytes = LevelDB.get(SALT_KEY)
+            salt = if (saltBytes != null && saltBytes.size == SALT_SIZE_BYTES) {
+                saltBytes
+            } else {
+                if (LevelDB.get(OLD_VERSION_KEY) != null)
+                    convertor()
+
+                val bytes = SecureRandom().nextBytes(SALT_SIZE_BYTES)
+
+                val batch = LevelDB.createWriteBatch()
+                batch.put(SALT_KEY, bytes)
+                batch.write()
+
+                bytes
+            }
         } else {
-            if (LevelDB.get(OLD_VERSION_KEY) != null)
-                convertor()
-
-            val bytes = SecureRandom().nextBytes(16)
-
-            val batch = LevelDB.createWriteBatch()
-            batch.put(SALT_KEY, bytes)
-            batch.write()
-
-            bytes
+            // 測試避免數據庫
+            salt = ByteArray(SALT_SIZE_BYTES) { it.toByte() }
         }
     }
 

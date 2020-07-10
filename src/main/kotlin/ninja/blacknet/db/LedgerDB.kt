@@ -811,7 +811,7 @@ object LedgerDB {
             }
         }
 
-        private object BalancesSerializer : KSerializer<Map<PublicKey, Long>> by MapSerializer(PublicKey.Companion, VarLongSerializer)
+        private object BalancesSerializer : KSerializer<Map<PublicKey, Long>> by MapSerializer(PublicKey.serializer(), VarLongSerializer)
     }
 
     private fun snapshotImpl() {

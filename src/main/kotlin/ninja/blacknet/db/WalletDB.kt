@@ -14,6 +14,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
@@ -479,11 +480,17 @@ object WalletDB {
     class Wallet(
             @Serializable(with = VarIntSerializer::class)
             var seq: Int = 0,
-            val htlcs: HashSet<HashTimeLockContractId> = HashSet(),
-            val multisigs: HashSet<MultiSignatureLockContractId> = HashSet(),
+            @Serializable(with = HTLCsSerializer::class)
+            val htlcs: MutableSet<HashTimeLockContractId> = HashSet(),
+            @Serializable(with = MultisigsSerializer::class)
+            val multisigs: MutableSet<MultiSignatureLockContractId> = HashSet(),
             val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
+            @Serializable(with = TransactionsSerializer::class)
             val transactions: HashMap<Hash, TransactionData> = HashMap()
     ) {
+        private object HTLCsSerializer : KSerializer<MutableSet<HashTimeLockContractId>> by HashSetSerializer(HashTimeLockContractId.serializer())
+        private object MultisigsSerializer : KSerializer<MutableSet<MultiSignatureLockContractId>> by HashSetSerializer(MultiSignatureLockContractId.serializer())
+        private object TransactionsSerializer : KSerializer<HashMap<Hash, TransactionData>> by HashMapSerializer(Hash.serializer(), TransactionData.serializer())
     }
 
     private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: PublicKey, wallet: Wallet) {

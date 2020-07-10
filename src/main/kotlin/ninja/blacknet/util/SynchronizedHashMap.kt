@@ -20,7 +20,7 @@ class SynchronizedHashMap<K, V>(
         val mutex: Mutex = Mutex(),
         val map: HashMap<K, V> = HashMap()
 ) {
-    constructor(expectedSize: Int) : this(map = newHashMapWithExpectedSize(expectedSize))
+    constructor(expectedSize: Int) : this(map = HashMap(expectedSize = expectedSize))
 
     suspend inline fun copy() = mutex.withLock { HashMap(map) }
 
