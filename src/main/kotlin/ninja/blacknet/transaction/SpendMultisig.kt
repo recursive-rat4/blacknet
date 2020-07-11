@@ -43,7 +43,7 @@ class SpendMultisig(
         operator fun component2() = signature
     }
 
-    fun sign(i: Int, privateKey: PrivateKey): Boolean {
+    fun sign(i: Int, privateKey: ByteArray): Boolean {
         val signature = Ed25519.sign(hash(), privateKey)
         signatures.add(SignatureElement(i.toByte(), signature))
         return true

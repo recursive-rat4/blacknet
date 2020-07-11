@@ -79,7 +79,8 @@ fun Route.wallet() {
 
     @Serializable
     class DecryptPaymentId(
-            val mnemonic: PrivateKey,
+            @Serializable(with = PrivateKeySerializer::class)
+            val mnemonic: ByteArray,
             val from: PublicKey,
             val message: String
     ) : Request {
@@ -99,7 +100,8 @@ fun Route.wallet() {
 
     @Serializable
     class SignMessage(
-            val mnemonic: PrivateKey,
+            @Serializable(with = PrivateKeySerializer::class)
+            val mnemonic: ByteArray,
             val message: String
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {

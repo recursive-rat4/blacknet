@@ -38,7 +38,7 @@ class Transaction(
         return BinaryDecoder(data).decode(serializer)
     }
 
-    fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
+    fun sign(privateKey: ByteArray): Pair<Hash, ByteArray> {
         val bytes = BinaryEncoder.toBytes(serializer(), this)
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)

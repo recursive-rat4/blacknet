@@ -17,7 +17,7 @@ object Mnemonic {
     private const val WORDS = 12
     private val random = SecureRandom()
 
-    fun generate(wordlist: Array<String>): Pair<String, PrivateKey> {
+    fun generate(wordlist: Array<String>): Pair<String, ByteArray> {
         require(wordlist.size == WORDLIST_SIZE) { "Wordlist size must be $WORDLIST_SIZE" }
 
         val builder = StringBuilder(12 * WORDS)
@@ -32,16 +32,16 @@ object Mnemonic {
             val mnemonic = builder.toString()
             val hash = hash(mnemonic)
             if (checkVersion(hash.bytes))
-                return Pair(mnemonic, PrivateKey(hash.bytes))
+                return Pair(mnemonic, hash.bytes)
 
             builder.setLength(0)
         }
     }
 
-    fun fromString(string: String): PrivateKey {
+    fun fromString(string: String): ByteArray {
         val hash = hash(string)
         return if (checkVersion(hash.bytes))
-            PrivateKey(hash.bytes)
+            hash.bytes
         else
             throw Exception("Check version failed")
     }

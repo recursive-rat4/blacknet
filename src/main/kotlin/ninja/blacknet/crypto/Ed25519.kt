@@ -53,13 +53,13 @@ object Ed25519 {
                 B)
     }
 
-    fun publicKey(privateKey: PrivateKey): PublicKey {
-        val key = EdDSAPrivateKeySpec(privateKey.bytes, spec)
+    fun toPublicKey(privateKey: ByteArray): PublicKey {
+        val key = EdDSAPrivateKeySpec(privateKey, spec)
         return PublicKey(key.getA().toByteArray())
     }
 
-    fun sign(hash: Hash, privateKey: PrivateKey): ByteArray {
-        val edDSAPrivateKeySpec = EdDSAPrivateKeySpec(privateKey.bytes, spec)
+    fun sign(hash: Hash, privateKey: ByteArray): ByteArray {
+        val edDSAPrivateKeySpec = EdDSAPrivateKeySpec(privateKey, spec)
         val edDSAPrivateKey = EdDSAPrivateKey(edDSAPrivateKeySpec)
         val edDSAEngine = EdDSAEngine(MessageDigest.getInstance(BLAKE2_B_512))
         edDSAEngine.initSign(edDSAPrivateKey)
@@ -79,7 +79,7 @@ object Ed25519 {
         return edDSAEngine.verify(signature)
     }
 
-    fun x25519(privateKey: PrivateKey, publicKey: PublicKey): ByteArray {
+    fun x25519(privateKey: ByteArray, publicKey: PublicKey): ByteArray {
         val pubKey = toCurve25519(publicKey)
         val privKey = toCurve25519(privateKey)
 
@@ -135,9 +135,9 @@ object Ed25519 {
         return x.toByteArray()
     }
 
-    private fun toCurve25519(privateKey: PrivateKey): ByteArray {
+    private fun toCurve25519(privateKey: ByteArray): ByteArray {
         val hash = buildHash(BLAKE2_B_512) { encodePrivateKey(privateKey) }
-        val h = hash.copyOf(PrivateKey.SIZE_BYTES)
+        val h = hash.copyOf(PRIVATE_KEY_SIZE_BYTES)
         h[0] = h[0] and 248.toByte()
         h[31] = h[31] and 127
         h[31] = h[31] or 64

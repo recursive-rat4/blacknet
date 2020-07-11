@@ -15,7 +15,7 @@ import io.ktor.response.respond
 import io.ktor.routing.Route
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Staker
-import ninja.blacknet.crypto.PrivateKey
+import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
@@ -24,7 +24,8 @@ import ninja.blacknet.ktor.requests.post
 fun Route.staking() {
     @Serializable
     class StartStaking(
-            val mnemonic: PrivateKey
+            @Serializable(with = PrivateKeySerializer::class)
+            val mnemonic: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val privateKey = mnemonic
@@ -36,7 +37,8 @@ fun Route.staking() {
 
     @Serializable
     class StopStaking(
-            val mnemonic: PrivateKey
+            @Serializable(with = PrivateKeySerializer::class)
+            val mnemonic: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val privateKey = mnemonic
@@ -48,7 +50,8 @@ fun Route.staking() {
 
     @Serializable
     class IsStaking(
-            val mnemonic: PrivateKey
+            @Serializable(with = PrivateKeySerializer::class)
+            val mnemonic: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val privateKey = mnemonic

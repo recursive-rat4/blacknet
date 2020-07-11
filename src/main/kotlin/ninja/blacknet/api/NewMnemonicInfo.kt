@@ -11,6 +11,7 @@ package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Address
+import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.Mnemonic
 
 @Serializable
@@ -22,14 +23,14 @@ class NewMnemonicInfo(
     companion object {
         fun new(wordlist: Array<String>): NewMnemonicInfo {
             val (mnemonic, privateKey) = Mnemonic.generate(wordlist)
-            val publicKey = privateKey.toPublicKey()
+            val publicKey = Ed25519.toPublicKey(privateKey)
             return NewMnemonicInfo(mnemonic, Address.encode(publicKey), publicKey.toString())
         }
 
         fun fromString(string: String): NewMnemonicInfo {
 
             val privateKey = Mnemonic.fromString(string)
-            val publicKey = privateKey.toPublicKey()
+            val publicKey = Ed25519.toPublicKey(privateKey)
             return NewMnemonicInfo(string, Address.encode(publicKey), publicKey.toString())
         }
     }

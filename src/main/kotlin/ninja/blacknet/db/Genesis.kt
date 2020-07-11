@@ -13,6 +13,7 @@ import com.google.common.io.Resources
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.list
 import ninja.blacknet.Config
+import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.Mnemonic
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
@@ -45,11 +46,11 @@ object Genesis {
         // rblacknet1y73v0n57axhsgkyrypusz7jlhwclz4gextzvhyqnj6awjhmapu9qklf7u2
         val mnemonic1 = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖"
         val privateKey1 = Mnemonic.fromString(mnemonic1)
-        val publicKey1 = privateKey1.toPublicKey()
+        val publicKey1 = Ed25519.toPublicKey(privateKey1)
 
         // rblacknet15edw70jp9qp39pdlqdncxtpc45fkdg0g6h3et0xu0gtu8v5t4vwspmsgfx
         val mnemonic2 = "胡 允 空 桥 料 状 纱 角 钠 灌 绝 件"
         val privateKey2 = Mnemonic.fromString(mnemonic2)
-        val publicKey2 = privateKey2.toPublicKey()
+        val publicKey2 = Ed25519.toPublicKey(privateKey2)
     }
 }

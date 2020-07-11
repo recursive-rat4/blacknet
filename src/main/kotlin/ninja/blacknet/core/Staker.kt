@@ -34,7 +34,7 @@ private val logger = KotlinLogging.logger {}
 object Staker {
     private class StakerState(
             val publicKey: PublicKey,
-            val privateKey: PrivateKey
+            val privateKey: ByteArray
     ) {
         val startTime = currentTimeMillis()
         var hashCounter = 0
@@ -143,8 +143,8 @@ object Staker {
         }
     }
 
-    suspend fun startStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
-        val publicKey = privateKey.toPublicKey()
+    suspend fun startStaking(privateKey: ByteArray): Boolean = stakers.mutex.withLock {
+        val publicKey = Ed25519.toPublicKey(privateKey)
 
         if (stakers.list.find { it.publicKey == publicKey } != null) {
             logger.info("Stakeholder is already active")
@@ -167,8 +167,8 @@ object Staker {
         return true
     }
 
-    suspend fun stopStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
-        val publicKey = privateKey.toPublicKey()
+    suspend fun stopStaking(privateKey: ByteArray): Boolean = stakers.mutex.withLock {
+        val publicKey = Ed25519.toPublicKey(privateKey)
         val i = stakers.list.indexOfFirst { it.publicKey == publicKey }
         if (i != -1) {
             stakers.list.removeAt(i)
@@ -184,8 +184,8 @@ object Staker {
         return true
     }
 
-    suspend fun isStaking(privateKey: PrivateKey): Boolean = stakers.mutex.withLock {
-        return stakers.list.find { it.privateKey == privateKey } != null
+    suspend fun isStaking(privateKey: ByteArray): Boolean = stakers.mutex.withLock {
+        return stakers.list.find { it.privateKey.contentEquals(privateKey) } != null
     }
 
     suspend fun info(publicKey: PublicKey?): StakingInfo {

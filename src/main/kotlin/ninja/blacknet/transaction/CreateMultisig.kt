@@ -54,8 +54,8 @@ class CreateMultisig(
             buildHash { encodeHash(hash); encodeInt(dataIndex); }
         )
 
-    fun sign(from: PublicKey, seq: Int, dataIndex: Int, privateKey: PrivateKey): Boolean {
-        val publicKey = privateKey.toPublicKey()
+    fun sign(from: PublicKey, seq: Int, dataIndex: Int, privateKey: ByteArray): Boolean {
+        val publicKey = Ed25519.toPublicKey(privateKey)
         val index = deposits.indexOfFirst { it.from == publicKey }
         if (index == -1) return false
         val signature = Ed25519.sign(hash(from, seq, dataIndex), privateKey)

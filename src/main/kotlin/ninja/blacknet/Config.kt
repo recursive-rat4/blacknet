@@ -9,9 +9,11 @@
 
 package ninja.blacknet
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PrivateKey
+import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.serialization.ConfigDecoder
 import ninja.blacknet.serialization.ConfigReader
 import java.io.File
@@ -36,7 +38,8 @@ class Config(
         val i2psamhost: String? = null,
         val i2psamport: Int? = null,
         val dbcache: Size,
-        var mnemonics: List<PrivateKey>? = null,
+        @Serializable(with = MnemonicsSerializer::class)
+        var mnemonics: List<ByteArray>? = null,
         // 主從模式
         val softblocksizelimit: Size = Size(PoS.MAX_BLOCK_SIZE),
         val txpoolsize: Size = Size(128 * 1024 * 1024),
@@ -66,3 +69,4 @@ class Config(
 }
 
 private class ConfigError(message: String) : Error(message)
+private object MnemonicsSerializer : KSerializer<List<ByteArray>> by ListSerializer(PrivateKeySerializer)

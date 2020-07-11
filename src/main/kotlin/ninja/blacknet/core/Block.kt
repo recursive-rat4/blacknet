@@ -27,7 +27,7 @@ class Block(
         @Serializable(with = ByteArrayListSerializer::class)
         val transactions: ArrayList<ByteArray>
 ) {
-    fun sign(privateKey: PrivateKey): Pair<Hash, ByteArray> {
+    fun sign(privateKey: ByteArray): Pair<Hash, ByteArray> {
         val bytes = BinaryEncoder.toBytes(serializer(), this)
         contentHash = contentHash(bytes)
         System.arraycopy(contentHash.bytes, 0, bytes, CONTENT_HASH_POS, Hash.SIZE_BYTES)
