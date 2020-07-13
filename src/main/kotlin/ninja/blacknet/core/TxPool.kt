@@ -17,11 +17,11 @@ import ninja.blacknet.api.APIServer
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.util.HashMap
 import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
@@ -29,10 +29,10 @@ private val logger = KotlinLogging.logger {}
 object TxPool : MemPool(), Ledger {
     internal val mutex = Mutex()
     private val rejects = HashSet<Hash>()
-    private val undoAccounts = HashMap<PublicKey, AccountState?>()
+    private val undoAccounts = HashMap<ByteArray, AccountState?>()
     private val undoHtlcs = HashMap<HashTimeLockContractId, Pair<Boolean, HTLC?>>()
     private val undoMultisigs = HashMap<MultiSignatureLockContractId, Pair<Boolean, Multisig?>>()
-    private val accounts = HashMap<PublicKey, AccountState>()
+    private val accounts = HashMap<ByteArray, AccountState>()
     private val htlcs = HashMap<HashTimeLockContractId, HTLC?>()
     private val multisigs = HashMap<MultiSignatureLockContractId, Multisig?>()
     private var transactions = ArrayList<Hash>(maxSeenSizeImpl())
@@ -75,7 +75,7 @@ object TxPool : MemPool(), Ledger {
         return !rejects.contains(hash) && !containsImpl(hash)
     }
 
-    suspend fun getSequence(key: PublicKey): Int = mutex.withLock {
+    suspend fun getSequence(key: ByteArray): Int = mutex.withLock {
         val account = accounts.get(key)
         if (account != null)
             return account.seq
@@ -104,7 +104,7 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.state().height
     }
 
-    override fun get(key: PublicKey): AccountState? {
+    override fun get(key: ByteArray): AccountState? {
         val account = accounts.get(key)
         if (account != null) {
             if (!undoAccounts.containsKey(key))
@@ -117,7 +117,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    override fun getOrCreate(key: PublicKey): AccountState {
+    override fun getOrCreate(key: ByteArray): AccountState {
         val account = get(key)
         return if (account != null) {
             account
@@ -127,7 +127,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    override fun set(key: PublicKey, state: AccountState) {
+    override fun set(key: ByteArray, state: AccountState) {
         accounts.put(key, state)
     }
 

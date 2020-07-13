@@ -12,15 +12,17 @@ package ninja.blacknet.core
 import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashLock
 import ninja.blacknet.contract.TimeLock
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 
 @Serializable
 class HTLC(
         val height: Int,
         val time: Long,
         val amount: Long,
-        val from: PublicKey,
-        val to: PublicKey,
+        @Serializable(with = PublicKeySerializer::class)
+        val from: ByteArray,
+        @Serializable(with = PublicKeySerializer::class)
+        val to: ByteArray,
         val timeLock: TimeLock,
         val hashLock: HashLock
 ) {

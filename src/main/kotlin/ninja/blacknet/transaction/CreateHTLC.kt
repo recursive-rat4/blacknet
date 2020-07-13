@@ -17,7 +17,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.encodeHash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -31,7 +31,8 @@ import ninja.blacknet.serialization.LongSerializer
 class CreateHTLC(
         @Serializable(with = LongSerializer::class)
         val amount: Long,
-        val to: PublicKey,
+        @Serializable(with = PublicKeySerializer::class)
+        val to: ByteArray,
         val timeLock: TimeLock,
         val hashLock: HashLock
 ) : TxData {
@@ -69,5 +70,5 @@ class CreateHTLC(
         return Accepted
     }
 
-    fun involves(publicKey: PublicKey) = to == publicKey
+    fun involves(publicKey: ByteArray) = to.contentEquals(publicKey)
 }

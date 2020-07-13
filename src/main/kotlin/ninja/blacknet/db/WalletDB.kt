@@ -44,7 +44,7 @@ object WalletDB {
     private val TX_KEY = DBKey(65, Hash.SIZE_BYTES)
     private val VERSION_KEY = DBKey(66, 0)
     private val WALLET_KEY = DBKey(67, Hash.SIZE_BYTES)
-    private val wallets = HashMap<PublicKey, Wallet>()
+    private val wallets = HashMap<ByteArray, Wallet>()
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val version = BinaryEncoder()
@@ -66,9 +66,9 @@ object WalletDB {
             if (keysBytes != null) {
                 var txns = 0
                 val decoder = BinaryDecoder(keysBytes)
-                for (i in 0 until keysBytes.size step PublicKey.SIZE_BYTES) {
-                    val publicKey = PublicKey(decoder.decodeFixedByteArray(PublicKey.SIZE_BYTES))
-                    val walletBytes = LevelDB.get(WALLET_KEY, publicKey.bytes)!!
+                for (i in 0 until keysBytes.size step PUBLIC_KEY_SIZE_BYTES) {
+                    val publicKey = decoder.decodeFixedByteArray(PUBLIC_KEY_SIZE_BYTES)
+                    val walletBytes = LevelDB.get(WALLET_KEY, publicKey)!!
                     val wallet = BinaryDecoder(walletBytes).decode(Wallet.serializer())
                     txns += wallet.transactions.size
                     wallets.put(publicKey, wallet)
@@ -163,7 +163,7 @@ object WalletDB {
         }
     }
 
-    suspend fun getConfirmations(publicKey: PublicKey, hash: Hash): Int? = BlockDB.mutex.withLock {
+    suspend fun getConfirmations(publicKey: ByteArray, hash: Hash): Int? = BlockDB.mutex.withLock {
         return mutex.withLock {
             val wallet = wallets.get(publicKey)
             if (wallet != null) {
@@ -179,7 +179,7 @@ object WalletDB {
         }
     }
 
-    suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
+    suspend fun getSequence(publicKey: ByteArray): Int = mutex.withLock {
         val wallet = getWalletImpl(publicKey)
         val seq = wallet.seq
         return@withLock if (seq < Config.instance.wallet_seqthreshold)
@@ -198,7 +198,7 @@ object WalletDB {
         val (block, _) = BlockDB.blockImpl(blockHash)!!
         val txHashes = block.transactions.map { Transaction.hash(it) }
 
-        val updated = HashMap<PublicKey, Wallet>(wallets.size)
+        val updated = HashMap<ByteArray, Wallet>(wallets.size)
         wallets.forEach { (publicKey, wallet) ->
             val generated = wallet.transactions.get(blockHash)
             if (generated != null) {
@@ -215,7 +215,7 @@ object WalletDB {
         }
 
         updated.forEach { (publicKey, wallet) ->
-            batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
+            batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
         }
     }
 
@@ -225,9 +225,9 @@ object WalletDB {
         }
     }
 
-    private suspend fun processBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch, rescan: Boolean) {
+    private suspend fun processBlockImpl(publicKey: ByteArray, wallet: Wallet, hash: Hash, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch, rescan: Boolean) {
         if (height != 0) {
-            if (block!!.generator == publicKey) {
+            if (block!!.generator.contentEquals(publicKey)) {
                 val tx = Transaction.generated(publicKey, height, hash, generated)
                 val txBytes = BinaryEncoder.toBytes(Transaction.serializer(), tx)
                 val txHash = hash // re-use block hash as hash of Generated tx
@@ -262,7 +262,7 @@ object WalletDB {
         }
     }
 
-    private fun processTransactionDataImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, dataIndex: Int, type: Byte, bytes: ByteArray, height: Int, from: Boolean): Boolean {
+    private fun processTransactionDataImpl(publicKey: ByteArray, wallet: Wallet, hash: Hash, dataIndex: Int, type: Byte, bytes: ByteArray, height: Int, from: Boolean): Boolean {
         return when (type) {
             TxType.Transfer.type -> {
                 if (from) {
@@ -335,7 +335,7 @@ object WalletDB {
             TxType.WithdrawFromLease.type -> {
                 val data = BinaryDecoder(bytes).decode(WithdrawFromLease.serializer())
                 if (from) {
-                    val lease = wallet.outLeases.find { it.publicKey == data.to && it.height == data.height && it.amount == data.amount }
+                    val lease = wallet.outLeases.find { it.publicKey.contentEquals(data.to) && it.height == data.height && it.amount == data.amount }
                     if (lease != null)
                         lease.amount -= data.withdraw
                     else
@@ -361,10 +361,10 @@ object WalletDB {
         }
     }
 
-    private suspend fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
+    private suspend fun processTransactionImpl(publicKey: ByteArray, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
         val txData = wallet.transactions.get(hash)
         if (txData == null) {
-            val from = tx.from == publicKey
+            val from = tx.from.contentEquals(publicKey)
             val types = if (tx.type == TxType.Generated.type) {
                 listOf(TransactionDataType(tx.type, 0))
             } else {
@@ -396,7 +396,7 @@ object WalletDB {
 
                 if (!rescan) {
                     APIServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
-                    batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
+                    batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
                 }
                 if (store) {
                     batch.put(TX_KEY, hash.bytes, bytes)
@@ -410,7 +410,7 @@ object WalletDB {
             txData.height = height
 
             if (!rescan) {
-                batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
+                batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
             }
 
             return true
@@ -493,16 +493,16 @@ object WalletDB {
         private object TransactionsSerializer : KSerializer<HashMap<Hash, TransactionData>> by HashMapSerializer(Hash.serializer(), TransactionData.serializer())
     }
 
-    private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: PublicKey, wallet: Wallet) {
+    private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: ByteArray, wallet: Wallet) {
         wallets.put(publicKey, wallet)
-        batch.put(WALLET_KEY, publicKey.bytes, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
+        batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
         val encoder = BinaryEncoder()
-        wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey.bytes) }
+        wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey) }
         val keysBytes = encoder.toBytes()
         batch.put(KEYS_KEY, keysBytes)
     }
 
-    internal suspend fun getWalletImpl(publicKey: PublicKey): Wallet {
+    internal suspend fun getWalletImpl(publicKey: ByteArray): Wallet {
         var wallet = wallets.get(publicKey)
         if (wallet != null)
             return wallet
@@ -545,7 +545,7 @@ object WalletDB {
             Hash.ZERO
     }
 
-    private suspend fun rescanBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
+    private suspend fun rescanBlockImpl(publicKey: ByteArray, wallet: Wallet, hash: Hash, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
         if (height != 0) {
             val block = BlockDB.blockImpl(hash)!!.first
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
@@ -590,7 +590,7 @@ object WalletDB {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 val key = WALLET_KEY - entry ?: break
-                val file = File(backupDir, Address.encode(PublicKey(key)))
+                val file = File(backupDir, Address.encode(key))
                 val stream = file.outputStream().buffered().data()
 
                 val bytes = entry.value

@@ -16,7 +16,7 @@ import io.ktor.routing.Route
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Staker
 import ninja.blacknet.crypto.PrivateKeySerializer
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.ktor.requests.post
@@ -63,7 +63,8 @@ fun Route.staking() {
 
     @Serializable
     class Staking(
-            val address: PublicKey? = null
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val publicKey = address

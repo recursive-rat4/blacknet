@@ -31,7 +31,8 @@ class CreateMultisig(
 ) : TxData {
     @Serializable
     class DepositElement(
-            val from: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val from: ByteArray,
             @Serializable(with = LongSerializer::class)
             val amount: Long
     ) {
@@ -54,16 +55,16 @@ class CreateMultisig(
             buildHash { encodeHash(hash); encodeInt(dataIndex); }
         )
 
-    fun sign(from: PublicKey, seq: Int, dataIndex: Int, privateKey: ByteArray): Boolean {
+    fun sign(from: ByteArray, seq: Int, dataIndex: Int, privateKey: ByteArray): Boolean {
         val publicKey = Ed25519.toPublicKey(privateKey)
-        val index = deposits.indexOfFirst { it.from == publicKey }
+        val index = deposits.indexOfFirst { it.from.contentEquals(publicKey) }
         if (index == -1) return false
         val signature = Ed25519.sign(hash(from, seq, dataIndex), privateKey)
         signatures.add(SignatureElement(index.toByte(), signature))
         return true
     }
 
-    private fun hash(from: PublicKey, seq: Int, dataIndex: Int): Hash {
+    private fun hash(from: ByteArray, seq: Int, dataIndex: Int): Hash {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = BinaryEncoder.toBytes(serializer(), copy)
         return buildHash {
@@ -110,17 +111,17 @@ class CreateMultisig(
                 }
                 val status = depositAccount.credit(amount)
                 if (status != Accepted) {
-                    return notAccepted("CreateMultisig $index", status)
+                    return notAccepted("CreateMultisig at index $index", status)
                 }
                 ledger.set(publicKey, depositAccount)
             }
         }
 
         val id = id(hash, dataIndex)
-        val multisig = Multisig(n, deposits.map { (from, amount) -> Pair(from, amount) })
+        val multisig = Multisig(n, deposits.map { (from, amount) -> Multisig.DepositElement(from, amount) })
         ledger.addMultisig(id, multisig)
         return Accepted
     }
 
-    fun involves(publicKey: PublicKey) = deposits.find { it.from == publicKey } != null
+    fun involves(publicKey: ByteArray) = deposits.find { it.from.contentEquals(publicKey) } != null
 }

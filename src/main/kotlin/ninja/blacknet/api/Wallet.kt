@@ -81,7 +81,8 @@ fun Route.wallet() {
     class DecryptPaymentId(
             @Serializable(with = PrivateKeySerializer::class)
             val mnemonic: ByteArray,
-            val from: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val from: ByteArray,
             val message: String
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
@@ -116,7 +117,8 @@ fun Route.wallet() {
 
     @Serializable
     class VerifyMessage(
-            val from: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val from: ByteArray,
             @Serializable(with = SignatureSerializer::class)
             val signature: ByteArray,
             val message: String
@@ -133,7 +135,8 @@ fun Route.wallet() {
 
     @Serializable
     class Transactions(
-            val address: PublicKey
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
             val publicKey = address
@@ -153,7 +156,8 @@ fun Route.wallet() {
 
     @Serializable
     class OutLeases(
-            val address: PublicKey
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
             val publicKey = address
@@ -169,7 +173,8 @@ fun Route.wallet() {
 
     @Serializable
     class Sequence(
-            val address: PublicKey
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val publicKey = address
@@ -184,7 +189,8 @@ fun Route.wallet() {
 
     @Serializable
     class TransactionRequest(
-            val address: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray,
             val hash: Hash,
             val raw: Boolean = false
     ) : Request {
@@ -212,7 +218,8 @@ fun Route.wallet() {
 
     @Serializable
     class Confirmations(
-            val address: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray,
             val hash: Hash
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
@@ -231,7 +238,8 @@ fun Route.wallet() {
 
     @Serializable
     class ReferenceChain(
-            val address: PublicKey
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             @Suppress("UNUSED_VARIABLE")
@@ -247,7 +255,8 @@ fun Route.wallet() {
 
     @Serializable
     class TxCount(
-            val address: PublicKey
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
             val publicKey = address
@@ -263,7 +272,8 @@ fun Route.wallet() {
 
     @Serializable
     class ListTransactions(
-            val address: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray,
             val offset: Int = 0,
             val max: Int = 100,
             val type: Int? = null
@@ -333,7 +343,8 @@ fun Route.wallet() {
 
     @Serializable
     class ListSinceBlock(
-            val address: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray,
             val hash: Hash = Hash.ZERO
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {

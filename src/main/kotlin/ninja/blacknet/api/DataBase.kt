@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
@@ -152,7 +152,8 @@ fun Route.dataBase() {
 
     @Serializable
     class Account(
-            val address: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val address: ByteArray,
             val confirmations: Int = PoS.DEFAULT_CONFIRMATIONS
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {

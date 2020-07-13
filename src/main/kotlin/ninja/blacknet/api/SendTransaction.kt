@@ -22,7 +22,7 @@ import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PrivateKeySerializer
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
@@ -39,7 +39,8 @@ fun Route.sendTransaction() {
             val mnemonic: ByteArray,
             val fee: Long,
             val amount: Long,
-            val to: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val to: ByteArray,
             val encrypted: Byte? = null,
             val message: String? = null,
             val referenceChain: Hash? = null
@@ -97,7 +98,8 @@ fun Route.sendTransaction() {
             val mnemonic: ByteArray,
             val fee: Long,
             val amount: Long,
-            val to: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val to: ByteArray,
             val referenceChain: Hash? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
@@ -124,7 +126,8 @@ fun Route.sendTransaction() {
             val mnemonic: ByteArray,
             val fee: Long,
             val amount: Long,
-            val to: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val to: ByteArray,
             val height: Int,
             val referenceChain: Hash? = null
     ) : Request {
@@ -153,7 +156,8 @@ fun Route.sendTransaction() {
             val fee: Long,
             val withdraw: Long,
             val amount: Long,
-            val to: PublicKey,
+            @Serializable(with = PublicKeySerializer::class)
+            val to: ByteArray,
             val height: Int,
             val referenceChain: Hash? = null
     ) : Request {

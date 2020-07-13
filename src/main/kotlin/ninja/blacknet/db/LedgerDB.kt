@@ -32,6 +32,7 @@ import ninja.blacknet.serialization.decodeVarInt
 import ninja.blacknet.serialization.encodeVarInt
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
+import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.toByteArray
@@ -40,7 +41,7 @@ private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
     private const val VERSION = 8
-    private val ACCOUNT_KEY = DBKey(1, PublicKey.SIZE_BYTES)
+    private val ACCOUNT_KEY = DBKey(1, PUBLIC_KEY_SIZE_BYTES)
     private val CHAIN_KEY = DBKey(2, Hash.SIZE_BYTES)
     private val HTLC_KEY = DBKey(3, HashTimeLockContractId.SIZE_BYTES)
     private val MULTISIG_KEY = DBKey(4, MultiSignatureLockContractId.SIZE_BYTES)
@@ -82,7 +83,7 @@ object LedgerDB {
         Genesis.balances.forEach { (publicKey, balance) ->
             val account = AccountState()
             account.stake = balance
-            batch.put(ACCOUNT_KEY, publicKey.bytes, BinaryEncoder.toBytes(AccountState.serializer(), account))
+            batch.put(ACCOUNT_KEY, publicKey, BinaryEncoder.toBytes(AccountState.serializer(), account))
             supply += balance
         }
 
@@ -287,11 +288,11 @@ object LedgerDB {
         }
     }
 
-    private fun getAccountBytes(key: PublicKey): ByteArray? {
-        return LevelDB.get(ACCOUNT_KEY, key.bytes)
+    private fun getAccountBytes(key: ByteArray): ByteArray? {
+        return LevelDB.get(ACCOUNT_KEY, key)
     }
 
-    fun get(key: PublicKey): AccountState? {
+    fun get(key: ByteArray): AccountState? {
         return getAccountBytes(key)?.let { bytes ->
             BinaryDecoder(bytes).decode(AccountState.serializer())
         }
@@ -444,9 +445,9 @@ object LedgerDB {
 
         undo.accounts.forEach { (key, bytes) ->
             if (bytes.isNotEmpty())
-                batch.put(ACCOUNT_KEY, key.bytes, bytes)
+                batch.put(ACCOUNT_KEY, key, bytes)
             else
-                batch.delete(ACCOUNT_KEY, key.bytes)
+                batch.delete(ACCOUNT_KEY, key)
         }
         undo.htlcs.forEach { (id, bytes) ->
             if (bytes.isNotEmpty())
@@ -585,7 +586,7 @@ object LedgerDB {
     )
 
     private fun iterateImpl(
-            account: (PublicKey, AccountState) -> Unit,
+            account: (ByteArray, AccountState) -> Unit,
             htlc: (HashTimeLockContractId, HTLC) -> Unit,
             multisig: (MultiSignatureLockContractId, Multisig) -> Unit
     ) {
@@ -594,7 +595,7 @@ object LedgerDB {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 val key = ACCOUNT_KEY - entry ?: break
-                account(PublicKey(key), BinaryDecoder(entry.value).decode(AccountState.serializer()))
+                account(key, BinaryDecoder(entry.value).decode(AccountState.serializer()))
             }
         }
         if (LevelDB.seek(iterator, HTLC_KEY)) {
@@ -621,12 +622,12 @@ object LedgerDB {
             private val blockPrevious: Hash,
             private val blockTime: Long,
             private val blockSize: Int,
-            private val blockGenerator: PublicKey,
+            private val blockGenerator: ByteArray,
             private val state: State = LedgerDB.state,
             private val height: Int = state.height + 1,
             private var supply: Long = state.supply,
             private val rollingCheckpoint: Hash = LedgerDB.getNextRollingCheckpoint(),
-            private val accounts: MutableMap<PublicKey, AccountState> = HashMap(),
+            private val accounts: MutableMap<ByteArray, AccountState> = HashMap(),
             private val htlcs: MutableMap<HashTimeLockContractId, HTLC?> = HashMap(),
             private val multisigs: MutableMap<MultiSignatureLockContractId, Multisig?> = HashMap(),
             private val undo: UndoBlock = UndoBlock(
@@ -666,7 +667,7 @@ object LedgerDB {
             return height
         }
 
-        override fun get(key: PublicKey): AccountState? {
+        override fun get(key: ByteArray): AccountState? {
             val account = accounts.get(key)
             return if (account != null) {
                 account
@@ -685,7 +686,7 @@ object LedgerDB {
             }
         }
 
-        override fun getOrCreate(key: PublicKey): AccountState {
+        override fun getOrCreate(key: ByteArray): AccountState {
             val account = get(key)
             return if (account != null) {
                 account
@@ -695,7 +696,7 @@ object LedgerDB {
             }
         }
 
-        override fun set(key: PublicKey, state: AccountState) {
+        override fun set(key: ByteArray, state: AccountState) {
             accounts.set(key, state)
         }
 
@@ -774,7 +775,7 @@ object LedgerDB {
             batch.put(CHAIN_KEY, blockPrevious.bytes, BinaryEncoder.toBytes(ChainIndex.serializer(), prevIndex!!))
             batch.put(CHAIN_KEY, blockHash.bytes, BinaryEncoder.toBytes(ChainIndex.serializer(), chainIndex!!))
             for ((key, account) in accounts)
-                batch.put(ACCOUNT_KEY, key.bytes, BinaryEncoder.toBytes(AccountState.serializer(), account))
+                batch.put(ACCOUNT_KEY, key, BinaryEncoder.toBytes(AccountState.serializer(), account))
             for ((id, htlc) in htlcs)
                 if (htlc != null)
                     batch.put(HTLC_KEY, id.hash.bytes, BinaryEncoder.toBytes(HTLC.serializer(), htlc))
@@ -796,7 +797,7 @@ object LedgerDB {
     @Serializable
     class Snapshot(
             @Serializable(with = BalancesSerializer::class)
-            private val balances: HashMap<PublicKey, Long> = HashMap()
+            private val balances: HashMap<ByteArray, Long> = HashMap()
     ) {
         fun supply(): Long {
             var supply = 0L
@@ -804,14 +805,14 @@ object LedgerDB {
             return supply
         }
 
-        fun credit(publicKey: PublicKey, amount: Long) {
+        fun credit(publicKey: ByteArray, amount: Long) {
             if (amount != 0L) {
                 val balance = balances.get(publicKey) ?: 0L
                 balances.put(publicKey, balance + amount)
             }
         }
 
-        private object BalancesSerializer : KSerializer<Map<PublicKey, Long>> by MapSerializer(PublicKey.serializer(), VarLongSerializer)
+        private object BalancesSerializer : KSerializer<Map<ByteArray, Long>> by MapSerializer(PublicKeySerializer, VarLongSerializer)
     }
 
     private fun snapshotImpl() {

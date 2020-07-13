@@ -16,14 +16,15 @@ import ninja.blacknet.Config
 import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.Mnemonic
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.util.HashMap
 
 object Genesis {
     const val TIME: Long = 1545555600
 
     val balances by lazy {
-        val map = HashMap<PublicKey, Long>()
+        val map = HashMap<ByteArray, Long>()
 
         if (Config.instance.regtest) {
             map.put(RegTest.publicKey1, 1000000000 * PoS.COIN)
@@ -40,7 +41,11 @@ object Genesis {
     }
 
     @Serializable
-    private class GenesisJsonEntry(val publicKey: PublicKey, val balance: Long)
+    private class GenesisJsonEntry(
+            @Serializable(with = PublicKeySerializer::class)
+            val publicKey: ByteArray,
+            val balance: Long
+    )
 
     object RegTest {
         // rblacknet1y73v0n57axhsgkyrypusz7jlhwclz4gextzvhyqnj6awjhmapu9qklf7u2

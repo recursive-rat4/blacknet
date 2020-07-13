@@ -10,17 +10,29 @@
 package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.serialization.LongSerializer
+import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.sumByLong
 
 @Serializable
 class Multisig(
         val n: Byte,
-        val deposits: List<Pair<PublicKey, Long>>
+        val deposits: List<DepositElement>
 ) {
 
     fun amount(): Long {
-        return deposits.sumByLong { it.second }
+        return deposits.sumByLong { it.amount }
     }
 
+    @Serializable
+    class DepositElement(
+            @Serializable(with = PublicKeySerializer::class)
+            val from: ByteArray,
+            @Serializable(with = LongSerializer::class)
+            val amount: Long
+    ) {
+        operator fun component1() = from
+        operator fun component2() = amount
+    }
 }

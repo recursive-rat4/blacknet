@@ -53,9 +53,9 @@ object Ed25519 {
                 B)
     }
 
-    fun toPublicKey(privateKey: ByteArray): PublicKey {
+    fun toPublicKey(privateKey: ByteArray): ByteArray {
         val key = EdDSAPrivateKeySpec(privateKey, spec)
-        return PublicKey(key.getA().toByteArray())
+        return key.getA().toByteArray()
     }
 
     fun sign(hash: Hash, privateKey: ByteArray): ByteArray {
@@ -68,7 +68,7 @@ object Ed25519 {
         return edDSAEngine.sign()
     }
 
-    fun verify(signature: ByteArray, hash: Hash, publicKey: PublicKey): Boolean {
+    fun verify(signature: ByteArray, hash: Hash, publicKey: ByteArray): Boolean {
         val A = toGroupElement(publicKey)
         val edDSAPublicKeySpec = EdDSAPublicKeySpec(A, spec)
         val edDSAPublicKey = EdDSAPublicKey(edDSAPublicKeySpec)
@@ -79,9 +79,9 @@ object Ed25519 {
         return edDSAEngine.verify(signature)
     }
 
-    fun x25519(privateKey: ByteArray, publicKey: PublicKey): ByteArray {
-        val pubKey = toCurve25519(publicKey)
-        val privKey = toCurve25519(privateKey)
+    fun x25519(privateKey: ByteArray, publicKey: ByteArray): ByteArray {
+        val pubKey = publicKeyToCurve25519(publicKey)
+        val privKey = privateKeyToCurve25519(privateKey)
 
         var x1 = field.fromByteArray(pubKey)
         var x2 = field.ONE
@@ -128,14 +128,14 @@ object Ed25519 {
         return x2.toByteArray()
     }
 
-    private fun toCurve25519(publicKey: PublicKey): ByteArray {
+    private fun publicKeyToCurve25519(publicKey: ByteArray): ByteArray {
         val A = toGroupElement(publicKey)
         val one_minus_y = field.ONE - A.y
         val x = (field.ONE + A.y) * one_minus_y.invert()
         return x.toByteArray()
     }
 
-    private fun toCurve25519(privateKey: ByteArray): ByteArray {
+    private fun privateKeyToCurve25519(privateKey: ByteArray): ByteArray {
         val hash = buildHash(BLAKE2_B_512) { encodePrivateKey(privateKey) }
         val h = hash.copyOf(PRIVATE_KEY_SIZE_BYTES)
         h[0] = h[0] and 248.toByte()
@@ -144,9 +144,9 @@ object Ed25519 {
         return h
     }
 
-    private fun toGroupElement(publicKey: PublicKey): GroupElement {
+    private fun toGroupElement(publicKey: ByteArray): GroupElement {
         try {
-            return GroupElement(curve, publicKey.bytes)
+            return GroupElement(curve, publicKey)
         } catch (e: IllegalArgumentException) {
             throw IllegalArgumentException("Invalid public key: not a valid point on the curve")
         }

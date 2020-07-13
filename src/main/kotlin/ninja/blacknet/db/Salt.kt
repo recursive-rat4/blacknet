@@ -12,7 +12,7 @@ package ninja.blacknet.db
 import mu.KotlinLogging
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PUBLIC_KEY_SIZE_BYTES
 import ninja.blacknet.crypto.nextBytes
 import java.security.SecureRandom
 
@@ -54,7 +54,7 @@ object Salt {
         while (iterator.hasNext()) {
             val entry = iterator.next()
             var key: ByteArray?
-            key = Pair("account", PublicKey.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(1, PublicKey.SIZE_BYTES)); continue }
+            key = Pair("account", PUBLIC_KEY_SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(1, PUBLIC_KEY_SIZE_BYTES)); continue }
             key = Pair("chain", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(2, Hash.SIZE_BYTES)); continue }
             key = Pair("htlc", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(3, Hash.SIZE_BYTES)); continue }
             key = Pair("multisig", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(4, Hash.SIZE_BYTES)); continue }

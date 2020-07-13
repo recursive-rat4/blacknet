@@ -12,7 +12,6 @@ package ninja.blacknet.core
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
 
 interface Ledger {
     fun addSupply(amount: Long)
@@ -20,9 +19,9 @@ interface Ledger {
     fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long
     fun height(): Int
-    fun get(key: PublicKey): AccountState?
-    fun getOrCreate(key: PublicKey): AccountState
-    fun set(key: PublicKey, state: AccountState)
+    fun get(key: ByteArray): AccountState?
+    fun getOrCreate(key: ByteArray): AccountState
+    fun set(key: ByteArray, state: AccountState)
     fun addHTLC(id: HashTimeLockContractId, htlc: HTLC)
     fun getHTLC(id: HashTimeLockContractId): HTLC?
     fun removeHTLC(id: HashTimeLockContractId)

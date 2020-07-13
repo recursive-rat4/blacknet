@@ -77,7 +77,7 @@ fun Route.APIV1() {
                     val keys = APIServer.walletNotifyV1.map.get(outgoing)
                     if (keys == null) {
                         @Suppress("NAME_SHADOWING")
-                        val keys = HashSet<PublicKey>()
+                        val keys = HashSet<ByteArray>()
                         keys.add(publicKey)
                         APIServer.walletNotifyV1.map.put(outgoing, keys)
                     } else {

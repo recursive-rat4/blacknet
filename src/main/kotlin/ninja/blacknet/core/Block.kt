@@ -20,7 +20,8 @@ class Block(
         val version: Int,
         val previous: Hash,
         val time: Long,
-        val generator: PublicKey,
+        @Serializable(with = PublicKeySerializer::class)
+        val generator: ByteArray,
         var contentHash: Hash,
         @Serializable(with = SignatureSerializer::class)
         var signature: ByteArray,
@@ -53,7 +54,7 @@ class Block(
 
     companion object {
         const val VERSION = 2
-        const val CONTENT_HASH_POS = Int.SIZE_BYTES + Hash.SIZE_BYTES + Long.SIZE_BYTES + PublicKey.SIZE_BYTES
+        const val CONTENT_HASH_POS = Int.SIZE_BYTES + Hash.SIZE_BYTES + Long.SIZE_BYTES + PUBLIC_KEY_SIZE_BYTES
         const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE_BYTES
         const val HEADER_SIZE_BYTES = SIGNATURE_POS + SIGNATURE_SIZE_BYTES
 
@@ -63,7 +64,7 @@ class Block(
             }
         }
 
-        fun create(previous: Hash, time: Long, generator: PublicKey): Block {
+        fun create(previous: Hash, time: Long, generator: ByteArray): Block {
             return Block(VERSION, previous, time, generator, Hash.ZERO, EMPTY_SIGNATURE, ArrayList())
         }
     }

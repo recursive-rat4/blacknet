@@ -33,20 +33,19 @@ object Address {
 
     private val HRP = if (Config.instance.regtest) HRP_REGTEST else HRP_MAINNET
 
-    fun encode(publicKey: PublicKey): String {
-        val bytes = publicKey.bytes
-        val data = Bech32.convertBits(bytes, 8, 5, true)
+    fun encode(publicKey: ByteArray): String {
+        val data = Bech32.convertBits(publicKey, 8, 5, true)
         return Bech32.encode(HRP, data)
     }
 
-    fun decode(string: String): PublicKey {
+    fun decode(string: String): ByteArray {
         val (hrp, data) = Bech32.decode(string)
         if (!HRP.contentEquals(hrp))
             throw Exception("Expected HRP ${String(HRP, Charsets.US_ASCII)} actual ${String(hrp, Charsets.US_ASCII)}")
         val bytes = Bech32.convertBits(data, 5, 8, false)
-        if (PublicKey.SIZE_BYTES != bytes.size)
-            throw Exception("Expected size ${PublicKey.SIZE_BYTES} actual ${bytes.size}")
-        return PublicKey(bytes)
+        if (PUBLIC_KEY_SIZE_BYTES != bytes.size)
+            throw Exception("Expected size $PUBLIC_KEY_SIZE_BYTES actual ${bytes.size}")
+        return bytes
     }
 
     fun encode(version: Byte, bytes: ByteArray): String {

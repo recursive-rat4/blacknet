@@ -11,7 +11,6 @@ package ninja.blacknet.api
 
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 
@@ -23,7 +22,7 @@ class AccountInfo(
         val stakingBalance: String
 ) {
     companion object {
-        suspend fun get(publicKey: PublicKey, confirmations: Int): AccountInfo? = BlockDB.mutex.withLock {
+        suspend fun get(publicKey: ByteArray, confirmations: Int): AccountInfo? = BlockDB.mutex.withLock {
             val account = LedgerDB.get(publicKey) ?: return null
             val state = LedgerDB.state()
             return AccountInfo(

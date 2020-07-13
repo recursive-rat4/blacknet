@@ -18,7 +18,7 @@ object Message {
         return Ed25519.sign(hash(message), privateKey)
     }
 
-    fun verify(publicKey: PublicKey, signature: ByteArray, message: String): Boolean {
+    fun verify(publicKey: ByteArray, signature: ByteArray, message: String): Boolean {
         return Ed25519.verify(signature, hash(message), publicKey)
     }
 

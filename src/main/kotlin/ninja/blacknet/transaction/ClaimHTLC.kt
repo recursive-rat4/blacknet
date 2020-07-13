@@ -33,7 +33,7 @@ class ClaimHTLC(
         if (htlc == null) {
             return Invalid("HTLC not found")
         }
-        if (tx.from != htlc.to) {
+        if (!tx.from.contentEquals(htlc.to)) {
             return Invalid("Invalid sender")
         }
         if (!htlc.hashLock.verify(preimage)) {

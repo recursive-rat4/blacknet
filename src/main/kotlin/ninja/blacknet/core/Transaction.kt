@@ -24,7 +24,8 @@ import ninja.blacknet.util.emptyByteArray
 class Transaction(
         @Serializable(with = SignatureSerializer::class)
         var signature: ByteArray,
-        val from: PublicKey,
+        @Serializable(with = PublicKeySerializer::class)
+        val from: ByteArray,
         val seq: Int,
         val referenceChain: Hash,
         @Serializable(with = LongSerializer::class)
@@ -57,7 +58,7 @@ class Transaction(
             }
         }
 
-        fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
+        fun create(from: ByteArray, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
             return Transaction(EMPTY_SIGNATURE, from, seq, referenceChain, fee, type, data)
         }
 
@@ -80,7 +81,7 @@ class Transaction(
          *
          * @return the constructed [Transaction]
          */
-        fun generated(from: PublicKey, height: Int, referenceChain: Hash, amount: Long): Transaction {
+        fun generated(from: ByteArray, height: Int, referenceChain: Hash, amount: Long): Transaction {
             return Transaction(EMPTY_SIGNATURE, from, height, referenceChain, amount, TxType.Generated.type, emptyByteArray())
         }
     }

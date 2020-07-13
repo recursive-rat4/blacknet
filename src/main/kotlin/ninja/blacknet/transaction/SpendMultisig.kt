@@ -9,7 +9,6 @@
 
 package ninja.blacknet.transaction
 
-import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -21,6 +20,7 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.LongSerializer
+import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.sumByLong
 
 /**
@@ -49,19 +49,19 @@ class SpendMultisig(
         return true
     }
 
-    private fun verifySignatures(multisig: Multisig, sender: PublicKey): Status {
+    private fun verifySignatures(multisig: Multisig, sender: ByteArray): Status {
         val multisigHash = hash()
-        val unsigned = newHashMapWithExpectedSize<Byte, PublicKey>(multisig.deposits.size)
+        val unsigned = HashMap<Byte, ByteArray>(multisig.deposits.size)
         for (i in 0 until multisig.deposits.size) {
-            unsigned.put(i.toByte(), multisig.deposits[i].first)
+            unsigned.put(i.toByte(), multisig.deposits[i].from)
         }
 
-        for ((i, signature) in signatures) {
-            val publicKey = unsigned.remove(i)
+        for ((index, signature) in signatures) {
+            val publicKey = unsigned.remove(index)
             if (publicKey == null)
-                return Invalid("Invalid or twice signed i $i")
+                return Invalid("Invalid or twice signed index $index")
             if (!Ed25519.verify(signature, multisigHash, publicKey))
-                return Invalid("Invalid signature i $i")
+                return Invalid("Invalid signature at index $index")
         }
 
         return if (unsigned.containsValue(sender))
@@ -106,7 +106,7 @@ class SpendMultisig(
             if (amounts[index] < 0) {
                 return Invalid("Negative amount index $index")
             } else if (amounts[index] != 0L) {
-                val publicKey = multisig.deposits[index].first
+                val publicKey = multisig.deposits[index].from
                 val toAccount = ledger.getOrCreate(publicKey)
                 toAccount.debit(height, amounts[index])
                 ledger.set(publicKey, toAccount)

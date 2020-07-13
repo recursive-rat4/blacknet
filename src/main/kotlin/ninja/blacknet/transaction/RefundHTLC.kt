@@ -30,7 +30,7 @@ class RefundHTLC(
         if (htlc == null) {
             return Invalid("HTLC not found")
         }
-        if (tx.from != htlc.from) {
+        if (!tx.from.contentEquals(htlc.from)) {
             return Invalid("Invalid sender")
         }
         if (!htlc.timeLock.verify(htlc.height, htlc.time, ledger.height(), ledger.blockTime())) {

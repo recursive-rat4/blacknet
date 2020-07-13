@@ -15,7 +15,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PaymentId
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -25,7 +25,8 @@ import ninja.blacknet.serialization.LongSerializer
 class Transfer(
         @Serializable(with = LongSerializer::class)
         val amount: Long,
-        val to: PublicKey,
+        @Serializable(with = PublicKeySerializer::class)
+        val to: ByteArray,
         val message: PaymentId
 ) : TxData {
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
@@ -41,5 +42,5 @@ class Transfer(
         return Accepted
     }
 
-    fun involves(publicKey: PublicKey) = to == publicKey
+    fun involves(publicKey: ByteArray) = to.contentEquals(publicKey)
 }

@@ -32,14 +32,14 @@ object PoS {
         return supply / 100 / BLOCKS_IN_YEAR
     }
 
-    fun nxtrng(nxtrng: Hash, generator: PublicKey): Hash {
+    fun nxtrng(nxtrng: Hash, generator: ByteArray): Hash {
         return buildHash {
             encodeHash(nxtrng)
             encodePublicKey(generator)
         }
     }
 
-    fun check(time: Long, generator: PublicKey, nxtrng: Hash, difficulty: BigInteger, prevTime: Long, stake: Long): Status {
+    fun check(time: Long, generator: ByteArray, nxtrng: Hash, difficulty: BigInteger, prevTime: Long, stake: Long): Status {
         if (stake <= 0) {
             return Invalid("Invalid stake amount")
         }

@@ -18,7 +18,7 @@ import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.util.emptyByteArray
 
@@ -35,14 +35,14 @@ class UndoBlock(
         val upgraded: Short,
         val blockSize: Int,
         @Serializable(with = AccountsSerializer::class)
-        val accounts: ArrayList<Pair<PublicKey, ByteArray>>,
+        val accounts: ArrayList<Pair<ByteArray, ByteArray>>,
         @Serializable(with = HTLCsSerializer::class)
         val htlcs: ArrayList<Pair<HashTimeLockContractId, ByteArray>>,
         @Serializable(with = MultisigsSerializer::class)
         val multisigs: ArrayList<Pair<MultiSignatureLockContractId, ByteArray>>,
         val forkV2: Short
 ) {
-    fun add(publicKey: PublicKey, account: ByteArray?) {
+    fun add(publicKey: ByteArray, account: ByteArray?) {
         val bytes = if (account != null)
             account
         else
@@ -67,8 +67,8 @@ class UndoBlock(
     }
 }
 
-private object AccountsSerializer : KSerializer<List<Pair<PublicKey, ByteArray>>>
-    by ListSerializer(PairSerializer(PublicKey.serializer(), ByteArraySerializer))
+private object AccountsSerializer : KSerializer<List<Pair<ByteArray, ByteArray>>>
+    by ListSerializer(PairSerializer(PublicKeySerializer, ByteArraySerializer))
 
 private object HTLCsSerializer : KSerializer<List<Pair<HashTimeLockContractId, ByteArray>>>
     by ListSerializer(PairSerializer(HashTimeLockContractId.serializer(), ByteArraySerializer))

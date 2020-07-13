@@ -14,7 +14,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.Json
@@ -29,7 +29,8 @@ class WithdrawFromLease(
         val withdraw: Long,
         @Serializable(with = LongSerializer::class)
         val amount: Long,
-        val to: PublicKey,
+        @Serializable(with = PublicKeySerializer::class)
+        val to: ByteArray,
         val height: Int
 ) : TxData {
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
@@ -43,7 +44,7 @@ class WithdrawFromLease(
         if (toAccount == null) {
             return Invalid("Account not found")
         }
-        val lease = toAccount.leases.find { it.publicKey == tx.from && it.height == height && it.amount == amount }
+        val lease = toAccount.leases.find { it.publicKey.contentEquals(tx.from) && it.height == height && it.amount == amount }
         if (lease == null) {
             return Invalid("Lease not found")
         }
@@ -55,5 +56,5 @@ class WithdrawFromLease(
         return Accepted
     }
 
-    fun involves(publicKey: PublicKey) = to == publicKey
+    fun involves(publicKey: ByteArray) = to.contentEquals(publicKey)
 }
