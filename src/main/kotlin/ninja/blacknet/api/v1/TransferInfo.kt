@@ -23,10 +23,10 @@ class TransferInfo(
     constructor(data: Transfer) : this(
             data.amount,
             Address.encode(data.to),
-            when (data.message.type) {
-                PaymentId.PLAIN -> String(data.message.message)
-                PaymentId.ENCRYPTED -> "ENCRYPTED:${data.message.message}"
-                else -> "UNKNOWN TYPE:${data.message.type} DATA:${data.message.message}"
+            when (data.paymentId.type) {
+                PaymentId.PLAIN -> String(data.paymentId.payload)
+                PaymentId.ENCRYPTED -> "ENCRYPTED:${data.paymentId.payload}"
+                else -> "UNKNOWN TYPE:${data.paymentId.type} DATA:${data.paymentId.payload}"
             }
     )
 }

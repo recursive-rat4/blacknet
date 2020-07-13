@@ -9,6 +9,7 @@
 
 package ninja.blacknet.transaction
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.*
@@ -27,7 +28,8 @@ class Transfer(
         val amount: Long,
         @Serializable(with = PublicKeySerializer::class)
         val to: ByteArray,
-        val message: PaymentId
+        @SerialName("message")
+        val paymentId: PaymentId
 ) : TxData {
     override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val account = ledger.get(tx.from)!!

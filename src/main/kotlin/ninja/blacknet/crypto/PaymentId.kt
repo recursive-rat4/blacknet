@@ -11,6 +11,7 @@ package ninja.blacknet.crypto
 
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
@@ -28,15 +29,16 @@ import ninja.blacknet.util.emptyByteArray
 @Serializable
 class PaymentId(
         val type: Byte,
-        val message: ByteArray
+        @SerialName("message")
+        val payload: ByteArray
 ) {
     fun isEmpty(): Boolean {
-        return type == PLAIN && message.isEmpty()
+        return type == PLAIN && payload.isEmpty()
     }
 
     fun decrypt(privateKey: ByteArray, publicKey: ByteArray): String? {
         val sharedKey = sharedKey(privateKey, publicKey)
-        return ChaCha20.decryptUtf8(sharedKey, message)
+        return ChaCha20.decryptUtf8(sharedKey, payload)
     }
 
     @Serializer(forClass = PaymentId::class)
@@ -95,13 +97,13 @@ class PaymentId(
             when (encoder) {
                 is BinaryEncoder -> {
                     encoder.encodeByte(value.type)
-                    encoder.encodeByteArray(value.message)
+                    encoder.encodeByteArray(value.payload)
                 }
                 is JsonOutput -> {
                     @Suppress("NAME_SHADOWING")
                     val encoder = encoder.beginStructure(descriptor)
                     encoder.encodeSerializableElement(descriptor, 0, Byte.serializer(), value.type)
-                    encoder.encodeSerializableElement(descriptor, 1, String.serializer(), if (value.type == PLAIN) String(value.message) else value.message.toHex())
+                    encoder.encodeSerializableElement(descriptor, 1, String.serializer(), if (value.type == PLAIN) String(value.payload) else value.payload.toHex())
                     encoder.endStructure(descriptor)
                 }
                 else -> throw notSupportedEncoderError(encoder, this)

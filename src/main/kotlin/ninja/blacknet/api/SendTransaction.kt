@@ -15,6 +15,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Transaction
@@ -35,8 +36,9 @@ import ninja.blacknet.transaction.*
 fun Route.sendTransaction() {
     @Serializable
     class TransferRequest(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray,
+            val privateKey: ByteArray,
             val fee: Long,
             val amount: Long,
             @Serializable(with = PublicKeySerializer::class)
@@ -46,7 +48,6 @@ fun Route.sendTransaction() {
             val referenceChain: Hash? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
-            val privateKey = mnemonic
             val message = PaymentId.create(message, encrypted, privateKey, to) ?: return call.respond(HttpStatusCode.BadRequest, "Failed to create payment id")
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
@@ -66,8 +67,9 @@ fun Route.sendTransaction() {
 
     @Serializable
     class BurnRequest(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray,
+            val privateKey: ByteArray,
             val fee: Long,
             val amount: Long,
             @Serializable(with = ByteArraySerializer::class)
@@ -75,7 +77,6 @@ fun Route.sendTransaction() {
             val referenceChain: Hash? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
-            val privateKey = mnemonic
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(Burn.serializer(), Burn(amount, message))
@@ -94,8 +95,9 @@ fun Route.sendTransaction() {
 
     @Serializable
     class LeaseRequest(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray,
+            val privateKey: ByteArray,
             val fee: Long,
             val amount: Long,
             @Serializable(with = PublicKeySerializer::class)
@@ -103,7 +105,6 @@ fun Route.sendTransaction() {
             val referenceChain: Hash? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
-            val privateKey = mnemonic
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(Lease.serializer(), Lease(amount, to))
@@ -122,8 +123,9 @@ fun Route.sendTransaction() {
 
     @Serializable
     class CancelLeaseRequest(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray,
+            val privateKey: ByteArray,
             val fee: Long,
             val amount: Long,
             @Serializable(with = PublicKeySerializer::class)
@@ -132,7 +134,6 @@ fun Route.sendTransaction() {
             val referenceChain: Hash? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
-            val privateKey = mnemonic
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(CancelLease.serializer(), CancelLease(amount, to, height))
@@ -151,8 +152,9 @@ fun Route.sendTransaction() {
 
     @Serializable
     class WithdrawFromLeaseRequest(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray,
+            val privateKey: ByteArray,
             val fee: Long,
             val withdraw: Long,
             val amount: Long,
@@ -162,7 +164,6 @@ fun Route.sendTransaction() {
             val referenceChain: Hash? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
-            val privateKey = mnemonic
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
@@ -181,11 +182,11 @@ fun Route.sendTransaction() {
 
     @Serializable
     class SendRawTransaction(
+            @SerialName("hex")
             @Serializable(with = ByteArraySerializer::class)
-            val hex: ByteArray
+            val bytes: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
-            val bytes = hex
             val hash = Transaction.hash(bytes)
 
             val status = Node.broadcastTx(hash, bytes)

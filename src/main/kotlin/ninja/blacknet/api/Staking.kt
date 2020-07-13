@@ -13,6 +13,7 @@ package ninja.blacknet.api
 import io.ktor.application.ApplicationCall
 import io.ktor.response.respond
 import io.ktor.routing.Route
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Staker
 import ninja.blacknet.crypto.PrivateKeySerializer
@@ -24,11 +25,11 @@ import ninja.blacknet.ktor.requests.post
 fun Route.staking() {
     @Serializable
     class StartStaking(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray
+            val privateKey: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            val privateKey = mnemonic
             return call.respond(Staker.startStaking(privateKey).toString())
         }
     }
@@ -37,11 +38,11 @@ fun Route.staking() {
 
     @Serializable
     class StopStaking(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray
+            val privateKey: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            val privateKey = mnemonic
             return call.respond(Staker.stopStaking(privateKey).toString())
         }
     }
@@ -50,11 +51,11 @@ fun Route.staking() {
 
     @Serializable
     class IsStaking(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray
+            val privateKey: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            val privateKey = mnemonic
             return call.respond(Staker.isStaking(privateKey).toString())
         }
     }
@@ -63,11 +64,11 @@ fun Route.staking() {
 
     @Serializable
     class Staking(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray? = null
+            val publicKey: ByteArray? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            val publicKey = address
             return call.respondJson(StakingInfo.serializer(), Staker.info(publicKey))
         }
     }

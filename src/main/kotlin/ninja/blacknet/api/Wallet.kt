@@ -17,6 +17,7 @@ import io.ktor.response.respond
 import io.ktor.routing.Route
 import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.list
@@ -79,14 +80,14 @@ fun Route.wallet() {
 
     @Serializable
     class DecryptPaymentId(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray,
+            val privateKey: ByteArray,
             @Serializable(with = PublicKeySerializer::class)
             val from: ByteArray,
             val message: String
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            val privateKey = mnemonic
             val decrypted = PaymentId.decrypt(privateKey, from, message)
 
             return if (decrypted != null)
@@ -101,12 +102,12 @@ fun Route.wallet() {
 
     @Serializable
     class SignMessage(
+            @SerialName("mnemonic")
             @Serializable(with = PrivateKeySerializer::class)
-            val mnemonic: ByteArray,
+            val privateKey: ByteArray,
             val message: String
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            val privateKey = mnemonic
             val signature = Message.sign(privateKey, message)
 
             return call.respond(signature.toString())
@@ -135,11 +136,11 @@ fun Route.wallet() {
 
     @Serializable
     class Transactions(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray
+            val publicKey: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
-            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             val transactions = newHashMapWithExpectedSize<String, TransactionDataInfo>(wallet.transactions.size)
             wallet.transactions.forEach { (hash, txData) ->
@@ -156,11 +157,11 @@ fun Route.wallet() {
 
     @Serializable
     class OutLeases(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray
+            val publicKey: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
-            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
 
             return call.respondJson(AccountState.Lease.serializer().list, wallet.outLeases)
@@ -173,12 +174,11 @@ fun Route.wallet() {
 
     @Serializable
     class Sequence(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray
+            val publicKey: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            val publicKey = address
-
             return call.respond(WalletDB.getSequence(publicKey).toString())
         }
     }
@@ -189,13 +189,13 @@ fun Route.wallet() {
 
     @Serializable
     class TransactionRequest(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray,
+            val publicKey: ByteArray,
             val hash: Hash,
             val raw: Boolean = false
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
-            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             val txData = wallet.transactions.get(hash)
             return if (txData != null) {
@@ -218,12 +218,12 @@ fun Route.wallet() {
 
     @Serializable
     class Confirmations(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray,
+            val publicKey: ByteArray,
             val hash: Hash
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            val publicKey = address
             val result = WalletDB.getConfirmations(publicKey, hash)
             return if (result != null)
                 call.respond(result.toString())
@@ -238,12 +238,11 @@ fun Route.wallet() {
 
     @Serializable
     class ReferenceChain(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray
+            val publicKey: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
-            @Suppress("UNUSED_VARIABLE")
-            val publicKey = address
             val result = WalletDB.referenceChain()
             return call.respond(result.toString())
         }
@@ -255,11 +254,11 @@ fun Route.wallet() {
 
     @Serializable
     class TxCount(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray
+            val publicKey: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
-            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             val count = wallet.transactions.size
             return call.respond(count.toString())
@@ -272,14 +271,14 @@ fun Route.wallet() {
 
     @Serializable
     class ListTransactions(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray,
+            val publicKey: ByteArray,
             val offset: Int = 0,
             val max: Int = 100,
             val type: Int? = null
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
-            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             BlockDB.mutex.withLock {
                 val size = wallet.transactions.size
@@ -343,12 +342,12 @@ fun Route.wallet() {
 
     @Serializable
     class ListSinceBlock(
+            @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
-            val address: ByteArray,
+            val publicKey: ByteArray,
             val hash: Hash = Hash.ZERO
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
-            val publicKey = address
             val wallet = WalletDB.getWalletImpl(publicKey)
             BlockDB.mutex.withLock {
                 val height = LedgerDB.getChainIndex(hash)?.height ?: return call.respond(HttpStatusCode.BadRequest, "Block not found")
