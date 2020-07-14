@@ -10,7 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.DAppId
+import ninja.blacknet.contract.DAppIdSerializer
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Status
@@ -26,7 +26,8 @@ import ninja.blacknet.serialization.Json
  */
 @Serializable
 class Bundle(
-        val id: DAppId,
+        @Serializable(with = DAppIdSerializer::class)
+        val id: ByteArray,
         @Serializable(with = ByteArraySerializer::class)
         val data: ByteArray
 ) : TxData {

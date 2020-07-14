@@ -10,7 +10,6 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
@@ -50,10 +49,11 @@ class CreateMultisig(
         operator fun component2() = signature
     }
 
-    fun id(hash: Hash, dataIndex: Int) =
-        MultiSignatureLockContractId(
-            buildHash { encodeHash(hash); encodeInt(dataIndex); }
-        )
+    fun id(hash: Hash, dataIndex: Int): ByteArray =
+        buildHash {
+            encodeHash(hash);
+            encodeInt(dataIndex);
+        }.bytes
 
     fun sign(from: ByteArray, seq: Int, dataIndex: Int, privateKey: ByteArray): Boolean {
         val publicKey = Ed25519.toPublicKey(privateKey)

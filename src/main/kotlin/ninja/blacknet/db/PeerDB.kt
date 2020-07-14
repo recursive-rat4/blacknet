@@ -11,18 +11,18 @@
 package ninja.blacknet.db
 
 import com.google.common.collect.Maps.newHashMapWithExpectedSize
-import com.google.common.collect.Sets.newHashSetWithExpectedSize
 import com.google.common.io.Resources
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.error
-import ninja.blacknet.contract.DAppId
+import ninja.blacknet.contract.DAppIdSerializer
 import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
@@ -32,6 +32,8 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.decodeVarInt
 import ninja.blacknet.serialization.encodeVarInt
+import ninja.blacknet.util.HashSet
+import ninja.blacknet.util.HashSetSerializer
 import ninja.blacknet.util.SynchronizedHashMap
 import kotlin.math.exp
 import kotlin.math.max
@@ -168,7 +170,7 @@ object PeerDB {
         }
     }
 
-    suspend fun bundlerAnnounce(address: Address, announce: List<DAppId>): Unit = peers.mutex.withLock {
+    suspend fun bundlerAnnounce(address: Address, announce: List<ByteArray>): Unit = peers.mutex.withLock {
         peers.map.get(address)?.stat?.bundler?.let { bundler ->
             announce.forEach { id ->
                 if (DAppDB.isInteresting(id)) {
@@ -178,7 +180,7 @@ object PeerDB {
         }
     }
 
-    suspend fun getBundlers(id: DAppId): List<Address> {
+    suspend fun getBundlers(id: ByteArray): List<Address> {
         return peers.filterToKeyList { _, entry -> entry.stat?.bundler?.contains(id) ?: false }
     }
 
@@ -296,7 +298,8 @@ object PeerDB {
             val stat1D: UptimeStat,
             val stat1W: UptimeStat,
             val stat1M: UptimeStat,
-            val bundler: HashSet<DAppId>
+            @Serializable(with = BundlerSerializer::class)
+            val bundler: MutableSet<ByteArray>
     ) {
         constructor(lastConnected: Long, userAgent: String) : this(
                 lastConnected,
@@ -306,9 +309,10 @@ object PeerDB {
                 UptimeStat(),
                 UptimeStat(),
                 UptimeStat(),
-                newHashSetWithExpectedSize(0)
+                HashSet(expectedSize = 0)
         )
-        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, newHashSetWithExpectedSize(0))
+        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, HashSet(expectedSize = 0))
+        private object BundlerSerializer : KSerializer<MutableSet<ByteArray>> by HashSetSerializer(DAppIdSerializer)
     }
 
     @Serializable

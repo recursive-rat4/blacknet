@@ -23,8 +23,8 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.api.APIServer
-import ninja.blacknet.contract.HashTimeLockContractId
-import ninja.blacknet.contract.MultiSignatureLockContractId
+import ninja.blacknet.contract.HashTimeLockContractIdSerializer
+import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
@@ -481,15 +481,15 @@ object WalletDB {
             @Serializable(with = VarIntSerializer::class)
             var seq: Int = 0,
             @Serializable(with = HTLCsSerializer::class)
-            val htlcs: MutableSet<HashTimeLockContractId> = HashSet(),
+            val htlcs: MutableSet<ByteArray> = HashSet(),
             @Serializable(with = MultisigsSerializer::class)
-            val multisigs: MutableSet<MultiSignatureLockContractId> = HashSet(),
+            val multisigs: MutableSet<ByteArray> = HashSet(),
             val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
             @Serializable(with = TransactionsSerializer::class)
             val transactions: HashMap<Hash, TransactionData> = HashMap()
     ) {
-        private object HTLCsSerializer : KSerializer<MutableSet<HashTimeLockContractId>> by HashSetSerializer(HashTimeLockContractId.serializer())
-        private object MultisigsSerializer : KSerializer<MutableSet<MultiSignatureLockContractId>> by HashSetSerializer(MultiSignatureLockContractId.serializer())
+        private object HTLCsSerializer : KSerializer<MutableSet<ByteArray>> by HashSetSerializer(HashTimeLockContractIdSerializer)
+        private object MultisigsSerializer : KSerializer<MutableSet<ByteArray>> by HashSetSerializer(MultiSignatureLockContractIdSerializer)
         private object TransactionsSerializer : KSerializer<HashMap<Hash, TransactionData>> by HashMapSerializer(Hash.serializer(), TransactionData.serializer())
     }
 

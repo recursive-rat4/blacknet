@@ -10,9 +10,9 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.Config
-import ninja.blacknet.contract.DAppId
-import ninja.blacknet.contract.HashTimeLockContractId
-import ninja.blacknet.contract.MultiSignatureLockContractId
+import ninja.blacknet.contract.DAPP_ID_SIZE_BYTES
+import ninja.blacknet.contract.HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES
+import ninja.blacknet.contract.MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES
 import ninja.blacknet.coding.Bech32
 import ninja.blacknet.util.plus
 
@@ -71,9 +71,9 @@ object Address {
 
     private fun expectedSize(version: Byte): Int = Byte.SIZE_BYTES + when (version) {
         STAKER -> throw Error("保留地址版本字節")
-        HTLC -> HashTimeLockContractId.SIZE_BYTES
-        MULTISIG -> MultiSignatureLockContractId.SIZE_BYTES
-        DAPP -> DAppId.SIZE_BYTES
+        HTLC -> HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES
+        MULTISIG -> MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES
+        DAPP -> DAPP_ID_SIZE_BYTES
         else -> throw Exception("Unknown address version $version")
     }
 

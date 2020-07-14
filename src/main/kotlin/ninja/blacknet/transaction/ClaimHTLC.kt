@@ -10,7 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
@@ -24,7 +24,8 @@ import ninja.blacknet.serialization.Json
  */
 @Serializable
 class ClaimHTLC(
-        val id: HashTimeLockContractId,
+        @Serializable(with = HashTimeLockContractIdSerializer::class)
+        val id: ByteArray,
         @Serializable(with = ByteArraySerializer::class)
         val preimage: ByteArray
 ) : TxData {
@@ -47,5 +48,5 @@ class ClaimHTLC(
         return Accepted
     }
 
-    fun involves(ids: Set<HashTimeLockContractId>) = ids.contains(id)
+    fun involves(ids: Set<ByteArray>) = ids.contains(id)
 }

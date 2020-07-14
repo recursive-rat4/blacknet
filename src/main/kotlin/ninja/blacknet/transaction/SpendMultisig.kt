@@ -12,7 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import ninja.blacknet.contract.MultiSignatureLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
@@ -28,7 +28,8 @@ import ninja.blacknet.util.sumByLong
  */
 @Serializable
 class SpendMultisig(
-        val id: MultiSignatureLockContractId,
+        @Serializable(with = MultiSignatureLockContractIdSerializer::class)
+        val id: ByteArray,
         @Serializable(with = AmountsSerializer::class)
         val amounts: ArrayList<Long>,
         val signatures: ArrayList<SignatureElement>
@@ -117,7 +118,7 @@ class SpendMultisig(
         return Accepted
     }
 
-    fun involves(ids: Set<MultiSignatureLockContractId>) = ids.contains(id)
+    fun involves(ids: Set<ByteArray>) = ids.contains(id)
 
     private object AmountsSerializer : KSerializer<List<Long>> by ListSerializer(LongSerializer)
 }

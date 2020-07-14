@@ -16,19 +16,19 @@ class AddressTest {
     @Test
     fun htlc() {
         val string = "blacknet1q8llal0ul0a0n78h7m6lfulj78cwlmhdan47460gulnwte8ruts7q6rcsw5"
-        val address = HashTimeLockContractId.parse(string)
-        assertTrue(address.toString().compareTo(string, ignoreCase = true) == 0)
+        val address = HashTimeLockContractIdSerializer.parse(string)
+        assertTrue(HashTimeLockContractIdSerializer.stringify(address).compareTo(string, ignoreCase = true) == 0)
     }
     @Test
     fun multisig() {
         val string = "blacknet1qtl0ml8mltul3alk7h608uh37rh7am0va04wn688umj7fclzu8sd7467cge"
-        val address = MultiSignatureLockContractId.parse(string)
-        assertTrue(address.toString().compareTo(string, ignoreCase = true) == 0)
+        val address = MultiSignatureLockContractIdSerializer.parse(string)
+        assertTrue(MultiSignatureLockContractIdSerializer.stringify(address).compareTo(string, ignoreCase = true) == 0)
     }
     @Test
     fun dapp() {
         val string = "blacknet1q07le7l69mvwv3"
-        val address = DAppId.parse(string)
-        assertTrue(address.toString().compareTo(string, ignoreCase = true) == 0)
+        val address = DAppIdSerializer.parse(string)
+        assertTrue(DAppIdSerializer.stringify(address).compareTo(string, ignoreCase = true) == 0)
     }
 }
