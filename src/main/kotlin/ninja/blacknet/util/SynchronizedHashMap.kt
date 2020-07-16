@@ -9,7 +9,6 @@
 
 package ninja.blacknet.util
 
-import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 

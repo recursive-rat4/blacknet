@@ -9,7 +9,6 @@
 
 package ninja.blacknet.util
 
-import com.google.common.collect.Sets.newHashSetWithExpectedSize
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -20,7 +19,7 @@ class SynchronizedHashSet<T>(
         val mutex: Mutex = Mutex(),
         val set: MutableSet<T> = HashSet()
 ) {
-    constructor(expectedSize: Int) : this(set = newHashSetWithExpectedSize(expectedSize))
+    constructor(expectedSize: Int) : this(set = HashSet(expectedSize = expectedSize))
 
     suspend inline fun isEmpty() = mutex.withLock { set.isEmpty() }
 

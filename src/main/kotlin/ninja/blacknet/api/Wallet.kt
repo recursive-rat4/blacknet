@@ -10,7 +10,6 @@
 
 package ninja.blacknet.api
 
-import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
@@ -19,10 +18,8 @@ import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
@@ -35,6 +32,8 @@ import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.ktor.requests.post
 import ninja.blacknet.transaction.TxType
 import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.util.HashMap
+import ninja.blacknet.util.HashMapSerializer
 
 fun Route.wallet() {
     @Serializable
@@ -142,12 +141,12 @@ fun Route.wallet() {
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
             val wallet = WalletDB.getWalletImpl(publicKey)
-            val transactions = newHashMapWithExpectedSize<String, TransactionDataInfo>(wallet.transactions.size)
+            val transactions = HashMap<String, TransactionDataInfo>(expectedSize = wallet.transactions.size)
             wallet.transactions.forEach { (hash, txData) ->
                 transactions.put(HashSerializer.stringify(hash), TransactionDataInfo(txData))
             }
 
-            return call.respondJson(MapSerializer(String.serializer(), TransactionDataInfo.serializer()), transactions)
+            return call.respondJson(HashMapSerializer(String.serializer(), TransactionDataInfo.serializer()), transactions)
         }
     }
 

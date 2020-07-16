@@ -10,7 +10,6 @@
 
 package ninja.blacknet.db
 
-import com.google.common.collect.Maps.newHashMapWithExpectedSize
 import com.google.common.io.Resources
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -32,6 +31,7 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.decodeVarInt
 import ninja.blacknet.serialization.encodeVarInt
+import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.HashSetSerializer
 import ninja.blacknet.util.SynchronizedHashMap
@@ -77,7 +77,7 @@ object PeerDB {
 
             val updatedHashMap = if (stateBytes != null) {
                 logger.info("Upgrading PeerDB...")
-                val result = newHashMapWithExpectedSize<Address, Entry>(MAX_SIZE)
+                val result = HashMap<Address, Entry>(expectedSize = MAX_SIZE)
                 try {
                     if (version == 3) {
                         val stateV3 = BinaryDecoder(stateBytes).decode(MapSerializer(Address.serializer(), EntryV3.serializer()))

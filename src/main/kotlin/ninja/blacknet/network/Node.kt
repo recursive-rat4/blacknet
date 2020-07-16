@@ -9,7 +9,6 @@
 
 package ninja.blacknet.network
 
-import com.google.common.collect.Sets.newHashSetWithExpectedSize
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -30,6 +29,7 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.packet.*
+import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 
@@ -310,7 +310,7 @@ object Node {
     }
 
     private suspend fun connector() {
-        val filter = newHashSetWithExpectedSize<Address>(connections.size() + listenAddress.size())
+        val filter = HashSet<Address>(expectedSize = connections.size() + listenAddress.size())
         connections.forEach { filter.add(it.remoteAddress) }
         listenAddress.forEach { filter.add(it) }
 
