@@ -83,7 +83,7 @@ class PaymentId(
             val sharedSecret = x25519(privateKey, publicKey)
             return buildHash {
                 encodeByteArray(sharedSecret)
-            }.bytes
+            }
         }
 
         override fun deserialize(decoder: Decoder): PaymentId {

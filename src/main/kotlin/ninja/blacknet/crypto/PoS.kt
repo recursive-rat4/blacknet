@@ -32,14 +32,14 @@ object PoS {
         return supply / 100 / BLOCKS_IN_YEAR
     }
 
-    fun nxtrng(nxtrng: Hash, generator: ByteArray): Hash {
+    fun nxtrng(nxtrng: ByteArray, generator: ByteArray): ByteArray {
         return buildHash {
             encodeHash(nxtrng)
             encodePublicKey(generator)
         }
     }
 
-    fun check(time: Long, generator: ByteArray, nxtrng: Hash, difficulty: BigInteger, prevTime: Long, stake: Long): Status {
+    fun check(time: Long, generator: ByteArray, nxtrng: ByteArray, difficulty: BigInteger, prevTime: Long, stake: Long): Status {
         if (stake <= 0) {
             return Invalid("Invalid stake amount")
         }
@@ -52,7 +52,7 @@ object PoS {
             encodePublicKey(generator)
             encodeLong(time)
         }
-        return if (BigInteger(hash) < difficulty * stake)
+        return if (BigInteger(1, hash) < difficulty * stake)
             Accepted
         else
             Invalid("Proof of stake doesn't match difficulty")
@@ -152,11 +152,6 @@ object PoS {
     private val A2 get() = (INTERVAL - 1) * TARGET_BLOCK_TIME
     private val ONE_SHL_256 = BigInteger.ONE shl 256
 
-    /**
-     * 散列為高精度整數
-     */
-    @Suppress("NOTHING_TO_INLINE")
-    private inline fun BigInteger(hash: Hash): BigInteger = BigInteger(1, hash.bytes)
     /**
      * 高精度整數乘法
      */

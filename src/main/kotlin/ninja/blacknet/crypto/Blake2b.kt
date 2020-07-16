@@ -21,13 +21,13 @@ object Blake2b {
      * Builds a hash value with the given [input] builder.
      *
      * @param input the initialization function with the [HashCoder] receiver
-     * @return the built [Hash] value
+     * @return the built hash value
      */
-    inline fun buildHash(input: HashCoder.() -> Unit): Hash {
+    inline fun buildHash(input: HashCoder.() -> Unit): ByteArray {
         val coder = pool.borrow()
         return try {
             coder.input()
-            Hash(coder.writer.finish())
+            coder.writer.finish()
         } catch (e: Throwable) {
             coder.writer.reset()
             throw e

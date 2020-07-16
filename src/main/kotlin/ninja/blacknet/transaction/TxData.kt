@@ -11,13 +11,12 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Hash
 
 interface TxData {
-    fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status
+    fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status
 
-    fun process(tx: Transaction, hash: Hash, ledger: Ledger): Status {
-        val account = ledger.get(tx.from)
+    fun process(tx: Transaction, hash: ByteArray, ledger: Ledger): Status {
+        val account = ledger.getAccount(tx.from)
         if (account == null) {
             return Invalid("Sender account not found")
         }
@@ -34,7 +33,7 @@ interface TxData {
             return notAccepted("Transaction fee", status)
         }
         account.seq += 1
-        ledger.set(tx.from, account)
+        ledger.setAccount(tx.from, account)
         return processImpl(tx, hash, 0, ledger)
     }
 }

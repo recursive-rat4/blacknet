@@ -13,6 +13,7 @@ import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.*
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
@@ -39,7 +40,7 @@ class Transactions(
             val hash = Transaction.hash(bytes)
 
             if (!TxFetcher.fetched(hash)) {
-                connection.dos("Unrequested $hash")
+                connection.dos("Unrequested ${HashSerializer.stringify(hash)}")
                 continue
             }
 
@@ -47,10 +48,10 @@ class Transactions(
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
-                is Invalid -> connection.dos("$status $hash")
-                is InFuture -> logger.debug { "$status $hash" }
-                is NotOnThisChain -> logger.debug { "$status $hash" }
-                is AlreadyHave -> logger.debug { "$status $hash" }
+                is Invalid -> connection.dos("$status ${HashSerializer.stringify(hash)}")
+                is InFuture -> logger.debug { "$status ${HashSerializer.stringify(hash)}" }
+                is NotOnThisChain -> logger.debug { "$status ${HashSerializer.stringify(hash)}" }
+                is AlreadyHave -> logger.debug { "$status ${HashSerializer.stringify(hash)}" }
             }
         }
 

@@ -11,24 +11,28 @@ package ninja.blacknet.api
 
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.serialization.LongSerializer
 
 @Serializable
 class SupplyInfo(
         val height: Int,
-        val blockHash: String,
+        @Serializable(with = HashSerializer::class)
+        val blockHash: ByteArray,
         val blockTime: Long,
-        val supply: String
+        @Serializable(with = LongSerializer::class)
+        val supply: Long
 ) {
     companion object {
         suspend fun get(): SupplyInfo = BlockDB.mutex.withLock {
             val state = LedgerDB.state()
             return SupplyInfo(
                     state.height,
-                    state.blockHash.toString(),
+                    state.blockHash,
                     state.blockTime,
-                    state.supply.toString()
+                    state.supply
             )
         }
     }

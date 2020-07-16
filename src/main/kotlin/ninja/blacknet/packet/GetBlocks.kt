@@ -11,7 +11,7 @@ package ninja.blacknet.packet
 
 import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
@@ -21,14 +21,16 @@ import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
 class GetBlocks(
-        private val best: Hash,
-        private val checkpoint: Hash
+        @Serializable(with = HashSerializer::class)
+        private val best: ByteArray,
+        @Serializable(with = HashSerializer::class)
+        private val checkpoint: ByteArray
 ) : Packet {
     override suspend fun process(connection: Connection) {
         val cachedBlock = BlockDB.cachedBlock
         if (cachedBlock != null) {
             val (previousHash, bytes) = cachedBlock
-            if (previousHash == best) {
+            if (previousHash.contentEquals(best)) {
                 connection.sendPacket(PacketType.Blocks, Blocks(emptyList(), listOf(bytes)))
                 return
             }
@@ -56,7 +58,7 @@ class GetBlocks(
             if (chainIndex == null)
                 break
             val hash = chainIndex.next
-            if (hash == Hash.ZERO)
+            if (hash.contentEquals(HashSerializer.ZERO))
                 break
             size += chainIndex.nextSize + 4 //TODO VarInt.size()
             if (response.isNotEmpty() && size >= maxSize)

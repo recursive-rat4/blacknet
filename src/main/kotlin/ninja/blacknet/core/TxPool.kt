@@ -9,31 +9,32 @@
 
 package ninja.blacknet.core
 
+import kotlin.math.min
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.api.APIServer
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.HashMap
-import kotlin.math.min
+import ninja.blacknet.util.HashSet
 
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
     internal val mutex = Mutex()
-    private val rejects = HashSet<Hash>()
+    private val rejects = HashSet<ByteArray>()
     private val undoAccounts = HashMap<ByteArray, AccountState?>()
     private val undoHtlcs = HashMap<ByteArray, Pair<Boolean, HTLC?>>()
     private val undoMultisigs = HashMap<ByteArray, Pair<Boolean, Multisig?>>()
     private val accounts = HashMap<ByteArray, AccountState>()
     private val htlcs = HashMap<ByteArray, HTLC?>()
     private val multisigs = HashMap<ByteArray, Multisig?>()
-    private var transactions = ArrayList<Hash>(maxSeenSizeImpl())
+    private var transactions = ArrayList<ByteArray>(maxSeenSizeImpl())
 
     suspend fun check(): Boolean = mutex.withLock {
         var result = true
@@ -69,7 +70,7 @@ object TxPool : MemPool(), Ledger {
         rejects.clear()
     }
 
-    suspend fun isInteresting(hash: Hash): Boolean = mutex.withLock {
+    suspend fun isInteresting(hash: ByteArray): Boolean = mutex.withLock {
         return !rejects.contains(hash) && !containsImpl(hash)
     }
 
@@ -80,13 +81,13 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.get(key)?.seq ?: 0
     }
 
-    suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
+    suspend fun get(hash: ByteArray): ByteArray? = mutex.withLock {
         return@withLock getImpl(hash)
     }
 
     override fun addSupply(amount: Long) {}
 
-    override fun checkReferenceChain(hash: Hash): Boolean {
+    override fun checkReferenceChain(hash: ByteArray): Boolean {
         return LedgerDB.checkReferenceChain(hash)
     }
 
@@ -102,7 +103,7 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.state().height
     }
 
-    override fun get(key: ByteArray): AccountState? {
+    override fun getAccount(key: ByteArray): AccountState? {
         val account = accounts.get(key)
         if (account != null) {
             if (!undoAccounts.containsKey(key))
@@ -116,7 +117,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     override fun getOrCreate(key: ByteArray): AccountState {
-        val account = get(key)
+        val account = getAccount(key)
         return if (account != null) {
             account
         } else {
@@ -125,7 +126,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    override fun set(key: ByteArray, state: AccountState) {
+    override fun setAccount(key: ByteArray, state: AccountState) {
         accounts.put(key, state)
     }
 
@@ -197,7 +198,7 @@ object TxPool : MemPool(), Ledger {
         undoMultisigs.clear()
     }
 
-    private fun processImpl(hash: Hash, bytes: ByteArray): Status {
+    private fun processImpl(hash: ByteArray, bytes: ByteArray): Status {
         val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
@@ -208,7 +209,7 @@ object TxPool : MemPool(), Ledger {
         return status
     }
 
-    private suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, time: Long): Pair<Status, Long> {
+    private suspend fun processImplWithFee(hash: ByteArray, bytes: ByteArray, time: Long): Pair<Status, Long> {
         val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
@@ -216,17 +217,17 @@ object TxPool : MemPool(), Ledger {
             transactions.add(hash)
             WalletDB.processTransaction(hash, tx, bytes, time)
             APIServer.txPoolNotify(tx, hash, time, bytes.size)
-            logger.debug { "Accepted $hash" }
+            logger.debug { "Accepted ${HashSerializer.stringify(hash)}" }
         }
         undoImpl(status)
         return Pair(status, tx.fee)
     }
 
-    suspend fun process(hash: Hash, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = mutex.withLock {
+    suspend fun process(hash: ByteArray, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = mutex.withLock {
         if (rejects.contains(hash))
             return Pair(Invalid("Already rejected tx"), 0)
         if (containsImpl(hash))
-            return Pair(AlreadyHave(hash.toString()), 0)
+            return Pair(AlreadyHave(HashSerializer.stringify(hash)), 0)
         if (TxPool.dataSizeImpl() + bytes.size > Config.instance.txpoolsize.bytes) {
             if (remote)
                 return Pair(InFuture("TxPool is full"), 0)
@@ -240,7 +241,7 @@ object TxPool : MemPool(), Ledger {
         return result
     }
 
-    internal fun removeImpl(hashes: List<Hash>) {
+    internal fun removeImpl(hashes: List<ByteArray>) {
         if (hashes.isEmpty() || transactions.isEmpty())
             return
 
@@ -250,7 +251,7 @@ object TxPool : MemPool(), Ledger {
                 processImpl(hash, map[hash]!!)
     }
 
-    private fun steal(): Pair<ArrayList<Hash>, HashMap<Hash, ByteArray>> {
+    private fun steal(): Pair<ArrayList<ByteArray>, HashMap<ByteArray, ByteArray>> {
         val txs = transactions
         val map = stealImpl()
         accounts.clear()

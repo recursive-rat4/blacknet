@@ -26,7 +26,6 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
@@ -173,7 +172,7 @@ object Node {
         connection.sendPacket(PacketType.Version, v)
     }
 
-    suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
+    suspend fun announceChain(hash: ByteArray, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
         Staker.awaitsNextTimeSlot?.cancel()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         return broadcastPacket(PacketType.ChainAnnounce, ann) {
@@ -181,7 +180,7 @@ object Node {
         }
     }
 
-    suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
+    suspend fun broadcastBlock(hash: ByteArray, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
             if (!Config.instance.regtest)
@@ -193,7 +192,7 @@ object Node {
         }
     }
 
-    suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
+    suspend fun broadcastTx(hash: ByteArray, bytes: ByteArray): Status {
         val currTime = currentTimeSeconds()
         val (status, fee) = TxPool.process(hash, bytes, currTime, false)
         if (status == Accepted) {
@@ -207,7 +206,7 @@ object Node {
 
     suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null): Int {
         var n = 0
-        val toSend = ArrayList<Hash>(unfiltered.size)
+        val toSend = ArrayList<ByteArray>(unfiltered.size)
         connections.forEach {
             if (it != source && it.state.isConnected()) {
                 for (i in 0 until unfiltered.size) {

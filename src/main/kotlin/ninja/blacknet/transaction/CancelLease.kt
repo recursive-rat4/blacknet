@@ -12,7 +12,6 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -30,16 +29,16 @@ class CancelLease(
         val to: ByteArray,
         val height: Int
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
-        val toAccount = ledger.get(to)
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+        val toAccount = ledger.getAccount(to)
         if (toAccount == null) {
             return Invalid("Account not found")
         }
         if (toAccount.leases.remove(AccountState.Lease(tx.from, height, amount))) {
-            ledger.set(to, toAccount)
-            val account = ledger.get(tx.from)!!
+            ledger.setAccount(to, toAccount)
+            val account = ledger.getAccount(tx.from)!!
             account.debit(ledger.height(), amount)
-            ledger.set(tx.from, account)
+            ledger.setAccount(tx.from, account)
             return Accepted
         }
         return Invalid("Lease not found")

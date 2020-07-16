@@ -9,12 +9,16 @@
 
 package ninja.blacknet.api
 
+import java.math.BigInteger
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.BigIntegerSerializer
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.packet.ChainAnnounce
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
+import ninja.blacknet.serialization.LongSerializer
+import ninja.blacknet.util.HashMap
 
 @Serializable
 class PeerInfo(
@@ -27,7 +31,8 @@ class PeerInfo(
         val agent: String,
         val outgoing: Boolean,
         val banScore: Int,
-        val feeFilter: String,
+        @Serializable(with = LongSerializer::class)
+        val feeFilter: Long,
         val connectedAt: Long,
         val lastChain: ChainInfo,
         val totalBytesRead: Long,
@@ -35,18 +40,20 @@ class PeerInfo(
 ) {
     @Serializable
     class ChainInfo(
-            val chain: String,
-            val cumulativeDifficulty: String,
+            @Serializable(with = HashSerializer::class)
+            val chain: ByteArray,
+            @Serializable(with = BigIntegerSerializer::class)
+            val cumulativeDifficulty: BigInteger,
             val fork: Boolean
     ) {
         constructor(chain: ChainAnnounce, fork: Boolean) : this(
-                chain.chain.toString(),
-                chain.cumulativeDifficulty.toString(),
+                chain.chain,
+                chain.cumulativeDifficulty,
                 fork
         )
 
         companion object {
-            fun get(chain: ChainAnnounce, forkCache: HashMap<Hash, Boolean>): ChainInfo {
+            fun get(chain: ChainAnnounce, forkCache: HashMap<ByteArray, Boolean>): ChainInfo {
                 val fork = forkCache.computeIfAbsent(chain.chain) { !LedgerDB.chainContains(it) }
                 return ChainInfo(chain, fork)
             }
@@ -54,7 +61,7 @@ class PeerInfo(
     }
 
     companion object {
-        fun get(connection: Connection, forkCache: HashMap<Hash, Boolean>): PeerInfo {
+        fun get(connection: Connection, forkCache: HashMap<ByteArray, Boolean>): PeerInfo {
             return PeerInfo(
                     connection.peerId,
                     connection.remoteAddress.toString(),
@@ -65,7 +72,7 @@ class PeerInfo(
                     connection.agent,
                     connection.state.isOutgoing(),
                     connection.dosScore(),
-                    connection.feeFilter.toString(),
+                    connection.feeFilter,
                     connection.connectedAt,
                     ChainInfo.get(connection.lastChain, forkCache),
                     connection.totalBytesRead,
@@ -74,8 +81,8 @@ class PeerInfo(
         }
 
         suspend fun getAll(): List<PeerInfo> {
-            val forkCache = HashMap<Hash, Boolean>()
-            forkCache.put(Hash.ZERO, false)
+            val forkCache = HashMap<ByteArray, Boolean>()
+            forkCache.put(HashSerializer.ZERO, false)
             return Node.connections.map { PeerInfo.get(it, forkCache) }
         }
     }

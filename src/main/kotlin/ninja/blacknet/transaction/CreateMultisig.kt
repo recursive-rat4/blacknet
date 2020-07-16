@@ -49,11 +49,11 @@ class CreateMultisig(
         operator fun component2() = signature
     }
 
-    fun id(hash: Hash, dataIndex: Int): ByteArray =
+    fun id(hash: ByteArray, dataIndex: Int): ByteArray =
         buildHash {
             encodeHash(hash);
             encodeInt(dataIndex);
-        }.bytes
+        }
 
     fun sign(from: ByteArray, seq: Int, dataIndex: Int, privateKey: ByteArray): Boolean {
         val publicKey = Ed25519.toPublicKey(privateKey)
@@ -64,7 +64,7 @@ class CreateMultisig(
         return true
     }
 
-    private fun hash(from: ByteArray, seq: Int, dataIndex: Int): Hash {
+    private fun hash(from: ByteArray, seq: Int, dataIndex: Int): ByteArray {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = BinaryEncoder.toBytes(serializer(), copy)
         return buildHash {
@@ -75,7 +75,7 @@ class CreateMultisig(
         }
     }
 
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (n < 0 || n > deposits.size) {
             return Invalid("Invalid n")
         }
@@ -105,7 +105,7 @@ class CreateMultisig(
                 if (!Ed25519.verify(signature, multisigHash, publicKey)) {
                     return Invalid("Invalid signature $index")
                 }
-                val depositAccount = ledger.get(publicKey)
+                val depositAccount = ledger.getAccount(publicKey)
                 if (depositAccount == null) {
                     return Invalid("Account not found $index")
                 }
@@ -113,7 +113,7 @@ class CreateMultisig(
                 if (status != Accepted) {
                     return notAccepted("CreateMultisig at index $index", status)
                 }
-                ledger.set(publicKey, depositAccount)
+                ledger.setAccount(publicKey, depositAccount)
             }
         }
 

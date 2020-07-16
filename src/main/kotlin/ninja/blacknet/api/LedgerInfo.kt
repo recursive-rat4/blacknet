@@ -9,34 +9,44 @@
 
 package ninja.blacknet.api
 
+import java.math.BigInteger
 import kotlinx.serialization.Serializable
+import ninja.blacknet.crypto.BigIntegerSerializer
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.serialization.LongSerializer
 
 @Serializable
 class LedgerInfo(
         val height: Int,
-        val blockHash: String,
+        @Serializable(with = HashSerializer::class)
+        val blockHash: ByteArray,
         val blockTime: Long,
-        val rollingCheckpoint: String,
-        val difficulty: String,
-        val cumulativeDifficulty: String,
-        val supply: String,
+        @Serializable(with = HashSerializer::class)
+        val rollingCheckpoint: ByteArray,
+        @Serializable(with = BigIntegerSerializer::class)
+        val difficulty: BigInteger,
+        @Serializable(with = BigIntegerSerializer::class)
+        val cumulativeDifficulty: BigInteger,
+        @Serializable(with = LongSerializer::class)
+        val supply: Long,
         val maxBlockSize: Int,
-        val nxtrng: String
+        @Serializable(with = HashSerializer::class)
+        val nxtrng: ByteArray
 ) {
     companion object {
         fun get(): LedgerInfo {
             val state = LedgerDB.state()
             return LedgerInfo(
                     state.height,
-                    state.blockHash.toString(),
+                    state.blockHash,
                     state.blockTime,
-                    state.rollingCheckpoint.toString(),
-                    state.difficulty.toString(),
-                    state.cumulativeDifficulty.toString(),
-                    state.supply.toString(),
+                    state.rollingCheckpoint,
+                    state.difficulty,
+                    state.cumulativeDifficulty,
+                    state.supply,
                     state.maxBlockSize,
-                    state.nxtrng.toString()
+                    state.nxtrng
             )
         }
     }

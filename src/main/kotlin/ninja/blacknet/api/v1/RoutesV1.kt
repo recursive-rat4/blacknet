@@ -112,7 +112,7 @@ fun Route.APIV1() {
     }
 
     get("/api/v1/blockdb/get/{hash}/{txdetail?}") {
-        val hash = call.parameters["hash"]?.let { Hash.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+        val hash = call.parameters["hash"]?.let { HashSerializer.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
         val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
 
         val result = BlockInfoV1.get(hash, txdetail)
@@ -123,7 +123,7 @@ fun Route.APIV1() {
     }
 
     get("/api/v2/blockdb/get/{hash}/{txdetail?}") {
-        val hash = call.parameters["hash"]?.let { Hash.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+        val hash = call.parameters["hash"]?.let { HashSerializer.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
         val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
 
         val result = BlockDB.block(hash)
@@ -141,17 +141,17 @@ fun Route.APIV1() {
             if (height < 0 || height > state.height)
                 return@get call.respond(HttpStatusCode.NotFound, "block not found")
             else if (height == 0)
-                return@get call.respond(Hash.ZERO.toString())
+                return@get call.respond(HashSerializer.stringify(HashSerializer.ZERO))
             else if (height == state.height)
-                return@get call.respond(state.blockHash.toString())
+                return@get call.respond(HashSerializer.stringify(state.blockHash))
 
             if (APIServer.lastIndex != null && APIServer.lastIndex!!.second.height == height)
-                return@get call.respond(APIServer.lastIndex!!.first.toString())
+                return@get call.respond(HashSerializer.stringify(APIServer.lastIndex!!.first))
 
-            var hash: Hash
+            var hash: ByteArray
             var index: ChainIndex
             if (height < state.height / 2) {
-                hash = Hash.ZERO
+                hash = HashSerializer.ZERO
                 index = LedgerDB.getChainIndex(hash)!!
             } else {
                 hash = state.blockHash
@@ -169,12 +169,12 @@ fun Route.APIV1() {
             }
             if (index.height < state.height - PoS.MATURITY + 1)
                 APIServer.lastIndex = Pair(hash, index)
-            call.respond(hash.toString())
+            call.respond(HashSerializer.stringify(hash))
         }
     }
 
     get("/api/v1/blockdb/getblockindex/{hash}/") {
-        val hash = call.parameters["hash"]?.let { Hash.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+        val hash = call.parameters["hash"]?.let { HashSerializer.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
 
         val result = LedgerDB.getChainIndex(hash)
         if (result != null)
@@ -185,13 +185,13 @@ fun Route.APIV1() {
 
     get("/api/v1/blockdb/makebootstrap") {
         val checkpoint = LedgerDB.state().rollingCheckpoint
-        if (checkpoint == Hash.ZERO)
+        if (checkpoint.contentEquals(HashSerializer.ZERO))
             return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
 
         val file = File(dataDir, "bootstrap.dat.new")
         val stream = file.outputStream().buffered().data()
 
-        var hash = Hash.ZERO
+        var hash = HashSerializer.ZERO
         var index = LedgerDB.getChainIndex(hash)!!
         do {
             hash = index.next
@@ -199,7 +199,7 @@ fun Route.APIV1() {
             val bytes = BlockDB.getImpl(hash)!!
             stream.writeInt(bytes.size)
             stream.write(bytes, 0, bytes.size)
-        } while (hash != checkpoint)
+        } while (!hash.contentEquals(checkpoint))
 
         stream.close()
 
@@ -254,7 +254,7 @@ fun Route.APIV1() {
         val to = call.parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
         val encrypted = call.parameters["encrypted"]?.let { it.toByteOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid encrypted") }
         val message = PaymentId.create(call.parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
-        val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
+        val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { HashSerializer.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
             @Suppress("USELESS_ELVIS")
@@ -265,7 +265,7 @@ fun Route.APIV1() {
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                call.respond(signed.first.toString())
+                call.respond(signed.first.toHex())
             else
                 call.respond("Transaction rejected")
         }
@@ -277,7 +277,7 @@ fun Route.APIV1() {
         val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
         val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
         val message = call.parameters["message"]?.let { fromHex(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
-        val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
+        val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { HashSerializer.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
             @Suppress("USELESS_ELVIS")
@@ -287,7 +287,7 @@ fun Route.APIV1() {
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                call.respond(signed.first.toString())
+                call.respond(signed.first.toHex())
             else
                 call.respond("Transaction rejected")
         }
@@ -299,7 +299,7 @@ fun Route.APIV1() {
         val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
         val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
         val to = call.parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
-        val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
+        val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { HashSerializer.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
             @Suppress("USELESS_ELVIS")
@@ -309,7 +309,7 @@ fun Route.APIV1() {
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                call.respond(signed.first.toString())
+                call.respond(signed.first.toHex())
             else
                 call.respond("Transaction rejected")
         }
@@ -322,7 +322,7 @@ fun Route.APIV1() {
         val amount = call.parameters["amount"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid amount")
         val to = call.parameters["to"]?.let { Address.decode(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
         val height = call.parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
-        val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
+        val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { HashSerializer.parse(it) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
         APIServer.txMutex.withLock {
             @Suppress("USELESS_ELVIS")
@@ -333,7 +333,7 @@ fun Route.APIV1() {
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                call.respond(signed.first.toString())
+                call.respond(signed.first.toHex())
             else
                 call.respond("Transaction rejected")
         }
@@ -345,7 +345,7 @@ fun Route.APIV1() {
 
         APIServer.txMutex.withLock {
             if (Node.broadcastTx(hash, serialized) == Accepted)
-                call.respond(hash.toString())
+                call.respond(hash.toHex())
             else
                 call.respond("Transaction rejected")
         }
@@ -369,7 +369,7 @@ fun Route.APIV1() {
 
         val signature = Message.sign(privateKey, message)
 
-        call.respond(signature.toString())
+        call.respond(signature.toHex())
     }
 
     get("/api/v1/verifymessage/{account}/{signature}/{message}") {
@@ -483,7 +483,7 @@ fun Route.APIV1() {
     }
 
     get("/api/v1/walletdb/gettransaction/{hash}/{raw?}") {
-        val hash = call.parameters["hash"]?.let { Hash.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+        val hash = call.parameters["hash"]?.let { HashSerializer.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
         val raw = call.parameters["raw"]?.toBoolean() ?: false
 
         val result = WalletDB.mutex.withLock {
@@ -501,7 +501,7 @@ fun Route.APIV1() {
     }
 
     get("/api/v1/walletdb/getconfirmations/{hash}") {
-        val hash = call.parameters["hash"]?.let { Hash.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
+        val hash = call.parameters["hash"]?.let { HashSerializer.parse(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
 
         val result = WalletDB.getConfirmations(hash)
         if (result != null)

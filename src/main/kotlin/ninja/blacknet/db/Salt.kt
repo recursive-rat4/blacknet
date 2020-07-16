@@ -11,7 +11,7 @@ package ninja.blacknet.db
 
 import mu.KotlinLogging
 import ninja.blacknet.coding.toHex
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PUBLIC_KEY_SIZE_BYTES
 import ninja.blacknet.crypto.nextBytes
 import java.security.SecureRandom
@@ -55,22 +55,22 @@ object Salt {
             val entry = iterator.next()
             var key: ByteArray?
             key = Pair("account", PUBLIC_KEY_SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(1, PUBLIC_KEY_SIZE_BYTES)); continue }
-            key = Pair("chain", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(2, Hash.SIZE_BYTES)); continue }
-            key = Pair("htlc", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(3, Hash.SIZE_BYTES)); continue }
-            key = Pair("multisig", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(4, Hash.SIZE_BYTES)); continue }
-            key = Pair("undo", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(5, Hash.SIZE_BYTES)); continue }
+            key = Pair("chain", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(2, HashSerializer.SIZE_BYTES)); continue }
+            key = Pair("htlc", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(3, HashSerializer.SIZE_BYTES)); continue }
+            key = Pair("multisig", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(4, HashSerializer.SIZE_BYTES)); continue }
+            key = Pair("undo", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(5, HashSerializer.SIZE_BYTES)); continue }
             key = Pair("ledgersizes", 0) - entry; if (key != null) { nibble(entry, key, DBKey(6, 0)); continue }
             key = Pair("ledgersnapshot", Int.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(7, Int.SIZE_BYTES)); continue }
             key = Pair("ledgersnapshotheights", 0) - entry; if (key != null) { nibble(entry, key, DBKey(8, 0)); continue }
             key = Pair("ledgerstate", 0) - entry; if (key != null) { nibble(entry, key, DBKey(9, 0)); continue }
             key = Pair("ledgerversion", 0) - entry; if (key != null) { continue; }
             key = Pair("walletkeys", 0) - entry; if (key != null) { nibble(entry, key, DBKey(64, 0)); continue }
-            key = Pair("tx", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(65, Hash.SIZE_BYTES)); continue }
+            key = Pair("tx", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(65, HashSerializer.SIZE_BYTES)); continue }
             key = Pair("walletversion", 0) - entry; if (key != null) { nibble(entry, key, DBKey(66, 0)); continue }
-            key = Pair("wallet", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(67, Hash.SIZE_BYTES)); continue }
+            key = Pair("wallet", PUBLIC_KEY_SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(67, PUBLIC_KEY_SIZE_BYTES)); continue }
             key = Pair("peerdb", 0) - entry; if (key != null) { nibble(entry, key, DBKey(0x80.toByte(), 0)); continue }
             key = Pair("peerversion", 0) - entry; if (key != null) { nibble(entry, key, DBKey(0x81.toByte(), 0)); continue }
-            key = Pair("block", Hash.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(0xC0.toByte(), Hash.SIZE_BYTES)); continue }
+            key = Pair("block", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(0xC0.toByte(), HashSerializer.SIZE_BYTES)); continue }
             logger.debug { "Unknown key ${entry.key.toHex()}" }
         }
         iterator.close()

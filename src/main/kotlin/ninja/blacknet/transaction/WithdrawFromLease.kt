@@ -12,7 +12,6 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.BinaryDecoder
@@ -33,14 +32,14 @@ class WithdrawFromLease(
         val to: ByteArray,
         val height: Int
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (withdraw <= 0 || withdraw > amount) {
             return Invalid("Invalid withdraw amount")
         }
         if (withdraw > amount - PoS.MIN_LEASE) {
             return Invalid("Can not withdraw more than ${amount - PoS.MIN_LEASE}")
         }
-        val toAccount = ledger.get(to)
+        val toAccount = ledger.getAccount(to)
         if (toAccount == null) {
             return Invalid("Account not found")
         }
@@ -49,10 +48,10 @@ class WithdrawFromLease(
             return Invalid("Lease not found")
         }
         lease.amount -= withdraw
-        ledger.set(to, toAccount)
-        val account = ledger.get(tx.from)!!
+        ledger.setAccount(to, toAccount)
+        val account = ledger.getAccount(tx.from)!!
         account.debit(ledger.height(), withdraw)
-        ledger.set(tx.from, account)
+        ledger.setAccount(tx.from, account)
         return Accepted
     }
 

@@ -9,17 +9,17 @@
 
 package ninja.blacknet.core
 
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 
 interface Ledger {
     fun addSupply(amount: Long)
-    fun checkReferenceChain(hash: Hash): Boolean
+    fun checkReferenceChain(hash: ByteArray): Boolean
     fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long
     fun height(): Int
-    fun get(key: ByteArray): AccountState?
+    fun getAccount(key: ByteArray): AccountState?
     fun getOrCreate(key: ByteArray): AccountState
-    fun set(key: ByteArray, state: AccountState)
+    fun setAccount(key: ByteArray, state: AccountState)
     fun addHTLC(id: ByteArray, htlc: HTLC)
     fun getHTLC(id: ByteArray): HTLC?
     fun removeHTLC(id: ByteArray)
@@ -27,12 +27,12 @@ interface Ledger {
     fun getMultisig(id: ByteArray): Multisig?
     fun removeMultisig(id: ByteArray)
 
-    fun processTransactionImpl(tx: Transaction, hash: Hash, size: Int): Status {
+    fun processTransactionImpl(tx: Transaction, hash: ByteArray, size: Int): Status {
         if (!tx.verifySignature(hash)) {
             return Invalid("Invalid signature")
         }
         if (!checkReferenceChain(tx.referenceChain)) {
-            return NotOnThisChain(tx.referenceChain.toString())
+            return NotOnThisChain(HashSerializer.stringify(tx.referenceChain))
         }
         if (!checkFee(size, tx.fee)) {
             return Invalid("Too low fee ${tx.fee}")

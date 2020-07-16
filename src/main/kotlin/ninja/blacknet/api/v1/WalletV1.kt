@@ -16,6 +16,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.notSupportedEncoderError
@@ -24,7 +25,7 @@ import ninja.blacknet.serialization.notSupportedEncoderError
 class WalletV1(val seq: Int, val transactions: ArrayList<JsonElement>) {
     constructor(wallet: WalletDB.Wallet) : this(wallet.seq, ArrayList(wallet.transactions.size)) {
         wallet.transactions.forEach { (hash, txData) ->
-            transactions.add(JsonLiteral(hash.toString()))
+            transactions.add(JsonLiteral(HashSerializer.stringify(hash)))
             transactions.add(TransactionDataV1(txData).toJson())
         }
     }

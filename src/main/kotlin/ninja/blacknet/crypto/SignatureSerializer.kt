@@ -45,6 +45,10 @@ object SignatureSerializer : KSerializer<ByteArray> {
         return fromHex(string, SIGNATURE_SIZE_BYTES)
     }
 
+    fun stringify(signature: ByteArray): String {
+        return signature.toHex()
+    }
+
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeFixedByteArray(SIGNATURE_SIZE_BYTES)

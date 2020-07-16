@@ -110,7 +110,7 @@ fun Route.wallet() {
         override suspend fun handle(call: ApplicationCall): Unit {
             val signature = Message.sign(privateKey, message)
 
-            return call.respond(signature.toString())
+            return call.respond(SignatureSerializer.stringify(signature))
         }
     }
 
@@ -144,7 +144,7 @@ fun Route.wallet() {
             val wallet = WalletDB.getWalletImpl(publicKey)
             val transactions = newHashMapWithExpectedSize<String, TransactionDataInfo>(wallet.transactions.size)
             wallet.transactions.forEach { (hash, txData) ->
-                transactions.put(hash.toString(), TransactionDataInfo(txData))
+                transactions.put(HashSerializer.stringify(hash), TransactionDataInfo(txData))
             }
 
             return call.respondJson(MapSerializer(String.serializer(), TransactionDataInfo.serializer()), transactions)
@@ -192,7 +192,8 @@ fun Route.wallet() {
             @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
             val publicKey: ByteArray,
-            val hash: Hash,
+            @Serializable(with = HashSerializer::class)
+            val hash: ByteArray,
             val raw: Boolean = false
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
@@ -221,7 +222,8 @@ fun Route.wallet() {
             @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
             val publicKey: ByteArray,
-            val hash: Hash
+            @Serializable(with = HashSerializer::class)
+            val hash: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val result = WalletDB.getConfirmations(publicKey, hash)
@@ -244,7 +246,7 @@ fun Route.wallet() {
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val result = WalletDB.referenceChain()
-            return call.respond(result.toString())
+            return call.respond(HashSerializer.stringify(result))
         }
     }
 
@@ -337,7 +339,8 @@ fun Route.wallet() {
     @Serializable
     class ListSinceBlockInfo(
             val transactions: List<WalletTransactionInfo>,
-            val lastBlockHash: Hash
+            @Serializable(with = HashSerializer::class)
+            val lastBlockHash: ByteArray
     )
 
     @Serializable
@@ -345,7 +348,8 @@ fun Route.wallet() {
             @SerialName("address")
             @Serializable(with = PublicKeySerializer::class)
             val publicKey: ByteArray,
-            val hash: Hash = Hash.ZERO
+            @Serializable(with = HashSerializer::class)
+            val hash: ByteArray = HashSerializer.ZERO
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit = WalletDB.mutex.withLock {
             val wallet = WalletDB.getWalletImpl(publicKey)

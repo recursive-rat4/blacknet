@@ -31,8 +31,8 @@ object Mnemonic {
 
             val mnemonic = builder.toString()
             val hash = hash(mnemonic)
-            if (checkVersion(hash.bytes))
-                return Pair(mnemonic, hash.bytes)
+            if (checkVersion(hash))
+                return Pair(mnemonic, hash)
 
             builder.setLength(0)
         }
@@ -40,8 +40,8 @@ object Mnemonic {
 
     fun fromString(string: String): ByteArray {
         val hash = hash(string)
-        return if (checkVersion(hash.bytes))
-            hash.bytes
+        return if (checkVersion(hash))
+            hash
         else
             throw Exception("Check version failed")
     }
@@ -50,7 +50,7 @@ object Mnemonic {
         return bytes[0].toInt() and 0xF0 == 0x10
     }
 
-    private fun hash(string: String): Hash {
+    private fun hash(string: String): ByteArray {
         return buildHash {
             encodeString(string)
         }

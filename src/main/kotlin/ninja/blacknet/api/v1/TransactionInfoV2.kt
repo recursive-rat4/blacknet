@@ -15,7 +15,8 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.json
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.TxData
@@ -33,13 +34,13 @@ class TransactionInfoV2(
         val type: Int,
         val data: JsonElement
 ) {
-    constructor(tx: Transaction, hash: Hash, size: Int) : this(
-            hash.toString(),
+    constructor(tx: Transaction, hash: ByteArray, size: Int) : this(
+            HashSerializer.stringify(hash),
             size,
-            tx.signature.toString(),
+            SignatureSerializer.stringify(tx.signature),
             Address.encode(tx.from),
             tx.seq,
-            tx.referenceChain.toString(),
+            HashSerializer.stringify(tx.referenceChain),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
             data(tx.type, tx.data)

@@ -9,19 +9,18 @@
 
 package ninja.blacknet.core
 
-import ninja.blacknet.crypto.Hash
-import ninja.blacknet.util.HashMap
 import kotlin.math.max
+import ninja.blacknet.util.HashMap
 
 abstract class MemPool {
     private var maxSeenSize = 512
-    private var map = HashMap<Hash, ByteArray>(maxSeenSize)
+    private var map = HashMap<ByteArray, ByteArray>(maxSeenSize)
     private var dataSize = 0
 
-    protected fun stealImpl(): HashMap<Hash, ByteArray> {
+    protected fun stealImpl(): HashMap<ByteArray, ByteArray> {
         val stolen = map
         maxSeenSize = max(maxSeenSize, stolen.size)
-        map = HashMap<Hash, ByteArray>(maxSeenSize)
+        map = HashMap<ByteArray, ByteArray>(maxSeenSize)
         dataSize = 0
         return stolen
     }
@@ -38,24 +37,24 @@ abstract class MemPool {
         return dataSize
     }
 
-    fun <T> mapHashesToListImpl(transform: (Hash) -> T): MutableList<T> {
+    fun <T> mapHashesToListImpl(transform: (ByteArray) -> T): MutableList<T> {
         return map.keys.mapTo(ArrayList(map.size), transform)
     }
 
-    protected fun addImpl(hash: Hash, bytes: ByteArray) {
+    protected fun addImpl(hash: ByteArray, bytes: ByteArray) {
         map.put(hash, bytes)
         dataSize += bytes.size
     }
 
-    protected fun containsImpl(hash: Hash): Boolean {
+    protected fun containsImpl(hash: ByteArray): Boolean {
         return map.containsKey(hash)
     }
 
-    protected fun getImpl(hash: Hash): ByteArray? {
+    protected fun getImpl(hash: ByteArray): ByteArray? {
         return map.get(hash)
     }
 
-    protected fun removeImpl(hash: Hash) {
+    protected fun removeImpl(hash: ByteArray) {
         val bytes = map.remove(hash)
         if (bytes != null)
             dataSize -= bytes.size

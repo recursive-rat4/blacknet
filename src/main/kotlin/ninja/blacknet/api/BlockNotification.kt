@@ -11,28 +11,31 @@ package ninja.blacknet.api
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Block
-import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.PublicKeySerializer
 
 @Serializable
 class BlockNotification(
-        val hash: String,
+        @Serializable(with = HashSerializer::class)
+        val hash: ByteArray,
         val height: Int,
         val size: Int,
         val version: Int,
-        val previous: String,
+        @Serializable(with = HashSerializer::class)
+        val previous: ByteArray,
         val time: Long,
-        val generator: String,
+        @Serializable(with = PublicKeySerializer::class)
+        val generator: ByteArray,
         val transactions: Int
 ) {
-    constructor(block: Block, hash: Hash, height: Int, size: Int) : this(
-            hash.toString(),
+    constructor(block: Block, hash: ByteArray, height: Int, size: Int) : this(
+            hash,
             height,
             size,
             block.version,
-            block.previous.toString(),
+            block.previous,
             block.time,
-            Address.encode(block.generator),
+            block.generator,
             block.transactions.size
     )
 }

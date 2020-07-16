@@ -13,7 +13,6 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
@@ -29,7 +28,7 @@ class ClaimHTLC(
         @Serializable(with = ByteArraySerializer::class)
         val preimage: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             return Invalid("HTLC not found")
@@ -41,9 +40,9 @@ class ClaimHTLC(
             return Invalid("Invalid hash lock")
         }
 
-        val account = ledger.get(tx.from)!!
+        val account = ledger.getAccount(tx.from)!!
         account.debit(ledger.height(), htlc.amount)
-        ledger.set(tx.from, account)
+        ledger.setAccount(tx.from, account)
         ledger.removeHTLC(id)
         return Accepted
     }

@@ -11,7 +11,7 @@ package ninja.blacknet.packet
 
 import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashListSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
@@ -20,7 +20,8 @@ import ninja.blacknet.serialization.ByteArrayListSerializer
 
 @Serializable
 class Blocks(
-        val hashes: List<Hash>,
+        @Serializable(with = HashListSerializer::class)
+        val hashes: List<ByteArray>,
         @Serializable(with = ByteArrayListSerializer::class)
         val blocks: List<ByteArray>
 ) : Packet {

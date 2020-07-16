@@ -39,7 +39,7 @@ import ninja.blacknet.api.v2.TransactionNotification
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.debug
 import ninja.blacknet.debugMessage
@@ -55,7 +55,7 @@ private val logger = KotlinLogging.logger {}
 
 object APIServer {
     internal val txMutex = Mutex()
-    internal var lastIndex: Pair<Hash, ChainIndex>? = null
+    internal var lastIndex: Pair<ByteArray, ChainIndex>? = null
     internal val blockNotifyV0 = SynchronizedArrayList<SendChannel<Frame>>()
     internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
     internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, MutableSet<ByteArray>>()
@@ -63,11 +63,11 @@ object APIServer {
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val walletNotify = SynchronizedHashMap<ByteArray, ArrayList<SendChannel<Frame>>>()
 
-    suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
+    suspend fun blockNotify(block: Block, hash: ByteArray, height: Int, size: Int) {
         blockNotifyV0.forEach {
             Runtime.launch {
                 try {
-                    it.send(Frame.Text(hash.toString()))
+                    it.send(Frame.Text(HashSerializer.stringify(hash)))
                 } finally {
                 }
             }
@@ -104,7 +104,7 @@ object APIServer {
         }
     }
 
-    suspend fun txPoolNotify(tx: Transaction, hash: Hash, time: Long, size: Int) {
+    suspend fun txPoolNotify(tx: Transaction, hash: ByteArray, time: Long, size: Int) {
         txPoolNotify.mutex.withLock {
             if (txPoolNotify.set.isNotEmpty()) {
                 val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
@@ -121,7 +121,7 @@ object APIServer {
         }
     }
 
-    suspend fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: ByteArray, filter: List<WalletDB.TransactionDataType>) {
+    suspend fun walletNotify(tx: Transaction, hash: ByteArray, time: Long, size: Int, publicKey: ByteArray, filter: List<WalletDB.TransactionDataType>) {
         walletNotifyV1.mutex.withLock {
             if (walletNotifyV1.map.isNotEmpty()) {
                 val notification = TransactionNotificationV2(tx, hash, time, size)

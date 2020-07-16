@@ -11,7 +11,6 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
@@ -25,16 +24,16 @@ class Burn(
         @Serializable(with = ByteArraySerializer::class)
         val message: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (amount == 0L) {
             return Invalid("Invalid amount")
         }
-        val account = ledger.get(tx.from)!!
+        val account = ledger.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
             return status
         }
-        ledger.set(tx.from, account)
+        ledger.setAccount(tx.from, account)
         ledger.addSupply(-amount)
         return Accepted
     }

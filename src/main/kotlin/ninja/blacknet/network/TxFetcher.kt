@@ -14,7 +14,6 @@ import kotlinx.coroutines.channels.Channel
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.core.currentTimeMillis
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.packet.GetTransactions
 import ninja.blacknet.packet.PacketType
 import ninja.blacknet.packet.Transactions
@@ -24,26 +23,26 @@ import ninja.blacknet.util.SynchronizedHashMap
  * 交易獲取器
  */
 object TxFetcher {
-    private val inventoryChannel: Channel<Pair<Connection, List<Hash>>> = Channel(Channel.UNLIMITED)
-    private val requested = SynchronizedHashMap<Hash, Long>()
+    private val inventoryChannel: Channel<Pair<Connection, List<ByteArray>>> = Channel(Channel.UNLIMITED)
+    private val requested = SynchronizedHashMap<ByteArray, Long>()
 
     init {
         Runtime.rotate(::implementation)
         Runtime.rotate(::watchdog)
     }
 
-    fun offer(connection: Connection, list: List<Hash>) {
+    fun offer(connection: Connection, list: List<ByteArray>) {
         inventoryChannel.offer(Pair(connection, list))
     }
 
-    suspend fun fetched(hash: Hash): Boolean {
+    suspend fun fetched(hash: ByteArray): Boolean {
         return requested.remove(hash) != null
     }
 
     private suspend fun implementation() {
         val (connection, inventory) = inventoryChannel.receive()
 
-        val request = ArrayList<Hash>(inventory.size)
+        val request = ArrayList<ByteArray>(inventory.size)
         val currTime = currentTimeMillis()
 
         for (hash in inventory) {
@@ -67,7 +66,7 @@ object TxFetcher {
         }
     }
 
-    private fun sendRequest(connection: Connection, request: ArrayList<Hash>) {
+    private fun sendRequest(connection: Connection, request: ArrayList<ByteArray>) {
         connection.sendPacket(PacketType.GetTransactions, GetTransactions(request))
     }
 

@@ -7,18 +7,18 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.contract
+package ninja.blacknet.crypto
 
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.coding.fromHex
+import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
@@ -27,30 +27,31 @@ import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
- * The number of bytes in a binary representation of a multisignature lock contract id.
+ * Serializes a BLAKE2b-256 hash.
  */
-const val MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES = HashSerializer.SIZE_BYTES
+object HashSerializer : KSerializer<ByteArray> {
+    /**
+     * The number of bytes in a binary representation of the hash.
+     */
+    const val SIZE_BYTES = 32
+    val ZERO = ByteArray(SIZE_BYTES)
 
-/**
- * Serializes an id of the multisignature lock contract.
- */
-object MultiSignatureLockContractIdSerializer : KSerializer<ByteArray> {
     override val descriptor: SerialDescriptor = SerialDescriptor(
-        "ninja.blacknet.contract.MultiSignatureLockContractIdSerializer",
+        "ninja.blacknet.crypto.HashSerializer",
         StructureKind.LIST  // PrimitiveKind.STRING
     )
 
     fun parse(string: String): ByteArray {
-        return Address.decode(Address.MULTISIG, string)
+        return fromHex(string, SIZE_BYTES)
     }
 
-    fun stringify(id: ByteArray): String {
-        return Address.encode(Address.MULTISIG, id)
+    fun stringify(hash: ByteArray): String {
+        return hash.toHex()
     }
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is BinaryDecoder -> decoder.decodeFixedByteArray(MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES)
+            is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
             else -> throw notSupportedDecoderError(decoder, this)
@@ -60,7 +61,7 @@ object MultiSignatureLockContractIdSerializer : KSerializer<ByteArray> {
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
-            is HashCoder -> encoder.encodeMultiSignatureLockContractId(value)
+            is HashCoder -> encoder.encodeHash(value)
             is JsonOutput -> encoder.encodeString(stringify(value))
             else -> throw notSupportedEncoderError(encoder, this)
         }
@@ -68,10 +69,15 @@ object MultiSignatureLockContractIdSerializer : KSerializer<ByteArray> {
 }
 
 /**
- * Encodes a multisignature lock contract id value.
+ * Encodes a hash value.
  *
  * @param value the [ByteArray] containing the data
  */
-fun HashCoder.encodeMultiSignatureLockContractId(value: ByteArray) {
+fun HashCoder.encodeHash(value: ByteArray) {
     writer.writeByteArray(value)
 }
+
+/**
+ * Serializes a [`List<ByteArray>`][List] with [ListSerializer] and [HashSerializer].
+ */
+object HashListSerializer : KSerializer<List<ByteArray>> by ListSerializer(HashSerializer)

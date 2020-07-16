@@ -12,7 +12,6 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.BinaryDecoder
@@ -30,19 +29,19 @@ class Lease(
         @Serializable(with = PublicKeySerializer::class)
         val to: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (amount < PoS.MIN_LEASE) {
             return Invalid("$amount less than minimal ${PoS.MIN_LEASE}")
         }
-        val account = ledger.get(tx.from)!!
+        val account = ledger.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
             return status
         }
-        ledger.set(tx.from, account)
+        ledger.setAccount(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
         toAccount.leases.add(AccountState.Lease(tx.from, ledger.height(), amount))
-        ledger.set(to, toAccount)
+        ledger.setAccount(to, toAccount)
         return Accepted
     }
 

@@ -71,13 +71,13 @@ class SpendMultisig(
             Invalid("Invalid sender")
     }
 
-    private fun hash(): Hash {
+    private fun hash(): ByteArray {
         val copy = SpendMultisig(id, amounts, ArrayList())
         val bytes = BinaryEncoder.toBytes(serializer(), copy)
         return buildHash { encodeByteArray(bytes) }
     }
 
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         val multisig = ledger.getMultisig(id)
         if (multisig == null) {
             return Invalid("Multisig not found")
@@ -110,7 +110,7 @@ class SpendMultisig(
                 val publicKey = multisig.deposits[index].from
                 val toAccount = ledger.getOrCreate(publicKey)
                 toAccount.debit(height, amounts[index])
-                ledger.set(publicKey, toAccount)
+                ledger.setAccount(publicKey, toAccount)
             }
         }
 

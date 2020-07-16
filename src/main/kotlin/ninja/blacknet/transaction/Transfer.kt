@@ -14,7 +14,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.BinaryDecoder
@@ -31,16 +30,16 @@ class Transfer(
         @SerialName("message")
         val paymentId: PaymentId
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
-        val account = ledger.get(tx.from)!!
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+        val account = ledger.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
             return status
         }
-        ledger.set(tx.from, account)
+        ledger.setAccount(tx.from, account)
         val toAccount = ledger.getOrCreate(to)
         toAccount.debit(ledger.height(), amount)
-        ledger.set(to, toAccount)
+        ledger.setAccount(to, toAccount)
         return Accepted
     }
 

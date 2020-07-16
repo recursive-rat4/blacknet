@@ -9,68 +9,71 @@
 
 package ninja.blacknet.db
 
+import java.util.Collections
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.serialization.BinaryDecoder
-import java.util.Collections
+import ninja.blacknet.util.LinkedHashMap
 
 private val logger = KotlinLogging.logger {}
 
 object BlockDB {
     private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
     internal val mutex = Mutex()
-    private val BLOCK_KEY = DBKey(0xC0.toByte(), Hash.SIZE_BYTES)
+    private val BLOCK_KEY = DBKey(0xC0.toByte(), HashSerializer.SIZE_BYTES)
     @Volatile
-    internal var cachedBlock: Pair<Hash, ByteArray>? = null
+    internal var cachedBlock: Pair<ByteArray, ByteArray>? = null
 
-    private val rejects = Collections.newSetFromMap(object : LinkedHashMap<Hash, Boolean>() {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Hash, Boolean>): Boolean {
-            return size > PoS.MATURITY
+    private val rejects = Collections.newSetFromMap(object : LinkedHashMap<ByteArray, Boolean>() {
+        override fun put(key: ByteArray, value: Boolean): Boolean? {
+            if (size > PoS.MATURITY)
+                remove(firstKey())
+            return super.put(key, value)
         }
     })
 
-    internal fun isRejectedImpl(hash: Hash): Boolean {
+    internal fun isRejectedImpl(hash: ByteArray): Boolean {
         return rejects.contains(hash)
     }
 
-    suspend fun block(hash: Hash): Pair<Block, Int>? = mutex.withLock {
+    suspend fun block(hash: ByteArray): Pair<Block, Int>? = mutex.withLock {
         return@withLock blockImpl(hash)
     }
 
-    internal fun blockImpl(hash: Hash): Pair<Block, Int>? {
+    internal fun blockImpl(hash: ByteArray): Pair<Block, Int>? {
         val bytes = getImpl(hash) ?: return null
         val block = BinaryDecoder(bytes).decode(Block.serializer())
         return Pair(block, bytes.size)
     }
 
-    suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
+    suspend fun get(hash: ByteArray): ByteArray? = mutex.withLock {
         return@withLock getImpl(hash)
     }
 
-    internal fun removeImpl(list: List<Hash>) {
+    internal fun removeImpl(list: List<ByteArray>) {
         val batch = LevelDB.createWriteBatch()
         list.forEach { hash ->
-            batch.delete(BLOCK_KEY, hash.bytes)
+            batch.delete(BLOCK_KEY, hash)
         }
         batch.write()
     }
 
-    private fun containsImpl(hash: Hash): Boolean {
+    private fun containsImpl(hash: ByteArray): Boolean {
         return LedgerDB.chainContains(hash)
     }
 
-    internal fun getImpl(hash: Hash): ByteArray? {
-        return LevelDB.get(BLOCK_KEY, hash.bytes)
+    internal fun getImpl(hash: ByteArray): ByteArray? {
+        return LevelDB.get(BLOCK_KEY, hash)
     }
 
-    private suspend fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
+    private suspend fun processBlockImpl(hash: ByteArray, bytes: ByteArray): Status {
         val block = BinaryDecoder(bytes).decode(Block.serializer())
         val state = LedgerDB.state()
         if (block.version.toUInt() > Block.VERSION.toUInt()) {
@@ -94,14 +97,14 @@ object BlockDB {
         if (!block.verifySignature(hash)) {
             return Invalid("Invalid signature")
         }
-        if (block.previous != state.blockHash) {
-            return NotOnThisChain(block.previous.toString())
+        if (!block.previous.contentEquals(state.blockHash)) {
+            return NotOnThisChain(HashSerializer.stringify(block.previous))
         }
         val batch = LevelDB.createWriteBatch()
         val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
         val (status, txHashes) = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
         if (status == Accepted) {
-            batch.put(BLOCK_KEY, hash.bytes, bytes)
+            batch.put(BLOCK_KEY, hash, bytes)
             txDb.commitImpl()
             TxPool.mutex.withLock {
                 TxPool.clearRejectsImpl()
@@ -115,11 +118,11 @@ object BlockDB {
         return status
     }
 
-    internal suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+    internal suspend fun processImpl(hash: ByteArray, bytes: ByteArray): Status {
         if (rejects.contains(hash))
             return Invalid("Already rejected block")
         if (containsImpl(hash))
-            return AlreadyHave(hash.toString())
+            return AlreadyHave(HashSerializer.stringify(hash))
         val status = processBlockImpl(hash, bytes)
         if (status is Invalid)
             rejects.add(hash)

@@ -11,38 +11,44 @@ package ninja.blacknet.api
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.transaction.MultiData
 import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
 
 @Serializable
 class TransactionInfo(
-        val hash: String,
+        @Serializable(with = HashSerializer::class)
+        val hash: ByteArray,
         val size: Int,
-        val signature: String,
-        val from: String,
+        @Serializable(with = SignatureSerializer::class)
+        val signature: ByteArray,
+        @Serializable(with = PublicKeySerializer::class)
+        val from: ByteArray,
         val seq: Int,
-        val referenceChain: String,
-        val fee: String,
+        @Serializable(with = HashSerializer::class)
+        val referenceChain: ByteArray,
+        @Serializable(with = LongSerializer::class)
+        val fee: Long,
         val data: List<DataInfo>
 ) {
-    constructor(tx: Transaction, hash: Hash, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
-            hash.toString(),
+    constructor(tx: Transaction, hash: ByteArray, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
+            hash,
             size,
-            tx.signature.toString(),
-            Address.encode(tx.from),
+            tx.signature,
+            tx.from,
             tx.seq,
-            tx.referenceChain.toString(),
-            tx.fee.toString(),
+            tx.referenceChain,
+            tx.fee,
             data(tx.type, tx.data, filter)
     )
 

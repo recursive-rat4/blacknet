@@ -13,14 +13,15 @@ import io.ktor.utils.io.core.ByteReadPacket
 import java.math.BigInteger
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
 class ChainAnnounce(
-        internal val chain: Hash,
+        @Serializable(with = HashSerializer::class)
+        internal val chain: ByteArray,
         @Serializable(with = BigIntegerSerializer::class)
         internal val cumulativeDifficulty: BigInteger
 ) : Packet {
@@ -31,6 +32,6 @@ class ChainAnnounce(
     }
 
     companion object {
-        val GENESIS = ChainAnnounce(Hash.ZERO, BigInteger.ZERO)
+        val GENESIS = ChainAnnounce(HashSerializer.ZERO, BigInteger.ZERO)
     }
 }

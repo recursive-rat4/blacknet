@@ -17,8 +17,8 @@ import kotlinx.serialization.StructureKind
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.HashCoder
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
@@ -29,7 +29,7 @@ import ninja.blacknet.serialization.notSupportedEncoderError
 /**
  * The number of bytes in a binary representation of a hash time lock contract id.
  */
-const val HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES = Hash.SIZE_BYTES
+const val HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES = HashSerializer.SIZE_BYTES
 
 /**
  * Serializes an id of the hash time lock contract.

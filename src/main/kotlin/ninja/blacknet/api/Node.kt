@@ -20,7 +20,7 @@ import kotlinx.serialization.builtins.list
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.ktor.requests.Request
 import ninja.blacknet.ktor.requests.get
 import ninja.blacknet.network.Network
@@ -43,7 +43,8 @@ fun Route.node() {
 
     @Serializable
     class TxPoolTransaction(
-            val hash: Hash,
+            @Serializable(with = HashSerializer::class)
+            val hash: ByteArray,
             val raw: Boolean = false
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {

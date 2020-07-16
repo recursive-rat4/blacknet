@@ -15,7 +15,6 @@ import ninja.blacknet.contract.TimeLock
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Blake2b.buildHash
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.encodeHash
 import ninja.blacknet.serialization.BinaryDecoder
@@ -35,13 +34,13 @@ class CreateHTLC(
         val timeLock: TimeLock,
         val hashLock: HashLock
 ) : TxData {
-    fun id(hash: Hash, dataIndex: Int): ByteArray =
+    fun id(hash: ByteArray, dataIndex: Int): ByteArray =
         buildHash {
             encodeHash(hash);
             encodeInt(dataIndex);
-        }.bytes
+        }
 
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         try {
             timeLock.validate()
         } catch (e: Throwable) {
@@ -57,7 +56,7 @@ class CreateHTLC(
             return Invalid("Invalid amount")
         }
 
-        val account = ledger.get(tx.from)!!
+        val account = ledger.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
             return status
@@ -65,7 +64,7 @@ class CreateHTLC(
 
         val id = id(hash, dataIndex)
         val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLock, hashLock)
-        ledger.set(tx.from, account)
+        ledger.setAccount(tx.from, account)
         ledger.addHTLC(id, htlc)
         return Accepted
     }

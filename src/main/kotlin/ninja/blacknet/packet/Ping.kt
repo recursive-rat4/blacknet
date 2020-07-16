@@ -38,5 +38,5 @@ fun solve(challenge: Int): Int {
         encodeInt(Node.magic)
         encodeInt(challenge)
     }
-    return Int.fromBytes(hash.bytes[0], hash.bytes[1], hash.bytes[2], hash.bytes[3])
+    return Int.fromBytes(hash[0], hash[1], hash[2], hash[3])
 }

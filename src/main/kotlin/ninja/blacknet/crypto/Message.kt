@@ -22,7 +22,7 @@ object Message {
         return Ed25519.verify(signature, hash(message), publicKey)
     }
 
-    private fun hash(message: String): Hash {
+    private fun hash(message: String): ByteArray {
         return buildHash {
             encodeString(SIGN_MAGIC)
             encodeString(message)

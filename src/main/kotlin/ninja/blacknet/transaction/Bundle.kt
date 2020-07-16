@@ -15,7 +15,6 @@ import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Status
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
@@ -31,7 +30,7 @@ class Bundle(
         @Serializable(with = ByteArraySerializer::class)
         val data: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         return Accepted
     }
 

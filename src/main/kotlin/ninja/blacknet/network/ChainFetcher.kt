@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
@@ -39,13 +39,13 @@ object ChainFetcher {
     private var request: Deferred<Blocks>? = null
     private var connectedBlocks = 0
     @Volatile
-    private var stakedBlock: Triple<Hash, ByteArray, CompletableDeferred<Pair<Status, Int>>>? = null
+    private var stakedBlock: Triple<ByteArray, ByteArray, CompletableDeferred<Pair<Status, Int>>>? = null
     @Volatile
     private var syncConnection: Connection? = null
-    private var originalChain: Hash? = null
-    private var rollbackTo: Hash? = null
+    private var originalChain: ByteArray? = null
+    private var rollbackTo: ByteArray? = null
     private var undoDifficulty = BigInteger.ZERO
-    private var undoRollback: List<Hash>? = null
+    private var undoRollback: List<ByteArray>? = null
 
     private val coroutine = Runtime.rotate(::implementation)
     /**
@@ -72,7 +72,7 @@ object ChainFetcher {
         announces.offer(Pair(connection, announce))
     }
 
-    suspend fun stakedBlock(hash: Hash, bytes: ByteArray): Pair<Status, Int> {
+    suspend fun stakedBlock(hash: ByteArray, bytes: ByteArray): Pair<Status, Int> {
         val deferred = CompletableDeferred<Pair<Status, Int>>()
         stakedBlock = Triple(hash, bytes, deferred)
         request?.cancel(CancellationException("Staked new block"))
@@ -111,7 +111,7 @@ object ChainFetcher {
                 return
             }
 
-            logger.info("Fetching ${announce.chain}")
+            logger.info("Fetching ${HashSerializer.stringify(announce.chain)}")
             syncConnection = connection
             originalChain = state.blockHash
 
@@ -184,7 +184,7 @@ object ChainFetcher {
         }
 
         state = LedgerDB.state()
-        if (state.blockHash != originalChain) {
+        if (!state.blockHash.contentEquals(originalChain!!)) {
             Node.announceChain(state.blockHash, state.cumulativeDifficulty, connection)
             connection.lastBlockTime = connection.lastPacketTime
         }
@@ -235,7 +235,7 @@ object ChainFetcher {
         for (i in answer.blocks) {
             val hash = Block.hash(i)
             if (undoRollback?.contains(hash) == true) {
-                connection.dos("Rollback contains $hash")
+                connection.dos("Rollback contains ${HashSerializer.stringify(hash)}")
                 return false
             }
             val status = BlockDB.processImpl(hash, i)
@@ -252,7 +252,7 @@ object ChainFetcher {
         return true
     }
 
-    private fun requestBlocks(connection: Connection, hash: Hash, checkpoint: Hash) {
+    private fun requestBlocks(connection: Connection, hash: ByteArray, checkpoint: ByteArray) {
         request = Runtime.async { recvChannel.receive() }
         connection.requestedBlocks = true
         // 緊湊型區塊轉發

@@ -19,7 +19,7 @@ import io.ktor.routing.get
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.ChainIndex
-import ninja.blacknet.crypto.Hash
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.dataDir
@@ -48,7 +48,8 @@ fun Route.dataBase() {
 
     @Serializable
     class Block(
-            val hash: Hash,
+            @Serializable(with = HashSerializer::class)
+            val hash: ByteArray,
             val txdetail: Boolean = false
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
@@ -70,18 +71,18 @@ fun Route.dataBase() {
             if (height < 0 || height > state.height)
                 return call.respond(HttpStatusCode.BadRequest, "Block not found")
             else if (height == 0)
-                return call.respond(Hash.ZERO.toString())
+                return call.respond(HashSerializer.stringify(HashSerializer.ZERO))
             else if (height == state.height)
-                return call.respond(state.blockHash.toString())
+                return call.respond(HashSerializer.stringify(state.blockHash))
 
             val lastIndex = APIServer.lastIndex
             if (lastIndex != null && lastIndex.second.height == height)
-                return call.respond(lastIndex.first.toString())
+                return call.respond(HashSerializer.stringify(lastIndex.first))
 
-            var hash: Hash
+            var hash: ByteArray
             var index: ChainIndex
             if (height < state.height / 2) {
-                hash = Hash.ZERO
+                hash = HashSerializer.ZERO
                 index = LedgerDB.getChainIndex(hash)!!
             } else {
                 hash = state.blockHash
@@ -100,7 +101,7 @@ fun Route.dataBase() {
             if (index.height < state.height - PoS.MATURITY + 1)
                 APIServer.lastIndex = Pair(hash, index)
 
-            return call.respond(hash.toString())
+            return call.respond(HashSerializer.stringify(hash))
         }
     }
 
@@ -109,7 +110,8 @@ fun Route.dataBase() {
 
     @Serializable
     class BlockIndex(
-            val hash: Hash
+            @Serializable(with = HashSerializer::class)
+            val hash: ByteArray
     ) : Request {
         override suspend fun handle(call: ApplicationCall): Unit {
             val index = LedgerDB.getChainIndex(hash)
@@ -125,13 +127,13 @@ fun Route.dataBase() {
 
     get("/api/v2/makebootstrap") {
         val checkpoint = LedgerDB.state().rollingCheckpoint
-        if (checkpoint == Hash.ZERO)
+        if (checkpoint.contentEquals(HashSerializer.ZERO))
             return@get call.respond(HttpStatusCode.BadRequest, "Not synchronized")
 
         val file = File(dataDir, "bootstrap.dat.new")
         val stream = file.outputStream().buffered().data()
 
-        var hash = Hash.ZERO
+        var hash = HashSerializer.ZERO
         var index = LedgerDB.getChainIndex(hash)!!
         do {
             hash = index.next
@@ -139,7 +141,7 @@ fun Route.dataBase() {
             val bytes = BlockDB.getImpl(hash)!!
             stream.writeInt(bytes.size)
             stream.write(bytes, 0, bytes.size)
-        } while (hash != checkpoint)
+        } while (!hash.contentEquals(checkpoint))
 
         stream.close()
 
