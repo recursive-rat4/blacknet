@@ -18,6 +18,7 @@ import ninja.blacknet.coding.HexFormatException
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.ConfigInput
 import ninja.blacknet.serialization.notSupportedDecoderError
@@ -59,17 +60,8 @@ object PrivateKeySerializer : KSerializer<ByteArray> {
 
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
-            is HashCoder -> encoder.encodePrivateKey(value)
+            is HashCoder -> encoder.encodeByteArray(value)
             else -> throw notSupportedEncoderError(encoder, this)
         }
     }
-}
-
-/**
- * Encodes a private key value.
- *
- * @param value the [PrivateKey] containing the data
- */
-fun HashCoder.encodePrivateKey(value: ByteArray) {
-    writer.writeByteArray(value)
 }

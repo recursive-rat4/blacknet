@@ -34,8 +34,8 @@ object PoS {
 
     fun nxtrng(nxtrng: ByteArray, generator: ByteArray): ByteArray {
         return buildHash {
-            encodeHash(nxtrng)
-            encodePublicKey(generator)
+            encodeByteArray(nxtrng)
+            encodeByteArray(generator)
         }
     }
 
@@ -47,9 +47,9 @@ object PoS {
             return Invalid("Invalid time slot")
         }
         val hash = buildHash {
-            encodeHash(nxtrng)
+            encodeByteArray(nxtrng)
             encodeLong(prevTime)
-            encodePublicKey(generator)
+            encodeByteArray(generator)
             encodeLong(time)
         }
         return if (BigInteger(1, hash) < difficulty * stake)

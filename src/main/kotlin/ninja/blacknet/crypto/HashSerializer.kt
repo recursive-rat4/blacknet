@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -61,20 +62,11 @@ object HashSerializer : KSerializer<ByteArray> {
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
-            is HashCoder -> encoder.encodeHash(value)
+            is HashCoder -> encoder.encodeByteArray(value)
             is JsonOutput -> encoder.encodeString(stringify(value))
             else -> throw notSupportedEncoderError(encoder, this)
         }
     }
-}
-
-/**
- * Encodes a hash value.
- *
- * @param value the [ByteArray] containing the data
- */
-fun HashCoder.encodeHash(value: ByteArray) {
-    writer.writeByteArray(value)
 }
 
 /**

@@ -51,7 +51,7 @@ class CreateMultisig(
 
     fun id(hash: ByteArray, dataIndex: Int): ByteArray =
         buildHash {
-            encodeHash(hash);
+            encodeByteArray(hash);
             encodeInt(dataIndex);
         }
 
@@ -68,7 +68,7 @@ class CreateMultisig(
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = BinaryEncoder.toBytes(serializer(), copy)
         return buildHash {
-            encodePublicKey(from)
+            encodeByteArray(from)
             encodeInt(seq)
             encodeInt(dataIndex)
             encodeByteArray(bytes)

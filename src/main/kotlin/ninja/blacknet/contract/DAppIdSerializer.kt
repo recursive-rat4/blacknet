@@ -19,6 +19,7 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
@@ -59,18 +60,9 @@ object DAppIdSerializer : KSerializer<ByteArray> {
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
-            is HashCoder -> encoder.encodeDAppId(value)
+            is HashCoder -> encoder.encodeByteArray(value)
             is JsonOutput -> encoder.encodeString(stringify(value))
             else -> throw notSupportedEncoderError(encoder, this)
         }
     }
-}
-
-/**
- * Encodes a dapp id value.
- *
- * @param value the [DAppId] containing the data
- */
-fun HashCoder.encodeDAppId(value: ByteArray) {
-    writer.writeByteArray(value)
 }
