@@ -27,14 +27,14 @@ import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
- * The number of bytes in a binary representation of an id of a dapp.
- */
-const val DAPP_ID_SIZE_BYTES = 4
-
-/**
  * Serializes an id of a dapp.
  */
 object DAppIdSerializer : KSerializer<ByteArray> {
+    /**
+     * The number of bytes in a binary representation of the dapp id.
+     */
+    const val SIZE_BYTES = 4
+
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.contract.DAppIdSerializer",
         StructureKind.LIST  // PrimitiveKind.STRING
@@ -50,7 +50,7 @@ object DAppIdSerializer : KSerializer<ByteArray> {
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is BinaryDecoder -> decoder.decodeFixedByteArray(DAPP_ID_SIZE_BYTES)
+            is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
             else -> throw notSupportedDecoderError(decoder, this)

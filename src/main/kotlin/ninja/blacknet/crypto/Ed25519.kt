@@ -137,7 +137,7 @@ object Ed25519 {
 
     private fun privateKeyToCurve25519(privateKey: ByteArray): ByteArray {
         val hash = buildHash(BLAKE2_B_512) { encodeByteArray(privateKey) }
-        val h = hash.copyOf(PRIVATE_KEY_SIZE_BYTES)
+        val h = hash.copyOf(PrivateKeySerializer.SIZE_BYTES)
         h[0] = h[0] and 248.toByte()
         h[31] = h[31] and 127
         h[31] = h[31] or 64

@@ -44,7 +44,7 @@ class Transaction(
         val bytes = BinaryEncoder.toBytes(serializer(), this)
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature, 0, bytes, 0, SIGNATURE_SIZE_BYTES)
+        System.arraycopy(signature, 0, bytes, 0, SignatureSerializer.SIZE_BYTES)
         return Pair(hash, bytes)
     }
 
@@ -55,7 +55,7 @@ class Transaction(
     companion object {
         fun hash(bytes: ByteArray): ByteArray {
             return buildHash {
-                encodeByteArray(bytes, SIGNATURE_SIZE_BYTES, bytes.size - SIGNATURE_SIZE_BYTES)
+                encodeByteArray(bytes, SignatureSerializer.SIZE_BYTES, bytes.size - SignatureSerializer.SIZE_BYTES)
             }
         }
 

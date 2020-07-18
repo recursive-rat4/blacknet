@@ -21,8 +21,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.contract.HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES
-import ninja.blacknet.contract.MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES
+import ninja.blacknet.contract.HashTimeLockContractIdSerializer
+import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
@@ -41,10 +41,10 @@ private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
     private const val VERSION = 8
-    private val ACCOUNT_KEY = DBKey(1, PUBLIC_KEY_SIZE_BYTES)
+    private val ACCOUNT_KEY = DBKey(1, PublicKeySerializer.SIZE_BYTES)
     private val CHAIN_KEY = DBKey(2, HashSerializer.SIZE_BYTES)
-    private val HTLC_KEY = DBKey(3, HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES)
-    private val MULTISIG_KEY = DBKey(4, MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES)
+    private val HTLC_KEY = DBKey(3, HashTimeLockContractIdSerializer.SIZE_BYTES)
+    private val MULTISIG_KEY = DBKey(4, MultiSignatureLockContractIdSerializer.SIZE_BYTES)
     private val UNDO_KEY = DBKey(5, HashSerializer.SIZE_BYTES)
     private val SIZES_KEY = DBKey(6, 0)
     private val SNAPSHOT_KEY = DBKey(7, Int.SIZE_BYTES)

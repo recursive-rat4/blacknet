@@ -25,14 +25,14 @@ import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
- * The number of bytes in a binary representation of a private key.
- */
-const val PRIVATE_KEY_SIZE_BYTES = 32
-
-/**
  * Serializes an Ed25519 private key.
  */
 object PrivateKeySerializer : KSerializer<ByteArray> {
+    /**
+     * The number of bytes in a binary representation of the private key.
+     */
+    const val SIZE_BYTES = 32
+
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.crypto.PrivateKeySerializer",
         StructureKind.LIST  // PrimitiveKind.STRING
@@ -40,7 +40,7 @@ object PrivateKeySerializer : KSerializer<ByteArray> {
 
     fun parse(string: String): ByteArray {
         return try {
-            fromHex(string, PRIVATE_KEY_SIZE_BYTES)
+            fromHex(string, SIZE_BYTES)
         } catch (e: HexFormatException) {
             try {
                 Mnemonic.fromString(string)

@@ -28,14 +28,14 @@ import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.ktor.requests.RequestDecoder
 
 /**
- * The maximum number of bytes in a binary representation of a [Long].
- */
-const val VAR_LONG_MAX_SIZE_BYTES = 10
-
-/**
  * Serializes a [Long] with variable number of bytes in a binary representation.
  */
 object VarLongSerializer : KSerializer<Long> {
+    /**
+     * The maximum number of bytes in a binary representation of the [Long].
+     */
+    const val MAX_SIZE_BYTES = 10
+
     fun descriptor(format: SerialFormat): SerialDescriptor = PrimitiveDescriptor(
         "ninja.blacknet.serialization.VarLongSerializer",
         if (format !is Json)
@@ -74,7 +74,7 @@ object VarLongSerializer : KSerializer<Long> {
  * @return the [Long] value containing the data
  */
 fun Decoder.decodeVarLong(): Long {
-    var c = VAR_LONG_MAX_SIZE_BYTES + 1
+    var c = VarLongSerializer.MAX_SIZE_BYTES + 1
     var result = 0L
     var v: Byte
     do {

@@ -28,14 +28,14 @@ import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
- * The number of bytes in a binary representation of a hash time lock contract id.
- */
-const val HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES = HashSerializer.SIZE_BYTES
-
-/**
  * Serializes an id of the hash time lock contract.
  */
 object HashTimeLockContractIdSerializer : KSerializer<ByteArray> {
+    /**
+     * The number of bytes in a binary representation of the hash time lock contract id.
+     */
+    const val SIZE_BYTES = HashSerializer.SIZE_BYTES
+
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.contract.HashTimeLockContractIdSerializer",
         StructureKind.LIST  // PrimitiveKind.STRING
@@ -51,7 +51,7 @@ object HashTimeLockContractIdSerializer : KSerializer<ByteArray> {
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is BinaryDecoder -> decoder.decodeFixedByteArray(HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES)
+            is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
             else -> throw notSupportedDecoderError(decoder, this)

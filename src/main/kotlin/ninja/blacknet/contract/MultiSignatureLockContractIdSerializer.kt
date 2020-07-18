@@ -28,14 +28,14 @@ import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
- * The number of bytes in a binary representation of a multisignature lock contract id.
- */
-const val MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES = HashSerializer.SIZE_BYTES
-
-/**
  * Serializes an id of the multisignature lock contract.
  */
 object MultiSignatureLockContractIdSerializer : KSerializer<ByteArray> {
+    /**
+     * The number of bytes in a binary representation of the multisignature lock contract id.
+     */
+    const val SIZE_BYTES = HashSerializer.SIZE_BYTES
+
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.contract.MultiSignatureLockContractIdSerializer",
         StructureKind.LIST  // PrimitiveKind.STRING
@@ -51,7 +51,7 @@ object MultiSignatureLockContractIdSerializer : KSerializer<ByteArray> {
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is BinaryDecoder -> decoder.decodeFixedByteArray(MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES)
+            is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
             else -> throw notSupportedDecoderError(decoder, this)

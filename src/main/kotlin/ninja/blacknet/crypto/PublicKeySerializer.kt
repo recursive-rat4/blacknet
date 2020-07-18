@@ -28,14 +28,14 @@ import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 
 /**
- * The number of bytes in a binary representation of a public key.
- */
-const val PUBLIC_KEY_SIZE_BYTES = 32
-
-/**
  * Serializes an Ed25519 public key.
  */
 object PublicKeySerializer : KSerializer<ByteArray> {
+    /**
+     * The number of bytes in a binary representation of the public key.
+     */
+    const val SIZE_BYTES = 32
+
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.crypto.PublicKeySerializer",
         StructureKind.LIST  // PrimitiveKind.STRING
@@ -43,7 +43,7 @@ object PublicKeySerializer : KSerializer<ByteArray> {
 
     fun parse(string: String): ByteArray {
         return try {
-            fromHex(string, PUBLIC_KEY_SIZE_BYTES)
+            fromHex(string, SIZE_BYTES)
         } catch (e: HexFormatException) {
             try {
                 Address.decode(string)
@@ -55,7 +55,7 @@ object PublicKeySerializer : KSerializer<ByteArray> {
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is BinaryDecoder -> decoder.decodeFixedByteArray(PUBLIC_KEY_SIZE_BYTES)
+            is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
             else -> throw notSupportedDecoderError(decoder, this)

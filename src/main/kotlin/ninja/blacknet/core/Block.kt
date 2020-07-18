@@ -36,7 +36,7 @@ class Block(
         System.arraycopy(contentHash, 0, bytes, CONTENT_HASH_POS, HashSerializer.SIZE_BYTES)
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
-        System.arraycopy(signature, 0, bytes, SIGNATURE_POS, SIGNATURE_SIZE_BYTES)
+        System.arraycopy(signature, 0, bytes, SIGNATURE_POS, SignatureSerializer.SIZE_BYTES)
         return Pair(hash, bytes)
     }
 
@@ -56,13 +56,13 @@ class Block(
 
     companion object {
         const val VERSION = 2
-        const val CONTENT_HASH_POS = Int.SIZE_BYTES + HashSerializer.SIZE_BYTES + Long.SIZE_BYTES + PUBLIC_KEY_SIZE_BYTES
+        const val CONTENT_HASH_POS = Int.SIZE_BYTES + HashSerializer.SIZE_BYTES + Long.SIZE_BYTES + PublicKeySerializer.SIZE_BYTES
         const val SIGNATURE_POS = CONTENT_HASH_POS + HashSerializer.SIZE_BYTES
-        const val HEADER_SIZE_BYTES = SIGNATURE_POS + SIGNATURE_SIZE_BYTES
+        const val HEADER_SIZE_BYTES = SIGNATURE_POS + SignatureSerializer.SIZE_BYTES
 
         fun hash(bytes: ByteArray): ByteArray {
             return buildHash {
-                encodeByteArray(bytes, 0, HEADER_SIZE_BYTES - SIGNATURE_SIZE_BYTES)
+                encodeByteArray(bytes, 0, HEADER_SIZE_BYTES - SignatureSerializer.SIZE_BYTES)
             }
         }
 

@@ -10,9 +10,9 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.Config
-import ninja.blacknet.contract.DAPP_ID_SIZE_BYTES
-import ninja.blacknet.contract.HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES
-import ninja.blacknet.contract.MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES
+import ninja.blacknet.contract.DAppIdSerializer
+import ninja.blacknet.contract.HashTimeLockContractIdSerializer
+import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.coding.Bech32
 import ninja.blacknet.util.plus
 
@@ -43,8 +43,8 @@ object Address {
         if (!HRP.contentEquals(hrp))
             throw Exception("Expected HRP ${String(HRP, Charsets.US_ASCII)} actual ${String(hrp, Charsets.US_ASCII)}")
         val bytes = Bech32.convertBits(data, 5, 8, false)
-        if (PUBLIC_KEY_SIZE_BYTES != bytes.size)
-            throw Exception("Expected size $PUBLIC_KEY_SIZE_BYTES actual ${bytes.size}")
+        if (PublicKeySerializer.SIZE_BYTES != bytes.size)
+            throw Exception("Expected size ${PublicKeySerializer.SIZE_BYTES} actual ${bytes.size}")
         return bytes
     }
 
@@ -71,9 +71,9 @@ object Address {
 
     private fun expectedSize(version: Byte): Int = Byte.SIZE_BYTES + when (version) {
         STAKER -> throw Error("保留地址版本字節")
-        HTLC -> HASH_TIME_LOCK_CONTRACT_ID_SIZE_BYTES
-        MULTISIG -> MULTI_SIGNATURE_LOCK_CONTRACT_ID_SIZE_BYTES
-        DAPP -> DAPP_ID_SIZE_BYTES
+        HTLC -> HashTimeLockContractIdSerializer.SIZE_BYTES
+        MULTISIG -> MultiSignatureLockContractIdSerializer.SIZE_BYTES
+        DAPP -> DAppIdSerializer.SIZE_BYTES
         else -> throw Exception("Unknown address version $version")
     }
 

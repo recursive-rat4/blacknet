@@ -25,24 +25,24 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedDecoderError
 import ninja.blacknet.serialization.notSupportedEncoderError
 
-/**
- * The number of bytes in a binary representation of a signature.
- */
-const val SIGNATURE_SIZE_BYTES = 64
-
-val EMPTY_SIGNATURE = ByteArray(SIGNATURE_SIZE_BYTES)
+val EMPTY_SIGNATURE = ByteArray(SignatureSerializer.SIZE_BYTES)
 
 /**
  * Serializes an Ed25519 signature.
  */
 object SignatureSerializer : KSerializer<ByteArray> {
+    /**
+     * The number of bytes in a binary representation of the signature.
+     */
+    const val SIZE_BYTES = 64
+
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.crypto.SignatureSerializer",
         StructureKind.LIST  // PrimitiveKind.STRING
     )
 
     fun parse(string: String): ByteArray {
-        return fromHex(string, SIGNATURE_SIZE_BYTES)
+        return fromHex(string, SIZE_BYTES)
     }
 
     fun stringify(signature: ByteArray): String {
@@ -51,7 +51,7 @@ object SignatureSerializer : KSerializer<ByteArray> {
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is BinaryDecoder -> decoder.decodeFixedByteArray(SIGNATURE_SIZE_BYTES)
+            is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder -> parse(decoder.decodeString())
             is JsonInput -> parse(decoder.decodeString())
             else -> throw notSupportedDecoderError(decoder, this)

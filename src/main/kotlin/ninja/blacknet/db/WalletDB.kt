@@ -43,7 +43,7 @@ object WalletDB {
     private val KEYS_KEY = DBKey(64, 0)
     private val TX_KEY = DBKey(65, HashSerializer.SIZE_BYTES)
     private val VERSION_KEY = DBKey(66, 0)
-    private val WALLET_KEY = DBKey(67, PUBLIC_KEY_SIZE_BYTES)
+    private val WALLET_KEY = DBKey(67, PublicKeySerializer.SIZE_BYTES)
     private val wallets = HashMap<ByteArray, Wallet>()
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
@@ -66,8 +66,8 @@ object WalletDB {
             if (keysBytes != null) {
                 var txns = 0
                 val decoder = BinaryDecoder(keysBytes)
-                for (i in 0 until keysBytes.size step PUBLIC_KEY_SIZE_BYTES) {
-                    val publicKey = decoder.decodeFixedByteArray(PUBLIC_KEY_SIZE_BYTES)
+                for (i in 0 until keysBytes.size step PublicKeySerializer.SIZE_BYTES) {
+                    val publicKey = decoder.decodeFixedByteArray(PublicKeySerializer.SIZE_BYTES)
                     val walletBytes = LevelDB.get(WALLET_KEY, publicKey)!!
                     val wallet = BinaryDecoder(walletBytes).decode(Wallet.serializer())
                     txns += wallet.transactions.size
