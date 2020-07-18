@@ -9,6 +9,7 @@
 
 package ninja.blacknet.coding
 
+import kotlin.jvm.Throws
 import ninja.blacknet.Config
 
 private val HEX_CHARS = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
@@ -60,6 +61,7 @@ fun ByteArray.toHex(): String {
  * @return the decoded [ByteArray]
  * @throws HexFormatException if the string is not a hexadecimal number
  */
+@Throws(HexFormatException::class)
 fun fromHex(string: String, size: Int = 0): ByteArray {
     val length = string.length
     if (size == 0) {
