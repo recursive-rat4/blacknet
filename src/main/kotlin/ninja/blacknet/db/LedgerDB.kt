@@ -690,7 +690,7 @@ object LedgerDB {
         }
 
         override fun getOrCreate(key: ByteArray): AccountState {
-            val account = get(key)
+            val account = getAccount(key)
             return if (account != null) {
                 account
             } else {
@@ -700,7 +700,7 @@ object LedgerDB {
         }
 
         override fun setAccount(key: ByteArray, state: AccountState) {
-            accounts.set(key, state)
+            accounts.put(key, state)
         }
 
         override fun addHTLC(id: ByteArray, htlc: HTLC) {

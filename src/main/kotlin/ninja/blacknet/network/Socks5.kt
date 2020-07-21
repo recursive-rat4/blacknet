@@ -15,20 +15,24 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.cancel
+import io.ktor.utils.io.close
 import io.ktor.utils.io.core.BytePacketBuilder
-import io.ktor.utils.io.core.Closeable
 import io.ktor.utils.io.core.writeFully
 import io.ktor.utils.io.core.writeShort
 
 /**
- * 短襪五
  * 代理客戶端
+ *
+ * RFC 1928 SOCKS Protocol Version 5
+ * RFC 1929 Username/Password Authentication for SOCKS V5
  */
 object Socks5 {
-    suspend fun connect(proxy: Address, destination: Address): Connection {
+    suspend fun connect(proxy: Address, destination: Address): Triple<ASocket, ByteReadChannel, ByteWriteChannel> {
         val socket = aSocket(Network.selector).tcp().connect(proxy.getSocketAddress())
         val readChannel = socket.openReadChannel()
         val writeChannel = socket.openWriteChannel(true)
+        val connection = Triple(socket, readChannel, writeChannel)
         val builder = BytePacketBuilder()
 
         builder.writeByte(VERSION)
@@ -37,10 +41,10 @@ object Socks5 {
         writeChannel.writePacket(builder.build())
 
         if (readChannel.readByte() != VERSION) {
-            error(socket, "Unknown socks version")
+            connection.exception("Unknown socks version")
         }
         if (readChannel.readByte() != NO_AUTHENTICATION) {
-            error(socket, "Socks auth not accepted")
+            connection.exception("Socks auth not accepted")
         }
 
         builder.writeByte(VERSION)
@@ -58,52 +62,55 @@ object Socks5 {
             Network.TORv2, Network.TORv3 -> {
                 val bytes = destination.getAddressString().toByteArray(Charsets.US_ASCII)
                 if (bytes.size < 1 || bytes.size > 255)
-                    error(socket, "Invalid length of domain name")
+                    connection.exception("Invalid length of domain name")
                 builder.writeByte(DOMAIN_NAME)
                 builder.writeByte(bytes.size.toByte())
                 builder.writeFully(bytes)
             }
-            else -> error(socket, "Not implemented for ${destination.network}")
+            else -> connection.exception("Not implemented for ${destination.network}")
         }
         builder.writeShort(destination.port.toShort())
         writeChannel.writePacket(builder.build())
 
         if (readChannel.readByte() != VERSION) {
-            error(socket, "Unknown socks version")
+            connection.exception("Unknown socks version")
         }
         if (readChannel.readByte() != REQUEST_GRANTED) {
-            error(socket, "Connection failed")
+            connection.exception("Connection failed")
         }
         if (readChannel.readByte() != 0.toByte()) {
-            error(socket, "Invalid socks response")
+            connection.exception("Invalid socks response")
         }
         val addrType = readChannel.readByte()
         when (addrType) {
             IPv4_ADDRESS -> readChannel.skip(4 + 2)
             IPv6_ADDRESS -> readChannel.skip(16 + 2)
             DOMAIN_NAME -> readChannel.skip(readChannel.readByte().toInt() + 2)
-            else -> error(socket, "Unknown socks response")
+            else -> connection.exception("Unknown socks response")
         }
 
-        return Connection(socket, readChannel, writeChannel)
+        return connection
     }
 
-    private fun error(closeable: Closeable, message: String) {
-        closeable.close()
+    private fun Triple<ASocket, ByteReadChannel, ByteWriteChannel>.exception(message: String) {
+        val socket = first; val readChannel = second; val writeChannel = third;
+        socket.close()
+        readChannel.cancel()
+        writeChannel.close()
         throw RuntimeException(message)
     }
 
-    class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel)
-
     private const val VERSION = 5.toByte()
     private const val NO_AUTHENTICATION = 0.toByte()
+    private const val USERNAME_PASSWORD_AUTHENTICATION = 2.toByte()
+    private const val NO_ACCEPTABLE_METHODS = 255.toByte()
     private const val TCP_CONNECTION = 1.toByte()
     private const val REQUEST_GRANTED = 0.toByte()
     private const val IPv4_ADDRESS = 1.toByte()
     private const val DOMAIN_NAME = 3.toByte()
     private const val IPv6_ADDRESS = 4.toByte()
-}
 
-private suspend fun ByteReadChannel.skip(num: Int) {
-    readFully(ByteArray(num), 0, num)
+    private suspend fun ByteReadChannel.skip(num: Int) {
+        readFully(ByteArray(num), 0, num)
+    }
 }

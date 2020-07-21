@@ -17,7 +17,6 @@ import io.ktor.request.receiveParameters
 import io.ktor.routing.Route
 import io.ktor.routing.route
 import io.ktor.util.AttributeKey
-import io.ktor.util.Attributes
 import kotlinx.serialization.DeserializationStrategy
 
 interface Request {
@@ -47,19 +46,16 @@ private fun <T : Request> Route.handle(
         serializer: DeserializationStrategy<T>
 ) {
     intercept(ApplicationCallPipeline.Features) {
-        call.attributes[requestKey] = RequestDecoder(RequestReader(when (method) {
+        call.attributes.put(requestKey, RequestDecoder(RequestReader(when (method) {
             HttpMethod.Get -> call.parameters
             HttpMethod.Post -> call.receiveParameters()
             else -> throw Error("超文本傳輸協議請求方法 ${method.value} 的支持尚未實現")
-        })).decode(serializer)
+        })).decode(serializer))
     }
     handle {
         @Suppress("UNCHECKED_CAST")
         (call.attributes[requestKey] as T).handle(call)
     }
 }
-
-// Warning: nay map put should be converted to assigment
-private operator fun <T : Any> Attributes.set(key: AttributeKey<T>, value: T): Unit = put(key, value)
 
 private val requestKey = AttributeKey<Any>("請求鍵")

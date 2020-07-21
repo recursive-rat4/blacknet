@@ -97,8 +97,8 @@ enum class Network(val type: Byte, val addrSize: Int) {
             when (address.network) {
                 IPv4, IPv6 -> {
                     if (socksProxy != null) {
-                        val c = Socks5.connect(socksProxy, address)
-                        return Connection(c.socket, c.readChannel, c.writeChannel, address, socksProxy, Connection.State.OUTGOING_WAITING)
+                        val (socket, readChannel, writeChannel) = Socks5.connect(socksProxy, address)
+                        return Connection(socket, readChannel, writeChannel, address, socksProxy, Connection.State.OUTGOING_WAITING)
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
@@ -109,8 +109,8 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 }
                 TORv2, TORv3 -> {
                     if (torProxy == null) throw RuntimeException("Tor proxy is not set")
-                    val c = Socks5.connect(torProxy, address)
-                    return Connection(c.socket, c.readChannel, c.writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
+                    val (socket, readChannel, writeChannel) = Socks5.connect(torProxy, address)
+                    return Connection(socket, readChannel, writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
                 }
                 I2P -> {
                     val c = I2PSAM.connect(address)
