@@ -10,9 +10,6 @@
 
 package ninja.blacknet.api
 
-import io.ktor.application.ApplicationCall
-import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
 import io.ktor.routing.Route
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
@@ -25,9 +22,7 @@ import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.ktor.requests.Request
-import ninja.blacknet.ktor.requests.get
-import ninja.blacknet.ktor.requests.post
+import ninja.blacknet.ktor.requests.*
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
@@ -48,8 +43,8 @@ fun Route.sendTransaction() {
             @Serializable(with = HashSerializer::class)
             val referenceChain: ByteArray? = null
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
-            val message = PaymentId.create(message, encrypted, privateKey, to) ?: return call.respond(HttpStatusCode.BadRequest, "Failed to create payment id")
+        override suspend fun handle(): TextContent = APIServer.txMutex.withLock {
+            val message = PaymentId.create(message, encrypted, privateKey, to) ?: return respondError("Failed to create payment id")
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(Transfer.serializer(), Transfer(amount, to, message))
@@ -58,9 +53,9 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                call.respond(HashSerializer.stringify(hash))
+                respondText(HashSerializer.stringify(hash))
             else
-                call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                respondError("Transaction rejected: $status")
         }
     }
 
@@ -78,7 +73,7 @@ fun Route.sendTransaction() {
             @Serializable(with = HashSerializer::class)
             val referenceChain: ByteArray? = null
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+        override suspend fun handle(): TextContent = APIServer.txMutex.withLock {
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(Burn.serializer(), Burn(amount, message))
@@ -87,9 +82,9 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                call.respond(HashSerializer.stringify(hash))
+                respondText(HashSerializer.stringify(hash))
             else
-                call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                respondError("Transaction rejected: $status")
         }
     }
 
@@ -107,7 +102,7 @@ fun Route.sendTransaction() {
             @Serializable(with = HashSerializer::class)
             val referenceChain: ByteArray? = null
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+        override suspend fun handle(): TextContent = APIServer.txMutex.withLock {
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(Lease.serializer(), Lease(amount, to))
@@ -116,9 +111,9 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                call.respond(HashSerializer.stringify(hash))
+                respondText(HashSerializer.stringify(hash))
             else
-                call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                respondError("Transaction rejected: $status")
         }
     }
 
@@ -137,7 +132,7 @@ fun Route.sendTransaction() {
             @Serializable(with = HashSerializer::class)
             val referenceChain: ByteArray? = null
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+        override suspend fun handle(): TextContent = APIServer.txMutex.withLock {
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(CancelLease.serializer(), CancelLease(amount, to, height))
@@ -146,9 +141,9 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                call.respond(HashSerializer.stringify(hash))
+                respondText(HashSerializer.stringify(hash))
             else
-                call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                respondError("Transaction rejected: $status")
         }
     }
 
@@ -168,7 +163,7 @@ fun Route.sendTransaction() {
             @Serializable(with = HashSerializer::class)
             val referenceChain: ByteArray? = null
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+        override suspend fun handle(): TextContent = APIServer.txMutex.withLock {
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
             val data = BinaryEncoder.toBytes(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
@@ -177,9 +172,9 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                call.respond(HashSerializer.stringify(hash))
+                respondText(HashSerializer.stringify(hash))
             else
-                call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                respondError("Transaction rejected: $status")
         }
     }
 
@@ -191,14 +186,14 @@ fun Route.sendTransaction() {
             @Serializable(with = ByteArraySerializer::class)
             val bytes: ByteArray
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit = APIServer.txMutex.withLock {
+        override suspend fun handle(): TextContent = APIServer.txMutex.withLock {
             val hash = Transaction.hash(bytes)
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                call.respond(HashSerializer.stringify(hash))
+                respondText(HashSerializer.stringify(hash))
             else
-                call.respond(HttpStatusCode.BadRequest, "Transaction rejected: $status")
+                respondError("Transaction rejected: $status")
         }
     }
 

@@ -9,37 +9,46 @@
 
 package ninja.blacknet.api
 
-import io.ktor.application.ApplicationCall
-import io.ktor.application.call
-import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
 import io.ktor.routing.Route
-import io.ktor.routing.get
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.list
 import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.HashSerializer
-import ninja.blacknet.ktor.requests.Request
-import ninja.blacknet.ktor.requests.get
+import ninja.blacknet.ktor.requests.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.toPort
 import ninja.blacknet.serialization.BinaryDecoder
 
 fun Route.node() {
-    get("/api/v2/peers") {
-        call.respondJson(PeerInfo.serializer().list, PeerInfo.getAll())
+    @Serializable
+    class Peers : Request {
+        override suspend fun handle(): TextContent {
+            return respondJson(PeerInfo.serializer().list, PeerInfo.getAll())
+        }
     }
 
-    get("/api/v2/node") {
-        call.respondJson(NodeInfo.serializer(), NodeInfo.get())
+    get(Peers.serializer(), "/api/v2/peers")
+
+    @Serializable
+    class NodeRequest : Request {
+        override suspend fun handle(): TextContent {
+            return respondJson(NodeInfo.serializer(), NodeInfo.get())
+        }
     }
 
-    get("/api/v2/txpool") {
-        call.respondJson(TxPoolInfo.serializer(), TxPoolInfo.get())
+    get(NodeRequest.serializer(), "/api/v2/node")
+
+    @Serializable
+    class TxPoolRequest : Request {
+        override suspend fun handle(): TextContent {
+            return respondJson(TxPoolInfo.serializer(), TxPoolInfo.get())
+        }
     }
+
+    get(TxPoolRequest.serializer(), "/api/v2/txpool")
 
     @Serializable
     class TxPoolTransaction(
@@ -47,16 +56,16 @@ fun Route.node() {
             val hash: ByteArray,
             val raw: Boolean = false
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit {
+        override suspend fun handle(): TextContent {
             val result = TxPool.get(hash)
             return if (result != null) {
                 if (raw)
-                    return call.respond(result.toHex())
+                    return respondText(result.toHex())
 
                 val tx = BinaryDecoder(result).decode(Transaction.serializer())
-                call.respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))
+                respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))
             } else {
-                call.respond(HttpStatusCode.BadRequest, "Transaction not found")
+                respondError("Transaction not found")
             }
         }
     }
@@ -70,16 +79,16 @@ fun Route.node() {
             val address: String,
             val force: Boolean = false
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit {
-            val port = Network.parsePort(port) ?: return call.respond(HttpStatusCode.BadRequest, "Invalid port")
-            val address = Network.parse(address, port) ?: return call.respond(HttpStatusCode.BadRequest, "Invalid address")
+        override suspend fun handle(): TextContent {
+            val port = Network.parsePort(port) ?: return respondError("Invalid port")
+            val address = Network.parse(address, port) ?: return respondError("Invalid address")
 
             val connection = Node.connections.find { it.remoteAddress == address }
             return if (force || connection == null) {
                 Node.connectTo(address)
-                call.respond(true.toString())
+                respondText(true.toString())
             } else {
-                call.respond(HttpStatusCode.BadRequest, "Already connected on ${connection.localAddress}")
+                respondError("Already connected on ${connection.localAddress}")
             }
         }
     }
@@ -94,16 +103,16 @@ fun Route.node() {
             @Suppress("unused")
             val force: Boolean = false
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit {
-            val port = Network.parsePort(port) ?: return call.respond(HttpStatusCode.BadRequest, "Invalid port")
-            val address = Network.parse(address, port) ?: return call.respond(HttpStatusCode.BadRequest, "Invalid address")
+        override suspend fun handle(): TextContent {
+            val port = Network.parsePort(port) ?: return respondError("Invalid port")
+            val address = Network.parse(address, port) ?: return respondError("Invalid address")
 
             val connection = Node.connections.find { it.remoteAddress == address }
             return if (connection != null) {
                 connection.close()
-                call.respond(true.toString())
+                respondText(true.toString())
             } else {
-                call.respond(false.toString())
+                respondText(false.toString())
             }
         }
     }
@@ -117,14 +126,13 @@ fun Route.node() {
             @Suppress("unused")
             val force: Boolean = false
     ) : Request {
-        override suspend fun handle(call: ApplicationCall): Unit {
-
+        override suspend fun handle(): TextContent {
             val connection = Node.connections.find { it.peerId == id }
             return if (connection != null) {
                 connection.close()
-                call.respond(true.toString())
+                respondText(true.toString())
             } else {
-                call.respond(false.toString())
+                respondText(false.toString())
             }
         }
     }

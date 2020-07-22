@@ -9,18 +9,52 @@
 
 package ninja.blacknet.ktor.requests
 
-import io.ktor.application.ApplicationCall
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.call
+import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.request.receiveParameters
+import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.route
 import io.ktor.util.AttributeKey
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
+import ninja.blacknet.serialization.Json
+
+typealias TextContent = io.ktor.http.content.TextContent
+
+/**
+ * A respond to a client with a plain [text].
+ *
+ * @param text the plain text content
+ */
+fun respondText(text: String)
+        = TextContent(text, ContentType.Text.Plain, HttpStatusCode.OK)
+
+/**
+ * A respond to a client with a plain text [message], using the [HttpStatusCode.BadRequest].
+ *
+ * @param message the plain text message
+ */
+fun respondError(message: String)
+        = TextContent(message, ContentType.Text.Plain, HttpStatusCode.BadRequest)
+
+/**
+ * A respond to a client with a [value], using provided [serializer] and the [ContentType.Application.Json].
+ *
+ * @param serializer the serialization strategy
+ * @param value the object serializable to JSON
+ */
+fun <T> respondJson(serializer: SerializationStrategy<T>, value: T)
+        = TextContent(Json.stringify(serializer, value), ContentType.Application.Json, HttpStatusCode.OK)
 
 interface Request {
-    suspend fun handle(call: ApplicationCall): Unit
+    /**
+     * Handle a HTTP request to respond with a text content.
+     */
+    suspend fun handle(): TextContent
 }
 
 fun <T : Request> Route.get(
@@ -54,7 +88,7 @@ private fun <T : Request> Route.handle(
     }
     handle {
         @Suppress("UNCHECKED_CAST")
-        (call.attributes[requestKey] as T).handle(call)
+        call.respond((call.attributes[requestKey] as T).handle())
     }
 }
 

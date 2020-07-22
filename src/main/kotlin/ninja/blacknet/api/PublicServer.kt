@@ -10,11 +10,14 @@
 package ninja.blacknet.api
 
 import io.ktor.application.Application
-import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.DefaultHeaders
-import io.ktor.routing.get
 import io.ktor.routing.routing
+import kotlinx.serialization.Serializable
+import ninja.blacknet.ktor.requests.Request
+import ninja.blacknet.ktor.requests.TextContent
+import ninja.blacknet.ktor.requests.get
+import ninja.blacknet.ktor.requests.respondJson
 
 fun Application.PublicServer() {
     install(DefaultHeaders) {
@@ -22,8 +25,13 @@ fun Application.PublicServer() {
     }
 
     routing {
-        get("/api/v1/supply") {
-            call.respondJson(SupplyInfo.serializer(), SupplyInfo.get())
+        @Serializable
+        class Supply : Request {
+            override suspend fun handle(): TextContent {
+                return respondJson(SupplyInfo.serializer(), SupplyInfo.get())
+            }
         }
+
+        get(Supply.serializer(), "/api/v1/supply")
     }
 }

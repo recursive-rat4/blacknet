@@ -11,24 +11,20 @@
 package ninja.blacknet.api
 
 import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.DefaultHeaders
 import io.ktor.features.StatusPages
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.response.respond
-import io.ktor.response.respondText
 import io.ktor.routing.Routing
 import io.ktor.websocket.WebSockets
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.SerializationStrategy
 import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
@@ -192,17 +188,5 @@ fun Application.APIServer() {
 
         // 已被棄用
         APIV1()
-    }
-}
-
-/**
- * Responds to a client with a [value], using provided [serializer] and the [ContentType.Application.Json].
- *
- * @param serializer the serialization strategy
- * @param value the object serializable to JSON
- */
-suspend fun <T> ApplicationCall.respondJson(serializer: SerializationStrategy<T>, value: T) {
-    respondText(ContentType.Application.Json, HttpStatusCode.OK) {
-        Json.stringify(serializer, value)
     }
 }
