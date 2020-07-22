@@ -9,8 +9,9 @@
 
 package ninja.blacknet.coding
 
-import org.testng.Assert.*
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertFails
+import kotlin.test.assertTrue
 
 class Bech32Test {
     @Test
@@ -46,7 +47,7 @@ class Bech32Test {
                 Pair("1qzzfhee", "Empty HRP")
         )) {
             try {
-                assertThrows { Bech32.decode(string) }
+                assertFails { Bech32.decode(string) }
             } catch (e: AssertionError) {
                 throw AssertionError(reason)
             }

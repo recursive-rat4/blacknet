@@ -9,8 +9,8 @@
 
 package ninja.blacknet.contract
 
-import org.testng.Assert.*
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 class AddressTest {
     @Test

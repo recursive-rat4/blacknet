@@ -9,11 +9,11 @@
 
 package ninja.blacknet.network
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.testng.Assert.assertEquals
-import org.testng.Assert.assertTrue
-import org.testng.annotations.Test
 import java.security.Security
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 class AddressTest {
     @Test

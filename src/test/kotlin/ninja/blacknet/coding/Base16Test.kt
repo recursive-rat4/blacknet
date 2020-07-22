@@ -9,8 +9,9 @@
 
 package ninja.blacknet.coding
 
-import org.testng.Assert.*
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class Base16Test {
     @Test
@@ -21,11 +22,11 @@ class Base16Test {
         assertEquals(fromHex("01020A0b"), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
         assertEquals(fromHex("01020A0B", 4), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
 
-        assertThrows(HexFormatException::class.java) { fromHex("0") }
-        assertThrows(HexFormatException::class.java) { fromHex("0Z") }
-        assertThrows(HexFormatException::class.java) { fromHex("01020A0B", 5) }
-        assertThrows(HexFormatException::class.java) { fromHex("01020A0B", 3) }
-        assertThrows(HexFormatException::class.java) { fromHex("01020A0B", 2) }
+        assertFailsWith(HexFormatException::class) { fromHex("0") }
+        assertFailsWith(HexFormatException::class) { fromHex("0Z") }
+        assertFailsWith(HexFormatException::class) { fromHex("01020A0B", 5) }
+        assertFailsWith(HexFormatException::class) { fromHex("01020A0B", 3) }
+        assertFailsWith(HexFormatException::class) { fromHex("01020A0B", 2) }
     }
 
     @Test

@@ -9,8 +9,8 @@
 
 package ninja.blacknet.util
 
-import org.testng.Assert.assertEquals
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class LinkedHashMapTest {
     @Test

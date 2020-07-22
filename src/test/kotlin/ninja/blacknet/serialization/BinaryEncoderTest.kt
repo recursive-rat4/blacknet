@@ -9,10 +9,10 @@
 
 package ninja.blacknet.serialization
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlinx.serialization.Serializable
 import ninja.blacknet.util.byteArrayOfInts
-import org.testng.Assert.assertEquals
-import org.testng.annotations.Test
 
 class BinaryEncoderTest {
     private val encoder = BinaryEncoder()

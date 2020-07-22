@@ -9,10 +9,10 @@
 
 package ninja.blacknet
 
-import org.testng.Assert.assertEquals
-import org.testng.Assert.assertThrows
-import org.testng.annotations.Test
 import java.util.Locale
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
 
 class SizeTest {
     @Test
@@ -30,7 +30,7 @@ class SizeTest {
             if (bytes != null)
                 assertEquals(Size.parse(string).bytes, bytes)
             else
-                assertThrows { Size.parse(string) }
+                assertFails { Size.parse(string) }
         }
     }
 

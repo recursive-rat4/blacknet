@@ -61,7 +61,7 @@ dependencies {
     implementation("org.bitlet:weupnp:${Versions.weupnp}")
     implementation("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
     implementation("org.ethereum:leveldbjni-all:${Versions.leveldbjni}")
-    testImplementation("org.testng:testng:7.1.1") {
+    testImplementation("org.jetbrains.kotlin:kotlin-test-testng:${Versions.kotlin}") {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
     }

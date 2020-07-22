@@ -9,9 +9,9 @@
 
 package ninja.blacknet.core
 
+import kotlin.test.Test
+import kotlin.test.assertTrue
 import ninja.blacknet.db.Genesis
-import org.testng.Assert.assertTrue
-import org.testng.annotations.Test
 
 class SystemClockTest {
     @Test

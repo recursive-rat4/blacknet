@@ -10,10 +10,11 @@
 package ninja.blacknet.crypto
 
 import com.rfksystems.blake2b.security.Blake2bProvider
-import ninja.blacknet.db.Genesis.RegTest
-import org.testng.Assert.*
-import org.testng.annotations.Test
 import java.security.Security
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import ninja.blacknet.db.Genesis.RegTest
 
 class MessageTest {
     init {

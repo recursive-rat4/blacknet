@@ -9,9 +9,9 @@
 
 package ninja.blacknet.contract
 
-import org.testng.Assert.assertFalse
-import org.testng.Assert.assertTrue
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class TimeLockTest {
     @Test

@@ -10,14 +10,14 @@
 package ninja.blacknet.contract
 
 import com.rfksystems.blake2b.security.Blake2bProvider
+import java.security.Security
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.emptyByteArray
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.testng.Assert.assertFalse
-import org.testng.Assert.assertTrue
-import org.testng.annotations.Test
-import java.security.Security
 
 class HashLockTest {
     init {
