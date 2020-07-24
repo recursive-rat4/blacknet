@@ -17,7 +17,7 @@ import kotlinx.serialization.modules.SerialModule
 abstract class AdaptorEncoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Encoder, CompositeEncoder {
-    private fun notImplementedError(four: String): Throwable = EncoderError("${this::class} is not implemented for $four")
+    private fun notImplementedError(message: String): Throwable = SerializationError("${this::class} is not implemented for $message")
 
     override val context: SerialModule = EmptyModule
     open val updateMode: UpdateMode = UpdateMode.BANNED

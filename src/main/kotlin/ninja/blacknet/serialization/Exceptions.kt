@@ -10,33 +10,15 @@
 package ninja.blacknet.serialization
 
 import kotlin.Error
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
+import kotlin.Throwable
+import kotlinx.serialization.SerializationException
 
-typealias SerializationException = kotlinx.serialization.SerializationException
-
-open class DecoderException(message: String, cause: Throwable? = null)
+open class SerializationException(message: String, cause: Throwable? = null)
     : SerializationException(message, cause)
 
-open class EncoderException(message: String, cause: Throwable? = null)
-    : SerializationException(message, cause)
-
-open class ParserException(message: String, cause: Throwable? = null)
-    : DecoderException(message, cause)
-
-open class DecoderError(message: String, cause: Throwable? = null)
+open class SerializationError(message: String, cause: Throwable? = null)
     : Error(message, cause)
 
-open class EncoderError(message: String, cause: Throwable? = null)
-    : Error(message, cause)
-
-open class ParserError(message: String, cause: Throwable? = null)
-    : DecoderError(message, cause)
-
-fun notSupportedDecoderError(decoder: Decoder, obj: Any): Throwable {
-    return DecoderError("Decoder ${decoder::class} is not supported by ${obj::class}")
-}
-
-fun notSupportedEncoderError(encoder: Encoder, obj: Any): Throwable {
-    return EncoderError("Encoder ${encoder::class} is not supported by ${obj::class}")
+fun notSupportedCoderError(coder: Any, obj: Any): Throwable {
+    return SerializationError("Coder ${coder::class} is not supported by ${obj::class}")
 }

@@ -22,8 +22,7 @@ import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.Ed25519.x25519
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderError
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.notSupportedCoderError
 import ninja.blacknet.util.emptyByteArray
 
 @Serializable
@@ -89,7 +88,7 @@ class PaymentId(
         override fun deserialize(decoder: Decoder): PaymentId {
             return when (decoder) {
                 is BinaryDecoder -> PaymentId(decoder.decodeByte(), decoder.decodeByteArray())
-                else -> throw notSupportedDecoderError(decoder, this)
+                else -> throw notSupportedCoderError(decoder, this)
             }
         }
 
@@ -106,7 +105,7 @@ class PaymentId(
                     encoder.encodeSerializableElement(descriptor, 1, String.serializer(), if (value.type == PLAIN) String(value.payload) else value.payload.toHex())
                     encoder.endStructure(descriptor)
                 }
-                else -> throw notSupportedEncoderError(encoder, this)
+                else -> throw notSupportedCoderError(encoder, this)
             }
         }
     }

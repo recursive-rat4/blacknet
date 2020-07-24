@@ -38,7 +38,7 @@ object ByteArraySerializer : KSerializer<ByteArray> {
             is BinaryDecoder -> decoder.decodeByteArray()
             is RequestDecoder -> fromHex(decoder.decodeString())
             is JsonInput -> fromHex(decoder.decodeString())
-            else -> throw notSupportedDecoderError(decoder, this)
+            else -> throw notSupportedCoderError(decoder, this)
         }
     }
 
@@ -47,7 +47,7 @@ object ByteArraySerializer : KSerializer<ByteArray> {
             is BinaryEncoder -> encoder.encodeByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
             is JsonOutput -> encoder.encodeString(value.toHex())
-            else -> throw notSupportedEncoderError(encoder, this)
+            else -> throw notSupportedCoderError(encoder, this)
         }
     }
 }

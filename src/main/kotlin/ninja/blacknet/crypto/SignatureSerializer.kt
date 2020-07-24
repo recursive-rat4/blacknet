@@ -22,8 +22,7 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderError
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.notSupportedCoderError
 
 val EMPTY_SIGNATURE = ByteArray(SignatureSerializer.SIZE_BYTES)
 
@@ -54,7 +53,7 @@ object SignatureSerializer : KSerializer<ByteArray> {
             is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder -> parse(decoder.decodeString())
             is JsonInput -> parse(decoder.decodeString())
-            else -> throw notSupportedDecoderError(decoder, this)
+            else -> throw notSupportedCoderError(decoder, this)
         }
     }
 
@@ -63,7 +62,7 @@ object SignatureSerializer : KSerializer<ByteArray> {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
             is JsonOutput -> encoder.encodeString(value.toHex())
-            else -> throw notSupportedEncoderError(encoder, this)
+            else -> throw notSupportedCoderError(encoder, this)
         }
     }
 }

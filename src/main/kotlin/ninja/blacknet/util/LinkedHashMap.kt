@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.StructureKind
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ByteArraySerializer
-import ninja.blacknet.serialization.DecoderException
+import ninja.blacknet.serialization.SerializationException
 import org.apache.commons.collections4.map.AbstractLinkedMap
 
 open class LinkedHashMap<K, V>(
@@ -69,7 +69,7 @@ class LinkedHashMapSerializer<K, V>(
             ) == null)
                 Unit
             else
-                throw DecoderException("Duplicate entry in LinkedHashMap")
+                throw SerializationException("Duplicate entry in LinkedHashMap")
         }
         decoder.endStructure(descriptor)
         return map

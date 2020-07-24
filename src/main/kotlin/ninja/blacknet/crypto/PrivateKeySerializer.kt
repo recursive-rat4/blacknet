@@ -21,8 +21,7 @@ import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.ConfigInput
-import ninja.blacknet.serialization.notSupportedDecoderError
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.notSupportedCoderError
 
 /**
  * Serializes an Ed25519 private key.
@@ -54,14 +53,14 @@ object PrivateKeySerializer : KSerializer<ByteArray> {
         return when (decoder) {
             is ConfigInput -> parse(decoder.decodeString())
             is RequestDecoder -> parse(decoder.decodeString())
-            else -> throw notSupportedDecoderError(decoder, this)
+            else -> throw notSupportedCoderError(decoder, this)
         }
     }
 
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
             is HashCoder -> encoder.encodeByteArray(value)
-            else -> throw notSupportedEncoderError(encoder, this)
+            else -> throw notSupportedCoderError(encoder, this)
         }
     }
 }

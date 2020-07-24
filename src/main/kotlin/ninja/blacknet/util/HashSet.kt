@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.StructureKind
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ByteArraySerializer
-import ninja.blacknet.serialization.DecoderException
+import ninja.blacknet.serialization.SerializationException
 
 // open class HashSet<T> : MutableSet<T> by Collections.newSetFromMap(HashMap<T, Boolean>())
 
@@ -47,7 +47,7 @@ class HashSetSerializer<K>(
             ) == true)
                 Unit
             else
-                throw DecoderException("Duplicate entry in HashSet")
+                throw SerializationException("Duplicate entry in HashSet")
         }
         decoder.endStructure(descriptor)
         return set

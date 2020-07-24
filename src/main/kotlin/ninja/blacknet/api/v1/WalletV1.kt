@@ -19,7 +19,7 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.Json
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.notSupportedCoderError
 
 @Serializable
 class WalletV1(val seq: Int, val transactions: ArrayList<JsonElement>) {
@@ -52,7 +52,7 @@ class TransactionDataV1(
                     encoder.encodeSerializableElement(descriptor, 2, Int.serializer(), value.height)
                     encoder.endStructure(descriptor)
                 }
-                else -> throw notSupportedEncoderError(encoder, this)
+                else -> throw notSupportedCoderError(encoder, this)
             }
         }
     }

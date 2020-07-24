@@ -43,7 +43,7 @@ object VarIntSerializer : KSerializer<Int> {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeVarInt()
             is JsonInput, is RequestDecoder -> decoder.decodeInt()
-            else -> throw notSupportedDecoderError(decoder, this)
+            else -> throw notSupportedCoderError(decoder, this)
         }
     }
 
@@ -51,7 +51,7 @@ object VarIntSerializer : KSerializer<Int> {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeVarInt(value)
             is HashCoder, is JsonOutput -> encoder.encodeInt(value)
-            else -> throw notSupportedEncoderError(encoder, this)
+            else -> throw notSupportedCoderError(encoder, this)
         }
     }
 }
@@ -70,7 +70,7 @@ fun Decoder.decodeVarInt(): Int {
             v = decodeByte()
             result = result shl 7 or (v and 0x7F.toByte()).toInt()
         } else {
-            throw DecoderException("Too long VarInt")
+            throw SerializationException("Too long VarInt")
         }
     } while (v and 0x80.toByte() == 0.toByte())
     return result

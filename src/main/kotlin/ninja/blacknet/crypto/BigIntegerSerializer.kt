@@ -21,8 +21,7 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderError
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.notSupportedCoderError
 
 /**
  * Serializes a [BigInteger] with a transformation to a decimal string in some representations.
@@ -38,7 +37,7 @@ object BigIntegerSerializer : KSerializer<BigInteger> {
             is BinaryDecoder -> BigInteger(decoder.decodeByteArray())
             is RequestDecoder -> BigInteger(decoder.decodeString())
             is JsonInput -> BigInteger(decoder.decodeString())
-            else -> throw notSupportedDecoderError(decoder, this)
+            else -> throw notSupportedCoderError(decoder, this)
         }
     }
 
@@ -47,7 +46,7 @@ object BigIntegerSerializer : KSerializer<BigInteger> {
             is BinaryEncoder -> encoder.encodeByteArray(value.toByteArray())
             is HashCoder -> encoder.encodeByteArray(value.toByteArray())
             is JsonOutput -> encoder.encodeString(value.toString())
-            else -> throw notSupportedEncoderError(encoder, this)
+            else -> throw notSupportedCoderError(encoder, this)
         }
     }
 }

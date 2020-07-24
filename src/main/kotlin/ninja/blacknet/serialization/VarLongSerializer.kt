@@ -54,7 +54,7 @@ object VarLongSerializer : KSerializer<Long> {
             is BinaryDecoder -> decoder.decodeVarLong()
             is JsonInput -> decoder.decodeString().toLong()
             is RequestDecoder -> decoder.decodeLong()
-            else -> throw notSupportedDecoderError(decoder, this)
+            else -> throw notSupportedCoderError(decoder, this)
         }
     }
 
@@ -63,7 +63,7 @@ object VarLongSerializer : KSerializer<Long> {
             is BinaryEncoder -> encoder.encodeVarLong(value)
             is HashCoder -> encoder.encodeLong(value)
             is JsonOutput -> encoder.encodeString(value.toString())
-            else -> throw notSupportedEncoderError(encoder, this)
+            else -> throw notSupportedCoderError(encoder, this)
         }
     }
 }
@@ -82,7 +82,7 @@ fun Decoder.decodeVarLong(): Long {
             v = decodeByte()
             result = result shl 7 or (v and 0x7F.toByte()).toLong()
         } else {
-            throw DecoderException("Too long VarLong")
+            throw SerializationException("Too long VarLong")
         }
     } while (v and 0x80.toByte() == 0.toByte())
     return result

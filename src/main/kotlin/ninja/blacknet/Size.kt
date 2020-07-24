@@ -14,9 +14,7 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import ninja.blacknet.serialization.ConfigInput
-import ninja.blacknet.serialization.ParserException
-import ninja.blacknet.serialization.notSupportedDecoderError
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.notSupportedCoderError
 import java.text.DecimalFormat
 import java.util.Locale
 
@@ -68,15 +66,18 @@ class Size(
             }))
         }
 
+        private class ParserException(message: String, cause: Throwable? = null)
+            : RuntimeException(message, cause)
+
         override fun deserialize(decoder: Decoder): Size {
             return when (decoder) {
                 is ConfigInput -> Size.parse(decoder.decodeString())
-                else -> throw notSupportedDecoderError(decoder, this)
+                else -> throw notSupportedCoderError(decoder, this)
             }
         }
 
         override fun serialize(encoder: Encoder, value: Size) {
-            throw notSupportedEncoderError(encoder, this)
+            throw notSupportedCoderError(encoder, this)
         }
     }
 }

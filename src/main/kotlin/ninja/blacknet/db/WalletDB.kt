@@ -434,7 +434,7 @@ object WalletDB {
                                 decoder.decodeByte()
                         )
                     }
-                    else -> throw notSupportedDecoderError(decoder, this)
+                    else -> throw notSupportedCoderError(decoder, this)
                 }
             }
 
@@ -451,7 +451,7 @@ object WalletDB {
                         encoder.encodeSerializableElement(descriptor, 1, Int.serializer(), value.dataIndex.toInt())
                         encoder.endStructure(descriptor)
                     }
-                    else -> throw notSupportedEncoderError(encoder, this)
+                    else -> throw notSupportedCoderError(encoder, this)
                 }
             }
         }

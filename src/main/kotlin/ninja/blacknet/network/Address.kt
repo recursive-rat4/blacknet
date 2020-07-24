@@ -20,8 +20,7 @@ import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedDecoderError
-import ninja.blacknet.serialization.notSupportedEncoderError
+import ninja.blacknet.serialization.notSupportedCoderError
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketAddress
@@ -151,7 +150,7 @@ class Address(
                             decoder.decodeShort(),
                             decoder.decodeFixedByteArray(network.addrSize))
                 }
-                else -> throw notSupportedDecoderError(decoder, this)
+                else -> throw notSupportedCoderError(decoder, this)
             }
         }
 
@@ -167,7 +166,7 @@ class Address(
                     encoder.encodeShort(value.port)
                     encoder.encodeByteArray(value.bytes)
                 }
-                else -> throw notSupportedEncoderError(encoder, this)
+                else -> throw notSupportedCoderError(encoder, this)
             }
         }
     }

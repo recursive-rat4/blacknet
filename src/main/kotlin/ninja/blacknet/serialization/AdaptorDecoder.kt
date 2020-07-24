@@ -17,7 +17,7 @@ import kotlinx.serialization.modules.SerialModule
 abstract class AdaptorDecoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Decoder, CompositeDecoder {
-    private fun notImplementedError(four: String): Throwable = DecoderError("${this::class} is not implemented for $four")
+    private fun notImplementedError(message: String): Throwable = SerializationError("${this::class} is not implemented for $message")
 
     override val context: SerialModule = EmptyModule
     override val updateMode: UpdateMode = UpdateMode.BANNED
@@ -80,7 +80,7 @@ constructor() : Decoder, CompositeDecoder {
     inline fun <T> catcher(descriptor: SerialDescriptor, index: Int, implementation: () -> T): T = try {
         implementation()
     } catch (e: Exception) {
-        throw DecoderException("Invalid ${descriptor.getElementName(index)}: ${e.statusMessage()}", e)
+        throw SerializationException("Invalid ${descriptor.getElementName(index)}: ${e.statusMessage()}", e)
     }
 }
 

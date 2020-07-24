@@ -28,7 +28,7 @@ class BinaryDecoder(
             value
         } else {
             input.release()
-            throw DecoderException("$remaining trailing bytes")
+            throw SerializationException("$remaining trailing bytes")
         }
     }
 
@@ -44,14 +44,14 @@ class BinaryDecoder(
         return when (val byte = input.readByte()) {
             0.toByte() -> false
             1.toByte() -> true
-            else -> throw DecoderException("Unexpected value for NotNullMark $byte")
+            else -> throw SerializationException("Unexpected value for NotNullMark $byte")
         }
     }
     override fun decodeBoolean(): Boolean {
         return when (val byte = input.readByte()) {
             0.toByte() -> false
             1.toByte() -> true
-            else -> throw DecoderException("Unexpected value for Boolean $byte")
+            else -> throw SerializationException("Unexpected value for Boolean $byte")
         }
     }
 
