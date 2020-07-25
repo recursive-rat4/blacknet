@@ -11,9 +11,13 @@
 package ninja.blacknet.db
 
 import com.google.common.io.Resources
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.exp
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.random.Random
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
@@ -34,19 +38,13 @@ import ninja.blacknet.serialization.encodeVarInt
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.HashSetSerializer
-import ninja.blacknet.util.SynchronizedHashMap
-import kotlin.math.exp
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
-import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
 object PeerDB {
     private const val MAX_SIZE = 8192
     private const val VERSION = 4
-    private val peers = SynchronizedHashMap<Address, Entry>(MAX_SIZE)
+    private val peers = ConcurrentHashMap<Address, Entry>((MAX_SIZE / 0.75f + 1.0f).toInt())
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)
 
@@ -117,12 +115,10 @@ object PeerDB {
 
         logger.info("Loaded ${hashMap.size} peer addresses")
 
-        peers.map.putAll(hashMap)
+        peers.putAll(hashMap)
 
-        if (peers.map.size < 100) {
-            val added = runBlocking {
-                add(listBuiltinPeers(), Network.LOOPBACK)
-            }
+        if (peers.size < 100) {
+            val added = add(listBuiltinPeers(), Network.LOOPBACK)
             if (added > 0) {
                 logger.info("Added $added built-in peer addresses to db")
             }
@@ -144,34 +140,30 @@ object PeerDB {
                     }
     }
 
-    suspend fun size(): Int {
-        return peers.size()
+    fun size(): Int {
+        return peers.size
     }
 
-    suspend fun isEmpty(): Boolean {
+    fun isEmpty(): Boolean {
         return peers.isEmpty()
     }
 
-    suspend fun connected(address: Address, time: Long, userAgent: String) {
+    fun connected(address: Address, time: Long, userAgent: String) {
         if (address.isLocal()) return
-        peers.mutex.withLock {
-            val entry = peers.map.get(address)
-            if (entry != null)
-                entry.connected(time, userAgent)
-            else
-                peers.map.put(address, Entry.newConnected(time, userAgent))
-        }
+        val entry = peers.get(address)
+        if (entry != null)
+            entry.connected(time, userAgent)
+        else
+            peers.put(address, Entry.newConnected(time, userAgent))
     }
 
     suspend fun failed(address: Address, time: Long) {
         if (Node.isOffline()) return
-        peers.mutex.withLock {
-            peers.map.get(address)?.failed(time)
-        }
+        peers.get(address)?.failed(time)
     }
 
-    suspend fun bundlerAnnounce(address: Address, announce: List<ByteArray>): Unit = peers.mutex.withLock {
-        peers.map.get(address)?.stat?.bundler?.let { bundler ->
+    fun bundlerAnnounce(address: Address, announce: List<ByteArray>): Unit {
+        peers.get(address)?.stat?.bundler?.let { bundler ->
             announce.forEach { id ->
                 if (DAppDB.isInteresting(id)) {
                     bundler.add(id)
@@ -180,27 +172,28 @@ object PeerDB {
         }
     }
 
-    suspend fun getBundlers(id: ByteArray): List<Address> {
-        return peers.filterToKeyList { _, entry -> entry.stat?.bundler?.contains(id) ?: false }
+    fun getBundlers(id: ByteArray): List<Address> {
+        val result = ArrayList<Address>(peers.size)
+        peers.forEach { (address, entry) -> if (entry.stat?.bundler?.contains(id) == true) result.add(address) }
+        return result
     }
 
-    suspend fun getAll(): ArrayList<Pair<Address, Entry>> {
-        return peers.copyToArray()
+    fun getAll(): List<Pair<Address, Entry>> {
+        return peers.toList()
     }
 
-    suspend fun getSeed(): List<Address> {
-        return peers.filterToKeyList { address, entry -> address.port == Node.DEFAULT_P2P_PORT && entry.isReliable() }
+    fun getSeed(): List<Address> {
+        val result = ArrayList<Address>(peers.size)
+        peers.forEach { (address, entry) -> address.port == Node.DEFAULT_P2P_PORT && entry.isReliable() }
+        return result
     }
 
-    suspend fun getCandidate(filter: Set<Address>): Address? {
-        val candidates = peers.mutex.withLock {
-            val candidates = ArrayList<Pair<Address, Float>>(peers.map.size)
-            val currTime = currentTimeSeconds()
-            peers.map.forEach { (address, entry) ->
-                if (!filter.contains(address))
-                    candidates.add(Pair(address, entry.chance(currTime)))
-            }
-            candidates
+    fun getCandidate(filter: Set<Address>): Address? {
+        val candidates = ArrayList<Pair<Address, Float>>(peers.size)
+        val currTime = currentTimeSeconds()
+        peers.forEach { (address, entry) ->
+            if (!filter.contains(address))
+                candidates.add(Pair(address, entry.chance(currTime)))
         }
         if (candidates.isNotEmpty()) {
             while (true) {
@@ -213,8 +206,9 @@ object PeerDB {
         }
     }
 
-    suspend fun getRandom(n: Int): ArrayList<Address> {
-        val candidates = peers.keys()
+    fun getRandom(n: Int): ArrayList<Address> {
+        val candidates = ArrayList<Address>(peers.size)
+        peers.forEach { (address, _) -> candidates.add(address) }
         candidates.shuffle()
         val x = min(candidates.size, n)
         val result = ArrayList<Address>(x)
@@ -223,12 +217,12 @@ object PeerDB {
         return result
     }
 
-    suspend fun add(newPeers: List<Address>, from: Address, force: Boolean = false): Int = peers.mutex.withLock {
+    fun add(newPeers: List<Address>, from: Address, force: Boolean = false): Int {
         var added = 0
         var i = 0
         val newPeersSize = newPeers.size
         val nToAdd = if (!force) {
-            val freeSlots = max(MAX_SIZE - peers.map.size, 0)
+            val freeSlots = max(MAX_SIZE - peers.size, 0)
             min(newPeersSize, freeSlots)
         } else {
             newPeersSize
@@ -246,13 +240,13 @@ object PeerDB {
             return false
         if (peer.isPrivate())
             return false
-        if (peers.map.containsKey(peer))
+        if (peers.containsKey(peer))
             return false
-        peers.map.put(peer, Entry.new(from))
+        peers.put(peer, Entry.new(from))
         return true
     }
 
-    suspend fun contains(peer: Address): Boolean {
+    fun contains(peer: Address): Boolean {
         return peers.containsKey(peer)
     }
 
@@ -263,24 +257,22 @@ object PeerDB {
             return
 
         val toRemove = ArrayList<Address>()
-        peers.mutex.withLock {
-            val currTime = currentTimeSeconds()
-            peers.map.forEach { (address, entry) ->
-                if (entry.isOld(currTime))
-                    toRemove.add(address)
-            }
-            if (!toRemove.isEmpty()) {
-                toRemove.forEach { peers.map.remove(it) }
-                val batch = LevelDB.createWriteBatch()
-                commitImpl(peers.map, batch, false)
-                logger.info("Removed ${toRemove.size} old entries from peer db")
-            }
+        val currTime = currentTimeSeconds()
+        peers.forEach { (address, entry) ->
+            if (entry.isOld(currTime))
+                toRemove.add(address)
+        }
+        if (!toRemove.isEmpty()) {
+            toRemove.forEach { peers.remove(it) }
+            val batch = LevelDB.createWriteBatch()
+            commitImpl(peers, batch, false)
+            logger.info("Removed ${toRemove.size} old entries from peer db")
         }
     }
 
-    private suspend fun commit(sync: Boolean = false) = peers.mutex.withLock {
+    private fun commit(sync: Boolean = false) {
         val batch = LevelDB.createWriteBatch()
-        commitImpl(peers.map, batch, sync)
+        commitImpl(peers, batch, sync)
     }
 
     private fun commitImpl(map: Map<Address, Entry>, batch: LevelDB.WriteBatch, sync: Boolean) {

@@ -21,7 +21,7 @@ class PeerDBInfo(
         val peers: JsonArray
 ) {
     companion object {
-        suspend fun get(stats: Boolean = false): PeerDBInfo {
+        fun get(stats: Boolean = false): PeerDBInfo {
             val peers = PeerDB.getAll().map { (address, entry) ->
                 if (!stats) {
                     JsonPrimitive(address.toString())
