@@ -26,82 +26,52 @@ import java.io.FileInputStream
 import java.security.Security
 import java.util.logging.LogManager
 
-private val logger = (KotlinLogging.logger({}))
+private val logger = KotlinLogging.logger {}
 
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        (System.setProperty
-        ("java.util.logging.manager", "ninja.blacknet.LogManager"))
-        (FileInputStream
-        (File
-        (configDir, "logging.properties")).let
-        ({ fileInputStream ->
-            (LogManager.getLogManager().readConfiguration
-            (fileInputStream))
-            (fileInputStream.close())
-        }))
+        System.setProperty("java.util.logging.manager", "ninja.blacknet.LogManager")
+        FileInputStream(File(configDir, "logging.properties")).let { fileInputStream ->
+            LogManager.getLogManager().readConfiguration(fileInputStream)
+            fileInputStream.close()
+        }
 
-        (Security.addProvider
-        (Blake2bProvider()))
-        (Security.addProvider
-        (BouncyCastleProvider()))
+        Security.addProvider(Blake2bProvider())
+        Security.addProvider(BouncyCastleProvider())
 
-        (Runtime.addShutdownHook
-        ({
-            (logger.debug
-            ({ "Shutting down logger" }))
-            ((LogManager.getLogManager() as ninja.blacknet.LogManager).shutDown())
-        }))
-        (Config.instance)
+        Runtime.addShutdownHook {
+            logger.debug { "Shutting down logger" }
+            (LogManager.getLogManager() as ninja.blacknet.LogManager).shutDown()
+        }
+        Config.instance
 
-        (logger.info
-        ("Starting up ${Version.name} node ${Version.revision}"))
-        (logger.info
-        ("CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}"))
-        (logger.info
-        ("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}"))
-        (logger.info
-        ("VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}"))
+        logger.info("Starting up ${Version.name} node ${Version.revision}")
+        logger.info("CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}")
+        logger.info("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}")
+        logger.info("VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}")
 
-        (if (and
-                (not
-                (Runtime.windowsOS),
-                        (equals
-                        (System.getProperty
-                        ("user.name"), "root"))))
-            (logger.warn
-            ("Running as root")))
+        if (!Runtime.windowsOS && System.getProperty("user.name") == "root")
+            logger.warn("Running as root")
 
-        (if (Config.instance.debugcoroutines) {
-            (logger.warn
-            ("Installing debug probes..."))
-            (DebugProbes.install().let
-            ({ unit: Unit ->
-                (if (equals
-                        (unit, Unit))
-                    (logger.warn
-                    ("Node may work significally slower"))
-                else
-                    (logger.error
-                    ("Broken AST")))
-            }))
-        })
+        if (Config.instance.debugcoroutines) {
+            logger.warn("Installing debug probes...")
+            DebugProbes.install()
+            logger.warn("Node may work significally slower")
+        }
 
-        (if (Config.instance.portable)
-            (logger.info
-            ("Portable mode")))
-        (logger.info
-        ("Using data directory ${dataDir.absolutePath}"))
+        if (Config.instance.portable)
+            logger.info("Portable mode")
+        logger.info("Using data directory ${dataDir.absolutePath}")
 
-        (LevelDB)
-        (Salt)
-        (BlockDB)
-        (WalletDB)
-        (LedgerDB)
-        (PeerDB)
-        (Node)
-        (Staker)
+        LevelDB
+        Salt
+        BlockDB
+        WalletDB
+        LedgerDB
+        PeerDB
+        Node
+        Staker
 
         /* Launch Blacknet API web-server using Ktor.
          *
@@ -119,34 +89,25 @@ object Main {
          * https://ktor.io/servers/engine.html
          *
          */
-        (if (Config.instance.apiserver_enabled) {
-            (if (Config.instance.regtest)
-                (embeddedServer
-                (Netty,
-                        (commandLineEnvironment
-                        (arrayOf
-                        ("-config=${File(configDir, "regtest.conf")}")))).start
-                (wait = false))
+        if (Config.instance.apiserver_enabled) {
+            if (Config.instance.regtest)
+                embeddedServer(
+                    Netty,
+                    commandLineEnvironment(arrayOf("-config=${File(configDir, "regtest.conf")}"))
+                ).start(wait = false)
             else
-                (embeddedServer
-                (Netty,
-                        (commandLineEnvironment
-                        (arrayOf
-                        ("-config=${File(configDir, "rpc.conf")}")))).start
-                (wait = false)))
-        })
-        (if (Config.instance.apiserver_publicserver)
-            (embeddedServer
-            (Netty,
-                    (commandLineEnvironment
-                    (arrayOf
-                    ("-config=${File(configDir, "ktor.conf")}")))).start
-            (wait = false)))
+                embeddedServer(
+                    Netty,
+                    commandLineEnvironment(arrayOf("-config=${File(configDir, "rpc.conf")}"))
+                ).start(wait = false)
+        }
+        if (Config.instance.apiserver_publicserver) {
+            embeddedServer(
+                Netty,
+                commandLineEnvironment(arrayOf("-config=${File(configDir, "ktor.conf")}"))
+            ).start(wait = false)
+        }
 
-        (ChainFetcher.run())
+        ChainFetcher.run()
     }
 }
-
-private fun and(a: Boolean, b: Boolean): Boolean = a.and(b)
-private fun equals(a: Any, b: Any): Boolean = a.equals(b)
-private fun not(a: Boolean): Boolean = a.not()
