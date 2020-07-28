@@ -12,8 +12,6 @@ package ninja.blacknet.core
 import java.math.BigInteger
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.PairSerializer
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.crypto.BigIntegerSerializer
@@ -36,12 +34,18 @@ class UndoBlock(
         val rollingCheckpoint: ByteArray,
         val upgraded: Short,
         val blockSize: Int,
-        @Serializable(with = AccountsSerializer::class)
-        val accounts: ArrayList<Pair<ByteArray, ByteArray>>,
-        @Serializable(with = HTLCsSerializer::class)
-        val htlcs: ArrayList<Pair<ByteArray, ByteArray>>,
-        @Serializable(with = MultisigsSerializer::class)
-        val multisigs: ArrayList<Pair<ByteArray, ByteArray>>,
+        val accounts: ArrayList<Pair<
+            @Serializable(with = PublicKeySerializer::class) ByteArray,
+            @Serializable(with = ByteArraySerializer::class) ByteArray
+        >>,
+        val htlcs: ArrayList<Pair<
+            @Serializable(with = HashTimeLockContractIdSerializer::class) ByteArray,
+            @Serializable(with = ByteArraySerializer::class) ByteArray
+        >>,
+        val multisigs: ArrayList<Pair<
+            @Serializable(with = MultiSignatureLockContractIdSerializer::class) ByteArray,
+            @Serializable(with = ByteArraySerializer::class) ByteArray
+        >>,
         val forkV2: Short
 ) {
     fun add(publicKey: ByteArray, account: ByteArray?) {
@@ -68,12 +72,3 @@ class UndoBlock(
         multisigs.add(Pair(id, bytes))
     }
 }
-
-private object AccountsSerializer : KSerializer<List<Pair<ByteArray, ByteArray>>>
-    by ListSerializer(PairSerializer(PublicKeySerializer, ByteArraySerializer))
-
-private object HTLCsSerializer : KSerializer<List<Pair<ByteArray, ByteArray>>>
-    by ListSerializer(PairSerializer(HashTimeLockContractIdSerializer, ByteArraySerializer))
-
-private object MultisigsSerializer : KSerializer<List<Pair<ByteArray, ByteArray>>>
-    by ListSerializer(PairSerializer(MultiSignatureLockContractIdSerializer, ByteArraySerializer))

@@ -11,7 +11,7 @@ package ninja.blacknet.packet
 
 import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.HashListSerializer
+import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
@@ -19,8 +19,7 @@ import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
 class Inventory(
-        @Serializable(with = HashListSerializer::class)
-        private val list: List<ByteArray>
+        private val list: List<@Serializable(HashSerializer::class) ByteArray>
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {

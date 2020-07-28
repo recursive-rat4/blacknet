@@ -14,7 +14,6 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
-import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.coding.fromHex
@@ -51,8 +50,3 @@ object ByteArraySerializer : KSerializer<ByteArray> {
         }
     }
 }
-
-/**
- * Serializes a [`List<ByteArray>`][List] with [ListSerializer] and [ByteArraySerializer].
- */
-object ByteArrayListSerializer : KSerializer<List<ByteArray>> by ListSerializer(ByteArraySerializer)

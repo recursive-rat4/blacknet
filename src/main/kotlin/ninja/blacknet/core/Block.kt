@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.ByteArrayListSerializer
+import ninja.blacknet.serialization.ByteArraySerializer
 
 @Serializable
 class Block(
@@ -27,8 +27,7 @@ class Block(
         var contentHash: ByteArray,
         @Serializable(with = SignatureSerializer::class)
         var signature: ByteArray,
-        @Serializable(with = ByteArrayListSerializer::class)
-        val transactions: ArrayList<ByteArray>
+        val transactions: ArrayList<@Serializable(ByteArraySerializer::class) ByteArray>
 ) {
     fun sign(privateKey: ByteArray): Pair<ByteArray, ByteArray> {
         val bytes = BinaryEncoder.toBytes(serializer(), this)

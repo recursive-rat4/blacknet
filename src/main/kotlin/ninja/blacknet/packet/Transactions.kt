@@ -18,14 +18,13 @@ import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.ByteArrayListSerializer
+import ninja.blacknet.serialization.ByteArraySerializer
 
 private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Transactions(
-        @Serializable(with = ByteArrayListSerializer::class)
-        private val list: ArrayList<ByteArray>
+        private val list: ArrayList<@Serializable(ByteArraySerializer::class) ByteArray>
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {
