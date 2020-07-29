@@ -480,18 +480,11 @@ object WalletDB {
     class Wallet(
             @Serializable(with = VarIntSerializer::class)
             var seq: Int = 0,
-            @Serializable(with = HTLCsSerializer::class)
-            val htlcs: MutableSet<ByteArray> = HashSet(),
-            @Serializable(with = MultisigsSerializer::class)
-            val multisigs: MutableSet<ByteArray> = HashSet(),
+            val htlcs: HashSet<@Serializable(HashTimeLockContractIdSerializer::class) ByteArray> = HashSet(),
+            val multisigs: HashSet<@Serializable(MultiSignatureLockContractIdSerializer::class) ByteArray> = HashSet(),
             val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
-            @Serializable(with = TransactionsSerializer::class)
-            val transactions: HashMap<ByteArray, TransactionData> = HashMap()
-    ) {
-        private object HTLCsSerializer : KSerializer<MutableSet<ByteArray>> by HashSetSerializer(HashTimeLockContractIdSerializer)
-        private object MultisigsSerializer : KSerializer<MutableSet<ByteArray>> by HashSetSerializer(MultiSignatureLockContractIdSerializer)
-        private object TransactionsSerializer : KSerializer<HashMap<ByteArray, TransactionData>> by HashMapSerializer(HashSerializer, TransactionData.serializer())
-    }
+            val transactions: HashMap<@Serializable(HashSerializer::class) ByteArray, TransactionData> = HashMap()
+    )
 
     private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: ByteArray, wallet: Wallet) {
         wallets.put(publicKey, wallet)

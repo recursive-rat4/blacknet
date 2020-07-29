@@ -14,19 +14,20 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.Serializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.StructureKind
+import kotlinx.serialization.listDescriptor
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.SerializationException
 
-// open class HashSet<T> : MutableSet<T> by Collections.newSetFromMap(HashMap<T, Boolean>())
-
-fun <T> HashSet(): MutableSet<T> = Collections.newSetFromMap(HashMap<T, Boolean>())
-fun <T> HashSet(expectedSize: Int): MutableSet<T> = Collections.newSetFromMap(HashMap<T, Boolean>(expectedSize = expectedSize))
+@Serializable(with = HashSetSerializer::class)
+open class HashSet<T>(map: HashMap<T, Boolean> = HashMap<T, Boolean>()) : MutableSet<T> by Collections.newSetFromMap(map) {
+    constructor(expectedSize: Int) : this(HashMap<T, Boolean>(expectedSize = expectedSize))
+}
 
 /**
- * Serializes a hash set as [MutableSet].
+ * Serializes a [HashSet].
  */
 class HashSetSerializer<K>(
         private val keySerializer: KSerializer<K>
@@ -34,7 +35,10 @@ class HashSetSerializer<K>(
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.util.HashSetSerializer",
         StructureKind.LIST
-    )
+    ) {
+        //listDescriptor(keySerializer.descriptor)
+        element("key", keySerializer.descriptor)
+    }
 
     override fun deserialize(decoder: Decoder): MutableSet<K> {
         @Suppress("NAME_SHADOWING")

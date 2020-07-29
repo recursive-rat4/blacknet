@@ -15,6 +15,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.StructureKind
+import kotlinx.serialization.mapDescriptor
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.SerializationException
@@ -54,7 +55,11 @@ class LinkedHashMapSerializer<K, V>(
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.util.LinkedHashMapSerializer",
         StructureKind.MAP
-    )
+    ) {
+        //mapDescriptor(keySerializer.descriptor, valueSerializer.descriptor)
+        element("key", keySerializer.descriptor)
+        element("value", valueSerializer.descriptor)
+    }
 
     override fun deserialize(decoder: Decoder): LinkedHashMap<K, V> {
         @Suppress("NAME_SHADOWING")

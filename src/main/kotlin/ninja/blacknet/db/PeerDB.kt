@@ -37,7 +37,6 @@ import ninja.blacknet.serialization.decodeVarInt
 import ninja.blacknet.serialization.encodeVarInt
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet
-import ninja.blacknet.util.HashSetSerializer
 
 private val logger = KotlinLogging.logger {}
 
@@ -290,8 +289,7 @@ object PeerDB {
             val stat1D: UptimeStat,
             val stat1W: UptimeStat,
             val stat1M: UptimeStat,
-            @Serializable(with = BundlerSerializer::class)
-            val bundler: MutableSet<ByteArray>
+            val bundler: HashSet<@Serializable(DAppIdSerializer::class) ByteArray>
     ) {
         constructor(lastConnected: Long, userAgent: String) : this(
                 lastConnected,
@@ -304,7 +302,6 @@ object PeerDB {
                 HashSet(expectedSize = 0)
         )
         internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, HashSet(expectedSize = 0))
-        private object BundlerSerializer : KSerializer<MutableSet<ByteArray>> by HashSetSerializer(DAppIdSerializer)
     }
 
     @Serializable

@@ -18,7 +18,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.MapSerializer
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
@@ -799,8 +798,10 @@ object LedgerDB {
 
     @Serializable
     class Snapshot(
-            @Serializable(with = BalancesSerializer::class)
-            private val balances: HashMap<ByteArray, Long> = HashMap()
+            private val balances: HashMap<
+                @Serializable(PublicKeySerializer::class) ByteArray,
+                @Serializable(VarLongSerializer::class) Long
+            > = HashMap()
     ) {
         fun supply(): Long {
             var supply = 0L
@@ -814,8 +815,6 @@ object LedgerDB {
                 balances.put(publicKey, balance + amount)
             }
         }
-
-        private object BalancesSerializer : KSerializer<Map<ByteArray, Long>> by MapSerializer(PublicKeySerializer, VarLongSerializer)
     }
 
     private fun snapshotImpl() {

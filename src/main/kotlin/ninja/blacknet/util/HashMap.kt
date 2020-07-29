@@ -13,13 +13,16 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.Serializer
+import kotlinx.serialization.SerialKind
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.StructureKind
+import kotlinx.serialization.mapDescriptor
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.SerializationException
 import org.apache.commons.collections4.map.AbstractHashedMap
 
+@Serializable(with = HashMapSerializer::class)
 open class HashMap<K, V>(
         initialCapacity: Int = DEFAULT_CAPACITY,
         loadFactor: Float = DEFAULT_LOAD_FACTOR,
@@ -54,7 +57,11 @@ class HashMapSerializer<K, V>(
     override val descriptor: SerialDescriptor = SerialDescriptor(
         "ninja.blacknet.util.HashMapSerializer",
         StructureKind.MAP
-    )
+    ) {
+        //mapDescriptor(keySerializer.descriptor, valueSerializer.descriptor)
+        element("key", keySerializer.descriptor)
+        element("value", valueSerializer.descriptor)
+    }
 
     override fun deserialize(decoder: Decoder): HashMap<K, V> {
         @Suppress("NAME_SHADOWING")
