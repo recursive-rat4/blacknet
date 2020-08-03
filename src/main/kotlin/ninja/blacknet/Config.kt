@@ -9,7 +9,7 @@
 
 package ninja.blacknet
 
-import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PrivateKeySerializer
@@ -45,15 +45,19 @@ class Config(
         val datadir: String? = null,
         val logips: Boolean = false,
         // 白名單
-        // 黑名單
+        // val blacklist: Set<String>? = null,
         val lowercasehex: Boolean = false,
         val regtest: Boolean = false,
         val debugcoroutines: Boolean = false,
 
+        @SerialName("apiserver.enabled")
         val apiserver_enabled: Boolean = true,
+        @SerialName("apiserver.jsonindented")
         val apiserver_jsonindented: Boolean = false,
+        @SerialName("apiserver.publicserver")
         val apiserver_publicserver: Boolean = false,
 
+        @SerialName("wallet.seqthreshold")
         val wallet_seqthreshold: Int = Int.MAX_VALUE - 1,
 
         val unit: Unit? = kotlin.Unit /* XXX 1.4 */

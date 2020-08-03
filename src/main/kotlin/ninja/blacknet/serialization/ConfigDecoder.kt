@@ -27,55 +27,55 @@ class ConfigDecoder(
     }
 
     override fun decodeNotNullMark(): Boolean {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toNotNullMark()
     }
 
     override fun decodeBoolean(): Boolean {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toBoolean()
     }
 
     override fun decodeByte(): Byte {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toByte()
     }
 
     override fun decodeShort(): Short {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toShort()
     }
 
     override fun decodeInt(): Int {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toInt()
     }
 
     override fun decodeLong(): Long {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toLong()
     }
 
     override fun decodeFloat(): Float {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toFloat()
     }
 
     override fun decodeDouble(): Double {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toDouble()
     }
 
     override fun decodeString(): String {
-        val name = descriptor.getConfigElementName(sleeper)
+        val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
         return string.toString()
     }
@@ -87,7 +87,7 @@ class ConfigDecoder(
     override fun beginStructure(descriptor: SerialDescriptor, vararg typeParams: KSerializer<*>): CompositeDecoder {
         return if (descriptor.kind === StructureKind.LIST) {
             require(descriptor.serialName.endsWith("ArrayList")) { "未知列表類型 ${descriptor.serialName}" }
-            val name = this.descriptor.getConfigElementName(sleeper)
+            val name = this.descriptor.getElementName(sleeper)
             val list = reader.readList(name)
             ListDecoder(list)
         } else {
@@ -100,15 +100,11 @@ class ConfigDecoder(
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
         require(this.descriptor === descriptor) { "彈射 ${descriptor.serialName}" }
         while (++sleeper < descriptor.elementsCount) {
-            val name = descriptor.getConfigElementName(sleeper)
+            val name = descriptor.getElementName(sleeper)
             if (reader.hasKey(name))
                 return sleeper
         }
         return READ_DONE
-    }
-
-    private fun SerialDescriptor.getConfigElementName(sleeper: Int): String {
-        return getElementName(sleeper).replace('_', '.')
     }
 
     private class ListDecoder(
