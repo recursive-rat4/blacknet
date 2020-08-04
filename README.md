@@ -4,7 +4,7 @@
 [![Matrix](https://img.shields.io/matrix/blacknet:matrix.org)](https://riot.im/app/#/room/#blacknet:matrix.org)
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja)](https://blacknet.ninja)
 
-Blacknet is an experimental peer-to-peer network based on blockchain technology.
+Blacknet is a public peer-to-peer network based on blockchain technology.
 
 ## How to build
 
@@ -39,8 +39,8 @@ To run the built program, use `./gradlew run`
 
 ## How to contribute
 
-We accept contributions from anyone in the Universe.
-File a theoretical or practical [issue](https://gitlab.com/blacknet-ninja/blacknet/issues), or send changes as a [pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests).
+You are welcome to report a theoretical or practical [issue](https://gitlab.com/blacknet-ninja/blacknet/issues),
+or send changes as a [pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests).
 
 
 ## License
