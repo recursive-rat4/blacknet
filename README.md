@@ -40,7 +40,7 @@ To run the built program, use `./gradlew run`
 ## How to contribute
 
 You are welcome to report a theoretical or practical [issue](https://gitlab.com/blacknet-ninja/blacknet/issues),
-or send changes as a [pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests).
+or send changes as a [pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests) to the master branch.
 
 
 ## License

@@ -21,7 +21,7 @@ import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.Json
 
 /**
- * 分散式應用程序交易包
+ * 去中心化電腦程序交易包
  */
 @Serializable
 class Bundle(
