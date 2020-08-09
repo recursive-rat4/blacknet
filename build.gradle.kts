@@ -95,15 +95,6 @@ val compileTestKotlin by tasks.existing(KotlinCompile::class) {
     }
 }
 
-val createVersionTxt by tasks.registering {
-    dependsOn(processResources)
-    doLast {
-        File("$buildDir/resources/main/revision.txt").writeText(dirtyDescribeGit(buildDir.getParentFile()))
-        File("$buildDir/resources/main/version.txt").writeText(project.version.toString())
-        File("$buildDir/resources/main/ktor_version.txt").writeText(Versions.ktor)
-    }
-}
-
 val downloadLicenses by tasks.existing(DownloadLicenses::class) {
     doFirst {
         val konfigurations = configurations.toTypedArray()
@@ -117,11 +108,16 @@ val downloadLicenses by tasks.existing(DownloadLicenses::class) {
     dependencyConfiguration = "xonfigurations"
 }
 
-val classes by tasks.existing {
-    dependsOn(createVersionTxt)
+val jar by tasks.existing(Jar::class) {
+    manifest {
+        dirtyDescribeGit(buildDir.getParentFile())?.let { revision ->
+            attributes("Build-Revision" to revision)
+        }
+        attributes(
+            "Implementation-Version" to project.version.toString()
+        )
+    }
 }
-
-val processResources by tasks.existing(ProcessResources::class)
 
 val run by tasks.existing(JavaExec::class) {
     classpath = files(tasks.jar) + classpath.filter { !it.startsWith(buildDir) }

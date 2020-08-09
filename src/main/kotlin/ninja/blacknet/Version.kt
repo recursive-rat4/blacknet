@@ -10,23 +10,32 @@
 package ninja.blacknet
 
 import ninja.blacknet.util.Resources
+import java.util.jar.Manifest
 
 object Version {
-    val name = if (Config.instance.regtest) "Blacknet-regtest" else "Blacknet"
+    val name: String
+    val version: String
+    val revision: String
 
-    val revision: String = {
-        val string = Resources.string(this, "revision.txt", Charsets.US_ASCII)
-        if (string.isNotEmpty())
-            string
+    init {
+        val stream = Resources.stream(this, "META-INF/MANIFEST.MF")
+        val attributes = Manifest(stream).getMainAttributes()
+        stream.close()
+
+        name = if (Config.instance.regtest)
+            "Blacknet-regtest"
         else
-            "unknown revision"
-    }()
+            "Blacknet"
 
-    val version: String = Resources.string(this, "version.txt", Charsets.US_ASCII)
+        version = attributes.getValue("Implementation-Version")
+
+        revision = attributes.getValue("Build-Revision")
+                ?: version
+    }
 
     const val http_server = "Ktor"
 
-    val http_server_version: String = Resources.string(this, "ktor_version.txt", Charsets.US_ASCII)
+    const val http_server_version = "1.3.2"
 
     const val http_server_engine = "Netty"
 

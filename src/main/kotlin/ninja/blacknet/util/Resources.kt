@@ -11,10 +11,15 @@ package ninja.blacknet.util
 
 import io.ktor.utils.io.charsets.Charset
 import java.io.BufferedReader
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.URL
 
 object Resources {
+    fun stream(context: Any, name: String): InputStream {
+        return URL("jar:${context::class.java.protectionDomain.codeSource.location}!/$name").openStream()
+    }
+
     fun string(context: Any, name: String, charset: Charset = Charsets.UTF_8): String {
         return reader(context, name, charset) {
             readLine()
@@ -36,7 +41,7 @@ object Resources {
     }
 
     private inline fun <T> reader(context: Any, name: String, charset: Charset, implementation: BufferedReader.() -> T): T {
-        val reader = BufferedReader(InputStreamReader(URL("jar:${context::class.java.protectionDomain.codeSource.location}!/$name").openStream(), charset))
+        val reader = BufferedReader(InputStreamReader(stream(context, name), charset))
         return try {
             implementation(reader)
         } finally {
