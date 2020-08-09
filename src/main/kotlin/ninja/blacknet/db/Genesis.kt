@@ -9,7 +9,6 @@
 
 package ninja.blacknet.db
 
-import com.google.common.io.Resources
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.list
 import ninja.blacknet.Config
@@ -19,6 +18,7 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.util.HashMap
+import ninja.blacknet.util.Resources
 
 object Genesis {
     const val TIME: Long = 1545555600
@@ -30,7 +30,7 @@ object Genesis {
             map.put(RegTest.publicKey1, 1000000000 * PoS.COIN)
             map.put(RegTest.publicKey2, 10101010 * PoS.COIN)
         } else {
-            val genesis = Resources.toString(Resources.getResource("genesis.json"), Charsets.UTF_8)
+            val genesis = Resources.string(this, "genesis.json", Charsets.UTF_8)
             val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
             entries.forEach { entry ->
                 map.put(entry.publicKey, entry.balance)

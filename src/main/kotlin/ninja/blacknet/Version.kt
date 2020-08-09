@@ -9,24 +9,24 @@
 
 package ninja.blacknet
 
-import com.google.common.io.Resources
+import ninja.blacknet.util.Resources
 
 object Version {
     val name = if (Config.instance.regtest) "Blacknet-regtest" else "Blacknet"
 
     val revision: String = {
-        val string = Resources.toString(Resources.getResource("revision.txt"), Charsets.US_ASCII)
+        val string = Resources.string(this, "revision.txt", Charsets.US_ASCII)
         if (string.isNotEmpty())
             string
         else
             "unknown revision"
     }()
 
-    val version: String = Resources.toString(Resources.getResource("version.txt"), Charsets.US_ASCII)
+    val version: String = Resources.string(this, "version.txt", Charsets.US_ASCII)
 
     const val http_server = "Ktor"
 
-    val http_server_version: String = Resources.toString(Resources.getResource("ktor_version.txt"), Charsets.US_ASCII)
+    val http_server_version: String = Resources.string(this, "ktor_version.txt", Charsets.US_ASCII)
 
     const val http_server_engine = "Netty"
 

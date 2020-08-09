@@ -10,7 +10,6 @@
 
 package ninja.blacknet.db
 
-import com.google.common.io.Resources
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.exp
 import kotlin.math.max
@@ -18,7 +17,6 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlinx.coroutines.delay
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
@@ -37,6 +35,7 @@ import ninja.blacknet.serialization.decodeVarInt
 import ninja.blacknet.serialization.encodeVarInt
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet
+import ninja.blacknet.util.Resources
 
 private val logger = KotlinLogging.logger {}
 
@@ -133,7 +132,7 @@ object PeerDB {
         return if (Config.instance.regtest)
             emptyList()
         else
-            Resources.readLines(Resources.getResource("peers.txt"), Charsets.UTF_8)
+            Resources.lines(this, "peers.txt", Charsets.UTF_8)
                     .map {
                         Network.parse(it, Node.DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
                     }

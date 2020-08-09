@@ -123,6 +123,10 @@ val classes by tasks.existing {
 
 val processResources by tasks.existing(ProcessResources::class)
 
+val run by tasks.existing(JavaExec::class) {
+    classpath = files(tasks.jar) + classpath.filter { !it.startsWith(buildDir) }
+}
+
 val test by tasks.existing(Test::class) {
     useTestNG()
 }
