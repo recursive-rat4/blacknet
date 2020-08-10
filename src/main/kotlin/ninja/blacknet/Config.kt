@@ -54,8 +54,6 @@ class Config(
         val apiserver_enabled: Boolean = true,
         @SerialName("apiserver.jsonindented")
         val apiserver_jsonindented: Boolean = false,
-        @SerialName("apiserver.publicserver")
-        val apiserver_publicserver: Boolean = false,
 
         @SerialName("wallet.seqthreshold")
         val wallet_seqthreshold: Int = Int.MAX_VALUE - 1,

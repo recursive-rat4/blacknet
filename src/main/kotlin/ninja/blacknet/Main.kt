@@ -77,34 +77,26 @@ object Main {
          *
          * Blacknet API web-server logic is implemented in
          * ninja.blacknet.api.APIServer
-         * ninja.blacknet.api.PublicServer
          *
          * Ktor is a framework for building asynchronous servers and clients
          * in connected systems using the powerful Kotlin programming language.
          * https://ktor.io/
          *
          * Ktor configuration is stored in
-         * config/rpc.conf private server
-         * config/ktor.conf public server
+         * config/rpc.conf main network
+         * config/rpcregtest.conf regression testing
          * https://ktor.io/servers/engine.html
          *
          */
         if (Config.instance.apiserver_enabled) {
-            if (Config.instance.regtest)
-                embeddedServer(
-                    Netty,
-                    commandLineEnvironment(arrayOf("-config=${File(configDir, "regtest.conf")}"))
-                ).start(wait = false)
-            else
-                embeddedServer(
-                    Netty,
-                    commandLineEnvironment(arrayOf("-config=${File(configDir, "rpc.conf")}"))
-                ).start(wait = false)
-        }
-        if (Config.instance.apiserver_publicserver) {
             embeddedServer(
                 Netty,
-                commandLineEnvironment(arrayOf("-config=${File(configDir, "ktor.conf")}"))
+                commandLineEnvironment(arrayOf("-config=${File(configDir,
+                    if (Config.instance.regtest)
+                        "rpcregtest.conf"
+                    else
+                        "rpc.conf"
+                )}"))
             ).start(wait = false)
         }
 
