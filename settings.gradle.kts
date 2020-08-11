@@ -8,3 +8,14 @@
  */
 
 rootProject.name = "blacknet"
+
+pluginManagement {
+    repositories {
+        jcenter()
+        gradlePluginPortal()
+        maven {
+            name = "Kotlin Early Access Preview"
+            url = uri("https://dl.bintray.com/kotlin/kotlin-eap")
+        }
+    }
+}
