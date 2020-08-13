@@ -92,29 +92,30 @@ enum class Network(val type: Byte, val addrSize: Int) {
             }
         }
 
-        suspend fun connect(address: Address): Connection {
+        suspend fun connect(address: Address, prober: Boolean): Connection {
             if (address.network.isDisabled()) throw RuntimeException("${address.network} is disabled")
+            val state = if (prober) Connection.State.PROBER_WAITING else Connection.State.OUTGOING_WAITING
             when (address.network) {
                 IPv4, IPv6 -> {
                     if (socksProxy != null) {
                         val (socket, readChannel, writeChannel) = Socks5.connect(socksProxy, address)
-                        return Connection(socket, readChannel, writeChannel, address, socksProxy, Connection.State.OUTGOING_WAITING)
+                        return Connection(socket, readChannel, writeChannel, address, socksProxy, state)
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as InetSocketAddress)
                         if (Config.instance.listen && !localAddress.isLocal())
                             Node.listenAddress.add(Address(localAddress.network, Config.instance.port.toPort(), localAddress.bytes))
-                        return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, Connection.State.OUTGOING_WAITING)
+                        return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, state)
                     }
                 }
                 TORv2, TORv3 -> {
                     if (torProxy == null) throw RuntimeException("Tor proxy is not set")
                     val (socket, readChannel, writeChannel) = Socks5.connect(torProxy, address)
-                    return Connection(socket, readChannel, writeChannel, address, torProxy, Connection.State.OUTGOING_WAITING)
+                    return Connection(socket, readChannel, writeChannel, address, torProxy, state)
                 }
                 I2P -> {
                     val c = I2PSAM.connect(address)
-                    return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.session().second, Connection.State.OUTGOING_WAITING)
+                    return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.session().second, state)
                 }
             }
         }

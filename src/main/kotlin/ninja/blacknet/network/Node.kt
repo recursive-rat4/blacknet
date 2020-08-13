@@ -69,6 +69,7 @@ object Node {
             repeat(Config.instance.outgoingconnections) {
                 Runtime.rotate(::connector)
             }
+            Runtime.rotate(::prober)
         }
     }
 
@@ -155,21 +156,39 @@ object Node {
         listenOn(Address.IPv4_ANY(Config.instance.port.toPort()))
     }
 
-    suspend fun connectTo(address: Address): Connection {
-        val connection = Network.connect(address)
+    suspend fun connectTo(address: Address, prober: Boolean = false): Connection {
+        val connection = Network.connect(address, prober)
         connections.mutex.withLock {
             connections.list.add(connection)
             connection.launch()
         }
-        sendVersion(connection, nonce(address.network))
+        sendVersion(connection, nonce(address.network), prober)
         return connection
     }
 
-    fun sendVersion(connection: Connection, nonce: Long) {
-        val state = LedgerDB.state()
-        val chain = ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
-        val v = Version(magic, version, currentTimeSeconds(), nonce, UserAgent.string, minTxFee, chain)
-        connection.sendPacket(PacketType.Version, v)
+    fun sendVersion(connection: Connection, nonce: Long, prober: Boolean) {
+        connection.sendPacket(PacketType.Version, if (prober) {
+            Version(
+                    magic,
+                    version,
+                    currentTimeSeconds(),
+                    nonce,
+                    UserAgent.prober,
+                    Long.MAX_VALUE,
+                    ChainAnnounce.GENESIS
+            )
+        } else {
+            val state = LedgerDB.state()
+            Version(
+                    magic,
+                    version,
+                    currentTimeSeconds(),
+                    nonce,
+                    UserAgent.string,
+                    minTxFee,
+                    ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
+            )
+        })
     }
 
     suspend fun announceChain(hash: ByteArray, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
@@ -309,12 +328,16 @@ object Node {
         return true
     }
 
-    private suspend fun connector() {
+    private suspend fun getFilter(): HashSet<Address> {
         val filter = HashSet<Address>(expectedSize = connections.size() + listenAddress.size())
         connections.forEach { filter.add(it.remoteAddress) }
         listenAddress.forEach { filter.add(it) }
+        return filter
+    }
 
-        val address = PeerDB.getCandidate(filter)
+    private suspend fun connector() {
+        val filter = getFilter()
+        val address = PeerDB.getCandidate { address, _ -> !filter.contains(address) }
         if (address == null) {
             logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.instance.outgoingconnections}")
             delay(15 * 60 * 1000L)
@@ -332,6 +355,28 @@ object Node {
         val x = 4 * 1000L - (currentTimeMillis() - time)
         if (x > 0L)
             delay(x) // 請在繼續之前等待或延遲
+    }
+
+    private suspend fun prober() {
+        delay(4 * 60 * 1000L)
+
+        if (PeerDB.size() < PeerDB.MAX_SIZE / 2)
+            return
+
+        if (outgoing() < Config.instance.outgoingconnections)
+            return
+
+        val filter = getFilter()
+        val time = currentTimeMillis()
+        val address = PeerDB.getCandidate { address, entry ->
+            (time / 1000L > entry.lastTry + 4 * 60 * 60) && !filter.contains(address)
+        } ?: return
+
+        try {
+            connectTo(address, prober = true)
+        } catch (e: Throwable) {
+            PeerDB.failed(address, time / 1000L)
+        }
     }
 
     private fun parseAmount(string: String): Long {

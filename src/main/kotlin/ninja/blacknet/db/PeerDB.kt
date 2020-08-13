@@ -40,7 +40,7 @@ import ninja.blacknet.util.Resources
 private val logger = KotlinLogging.logger {}
 
 object PeerDB {
-    private const val MAX_SIZE = 8192
+    const val MAX_SIZE = 8192
     private const val VERSION = 4
     private val peers = ConcurrentHashMap<Address, Entry>((MAX_SIZE / 0.75f + 1.0f).toInt())
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
@@ -146,11 +146,11 @@ object PeerDB {
         return peers.isEmpty()
     }
 
-    fun connected(address: Address, time: Long, userAgent: String) {
+    fun connected(address: Address, time: Long, userAgent: String, prober: Boolean) {
         if (address.isLocal()) return
         val entry = peers.get(address)
         if (entry != null)
-            entry.connected(time, userAgent)
+            entry.connected(time, userAgent, prober)
         else
             peers.put(address, Entry.newConnected(time, userAgent))
     }
@@ -186,11 +186,11 @@ object PeerDB {
         return result
     }
 
-    fun getCandidate(filter: Set<Address>): Address? {
+    fun getCandidate(predicate: (Address, Entry) -> Boolean): Address? {
         val candidates = ArrayList<Pair<Address, Float>>(peers.size)
         val currTime = currentTimeSeconds()
         peers.forEach { (address, entry) ->
-            if (!filter.contains(address))
+            if (predicate(address, entry))
                 candidates.add(Pair(address, entry.chance(currTime)))
         }
         if (candidates.isNotEmpty()) {
@@ -320,12 +320,13 @@ object PeerDB {
             lastTry = time
         }
 
-        fun connected(time: Long, userAgent: String) {
+        fun connected(time: Long, userAgent: String, prober: Boolean) {
             val stat = stat
             if (stat != null) {
                 stat.lastConnected = time
                 stat.userAgent = userAgent
-                stat.bundler.clear()
+                if (!prober)
+                    stat.bundler.clear()
                 updateUptimeStat(stat, true, time)
             } else {
                 @Suppress("NAME_SHADOWING")
