@@ -9,7 +9,6 @@
 
 package ninja.blacknet.packet
 
-import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.*
@@ -17,7 +16,6 @@ import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
-import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
 
 private val logger = KotlinLogging.logger {}

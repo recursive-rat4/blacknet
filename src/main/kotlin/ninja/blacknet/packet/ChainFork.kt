@@ -9,11 +9,9 @@
 
 package ninja.blacknet.packet
 
-import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
-import ninja.blacknet.serialization.BinaryEncoder
 
 @Serializable
 class ChainFork(

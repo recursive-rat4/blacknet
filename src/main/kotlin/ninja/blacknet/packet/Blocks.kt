@@ -9,13 +9,11 @@
 
 package ninja.blacknet.packet
 
-import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
-import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
 
 @Serializable

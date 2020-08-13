@@ -9,13 +9,11 @@
 
 package ninja.blacknet.packet
 
-import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.*
-import ninja.blacknet.serialization.BinaryEncoder
 
 private val logger = KotlinLogging.logger {}
 

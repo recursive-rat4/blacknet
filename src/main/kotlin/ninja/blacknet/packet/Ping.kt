@@ -9,12 +9,10 @@
 
 package ninja.blacknet.packet
 
-import io.ktor.utils.io.core.ByteReadPacket
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
-import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.util.fromBytes
 
 @Serializable
