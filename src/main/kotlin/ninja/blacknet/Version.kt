@@ -10,7 +10,6 @@
 package ninja.blacknet
 
 import ninja.blacknet.util.Resources
-import java.util.jar.Manifest
 
 object Version {
     val name: String
@@ -18,9 +17,9 @@ object Version {
     val revision: String
 
     init {
-        val stream = Resources.stream(this, "META-INF/MANIFEST.MF")
-        val attributes = Manifest(stream).getMainAttributes()
-        stream.close()
+        val jar = Resources.jar(Version::class.java)
+        val attributes = jar.getManifest().getMainAttributes()
+        jar.close()
 
         name = if (Config.instance.regtest)
             "Blacknet-regtest"

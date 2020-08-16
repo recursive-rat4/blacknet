@@ -132,7 +132,7 @@ object PeerDB {
         return if (Config.instance.regtest)
             emptyList()
         else
-            Resources.lines(this, "peers.txt", Charsets.UTF_8)
+            Resources.lines(PeerDB::class.java, "peers.txt", Charsets.UTF_8)
                     .map {
                         Network.parse(it, Node.DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
                     }

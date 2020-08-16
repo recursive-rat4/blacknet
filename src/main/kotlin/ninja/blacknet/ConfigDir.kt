@@ -14,7 +14,7 @@ import java.io.File
 
 val configDir: File get() = File(gittyPath("config"))
 
-internal fun gittyPath(path: String): String {
+private fun gittyPath(path: String): String {
     if (Runtime.windowsOS) {
         val file = File(path)
         if (file.isFile()) {

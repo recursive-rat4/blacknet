@@ -10,12 +10,12 @@
 package ninja.blacknet.api
 
 import io.ktor.application.call
-import io.ktor.http.content.files
 import io.ktor.http.content.static
 import io.ktor.response.respondRedirect
 import io.ktor.routing.Route
 import io.ktor.routing.get
-import ninja.blacknet.htmlDir
+import ninja.blacknet.Main
+import ninja.blacknet.ktor.content.resources
 
 fun Route.html() {
     get("/") {
@@ -23,6 +23,6 @@ fun Route.html() {
     }
 
     static("static") {
-        files(htmlDir)
+        resources(Main::class.java, "html")
     }
 }

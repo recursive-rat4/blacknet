@@ -30,7 +30,7 @@ object Genesis {
             map.put(RegTest.publicKey1, 1000000000 * PoS.COIN)
             map.put(RegTest.publicKey2, 10101010 * PoS.COIN)
         } else {
-            val genesis = Resources.string(this, "genesis.json", Charsets.UTF_8)
+            val genesis = Resources.string(Genesis::class.java, "genesis.json", Charsets.UTF_8)
             val entries = Json.parse(GenesisJsonEntry.serializer().list, genesis)
             entries.forEach { entry ->
                 map.put(entry.publicKey, entry.balance)

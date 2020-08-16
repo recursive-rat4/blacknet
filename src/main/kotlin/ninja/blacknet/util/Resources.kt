@@ -11,22 +11,26 @@ package ninja.blacknet.util
 
 import io.ktor.utils.io.charsets.Charset
 import java.io.BufferedReader
-import java.io.InputStream
+import java.io.File
 import java.io.InputStreamReader
-import java.net.URL
+import java.util.jar.JarFile
 
 object Resources {
-    fun stream(context: Any, name: String): InputStream {
-        return URL("jar:${context::class.java.protectionDomain.codeSource.location}!/$name").openStream()
+    fun file(context: Class<*>): File {
+        return File(context.protectionDomain.codeSource.location.path)
     }
 
-    fun string(context: Any, name: String, charset: Charset = Charsets.UTF_8): String {
+    fun jar(context: Class<*>): JarFile {
+        return JarFile(file(context))
+    }
+
+    fun string(context: Class<*>, name: String, charset: Charset = Charsets.UTF_8): String {
         return reader(context, name, charset) {
             readLine()
         }
     }
 
-    fun lines(context: Any, name: String, charset: Charset = Charsets.UTF_8): ArrayList<String> {
+    fun lines(context: Class<*>, name: String, charset: Charset = Charsets.UTF_8): ArrayList<String> {
         return reader(context, name, charset) {
             val result = ArrayList<String>()
             while (true) {
@@ -40,12 +44,12 @@ object Resources {
         }
     }
 
-    private inline fun <T> reader(context: Any, name: String, charset: Charset, implementation: BufferedReader.() -> T): T {
-        val reader = BufferedReader(InputStreamReader(stream(context, name), charset))
+    private inline fun <T> reader(context: Class<*>, name: String, charset: Charset, implementation: BufferedReader.() -> T): T {
+        val jar = jar(context)
         return try {
-            implementation(reader)
+            implementation(BufferedReader(InputStreamReader(jar.getInputStream(jar.getEntry(name)), charset)))
         } finally {
-            reader.close()
+            jar.close()
         }
     }
 }

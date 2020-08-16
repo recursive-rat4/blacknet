@@ -35,6 +35,6 @@ object Wordlists {
     private val KOREAN by lazy { load("korean") }
 
     private fun load(name: String): Array<String> {
-        return Resources.lines(this, "bip39/$name.txt", Charsets.UTF_8).toTypedArray()
+        return Resources.lines(Wordlists::class.java, "bip39/$name.txt", Charsets.UTF_8).toTypedArray()
     }
 }
