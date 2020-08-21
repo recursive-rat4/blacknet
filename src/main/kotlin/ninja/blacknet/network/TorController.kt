@@ -14,10 +14,10 @@ import net.freehaven.tor.control.TorControlCommands
 import net.freehaven.tor.control.TorControlConnection
 import net.freehaven.tor.control.TorControlError
 import ninja.blacknet.Config
+import ninja.blacknet.dataDir
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.dataDir
-import ninja.blacknet.error
+import ninja.blacknet.logging.error
 import ninja.blacknet.util.emptyByteArray
 import java.io.File
 

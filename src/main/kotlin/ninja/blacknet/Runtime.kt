@@ -12,7 +12,7 @@ package ninja.blacknet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
-import ninja.blacknet.error
+import ninja.blacknet.logging.error
 import ninja.blacknet.util.SynchronizedArrayList
 import kotlin.coroutines.CoroutineContext
 

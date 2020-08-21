@@ -14,6 +14,11 @@ import com.rfksystems.blake2b.security.Blake2bProvider
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import java.io.File
+import java.io.FileInputStream
+import java.security.Security
+import java.util.logging.LogManager
+import kotlin.system.exitProcess
 import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.core.Staker
@@ -21,17 +26,24 @@ import ninja.blacknet.db.*
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import java.io.File
-import java.io.FileInputStream
-import java.security.Security
-import java.util.logging.LogManager
 
 private val logger = KotlinLogging.logger {}
 
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        System.setProperty("java.util.logging.manager", "ninja.blacknet.LogManager")
+        if (System.getProperty("ninja.blacknet.createConfigAndExit") != null) {
+            configDir
+            exitProcess(status = if (configDirCreated) {
+                println("Created configuration directory $configDir")
+                0
+            } else {
+                println("Configuration directory already exists or cannot be created $configDir")
+                1
+            })
+        }
+
+        System.setProperty("java.util.logging.manager", "ninja.blacknet.logging.LogManager")
         FileInputStream(File(configDir, "logging.properties")).let { fileInputStream ->
             LogManager.getLogManager().readConfiguration(fileInputStream)
             fileInputStream.close()
@@ -42,7 +54,7 @@ object Main {
 
         Runtime.addShutdownHook {
             logger.debug { "Shutting down logger" }
-            (LogManager.getLogManager() as ninja.blacknet.LogManager).shutDown()
+            (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
         }
         Config.instance
 
@@ -60,8 +72,7 @@ object Main {
             logger.warn("Node may work significally slower")
         }
 
-        if (Config.instance.portable)
-            logger.info("Portable mode")
+        logger.info("Using config directory ${configDir.absolutePath}")
         logger.info("Using data directory ${dataDir.absolutePath}")
 
         LevelDB

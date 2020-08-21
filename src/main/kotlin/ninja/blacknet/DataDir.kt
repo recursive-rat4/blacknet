@@ -13,31 +13,22 @@ package ninja.blacknet
 import java.io.File
 
 val dataDir: File = {
-    var dir = if (Config.instance.portable) {
-        File("db")
-    } else if (Config.instance.datadir == null) {
-        if (Runtime.macOS) {
-            File(System.getProperty("user.home"), "Library/Application Support/Blacknet")
-        } else if (Runtime.windowsOS) {
-            File(System.getProperty("user.home"), "AppData\\Roaming\\Blacknet")
-        } else {
-            // https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.7.html
-            val xdgDataHome = System.getenv("XDG_DATA_HOME")?.let { File(it) }
-            val new = if (xdgDataHome != null && xdgDataHome.isAbsolute) {
-                File(xdgDataHome, "Blacknet")
-            } else {
-                File(System.getProperty("user.home"), ".local/share/Blacknet")
-            }
-            val old = File(System.getProperty("user.home"), ".blacknet")
-            if (old.exists()) {
-                if (new.exists()) throw RuntimeException("Both $old and $new exist")
-                new.parentFile.mkdirs()
-                if (!old.renameTo(new)) throw RuntimeException("Rename $old to $new not succeeded")
-            }
-            new
-        }
+    val custom = System.getProperty("ninja.blacknet.dataDir")
+    var dir = if (custom != null) {
+        File(custom)
+    } else if (Runtime.macOS) {
+        File(System.getProperty("user.home"), "Library/Application Support/Blacknet")
+    } else if (Runtime.windowsOS) {
+        File(System.getProperty("user.home"), "AppData\\Roaming\\Blacknet")
     } else {
-        File(Config.instance.datadir)
+        val new = XDGDataDirectory()
+        val old = File(System.getProperty("user.home"), ".blacknet")
+        if (old.exists()) {
+            if (new.exists()) throw RuntimeException("Both $old and $new exist")
+            new.parentFile.mkdirs()
+            if (!old.renameTo(new)) throw RuntimeException("Rename $old to $new not succeeded")
+        }
+        new
     }
     if (Config.instance.regtest) {
         dir = File(dir, "regtest")

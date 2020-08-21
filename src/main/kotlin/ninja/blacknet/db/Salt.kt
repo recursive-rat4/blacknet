@@ -25,7 +25,10 @@ object Salt {
     val salt: ByteArray
 
     init {
-        if (System.getProperty("org.gradle.test.worker") == null) {
+        if (System.getProperty("org.gradle.test.worker") != null) {
+            logger.info("測試避免數據庫")
+            salt = ByteArray(SALT_SIZE_BYTES) { it.toByte() }
+        } else {
             val saltBytes = LevelDB.get(SALT_KEY)
             salt = if (saltBytes != null && saltBytes.size == SALT_SIZE_BYTES) {
                 saltBytes
@@ -41,9 +44,6 @@ object Salt {
 
                 bytes
             }
-        } else {
-            // 測試避免數據庫
-            salt = ByteArray(SALT_SIZE_BYTES) { it.toByte() }
         }
     }
 

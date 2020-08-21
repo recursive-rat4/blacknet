@@ -21,11 +21,11 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
+import ninja.blacknet.dataDir
 import ninja.blacknet.coding.Base64
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.dataDir
-import ninja.blacknet.error
+import ninja.blacknet.logging.error
 import java.io.File
 import kotlin.random.Random
 

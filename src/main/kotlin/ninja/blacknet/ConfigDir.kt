@@ -11,16 +11,43 @@
 package ninja.blacknet
 
 import java.io.File
+import java.io.FileOutputStream
+import ninja.blacknet.util.Resources
 
-val configDir: File get() = File(gittyPath("config"))
+var configDirCreated: Boolean = false
 
-private fun gittyPath(path: String): String {
-    if (Runtime.windowsOS) {
-        val file = File(path)
-        if (file.isFile()) {
-            // git symlink
-            return file.readText()
-        }
+val configDir: File get() = {
+    val custom = System.getProperty("ninja.blacknet.configDir")
+    val dir = if (System.getProperty("org.gradle.test.worker") != null) {
+        println("測試避免配置目錄")
+        File("build/resources/main/config")
+    } else if (custom != null) {
+        File(custom)
+    } else if (Runtime.macOS) {
+        File(System.getProperty("user.home"), "Library/Application Support/Blacknet")
+    } else if (Runtime.windowsOS) {
+        File(System.getProperty("user.home"), "AppData\\Roaming\\Blacknet")
+    } else {
+        XDGConfigDirectory()
     }
-    return path
-}
+    if (dir.mkdirs()) {
+        val jar = Resources.jar(Main::class.java)
+        configFiles().forEach { name ->
+            val input = jar.getInputStream(jar.getJarEntry("config/$name"))
+            val output = FileOutputStream(File(dir, name))
+            input.transferTo(output)
+            input.close()
+            output.close()
+        }
+        jar.close()
+        configDirCreated = true
+    }
+    dir
+}()
+
+private fun configFiles() = arrayOf(
+        "blacknet.conf",
+        "logging.properties",
+        "rpc.conf",
+        "rpcregtest.conf"
+)

@@ -19,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.coding.Base32
-import ninja.blacknet.error
+import ninja.blacknet.logging.error
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress

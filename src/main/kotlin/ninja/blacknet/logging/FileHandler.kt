@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.util
+package ninja.blacknet.logging
 
 import ninja.blacknet.dataDir
 import java.io.File

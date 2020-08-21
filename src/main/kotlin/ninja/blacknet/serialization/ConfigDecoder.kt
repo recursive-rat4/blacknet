@@ -16,9 +16,9 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
 
-class ConfigDecoder(
+class ConfigDecoderImpl(
         private val reader: ConfigReader
-) : AdaptorDecoder(), ConfigInput {
+) : AdaptorDecoder(), ConfigDecoder {
     fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
         sleeper = -1
         descriptor = strategy.descriptor
@@ -109,7 +109,7 @@ class ConfigDecoder(
 
     private class ListDecoder(
             private val input: List<String>
-    ) : AdaptorDecoder(), ConfigInput {
+    ) : AdaptorDecoder(), ConfigDecoder {
         override fun decodeBoolean(): Boolean = input[++position].toBoolean()
         override fun decodeByte(): Byte = input[++position].toByte()
         override fun decodeShort(): Short = input[++position].toShort()

@@ -37,10 +37,10 @@ import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.debug
-import ninja.blacknet.debugMessage
-import ninja.blacknet.error
 import ninja.blacknet.ktor.requests.Requests
+import ninja.blacknet.logging.debug
+import ninja.blacknet.logging.debugMessage
+import ninja.blacknet.logging.error
 import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.statusMessage
 import ninja.blacknet.util.SynchronizedArrayList

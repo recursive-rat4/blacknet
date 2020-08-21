@@ -7,16 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization
+package ninja.blacknet.logging
 
-import java.util.Properties
+import java.util.logging.LogManager
+import kotlin.Unit
 
-// 標記接口
+class LogManager() : LogManager() {
+    override fun reset() = Unit
 
-typealias ConfigInput = Properties
-
-interface ConfigDecoder
-
-typealias ConfigOutput = Properties
-
-interface ConfigEncoder
+    fun shutDown() = super.reset()
+}

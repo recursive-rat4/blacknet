@@ -7,18 +7,10 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.logging
 
 import kotlin.Throwable
-import kotlin.Unit
 import mu.KLogger
-import java.util.logging.LogManager
-
-class LogManager() : LogManager() {
-    override fun reset() = Unit
-
-    fun shutDown() = super.reset()
-}
 
 fun KLogger.debug(throwable: Throwable) = debug(throwable) {
     throwable.debugMessage()

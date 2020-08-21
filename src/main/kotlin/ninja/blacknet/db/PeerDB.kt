@@ -22,9 +22,9 @@ import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.error
 import ninja.blacknet.contract.DAppIdSerializer
 import ninja.blacknet.core.currentTimeSeconds
+import ninja.blacknet.logging.error
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Network

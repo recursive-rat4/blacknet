@@ -13,7 +13,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PrivateKeySerializer
-import ninja.blacknet.serialization.ConfigDecoder
+import ninja.blacknet.serialization.ConfigDecoderImpl
 import ninja.blacknet.serialization.ConfigReader
 import java.io.File
 
@@ -41,8 +41,6 @@ class Config(
         // 主從模式
         val softblocksizelimit: Size = Size(PoS.MAX_BLOCK_SIZE),
         val txpoolsize: Size = Size(128 * 1024 * 1024),
-        val portable: Boolean = false,
-        val datadir: String? = null,
         val logips: Boolean = false,
         // 白名單
         // val blacklist: Set<String>? = null,
@@ -61,7 +59,7 @@ class Config(
         val unit: Unit? = kotlin.Unit /* XXX 1.4 */
 ) {
     companion object {
-        val instance = ConfigDecoder(ConfigReader(File(configDir, "blacknet.conf"))).decode(serializer()).also {
+        val instance = ConfigDecoderImpl(ConfigReader(File(configDir, "blacknet.conf"))).decode(serializer()).also {
             if (it.dbcache.bytes < 1024 * 1024) throw ConfigError("dbcache ${it.dbcache.hrp(false)} is unrealistically low")
             if (it.txpoolsize.bytes < 1024 * 1024) throw ConfigError("txpoolsize ${it.txpoolsize.hrp(false)} is unrealistically low")
         }

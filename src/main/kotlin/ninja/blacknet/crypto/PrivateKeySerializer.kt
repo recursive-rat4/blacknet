@@ -17,10 +17,8 @@ import kotlinx.serialization.StructureKind
 import ninja.blacknet.coding.HexFormatException
 import ninja.blacknet.coding.fromHex
 import ninja.blacknet.coding.toHex
-import ninja.blacknet.crypto.SipHash.hashCode
-import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.ktor.requests.RequestDecoder
-import ninja.blacknet.serialization.ConfigInput
+import ninja.blacknet.serialization.ConfigDecoder
 import ninja.blacknet.serialization.notSupportedCoderError
 
 /**
@@ -51,7 +49,7 @@ object PrivateKeySerializer : KSerializer<ByteArray> {
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is ConfigInput -> parse(decoder.decodeString())
+            is ConfigDecoder -> parse(decoder.decodeString())
             is RequestDecoder -> parse(decoder.decodeString())
             else -> throw notSupportedCoderError(decoder, this)
         }
