@@ -10,7 +10,7 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.Config
-import ninja.blacknet.contract.DAppIdSerializer
+import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.coding.Bech32
@@ -29,7 +29,7 @@ object Address {
     const val STAKER: Byte = 0
     const val HTLC: Byte = 1
     const val MULTISIG: Byte = 2
-    const val DAPP: Byte = 3
+    const val BAPP: Byte = 3
 
     private val HRP = if (Config.instance.regtest) HRP_REGTEST else HRP_MAINNET
 
@@ -73,7 +73,7 @@ object Address {
         STAKER -> throw Error("保留地址版本字節")
         HTLC -> HashTimeLockContractIdSerializer.SIZE_BYTES
         MULTISIG -> MultiSignatureLockContractIdSerializer.SIZE_BYTES
-        DAPP -> DAppIdSerializer.SIZE_BYTES
+        BAPP -> BAppIdSerializer.SIZE_BYTES
         else -> throw Exception("Unknown address version $version")
     }
 

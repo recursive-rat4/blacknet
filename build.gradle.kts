@@ -12,8 +12,10 @@ import nl.javadude.gradle.plugins.license.LicenseMetadata
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
-group = "ninja.blacknet"
-version = "0.3-SNAPSHOT"
+allprojects {
+    group = "ninja.blacknet"
+    version = "0.3-SNAPSHOT"
+}
 
 buildscript {
     dependencies {
@@ -39,6 +41,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project("blockchain"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}")
     implementation("io.ktor:ktor-network:${Versions.ktor}")
     implementation("io.ktor:ktor-server-netty:${Versions.ktor}") {

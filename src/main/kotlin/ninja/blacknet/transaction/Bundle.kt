@@ -10,7 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.DAppIdSerializer
+import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Status
@@ -21,11 +21,11 @@ import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.Json
 
 /**
- * 去中心化電腦程序交易包
+ * 黑網區塊鏈應用程序交易包
  */
 @Serializable
 class Bundle(
-        @Serializable(with = DAppIdSerializer::class)
+        @Serializable(with = BAppIdSerializer::class)
         val id: ByteArray,
         @Serializable(with = ByteArraySerializer::class)
         val data: ByteArray

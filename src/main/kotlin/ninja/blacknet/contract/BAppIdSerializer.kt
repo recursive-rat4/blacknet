@@ -18,7 +18,6 @@ import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.ktor.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
@@ -26,25 +25,25 @@ import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedCoderError
 
 /**
- * Serializes an id of a dapp.
+ * Serializes an id of a Blacknet blockchain application.
  */
-object DAppIdSerializer : KSerializer<ByteArray> {
+object BAppIdSerializer : KSerializer<ByteArray> {
     /**
-     * The number of bytes in a binary representation of the dapp id.
+     * The number of bytes in a binary representation of the Blacknet blockchain application id.
      */
     const val SIZE_BYTES = 4
 
     override val descriptor: SerialDescriptor = SerialDescriptor(
-        "ninja.blacknet.contract.DAppIdSerializer",
+        "ninja.blacknet.contract.BAppIdSerializer",
         StructureKind.LIST  // PrimitiveKind.STRING
     )
 
     fun parse(string: String): ByteArray {
-        return Address.decode(Address.DAPP, string)
+        return Address.decode(Address.BAPP, string)
     }
 
     fun stringify(id: ByteArray): String {
-        return Address.encode(Address.DAPP, id)
+        return Address.encode(Address.BAPP, id)
     }
 
     override fun deserialize(decoder: Decoder): ByteArray {

@@ -7,19 +7,4 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.db
-
-import ninja.blacknet.contract.DAppIdSerializer
-import ninja.blacknet.util.HashMap
-
-object DAppDB {
-    private val dapps: Map<ByteArray, *> = emptyMap<ByteArray, Unit>()
-
-    init {
-
-    }
-
-    fun isInteresting(id: ByteArray): Boolean {
-        return dapps.containsKey(id)
-    }
-}
+package ninja.blacknet

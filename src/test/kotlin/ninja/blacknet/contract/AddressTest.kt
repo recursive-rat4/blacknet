@@ -26,9 +26,9 @@ class AddressTest {
         assertTrue(MultiSignatureLockContractIdSerializer.stringify(address).compareTo(string, ignoreCase = true) == 0)
     }
     @Test
-    fun dapp() {
+    fun bapp() {
         val string = "blacknet1q07le7l69mvwv3"
-        val address = DAppIdSerializer.parse(string)
-        assertTrue(DAppIdSerializer.stringify(address).compareTo(string, ignoreCase = true) == 0)
+        val address = BAppIdSerializer.parse(string)
+        assertTrue(BAppIdSerializer.stringify(address).compareTo(string, ignoreCase = true) == 0)
     }
 }

@@ -22,7 +22,7 @@ import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.contract.DAppIdSerializer
+import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.logging.error
 import ninja.blacknet.network.Address
@@ -163,7 +163,7 @@ object PeerDB {
     fun bundlerAnnounce(address: Address, announce: List<ByteArray>): Unit {
         peers.get(address)?.stat?.bundler?.let { bundler ->
             announce.forEach { id ->
-                if (DAppDB.isInteresting(id)) {
+                if (BAppDB.isInteresting(id)) {
                     bundler.add(id)
                 }
             }
@@ -288,7 +288,7 @@ object PeerDB {
             val stat1D: UptimeStat,
             val stat1W: UptimeStat,
             val stat1M: UptimeStat,
-            val bundler: HashSet<@Serializable(DAppIdSerializer::class) ByteArray>
+            val bundler: HashSet<@Serializable(BAppIdSerializer::class) ByteArray>
     ) {
         constructor(lastConnected: Long, userAgent: String) : this(
                 lastConnected,

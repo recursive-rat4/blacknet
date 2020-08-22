@@ -7,17 +7,22 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-rootProject.name = "blacknet"
+plugins {
+    kotlin("jvm")
+}
 
-include("blockchain")
+repositories {
+    jcenter()
+}
 
-pluginManagement {
-    repositories {
-        jcenter()
-        gradlePluginPortal()
-        maven {
-            name = "Kotlin Early Access Preview"
-            url = uri("https://dl.bintray.com/kotlin/kotlin-eap")
-        }
+dependencies {
+    api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
+}
+
+val jar by tasks.existing(Jar::class) {
+    manifest {
+        attributes(
+            "Implementation-Version" to project.version.toString()
+        )
     }
 }
