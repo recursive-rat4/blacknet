@@ -82,13 +82,13 @@ fun Route.dataBase() {
             if (height < 0 || height > state.height)
                 return respondError("Block not found")
             else if (height == 0)
-                return respondText(HashSerializer.stringify(HashSerializer.ZERO))
+                return respondText(HashSerializer.encode(HashSerializer.ZERO))
             else if (height == state.height)
-                return respondText(HashSerializer.stringify(state.blockHash))
+                return respondText(HashSerializer.encode(state.blockHash))
 
             val lastIndex = RPCServer.lastIndex
             if (lastIndex != null && lastIndex.second.height == height)
-                return respondText(HashSerializer.stringify(lastIndex.first))
+                return respondText(HashSerializer.encode(lastIndex.first))
 
             var hash: ByteArray
             var index: ChainIndex
@@ -112,7 +112,7 @@ fun Route.dataBase() {
             if (index.height < state.height - PoS.MATURITY + 1)
                 RPCServer.lastIndex = Pair(hash, index)
 
-            return respondText(HashSerializer.stringify(hash))
+            return respondText(HashSerializer.encode(hash))
         }
     }
 

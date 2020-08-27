@@ -18,7 +18,7 @@ import ninja.blacknet.codec.base.*
  * @throws CodecException if there is no such codec
  */
 @Throws(CodecException::class)
-fun stringCodec(codec: String): StringCodec {
+public fun stringCodec(codec: String): StringCodec {
     return when (codec) {
         "base16" -> Base16
         "base32" -> throw NotImplementedError()

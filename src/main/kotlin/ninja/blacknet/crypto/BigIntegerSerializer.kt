@@ -10,33 +10,33 @@
 package ninja.blacknet.crypto
 
 import java.math.BigInteger
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.StructureKind
-import kotlinx.serialization.json.JsonInput
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedFormatError
+import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 
 /**
  * Serializes a [BigInteger] with a transformation to a decimal string in some representations.
  */
 object BigIntegerSerializer : KSerializer<BigInteger> {
-    override val descriptor: SerialDescriptor = SerialDescriptor(
-        "ninja.blacknet.crypto.BigIntegerSerializer",
-        StructureKind.LIST  // PrimitiveKind.STRING
+    override val descriptor: SerialDescriptor = ListSerialDescriptor(
+            "ninja.blacknet.crypto.BigIntegerSerializer",
+            Byte.serializer().descriptor  // PrimitiveKind.STRING
     )
 
     override fun deserialize(decoder: Decoder): BigInteger {
         return when (decoder) {
             is BinaryDecoder -> BigInteger(decoder.decodeByteArray())
             is RequestDecoder,
-            is JsonInput -> BigInteger(decoder.decodeString())
+            is JsonDecoder -> BigInteger(decoder.decodeString())
             else -> throw notSupportedFormatError(decoder, this)
         }
     }
@@ -45,7 +45,7 @@ object BigIntegerSerializer : KSerializer<BigInteger> {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeByteArray(value.toByteArray())
             is HashCoder -> encoder.encodeByteArray(value.toByteArray())
-            is JsonOutput -> encoder.encodeString(value.toString())
+            is JsonEncoder -> encoder.encodeString(value.toString())
             else -> throw notSupportedFormatError(encoder, this)
         }
     }

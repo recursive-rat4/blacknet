@@ -11,6 +11,8 @@ package ninja.blacknet.crypto
 
 import io.ktor.utils.io.bits.*
 import io.ktor.utils.io.charsets.Charset
+import kotlinx.serialization.modules.EmptySerializersModule
+import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.AdaptorEncoder
 import ninja.blacknet.serialization.SerializationError
 
@@ -22,16 +24,14 @@ class HashCoder(
     private val buffer = ByteArray(Long.SIZE_BYTES)
     private val memory = Memory.of(buffer)
 
+    override val serializersModule: SerializersModule = EmptySerializersModule
+
     override fun encodeNull() {
         writer.writeByte(0)
     }
 
     override fun encodeNotNullMark() {
         writer.writeByte(1)
-    }
-
-    override fun encodeUnit() {
-        writer.writeByteArray(buffer, 0, 0)
     }
 
     override fun encodeBoolean(value: Boolean) {

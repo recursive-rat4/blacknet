@@ -9,13 +9,13 @@
 
 package ninja.blacknet.crypto
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.Ed25519.x25519
@@ -97,7 +97,7 @@ class PaymentId(
                     encoder.encodeByte(value.type)
                     encoder.encodeByteArray(value.payload)
                 }
-                is JsonOutput -> {
+                is JsonEncoder -> {
                     @Suppress("NAME_SHADOWING")
                     val encoder = encoder.beginStructure(descriptor)
                     encoder.encodeSerializableElement(descriptor, 0, Byte.serializer(), value.type)

@@ -16,20 +16,20 @@ class HashSetTest {
     @Test
     fun int() {
         val set = HashSet<Int>()
-        assertEquals(set.size, 0)
+        assertEquals(0, set.size)
         set.add(32)
-        assertEquals(set.size, 1)
+        assertEquals(1, set.size)
         set.add(32)
-        assertEquals(set.size, 1)
+        assertEquals(1, set.size)
     }
 
     @Test
     fun bytearray() {
         val set = HashSet<ByteArray>()
-        assertEquals(set.size, 0)
+        assertEquals(0, set.size)
         set.add(ByteArray(32))
-        assertEquals(set.size, 1)
+        assertEquals(1, set.size)
         set.add(ByteArray(32))
-        assertEquals(set.size, 1)
+        assertEquals(1, set.size)
     }
 }

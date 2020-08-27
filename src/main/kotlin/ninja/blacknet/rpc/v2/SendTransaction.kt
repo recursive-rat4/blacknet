@@ -54,7 +54,7 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                respondText(HashSerializer.stringify(hash))
+                respondText(HashSerializer.encode(hash))
             else
                 respondError("Transaction rejected: $status")
         }
@@ -83,7 +83,7 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                respondText(HashSerializer.stringify(hash))
+                respondText(HashSerializer.encode(hash))
             else
                 respondError("Transaction rejected: $status")
         }
@@ -112,7 +112,7 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                respondText(HashSerializer.stringify(hash))
+                respondText(HashSerializer.encode(hash))
             else
                 respondError("Transaction rejected: $status")
         }
@@ -142,7 +142,7 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                respondText(HashSerializer.stringify(hash))
+                respondText(HashSerializer.encode(hash))
             else
                 respondError("Transaction rejected: $status")
         }
@@ -173,7 +173,7 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                respondText(HashSerializer.stringify(hash))
+                respondText(HashSerializer.encode(hash))
             else
                 respondError("Transaction rejected: $status")
         }
@@ -192,7 +192,7 @@ fun Route.sendTransaction() {
 
             val status = Node.broadcastTx(hash, bytes)
             return if (status == Accepted)
-                respondText(HashSerializer.stringify(hash))
+                respondText(HashSerializer.encode(hash))
             else
                 respondError("Transaction rejected: $status")
         }

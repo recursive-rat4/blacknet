@@ -115,7 +115,7 @@ object Staker {
                 val block = Block.create(state.blockHash, timeSlot, staker.publicKey)
                 TxPool.fill(block)
                 val (hash, bytes) = block.sign(staker.privateKey)
-                logger.info("Staked ${HashSerializer.stringify(hash)}")
+                logger.info("Staked ${HashSerializer.encode(hash)}")
                 if (Node.broadcastBlock(hash, bytes)) {
                     return
                 } else @Suppress("NAME_SHADOWING") {
@@ -129,7 +129,7 @@ object Staker {
                         TxPool.fill(block)
                         if (block.transactions.isNotEmpty()) {
                             val (hash, bytes) = block.sign(staker.privateKey)
-                            logger.warn("Retry ${HashSerializer.stringify(hash)}")
+                            logger.warn("Retry ${HashSerializer.encode(hash)}")
                             if (Node.broadcastBlock(hash, bytes))
                                 return
                             else
@@ -137,7 +137,7 @@ object Staker {
                         }
                     }
                     val (hash, bytes) = block.sign(staker.privateKey)
-                    logger.warn("Empty ${HashSerializer.stringify(hash)}")
+                    logger.warn("Empty ${HashSerializer.encode(hash)}")
                     Node.broadcastBlock(hash, bytes)
                 }
             }

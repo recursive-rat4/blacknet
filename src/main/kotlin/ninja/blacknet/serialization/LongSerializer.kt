@@ -7,18 +7,16 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("DUPLICATE_LABEL_IN_WHEN")
-
 package ninja.blacknet.serialization
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveDescriptor
-import kotlinx.serialization.PrimitiveKind
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.json.JsonInput
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.rpc.requests.RequestDecoder
 
@@ -31,7 +29,7 @@ object LongSerializer : KSerializer<Long> {
      */
     const val SIZE_BYTES = Long.SIZE_BYTES
 
-    override val descriptor: SerialDescriptor = PrimitiveDescriptor(
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
         "ninja.blacknet.serialization.LongSerializer",
         PrimitiveKind.LONG  // PrimitiveKind.STRING
     )
@@ -40,10 +38,8 @@ object LongSerializer : KSerializer<Long> {
         return when (decoder) {
             is BinaryDecoder,
             is RequestDecoder,
-            is RequestDecoder /* XXX 1.4 */
                 -> decoder.decodeLong()
-            is JsonInput,
-            is JsonInput /* XXX 1.4 */
+            is JsonDecoder,
                 -> decoder.decodeString().toLong()
             else
                 -> throw notSupportedFormatError(decoder, this)
@@ -54,10 +50,8 @@ object LongSerializer : KSerializer<Long> {
         when (encoder) {
             is BinaryEncoder,
             is HashCoder,
-            is HashCoder /* XXX 1.4 */
                 -> encoder.encodeLong(value)
-            is JsonOutput,
-            is JsonOutput /* XXX 1.4 */
+            is JsonEncoder,
                 -> encoder.encodeString(value.toString())
             else
                 -> throw notSupportedFormatError(encoder, this)

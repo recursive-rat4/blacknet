@@ -7,9 +7,10 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.codec
+package ninja.blacknet.core
 
-/**
- * Thrown to indicate a problem during the encoding or decoding process.
- */
-public open class CodecException(message: String) : RuntimeException(message)
+object Tower {
+
+}
+
+private class TowerException(message: String) : RuntimeException(message)

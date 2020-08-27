@@ -27,28 +27,28 @@ class ByteArraySerializerTest {
 
     @Test
     fun binaryDecoder() {
-        assertEquals(BinaryDecoder(binaryEncoded).decode(ByteArraySerializer), byteArray)
+        assertEquals(byteArray, BinaryDecoder(binaryEncoded).decode(ByteArraySerializer))
     }
 
     @Test
     fun binaryEncoder() {
-        assertEquals(BinaryEncoder.toBytes(ByteArraySerializer, byteArray), binaryEncoded)
+        assertEquals(binaryEncoded, BinaryEncoder.toBytes(ByteArraySerializer, byteArray))
     }
 
     @Test
     fun hashCoder() {
-        assertEquals(HashCoder.buildHash("MD5") { encodeSerializableValue(ByteArraySerializer, byteArray) }.size, 16)
+        assertEquals(16, HashCoder.buildHash("MD5") { encodeSerializableValue(ByteArraySerializer, byteArray) }.size)
     }
 
     @Test
     fun jsonDecoder() {
-        assertEquals(json.parse(ByteArraySerializer, jsonEncoded), byteArray)
+        assertEquals(byteArray, json.decodeFromString(ByteArraySerializer, jsonEncoded))
     }
 
     @Test
     fun jsonEncoder() {
         assertTrue(
-            json.stringify(ByteArraySerializer, byteArray)
+            json.encodeToString(ByteArraySerializer, byteArray)
             .compareTo(jsonEncoded, ignoreCase = true) == 0
         )
     }
@@ -57,6 +57,6 @@ class ByteArraySerializerTest {
     fun requestDecoder() {
         @Serializable
         class Request(@Serializable(with = ByteArraySerializer::class) val byteArray: ByteArray)
-        assertEquals(RequestDecoder(parametersOf("byteArray", hexEncoded)).decode(Request.serializer()).byteArray, byteArray)
+        assertEquals(byteArray, RequestDecoder(parametersOf("byteArray", hexEncoded)).decode(Request.serializer()).byteArray)
     }
 }

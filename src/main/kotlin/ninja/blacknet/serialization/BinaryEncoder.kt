@@ -10,7 +10,11 @@
 package ninja.blacknet.serialization
 
 import io.ktor.utils.io.core.*
-import kotlinx.serialization.*
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.CompositeEncoder
+import kotlinx.serialization.modules.EmptySerializersModule
+import kotlinx.serialization.modules.SerializersModule
 
 /**
  * Encoder to the Blacknet Binary Format
@@ -25,6 +29,8 @@ class BinaryEncoder : AdaptorEncoder() {
     fun toBytes(): ByteArray {
         return toPacket().readBytes()
     }
+
+    override val serializersModule: SerializersModule = EmptySerializersModule
 
     override fun encodeByte(value: Byte) = out.writeByte(value)
     override fun encodeShort(value: Short) = out.writeShort(value)
@@ -44,8 +50,8 @@ class BinaryEncoder : AdaptorEncoder() {
         out.writeFully(bytes, 0, bytes.size)
     }
 
-    override fun beginCollection(descriptor: SerialDescriptor, collectionSize: Int, vararg typeSerializers: KSerializer<*>): CompositeEncoder {
-        return super.beginCollection(descriptor, collectionSize, *typeSerializers).also {
+    override fun beginCollection(descriptor: SerialDescriptor, collectionSize: Int): CompositeEncoder {
+        return super.beginCollection(descriptor, collectionSize).also {
             encodeVarInt(collectionSize)
         }
     }

@@ -14,7 +14,7 @@ package ninja.blacknet.rpc.v1
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.HashSerializer
@@ -36,12 +36,12 @@ class TransactionInfoV2(
         val data: JsonElement
 ) {
     constructor(tx: Transaction, hash: ByteArray, size: Int) : this(
-            HashSerializer.stringify(hash),
+            HashSerializer.encode(hash),
             size,
-            SignatureSerializer.stringify(tx.signature),
+            SignatureSerializer.encode(tx.signature),
             Address.encode(tx.from),
             tx.seq,
-            HashSerializer.stringify(tx.referenceChain),
+            HashSerializer.encode(tx.referenceChain),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
             data(tx.type, tx.data)
@@ -51,7 +51,7 @@ class TransactionInfoV2(
 
     companion object {
         fun data(type: Byte, bytes: ByteArray): JsonElement {
-            if (type == TxType.Generated.type) return json {}
+            if (type == TxType.Generated.type) return buildJsonObject {}
             @Suppress("UNCHECKED_CAST")
             val serializer = TxType.getSerializer(type) as KSerializer<TxData>
             val txData = BinaryDecoder(bytes).decode(serializer)

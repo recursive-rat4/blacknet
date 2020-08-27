@@ -358,12 +358,19 @@ object Node {
             delay(x) // 請在繼續之前等待或延遲
     }
 
+    /**
+     * Peer network prober is a tool that periodically tries to establish an
+     * outgoing connection in order to provide statistic for the peer database
+     * prober.
+     */
     private suspend fun prober() {
         delay(4 * 60 * 1000L)
 
+        // Await peer network address announce
         if (PeerDB.size() < PeerDB.MAX_SIZE / 2)
             return
 
+        // Await while connectors are working
         if (outgoing() < Config.instance.outgoingconnections)
             return
 

@@ -37,7 +37,7 @@ class Transactions(
             val hash = Transaction.hash(bytes)
 
             if (!TxFetcher.fetched(hash)) {
-                connection.dos("Unrequested ${HashSerializer.stringify(hash)}")
+                connection.dos("Unrequested ${HashSerializer.encode(hash)}")
                 continue
             }
 
@@ -45,10 +45,10 @@ class Transactions(
 
             when (status) {
                 Accepted -> inv.add(Pair(hash, fee))
-                is Invalid -> connection.dos("$status ${HashSerializer.stringify(hash)}")
-                is InFuture -> logger.debug { "$status ${HashSerializer.stringify(hash)}" }
-                is NotOnThisChain -> logger.debug { "$status ${HashSerializer.stringify(hash)}" }
-                is AlreadyHave -> logger.debug { "$status ${HashSerializer.stringify(hash)}" }
+                is Invalid -> connection.dos("$status ${HashSerializer.encode(hash)}")
+                is InFuture -> logger.debug { "$status ${HashSerializer.encode(hash)}" }
+                is NotOnThisChain -> logger.debug { "$status ${HashSerializer.encode(hash)}" }
+                is AlreadyHave -> logger.debug { "$status ${HashSerializer.encode(hash)}" }
             }
         }
 

@@ -9,22 +9,21 @@
 
 package ninja.blacknet.serialization
 
-import kotlinx.serialization.*
-import kotlinx.serialization.builtins.UnitSerializer
-import kotlinx.serialization.modules.EmptyModule
-import kotlinx.serialization.modules.SerialModule
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.UpdateMode
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.CompositeEncoder
+import kotlinx.serialization.encoding.Encoder
 
 abstract class AdaptorEncoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Encoder, CompositeEncoder {
     private fun notImplementedError(message: String): Throwable = SerializationError("${this::class} is not implemented for $message")
 
-    override val context: SerialModule = EmptyModule
     open val updateMode: UpdateMode = UpdateMode.BANNED
 
     override fun encodeNotNullMark(): Unit = throw notImplementedError("NotNullMark")
     override fun encodeNull(): Unit = throw notImplementedError("Null")
-    override fun encodeUnit(): Unit = UnitSerializer().serialize(this, Unit)
 
     override fun encodeBoolean(value: Boolean): Unit = throw notImplementedError("Boolean")
     override fun encodeByte(value: Byte): Unit = throw notImplementedError("Byte")
@@ -37,13 +36,12 @@ constructor() : Encoder, CompositeEncoder {
     override fun encodeString(value: String): Unit = throw notImplementedError("String")
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int): Unit = throw notImplementedError("Enum")
 
-    override fun beginStructure(descriptor: SerialDescriptor, vararg typeSerializers: KSerializer<*>): CompositeEncoder = this
+    override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
 
     open fun encodeSequentially(): Boolean = true
     open fun encodeElementIndex(descriptor: SerialDescriptor, index: Int): Unit = throw notImplementedError("non-sequential mode")
 
-    override fun encodeUnitElement(descriptor: SerialDescriptor, index: Int): Unit = encodeUnit()
     override fun encodeBooleanElement(descriptor: SerialDescriptor, index: Int, value: Boolean): Unit = encodeBoolean(value)
     override fun encodeByteElement(descriptor: SerialDescriptor, index: Int, value: Byte): Unit = encodeByte(value)
     override fun encodeShortElement(descriptor: SerialDescriptor, index: Int, value: Short): Unit = encodeShort(value)

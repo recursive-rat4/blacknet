@@ -22,10 +22,7 @@ Install the Java JDK (not only JRE) version 8th number or greater.
 
 #### Get the source code
 
-```
-git clone https://gitlab.com/blacknet-ninja/blacknet
-cd blacknet
-```
+[Release tags](https://gitlab.com/blacknet-ninja/blacknet/-/tags)
 
 #### Make the build
 
@@ -40,7 +37,7 @@ To run the built program, use `./gradlew run`
 ## How to contribute
 
 You are welcome to report a theoretical or practical [issue](https://gitlab.com/blacknet-ninja/blacknet/issues),
-or send changes as a [pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests) to the master branch.
+or send changes as a [GitLab pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests) to the master branch.
 
 
 ## License

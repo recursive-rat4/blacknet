@@ -7,6 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm")
 }
@@ -17,10 +19,20 @@ repositories {
 
 dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serialization}")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
     testImplementation("org.jetbrains.kotlin:kotlin-test-testng:${Versions.kotlin}") {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
+    }
+}
+
+val compileKotlin by tasks.existing(KotlinCompile::class) {
+    kotlinOptions {
+        jvmTarget = "1.8"
+        freeCompilerArgs = listOf(
+                "-Xexplicit-api=strict",
+                "-Xjvm-default=all"
+        )
     }
 }
 

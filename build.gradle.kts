@@ -19,7 +19,7 @@ allprojects {
 
 buildscript {
     dependencies {
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.2")
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.4")
     }
 }
 
@@ -49,10 +49,10 @@ dependencies {
         exclude("org.eclipse.jetty.alpn", "alpn-api")
     }
     implementation("io.ktor:ktor-websockets:${Versions.ktor}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:${Versions.coroutines}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.coroutines}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.coroutines}")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serialization}")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
     implementation("org.apache.commons:commons-collections4:4.4")
     implementation("net.i2p.crypto:eddsa:0.3.0")
     implementation("com.rfksystems:blake2b:1.0.0")
@@ -86,7 +86,8 @@ distributions {
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     kotlinOptions {
         jvmTarget = "1.8"
-        freeCompilerArgs += listOf(
+        freeCompilerArgs = listOf(
+                "-Xjvm-default=all",
                 "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
         )
     }

@@ -24,8 +24,8 @@ class AddressTest {
                 Pair("255.255.255.255", false)
         )) {
             val address = Network.parse(string, 0) ?: throw AssertionError("Network.parse failed")
-            assertEquals(address.getAddressString(), string)
-            assertEquals(address.isLocal(), local)
+            assertEquals(string, address.getAddressString())
+            assertEquals(local, address.isLocal())
         }
     }
 

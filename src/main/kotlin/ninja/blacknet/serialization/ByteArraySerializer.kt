@@ -9,32 +9,33 @@
 
 package ninja.blacknet.serialization
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.StructureKind
-import kotlinx.serialization.json.JsonInput
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.rpc.requests.RequestDecoder
+import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 
 /**
  * Serializes a [ByteArray] with a transformation to a hex string in some representations.
  */
 object ByteArraySerializer : KSerializer<ByteArray> {
-    override val descriptor: SerialDescriptor = SerialDescriptor(
-        "ninja.blacknet.serialization.ByteArraySerializer",
-        StructureKind.LIST  // PrimitiveKind.STRING
+    override val descriptor: SerialDescriptor = ListSerialDescriptor(
+            "ninja.blacknet.serialization.ByteArraySerializer",
+            Byte.serializer().descriptor  // PrimitiveKind.STRING
     )
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeByteArray()
             is RequestDecoder,
-            is JsonInput -> Base16.decode(decoder.decodeString())
+            is JsonDecoder -> Base16.decode(decoder.decodeString())
             else -> throw notSupportedFormatError(decoder, this)
         }
     }
@@ -43,7 +44,7 @@ object ByteArraySerializer : KSerializer<ByteArray> {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
-            is JsonOutput -> encoder.encodeString(Base16.encode(value))
+            is JsonEncoder -> encoder.encodeString(Base16.encode(value))
             else -> throw notSupportedFormatError(encoder, this)
         }
     }

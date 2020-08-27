@@ -7,8 +7,6 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package ninja.blacknet.util
 
 import io.ktor.utils.io.bits.*

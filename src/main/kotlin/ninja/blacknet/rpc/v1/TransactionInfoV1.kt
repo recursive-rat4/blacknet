@@ -32,12 +32,12 @@ class TransactionInfoV1(
         val data: String
 ) {
     constructor(tx: Transaction, hash: ByteArray, size: Int) : this(
-            HashSerializer.stringify(hash),
+            HashSerializer.encode(hash),
             size,
-            SignatureSerializer.stringify(tx.signature),
+            SignatureSerializer.encode(tx.signature),
             Address.encode(tx.from),
             tx.seq,
-            HashSerializer.stringify(tx.referenceChain),
+            HashSerializer.encode(tx.referenceChain),
             tx.fee,
             tx.type.toUByte().toInt(),
             data(tx.type, tx.data)

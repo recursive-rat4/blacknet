@@ -26,7 +26,7 @@ class PaymentIdTest {
         val obj = PaymentId.encrypted(id, RegTest.privateKey1, RegTest.publicKey2)
         val decrypted = obj.decrypt(RegTest.privateKey2, RegTest.publicKey1)
 
-        assertEquals(decrypted, id)
+        assertEquals(id, decrypted)
     }
 
     @Test
@@ -35,6 +35,6 @@ class PaymentIdTest {
         val encrypted = "CDCEF8D208A645DB78358859C10F"
         val decrypted = PaymentId.decrypt(RegTest.privateKey2, RegTest.publicKey1, encrypted)
 
-        assertEquals(decrypted, id)
+        assertEquals(id, decrypted)
     }
 }

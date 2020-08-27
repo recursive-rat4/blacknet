@@ -22,7 +22,7 @@ class TxPoolInfo(
 ) {
     companion object {
         suspend fun get(): TxPoolInfo = TxPool.mutex.withLock {
-            val tx = TxPool.mapHashesToListImpl { HashSerializer.stringify(it) }
+            val tx = TxPool.mapHashesToListImpl { HashSerializer.encode(it) }
             return TxPoolInfo(TxPool.sizeImpl(), TxPool.dataSizeImpl(), tx)
         }
     }

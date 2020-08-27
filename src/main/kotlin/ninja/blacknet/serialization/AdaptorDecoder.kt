@@ -9,22 +9,22 @@
 
 package ninja.blacknet.serialization
 
-import kotlinx.serialization.*
-import kotlinx.serialization.builtins.UnitSerializer
-import kotlinx.serialization.modules.EmptyModule
-import kotlinx.serialization.modules.SerialModule
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.UpdateMode
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.Decoder
 
 abstract class AdaptorDecoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Decoder, CompositeDecoder {
     private fun notImplementedError(message: String): Throwable = SerializationError("${this::class} is not implemented for $message")
 
-    override val context: SerialModule = EmptyModule
     override val updateMode: UpdateMode = UpdateMode.BANNED
 
     override fun decodeNotNullMark(): Boolean = throw notImplementedError("NotNullMark")
     override fun decodeNull(): Nothing? = null
-    override fun decodeUnit(): Unit = UnitSerializer().deserialize(this)
 
     override fun decodeBoolean(): Boolean = throw notImplementedError("Boolean")
     override fun decodeByte(): Byte = throw notImplementedError("Byte")
@@ -37,13 +37,12 @@ constructor() : Decoder, CompositeDecoder {
     override fun decodeString(): String = throw notImplementedError("String")
     override fun decodeEnum(enumDescriptor: SerialDescriptor): Int = throw notImplementedError("Enum")
 
-    override fun beginStructure(descriptor: SerialDescriptor, vararg typeParams: KSerializer<*>): CompositeDecoder = this
+    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
 
     override fun decodeSequentially(): Boolean = true
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int = throw notImplementedError("non-sequential mode")
 
-    override fun decodeUnitElement(descriptor: SerialDescriptor, index: Int): Unit = catcher(descriptor, index) { decodeUnit() }
     override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean = catcher(descriptor, index) { decodeBoolean() }
     override fun decodeByteElement(descriptor: SerialDescriptor, index: Int): Byte = catcher(descriptor, index) { decodeByte() }
     override fun decodeShortElement(descriptor: SerialDescriptor, index: Int): Short = catcher(descriptor, index) { decodeShort() }
@@ -57,25 +56,26 @@ constructor() : Decoder, CompositeDecoder {
     override fun <T : Any?> decodeSerializableElement(
             descriptor: SerialDescriptor,
             index: Int,
-            deserializer: DeserializationStrategy<T>
-    ): T = catcher(descriptor, index) { decodeSerializableValue(deserializer) }
+            deserializer: DeserializationStrategy<T>,
+            previousValue: T?
+    ): T {
+        require(previousValue == null) { notImplementedError("update mode") }
+        return catcher(descriptor, index) {
+            decodeSerializableValue(deserializer)
+        }
+    }
+
     override fun <T : Any> decodeNullableSerializableElement(
             descriptor: SerialDescriptor,
             index: Int,
-            deserializer: DeserializationStrategy<T?>
-    ): T? = catcher(descriptor, index) { decodeNullableSerializableValue(deserializer) }
-    override fun <T> updateSerializableElement(
-            descriptor: SerialDescriptor,
-            index: Int,
-            deserializer: DeserializationStrategy<T>,
-            old: T
-    ): T = catcher(descriptor, index) { updateSerializableValue(deserializer, old) }
-    override fun <T : Any> updateNullableSerializableElement(
-            descriptor: SerialDescriptor,
-            index: Int,
             deserializer: DeserializationStrategy<T?>,
-            old: T?
-    ): T? = catcher(descriptor, index) { updateNullableSerializableValue(deserializer, old) }
+            previousValue: T?
+    ): T? {
+        require(previousValue == null) { notImplementedError("update mode") }
+        return catcher(descriptor, index) {
+            decodeNullableSerializableValue(deserializer)
+        }
+    }
 
     inline fun <T> catcher(descriptor: SerialDescriptor, index: Int, implementation: () -> T): T = try {
         implementation()

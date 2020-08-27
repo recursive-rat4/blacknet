@@ -10,7 +10,7 @@
 package ninja.blacknet.db
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.ListSerializer
 import ninja.blacknet.regtest
 import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.Mnemonic
@@ -31,7 +31,7 @@ object Genesis {
             map.put(RegTest.publicKey2, 10101010 * PoS.COIN)
         } else {
             val genesis = Resources.string(Genesis::class.java, "genesis.json", Charsets.UTF_8)
-            val entries = json.parse(GenesisJsonEntry.serializer().list, genesis)
+            val entries = json.decodeFromString(ListSerializer(GenesisJsonEntry.serializer()), genesis)
             entries.forEach { entry ->
                 map.put(entry.publicKey, entry.balance)
             }

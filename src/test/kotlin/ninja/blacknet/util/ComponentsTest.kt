@@ -15,9 +15,9 @@ import kotlin.test.assertEquals
 class ComponentsTest {
     @Test
     fun test() {
-        assertEquals(0x01FF.toShort().toByteArray(), byteArrayOf(1, -1))
-        assertEquals(0x0201FFFE.toByteArray(), byteArrayOf(2, 1, -1, -2))
-        assertEquals(0x04030201FFFEFDFC.toByteArray(), byteArrayOf(4, 3, 2, 1, -1, -2, -3, -4))
+        assertEquals(byteArrayOf(1, -1), 0x01FF.toShort().toByteArray())
+        assertEquals(byteArrayOf(2, 1, -1, -2), 0x0201FFFE.toByteArray())
+        assertEquals(byteArrayOf(4, 3, 2, 1, -1, -2, -3, -4), 0x04030201FFFEFDFC.toByteArray())
 
         assertEquals(0x01FF.toShort(), Short.fromBytes(1, -1))
         assertEquals(0x0201FFFE, Int.fromBytes(2, 1, -1, -2))

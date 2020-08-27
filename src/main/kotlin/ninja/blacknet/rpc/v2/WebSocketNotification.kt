@@ -20,11 +20,11 @@ class WebSocketNotification(
 ) {
     constructor(notification: BlockNotification) : this(
             "block",
-            json.toJson(BlockNotification.serializer(), notification)
+            json.encodeToJsonElement(BlockNotification.serializer(), notification)
     )
 
     constructor(notification: TransactionNotification) : this(
             "transaction",
-            json.toJson(TransactionNotification.serializer(), notification)
+            json.encodeToJsonElement(TransactionNotification.serializer(), notification)
     )
 }

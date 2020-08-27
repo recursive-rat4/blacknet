@@ -12,14 +12,15 @@
 
 package ninja.blacknet.serialization
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveDescriptor
-import kotlinx.serialization.PrimitiveKind
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.json.JsonInput
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
 import kotlin.experimental.and
 import kotlin.experimental.or
 import ninja.blacknet.crypto.HashCoder
@@ -34,7 +35,7 @@ object VarIntSerializer : KSerializer<Int> {
      */
     const val MAX_SIZE_BYTES = 5
 
-    override val descriptor: SerialDescriptor = PrimitiveDescriptor(
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
         "ninja.blacknet.serialization.VarIntSerializer",
         PrimitiveKind.INT
     )
@@ -42,7 +43,7 @@ object VarIntSerializer : KSerializer<Int> {
     override fun deserialize(decoder: Decoder): Int {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeVarInt()
-            is JsonInput, is RequestDecoder -> decoder.decodeInt()
+            is JsonDecoder, is RequestDecoder -> decoder.decodeInt()
             else -> throw notSupportedFormatError(decoder, this)
         }
     }
@@ -50,7 +51,7 @@ object VarIntSerializer : KSerializer<Int> {
     override fun serialize(encoder: Encoder, value: Int) {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeVarInt(value)
-            is HashCoder, is JsonOutput -> encoder.encodeInt(value)
+            is HashCoder, is JsonEncoder -> encoder.encodeInt(value)
             else -> throw notSupportedFormatError(encoder, this)
         }
     }

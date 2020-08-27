@@ -10,17 +10,20 @@
 package ninja.blacknet.serialization
 
 import io.ktor.utils.io.charsets.Charset
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.CompositeDecoder.Companion.READ_DONE
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.StructureKind
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
+import kotlinx.serialization.modules.EmptySerializersModule
+import kotlinx.serialization.modules.SerializersModule
 
 class ConfigDecoderImpl(
         private val reader: ConfigReader
 ) : AdaptorDecoder(), ConfigDecoder {
     constructor(name: String, charset: Charset = Charsets.UTF_8) : this(ConfigReader(name, charset))
+
+    override val serializersModule: SerializersModule = EmptySerializersModule
 
     fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
         sleeper = -1
@@ -87,7 +90,7 @@ class ConfigDecoderImpl(
     private var sleeper: Int = -1
     private lateinit var descriptor: SerialDescriptor
 
-    override fun beginStructure(descriptor: SerialDescriptor, vararg typeParams: KSerializer<*>): CompositeDecoder {
+    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
         return if (descriptor.kind === StructureKind.LIST) {
             require(descriptor.serialName.endsWith("ArrayList")) { "未知列表類型 ${descriptor.serialName}" }
             val name = this.descriptor.getElementName(sleeper)
@@ -107,12 +110,14 @@ class ConfigDecoderImpl(
             if (reader.hasKey(name))
                 return sleeper
         }
-        return READ_DONE
+        return DECODE_DONE
     }
 
     private class ListDecoder(
             private val input: List<String>
     ) : AdaptorDecoder(), ConfigDecoder {
+        override val serializersModule: SerializersModule = EmptySerializersModule
+
         override fun decodeBoolean(): Boolean = input[++position].toBoolean()
         override fun decodeByte(): Byte = input[++position].toByte()
         override fun decodeShort(): Short = input[++position].toShort()
@@ -125,7 +130,7 @@ class ConfigDecoderImpl(
 
         private var position: Int = -1
 
-        override fun beginStructure(descriptor: SerialDescriptor, vararg typeParams: KSerializer<*>): CompositeDecoder {
+        override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
             require(descriptor.kind !== StructureKind.LIST) { "彈射一個遞歸列表" }
             return this
         }

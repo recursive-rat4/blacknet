@@ -28,7 +28,7 @@ class SizeTest {
                 Pair("1iRobot", null)
         )) {
             if (bytes != null)
-                assertEquals(Size.parse(string).bytes, bytes)
+                assertEquals(bytes, Size.parse(string).bytes)
             else
                 assertFails { Size.parse(string) }
         }
@@ -45,7 +45,7 @@ class SizeTest {
                 Triple(1024, "1 KiB", false),
                 Triple(1023, "1023 B", false)
         )) {
-            assertEquals(Size(bytes).hrp(decimal, Locale.CHINESE), hrp)
+            assertEquals(hrp, Size(bytes).hrp(decimal, Locale.CHINESE))
         }
     }
 }

@@ -11,13 +11,13 @@
 
 package ninja.blacknet.rpc.v1
 
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonLiteral
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonPrimitive
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.notSupportedFormatError
@@ -26,7 +26,7 @@ import ninja.blacknet.serialization.notSupportedFormatError
 class WalletV1(val seq: Int, val transactions: ArrayList<JsonElement>) {
     constructor(wallet: WalletDB.Wallet) : this(wallet.seq, ArrayList(wallet.transactions.size)) {
         wallet.transactions.forEach { (hash, txData) ->
-            transactions.add(JsonLiteral(HashSerializer.stringify(hash)))
+            transactions.add(JsonPrimitive(HashSerializer.encode(hash)))
             transactions.add(TransactionDataV1(txData).toJson())
         }
     }
@@ -45,7 +45,7 @@ class TransactionDataV1(
     companion object {
         override fun serialize(encoder: Encoder, value: TransactionDataV1) {
             when (encoder) {
-                is JsonOutput -> {
+                is JsonEncoder -> {
                     @Suppress("NAME_SHADOWING")
                     val encoder = encoder.beginStructure(descriptor)
                     encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), value.type.toUByte().toInt())

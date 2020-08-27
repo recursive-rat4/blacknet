@@ -12,7 +12,7 @@ package ninja.blacknet.rpc.v2
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonLiteral
+import kotlinx.serialization.json.JsonPrimitive
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.HashSerializer
@@ -56,10 +56,10 @@ class BlockInfo(
                 return JsonArray(block.transactions.map { bytes ->
                     val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                     val txHash = Transaction.hash(bytes)
-                    return@map json.toJson(TransactionInfo.serializer(), TransactionInfo(tx, txHash, bytes.size))
+                    return@map json.encodeToJsonElement(TransactionInfo.serializer(), TransactionInfo(tx, txHash, bytes.size))
                 })
             }
-            return JsonLiteral(block.transactions.size)
+            return JsonPrimitive(block.transactions.size)
         }
     }
 }

@@ -125,7 +125,7 @@ object PeerDB {
         Runtime.addShutdownHook {
             commit(true)
         }
-        Runtime.rotate(::oldEntriesRemover)
+        Runtime.rotate(::prober)
     }
 
     private fun listBuiltinPeers(): List<Address> {
@@ -248,9 +248,10 @@ object PeerDB {
         return peers.containsKey(peer)
     }
 
-    private suspend fun oldEntriesRemover() {
+    private suspend fun prober() {
         delay(1 * 60 * 60 * 1000L)
 
+        // Await while node is offline
         if (Node.isOffline())
             return
 
@@ -264,7 +265,7 @@ object PeerDB {
             toRemove.forEach { peers.remove(it) }
             val batch = LevelDB.createWriteBatch()
             commitImpl(peers, batch, false)
-            logger.info("Removed ${toRemove.size} old entries from peer db")
+            logger.info("Probed ${toRemove.size} entries")
         }
     }
 

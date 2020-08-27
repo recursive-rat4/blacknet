@@ -11,37 +11,25 @@ package ninja.blacknet.util
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.serialization.builtins.serializer
-import ninja.blacknet.serialization.json.json
 
 class HashMapTest {
     @Test
     fun int() {
         val map = HashMap<Int, Int>()
-        assertEquals(map.size, 0)
+        assertEquals(0, map.size)
         map.put(4, 16)
-        assertEquals(map.size, 1)
+        assertEquals(1, map.size)
         map.put(4, 16)
-        assertEquals(map.size, 1)
+        assertEquals(1, map.size)
     }
 
     @Test
     fun bytearray() {
         val map = HashMap<ByteArray, ByteArray>()
-        assertEquals(map.size, 0)
+        assertEquals(0, map.size)
         map.put(ByteArray(4), ByteArray(16))
-        assertEquals(map.size, 1)
+        assertEquals(1, map.size)
         map.put(ByteArray(4), ByteArray(16))
-        assertEquals(map.size, 1)
-    }
-
-    @Test
-    fun serializer() {
-        val map = HashMap<Int, Int>()
-        map.put(4, 16)
-        assertEquals(
-                json.stringify(HashMapSerializer(Int.serializer(), Int.serializer()), map),
-                "{\"4\":16}"
-        )
+        assertEquals(1, map.size)
     }
 }

@@ -20,22 +20,22 @@ class BinaryEncoderTest {
     @Test
     fun element() {
         encoder.encodeByte(0)
-        assertEquals(encoder.toBytes(), byteArrayOf(0))
+        assertEquals(byteArrayOf(0), encoder.toBytes())
 
         encoder.encodeShort(0x01FF)
-        assertEquals(encoder.toBytes(), byteArrayOf(1, -1))
+        assertEquals(byteArrayOf(1, -1), encoder.toBytes())
 
         encoder.encodeInt(0x0201FFFE)
-        assertEquals(encoder.toBytes(), byteArrayOf(2, 1, -1, -2))
+        assertEquals(byteArrayOf(2, 1, -1, -2), encoder.toBytes())
 
         encoder.encodeLong(0x04030201FFFEFDFC)
-        assertEquals(encoder.toBytes(), byteArrayOf(4, 3, 2, 1, -1, -2, -3, -4))
+        assertEquals(byteArrayOf(4, 3, 2, 1, -1, -2, -3, -4), encoder.toBytes())
 
         encoder.encodeFixedByteArray(ByteArray(9))
-        assertEquals(encoder.toBytes(), ByteArray(9))
+        assertEquals(ByteArray(9), encoder.toBytes())
 
         encoder.encodeString("八")
-        assertEquals(encoder.toBytes(), byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB))
+        assertEquals(byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB), encoder.toBytes())
     }
 
     @Test
@@ -61,13 +61,16 @@ class BinaryEncoderTest {
 
         Structure.serializer().serialize(encoder, value)
 
-        assertEquals(encoder.toBytes(), byteArrayOfInts(
-                0,
-                1, -1,
-                2, 1, -1, -2,
-                4, 3, 2, 1, -1, -2, -3, -4,
-                // Unit //
-                0x83, 0xE5, 0x85, 0xAB
-        ))
+        assertEquals(
+                byteArrayOfInts(
+                        0,
+                        1, -1,
+                        2, 1, -1, -2,
+                        4, 3, 2, 1, -1, -2, -3, -4,
+                        // Unit //
+                        0x83, 0xE5, 0x85, 0xAB
+                ),
+                encoder.toBytes()
+        )
     }
 }

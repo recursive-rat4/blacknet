@@ -11,25 +11,52 @@ package ninja.blacknet.util
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.serialization.builtins.serializer
+import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.json.json
 
 class LinkedHashMapTest {
     @Test
     fun int() {
         val map = LinkedHashMap<Int, Int>()
-        assertEquals(map.size, 0)
+        assertEquals(0, map.size)
         map.put(4, 16)
-        assertEquals(map.size, 1)
+        assertEquals(1, map.size)
         map.put(4, 16)
-        assertEquals(map.size, 1)
+        assertEquals(1, map.size)
     }
 
     @Test
     fun bytearray() {
         val map = LinkedHashMap<ByteArray, ByteArray>()
-        assertEquals(map.size, 0)
+        assertEquals(0, map.size)
         map.put(ByteArray(4), ByteArray(16))
-        assertEquals(map.size, 1)
+        assertEquals(1, map.size)
         map.put(ByteArray(4), ByteArray(16))
-        assertEquals(map.size, 1)
+        assertEquals(1, map.size)
+    }
+
+    @Test
+    fun serializer() {
+        val binaryEncoded = byteArrayOfInts(
+                132,
+                0, 0, 0, 1, 0, 0, 0, 16,
+                0, 0, 0, 2, 0, 0, 0, 16,
+                0, 0, 0, 3, 0, 0, 0, 16,
+                0, 0, 0, 4, 0, 0, 0, 16,
+        )
+        val jsonEncoded = "{\"1\":16,\"2\":16,\"3\":16,\"4\":16}"
+        val map = LinkedHashMap<Int, Int>().also {
+            it.put(1, 16)
+            it.put(2, 16)
+            it.put(3, 16)
+            it.put(4, 16)
+        }
+        val serializer = LinkedHashMapSerializer(Int.serializer(), Int.serializer())
+        assertEquals(map, BinaryDecoder(binaryEncoded).decode(serializer))
+        assertEquals(binaryEncoded,BinaryEncoder.toBytes(serializer, map))
+        assertEquals(map, json.decodeFromString(serializer, jsonEncoded))
+        assertEquals(jsonEncoded, json.encodeToString(serializer, map))
     }
 }

@@ -17,12 +17,12 @@ import ninja.blacknet.util.byteArrayOfInts
 class BinaryDecoderTest {
     @Test
     fun element() {
-        assertEquals(BinaryDecoder(byteArrayOf(0)).decodeByte(), 0)
-        assertEquals(BinaryDecoder(byteArrayOf(1, -1)).decodeShort(), 0x01FF)
-        assertEquals(BinaryDecoder(byteArrayOf(2, 1, -1, -2)).decodeInt(), 0x0201FFFE)
-        assertEquals(BinaryDecoder(byteArrayOf(4, 3, 2, 1, -1, -2, -3, -4)).decodeLong(), 0x04030201FFFEFDFC)
-        assertEquals(BinaryDecoder(ByteArray(9)).decodeFixedByteArray(9), ByteArray(9))
-        assertEquals(BinaryDecoder(byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB)).decodeString(), "八")
+        assertEquals(0, BinaryDecoder(byteArrayOf(0)).decodeByte())
+        assertEquals(0x01FF, BinaryDecoder(byteArrayOf(1, -1)).decodeShort())
+        assertEquals(0x0201FFFE, BinaryDecoder(byteArrayOf(2, 1, -1, -2)).decodeInt())
+        assertEquals(0x04030201FFFEFDFC, BinaryDecoder(byteArrayOf(4, 3, 2, 1, -1, -2, -3, -4)).decodeLong())
+        assertEquals(ByteArray(9), BinaryDecoder(ByteArray(9)).decodeFixedByteArray(9))
+        assertEquals("八", BinaryDecoder(byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB)).decodeString())
     }
 
     @Test
@@ -38,14 +38,6 @@ class BinaryDecoderTest {
         )
 
         assertEquals(
-                BinaryDecoder(byteArrayOfInts(
-                        0,
-                        1, -1,
-                        2, 1, -1, -2,
-                        4, 3, 2, 1, -1, -2, -3, -4,
-                        // Unit //
-                        0x83, 0xE5, 0x85, 0xAB
-                )).decode(Structure.serializer()),
                 Structure(
                         0,
                         0x01FF,
@@ -53,6 +45,15 @@ class BinaryDecoderTest {
                         0x04030201FFFEFDFC,
                         Unit,
                         "八"
-                ))
+                ),
+                BinaryDecoder(byteArrayOfInts(
+                        0,
+                        1, -1,
+                        2, 1, -1, -2,
+                        4, 3, 2, 1, -1, -2, -3, -4,
+                        // Unit //
+                        0x83, 0xE5, 0x85, 0xAB
+                )).decode(Structure.serializer())
+        )
     }
 }

@@ -9,20 +9,20 @@
 
 package ninja.blacknet.crypto
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.StructureKind
-import kotlinx.serialization.json.JsonInput
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedFormatError
-
+import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 
 /**
  * Serializes a BLAKE2b-256 hash.
@@ -34,16 +34,16 @@ object HashSerializer : KSerializer<ByteArray> {
     const val SIZE_BYTES = 32
     val ZERO = ByteArray(SIZE_BYTES)
 
-    override val descriptor: SerialDescriptor = SerialDescriptor(
-        "ninja.blacknet.crypto.HashSerializer",
-        StructureKind.LIST  // PrimitiveKind.STRING
+    override val descriptor: SerialDescriptor = ListSerialDescriptor(
+            "ninja.blacknet.crypto.HashSerializer",
+            Byte.serializer().descriptor  // PrimitiveKind.STRING
     )
 
-    fun parse(string: String): ByteArray {
+    fun decode(string: String): ByteArray {
         return decodeHex(string, SIZE_BYTES * 2)
     }
 
-    fun stringify(hash: ByteArray): String {
+    fun encode(hash: ByteArray): String {
         return encodeHex(hash, SIZE_BYTES * 2)
     }
 
@@ -51,7 +51,7 @@ object HashSerializer : KSerializer<ByteArray> {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
-            is JsonInput -> parse(decoder.decodeString())
+            is JsonDecoder -> decode(decoder.decodeString())
             else -> throw notSupportedFormatError(decoder, this)
         }
     }
@@ -60,7 +60,7 @@ object HashSerializer : KSerializer<ByteArray> {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
-            is JsonOutput -> encoder.encodeString(stringify(value))
+            is JsonEncoder -> encoder.encodeString(encode(value))
             else -> throw notSupportedFormatError(encoder, this)
         }
     }

@@ -10,15 +10,19 @@
 package ninja.blacknet.rpc.requests
 
 import io.ktor.http.Parameters
-import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.modules.EmptySerializersModule
+import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.AdaptorDecoder
 
 class RequestDecoder(
         private val reader: RequestReader
 ) : AdaptorDecoder() {
     constructor(parameters: Parameters) : this(RequestReader(parameters))
+
+    override val serializersModule: SerializersModule = EmptySerializersModule
 
     fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
         sleeper = -1
@@ -93,7 +97,7 @@ class RequestDecoder(
             if (reader.hasKey(name))
                 return sleeper
         }
-        return CompositeDecoder.READ_DONE
+        return CompositeDecoder.DECODE_DONE
     }
 
     // 打破空值字串

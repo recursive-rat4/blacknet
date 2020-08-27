@@ -12,7 +12,7 @@ package ninja.blacknet.codec.base
 import ninja.blacknet.codec.CodecException
 import ninja.blacknet.codec.StringCodec
 
-object Base16 : StringCodec {
+public object Base16 : StringCodec {
     @Throws(HexCodecException::class)
     override fun decode(string: String): ByteArray {
         val length = string.length
@@ -70,4 +70,4 @@ object Base16 : StringCodec {
     }
 }
 
-class HexCodecException(message: String) : CodecException(message)
+public class HexCodecException(message: String) : CodecException(message)

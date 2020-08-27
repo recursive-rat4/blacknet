@@ -111,7 +111,7 @@ object ChainFetcher {
                 return
             }
 
-            logger.info("Fetching ${HashSerializer.stringify(announce.chain)}")
+            logger.info("Fetching ${HashSerializer.encode(announce.chain)}")
             syncConnection = connection
             originalChain = state.blockHash
 
@@ -235,7 +235,7 @@ object ChainFetcher {
         for (i in answer.blocks) {
             val hash = Block.hash(i)
             if (undoRollback?.contains(hash) == true) {
-                connection.dos("Rollback contains ${HashSerializer.stringify(hash)}")
+                connection.dos("Rollback contains ${HashSerializer.encode(hash)}")
                 return false
             }
             val status = BlockDB.processImpl(hash, i)

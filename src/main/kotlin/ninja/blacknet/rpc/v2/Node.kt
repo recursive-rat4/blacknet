@@ -11,7 +11,8 @@ package ninja.blacknet.rpc.v2
 
 import io.ktor.routing.Route
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.ListSerializer
+import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.HashSerializer
@@ -27,7 +28,7 @@ fun Route.node() {
     @Serializable
     class Peers : Request {
         override suspend fun handle(): TextContent {
-            return respondJson(PeerInfo.serializer().list, PeerInfo.getAll())
+            return respondJson(ListSerializer(PeerInfo.serializer()), PeerInfo.getAll())
         }
     }
 
@@ -61,7 +62,7 @@ fun Route.node() {
             val result = TxPool.get(hash)
             return if (result != null) {
                 if (raw)
-                    return respondText(HashSerializer.stringify(result))
+                    return respondText(Base16.encode(result))
 
                 val tx = BinaryDecoder(result).decode(Transaction.serializer())
                 respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))

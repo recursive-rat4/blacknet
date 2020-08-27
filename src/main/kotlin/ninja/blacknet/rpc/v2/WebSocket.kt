@@ -16,6 +16,10 @@ import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.json.json
@@ -25,18 +29,18 @@ fun Route.webSocket() {
         try {
             while (true) {
                 val string = (incoming.receive() as Frame.Text).readText()
-                val request = json.parseJson(string).jsonObject
-                val command = request.getPrimitive("command").content
+                val request = json.parseToJsonElement(string).jsonObject
+                val command = request.getString("command")
 
                 if (command == "subscribe") {
-                    val route = request.getPrimitive("route").content
+                    val route = request.getString("route")
 
                     if (route == "block") {
                         RPCServer.blockNotify.add(outgoing)
                     } else if (route == "txpool") {
                         RPCServer.txPoolNotify.add(outgoing)
                     } else if (route == "wallet") {
-                        val address = request.getPrimitive("address").content
+                        val address = request.getString("address")
                         val publicKey = Address.decode(address)
 
                         RPCServer.walletNotify.mutex.withLock {
@@ -52,14 +56,14 @@ fun Route.webSocket() {
                         }
                     }
                 } else if (command == "unsubscribe") {
-                    val route = request.getPrimitive("route").content
+                    val route = request.getString("route")
 
                     if (route == "block") {
                         RPCServer.blockNotify.remove(outgoing)
                     } else if (route == "txpool") {
                         RPCServer.txPoolNotify.remove(outgoing)
                     } else if (route == "wallet") {
-                        val address = request.getPrimitive("address").content
+                        val address = request.getString("address")
                         val publicKey = Address.decode(address)
 
                         RPCServer.walletNotify.mutex.withLock {
@@ -83,3 +87,5 @@ fun Route.webSocket() {
         }
     }
 }
+
+private fun JsonObject.getString(key: String) = (get(key) ?: throw RuntimeException("Missing $key")).jsonPrimitive.content

@@ -7,13 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.serialization.descriptor
 
-/**
- * 面子控制
- */
-object Bouncer {
+public fun elementIndexException(index: Int, size: Int): Throwable = IndexOutOfBoundsException("Descriptor element index $index is out of size $size")
 
-}
-
-private class BouncerException(message: String) : RuntimeException(message)
+public fun notImplementedError(): Throwable = NotImplementedError("Serial annotations are not implemented")

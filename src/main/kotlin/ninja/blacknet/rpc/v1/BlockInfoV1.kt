@@ -33,16 +33,16 @@ class BlockInfoV1(
     constructor(block: Block, size: Int, txdetail: Boolean) : this(
             size,
             block.version,
-            HashSerializer.stringify(block.previous),
+            HashSerializer.encode(block.previous),
             block.time,
             Address.encode(block.generator),
-            HashSerializer.stringify(block.contentHash),
-            SignatureSerializer.stringify(block.signature),
+            HashSerializer.encode(block.contentHash),
+            SignatureSerializer.encode(block.signature),
             block.transactions.map {
                 if (txdetail)
                     Json.stringify(TransactionInfoV1.serializer(), TransactionInfoV1.fromBytes(it))
                 else
-                    HashSerializer.stringify(Transaction.hash(it))
+                    HashSerializer.encode(Transaction.hash(it))
             }
     )
 

@@ -26,11 +26,11 @@ class BlockNotificationV1(
         val txns: Int
 ) {
     constructor(block: Block, hash: ByteArray, height: Int, size: Int) : this(
-            HashSerializer.stringify(hash),
+            HashSerializer.encode(hash),
             height,
             size,
             block.version,
-            HashSerializer.stringify(block.previous),
+            HashSerializer.encode(block.previous),
             block.time,
             Address.encode(block.generator),
             block.transactions.size

@@ -12,16 +12,17 @@
 
 package ninja.blacknet.serialization
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveDescriptor
-import kotlinx.serialization.PrimitiveKind
-import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerialFormat
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonInput
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
 import kotlin.experimental.and
 import kotlin.experimental.or
 import ninja.blacknet.crypto.HashCoder
@@ -36,7 +37,7 @@ object VarLongSerializer : KSerializer<Long> {
      */
     const val MAX_SIZE_BYTES = 10
 
-    fun descriptor(format: SerialFormat): SerialDescriptor = PrimitiveDescriptor(
+    fun descriptor(format: SerialFormat): SerialDescriptor = PrimitiveSerialDescriptor(
         "ninja.blacknet.serialization.VarLongSerializer",
         if (format !is Json)
             PrimitiveKind.LONG
@@ -44,7 +45,7 @@ object VarLongSerializer : KSerializer<Long> {
             PrimitiveKind.STRING
     )
 
-    override val descriptor: SerialDescriptor = PrimitiveDescriptor(
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
         "ninja.blacknet.serialization.VarLongSerializer",
         PrimitiveKind.LONG  // PrimitiveKind.STRING
     )
@@ -52,7 +53,7 @@ object VarLongSerializer : KSerializer<Long> {
     override fun deserialize(decoder: Decoder): Long {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeVarLong()
-            is JsonInput -> decoder.decodeString().toLong()
+            is JsonDecoder -> decoder.decodeString().toLong()
             is RequestDecoder -> decoder.decodeLong()
             else -> throw notSupportedFormatError(decoder, this)
         }
@@ -62,7 +63,7 @@ object VarLongSerializer : KSerializer<Long> {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeVarLong(value)
             is HashCoder -> encoder.encodeLong(value)
-            is JsonOutput -> encoder.encodeString(value.toString())
+            is JsonEncoder -> encoder.encodeString(value.toString())
             else -> throw notSupportedFormatError(encoder, this)
         }
     }

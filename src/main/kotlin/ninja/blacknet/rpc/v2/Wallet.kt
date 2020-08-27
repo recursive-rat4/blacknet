@@ -15,7 +15,7 @@ import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
@@ -106,7 +106,7 @@ fun Route.wallet() {
         override suspend fun handle(): TextContent {
             val signature = Message.sign(privateKey, message)
 
-            return respondText(SignatureSerializer.stringify(signature))
+            return respondText(SignatureSerializer.encode(signature))
         }
     }
 
@@ -140,7 +140,7 @@ fun Route.wallet() {
             val wallet = WalletDB.getWalletImpl(publicKey)
             val transactions = HashMap<String, TransactionDataInfo>(expectedSize = wallet.transactions.size)
             wallet.transactions.forEach { (hash, txData) ->
-                transactions.put(HashSerializer.stringify(hash), TransactionDataInfo(txData))
+                transactions.put(HashSerializer.encode(hash), TransactionDataInfo(txData))
             }
 
             return respondJson(HashMapSerializer(String.serializer(), TransactionDataInfo.serializer()), transactions)
@@ -160,7 +160,7 @@ fun Route.wallet() {
         override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
             val wallet = WalletDB.getWalletImpl(publicKey)
 
-            return respondJson(AccountState.Lease.serializer().list, wallet.outLeases)
+            return respondJson(ListSerializer(AccountState.Lease.serializer()), wallet.outLeases)
         }
     }
 
@@ -242,7 +242,7 @@ fun Route.wallet() {
     ) : Request {
         override suspend fun handle(): TextContent {
             val result = WalletDB.referenceChain()
-            return respondText(HashSerializer.stringify(result))
+            return respondText(HashSerializer.encode(result))
         }
     }
 
@@ -323,7 +323,7 @@ fun Route.wallet() {
                             break
                     }
                 }
-                return respondJson(WalletTransactionInfo.serializer().list, transactions)
+                return respondJson(ListSerializer(WalletTransactionInfo.serializer()), transactions)
             }
         }
     }

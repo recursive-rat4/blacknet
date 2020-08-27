@@ -41,7 +41,7 @@ class PeerInfoV1(
             val fork: Boolean
     ) {
         constructor(chain: ChainAnnounce, fork: Boolean) : this(
-                HashSerializer.stringify(chain.chain),
+                HashSerializer.encode(chain.chain),
                 chain.cumulativeDifficulty.toString(),
                 fork
         )

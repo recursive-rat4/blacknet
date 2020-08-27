@@ -223,7 +223,7 @@ object LedgerDB {
                                 logger.info("Processed $n blocks")
                             pruneImpl()
                         } else if (status !is AlreadyHave) {
-                            logger.info("$status block ${HashSerializer.stringify(hash)}")
+                            logger.info("$status block ${HashSerializer.encode(hash)}")
                             break
                         }
                     }
@@ -352,8 +352,8 @@ object LedgerDB {
     internal suspend fun processBlockImpl(txDb: Update, hash: ByteArray, block: Block, size: Int): Pair<Status, List<ByteArray>> {
         val state = state
         if (!block.previous.contentEquals(state.blockHash)) {
-            logger.error("${HashSerializer.stringify(hash)} not on current chain ${HashSerializer.stringify(state.blockHash)} previous ${HashSerializer.stringify(block.previous)}")
-            return Pair(NotOnThisChain(HashSerializer.stringify(block.previous)), emptyList())
+            logger.error("${HashSerializer.encode(hash)} not on current chain ${HashSerializer.encode(state.blockHash)} previous ${HashSerializer.encode(block.previous)}")
+            return Pair(NotOnThisChain(HashSerializer.encode(block.previous)), emptyList())
         }
         if (size > state.maxBlockSize) {
             return Pair(Invalid("Too large block $size bytes, maximum ${state.maxBlockSize}"), emptyList())
@@ -487,7 +487,7 @@ object LedgerDB {
         list.asReversed().forEach { hash ->
             val block = BlockDB.blockImpl(hash)
             if (block == null) {
-                logger.error("${HashSerializer.stringify(hash)} not found")
+                logger.error("${HashSerializer.encode(hash)} not found")
                 return toRemove
             }
 
@@ -496,7 +496,7 @@ object LedgerDB {
             val (status, _) = processBlockImpl(txDb, hash, block.first, block.second)
             if (status != Accepted) {
                 batch.close()
-                logger.error("$status block ${HashSerializer.stringify(hash)}")
+                logger.error("$status block ${HashSerializer.encode(hash)}")
                 return toRemove
             }
             txDb.commitImpl()

@@ -217,7 +217,7 @@ object TxPool : MemPool(), Ledger {
             transactions.add(hash)
             WalletDB.processTransaction(hash, tx, bytes, time)
             RPCServer.txPoolNotify(tx, hash, time, bytes.size)
-            logger.debug { "Accepted ${HashSerializer.stringify(hash)}" }
+            logger.debug { "Accepted ${HashSerializer.encode(hash)}" }
         }
         undoImpl(status)
         return Pair(status, tx.fee)
@@ -227,7 +227,7 @@ object TxPool : MemPool(), Ledger {
         if (rejects.contains(hash))
             return Pair(Invalid("Already rejected tx"), 0)
         if (containsImpl(hash))
-            return Pair(AlreadyHave(HashSerializer.stringify(hash)), 0)
+            return Pair(AlreadyHave(HashSerializer.encode(hash)), 0)
         if (TxPool.dataSizeImpl() + bytes.size > Config.instance.txpoolsize.bytes) {
             if (remote)
                 return Pair(InFuture("TxPool is full"), 0)

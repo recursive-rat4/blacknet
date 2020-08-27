@@ -26,7 +26,7 @@ class PeerDBInfo(
                 if (!stats) {
                     JsonPrimitive(address.toString())
                 } else {
-                    json.toJson(PeerDB.Entry.Info.serializer(), PeerDB.Entry.Info(entry, address))
+                    json.encodeToJsonElement(PeerDB.Entry.Info.serializer(), PeerDB.Entry.Info(entry, address))
                 }
             }
             return PeerDBInfo(peers.size, JsonArray(peers))

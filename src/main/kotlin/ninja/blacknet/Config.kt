@@ -49,8 +49,6 @@ class Config(
 
         @SerialName("wallet.seqthreshold")
         val wallet_seqthreshold: Int = Int.MAX_VALUE - 1,
-
-        val unit: Unit? = kotlin.Unit /* XXX 1.4 */
 ) {
     companion object {
         val instance = ConfigDecoderImpl("blacknet.conf").decode(serializer()).also {

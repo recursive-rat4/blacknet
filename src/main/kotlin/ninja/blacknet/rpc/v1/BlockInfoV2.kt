@@ -14,7 +14,7 @@ package ninja.blacknet.rpc.v1
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonLiteral
+import kotlinx.serialization.json.JsonPrimitive
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
@@ -35,14 +35,14 @@ class BlockInfoV2(
         val transactions: JsonElement
 ) {
     constructor(block: Block, hash: ByteArray, size: Int, txdetail: Boolean) : this(
-            HashSerializer.stringify(hash),
+            HashSerializer.encode(hash),
             size,
             block.version,
-            HashSerializer.stringify(block.previous),
+            HashSerializer.encode(block.previous),
             block.time,
             Address.encode(block.generator),
-            HashSerializer.stringify(block.contentHash),
-            SignatureSerializer.stringify(block.signature),
+            HashSerializer.encode(block.contentHash),
+            SignatureSerializer.encode(block.signature),
             transactions(block, txdetail)
     )
 
@@ -58,7 +58,7 @@ class BlockInfoV2(
                     return@map TransactionInfoV2(tx, txHash, bytes.size).toJson()
                 })
             }
-            return JsonLiteral(block.transactions.size)
+            return JsonPrimitive(block.transactions.size)
         }
     }
 }

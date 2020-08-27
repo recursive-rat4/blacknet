@@ -8,10 +8,10 @@
  */
 
 object Versions {
-    const val kotlin = "1.3.72"
-    const val coroutines = "1.3.8"
-    const val serialization = "0.20.0"
-    const val ktor = "1.3.2"
+    const val kotlin = "1.4.10"
+    const val coroutines = "1.3.9"
+    const val serialization = "1.0.0-RC"
+    const val ktor = "1.4.0"
     const val weupnp = "0.1.4"
     const val bouncycastle = "1.66"
     const val leveldbjni = "1.18.3"

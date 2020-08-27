@@ -30,13 +30,13 @@ class TransactionNotification(
         val data: List<TransactionInfo.DataInfo>
 ) {
     constructor(tx: Transaction, hash: ByteArray, time: Long, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
-            HashSerializer.stringify(hash),
+            HashSerializer.encode(hash),
             time,
             size,
-            SignatureSerializer.stringify(tx.signature),
+            SignatureSerializer.encode(tx.signature),
             Address.encode(tx.from),
             tx.seq,
-            HashSerializer.stringify(tx.referenceChain),
+            HashSerializer.encode(tx.referenceChain),
             tx.fee.toString(),
             tx.type.toUByte().toInt(),
             TransactionInfo.data(tx.type, tx.data, filter)

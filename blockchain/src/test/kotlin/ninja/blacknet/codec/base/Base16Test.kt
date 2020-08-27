@@ -19,10 +19,10 @@ import ninja.blacknet.codec.base.Base16.decode
 class Base16Test {
     @Test
     fun decode() {
-        assertEquals(decode("01020A0B"), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
-        assertEquals(decode("01020a0b"), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
-        assertEquals(decode("01020A0b"), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
-        assertEquals(decode("01020a0B"), byteArrayOf(0x01, 0x02, 0x0A, 0x0B))
+        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), decode("01020A0B"))
+        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), decode("01020a0b"))
+        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), decode("01020A0b"))
+        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), decode("01020a0B"))
 
         assertFailsWith(HexCodecException::class) { decode("0") }
         assertFailsWith(HexCodecException::class) { decode("0Z") }

@@ -13,12 +13,12 @@ import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.JsonOutput
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonEncoder
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
@@ -130,7 +130,7 @@ object WalletDB {
                         inv.add(Pair(hash, fee))
                     }
                     else -> {
-                        logger.debug { "$status ${HashSerializer.stringify(hash)}" }
+                        logger.debug { "$status ${HashSerializer.encode(hash)}" }
                     }
                 }
             }
@@ -371,7 +371,7 @@ object WalletDB {
                     if (tx.seq == wallet.seq)
                         wallet.seq += 1
                     else
-                        logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} ${HashSerializer.stringify(hash)}")
+                        logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} ${HashSerializer.encode(hash)}")
                 }
                 if (tx.type != TxType.MultiData.type) {
                     if (processTransactionDataImpl(publicKey, wallet, hash, 0, tx.type, tx.data, height, from))
@@ -443,7 +443,7 @@ object WalletDB {
                         encoder.encodeByte(value.type)
                         encoder.encodeByte(value.dataIndex)
                     }
-                    is JsonOutput -> {
+                    is JsonEncoder -> {
                         @Suppress("NAME_SHADOWING")
                         val encoder = encoder.beginStructure(descriptor)
                         encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), value.type.toUByte().toInt())

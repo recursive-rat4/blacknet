@@ -12,7 +12,7 @@ package ninja.blacknet.codec
 /**
  * String codec encodes bytes to a string and decodes a string to bytes.
  */
-interface StringCodec {
+public interface StringCodec {
     /**
      * Returns a byte array representation of a string.
      * @param string the [String] to be decoded
@@ -20,7 +20,7 @@ interface StringCodec {
      * @throws CodecException
      */
     @Throws(CodecException::class)
-    fun decode(string: String): ByteArray
+    public fun decode(string: String): ByteArray
 
     /**
      * Returns a string representation of a byte array.
@@ -29,5 +29,5 @@ interface StringCodec {
      * @throws CodecException
      */
     @Throws(CodecException::class)
-    fun encode(bytes: ByteArray): String
+    public fun encode(bytes: ByteArray): String
 }

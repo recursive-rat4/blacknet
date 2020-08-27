@@ -98,7 +98,7 @@ object BlockDB {
             return Invalid("Invalid signature")
         }
         if (!block.previous.contentEquals(state.blockHash)) {
-            return NotOnThisChain(HashSerializer.stringify(block.previous))
+            return NotOnThisChain(HashSerializer.encode(block.previous))
         }
         val batch = LevelDB.createWriteBatch()
         val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
@@ -122,7 +122,7 @@ object BlockDB {
         if (rejects.contains(hash))
             return Invalid("Already rejected block")
         if (containsImpl(hash))
-            return AlreadyHave(HashSerializer.stringify(hash))
+            return AlreadyHave(HashSerializer.encode(hash))
         val status = processBlockImpl(hash, bytes)
         if (status is Invalid)
             rejects.add(hash)

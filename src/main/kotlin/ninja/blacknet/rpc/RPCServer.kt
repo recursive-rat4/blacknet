@@ -61,7 +61,7 @@ object RPCServer {
         blockNotifyV0.forEach {
             Runtime.launch {
                 try {
-                    it.send(Frame.Text(HashSerializer.stringify(hash)))
+                    it.send(Frame.Text(HashSerializer.encode(hash)))
                 } finally {
                 }
             }
@@ -70,7 +70,7 @@ object RPCServer {
         blockNotifyV1.mutex.withLock {
             if (blockNotifyV1.list.isNotEmpty()) {
                 val notification = BlockNotificationV1(block, hash, height, size)
-                val message = json.stringify(BlockNotificationV1.serializer(), notification)
+                val message = json.encodeToString(BlockNotificationV1.serializer(), notification)
                 blockNotifyV1.list.forEach {
                     Runtime.launch {
                         try {
@@ -85,7 +85,7 @@ object RPCServer {
         blockNotify.mutex.withLock {
             if (blockNotify.set.isNotEmpty()) {
                 val notification = WebSocketNotification(BlockNotification(block, hash, height, size))
-                val message = json.stringify(WebSocketNotification.serializer(), notification)
+                val message = json.encodeToString(WebSocketNotification.serializer(), notification)
                 blockNotify.set.forEach {
                     Runtime.launch {
                         try {
@@ -102,7 +102,7 @@ object RPCServer {
         txPoolNotify.mutex.withLock {
             if (txPoolNotify.set.isNotEmpty()) {
                 val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
-                val message = json.stringify(WebSocketNotification.serializer(), notification)
+                val message = json.encodeToString(WebSocketNotification.serializer(), notification)
                 txPoolNotify.set.forEach {
                     Runtime.launch {
                         try {
@@ -119,7 +119,7 @@ object RPCServer {
         walletNotifyV1.mutex.withLock {
             if (walletNotifyV1.map.isNotEmpty()) {
                 val notification = TransactionNotificationV2(tx, hash, time, size)
-                val message = json.stringify(TransactionNotificationV2.serializer(), notification)
+                val message = json.encodeToString(TransactionNotificationV2.serializer(), notification)
                 walletNotifyV1.map.forEach {
                     if (it.value.contains(publicKey)) {
                         Runtime.launch {
@@ -138,7 +138,7 @@ object RPCServer {
             if (subscribers != null) {
                 if (subscribers.isNotEmpty()) {
                     val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size, filter))
-                    val message = json.stringify(WebSocketNotification.serializer(), notification)
+                    val message = json.encodeToString(WebSocketNotification.serializer(), notification)
                     subscribers.forEach {
                         Runtime.launch {
                             try {

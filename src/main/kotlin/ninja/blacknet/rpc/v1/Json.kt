@@ -21,9 +21,9 @@ import ninja.blacknet.serialization.json.json
 object Json {
     private val instance = json
 
-    fun <T> stringify(serializer: SerializationStrategy<T>, value: T): String = instance.stringify(serializer, value)
-    fun <T : Any?> toJson(serializer: SerializationStrategy<T>, value: T): JsonElement = instance.toJson(serializer, value)
-    fun <T> parse(deserializer: DeserializationStrategy<T>, string: String): T = instance.parse(deserializer, string)
-    fun parseJson(string: String): JsonElement = instance.parseJson(string)
-    fun <T> fromJson(deserializer: DeserializationStrategy<T>, json: JsonElement): T = instance.fromJson(deserializer, json)
+    fun <T> stringify(serializer: SerializationStrategy<T>, value: T): String = instance.encodeToString(serializer, value)
+    fun <T : Any?> toJson(serializer: SerializationStrategy<T>, value: T): JsonElement = instance.encodeToJsonElement(serializer, value)
+    fun <T> parse(deserializer: DeserializationStrategy<T>, string: String): T = instance.decodeFromString(deserializer, string)
+    fun parseJson(string: String): JsonElement = instance.parseToJsonElement(string)
+    fun <T> fromJson(deserializer: DeserializationStrategy<T>, json: JsonElement): T = instance.decodeFromJsonElement(deserializer, json)
 }

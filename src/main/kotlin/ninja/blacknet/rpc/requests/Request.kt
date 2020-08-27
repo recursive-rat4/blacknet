@@ -48,7 +48,7 @@ fun respondError(message: String)
  * @param value the object serializable to JSON
  */
 fun <T> respondJson(serializer: SerializationStrategy<T>, value: T)
-        = TextContent(json.stringify(serializer, value), ContentType.Application.Json, HttpStatusCode.OK)
+        = TextContent(json.encodeToString(serializer, value), ContentType.Application.Json, HttpStatusCode.OK)
 
 interface Request {
     /**
