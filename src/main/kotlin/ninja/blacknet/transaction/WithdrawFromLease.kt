@@ -14,9 +14,6 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKeySerializer
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.LongSerializer
 
 /**

@@ -13,9 +13,6 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
 
 /**
  * 償還合約

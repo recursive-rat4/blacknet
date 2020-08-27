@@ -17,9 +17,6 @@ import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.LongSerializer
 
 /**

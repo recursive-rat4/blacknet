@@ -9,15 +9,12 @@
 
 package ninja.blacknet.transaction
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
-import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.sumByLong

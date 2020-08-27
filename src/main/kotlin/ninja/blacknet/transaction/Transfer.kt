@@ -11,14 +11,10 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PublicKeySerializer
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.LongSerializer
 
 @Serializable

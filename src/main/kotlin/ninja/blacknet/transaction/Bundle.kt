@@ -15,10 +15,7 @@ import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Status
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
-import ninja.blacknet.serialization.Json
 
 /**
  * 黑網區塊鏈應用程序交易包

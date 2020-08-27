@@ -9,7 +9,6 @@
 
 package ninja.blacknet.transaction
 
-import kotlinx.serialization.json.JsonElement
 import ninja.blacknet.core.*
 
 interface TxData {
