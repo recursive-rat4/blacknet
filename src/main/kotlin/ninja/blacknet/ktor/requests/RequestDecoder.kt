@@ -9,6 +9,7 @@
 
 package ninja.blacknet.ktor.requests
 
+import io.ktor.http.Parameters
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialDescriptor
@@ -17,6 +18,8 @@ import ninja.blacknet.serialization.AdaptorDecoder
 class RequestDecoder(
         private val reader: RequestReader
 ) : AdaptorDecoder() {
+    constructor(parameters: Parameters) : this(RequestReader(parameters))
+
     fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
         sleeper = -1
         descriptor = strategy.descriptor

@@ -80,11 +80,11 @@ private fun <T : Request> Route.handle(
         serializer: DeserializationStrategy<T>
 ) {
     intercept(ApplicationCallPipeline.Features) {
-        call.attributes.put(requestKey, RequestDecoder(RequestReader(when (method) {
+        call.attributes.put(requestKey, RequestDecoder(when (method) {
             HttpMethod.Get -> call.parameters
             HttpMethod.Post -> call.receiveParameters()
             else -> throw Error("超文本傳輸協議請求方法 ${method.value} 的支持尚未實現")
-        })).decode(serializer))
+        }).decode(serializer))
     }
     handle {
         @Suppress("UNCHECKED_CAST")
