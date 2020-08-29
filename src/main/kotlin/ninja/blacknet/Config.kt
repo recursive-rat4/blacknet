@@ -14,8 +14,6 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.serialization.ConfigDecoderImpl
-import ninja.blacknet.serialization.ConfigReader
-import java.io.File
 
 @Serializable
 class Config(
@@ -59,9 +57,10 @@ class Config(
         val unit: Unit? = kotlin.Unit /* XXX 1.4 */
 ) {
     companion object {
-        val instance = ConfigDecoderImpl(ConfigReader(File(configDir, "blacknet.conf"))).decode(serializer()).also {
+        val instance = ConfigDecoderImpl("blacknet.conf").decode(serializer()).also {
             if (it.dbcache.bytes < 1024 * 1024) throw ConfigError("dbcache ${it.dbcache.hrp(false)} is unrealistically low")
             if (it.txpoolsize.bytes < 1024 * 1024) throw ConfigError("txpoolsize ${it.txpoolsize.hrp(false)} is unrealistically low")
+            if (it.apiserver_jsonindented) System.setProperty("ninja.blacknet.serialization.json.indented", "true")
         }
     }
 }

@@ -7,6 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+@file:Suppress("DEPRECATION")
+
 package ninja.blacknet.api.v1
 
 import kotlinx.serialization.Encoder
@@ -18,7 +20,6 @@ import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.serialization.Json
 import ninja.blacknet.serialization.notSupportedCoderError
 
 @Serializable

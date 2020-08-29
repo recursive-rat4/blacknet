@@ -17,12 +17,23 @@ repositories {
 
 dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serialization}")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-testng:${Versions.kotlin}") {
+        exclude("aopalliance", "aopalliance")
+        exclude("junit", "junit")
+    }
 }
 
 val jar by tasks.existing(Jar::class) {
     manifest {
         attributes(
-            "Implementation-Version" to project.version.toString()
+                "Implementation-Title" to project.name.toString(),
+                "Implementation-Vendor" to "Blacknet Team",
+                "Implementation-Version" to project.version.toString()
         )
     }
+}
+
+val test by tasks.existing(Test::class) {
+    useTestNG()
 }

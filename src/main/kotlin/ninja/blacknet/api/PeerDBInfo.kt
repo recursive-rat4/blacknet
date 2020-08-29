@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import ninja.blacknet.db.PeerDB
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.json.json
 
 @Serializable
 class PeerDBInfo(
@@ -26,7 +26,7 @@ class PeerDBInfo(
                 if (!stats) {
                     JsonPrimitive(address.toString())
                 } else {
-                    Json.toJson(PeerDB.Entry.Info.serializer(), PeerDB.Entry.Info(entry, address))
+                    json.toJson(PeerDB.Entry.Info.serializer(), PeerDB.Entry.Info(entry, address))
                 }
             }
             return PeerDBInfo(peers.size, JsonArray(peers))

@@ -8,6 +8,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+@file:Suppress("DEPRECATION")
+
 package ninja.blacknet.api.v1
 
 import io.ktor.application.call
@@ -35,7 +37,6 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.Json
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 import java.io.File

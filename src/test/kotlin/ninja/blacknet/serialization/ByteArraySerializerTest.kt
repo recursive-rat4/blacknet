@@ -16,6 +16,7 @@ import kotlin.test.assertTrue
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.ktor.requests.RequestDecoder
+import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.plus
 
 class ByteArraySerializerTest {
@@ -41,13 +42,13 @@ class ByteArraySerializerTest {
 
     @Test
     fun jsonDecoder() {
-        assertEquals(Json.parse(ByteArraySerializer, jsonEncoded), byteArray)
+        assertEquals(json.parse(ByteArraySerializer, jsonEncoded), byteArray)
     }
 
     @Test
     fun jsonEncoder() {
         assertTrue(
-            Json.stringify(ByteArraySerializer, byteArray)
+            json.stringify(ByteArraySerializer, byteArray)
             .compareTo(jsonEncoded, ignoreCase = true) == 0
         )
     }

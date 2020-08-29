@@ -19,7 +19,7 @@ import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.json.json
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.transaction.MultiData
 import ninja.blacknet.transaction.TxData
@@ -67,7 +67,7 @@ class TransactionInfo(
                 @Suppress("UNCHECKED_CAST")
                 val serializer = TxType.getSerializer(type) as KSerializer<TxData>
                 val data = BinaryDecoder(bytes).decode(serializer)
-                listOf(DataInfo(type.toUByte().toInt(), 0, Json.toJson(serializer, data)))
+                listOf(DataInfo(type.toUByte().toInt(), 0, json.toJson(serializer, data)))
             } else {
                 val multiData = BinaryDecoder(bytes).decode(MultiData.serializer())
                 val list = ArrayList<DataInfo>(multiData.multiData.size)
@@ -77,7 +77,7 @@ class TransactionInfo(
                         @Suppress("UNCHECKED_CAST")
                         val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
                         val data = BinaryDecoder(dataBytes).decode(serializer)
-                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, Json.toJson(serializer, data)))
+                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, json.toJson(serializer, data)))
                     }
                 } else {
                     for (i in 0 until filter.size) {
@@ -86,7 +86,7 @@ class TransactionInfo(
                         @Suppress("UNCHECKED_CAST")
                         val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
                         val data = BinaryDecoder(dataBytes).decode(serializer)
-                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, Json.toJson(serializer, data)))
+                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, json.toJson(serializer, data)))
                     }
                 }
                 list

@@ -9,6 +9,7 @@
 
 package ninja.blacknet.serialization
 
+import io.ktor.utils.io.charsets.Charset
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.CompositeDecoder.Companion.READ_DONE
 import kotlinx.serialization.DeserializationStrategy
@@ -19,6 +20,8 @@ import kotlinx.serialization.StructureKind
 class ConfigDecoderImpl(
         private val reader: ConfigReader
 ) : AdaptorDecoder(), ConfigDecoder {
+    constructor(name: String, charset: Charset = Charsets.UTF_8) : this(ConfigReader(name, charset))
+
     fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
         sleeper = -1
         descriptor = strategy.descriptor

@@ -41,7 +41,7 @@ import ninja.blacknet.ktor.requests.Requests
 import ninja.blacknet.logging.debug
 import ninja.blacknet.logging.debugMessage
 import ninja.blacknet.logging.error
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.json.json
 import ninja.blacknet.serialization.statusMessage
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
@@ -72,7 +72,7 @@ object APIServer {
         blockNotifyV1.mutex.withLock {
             if (blockNotifyV1.list.isNotEmpty()) {
                 val notification = BlockNotificationV1(block, hash, height, size)
-                val message = Json.stringify(BlockNotificationV1.serializer(), notification)
+                val message = json.stringify(BlockNotificationV1.serializer(), notification)
                 blockNotifyV1.list.forEach {
                     Runtime.launch {
                         try {
@@ -87,7 +87,7 @@ object APIServer {
         blockNotify.mutex.withLock {
             if (blockNotify.set.isNotEmpty()) {
                 val notification = WebSocketNotification(BlockNotification(block, hash, height, size))
-                val message = Json.stringify(WebSocketNotification.serializer(), notification)
+                val message = json.stringify(WebSocketNotification.serializer(), notification)
                 blockNotify.set.forEach {
                     Runtime.launch {
                         try {
@@ -104,7 +104,7 @@ object APIServer {
         txPoolNotify.mutex.withLock {
             if (txPoolNotify.set.isNotEmpty()) {
                 val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
-                val message = Json.stringify(WebSocketNotification.serializer(), notification)
+                val message = json.stringify(WebSocketNotification.serializer(), notification)
                 txPoolNotify.set.forEach {
                     Runtime.launch {
                         try {
@@ -121,7 +121,7 @@ object APIServer {
         walletNotifyV1.mutex.withLock {
             if (walletNotifyV1.map.isNotEmpty()) {
                 val notification = TransactionNotificationV2(tx, hash, time, size)
-                val message = Json.stringify(TransactionNotificationV2.serializer(), notification)
+                val message = json.stringify(TransactionNotificationV2.serializer(), notification)
                 walletNotifyV1.map.forEach {
                     if (it.value.contains(publicKey)) {
                         Runtime.launch {
@@ -140,7 +140,7 @@ object APIServer {
             if (subscribers != null) {
                 if (subscribers.isNotEmpty()) {
                     val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size, filter))
-                    val message = Json.stringify(WebSocketNotification.serializer(), notification)
+                    val message = json.stringify(WebSocketNotification.serializer(), notification)
                     subscribers.forEach {
                         Runtime.launch {
                             try {

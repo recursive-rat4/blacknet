@@ -7,25 +7,19 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization
+package ninja.blacknet.api.v1
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonElement
-import ninja.blacknet.Config
+import ninja.blacknet.serialization.json.json
 
 /**
  * Instance of JSON serialization.
  */
+@Deprecated("")
 object Json {
-    private val instance = Json(
-            JsonConfiguration(
-                    prettyPrint = Config.instance.apiserver_jsonindented,
-                    indent = "    "
-            )
-    )
+    private val instance = json
 
     fun <T> stringify(serializer: SerializationStrategy<T>, value: T): String = instance.stringify(serializer, value)
     fun <T : Any?> toJson(serializer: SerializationStrategy<T>, value: T): JsonElement = instance.toJson(serializer, value)

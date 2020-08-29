@@ -21,7 +21,7 @@ import io.ktor.routing.route
 import io.ktor.util.AttributeKey
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.json.json
 
 typealias TextContent = io.ktor.http.content.TextContent
 
@@ -48,7 +48,7 @@ fun respondError(message: String)
  * @param value the object serializable to JSON
  */
 fun <T> respondJson(serializer: SerializationStrategy<T>, value: T)
-        = TextContent(Json.stringify(serializer, value), ContentType.Application.Json, HttpStatusCode.OK)
+        = TextContent(json.stringify(serializer, value), ContentType.Application.Json, HttpStatusCode.OK)
 
 interface Request {
     /**

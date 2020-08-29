@@ -117,7 +117,9 @@ val jar by tasks.existing(Jar::class) {
             attributes("Build-Revision" to revision)
         }
         attributes(
-            "Implementation-Version" to project.version.toString()
+                "Implementation-Title" to project.name.toString(),
+                "Implementation-Vendor" to "Blacknet Team",
+                "Implementation-Version" to project.version.toString()
         )
     }
 }

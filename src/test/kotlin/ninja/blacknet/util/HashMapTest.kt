@@ -12,7 +12,7 @@ package ninja.blacknet.util
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.builtins.serializer
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.json.json
 
 class HashMapTest {
     @Test
@@ -40,7 +40,7 @@ class HashMapTest {
         val map = HashMap<Int, Int>()
         map.put(4, 16)
         assertEquals(
-                Json.stringify(HashMapSerializer(Int.serializer(), Int.serializer()), map),
+                json.stringify(HashMapSerializer(Int.serializer(), Int.serializer()), map),
                 "{\"4\":16}"
         )
     }

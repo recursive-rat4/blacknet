@@ -17,14 +17,14 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.serialization.Json
+import ninja.blacknet.serialization.json.json
 
 fun Route.webSocket() {
     webSocket("/api/v2/websocket") {
         try {
             while (true) {
                 val string = (incoming.receive() as Frame.Text).readText()
-                val request = Json.parseJson(string).jsonObject
+                val request = json.parseJson(string).jsonObject
                 val command = request.getPrimitive("command").content
 
                 if (command == "subscribe") {
