@@ -84,22 +84,22 @@ object Main {
         Node
         Staker
 
-        /* Launch Blacknet API web-server using Ktor.
+        /* Launch Blacknet RPC API server using Ktor.
          *
-         * Blacknet API web-server logic is implemented in
-         * ninja.blacknet.api.APIServer
+         * Blacknet RPC API server logic is implemented in
+         * ninja.blacknet.rpc.RPCServer
          *
          * Ktor is a framework for building asynchronous servers and clients
          * in connected systems using the powerful Kotlin programming language.
          * https://ktor.io/
          *
          * Ktor configuration is stored in
-         * config/rpc.conf main network
-         * config/rpcregtest.conf regression testing
+         * rpc.conf for main network
+         * rpcregtest.conf for regression testing mode
          * https://ktor.io/servers/engine.html
          *
          */
-        if (Config.instance.apiserver_enabled) {
+        if (Config.instance.rpcserver_enabled) {
             embeddedServer(
                 Netty,
                 commandLineEnvironment(arrayOf("-config=${File(configDir,

@@ -19,7 +19,7 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.ktor.requests.RequestDecoder
+import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedCoderError

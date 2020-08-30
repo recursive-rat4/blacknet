@@ -15,7 +15,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
@@ -23,7 +22,6 @@ import kotlinx.serialization.json.JsonOutput
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.api.APIServer
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
@@ -31,6 +29,7 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
 import ninja.blacknet.network.Node
 import ninja.blacknet.packet.UnfilteredInvList
+import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.*
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
@@ -395,7 +394,7 @@ object WalletDB {
                 wallet.transactions.put(hash, TransactionData(types, time, height))
 
                 if (!rescan) {
-                    APIServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
+                    RPCServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
                     batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
                 }
                 if (store) {

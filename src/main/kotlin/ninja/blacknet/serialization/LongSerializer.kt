@@ -20,7 +20,7 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.ktor.requests.RequestDecoder
+import ninja.blacknet.rpc.requests.RequestDecoder
 
 /**
  * Serializes a [Long] with a transformation to a string in a json representation.

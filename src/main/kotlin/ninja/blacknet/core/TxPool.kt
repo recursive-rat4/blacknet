@@ -14,11 +14,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.api.APIServer
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
+import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet
@@ -216,7 +216,7 @@ object TxPool : MemPool(), Ledger {
             addImpl(hash, bytes)
             transactions.add(hash)
             WalletDB.processTransaction(hash, tx, bytes, time)
-            APIServer.txPoolNotify(tx, hash, time, bytes.size)
+            RPCServer.txPoolNotify(tx, hash, time, bytes.size)
             logger.debug { "Accepted ${HashSerializer.stringify(hash)}" }
         }
         undoImpl(status)

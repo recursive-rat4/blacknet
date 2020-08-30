@@ -21,7 +21,7 @@ import ninja.blacknet.coding.toHex
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.ktor.requests.RequestDecoder
+import ninja.blacknet.rpc.requests.RequestDecoder
 
 /**
  * Serializes a [ByteArray] with a transformation to a hex string in some representations.

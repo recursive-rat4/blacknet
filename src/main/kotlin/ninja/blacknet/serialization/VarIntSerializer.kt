@@ -23,7 +23,7 @@ import kotlinx.serialization.json.JsonOutput
 import kotlin.experimental.and
 import kotlin.experimental.or
 import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.ktor.requests.RequestDecoder
+import ninja.blacknet.rpc.requests.RequestDecoder
 
 /**
  * Serializes an [Int] with variable number of bytes in a binary representation.

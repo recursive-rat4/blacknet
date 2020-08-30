@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.ktor.requests.RequestDecoder
+import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.plus
 

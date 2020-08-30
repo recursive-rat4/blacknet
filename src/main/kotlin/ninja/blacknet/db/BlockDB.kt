@@ -13,12 +13,12 @@ import java.util.Collections
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
-import ninja.blacknet.api.APIServer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.LedgerDB.forkV2
+import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.LinkedHashMap
 
@@ -110,7 +110,7 @@ object BlockDB {
                 TxPool.clearRejectsImpl()
                 TxPool.removeImpl(txHashes)
             }
-            APIServer.blockNotify(block, hash, state.height + 1, bytes.size)
+            RPCServer.blockNotify(block, hash, state.height + 1, bytes.size)
             cachedBlock = Pair(block.previous, bytes)
         } else {
             batch.close()

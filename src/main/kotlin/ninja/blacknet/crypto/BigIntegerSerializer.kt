@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.StructureKind
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.ktor.requests.RequestDecoder
+import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedCoderError
