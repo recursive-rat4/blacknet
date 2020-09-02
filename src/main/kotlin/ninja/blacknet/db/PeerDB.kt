@@ -20,7 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
-import ninja.blacknet.Config
+import ninja.blacknet.regtest
 import ninja.blacknet.Runtime
 import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.core.currentTimeSeconds
@@ -129,7 +129,7 @@ object PeerDB {
     }
 
     private fun listBuiltinPeers(): List<Address> {
-        return if (Config.instance.regtest)
+        return if (regtest)
             emptyList()
         else
             Resources.lines(PeerDB::class.java, "peers.txt", Charsets.UTF_8)

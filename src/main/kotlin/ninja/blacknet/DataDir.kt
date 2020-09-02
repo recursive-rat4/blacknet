@@ -30,7 +30,7 @@ val dataDir: File = {
         }
         new
     }
-    if (Config.instance.regtest) {
+    if (regtest) {
         dir = File(dir, "regtest")
     }
     dir.mkdirs()

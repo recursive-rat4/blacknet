@@ -21,7 +21,7 @@ object Version {
         val attributes = jar.getManifest().getMainAttributes()
         jar.close()
 
-        name = if (Config.instance.regtest)
+        name = if (regtest)
             "Blacknet-regtest"
         else
             "Blacknet"

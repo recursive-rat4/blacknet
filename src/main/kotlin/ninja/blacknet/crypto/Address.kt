@@ -9,7 +9,7 @@
 
 package ninja.blacknet.crypto
 
-import ninja.blacknet.Config
+import ninja.blacknet.regtest
 import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
@@ -31,7 +31,7 @@ object Address {
     const val MULTISIG: Byte = 2
     const val BAPP: Byte = 3
 
-    private val HRP = if (Config.instance.regtest) HRP_REGTEST else HRP_MAINNET
+    private val HRP = if (regtest) HRP_REGTEST else HRP_MAINNET
 
     fun encode(publicKey: ByteArray): String {
         val data = Bech32.convertBits(publicKey, 8, 5, true)

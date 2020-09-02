@@ -11,7 +11,7 @@ package ninja.blacknet.db
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.list
-import ninja.blacknet.Config
+import ninja.blacknet.regtest
 import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.Mnemonic
 import ninja.blacknet.crypto.PoS
@@ -26,7 +26,7 @@ object Genesis {
     val balances by lazy {
         val map = HashMap<ByteArray, Long>()
 
-        if (Config.instance.regtest) {
+        if (regtest) {
             map.put(RegTest.publicKey1, 1000000000 * PoS.COIN)
             map.put(RegTest.publicKey2, 10101010 * PoS.COIN)
         } else {

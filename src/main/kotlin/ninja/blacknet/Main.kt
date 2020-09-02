@@ -103,7 +103,7 @@ object Main {
             embeddedServer(
                 Netty,
                 commandLineEnvironment(arrayOf("-config=${File(configDir,
-                    if (Config.instance.regtest)
+                    if (regtest)
                         "rpcregtest.conf"
                     else
                         "rpc.conf"

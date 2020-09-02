@@ -17,7 +17,7 @@ import kotlinx.serialization.json.JsonConfiguration
  */
 val json = Json(
         JsonConfiguration(
-                prettyPrint = System.getProperty("ninja.blacknet.serialization.json.indented") == "true",
+                prettyPrint = System.getProperty("ninja.blacknet.serialization.json.indented")?.toBoolean() ?: false,
                 indent = "    "
         )
 )

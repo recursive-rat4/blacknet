@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import ninja.blacknet.regtest
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.*
@@ -87,7 +88,7 @@ object Staker {
         job.join()
         awaitsNextTimeSlot = null
 
-        if (!Config.instance.regtest) {
+        if (!regtest) {
             if (Node.isOffline())
                 return
 

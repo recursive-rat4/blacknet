@@ -19,12 +19,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.Config
+import ninja.blacknet.dataDir
+import ninja.blacknet.regtest
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.dataDir
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.decodeVarInt
@@ -247,7 +247,7 @@ object LedgerDB {
     }
 
     fun forkV2(): Boolean {
-        return if (Config.instance.regtest)
+        return if (regtest)
             true
         else
             state.forkV2 == (PoS.MATURITY + 1).toShort()

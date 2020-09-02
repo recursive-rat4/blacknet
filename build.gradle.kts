@@ -126,6 +126,11 @@ val jar by tasks.existing(Jar::class) {
 
 val run by tasks.existing(JavaExec::class) {
     classpath = files(tasks.jar) + classpath.filter { !it.startsWith(buildDir) }
+    systemProperties = defaultSystemProperties
+}
+
+val startScripts by tasks.existing(CreateStartScripts::class) {
+    defaultJvmOpts = defaultSystemProperties.map { (key, value) -> "-D$key=$value" }
 }
 
 val test by tasks.existing(Test::class) {
@@ -137,3 +142,10 @@ val wrapper by tasks.existing(Wrapper::class) {
     distributionType = Wrapper.DistributionType.BIN
     distributionSha256Sum = "e6f83508f0970452f56197f610d13c5f593baaf43c0e3c6a571e5967be754025"
 }
+
+val defaultSystemProperties: Map<String, Any> = mapOf(
+    // Indent JSON returned by RPC API
+    // "ninja.blacknet.serialization.json.indented" to true,
+    // Regression testing mode
+    // "ninja.blacknet.regtest" to true,
+)

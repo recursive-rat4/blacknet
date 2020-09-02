@@ -22,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import ninja.blacknet.regtest
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
@@ -48,7 +49,7 @@ object Node {
     private val nextPeerId = atomic(1L)
 
     init {
-        if (!Config.instance.regtest) {
+        if (!regtest) {
             if (Config.instance.listen) {
                 try {
                     listenOnIP()
@@ -202,7 +203,7 @@ object Node {
     suspend fun broadcastBlock(hash: ByteArray, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
-            if (!Config.instance.regtest)
+            if (!regtest)
                 logger.info("Announced to $n peers")
             return true
         } else {

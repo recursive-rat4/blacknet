@@ -43,13 +43,10 @@ class Config(
         // 白名單
         // val blacklist: Set<String>? = null,
         val lowercasehex: Boolean = false,
-        val regtest: Boolean = false,
         val debugcoroutines: Boolean = false,
 
         @SerialName("rpcserver.enabled")
         val rpcserver_enabled: Boolean = true,
-        @SerialName("rpcserver.jsonindented")
-        val rpcserver_jsonindented: Boolean = false,
 
         @SerialName("wallet.seqthreshold")
         val wallet_seqthreshold: Int = Int.MAX_VALUE - 1,
@@ -60,7 +57,6 @@ class Config(
         val instance = ConfigDecoderImpl("blacknet.conf").decode(serializer()).also {
             if (it.dbcache.bytes < 1024 * 1024) throw ConfigError("dbcache ${it.dbcache.hrp(false)} is unrealistically low")
             if (it.txpoolsize.bytes < 1024 * 1024) throw ConfigError("txpoolsize ${it.txpoolsize.hrp(false)} is unrealistically low")
-            if (it.rpcserver_jsonindented) System.setProperty("ninja.blacknet.serialization.json.indented", "true")
         }
     }
 }
