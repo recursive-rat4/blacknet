@@ -22,10 +22,10 @@ import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.packet.Blocks
-import ninja.blacknet.packet.ChainAnnounce
-import ninja.blacknet.packet.GetBlocks
-import ninja.blacknet.packet.PacketType
+import ninja.blacknet.network.packet.Blocks
+import ninja.blacknet.network.packet.ChainAnnounce
+import ninja.blacknet.network.packet.GetBlocks
+import ninja.blacknet.network.packet.PacketType
 
 private val logger = KotlinLogging.logger {}
 

@@ -14,9 +14,9 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.packet.ChainAnnounce
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
+import ninja.blacknet.network.packet.ChainAnnounce
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.util.HashMap
 

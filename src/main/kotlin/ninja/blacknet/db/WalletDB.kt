@@ -28,7 +28,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
 import ninja.blacknet.network.Node
-import ninja.blacknet.packet.UnfilteredInvList
+import ninja.blacknet.network.packet.UnfilteredInvList
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.*
 import ninja.blacknet.transaction.*

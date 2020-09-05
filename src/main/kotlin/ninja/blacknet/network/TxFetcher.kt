@@ -14,9 +14,9 @@ import kotlinx.coroutines.channels.Channel
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.core.currentTimeMillis
-import ninja.blacknet.packet.GetTransactions
-import ninja.blacknet.packet.PacketType
-import ninja.blacknet.packet.Transactions
+import ninja.blacknet.network.packet.GetTransactions
+import ninja.blacknet.network.packet.PacketType
+import ninja.blacknet.network.packet.Transactions
 import ninja.blacknet.util.SynchronizedHashMap
 
 /**

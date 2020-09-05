@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.packet
+package ninja.blacknet.network.packet
 
 import kotlinx.serialization.KSerializer
 
@@ -33,22 +33,22 @@ enum class PacketType {
     companion object {
         fun getSerializer(type: Int): KSerializer<out Packet> {
             return when (type) {
-                Version.ordinal -> ninja.blacknet.packet.Version.serializer()
-                Ping.ordinal -> ninja.blacknet.packet.Ping.serializer()
-                Pong.ordinal -> ninja.blacknet.packet.Pong.serializer()
+                Version.ordinal -> ninja.blacknet.network.packet.Version.serializer()
+                Ping.ordinal -> ninja.blacknet.network.packet.Ping.serializer()
+                Pong.ordinal -> ninja.blacknet.network.packet.Pong.serializer()
                 GetPeers.ordinal -> throw RuntimeException("Obsolete packet type GetPeers")
                 PeersV1.ordinal -> throw RuntimeException("Obsolete packet type PeersV1")
                 InventoryV1.ordinal -> throw RuntimeException("Obsolete packet type InventoryV1")
                 GetData.ordinal -> throw RuntimeException("Obsolete packet type GetData")
                 Data.ordinal -> throw RuntimeException("Obsolete packet type Data")
-                GetBlocks.ordinal -> ninja.blacknet.packet.GetBlocks.serializer()
-                Blocks.ordinal -> ninja.blacknet.packet.Blocks.serializer()
-                ChainAnnounce.ordinal -> ninja.blacknet.packet.ChainAnnounce.serializer()
-                ChainFork.ordinal -> ninja.blacknet.packet.ChainFork.serializer()
-                Inventory.ordinal -> ninja.blacknet.packet.Inventory.serializer()
-                GetTransactions.ordinal -> ninja.blacknet.packet.GetTransactions.serializer()
-                Transactions.ordinal -> ninja.blacknet.packet.Transactions.serializer()
-                Peers.ordinal -> ninja.blacknet.packet.Peers.serializer()
+                GetBlocks.ordinal -> ninja.blacknet.network.packet.GetBlocks.serializer()
+                Blocks.ordinal -> ninja.blacknet.network.packet.Blocks.serializer()
+                ChainAnnounce.ordinal -> ninja.blacknet.network.packet.ChainAnnounce.serializer()
+                ChainFork.ordinal -> ninja.blacknet.network.packet.ChainFork.serializer()
+                Inventory.ordinal -> ninja.blacknet.network.packet.Inventory.serializer()
+                GetTransactions.ordinal -> ninja.blacknet.network.packet.GetTransactions.serializer()
+                Transactions.ordinal -> ninja.blacknet.network.packet.Transactions.serializer()
+                Peers.ordinal -> ninja.blacknet.network.packet.Peers.serializer()
                 else -> throw RuntimeException("Unknown packet type $type")
             }
         }

@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.packet
+package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Blake2b.buildHash

@@ -26,7 +26,7 @@ import ninja.blacknet.Runtime
 import ninja.blacknet.core.currentTimeMillis
 import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.db.PeerDB
-import ninja.blacknet.packet.*
+import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
 import kotlin.coroutines.CoroutineContext
