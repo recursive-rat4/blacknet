@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.coding
+package ninja.blacknet.codec.base
 
 import kotlin.test.Test
 import kotlin.test.assertFails

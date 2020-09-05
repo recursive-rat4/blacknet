@@ -11,7 +11,11 @@ package ninja.blacknet.serialization
 
 import kotlin.Error
 import kotlin.Throwable
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.Encoder
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.SerializationStrategy
 
 open class SerializationException(message: String, cause: Throwable? = null)
     : SerializationException(message, cause)
@@ -19,6 +23,10 @@ open class SerializationException(message: String, cause: Throwable? = null)
 open class SerializationError(message: String, cause: Throwable? = null)
     : Error(message, cause)
 
-fun notSupportedCoderError(coder: Any, obj: Any): Throwable {
-    return SerializationError("Coder ${coder::class} is not supported by ${obj::class}")
+fun notSupportedFormatError(decoder: Decoder, obj: DeserializationStrategy<*>): Throwable {
+    return SerializationError("Decoder ${decoder::class} is not supported by deserializer ${obj::class}")
+}
+
+fun notSupportedFormatError(encoder: Encoder, obj: SerializationStrategy<*>): Throwable {
+    return SerializationError("Encoder ${encoder::class} is not supported by serializer ${obj::class}")
 }

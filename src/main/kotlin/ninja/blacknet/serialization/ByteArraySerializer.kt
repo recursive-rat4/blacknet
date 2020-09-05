@@ -16,10 +16,8 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.coding.fromHex
-import ninja.blacknet.coding.toHex
+import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.rpc.requests.RequestDecoder
 
@@ -35,9 +33,9 @@ object ByteArraySerializer : KSerializer<ByteArray> {
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeByteArray()
-            is RequestDecoder -> fromHex(decoder.decodeString())
-            is JsonInput -> fromHex(decoder.decodeString())
-            else -> throw notSupportedCoderError(decoder, this)
+            is RequestDecoder,
+            is JsonInput -> Base16.decode(decoder.decodeString())
+            else -> throw notSupportedFormatError(decoder, this)
         }
     }
 
@@ -45,8 +43,8 @@ object ByteArraySerializer : KSerializer<ByteArray> {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
-            is JsonOutput -> encoder.encodeString(value.toHex())
-            else -> throw notSupportedCoderError(encoder, this)
+            is JsonOutput -> encoder.encodeString(Base16.encode(value))
+            else -> throw notSupportedFormatError(encoder, this)
         }
     }
 }

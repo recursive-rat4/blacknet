@@ -42,7 +42,6 @@ class Config(
         val logips: Boolean = false,
         // 白名單
         // val blacklist: Set<String>? = null,
-        val lowercasehex: Boolean = false,
         val debugcoroutines: Boolean = false,
 
         @SerialName("rpcserver.enabled")

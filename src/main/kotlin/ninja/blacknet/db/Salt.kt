@@ -10,7 +10,7 @@
 package ninja.blacknet.db
 
 import mu.KotlinLogging
-import ninja.blacknet.coding.toHex
+import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.nextBytes
@@ -71,7 +71,7 @@ object Salt {
             key = Pair("peerdb", 0) - entry; if (key != null) { nibble(entry, key, DBKey(0x80.toByte(), 0)); continue }
             key = Pair("peerversion", 0) - entry; if (key != null) { nibble(entry, key, DBKey(0x81.toByte(), 0)); continue }
             key = Pair("block", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(0xC0.toByte(), HashSerializer.SIZE_BYTES)); continue }
-            logger.debug { "Unknown key ${entry.key.toHex()}" }
+            logger.debug { "Unknown key ${Base16.encode(entry.key)}" }
         }
         iterator.close()
         val batch = LevelDB.createWriteBatch()

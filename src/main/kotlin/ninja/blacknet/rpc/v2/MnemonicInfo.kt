@@ -10,7 +10,7 @@
 package ninja.blacknet.rpc.v2
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.coding.toHex
+import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.Mnemonic
@@ -24,7 +24,7 @@ class MnemonicInfo(
         fun fromString(string: String): MnemonicInfo {
             val privateKey = Mnemonic.fromString(string)
             val publicKey = Ed25519.toPublicKey(privateKey)
-            return MnemonicInfo(Address.encode(publicKey), publicKey.toHex())
+            return MnemonicInfo(Address.encode(publicKey), Base16.encode(publicKey))
         }
     }
 }

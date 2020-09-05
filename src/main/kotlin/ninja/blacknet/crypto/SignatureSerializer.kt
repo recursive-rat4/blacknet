@@ -17,12 +17,11 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.StructureKind
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.coding.fromHex
-import ninja.blacknet.coding.toHex
+import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedCoderError
+import ninja.blacknet.serialization.notSupportedFormatError
 
 val EMPTY_SIGNATURE = ByteArray(SignatureSerializer.SIZE_BYTES)
 
@@ -41,19 +40,19 @@ object SignatureSerializer : KSerializer<ByteArray> {
     )
 
     fun parse(string: String): ByteArray {
-        return fromHex(string, SIZE_BYTES)
+        return decodeHex(string, SIZE_BYTES * 2)
     }
 
     fun stringify(signature: ByteArray): String {
-        return signature.toHex()
+        return encodeHex(signature, SIZE_BYTES * 2)
     }
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
-            is RequestDecoder -> parse(decoder.decodeString())
+            is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
-            else -> throw notSupportedCoderError(decoder, this)
+            else -> throw notSupportedFormatError(decoder, this)
         }
     }
 
@@ -61,8 +60,8 @@ object SignatureSerializer : KSerializer<ByteArray> {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
-            is JsonOutput -> encoder.encodeString(value.toHex())
-            else -> throw notSupportedCoderError(encoder, this)
+            is JsonOutput -> encoder.encodeString(stringify(value))
+            else -> throw notSupportedFormatError(encoder, this)
         }
     }
 }

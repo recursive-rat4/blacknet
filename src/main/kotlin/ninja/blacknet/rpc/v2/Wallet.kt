@@ -17,7 +17,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.builtins.serializer
-import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.*
@@ -27,6 +26,7 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.rpc.requests.*
 import ninja.blacknet.rpc.v1.AddressInfo
 import ninja.blacknet.rpc.v1.NewMnemonicInfo
+import ninja.blacknet.rpc.v1.toHex
 import ninja.blacknet.transaction.TxType
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.HashMap
@@ -198,7 +198,7 @@ fun Route.wallet() {
             return if (txData != null) {
                 val bytes = WalletDB.getTransactionImpl(hash)!!
                 if (raw) {
-                    respondText(bytes.toHex())
+                    respondText(@Suppress("DEPRECATION") bytes.toHex())
                 } else {
                     val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
                     respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, bytes.size, txData.types))

@@ -46,7 +46,7 @@ object LongSerializer : KSerializer<Long> {
             is JsonInput /* XXX 1.4 */
                 -> decoder.decodeString().toLong()
             else
-                -> throw notSupportedCoderError(decoder, this)
+                -> throw notSupportedFormatError(decoder, this)
         }
     }
 
@@ -60,7 +60,7 @@ object LongSerializer : KSerializer<Long> {
             is JsonOutput /* XXX 1.4 */
                 -> encoder.encodeString(value.toString())
             else
-                -> throw notSupportedCoderError(encoder, this)
+                -> throw notSupportedFormatError(encoder, this)
         }
     }
 }

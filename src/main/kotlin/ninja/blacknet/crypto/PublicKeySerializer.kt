@@ -16,15 +16,13 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.coding.HexFormatException
-import ninja.blacknet.coding.fromHex
-import ninja.blacknet.coding.toHex
-import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.HexCodecException
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedCoderError
+import ninja.blacknet.serialization.notSupportedFormatError
 
 /**
  * Serializes an Ed25519 public key.
@@ -42,13 +40,9 @@ object PublicKeySerializer : KSerializer<ByteArray> {
 
     fun parse(string: String): ByteArray {
         return try {
-            fromHex(string, SIZE_BYTES)
-        } catch (e: HexFormatException) {
-            try {
-                Address.decode(string)
-            } catch (e: Throwable) {
-                throw e
-            }
+            decodeHex(string, SIZE_BYTES * 2)
+        } catch (e: HexCodecException) {
+            Address.decode(string)
         }
     }
 
@@ -57,7 +51,7 @@ object PublicKeySerializer : KSerializer<ByteArray> {
             is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
-            else -> throw notSupportedCoderError(decoder, this)
+            else -> throw notSupportedFormatError(decoder, this)
         }
     }
 
@@ -66,7 +60,7 @@ object PublicKeySerializer : KSerializer<ByteArray> {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
             is JsonOutput -> encoder.encodeString(Address.encode(value))
-            else -> throw notSupportedCoderError(encoder, this)
+            else -> throw notSupportedFormatError(encoder, this)
         }
     }
 }

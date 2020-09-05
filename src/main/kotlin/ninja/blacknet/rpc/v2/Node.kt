@@ -12,7 +12,6 @@ package ninja.blacknet.rpc.v2
 import io.ktor.routing.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.list
-import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.HashSerializer
@@ -62,7 +61,7 @@ fun Route.node() {
             val result = TxPool.get(hash)
             return if (result != null) {
                 if (raw)
-                    return respondText(result.toHex())
+                    return respondText(HashSerializer.stringify(result))
 
                 val tx = BinaryDecoder(result).decode(Transaction.serializer())
                 respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))

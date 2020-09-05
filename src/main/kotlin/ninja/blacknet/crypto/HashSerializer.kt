@@ -16,14 +16,13 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
 import kotlinx.serialization.json.JsonInput
 import kotlinx.serialization.json.JsonOutput
-import ninja.blacknet.coding.fromHex
-import ninja.blacknet.coding.toHex
-import ninja.blacknet.crypto.SipHash.hashCode
+import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedCoderError
+import ninja.blacknet.serialization.notSupportedFormatError
+
 
 /**
  * Serializes a BLAKE2b-256 hash.
@@ -41,11 +40,11 @@ object HashSerializer : KSerializer<ByteArray> {
     )
 
     fun parse(string: String): ByteArray {
-        return fromHex(string, SIZE_BYTES)
+        return decodeHex(string, SIZE_BYTES * 2)
     }
 
     fun stringify(hash: ByteArray): String {
-        return hash.toHex()
+        return encodeHex(hash, SIZE_BYTES * 2)
     }
 
     override fun deserialize(decoder: Decoder): ByteArray {
@@ -53,7 +52,7 @@ object HashSerializer : KSerializer<ByteArray> {
             is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
-            else -> throw notSupportedCoderError(decoder, this)
+            else -> throw notSupportedFormatError(decoder, this)
         }
     }
 
@@ -62,7 +61,7 @@ object HashSerializer : KSerializer<ByteArray> {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
             is JsonOutput -> encoder.encodeString(stringify(value))
-            else -> throw notSupportedCoderError(encoder, this)
+            else -> throw notSupportedFormatError(encoder, this)
         }
     }
 }

@@ -14,13 +14,13 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import ninja.blacknet.Config
-import ninja.blacknet.coding.Base32
+import ninja.blacknet.codec.base.Base32
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedCoderError
+import ninja.blacknet.serialization.notSupportedFormatError
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketAddress
@@ -150,7 +150,7 @@ class Address(
                             decoder.decodeShort(),
                             decoder.decodeFixedByteArray(network.addrSize))
                 }
-                else -> throw notSupportedCoderError(decoder, this)
+                else -> throw notSupportedFormatError(decoder, this)
             }
         }
 
@@ -166,7 +166,7 @@ class Address(
                     encoder.encodeShort(value.port)
                     encoder.encodeByteArray(value.bytes)
                 }
-                else -> throw notSupportedCoderError(encoder, this)
+                else -> throw notSupportedFormatError(encoder, this)
             }
         }
     }

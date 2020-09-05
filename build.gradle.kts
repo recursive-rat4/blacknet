@@ -144,6 +144,8 @@ val wrapper by tasks.existing(Wrapper::class) {
 }
 
 val defaultSystemProperties: Map<String, Any> = mapOf(
+    // Output hexadecimal values with lower case letters
+    // "ninja.blacknet.codec.base.hex.lowercase" to true,
     // Indent JSON returned by RPC API
     // "ninja.blacknet.serialization.json.indented" to true,
     // Regression testing mode

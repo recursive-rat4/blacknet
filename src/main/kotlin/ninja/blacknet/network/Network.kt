@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.coding.Base32
+import ninja.blacknet.codec.base.Base32
 import ninja.blacknet.logging.error
 import java.net.ConnectException
 import java.net.InetAddress

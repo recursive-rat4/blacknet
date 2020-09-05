@@ -14,12 +14,11 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
-import ninja.blacknet.coding.HexFormatException
-import ninja.blacknet.coding.fromHex
-import ninja.blacknet.coding.toHex
+import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.HexCodecException
 import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.ConfigDecoder
-import ninja.blacknet.serialization.notSupportedCoderError
+import ninja.blacknet.serialization.notSupportedFormatError
 
 /**
  * Serializes an Ed25519 private key.
@@ -37,28 +36,24 @@ object PrivateKeySerializer : KSerializer<ByteArray> {
 
     fun parse(string: String): ByteArray {
         return try {
-            fromHex(string, SIZE_BYTES)
-        } catch (e: HexFormatException) {
-            try {
-                Mnemonic.fromString(string)
-            } catch (e: Throwable) {
-                throw e
-            }
+            decodeHex(string, SIZE_BYTES * 2)
+        } catch (e: HexCodecException) {
+            Mnemonic.fromString(string)
         }
     }
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is ConfigDecoder -> parse(decoder.decodeString())
+            is ConfigDecoder,
             is RequestDecoder -> parse(decoder.decodeString())
-            else -> throw notSupportedCoderError(decoder, this)
+            else -> throw notSupportedFormatError(decoder, this)
         }
     }
 
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
             is HashCoder -> encoder.encodeByteArray(value)
-            else -> throw notSupportedCoderError(encoder, this)
+            else -> throw notSupportedFormatError(encoder, this)
         }
     }
 }

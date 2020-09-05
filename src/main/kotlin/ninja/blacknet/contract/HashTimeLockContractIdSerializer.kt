@@ -19,12 +19,11 @@ import kotlinx.serialization.json.JsonOutput
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.HashSerializer
-import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedCoderError
+import ninja.blacknet.serialization.notSupportedFormatError
 
 /**
  * Serializes an id of the hash time lock contract.
@@ -53,7 +52,7 @@ object HashTimeLockContractIdSerializer : KSerializer<ByteArray> {
             is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
             is RequestDecoder,
             is JsonInput -> parse(decoder.decodeString())
-            else -> throw notSupportedCoderError(decoder, this)
+            else -> throw notSupportedFormatError(decoder, this)
         }
     }
 
@@ -62,7 +61,7 @@ object HashTimeLockContractIdSerializer : KSerializer<ByteArray> {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
             is HashCoder -> encoder.encodeByteArray(value)
             is JsonOutput -> encoder.encodeString(stringify(value))
-            else -> throw notSupportedCoderError(encoder, this)
+            else -> throw notSupportedFormatError(encoder, this)
         }
     }
 }

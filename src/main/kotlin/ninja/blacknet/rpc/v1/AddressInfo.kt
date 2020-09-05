@@ -10,7 +10,7 @@
 package ninja.blacknet.rpc.v1
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.coding.toHex
+import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.Address
 
 @Serializable
@@ -20,7 +20,7 @@ class AddressInfo(
     companion object {
         fun fromString(string: String): AddressInfo {
             val publicKey = Address.decode(string)
-            return AddressInfo(publicKey.toHex())
+            return AddressInfo(Base16.encode(publicKey))
         }
     }
 }

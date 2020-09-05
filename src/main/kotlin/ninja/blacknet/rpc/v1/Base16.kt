@@ -7,10 +7,11 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.coding
+@file:Suppress("DEPRECATION")
+
+package ninja.blacknet.rpc.v1
 
 import kotlin.jvm.Throws
-import ninja.blacknet.Config
 
 private val HEX_CHARS = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
 private val HEX_CHARS_LOWER = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
@@ -28,6 +29,9 @@ private fun decodeTable(character: Char): Int {
     throw HexFormatException("$character is not a hexadecimal digit")
 }
 
+private val lowercasehex: Boolean = System.getProperty("ninja.blacknet.codec.base.hex.lowercase")?.toBoolean() ?: false
+
+@Deprecated("")
 fun hex(bytes: ByteArray, lowerCase: Boolean): String {
     val encodeTable = if (!lowerCase) HEX_CHARS else HEX_CHARS_LOWER
 
@@ -50,8 +54,9 @@ fun hex(bytes: ByteArray, lowerCase: Boolean): String {
  *
  * @return the encoded [String]
  */
+@Deprecated("")
 fun ByteArray.toHex(): String {
-    return hex(this, Config.instance.lowercasehex)
+    return hex(this, lowercasehex)
 }
 
 /**
@@ -61,6 +66,7 @@ fun ByteArray.toHex(): String {
  * @return the decoded [ByteArray]
  * @throws HexFormatException if the string is not a hexadecimal number
  */
+@Deprecated("")
 @Throws(HexFormatException::class)
 fun fromHex(string: String, size: Int = 0): ByteArray {
     val length = string.length
@@ -89,4 +95,5 @@ fun fromHex(string: String, size: Int = 0): ByteArray {
 /**
  * Thrown to indicate that the given string does not have the appropriate format.
  */
+@Deprecated("")
 class HexFormatException(message: String) : RuntimeException(message)

@@ -13,7 +13,7 @@ import ninja.blacknet.regtest
 import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
-import ninja.blacknet.coding.Bech32
+import ninja.blacknet.codec.base.Bech32
 import ninja.blacknet.util.plus
 
 /**

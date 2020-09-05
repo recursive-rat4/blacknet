@@ -27,8 +27,6 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.rpc.*
-import ninja.blacknet.coding.fromHex
-import ninja.blacknet.coding.toHex
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir

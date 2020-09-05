@@ -43,7 +43,7 @@ object VarIntSerializer : KSerializer<Int> {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeVarInt()
             is JsonInput, is RequestDecoder -> decoder.decodeInt()
-            else -> throw notSupportedCoderError(decoder, this)
+            else -> throw notSupportedFormatError(decoder, this)
         }
     }
 
@@ -51,7 +51,7 @@ object VarIntSerializer : KSerializer<Int> {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeVarInt(value)
             is HashCoder, is JsonOutput -> encoder.encodeInt(value)
-            else -> throw notSupportedCoderError(encoder, this)
+            else -> throw notSupportedFormatError(encoder, this)
         }
     }
 }
