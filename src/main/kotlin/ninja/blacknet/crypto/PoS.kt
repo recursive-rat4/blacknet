@@ -20,13 +20,6 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.util.byteArrayOfInts
 
-/**
- * 黑網權益證明算法
- * 黑網是點對點技術
- * 權益又譯為持有量
- * 證明依賴當前時間
- * 算法不能同步時鐘
- */
 object PoS {
     fun mint(supply: Long): Long {
         return supply / 100 / BLOCKS_IN_YEAR
