@@ -128,12 +128,12 @@ enum class Network(val type: Byte, val addrSize: Int) {
 
         suspend fun listenOnTor() {
             try {
-                val (thread, localAddress) = TorController.listen()
+                val (coroutine, localAddress) = TorController.listen()
 
                 logger.info("Listening on ${localAddress.debugName()}")
                 Node.listenAddress.add(localAddress)
 
-                thread.join()
+                coroutine.join()
 
                 Node.listenAddress.remove(localAddress)
                 logger.info("Lost connection to tor controller")
