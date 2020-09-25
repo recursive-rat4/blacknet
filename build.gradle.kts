@@ -53,6 +53,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.coroutines}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.coroutines}")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
     implementation("org.apache.commons:commons-collections4:4.4")
     implementation("net.i2p.crypto:eddsa:0.3.0")
     implementation("com.rfksystems:blake2b:1.0.0")

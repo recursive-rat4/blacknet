@@ -34,9 +34,9 @@ object Version {
 
     const val http_server = "Ktor"
 
-    const val http_server_version = "1.3.2"
+    const val http_server_version = "1.4.1"
 
     const val http_server_engine = "Netty"
 
-    const val http_server_engine_version = "4.1.44.Final"
+    const val http_server_engine_version = "4.1.51.Final"
 }
