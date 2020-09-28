@@ -16,7 +16,7 @@ enum class TxType(val type: Byte) {
     Burn(1),
     Lease(2),
     CancelLease(3),
-    Bundle(4),
+    BApp(4),
     CreateHTLC(5),
     UnlockHTLC(6),
     RefundHTLC(7),
@@ -25,7 +25,7 @@ enum class TxType(val type: Byte) {
     SpendMultisig(10),
     WithdrawFromLease(11),
     ClaimHTLC(12),
-    MultiData(16),
+    Bundle(16),
     // Genesis(125),
     Generated(254.toByte()),
     ;
@@ -37,7 +37,7 @@ enum class TxType(val type: Byte) {
                 Burn.type -> ninja.blacknet.transaction.Burn.serializer()
                 Lease.type -> ninja.blacknet.transaction.Lease.serializer()
                 CancelLease.type -> ninja.blacknet.transaction.CancelLease.serializer()
-                Bundle.type -> ninja.blacknet.transaction.Bundle.serializer()
+                BApp.type -> ninja.blacknet.transaction.BApp.serializer()
                 CreateHTLC.type -> ninja.blacknet.transaction.CreateHTLC.serializer()
                 UnlockHTLC.type -> throw RuntimeException("Obsolete tx type UnlockHTLC")
                 RefundHTLC.type -> ninja.blacknet.transaction.RefundHTLC.serializer()
@@ -46,7 +46,7 @@ enum class TxType(val type: Byte) {
                 SpendMultisig.type -> ninja.blacknet.transaction.SpendMultisig.serializer()
                 WithdrawFromLease.type -> ninja.blacknet.transaction.WithdrawFromLease.serializer()
                 ClaimHTLC.type -> ninja.blacknet.transaction.ClaimHTLC.serializer()
-                MultiData.type -> ninja.blacknet.transaction.MultiData.serializer()
+                Bundle.type -> ninja.blacknet.transaction.Bundle.serializer()
                 Generated.type -> throw RuntimeException("Generated as individual tx")
                 else -> throw RuntimeException("Unknown transaction type $type")
             }

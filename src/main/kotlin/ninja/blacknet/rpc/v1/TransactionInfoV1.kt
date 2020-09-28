@@ -57,7 +57,7 @@ class TransactionInfoV1(
                 TxType.Burn.type -> Json.stringify(Burn.serializer(), txData as Burn)
                 TxType.Lease.type -> Json.stringify(Lease.serializer(), txData as Lease)
                 TxType.CancelLease.type -> Json.stringify(CancelLease.serializer(), txData as CancelLease)
-                TxType.Bundle.type -> Json.stringify(Bundle.serializer(), txData as Bundle)
+                TxType.BApp.type -> Json.stringify(BApp.serializer(), txData as BApp)
                 else -> "Unknown type:$type data:$bytes"
             }
         }

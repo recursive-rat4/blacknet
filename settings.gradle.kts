@@ -9,7 +9,10 @@
 
 rootProject.name = "blacknet"
 
-include("blockchain")
+include(":blockchain")
+
+include(":blacknet-cli")
+project(":blacknet-cli").projectDir = file("cli")
 
 pluginManagement {
     repositories {

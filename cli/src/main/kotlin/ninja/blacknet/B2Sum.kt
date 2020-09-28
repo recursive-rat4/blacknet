@@ -7,13 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.util
+package ninja.blacknet
 
 import com.rfksystems.blake2b.Blake2b
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import ninja.blacknet.Runtime
 import ninja.blacknet.codec.stringCodec
 import java.io.File
 
@@ -27,7 +27,7 @@ object B2Sum {
         val DIGEST_SIZE_BYTES = DIGEST_SIZE_BITS / Byte.SIZE_BITS
 
         args.forEach { arg ->
-            val job = Runtime.launch {
+            val job = GlobalScope.launch {
                 val file = File(arg)
                 val stream = try {
                     file.inputStream()

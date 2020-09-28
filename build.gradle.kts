@@ -41,7 +41,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project("blockchain"))
+    implementation(project(":blockchain"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}")
     implementation("io.ktor:ktor-network:${Versions.ktor}")
     implementation("io.ktor:ktor-server-netty:${Versions.ktor}") {
