@@ -20,6 +20,7 @@ import io.ktor.utils.io.close
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import java.io.File
+import java.io.FileOutputStream
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -30,6 +31,8 @@ import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.logging.error
+import ninja.blacknet.util.moveFile
+import ninja.blacknet.util.sync
 
 private val logger = KotlinLogging.logger {}
 
@@ -43,8 +46,8 @@ object TorController {
             if (readPrivateKey.startsWith("RSA1024:")) {
                 logger.info("Migration to Tor addresses version 3")
                 val newName = "privateKey.${currentTimeSeconds()}.tor"
-                if (file.renameTo(File(dataDir, newName)))
-                    logger.info("Renamed private key file to $newName")
+                moveFile(file, File(dataDir, newName))
+                logger.info("Renamed private key file to $newName")
             } else {
                 privateKey = readPrivateKey
             }
@@ -125,7 +128,9 @@ object TorController {
         privateKey = privKey
         logger.info("Saving Tor private key")
         try {
-            File(dataDir, "privateKey.tor").writeText(privateKey)
+            FileOutputStream(File(dataDir, "privateKey.tor")).sync {
+                write(privateKey.toByteArray(Charsets.UTF_8))
+            }
         } catch (e: Throwable) {
             logger.error(e)
         }

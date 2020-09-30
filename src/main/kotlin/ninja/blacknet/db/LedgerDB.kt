@@ -25,6 +25,7 @@ import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.logging.info
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.BinaryEncoder
 import ninja.blacknet.serialization.decodeVarInt
@@ -34,6 +35,7 @@ import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
+import ninja.blacknet.util.moveFile
 import ninja.blacknet.util.toByteArray
 
 private val logger = KotlinLogging.logger {}
@@ -209,33 +211,30 @@ object LedgerDB {
                 logger.info("Found bootstrap")
                 var n = 0
 
-                val stream = bootstrap.inputStream().buffered().data()
                 try {
-                    while (true) {
-                        val size = stream.readInt()
-                        val bytes = ByteArray(size)
-                        stream.readFully(bytes)
+                    bootstrap.inputStream().buffered().data().use {
+                        while (true) {
+                            val size = it.readInt()
+                            val bytes = ByteArray(size)
+                            it.readFully(bytes)
 
-                        val hash = Block.hash(bytes)
-                        val status = BlockDB.processImpl(hash, bytes)
-                        if (status == Accepted) {
-                            if (++n % 50000 == 0)
-                                logger.info("Processed $n blocks")
-                            pruneImpl()
-                        } else if (status !is AlreadyHave) {
-                            logger.info("$status block ${HashSerializer.encode(hash)}")
-                            break
+                            val hash = Block.hash(bytes)
+                            val status = BlockDB.processImpl(hash, bytes)
+                            if (status == Accepted) {
+                                if (++n % 50000 == 0)
+                                    logger.info("Processed $n blocks")
+                                pruneImpl()
+                            } else if (status !is AlreadyHave) {
+                                logger.info("$status block ${HashSerializer.encode(hash)}")
+                                break
+                            }
                         }
                     }
                 } catch (e: Throwable) {
-                    logger.debug { e }
-                } finally {
-                    stream.close()
+                    logger.info(e)
                 }
 
-                val f = File(dataDir, "bootstrap.dat.old")
-                f.delete()
-                bootstrap.renameTo(f)
+                moveFile(bootstrap, File(dataDir, "bootstrap.dat.old"))
 
                 logger.info("Imported $n blocks")
             }

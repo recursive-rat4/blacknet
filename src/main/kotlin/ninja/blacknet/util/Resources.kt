@@ -45,11 +45,8 @@ object Resources {
     }
 
     private inline fun <T> reader(context: Class<*>, name: String, charset: Charset, implementation: BufferedReader.() -> T): T {
-        val jar = jar(context)
-        return try {
-            implementation(BufferedReader(InputStreamReader(jar.getInputStream(jar.getJarEntry(name)), charset)))
-        } finally {
-            jar.close()
+        return jar(context).use {
+            implementation(BufferedReader(InputStreamReader(it.getInputStream(it.getJarEntry(name)), charset)))
         }
     }
 }

@@ -17,11 +17,8 @@ class ConfigReader(
         private val input: ConfigInput
 ) {
     constructor(name: String, charset: Charset) : this(ConfigInput()) {
-        val reader = File(configDir, name).reader(charset)
-        try {
-            input.load(reader)
-        } finally {
-            reader.close()
+        File(configDir, name).reader(charset).use {
+            input.load(it)
         }
     }
 

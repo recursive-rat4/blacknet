@@ -20,6 +20,10 @@ fun KLogger.error(throwable: Throwable) = error(throwable) {
     throwable.debugMessage()
 }
 
+fun KLogger.info(throwable: Throwable) = info(throwable) {
+    throwable.debugMessage()
+}
+
 fun Throwable.debugMessage() = message?.let { message ->
     "${this::class.simpleName ?: this::class}: $message"
 } ?: "Messageless throwable of ${this::class}"
