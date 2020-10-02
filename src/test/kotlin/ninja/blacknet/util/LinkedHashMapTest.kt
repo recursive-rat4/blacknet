@@ -47,12 +47,12 @@ class LinkedHashMapTest {
                 0, 0, 0, 4, 0, 0, 0, 16,
         )
         val jsonEncoded = "{\"1\":16,\"2\":16,\"3\":16,\"4\":16}"
-        val map = LinkedHashMap<Int, Int>().also {
-            it.put(1, 16)
-            it.put(2, 16)
-            it.put(3, 16)
-            it.put(4, 16)
-        }
+        val map = linkedHashMapOf<Int, Int>(
+            1 to 16,
+            2 to 16,
+            3 to 16,
+            4 to 16,
+        )
         val serializer = LinkedHashMapSerializer(Int.serializer(), Int.serializer())
         assertEquals(map, BinaryDecoder(binaryEncoded).decode(serializer))
         assertEquals(binaryEncoded,BinaryEncoder.toBytes(serializer, map))

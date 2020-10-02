@@ -17,8 +17,15 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ByteArraySerializer
+import ninja.blacknet.serialization.MapSerializer
 import ninja.blacknet.serialization.descriptor.MapSerialDescriptor
 import org.apache.commons.collections4.map.AbstractHashedMap
+
+inline fun <T, K, V> makeMap(content: Array<out Pair<K, V>>, factory: () -> T): T
+    where T : MutableMap<K, V> = factory().apply { putAll(content) }
+
+fun <K, V> hashMapOf(vararg content: Pair<K, V>) =
+    makeMap<HashMap<K, V>, K, V>(content) { HashMap(expectedSize = content.size) }
 
 @Serializable(with = HashMapSerializer::class)
 open class HashMap<K, V>(
@@ -48,53 +55,15 @@ open class HashMap<K, V>(
  * Serializes a [HashMap].
  */
 class HashMapSerializer<K, V>(
-        private val keySerializer: KSerializer<K>,
-        private val valueSerializer: KSerializer<V>
-) : KSerializer<HashMap<K, V>> {
+        override val keySerializer: KSerializer<K>,
+        override val valueSerializer: KSerializer<V>
+) : MapSerializer<HashMap<K, V>, K, V>() {
     override val descriptor: SerialDescriptor = MapSerialDescriptor(
             "ninja.blacknet.util.HashMapSerializer",
             keySerializer.descriptor,
             valueSerializer.descriptor
     )
 
-    override fun deserialize(decoder: Decoder): HashMap<K, V> {
-        @Suppress("NAME_SHADOWING")
-        val decoder = decoder.beginStructure(descriptor)
-        val map: HashMap<K, V>
-        if (decoder.decodeSequentially()) {
-            val size = decoder.decodeCollectionSize(descriptor)
-            map = HashMap<K, V>(expectedSize = size)
-            for (elementIndex in 0 until size) {
-                val key = decoder.decodeSerializableElement(descriptor, 0, keySerializer)
-                val value = decoder.decodeSerializableElement(descriptor, 1, valueSerializer)
-                if (map.put(key, value) == null)
-                    Unit
-                else
-                    throw SerializationException("Duplicate key $key in HashMap")
-            }
-        } else {
-            map = HashMap<K, V>()
-            while (decoder.decodeElementIndex(descriptor) >= 0) {
-                val key = decoder.decodeSerializableElement(descriptor, 0, keySerializer)
-                require(decoder.decodeElementIndex(descriptor) > 0)
-                val value = decoder.decodeSerializableElement(descriptor, 1, valueSerializer)
-                if (map.put(key, value) == null)
-                    Unit
-                else
-                    throw SerializationException("Duplicate key $key in HashMap")
-            }
-        }
-        decoder.endStructure(descriptor)
-        return map
-    }
-
-    override fun serialize(encoder: Encoder, value: HashMap<K, V>) {
-        @Suppress("NAME_SHADOWING")
-        val encoder = encoder.beginCollection(descriptor, value.size)
-        for ((k, v) in value) {
-            encoder.encodeSerializableElement(descriptor, 0, keySerializer, k)
-            encoder.encodeSerializableElement(descriptor, 1, valueSerializer, v)
-        }
-        encoder.endStructure(descriptor)
-    }
+    override fun factory() = HashMap<K, V>()
+    override fun factory(size: Int) = HashMap<K, V>(expectedSize = size)
 }

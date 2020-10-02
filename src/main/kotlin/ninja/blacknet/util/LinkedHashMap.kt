@@ -17,8 +17,12 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ByteArraySerializer
+import ninja.blacknet.serialization.MapSerializer
 import ninja.blacknet.serialization.descriptor.MapSerialDescriptor
 import org.apache.commons.collections4.map.AbstractLinkedMap
+
+fun <K, V> linkedHashMapOf(vararg content: Pair<K, V>) =
+    makeMap<LinkedHashMap<K, V>, K, V>(content) { LinkedHashMap(expectedSize = content.size) }
 
 open class LinkedHashMap<K, V>(
         initialCapacity: Int = DEFAULT_CAPACITY,
@@ -47,53 +51,15 @@ open class LinkedHashMap<K, V>(
  * Serializes a [LinkedHashMap].
  */
 class LinkedHashMapSerializer<K, V>(
-        private val keySerializer: KSerializer<K>,
-        private val valueSerializer: KSerializer<V>
-) : KSerializer<LinkedHashMap<K, V>> {
+        override val keySerializer: KSerializer<K>,
+        override val valueSerializer: KSerializer<V>
+) : MapSerializer<LinkedHashMap<K, V>, K, V>() {
     override val descriptor: SerialDescriptor = MapSerialDescriptor(
             "ninja.blacknet.util.LinkedHashMapSerializer",
             keySerializer.descriptor,
             valueSerializer.descriptor
     )
 
-    override fun deserialize(decoder: Decoder): LinkedHashMap<K, V> {
-        @Suppress("NAME_SHADOWING")
-        val decoder = decoder.beginStructure(descriptor)
-        val map: LinkedHashMap<K, V>
-        if (decoder.decodeSequentially()) {
-            val size = decoder.decodeCollectionSize(descriptor)
-            map = LinkedHashMap<K, V>(expectedSize = size)
-            for (elementIndex in 0 until size) {
-                val key = decoder.decodeSerializableElement(descriptor, 0, keySerializer)
-                val value = decoder.decodeSerializableElement(descriptor, 1, valueSerializer)
-                if (map.put(key, value) == null)
-                    Unit
-                else
-                    throw SerializationException("Duplicate key $key in LinkedHashMap")
-            }
-        } else {
-            map = LinkedHashMap<K, V>()
-            while (decoder.decodeElementIndex(descriptor) >= 0) {
-                val key = decoder.decodeSerializableElement(descriptor, 0, keySerializer)
-                require(decoder.decodeElementIndex(descriptor) > 0)
-                val value = decoder.decodeSerializableElement(descriptor, 1, valueSerializer)
-                if (map.put(key, value) == null)
-                    Unit
-                else
-                    throw SerializationException("Duplicate key $key in LinkedHashMap")
-            }
-        }
-        decoder.endStructure(descriptor)
-        return map
-    }
-
-    override fun serialize(encoder: Encoder, value: LinkedHashMap<K, V>) {
-        @Suppress("NAME_SHADOWING")
-        val encoder = encoder.beginCollection(descriptor, value.size)
-        for ((k, v) in value) {
-            encoder.encodeSerializableElement(descriptor, 0, keySerializer, k)
-            encoder.encodeSerializableElement(descriptor, 1, valueSerializer, v)
-        }
-        encoder.endStructure(descriptor)
-    }
+    override fun factory() = LinkedHashMap<K, V>()
+    override fun factory(size: Int) = LinkedHashMap<K, V>(expectedSize = size)
 }
