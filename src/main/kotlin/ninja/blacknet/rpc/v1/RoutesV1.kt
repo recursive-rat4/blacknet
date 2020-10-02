@@ -43,25 +43,25 @@ import kotlin.math.abs
 fun Route.APIV1() {
     webSocket("/api/v1/notify/block") {
         try {
-            RPCServer.blockNotifyV0.add(outgoing)
+            RPCServerV1.blockNotifyV0.add(outgoing)
             while (true) {
                 incoming.receive()
             }
         } catch (e: ClosedReceiveChannelException) {
         } finally {
-            RPCServer.blockNotifyV0.remove(outgoing)
+            RPCServerV1.blockNotifyV0.remove(outgoing)
         }
     }
 
     webSocket("/api/v2/notify/block") {
         try {
-            RPCServer.blockNotifyV1.add(outgoing)
+            RPCServerV1.blockNotifyV1.add(outgoing)
             while (true) {
                 incoming.receive()
             }
         } catch (e: ClosedReceiveChannelException) {
         } finally {
-            RPCServer.blockNotifyV1.remove(outgoing)
+            RPCServerV1.blockNotifyV1.remove(outgoing)
         }
     }
 
@@ -72,13 +72,13 @@ fun Route.APIV1() {
                 @Suppress("USELESS_ELVIS")
                 val publicKey = Address.decode(string) ?: return@webSocket this.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "invalid account"))
 
-                RPCServer.walletNotifyV1.mutex.withLock<Unit> {
-                    val keys = RPCServer.walletNotifyV1.map.get(outgoing)
+                RPCServerV1.walletNotifyV1.mutex.withLock<Unit> {
+                    val keys = RPCServerV1.walletNotifyV1.map.get(outgoing)
                     if (keys == null) {
                         @Suppress("NAME_SHADOWING")
                         val keys = HashSet<ByteArray>()
                         keys.add(publicKey)
-                        RPCServer.walletNotifyV1.map.put(outgoing, keys)
+                        RPCServerV1.walletNotifyV1.map.put(outgoing, keys)
                     } else {
                         keys.add(publicKey)
                     }
@@ -86,7 +86,7 @@ fun Route.APIV1() {
             }
         } catch (e: ClosedReceiveChannelException) {
         } finally {
-            RPCServer.walletNotifyV1.remove(outgoing)
+            RPCServerV1.walletNotifyV1.remove(outgoing)
         }
     }
 

@@ -41,7 +41,6 @@ import ninja.blacknet.rpc.v1.*
 import ninja.blacknet.rpc.v2.*
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.serialization.statusMessage
-import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.SynchronizedHashSet
@@ -51,37 +50,12 @@ private val logger = KotlinLogging.logger {}
 object RPCServer {
     internal val txMutex = Mutex()
     internal var lastIndex: Pair<ByteArray, ChainIndex>? = null
-    internal val blockNotifyV0 = SynchronizedArrayList<SendChannel<Frame>>()
-    internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
-    internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<ByteArray>>()
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val walletNotify = SynchronizedHashMap<ByteArray, ArrayList<SendChannel<Frame>>>()
 
     suspend fun blockNotify(block: Block, hash: ByteArray, height: Int, size: Int) {
-        blockNotifyV0.forEach {
-            Runtime.launch {
-                try {
-                    it.send(Frame.Text(HashSerializer.encode(hash)))
-                } finally {
-                }
-            }
-        }
-
-        blockNotifyV1.mutex.withLock {
-            if (blockNotifyV1.list.isNotEmpty()) {
-                val notification = BlockNotificationV1(block, hash, height, size)
-                val message = json.encodeToString(BlockNotificationV1.serializer(), notification)
-                blockNotifyV1.list.forEach {
-                    Runtime.launch {
-                        try {
-                            it.send(Frame.Text(message))
-                        } finally {
-                        }
-                    }
-                }
-            }
-        }
+        RPCServerV1.blockNotify(block, hash, height, size)
 
         blockNotify.mutex.withLock {
             if (blockNotify.set.isNotEmpty()) {
@@ -117,22 +91,7 @@ object RPCServer {
     }
 
     suspend fun walletNotify(tx: Transaction, hash: ByteArray, time: Long, size: Int, publicKey: ByteArray, filter: List<WalletDB.TransactionDataType>) {
-        walletNotifyV1.mutex.withLock {
-            if (walletNotifyV1.map.isNotEmpty()) {
-                val notification = TransactionNotificationV2(tx, hash, time, size)
-                val message = json.encodeToString(TransactionNotificationV2.serializer(), notification)
-                walletNotifyV1.map.forEach {
-                    if (it.value.contains(publicKey)) {
-                        Runtime.launch {
-                            try {
-                                it.key.send(Frame.Text(message))
-                            } finally {
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        RPCServerV1.walletNotify(tx, hash, time, size, publicKey, filter)
 
         walletNotify.mutex.withLock {
             val subscribers = walletNotify.map.get(publicKey)
