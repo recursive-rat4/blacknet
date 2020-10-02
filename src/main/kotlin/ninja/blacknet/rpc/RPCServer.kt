@@ -41,6 +41,7 @@ import ninja.blacknet.rpc.v1.*
 import ninja.blacknet.rpc.v2.*
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.serialization.statusMessage
+import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.SynchronizedHashSet
@@ -52,7 +53,7 @@ object RPCServer {
     internal var lastIndex: Pair<ByteArray, ChainIndex>? = null
     internal val blockNotifyV0 = SynchronizedArrayList<SendChannel<Frame>>()
     internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
-    internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, MutableSet<ByteArray>>()
+    internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<ByteArray>>()
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val walletNotify = SynchronizedHashMap<ByteArray, ArrayList<SendChannel<Frame>>>()

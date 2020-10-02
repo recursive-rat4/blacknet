@@ -51,9 +51,12 @@ open class LinkedHashMap<K, V>(
  * Serializes a [LinkedHashMap].
  */
 class LinkedHashMapSerializer<K, V>(
-        override val keySerializer: KSerializer<K>,
-        override val valueSerializer: KSerializer<V>
-) : MapSerializer<LinkedHashMap<K, V>, K, V>() {
+        keySerializer: KSerializer<K>,
+        valueSerializer: KSerializer<V>
+) : MapSerializer<LinkedHashMap<K, V>, K, V>(
+        keySerializer,
+        valueSerializer
+) {
     override val descriptor: SerialDescriptor = MapSerialDescriptor(
             "ninja.blacknet.util.LinkedHashMapSerializer",
             keySerializer.descriptor,

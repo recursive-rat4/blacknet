@@ -9,20 +9,20 @@
 
 package ninja.blacknet.serialization
 
+import java.util.Collections
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import ninja.blacknet.serialization.descriptor.MapSerialDescriptor
+import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 
 /**
- * Abstract serializer for a [Map].
+ * Abstract serializer for a [Set].
  */
-public abstract class MapSerializer<T : MutableMap<K, V>, K, V>(
-        private val keySerializer: KSerializer<K>,
-        private val valueSerializer: KSerializer<V>
+public abstract class SetSerializer<T : MutableSet<E>, E>(
+        private val elementSerializer: KSerializer<E>
 ) : KSerializer<T> {
     protected abstract fun factory(): T
     protected abstract fun factory(size: Int): T
@@ -30,40 +30,36 @@ public abstract class MapSerializer<T : MutableMap<K, V>, K, V>(
     override fun deserialize(decoder: Decoder): T {
         @Suppress("NAME_SHADOWING")
         val decoder = decoder.beginStructure(descriptor)
-        val map: T
+        val set: T
         if (decoder.decodeSequentially()) {
             val size = decoder.decodeCollectionSize(descriptor)
-            map = factory(size)
+            set = factory(size)
             for (elementIndex in 0 until size) {
-                val key = decoder.decodeSerializableElement(descriptor, 0, keySerializer)
-                val value = decoder.decodeSerializableElement(descriptor, 1, valueSerializer)
-                if (map.put(key, value) == null)
+                val entry = decoder.decodeSerializableElement(descriptor, 0, elementSerializer)
+                if (set.add(entry))
                     Unit
                 else
-                    throw SerializationException("Duplicate key $key in HashMap")
+                    throw SerializationException("Duplicate $entry in HashSet")
             }
         } else {
-            map = factory()
+            set = factory()
             while (decoder.decodeElementIndex(descriptor) >= 0) {
-                val key = decoder.decodeSerializableElement(descriptor, 0, keySerializer)
-                require(decoder.decodeElementIndex(descriptor) > 0)
-                val value = decoder.decodeSerializableElement(descriptor, 1, valueSerializer)
-                if (map.put(key, value) == null)
+                val entry = decoder.decodeSerializableElement(descriptor, 0, elementSerializer)
+                if (set.add(entry))
                     Unit
                 else
-                    throw SerializationException("Duplicate key $key in HashMap")
+                    throw SerializationException("Duplicate $entry in HashSet")
             }
         }
         decoder.endStructure(descriptor)
-        return map
+        return set
     }
 
     override fun serialize(encoder: Encoder, value: T) {
         @Suppress("NAME_SHADOWING")
         val encoder = encoder.beginCollection(descriptor, value.size)
-        for ((k, v) in value) {
-            encoder.encodeSerializableElement(descriptor, 0, keySerializer, k)
-            encoder.encodeSerializableElement(descriptor, 1, valueSerializer, v)
+        for (e in value) {
+            encoder.encodeSerializableElement(descriptor, 0, elementSerializer, e)
         }
         encoder.endStructure(descriptor)
     }

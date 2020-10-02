@@ -18,7 +18,14 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ByteArraySerializer
+import ninja.blacknet.serialization.SetSerializer
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
+
+inline fun <T, E> makeSet(content: Array<out E>, factory: () -> T): T
+    where T : MutableSet<E> = factory().apply { addAll(content) }
+
+fun <E> hashSetOf(vararg content: E) =
+    makeSet<HashSet<E>, E>(content) { HashSet(expectedSize = content.size) }
 
 @Serializable(with = HashSetSerializer::class)
 open class HashSet<T>(map: HashMap<T, Boolean> = HashMap<T, Boolean>()) : MutableSet<T> by Collections.newSetFromMap(map) {
@@ -28,48 +35,16 @@ open class HashSet<T>(map: HashMap<T, Boolean> = HashMap<T, Boolean>()) : Mutabl
 /**
  * Serializes a [HashSet].
  */
-class HashSetSerializer<K>(
-        private val elementSerializer: KSerializer<K>
-) : KSerializer<MutableSet<K>> {
+class HashSetSerializer<E>(
+        elementSerializer: KSerializer<E>
+) : SetSerializer<HashSet<E>, E>(
+        elementSerializer
+) {
     override val descriptor: SerialDescriptor = ListSerialDescriptor(
             "ninja.blacknet.util.HashSetSerializer",
             elementSerializer.descriptor
     )
 
-    override fun deserialize(decoder: Decoder): MutableSet<K> {
-        @Suppress("NAME_SHADOWING")
-        val decoder = decoder.beginStructure(descriptor)
-        val set: MutableSet<K>
-        if (decoder.decodeSequentially()) {
-            val size = decoder.decodeCollectionSize(descriptor)
-            set = HashSet<K>(expectedSize = size)
-            for (elementIndex in 0 until size) {
-                val entry = decoder.decodeSerializableElement(descriptor, 0, elementSerializer)
-                if (set.add(entry))
-                    Unit
-                else
-                    throw SerializationException("Duplicate $entry in HashSet")
-            }
-        } else {
-            set = HashSet<K>()
-            while (decoder.decodeElementIndex(descriptor) >= 0) {
-                val entry = decoder.decodeSerializableElement(descriptor, 0, elementSerializer)
-                if (set.add(entry))
-                    Unit
-                else
-                    throw SerializationException("Duplicate $entry in HashSet")
-            }
-        }
-        decoder.endStructure(descriptor)
-        return set
-    }
-
-    override fun serialize(encoder: Encoder, value: MutableSet<K>) {
-        @Suppress("NAME_SHADOWING")
-        val encoder = encoder.beginCollection(descriptor, value.size)
-        for (k in value) {
-            encoder.encodeSerializableElement(descriptor, 0, elementSerializer, k)
-        }
-        encoder.endStructure(descriptor)
-    }
+    override fun factory() = HashSet<E>()
+    override fun factory(size: Int) = HashSet<E>(expectedSize = size)
 }

@@ -55,9 +55,12 @@ open class HashMap<K, V>(
  * Serializes a [HashMap].
  */
 class HashMapSerializer<K, V>(
-        override val keySerializer: KSerializer<K>,
-        override val valueSerializer: KSerializer<V>
-) : MapSerializer<HashMap<K, V>, K, V>() {
+        keySerializer: KSerializer<K>,
+        valueSerializer: KSerializer<V>
+) : MapSerializer<HashMap<K, V>, K, V>(
+        keySerializer,
+        valueSerializer
+) {
     override val descriptor: SerialDescriptor = MapSerialDescriptor(
             "ninja.blacknet.util.HashMapSerializer",
             keySerializer.descriptor,
