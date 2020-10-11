@@ -481,7 +481,7 @@ void function () {
             "Burn",
             "Lease",
             "CancelLease",
-            "Bundle",
+            "BApp",
             "CreateHTLC",
             "UnlockHTLC",
             "RefundHTLC",
@@ -495,7 +495,7 @@ void function () {
         let name = typeNames[type];
 
         if (type == 16) {
-            name = "MultiData";
+            name = "Batch";
         } else if (type == 254) {
             name = "Generated";
         } else if (type == 0) {

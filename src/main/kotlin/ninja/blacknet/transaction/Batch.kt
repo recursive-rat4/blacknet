@@ -15,10 +15,10 @@ import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.ByteArraySerializer
 
 /**
- * 包
+ * 批次處理
  */
 @Serializable
-class Bundle(
+class Batch(
         val multiData: ArrayList<TxDataData>
 ) : TxData {
     @Serializable
@@ -33,10 +33,10 @@ class Bundle(
 
     override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (dataIndex != 0) {
-            return Invalid("Bundle is not permitted to contain Bundle")
+            return Invalid("Batch is not permitted to contain Batch")
         }
         if (multiData.size < 2 || multiData.size > 20) {
-            return Invalid("Invalid Bundle size ${multiData.size}")
+            return Invalid("Invalid Batch size ${multiData.size}")
         }
 
         for (index in 0 until multiData.size) {
@@ -45,7 +45,7 @@ class Bundle(
             val data = BinaryDecoder(bytes).decode(serializer)
             val status = data.processImpl(tx, hash, index + 1, ledger)
             if (status != Accepted) {
-                return notAccepted("Bundle ${index + 1}", status)
+                return notAccepted("Batch ${index + 1}", status)
             }
         }
 

@@ -373,13 +373,13 @@ object WalletDB {
                     else
                         logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} ${HashSerializer.encode(hash)}")
                 }
-                if (tx.type != TxType.Bundle.type) {
+                if (tx.type != TxType.Batch.type) {
                     if (processTransactionDataImpl(publicKey, wallet, hash, 0, tx.type, tx.data, height, from))
                         listOf(TransactionDataType(tx.type, 0))
                     else
                         emptyList()
                 } else {
-                    val data = BinaryDecoder(bytes).decode(Bundle.serializer())
+                    val data = BinaryDecoder(bytes).decode(Batch.serializer())
                     val types = ArrayList<TransactionDataType>(data.multiData.size)
                     for (index in 0 until data.multiData.size) {
                         val (dataType, dataBytes) = data.multiData[index]

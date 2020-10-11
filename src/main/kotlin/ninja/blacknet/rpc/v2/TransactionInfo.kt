@@ -21,7 +21,7 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.serialization.LongSerializer
-import ninja.blacknet.transaction.Bundle
+import ninja.blacknet.transaction.Batch
 import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
 
@@ -63,13 +63,13 @@ class TransactionInfo(
         fun data(type: Byte, bytes: ByteArray, filter: List<WalletDB.TransactionDataType>?): List<DataInfo> {
             val data = if (type == TxType.Generated.type) {
                 listOf(DataInfo(type.toUByte().toInt(), 0, JsonObject(emptyMap())))
-            } else if (type != TxType.Bundle.type) {
+            } else if (type != TxType.Batch.type) {
                 @Suppress("UNCHECKED_CAST")
                 val serializer = TxType.getSerializer(type) as KSerializer<TxData>
                 val data = BinaryDecoder(bytes).decode(serializer)
                 listOf(DataInfo(type.toUByte().toInt(), 0, json.encodeToJsonElement(serializer, data)))
             } else {
-                val multiData = BinaryDecoder(bytes).decode(Bundle.serializer())
+                val multiData = BinaryDecoder(bytes).decode(Batch.serializer())
                 val list = ArrayList<DataInfo>(multiData.multiData.size)
                 if (filter == null) {
                     for (index in 0 until multiData.multiData.size) {

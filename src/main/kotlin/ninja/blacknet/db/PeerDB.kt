@@ -160,19 +160,19 @@ object PeerDB {
         peers.get(address)?.failed(time)
     }
 
-    fun bundlerAnnounce(address: Address, announce: List<ByteArray>): Unit {
-        peers.get(address)?.stat?.bundler?.let { bundler ->
+    fun batcherAnnounce(address: Address, announce: List<ByteArray>): Unit {
+        peers.get(address)?.stat?.batcher?.let { batcher ->
             announce.forEach { id ->
                 if (BAppDB.isInteresting(id)) {
-                    bundler.add(id)
+                    batcher.add(id)
                 }
             }
         }
     }
 
-    fun getBundlers(id: ByteArray): List<Address> {
+    fun getBatchers(id: ByteArray): List<Address> {
         val result = ArrayList<Address>(peers.size)
-        peers.forEach { (address, entry) -> if (entry.stat?.bundler?.contains(id) == true) result.add(address) }
+        peers.forEach { (address, entry) -> if (entry.stat?.batcher?.contains(id) == true) result.add(address) }
         return result
     }
 
@@ -289,7 +289,7 @@ object PeerDB {
             val stat1D: UptimeStat,
             val stat1W: UptimeStat,
             val stat1M: UptimeStat,
-            val bundler: HashSet<@Serializable(BAppIdSerializer::class) ByteArray>
+            val batcher: HashSet<@Serializable(BAppIdSerializer::class) ByteArray>
     ) {
         constructor(lastConnected: Long, userAgent: String) : this(
                 lastConnected,
@@ -327,7 +327,7 @@ object PeerDB {
                 stat.lastConnected = time
                 stat.userAgent = userAgent
                 if (!prober)
-                    stat.bundler.clear()
+                    stat.batcher.clear()
                 updateUptimeStat(stat, true, time)
             } else {
                 @Suppress("NAME_SHADOWING")
