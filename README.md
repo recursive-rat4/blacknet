@@ -8,8 +8,8 @@ Blacknet is a public peer-to-peer network based on blockchain technology with pr
 
 ## Get the source code
 
-[Release tags](https://gitlab.com/blacknet-ninja/blacknet/-/tags)
-`git clone https://gitlab.com/blacknet-ninja/blacknet.git`
+- [Release tags](https://gitlab.com/blacknet-ninja/blacknet/-/tags)
+- `git clone https://gitlab.com/blacknet-ninja/blacknet.git`
 
 ## Setup the environment
 
@@ -30,7 +30,9 @@ Install the Java JDK (not only JRE) version 8th number or greater.
 ```
 
 The built program is in `./build/install/`
+
 To run use `./blacknet`, or on Windows use `.\blacknet.bat`
+
 Gradle `:run` task is supported but not recommended.
 
 ## How to contribute
