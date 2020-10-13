@@ -1,14 +1,17 @@
 ## Blacknet Reference Software
 
 [![Pipeline Status](https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg)](https://gitlab.com/blacknet-ninja/blacknet/pipelines)
-[![Matrix](https://img.shields.io/matrix/blacknet:matrix.org)](https://riot.im/app/#/room/#blacknet:matrix.org)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja)](https://blacknet.ninja)
+[![Web Chat](https://img.shields.io/matrix/blacknet:matrix.org)](https://app.element.io/#/group/+blacknet:matrix.org)
+[![Web Site](https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja)](https://blacknet.ninja)
 
-Blacknet is a public peer-to-peer network based on blockchain technology.
+Blacknet is a public peer-to-peer network based on blockchain technology with proof of stake consensus mechanism.
 
-## How to build
+## Get the source code
 
-#### Setup the environment
+[Release tags](https://gitlab.com/blacknet-ninja/blacknet/-/tags)
+`git clone https://gitlab.com/blacknet-ninja/blacknet.git`
+
+## Setup the environment
 
 Install the Java JDK (not only JRE) version 8th number or greater.
 
@@ -20,25 +23,20 @@ Install the Java JDK (not only JRE) version 8th number or greater.
 - FreeBSD: `sudo pkg install openjdk11 git`
 - OpenBSD: `sudo pkg_add jdk git`
 
-#### Get the source code
-
-[Release tags](https://gitlab.com/blacknet-ninja/blacknet/-/tags)
-
-#### Make the build
+## Make the build
 
 ```
-./gradlew build
+./gradlew installDist
 ```
 
-To run the built program, use `./gradlew run`
-- Windows: use `.\gradlew.bat` in place of `./gradlew`
-
+The built program is in `./build/install/`
+To run use `./blacknet`, or on Windows use `.\blacknet.bat`
+Gradle `:run` task is supported but not recommended.
 
 ## How to contribute
 
 You are welcome to report a theoretical or practical [issue](https://gitlab.com/blacknet-ninja/blacknet/issues),
 or send changes as a [GitLab pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests) to the master branch.
-
 
 ## License
 
