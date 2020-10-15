@@ -1,14 +1,14 @@
-## Blacknet Reference Software
+## Blacknet Full Node Wallet
 
-[![Pipeline Status](https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg)](https://gitlab.com/blacknet-ninja/blacknet/pipelines)
-[![Web Chat](https://img.shields.io/matrix/blacknet:matrix.org)](https://app.element.io/#/group/+blacknet:matrix.org)
-[![Web Site](https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja)](https://blacknet.ninja)
+[![Pipeline status][]](https://gitlab.com/blacknet-ninja/blacknet/pipelines)
+[![Web chat][]](https://app.element.io/#/group/+blacknet:matrix.org)
+[![Web site][]](https://blacknet.ninja)
 
 Blacknet is a public peer-to-peer network based on blockchain technology with proof of stake consensus mechanism.
 
 ## Get the source code
 
-- [Release tags](https://gitlab.com/blacknet-ninja/blacknet/-/tags)
+- [Release tags][]
 - `git clone https://gitlab.com/blacknet-ninja/blacknet.git`
 
 ## Setup the environment
@@ -37,10 +37,17 @@ Gradle `:run` task is supported but not recommended.
 
 ## How to contribute
 
-You are welcome to report a theoretical or practical [issue](https://gitlab.com/blacknet-ninja/blacknet/issues),
-or send changes as a [GitLab pull request](https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests) to the master branch.
+You are welcome to report a theoretical or practical [Issue][],
+or send changes as a [Pull request][] to the master branch.
 
 ## License
 
 This program is distributed under the terms of the Jelurida Public License
-version 1.1 for the Blacknet Public Blockchain Platform. See [LICENSE.txt](LICENSE.txt).
+version 1.1 for the Blacknet Public Blockchain Platform. See the LICENSE file.
+
+[Issue]: https://gitlab.com/blacknet-ninja/blacknet/issues
+[Pipeline status]: https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg
+[Pull request]: https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests
+[Release tags]: https://gitlab.com/blacknet-ninja/blacknet/-/tags
+[Web chat]: https://img.shields.io/matrix/blacknet:matrix.org
+[Web site]: https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja
