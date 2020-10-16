@@ -11,7 +11,6 @@ package ninja.blacknet.serialization
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.UpdateMode
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
@@ -20,8 +19,6 @@ abstract class AdaptorDecoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Decoder, CompositeDecoder {
     private fun notImplementedError(message: String): Throwable = SerializationError("${this::class} is not implemented for $message")
-
-    override val updateMode: UpdateMode = UpdateMode.BANNED
 
     override fun decodeNotNullMark(): Boolean = throw notImplementedError("NotNullMark")
     override fun decodeNull(): Nothing? = null
