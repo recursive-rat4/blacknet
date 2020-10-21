@@ -35,12 +35,6 @@ class Blocks(
             return
         }
 
-        if (!connection.requestedBlocks) {
-            connection.dos("Unexpected Blocks")
-            return
-        }
-
-        connection.requestedBlocks = false
         ChainFetcher.blocks(connection, this)
     }
 

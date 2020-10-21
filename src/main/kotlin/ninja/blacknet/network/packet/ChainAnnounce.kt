@@ -24,6 +24,11 @@ class ChainAnnounce(
         internal val cumulativeDifficulty: BigInteger
 ) : Packet {
     override suspend fun process(connection: Connection) {
+        if (cumulativeDifficulty < BigInteger.ZERO) {
+            connection.dos("Invalid cumulative difficulty ${cumulativeDifficulty}")
+            return
+        }
+
         connection.lastChain = this
 
         ChainFetcher.offer(connection, this)

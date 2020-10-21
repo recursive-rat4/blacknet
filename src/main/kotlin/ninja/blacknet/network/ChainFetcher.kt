@@ -24,6 +24,7 @@ import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.packet.Blocks
 import ninja.blacknet.network.packet.ChainAnnounce
+import ninja.blacknet.network.packet.ChainFork
 import ninja.blacknet.network.packet.GetBlocks
 import ninja.blacknet.network.packet.PacketType
 
@@ -34,6 +35,7 @@ private val logger = KotlinLogging.logger {}
  */
 object ChainFetcher {
     private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
+    private val deferChannel = Channel<Pair<Blocks, BigInteger>>(16)
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     @Volatile
     private var request: Deferred<Blocks>? = null
@@ -48,9 +50,7 @@ object ChainFetcher {
     private var undoRollback: List<ByteArray>? = null
 
     private val coroutine = Runtime.rotate(::implementation)
-    /**
-     * 走吧
-     */
+
     fun run(): Nothing = runBlocking {
         coroutine.join()
         throw RuntimeException("ChainFetcher exited")
@@ -61,8 +61,10 @@ object ChainFetcher {
     }
 
     fun disconnected(connection: Connection) {
-        if (syncConnection == connection)
-            request?.cancel(CancellationException("Connection closed"))
+        if (syncConnection != connection)
+            return
+
+        request?.cancel(CancellationException("Connection closed"))
     }
 
     fun offer(connection: Connection, announce: ChainAnnounce) {
@@ -96,10 +98,27 @@ object ChainFetcher {
             deferred.complete(Pair(status, n))
         }
 
+        deferChannel.poll()?.let { (blocks, requestedDifficulty) ->
+            if (requestedDifficulty <= LedgerDB.state().cumulativeDifficulty)
+                return@let
+
+            if (blocks.blocks.isNotEmpty()) {
+                logger.debug { "Skipped ${blocks.blocks.size} blocks" }
+            } else if (blocks.hashes.isNotEmpty()) {
+                logger.debug { "Skipped ${blocks.hashes.size} hashes" }
+            } else {
+                logger.error("Invalid packet Blocks")
+            }
+        }
+
         if (data == null)
             return
 
         val (connection, announce) = data
+
+        if (connection.requestedBlocks) {
+            return
+        }
 
         var state = LedgerDB.state()
         if (announce.cumulativeDifficulty <= state.cumulativeDifficulty)
@@ -116,7 +135,7 @@ object ChainFetcher {
             originalChain = state.blockHash
 
             try {
-                requestBlocks(connection, state.blockHash, state.rollingCheckpoint)
+                requestBlocks(connection, state.blockHash, state.rollingCheckpoint, announce.cumulativeDifficulty)
 
                 requestLoop@ while (true) {
                     val answer = withTimeout(timeout()) {
@@ -130,7 +149,7 @@ object ChainFetcher {
                         state = LedgerDB.state()
 
                         if (announce.cumulativeDifficulty > state.cumulativeDifficulty) {
-                            requestBlocks(connection, state.blockHash, state.rollingCheckpoint)
+                            requestBlocks(connection, state.blockHash, state.rollingCheckpoint, announce.cumulativeDifficulty)
                         } else {
                             break
                         }
@@ -155,7 +174,7 @@ object ChainFetcher {
                             prev = hash
                         }
                         rollbackTo = prev
-                        requestBlocks(connection, prev, state.rollingCheckpoint)
+                        requestBlocks(connection, prev, state.rollingCheckpoint, announce.cumulativeDifficulty)
                     } else {
                         break
                     }
@@ -206,23 +225,38 @@ object ChainFetcher {
         undoDifficulty = BigInteger.ZERO
     }
 
-    fun chainFork(connection: Connection) {
-        val request = request
-
-        if (request == null || syncConnection != connection) {
-            connection.dos("Unexpected chain fork message")
+    @Suppress("UNUSED_PARAMETER")
+    fun chainFork(connection: Connection, chainFork: ChainFork) {
+        if (!connection.requestedBlocks) {
+            connection.dos("Unexpected packet ChainFork")
             return
         }
 
         connection.close()
-        request.cancel(CancellationException("Fork longer than the rolling checkpoint"))
+
+        if (syncConnection != connection)
+            return
+
+        request?.cancel(CancellationException("Fork longer than the rolling checkpoint"))
     }
 
     suspend fun blocks(connection: Connection, blocks: Blocks) {
-        if (request == null || syncConnection != connection) {
-            // 請求可能被取消
+        val requestedDifficulty = connection.requestedDifficulty.also {
+            connection.requestedDifficulty = BigInteger.ZERO
+        }
+
+        if (requestedDifficulty == BigInteger.ZERO) {
+            connection.dos("Unexpected packet Blocks")
             return
         }
+
+        if (request == null || syncConnection != connection) {
+            deferChannel.send(Pair(blocks, requestedDifficulty))
+            announces.offer(null)
+            logger.debug { "Deferred packet Blocks from ${connection.debugName()}" }
+            return
+        }
+
         recvChannel.send(blocks)
     }
 
@@ -252,9 +286,14 @@ object ChainFetcher {
         return true
     }
 
-    private fun requestBlocks(connection: Connection, hash: ByteArray, checkpoint: ByteArray) {
+    private fun requestBlocks(
+            connection: Connection,
+            hash: ByteArray,
+            checkpoint: ByteArray,
+            difficulty: BigInteger,
+    ) {
         request = Runtime.async { recvChannel.receive() }
-        connection.requestedBlocks = true
+        connection.requestedDifficulty = difficulty
         // 緊湊型區塊轉發
         connection.sendPacket(PacketType.GetBlocks, GetBlocks(hash, checkpoint))
     }

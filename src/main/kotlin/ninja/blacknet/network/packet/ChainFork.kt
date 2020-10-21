@@ -17,6 +17,7 @@ import ninja.blacknet.network.Connection
 class ChainFork(
 ) : Packet {
     override suspend fun process(connection: Connection) {
-        ChainFetcher.chainFork(connection)
+
+        ChainFetcher.chainFork(connection, this)
     }
 }

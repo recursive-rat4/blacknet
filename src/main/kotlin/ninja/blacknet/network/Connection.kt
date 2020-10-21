@@ -14,6 +14,9 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.ByteReadPacket
 import io.ktor.utils.io.core.readInt
 import io.ktor.utils.io.errors.IOException
+import java.math.BigInteger
+import kotlin.coroutines.CoroutineContext
+import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
@@ -29,8 +32,6 @@ import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.BinaryDecoder
 import ninja.blacknet.util.SynchronizedArrayList
-import kotlin.coroutines.CoroutineContext
-import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -72,7 +73,10 @@ class Connection(
     @Volatile
     var pingRequest: Pair<Int, Long>? = null
     @Volatile
-    var requestedBlocks: Boolean = false
+    var requestedDifficulty: BigInteger = BigInteger.ZERO
+
+    inline val requestedBlocks: Boolean
+        get() = requestedDifficulty != BigInteger.ZERO
 
     var peerId: Long = 0
     var version: Int = 0

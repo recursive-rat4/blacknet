@@ -35,8 +35,9 @@ class PeerInfo(
         val feeFilter: Long,
         val connectedAt: Long,
         val lastChain: ChainInfo,
+        val requestedBlocks: Boolean,
         val totalBytesRead: Long,
-        val totalBytesWritten: Long
+        val totalBytesWritten: Long,
 ) {
     @Serializable
     class ChainInfo(
@@ -75,8 +76,9 @@ class PeerInfo(
                     connection.feeFilter,
                     connection.connectedAt,
                     ChainInfo.get(connection.lastChain, forkCache),
+                    connection.requestedBlocks,
                     connection.totalBytesRead,
-                    connection.totalBytesWritten
+                    connection.totalBytesWritten,
             )
         }
 
