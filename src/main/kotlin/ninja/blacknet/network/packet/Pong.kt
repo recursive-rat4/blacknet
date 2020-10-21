@@ -17,7 +17,7 @@ class Pong(
         val response: Int
 ) : Packet {
     override suspend fun process(connection: Connection) {
-        val (challenge, requestTime) = connection.pingRequest ?: return connection.dos("Unexpected Pong")
+        val (challenge, requestTime) = connection.pingRequest ?: return connection.dos("Unexpected packet Pong")
 
         val solution = if (connection.version >= 13)
             solve(challenge)
