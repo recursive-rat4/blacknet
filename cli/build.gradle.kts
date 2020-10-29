@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":blockchain"))
+    implementation(project(":blacknet-runtime"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
     implementation("com.rfksystems:blake2b:1.0.0")
 }
