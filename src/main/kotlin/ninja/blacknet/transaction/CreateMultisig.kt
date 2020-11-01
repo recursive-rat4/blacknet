@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.util.sumByLong
 
@@ -64,7 +64,7 @@ class CreateMultisig(
 
     private fun hash(from: ByteArray, seq: Int, dataIndex: Int): ByteArray {
         val copy = CreateMultisig(n, deposits, ArrayList())
-        val bytes = BinaryEncoder.toBytes(serializer(), copy)
+        val bytes = binaryFormat.encodeToByteArray(serializer(), copy)
         return buildHash {
             encodeByteArray(from)
             encodeInt(seq)

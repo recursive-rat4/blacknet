@@ -19,7 +19,7 @@ import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.rpc.RPCServer
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet
 
@@ -199,7 +199,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     private fun processImpl(hash: ByteArray, bytes: ByteArray): Status {
-        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+        val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
             addImpl(hash, bytes)
@@ -210,7 +210,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     private suspend fun processImplWithFee(hash: ByteArray, bytes: ByteArray, time: Long): Pair<Status, Long> {
-        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+        val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
         val status = processTransactionImpl(tx, hash, bytes.size)
         if (status == Accepted) {
             addImpl(hash, bytes)

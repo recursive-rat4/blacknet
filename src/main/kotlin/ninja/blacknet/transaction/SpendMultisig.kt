@@ -14,7 +14,7 @@ import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.sumByLong
@@ -68,7 +68,7 @@ class SpendMultisig(
 
     private fun hash(): ByteArray {
         val copy = SpendMultisig(id, amounts, ArrayList())
-        val bytes = BinaryEncoder.toBytes(serializer(), copy)
+        val bytes = binaryFormat.encodeToByteArray(serializer(), copy)
         return buildHash { encodeByteArray(bytes) }
     }
 

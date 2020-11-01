@@ -17,7 +17,7 @@ import kotlinx.serialization.encoding.Encoder
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.HexCodecException
 import ninja.blacknet.rpc.requests.RequestDecoder
-import ninja.blacknet.serialization.ConfigDecoder
+import ninja.blacknet.serialization.config.ConfigDecoder
 import ninja.blacknet.serialization.notSupportedFormatError
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 

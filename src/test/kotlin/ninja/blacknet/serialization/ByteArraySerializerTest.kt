@@ -15,7 +15,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.rpc.requests.RequestDecoder
+import ninja.blacknet.rpc.requests.RequestFormat
+import ninja.blacknet.serialization.bbf.BinaryDecoder
+import ninja.blacknet.serialization.bbf.BinaryEncoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.plus
 
@@ -27,12 +30,12 @@ class ByteArraySerializerTest {
 
     @Test
     fun binaryDecoder() {
-        assertEquals(byteArray, BinaryDecoder(binaryEncoded).decode(ByteArraySerializer))
+        assertEquals(byteArray, binaryFormat.decodeFromByteArray(ByteArraySerializer, binaryEncoded))
     }
 
     @Test
     fun binaryEncoder() {
-        assertEquals(binaryEncoded, BinaryEncoder.toBytes(ByteArraySerializer, byteArray))
+        assertEquals(binaryEncoded, binaryFormat.encodeToByteArray(ByteArraySerializer, byteArray))
     }
 
     @Test
@@ -57,6 +60,6 @@ class ByteArraySerializerTest {
     fun requestDecoder() {
         @Serializable
         class Request(@Serializable(with = ByteArraySerializer::class) val byteArray: ByteArray)
-        assertEquals(byteArray, RequestDecoder(parametersOf("byteArray", hexEncoded)).decode(Request.serializer()).byteArray)
+        assertEquals(byteArray, RequestFormat().decodeFromParameters(Request.serializer(), parametersOf("byteArray", hexEncoded)).byteArray)
     }
 }

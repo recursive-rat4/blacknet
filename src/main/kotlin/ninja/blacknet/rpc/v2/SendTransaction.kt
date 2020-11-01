@@ -25,7 +25,7 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.rpc.requests.*
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.transaction.*
 
@@ -48,7 +48,7 @@ fun Route.sendTransaction() {
             val message = PaymentId.create(message, encrypted, privateKey, to) ?: return respondError("Failed to create payment id")
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
-            val data = BinaryEncoder.toBytes(Transfer.serializer(), Transfer(amount, to, message))
+            val data = binaryFormat.encodeToByteArray(Transfer.serializer(), Transfer(amount, to, message))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -77,7 +77,7 @@ fun Route.sendTransaction() {
         override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
-            val data = BinaryEncoder.toBytes(Burn.serializer(), Burn(amount, message))
+            val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -106,7 +106,7 @@ fun Route.sendTransaction() {
         override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
-            val data = BinaryEncoder.toBytes(Lease.serializer(), Lease(amount, to))
+            val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -136,7 +136,7 @@ fun Route.sendTransaction() {
         override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
-            val data = BinaryEncoder.toBytes(CancelLease.serializer(), CancelLease(amount, to, height))
+            val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 
@@ -167,7 +167,7 @@ fun Route.sendTransaction() {
         override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
             val from = Ed25519.toPublicKey(privateKey)
             val seq = WalletDB.getSequence(from)
-            val data = BinaryEncoder.toBytes(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
+            val data = binaryFormat.encodeToByteArray(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
             val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.WithdrawFromLease.type, data)
             val (hash, bytes) = tx.sign(privateKey)
 

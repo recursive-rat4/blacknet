@@ -11,7 +11,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.ByteArraySerializer
 
 /**
@@ -42,7 +42,7 @@ class Batch(
         for (index in 0 until multiData.size) {
             val (type, bytes) = multiData[index]
             val serializer = TxType.getSerializer(type)
-            val data = BinaryDecoder(bytes).decode(serializer)
+            val data = binaryFormat.decodeFromByteArray(serializer, bytes)
             val status = data.processImpl(tx, hash, index + 1, ledger)
             if (status != Accepted) {
                 return notAccepted("Batch ${index + 1}", status)

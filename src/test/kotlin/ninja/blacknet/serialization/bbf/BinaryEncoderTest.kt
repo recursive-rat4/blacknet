@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization
+package ninja.blacknet.serialization.bbf
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

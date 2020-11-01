@@ -33,8 +33,7 @@ import ninja.blacknet.dataDir
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.*
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 import java.io.File
@@ -258,7 +257,7 @@ fun Route.APIV1() {
         RPCServer.txMutex.withLock {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
-            val data = BinaryEncoder.toBytes(Transfer.serializer(), Transfer(amount, to, message))
+            val data = binaryFormat.encodeToByteArray(Transfer.serializer(), Transfer(amount, to, message))
             val tx = Transaction.create(from, seq, blockHash
                     ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
             val signed = tx.sign(privateKey)
@@ -281,7 +280,7 @@ fun Route.APIV1() {
         RPCServer.txMutex.withLock {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
-            val data = BinaryEncoder.toBytes(Burn.serializer(), Burn(amount, message))
+            val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
             val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
             val signed = tx.sign(privateKey)
 
@@ -303,7 +302,7 @@ fun Route.APIV1() {
         RPCServer.txMutex.withLock {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
-            val data = BinaryEncoder.toBytes(Lease.serializer(), Lease(amount, to))
+            val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
             val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
             val signed = tx.sign(privateKey)
 
@@ -326,7 +325,7 @@ fun Route.APIV1() {
         RPCServer.txMutex.withLock {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
-            val data = BinaryEncoder.toBytes(CancelLease.serializer(), CancelLease(amount, to, height))
+            val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
             val tx = Transaction.create(from, seq, blockHash
                     ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
             val signed = tx.sign(privateKey)
@@ -492,7 +491,7 @@ fun Route.APIV1() {
             if (raw)
                 return@get call.respond(result.toHex())
 
-            val tx = BinaryDecoder(result).decode(Transaction.serializer())
+            val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), result)
             call.respond(Json.stringify(TransactionInfoV2.serializer(), TransactionInfoV2(tx, hash, result.size)))
         } else {
             call.respond(HttpStatusCode.NotFound, "transaction not found")

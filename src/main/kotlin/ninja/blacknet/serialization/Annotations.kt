@@ -9,10 +9,16 @@
 
 package ninja.blacknet.serialization
 
+/**
+ * Serializable with Blacknet serialization.
+ */
 @Target(AnnotationTarget.CLASS)
 annotation class Serializable
 
+/**
+ * A collection of a statically known size that generally doesn't encode this value.
+ */
 @Target(AnnotationTarget.PROPERTY)
-annotation class FixedSize(
-    val size: Int
+annotation class Size(
+    val value: Int
 )

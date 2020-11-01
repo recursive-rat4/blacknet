@@ -22,7 +22,7 @@ import ninja.blacknet.network.toPort
 import ninja.blacknet.rpc.requests.*
 import ninja.blacknet.rpc.v1.NodeInfo
 import ninja.blacknet.rpc.v1.TxPoolInfo
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 
 fun Route.node() {
     @Serializable
@@ -64,7 +64,7 @@ fun Route.node() {
                 if (raw)
                     return respondText(Base16.encode(result))
 
-                val tx = BinaryDecoder(result).decode(Transaction.serializer())
+                val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), result)
                 respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, result.size))
             } else {
                 respondError("Transaction not found")

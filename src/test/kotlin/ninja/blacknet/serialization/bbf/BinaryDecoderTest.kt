@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization
+package ninja.blacknet.serialization.bbf
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,14 +46,14 @@ class BinaryDecoderTest {
                         Unit,
                         "八"
                 ),
-                BinaryDecoder(byteArrayOfInts(
+                binaryFormat.decodeFromByteArray(Structure.serializer(), byteArrayOfInts(
                         0,
                         1, -1,
                         2, 1, -1, -2,
                         4, 3, 2, 1, -1, -2, -3, -4,
                         // Unit //
                         0x83, 0xE5, 0x85, 0xAB
-                )).decode(Structure.serializer())
+                ))
         )
     }
 }

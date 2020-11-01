@@ -7,31 +7,19 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization
+package ninja.blacknet.serialization.config
 
-import io.ktor.utils.io.charsets.Charset
-import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
-import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import ninja.blacknet.serialization.AdaptorDecoder
 
 class ConfigDecoderImpl(
-        private val reader: ConfigReader
+        private val reader: ConfigReader,
+        override val serializersModule: SerializersModule
 ) : AdaptorDecoder(), ConfigDecoder {
-    constructor(name: String, charset: Charset = Charsets.UTF_8) : this(ConfigReader(name, charset))
-
-    override val serializersModule: SerializersModule = EmptySerializersModule
-
-    fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
-        sleeper = -1
-        descriptor = strategy.descriptor
-        val value = strategy.deserialize(this)
-        return value
-    }
-
     override fun decodeNotNullMark(): Boolean {
         val name = descriptor.getElementName(sleeper)
         val string = reader.readString(name)
@@ -86,16 +74,15 @@ class ConfigDecoderImpl(
         return string.toString()
     }
 
-    // 軌枕
     private var sleeper: Int = -1
-    private lateinit var descriptor: SerialDescriptor
+    internal lateinit var descriptor: SerialDescriptor
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
         return if (descriptor.kind === StructureKind.LIST) {
             require(descriptor.serialName.endsWith("ArrayList")) { "未知列表類型 ${descriptor.serialName}" }
             val name = this.descriptor.getElementName(sleeper)
             val list = reader.readList(name)
-            ListDecoder(list)
+            ListDecoder(list, serializersModule)
         } else {
             this
         }
@@ -114,10 +101,9 @@ class ConfigDecoderImpl(
     }
 
     private class ListDecoder(
-            private val input: List<String>
+            private val input: List<String>,
+            override val serializersModule: SerializersModule
     ) : AdaptorDecoder(), ConfigDecoder {
-        override val serializersModule: SerializersModule = EmptySerializersModule
-
         override fun decodeBoolean(): Boolean = input[++position].toBoolean()
         override fun decodeByte(): Byte = input[++position].toByte()
         override fun decodeShort(): Short = input[++position].toShort()

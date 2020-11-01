@@ -18,7 +18,7 @@ import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.transaction.Batch
@@ -66,17 +66,17 @@ class TransactionInfo(
             } else if (type != TxType.Batch.type) {
                 @Suppress("UNCHECKED_CAST")
                 val serializer = TxType.getSerializer(type) as KSerializer<TxData>
-                val data = BinaryDecoder(bytes).decode(serializer)
+                val data = binaryFormat.decodeFromByteArray(serializer, bytes)
                 listOf(DataInfo(type.toUByte().toInt(), 0, json.encodeToJsonElement(serializer, data)))
             } else {
-                val multiData = BinaryDecoder(bytes).decode(Batch.serializer())
+                val multiData = binaryFormat.decodeFromByteArray(Batch.serializer(), bytes)
                 val list = ArrayList<DataInfo>(multiData.multiData.size)
                 if (filter == null) {
                     for (index in 0 until multiData.multiData.size) {
                         val (dataType, dataBytes) = multiData.multiData[index]
                         @Suppress("UNCHECKED_CAST")
                         val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
-                        val data = BinaryDecoder(dataBytes).decode(serializer)
+                        val data = binaryFormat.decodeFromByteArray(serializer, dataBytes)
                         list.add(DataInfo(dataType.toUByte().toInt(), index + 1, json.encodeToJsonElement(serializer, data)))
                     }
                 } else {
@@ -85,7 +85,7 @@ class TransactionInfo(
                         val (dataType, dataBytes) = multiData.multiData[dataIndex - 1]
                         @Suppress("UNCHECKED_CAST")
                         val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
-                        val data = BinaryDecoder(dataBytes).decode(serializer)
+                        val data = binaryFormat.decodeFromByteArray(serializer, dataBytes)
                         list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, json.encodeToJsonElement(serializer, data)))
                     }
                 }

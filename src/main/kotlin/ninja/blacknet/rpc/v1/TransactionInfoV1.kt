@@ -16,7 +16,7 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.SignatureSerializer
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.transaction.*
 
 @Serializable
@@ -46,12 +46,12 @@ class TransactionInfoV1(
     companion object {
         fun fromBytes(bytes: ByteArray): TransactionInfoV1 {
             val hash = Transaction.hash(bytes)
-            return TransactionInfoV1(BinaryDecoder(bytes).decode(Transaction.serializer()), hash, bytes.size)
+            return TransactionInfoV1(binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes), hash, bytes.size)
         }
 
         private fun data(type: Byte, bytes: ByteArray): String {
             val serializer = TxType.getSerializer(type)
-            val txData = BinaryDecoder(bytes).decode(serializer)
+            val txData = binaryFormat.decodeFromByteArray(serializer, bytes)
             return when (type) {
                 TxType.Transfer.type -> Json.stringify(TransferInfo.serializer(), TransferInfo(txData as Transfer))
                 TxType.Burn.type -> Json.stringify(Burn.serializer(), txData as Burn)

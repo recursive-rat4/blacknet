@@ -18,7 +18,7 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.SignatureSerializer
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.json.json
 
 @Serializable
@@ -54,7 +54,7 @@ class BlockInfo(
         private fun transactions(block: Block, txdetail: Boolean): JsonElement {
             if (txdetail) {
                 return JsonArray(block.transactions.map { bytes ->
-                    val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                    val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
                     val txHash = Transaction.hash(bytes)
                     return@map json.encodeToJsonElement(TransactionInfo.serializer(), TransactionInfo(tx, txHash, bytes.size))
                 })

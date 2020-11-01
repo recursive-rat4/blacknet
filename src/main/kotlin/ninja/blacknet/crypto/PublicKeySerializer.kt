@@ -20,8 +20,8 @@ import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.HexCodecException
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.rpc.requests.RequestDecoder
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.BinaryDecoder
+import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedFormatError
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 

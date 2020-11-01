@@ -14,8 +14,8 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.BinaryDecoder
+import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
 
 const val BLAKE256: Byte = 0

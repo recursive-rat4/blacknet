@@ -13,8 +13,8 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.SipHash.hashCode
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.BinaryDecoder
+import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.sumByLong

@@ -12,8 +12,8 @@ package ninja.blacknet.util
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.builtins.serializer
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.json.json
 
 class LinkedHashMapTest {
@@ -54,8 +54,8 @@ class LinkedHashMapTest {
             4 to 16,
         )
         val serializer = LinkedHashMapSerializer(Int.serializer(), Int.serializer())
-        assertEquals(map, BinaryDecoder(binaryEncoded).decode(serializer))
-        assertEquals(binaryEncoded,BinaryEncoder.toBytes(serializer, map))
+        assertEquals(map, binaryFormat.decodeFromByteArray(serializer, binaryEncoded))
+        assertEquals(binaryEncoded, binaryFormat.encodeToByteArray(serializer, map))
         assertEquals(map, json.decodeFromString(serializer, jsonEncoded))
         assertEquals(jsonEncoded, json.encodeToString(serializer, map))
     }

@@ -19,8 +19,8 @@ import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.Ed25519.x25519
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.BinaryDecoder
+import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedFormatError
 import ninja.blacknet.util.emptyByteArray
 

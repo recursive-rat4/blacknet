@@ -18,8 +18,8 @@ import ninja.blacknet.codec.base.Base32
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.serialization.BinaryDecoder
-import ninja.blacknet.serialization.BinaryEncoder
+import ninja.blacknet.serialization.bbf.BinaryDecoder
+import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedFormatError
 import java.net.InetAddress
 import java.net.InetSocketAddress

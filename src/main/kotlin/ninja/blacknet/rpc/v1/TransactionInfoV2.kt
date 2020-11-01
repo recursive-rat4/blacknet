@@ -19,7 +19,7 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.SignatureSerializer
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.transaction.TxData
 import ninja.blacknet.transaction.TxType
 
@@ -54,7 +54,7 @@ class TransactionInfoV2(
             if (type == TxType.Generated.type) return buildJsonObject {}
             @Suppress("UNCHECKED_CAST")
             val serializer = TxType.getSerializer(type) as KSerializer<TxData>
-            val txData = BinaryDecoder(bytes).decode(serializer)
+            val txData = binaryFormat.decodeFromByteArray(serializer, bytes)
             return Json.toJson(serializer, txData)
         }
     }

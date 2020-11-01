@@ -19,6 +19,8 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.crypto.HashCoder
 import ninja.blacknet.rpc.requests.RequestDecoder
+import ninja.blacknet.serialization.bbf.BinaryDecoder
+import ninja.blacknet.serialization.bbf.BinaryEncoder
 
 /**
  * Serializes a [Long] with a transformation to a string in a json representation.

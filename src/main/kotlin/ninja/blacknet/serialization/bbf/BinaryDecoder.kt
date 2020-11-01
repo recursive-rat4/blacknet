@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization
+package ninja.blacknet.serialization.bbf
 
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.DeserializationStrategy
@@ -15,27 +15,16 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import ninja.blacknet.serialization.AdaptorDecoder
 
 /**
  * Decoder from the Blacknet Binary Format
  */
 class BinaryDecoder(
-        private val input: ByteReadPacket
+        val input: ByteReadPacket,
+        override val serializersModule: SerializersModule = EmptySerializersModule
 ) : AdaptorDecoder() {
     constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
-
-    override val serializersModule: SerializersModule = EmptySerializersModule
-
-    fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
-        val value = strategy.deserialize(this)
-        val remaining = input.remaining
-        return if (remaining == 0L) {
-            value
-        } else {
-            input.release()
-            throw SerializationException("$remaining trailing bytes")
-        }
-    }
 
     override fun decodeByte(): Byte = input.readByte()
     override fun decodeShort(): Short = input.readShort()

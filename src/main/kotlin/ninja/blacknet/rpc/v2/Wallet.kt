@@ -28,7 +28,7 @@ import ninja.blacknet.rpc.v1.AddressInfo
 import ninja.blacknet.rpc.v1.NewMnemonicInfo
 import ninja.blacknet.rpc.v1.toHex
 import ninja.blacknet.transaction.TxType
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashMapSerializer
 
@@ -200,7 +200,7 @@ fun Route.wallet() {
                 if (raw) {
                     respondText(@Suppress("DEPRECATION") bytes.toHex())
                 } else {
-                    val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                    val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
                     respondJson(TransactionInfo.serializer(), TransactionInfo(tx, hash, bytes.size, txData.types))
                 }
             } else {
@@ -292,7 +292,7 @@ fun Route.wallet() {
                     for (index in offset until toIndex) {
                         val (hash, txData) = list[index]
                         val bytes = WalletDB.getTransactionImpl(hash)!!
-                        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                        val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
                         transactions.add(WalletTransactionInfo(
                                 TransactionInfo(tx, hash, bytes.size, txData.types),
                                 txData.confirmationsImpl(state),
@@ -313,7 +313,7 @@ fun Route.wallet() {
                             continue
                         }
                         val bytes = WalletDB.getTransactionImpl(hash)!!
-                        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                        val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
                         transactions.add(WalletTransactionInfo(
                             TransactionInfo(tx, hash, bytes.size, filter),
                             txData.confirmationsImpl(state),
@@ -358,7 +358,7 @@ fun Route.wallet() {
                 wallet.transactions.forEach { (hash, txData) ->
                     if (txData.height != 0 && height >= txData.height) {
                         val bytes = WalletDB.getTransactionImpl(hash)!!
-                        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                        val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
                         transactions.add(WalletTransactionInfo(
                                 TransactionInfo(tx, hash, bytes.size, txData.types),
                                 txData.confirmationsImpl(state),

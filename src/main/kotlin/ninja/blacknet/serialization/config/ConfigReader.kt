@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization
+package ninja.blacknet.serialization.config
 
 import io.ktor.utils.io.charsets.Charset
 import java.io.File

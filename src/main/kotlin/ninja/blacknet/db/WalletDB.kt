@@ -31,6 +31,9 @@ import ninja.blacknet.network.Node
 import ninja.blacknet.network.packet.UnfilteredInvList
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.*
+import ninja.blacknet.serialization.bbf.BinaryDecoder
+import ninja.blacknet.serialization.bbf.BinaryEncoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 
@@ -46,9 +49,8 @@ object WalletDB {
     private val wallets = HashMap<ByteArray, Wallet>()
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
-        val version = BinaryEncoder()
-        version.encodeVarInt(VERSION)
-        batch.put(VERSION_KEY, version.toBytes())
+        val versionBytes = binaryFormat.encodeToByteArray(VarIntSerializer, VERSION)
+        batch.put(VERSION_KEY, versionBytes)
     }
 
     init {
@@ -56,7 +58,7 @@ object WalletDB {
         val versionBytes = LevelDB.get(VERSION_KEY)
 
         val version = if (versionBytes != null) {
-            BinaryDecoder(versionBytes).decodeVarInt()
+            binaryFormat.decodeFromByteArray(VarIntSerializer, versionBytes)
         } else {
             1
         }
@@ -68,7 +70,7 @@ object WalletDB {
                 for (i in 0 until keysBytes.size step PublicKeySerializer.SIZE_BYTES) {
                     val publicKey = decoder.decodeFixedByteArray(PublicKeySerializer.SIZE_BYTES)
                     val walletBytes = LevelDB.get(WALLET_KEY, publicKey)!!
-                    val wallet = BinaryDecoder(walletBytes).decode(Wallet.serializer())
+                    val wallet = binaryFormat.decodeFromByteArray(Wallet.serializer(), walletBytes)
                     txns += wallet.transactions.size
                     wallets.put(publicKey, wallet)
                 }
@@ -101,7 +103,7 @@ object WalletDB {
                 wallet.transactions.forEach { (hash, txData) ->
                     if (txData.height == 0 && txData.types[0].type != TxType.Generated.type) {
                         val bytes = getTransactionImpl(hash)!!
-                        val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                        val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
                         unconfirmed.add(Triple(hash, bytes, tx.seq))
                     }
                 }
@@ -214,7 +216,7 @@ object WalletDB {
         }
 
         updated.forEach { (publicKey, wallet) ->
-            batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
+            batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
         }
     }
 
@@ -228,7 +230,7 @@ object WalletDB {
         if (height != 0) {
             if (block!!.generator.contentEquals(publicKey)) {
                 val tx = Transaction.generated(publicKey, height, hash, generated)
-                val txBytes = BinaryEncoder.toBytes(Transaction.serializer(), tx)
+                val txBytes = binaryFormat.encodeToByteArray(Transaction.serializer(), tx)
                 val txHash = hash // re-use block hash as hash of Generated tx
                 processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, block.time, height, batch, rescan)
             }
@@ -236,7 +238,7 @@ object WalletDB {
             val balance = Genesis.balances.get(publicKey) ?: return
 
             val tx = Transaction.generated(publicKey, height, hash, balance)
-            val txBytes = BinaryEncoder.toBytes(Transaction.serializer(), tx)
+            val txBytes = binaryFormat.encodeToByteArray(Transaction.serializer(), tx)
             val txHash = Transaction.hash(txBytes)
             processTransactionImpl(publicKey, wallet, txHash, tx, txBytes, Genesis.TIME, height, batch, rescan)
         }
@@ -267,14 +269,14 @@ object WalletDB {
                 if (from) {
                     true
                 } else {
-                    BinaryDecoder(bytes).decode(Transfer.serializer()).involves(publicKey)
+                    binaryFormat.decodeFromByteArray(Transfer.serializer(), bytes).involves(publicKey)
                 }
             }
             TxType.Burn.type -> {
                 from
             }
             TxType.Lease.type -> {
-                val data = BinaryDecoder(bytes).decode(Lease.serializer())
+                val data = binaryFormat.decodeFromByteArray(Lease.serializer(), bytes)
                 if (from) {
                     wallet.outLeases.add(AccountState.Lease(data.to, height, data.amount))
                     true
@@ -283,7 +285,7 @@ object WalletDB {
                 }
             }
             TxType.CancelLease.type -> {
-                val data = BinaryDecoder(bytes).decode(CancelLease.serializer())
+                val data = binaryFormat.decodeFromByteArray(CancelLease.serializer(), bytes)
                 if (from) {
                     if (!wallet.outLeases.remove(AccountState.Lease(data.to, data.height, data.amount)))
                         logger.warn("Lease not found")
@@ -296,7 +298,7 @@ object WalletDB {
                 from
             }
             TxType.CreateHTLC.type -> {
-                val data = BinaryDecoder(bytes).decode(CreateHTLC.serializer())
+                val data = binaryFormat.decodeFromByteArray(CreateHTLC.serializer(), bytes)
                 if (from || data.involves(publicKey)) {
                     wallet.htlcs.add(data.id(hash, dataIndex))
                     true
@@ -305,7 +307,7 @@ object WalletDB {
                 }
             }
             TxType.RefundHTLC.type -> {
-                val data = BinaryDecoder(bytes).decode(RefundHTLC.serializer())
+                val data = binaryFormat.decodeFromByteArray(RefundHTLC.serializer(), bytes)
                 if (from || data.involves(wallet.htlcs)) {
                     wallet.htlcs.remove(data.id)
                     true
@@ -314,7 +316,7 @@ object WalletDB {
                 }
             }
             TxType.CreateMultisig.type -> {
-                val data = BinaryDecoder(bytes).decode(CreateMultisig.serializer())
+                val data = binaryFormat.decodeFromByteArray(CreateMultisig.serializer(), bytes)
                 if (from || data.involves(publicKey)) {
                     wallet.multisigs.add(data.id(hash, dataIndex))
                     true
@@ -323,7 +325,7 @@ object WalletDB {
                 }
             }
             TxType.SpendMultisig.type -> {
-                val data = BinaryDecoder(bytes).decode(SpendMultisig.serializer())
+                val data = binaryFormat.decodeFromByteArray(SpendMultisig.serializer(), bytes)
                 if (from || data.involves(wallet.multisigs)) {
                     wallet.multisigs.remove(data.id)
                     true
@@ -332,7 +334,7 @@ object WalletDB {
                 }
             }
             TxType.WithdrawFromLease.type -> {
-                val data = BinaryDecoder(bytes).decode(WithdrawFromLease.serializer())
+                val data = binaryFormat.decodeFromByteArray(WithdrawFromLease.serializer(), bytes)
                 if (from) {
                     val lease = wallet.outLeases.find { it.publicKey.contentEquals(data.to) && it.height == data.height && it.amount == data.amount }
                     if (lease != null)
@@ -345,7 +347,7 @@ object WalletDB {
                 }
             }
             TxType.ClaimHTLC.type -> {
-                val data = BinaryDecoder(bytes).decode(ClaimHTLC.serializer())
+                val data = binaryFormat.decodeFromByteArray(ClaimHTLC.serializer(), bytes)
                 if (from || data.involves(wallet.htlcs)) {
                     wallet.htlcs.remove(data.id)
                     true
@@ -379,7 +381,7 @@ object WalletDB {
                     else
                         emptyList()
                 } else {
-                    val data = BinaryDecoder(bytes).decode(Batch.serializer())
+                    val data = binaryFormat.decodeFromByteArray(Batch.serializer(), bytes)
                     val types = ArrayList<TransactionDataType>(data.multiData.size)
                     for (index in 0 until data.multiData.size) {
                         val (dataType, dataBytes) = data.multiData[index]
@@ -395,7 +397,7 @@ object WalletDB {
 
                 if (!rescan) {
                     RPCServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
-                    batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
+                    batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
                 }
                 if (store) {
                     batch.put(TX_KEY, hash, bytes)
@@ -409,7 +411,7 @@ object WalletDB {
             txData.height = height
 
             if (!rescan) {
-                batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
+                batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
             }
 
             return true
@@ -487,7 +489,7 @@ object WalletDB {
 
     private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: ByteArray, wallet: Wallet) {
         wallets.put(publicKey, wallet)
-        batch.put(WALLET_KEY, publicKey, BinaryEncoder.toBytes(Wallet.serializer(), wallet))
+        batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
         val encoder = BinaryEncoder()
         wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey) }
         val keysBytes = encoder.toBytes()
@@ -542,7 +544,7 @@ object WalletDB {
             val block = BlockDB.blockImpl(hash)!!.first
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
-                val tx = BinaryDecoder(bytes).decode(Transaction.serializer())
+                val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
                 val txHash = Transaction.hash(bytes)
                 processTransactionImpl(publicKey, wallet, txHash, tx, bytes, block.time, height, batch, true)
             }

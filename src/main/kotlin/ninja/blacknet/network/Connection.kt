@@ -30,7 +30,7 @@ import ninja.blacknet.core.currentTimeMillis
 import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.packet.*
-import ninja.blacknet.serialization.BinaryDecoder
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.util.SynchronizedArrayList
 
 private val logger = KotlinLogging.logger {}
@@ -108,7 +108,7 @@ class Connection(
 
                 val packet = try {
                     val serializer = PacketType.getSerializer(type)
-                    BinaryDecoder(bytes).decode(serializer)
+                    binaryFormat.decodeFromPacket(serializer, bytes)
                 } catch (e: Throwable) {
                     dos("Deserialization failed: ${e.message}")
                     continue
