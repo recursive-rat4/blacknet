@@ -14,7 +14,6 @@ import java.security.Security
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import ninja.blacknet.crypto.HashCoder.Companion.buildHash
 import ninja.blacknet.util.byteArrayOfInts
 import ninja.blacknet.util.emptyByteArray
 import org.bouncycastle.jce.provider.BouncyCastleProvider

@@ -28,7 +28,7 @@ import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.dataDir
 import ninja.blacknet.core.currentTimeSeconds
-import ninja.blacknet.crypto.HashCoder.Companion.buildHash
+import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.logging.error
 import ninja.blacknet.util.moveFile

@@ -20,10 +20,10 @@ object Blake2b {
     /**
      * Builds a hash value with the given [input] builder.
      *
-     * @param input the initialization function with the [HashCoder] receiver
+     * @param input the initialization function with the [HashEncoder] receiver
      * @return the built hash value
      */
-    inline fun buildHash(input: HashCoder.() -> Unit): ByteArray {
+    inline fun buildHash(input: HashEncoder.() -> Unit): ByteArray {
         val coder = pool.borrow()
         return try {
             coder.input()
@@ -36,20 +36,20 @@ object Blake2b {
         }
     }
 
-    val pool = object : DefaultPool<HashCoder>(Runtime.availableProcessors) {
-        override fun produceInstance(): HashCoder {
-            return HashCoder(HashWriterJvm(BLAKE2_B_256))
+    val pool = object : DefaultPool<HashEncoder>(Runtime.availableProcessors) {
+        override fun produceInstance(): HashEncoder {
+            return HashEncoder(HashWriterJvm(BLAKE2_B_256))
         }
 
-        override fun clearInstance(instance: HashCoder): HashCoder {
+        override fun clearInstance(instance: HashEncoder): HashEncoder {
             return instance
         }
 
-        override fun validateInstance(instance: HashCoder) {
+        override fun validateInstance(instance: HashEncoder) {
 
         }
 
-        override fun disposeInstance(instance: HashCoder) {
+        override fun disposeInstance(instance: HashEncoder) {
 
         }
     }

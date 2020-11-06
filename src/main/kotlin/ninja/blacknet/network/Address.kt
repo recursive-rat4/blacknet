@@ -15,7 +15,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import ninja.blacknet.Config
 import ninja.blacknet.codec.base.Base32
-import ninja.blacknet.crypto.HashCoder
+import ninja.blacknet.crypto.HashEncoder
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.serialization.bbf.BinaryDecoder
@@ -161,7 +161,7 @@ class Address(
                     encoder.encodeShort(value.port)
                     encoder.encodeFixedByteArray(value.bytes)
                 }
-                is HashCoder -> {
+                is HashEncoder -> {
                     encoder.encodeByte(value.network.type)
                     encoder.encodeShort(value.port)
                     encoder.encodeByteArray(value.bytes)

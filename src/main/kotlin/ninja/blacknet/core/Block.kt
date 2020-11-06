@@ -66,7 +66,7 @@ class Block(
         }
 
         fun create(previous: ByteArray, time: Long, generator: ByteArray): Block {
-            return Block(VERSION, previous, time, generator, HashSerializer.ZERO, EMPTY_SIGNATURE, ArrayList())
+            return Block(VERSION, previous, time, generator, HashSerializer.ZERO, SignatureSerializer.EMPTY, ArrayList())
         }
     }
 }

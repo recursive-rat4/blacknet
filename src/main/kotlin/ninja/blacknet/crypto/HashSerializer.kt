@@ -11,33 +11,26 @@ package ninja.blacknet.crypto
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonEncoder
-import ninja.blacknet.codec.base.Base16
-import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.rpc.requests.RequestDecoder
+import ninja.blacknet.serialization.ContextualSerializer
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
-import ninja.blacknet.serialization.notSupportedFormatError
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
+import ninja.blacknet.serialization.notSupportedFormatError
 
 /**
- * Serializes a BLAKE2b-256 hash.
+ * Contextual serializer for a BLAKE2b-256 hash.
  */
-object HashSerializer : KSerializer<ByteArray> {
+object HashSerializer : ContextualSerializer<ByteArray>() {
     /**
      * The number of bytes in a binary representation of the hash.
      */
     const val SIZE_BYTES = 32
     val ZERO = ByteArray(SIZE_BYTES)
-
-    override val descriptor: SerialDescriptor = ListSerialDescriptor(
-            "ninja.blacknet.crypto.HashSerializer",
-            Byte.serializer().descriptor  // PrimitiveKind.STRING
-    )
 
     fun decode(string: String): ByteArray {
         return decodeHex(string, SIZE_BYTES * 2)
@@ -46,12 +39,20 @@ object HashSerializer : KSerializer<ByteArray> {
     fun encode(hash: ByteArray): String {
         return encodeHex(hash, SIZE_BYTES * 2)
     }
+}
+
+/**
+ * Serializes a BLAKE2b-256 hash.
+ */
+object HashAsBinarySerializer : KSerializer<ByteArray> {
+    override val descriptor: SerialDescriptor = ListSerialDescriptor(
+            "ninja.blacknet.crypto.HashAsBinarySerializer",
+            Byte.serializer().descriptor
+    )
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is BinaryDecoder -> decoder.decodeFixedByteArray(SIZE_BYTES)
-            is RequestDecoder,
-            is JsonDecoder -> decode(decoder.decodeString())
+            is BinaryDecoder -> decoder.decodeFixedByteArray(HashSerializer.SIZE_BYTES)
             else -> throw notSupportedFormatError(decoder, this)
         }
     }
@@ -59,9 +60,26 @@ object HashSerializer : KSerializer<ByteArray> {
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeFixedByteArray(value)
-            is HashCoder -> encoder.encodeByteArray(value)
-            is JsonEncoder -> encoder.encodeString(encode(value))
+            is HashEncoder -> encoder.encodeByteArray(value)
             else -> throw notSupportedFormatError(encoder, this)
         }
+    }
+}
+
+/**
+ * Serializes a BLAKE2b-256 hash.
+ */
+object HashAsStringSerializer : KSerializer<ByteArray> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
+            "ninja.blacknet.crypto.HashAsStringSerializer",
+            PrimitiveKind.STRING
+    )
+
+    override fun deserialize(decoder: Decoder): ByteArray {
+        return HashSerializer.decode(decoder.decodeString())
+    }
+
+    override fun serialize(encoder: Encoder, value: ByteArray) {
+        encoder.encodeString(HashSerializer.encode(value))
     }
 }

@@ -12,8 +12,6 @@ package ninja.blacknet.core
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
-import ninja.blacknet.serialization.bbf.BinaryDecoder
-import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.LongSerializer
@@ -61,7 +59,7 @@ class Transaction(
         }
 
         fun create(from: ByteArray, seq: Int, referenceChain: ByteArray, fee: Long, type: Byte, data: ByteArray): Transaction {
-            return Transaction(EMPTY_SIGNATURE, from, seq, referenceChain, fee, type, data)
+            return Transaction(SignatureSerializer.EMPTY, from, seq, referenceChain, fee, type, data)
         }
 
         /**
@@ -84,7 +82,7 @@ class Transaction(
          * @return the constructed [Transaction]
          */
         fun generated(from: ByteArray, height: Int, referenceChain: ByteArray, amount: Long): Transaction {
-            return Transaction(EMPTY_SIGNATURE, from, height, referenceChain, amount, TxType.Generated.type, emptyByteArray())
+            return Transaction(SignatureSerializer.EMPTY, from, height, referenceChain, amount, TxType.Generated.type, emptyByteArray())
         }
     }
 }

@@ -22,10 +22,12 @@ public abstract class ContextualSerializer<T> : KSerializer<T> {
     override val descriptor: SerialDescriptor = ContextualSerialDescriptor("ninja.blacknet.serialization.ContextualSerializer")
 
     override fun deserialize(decoder: Decoder): T {
+        @Suppress("UNCHECKED_CAST")
         return ((decoder.serializersModule.getContextual(this::class) ?: throw notSupportedFormatError(decoder, this)) as KSerializer<T>).deserialize(decoder)
     }
 
     override fun serialize(encoder: Encoder, value: T) {
+        @Suppress("UNCHECKED_CAST")
         ((encoder.serializersModule.getContextual(this::class) ?: throw notSupportedFormatError(encoder, this)) as KSerializer<T>).serialize(encoder, value)
     }
 }

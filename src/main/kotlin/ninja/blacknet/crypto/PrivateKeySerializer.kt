@@ -11,29 +11,24 @@ package ninja.blacknet.crypto
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.HexCodecException
-import ninja.blacknet.rpc.requests.RequestDecoder
-import ninja.blacknet.serialization.config.ConfigDecoder
+import ninja.blacknet.serialization.ContextualSerializer
 import ninja.blacknet.serialization.notSupportedFormatError
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 
 /**
- * Serializes an Ed25519 private key.
+ * Contextual serializer for an Ed25519 private key.
  */
-object PrivateKeySerializer : KSerializer<ByteArray> {
+object PrivateKeySerializer : ContextualSerializer<ByteArray>() {
     /**
      * The number of bytes in a binary representation of the private key.
      */
     const val SIZE_BYTES = 32
-
-    override val descriptor: SerialDescriptor = ListSerialDescriptor(
-            "ninja.blacknet.crypto.PrivateKeySerializer",
-            Byte.serializer().descriptor  // PrimitiveKind.STRING
-    )
 
     fun decode(string: String): ByteArray {
         return try {
@@ -42,19 +37,43 @@ object PrivateKeySerializer : KSerializer<ByteArray> {
             Mnemonic.fromString(string)
         }
     }
+}
+
+/**
+ * Serializes an Ed25519 private key.
+ */
+object PrivateKeyAsBinarySerializer : KSerializer<ByteArray> {
+    override val descriptor: SerialDescriptor = ListSerialDescriptor(
+            "ninja.blacknet.crypto.PrivateKeyAsBinarySerializer",
+            Byte.serializer().descriptor
+    )
 
     override fun deserialize(decoder: Decoder): ByteArray {
-        return when (decoder) {
-            is ConfigDecoder,
-            is RequestDecoder -> decode(decoder.decodeString())
-            else -> throw notSupportedFormatError(decoder, this)
-        }
+        throw notSupportedFormatError(decoder, this)
     }
 
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
-            is HashCoder -> encoder.encodeByteArray(value)
+            is HashEncoder -> encoder.encodeByteArray(value)
             else -> throw notSupportedFormatError(encoder, this)
         }
+    }
+}
+
+/**
+ * Serializes an Ed25519 private key.
+ */
+object PrivateKeyAsStringSerializer : KSerializer<ByteArray> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
+            "ninja.blacknet.crypto.PrivateKeyAsStringSerializer",
+            PrimitiveKind.STRING
+    )
+
+    override fun deserialize(decoder: Decoder): ByteArray {
+        return PrivateKeySerializer.decode(decoder.decodeString())
+    }
+
+    override fun serialize(encoder: Encoder, value: ByteArray) {
+        throw notSupportedFormatError(encoder, this)
     }
 }

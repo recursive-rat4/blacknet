@@ -18,6 +18,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import ninja.blacknet.serialization.binaryModule
 
 class BinaryFormat(
         override val serializersModule: SerializersModule = EmptySerializersModule
@@ -49,4 +50,6 @@ class BinaryFormat(
     }
 }
 
-val binaryFormat = BinaryFormat()
+val binaryFormat = BinaryFormat(
+        serializersModule = binaryModule
+)

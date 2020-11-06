@@ -12,20 +12,11 @@
 
 package ninja.blacknet.serialization.bbf
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonEncoder
 import kotlin.experimental.and
 import kotlin.experimental.or
-import ninja.blacknet.crypto.HashCoder
-import ninja.blacknet.rpc.requests.RequestDecoder
-import ninja.blacknet.serialization.notSupportedFormatError
 
 /**
  * The maximum number of bytes in the Blacknet Binary Format representation of the [Int].

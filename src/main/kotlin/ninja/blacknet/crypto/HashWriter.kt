@@ -49,7 +49,7 @@ interface HashWriter {
  *
  * @param value the [ByteArray] containing the data
  */
-fun HashCoder.encodeByteArray(value: ByteArray) {
+fun HashEncoder.encodeByteArray(value: ByteArray) {
     writer.writeByteArray(value)
 }
 
@@ -60,6 +60,6 @@ fun HashCoder.encodeByteArray(value: ByteArray) {
  * @param offset the offset of the data
  * @param length the length of the data
  */
-fun HashCoder.encodeByteArray(value: ByteArray, offset: Int, length: Int) {
+fun HashEncoder.encodeByteArray(value: ByteArray, offset: Int, length: Int) {
     writer.writeByteArray(value, offset, length)
 }

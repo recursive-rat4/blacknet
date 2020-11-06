@@ -12,10 +12,8 @@ package ninja.blacknet.contract
 import com.rfksystems.blake2b.Blake2b.BLAKE2_B_256
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.HashCoder.Companion.buildHash
+import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.serialization.bbf.BinaryDecoder
-import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.ByteArraySerializer
 
 const val BLAKE256: Byte = 0

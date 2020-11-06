@@ -11,10 +11,10 @@ package ninja.blacknet.crypto
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import ninja.blacknet.crypto.HashCoder.Companion.buildHash
+import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.util.byteArrayOfInts
 
-class HashCoderTest {
+class HashEncoderTest {
     @Test
     fun test() {
         assertEquals(

@@ -13,7 +13,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import ninja.blacknet.serialization.config.ConfigDecoder
 import ninja.blacknet.serialization.notSupportedFormatError
 import java.text.DecimalFormat
 import java.util.Locale
@@ -70,10 +69,7 @@ class Size(
             : RuntimeException(message, cause)
 
         override fun deserialize(decoder: Decoder): Size {
-            return when (decoder) {
-                is ConfigDecoder -> Size.parse(decoder.decodeString())
-                else -> throw notSupportedFormatError(decoder, this)
-            }
+            return Size.parse(decoder.decodeString())
         }
 
         override fun serialize(encoder: Encoder, value: Size) {

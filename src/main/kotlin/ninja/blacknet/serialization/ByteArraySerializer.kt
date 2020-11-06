@@ -11,33 +11,35 @@ package ninja.blacknet.serialization
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.codec.base.Base16
-import ninja.blacknet.crypto.HashCoder
+import ninja.blacknet.crypto.HashEncoder
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 
 /**
- * Serializes a [ByteArray] with a transformation to a hex string in some representations.
+ * Contextual serializer for a [ByteArray].
  */
-object ByteArraySerializer : KSerializer<ByteArray> {
+object ByteArraySerializer : ContextualSerializer<ByteArray>()
+
+/**
+ * Serializes a [ByteArray].
+ */
+object ByteArrayAsBinarySerializer : KSerializer<ByteArray> {
     override val descriptor: SerialDescriptor = ListSerialDescriptor(
-            "ninja.blacknet.serialization.ByteArraySerializer",
-            Byte.serializer().descriptor  // PrimitiveKind.STRING
+            "ninja.blacknet.serialization.ByteArrayAsBinarySerializer",
+            Byte.serializer().descriptor
     )
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
             is BinaryDecoder -> decoder.decodeByteArray()
-            is RequestDecoder,
-            is JsonDecoder -> Base16.decode(decoder.decodeString())
             else -> throw notSupportedFormatError(decoder, this)
         }
     }
@@ -45,9 +47,26 @@ object ByteArraySerializer : KSerializer<ByteArray> {
     override fun serialize(encoder: Encoder, value: ByteArray) {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeByteArray(value)
-            is HashCoder -> encoder.encodeByteArray(value)
-            is JsonEncoder -> encoder.encodeString(Base16.encode(value))
+            is HashEncoder -> encoder.encodeByteArray(value)
             else -> throw notSupportedFormatError(encoder, this)
         }
+    }
+}
+
+/**
+ * Serializes a [ByteArray] with a transformation to a hex string.
+ */
+object ByteArrayAsStringSerializer : KSerializer<ByteArray> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
+            "ninja.blacknet.serialization.ByteArrayAsStringSerializer",
+            PrimitiveKind.STRING
+    )
+
+    override fun deserialize(decoder: Decoder): ByteArray {
+        return Base16.decode(decoder.decodeString())
+    }
+
+    override fun serialize(encoder: Encoder, value: ByteArray) {
+        encoder.encodeString(Base16.encode(value))
     }
 }

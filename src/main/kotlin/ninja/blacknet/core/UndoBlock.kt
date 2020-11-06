@@ -10,7 +10,6 @@
 package ninja.blacknet.core
 
 import java.math.BigInteger
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer

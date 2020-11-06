@@ -10,7 +10,6 @@
 package ninja.blacknet.serialization
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -18,11 +17,8 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
-import kotlin.experimental.and
-import kotlin.experimental.or
-import ninja.blacknet.crypto.HashCoder
+import ninja.blacknet.crypto.HashEncoder
 import ninja.blacknet.rpc.requests.RequestDecoder
-import ninja.blacknet.serialization.notSupportedFormatError
 import ninja.blacknet.serialization.bbf.*
 
 /**
@@ -45,7 +41,7 @@ object VarIntSerializer : KSerializer<Int> {
     override fun serialize(encoder: Encoder, value: Int) {
         when (encoder) {
             is BinaryEncoder -> encoder.encodeVarInt(value)
-            is HashCoder, is JsonEncoder -> encoder.encodeInt(value)
+            is HashEncoder, is JsonEncoder -> encoder.encodeInt(value)
             else -> throw notSupportedFormatError(encoder, this)
         }
     }

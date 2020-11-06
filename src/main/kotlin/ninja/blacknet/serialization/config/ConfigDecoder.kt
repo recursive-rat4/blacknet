@@ -16,71 +16,71 @@ import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
 import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.AdaptorDecoder
 
-class ConfigDecoderImpl(
+class ConfigDecoder(
         private val reader: ConfigReader,
         override val serializersModule: SerializersModule
-) : AdaptorDecoder(), ConfigDecoder {
+) : AdaptorDecoder() {
     override fun decodeNotNullMark(): Boolean {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toNotNullMark()
     }
 
     override fun decodeBoolean(): Boolean {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toBoolean()
     }
 
     override fun decodeByte(): Byte {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toByte()
     }
 
     override fun decodeShort(): Short {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toShort()
     }
 
     override fun decodeInt(): Int {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toInt()
     }
 
     override fun decodeLong(): Long {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toLong()
     }
 
     override fun decodeFloat(): Float {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toFloat()
     }
 
     override fun decodeDouble(): Double {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toDouble()
     }
 
     override fun decodeString(): String {
-        val name = descriptor.getElementName(sleeper)
+        val name = descriptor.getElementName(position)
         val string = reader.readString(name)
         return string.toString()
     }
 
-    private var sleeper: Int = -1
+    private var position: Int = -1
     internal lateinit var descriptor: SerialDescriptor
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
         return if (descriptor.kind === StructureKind.LIST) {
             require(descriptor.serialName.endsWith("ArrayList")) { "未知列表類型 ${descriptor.serialName}" }
-            val name = this.descriptor.getElementName(sleeper)
+            val name = this.descriptor.getElementName(position)
             val list = reader.readList(name)
             ListDecoder(list, serializersModule)
         } else {
@@ -92,10 +92,10 @@ class ConfigDecoderImpl(
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
         require(this.descriptor === descriptor) { "彈射 ${descriptor.serialName}" }
-        while (++sleeper < descriptor.elementsCount) {
-            val name = descriptor.getElementName(sleeper)
+        while (++position < descriptor.elementsCount) {
+            val name = descriptor.getElementName(position)
             if (reader.hasKey(name))
-                return sleeper
+                return position
         }
         return DECODE_DONE
     }
@@ -103,7 +103,7 @@ class ConfigDecoderImpl(
     private class ListDecoder(
             private val input: List<String>,
             override val serializersModule: SerializersModule
-    ) : AdaptorDecoder(), ConfigDecoder {
+    ) : AdaptorDecoder() {
         override fun decodeBoolean(): Boolean = input[++position].toBoolean()
         override fun decodeByte(): Byte = input[++position].toByte()
         override fun decodeShort(): Short = input[++position].toShort()

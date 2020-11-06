@@ -10,6 +10,7 @@
 package ninja.blacknet.serialization.json
 
 import kotlinx.serialization.json.Json
+import ninja.blacknet.serialization.textModule
 
 /**
  * Instance of JSON serialization.
@@ -17,4 +18,5 @@ import kotlinx.serialization.json.Json
 public val json: Json = Json {
     prettyPrint = System.getProperty("ninja.blacknet.serialization.json.indented")?.toBoolean() ?: false
     prettyPrintIndent = "    "
+    serializersModule = textModule
 }

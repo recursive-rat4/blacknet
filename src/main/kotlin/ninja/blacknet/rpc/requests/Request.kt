@@ -22,6 +22,7 @@ import io.ktor.util.AttributeKey
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import ninja.blacknet.serialization.json.json
+import ninja.blacknet.serialization.textModule
 
 typealias TextContent = io.ktor.http.content.TextContent
 
@@ -93,4 +94,7 @@ private fun <T : Request> Route.handle(
 }
 
 private val requestKey = AttributeKey<Any>("請求鍵")
-private val requestFormat = RequestFormat()
+
+private val requestFormat = RequestFormat(
+        serializersModule = textModule
+)

@@ -20,18 +20,12 @@ class ConfigFormat(
         override val serializersModule: SerializersModule = EmptySerializersModule
 ) : SerialFormat {
     fun <T : Any?> decodeFromFile(strategy: DeserializationStrategy<T>, name: String, charset: Charset = Charsets.UTF_8): T {
-        val decoder = ConfigDecoderImpl(ConfigReader(name, charset), serializersModule)
+        val decoder = ConfigDecoder(ConfigReader(name, charset), serializersModule)
         decoder.descriptor = strategy.descriptor
         return strategy.deserialize(decoder)
     }
 }
 
-// 標記接口
-
 typealias ConfigInput = Properties
 
-interface ConfigDecoder
-
 typealias ConfigOutput = Properties
-
-interface ConfigEncoder

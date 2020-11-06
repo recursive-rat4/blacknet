@@ -15,16 +15,16 @@ import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.AdaptorEncoder
 import ninja.blacknet.serialization.SerializationError
+import ninja.blacknet.serialization.binaryModule
 
-class HashCoder(
+class HashEncoder(
         val writer: HashWriter,
         val charset: Charset? = Charsets.UTF_8,
-        val allowFloatingPointValues: Boolean = false
+        val allowFloatingPointValues: Boolean = false,
+        override val serializersModule: SerializersModule = binaryModule
 ) : AdaptorEncoder() {
     private val buffer = ByteArray(Long.SIZE_BYTES)
     private val memory = Memory.of(buffer)
-
-    override val serializersModule: SerializersModule = EmptySerializersModule
 
     override fun encodeNull() {
         writer.writeByte(0)
@@ -102,11 +102,11 @@ class HashCoder(
          * Builds a hash value with the given [input] builder.
          *
          * @param algorithm the name of the hash function
-         * @param input the initialization function with the [HashCoder] receiver
+         * @param input the initialization function with the [HashEncoder] receiver
          * @return the built hash value
          */
-        inline fun buildHash(algorithm: String, input: HashCoder.() -> Unit): ByteArray {
-            val coder = HashCoder(HashWriterJvm(algorithm))
+        inline fun buildHash(algorithm: String, input: HashEncoder.() -> Unit): ByteArray {
+            val coder = HashEncoder(HashWriterJvm(algorithm))
             coder.input()
             return coder.writer.finish()
         }

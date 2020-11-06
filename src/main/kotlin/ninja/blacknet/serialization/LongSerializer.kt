@@ -17,7 +17,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
-import ninja.blacknet.crypto.HashCoder
+import ninja.blacknet.crypto.HashEncoder
 import ninja.blacknet.rpc.requests.RequestDecoder
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
@@ -51,7 +51,7 @@ object LongSerializer : KSerializer<Long> {
     override fun serialize(encoder: Encoder, value: Long) {
         when (encoder) {
             is BinaryEncoder,
-            is HashCoder,
+            is HashEncoder,
                 -> encoder.encodeLong(value)
             is JsonEncoder,
                 -> encoder.encodeString(value.toString())
