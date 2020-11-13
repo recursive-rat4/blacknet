@@ -35,9 +35,6 @@ apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
 
 repositories {
     jcenter()
-    maven { url = URI("https://dl.bintray.com/kotlin/ktor") }
-    maven { url = URI("https://dl.bintray.com/kotlin/kotlinx") }
-    maven { url = URI("https://dl.bintray.com/ethereum/maven") }
 }
 
 dependencies {
@@ -63,7 +60,7 @@ dependencies {
     implementation("com.google.guava:guava:29.0-jre")
     implementation("org.bitlet:weupnp:${Versions.weupnp}")
     implementation("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
-    implementation("org.ethereum:leveldbjni-all:${Versions.leveldbjni}")
+    implementation(files("buildSrc/libs/leveldbjni-all-${Versions.leveldbjni}.jar"))
     testImplementation("org.jetbrains.kotlin:kotlin-test-testng:${Versions.kotlin}") {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
@@ -106,8 +103,7 @@ val downloadLicenses by tasks.existing(DownloadLicenses::class) {
     }
     licenses = mapOf(
         "org.bitlet:weupnp:${Versions.weupnp}" to LicenseMetadata("GNU LESSER GENERAL PUBLIC LICENSE 2.1", "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html"),
-        "org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}" to LicenseMetadata("MIT License", "https://opensource.org/licenses/MIT"),
-        "org.ethereum:leveldbjni-all:${Versions.leveldbjni}" to LicenseMetadata("BSD-3-clause", "https://opensource.org/licenses/BSD-3-Clause")
+        "org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}" to LicenseMetadata("MIT License", "https://opensource.org/licenses/MIT")
     )
     dependencyConfiguration = "xonfigurations"
 }
