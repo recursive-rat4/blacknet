@@ -22,6 +22,7 @@ import kotlin.system.exitProcess
 import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.core.Staker
+import ninja.blacknet.core.TxPool
 import ninja.blacknet.db.*
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
@@ -88,6 +89,7 @@ object Main {
         WalletDB
         LedgerDB
         PeerDB
+        TxPool
         Node
         Staker
 
