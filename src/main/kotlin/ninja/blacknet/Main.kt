@@ -56,7 +56,14 @@ object Main {
             logger.debug { "Shutting down logger" }
             (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
         }
-        Config.instance
+
+        try {
+            Config.instance
+        } catch(e: ExceptionInInitializerError) {
+            println("Error reading configuration file ${File(configDir, "blacknet.conf")}")
+            e.cause?.message?.let(::println)
+            exitProcess(1)
+        }
 
         logger.info("Starting up ${Version.name} node ${Version.revision}")
         logger.info("CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}")
