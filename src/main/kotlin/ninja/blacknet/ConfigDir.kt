@@ -19,8 +19,9 @@ var configDirCreated: Boolean = false
 val configDir: File get() = {
     val custom = System.getProperty("ninja.blacknet.configDir")
     val dir = if (System.getProperty("org.gradle.test.worker") != null) {
-        println("測試避免配置目錄")
-        File("build/resources/main/config")
+        File("build/resources/main/config").also {
+            println("Using config directory ${it.absolutePath}")
+        }
     } else if (custom != null) {
         File(custom)
     } else if (Runtime.macOS) {
