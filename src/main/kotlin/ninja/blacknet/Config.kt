@@ -17,7 +17,7 @@ import ninja.blacknet.serialization.config.ConfigFormat
 
 @Serializable
 class Config(
-        val mintxfee: String,
+        val minfeerate: String,
         val ipv4: Boolean,
         val ipv6: Boolean,
         val listen: Boolean,

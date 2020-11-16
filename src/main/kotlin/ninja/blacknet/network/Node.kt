@@ -45,7 +45,7 @@ object Node {
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
-    var minTxFee = parseAmount(Config.instance.mintxfee)
+    var minFeeRate = parseAmount(Config.instance.minfeerate)
     private val nextPeerId = atomic(1L)
 
     init {
@@ -186,7 +186,7 @@ object Node {
                     currentTimeSeconds(),
                     nonce,
                     UserAgent.string,
-                    minTxFee,
+                    minFeeRate,
                     ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
             )
         })

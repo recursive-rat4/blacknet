@@ -92,7 +92,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     override fun checkFee(size: Int, amount: Long): Boolean {
-        return amount >= Node.minTxFee * (1 + size / 1000)
+        return amount >= Node.minFeeRate * (1 + size / 1000)
     }
 
     override fun blockTime(): Long {
