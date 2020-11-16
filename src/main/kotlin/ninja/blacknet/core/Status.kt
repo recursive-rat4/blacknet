@@ -9,27 +9,19 @@
 
 package ninja.blacknet.core
 
-sealed class Status
-
-object Accepted : Status() {
-    override fun toString() = "Accepted"
-}
-
-class AlreadyHave(val message: String) : Status() {
-    override fun toString() = "Already have $message"
-}
-
-class InFuture(val message: String) : Status() {
-    override fun toString() = "Too far in future $message"
-}
-
-class Invalid(val message: String) : Status() {
+sealed class Status(val message: String) {
     override fun toString() = message
 }
 
-class NotOnThisChain(val message: String) : Status() {
-    override fun toString() = "Not on this chain $message"
-}
+object Accepted : Status("Accepted")
+
+class AlreadyHave(message: String) : Status("Already have $message")
+
+class InFuture(message: String) : Status("Too far in future $message")
+
+class Invalid(message: String) : Status(message)
+
+class NotOnThisChain(message: String) : Status("Not on this chain $message")
 
 fun notAccepted(message: String, status: Status): Status {
     return when (status) {
