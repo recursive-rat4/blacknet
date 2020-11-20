@@ -30,7 +30,7 @@ import ninja.blacknet.util.sumByLong
 private val logger = KotlinLogging.logger {}
 
 /**
- * 權益持有器
+ * 權益采塊器
  */
 object Staker {
     private class StakerState(
