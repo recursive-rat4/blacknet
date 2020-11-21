@@ -106,7 +106,7 @@ object Main {
          * https://ktor.io/servers/engine.html
          *
          */
-        if (Config.instance.rpcserver_enabled) {
+        if (Config.instance.rpcserver) {
             embeddedServer(
                 Netty,
                 commandLineEnvironment(arrayOf("-config=${File(configDir,
