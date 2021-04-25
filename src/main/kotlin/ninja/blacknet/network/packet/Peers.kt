@@ -29,7 +29,7 @@ class Peers(
 
         val added = PeerDB.add(list, connection.remoteAddress)
         if (added > 0) {
-            logger.info("$added new peer addresses from ${connection.debugName()}")
+            logger.debug { "$added new peer addresses from ${connection.debugName()}" }
         }
     }
 

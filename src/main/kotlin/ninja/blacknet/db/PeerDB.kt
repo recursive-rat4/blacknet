@@ -264,7 +264,7 @@ object PeerDB {
             toRemove.forEach { peers.remove(it) }
             val batch = LevelDB.createWriteBatch()
             commitImpl(peers, batch, false)
-            logger.info("Probed ${toRemove.size} entries")
+            logger.debug { "Probed ${toRemove.size} entries" }
         }
     }
 
