@@ -10,10 +10,21 @@
 package ninja.blacknet.core
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import ninja.blacknet.crypto.PoS
 
 class TxPoolTest {
     @Test
     fun initialization() {
         TxPool
+    }
+
+    @Test
+    fun setFee() {
+        TxPool.minFeeRate = 0
+        assertEquals(0, TxPool.minFeeRate)
+
+        TxPool.minFeeRate = 4 * PoS.COIN
+        assertEquals(4 * PoS.COIN, TxPool.minFeeRate)
     }
 }
