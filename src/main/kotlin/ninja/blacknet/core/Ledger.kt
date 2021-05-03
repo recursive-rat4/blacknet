@@ -14,7 +14,6 @@ import ninja.blacknet.crypto.HashSerializer
 interface Ledger {
     fun addSupply(amount: Long)
     fun checkReferenceChain(hash: ByteArray): Boolean
-    fun checkFee(size: Int, amount: Long): Boolean
     fun blockTime(): Long
     fun height(): Int
     fun getAccount(key: ByteArray): AccountState?
@@ -27,15 +26,15 @@ interface Ledger {
     fun getMultisig(id: ByteArray): Multisig?
     fun removeMultisig(id: ByteArray)
 
-    fun processTransactionImpl(tx: Transaction, hash: ByteArray, size: Int): Status {
+    fun processTransactionImpl(tx: Transaction, hash: ByteArray): Status {
         if (!tx.verifySignature(hash)) {
             return Invalid("Invalid signature")
         }
         if (!checkReferenceChain(tx.referenceChain)) {
             return NotOnThisChain(HashSerializer.encode(tx.referenceChain))
         }
-        if (!checkFee(size, tx.fee)) {
-            return Invalid("Too low fee ${tx.fee}")
+        if (tx.fee < 0) {
+            return Invalid("Negative fee")
         }
         val data = tx.data()
         return data.process(tx, hash, this)

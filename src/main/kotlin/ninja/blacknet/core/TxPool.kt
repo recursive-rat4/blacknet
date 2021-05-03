@@ -93,7 +93,7 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.checkReferenceChain(hash)
     }
 
-    override fun checkFee(size: Int, amount: Long): Boolean {
+    fun checkFee(size: Int, amount: Long): Boolean {
         return amount >= minFeeRate * (1 + size / 1000)
     }
 
@@ -202,7 +202,10 @@ object TxPool : MemPool(), Ledger {
 
     private fun processImpl(hash: ByteArray, bytes: ByteArray): Status {
         val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
-        val status = processTransactionImpl(tx, hash, bytes.size)
+        if (!checkFee(bytes.size, tx.fee)) {
+            return Invalid("Too low fee ${tx.fee}")
+        }
+        val status = processTransactionImpl(tx, hash)
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
@@ -213,7 +216,10 @@ object TxPool : MemPool(), Ledger {
 
     private suspend fun processImplWithFee(hash: ByteArray, bytes: ByteArray, time: Long): Pair<Status, Long> {
         val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
-        val status = processTransactionImpl(tx, hash, bytes.size)
+        if (!checkFee(bytes.size, tx.fee)) {
+            return Pair(Invalid("Too low fee ${tx.fee}"), tx.fee)
+        }
+        val status = processTransactionImpl(tx, hash)
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)

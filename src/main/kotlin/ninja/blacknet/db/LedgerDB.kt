@@ -380,7 +380,7 @@ object LedgerDB {
             val bytes = block.transactions[index]
             val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
             val txHash = Transaction.hash(bytes)
-            val status = txDb.processTransactionImpl(tx, txHash, bytes.size)
+            val status = txDb.processTransactionImpl(tx, txHash)
             if (status != Accepted) {
                 return Pair(notAccepted("Transaction $index", status), emptyList())
             }
@@ -655,10 +655,6 @@ object LedgerDB {
 
         override fun checkReferenceChain(hash: ByteArray): Boolean {
             return LedgerDB.checkReferenceChain(hash)
-        }
-
-        override fun checkFee(size: Int, amount: Long): Boolean {
-            return amount >= 0
         }
 
         override fun blockTime(): Long {
