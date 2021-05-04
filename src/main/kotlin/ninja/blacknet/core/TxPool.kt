@@ -36,7 +36,7 @@ object TxPool : MemPool(), Ledger {
     private val htlcs = HashMap<ByteArray, HTLC?>()
     private val multisigs = HashMap<ByteArray, Multisig?>()
     private var transactions = ArrayList<ByteArray>(maxSeenSizeImpl())
-    internal var minFeeRate = parseAmount(Config.instance.minfeerate)
+    internal var minFeeRate = parseAmount(Config.instance.minrelayfeerate)
 
     suspend fun check(): Boolean = mutex.withLock {
         var result = true

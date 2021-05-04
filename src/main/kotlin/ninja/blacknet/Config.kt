@@ -17,7 +17,7 @@ import ninja.blacknet.serialization.textModule
 
 @Serializable
 class Config(
-        val minfeerate: String,
+        val minrelayfeerate: String,
         val ipv4: Boolean,
         val ipv6: Boolean,
         val listen: Boolean,
