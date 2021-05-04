@@ -241,13 +241,13 @@ void function () {
 
     Blacknet.sendMoney = function (mnemonic, amount, to, message, encrypted, callback) {
 
-        let fee = 100000, amountText;
+        let fee = 1000000, amountText;
 
         amountText = new BigNumber(amount).toFixed(8);
         amount = new BigNumber(amount).times(1e8).toNumber();
 
         Blacknet.confirm('Are you sure you want to send?\n\n' + amountText + ' BLN to \n' +
-            to + '\n\n0.001 BLN added as transaction fee?', function (flag) {
+            to + '\n\n0.01 BLN added as transaction fee?', function (flag) {
                 if (flag) {
 
                     let postdata = {
@@ -265,13 +265,13 @@ void function () {
 
     Blacknet.lease = function (mnemonic, type, amount, to, height, callback) {
 
-        let fee = 100000, amountText, type_text = type == 'lease' ? 'lease' : 'cancel lease';
+        let fee = 1000000, amountText, type_text = type == 'lease' ? 'lease' : 'cancel lease';
 
         amountText = new BigNumber(amount).toFixed(8);
         amount = new BigNumber(amount).times(1e8).toNumber();
 
         Blacknet.confirm('Are you sure you want to ' + type_text + '?\n\n' + amountText +
-            ' BLN to \n' + to + '\n\n0.001 BLN added as transaction fee?', function (flag) {
+            ' BLN to \n' + to + '\n\n0.01 BLN added as transaction fee?', function (flag) {
                 if (flag) {
 
                     let postdata = {
