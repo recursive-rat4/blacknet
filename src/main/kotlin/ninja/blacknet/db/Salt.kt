@@ -48,7 +48,7 @@ object Salt {
     }
 
     private fun convertor() {
-        logger.info("Convertoring the database...")
+        logger.info("Converting database; this may take a while...")
         val iterator = LevelDB.iterator()
         iterator.seekToFirst()
         while (iterator.hasNext()) {
