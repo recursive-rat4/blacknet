@@ -242,6 +242,10 @@ class Connection(
         return closed.value
     }
 
+    fun checkFeeFilter(fee: Long): Boolean {
+        return feeFilter <= fee
+    }
+
     fun debugName(): String {
         return if (Config.instance.logips)
             remoteAddress.toString()
