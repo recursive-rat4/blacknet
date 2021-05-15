@@ -57,7 +57,7 @@ dependencies {
     implementation("org.iq80.leveldb:leveldb:0.12")
     implementation("org.slf4j:slf4j-jdk14:1.7.30")
     implementation("io.github.microutils:kotlin-logging:1.7.9")
-    implementation("com.google.guava:guava:29.0-jre")
+    implementation("com.google.guava:guava:30.0-jre")
     implementation("org.bitlet:weupnp:${Versions.weupnp}")
     implementation("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
     implementation(files("buildSrc/libs/leveldbjni-all-${Versions.leveldbjni}.jar"))
