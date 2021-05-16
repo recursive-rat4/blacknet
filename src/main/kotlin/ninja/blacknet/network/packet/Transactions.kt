@@ -44,7 +44,7 @@ class Transactions(
             val (status, fee) = TxPool.process(hash, bytes, time / 1000L, true)
 
             when (status) {
-                Accepted -> inv.add(Pair(hash, fee))
+                Accepted -> inv.add(Triple(hash, bytes.size, fee))
                 is Invalid -> connection.dos("$status ${HashSerializer.encode(hash)}")
                 is InFuture -> logger.debug { "$status ${HashSerializer.encode(hash)}" }
                 is NotOnThisChain -> logger.debug { "$status ${HashSerializer.encode(hash)}" }

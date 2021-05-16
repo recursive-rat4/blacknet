@@ -242,7 +242,7 @@ class Connection(
         return closed.value
     }
 
-    fun checkFeeFilter(fee: Long): Boolean {
+    fun checkFeeFilter(size: Int, fee: Long): Boolean {
         return feeFilter <= fee
     }
 

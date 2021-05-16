@@ -38,4 +38,4 @@ class Inventory(
     }
 }
 
-typealias UnfilteredInvList = ArrayList<Pair<ByteArray, Long>>
+typealias UnfilteredInvList = ArrayList<Triple<ByteArray, Int, Long>>

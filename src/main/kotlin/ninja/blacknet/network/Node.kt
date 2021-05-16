@@ -215,7 +215,7 @@ object Node {
         val (status, fee) = TxPool.process(hash, bytes, currTime, false)
         if (status == Accepted) {
             connections.forEach {
-                if (it.state.isConnected() && it.checkFeeFilter(fee))
+                if (it.state.isConnected() && it.checkFeeFilter(bytes.size, fee))
                     it.inventory(hash)
             }
         }
@@ -228,8 +228,8 @@ object Node {
         connections.forEach {
             if (it != source && it.state.isConnected()) {
                 for (i in 0 until unfiltered.size) {
-                    val (hash, fee) = unfiltered[i]
-                    if (it.checkFeeFilter(fee))
+                    val (hash, size, fee) = unfiltered[i]
+                    if (it.checkFeeFilter(size, fee))
                         toSend.add(hash)
                 }
                 if (toSend.size != 0) {

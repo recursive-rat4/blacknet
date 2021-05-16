@@ -126,10 +126,10 @@ object WalletDB {
                 when (status) {
                     Accepted -> {
                         poolAccepted += 1
-                        inv.add(Pair(hash, fee))
+                        inv.add(Triple(hash, bytes.size, fee))
                     }
                     is AlreadyHave -> {
-                        inv.add(Pair(hash, fee))
+                        inv.add(Triple(hash, bytes.size, fee))
                     }
                     else -> {
                         logger.debug { "$status ${HashSerializer.encode(hash)}" }
