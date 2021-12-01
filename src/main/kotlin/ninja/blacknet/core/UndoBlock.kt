@@ -45,7 +45,11 @@ class UndoBlock(
             @Serializable(with = MultiSignatureLockContractIdSerializer::class) ByteArray,
             @Serializable(with = ByteArraySerializer::class) ByteArray
         >>,
-        val forkV2: Short
+        val forkV2: Short,
+        val bapps: ArrayList<Pair<
+                @Serializable(with = ByteArraySerializer::class) ByteArray,
+                @Serializable(with = ByteArraySerializer::class) ByteArray
+        >>
 ) {
     fun add(publicKey: ByteArray, account: ByteArray?) {
         val bytes = if (account != null)
@@ -69,5 +73,13 @@ class UndoBlock(
         else
             emptyByteArray()
         multisigs.add(Pair(id, bytes))
+    }
+
+    fun addBApp(key: ByteArray, data: ByteArray?) {
+        val bytes = if (data != null)
+            data
+        else
+            emptyByteArray()
+        bapps.add(Pair(key, bytes))
     }
 }
