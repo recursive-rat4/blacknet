@@ -14,6 +14,7 @@ import ninja.blacknet.crypto.HashSerializer
 interface Ledger {
     fun addSupply(amount: Long)
     fun checkReferenceChain(hash: ByteArray): Boolean
+    fun blockHash(): ByteArray
     fun blockTime(): Long
     fun height(): Int
     fun getAccount(key: ByteArray): AccountState?

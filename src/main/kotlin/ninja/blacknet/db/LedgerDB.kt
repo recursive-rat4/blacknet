@@ -659,6 +659,10 @@ object LedgerDB {
             return LedgerDB.checkReferenceChain(hash)
         }
 
+        override fun blockHash(): ByteArray {
+            return blockHash
+        }
+
         override fun blockTime(): Long {
             return blockTime
         }

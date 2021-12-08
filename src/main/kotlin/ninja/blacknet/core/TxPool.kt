@@ -97,6 +97,10 @@ object TxPool : MemPool(), Ledger {
         return amount >= minFeeRate * (1 + size / 1000)
     }
 
+    override fun blockHash(): ByteArray {
+        return LedgerDB.state().blockHash
+    }
+
     override fun blockTime(): Long {
         return LedgerDB.state().blockTime
     }
