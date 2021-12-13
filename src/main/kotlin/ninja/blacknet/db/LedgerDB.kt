@@ -16,7 +16,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import ninja.blacknet.dataDir
