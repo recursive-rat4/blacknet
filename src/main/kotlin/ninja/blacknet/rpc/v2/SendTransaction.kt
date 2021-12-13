@@ -14,6 +14,7 @@ import io.ktor.routing.Route
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Ed25519
@@ -180,6 +181,36 @@ fun Route.sendTransaction() {
     }
 
     post(WithdrawFromLeaseRequest.serializer(), "/api/v2/withdrawfromlease")
+
+    @Serializable
+    class BundleRequest(
+            @SerialName("mnemonic")
+            @Serializable(with = PrivateKeySerializer::class)
+            val privateKey: ByteArray,
+            val fee: Long,
+            @Serializable(with = BAppIdSerializer::class)
+            val id: ByteArray,
+            @Serializable(with = ByteArraySerializer::class)
+            val data: ByteArray,
+            @Serializable(with = HashSerializer::class)
+            val referenceChain: ByteArray? = null
+    ) : Request {
+        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+            val from = Ed25519.toPublicKey(privateKey)
+            val seq = WalletDB.getSequence(from)
+            val data = binaryFormat.encodeToByteArray(BApp.serializer(), BApp(id, data))
+            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.BApp.type, data)
+            val (hash, bytes) = tx.sign(privateKey)
+
+            val status = Node.broadcastTx(hash, bytes)
+            return if (status == Accepted)
+                respondText(HashSerializer.encode(hash))
+            else
+                respondError("Transaction rejected: $status")
+        }
+    }
+
+    post(BundleRequest.serializer(), "/api/v2/bundle")
 
     @Serializable
     class SendRawTransaction(
