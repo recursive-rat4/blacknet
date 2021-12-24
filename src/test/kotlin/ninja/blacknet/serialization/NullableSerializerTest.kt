@@ -18,11 +18,31 @@ import kotlin.test.assertEquals
 class NullableSerializerTest {
     private val byteArray = ByteArray(16) { it.toByte() }
     private val binaryEncoded = 1.toByte() + (144.toByte() + byteArray)
+    @Serializable
+    class Structure(@Serializable(with = ByteArraySerializer::class) val maybeByteArray: ByteArray?) {
+        override fun equals(other: Any?): Boolean {
+            return (other is Structure) && maybeByteArray.contentEquals(other.maybeByteArray)
+        }
+    }
+
+    @Test
+    fun binaryNullableDecoder() {
+        assertEquals(
+                Structure(null),
+                binaryFormat.decodeFromByteArray(Structure.serializer(), byteArrayOf(0))
+        )
+        assertEquals(
+                Structure(byteArray),
+                binaryFormat.decodeFromByteArray(Structure.serializer(), binaryEncoded)
+        )
+    }
 
     @Test
     fun binaryNullableEncoder() {
-        @Serializable
-        class Structure(@Serializable(with = ByteArraySerializer::class) val maybeByteArray: ByteArray?)
+        assertEquals(
+                byteArrayOf(0),
+                binaryFormat.encodeToByteArray(Structure.serializer(), Structure(null))
+        )
         assertEquals(
                 binaryEncoded,
                 binaryFormat.encodeToByteArray(Structure.serializer(), Structure(byteArray))
