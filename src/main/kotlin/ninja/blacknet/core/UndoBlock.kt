@@ -35,51 +35,35 @@ class UndoBlock(
         val blockSize: Int,
         val accounts: ArrayList<Pair<
             @Serializable(with = PublicKeySerializer::class) ByteArray,
-            @Serializable(with = ByteArraySerializer::class) ByteArray
+            @Serializable(with = ByteArraySerializer::class) ByteArray?
         >>,
         val htlcs: ArrayList<Pair<
             @Serializable(with = HashTimeLockContractIdSerializer::class) ByteArray,
-            @Serializable(with = ByteArraySerializer::class) ByteArray
+            @Serializable(with = ByteArraySerializer::class) ByteArray?
         >>,
         val multisigs: ArrayList<Pair<
             @Serializable(with = MultiSignatureLockContractIdSerializer::class) ByteArray,
-            @Serializable(with = ByteArraySerializer::class) ByteArray
+            @Serializable(with = ByteArraySerializer::class) ByteArray?
         >>,
         val forkV2: Short,
         val bapps: ArrayList<Pair<
                 @Serializable(with = ByteArraySerializer::class) ByteArray,
-                @Serializable(with = ByteArraySerializer::class) ByteArray
+                @Serializable(with = ByteArraySerializer::class) ByteArray?
         >>
 ) {
     fun add(publicKey: ByteArray, account: ByteArray?) {
-        val bytes = if (account != null)
-            account
-        else
-            emptyByteArray()
-        accounts.add(Pair(publicKey, bytes))
+        accounts.add(Pair(publicKey, account))
     }
 
     fun addHTLC(id: ByteArray, htlc: ByteArray?) {
-        val bytes = if (htlc != null)
-            htlc
-        else
-            emptyByteArray()
-        htlcs.add(Pair(id, bytes))
+        htlcs.add(Pair(id, htlc))
     }
 
     fun addMultisig(id: ByteArray, multisig: ByteArray?) {
-        val bytes = if (multisig != null)
-            multisig
-        else
-            emptyByteArray()
-        multisigs.add(Pair(id, bytes))
+        multisigs.add(Pair(id, multisig))
     }
 
     fun addBApp(key: ByteArray, data: ByteArray?) {
-        val bytes = if (data != null)
-            data
-        else
-            emptyByteArray()
-        bapps.add(Pair(key, bytes))
+        bapps.add(Pair(key, data))
     }
 }

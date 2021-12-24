@@ -41,7 +41,7 @@ import ninja.blacknet.util.toByteArray
 private val logger = KotlinLogging.logger {}
 
 object LedgerDB {
-    private const val VERSION = 9
+    private const val VERSION = 10
     private val ACCOUNT_KEY = DBKey(1, PublicKeySerializer.SIZE_BYTES)
     private val CHAIN_KEY = DBKey(2, HashSerializer.SIZE_BYTES)
     private val HTLC_KEY = DBKey(3, HashTimeLockContractIdSerializer.SIZE_BYTES)
@@ -445,19 +445,19 @@ object LedgerDB {
         batch.delete(CHAIN_KEY, hash)
 
         undo.accounts.forEach { (key, bytes) ->
-            if (bytes.isNotEmpty())
+            if (bytes != null)
                 batch.put(ACCOUNT_KEY, key, bytes)
             else
                 batch.delete(ACCOUNT_KEY, key)
         }
         undo.htlcs.forEach { (id, bytes) ->
-            if (bytes.isNotEmpty())
+            if (bytes != null)
                 batch.put(HTLC_KEY, id, bytes)
             else
                 batch.delete(HTLC_KEY, id)
         }
         undo.multisigs.forEach { (id, bytes) ->
-            if (bytes.isNotEmpty())
+            if (bytes != null)
                 batch.put(MULTISIG_KEY, id, bytes)
             else
                 batch.delete(MULTISIG_KEY, id)
