@@ -17,7 +17,6 @@ import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.ByteArraySerializer
-import ninja.blacknet.util.emptyByteArray
 
 @Serializable
 class UndoBlock(
