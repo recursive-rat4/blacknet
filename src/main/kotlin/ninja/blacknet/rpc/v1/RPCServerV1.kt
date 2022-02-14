@@ -37,7 +37,6 @@ import ninja.blacknet.logging.debugMessage
 import ninja.blacknet.logging.error
 import ninja.blacknet.rpc.requests.Requests
 import ninja.blacknet.serialization.json.json
-import ninja.blacknet.serialization.statusMessage
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
