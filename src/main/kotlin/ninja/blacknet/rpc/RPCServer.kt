@@ -40,10 +40,10 @@ import ninja.blacknet.rpc.requests.Requests
 import ninja.blacknet.rpc.v1.*
 import ninja.blacknet.rpc.v2.*
 import ninja.blacknet.serialization.json.json
-import ninja.blacknet.serialization.statusMessage
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
 import ninja.blacknet.util.SynchronizedHashSet
+import ninja.blacknet.util.statusMessage
 
 private val logger = KotlinLogging.logger {}
 

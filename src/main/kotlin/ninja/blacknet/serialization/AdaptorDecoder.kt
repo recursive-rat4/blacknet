@@ -14,6 +14,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
+import ninja.blacknet.util.statusMessage
 
 abstract class AdaptorDecoder
 @Suppress("RemoveEmptyPrimaryConstructor")
@@ -80,5 +81,3 @@ constructor() : Decoder, CompositeDecoder {
         throw SerializationException("Invalid ${descriptor.getElementName(index)}: ${e.statusMessage()}", e)
     }
 }
-
-fun Throwable.statusMessage() = message ?: this::class.simpleName ?: this::class.toString()
