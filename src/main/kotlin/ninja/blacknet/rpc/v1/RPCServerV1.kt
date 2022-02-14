@@ -9,38 +9,20 @@
 
 package ninja.blacknet.rpc.v1
 
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.features.DefaultHeaders
-import io.ktor.features.StatusPages
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.Frame
-import io.ktor.response.respond
-import io.ktor.routing.Routing
-import io.ktor.websocket.WebSockets
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Runtime
-import ninja.blacknet.Version
 import ninja.blacknet.core.Block
-import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.logging.debug
-import ninja.blacknet.logging.debugMessage
-import ninja.blacknet.logging.error
-import ninja.blacknet.rpc.requests.Requests
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
-import ninja.blacknet.util.SynchronizedHashSet
 
 private val logger = KotlinLogging.logger {}
 
