@@ -16,7 +16,7 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import ninja.blacknet.util.statusMessage
 
-abstract class AdaptorDecoder
+public abstract class AdaptorDecoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Decoder, CompositeDecoder {
     private fun notImplementedError(message: String): Throwable = SerializationError("${this::class} is not implemented for $message")
@@ -75,7 +75,7 @@ constructor() : Decoder, CompositeDecoder {
         }
     }
 
-    inline fun <T> catcher(descriptor: SerialDescriptor, index: Int, implementation: () -> T): T = try {
+    public inline fun <T> catcher(descriptor: SerialDescriptor, index: Int, implementation: () -> T): T = try {
         implementation()
     } catch (e: Exception) {
         throw SerializationException("Invalid ${descriptor.getElementName(index)}: ${e.statusMessage()}", e)
