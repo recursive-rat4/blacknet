@@ -10,7 +10,6 @@
 package ninja.blacknet.serialization.bbf
 
 import io.ktor.utils.io.core.*
-import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.modules.EmptySerializersModule

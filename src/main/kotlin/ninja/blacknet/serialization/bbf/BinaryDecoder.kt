@@ -10,7 +10,6 @@
 package ninja.blacknet.serialization.bbf
 
 import io.ktor.utils.io.core.*
-import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.EmptySerializersModule
