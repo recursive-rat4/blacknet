@@ -15,6 +15,9 @@ project(":blacknet-cli").projectDir = file("cli")
 include(":blacknet-runtime")
 project(":blacknet-runtime").projectDir = file("runtime")
 
+include(":blacknet-serialization")
+project(":blacknet-serialization").projectDir = file("serialization")
+
 pluginManagement {
     repositories {
         jcenter()
