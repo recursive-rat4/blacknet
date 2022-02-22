@@ -118,9 +118,8 @@ object LedgerDB {
     }
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
-        val version = BinaryEncoder()
-        version.encodeVarInt(VERSION)
-        batch.put(VERSION_KEY, version.toBytes())
+        val versionBytes = binaryFormat.encodeToByteArray(VarIntSerializer, VERSION)
+        batch.put(VERSION_KEY, versionBytes)
     }
 
     private fun writeBlockSizes(batch: LevelDB.WriteBatch) {
