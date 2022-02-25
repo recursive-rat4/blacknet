@@ -17,6 +17,7 @@ import kotlin.math.min
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import mu.KotlinLogging
 import ninja.blacknet.dataDir
 import ninja.blacknet.regtest
@@ -125,11 +126,9 @@ object LedgerDB {
     }
 
     private fun writeBlockSizes(batch: LevelDB.WriteBatch) {
-        val encoder = BinaryEncoder()
-        encoder.encodeVarInt(blockSizes.size)
-        for (size in blockSizes)
-            encoder.encodeVarInt(size)
-        batch.put(SIZES_KEY, encoder.toBytes())
+        val blockSizesList = blockSizes.toList() //TODO ArrayDequeSerializer
+        val blockSizesBytes = binaryFormat.encodeToByteArray(ListSerializer(VarIntSerializer), blockSizesList)
+        batch.put(SIZES_KEY, blockSizesBytes)
     }
 
     private fun writeSnapshotHeights(batch: LevelDB.WriteBatch) {
