@@ -33,6 +33,8 @@ import ninja.blacknet.serialization.bbf.encodeVarInt
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.HashMap
+import ninja.blacknet.util.HashSet
+import ninja.blacknet.util.HashSetSerializer
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.moveFile
@@ -131,11 +133,8 @@ object LedgerDB {
     }
 
     private fun writeSnapshotHeights(batch: LevelDB.WriteBatch) {
-        val encoder = BinaryEncoder()
-        encoder.encodeVarInt(snapshotHeights.size)
-        for (height in snapshotHeights)
-            encoder.encodeVarInt(height)
-        batch.put(SNAPSHOTHEIGHTS_KEY, encoder.toBytes())
+        val snapshotHeightsBytes = binaryFormat.encodeToByteArray(HashSetSerializer(VarIntSerializer), snapshotHeights)
+        batch.put(SNAPSHOTHEIGHTS_KEY, snapshotHeightsBytes)
     }
 
     init {
