@@ -15,6 +15,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -66,9 +67,8 @@ object WalletDB {
             val publicKeysBytes = LevelDB.get(PUBLIC_KEYS_KEY)
             if (publicKeysBytes != null) {
                 var txns = 0
-                val decoder = BinaryDecoder(publicKeysBytes)
-                for (i in 0 until publicKeysBytes.size step PublicKeySerializer.SIZE_BYTES) {
-                    val publicKey = decoder.decodeFixedByteArray(PublicKeySerializer.SIZE_BYTES)
+                val publicKeys = binaryFormat.decodeFromByteArray(SetSerializer(PublicKeySerializer), publicKeysBytes)
+                publicKeys.forEach { publicKey ->
                     val walletBytes = LevelDB.get(WALLET_KEY, publicKey)!!
                     val wallet = binaryFormat.decodeFromByteArray(Wallet.serializer(), walletBytes)
                     txns += wallet.transactions.size
@@ -488,10 +488,9 @@ object WalletDB {
     private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: ByteArray, wallet: Wallet) {
         wallets.put(publicKey, wallet)
         batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
-        val encoder = BinaryEncoder()
-        wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey) }
-        val publicKkeysBytes = encoder.toBytes()
-        batch.put(PUBLIC_KEYS_KEY, publicKkeysBytes)
+        val publicKeys = wallets.keys
+        val publicKeysBytes = binaryFormat.encodeToByteArray(SetSerializer(PublicKeySerializer), publicKeys)
+        batch.put(PUBLIC_KEYS_KEY, publicKeysBytes)
     }
 
     internal suspend fun getWalletImpl(publicKey: ByteArray): Wallet {
