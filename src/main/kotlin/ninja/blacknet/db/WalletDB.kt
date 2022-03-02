@@ -42,7 +42,7 @@ private val logger = KotlinLogging.logger {}
 object WalletDB {
     private const val VERSION = 8
     internal val mutex = Mutex()
-    private val KEYS_KEY = DBKey(64, 0)
+    private val PUBLIC_KEYS_KEY = DBKey(64, 0)
     private val TX_KEY = DBKey(65, HashSerializer.SIZE_BYTES)
     private val VERSION_KEY = DBKey(66, 0)
     private val WALLET_KEY = DBKey(67, PublicKeySerializer.SIZE_BYTES)
@@ -54,7 +54,7 @@ object WalletDB {
     }
 
     init {
-        val keysBytes = LevelDB.get(KEYS_KEY)
+        val publicKeysBytes = LevelDB.get(PUBLIC_KEYS_KEY)
         val versionBytes = LevelDB.get(VERSION_KEY)
 
         val version = if (versionBytes != null) {
@@ -64,10 +64,10 @@ object WalletDB {
         }
 
         if (version == VERSION) {
-            if (keysBytes != null) {
+            if (publicKeysBytes != null) {
                 var txns = 0
-                val decoder = BinaryDecoder(keysBytes)
-                for (i in 0 until keysBytes.size step PublicKeySerializer.SIZE_BYTES) {
+                val decoder = BinaryDecoder(publicKeysBytes)
+                for (i in 0 until publicKeysBytes.size step PublicKeySerializer.SIZE_BYTES) {
                     val publicKey = decoder.decodeFixedByteArray(PublicKeySerializer.SIZE_BYTES)
                     val walletBytes = LevelDB.get(WALLET_KEY, publicKey)!!
                     val wallet = binaryFormat.decodeFromByteArray(Wallet.serializer(), walletBytes)
@@ -81,7 +81,7 @@ object WalletDB {
             }
         } else if (version in 1 until VERSION) {
             val batch = LevelDB.createWriteBatch()
-            if (keysBytes != null) {
+            if (publicKeysBytes != null) {
                 clear(batch)
             }
             setVersion(batch)
@@ -492,8 +492,8 @@ object WalletDB {
         batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
         val encoder = BinaryEncoder()
         wallets.forEach { (publicKey, _) -> encoder.encodeFixedByteArray(publicKey) }
-        val keysBytes = encoder.toBytes()
-        batch.put(KEYS_KEY, keysBytes)
+        val publicKkeysBytes = encoder.toBytes()
+        batch.put(PUBLIC_KEYS_KEY, publicKkeysBytes)
     }
 
     internal suspend fun getWalletImpl(publicKey: ByteArray): Wallet {
