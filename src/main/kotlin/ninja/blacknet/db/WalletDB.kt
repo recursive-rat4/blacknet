@@ -54,7 +54,6 @@ object WalletDB {
     }
 
     init {
-        val publicKeysBytes = LevelDB.get(PUBLIC_KEYS_KEY)
         val versionBytes = LevelDB.get(VERSION_KEY)
 
         val version = if (versionBytes != null) {
@@ -64,6 +63,7 @@ object WalletDB {
         }
 
         if (version == VERSION) {
+            val publicKeysBytes = LevelDB.get(PUBLIC_KEYS_KEY)
             if (publicKeysBytes != null) {
                 var txns = 0
                 val decoder = BinaryDecoder(publicKeysBytes)
@@ -81,9 +81,7 @@ object WalletDB {
             }
         } else if (version in 1 until VERSION) {
             val batch = LevelDB.createWriteBatch()
-            if (publicKeysBytes != null) {
-                clear(batch)
-            }
+            clear(batch)
             setVersion(batch)
             batch.write()
         } else {
@@ -558,6 +556,8 @@ object WalletDB {
         backupDir.mkdir()
         logger.info("Saving backup to $backupDir")
         wallets.clear()
+
+        batch.delete(PUBLIC_KEYS_KEY)
 
         val iterator = LevelDB.iterator()
 
