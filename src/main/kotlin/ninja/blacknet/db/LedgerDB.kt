@@ -146,10 +146,10 @@ object LedgerDB {
 
         val blockSizesBytes = LevelDB.get(SIZES_KEY)
         if (blockSizesBytes != null) {
-            val decoder = BinaryDecoder(blockSizesBytes)
-            val size = decoder.decodeVarInt()
-            for (i in 0 until size)
-                blockSizes.addLast(decoder.decodeVarInt())
+            //TODO ArrayDequeSerializer
+            binaryFormat.decodeFromByteArray(ListSerializer(VarIntSerializer), blockSizesBytes).forEach { blockSize ->
+                blockSizes.addLast(blockSize)
+            }
         }
 
         val stateBytes = LevelDB.get(STATE_KEY)
