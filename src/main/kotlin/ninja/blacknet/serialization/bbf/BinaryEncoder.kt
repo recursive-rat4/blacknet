@@ -20,7 +20,7 @@ import ninja.blacknet.serialization.AdaptorEncoder
  * Encoder to the Blacknet Binary Format
  */
 class BinaryEncoder(
-        val output: BytePacketBuilder = BytePacketBuilder(),
+        internal val output: BytePacketBuilder = BytePacketBuilder(),
         override val serializersModule: SerializersModule = EmptySerializersModule
 ) : AdaptorEncoder() {
     override fun encodeByte(value: Byte) = output.writeByte(value)

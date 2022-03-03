@@ -20,7 +20,7 @@ import ninja.blacknet.serialization.AdaptorDecoder
  * Decoder from the Blacknet Binary Format
  */
 class BinaryDecoder(
-        val input: ByteReadPacket,
+        internal val input: ByteReadPacket,
         override val serializersModule: SerializersModule = EmptySerializersModule
 ) : AdaptorDecoder() {
     constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
