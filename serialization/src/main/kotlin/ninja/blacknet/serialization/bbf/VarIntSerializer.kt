@@ -28,7 +28,7 @@ private const val MAX_SIZE_BYTES = 5
  *
  * @return the [Int] value containing the data
  */
-fun Decoder.decodeVarInt(): Int {
+public fun Decoder.decodeVarInt(): Int {
     var c = MAX_SIZE_BYTES + 1
     var result = 0
     var v: Byte
@@ -48,7 +48,7 @@ fun Decoder.decodeVarInt(): Int {
  *
  * @param value the [Int] containing the data
  */
-fun Encoder.encodeVarInt(value: Int) {
+public fun Encoder.encodeVarInt(value: Int) {
     var shift = 31 - Integer.numberOfLeadingZeros(value)
     shift -= shift % 7 // round down to nearest multiple of 7
     while (shift != 0) {
