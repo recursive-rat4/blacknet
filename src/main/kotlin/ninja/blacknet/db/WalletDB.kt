@@ -41,7 +41,7 @@ import ninja.blacknet.util.*
 private val logger = KotlinLogging.logger {}
 
 object WalletDB {
-    private const val VERSION = 8
+    private const val VERSION = 9
     internal val mutex = Mutex()
     private val PUBLIC_KEYS_KEY = DBKey(64, 0)
     private val TX_KEY = DBKey(65, HashSerializer.SIZE_BYTES)
