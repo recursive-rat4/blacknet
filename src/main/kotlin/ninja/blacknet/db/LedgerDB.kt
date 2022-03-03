@@ -139,10 +139,9 @@ object LedgerDB {
     init {
         val snapshotHeightsBytes = LevelDB.get(SNAPSHOTHEIGHTS_KEY)
         if (snapshotHeightsBytes != null) {
-            val decoder = BinaryDecoder(snapshotHeightsBytes)
-            val size = decoder.decodeVarInt()
-            for (i in 0 until size)
-                snapshotHeights.add(decoder.decodeVarInt())
+            binaryFormat.decodeFromByteArray(HashSetSerializer(VarIntSerializer), snapshotHeightsBytes).forEach { height ->
+                snapshotHeights.add(height)
+            }
         }
 
         val blockSizesBytes = LevelDB.get(SIZES_KEY)
