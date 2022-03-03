@@ -28,7 +28,7 @@ private const val MAX_SIZE_BYTES = 10
  *
  * @return the [Long] value containing the data
  */
-fun Decoder.decodeVarLong(): Long {
+public fun Decoder.decodeVarLong(): Long {
     var c = MAX_SIZE_BYTES + 1
     var result = 0L
     var v: Byte
@@ -48,7 +48,7 @@ fun Decoder.decodeVarLong(): Long {
  *
  * @param value the [Long] containing the data
  */
-fun Encoder.encodeVarLong(value: Long) {
+public fun Encoder.encodeVarLong(value: Long) {
     var shift = 63 - java.lang.Long.numberOfLeadingZeros(value)
     shift -= shift % 7 // round down to nearest multiple of 7
     while (shift != 0) {
