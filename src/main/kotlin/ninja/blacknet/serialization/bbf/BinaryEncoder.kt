@@ -23,10 +23,6 @@ class BinaryEncoder(
         val output: BytePacketBuilder = BytePacketBuilder(),
         override val serializersModule: SerializersModule = EmptySerializersModule
 ) : AdaptorEncoder() {
-    fun toBytes(): ByteArray {
-        return output.build().readBytes()
-    }
-
     override fun encodeByte(value: Byte) = output.writeByte(value)
     override fun encodeShort(value: Short) = output.writeShort(value)
     override fun encodeInt(value: Int) = output.writeInt(value)

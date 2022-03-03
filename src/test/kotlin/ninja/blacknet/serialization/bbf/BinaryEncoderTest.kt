@@ -9,6 +9,7 @@
 
 package ninja.blacknet.serialization.bbf
 
+import io.ktor.utils.io.core.readBytes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.Serializable
@@ -72,5 +73,9 @@ class BinaryEncoderTest {
                 ),
                 encoder.toBytes()
         )
+    }
+
+    private fun BinaryEncoder.toBytes(): ByteArray {
+        return output.build().readBytes()
     }
 }
