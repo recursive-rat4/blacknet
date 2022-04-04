@@ -19,21 +19,21 @@ import ninja.blacknet.serialization.AdaptorEncoder
 /**
  * Encoder to the Blacknet Binary Format
  */
-class BinaryEncoder(
+public class BinaryEncoder(
         internal val output: BytePacketBuilder = BytePacketBuilder(),
         override val serializersModule: SerializersModule = EmptySerializersModule
 ) : AdaptorEncoder() {
-    override fun encodeByte(value: Byte) = output.writeByte(value)
-    override fun encodeShort(value: Short) = output.writeShort(value)
-    override fun encodeInt(value: Int) = output.writeInt(value)
-    override fun encodeLong(value: Long) = output.writeLong(value)
+    override fun encodeByte(value: Byte): Unit = output.writeByte(value)
+    override fun encodeShort(value: Short): Unit = output.writeShort(value)
+    override fun encodeInt(value: Int): Unit = output.writeInt(value)
+    override fun encodeLong(value: Long): Unit = output.writeLong(value)
 
-    override fun encodeFloat(value: Float) = output.writeFloat(value)
-    override fun encodeDouble(value: Double) = output.writeDouble(value)
+    override fun encodeFloat(value: Float): Unit = output.writeFloat(value)
+    override fun encodeDouble(value: Double): Unit = output.writeDouble(value)
 
-    override fun encodeNull() = output.writeByte(0)
-    override fun encodeNotNullMark() = output.writeByte(1)
-    override fun encodeBoolean(value: Boolean) = output.writeByte(if (value) 1 else 0)
+    override fun encodeNull(): Unit = output.writeByte(0)
+    override fun encodeNotNullMark(): Unit = output.writeByte(1)
+    override fun encodeBoolean(value: Boolean): Unit = output.writeByte(if (value) 1 else 0)
 
     override fun encodeString(value: String) {
         val bytes = value.toByteArray()
@@ -47,12 +47,12 @@ class BinaryEncoder(
         }
     }
 
-    fun encodeByteArray(value: ByteArray) {
+    public fun encodeByteArray(value: ByteArray) {
         encodeVarInt(value.size)
         output.writeFully(value, 0, value.size)
     }
 
-    fun encodeFixedByteArray(value: ByteArray) {
+    public fun encodeFixedByteArray(value: ByteArray) {
         output.writeFully(value, 0, value.size)
     }
 }

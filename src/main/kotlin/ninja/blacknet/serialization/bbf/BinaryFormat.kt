@@ -9,46 +9,7 @@
 
 package ninja.blacknet.serialization.bbf
 
-import io.ktor.utils.io.core.BytePacketBuilder
-import io.ktor.utils.io.core.ByteReadPacket
-import io.ktor.utils.io.core.readBytes
-import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.modules.EmptySerializersModule
-import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.binaryModule
-
-class BinaryFormat(
-        override val serializersModule: SerializersModule = EmptySerializersModule
-) : BinaryFormat {
-    override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
-        return decodeFromPacket(deserializer, ByteReadPacket(bytes))
-    }
-
-    fun <T : Any?> decodeFromPacket(strategy: DeserializationStrategy<T>, packet: ByteReadPacket): T {
-        val decoder = BinaryDecoder(packet, serializersModule)
-        val value = strategy.deserialize(decoder)
-        val remaining = decoder.input.remaining
-        return if (remaining == 0L) {
-            value
-        } else {
-            decoder.input.release()
-            throw SerializationException("$remaining trailing bytes")
-        }
-    }
-
-    override fun <T> encodeToByteArray(serializer: SerializationStrategy<T>, value: T): ByteArray {
-        return encodeToPacket(serializer, value).readBytes()
-    }
-
-    fun <T : Any?> encodeToPacket(strategy: SerializationStrategy<T>, value: T): ByteReadPacket {
-        val encoder = BinaryEncoder(BytePacketBuilder(), serializersModule)
-        strategy.serialize(encoder, value)
-        return encoder.output.build()
-    }
-}
 
 val binaryFormat = BinaryFormat(
         serializersModule = binaryModule

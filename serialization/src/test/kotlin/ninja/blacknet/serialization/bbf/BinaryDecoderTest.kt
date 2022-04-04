@@ -46,7 +46,7 @@ class BinaryDecoderTest {
                         Unit,
                         "八"
                 ),
-                binaryFormat.decodeFromByteArray(Structure.serializer(), byteArrayOfInts(
+                BinaryFormat().decodeFromByteArray(Structure.serializer(), byteArrayOfInts(
                         0,
                         1, -1,
                         2, 1, -1, -2,

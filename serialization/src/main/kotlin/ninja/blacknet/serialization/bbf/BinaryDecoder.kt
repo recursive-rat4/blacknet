@@ -19,11 +19,11 @@ import ninja.blacknet.serialization.AdaptorDecoder
 /**
  * Decoder from the Blacknet Binary Format
  */
-class BinaryDecoder(
+public class BinaryDecoder(
         internal val input: ByteReadPacket,
         override val serializersModule: SerializersModule = EmptySerializersModule
 ) : AdaptorDecoder() {
-    constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
+    public constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
 
     override fun decodeByte(): Byte = input.readByte()
     override fun decodeShort(): Short = input.readShort()
@@ -55,12 +55,12 @@ class BinaryDecoder(
 
     override fun decodeCollectionSize(descriptor: SerialDescriptor): Int = decodeVarInt()
 
-    fun decodeByteArray(): ByteArray {
+    public fun decodeByteArray(): ByteArray {
         val size = decodeVarInt()
         return input.readBytes(size)
     }
 
-    fun decodeFixedByteArray(size: Int): ByteArray {
+    public fun decodeFixedByteArray(size: Int): ByteArray {
         return input.readBytes(size)
     }
 }
