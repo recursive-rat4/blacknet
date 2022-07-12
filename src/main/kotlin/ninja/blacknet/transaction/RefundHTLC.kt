@@ -12,7 +12,6 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Address
 
 /**
  * 償還合約

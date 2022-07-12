@@ -13,7 +13,6 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashLock
 import ninja.blacknet.contract.TimeLock
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.encodeByteArray
