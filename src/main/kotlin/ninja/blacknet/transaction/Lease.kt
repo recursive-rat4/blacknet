@@ -25,7 +25,7 @@ class Lease(
         @Serializable(with = PublicKeySerializer::class)
         val to: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (amount < PoS.MIN_LEASE) {
             return Invalid("$amount less than minimal ${PoS.MIN_LEASE}")
         }

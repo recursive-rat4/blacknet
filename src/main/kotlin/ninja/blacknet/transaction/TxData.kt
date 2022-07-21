@@ -12,9 +12,9 @@ package ninja.blacknet.transaction
 import ninja.blacknet.core.*
 
 interface TxData {
-    fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status
+    fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status
 
-    fun process(tx: Transaction, hash: ByteArray, ledger: Ledger): Status {
+    fun processLedger(tx: Transaction, hash: ByteArray, ledger: Ledger): Status {
         val account = ledger.getAccount(tx.from)
         if (account == null) {
             return Invalid("Sender account not found")
@@ -33,6 +33,6 @@ interface TxData {
         }
         account.seq += 1
         ledger.setAccount(tx.from, account)
-        return processImpl(tx, hash, 0, ledger)
+        return processLedgerImpl(tx, hash, 0, ledger)
     }
 }

@@ -27,7 +27,7 @@ class BApp(
         @Serializable(with = ByteArraySerializer::class)
         val data: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         return Accepted
     }
 

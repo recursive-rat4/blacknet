@@ -38,6 +38,6 @@ interface Ledger {
             return Invalid("Negative fee")
         }
         val data = tx.data()
-        return data.process(tx, hash, this)
+        return data.processLedger(tx, hash, this)
     }
 }

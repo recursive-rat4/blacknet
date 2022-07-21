@@ -24,7 +24,7 @@ class ClaimHTLC(
         @Serializable(with = ByteArraySerializer::class)
         val preimage: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             return Invalid("HTLC not found")

@@ -25,7 +25,7 @@ class CancelLease(
         val to: ByteArray,
         val height: Int
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         val toAccount = ledger.getAccount(to)
         if (toAccount == null) {
             return Invalid("Account not found")

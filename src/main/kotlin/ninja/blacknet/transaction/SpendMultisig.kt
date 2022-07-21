@@ -72,7 +72,7 @@ class SpendMultisig(
         return buildHash { encodeByteArray(bytes) }
     }
 
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         val multisig = ledger.getMultisig(id)
         if (multisig == null) {
             return Invalid("Multisig not found")

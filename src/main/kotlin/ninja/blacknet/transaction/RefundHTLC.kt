@@ -21,7 +21,7 @@ class RefundHTLC(
         @Serializable(with = HashTimeLockContractIdSerializer::class)
         val id: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             return Invalid("HTLC not found")

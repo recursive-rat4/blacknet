@@ -36,7 +36,7 @@ class CreateHTLC(
             encodeInt(dataIndex);
         }
 
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         try {
             timeLock.validate()
         } catch (e: Throwable) {

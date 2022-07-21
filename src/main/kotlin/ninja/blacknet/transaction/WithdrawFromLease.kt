@@ -28,7 +28,7 @@ class WithdrawFromLease(
         val to: ByteArray,
         val height: Int
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (withdraw <= 0 || withdraw > amount) {
             return Invalid("Invalid withdraw amount")
         }

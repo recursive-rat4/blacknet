@@ -31,7 +31,7 @@ class Batch(
         operator fun component2() = data
     }
 
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (dataIndex != 0) {
             return Invalid("Batch is not permitted to contain Batch")
         }
@@ -43,7 +43,7 @@ class Batch(
             val (type, bytes) = multiData[index]
             val serializer = TxType.getSerializer(type)
             val data = binaryFormat.decodeFromByteArray(serializer, bytes)
-            val status = data.processImpl(tx, hash, index + 1, ledger)
+            val status = data.processLedgerImpl(tx, hash, index + 1, ledger)
             if (status != Accepted) {
                 return notAccepted("Batch ${index + 1}", status)
             }

@@ -25,7 +25,7 @@ class Transfer(
         @SerialName("message")
         val paymentId: PaymentId
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         val account = ledger.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {

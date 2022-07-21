@@ -21,7 +21,7 @@ class Burn(
         @Serializable(with = ByteArraySerializer::class)
         val message: ByteArray
 ) : TxData {
-    override fun processImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (amount == 0L) {
             return Invalid("Invalid amount")
         }
