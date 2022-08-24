@@ -33,6 +33,8 @@ constructor() : Encoder, CompositeEncoder {
     override fun encodeString(value: String): Unit = throw notImplementedError("String")
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int): Unit = throw notImplementedError("Enum")
 
+    override fun encodeInline(inlineDescriptor: SerialDescriptor): Encoder = this
+
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
 
@@ -48,6 +50,12 @@ constructor() : Encoder, CompositeEncoder {
     override fun encodeDoubleElement(descriptor: SerialDescriptor, index: Int, value: Double): Unit = encodeDouble(value)
     override fun encodeCharElement(descriptor: SerialDescriptor, index: Int, value: Char): Unit = encodeChar(value)
     override fun encodeStringElement(descriptor: SerialDescriptor, index: Int, value: String): Unit = encodeString(value)
+
+    override fun encodeInlineElement(
+            descriptor: SerialDescriptor,
+            index: Int
+    ): Encoder =
+            encodeInline(descriptor.getElementDescriptor(index))
 
     override fun <T : Any?> encodeSerializableElement(
             descriptor: SerialDescriptor,

@@ -35,6 +35,8 @@ constructor() : Decoder, CompositeDecoder {
     override fun decodeString(): String = throw notImplementedError("String")
     override fun decodeEnum(enumDescriptor: SerialDescriptor): Int = throw notImplementedError("Enum")
 
+    override fun decodeInline(inlineDescriptor: SerialDescriptor): Decoder = this
+
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
 
@@ -51,13 +53,17 @@ constructor() : Decoder, CompositeDecoder {
     override fun decodeCharElement(descriptor: SerialDescriptor, index: Int): Char = catcher(descriptor, index) { decodeChar() }
     override fun decodeStringElement(descriptor: SerialDescriptor, index: Int): String = catcher(descriptor, index) { decodeString() }
 
+    override fun decodeInlineElement(
+            descriptor: SerialDescriptor,
+            index: Int
+    ): Decoder = decodeInline(descriptor.getElementDescriptor(index))
+
     override fun <T : Any?> decodeSerializableElement(
             descriptor: SerialDescriptor,
             index: Int,
             deserializer: DeserializationStrategy<T>,
             previousValue: T?
     ): T {
-        require(previousValue == null) { notImplementedError("update mode") }
         return catcher(descriptor, index) {
             decodeSerializableValue(deserializer)
         }
@@ -69,7 +75,6 @@ constructor() : Decoder, CompositeDecoder {
             deserializer: DeserializationStrategy<T?>,
             previousValue: T?
     ): T? {
-        require(previousValue == null) { notImplementedError("update mode") }
         return catcher(descriptor, index) {
             decodeNullableSerializableValue(deserializer)
         }
