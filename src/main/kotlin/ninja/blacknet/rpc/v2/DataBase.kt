@@ -134,7 +134,7 @@ fun Route.dataBase() {
     }
 
     get(BlockIndex.serializer(), "/api/v2/blockindex")
-    get(BlockIndex.serializer(), "/api/v2/blockindex/{hash}/")
+    get(BlockIndex.serializer(), "/api/v2/blockindex/{hash}")
 
     @Serializable
     class MakeBootstrap : Request {

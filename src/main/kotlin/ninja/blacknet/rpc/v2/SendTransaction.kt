@@ -326,5 +326,5 @@ fun Route.sendTransaction() {
         }
     }
 
-    get(SendRawTransaction.serializer(), "/api/v2/sendrawtransaction/{hex}/")
+    get(SendRawTransaction.serializer(), "/api/v2/sendrawtransaction/{hex}")
 }
