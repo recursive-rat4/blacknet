@@ -42,10 +42,7 @@ dependencies {
     implementation(project(":blacknet-serialization"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}")
     implementation("io.ktor:ktor-network:${Versions.ktor}")
-    implementation("io.ktor:ktor-server-netty:${Versions.ktor}") {
-        exclude("org.eclipse.jetty", "jetty-parent")
-        exclude("org.eclipse.jetty.alpn", "alpn-api")
-    }
+    implementation("io.ktor:ktor-server-cio:${Versions.ktor}")
     implementation("io.ktor:ktor-websockets:${Versions.ktor}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.coroutines}")
