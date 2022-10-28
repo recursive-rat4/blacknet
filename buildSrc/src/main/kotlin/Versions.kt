@@ -10,7 +10,7 @@
 object Versions {
     const val kotlin = "1.4.32"
     const val coroutines = "1.5.2"
-    const val serialization = "1.3.0"
+    const val serialization = "1.3.1"
     const val ktor = "1.6.5"
     const val weupnp = "0.1.4"
     const val bouncycastle = "1.68"
