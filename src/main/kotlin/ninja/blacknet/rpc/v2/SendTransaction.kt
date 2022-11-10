@@ -33,298 +33,298 @@ import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.transaction.*
 
+@Serializable
+class TransferRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    val amount: Long,
+    @Serializable(with = PublicKeySerializer::class)
+    val to: ByteArray,
+    val encrypted: Byte? = null,
+    val message: String? = null,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val message = PaymentId.create(message, encrypted, privateKey, to) ?: return respondError("Failed to create payment id")
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(Transfer.serializer(), Transfer(amount, to, message))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class BurnRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    val amount: Long,
+    @Serializable(with = ByteArraySerializer::class)
+    val message: ByteArray,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class LeaseRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    val amount: Long,
+    @Serializable(with = PublicKeySerializer::class)
+    val to: ByteArray,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class CancelLeaseRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    val amount: Long,
+    @Serializable(with = PublicKeySerializer::class)
+    val to: ByteArray,
+    val height: Int,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class WithdrawFromLeaseRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    val withdraw: Long,
+    val amount: Long,
+    @Serializable(with = PublicKeySerializer::class)
+    val to: ByteArray,
+    val height: Int,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.WithdrawFromLease.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class BundleRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    @Serializable(with = BAppIdSerializer::class)
+    val id: ByteArray,
+    @Serializable(with = ByteArraySerializer::class)
+    val data: ByteArray,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(BApp.serializer(), BApp(id, data))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.BApp.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class CreateSwapRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    val amount: Long,
+    @Serializable(with = PublicKeySerializer::class)
+    val to: ByteArray,
+    val timeLockType: Byte,
+    val timeLockData: Long,
+    val hashLockType: Byte,
+    @Serializable(with = ByteArraySerializer::class)
+    val hashLockData: ByteArray,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val timeLock = TimeLock(timeLockType, timeLockData).also { it.validate() }
+        val hashLock = HashLock(hashLockType, hashLockData).also { it.validate() }
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(CreateHTLC.serializer(), CreateHTLC(amount, to, timeLock, hashLock))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CreateHTLC.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class ClaimSwapRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    @Serializable(with = HashTimeLockContractIdSerializer::class)
+    val id: ByteArray,
+    @Serializable(with = ByteArraySerializer::class)
+    val preimage: ByteArray,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(ClaimHTLC.serializer(), ClaimHTLC(id, preimage))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.ClaimHTLC.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class RefundSwapRequest(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray,
+    val fee: Long,
+    @Serializable(with = HashTimeLockContractIdSerializer::class)
+    val id: ByteArray,
+    @Serializable(with = HashSerializer::class)
+    val referenceChain: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val from = Ed25519.toPublicKey(privateKey)
+        val seq = WalletDB.getSequence(from)
+        val data = binaryFormat.encodeToByteArray(RefundHTLC.serializer(), RefundHTLC(id))
+        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.RefundHTLC.type, data)
+        val (hash, bytes) = tx.sign(privateKey)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
+@Serializable
+class SendRawTransaction(
+    @SerialName("hex")
+    @Serializable(with = ByteArraySerializer::class)
+    val bytes: ByteArray
+) : Request {
+    override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
+        val hash = Transaction.hash(bytes)
+
+        val status = Node.broadcastTx(hash, bytes)
+        return if (status == Accepted)
+            respondText(HashSerializer.encode(hash))
+        else
+            respondError("Transaction rejected: $status")
+    }
+}
+
 fun Route.sendTransaction() {
-    @Serializable
-    class TransferRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            val amount: Long,
-            @Serializable(with = PublicKeySerializer::class)
-            val to: ByteArray,
-            val encrypted: Byte? = null,
-            val message: String? = null,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val message = PaymentId.create(message, encrypted, privateKey, to) ?: return respondError("Failed to create payment id")
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(Transfer.serializer(), Transfer(amount, to, message))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
-
     post(TransferRequest.serializer(), "/api/v2/transfer")
-
-    @Serializable
-    class BurnRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            val amount: Long,
-            @Serializable(with = ByteArraySerializer::class)
-            val message: ByteArray,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
 
     post(BurnRequest.serializer(), "/api/v2/burn")
 
-    @Serializable
-    class LeaseRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            val amount: Long,
-            @Serializable(with = PublicKeySerializer::class)
-            val to: ByteArray,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
-
     post(LeaseRequest.serializer(), "/api/v2/lease")
-
-    @Serializable
-    class CancelLeaseRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            val amount: Long,
-            @Serializable(with = PublicKeySerializer::class)
-            val to: ByteArray,
-            val height: Int,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
 
     post(CancelLeaseRequest.serializer(), "/api/v2/cancellease")
 
-    @Serializable
-    class WithdrawFromLeaseRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            val withdraw: Long,
-            val amount: Long,
-            @Serializable(with = PublicKeySerializer::class)
-            val to: ByteArray,
-            val height: Int,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.WithdrawFromLease.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
-
     post(WithdrawFromLeaseRequest.serializer(), "/api/v2/withdrawfromlease")
-
-    @Serializable
-    class BundleRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            @Serializable(with = BAppIdSerializer::class)
-            val id: ByteArray,
-            @Serializable(with = ByteArraySerializer::class)
-            val data: ByteArray,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(BApp.serializer(), BApp(id, data))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.BApp.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
 
     post(BundleRequest.serializer(), "/api/v2/bundle")
 
-    @Serializable
-    class CreateSwapRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            val amount: Long,
-            @Serializable(with = PublicKeySerializer::class)
-            val to: ByteArray,
-            val timeLockType: Byte,
-            val timeLockData: Long,
-            val hashLockType: Byte,
-            @Serializable(with = ByteArraySerializer::class)
-            val hashLockData: ByteArray,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val timeLock = TimeLock(timeLockType, timeLockData).also { it.validate() }
-            val hashLock = HashLock(hashLockType, hashLockData).also { it.validate() }
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(CreateHTLC.serializer(), CreateHTLC(amount, to, timeLock, hashLock))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CreateHTLC.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
-
     post(CreateSwapRequest.serializer(), "/api/v2/createswap")
-
-    @Serializable
-    class ClaimSwapRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            @Serializable(with = HashTimeLockContractIdSerializer::class)
-            val id: ByteArray,
-            @Serializable(with = ByteArraySerializer::class)
-            val preimage: ByteArray,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(ClaimHTLC.serializer(), ClaimHTLC(id, preimage))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.ClaimHTLC.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
 
     post(ClaimSwapRequest.serializer(), "/api/v2/claimswap")
 
-    @Serializable
-    class RefundSwapRequest(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray,
-            val fee: Long,
-            @Serializable(with = HashTimeLockContractIdSerializer::class)
-            val id: ByteArray,
-            @Serializable(with = HashSerializer::class)
-            val referenceChain: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val from = Ed25519.toPublicKey(privateKey)
-            val seq = WalletDB.getSequence(from)
-            val data = binaryFormat.encodeToByteArray(RefundHTLC.serializer(), RefundHTLC(id))
-            val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.RefundHTLC.type, data)
-            val (hash, bytes) = tx.sign(privateKey)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
-
     post(RefundSwapRequest.serializer(), "/api/v2/refundswap")
-
-    @Serializable
-    class SendRawTransaction(
-            @SerialName("hex")
-            @Serializable(with = ByteArraySerializer::class)
-            val bytes: ByteArray
-    ) : Request {
-        override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
-            val hash = Transaction.hash(bytes)
-
-            val status = Node.broadcastTx(hash, bytes)
-            return if (status == Accepted)
-                respondText(HashSerializer.encode(hash))
-            else
-                respondError("Transaction rejected: $status")
-        }
-    }
 
     get(SendRawTransaction.serializer(), "/api/v2/sendrawtransaction/{hex}")
 }

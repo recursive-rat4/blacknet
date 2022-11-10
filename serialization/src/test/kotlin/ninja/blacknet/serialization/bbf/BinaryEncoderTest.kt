@@ -39,18 +39,18 @@ class BinaryEncoderTest {
         assertEquals(byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB), encoder.toBytes())
     }
 
+    @Serializable
+    class Structure(
+        val a: Byte,
+        val b: Short,
+        val c: Int,
+        val d: Long,
+        val e: Unit,
+        val f: String
+    )
+
     @Test
     fun structure() {
-        @Serializable
-        class Structure(
-                val a: Byte,
-                val b: Short,
-                val c: Int,
-                val d: Long,
-                val e: Unit,
-                val f: String
-        )
-
         val value = Structure(
                 0,
                 0x01FF,
