@@ -80,17 +80,9 @@ distributions {
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     kotlinOptions {
-        jvmTarget = "1.8"
         freeCompilerArgs = listOf(
-                "-Xjvm-default=all",
-                "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
+                "-Xjvm-default=all"
         )
-    }
-}
-
-val compileTestKotlin by tasks.existing(KotlinCompile::class) {
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
 }
 

@@ -8,7 +8,7 @@
  */
 
 object Versions {
-    const val kotlin = "1.4.32"
+    const val kotlin = "1.5.20"
     const val coroutines = "1.5.2"
     const val serialization = "1.3.1"
     const val ktor = "1.6.5"
