@@ -53,8 +53,6 @@ class SynchronizedArrayList<T>(
 
     suspend inline fun filter(predicate: (T) -> Boolean) = mutex.withLock { list.filterTo(ArrayList(list.size), predicate) }
 
-    suspend inline fun <R : Comparable<R>> maxBy(selector: (T) -> R) = mutex.withLock { list.maxBy(selector) }
-
     suspend inline fun <R> map(transform: (T) -> R): ArrayList<R> = mutex.withLock { list.mapTo(ArrayList(list.size), transform) }
 
     suspend inline fun removeFirstIf(filter: (T) -> Boolean): T? = mutex.withLock {
