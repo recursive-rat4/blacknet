@@ -19,9 +19,11 @@ import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.Resources
+import java.math.BigInteger
 
 object Genesis {
     const val TIME: Long = 1545555600
+    val CUMULATIVE_DIFFICULTY = BigInteger.ZERO
 
     val balances by lazy {
         val map = HashMap<ByteArray, Long>()

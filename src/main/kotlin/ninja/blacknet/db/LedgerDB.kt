@@ -105,7 +105,7 @@ object LedgerDB {
                 HashSerializer.ZERO,
                 Genesis.TIME,
                 PoS.INITIAL_DIFFICULTY,
-                BigInteger.ZERO,
+                Genesis.CUMULATIVE_DIFFICULTY,
                 supply,
                 HashSerializer.ZERO,
                 HashSerializer.ZERO,

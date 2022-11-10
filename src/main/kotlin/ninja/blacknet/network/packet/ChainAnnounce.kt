@@ -13,6 +13,7 @@ import java.math.BigInteger
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.db.Genesis
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
 
@@ -24,7 +25,7 @@ class ChainAnnounce(
         internal val cumulativeDifficulty: BigInteger
 ) : Packet {
     override suspend fun process(connection: Connection) {
-        if (cumulativeDifficulty < BigInteger.ZERO) {
+        if (cumulativeDifficulty < Genesis.CUMULATIVE_DIFFICULTY) {
             connection.dos("Invalid cumulative difficulty ${cumulativeDifficulty}")
             return
         }
@@ -35,6 +36,6 @@ class ChainAnnounce(
     }
 
     companion object {
-        val GENESIS = ChainAnnounce(HashSerializer.ZERO, BigInteger.ZERO)
+        val GENESIS = ChainAnnounce(HashSerializer.ZERO, Genesis.CUMULATIVE_DIFFICULTY)
     }
 }
