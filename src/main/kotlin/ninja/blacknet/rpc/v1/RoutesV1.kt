@@ -139,7 +139,7 @@ fun Route.APIV1() {
             if (height < 0 || height > state.height)
                 return@get call.respond(HttpStatusCode.NotFound, "block not found")
             else if (height == 0)
-                return@get call.respond(HashSerializer.encode(HashSerializer.ZERO))
+                return@get call.respond(HashSerializer.encode(Genesis.BLOCK_HASH))
             else if (height == state.height)
                 return@get call.respond(HashSerializer.encode(state.blockHash))
 
@@ -149,7 +149,7 @@ fun Route.APIV1() {
             var hash: ByteArray
             var index: ChainIndex
             if (height < state.height / 2) {
-                hash = HashSerializer.ZERO
+                hash = Genesis.BLOCK_HASH
                 index = LedgerDB.getChainIndex(hash)!!
             } else {
                 hash = state.blockHash
@@ -183,13 +183,13 @@ fun Route.APIV1() {
 
     get("/api/v1/blockdb/makebootstrap") {
         val checkpoint = LedgerDB.state().rollingCheckpoint
-        if (checkpoint.contentEquals(HashSerializer.ZERO))
+        if (checkpoint.contentEquals(Genesis.BLOCK_HASH))
             return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
 
         val file = File(dataDir, "bootstrap.dat.new")
         val stream = file.outputStream().buffered().data()
 
-        var hash = HashSerializer.ZERO
+        var hash = Genesis.BLOCK_HASH
         var index = LedgerDB.getChainIndex(hash)!!
         do {
             hash = index.next

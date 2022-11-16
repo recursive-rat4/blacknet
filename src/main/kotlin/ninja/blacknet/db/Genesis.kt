@@ -11,11 +11,8 @@ package ninja.blacknet.db
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import ninja.blacknet.crypto.*
 import ninja.blacknet.regtest
-import ninja.blacknet.crypto.Ed25519
-import ninja.blacknet.crypto.Mnemonic
-import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.Resources
@@ -23,6 +20,7 @@ import java.math.BigInteger
 
 object Genesis {
     const val TIME: Long = 1545555600
+    val BLOCK_HASH = HashSerializer.ZERO
     val CUMULATIVE_DIFFICULTY = BigInteger.ZERO
 
     val balances by lazy {

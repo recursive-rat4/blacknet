@@ -36,6 +36,6 @@ class ChainAnnounce(
     }
 
     companion object {
-        val GENESIS = ChainAnnounce(HashSerializer.ZERO, Genesis.CUMULATIVE_DIFFICULTY)
+        val GENESIS = ChainAnnounce(Genesis.BLOCK_HASH, Genesis.CUMULATIVE_DIFFICULTY)
     }
 }

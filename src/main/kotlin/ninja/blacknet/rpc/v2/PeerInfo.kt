@@ -13,6 +13,7 @@ import java.math.BigInteger
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.db.Genesis
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
@@ -84,7 +85,7 @@ class PeerInfo(
 
         suspend fun getAll(): List<PeerInfo> {
             val forkCache = HashMap<ByteArray, Boolean>()
-            forkCache.put(HashSerializer.ZERO, false)
+            forkCache.put(Genesis.BLOCK_HASH, false)
             return Node.connections.map { PeerInfo.get(it, forkCache) }
         }
     }

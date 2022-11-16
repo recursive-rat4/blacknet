@@ -505,7 +505,7 @@ object WalletDB {
         mutex.withUnlock {
             BlockDB.mutex.withLock {
                 mutex.withLock {
-                    var hash = HashSerializer.ZERO
+                    var hash = Genesis.BLOCK_HASH
                     var index = LedgerDB.getChainIndex(hash)!!
                     val height = LedgerDB.state().height
                     val n = height - index.height + 1
@@ -533,7 +533,7 @@ object WalletDB {
         return if (!PoS.guessInitialSynchronization())
             LedgerDB.state().rollingCheckpoint
         else
-            HashSerializer.ZERO
+            Genesis.BLOCK_HASH
     }
 
     private suspend fun rescanBlockImpl(publicKey: ByteArray, wallet: Wallet, hash: ByteArray, height: Int, generated: Long, batch: LevelDB.WriteBatch) {

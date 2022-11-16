@@ -21,6 +21,7 @@ import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
+import ninja.blacknet.db.Genesis
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.rpc.requests.*
@@ -345,7 +346,7 @@ fun Route.wallet() {
             @Serializable(with = PublicKeySerializer::class)
             val publicKey: ByteArray,
             @Serializable(with = HashSerializer::class)
-            val hash: ByteArray = HashSerializer.ZERO
+            val hash: ByteArray = Genesis.BLOCK_HASH
     ) : Request {
         override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
             val wallet = WalletDB.getWalletImpl(publicKey)

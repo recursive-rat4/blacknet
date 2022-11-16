@@ -25,6 +25,7 @@ import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.db.Genesis
 import ninja.blacknet.logging.info
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
@@ -95,20 +96,20 @@ object LedgerDB {
         }
 
         val chainIndex = ChainIndex(HashSerializer.ZERO, HashSerializer.ZERO, 0, 0, 0L)
-        batch.put(CHAIN_KEY, HashSerializer.ZERO, binaryFormat.encodeToByteArray(ChainIndex.serializer(), chainIndex))
+        batch.put(CHAIN_KEY, Genesis.BLOCK_HASH, binaryFormat.encodeToByteArray(ChainIndex.serializer(), chainIndex))
 
         blockSizes.add(0)
         writeBlockSizes(batch)
 
         val state = State(
                 0,
-                HashSerializer.ZERO,
+                Genesis.BLOCK_HASH,
                 Genesis.TIME,
                 PoS.INITIAL_DIFFICULTY,
                 Genesis.CUMULATIVE_DIFFICULTY,
                 supply,
                 HashSerializer.ZERO,
-                HashSerializer.ZERO,
+                Genesis.BLOCK_HASH,
                 PoS.DEFAULT_MAX_BLOCK_SIZE,
                 0,
                 0)
@@ -166,7 +167,7 @@ object LedgerDB {
 
                 runBlocking {
                     val blockHashes = ArrayList<ByteArray>(500000)
-                    var index = getChainIndex(HashSerializer.ZERO)!!
+                    var index = getChainIndex(Genesis.BLOCK_HASH)!!
                     while (!index.next.contentEquals(HashSerializer.ZERO)) {
                         blockHashes.add(index.next)
                         index = getChainIndex(index.next)!!
@@ -271,12 +272,12 @@ object LedgerDB {
 
     internal fun getNextRollingCheckpoint(): ByteArray {
         val state = state
-        if (!state.rollingCheckpoint.contentEquals(HashSerializer.ZERO)) {
+        if (!state.rollingCheckpoint.contentEquals(Genesis.BLOCK_HASH)) {
             val chainIndex = getChainIndex(state.rollingCheckpoint)!!
             return chainIndex.next
         } else {
             if (state.height < PoS.MATURITY + 1)
-                return HashSerializer.ZERO
+                return Genesis.BLOCK_HASH
             val checkpoint = state.height - PoS.MATURITY
             var chainIndex = getChainIndex(state.blockHash)!!
             while (chainIndex.height != checkpoint + 1)
@@ -306,7 +307,7 @@ object LedgerDB {
     }
 
     fun checkReferenceChain(hash: ByteArray): Boolean {
-        return hash.contentEquals(HashSerializer.ZERO) || chainContains(hash)
+        return hash.contentEquals(Genesis.BLOCK_HASH) || chainContains(hash)
     }
 
     suspend fun getNextBlockHashes(start: ByteArray, max: Int): List<ByteArray>? = BlockDB.mutex.withLock {

@@ -21,6 +21,7 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.BlockDB
+import ninja.blacknet.db.Genesis
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LevelDB
 import ninja.blacknet.rpc.RPCServer
@@ -82,7 +83,7 @@ fun Route.dataBase() {
             if (height < 0 || height > state.height)
                 return respondError("Block not found")
             else if (height == 0)
-                return respondText(HashSerializer.encode(HashSerializer.ZERO))
+                return respondText(HashSerializer.encode(Genesis.BLOCK_HASH))
             else if (height == state.height)
                 return respondText(HashSerializer.encode(state.blockHash))
 
@@ -93,7 +94,7 @@ fun Route.dataBase() {
             var hash: ByteArray
             var index: ChainIndex
             if (height < state.height / 2) {
-                hash = HashSerializer.ZERO
+                hash = Genesis.BLOCK_HASH
                 index = LedgerDB.getChainIndex(hash)!!
             } else {
                 hash = state.blockHash
@@ -140,13 +141,13 @@ fun Route.dataBase() {
     class MakeBootstrap : Request {
         override suspend fun handle(): TextContent {
             val checkpoint = LedgerDB.state().rollingCheckpoint
-            if (checkpoint.contentEquals(HashSerializer.ZERO))
+            if (checkpoint.contentEquals(Genesis.BLOCK_HASH))
                 return respondError("Not synchronized")
 
             val file = File(dataDir, "bootstrap.dat.new")
             val stream = file.outputStream().buffered().data()
 
-            var hash = HashSerializer.ZERO
+            var hash = Genesis.BLOCK_HASH
             var index = LedgerDB.getChainIndex(hash)!!
             do {
                 hash = index.next
