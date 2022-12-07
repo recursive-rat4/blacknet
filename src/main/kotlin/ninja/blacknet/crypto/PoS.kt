@@ -87,13 +87,17 @@ object PoS {
     }
 
     /**
+     * Fundamental constant of Universe
+     */
+    const val RAT = 4
+    /**
      * Length of time slot
      */
     val TIME_SLOT get() = if (forkV2()) 4L else 16L
     /**
      * Expected block time
      */
-    val TARGET_BLOCK_TIME get() = 4 * TIME_SLOT
+    val TARGET_BLOCK_TIME get() = RAT * TIME_SLOT
     /**
      * Expected number of blocks in year
      */
