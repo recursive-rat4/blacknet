@@ -300,8 +300,8 @@ object ChainFetcher {
 
     private fun timeout(): Long {
         return if (!PoS.guessInitialSynchronization())
-            4 * 1000
+            4 * 1000L
         else
-            10 * 1000
+            10 * 1000L
     }
 }
