@@ -78,7 +78,7 @@ class HashEncoder(
             val bytes = value.toString().toByteArray(charset)
             writer.writeByteArray(bytes, 0, bytes.size)
         } else {
-            encodeShort(value.toShort())
+            encodeShort(value.code.toShort())
         }
     }
 
@@ -88,7 +88,7 @@ class HashEncoder(
             writer.writeByteArray(bytes, 0, bytes.size)
         } else {
             for (i in 0 until value.length) {
-                encodeShort(value[i].toShort())
+                encodeShort(value[i].code.toShort())
             }
         }
     }

@@ -51,7 +51,7 @@ object Base64 {
         val table = if (!i2p) DECODE_TABLE else DECODE_TABLE_I2P
 
         for (i in base.indices) {
-            val x = base[i].toInt()
+            val x = base[i].code
             val byte = if (x >= 0 && x < table.size)
                 table[x]
             else

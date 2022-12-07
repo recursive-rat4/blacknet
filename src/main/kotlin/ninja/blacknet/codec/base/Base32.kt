@@ -40,7 +40,7 @@ object Base32 {
         val bytes = ByteArray(base.length)
 
         for (i in base.indices) {
-            val x = base[i].toInt()
+            val x = base[i].code
             val byte = if (x >= 0 && x < DECODE_TABLE.size)
                 DECODE_TABLE[x]
             else
