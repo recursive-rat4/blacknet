@@ -98,7 +98,7 @@ object ChainFetcher {
             deferred.complete(Pair(status, n))
         }
 
-        deferChannel.poll()?.let { (blocks, requestedDifficulty) ->
+        deferChannel.tryReceive().getOrNull()?.let { (blocks, requestedDifficulty) ->
             if (requestedDifficulty <= LedgerDB.state().cumulativeDifficulty)
                 return@let
 
@@ -213,7 +213,7 @@ object ChainFetcher {
         else
             logger.info("Fetched $connectedBlocks blocks from ${connection.debugName()}")
 
-        recvChannel.poll()
+        recvChannel.tryReceive()
         request?.let {
             it.cancel()
             request = null
