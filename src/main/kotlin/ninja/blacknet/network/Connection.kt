@@ -48,6 +48,7 @@ class Connection(
 
     private val closed = atomic(false)
     private val dosScore = atomic(0)
+    //TODO review capacity
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     private val inventoryToSend = SynchronizedArrayList<ByteArray>(Inventory.SEND_MAX)
     val connectedAt = currentTimeSeconds()

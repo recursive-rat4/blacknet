@@ -102,6 +102,8 @@ object ChainFetcher {
             if (requestedDifficulty <= LedgerDB.state().cumulativeDifficulty)
                 return@let
 
+            //TODO process deferred blocks
+
             if (blocks.blocks.isNotEmpty()) {
                 logger.debug { "Skipped ${blocks.blocks.size} blocks" }
             } else if (blocks.hashes.isNotEmpty()) {
