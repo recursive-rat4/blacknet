@@ -9,7 +9,7 @@
 
 object Versions {
     const val kotlin = "1.6.21"
-    const val coroutines = "1.6.0"
+    const val coroutines = "1.6.1"
     const val serialization = "1.3.2"
     const val ktor = "1.6.8"
     const val weupnp = "0.1.4"
