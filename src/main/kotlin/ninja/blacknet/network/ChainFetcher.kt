@@ -71,14 +71,14 @@ object ChainFetcher {
         if (announce.cumulativeDifficulty <= LedgerDB.state().cumulativeDifficulty)
             return
 
-        announces.offer(Pair(connection, announce))
+        announces.trySend(Pair(connection, announce))
     }
 
     suspend fun stakedBlock(hash: ByteArray, bytes: ByteArray): Pair<Status, Int> {
         val deferred = CompletableDeferred<Pair<Status, Int>>()
         stakedBlock = Triple(hash, bytes, deferred)
         request?.cancel(CancellationException("Staked new block"))
-        announces.offer(null)
+        announces.trySend(null)
         return deferred.await()
     }
 
@@ -252,7 +252,7 @@ object ChainFetcher {
 
         if (request == null || syncConnection != connection) {
             deferChannel.send(Pair(blocks, requestedDifficulty))
-            announces.offer(null)
+            announces.trySend(null)
             logger.debug { "Deferred packet Blocks from ${connection.debugName()}" }
             return
         }
