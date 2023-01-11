@@ -57,7 +57,7 @@ dependencies {
     implementation("com.rfksystems:blake2b:1.0.0")
     implementation("org.iq80.leveldb:leveldb:0.12")
     implementation("org.slf4j:slf4j-jdk14:1.7.36")
-    implementation("io.github.microutils:kotlin-logging-jvm:2.0.4")
+    implementation("io.github.microutils:kotlin-logging-jvm:2.0.5")
     implementation("com.google.guava:guava:30.1-jre")
     implementation("org.bitlet:weupnp:${Versions.weupnp}")
     implementation("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
