@@ -56,7 +56,7 @@ dependencies {
     implementation("net.i2p.crypto:eddsa:0.3.0")
     implementation("com.rfksystems:blake2b:1.0.0")
     implementation("org.iq80.leveldb:leveldb:0.12")
-    implementation("org.slf4j:slf4j-jdk14:2.0.3")
+    implementation("org.slf4j:slf4j-jdk14:2.0.4")
     implementation("io.github.microutils:kotlin-logging-jvm:2.0.8")
     implementation("com.google.guava:guava:30.1-jre")
     implementation("org.bitlet:weupnp:${Versions.weupnp}")
