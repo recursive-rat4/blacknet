@@ -28,7 +28,7 @@ plugins {
     kotlin("plugin.serialization") version Versions.kotlin
     application
     distribution
-    id("com.github.hierynomus.license-report") version "0.15.0"
+    id("com.github.hierynomus.license-report") version "0.16.1"
 }
 
 apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
@@ -136,9 +136,9 @@ val test by tasks.existing(Test::class) {
 }
 
 val wrapper by tasks.existing(Wrapper::class) {
-    gradleVersion = "6.8.3"
+    gradleVersion = "7.0.2"
     distributionType = Wrapper.DistributionType.BIN
-    distributionSha256Sum = "7faa7198769f872826c8ef4f1450f839ec27f0b4d5d1e51bade63667cbccd205"
+    distributionSha256Sum = "0e46229820205440b48a5501122002842b82886e76af35f0f3a069243dca4b3c"
 }
 
 val defaultSystemProperties: Map<String, Any> = mapOf(
