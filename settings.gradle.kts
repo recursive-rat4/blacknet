@@ -20,7 +20,7 @@ project(":blacknet-serialization").projectDir = file("serialization")
 
 pluginManagement {
     repositories {
-        jcenter()
+        mavenCentral()
         gradlePluginPortal()
     }
 }
