@@ -69,7 +69,7 @@ dependencies {
 }
 
 application {
-    mainClassName = "ninja.blacknet.Main"
+    mainClass.set("ninja.blacknet.Main")
 }
 
 distributions {
