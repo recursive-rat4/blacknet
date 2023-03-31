@@ -54,10 +54,11 @@ class ByteArraySerializerTest {
         )
     }
 
+    @Serializable
+    class Request(@Serializable(with = ByteArraySerializer::class) val byteArray: ByteArray)
+
     @Test
     fun requestDecoder() {
-        @Serializable
-        class Request(@Serializable(with = ByteArraySerializer::class) val byteArray: ByteArray)
         assertEquals(
                 byteArray,
                 RequestFormat(

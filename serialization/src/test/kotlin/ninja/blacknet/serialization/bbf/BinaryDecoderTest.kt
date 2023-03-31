@@ -25,18 +25,18 @@ class BinaryDecoderTest {
         assertEquals("八", BinaryDecoder(byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB)).decodeString())
     }
 
+    @Serializable
+    data class Structure(
+        val a: Byte,
+        val b: Short,
+        val c: Int,
+        val d: Long,
+        val e: Unit,
+        val f: String
+    )
+
     @Test
     fun structure() {
-        @Serializable
-        data class Structure(
-                val a: Byte,
-                val b: Short,
-                val c: Int,
-                val d: Long,
-                val e: Unit,
-                val f: String
-        )
-
         assertEquals(
                 Structure(
                         0,

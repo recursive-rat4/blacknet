@@ -40,9 +40,6 @@ MIT license: https://www.slf4j.org/license.html
 kotlin-logging https://github.com/MicroUtils/kotlin-logging is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
-Netty https://netty.io/ is licensed under the
-Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
-
 Guava https://github.com/google/guava is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 

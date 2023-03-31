@@ -26,10 +26,10 @@ object Bech32 {
         System.arraycopy(hrp, 0, result, 0, hrp.size)
         result[hrp.size] = 0x31
         for (i in 0 until data.size) {
-            result[i + hrp.size + 1] = CHARSET[data[i].toInt()].toByte()
+            result[i + hrp.size + 1] = CHARSET[data[i].toInt()].code.toByte()
         }
         for (i in 0 until checksum.size) {
-            result[i + hrp.size + 1 + data.size] = CHARSET[checksum[i].toInt()].toByte()
+            result[i + hrp.size + 1 + data.size] = CHARSET[checksum[i].toInt()].code.toByte()
         }
 
         return String(result, Charsets.US_ASCII)

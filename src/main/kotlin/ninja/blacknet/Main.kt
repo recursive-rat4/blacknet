@@ -11,9 +11,9 @@
 package ninja.blacknet
 
 import com.rfksystems.blake2b.security.Blake2bProvider
+import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
 import java.io.File
 import java.io.FileInputStream
 import java.security.Security
@@ -110,7 +110,7 @@ object Main {
          */
         if (Config.instance.rpcserver) {
             embeddedServer(
-                Netty,
+                CIO,
                 commandLineEnvironment(arrayOf("-config=${File(configDir,
                     if (regtest)
                         "rpcregtest.conf"

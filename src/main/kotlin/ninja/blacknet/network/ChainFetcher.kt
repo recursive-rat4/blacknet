@@ -71,14 +71,14 @@ object ChainFetcher {
         if (announce.cumulativeDifficulty <= LedgerDB.state().cumulativeDifficulty)
             return
 
-        announces.offer(Pair(connection, announce))
+        announces.trySend(Pair(connection, announce))
     }
 
     suspend fun stakedBlock(hash: ByteArray, bytes: ByteArray): Pair<Status, Int> {
         val deferred = CompletableDeferred<Pair<Status, Int>>()
         stakedBlock = Triple(hash, bytes, deferred)
         request?.cancel(CancellationException("Staked new block"))
-        announces.offer(null)
+        announces.trySend(null)
         return deferred.await()
     }
 
@@ -98,7 +98,7 @@ object ChainFetcher {
             deferred.complete(Pair(status, n))
         }
 
-        deferChannel.poll()?.let { (blocks, requestedDifficulty) ->
+        deferChannel.tryReceive().getOrNull()?.let { (blocks, requestedDifficulty) ->
             if (requestedDifficulty <= LedgerDB.state().cumulativeDifficulty)
                 return@let
 
@@ -215,7 +215,7 @@ object ChainFetcher {
         else
             logger.info("Fetched $connectedBlocks blocks from ${connection.debugName()}")
 
-        recvChannel.poll()
+        recvChannel.tryReceive()
         request?.let {
             it.cancel()
             request = null
@@ -254,7 +254,7 @@ object ChainFetcher {
 
         if (request == null || syncConnection != connection) {
             deferChannel.send(Pair(blocks, requestedDifficulty))
-            announces.offer(null)
+            announces.trySend(null)
             logger.debug { "Deferred packet Blocks from ${connection.debugName()}" }
             return
         }
@@ -302,8 +302,8 @@ object ChainFetcher {
 
     private fun timeout(): Long {
         return if (!PoS.guessInitialSynchronization())
-            4 * 1000
+            4 * 1000L
         else
-            10 * 1000
+            10 * 1000L
     }
 }

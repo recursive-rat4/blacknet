@@ -19,7 +19,7 @@ allprojects {
 
 buildscript {
     dependencies {
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.4")
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.17.3")
     }
 }
 
@@ -40,16 +40,12 @@ repositories {
 dependencies {
     implementation(project(":blacknet-runtime"))
     implementation(project(":blacknet-serialization"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     implementation("io.ktor:ktor-network:${Versions.ktor}")
-    implementation("io.ktor:ktor-server-netty:${Versions.ktor}") {
-        exclude("org.eclipse.jetty", "jetty-parent")
-        exclude("org.eclipse.jetty.alpn", "alpn-api")
-    }
+    implementation("io.ktor:ktor-server-cio:${Versions.ktor}")
     implementation("io.ktor:ktor-websockets:${Versions.ktor}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.coroutines}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.coroutines}")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
     implementation("org.apache.commons:commons-collections4:4.4")
@@ -83,17 +79,9 @@ distributions {
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     kotlinOptions {
-        jvmTarget = "1.8"
         freeCompilerArgs = listOf(
-                "-Xjvm-default=all",
-                "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
+                "-Xjvm-default=all"
         )
-    }
-}
-
-val compileTestKotlin by tasks.existing(KotlinCompile::class) {
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
 }
 

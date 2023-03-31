@@ -18,56 +18,56 @@ import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.rpc.requests.*
 
+@Serializable
+class StartStaking(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray
+) : Request {
+    override suspend fun handle(): TextContent {
+        return respondText(Staker.startStaking(privateKey).toString())
+    }
+}
+
+@Serializable
+class StopStaking(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray
+) : Request {
+    override suspend fun handle(): TextContent {
+        return respondText(Staker.stopStaking(privateKey).toString())
+    }
+}
+
+@Serializable
+class IsStaking(
+    @SerialName("mnemonic")
+    @Serializable(with = PrivateKeySerializer::class)
+    val privateKey: ByteArray
+) : Request {
+    override suspend fun handle(): TextContent {
+        return respondText(Staker.isStaking(privateKey).toString())
+    }
+}
+
+@Serializable
+class Staking(
+    @SerialName("address")
+    @Serializable(with = PublicKeySerializer::class)
+    val publicKey: ByteArray? = null
+) : Request {
+    override suspend fun handle(): TextContent {
+        return respondJson(StakingInfo.serializer(), Staker.info(publicKey))
+    }
+}
+
 fun Route.staking() {
-    @Serializable
-    class StartStaking(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray
-    ) : Request {
-        override suspend fun handle(): TextContent {
-            return respondText(Staker.startStaking(privateKey).toString())
-        }
-    }
-
     post(StartStaking.serializer(), "/api/v2/startstaking")
-
-    @Serializable
-    class StopStaking(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray
-    ) : Request {
-        override suspend fun handle(): TextContent {
-            return respondText(Staker.stopStaking(privateKey).toString())
-        }
-    }
 
     post(StopStaking.serializer(), "/api/v2/stopstaking")
 
-    @Serializable
-    class IsStaking(
-            @SerialName("mnemonic")
-            @Serializable(with = PrivateKeySerializer::class)
-            val privateKey: ByteArray
-    ) : Request {
-        override suspend fun handle(): TextContent {
-            return respondText(Staker.isStaking(privateKey).toString())
-        }
-    }
-
     post(IsStaking.serializer(), "/api/v2/isstaking")
-
-    @Serializable
-    class Staking(
-            @SerialName("address")
-            @Serializable(with = PublicKeySerializer::class)
-            val publicKey: ByteArray? = null
-    ) : Request {
-        override suspend fun handle(): TextContent {
-            return respondJson(StakingInfo.serializer(), Staker.info(publicKey))
-        }
-    }
 
     get(Staking.serializer(), "/api/v2/staking/{address?}")
 }

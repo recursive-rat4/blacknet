@@ -32,7 +32,7 @@ object TxFetcher {
     }
 
     fun offer(connection: Connection, list: List<ByteArray>) {
-        inventoryChannel.offer(Pair(connection, list))
+        inventoryChannel.trySend(Pair(connection, list))
     }
 
     suspend fun fetched(hash: ByteArray): Boolean {

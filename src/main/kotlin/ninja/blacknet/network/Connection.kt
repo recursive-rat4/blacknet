@@ -195,11 +195,11 @@ class Connection(
 
     fun sendPacket(type: PacketType, packet: Packet) {
         logger.debug { "Sending $type to ${debugName()}" }
-        sendChannel.offer(buildPacket(type, packet))
+        sendChannel.trySend(buildPacket(type, packet))
     }
 
     internal fun sendPacket(bytes: ByteReadPacket) {
-        sendChannel.offer(bytes)
+        sendChannel.trySend(bytes)
     }
 
     fun dos(reason: String) {

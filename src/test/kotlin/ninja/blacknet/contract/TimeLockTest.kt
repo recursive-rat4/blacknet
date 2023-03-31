@@ -16,33 +16,33 @@ import kotlin.test.assertTrue
 class TimeLockTest {
     @Test
     fun absoluteTime() {
-        assertFalse(TimeLock(TIME, 1000000).verify(0, 0, 0, 1000000 - 1))
-        assertFalse(TimeLock(TIME, 1000000).verify(0, 0, 0, 1000000))
-        assertTrue(TimeLock(TIME, 1000000).verify(0, 0, 0, 1000001))
-        assertTrue(TimeLock(TIME, 1000000).verify(0, 0, 0, 1000001 + 1))
+        assertFalse(TimeLock(TIME, 1000000L).verify(0, 0L, 0, 1000000L - 1))
+        assertFalse(TimeLock(TIME, 1000000L).verify(0, 0L, 0, 1000000L))
+        assertTrue(TimeLock(TIME, 1000000L).verify(0, 0L, 0, 1000001L))
+        assertTrue(TimeLock(TIME, 1000000L).verify(0, 0L, 0, 1000001L + 1))
     }
 
     @Test
     fun absoluteHeight() {
-        assertFalse(TimeLock(HEIGHT, 1000000).verify(0, 0, 1000000 - 1, 0))
-        assertFalse(TimeLock(HEIGHT, 1000000).verify(0, 0, 1000000, 0))
-        assertTrue(TimeLock(HEIGHT, 1000000).verify(0, 0, 1000001, 0))
-        assertTrue(TimeLock(HEIGHT, 1000000).verify(0, 0, 1000001 + 1, 0))
+        assertFalse(TimeLock(HEIGHT, 1000000L).verify(0, 0L, 1000000 - 1, 0L))
+        assertFalse(TimeLock(HEIGHT, 1000000L).verify(0, 0L, 1000000, 0L))
+        assertTrue(TimeLock(HEIGHT, 1000000L).verify(0, 0L, 1000001, 0L))
+        assertTrue(TimeLock(HEIGHT, 1000000L).verify(0, 0L, 1000001 + 1, 0L))
     }
 
     @Test
     fun relativeTime() {
-        assertFalse(TimeLock(RELATIVE_TIME, 10000).verify(0, 990000, 0, 1000000 - 1))
-        assertFalse(TimeLock(RELATIVE_TIME, 10000).verify(0, 990000, 0, 1000000))
-        assertTrue(TimeLock(RELATIVE_TIME, 10000).verify(0, 990000, 0, 1000001))
-        assertTrue(TimeLock(RELATIVE_TIME, 10000).verify(0, 990000, 0, 1000001 + 1))
+        assertFalse(TimeLock(RELATIVE_TIME, 10000L).verify(0, 990000L, 0, 1000000L - 1))
+        assertFalse(TimeLock(RELATIVE_TIME, 10000L).verify(0, 990000L, 0, 1000000L))
+        assertTrue(TimeLock(RELATIVE_TIME, 10000L).verify(0, 990000L, 0, 1000001L))
+        assertTrue(TimeLock(RELATIVE_TIME, 10000L).verify(0, 990000L, 0, 1000001L + 1))
     }
 
     @Test
     fun relativeHeight() {
-        assertFalse(TimeLock(RELATIVE_HEIGHT, 10000).verify(990000, 0, 1000000 - 1, 0))
-        assertFalse(TimeLock(RELATIVE_HEIGHT, 10000).verify(990000, 0, 1000000, 0))
-        assertTrue(TimeLock(RELATIVE_HEIGHT, 10000).verify(990000, 0, 1000001, 0))
-        assertTrue(TimeLock(RELATIVE_HEIGHT, 10000).verify(990000, 0, 1000001 + 1, 0))
+        assertFalse(TimeLock(RELATIVE_HEIGHT, 10000L).verify(990000, 0L, 1000000 - 1, 0L))
+        assertFalse(TimeLock(RELATIVE_HEIGHT, 10000L).verify(990000, 0L, 1000000, 0L))
+        assertTrue(TimeLock(RELATIVE_HEIGHT, 10000L).verify(990000, 0L, 1000001, 0L))
+        assertTrue(TimeLock(RELATIVE_HEIGHT, 10000L).verify(990000, 0L, 1000001 + 1, 0L))
     }
 }

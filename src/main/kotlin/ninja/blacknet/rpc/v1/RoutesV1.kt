@@ -244,7 +244,7 @@ fun Route.APIV1() {
         call.respond(Json.stringify(NewMnemonicInfo.serializer(), info))
     }
 
-    post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}/{blockHash?}/") {
+    post("/api/v1/transfer/{mnemonic}/{fee}/{amount}/{to}/{message?}/{encrypted?}/{blockHash?}") {
         val privateKey = call.parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
         val from = Ed25519.toPublicKey(privateKey)
         val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
@@ -269,7 +269,7 @@ fun Route.APIV1() {
         }
     }
 
-    post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/{blockHash?}/") {
+    post("/api/v1/burn/{mnemonic}/{fee}/{amount}/{message?}/{blockHash?}") {
         val privateKey = call.parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
         val from = Ed25519.toPublicKey(privateKey)
         val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
@@ -291,7 +291,7 @@ fun Route.APIV1() {
         }
     }
 
-    post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}/{blockHash?}/") {
+    post("/api/v1/lease/{mnemonic}/{fee}/{amount}/{to}/{blockHash?}") {
         val privateKey = call.parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
         val from = Ed25519.toPublicKey(privateKey)
         val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
@@ -313,7 +313,7 @@ fun Route.APIV1() {
         }
     }
 
-    post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}/{blockHash?}/") {
+    post("/api/v1/cancellease/{mnemonic}/{fee}/{amount}/{to}/{height}/{blockHash?}") {
         val privateKey = call.parameters["mnemonic"]?.let { Mnemonic.fromString(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid mnemonic")
         val from = Ed25519.toPublicKey(privateKey)
         val fee = call.parameters["fee"]?.toLongOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid fee")
@@ -337,7 +337,7 @@ fun Route.APIV1() {
         }
     }
 
-    get("/api/v1/transaction/raw/send/{serialized}/") {
+    get("/api/v1/transaction/raw/send/{serialized}") {
         val serialized = call.parameters["serialized"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
         val hash = Transaction.hash(serialized)
 
