@@ -10,7 +10,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.jvm)
 }
 
 repositories {
@@ -19,8 +19,8 @@ repositories {
 
 dependencies {
     implementation(project(":blacknet-runtime"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-    implementation("com.rfksystems:blake2b:1.0.0")
+    implementation(libs.kotlin.coroutines)
+    implementation(libs.blake2b)
 }
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {

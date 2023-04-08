@@ -10,7 +10,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.jvm)
 }
 
 repositories {
@@ -18,10 +18,10 @@ repositories {
 }
 
 dependencies {
-    api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-testng:${Versions.kotlin}") {
+    api(libs.kotlin.stdlib)
+    api(libs.kotlin.serialization)
+    api(libs.kotlin.serialization.json)
+    testImplementation(libs.kotlin.testng) {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
     }

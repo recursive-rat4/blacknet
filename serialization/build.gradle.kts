@@ -10,8 +10,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 repositories {
@@ -20,11 +20,11 @@ repositories {
 
 dependencies {
     api(project(":blacknet-runtime"))
-    api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
-    api("io.ktor:ktor-io:${Versions.ktor}")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-testng:${Versions.kotlin}") {
+    api(libs.kotlin.stdlib)
+    api(libs.kotlin.serialization)
+    api(libs.kotlin.serialization.json)
+    api(libs.ktor.io)
+    testImplementation(libs.kotlin.testng) {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
     }

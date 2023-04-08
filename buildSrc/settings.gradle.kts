@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2023 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -7,14 +7,10 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-plugins {
-    `kotlin-dsl`
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation(libs.jgit)
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("libs") {
+            from(files("../gradle/libs.versions.toml"))
+        }
+    }
 }

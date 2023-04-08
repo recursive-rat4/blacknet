@@ -19,16 +19,16 @@ allprojects {
 
 buildscript {
     dependencies {
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.17.3")
+        classpath(libs.kotlin.atomicfu)
     }
 }
 
 plugins {
-    kotlin("jvm") version Versions.kotlin
-    kotlin("plugin.serialization") version Versions.kotlin
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     application
     distribution
-    id("com.github.hierynomus.license-report") version "0.16.1"
+    alias(libs.plugins.licenses)
 }
 
 apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
@@ -40,25 +40,25 @@ repositories {
 dependencies {
     implementation(project(":blacknet-runtime"))
     implementation(project(":blacknet-serialization"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
-    implementation("io.ktor:ktor-network:${Versions.ktor}")
-    implementation("io.ktor:ktor-server-cio:${Versions.ktor}")
-    implementation("io.ktor:ktor-websockets:${Versions.ktor}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.coroutines}")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
-    implementation("org.apache.commons:commons-collections4:4.4")
-    implementation("net.i2p.crypto:eddsa:0.3.0")
-    implementation("com.rfksystems:blake2b:1.0.0")
-    implementation("org.iq80.leveldb:leveldb:0.12")
-    implementation("org.slf4j:slf4j-jdk14:2.0.6")
-    implementation("io.github.microutils:kotlin-logging-jvm:2.0.8")
-    implementation("com.google.guava:guava:30.1-jre")
-    implementation("org.bitlet:weupnp:${Versions.weupnp}")
-    implementation("org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}")
-    implementation(files("buildSrc/libs/leveldbjni-all-${Versions.leveldbjni}.jar"))
-    testImplementation("org.jetbrains.kotlin:kotlin-test-testng:${Versions.kotlin}") {
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.ktor.network)
+    implementation(libs.ktor.cio)
+    implementation(libs.ktor.websockets)
+    implementation(libs.kotlin.coroutines)
+    implementation(libs.kotlin.coroutines.debug)
+    implementation(libs.kotlin.serialization)
+    implementation(libs.kotlin.serialization.json)
+    implementation(libs.apache.collections)
+    implementation(libs.eddsa)
+    implementation(libs.blake2b)
+    implementation(libs.bouncycastle)
+    implementation(libs.leveldb.java)
+    implementation(libs.slf4j)
+    implementation(libs.microutils.logging)
+    implementation(libs.guava)
+    implementation(libs.weupnp)
+    implementation(files("buildSrc/libs/leveldbjni-all-1.18.3.jar"))
+    testImplementation(libs.kotlin.testng) {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
     }
@@ -98,8 +98,8 @@ val downloadLicenses by tasks.existing(DownloadLicenses::class) {
         configurations.create("xonfigurations").extendsFrom(*konfigurations)
     }
     licenses = mapOf(
-        "org.bitlet:weupnp:${Versions.weupnp}" to LicenseMetadata("GNU LESSER GENERAL PUBLIC LICENSE 2.1", "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html"),
-        "org.bouncycastle:bcprov-jdk15on:${Versions.bouncycastle}" to LicenseMetadata("MIT License", "https://opensource.org/licenses/MIT")
+        libs.weupnp to LicenseMetadata("GNU LESSER GENERAL PUBLIC LICENSE 2.1", "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html"),
+        libs.bouncycastle to LicenseMetadata("MIT License", "https://opensource.org/licenses/MIT")
     )
     dependencyConfiguration = "xonfigurations"
 }
