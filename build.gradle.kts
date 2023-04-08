@@ -10,7 +10,6 @@
 import nl.javadude.gradle.plugins.license.DownloadLicenses
 import nl.javadude.gradle.plugins.license.LicenseMetadata
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.net.URI
 
 allprojects {
     group = "ninja.blacknet"
