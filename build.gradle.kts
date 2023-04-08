@@ -79,9 +79,16 @@ distributions {
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     kotlinOptions {
+        jvmTarget = "11"
         freeCompilerArgs = listOf(
                 "-Xjvm-default=all"
         )
+    }
+}
+
+val compileTestKotlin by tasks.existing(KotlinCompile::class) {
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 

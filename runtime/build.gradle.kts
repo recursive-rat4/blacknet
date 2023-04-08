@@ -29,11 +29,17 @@ dependencies {
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
         freeCompilerArgs = listOf(
                 "-Xexplicit-api=strict",
                 "-Xjvm-default=all"
         )
+    }
+}
+
+val compileTestKotlin by tasks.existing(KotlinCompile::class) {
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 
