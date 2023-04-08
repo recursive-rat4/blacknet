@@ -34,7 +34,7 @@ plugins {
 apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
