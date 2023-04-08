@@ -130,9 +130,9 @@ val test by tasks.existing(Test::class) {
 }
 
 val wrapper by tasks.existing(Wrapper::class) {
-    gradleVersion = "7.6.1"
+    gradleVersion = "8.0.2"
     distributionType = Wrapper.DistributionType.BIN
-    distributionSha256Sum = "6147605a23b4eff6c334927a86ff3508cb5d6722cd624c97ded4c2e8640f1f87"
+    distributionSha256Sum = "ff7bf6a86f09b9b2c40bb8f48b25fc19cf2b2664fd1d220cd7ab833ec758d0d7"
 }
 
 val defaultSystemProperties: Map<String, Any> = mapOf(
