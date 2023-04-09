@@ -34,7 +34,7 @@ slf4j = "org.slf4j:slf4j-jdk14:2.0.6"
 microutils-logging = "io.github.microutils:kotlin-logging-jvm:2.0.8"
 guava = "com.google.guava:guava:30.1-jre"
 weupnp = "org.bitlet:weupnp:0.1.4"
-jgit = "org.eclipse.jgit:org.eclipse.jgit:6.2.0.202206071550-r"
+jgit = "org.eclipse.jgit:org.eclipse.jgit:6.3.0.202209071007-r"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
