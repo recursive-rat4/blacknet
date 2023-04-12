@@ -15,7 +15,6 @@ import kotlinx.serialization.SerialFormat
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import java.io.File
-import java.util.Properties
 
 class ConfigFormat(
         override val serializersModule: SerializersModule = EmptySerializersModule
@@ -26,7 +25,3 @@ class ConfigFormat(
         return strategy.deserialize(decoder)
     }
 }
-
-typealias ConfigInput = Properties
-
-typealias ConfigOutput = Properties
