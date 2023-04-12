@@ -16,10 +16,10 @@ import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import java.io.File
 
-class ConfigFormat(
+public class ConfigFormat(
         override val serializersModule: SerializersModule = EmptySerializersModule
 ) : SerialFormat {
-    fun <T : Any?> decodeFromFile(strategy: DeserializationStrategy<T>, file: File, charset: Charset = Charsets.UTF_8): T {
+    public fun <T : Any?> decodeFromFile(strategy: DeserializationStrategy<T>, file: File, charset: Charset = Charsets.UTF_8): T {
         val decoder = ConfigDecoder(ConfigReader(file, charset), serializersModule)
         decoder.descriptor = strategy.descriptor
         return strategy.deserialize(decoder)

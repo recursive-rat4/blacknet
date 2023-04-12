@@ -11,6 +11,6 @@ package ninja.blacknet.serialization.config
 
 import java.util.Properties
 
-typealias ConfigInput = Properties
+internal typealias ConfigInput = Properties
 
-typealias ConfigOutput = Properties
+internal typealias ConfigOutput = Properties
