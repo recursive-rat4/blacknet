@@ -16,7 +16,7 @@ import ninja.blacknet.util.Resources
 
 var configDirCreated: Boolean = false
 
-val configDir: File get() = {
+val configDir: File = {
     val custom = System.getProperty("ninja.blacknet.configDir")
     val dir = if (System.getProperty("org.gradle.test.worker") != null) {
         File("build/resources/main/config").also {
