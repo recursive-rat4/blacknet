@@ -11,7 +11,6 @@ package ninja.blacknet.crypto
 
 import io.ktor.utils.io.bits.*
 import io.ktor.utils.io.charsets.Charset
-import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.SequentialEncoder
 import ninja.blacknet.serialization.SerializationError
