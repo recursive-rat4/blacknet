@@ -11,13 +11,12 @@ package ninja.blacknet.serialization.config
 
 import io.ktor.utils.io.charsets.Charset
 import java.io.File
-import ninja.blacknet.configDir
 
 class ConfigReader(
         private val input: ConfigInput
 ) {
-    constructor(name: String, charset: Charset) : this(ConfigInput()) {
-        File(configDir, name).reader(charset).use {
+    constructor(file: File, charset: Charset) : this(ConfigInput()) {
+        file.reader(charset).use {
             input.load(it)
         }
     }

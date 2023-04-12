@@ -14,6 +14,7 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.serialization.config.ConfigFormat
 import ninja.blacknet.serialization.textModule
+import java.io.File
 
 @Serializable
 class Config(
@@ -48,7 +49,7 @@ class Config(
         val seqthreshold: Int = Int.MAX_VALUE - 1,
 ) {
     companion object {
-        val instance = ConfigFormat(serializersModule = textModule).decodeFromFile(serializer(), "blacknet.conf").also {
+        val instance = ConfigFormat(serializersModule = textModule).decodeFromFile(serializer(), File(configDir, "blacknet.conf")).also {
             if (it.dbcache.bytes < 1024 * 1024) throw ConfigError("dbcache ${it.dbcache.hrp(false)} is unrealistically low")
             if (it.txpoolsize.bytes < 1024 * 1024) throw ConfigError("txpoolsize ${it.txpoolsize.hrp(false)} is unrealistically low")
         }
