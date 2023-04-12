@@ -93,7 +93,7 @@ class HashEncoder(
     }
 
     private fun floatingPointValueError(): Throwable {
-        return SerializationError("You can enable floating point number values with 'allowFloatingPointNumbers' flag in HashCoder.")
+        return SerializationError("You can enable floating point number values with 'allowFloatingPointNumbers' flag in HashEncoder.")
     }
 
     companion object {
