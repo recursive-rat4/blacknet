@@ -56,7 +56,11 @@ constructor() : Decoder, CompositeDecoder {
     override fun decodeInlineElement(
             descriptor: SerialDescriptor,
             index: Int
-    ): Decoder = decodeInline(descriptor.getElementDescriptor(index))
+    ): Decoder {
+        return catcher(descriptor, index) {
+            decodeInline(descriptor.getElementDescriptor(index))
+        }
+    }
 
     override fun <T : Any?> decodeSerializableElement(
             descriptor: SerialDescriptor,
