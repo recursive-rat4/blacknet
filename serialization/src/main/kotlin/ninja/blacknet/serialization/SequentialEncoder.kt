@@ -14,7 +14,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 
-public abstract class AdaptorEncoder
+public abstract class SequentialEncoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Encoder, CompositeEncoder {
     private fun notImplementedError(message: String): Throwable = SerializationError("${this::class} is not implemented for $message")
@@ -37,9 +37,6 @@ constructor() : Encoder, CompositeEncoder {
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
-
-    public open fun encodeSequentially(): Boolean = true
-    public open fun encodeElementIndex(descriptor: SerialDescriptor, index: Int): Unit = throw notImplementedError("non-sequential mode")
 
     override fun encodeBooleanElement(descriptor: SerialDescriptor, index: Int, value: Boolean): Unit = encodeBoolean(value)
     override fun encodeByteElement(descriptor: SerialDescriptor, index: Int, value: Byte): Unit = encodeByte(value)

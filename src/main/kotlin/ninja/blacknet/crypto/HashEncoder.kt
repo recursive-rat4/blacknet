@@ -13,7 +13,7 @@ import io.ktor.utils.io.bits.*
 import io.ktor.utils.io.charsets.Charset
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import ninja.blacknet.serialization.AdaptorEncoder
+import ninja.blacknet.serialization.SequentialEncoder
 import ninja.blacknet.serialization.SerializationError
 import ninja.blacknet.serialization.binaryModule
 
@@ -22,7 +22,7 @@ class HashEncoder(
         val charset: Charset? = Charsets.UTF_8,
         val allowFloatingPointValues: Boolean = false,
         override val serializersModule: SerializersModule = binaryModule
-) : AdaptorEncoder() {
+) : SequentialEncoder() {
     private val buffer = ByteArray(Long.SIZE_BYTES)
     private val memory = Memory.of(buffer)
 

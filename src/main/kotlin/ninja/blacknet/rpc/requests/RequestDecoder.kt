@@ -13,12 +13,12 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.modules.SerializersModule
-import ninja.blacknet.serialization.AdaptorDecoder
+import ninja.blacknet.serialization.SequentialDecoder
 
 class RequestDecoder(
         private val reader: RequestReader,
         override val serializersModule: SerializersModule
-) : AdaptorDecoder() {
+) : SequentialDecoder() {
     fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
         position = -1
         descriptor = strategy.descriptor

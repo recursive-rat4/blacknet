@@ -14,7 +14,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import ninja.blacknet.serialization.AdaptorDecoder
+import ninja.blacknet.serialization.SequentialDecoder
 
 /**
  * Decoder from the Blacknet Binary Format
@@ -22,7 +22,7 @@ import ninja.blacknet.serialization.AdaptorDecoder
 public class BinaryDecoder(
         internal val input: ByteReadPacket,
         override val serializersModule: SerializersModule = EmptySerializersModule
-) : AdaptorDecoder() {
+) : SequentialDecoder() {
     public constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
 
     override fun decodeByte(): Byte = input.readByte()

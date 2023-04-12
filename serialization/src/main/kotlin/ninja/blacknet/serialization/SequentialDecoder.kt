@@ -16,7 +16,7 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import ninja.blacknet.util.statusMessage
 
-public abstract class AdaptorDecoder
+public abstract class SequentialDecoder
 @Suppress("RemoveEmptyPrimaryConstructor")
 constructor() : Decoder, CompositeDecoder {
     private fun notImplementedError(message: String): Throwable = SerializationError("${this::class} is not implemented for $message")

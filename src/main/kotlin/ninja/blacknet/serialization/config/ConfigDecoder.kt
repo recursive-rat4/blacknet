@@ -14,12 +14,12 @@ import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
 import kotlinx.serialization.modules.SerializersModule
-import ninja.blacknet.serialization.AdaptorDecoder
+import ninja.blacknet.serialization.SequentialDecoder
 
 class ConfigDecoder(
         private val reader: ConfigReader,
         override val serializersModule: SerializersModule
-) : AdaptorDecoder() {
+) : SequentialDecoder() {
     override fun decodeNotNullMark(): Boolean {
         val name = descriptor.getElementName(position)
         val string = reader.readString(name)
@@ -103,7 +103,7 @@ class ConfigDecoder(
     private class ListDecoder(
             private val input: List<String>,
             override val serializersModule: SerializersModule
-    ) : AdaptorDecoder() {
+    ) : SequentialDecoder() {
         override fun decodeBoolean(): Boolean = input[++position].toBoolean()
         override fun decodeByte(): Byte = input[++position].toByte()
         override fun decodeShort(): Short = input[++position].toShort()

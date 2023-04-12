@@ -14,7 +14,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import ninja.blacknet.serialization.AdaptorEncoder
+import ninja.blacknet.serialization.SequentialEncoder
 
 /**
  * Encoder to the Blacknet Binary Format
@@ -22,7 +22,7 @@ import ninja.blacknet.serialization.AdaptorEncoder
 public class BinaryEncoder(
         internal val output: BytePacketBuilder = BytePacketBuilder(),
         override val serializersModule: SerializersModule = EmptySerializersModule
-) : AdaptorEncoder() {
+) : SequentialEncoder() {
     override fun encodeByte(value: Byte): Unit = output.writeByte(value)
     override fun encodeShort(value: Short): Unit = output.writeShort(value)
     override fun encodeInt(value: Int): Unit = output.writeInt(value)
