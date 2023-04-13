@@ -21,7 +21,6 @@ class RequestFormat(
 ) : SerialFormat {
     fun <T : Any?> decodeFromParameters(strategy: DeserializationStrategy<T>, parameters: Parameters): T {
         val decoder = RequestDecoder(RequestReader(parameters), serializersModule)
-        decoder.descriptor = strategy.descriptor
         return strategy.deserialize(decoder)
     }
 }
