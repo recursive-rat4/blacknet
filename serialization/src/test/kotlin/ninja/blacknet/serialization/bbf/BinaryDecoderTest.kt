@@ -17,6 +17,7 @@ import ninja.blacknet.util.byteArrayOfInts
 class BinaryDecoderTest {
     @Test
     fun element() {
+        assertEquals(false, BinaryDecoder(byteArrayOf(0)).decodeBoolean())
         assertEquals(0, BinaryDecoder(byteArrayOf(0)).decodeByte())
         assertEquals(0x01FF, BinaryDecoder(byteArrayOf(1, -1)).decodeShort())
         assertEquals(0x0201FFFE, BinaryDecoder(byteArrayOf(2, 1, -1, -2)).decodeInt())
@@ -27,33 +28,35 @@ class BinaryDecoderTest {
 
     @Serializable
     data class Structure(
-        val a: Byte,
-        val b: Short,
-        val c: Int,
-        val d: Long,
-        val e: Unit,
-        val f: String
+        val boolean: Boolean,
+        val byte: Byte,
+        val short: Short,
+        val int: Int,
+        val long: Long,
+        val string: String
     )
 
     @Test
     fun structure() {
         assertEquals(
-                Structure(
-                        0,
-                        0x01FF,
-                        0x0201FFFE,
-                        0x04030201FFFEFDFC,
-                        Unit,
-                        "八"
-                ),
-                BinaryFormat().decodeFromByteArray(Structure.serializer(), byteArrayOfInts(
-                        0,
-                        1, -1,
-                        2, 1, -1, -2,
-                        4, 3, 2, 1, -1, -2, -3, -4,
-                        // Unit //
-                        0x83, 0xE5, 0x85, 0xAB
-                ))
+            Structure(
+                false,
+                0,
+                0x01FF,
+                0x0201FFFE,
+                0x04030201FFFEFDFC,
+                "八"
+            ),
+            BinaryFormat().decodeFromByteArray(
+                Structure.serializer(), byteArrayOfInts(
+                    0,
+                    0,
+                    1, -1,
+                    2, 1, -1, -2,
+                    4, 3, 2, 1, -1, -2, -3, -4,
+                    0x83, 0xE5, 0x85, 0xAB
+                )
+            )
         )
     }
 }

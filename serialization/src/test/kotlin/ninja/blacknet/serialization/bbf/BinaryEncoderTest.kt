@@ -20,6 +20,9 @@ class BinaryEncoderTest {
 
     @Test
     fun element() {
+        encoder.encodeBoolean(false)
+        assertEquals(byteArrayOf(0), encoder.toBytes())
+
         encoder.encodeByte(0)
         assertEquals(byteArrayOf(0), encoder.toBytes())
 
@@ -41,37 +44,37 @@ class BinaryEncoderTest {
 
     @Serializable
     class Structure(
-        val a: Byte,
-        val b: Short,
-        val c: Int,
-        val d: Long,
-        val e: Unit,
-        val f: String
+        val boolean: Boolean,
+        val byte: Byte,
+        val short: Short,
+        val int: Int,
+        val long: Long,
+        val string: String
     )
 
     @Test
     fun structure() {
         val value = Structure(
-                0,
-                0x01FF,
-                0x0201FFFE,
-                0x04030201FFFEFDFC,
-                Unit,
-                "八"
+            false,
+            0,
+            0x01FF,
+            0x0201FFFE,
+            0x04030201FFFEFDFC,
+            "八"
         )
 
         Structure.serializer().serialize(encoder, value)
 
         assertEquals(
-                byteArrayOfInts(
-                        0,
-                        1, -1,
-                        2, 1, -1, -2,
-                        4, 3, 2, 1, -1, -2, -3, -4,
-                        // Unit //
-                        0x83, 0xE5, 0x85, 0xAB
-                ),
-                encoder.toBytes()
+            byteArrayOfInts(
+                0,
+                0,
+                1, -1,
+                2, 1, -1, -2,
+                4, 3, 2, 1, -1, -2, -3, -4,
+                0x83, 0xE5, 0x85, 0xAB
+            ),
+            encoder.toBytes()
         )
     }
 
