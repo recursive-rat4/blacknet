@@ -9,7 +9,6 @@
 
 package ninja.blacknet.rpc.requests
 
-import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.modules.SerializersModule
@@ -19,13 +18,6 @@ class RequestDecoder(
         private val reader: RequestReader,
         override val serializersModule: SerializersModule
 ) : SequentialDecoder() {
-    fun <T : Any?> decode(strategy: DeserializationStrategy<T>): T {
-        position = -1
-        descriptor = strategy.descriptor
-        val value = strategy.deserialize(this)
-        return value
-    }
-
     override fun decodeNotNullMark(): Boolean {
         val name = descriptor.getElementName(position)
         val string = reader.readString(name)
