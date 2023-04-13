@@ -17,7 +17,7 @@ import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 
 class RequestFormat(
-        override val serializersModule: SerializersModule = EmptySerializersModule
+        override val serializersModule: SerializersModule = EmptySerializersModule()
 ) : SerialFormat {
     fun <T : Any?> decodeFromParameters(strategy: DeserializationStrategy<T>, parameters: Parameters): T {
         val decoder = RequestDecoder(RequestReader(parameters), serializersModule)

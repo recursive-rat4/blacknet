@@ -21,7 +21,7 @@ import ninja.blacknet.serialization.SequentialDecoder
  */
 public class BinaryDecoder(
         internal val input: ByteReadPacket,
-        override val serializersModule: SerializersModule = EmptySerializersModule
+        override val serializersModule: SerializersModule = EmptySerializersModule()
 ) : SequentialDecoder() {
     public constructor(bytes: ByteArray) : this(ByteReadPacket(bytes))
 

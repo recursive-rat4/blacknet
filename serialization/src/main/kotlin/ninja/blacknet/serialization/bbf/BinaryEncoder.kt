@@ -21,7 +21,7 @@ import ninja.blacknet.serialization.SequentialEncoder
  */
 public class BinaryEncoder(
         internal val output: BytePacketBuilder = BytePacketBuilder(),
-        override val serializersModule: SerializersModule = EmptySerializersModule
+        override val serializersModule: SerializersModule = EmptySerializersModule()
 ) : SequentialEncoder() {
     override fun encodeByte(value: Byte): Unit = output.writeByte(value)
     override fun encodeShort(value: Short): Unit = output.writeShort(value)
