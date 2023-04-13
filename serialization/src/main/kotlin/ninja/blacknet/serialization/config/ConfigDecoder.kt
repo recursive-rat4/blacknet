@@ -21,67 +21,57 @@ internal class ConfigDecoder(
         override val serializersModule: SerializersModule
 ) : SequentialDecoder() {
     override fun decodeNotNullMark(): Boolean {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toNotNullMark()
     }
 
     override fun decodeBoolean(): Boolean {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toBoolean()
     }
 
     override fun decodeByte(): Byte {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toByte()
     }
 
     override fun decodeShort(): Short {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toShort()
     }
 
     override fun decodeInt(): Int {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toInt()
     }
 
     override fun decodeLong(): Long {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toLong()
     }
 
     override fun decodeFloat(): Float {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toFloat()
     }
 
     override fun decodeDouble(): Double {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toDouble()
     }
 
     override fun decodeString(): String {
-        val name = descriptor.getElementName(position)
-        val string = reader.readString(name)
+        val string = reader.readString(elementName)
         return string.toString()
     }
 
-    private var position: Int = -1
-    internal lateinit var descriptor: SerialDescriptor
+    private var elementIndex: Int = -1
+    private var elementName: String = ""
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
         return if (descriptor.kind === StructureKind.LIST) {
             require(descriptor.serialName.endsWith("ArrayList")) { "未知列表類型 ${descriptor.serialName}" }
-            val name = this.descriptor.getElementName(position)
-            val list = reader.readList(name)
+            val list = reader.readList(elementName)
             ListDecoder(list, serializersModule)
         } else {
             this
@@ -91,11 +81,10 @@ internal class ConfigDecoder(
     override fun decodeSequentially(): Boolean = false
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
-        require(this.descriptor === descriptor) { "彈射 ${descriptor.serialName}" }
-        while (++position < descriptor.elementsCount) {
-            val name = descriptor.getElementName(position)
-            if (reader.hasKey(name))
-                return position
+        while (++elementIndex < descriptor.elementsCount) {
+            elementName = descriptor.getElementName(elementIndex)
+            if (reader.hasKey(elementName))
+                return elementIndex
         }
         return DECODE_DONE
     }
