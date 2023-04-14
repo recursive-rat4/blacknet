@@ -24,7 +24,7 @@ ktor-io = { module = "io.ktor:ktor-io", version.ref = "ktor" }
 ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 ktor-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
-kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.19.0"
+kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.20.2"
 apache-collections = "org.apache.commons:commons-collections4:4.4"
 eddsa = "net.i2p.crypto:eddsa:0.3.0"
 blake2b = "com.rfksystems:blake2b:1.0.0"
