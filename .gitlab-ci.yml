@@ -8,9 +8,7 @@
 # See the LICENSE.txt file at the top-level directory of this distribution.
 #
 
-# Gradle 7.0
-# image: openjdk:latest
-image: openjdk:15
+image: eclipse-temurin:17.0.6_10-jdk@sha256:ec8d3b91c6e30208bf69ecbbc3abdbc0f9aeaa2b955162e46c089fd6e07f4fb0
 
 include:
   # GradleProperties has not been loaded yet.
@@ -50,7 +48,8 @@ test:
     reports:
       junit:
         - build/test-results/test/TEST-*.xml
-        - blockchain/build/test-results/test/TEST-*.xml
+        - runtime/build/test-results/test/TEST-*.xml
+        - serialization/build/test-results/test/TEST-*.xml
 
 build:
   stage: build
