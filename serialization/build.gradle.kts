@@ -30,6 +30,14 @@ dependencies {
     }
 }
 
+val compileJava by tasks.existing(JavaCompile::class) {
+    targetCompatibility = "11"
+}
+
+val compileTestJava by tasks.existing(JavaCompile::class) {
+    targetCompatibility = "11"
+}
+
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     kotlinOptions {
         jvmTarget = "11"

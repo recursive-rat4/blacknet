@@ -23,6 +23,10 @@ dependencies {
     implementation(libs.blake2b)
 }
 
+val compileJava by tasks.existing(JavaCompile::class) {
+    targetCompatibility = "11"
+}
+
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     kotlinOptions {
         jvmTarget = "11"
