@@ -7,6 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -28,11 +29,9 @@ val compileJava by tasks.existing(JavaCompile::class) {
 }
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
-    kotlinOptions {
-        jvmTarget = "11"
-        freeCompilerArgs = listOf(
-                "-Xjvm-default=all"
-        )
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+        freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
 

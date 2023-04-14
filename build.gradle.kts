@@ -9,6 +9,7 @@
 
 import nl.javadude.gradle.plugins.license.DownloadLicenses
 import nl.javadude.gradle.plugins.license.LicenseMetadata
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 allprojects {
@@ -85,17 +86,15 @@ val compileTestJava by tasks.existing(JavaCompile::class) {
 }
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
-    kotlinOptions {
-        jvmTarget = "11"
-        freeCompilerArgs = listOf(
-                "-Xjvm-default=all"
-        )
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+        freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
 
 val compileTestKotlin by tasks.existing(KotlinCompile::class) {
-    kotlinOptions {
-        jvmTarget = "11"
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
