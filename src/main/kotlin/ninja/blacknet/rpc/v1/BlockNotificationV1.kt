@@ -19,7 +19,7 @@ class BlockNotificationV1(
         val hash: String,
         val height: Int,
         val size: Int,
-        val version: Int,
+        val version: UInt,
         val previous: String,
         val time: Long,
         val generator: String,

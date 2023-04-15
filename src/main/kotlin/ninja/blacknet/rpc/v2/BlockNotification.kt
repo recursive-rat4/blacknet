@@ -20,7 +20,7 @@ class BlockNotification(
         val hash: ByteArray,
         val height: Int,
         val size: Int,
-        val version: Int,
+        val version: UInt,
         @Serializable(with = HashSerializer::class)
         val previous: ByteArray,
         val time: Long,

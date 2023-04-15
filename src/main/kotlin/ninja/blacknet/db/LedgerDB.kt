@@ -616,7 +616,7 @@ object LedgerDB {
 
     internal class Update(
             val batch: LevelDB.WriteBatch,
-            private val blockVersion: Int,
+            private val blockVersion: UInt,
             private val blockHash: ByteArray,
             private val blockPrevious: ByteArray,
             private val blockTime: Long,
@@ -754,8 +754,8 @@ object LedgerDB {
             val cumulativeDifficulty = PoS.cumulativeDifficulty(undo.cumulativeDifficulty, difficulty)
             val nxtrng = PoS.nxtrng(state.nxtrng, blockGenerator)
             val maxBlockSize = PoS.maxBlockSize(blockSizes)
-            val upgraded = if (blockVersion.toUInt() > Block.VERSION.toUInt()) min(state.upgraded + 1, PoS.MATURITY + 1) else max(state.upgraded - 1, 0)
-            val forkV2 = if (blockVersion.toUInt() >= 2.toUInt()) min(state.forkV2 + 1, PoS.MATURITY + 1) else max(state.forkV2 - 1, 0)
+            val upgraded = if (blockVersion > Block.VERSION) min(state.upgraded + 1, PoS.MATURITY + 1) else max(state.upgraded - 1, 0)
+            val forkV2 = if (blockVersion >= 2.toUInt()) min(state.forkV2 + 1, PoS.MATURITY + 1) else max(state.forkV2 - 1, 0)
             val newState = State(
                     height,
                     blockHash,

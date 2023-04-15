@@ -76,16 +76,16 @@ object BlockDB {
     private suspend fun processBlockImpl(hash: ByteArray, bytes: ByteArray): Status {
         val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
         val state = LedgerDB.state()
-        if (block.version.toUInt() > Block.VERSION.toUInt()) {
+        if (block.version > Block.VERSION) {
             val percent = 100 * state.upgraded / PoS.MATURITY
             if (percent > 9)
                 logger.info("$percent% upgraded to unknown version")
             else
-                logger.info("Unknown version ${block.version.toUInt()}")
+                logger.info("Unknown version ${block.version}")
         }
         if (forkV2()) {
-            if (block.version.toUInt() < 2.toUInt()) {
-                return Invalid("Block version ${block.version.toUInt()} is no longer accepted")
+            if (block.version < 2.toUInt()) {
+                return Invalid("Block version ${block.version} is no longer accepted")
             }
         }
         if (PoS.isTooFarInFuture(block.time)) {

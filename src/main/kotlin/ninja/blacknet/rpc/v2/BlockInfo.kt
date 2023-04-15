@@ -26,7 +26,7 @@ class BlockInfo(
         @Serializable(with = HashSerializer::class)
         val hash: ByteArray,
         val size: Int,
-        val version: Int,
+        val version: UInt,
         @Serializable(with = HashSerializer::class)
         val previous: ByteArray,
         val time: Long,

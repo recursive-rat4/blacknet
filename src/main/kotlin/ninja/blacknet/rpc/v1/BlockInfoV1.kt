@@ -22,7 +22,7 @@ import ninja.blacknet.db.BlockDB
 @Serializable
 class BlockInfoV1(
         val size: Int,
-        val version: Int,
+        val version: UInt,
         val previous: String,
         val time: Long,
         val generator: String,

@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
 
 class BlockTest {
     val block = Block(
-        0,
+        0.toUInt(),
         HashSerializer.ZERO,
         1545556624L,
         Address.decode("blacknet1klnycx794hg9jvuhua0gy75d5v374rrwrlnpg25xpykfxkg30egqq83tj0"),

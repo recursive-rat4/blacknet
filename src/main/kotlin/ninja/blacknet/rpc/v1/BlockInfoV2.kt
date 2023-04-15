@@ -26,7 +26,7 @@ import ninja.blacknet.serialization.bbf.binaryFormat
 class BlockInfoV2(
         val hash: String,
         val size: Int,
-        val version: Int,
+        val version: UInt,
         val previous: String,
         val time: Long,
         val generator: String,
