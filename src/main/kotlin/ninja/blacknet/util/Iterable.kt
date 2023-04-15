@@ -12,14 +12,15 @@ package ninja.blacknet.util
 /**
  * Returns the sum of all values produced by [selector].
  */
-inline fun <T> Iterable<T>.sumByFloat(selector: (T) -> Float): Float {
-    var sum: Float = 0f
+inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
+    var sum: Float = 0.toFloat()
     for (element in this) {
         sum += selector(element)
     }
     return sum
 }
 
+//TODO rename
 /**
  * Returns the sum of all values produced by [selector].
  *
@@ -33,6 +34,7 @@ inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
     return sum
 }
 
+//TODO rename
 /**
  * Returns the sum of all elements.
  *

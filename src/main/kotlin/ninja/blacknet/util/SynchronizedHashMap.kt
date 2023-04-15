@@ -7,8 +7,6 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("DEPRECATION")
-
 package ninja.blacknet.util
 
 import kotlinx.coroutines.sync.Mutex
@@ -48,8 +46,6 @@ class SynchronizedHashMap<K, V>(
     suspend inline fun removeAll(keys: ArrayList<K>) = mutex.withLock { for (i in keys.indices) map.remove(keys[i]) }
 
     suspend inline fun containsKey(key: K) = mutex.withLock { map.containsKey(key) }
-
-    suspend inline fun sumValuesBy(selector: (V) -> Int) = mutex.withLock { map.values.sumBy(selector) }
 
     suspend inline fun <R> mapKeysToList(transform: (K) -> R) = mutex.withLock { map.keys.mapTo(ArrayList(map.size), transform) }
 

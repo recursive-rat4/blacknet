@@ -194,7 +194,7 @@ object Staker {
             if (publicKey == null) {
                 Triple(
                         stakers.list.size,
-                        stakers.list.sumByDouble { it.hashRate() },
+                        stakers.list.sumOf { it.hashRate() },
                         stakers.list.sumByLong { it.stake }
                 )
             } else {
