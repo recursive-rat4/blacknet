@@ -24,6 +24,6 @@ private fun XDGBaseDirectory(environmentVariable: String, defaultBase: String): 
     }
 }
 
-fun XDGConfigDirectory() = XDGBaseDirectory("XDG_CONFIG_HOME", ".config")
+public fun XDGConfigDirectory(): File = XDGBaseDirectory("XDG_CONFIG_HOME", ".config")
 
-fun XDGDataDirectory() = XDGBaseDirectory("XDG_DATA_HOME", ".local/share")
+public fun XDGDataDirectory(): File = XDGBaseDirectory("XDG_DATA_HOME", ".local/share")
