@@ -23,7 +23,6 @@ import mu.KotlinLogging
 import ninja.blacknet.regtest
 import ninja.blacknet.Runtime
 import ninja.blacknet.contract.BAppIdSerializer
-import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.logging.error
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
@@ -31,6 +30,7 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.Resources

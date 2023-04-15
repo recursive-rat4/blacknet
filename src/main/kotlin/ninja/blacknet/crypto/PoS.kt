@@ -14,10 +14,10 @@ import kotlin.math.min
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Invalid
 import ninja.blacknet.core.Status
-import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LedgerDB.forkV2
+import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.byteArrayOfInts
 
 object PoS {

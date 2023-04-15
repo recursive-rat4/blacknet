@@ -40,6 +40,7 @@ repositories {
 dependencies {
     implementation(project(":blacknet-runtime"))
     implementation(project(":blacknet-serialization"))
+    implementation(project(":blacknet-time"))
     implementation(libs.kotlin.stdlib)
     implementation(libs.ktor.network)
     implementation(libs.ktor.cio)

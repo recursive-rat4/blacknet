@@ -19,7 +19,7 @@ import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Version
 import ninja.blacknet.dataDir
-import ninja.blacknet.core.currentTimeSeconds
+import ninja.blacknet.time.currentTimeSeconds
 import java.io.File
 import java.io.PrintStream
 

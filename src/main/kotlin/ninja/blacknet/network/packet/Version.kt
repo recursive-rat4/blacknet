@@ -11,9 +11,9 @@ package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.*
+import ninja.blacknet.time.currentTimeSeconds
 
 private val logger = KotlinLogging.logger {}
 

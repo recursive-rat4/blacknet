@@ -13,10 +13,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.TxPool
-import ninja.blacknet.core.currentTimeMillis
 import ninja.blacknet.network.packet.GetTransactions
 import ninja.blacknet.network.packet.PacketType
 import ninja.blacknet.network.packet.Transactions
+import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.util.SynchronizedHashMap
 
 /**

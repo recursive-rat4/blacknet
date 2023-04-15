@@ -50,6 +50,7 @@ test:
         - build/test-results/test/TEST-*.xml
         - runtime/build/test-results/test/TEST-*.xml
         - serialization/build/test-results/test/TEST-*.xml
+        - time/build/test-results/test/TEST-*.xml
 
 build:
   stage: build

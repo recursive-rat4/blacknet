@@ -29,6 +29,8 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.packet.*
+import ninja.blacknet.time.currentTimeMillis
+import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet

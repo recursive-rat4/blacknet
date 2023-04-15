@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.time
 
 import java.lang.System
 import kotlin.Long
@@ -17,10 +17,10 @@ import kotlin.Suppress
  * The current time of the operating system as the number of seconds since the Epoch.
  */
 @Suppress("NOTHING_TO_INLINE")
-inline fun currentTimeSeconds(): Long = System.currentTimeMillis() / 1000L
+public inline fun currentTimeSeconds(): Long = System.currentTimeMillis() / 1000L
 
 /**
  * The current time of the operating system as the number of milliseconds since the Epoch.
  */
 @Suppress("NOTHING_TO_INLINE")
-inline fun currentTimeMillis(): Long = System.currentTimeMillis()
+public inline fun currentTimeMillis(): Long = System.currentTimeMillis()

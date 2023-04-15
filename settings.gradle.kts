@@ -18,6 +18,9 @@ project(":blacknet-runtime").projectDir = file("runtime")
 include(":blacknet-serialization")
 project(":blacknet-serialization").projectDir = file("serialization")
 
+include(":blacknet-time")
+project(":blacknet-time").projectDir = file("time")
+
 pluginManagement {
     repositories {
         mavenCentral()

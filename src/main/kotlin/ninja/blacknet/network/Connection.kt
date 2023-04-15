@@ -26,11 +26,11 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.core.currentTimeMillis
-import ninja.blacknet.core.currentTimeSeconds
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.time.currentTimeMillis
+import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.SynchronizedArrayList
 
 private val logger = KotlinLogging.logger {}

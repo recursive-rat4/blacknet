@@ -7,21 +7,20 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.core
+package ninja.blacknet.time
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import ninja.blacknet.db.Genesis
 
 class SystemClockTest {
     @Test
     fun test() {
         val seconds = currentTimeSeconds()
-        assertTrue(seconds >= Genesis.TIME)
+        assertTrue(seconds >= 0)
         assertTrue(seconds <= Long.MAX_VALUE)
 
         val milliseconds = currentTimeMillis()
-        assertTrue(milliseconds >= Genesis.TIME * 1000L)
+        assertTrue(milliseconds >= 0)
         assertTrue(milliseconds <= Long.MAX_VALUE)
     }
 }

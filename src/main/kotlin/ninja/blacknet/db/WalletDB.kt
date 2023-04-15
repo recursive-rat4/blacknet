@@ -35,6 +35,7 @@ import ninja.blacknet.serialization.*
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
 
