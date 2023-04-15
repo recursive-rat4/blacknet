@@ -14,6 +14,8 @@ import java.io.File
 import java.io.FileOutputStream
 import ninja.blacknet.util.Resources
 
+//TODO populate config dir in another place
+
 var configDirCreated: Boolean = false
 
 val configDir: File = {
