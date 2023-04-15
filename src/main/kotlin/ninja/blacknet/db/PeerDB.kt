@@ -30,8 +30,6 @@ import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.VarIntSerializer
-import ninja.blacknet.serialization.bbf.BinaryDecoder
-import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet

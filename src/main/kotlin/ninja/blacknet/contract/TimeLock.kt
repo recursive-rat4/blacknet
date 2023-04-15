@@ -9,7 +9,6 @@
 
 package ninja.blacknet.contract
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 
 const val TIME: Byte = 0

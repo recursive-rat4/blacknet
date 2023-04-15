@@ -10,7 +10,6 @@
 package ninja.blacknet.contract
 
 import com.rfksystems.blake2b.Blake2b.BLAKE2_B_256
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray

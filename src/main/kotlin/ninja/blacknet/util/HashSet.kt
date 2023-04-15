@@ -12,12 +12,7 @@ package ninja.blacknet.util
 import java.util.Collections
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import ninja.blacknet.crypto.SipHash.hashCode
-import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.SetSerializer
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 

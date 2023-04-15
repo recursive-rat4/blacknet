@@ -10,7 +10,6 @@
 package ninja.blacknet.rpc.requests
 
 import io.ktor.http.Parameters
-import io.ktor.utils.io.charsets.Charset
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialFormat
 import kotlinx.serialization.modules.EmptySerializersModule
