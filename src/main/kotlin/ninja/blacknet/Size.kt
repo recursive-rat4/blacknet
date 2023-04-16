@@ -9,15 +9,18 @@
 
 package ninja.blacknet
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import ninja.blacknet.serialization.notSupportedFormatError
 import java.text.DecimalFormat
 import java.util.Locale
 
-@Serializable
+@Serializable(Size.Companion::class)
 class Size(
         val bytes: Int
 ) {
@@ -44,8 +47,7 @@ class Size(
         return "${format.format(value)} $symbol"
     }
 
-    @Serializer(forClass = Size::class)
-    companion object {
+    companion object : KSerializer<Size> {
         fun parse(string: String): Size {
             val valueString = string.takeWhile { it.isDigit() }
             val value = valueString.toInt()
@@ -67,6 +69,11 @@ class Size(
 
         private class ParserException(message: String, cause: Throwable? = null)
             : RuntimeException(message, cause)
+
+        override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
+            "ninja.blacknet.Size",
+            PrimitiveKind.STRING
+        )
 
         override fun deserialize(decoder: Decoder): Size {
             return Size.parse(decoder.decodeString())
