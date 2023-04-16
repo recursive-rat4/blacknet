@@ -9,8 +9,12 @@
 
 package ninja.blacknet.network
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.listSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import ninja.blacknet.Config
@@ -29,7 +33,7 @@ import kotlin.experimental.and
 /**
  * Network address
  */
-@Serializable
+@Serializable(Address.Companion::class)
 class Address(
         val network: Network,
         val port: Short,
@@ -135,12 +139,19 @@ class Address(
         return bytes[0] and 0xFE.toByte() == 0xFC.toByte()
     }
 
-    @Serializer(forClass = Address::class)
-    companion object {
+    companion object : KSerializer<Address> {
         fun IPv4_ANY(port: Short) = Address(Network.IPv4, port, ByteArray(Network.IPv4.addrSize))
         fun IPv4_LOOPBACK(port: Short) = Address(Network.IPv4, port, Network.IPv4_LOOPBACK_BYTES)
         fun IPv6_ANY(port: Short) = Address(Network.IPv6, port, Network.IPv6_ANY_BYTES)
         fun IPv6_LOOPBACK(port: Short) = Address(Network.IPv6, port, Network.IPv6_LOOPBACK_BYTES)
+
+        override val descriptor: SerialDescriptor = buildClassSerialDescriptor(
+            "ninja.blacknet.network.Address"
+        ) {
+            element("network", Byte.serializer().descriptor)
+            element("port", Short.serializer().descriptor)
+            element("bytes", listSerialDescriptor(Byte.serializer().descriptor))
+        }
 
         override fun deserialize(decoder: Decoder): Address {
             return when (decoder) {
