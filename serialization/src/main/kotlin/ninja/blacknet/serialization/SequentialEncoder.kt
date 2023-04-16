@@ -33,7 +33,7 @@ constructor() : Encoder, CompositeEncoder {
     override fun encodeString(value: String): Unit = throw notImplementedError("String")
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int): Unit = throw notImplementedError("Enum")
 
-    override fun encodeInline(inlineDescriptor: SerialDescriptor): Encoder = this
+    override fun encodeInline(descriptor: SerialDescriptor): Encoder = this
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit

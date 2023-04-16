@@ -35,7 +35,7 @@ constructor() : Decoder, CompositeDecoder {
     override fun decodeString(): String = throw notImplementedError("String")
     override fun decodeEnum(enumDescriptor: SerialDescriptor): Int = throw notImplementedError("Enum")
 
-    override fun decodeInline(inlineDescriptor: SerialDescriptor): Decoder = this
+    override fun decodeInline(descriptor: SerialDescriptor): Decoder = this
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder = this
     override fun endStructure(descriptor: SerialDescriptor): Unit = Unit
