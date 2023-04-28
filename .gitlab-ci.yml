@@ -11,17 +11,10 @@
 image: eclipse-temurin:17.0.6_10-jdk@sha256:ec8d3b91c6e30208bf69ecbbc3abdbc0f9aeaa2b955162e46c089fd6e07f4fb0
 
 include:
-  # GradleProperties has not been loaded yet.
-  # - template: Dependency-Scanning.gitlab-ci.yml
   - template: License-Scanning.gitlab-ci.yml
-  # Try again later.
-  # - template: SAST.gitlab-ci.yml
-  # - template: DAST.gitlab-ci.yml
 
 variables:
   GRADLE_USER_HOME: ".gradle"
-#   SAST_DISABLE_DIND: "true"
-#   DAST_WEBSITE: http://localhost:8283/
 
 cache:
   paths:
