@@ -29,14 +29,12 @@ import kotlinx.serialization.builtins.*
 import ninja.blacknet.rpc.*
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.dataDir
 import ninja.blacknet.db.*
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.bbf.*
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.*
-import java.io.File
 import kotlin.math.abs
 
 fun Route.APIV1() {
@@ -182,26 +180,11 @@ fun Route.APIV1() {
     }
 
     get("/api/v1/blockdb/makebootstrap") {
-        val checkpoint = LedgerDB.state().rollingCheckpoint
-        if (checkpoint.contentEquals(Genesis.BLOCK_HASH))
-            return@get call.respond(HttpStatusCode.BadRequest, "not synchronized")
-
-        val file = File(dataDir, "bootstrap.dat.new")
-        val stream = file.outputStream().buffered().data()
-
-        var hash = Genesis.BLOCK_HASH
-        var index = LedgerDB.getChainIndex(hash)!!
-        do {
-            hash = index.next
-            index = LedgerDB.getChainIndex(hash)!!
-            val bytes = BlockDB.getImpl(hash)!!
-            stream.writeInt(bytes.size)
-            stream.write(bytes, 0, bytes.size)
-        } while (!hash.contentEquals(checkpoint))
-
-        stream.close()
-
-        call.respond(file.absolutePath)
+        val file = Bootstrap.export()
+        if (file != null)
+            call.respond(file.absolutePath)
+        else
+            call.respond(HttpStatusCode.BadRequest, "not synchronized")
     }
 
     get("/api/v1/ledger") {

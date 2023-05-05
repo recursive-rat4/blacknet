@@ -11,7 +11,6 @@
 package ninja.blacknet.rpc.v2
 
 import io.ktor.routing.Route
-import java.io.File
 import kotlin.math.abs
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
@@ -19,17 +18,11 @@ import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKeySerializer
-import ninja.blacknet.dataDir
-import ninja.blacknet.db.BlockDB
-import ninja.blacknet.db.Genesis
-import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.db.LevelDB
+import ninja.blacknet.db.*
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.rpc.requests.*
 import ninja.blacknet.rpc.v1.LedgerInfo
 import ninja.blacknet.rpc.v1.PeerDBInfo
-import ninja.blacknet.util.buffered
-import ninja.blacknet.util.data
 
 @Serializable
 class PeerDB : Request {
@@ -124,26 +117,11 @@ class BlockIndex(
 @Serializable
 class MakeBootstrap : Request {
     override suspend fun handle(): TextContent {
-        val checkpoint = LedgerDB.state().rollingCheckpoint
-        if (checkpoint.contentEquals(HashSerializer.ZERO))
-            return respondError("Not synchronized")
-
-        val file = File(dataDir, "bootstrap.dat.new")
-        val stream = file.outputStream().buffered().data()
-
-        var hash = HashSerializer.ZERO
-        var index = LedgerDB.getChainIndex(hash)!!
-        do {
-            hash = index.next
-            index = LedgerDB.getChainIndex(hash)!!
-            val bytes = BlockDB.getImpl(hash)!!
-            stream.writeInt(bytes.size)
-            stream.write(bytes, 0, bytes.size)
-        } while (!hash.contentEquals(checkpoint))
-
-        stream.close()
-
-        return respondText(file.absolutePath)
+        val file = Bootstrap.export()
+        return if (file != null)
+            respondText(file.absolutePath)
+        else
+            respondError("Not synchronized")
     }
 }
 

@@ -9,7 +9,6 @@
 
 package ninja.blacknet.db
 
-import java.io.File
 import java.math.BigInteger
 import java.util.ArrayDeque //TODO check kotlin.collections.ArrayDeque
 import kotlin.math.max
@@ -19,22 +18,17 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import mu.KotlinLogging
-import ninja.blacknet.dataDir
 import ninja.blacknet.regtest
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.logging.info
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.HashSetSerializer
-import ninja.blacknet.util.buffered
-import ninja.blacknet.util.data
-import ninja.blacknet.util.moveFile
 import ninja.blacknet.util.toByteArray
 
 private val logger = KotlinLogging.logger {}
@@ -197,40 +191,7 @@ object LedgerDB {
             loadGenesisState()
         }
 
-        val bootstrap = File(dataDir, "bootstrap.dat")
-        if (bootstrap.exists()) {
-            runBlocking {
-                logger.info("Found bootstrap")
-                var n = 0
-
-                try {
-                    bootstrap.inputStream().buffered().data().use {
-                        while (true) {
-                            val size = it.readInt()
-                            val bytes = ByteArray(size)
-                            it.readFully(bytes)
-
-                            val hash = Block.hash(bytes)
-                            val status = BlockDB.processImpl(hash, bytes)
-                            if (status == Accepted) {
-                                if (++n % 50000 == 0)
-                                    logger.info("Processed $n blocks")
-                                pruneImpl()
-                            } else if (status !is AlreadyHave) {
-                                logger.info("$status block ${HashSerializer.encode(hash)}")
-                                break
-                            }
-                        }
-                    }
-                } catch (e: Throwable) {
-                    logger.info(e)
-                }
-
-                moveFile(bootstrap, File(dataDir, "bootstrap.dat.old"))
-
-                logger.info("Imported $n blocks")
-            }
-        }
+        Bootstrap.import()
     }
 
     internal fun state(): State {
