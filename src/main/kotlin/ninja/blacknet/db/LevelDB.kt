@@ -19,8 +19,18 @@ import java.io.File
 private val logger = KotlinLogging.logger {}
 
 object LevelDB {
-    private val factory: DBFactory = loadFactory()
-    private val db: DB = factory.open(File(dataDir, "leveldb"), options())
+    private val factory: DBFactory
+    private val db: DB
+
+    init {
+        factory = loadFactory()
+        db = factory.open(File(dataDir, "leveldb"), options())
+
+        Runtime.addShutdownHook {
+            logger.info("Closing database")
+            db.close()
+        }
+    }
 
     internal fun iterator(): DBIterator {
         return db.iterator()
