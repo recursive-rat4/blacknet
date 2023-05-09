@@ -101,7 +101,7 @@ object PeerDB {
             if (updatedHashMap.isEmpty())
                 batch.write()
             else
-                commitImpl(updatedHashMap, batch, false)
+                commitImpl(updatedHashMap, batch)
 
             updatedHashMap
         } else {
@@ -121,7 +121,7 @@ object PeerDB {
 
         Runtime.addShutdownHook {
             logger.info("Saving PeerDB")
-            commit(true)
+            commit()
         }
         Runtime.rotate(::prober)
     }
@@ -262,20 +262,20 @@ object PeerDB {
         if (!toRemove.isEmpty()) {
             toRemove.forEach { peers.remove(it) }
             val batch = LevelDB.createWriteBatch()
-            commitImpl(peers, batch, false)
+            commitImpl(peers, batch)
             logger.debug { "Probed ${toRemove.size} entries" }
         }
     }
 
-    private fun commit(sync: Boolean = false) {
+    private fun commit() {
         val batch = LevelDB.createWriteBatch()
-        commitImpl(peers, batch, sync)
+        commitImpl(peers, batch)
     }
 
-    private fun commitImpl(map: Map<Address, Entry>, batch: LevelDB.WriteBatch, sync: Boolean) {
+    private fun commitImpl(map: Map<Address, Entry>, batch: LevelDB.WriteBatch) {
         val bytes = binaryFormat.encodeToByteArray(MapSerializer(Address.serializer(), Entry.serializer()), map)
         batch.put(STATE_KEY, bytes)
-        batch.write(sync)
+        batch.write()
     }
 
     @Serializable

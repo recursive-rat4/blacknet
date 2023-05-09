@@ -97,8 +97,8 @@ object LevelDB {
             batch.delete(unkey)
         }
 
-        fun write(sync: Boolean = false) {
-            db.write(batch, if (sync) syncOptions else writeOptions)
+        fun write() {
+            db.write(batch, writeOptions)
             batch.close()
         }
 
@@ -149,5 +149,4 @@ object LevelDB {
     }
 
     private val writeOptions = WriteOptions()
-    private val syncOptions = WriteOptions().sync(true)
 }
