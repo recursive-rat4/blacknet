@@ -54,7 +54,7 @@ object Main {
         Security.addProvider(BouncyCastleProvider())
 
         Runtime.addShutdownHook {
-            logger.debug { "Shutting down logger" }
+            logger.info("Shutting down logger")
             (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
         }
 

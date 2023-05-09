@@ -120,6 +120,7 @@ object PeerDB {
         }
 
         Runtime.addShutdownHook {
+            logger.info("Saving PeerDB")
             commit(true)
         }
         Runtime.rotate(::prober)
