@@ -20,7 +20,7 @@ private val logger = KotlinLogging.logger {}
 
 object Runtime : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
-    private val shutdownHooks = SynchronizedArrayList<suspend () -> Unit>()
+    private val shutdownHooks = SynchronizedArrayList<() -> Unit>()
 
     /**
      * The number of available CPU, including virtual cores.
@@ -42,7 +42,7 @@ object Runtime : CoroutineScope {
      *
      * All registered shutdown hooks will be run sequentially in the reversed order.
      */
-    fun addShutdownHook(hook: suspend () -> Unit) {
+    fun addShutdownHook(hook: () -> Unit) {
         runBlocking {
             shutdownHooks.mutex.withLock {
                 shutdownHooks.list.add(hook)
