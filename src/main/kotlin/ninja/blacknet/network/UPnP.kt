@@ -9,7 +9,7 @@
 
 package ninja.blacknet.network
 
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
@@ -45,7 +45,9 @@ object UPnP {
         } catch (e: Throwable) {
         }
         if (address != null) {
-            Runtime.launch { Node.listenAddress.add(address) }
+            runBlocking {
+                Node.listenAddress.add(address)
+            }
             logger.info("Mapped to $address")
         } else {
             logger.info("Mapped to unknown external address")
