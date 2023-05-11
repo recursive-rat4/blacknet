@@ -48,7 +48,7 @@ object UPnP {
             runBlocking {
                 Node.listenAddress.add(address)
             }
-            logger.info("Mapped to $address")
+            logger.info("Mapped to ${address.debugName()}")
         } else {
             logger.info("Mapped to unknown external address")
         }
