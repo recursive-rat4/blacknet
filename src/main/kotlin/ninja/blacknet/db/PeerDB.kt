@@ -119,11 +119,13 @@ object PeerDB {
             }
         }
 
+        val proberJob = Runtime.rotate(::prober)
+
         Runtime.addShutdownHook {
+            proberJob.cancel()
             logger.info("Saving PeerDB")
             commit()
         }
-        Runtime.rotate(::prober)
     }
 
     private fun listBuiltinPeers(): List<Address> {
