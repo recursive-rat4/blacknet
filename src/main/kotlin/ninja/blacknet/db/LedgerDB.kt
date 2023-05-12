@@ -711,7 +711,7 @@ object LedgerDB {
             val nxtrng = PoS.nxtrng(state.nxtrng, blockGenerator)
             val maxBlockSize = PoS.maxBlockSize(blockSizes)
             val upgraded = if (blockVersion > Block.VERSION) min(state.upgraded + 1, PoS.MATURITY + 1) else max(state.upgraded - 1, 0)
-            val forkV2 = if (blockVersion >= 2.toUInt()) min(state.forkV2 + 1, PoS.MATURITY + 1) else max(state.forkV2 - 1, 0)
+            val forkV2 = if (blockVersion >= 2u) min(state.forkV2 + 1, PoS.MATURITY + 1) else max(state.forkV2 - 1, 0)
             val newState = State(
                     height,
                     blockHash,

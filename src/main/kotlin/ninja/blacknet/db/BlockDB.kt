@@ -84,7 +84,7 @@ object BlockDB {
                 logger.info("Unknown version ${block.version}")
         }
         if (forkV2()) {
-            if (block.version < 2.toUInt()) {
+            if (block.version < 2u) {
                 return Invalid("Block version ${block.version} is no longer accepted")
             }
         }
