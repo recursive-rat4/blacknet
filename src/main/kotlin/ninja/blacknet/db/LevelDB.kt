@@ -18,7 +18,7 @@ import java.io.File
 
 private val logger = KotlinLogging.logger {}
 
-object LevelDB {
+object LevelDB : KeyValueStore {
     private val factory: DBFactory
     private val db: DB
 
