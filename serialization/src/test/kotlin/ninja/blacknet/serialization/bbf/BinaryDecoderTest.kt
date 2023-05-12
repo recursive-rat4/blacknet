@@ -33,6 +33,7 @@ class BinaryDecoderTest {
         val short: Short,
         val int: Int,
         val long: Long,
+        val unit: Unit,
         val string: String
     )
 
@@ -45,6 +46,7 @@ class BinaryDecoderTest {
                 0x01FF,
                 0x0201FFFE,
                 0x04030201FFFEFDFC,
+                Unit,
                 "八"
             ),
             BinaryFormat().decodeFromByteArray(
@@ -54,6 +56,7 @@ class BinaryDecoderTest {
                     1, -1,
                     2, 1, -1, -2,
                     4, 3, 2, 1, -1, -2, -3, -4,
+                    // Unit //
                     0x83, 0xE5, 0x85, 0xAB
                 )
             )
