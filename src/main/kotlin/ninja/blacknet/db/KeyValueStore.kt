@@ -13,4 +13,8 @@ package ninja.blacknet.db
  * It represents an associative array with [ByteArray] keys and values.
  */
 interface KeyValueStore {
+    /**
+     * @return the value associated with the given key or `null` if there is none
+     */
+    fun get(key: ByteArray): ByteArray?
 }

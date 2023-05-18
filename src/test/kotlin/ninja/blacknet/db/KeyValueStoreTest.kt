@@ -9,11 +9,20 @@
 
 package ninja.blacknet.db
 
-/**
- * A simple implementation of [KeyValueStore] that keeps all its data in the main memory.
- */
-object MemDB : KeyValueStore {
-    override fun get(key: ByteArray): ByteArray? {
-        return null
+import kotlin.test.Test
+import kotlin.test.assertNull
+
+class KeyValueStoreTest {
+    @Test
+    fun test() {
+        val store = MemDB
+
+        val key0 = byteArrayOf(0)
+        val key1 = byteArrayOf(1)
+        val key2 = byteArrayOf(2)
+
+        assertNull(store.get(key0))
+        assertNull(store.get(key1))
+        assertNull(store.get(key2))
     }
 }

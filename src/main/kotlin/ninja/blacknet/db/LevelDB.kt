@@ -56,8 +56,8 @@ object LevelDB : KeyValueStore {
         return db.get(dbKey + key)
     }
 
-    internal fun get(unkey: ByteArray): ByteArray? {
-        return db.get(unkey)
+    override fun get(key: ByteArray): ByteArray? {
+        return db.get(key)
     }
 
     fun contains(dbKey: DBKey, key: ByteArray): Boolean {
