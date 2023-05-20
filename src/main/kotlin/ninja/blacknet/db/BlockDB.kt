@@ -33,7 +33,7 @@ object BlockDB {
 
     private val rejects = Collections.newSetFromMap(object : LinkedHashMap<ByteArray, Boolean>() {
         override fun put(key: ByteArray, value: Boolean): Boolean? {
-            if (size > PoS.MATURITY)
+            if (size > PoS.ROLLBACK_LIMIT)
                 remove(firstKey())
             return super.put(key, value)
         }

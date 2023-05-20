@@ -163,7 +163,7 @@ fun Route.APIV1() {
                 hash = index.next
                 index = LedgerDB.getChainIndex(hash)!!
             }
-            if (index.height < state.height - PoS.MATURITY + 1)
+            if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
                 RPCServer.lastIndex = Pair(hash, index)
             call.respond(HashSerializer.encode(hash))
         }

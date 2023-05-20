@@ -232,9 +232,9 @@ object LedgerDB {
             val chainIndex = getChainIndex(state.rollingCheckpoint)!!
             return chainIndex.next
         } else {
-            if (state.height < PoS.MATURITY + 1)
+            if (state.height < PoS.ROLLBACK_LIMIT + 1)
                 return Genesis.BLOCK_HASH
-            val checkpoint = state.height - PoS.MATURITY
+            val checkpoint = state.height - PoS.ROLLBACK_LIMIT
             var chainIndex = getChainIndex(state.blockHash)!!
             while (chainIndex.height != checkpoint + 1)
                 chainIndex = getChainIndex(chainIndex.previous)!!

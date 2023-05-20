@@ -17,5 +17,6 @@ class PoSTest {
     @Test
     fun sanity() {
         assertTrue(PoS.UPGRADE_THRESHOLD >= PoS.MATURITY, "Not strictly required but seems logical")
+        assertTrue(PoS.ROLLBACK_LIMIT <= PoS.UPGRADE_THRESHOLD, "Fork activation shouldn't be reversible")
     }
 }

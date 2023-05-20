@@ -65,7 +65,7 @@ object PoS {
     }
 
     fun guessInitialSynchronization(): Boolean {
-        return currentTimeSeconds() > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * MATURITY
+        return currentTimeSeconds() > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * ROLLBACK_LIMIT
     }
 
     fun maxBlockSize(blockSizes: Collection<Int>): Int {
@@ -107,9 +107,13 @@ object PoS {
      */
     const val DEFAULT_CONFIRMATIONS = 10
     /**
-     * Maximum number of blocks that can be rolled back
+     * Number of confirmations to make coins eligible for staking
      */
     const val MATURITY = 1350
+    /**
+     * Depth of rolling checkpoint
+     */
+    const val ROLLBACK_LIMIT = 1350
     /**
      * Sequence of blocks to activate fork
      */

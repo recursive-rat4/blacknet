@@ -40,6 +40,6 @@ class Blocks(
 
     companion object {
         const val MAX_BLOCKS = 1000
-        const val MAX_HASHES = PoS.MATURITY
+        const val MAX_HASHES = PoS.ROLLBACK_LIMIT
     }
 }

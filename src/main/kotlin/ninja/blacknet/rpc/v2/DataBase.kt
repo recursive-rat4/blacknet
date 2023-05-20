@@ -93,7 +93,7 @@ class BlockHash(
             hash = index.next
             index = LedgerDB.getChainIndex(hash)!!
         }
-        if (index.height < state.height - PoS.MATURITY + 1)
+        if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
             RPCServer.lastIndex = Pair(hash, index)
 
         return respondText(HashSerializer.encode(hash))
