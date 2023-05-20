@@ -111,6 +111,10 @@ object PoS {
      */
     const val MATURITY = 1350
     /**
+     * Sequence of blocks to activate fork
+     */
+    const val UPGRADE_THRESHOLD = 1350
+    /**
      * Number of blocks used to calculate the maximum block size
      */
     const val BLOCK_SIZE_SPAN = 1351

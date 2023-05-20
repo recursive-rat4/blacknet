@@ -77,7 +77,7 @@ object BlockDB {
         val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
         val state = LedgerDB.state()
         if (block.version > Block.VERSION) {
-            val percent = 100 * state.upgraded / PoS.MATURITY
+            val percent = 100 * state.upgraded / PoS.UPGRADE_THRESHOLD
             if (percent > 9)
                 logger.info("$percent% upgraded to unknown version")
             else

@@ -202,7 +202,7 @@ object LedgerDB {
         return if (regtest)
             true
         else
-            state.forkV2 == (PoS.MATURITY + 1).toShort()
+            state.forkV2 == (PoS.UPGRADE_THRESHOLD + 1).toShort()
     }
 
     fun chainContains(hash: ByteArray): Boolean {
@@ -504,7 +504,7 @@ object LedgerDB {
     }
 
     fun warnings(): List<String> {
-        return if (state.upgraded < PoS.MATURITY / 2)
+        return if (state.upgraded < PoS.UPGRADE_THRESHOLD / 2)
             emptyList()
         else
             listOf("This version is obsolete, upgrade required!")
@@ -710,8 +710,8 @@ object LedgerDB {
             val cumulativeDifficulty = PoS.cumulativeDifficulty(undo.cumulativeDifficulty, difficulty)
             val nxtrng = PoS.nxtrng(state.nxtrng, blockGenerator)
             val maxBlockSize = PoS.maxBlockSize(blockSizes)
-            val upgraded = if (blockVersion > Block.VERSION) min(state.upgraded + 1, PoS.MATURITY + 1) else max(state.upgraded - 1, 0)
-            val forkV2 = if (blockVersion >= 2u) min(state.forkV2 + 1, PoS.MATURITY + 1) else max(state.forkV2 - 1, 0)
+            val upgraded = if (blockVersion > Block.VERSION) min(state.upgraded + 1, PoS.UPGRADE_THRESHOLD + 1) else max(state.upgraded - 1, 0)
+            val forkV2 = if (blockVersion >= 2u) min(state.forkV2 + 1, PoS.UPGRADE_THRESHOLD + 1) else max(state.forkV2 - 1, 0)
             val newState = State(
                     height,
                     blockHash,
