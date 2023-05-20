@@ -11,7 +11,6 @@ package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.HashSerializer
-import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Connection
@@ -37,7 +36,7 @@ class GetBlocks(
         var chainIndex = LedgerDB.getChainIndex(best)
 
         if (chainIndex == null) {
-            val nextBlockHashes = LedgerDB.getNextBlockHashes(checkpoint, PoS.MATURITY)
+            val nextBlockHashes = LedgerDB.getNextBlockHashes(checkpoint, Blocks.MAX_HASHES)
             if (nextBlockHashes != null) {
                 connection.sendPacket(PacketType.Blocks, Blocks(nextBlockHashes, emptyList()))
                 return
