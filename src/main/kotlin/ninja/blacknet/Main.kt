@@ -53,7 +53,7 @@ object Main {
         Security.addProvider(Blake2bProvider())
         Security.addProvider(BouncyCastleProvider())
 
-        Runtime.addShutdownHook {
+        ShutdownHooks.add {
             logger.info("Shutting down logger")
             (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
         }

@@ -22,6 +22,7 @@ import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
 import ninja.blacknet.regtest
 import ninja.blacknet.Runtime
+import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.logging.error
 import ninja.blacknet.network.Address
@@ -121,7 +122,7 @@ object PeerDB {
 
         val proberJob = Runtime.rotate(::prober)
 
-        Runtime.addShutdownHook {
+        ShutdownHooks.add {
             proberJob.cancel()
             logger.info("Saving PeerDB")
             commit()

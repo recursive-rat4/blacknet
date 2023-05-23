@@ -12,6 +12,7 @@ package ninja.blacknet.db
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
+import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.dataDir
 import org.iq80.leveldb.*
 import java.io.File
@@ -26,7 +27,7 @@ object LevelDB : KeyValueStore {
         factory = loadFactory()
         db = factory.open(File(dataDir, "leveldb"), options())
 
-        Runtime.addShutdownHook {
+        ShutdownHooks.add {
             logger.info("Closing database")
             db.close()
         }

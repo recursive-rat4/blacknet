@@ -9,18 +9,14 @@
 
 package ninja.blacknet
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.withLock
-import mu.KotlinLogging
-import ninja.blacknet.logging.error
-import ninja.blacknet.util.SynchronizedArrayList
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
-
-private val logger = KotlinLogging.logger {}
 
 object Runtime : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
-    private val shutdownHooks = SynchronizedArrayList<() -> Unit>()
 
     /**
      * The number of available CPU, including virtual cores.
@@ -37,41 +33,10 @@ object Runtime : CoroutineScope {
      */
     val windowsOS: Boolean
 
-    /**
-     * Registers a new shutdown hook.
-     *
-     * All registered shutdown hooks will be run sequentially in the reversed order.
-     */
-    fun addShutdownHook(hook: () -> Unit) {
-        runBlocking {
-            shutdownHooks.mutex.withLock {
-                shutdownHooks.list.add(hook)
-                if (shutdownHooks.list.size == 1) {
-                    java.lang.Runtime.getRuntime().addShutdownHook(ShutdownHooks())
-                }
-            }
-        }
-    }
-
     init {
         System.getProperty("os.name").let { os_name ->
             macOS = os_name.startsWith("Mac")
             windowsOS = os_name.startsWith("Windows")
-        }
-    }
-
-    private class ShutdownHooks() : Thread() {
-        override fun run() {
-            logger.info("Shutdown is in progress...")
-            runBlocking {
-                shutdownHooks.reversedForEach { hook ->
-                    try {
-                        hook()
-                    } catch (e: Throwable) {
-                        logger.error(e)
-                    }
-                }
-            }
         }
     }
 

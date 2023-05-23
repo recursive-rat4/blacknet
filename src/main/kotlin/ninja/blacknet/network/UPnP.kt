@@ -12,7 +12,7 @@ package ninja.blacknet.network
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import ninja.blacknet.Config
-import ninja.blacknet.Runtime
+import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.Version
 import org.bitlet.weupnp.GatewayDevice
 import org.bitlet.weupnp.GatewayDiscover
@@ -53,7 +53,7 @@ object UPnP {
             logger.info("Mapped to unknown external address")
         }
 
-        Runtime.addShutdownHook {
+        ShutdownHooks.add {
             remove(gateway)
         }
     }
