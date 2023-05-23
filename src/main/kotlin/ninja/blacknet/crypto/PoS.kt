@@ -103,7 +103,7 @@ object PoS {
      */
     val BLOCKS_IN_YEAR get() = 365 * 24 * 60 * 60 / TARGET_BLOCK_TIME
     /**
-     * Default number of confirmations
+     * Recommended number of confirmations that is not enforced by protocol
      */
     const val DEFAULT_CONFIRMATIONS = 10
     /**
