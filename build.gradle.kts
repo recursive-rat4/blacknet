@@ -38,6 +38,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":blacknet-json-rpc"))
     implementation(project(":blacknet-runtime"))
     implementation(project(":blacknet-serialization"))
     implementation(project(":blacknet-time"))

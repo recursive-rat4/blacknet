@@ -41,6 +41,7 @@ test:
     reports:
       junit:
         - build/test-results/test/TEST-*.xml
+        - json-rpc/build/test-results/test/TEST-*.xml
         - runtime/build/test-results/test/TEST-*.xml
         - serialization/build/test-results/test/TEST-*.xml
         - time/build/test-results/test/TEST-*.xml
