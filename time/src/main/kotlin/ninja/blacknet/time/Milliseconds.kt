@@ -14,6 +14,25 @@ package ninja.blacknet.time
  */
 public inline class Milliseconds(
     /*TODO private*/public val milliseconds: Long
-) {
+) : Comparable<Milliseconds> {
     override fun toString(): String = milliseconds.toString()
+
+    override fun compareTo(other: Milliseconds): Int = milliseconds.compareTo(other.milliseconds)
+
+    public companion object {
+        /**
+         * The zero value that is represented by [Milliseconds].
+         */
+        public val ZERO: Milliseconds = Milliseconds(0)
+
+        /**
+         * The minimum value that can be represented by [Milliseconds].
+         */
+        public val MIN_VALUE: Milliseconds = Milliseconds(Long.MIN_VALUE)
+
+        /**
+         * The maximum value that can be represented by [Milliseconds].
+         */
+        public val MAX_VALUE: Milliseconds = Milliseconds(Long.MAX_VALUE)
+    }
 }

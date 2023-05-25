@@ -11,6 +11,7 @@ package ninja.blacknet.time
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MillisecondsTest {
     @Test
@@ -20,5 +21,15 @@ class MillisecondsTest {
         assertEquals(Milliseconds(answer), Milliseconds(answer))
         assertEquals(Milliseconds(answer).hashCode(), Milliseconds(answer).hashCode())
         assertEquals(answer.toString(), Milliseconds(answer).toString())
+    }
+
+    @Test
+    fun comparison() {
+        val a = Milliseconds('А'.code.toLong())
+        val b = Milliseconds('Б'.code.toLong())
+        assertTrue(a >= Milliseconds.MIN_VALUE && a <= Milliseconds.MAX_VALUE)
+        assertTrue(b >= Milliseconds.MIN_VALUE && b <= Milliseconds.MAX_VALUE)
+        assertTrue(a < b)
+        assertTrue(b > a)
     }
 }
