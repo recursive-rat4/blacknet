@@ -23,4 +23,4 @@ public inline fun currentTimeSeconds(): Long = System.currentTimeMillis() / 1000
  * The current time of the operating system as the number of milliseconds since the Epoch.
  */
 @Suppress("NOTHING_TO_INLINE")
-public inline fun currentTimeMillis(): Long = System.currentTimeMillis()
+public inline fun currentTimeMillis(): Long = Milliseconds(System.currentTimeMillis()).milliseconds
