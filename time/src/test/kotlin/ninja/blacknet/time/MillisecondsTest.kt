@@ -32,4 +32,23 @@ class MillisecondsTest {
         assertTrue(a < b)
         assertTrue(b > a)
     }
+
+    @Test
+    fun operators() {
+        val a = Milliseconds(202)
+        val b = Milliseconds(2)
+
+        assertEquals(Milliseconds(+202), +a)
+        assertEquals(Milliseconds(-202), -a)
+
+        assertEquals(Milliseconds(204), a + b)
+        assertEquals(Milliseconds(200), a - b)
+
+        assertEquals(Milliseconds(404), a * 2)
+        assertEquals(101, a / b)
+        assertEquals(Milliseconds(101), a / 2)
+
+        assertEquals(Milliseconds(0), a % b)
+        assertEquals(Milliseconds(1), a % 3)
+    }
 }
