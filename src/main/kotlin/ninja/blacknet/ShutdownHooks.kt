@@ -9,6 +9,7 @@
 
 package ninja.blacknet
 
+import java.lang.Runtime
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
@@ -18,7 +19,13 @@ import ninja.blacknet.util.SynchronizedArrayList
 private val logger = KotlinLogging.logger {}
 
 object ShutdownHooks {
-    private val shutdownHooks = SynchronizedArrayList<() -> Unit>()
+    @Suppress("JoinDeclarationAndAssignment")
+    private val shutdownHooks: SynchronizedArrayList<() -> Unit>
+
+    init {
+        shutdownHooks = SynchronizedArrayList()
+        Runtime.getRuntime().addShutdownHook(Executor())
+    }
 
     /**
      * Registers a new shutdown hook.
@@ -29,9 +36,6 @@ object ShutdownHooks {
         runBlocking {
             shutdownHooks.mutex.withLock {
                 shutdownHooks.list.add(hook)
-                if (shutdownHooks.list.size == 1) {
-                    java.lang.Runtime.getRuntime().addShutdownHook(Executor())
-                }
             }
         }
     }
