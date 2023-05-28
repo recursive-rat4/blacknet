@@ -15,6 +15,7 @@ import java.io.FileOutputStream
 import ninja.blacknet.util.Resources
 
 //TODO populate config dir in another place
+//FIXME permission 0700
 
 var configDirCreated: Boolean = false
 

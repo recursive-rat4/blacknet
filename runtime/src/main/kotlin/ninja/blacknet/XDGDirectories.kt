@@ -11,7 +11,7 @@ package ninja.blacknet
 
 import java.io.File
 
-// https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.7.html
+// https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.8.html
 
 private const val subdirectory = "Blacknet"
 
@@ -27,3 +27,5 @@ private fun XDGBaseDirectory(environmentVariable: String, defaultBase: String): 
 public fun XDGConfigDirectory(): File = XDGBaseDirectory("XDG_CONFIG_HOME", ".config")
 
 public fun XDGDataDirectory(): File = XDGBaseDirectory("XDG_DATA_HOME", ".local/share")
+
+public fun XDGStateDirectory(): File = XDGBaseDirectory("XDG_STATE_HOME", ".local/state")

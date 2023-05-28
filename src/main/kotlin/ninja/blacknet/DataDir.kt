@@ -12,6 +12,9 @@ package ninja.blacknet
 
 import java.io.File
 
+//TODO use XDGStateDirectory
+//FIXME permission 0700
+
 val dataDir: File = {
     val custom = System.getProperty("ninja.blacknet.dataDir")
     var dir = if (custom != null) {
