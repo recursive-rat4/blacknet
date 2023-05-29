@@ -15,7 +15,7 @@ import java.io.File
 //TODO use XDGStateDirectory
 //FIXME permission 0700
 
-val dataDir: File = {
+val dataDir: File = run {
     val custom = System.getProperty("ninja.blacknet.dataDir")
     var dir = if (custom != null) {
         File(custom)
@@ -38,4 +38,4 @@ val dataDir: File = {
     }
     dir.mkdirs()
     dir
-}()
+}
