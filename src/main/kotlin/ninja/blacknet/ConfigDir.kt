@@ -19,7 +19,7 @@ import ninja.blacknet.util.Resources
 
 var configDirCreated: Boolean = false
 
-val configDir: File = {
+val configDir: File = run {
     val custom = System.getProperty("ninja.blacknet.configDir")
     val dir = if (System.getProperty("org.gradle.test.worker") != null) {
         File("build/resources/main/config").also {
@@ -47,7 +47,7 @@ val configDir: File = {
         configDirCreated = true
     }
     dir
-}()
+}
 
 private fun configFiles() = arrayOf(
         "blacknet.conf",
