@@ -27,6 +27,7 @@ class MillisecondsTest {
     fun comparison() {
         val a = Milliseconds('А'.code.toLong())
         val b = Milliseconds('Б'.code.toLong())
+        assertTrue(a > Milliseconds.ZERO && -a < Milliseconds.ZERO)
         assertTrue(a >= Milliseconds.MIN_VALUE && a <= Milliseconds.MAX_VALUE)
         assertTrue(b >= Milliseconds.MIN_VALUE && b <= Milliseconds.MAX_VALUE)
         assertTrue(a < b)
