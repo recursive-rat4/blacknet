@@ -9,6 +9,10 @@
 
 package ninja.blacknet.time
 
+import ninja.blacknet.time.Milliseconds.Companion.fromDays
+import ninja.blacknet.time.Milliseconds.Companion.fromHours
+import ninja.blacknet.time.Milliseconds.Companion.fromMinutes
+import ninja.blacknet.time.Milliseconds.Companion.fromSeconds
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -51,5 +55,13 @@ class MillisecondsTest {
 
         assertEquals(Milliseconds(0), a % b)
         assertEquals(Milliseconds(1), a % 3)
+    }
+
+    @Test
+    fun conversion() {
+        assertEquals(Milliseconds(4000), fromSeconds(4))
+        assertEquals(Milliseconds(240000), fromMinutes(4))
+        assertEquals(Milliseconds(14400000), fromHours(4))
+        assertEquals(Milliseconds(345600000), fromDays(4))
     }
 }

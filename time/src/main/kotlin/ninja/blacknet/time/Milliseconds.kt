@@ -79,5 +79,25 @@ public inline class Milliseconds(
          * The maximum value that can be represented by [Milliseconds].
          */
         public val MAX_VALUE: Milliseconds = Milliseconds(Long.MAX_VALUE)
+
+        /**
+         * @return the converted number of seconds into [Milliseconds].
+         */
+        public fun fromSeconds(number: Long): Milliseconds = Milliseconds(number * 1000)
+
+        /**
+         * @return the converted number of minutes into [Milliseconds].
+         */
+        public fun fromMinutes(number: Long): Milliseconds = Milliseconds(number * 60 * 1000)
+
+        /**
+         * @return the converted number of hours into [Milliseconds].
+         */
+        public fun fromHours(number: Long): Milliseconds = Milliseconds(number * 60 * 60 * 1000)
+
+        /**
+         * @return the converted number of days into [Milliseconds].
+         */
+        public fun fromDays(number: Long): Milliseconds = Milliseconds(number * 24 * 60 * 60 * 1000)
     }
 }
