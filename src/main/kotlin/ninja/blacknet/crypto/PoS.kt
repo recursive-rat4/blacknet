@@ -20,6 +20,9 @@ import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.byteArrayOfInts
 
+/**
+ * The implementation of asynchronous proof of stake
+ */
 object PoS {
     fun mint(supply: Long): Long {
         return supply / 100 / BLOCKS_IN_YEAR
@@ -123,7 +126,7 @@ object PoS {
      */
     const val BLOCK_SIZE_SPAN = 1351
     /**
-     * Satoshi
+     * The satoshi is a monetary unit of many cryptocurrencies
      */
     const val COIN = 100000000L
     /**
