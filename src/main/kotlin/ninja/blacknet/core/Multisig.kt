@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.serialization.VarLongSerializer
-import ninja.blacknet.util.sumByLong
+import ninja.blacknet.util.exactSumOf
 
 @Serializable
 class Multisig(
@@ -22,7 +22,7 @@ class Multisig(
 ) {
 
     fun amount(): Long {
-        return deposits.sumByLong { it.amount }
+        return deposits.exactSumOf { it.amount }
     }
 
     @Serializable

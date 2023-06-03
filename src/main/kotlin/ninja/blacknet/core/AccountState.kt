@@ -15,7 +15,7 @@ import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
-import ninja.blacknet.util.sumByLong
+import ninja.blacknet.util.exactSumOf
 
 @Serializable
 class AccountState(
@@ -35,19 +35,19 @@ class AccountState(
     }
 
     fun balance(): Long {
-        return stake + immature.sumByLong { it.amount }
+        return stake + immature.exactSumOf { it.amount }
     }
 
     fun confirmedBalance(height: Int, confirmations: Int): Long {
-        return stake + immature.sumByLong { it.confirmedBalance(height, confirmations) }
+        return stake + immature.exactSumOf { it.confirmedBalance(height, confirmations) }
     }
 
     fun stakingBalance(height: Int): Long {
-        return stake + immature.sumByLong { it.matureBalance(height) } + leases.sumByLong { it.matureBalance(height) }
+        return stake + immature.exactSumOf { it.matureBalance(height) } + leases.exactSumOf { it.matureBalance(height) }
     }
 
     fun totalBalance(): Long {
-        return stake + immature.sumByLong { it.amount } + leases.sumByLong { it.amount }
+        return stake + immature.exactSumOf { it.amount } + leases.exactSumOf { it.amount }
     }
 
     fun credit(amount: Long): Status {
@@ -85,7 +85,7 @@ class AccountState(
     }
 
     fun prune(height: Int): Boolean {
-        val mature = immature.sumByLong { it.matureBalance(height) }
+        val mature = immature.exactSumOf { it.matureBalance(height) }
         return if (mature == 0L) {
             false
         } else {

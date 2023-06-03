@@ -27,7 +27,7 @@ import ninja.blacknet.rpc.v2.StakingInfo
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.SynchronizedArrayList
-import ninja.blacknet.util.sumByLong
+import ninja.blacknet.util.exactSumOf
 
 private val logger = KotlinLogging.logger {}
 
@@ -197,7 +197,7 @@ object Staker {
                 Triple(
                         stakers.list.size,
                         stakers.list.sumOf { it.hashRate() },
-                        stakers.list.sumByLong { it.stake }
+                        stakers.list.exactSumOf { it.stake }
                 )
             } else {
                 val staker = stakers.list.find { it.publicKey.contentEquals(publicKey) }

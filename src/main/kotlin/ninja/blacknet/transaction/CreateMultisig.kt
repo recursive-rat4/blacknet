@@ -15,7 +15,7 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.LongSerializer
-import ninja.blacknet.util.sumByLong
+import ninja.blacknet.util.exactSumOf
 
 /**
  * 創建合約
@@ -84,7 +84,7 @@ class CreateMultisig(
             return Invalid("Too many signatures")
         }
         val total = try {
-            deposits.sumByLong { it.amount }
+            deposits.exactSumOf { it.amount }
         } catch (e: ArithmeticException) {
             return Invalid("Invalid total amount: ${e.message}")
         }

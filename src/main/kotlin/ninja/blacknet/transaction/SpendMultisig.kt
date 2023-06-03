@@ -17,7 +17,7 @@ import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.util.HashMap
-import ninja.blacknet.util.sumByLong
+import ninja.blacknet.util.exactSum
 
 /**
  * 花費合約
@@ -81,7 +81,7 @@ class SpendMultisig(
             return Invalid("Invalid number of amounts")
         }
         val amount = try {
-            amounts.sumByLong()
+            amounts.exactSum()
         } catch (e: ArithmeticException) {
             return Invalid("Invalid total amount: ${e.message}")
         }

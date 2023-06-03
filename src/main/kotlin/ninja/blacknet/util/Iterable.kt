@@ -20,13 +20,12 @@ inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
     return sum
 }
 
-//TODO rename
 /**
  * Returns the sum of all values produced by [selector].
  *
  * @throws ArithmeticException on overflow.
  */
-inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
+inline fun <T> Iterable<T>.exactSumOf(selector: (T) -> Long): Long {
     var sum: Long = 0
     for (element in this) {
         sum = Math.addExact(sum, selector(element))
@@ -34,13 +33,12 @@ inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
     return sum
 }
 
-//TODO rename
 /**
  * Returns the sum of all elements.
  *
  * @throws ArithmeticException on overflow.
  */
-fun ArrayList<Long>.sumByLong(): Long {
+fun ArrayList<Long>.exactSum(): Long {
     var sum: Long = 0
     for (i in 0 until size) {
         sum = Math.addExact(sum, this[i])
