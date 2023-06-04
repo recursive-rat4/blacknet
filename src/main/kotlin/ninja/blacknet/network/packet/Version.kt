@@ -29,6 +29,7 @@ class Version(
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (magic != Node.magic) {
+            // connection from another network
             connection.close()
             return
         }
@@ -48,10 +49,12 @@ class Version(
 
         if (connection.state == Connection.State.INCOMING_WAITING) {
             if (nonce != Node.nonce) {
+                // echo the nonce
                 Node.sendVersion(connection, nonce, prober = false)
                 connection.state = Connection.State.INCOMING_CONNECTED
                 logger.info("Accepted connection from ${connection.debugName()} $agent")
             } else {
+                // connected to self or bad luck
                 connection.close()
                 return
             }
@@ -60,14 +63,17 @@ class Version(
             PeerDB.connected(connection.remoteAddress, connection.connectedAt, connection.agent, prober = false)
             logger.info("Connected to ${connection.debugName()} $agent")
         } else if (connection.state == Connection.State.PROBER_WAITING) {
+            // keeping track of online peers
             connection.state = Connection.State.PROBER_CONNECTED
             connection.close()
             PeerDB.connected(connection.remoteAddress, connection.connectedAt, connection.agent, prober = true)
             return
         } else {
+            // this condition should never be reached
             throw IllegalStateException("${connection.state}")
         }
 
+        // got anything?
         ChainFetcher.offer(connection, chainAnnounce)
     }
 }
