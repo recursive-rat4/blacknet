@@ -43,11 +43,11 @@ object BlockDB {
         return rejects.contains(hash)
     }
 
-    suspend fun block(hash: ByteArray): Pair<Block, Int>? = mutex.withLock {
-        return@withLock blockImpl(hash)
+    suspend fun getWithSize(hash: ByteArray): Pair<Block, Int>? = mutex.withLock {
+        return@withLock getWithSizeImpl(hash)
     }
 
-    internal fun blockImpl(hash: ByteArray): Pair<Block, Int>? {
+    internal fun getWithSizeImpl(hash: ByteArray): Pair<Block, Int>? {
         val bytes = getImpl(hash) ?: return null
         val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
         return Pair(block, bytes.size)

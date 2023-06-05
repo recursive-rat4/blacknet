@@ -167,7 +167,7 @@ object LedgerDB {
 
                     for (i in 0 until blockHashes.size) {
                         val hash = blockHashes[i]
-                        val (block, size) = BlockDB.blockImpl(hash)!!
+                        val (block, size) = BlockDB.getWithSizeImpl(hash)!!
                         val batch = LevelDB.createWriteBatch()
                         val txDb = Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
                         val (status, _) = processBlockImpl(txDb, hash, block, size)
@@ -438,7 +438,7 @@ object LedgerDB {
         val toRemove = if (!state.blockHash.contentEquals(rollbackTo)) rollbackToImpl(rollbackTo) else emptyList()
 
         list.asReversed().forEach { hash ->
-            val block = BlockDB.blockImpl(hash)
+            val block = BlockDB.getWithSizeImpl(hash)
             if (block == null) {
                 logger.error("${HashSerializer.encode(hash)} not found")
                 return toRemove
