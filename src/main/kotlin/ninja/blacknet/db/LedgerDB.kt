@@ -438,15 +438,13 @@ object LedgerDB {
         val toRemove = if (!state.blockHash.contentEquals(rollbackTo)) rollbackToImpl(rollbackTo) else emptyList()
 
         list.asReversed().forEach { hash ->
-            val block = BlockDB.getWithSizeImpl(hash)
-            if (block == null) {
+            val (block, size) = BlockDB.getWithSizeImpl(hash) ?: return toRemove.also {
                 logger.error("${HashSerializer.encode(hash)} not found")
-                return toRemove
             }
 
             val batch = LevelDB.createWriteBatch()
-            val txDb = LedgerDB.Update(batch, block.first.version, hash, block.first.previous, block.first.time, block.second, block.first.generator)
-            val (status, _) = processBlockImpl(txDb, hash, block.first, block.second)
+            val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
+            val (status, _) = processBlockImpl(txDb, hash, block, size)
             if (status != Accepted) {
                 batch.close()
                 logger.error("$status block ${HashSerializer.encode(hash)}")
