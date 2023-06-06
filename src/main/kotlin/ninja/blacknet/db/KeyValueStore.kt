@@ -14,6 +14,11 @@ package ninja.blacknet.db
  */
 interface KeyValueStore {
     /**
+     * @return `true` if a value is associated with the given key or `false` otherwise.
+     */
+    fun contains(key: ByteArray): Boolean
+
+    /**
      * @return the value associated with the given key or `null` if there is none
      */
     fun get(key: ByteArray): ByteArray?

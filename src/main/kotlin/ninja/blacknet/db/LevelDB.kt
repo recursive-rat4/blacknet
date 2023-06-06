@@ -57,12 +57,17 @@ object LevelDB : KeyValueStore {
         return db.get(dbKey + key)
     }
 
+    override fun contains(key: ByteArray): Boolean {
+        // LevelDB 1.23 doesn't seem to have a more efficient way to do so
+        return db.get(key) != null
+    }
+
     override fun get(key: ByteArray): ByteArray? {
         return db.get(key)
     }
 
     fun contains(dbKey: DBKey, key: ByteArray): Boolean {
-        return get(dbKey, key) != null
+        return contains(dbKey + key)
     }
 
     fun put(dbKey: DBKey, key: ByteArray, bytes: ByteArray) {

@@ -10,6 +10,7 @@
 package ninja.blacknet.db
 
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 class KeyValueStoreTest {
@@ -20,6 +21,10 @@ class KeyValueStoreTest {
         val key0 = byteArrayOf(0)
         val key1 = byteArrayOf(1)
         val key2 = byteArrayOf(2)
+
+        assertFalse(store.contains(key0))
+        assertFalse(store.contains(key1))
+        assertFalse(store.contains(key2))
 
         assertNull(store.get(key0))
         assertNull(store.get(key1))
