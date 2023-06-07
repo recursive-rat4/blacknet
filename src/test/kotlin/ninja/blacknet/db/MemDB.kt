@@ -9,15 +9,19 @@
 
 package ninja.blacknet.db
 
+import ninja.blacknet.util.HashMap
+
 /**
  * A simple implementation of [KeyValueStore] that keeps all its data in the main memory.
  */
-class MemDB() : KeyValueStore {
+class MemDB(
+    private val map: HashMap<ByteArray, ByteArray> = HashMap(0)
+) : KeyValueStore {
     override fun contains(key: ByteArray): Boolean {
-        return false
+        return map.containsKey(key)
     }
 
     override fun get(key: ByteArray): ByteArray? {
-        return null
+        return map.get(key)
     }
 }
