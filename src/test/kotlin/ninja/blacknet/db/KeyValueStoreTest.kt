@@ -16,7 +16,7 @@ import kotlin.test.assertNull
 class KeyValueStoreTest {
     @Test
     fun test() {
-        val store = MemDB
+        val store = MemDB()
 
         val key0 = byteArrayOf(0)
         val key1 = byteArrayOf(1)

@@ -12,7 +12,7 @@ package ninja.blacknet.db
 /**
  * A simple implementation of [KeyValueStore] that keeps all its data in the main memory.
  */
-object MemDB : KeyValueStore {
+class MemDB() : KeyValueStore {
     override fun contains(key: ByteArray): Boolean {
         return false
     }
