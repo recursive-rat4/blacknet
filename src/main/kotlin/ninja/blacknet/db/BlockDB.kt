@@ -43,18 +43,14 @@ object BlockDB {
         return rejects.contains(hash)
     }
 
-    suspend fun getWithSize(hash: ByteArray): Pair<Block, Int>? = mutex.withLock {
-        return@withLock getWithSizeImpl(hash)
-    }
-
-    internal fun getWithSizeImpl(hash: ByteArray): Pair<Block, Int>? {
-        val bytes = getImpl(hash) ?: return null
+    fun getWithSize(hash: ByteArray): Pair<Block, Int>? {
+        val bytes = get(hash) ?: return null
         val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
         return Pair(block, bytes.size)
     }
 
-    suspend fun get(hash: ByteArray): ByteArray? = mutex.withLock {
-        return@withLock getImpl(hash)
+    fun get(hash: ByteArray): ByteArray? {
+        return LevelDB.get(BLOCK_KEY, hash)
     }
 
     internal fun removeImpl(list: List<ByteArray>) {
@@ -67,10 +63,6 @@ object BlockDB {
 
     private fun containsImpl(hash: ByteArray): Boolean {
         return LedgerDB.chainContains(hash)
-    }
-
-    internal fun getImpl(hash: ByteArray): ByteArray? {
-        return LevelDB.get(BLOCK_KEY, hash)
     }
 
     private suspend fun processBlockImpl(hash: ByteArray, bytes: ByteArray): Status {

@@ -81,7 +81,7 @@ object Bootstrap {
         do {
             hash = index.next
             index = LedgerDB.getChainIndex(hash)!!
-            val bytes = BlockDB.getImpl(hash)!!
+            val bytes = BlockDB.get(hash)!!
             stream.writeInt(bytes.size)
             stream.write(bytes, 0, bytes.size)
         } while (!hash.contentEquals(checkpoint))
