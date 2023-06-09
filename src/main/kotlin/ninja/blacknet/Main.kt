@@ -71,6 +71,8 @@ object Main {
         logger.info("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}")
         logger.info("VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}")
 
+        //WINDOWS system user, admin rights, and whatever
+        //XXX root may be renamed
         if (!Runtime.windowsOS && System.getProperty("user.name") == "root")
             logger.warn("Running as root")
 

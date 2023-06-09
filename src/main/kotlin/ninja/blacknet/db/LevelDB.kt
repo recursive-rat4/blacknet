@@ -128,6 +128,7 @@ object LevelDB : KeyValueStore {
     }
 
     private fun Options.xMaxOpenFiles(): Options {
+        //MACOS is this still relevant for 64bits?
         return if (Runtime.macOS || !System.getProperty("os.arch").contains("64"))
             maxOpenFiles(64)
         else
