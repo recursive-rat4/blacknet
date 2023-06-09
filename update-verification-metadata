@@ -1,0 +1,76 @@
+#!/bin/bash
+#
+# Copyright (c) 2023 Pavel Vasin
+#
+# Licensed under the Jelurida Public License version 1.1
+# for the Blacknet Public Blockchain Platform (the "License");
+# you may not use this file except in compliance with the License.
+# See the LICENSE.txt file at the top-level directory of this distribution.
+#
+
+LOG_FILE="update-verification-metadata.log"
+METADATA_FILE="gradle/verification-metadata.xml"
+
+die() {
+    echo $1
+    exit 1
+}
+
+doit() {
+    echo -n "$2... "
+    echo "Executing $1" >> $LOG_FILE
+    $1 &>> $LOG_FILE && echo yes || $3 no
+}
+
+check() {
+    doit "$1" "$2" "die"
+}
+
+optional() {
+    doit "$1" "$2" "echo"
+}
+
+gradle_directory() {
+    test -d gradle
+}
+
+gradle_wrapper() {
+    test -x gradlew
+}
+
+remove_old() {
+    rm -- $METADATA_FILE
+}
+
+gradle_write() {
+    ./gradlew --write-verification-metadata sha256 downloadLicenses
+}
+
+add_exceptions() {
+    local HEAD_LINES=5
+    local FILE_LINES=$(wc --lines -- $METADATA_FILE | cut --delimiter=' ' --fields=1)
+    local TAIL_LINES=$((FILE_LINES - HEAD_LINES))
+    local HEAD=$(head --lines=$HEAD_LINES -- $METADATA_FILE)
+    local TAIL=$(tail --lines=$TAIL_LINES -- $METADATA_FILE)
+    echo "$HEAD"                                                            >  $METADATA_FILE
+    echo '      <trusted-artifacts>'                                        >> $METADATA_FILE
+    echo '         <trust file=".*-javadoc[.]jar" regex="true"/>'           >> $METADATA_FILE
+    echo '         <trust file=".*-sources[.]jar" regex="true"/>'           >> $METADATA_FILE
+    echo '         <trust file="gradle-[0-9.]+-src.zip" regex="true"/>'     >> $METADATA_FILE
+    echo '         <trust file="groovy-[a-z]*-?[0-9.]+.pom" regex="true"/>' >> $METADATA_FILE
+    echo '      </trusted-artifacts>'                                       >> $METADATA_FILE
+    echo "$TAIL"                                                            >> $METADATA_FILE
+}
+
+happy_git() {
+    git diff --check
+}
+
+truncate --size=0 -- $LOG_FILE
+
+check gradle_directory "Checking for Gradle directory"
+check gradle_wrapper "Checking for Gradle wrapper"
+optional remove_old "Removing existing verification metadata"
+check gradle_write "Downloading new verification metadata"
+check add_exceptions "Whitelisting source packages"
+check happy_git "Checking whether git is happy"
