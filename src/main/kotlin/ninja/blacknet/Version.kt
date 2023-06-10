@@ -22,9 +22,9 @@ object Version {
         jar.close()
 
         name = if (regtest)
-            "Blacknet-regtest"
+            "$AGENT_NAME-regtest"
         else
-            "Blacknet"
+            AGENT_NAME
 
         version = attributes.getValue("Implementation-Version")
 

@@ -9,22 +9,27 @@
 
 package ninja.blacknet.crypto
 
+import ninja.blacknet.MESSAGE_SIGN_NAME
 import ninja.blacknet.crypto.Blake2b.buildHash
 
 object Message {
-    private const val SIGN_MAGIC = "Blacknet Signed Message:\n"
+    private const val SIGN_MAGIC = "$MESSAGE_SIGN_NAME Signed Message:\n"
 
     fun sign(privateKey: ByteArray, message: String): ByteArray {
-        return Ed25519.sign(hash(message), privateKey)
+        return Ed25519.sign(hash(SIGN_MAGIC, message), privateKey)
     }
 
     fun verify(publicKey: ByteArray, signature: ByteArray, message: String): Boolean {
-        return Ed25519.verify(signature, hash(message), publicKey)
+        return verifyWithMagic(publicKey, signature, message, SIGN_MAGIC)
     }
 
-    private fun hash(message: String): ByteArray {
+    internal fun verifyWithMagic(publicKey: ByteArray, signature: ByteArray, message: String, magic: String): Boolean {
+        return Ed25519.verify(signature, hash(magic, message), publicKey)
+    }
+
+    private fun hash(magic: String, message: String): ByteArray {
         return buildHash {
-            encodeString(SIGN_MAGIC)
+            encodeString(magic)
             encodeString(message)
         }
     }

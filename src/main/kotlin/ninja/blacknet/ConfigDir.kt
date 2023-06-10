@@ -28,11 +28,11 @@ val configDir: File = run {
     } else if (custom != null) {
         File(custom)
     } else if (Runtime.macOS) {
-        File(System.getProperty("user.home"), "Library/Application Support/Blacknet")
+        File(System.getProperty("user.home"), "Library/Application Support/$XDG_SUBDIRECTORY")
     } else if (Runtime.windowsOS) {
-        File(System.getProperty("user.home"), "AppData\\Roaming\\Blacknet")
+        File(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
     } else {
-        XDGConfigDirectory()
+        XDGConfigDirectory(XDG_SUBDIRECTORY)
     }
     if (dir.mkdirs()) {
         val jar = Resources.jar(Main::class.java)

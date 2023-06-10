@@ -9,6 +9,7 @@
 
 package ninja.blacknet.crypto
 
+import ninja.blacknet.BECH32_HRP
 import ninja.blacknet.regtest
 import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
@@ -22,8 +23,8 @@ import ninja.blacknet.util.plus
  * SatoshiLabs Improvement Proposal 173 "Registered human-readable parts for BIP-0173"
  */
 object Address {
-    private val HRP_MAINNET = "blacknet".toByteArray(Charsets.US_ASCII)
-    private val HRP_REGTEST = "rblacknet".toByteArray(Charsets.US_ASCII)
+    private val HRP_MAINNET = BECH32_HRP.toByteArray(Charsets.US_ASCII)
+    private val HRP_REGTEST = "r$BECH32_HRP".toByteArray(Charsets.US_ASCII)
 
     val ACCOUNT: Byte? = null
     const val STAKER: Byte = 0

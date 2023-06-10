@@ -20,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
 import mu.KotlinLogging
+import ninja.blacknet.DEFAULT_P2P_PORT
 import ninja.blacknet.regtest
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
@@ -135,7 +136,7 @@ object PeerDB {
         else
             Resources.lines(PeerDB::class.java, "peers.txt", Charsets.UTF_8)
                     .map {
-                        Network.parse(it, Node.DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
+                        Network.parse(it, DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
                     }
     }
 
@@ -183,7 +184,7 @@ object PeerDB {
 
     fun getSeed(): List<Address> {
         val result = ArrayList<Address>(peers.size)
-        peers.forEach { (address, entry) -> address.port == Node.DEFAULT_P2P_PORT && entry.isReliable() }
+        peers.forEach { (address, entry) -> address.port == DEFAULT_P2P_PORT && entry.isReliable() }
         return result
     }
 

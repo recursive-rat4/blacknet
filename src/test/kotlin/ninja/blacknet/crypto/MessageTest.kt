@@ -22,7 +22,7 @@ class MessageTest {
     }
 
     @Test
-    fun sign() {
+    fun signAndVerify() {
         val message = "Blacknet test message 1"
         val signature = Message.sign(RegTest.privateKey1, message)
 
@@ -30,12 +30,13 @@ class MessageTest {
     }
 
     @Test
-    fun verify() {
+    fun testVectors() {
+        val magic = "Blacknet Signed Message:\n" // don't break test in forks
         val message = "Blacknet test message 2"
         val signature1 = SignatureSerializer.decode("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
         val signature2 = SignatureSerializer.EMPTY
 
-        assertTrue(Message.verify(RegTest.publicKey1, signature1, message))
-        assertFalse(Message.verify(RegTest.publicKey1, signature2, message))
+        assertTrue(Message.verifyWithMagic(RegTest.publicKey1, signature1, message, magic))
+        assertFalse(Message.verifyWithMagic(RegTest.publicKey1, signature2, message, magic))
     }
 }

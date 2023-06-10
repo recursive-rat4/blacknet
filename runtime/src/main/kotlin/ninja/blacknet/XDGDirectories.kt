@@ -13,9 +13,7 @@ import java.io.File
 
 // https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.8.html
 
-private const val subdirectory = "Blacknet"
-
-private fun XDGBaseDirectory(environmentVariable: String, defaultBase: String): File {
+private fun XDGBaseDirectory(subdirectory: String, environmentVariable: String, defaultBase: String): File {
     val baseDir = System.getenv(environmentVariable)?.let { File(it) }
     return if (baseDir != null && baseDir.isAbsolute) {
         File(baseDir, subdirectory)
@@ -24,8 +22,8 @@ private fun XDGBaseDirectory(environmentVariable: String, defaultBase: String): 
     }
 }
 
-public fun XDGConfigDirectory(): File = XDGBaseDirectory("XDG_CONFIG_HOME", ".config")
+public fun XDGConfigDirectory(subdirectory: String): File = XDGBaseDirectory(subdirectory, "XDG_CONFIG_HOME", ".config")
 
-public fun XDGDataDirectory(): File = XDGBaseDirectory("XDG_DATA_HOME", ".local/share")
+public fun XDGDataDirectory(subdirectory: String): File = XDGBaseDirectory(subdirectory, "XDG_DATA_HOME", ".local/share")
 
-public fun XDGStateDirectory(): File = XDGBaseDirectory("XDG_STATE_HOME", ".local/state")
+public fun XDGStateDirectory(subdirectory: String): File = XDGBaseDirectory(subdirectory, "XDG_STATE_HOME", ".local/state")

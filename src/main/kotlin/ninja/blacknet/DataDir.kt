@@ -20,11 +20,11 @@ val dataDir: File = run {
     var dir = if (custom != null) {
         File(custom)
     } else if (Runtime.macOS) {
-        File(System.getProperty("user.home"), "Library/Application Support/Blacknet")
+        File(System.getProperty("user.home"), "Library/Application Support/$XDG_SUBDIRECTORY")
     } else if (Runtime.windowsOS) {
-        File(System.getProperty("user.home"), "AppData\\Roaming\\Blacknet")
+        File(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
     } else {
-        val new = XDGDataDirectory()
+        val new = XDGDataDirectory(XDG_SUBDIRECTORY)
         val old = File(System.getProperty("user.home"), ".blacknet")
         if (old.exists()) {
             if (new.exists()) throw RuntimeException("Both $old and $new exist")

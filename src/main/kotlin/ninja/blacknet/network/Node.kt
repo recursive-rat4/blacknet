@@ -23,6 +23,7 @@ import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.regtest
 import ninja.blacknet.Config
+import ninja.blacknet.NETWORK_MAGIC
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.PoS
@@ -38,9 +39,7 @@ import ninja.blacknet.util.SynchronizedHashSet
 private val logger = KotlinLogging.logger {}
 
 object Node {
-    const val DEFAULT_P2P_PORT: Short = 28453
     const val NETWORK_TIMEOUT = 90 * 1000L
-    const val magic = 0x17895E7D
     const val version = 13
     const val minVersion = 12
     val nonce = Random.nextLong()
@@ -170,7 +169,7 @@ object Node {
     fun sendVersion(connection: Connection, nonce: Long, prober: Boolean) {
         connection.sendPacket(PacketType.Version, if (prober) {
             Version(
-                    magic,
+                    NETWORK_MAGIC,
                     version,
                     currentTimeSeconds(),
                     nonce,
@@ -181,7 +180,7 @@ object Node {
         } else {
             val state = LedgerDB.state()
             Version(
-                    magic,
+                    NETWORK_MAGIC,
                     version,
                     currentTimeSeconds(),
                     nonce,
