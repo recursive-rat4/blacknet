@@ -19,7 +19,7 @@ interface KeyValueStore {
     fun contains(key: ByteArray): Boolean
 
     /**
-     * @return the value associated with the given key or `null` if there is none
+     * @return the value associated with the given key or `null` if there is none.
      */
     fun get(key: ByteArray): ByteArray?
 }
