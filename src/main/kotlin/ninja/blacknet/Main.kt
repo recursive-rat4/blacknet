@@ -54,6 +54,13 @@ object Main {
             (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
         }
 
+        logger.info("Starting up ${Version.name} node ${Version.revision}")
+        logger.info("CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}")
+        logger.info("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}")
+        logger.info("VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}")
+        logger.info("Using config directory ${configDir.absolutePath}")
+        logger.info("Using data directory ${dataDir.absolutePath}")
+
         Security.addProvider(Blake2bProvider())
         Security.addProvider(BouncyCastleProvider())
 
@@ -65,11 +72,6 @@ object Main {
             exitProcess(1)
         }
 
-        logger.info("Starting up ${Version.name} node ${Version.revision}")
-        logger.info("CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}")
-        logger.info("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}")
-        logger.info("VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}")
-
         //WINDOWS system user, admin rights, and whatever
         //XXX root may be renamed
         if (!Runtime.windowsOS && System.getProperty("user.name") == "root")
@@ -80,9 +82,6 @@ object Main {
             DebugProbes.install()
             logger.warn("Node may work significally slower")
         }
-
-        logger.info("Using config directory ${configDir.absolutePath}")
-        logger.info("Using data directory ${dataDir.absolutePath}")
 
         LevelDB
         Salt
