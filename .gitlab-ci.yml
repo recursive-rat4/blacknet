@@ -29,6 +29,14 @@ stages:
 license_scanning:
   stage: license_scanning
   allow_failure: false
+  rules:
+    - changes:
+      - 3RD-PARTY-LICENSES.txt
+      - LICENSE.txt
+      - gradle/libs.versions.toml
+      - gradle/verification-metadata.xml
+      when: on_success
+    - when: never
   artifacts:
     reports:
       license_scanning: gl-license-scanning-report.json
