@@ -8,7 +8,7 @@
 # See the LICENSE.txt file at the top-level directory of this distribution.
 #
 
-image: eclipse-temurin:17.0.7_7-jdk@sha256:da794e3718439e4acb1798655a6341f42bc7f2d369c01da75f9d6ec4d6e8069a
+image: eclipse-temurin:17.0.7_7-jdk@sha256:b0faf02bf7acfc65be1c2d0a291140300bd129620f145bf1013a1da748295d0c
 
 include:
   - template: License-Scanning.gitlab-ci.yml
