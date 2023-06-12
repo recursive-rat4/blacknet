@@ -24,6 +24,7 @@ import mu.KotlinLogging
 import ninja.blacknet.core.Staker
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.db.*
+import ninja.blacknet.logging.error
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -52,6 +53,10 @@ object Main {
         ShutdownHooks.add {
             logger.info("Shutting down logger")
             (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
+        }
+
+        Thread.currentThread().setUncaughtExceptionHandler { _, e ->
+            logger.error(e)
         }
 
         logger.info("Starting up ${Version.name} node ${Version.revision}")
