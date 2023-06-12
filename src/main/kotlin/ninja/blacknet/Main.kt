@@ -67,8 +67,8 @@ object Main {
         try {
             Config.instance
         } catch(e: ExceptionInInitializerError) {
-            println("Error reading configuration file ${File(configDir, "blacknet.conf")}")
-            e.cause?.message?.let(::println)
+            logger.error("Error reading configuration file ${File(configDir, "blacknet.conf")}")
+            e.cause?.message?.let(logger::error)
             exitProcess(1)
         }
 
