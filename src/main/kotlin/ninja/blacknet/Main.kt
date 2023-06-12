@@ -49,14 +49,13 @@ object Main {
             LogManager.getLogManager().readConfiguration(fileInputStream)
             fileInputStream.close()
         }
-
-        Security.addProvider(Blake2bProvider())
-        Security.addProvider(BouncyCastleProvider())
-
         ShutdownHooks.add {
             logger.info("Shutting down logger")
             (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
         }
+
+        Security.addProvider(Blake2bProvider())
+        Security.addProvider(BouncyCastleProvider())
 
         try {
             Config.instance
