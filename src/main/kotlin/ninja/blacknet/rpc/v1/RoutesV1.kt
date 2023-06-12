@@ -123,7 +123,7 @@ fun Route.APIV1() {
         val hash = call.parameters["hash"]?.let { HashSerializer.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
         val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
 
-        val result = BlockDB.getWithSize(hash)
+        val result = BlockDB.blocks.getWithSize(hash)
         if (result != null)
             call.respond(Json.stringify(BlockInfoV2.serializer(), BlockInfoV2(result.first, hash, result.second, txdetail)))
         else

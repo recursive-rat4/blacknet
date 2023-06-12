@@ -31,6 +31,8 @@ object BlockDB {
     @Volatile
     internal var cachedBlock: Pair<ByteArray, ByteArray>? = null
 
+    val blocks = DBView(LevelDB, BLOCK_KEY, Block.serializer(), binaryFormat)
+
     private val rejects = Collections.newSetFromMap(object : LinkedHashMap<ByteArray, Boolean>() {
         override fun put(key: ByteArray, value: Boolean): Boolean? {
             if (size > PoS.ROLLBACK_LIMIT)
@@ -41,16 +43,6 @@ object BlockDB {
 
     internal fun isRejectedImpl(hash: ByteArray): Boolean {
         return rejects.contains(hash)
-    }
-
-    fun getWithSize(hash: ByteArray): Pair<Block, Int>? {
-        val bytes = get(hash) ?: return null
-        val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
-        return Pair(block, bytes.size)
-    }
-
-    fun get(hash: ByteArray): ByteArray? {
-        return LevelDB.get(BLOCK_KEY, hash)
     }
 
     internal fun removeImpl(list: List<ByteArray>) {

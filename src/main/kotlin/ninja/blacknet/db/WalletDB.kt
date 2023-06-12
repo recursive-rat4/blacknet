@@ -195,7 +195,7 @@ object WalletDB {
     suspend fun disconnectBlock(blockHash: ByteArray, batch: LevelDB.WriteBatch) = mutex.withLock {
         if (wallets.isEmpty()) return@withLock
 
-        val (block, _) = BlockDB.getWithSize(blockHash)!!
+        val block = BlockDB.blocks.get(blockHash)!!
         val txHashes = block.transactions.map { Transaction.hash(it) }
 
         val updated = HashMap<ByteArray, Wallet>(wallets.size)
@@ -539,7 +539,7 @@ object WalletDB {
 
     private suspend fun rescanBlockImpl(publicKey: ByteArray, wallet: Wallet, hash: ByteArray, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
         if (height != 0) {
-            val block = BlockDB.getWithSize(hash)!!.first
+            val block = BlockDB.blocks.get(hash)!!
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
                 val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)

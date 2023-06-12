@@ -52,7 +52,7 @@ class Block(
     val txdetail: Boolean = false
 ) : Request {
     override suspend fun handle(): TextContent {
-        val (block, size) = BlockDB.getWithSize(hash) ?: return respondError("Block not found")
+        val (block, size) = BlockDB.blocks.getWithSize(hash) ?: return respondError("Block not found")
         return respondJson(BlockInfo.serializer(), BlockInfo(block, hash, size, txdetail))
     }
 }
