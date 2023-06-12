@@ -13,7 +13,7 @@
 
 ## Setup the environment
 
-Install the Java JDK (not only JRE) version 8th number or greater.
+Install the Java JDK (not only JRE) version 11th number or greater.
 
 - Debian & Ubuntu: `sudo apt-get install default-jdk git`
 - Red Hat & Oracle: `sudo yum install java-11-openjdk git`
