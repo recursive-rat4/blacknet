@@ -33,7 +33,7 @@ class GetBlocks(
             }
         }
 
-        var chainIndex = LedgerDB.getChainIndex(best)
+        var chainIndex = LedgerDB.chainIndexes.get(best)
 
         if (chainIndex == null) {
             val nextBlockHashes = LedgerDB.getNextBlockHashes(checkpoint, Blocks.MAX_HASHES)
@@ -64,7 +64,7 @@ class GetBlocks(
             if (bytes == null)
                 break
             response.add(bytes)
-            chainIndex = LedgerDB.getChainIndex(hash)
+            chainIndex = LedgerDB.chainIndexes.get(hash)
         }
 
         connection.sendPacket(PacketType.Blocks, Blocks(emptyList(), response))

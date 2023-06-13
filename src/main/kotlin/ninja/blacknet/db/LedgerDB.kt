@@ -46,6 +46,8 @@ object LedgerDB {
     private val STATE_KEY = DBKey(9, 0)
     private val VERSION_KEY = DBKey(10, 0)
 
+    val chainIndexes = DBView(LevelDB, CHAIN_KEY, ChainIndex.serializer(), binaryFormat)
+
     @Serializable
     internal class State(
             val height: Int,
@@ -156,10 +158,10 @@ object LedgerDB {
 
                 runBlocking {
                     val blockHashes = ArrayList<ByteArray>(500000)
-                    var index = getChainIndex(Genesis.BLOCK_HASH)!!
+                    var index = chainIndexes.get(Genesis.BLOCK_HASH)!!
                     while (!index.next.contentEquals(HashSerializer.ZERO)) {
                         blockHashes.add(index.next)
-                        index = getChainIndex(index.next)!!
+                        index = chainIndexes.get(index.next)!!
                     }
                     logger.info("Found ${blockHashes.size} blocks")
 
@@ -205,10 +207,6 @@ object LedgerDB {
             state.forkV2 == (PoS.UPGRADE_THRESHOLD + 1).toShort()
     }
 
-    fun chainContains(hash: ByteArray): Boolean {
-        return LevelDB.contains(CHAIN_KEY, hash)
-    }
-
     fun scheduleSnapshotImpl(height: Int): Boolean {
         if (height <= state.height)
             return false
@@ -229,15 +227,15 @@ object LedgerDB {
     internal fun getNextRollingCheckpoint(): ByteArray {
         val state = state
         if (!state.rollingCheckpoint.contentEquals(Genesis.BLOCK_HASH)) {
-            val chainIndex = getChainIndex(state.rollingCheckpoint)!!
+            val chainIndex = chainIndexes.get(state.rollingCheckpoint)!!
             return chainIndex.next
         } else {
             if (state.height < PoS.ROLLBACK_LIMIT + 1)
                 return Genesis.BLOCK_HASH
             val checkpoint = state.height - PoS.ROLLBACK_LIMIT
-            var chainIndex = getChainIndex(state.blockHash)!!
+            var chainIndex = chainIndexes.get(state.blockHash)!!
             while (chainIndex.height != checkpoint + 1)
-                chainIndex = getChainIndex(chainIndex.previous)!!
+                chainIndex = chainIndexes.get(chainIndex.previous)!!
             return chainIndex.previous
         }
     }
@@ -256,18 +254,12 @@ object LedgerDB {
         return binaryFormat.decodeFromByteArray(UndoBlock.serializer(), LevelDB.get(UNDO_KEY, hash)!!)
     }
 
-    fun getChainIndex(hash: ByteArray): ChainIndex? {
-        return LevelDB.get(CHAIN_KEY, hash)?.let { bytes ->
-            binaryFormat.decodeFromByteArray(ChainIndex.serializer(), bytes)
-        }
-    }
-
     fun checkReferenceChain(hash: ByteArray): Boolean {
-        return hash.contentEquals(Genesis.BLOCK_HASH) || chainContains(hash)
+        return hash.contentEquals(Genesis.BLOCK_HASH) || chainIndexes.contains(hash)
     }
 
     suspend fun getNextBlockHashes(start: ByteArray, max: Int): List<ByteArray>? = BlockDB.mutex.withLock {
-        var chainIndex = getChainIndex(start) ?: return@withLock null
+        var chainIndex = chainIndexes.get(start) ?: return@withLock null
         val result = ArrayList<ByteArray>(max)
         while (true) {
             val hash = chainIndex.next
@@ -276,7 +268,7 @@ object LedgerDB {
             result.add(hash)
             if (result.size == max)
                 break
-            chainIndex = getChainIndex(chainIndex.next)!!
+            chainIndex = chainIndexes.get(chainIndex.next)!!
         }
         return result
     }
@@ -347,7 +339,7 @@ object LedgerDB {
         val mint = PoS.mint(state.supply)
         val generated = mint + fees
 
-        val prevIndex = getChainIndex(block.previous)!!
+        val prevIndex = chainIndexes.get(block.previous)!!
         prevIndex.next = hash
         prevIndex.nextSize = size
         txDb.prevIndex = prevIndex
@@ -366,7 +358,7 @@ object LedgerDB {
         val state = state
         val batch = LevelDB.createWriteBatch()
         val hash = state.blockHash
-        val chainIndex = getChainIndex(hash)!!
+        val chainIndex = chainIndexes.get(hash)!!
         val undo = getUndo(hash)
 
         blockSizes.removeLast()
@@ -391,7 +383,7 @@ object LedgerDB {
         this.state = newState
         batch.put(STATE_KEY, binaryFormat.encodeToByteArray(State.serializer(), newState))
 
-        val prevIndex = getChainIndex(chainIndex.previous)!!
+        val prevIndex = chainIndexes.get(chainIndex.previous)!!
         prevIndex.next = HashSerializer.ZERO
         prevIndex.nextSize = 0
         batch.put(CHAIN_KEY, chainIndex.previous, binaryFormat.encodeToByteArray(ChainIndex.serializer(), prevIndex))
@@ -463,7 +455,7 @@ object LedgerDB {
     }
 
     private fun pruneImpl(batch: LevelDB.WriteBatch) {
-        var chainIndex = getChainIndex(state.rollingCheckpoint)!!
+        var chainIndex = chainIndexes.get(state.rollingCheckpoint)!!
         while (true) {
             val hash = chainIndex.previous
             if (!LevelDB.contains(UNDO_KEY, hash))
@@ -471,7 +463,7 @@ object LedgerDB {
             batch.delete(UNDO_KEY, hash)
             if (hash.contentEquals(HashSerializer.ZERO))
                 break
-            chainIndex = getChainIndex(hash)!!
+            chainIndex = chainIndexes.get(hash)!!
         }
     }
 

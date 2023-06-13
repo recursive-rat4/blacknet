@@ -507,7 +507,7 @@ object WalletDB {
             BlockDB.mutex.withLock {
                 mutex.withLock {
                     var hash = Genesis.BLOCK_HASH
-                    var index = LedgerDB.getChainIndex(hash)!!
+                    var index = LedgerDB.chainIndexes.get(hash)!!
                     val height = LedgerDB.state().height
                     val n = height - index.height + 1
                     if (n > 0) {
@@ -515,7 +515,7 @@ object WalletDB {
                         do {
                             rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
                             hash = index.next
-                            index = LedgerDB.getChainIndex(hash)!!
+                            index = LedgerDB.chainIndexes.get(hash)!!
                         } while (index.height != height)
                         logger.info("Finished rescan")
                     }

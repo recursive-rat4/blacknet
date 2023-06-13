@@ -78,20 +78,20 @@ class BlockHash(
         var index: ChainIndex
         if (height < state.height / 2) {
             hash = Genesis.BLOCK_HASH
-            index = LedgerDB.getChainIndex(hash)!!
+            index = LedgerDB.chainIndexes.get(hash)!!
         } else {
             hash = state.blockHash
-            index = LedgerDB.getChainIndex(hash)!!
+            index = LedgerDB.chainIndexes.get(hash)!!
         }
         if (lastIndex != null && abs(height - index.height) > abs(height - lastIndex.second.height))
             index = lastIndex.second
         while (index.height > height) {
             hash = index.previous
-            index = LedgerDB.getChainIndex(hash)!!
+            index = LedgerDB.chainIndexes.get(hash)!!
         }
         while (index.height < height) {
             hash = index.next
-            index = LedgerDB.getChainIndex(hash)!!
+            index = LedgerDB.chainIndexes.get(hash)!!
         }
         if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
             RPCServer.lastIndex = Pair(hash, index)
@@ -106,7 +106,7 @@ class BlockIndex(
     val hash: ByteArray
 ) : Request {
     override suspend fun handle(): TextContent {
-        val index = LedgerDB.getChainIndex(hash)
+        val index = LedgerDB.chainIndexes.get(hash)
         return if (index != null)
             respondJson(ChainIndex.serializer(), index)
         else

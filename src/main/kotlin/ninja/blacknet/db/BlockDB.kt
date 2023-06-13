@@ -54,7 +54,7 @@ object BlockDB {
     }
 
     private fun containsImpl(hash: ByteArray): Boolean {
-        return LedgerDB.chainContains(hash)
+        return LedgerDB.chainIndexes.contains(hash)
     }
 
     private suspend fun processBlockImpl(hash: ByteArray, bytes: ByteArray): Status {

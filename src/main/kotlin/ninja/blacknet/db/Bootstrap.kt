@@ -77,10 +77,10 @@ object Bootstrap {
         val stream = file.outputStream().buffered().data()
 
         var hash = Genesis.BLOCK_HASH
-        var index = LedgerDB.getChainIndex(hash)!!
+        var index = LedgerDB.chainIndexes.get(hash)!!
         do {
             hash = index.next
-            index = LedgerDB.getChainIndex(hash)!!
+            index = LedgerDB.chainIndexes.get(hash)!!
             val bytes = BlockDB.blocks.getBytes(hash)!!
             stream.writeInt(bytes.size)
             stream.write(bytes, 0, bytes.size)

@@ -166,7 +166,7 @@ object ChainFetcher {
                                 connection.dos("Rejected chain")
                                 break@requestLoop
                             }
-                            val chainIndex = LedgerDB.getChainIndex(hash)
+                            val chainIndex = LedgerDB.chainIndexes.get(hash)
                             if (chainIndex == null)
                                 break
                             if (chainIndex.height < state.height - PoS.ROLLBACK_LIMIT) {

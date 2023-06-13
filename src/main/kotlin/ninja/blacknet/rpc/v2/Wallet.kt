@@ -302,7 +302,7 @@ class ListSinceBlock(
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
         BlockDB.mutex.withLock {
-            val height = LedgerDB.getChainIndex(hash)?.height ?: return respondError("Block not found")
+            val height = LedgerDB.chainIndexes.get(hash)?.height ?: return respondError("Block not found")
             val state = LedgerDB.state()
             if (height >= state.height - PoS.ROLLBACK_LIMIT)
                 return respondError("Block not finalized")

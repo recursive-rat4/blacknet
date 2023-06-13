@@ -52,7 +52,7 @@ class PeerInfoV1(
                 return if (cached != null) {
                     ChainInfo(chain, cached)
                 } else {
-                    val fork = !LedgerDB.chainContains(chain.chain)
+                    val fork = !LedgerDB.chainIndexes.contains(chain.chain)
                     forkCache.put(chain.chain, fork)
                     ChainInfo(chain, fork)
                 }

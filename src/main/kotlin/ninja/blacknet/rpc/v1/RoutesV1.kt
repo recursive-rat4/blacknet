@@ -149,20 +149,20 @@ fun Route.APIV1() {
             var index: ChainIndex
             if (height < state.height / 2) {
                 hash = Genesis.BLOCK_HASH
-                index = LedgerDB.getChainIndex(hash)!!
+                index = LedgerDB.chainIndexes.get(hash)!!
             } else {
                 hash = state.blockHash
-                index = LedgerDB.getChainIndex(hash)!!
+                index = LedgerDB.chainIndexes.get(hash)!!
             }
             if (RPCServer.lastIndex != null && abs(height - index.height) > abs(height - RPCServer.lastIndex!!.second.height))
                 index = RPCServer.lastIndex!!.second
             while (index.height > height) {
                 hash = index.previous
-                index = LedgerDB.getChainIndex(hash)!!
+                index = LedgerDB.chainIndexes.get(hash)!!
             }
             while (index.height < height) {
                 hash = index.next
-                index = LedgerDB.getChainIndex(hash)!!
+                index = LedgerDB.chainIndexes.get(hash)!!
             }
             if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
                 RPCServer.lastIndex = Pair(hash, index)
@@ -173,7 +173,7 @@ fun Route.APIV1() {
     get("/api/v1/blockdb/getblockindex/{hash}/") {
         val hash = call.parameters["hash"]?.let { HashSerializer.decode(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
 
-        val result = LedgerDB.getChainIndex(hash)
+        val result = LedgerDB.chainIndexes.get(hash)
         if (result != null)
             call.respond(Json.stringify(ChainIndex.serializer(), result))
         else

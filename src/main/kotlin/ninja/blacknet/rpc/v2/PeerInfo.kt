@@ -56,7 +56,7 @@ class PeerInfo(
 
         companion object {
             fun get(chain: ChainAnnounce, forkCache: HashMap<ByteArray, Boolean>): ChainInfo {
-                val fork = forkCache.computeIfAbsent(chain.chain) { !LedgerDB.chainContains(it) }
+                val fork = forkCache.computeIfAbsent(chain.chain) { !LedgerDB.chainIndexes.contains(it) }
                 return ChainInfo(chain, fork)
             }
         }
