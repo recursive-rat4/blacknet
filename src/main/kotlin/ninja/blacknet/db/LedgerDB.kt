@@ -47,6 +47,7 @@ object LedgerDB {
     private val VERSION_KEY = DBKey(10, 0)
 
     val chainIndexes = DBView(LevelDB, CHAIN_KEY, ChainIndex.serializer(), binaryFormat)
+    private val undos = DBView(LevelDB, UNDO_KEY, UndoBlock.serializer(), binaryFormat)
 
     @Serializable
     internal class State(
@@ -250,10 +251,6 @@ object LedgerDB {
         }
     }
 
-    private fun getUndo(hash: ByteArray): UndoBlock {
-        return binaryFormat.decodeFromByteArray(UndoBlock.serializer(), LevelDB.get(UNDO_KEY, hash)!!)
-    }
-
     fun checkReferenceChain(hash: ByteArray): Boolean {
         return hash.contentEquals(Genesis.BLOCK_HASH) || chainIndexes.contains(hash)
     }
@@ -359,7 +356,7 @@ object LedgerDB {
         val batch = LevelDB.createWriteBatch()
         val hash = state.blockHash
         val chainIndex = chainIndexes.get(hash)!!
-        val undo = getUndo(hash)
+        val undo = undos.get(hash)!!
 
         blockSizes.removeLast()
         blockSizes.addFirst(undo.blockSize)
