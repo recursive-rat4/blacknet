@@ -12,7 +12,6 @@ package ninja.blacknet.logging
 import ninja.blacknet.dataDir
 import java.io.File
 import java.util.logging.FileHandler
-import java.util.logging.SimpleFormatter
 
 class FileHandler : FileHandler(
         File(dataDir, "debug.log").getPath(),
@@ -20,7 +19,4 @@ class FileHandler : FileHandler(
         2,
         true
 ) {
-    init {
-        setFormatter(SimpleFormatter())
-    }
 }
