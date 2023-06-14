@@ -55,7 +55,8 @@ object Main {
             (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
         }
 
-        Thread.currentThread().setUncaughtExceptionHandler { _, e ->
+        // exceptions from coroutines should end up here too
+        Thread.setDefaultUncaughtExceptionHandler { _, e ->
             logger.error(e)
         }
 
