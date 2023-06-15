@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    application
 }
 
 repositories {
@@ -22,6 +23,10 @@ dependencies {
     implementation(project(":blacknet-runtime"))
     implementation(libs.kotlin.coroutines)
     implementation(libs.blake2b)
+}
+
+application {
+    mainClass.set("ninja.blacknet.B2Sum")
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {
