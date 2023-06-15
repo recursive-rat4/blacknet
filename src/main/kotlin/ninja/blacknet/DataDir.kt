@@ -12,7 +12,6 @@ package ninja.blacknet
 
 import java.io.File
 
-//TODO use XDGStateDirectory
 //FIXME permission 0700
 
 val dataDir: File = run {

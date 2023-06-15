@@ -66,6 +66,7 @@ object Main {
         logger.info("VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}")
         logger.info("Using config directory ${configDir.absolutePath}")
         logger.info("Using data directory ${dataDir.absolutePath}")
+        logger.info("Using state directory ${stateDir.absolutePath}")
 
         Security.addProvider(Blake2bProvider())
         Security.addProvider(BouncyCastleProvider())

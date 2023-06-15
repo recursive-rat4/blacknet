@@ -18,7 +18,7 @@ import kotlinx.coroutines.debug.DebugProbes
 import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Version
-import ninja.blacknet.dataDir
+import ninja.blacknet.stateDir
 import ninja.blacknet.time.currentTimeSeconds
 import java.io.File
 import java.io.PrintStream
@@ -28,7 +28,7 @@ private val logger = KotlinLogging.logger {}
 fun Route.debug() {
     get("/api/dumpcoroutines") {
         if (Config.instance.debugcoroutines) {
-            val file = File(dataDir, "coroutines_${currentTimeSeconds()}.log")
+            val file = File(stateDir, "coroutines_${currentTimeSeconds()}.log")
             val stream = PrintStream(file)
             stream.println("${Version.name} ${Version.revision}")
             DebugProbes.dumpCoroutines(stream)
