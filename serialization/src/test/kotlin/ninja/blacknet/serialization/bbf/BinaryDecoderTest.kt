@@ -34,7 +34,13 @@ class BinaryDecoderTest {
         val int: Int,
         val long: Long,
         val unit: Unit,
-        val string: String
+        val string: String,
+        val inline: InlineClass,
+    )
+
+    @Serializable
+    inline class InlineClass(
+        val int: Int,
     )
 
     @Test
@@ -47,7 +53,8 @@ class BinaryDecoderTest {
                 0x0201FFFE,
                 0x04030201FFFEFDFC,
                 Unit,
-                "八"
+                "八",
+                InlineClass(0x0201FFFE),
             ),
             BinaryFormat().decodeFromByteArray(
                 Structure.serializer(), byteArrayOfInts(
@@ -57,7 +64,8 @@ class BinaryDecoderTest {
                     2, 1, -1, -2,
                     4, 3, 2, 1, -1, -2, -3, -4,
                     // Unit //
-                    0x83, 0xE5, 0x85, 0xAB
+                    0x83, 0xE5, 0x85, 0xAB,
+                    2, 1, -1, -2,
                 )
             )
         )
