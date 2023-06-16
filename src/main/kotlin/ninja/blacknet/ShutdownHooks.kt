@@ -10,20 +10,17 @@
 package ninja.blacknet
 
 import java.lang.Runtime
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import ninja.blacknet.logging.error
-import ninja.blacknet.util.SynchronizedArrayList
 
 private val logger = KotlinLogging.logger {}
 
 object ShutdownHooks {
     @Suppress("JoinDeclarationAndAssignment")
-    private val shutdownHooks: SynchronizedArrayList<() -> Unit>
+    private val shutdownHooks: ArrayList<() -> Unit>
 
     init {
-        shutdownHooks = SynchronizedArrayList()
+        shutdownHooks = ArrayList()
         Runtime.getRuntime().addShutdownHook(Executor())
     }
 
@@ -33,17 +30,15 @@ object ShutdownHooks {
      * All registered shutdown hooks will be run sequentially in the reversed order.
      */
     fun add(hook: () -> Unit) {
-        runBlocking {
-            shutdownHooks.mutex.withLock {
-                shutdownHooks.list.add(hook)
-            }
+        synchronized(shutdownHooks) {
+            shutdownHooks.add(hook)
         }
     }
 
     private class Executor() : Thread() {
         override fun run() {
             logger.info("Shutdown is in progress...")
-            runBlocking {
+            synchronized(shutdownHooks) {
                 shutdownHooks.reversedForEach { hook ->
                     try {
                         hook()
@@ -54,4 +49,9 @@ object ShutdownHooks {
             }
         }
     }
+}
+
+private inline fun <T> ArrayList<T>.reversedForEach(action: (T) -> Unit) {
+    for (i in size - 1 downTo 0)
+        action(get(i))
 }
