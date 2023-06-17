@@ -9,6 +9,8 @@
 
 package ninja.blacknet.network
 
+import java.util.Arrays
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
 import ninja.blacknet.Runtime
@@ -17,14 +19,13 @@ import ninja.blacknet.network.packet.GetTransactions
 import ninja.blacknet.network.packet.PacketType
 import ninja.blacknet.network.packet.Transactions
 import ninja.blacknet.time.currentTimeMillis
-import ninja.blacknet.util.SynchronizedHashMap
 
 /**
  * 交易獲取器
  */
 object TxFetcher {
     private val inventoryChannel: Channel<Pair<Connection, List<ByteArray>>> = Channel(Channel.UNLIMITED)
-    private val requested = SynchronizedHashMap<ByteArray, Long>()
+    private val requested = ConcurrentHashMap<Hash, Long>()
 
     init {
         Runtime.rotate(::implementation)
@@ -35,8 +36,8 @@ object TxFetcher {
         inventoryChannel.trySend(Pair(connection, list))
     }
 
-    suspend fun fetched(hash: ByteArray): Boolean {
-        return requested.remove(hash) != null
+    fun fetched(hash: ByteArray): Boolean {
+        return requested.remove(Hash(hash)) != null
     }
 
     private suspend fun implementation() {
@@ -46,12 +47,12 @@ object TxFetcher {
         val currTime = currentTimeMillis()
 
         for (hash in inventory) {
-            if (requested.containsKey(hash)) {
+            if (requested.containsKey(Hash(hash))) {
                 continue
             }
 
             if (TxPool.isInteresting(hash)) {
-                requested.put(hash, currTime)
+                requested.put(Hash(hash), currTime)
                 request.add(hash)
             }
 
@@ -77,7 +78,23 @@ object TxFetcher {
         delay(Node.NETWORK_TIMEOUT)
 
         val currTime = currentTimeMillis()
-        val timeouted = requested.filterToKeyList { _, time -> currTime > time + Node.NETWORK_TIMEOUT }
-        requested.removeAll(timeouted)
+        requested.asSequence()
+            .filter { (_, time) -> currTime > time + Node.NETWORK_TIMEOUT }
+            .map { (hash, _) -> hash }
+            .forEach { hash -> requested.remove(hash) }
+    }
+}
+
+private class Hash(private val bytes: ByteArray) : Comparable<Hash> {
+    override fun equals(other: Any?): Boolean {
+        return (other is Hash) && bytes.contentEquals(other.bytes)
+    }
+
+    override fun hashCode(): Int {
+        return bytes.contentHashCode()
+    }
+
+    override fun compareTo(other: Hash): Int {
+        return Arrays.compare(bytes, other.bytes)
     }
 }
