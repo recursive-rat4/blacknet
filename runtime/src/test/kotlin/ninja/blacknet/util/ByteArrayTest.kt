@@ -9,8 +9,10 @@
 
 package ninja.blacknet.util
 
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 
 class ByteArrayTest {
     @Test
@@ -22,6 +24,14 @@ class ByteArrayTest {
     fun ints() {
         assertEquals(byteArrayOfInts(), ByteArray(0))
         assertEquals(byteArrayOfInts(1, 2, 3, 4), ByteArray(4) { (it + 1).toByte() } )
+        assertFails {
+            byteArrayOfInts(
+                Random.nextLong(
+                    UByte.MAX_VALUE.toLong() + 1,
+                    Int.MAX_VALUE.toLong() + 1
+                ).toInt()
+            )
+        }
     }
 
     @Test

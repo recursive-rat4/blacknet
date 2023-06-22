@@ -26,7 +26,13 @@ public fun emptyByteArray(): ByteArray {
  * Returns a [ByteArray] containing the specified bytes represented as [Int]s.
  */
 public fun byteArrayOfInts(vararg ints: Int): ByteArray {
-    return ByteArray(ints.size) { index -> ints[index].toByte() }
+    return ByteArray(ints.size) { index ->
+        ints[index].let { int ->
+            require(int <= UByte.MAX_VALUE.toInt()) { "$int is out of byte range" }
+            //TODO negative values
+            int.toByte()
+        }
+    }
 }
 
 /**
