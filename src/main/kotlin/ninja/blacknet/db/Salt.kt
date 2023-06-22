@@ -9,7 +9,7 @@
 
 package ninja.blacknet.db
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PublicKeySerializer

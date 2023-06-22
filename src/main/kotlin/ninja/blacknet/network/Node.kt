@@ -9,6 +9,7 @@
 
 package ninja.blacknet.network
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -20,7 +21,6 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
-import mu.KotlinLogging
 import ninja.blacknet.regtest
 import ninja.blacknet.Config
 import ninja.blacknet.NETWORK_MAGIC

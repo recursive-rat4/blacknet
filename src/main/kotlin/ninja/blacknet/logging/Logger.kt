@@ -9,8 +9,8 @@
 
 package ninja.blacknet.logging
 
+import io.github.oshai.kotlinlogging.KLogger
 import kotlin.Throwable
-import mu.KLogger
 
 fun KLogger.debug(throwable: Throwable) = debug(throwable) {
     throwable.debugMessage()

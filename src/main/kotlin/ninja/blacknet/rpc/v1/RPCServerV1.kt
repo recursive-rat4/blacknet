@@ -9,11 +9,11 @@
 
 package ninja.blacknet.rpc.v1
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.cio.websocket.Frame
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
-import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction

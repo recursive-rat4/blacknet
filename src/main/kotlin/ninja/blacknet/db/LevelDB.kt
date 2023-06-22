@@ -9,7 +9,7 @@
 
 package ninja.blacknet.db
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks

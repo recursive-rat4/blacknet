@@ -10,6 +10,7 @@
 
 package ninja.blacknet.db
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.exp
 import kotlin.math.max
@@ -19,7 +20,6 @@ import kotlin.random.Random
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
-import mu.KotlinLogging
 import ninja.blacknet.DEFAULT_P2P_PORT
 import ninja.blacknet.regtest
 import ninja.blacknet.Runtime

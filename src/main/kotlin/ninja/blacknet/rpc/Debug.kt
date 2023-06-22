@@ -9,13 +9,13 @@
 
 package ninja.blacknet.rpc
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
 import kotlinx.coroutines.debug.DebugProbes
-import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Version
 import ninja.blacknet.stateDir

@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigInteger
 import java.util.ArrayDeque //TODO check kotlin.collections.ArrayDeque
 import kotlin.math.max
@@ -17,7 +18,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import mu.KotlinLogging
 import ninja.blacknet.regtest
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer

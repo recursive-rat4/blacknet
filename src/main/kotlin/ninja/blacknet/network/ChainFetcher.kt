@@ -10,12 +10,12 @@
 
 package ninja.blacknet.network
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigInteger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.sync.withLock
-import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.HashSerializer

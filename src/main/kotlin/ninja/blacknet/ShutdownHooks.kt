@@ -9,8 +9,8 @@
 
 package ninja.blacknet
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.Runtime
-import mu.KotlinLogging
 import ninja.blacknet.logging.error
 
 private val logger = KotlinLogging.logger {}

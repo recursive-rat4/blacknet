@@ -56,7 +56,7 @@ dependencies {
     implementation(libs.bouncycastle)
     implementation(libs.leveldb.java)
     implementation(libs.slf4j)
-    implementation(libs.microutils.logging)
+    implementation(libs.kotlin.logging)
     implementation(libs.guava)
     implementation(libs.weupnp)
     implementation(files("buildSrc/libs/leveldbjni-all-1.18.3.jar"))

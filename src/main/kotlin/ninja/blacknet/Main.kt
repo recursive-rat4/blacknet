@@ -11,6 +11,7 @@
 package ninja.blacknet
 
 import com.rfksystems.blake2b.security.Blake2bProvider
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
@@ -20,7 +21,6 @@ import java.security.Security
 import java.util.logging.LogManager
 import kotlin.system.exitProcess
 import kotlinx.coroutines.debug.DebugProbes
-import mu.KotlinLogging
 import ninja.blacknet.core.Staker
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.db.*

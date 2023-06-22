@@ -9,6 +9,7 @@
 
 package ninja.blacknet.db
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -20,7 +21,6 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
-import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer

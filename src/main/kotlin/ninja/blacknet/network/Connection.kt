@@ -9,6 +9,7 @@
 
 package ninja.blacknet.network
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.network.sockets.ASocket
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.ByteReadPacket
@@ -23,7 +24,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
-import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.db.PeerDB

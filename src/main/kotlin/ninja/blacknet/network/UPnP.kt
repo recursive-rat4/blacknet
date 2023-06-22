@@ -9,8 +9,8 @@
 
 package ninja.blacknet.network
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.Version

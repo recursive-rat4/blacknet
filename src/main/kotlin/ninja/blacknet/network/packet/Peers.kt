@@ -9,8 +9,8 @@
 
 package ninja.blacknet.network.packet
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.Serializable
-import mu.KotlinLogging
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.Connection

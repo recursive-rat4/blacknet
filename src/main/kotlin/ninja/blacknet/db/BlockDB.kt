@@ -9,10 +9,10 @@
 
 package ninja.blacknet.db
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.util.Collections
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import mu.KotlinLogging
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS

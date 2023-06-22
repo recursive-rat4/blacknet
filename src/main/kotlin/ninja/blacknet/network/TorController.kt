@@ -9,6 +9,7 @@
 
 package ninja.blacknet.network
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.network.sockets.ASocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -23,7 +24,6 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.dataDir

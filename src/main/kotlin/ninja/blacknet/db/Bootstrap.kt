@@ -9,8 +9,8 @@
 
 package ninja.blacknet.db
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.AlreadyHave
 import ninja.blacknet.core.Block

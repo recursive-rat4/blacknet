@@ -10,6 +10,7 @@
 
 package ninja.blacknet.rpc
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -25,7 +26,6 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import mu.KotlinLogging
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
 import ninja.blacknet.core.Block

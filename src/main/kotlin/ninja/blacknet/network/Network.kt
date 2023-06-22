@@ -10,13 +10,13 @@
 package ninja.blacknet.network
 
 import com.google.common.net.InetAddresses
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
-import mu.KotlinLogging
 import ninja.blacknet.Config
 import ninja.blacknet.codec.base.Base32
 import ninja.blacknet.logging.error

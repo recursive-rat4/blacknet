@@ -10,12 +10,12 @@
 
 package ninja.blacknet.core
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
-import mu.KotlinLogging
 import ninja.blacknet.regtest
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
