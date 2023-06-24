@@ -71,13 +71,7 @@ object Main {
         Security.addProvider(Blake2bProvider())
         Security.addProvider(BouncyCastleProvider())
 
-        try {
-            Config.instance
-        } catch(e: ExceptionInInitializerError) {
-            logger.error("Error reading configuration file ${File(configDir, "blacknet.conf")}")
-            e.cause?.message?.let(logger::error)
-            exitProcess(1)
-        }
+        Config.instance
 
         //WINDOWS system user, admin rights, and whatever
         //XXX root may be renamed
