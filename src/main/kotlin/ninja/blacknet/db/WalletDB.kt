@@ -150,7 +150,7 @@ object WalletDB {
     }
 
     suspend fun getConfirmations(hash: ByteArray): Int? = BlockDB.mutex.withLock {
-        mutex.withLock {
+        mutex.withLock<Int?> {
             wallets.forEach { (_, wallet) ->
                 val data = wallet.transactions.get(hash)
                 if (data != null) {
