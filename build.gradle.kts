@@ -43,8 +43,9 @@ dependencies {
     implementation(project(":blacknet-serialization"))
     implementation(project(":blacknet-time"))
     implementation(libs.kotlin.stdlib)
-    implementation(libs.ktor.network)
     implementation(libs.ktor.cio)
+    implementation(libs.ktor.io)
+    implementation(libs.ktor.network)
     implementation(libs.ktor.websockets)
     implementation(libs.kotlin.coroutines)
     implementation(libs.kotlin.coroutines.debug)
@@ -91,6 +92,7 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.add("-Xjvm-default=all")
+        freeCompilerArgs.addAll(optOut(project))
     }
 }
 

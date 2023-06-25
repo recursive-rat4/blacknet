@@ -39,6 +39,7 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
         jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.add("-Xexplicit-api=strict")
         freeCompilerArgs.add("-Xjvm-default=all")
+        freeCompilerArgs.addAll(optOut(project))
     }
 }
 

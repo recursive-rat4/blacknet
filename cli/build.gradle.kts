@@ -37,6 +37,7 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.add("-Xjvm-default=all")
+        freeCompilerArgs.addAll(optOut(project))
     }
 }
 
