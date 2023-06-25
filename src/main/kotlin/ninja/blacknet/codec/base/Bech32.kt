@@ -62,7 +62,7 @@ object Bech32 {
         }
 
         val bechLow = when (upper) {
-            true -> bech.toLowerCase()
+            true -> bech.lowercase()
             false -> bech
         }
 
