@@ -187,7 +187,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
 
         fun parse(string: String?, port: Short): Address? {
             if (string == null) return null
-            val host = string.toLowerCase()
+            val host = string.lowercase()
 
             if (host.endsWith(TOR_SUFFIX)) {
                 if (host.length == 16 + TOR_SUFFIX.length) {
