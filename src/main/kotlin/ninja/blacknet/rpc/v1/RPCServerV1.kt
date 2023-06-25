@@ -7,6 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+@file:Suppress("UNUSED_PARAMETER")
+
 package ninja.blacknet.rpc.v1
 
 import io.github.oshai.kotlinlogging.KotlinLogging
