@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 repositories {
@@ -20,6 +21,8 @@ repositories {
 
 dependencies {
     api(libs.kotlin.stdlib)
+    api(libs.kotlin.serialization)
+    api(libs.kotlin.serialization.json)
     testImplementation(libs.kotlin.testng) {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
