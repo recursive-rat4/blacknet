@@ -13,6 +13,8 @@ import io.ktor.utils.io.core.readBytes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import ninja.blacknet.util.byteArrayOfInts
 
 class BinaryEncoderTest {
@@ -40,6 +42,9 @@ class BinaryEncoderTest {
 
         encoder.encodeString("八")
         assertEquals(byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB), encoder.toBytes())
+
+        encoder.beginCollection(ListSerializer(Byte.serializer()).descriptor, 4)
+        assertEquals(byteArrayOfInts(0x84), encoder.toBytes())
     }
 
     @Serializable
@@ -52,6 +57,7 @@ class BinaryEncoderTest {
         val unit: Unit,
         val string: String,
         val inline: InlineClass,
+        val list: List<Byte>,
     )
 
     @Serializable
@@ -70,6 +76,7 @@ class BinaryEncoderTest {
             Unit,
             "八",
             InlineClass(0x0201FFFE),
+            listOf(1, 2, 3, 4),
         )
 
         Structure.serializer().serialize(encoder, value)
@@ -84,6 +91,7 @@ class BinaryEncoderTest {
                 // Unit //
                 0x83, 0xE5, 0x85, 0xAB,
                 2, 1, -1, -2,
+                0x84, 0x01, 0x02, 0x03, 0x04,
             ),
             encoder.toBytes()
         )

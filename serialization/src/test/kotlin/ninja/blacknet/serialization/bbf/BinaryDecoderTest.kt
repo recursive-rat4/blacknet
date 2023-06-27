@@ -12,6 +12,8 @@ package ninja.blacknet.serialization.bbf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import ninja.blacknet.util.byteArrayOfInts
 
 class BinaryDecoderTest {
@@ -24,6 +26,7 @@ class BinaryDecoderTest {
         assertEquals(0x04030201FFFEFDFC, BinaryDecoder(byteArrayOf(4, 3, 2, 1, -1, -2, -3, -4)).decodeLong())
         assertEquals(ByteArray(9), BinaryDecoder(ByteArray(9)).decodeFixedByteArray(9))
         assertEquals("八", BinaryDecoder(byteArrayOfInts(0x83, 0xE5, 0x85, 0xAB)).decodeString())
+        assertEquals(4, BinaryDecoder(byteArrayOfInts(0x84)).decodeCollectionSize(ListSerializer(Byte.serializer()).descriptor))
     }
 
     @Serializable
@@ -36,6 +39,7 @@ class BinaryDecoderTest {
         val unit: Unit,
         val string: String,
         val inline: InlineClass,
+        val list: List<Byte>,
     )
 
     @Serializable
@@ -55,6 +59,7 @@ class BinaryDecoderTest {
                 Unit,
                 "八",
                 InlineClass(0x0201FFFE),
+                listOf(1, 2, 3, 4),
             ),
             BinaryFormat().decodeFromByteArray(
                 Structure.serializer(), byteArrayOfInts(
@@ -66,6 +71,7 @@ class BinaryDecoderTest {
                     // Unit //
                     0x83, 0xE5, 0x85, 0xAB,
                     2, 1, -1, -2,
+                    0x84, 0x01, 0x02, 0x03, 0x04,
                 )
             )
         )
