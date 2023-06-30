@@ -80,6 +80,7 @@ object Main {
 
         if (Config.instance.debugcoroutines) {
             logger.warn("Installing debug probes...")
+            DebugProbes.ignoreCoroutinesWithEmptyContext = false
             DebugProbes.install()
             logger.warn("Node may work significally slower")
         }
