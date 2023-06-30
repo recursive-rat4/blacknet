@@ -11,6 +11,9 @@ package ninja.blacknet.jsonrpc
 
 import kotlinx.serialization.Serializable
 
+/**
+ * A JSON-RPC request that must be replied with a [Response] if an [id] is present, otherwise it's a notification.
+ */
 @Serializable
 internal class Request private constructor(
     private val jsonrpc: Version,

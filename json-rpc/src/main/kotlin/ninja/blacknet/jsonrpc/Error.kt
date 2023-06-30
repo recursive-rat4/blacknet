@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 /**
- * A type for the `error` field in a response.
+ * A type for the `error` field in a [Response].
  */
 @Serializable
 internal class Error private constructor(

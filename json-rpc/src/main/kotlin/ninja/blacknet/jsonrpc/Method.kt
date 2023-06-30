@@ -12,7 +12,7 @@ package ninja.blacknet.jsonrpc
 import kotlinx.serialization.Serializable
 
 /**
- * A type for the `method` field in a request.
+ * A type for the `method` field in a [Request].
  */
 @Serializable
 internal inline class Method(

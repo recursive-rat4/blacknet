@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 private const val JSON_RPC_VERSION = "2.0"
 
 /**
- * A type for the `jsonrpc` field in a request or response.
+ * A type for the `jsonrpc` field in a [Request] or [Response].
  */
 @Serializable
 internal inline class Version private constructor(

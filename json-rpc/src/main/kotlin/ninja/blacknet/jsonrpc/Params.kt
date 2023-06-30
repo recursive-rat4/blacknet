@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * A type for the `params` field in a request.
+ * A type for the `params` field in a [Request].
  */
 @Serializable
 internal inline class Params private constructor(

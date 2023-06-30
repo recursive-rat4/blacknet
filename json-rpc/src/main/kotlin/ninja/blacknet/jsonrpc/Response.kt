@@ -12,6 +12,9 @@ package ninja.blacknet.jsonrpc
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
+/**
+ * A JSON-RPC response to a [Request] that matches by the [id].
+ */
 @Serializable
 internal class Response private constructor(
     private val jsonrpc: Version,

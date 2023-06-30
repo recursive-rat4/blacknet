@@ -15,7 +15,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 
 /**
- * A type for the `id` field in a request or response.
+ * A type for the `id` field in a [Request] or [Response].
  */
 @Serializable
 internal inline class Id private constructor(
