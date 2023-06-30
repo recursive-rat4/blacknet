@@ -64,6 +64,8 @@ class GetBlocks(
             if (bytes == null)
                 break
             response.add(bytes)
+            if (response.size == Blocks.MAX_BLOCKS)
+                break
             chainIndex = LedgerDB.chainIndexes.get(hash)
         }
 
