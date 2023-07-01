@@ -38,16 +38,18 @@ val compileTestJava by tasks.existing(JavaCompile::class) {
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
-        freeCompilerArgs.add("-Xexplicit-api=strict")
-        freeCompilerArgs.add("-Xjvm-default=all")
-        freeCompilerArgs.addAll(optOut(project))
+        jvmTarget = JvmTarget.JVM_11
+        freeCompilerArgs = listOf(
+            "-Xexplicit-api=strict",
+            "-Xjvm-default=all",
+            *optOut(project),
+        )
     }
 }
 
 val compileTestKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 

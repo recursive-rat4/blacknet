@@ -68,7 +68,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("ninja.blacknet.Main")
+    mainClass = "ninja.blacknet.Main"
 }
 
 distributions {
@@ -90,15 +90,17 @@ val compileTestJava by tasks.existing(JavaCompile::class) {
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
-        freeCompilerArgs.add("-Xjvm-default=all")
-        freeCompilerArgs.addAll(optOut(project))
+        jvmTarget = JvmTarget.JVM_11
+        freeCompilerArgs = listOf(
+            "-Xjvm-default=all",
+            *optOut(project),
+        )
     }
 }
 
 val compileTestKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 

@@ -21,7 +21,7 @@ private val compilerArgs = mapOf(
     name to "-opt-in=$annotation"
 }
 
-fun optOut(project: Project): Collection<String> {
+fun optOut(project: Project): Array<String> {
     val result = HashSet<String>()
     project.configurations.forEach { configuration ->
         configuration.dependencies.forEach { dependency ->
@@ -30,5 +30,5 @@ fun optOut(project: Project): Collection<String> {
             }
         }
     }
-    return result
+    return result.toTypedArray()
 }

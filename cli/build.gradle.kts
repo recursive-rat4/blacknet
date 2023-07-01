@@ -26,7 +26,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("ninja.blacknet.B2Sum")
+    mainClass = "ninja.blacknet.B2Sum"
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {
@@ -35,9 +35,11 @@ val compileJava by tasks.existing(JavaCompile::class) {
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
-        freeCompilerArgs.add("-Xjvm-default=all")
-        freeCompilerArgs.addAll(optOut(project))
+        jvmTarget = JvmTarget.JVM_11
+        freeCompilerArgs = listOf(
+            "-Xjvm-default=all",
+            *optOut(project),
+        )
     }
 }
 
