@@ -1,7 +1,7 @@
 ## Blacknet Full Node Wallet
 
 [![Pipeline status][]](https://gitlab.com/blacknet-ninja/blacknet/pipelines)
-[![Web chat][]](https://app.element.io/#/group/+blacknet:matrix.org)
+[![Web chat][]](https://app.element.io/#/room/#blacknet-space:matrix.org)
 [![Web site][]](https://blacknet.ninja)
 
 #### Blacknet is decentralized peer-to-peer network that secures public blockchain platform with proof of stake consensus.
