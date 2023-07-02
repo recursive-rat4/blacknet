@@ -17,11 +17,11 @@ import kotlin.test.assertFails
 class VersionTest {
     @Test
     fun test() {
-        val good = "\"2.0\""
-        val bad = "\"1.0\""
+        val good = """"2.0""""
+        val bad = """"1.0""""
 
-        assertEquals(good, Json.encodeToString(Version.serializer(), Version()))
-        assertEquals(Version(), Json.decodeFromString(Version.serializer(), good))
+        assertEquals(good, Json.encodeToString(Version.serializer(), Version.DEFAULT))
+        assertEquals(Version.DEFAULT, Json.decodeFromString(Version.serializer(), good))
         assertFails { Json.decodeFromString(Version.serializer(), bad) }
     }
 }

@@ -11,8 +11,6 @@ package ninja.blacknet.jsonrpc
 
 import kotlinx.serialization.Serializable
 
-private const val JSON_RPC_VERSION = "2.0"
-
 /**
  * A type for the `jsonrpc` field in a [Request] or [Response].
  */
@@ -20,12 +18,16 @@ private const val JSON_RPC_VERSION = "2.0"
 internal inline class Version private constructor(
     private val value: String
 ) {
-    /**
-     * Use a default version.
-     */
-    constructor() : this(JSON_RPC_VERSION)
-
     init {
         require(value == JSON_RPC_VERSION) { "Unknown JSON-RPC version $value" }
+    }
+
+    companion object {
+        private const val JSON_RPC_VERSION = "2.0"
+
+        /**
+         * The default JSON-RPC [Version].
+         */
+        val DEFAULT = Version(JSON_RPC_VERSION)
     }
 }
