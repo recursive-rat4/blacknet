@@ -10,18 +10,35 @@
 package ninja.blacknet.jsonrpc
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
 class ErrorTest {
     @Test
-    fun test() {
-        val goodJson1 = """{"code":-32700,"message":"Parse error"}"""
-        val goodJson2 = """{"code":-32099,"message":"Something went wrong","data":"Report this to developers"}"""
+    fun serialization() {
+        val parseError = Error.parseError()
+        val applicationError = Error.of(-31000, "Something went wrong", JsonPrimitive("Report this to developers"))
+        val parseErrorJson = """{"code":-32700,"message":"Parse error"}"""
+        val applicationErrorJson = """{"code":-31000,"message":"Something went wrong","data":"Report this to developers"}"""
         val badJson = """{"code":0.777,"message":"Custom error"}"""
 
-        Json.decodeFromString(Error.serializer(), goodJson1)
-        Json.decodeFromString(Error.serializer(), goodJson2)
+        assertEquals(parseErrorJson, Json.encodeToString(Error.serializer(), parseError))
+        assertEquals(applicationErrorJson, Json.encodeToString(Error.serializer(), applicationError))
+        Json.decodeFromString(Error.serializer(), parseErrorJson)
+        Json.decodeFromString(Error.serializer(), applicationErrorJson)
         assertFails { Json.decodeFromString(Error.serializer(), badJson) }
+    }
+
+    @Test
+    fun code() {
+        Error.parseError()
+        Error.invalidRequest()
+        Error.methodNotFound()
+        Error.invalidParams()
+        Error.internalError()
+
+        assertFails { Error.of(-32099, "Server error") }
     }
 }
