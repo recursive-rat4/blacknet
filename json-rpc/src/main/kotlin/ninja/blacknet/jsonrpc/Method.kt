@@ -15,10 +15,10 @@ import kotlinx.serialization.Serializable
  * A type for the `method` field in a [Request].
  */
 @Serializable
-internal inline class Method(
-    private val value: String
+internal inline class Method private constructor(
+    private val name: String
 ) {
     init {
-        require(!value.startsWith("rpc.")) { "Reserved method $value" }
+        require(!name.startsWith("rpc.")) { "Reserved method $name" }
     }
 }
