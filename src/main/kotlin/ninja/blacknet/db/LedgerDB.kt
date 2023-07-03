@@ -188,7 +188,7 @@ object LedgerDB {
                     logger.info("Finished reindex at height ${state.height}")
                 }
             } else {
-                throw RuntimeException("Unknown database version $version")
+                throw Error("Unknown database version $version")
             }
         } else {
             loadGenesisState()

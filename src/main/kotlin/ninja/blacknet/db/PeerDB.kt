@@ -107,7 +107,7 @@ object PeerDB {
 
             updatedHashMap
         } else {
-            throw RuntimeException("Unknown database version $version")
+            throw Error("Unknown database version $version")
         }
 
         logger.info("Loaded ${hashMap.size} peer addresses")

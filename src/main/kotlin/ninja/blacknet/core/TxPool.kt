@@ -275,7 +275,7 @@ object TxPool : MemPool(), Ledger {
 
     private fun parseAmount(string: String): Long {
         val n = (BigDecimal(string) * BigDecimal(PoS.COIN)).longValueExact()
-        if (n < 0) throw RuntimeException("Negative amount")
+        if (n < 0) throw IllegalArgumentException("Negative amount")
         return n
     }
 }

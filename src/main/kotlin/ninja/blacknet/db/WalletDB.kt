@@ -86,7 +86,7 @@ object WalletDB {
             setVersion(batch)
             batch.write()
         } else {
-            throw RuntimeException("Unknown database version $version")
+            throw Error("Unknown database version $version")
         }
 
         Runtime.rotate(::announcer)
