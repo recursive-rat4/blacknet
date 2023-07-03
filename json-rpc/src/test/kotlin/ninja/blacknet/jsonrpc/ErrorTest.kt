@@ -45,6 +45,6 @@ class ErrorTest {
         Error.fromException(InvalidParams())
         Error.fromException(InternalError())
         Error.fromException(InternalError())
-        Error.fromException(Exception(-32099, "Server error"))
+        Error.fromException(Exception(-30000, "Application error"))
     }
 }

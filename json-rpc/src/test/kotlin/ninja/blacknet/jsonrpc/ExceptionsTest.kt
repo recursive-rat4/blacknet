@@ -22,6 +22,7 @@ class ExceptionsTest {
         InternalError()
         InternalError()
         Exception(
+            -31000,
             "Replace by fee is not implemented yet",
             JsonPrimitive("See https://gitlab.com/blacknet-ninja/blacknet/-/issues/63")
         )
