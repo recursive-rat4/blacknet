@@ -9,20 +9,21 @@
 
 package ninja.blacknet.jsonrpc
 
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
-import kotlin.test.assertFails
 
-class HandlerTest {
+class ExceptionsTest {
     @Test
     fun test() {
-        val ping = object : Handler<String> {
-            override fun handle(): String = "Pong"
-        }
-        ping.handle()
-
-        val erroneous = object : Handler<Nothing> {
-            override fun handle() = throw Exception(0, "Error success")
-        }
-        assertFails { erroneous.handle() }
+        ParseError()
+        InvalidRequest()
+        MethodNotFound()
+        InvalidParams()
+        InternalError()
+        InternalError()
+        Exception(
+            "Replace by fee is not implemented yet",
+            JsonPrimitive("See https://gitlab.com/blacknet-ninja/blacknet/-/issues/63")
+        )
     }
 }

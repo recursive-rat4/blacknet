@@ -23,37 +23,14 @@ internal class Error private constructor(
 ) {
     companion object {
         /**
-         * Invalid JSON was received by the server.
-         * An error occurred on the server while parsing the JSON text.
+         * Convert [Exception] to [Error].
          */
-        fun parseError(data: JsonElement? = null) = Error(-32700, "Parse error", data)
-
-        /**
-         * The JSON sent is not a valid Request object.
-         */
-        fun invalidRequest(data: JsonElement? = null) = Error(-32600, "Invalid Request", data)
-
-        /**
-         * The method does not exist / is not available.
-         */
-        fun methodNotFound(data: JsonElement? = null) = Error(-32601, "Method not found", data)
-
-        /**
-         * Invalid method parameter(s).
-         */
-        fun invalidParams(data: JsonElement? = null) = Error(-32602, "Invalid params", data)
-
-        /**
-         * Internal JSON-RPC error.
-         */
-        fun internalError(data: JsonElement? = null) = Error(-32603, "Internal error", data)
-
-        /**
-         * An application-defined error.
-         */
-        fun of(code: Int, message: String, data: JsonElement? = null): Error {
-            require(code < -32768 || code > -32000) { "code $code is reserved for server errors" }
-            return Error(code, message, data)
+        fun fromException(exception: Exception): Error {
+            return Error(
+                exception.code,
+                exception.message,
+                exception.data,
+            )
         }
     }
 }

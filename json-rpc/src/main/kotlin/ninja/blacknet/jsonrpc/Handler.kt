@@ -17,6 +17,8 @@ package ninja.blacknet.jsonrpc
 public interface Handler<T> {
     /**
      * Handle a JSON-RPC request and return a result to respond if the request is not a notification.
+     *
+     * @throws Exception in case of any specific error.
      */
     public fun handle(): T
 }
