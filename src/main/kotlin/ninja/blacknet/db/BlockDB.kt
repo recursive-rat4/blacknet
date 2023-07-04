@@ -14,13 +14,13 @@ import java.util.Collections
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.core.*
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.bbf.binaryFormat
-import ninja.blacknet.util.LinkedHashMap
 
 private val logger = KotlinLogging.logger {}
 
@@ -33,16 +33,14 @@ object BlockDB {
 
     val blocks = DBView(LevelDB, BLOCK_KEY, Block.serializer(), binaryFormat)
 
-    private val rejects = Collections.newSetFromMap(object : LinkedHashMap<ByteArray, Boolean>() {
-        override fun put(key: ByteArray, value: Boolean): Boolean? {
-            if (size > PoS.ROLLBACK_LIMIT)
-                remove(firstKey())
-            return super.put(key, value)
+    private val rejects = Collections.newSetFromMap(object : LinkedHashMap<Hash, Boolean>() {
+        override fun removeEldestEntry(eldest: Map.Entry<Hash, Boolean>): Boolean {
+            return size > PoS.ROLLBACK_LIMIT
         }
     })
 
     internal fun isRejectedImpl(hash: ByteArray): Boolean {
-        return rejects.contains(hash)
+        return rejects.contains(Hash(hash))
     }
 
     internal fun removeImpl(list: List<ByteArray>) {
@@ -103,13 +101,13 @@ object BlockDB {
     }
 
     internal suspend fun processImpl(hash: ByteArray, bytes: ByteArray): Status {
-        if (rejects.contains(hash))
+        if (rejects.contains(Hash(hash)))
             return Invalid("Already rejected block")
         if (containsImpl(hash))
             return AlreadyHave(HashSerializer.encode(hash))
         val status = processBlockImpl(hash, bytes)
         if (status is Invalid)
-            rejects.add(hash)
+            rejects.add(Hash(hash))
         return status
     }
 
