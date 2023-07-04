@@ -9,6 +9,7 @@
 
 package ninja.blacknet.crypto
 
+import java.util.Arrays
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -21,6 +22,24 @@ import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 import ninja.blacknet.serialization.notSupportedFormatError
+
+/**
+ * Represents a BLAKE2b-256 hash.
+ */
+class Hash(private val bytes: ByteArray) : Comparable<Hash> {
+    override fun equals(other: Any?): Boolean {
+        return (other is Hash) && bytes.contentEquals(other.bytes)
+    }
+
+    override fun hashCode(): Int {
+        return bytes.contentHashCode()
+    }
+
+    override fun compareTo(other: Hash): Int {
+        // non-numerical comparison only to make hashed data structures DoS resistant
+        return Arrays.compare(bytes, other.bytes)
+    }
+}
 
 /**
  * Contextual serializer for a BLAKE2b-256 hash.

@@ -9,12 +9,12 @@
 
 package ninja.blacknet.network
 
-import java.util.Arrays
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.TxPool
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.packet.GetTransactions
 import ninja.blacknet.network.packet.PacketType
 import ninja.blacknet.network.packet.Transactions
@@ -82,19 +82,5 @@ object TxFetcher {
             .filter { (_, time) -> currTime > time + Node.NETWORK_TIMEOUT }
             .map { (hash, _) -> hash }
             .forEach { hash -> requested.remove(hash) }
-    }
-}
-
-private class Hash(private val bytes: ByteArray) : Comparable<Hash> {
-    override fun equals(other: Any?): Boolean {
-        return (other is Hash) && bytes.contentEquals(other.bytes)
-    }
-
-    override fun hashCode(): Int {
-        return bytes.contentHashCode()
-    }
-
-    override fun compareTo(other: Hash): Int {
-        return Arrays.compare(bytes, other.bytes)
     }
 }
