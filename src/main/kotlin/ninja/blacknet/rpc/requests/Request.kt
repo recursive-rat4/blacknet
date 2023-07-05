@@ -9,15 +9,15 @@
 
 package ninja.blacknet.rpc.requests
 
-import io.ktor.application.ApplicationCallPipeline
-import io.ktor.application.call
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.receiveParameters
-import io.ktor.response.respond
-import io.ktor.routing.Route
-import io.ktor.routing.route
+import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.application.call
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.route
 import io.ktor.util.AttributeKey
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
@@ -80,7 +80,7 @@ private fun <T : Request> Route.handle(
         method: HttpMethod,
         serializer: DeserializationStrategy<T>
 ) {
-    intercept(ApplicationCallPipeline.Features) {
+    intercept(ApplicationCallPipeline.Plugins) {
         call.attributes.put(requestKey, requestFormat.decodeFromParameters(serializer, when (method) {
             HttpMethod.Get -> call.parameters
             HttpMethod.Post -> call.receiveParameters()

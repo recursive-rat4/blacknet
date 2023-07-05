@@ -9,11 +9,11 @@
 
 package ninja.blacknet.rpc.requests
 
-import io.ktor.application.Application
-import io.ktor.application.ApplicationFeature
+import io.ktor.server.application.Application
+import io.ktor.server.application.BaseApplicationPlugin
 import io.ktor.util.AttributeKey
 
-object Requests : ApplicationFeature<Application, Unit, Unit> {
+object Requests : BaseApplicationPlugin<Application, Unit, Unit> {
     override val key: AttributeKey<Unit> = AttributeKey("請求功能")
 
     override fun install(pipeline: Application, configure: Unit.() -> Unit): Unit {

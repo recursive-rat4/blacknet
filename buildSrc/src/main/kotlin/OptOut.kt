@@ -16,7 +16,6 @@ private val compilerArgs = mapOf(
     "kotlinx-coroutines-core" to "kotlinx.coroutines.DelicateCoroutinesApi",
     "kotlinx-coroutines-debug" to "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlinx-serialization-core" to "kotlinx.serialization.ExperimentalSerializationApi",
-    "ktor-io" to "io.ktor.utils.io.core.ExperimentalIoApi",
 ).asSequence().associate { (name, annotation) ->
     name to "-opt-in=$annotation"
 }

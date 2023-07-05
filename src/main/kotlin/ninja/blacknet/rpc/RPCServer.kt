@@ -11,17 +11,16 @@
 package ninja.blacknet.rpc
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.features.DefaultHeaders
-import io.ktor.features.StatusPages
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.response.respond
-import io.ktor.routing.Routing
-import io.ktor.websocket.WebSockets
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.plugins.defaultheaders.DefaultHeaders
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Routing
+import io.ktor.server.websocket.WebSockets
+import io.ktor.websocket.Frame
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -116,11 +115,11 @@ fun Application.RPCServer() {
         header(HttpHeaders.Server, "${Version.name}/${Version.version} ${Version.http_server}/${Version.http_server_version} ${Version.http_server_engine}/${Version.http_server_engine_version}")
     }
     install(StatusPages) {
-        exception<Exception> { cause ->
+        exception<Exception> { call, cause ->
             call.respond(HttpStatusCode.BadRequest, cause.statusMessage())
             logger.debug(cause)
         }
-        exception<Throwable> { cause ->
+        exception<Throwable> { call, cause ->
             call.respond(HttpStatusCode.InternalServerError, cause.debugMessage())
             logger.error(cause)
         }

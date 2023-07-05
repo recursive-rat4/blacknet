@@ -9,13 +9,13 @@
 
 package ninja.blacknet.rpc
 
-import io.ktor.application.call
 import io.ktor.http.ContentType
-import io.ktor.http.content.JarFileContent
 import io.ktor.http.defaultForFilePath
-import io.ktor.response.respond
-import io.ktor.routing.Route
-import io.ktor.routing.get
+import io.ktor.server.application.call
+import io.ktor.server.http.content.JarFileContent
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 import ninja.blacknet.util.Resources
 
 fun Route.resource(context: Class<*>, resourceName: String) {

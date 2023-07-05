@@ -135,7 +135,7 @@ class Connection(
             }
             close()
         }
-        val result = readChannel.readPacket(size, 0)
+        val result = readChannel.readPacket(size)
         lastPacketTime = currentTimeMillis()
         totalBytesRead += size + 4
         return result

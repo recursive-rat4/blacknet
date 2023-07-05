@@ -12,6 +12,7 @@ package ninja.blacknet.network
 import com.google.common.net.InetAddresses
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.network.selector.ActorSelectorManager
+import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -83,6 +84,11 @@ enum class Network(val type: Byte, val addrSize: Int) {
             return address(inet.getAddress(), inet.port.toPort())
         }
 
+        fun address(inet: KtorInetSocketAddress): Address {
+            //UPSTREAM KtorInetSocketAddress doesn't provide access to bytes
+            return address(InetAddresses.forString(inet.hostname), inet.port.toPort())
+        }
+
         fun address(inet: InetAddress, port: Short): Address {
             val bytes = inet.getAddress()
             return when (bytes.size) {
@@ -102,7 +108,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                         return Connection(socket, readChannel, writeChannel, address, socksProxy, state)
                     } else {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
-                        val localAddress = Network.address(socket.localAddress as InetSocketAddress)
+                        val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
                         if (Config.instance.listen && !localAddress.isLocal())
                             Node.listenAddress.add(Address(localAddress.network, Config.instance.port.toPort(), localAddress.bytes))
                         return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, state)

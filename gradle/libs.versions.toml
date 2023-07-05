@@ -11,7 +11,7 @@
 kotlin = "1.8.10"
 coroutines = "1.7.2"
 serialization = "1.5.1"
-ktor = "1.6.8"
+ktor = "2.0.0"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -23,7 +23,9 @@ kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializat
 ktor-io = { module = "io.ktor:ktor-io", version.ref = "ktor" }
 ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 ktor-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
-ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
+ktor-default-headers = { module = "io.ktor:ktor-server-default-headers", version.ref = "ktor" }
+ktor-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
+ktor-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.20.2"
 apache-collections = "org.apache.commons:commons-collections4:4.4"
 eddsa = "net.i2p.crypto:eddsa:0.3.0"

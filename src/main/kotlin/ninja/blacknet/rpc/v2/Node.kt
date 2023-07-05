@@ -9,7 +9,7 @@
 
 package ninja.blacknet.rpc.v2
 
-import io.ktor.routing.Route
+import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import ninja.blacknet.DEFAULT_P2P_PORT

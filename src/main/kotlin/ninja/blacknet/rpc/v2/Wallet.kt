@@ -10,7 +10,7 @@
 
 package ninja.blacknet.rpc.v2
 
-import io.ktor.routing.Route
+import io.ktor.server.routing.Route
 import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName

@@ -10,12 +10,12 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import java.math.BigInteger
-import java.net.InetSocketAddress
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.delay
@@ -281,8 +281,8 @@ object Node {
     private suspend fun listener(server: ServerSocket) {
         while (true) {
             val socket = server.accept()
-            val remoteAddress = Network.address(socket.remoteAddress as InetSocketAddress)
-            val localAddress = Network.address(socket.localAddress as InetSocketAddress)
+            val remoteAddress = Network.address(socket.remoteAddress as KtorInetSocketAddress)
+            val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
             if (!localAddress.isLocal())
                 listenAddress.add(localAddress)
             val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)

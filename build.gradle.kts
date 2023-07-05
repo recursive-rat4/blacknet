@@ -44,6 +44,8 @@ dependencies {
     implementation(project(":blacknet-time"))
     implementation(libs.kotlin.stdlib)
     implementation(libs.ktor.cio)
+    implementation(libs.ktor.default.headers)
+    implementation(libs.ktor.status.pages)
     implementation(libs.ktor.io)
     implementation(libs.ktor.network)
     implementation(libs.ktor.websockets)

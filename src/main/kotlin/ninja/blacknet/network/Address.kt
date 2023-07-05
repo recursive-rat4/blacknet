@@ -9,6 +9,8 @@
 
 package ninja.blacknet.network
 
+import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
+import io.ktor.network.sockets.SocketAddress as KtorSocketAddress
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
@@ -27,7 +29,6 @@ import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedFormatError
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.SocketAddress
 import kotlin.experimental.and
 
 /**
@@ -62,8 +63,10 @@ class Address(
         Network.I2P -> Base32.encode(bytes) + Network.I2P_SUFFIX
     }
 
-    fun getSocketAddress(): SocketAddress {
-        return InetSocketAddress(InetAddress.getByAddress(bytes), port.toPort())
+    fun getSocketAddress(): KtorSocketAddress {
+        require(network == Network.IPv4 || network == Network.IPv6) { "$network is not IP" }
+        //UPSTREAM KtorSocketAddress requires round trip though string
+        return KtorInetSocketAddress(getAddressString(), port.toPort())
     }
 
     fun debugName(): String {

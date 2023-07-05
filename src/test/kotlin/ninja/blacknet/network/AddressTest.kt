@@ -12,6 +12,7 @@ package ninja.blacknet.network
 import java.security.Security
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -30,6 +31,7 @@ class AddressTest {
             assertEquals(string, address.getAddressString())
             assertEquals(local, address.isLocal())
             assertEquals(private, address.isPrivate())
+            address.getSocketAddress()
         }
     }
 
@@ -42,6 +44,7 @@ class AddressTest {
         )) {
             val address = Network.parse(string, 0) ?: throw AssertionError("Network.parse failed")
             assertTrue(address.getAddressString().compareTo(string, ignoreCase = true) == 0)
+            address.getSocketAddress()
         }
     }
 
@@ -59,6 +62,7 @@ class AddressTest {
             assertTrue(address.getAddressString().compareTo(string, ignoreCase = true) == 0)
             assertFalse(address.isLocal())
             assertFalse(address.isPrivate())
+            assertFails { address.getSocketAddress() }
         }
     }
 
@@ -71,6 +75,7 @@ class AddressTest {
             assertTrue(address.getAddressString().compareTo(string, ignoreCase = true) == 0)
             assertFalse(address.isLocal())
             assertFalse(address.isPrivate())
+            assertFails { address.getSocketAddress() }
         }
     }
 }

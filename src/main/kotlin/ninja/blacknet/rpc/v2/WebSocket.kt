@@ -9,10 +9,10 @@
 
 package ninja.blacknet.rpc.v2
 
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.readText
-import io.ktor.routing.Route
-import io.ktor.websocket.webSocket
+import io.ktor.server.routing.Route
+import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.withLock
