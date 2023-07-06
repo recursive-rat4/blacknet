@@ -7,6 +7,9 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     `kotlin-dsl`
 }
@@ -17,4 +20,14 @@ repositories {
 
 dependencies {
     implementation(libs.jgit)
+}
+
+val compileKotlin by tasks.existing(KotlinCompile::class) {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
+    }
+}
+
+val compileJava by tasks.existing(JavaCompile::class) {
+    targetCompatibility = "11"
 }
