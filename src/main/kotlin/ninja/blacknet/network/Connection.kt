@@ -43,6 +43,7 @@ class Connection(
         val localAddress: Address,
         var state: State
 ) : CoroutineScope {
+    //TODO Socket now implements CoroutineScope, should it be used instead?
     val job = Job()
     override val coroutineContext: CoroutineContext = Runtime.coroutineContext + job
 
@@ -243,7 +244,9 @@ class Connection(
         return closed.value
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun checkFeeFilter(size: Int, fee: Long): Boolean {
+        //FIXME use size
         return feeFilter <= fee
     }
 
