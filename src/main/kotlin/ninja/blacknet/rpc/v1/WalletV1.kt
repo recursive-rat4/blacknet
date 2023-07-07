@@ -7,7 +7,10 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("DEPRECATION")
+@file:Suppress(
+    "DEPRECATION",
+    "COMPANION_OBJECT_AS_CUSTOM_SERIALIZER_DEPRECATED",
+)
 
 package ninja.blacknet.rpc.v1
 

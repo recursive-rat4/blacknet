@@ -7,6 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+@file:Suppress("DEPRECATION")
+
 package ninja.blacknet.rpc
 
 import io.ktor.server.application.call
