@@ -86,7 +86,11 @@ enum class Network(val type: Byte, val addrSize: Int) {
 
         fun address(inet: KtorInetSocketAddress): Address {
             //UPSTREAM KtorInetSocketAddress doesn't provide access to bytes
-            return address(InetAddresses.forString(inet.hostname), inet.port.toPort())
+            val hostname = inet.hostname
+            return if (hostname != "localhost")
+                address(InetAddresses.forString(hostname), inet.port.toPort())
+            else
+                address(InetAddress.getByAddress(IPv4_LOOPBACK_BYTES), inet.port.toPort())
         }
 
         fun address(inet: InetAddress, port: Short): Address {
