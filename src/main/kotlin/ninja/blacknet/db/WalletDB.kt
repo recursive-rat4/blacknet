@@ -14,10 +14,12 @@ import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
@@ -419,13 +421,19 @@ object WalletDB {
         }
     }
 
-    @Serializable
+    @Serializable(TransactionDataType.Companion::class)
     class TransactionDataType(
             val type: Byte,
             val dataIndex: Byte
     ) {
-        @Serializer(forClass = TransactionDataType::class)
-        companion object {
+        companion object : KSerializer<TransactionDataType> {
+            override val descriptor: SerialDescriptor = buildClassSerialDescriptor(
+                "ninja.blacknet.db.WalletDB.TransactionDataType"
+            ) {
+                element("type", Byte.serializer().descriptor)
+                element("dataIndex", Byte.serializer().descriptor)
+            }
+
             override fun deserialize(decoder: Decoder): TransactionDataType {
                 return when (decoder) {
                     is BinaryDecoder -> {
