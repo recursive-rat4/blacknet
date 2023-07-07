@@ -59,6 +59,13 @@ object Staker {
     }
 
     private val stakers = SynchronizedArrayList<StakerState>()
+    private var state: String = "Initializing staker"
+        set(value) {
+            if (field === value)
+                return
+            field = value
+            logger.info(value)
+        }
 
     init {
         Config.instance.mnemonics?.let { mnemonics ->
@@ -67,11 +74,6 @@ object Staker {
                     val privateKey = mnemonic
                     startStaking(privateKey)
                 }
-                val n = stakers.list.size
-                if (n == 1)
-                    logger.info("Started staking")
-                else if (n > 1)
-                    logger.info("Started staking with $n accounts")
                 Config.instance.mnemonics = null
             }
         }
@@ -91,12 +93,18 @@ object Staker {
         awaitsNextTimeSlot = null
 
         if (!regtest) {
-            if (Node.isOffline())
+            if (Node.isOffline()) {
+                state = "Awaiting to get online"
                 return
+            }
 
-            if (Node.isInitialSynchronization())
+            if (Node.isInitialSynchronization()) {
+                state = "Awaiting to get synchronized"
                 return
+            }
         }
+
+        state = "Staking"
 
         var state = LedgerDB.state()
         val currTime = currentTimeSeconds()
@@ -166,6 +174,7 @@ object Staker {
         stakers.list.add(staker)
         if (stakers.list.size == 1) {
             coroutine = Runtime.rotate(::implementation)
+            state = "Started staker"
         }
         return true
     }
@@ -183,6 +192,7 @@ object Staker {
             coroutine!!.cancel()
             coroutine = null
             awaitsNextTimeSlot = null
+            state = "Stopped staker"
         }
         return true
     }
