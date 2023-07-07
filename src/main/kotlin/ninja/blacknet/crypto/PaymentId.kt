@@ -9,22 +9,25 @@
 
 package ninja.blacknet.crypto
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.Ed25519.x25519
+import ninja.blacknet.serialization.ByteArraySerializer
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedFormatError
 import ninja.blacknet.util.emptyByteArray
 
-@Serializable
+@Serializable(PaymentId.Companion::class)
 class PaymentId(
         val type: Byte,
         @SerialName("message")
@@ -39,8 +42,7 @@ class PaymentId(
         return ChaCha20.decryptUtf8(sharedKey, payload)
     }
 
-    @Serializer(forClass = PaymentId::class)
-    companion object {
+    companion object : KSerializer<PaymentId> {
         const val PLAIN: Byte = 0
         const val ENCRYPTED: Byte = 1
         val EMPTY = PaymentId(PLAIN, emptyByteArray())
@@ -82,6 +84,13 @@ class PaymentId(
             return buildHash {
                 encodeByteArray(sharedSecret)
             }
+        }
+
+        override val descriptor: SerialDescriptor = buildClassSerialDescriptor(
+            "ninja.blacknet.crypto.PaymentId"
+        ) {
+            element("type", Byte.serializer().descriptor)
+            element("message", ByteArraySerializer.descriptor)
         }
 
         override fun deserialize(decoder: Decoder): PaymentId {
