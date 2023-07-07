@@ -17,8 +17,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal class Request private constructor(
     private val jsonrpc: Version,
-    private val method: Method,
-    private val params: Params? = null,
+    internal val method: Method,
+    internal val params: Params? = null,
     private val id: Id? = null
 ) {
     fun isNotification(): Boolean = id == null

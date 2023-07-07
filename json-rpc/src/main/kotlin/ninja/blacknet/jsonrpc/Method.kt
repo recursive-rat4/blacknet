@@ -16,9 +16,9 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 internal inline class Method private constructor(
-    private val name: String
+    internal val value: String
 ) {
     init {
-        require(!name.startsWith("rpc.")) { "Reserved method $name" }
+        require(!value.startsWith("rpc.")) { "Reserved method $value" }
     }
 }

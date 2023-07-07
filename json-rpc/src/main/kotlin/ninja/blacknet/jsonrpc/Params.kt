@@ -18,7 +18,7 @@ import kotlinx.serialization.json.JsonPrimitive
  */
 @Serializable
 internal inline class Params private constructor(
-    private val value: JsonElement
+    internal val value: JsonElement
 ) {
     //TODO what types should be passed to constructors?
 
