@@ -240,6 +240,8 @@ object PeerDB {
             return false
         if (peer.isPrivate())
             return false
+        if (peer.network == Network.TORv2) // obsolete
+            return false
         if (peers.containsKey(peer))
             return false
         peers.put(peer, Entry.new(from))
