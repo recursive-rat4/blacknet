@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2023 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -10,10 +10,10 @@
 package ninja.blacknet.codec.base
 
 /**
- * Bech32 address format.
+ * Bech32m address format.
  *
- * Bitcoin improvement proposal 173 "Base32 address format for native v0-16 witness outputs"
+ * Bitcoin improvement proposal 350 "Bech32m format for v1+ witness addresses"
  */
-object Bech32 : AbstractBech32() {
-    override val POLYMOD_CONST: Int = 1
+object Bech32m : AbstractBech32() {
+    override val POLYMOD_CONST: Int = 0x2BC830A3
 }
