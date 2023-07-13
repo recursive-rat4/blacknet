@@ -35,6 +35,7 @@ license_scanning:
       - LICENSE.txt
       - gradle/libs.versions.toml
       - gradle/verification-metadata.xml
+      - gradle/wrapper/gradle-wrapper.properties
       when: on_success
     - when: never
   artifacts:
