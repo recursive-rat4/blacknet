@@ -42,7 +42,7 @@ private val logger = KotlinLogging.logger {}
 object PeerDB {
     const val MAX_SIZE = 8192
     private const val VERSION = 4
-    private val peers = ConcurrentHashMap<Address, Entry>((MAX_SIZE / 0.75f + 1.0f).toInt())
+    private val peers = ConcurrentHashMap<Address, Entry>(MAX_SIZE)
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)
 
