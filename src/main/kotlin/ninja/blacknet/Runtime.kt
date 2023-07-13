@@ -11,8 +11,6 @@ package ninja.blacknet
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 object Runtime : CoroutineScope {
@@ -37,17 +35,6 @@ object Runtime : CoroutineScope {
         System.getProperty("os.name").let { os_name ->
             macOS = os_name.startsWith("Mac")
             windowsOS = os_name.startsWith("Windows")
-        }
-    }
-
-    /**
-     * Rotate [wheel].
-     */
-    inline fun rotate(crossinline wheel: suspend () -> Unit): Job {
-        return launch {
-            while (true) {
-                wheel()
-            }
         }
     }
 }

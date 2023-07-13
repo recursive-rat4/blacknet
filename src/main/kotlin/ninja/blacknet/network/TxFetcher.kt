@@ -19,6 +19,7 @@ import ninja.blacknet.network.packet.GetTransactions
 import ninja.blacknet.network.packet.PacketType
 import ninja.blacknet.network.packet.Transactions
 import ninja.blacknet.time.currentTimeMillis
+import ninja.blacknet.util.rotate
 
 /**
  * 交易獲取器

@@ -27,6 +27,7 @@ import ninja.blacknet.network.packet.ChainAnnounce
 import ninja.blacknet.network.packet.ChainFork
 import ninja.blacknet.network.packet.GetBlocks
 import ninja.blacknet.network.packet.PacketType
+import ninja.blacknet.util.rotate
 
 private val logger = KotlinLogging.logger {}
 
