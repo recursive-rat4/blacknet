@@ -305,7 +305,7 @@ class ListSinceBlock(
             val height = LedgerDB.chainIndexes.get(hash)?.height ?: return respondError("Block not found")
             val state = LedgerDB.state()
             if (height >= state.height - PoS.ROLLBACK_LIMIT)
-                return respondError("Block not finalized")
+                return respondError("Block not checkpointed")
             val transactions = ArrayList<WalletTransactionInfo>()
             wallet.transactions.forEach { (hash, txData) ->
                 if (txData.height != 0 && height >= txData.height) {
