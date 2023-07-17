@@ -20,11 +20,13 @@ import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.regtest
 import ninja.blacknet.Config
 import ninja.blacknet.NETWORK_MAGIC
 import ninja.blacknet.Runtime
+import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
@@ -71,6 +73,16 @@ object Node {
                 Runtime.rotate(::connector)
             }
             Runtime.rotate(::prober)
+            ShutdownHooks.add {
+                runBlocking {
+                    connections.mutex.withLock {
+                        logger.info("Closing ${connections.list.size} p2p connections")
+                        connections.list.forEach { connection ->
+                            connection.close()
+                        }
+                    }
+                }
+            }
         }
     }
 
