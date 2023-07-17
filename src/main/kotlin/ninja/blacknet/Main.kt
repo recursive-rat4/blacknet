@@ -122,6 +122,12 @@ object Main {
             ).start(wait = false)
         }
 
-        ChainFetcher.run()
+        try {
+            ChainFetcher.run()
+        } catch (e: Throwable) {
+            logger.error(e)
+        } finally {
+            exitProcess(1) //FIXME non-main threads shouldn't inhibit shutdown
+        }
     }
 }
