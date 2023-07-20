@@ -37,7 +37,7 @@ object ShutdownHooks {
 
     private class Executor() : Thread() {
         override fun run() {
-            logger.info("Shutdown is in progress...")
+            logger.info { "Shutdown is in progress..." }
             synchronized(shutdownHooks) {
                 shutdownHooks.reversedForEach { hook ->
                     try {

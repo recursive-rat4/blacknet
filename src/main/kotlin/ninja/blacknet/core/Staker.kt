@@ -65,7 +65,7 @@ object Staker {
             if (field === value)
                 return
             field = value
-            logger.info(value)
+            logger.info { value }
         }
 
     init {
@@ -126,7 +126,7 @@ object Staker {
                 val block = Block.create(state.blockHash, timeSlot, staker.publicKey)
                 TxPool.fill(block)
                 val (hash, bytes) = block.sign(staker.privateKey)
-                logger.info("Staked ${HashSerializer.encode(hash)}")
+                logger.info { "Staked ${HashSerializer.encode(hash)}" }
                 if (Node.broadcastBlock(hash, bytes)) {
                     return
                 } else @Suppress("NAME_SHADOWING") {
@@ -140,7 +140,7 @@ object Staker {
                         TxPool.fill(block)
                         if (block.transactions.isNotEmpty()) {
                             val (hash, bytes) = block.sign(staker.privateKey)
-                            logger.warn("Retry ${HashSerializer.encode(hash)}")
+                            logger.warn { "Retry ${HashSerializer.encode(hash)}" }
                             if (Node.broadcastBlock(hash, bytes))
                                 return
                             else
@@ -148,7 +148,7 @@ object Staker {
                         }
                     }
                     val (hash, bytes) = block.sign(staker.privateKey)
-                    logger.warn("Empty ${HashSerializer.encode(hash)}")
+                    logger.warn { "Empty ${HashSerializer.encode(hash)}" }
                     Node.broadcastBlock(hash, bytes)
                 }
             }
@@ -159,7 +159,7 @@ object Staker {
         val publicKey = Ed25519.toPublicKey(privateKey)
 
         if (stakers.list.find { it.publicKey.contentEquals(publicKey) } != null) {
-            logger.info("Stakeholder is already active")
+            logger.info { "Stakeholder is already active" }
             return false
         }
 
@@ -169,7 +169,7 @@ object Staker {
             staker.updateImpl(state)
         }
         if (staker.stake == 0L) {
-            logger.warn("Stakeholder has zero active balance")
+            logger.warn { "Stakeholder has zero active balance" }
         }
 
         stakers.list.add(staker)
@@ -186,7 +186,7 @@ object Staker {
         if (i != -1) {
             stakers.list.removeAt(i)
         } else {
-            logger.info("Stakeholder is not active")
+            logger.info { "Stakeholder is not active" }
             return false
         }
         if (stakers.list.size == 0) {

@@ -143,19 +143,19 @@ enum class Network(val type: Byte, val addrSize: Int) {
             try {
                 val (coroutine, localAddress) = TorController.listen()
 
-                logger.info("Listening on ${localAddress.debugName()}")
+                logger.info { "Listening on ${localAddress.debugName()}" }
                 Node.listenAddress.add(localAddress)
 
                 coroutine.join()
 
                 Node.listenAddress.remove(localAddress)
-                logger.info("Lost connection to tor controller")
+                logger.info { "Lost connection to tor controller" }
 
                 torTimeout = INIT_TIMEOUT
             } catch (e: ConnectException) {
                 logger.debug { "Can't connect to tor controller: ${e.message}" }
             } catch (e: Throwable) {
-                logger.info(e.message)
+                logger.info { e.message }
             }
 
             delay(torTimeout)
@@ -166,7 +166,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
             try {
                 val (_, localAddress) = I2PSAM.createSession()
 
-                logger.info("Listening on ${localAddress.debugName()}")
+                logger.info { "Listening on ${localAddress.debugName()}" }
                 Node.listenAddress.add(localAddress)
 
                 while (true) {
@@ -180,14 +180,14 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 }
 
                 Node.listenAddress.remove(localAddress)
-                logger.info("I2P SAM session closed")
+                logger.info { "I2P SAM session closed" }
 
                 i2pTimeout = INIT_TIMEOUT
             } catch (e: I2PSAM.NotConfigured) {
-                logger.info(e.message)
+                logger.info { e.message }
                 return
             } catch (e: I2PSAM.I2PException) {
-                logger.info(e.message)
+                logger.info { e.message }
             } catch (e: ConnectException) {
                 logger.debug { "Can't connect to I2P SAM: ${e.message}" }
             } catch (e: Throwable) {

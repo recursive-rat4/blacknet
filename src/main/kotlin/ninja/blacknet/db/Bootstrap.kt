@@ -32,7 +32,7 @@ object Bootstrap {
         val bootstrap = File(dataDir, "bootstrap.dat")
         if (bootstrap.exists()) {
             runBlocking {
-                logger.info("Found bootstrap")
+                logger.info { "Found bootstrap" }
                 var n = 0
 
                 try {
@@ -46,10 +46,10 @@ object Bootstrap {
                             val status = BlockDB.processImpl(hash, bytes)
                             if (status == Accepted) {
                                 if (++n % 50000 == 0)
-                                    logger.info("Processed $n blocks")
+                                    logger.info { "Processed $n blocks" }
                                 LedgerDB.pruneImpl()
                             } else if (status !is AlreadyHave) {
-                                logger.info("$status block ${HashSerializer.encode(hash)}")
+                                logger.info { "$status block ${HashSerializer.encode(hash)}" }
                                 break
                             }
                         }
@@ -60,7 +60,7 @@ object Bootstrap {
 
                 moveFile(bootstrap, File(dataDir, "bootstrap.dat.old"))
 
-                logger.info("Imported $n blocks")
+                logger.info { "Imported $n blocks" }
             }
         }
     }

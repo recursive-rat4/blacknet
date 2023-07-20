@@ -23,19 +23,19 @@ object UPnP {
     private const val PROTOCOL = "TCP"
 
     fun forward() {
-        logger.info("Looking for UPnP Gateway")
+        logger.info { "Looking for UPnP Gateway" }
         val discover = GatewayDiscover()
         discover.discover()
 
         val gateway = discover.getValidGateway()
         if (gateway == null) {
-            logger.info("No valid UPnP Gateway found")
+            logger.info { "No valid UPnP Gateway found" }
             return
         }
 
-        logger.info("Sending port mapping request")
+        logger.info { "Sending port mapping request" }
         if (!gateway.addPortMapping(Config.instance.port.toPort().toPort(), Config.instance.port.toPort().toPort(), gateway.localAddress.hostAddress, PROTOCOL, Version.name)) {
-            logger.info("Port mapping failed")
+            logger.info { "Port mapping failed" }
             return
         }
 
@@ -48,9 +48,9 @@ object UPnP {
             runBlocking {
                 Node.listenAddress.add(address)
             }
-            logger.info("Mapped to ${address.debugName()}")
+            logger.info { "Mapped to ${address.debugName()}" }
         } else {
-            logger.info("Mapped to unknown external address")
+            logger.info { "Mapped to unknown external address" }
         }
 
         ShutdownHooks.add {
@@ -59,7 +59,7 @@ object UPnP {
     }
 
     private fun remove(gateway: GatewayDevice) {
-        logger.info("Removing port mapping")
+        logger.info { "Removing port mapping" }
         gateway.deletePortMapping(Config.instance.port.toPort().toPort(), PROTOCOL)
     }
 }

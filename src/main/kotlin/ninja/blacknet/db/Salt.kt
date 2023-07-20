@@ -26,7 +26,7 @@ object Salt {
 
     init {
         if (System.getProperty("org.gradle.test.worker") != null) {
-            logger.info("測試避免數據庫")
+            logger.info { "測試避免數據庫" }
             salt = ByteArray(SALT_SIZE_BYTES) { it.toByte() }
         } else {
             val saltBytes = LevelDB.get(SALT_KEY)
@@ -48,7 +48,7 @@ object Salt {
     }
 
     private fun convertor() {
-        logger.info("Converting database; this may take a while...")
+        logger.info { "Converting database; this may take a while..." }
         val iterator = LevelDB.iterator()
         iterator.seekToFirst()
         while (iterator.hasNext()) {

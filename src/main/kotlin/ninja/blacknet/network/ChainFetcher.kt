@@ -110,7 +110,7 @@ object ChainFetcher {
             } else if (blocks.hashes.isNotEmpty()) {
                 logger.debug { "Skipped ${blocks.hashes.size} hashes" }
             } else {
-                logger.error("Invalid packet Blocks")
+                logger.error { "Invalid packet Blocks" }
             }
         }
 
@@ -133,7 +133,7 @@ object ChainFetcher {
                 return
             }
 
-            logger.info("Fetching ${HashSerializer.encode(announce.chain)}")
+            logger.info { "Fetching ${HashSerializer.encode(announce.chain)}" }
             syncConnection = connection
             originalChain = state.blockHash
 
@@ -186,15 +186,15 @@ object ChainFetcher {
             } catch (e: TimeoutCancellationException) {
                 connection.dos("Fetching cancelled: ${e.message}")
             } catch (e: CancellationException) {
-                logger.info("Fetching cancelled: ${e.message}")
+                logger.info { "Fetching cancelled: ${e.message}" }
             } catch (e: Throwable) {
-                logger.error("Exception in processBlocks ${connection.debugName()}", e)
+                logger.error(e) { "Exception in processBlocks ${connection.debugName()}" }
                 connection.close()
             }
 
             undoRollback?.let {
                 if (undoDifficulty >= state.cumulativeDifficulty) {
-                    logger.info("Reconnecting ${it.size} blocks")
+                    logger.info { "Reconnecting ${it.size} blocks" }
                     val toRemove = LedgerDB.undoRollbackImpl(rollbackTo!!, it)
                     BlockDB.removeImpl(toRemove)
                 } else {
@@ -212,9 +212,9 @@ object ChainFetcher {
         }
 
         if (connection.isClosed())
-            logger.info("Fetched $connectedBlocks blocks from disconnected ${connection.debugName()}")
+            logger.info { "Fetched $connectedBlocks blocks from disconnected ${connection.debugName()}" }
         else
-            logger.info("Fetched $connectedBlocks blocks from ${connection.debugName()}")
+            logger.info { "Fetched $connectedBlocks blocks from ${connection.debugName()}" }
 
         recvChannel.tryReceive()
         request?.let {
@@ -267,7 +267,7 @@ object ChainFetcher {
         if (rollbackTo != null && undoRollback == null) {
             undoDifficulty = LedgerDB.state().cumulativeDifficulty
             undoRollback = LedgerDB.rollbackToImpl(rollbackTo!!)
-            logger.info("Disconnected ${undoRollback!!.size} blocks")
+            logger.info { "Disconnected ${undoRollback!!.size} blocks" }
         }
         for (i in answer.blocks) {
             val hash = Block.hash(i)
@@ -285,7 +285,7 @@ object ChainFetcher {
             LedgerDB.pruneImpl()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
-            logger.info("Connected ${answer.blocks.size} blocks")
+            logger.info { "Connected ${answer.blocks.size} blocks" }
         return true
     }
 

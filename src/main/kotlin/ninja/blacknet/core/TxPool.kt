@@ -45,7 +45,7 @@ object TxPool : MemPool(), Ledger {
             if (processImpl(hash, map[hash]!!) != Accepted)
                 result = false
         if (result == false)
-            logger.warn("Removed ${txs.size - transactions.size} transactions, ${transactions.size} remain in pool")
+            logger.warn { "Removed ${txs.size - transactions.size} transactions, ${transactions.size} remain in pool" }
         result
     }
 
@@ -57,7 +57,7 @@ object TxPool : MemPool(), Ledger {
             val hash = transactions.get(i++)
             val bytes = getImpl(hash)
             if (bytes == null) {
-                logger.error("Inconsistent MemPool")
+                logger.error { "Inconsistent MemPool" }
                 continue
             }
             if (bytes.size + 4 > freeBlockSize)
@@ -244,7 +244,7 @@ object TxPool : MemPool(), Ledger {
             if (remote)
                 return Pair(InFuture("TxPool is full"), 0)
             else
-                logger.warn("TxPool is full")
+                logger.warn { "TxPool is full" }
         }
         val result = TxPool.processImplWithFee(hash, bytes, time)
         if (result.first is Invalid || result.first is InFuture) {

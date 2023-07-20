@@ -28,7 +28,7 @@ object LevelDB : KeyValueStore {
         db = factory.open(File(dataDir, "leveldb"), options())
 
         ShutdownHooks.add {
-            logger.info("Closing database")
+            logger.info { "Closing database" }
             db.close()
         }
     }
@@ -123,7 +123,7 @@ object LevelDB : KeyValueStore {
                 .writeBufferSize(cacheSize / 4)
                 .xMaxOpenFiles()
                 .logger(DBLogger)
-        logger.info("LevelDB cache ${Config.instance.dbcache.hrp(false)}, max open files ${options.maxOpenFiles()}")
+        logger.info { "LevelDB cache ${Config.instance.dbcache.hrp(false)}, max open files ${options.maxOpenFiles()}" }
         return options
     }
 
@@ -142,7 +142,7 @@ object LevelDB : KeyValueStore {
             for (loader in arrayOf(ClassLoader.getSystemClassLoader(), javaClass.classLoader)) {
                 try {
                     val factory = loader.loadClass(clazz).getConstructor().newInstance() as DBFactory
-                    logger.info("Loaded $name")
+                    logger.info { "Loaded $name" }
                     return factory
                 } catch (e: Throwable) {
                 }

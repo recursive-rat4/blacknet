@@ -76,7 +76,7 @@ object Node {
             ShutdownHooks.add {
                 runBlocking {
                     connections.mutex.withLock {
-                        logger.info("Closing ${connections.list.size} p2p connections")
+                        logger.info { "Closing ${connections.list.size} p2p connections" }
                         connections.list.forEach { connection ->
                             connection.close()
                         }
@@ -154,7 +154,7 @@ object Node {
             else -> throw NotImplementedError("Not implemented for " + address.network)
         }
         val server = aSocket(Network.selector).tcp().bind(addr)
-        logger.info("Listening on ${address.debugName()}")
+        logger.info { "Listening on ${address.debugName()}" }
         Runtime.launch {
             listenAddress.add(address)
             listener(server)
@@ -216,10 +216,10 @@ object Node {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
             if (!regtest)
-                logger.info("Announced to $n peers")
+                logger.info { "Announced to $n peers" }
             return true
         } else {
-            logger.info(status.toString())
+            logger.info { status.toString() }
             return false
         }
     }
@@ -305,7 +305,7 @@ object Node {
 
     suspend fun addConnection(connection: Connection) {
         if (!haveSlot()) {
-            logger.info("Too many connections, dropping ${connection.debugName()}")
+            logger.info { "Too many connections, dropping ${connection.debugName()}" }
             connection.close()
             return
         }
@@ -336,7 +336,7 @@ object Node {
             return false
 
         val connection = candidates.random()
-        logger.info("Evicting ${connection.debugName()}")
+        logger.info { "Evicting ${connection.debugName()}" }
         connection.close()
         return true
     }
@@ -352,7 +352,8 @@ object Node {
         val filter = getFilter()
         val address = PeerDB.getCandidate { address, _ -> !filter.contains(address) }
         if (address == null) {
-            logger.info("Don't have candidates in PeerDB. ${outgoing()} connections, max ${Config.instance.outgoingconnections}")
+            //UPSTREAM https://github.com/oshai/kotlin-logging/issues/338
+            logger.info { "Don't have candidates in PeerDB. ${runBlocking { outgoing() }} connections, max ${Config.instance.outgoingconnections}" }
             delay(15 * 60 * 1000L)
             return
         }

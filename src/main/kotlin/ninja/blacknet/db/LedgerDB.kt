@@ -152,10 +152,10 @@ object LedgerDB {
 
             if (version == VERSION) {
                 val state = binaryFormat.decodeFromByteArray(LedgerDB.State.serializer(), stateBytes)
-                logger.info("Blockchain height ${state.height}")
+                logger.info { "Blockchain height ${state.height}" }
                 this.state = state
             } else if (version in 1 until VERSION) {
-                logger.info("Reindexing blockchain...")
+                logger.info { "Reindexing blockchain..." }
 
                 runBlocking {
                     val blockHashes = ArrayList<ByteArray>(500000)
@@ -164,7 +164,7 @@ object LedgerDB {
                         blockHashes.add(index.next)
                         index = chainIndexes.get(index.next)!!
                     }
-                    logger.info("Found ${blockHashes.size} blocks")
+                    logger.info { "Found ${blockHashes.size} blocks" }
 
                     clear()
 
@@ -176,16 +176,16 @@ object LedgerDB {
                         val (status, _) = processBlockImpl(txDb, hash, block, size)
                         if (status != Accepted) {
                             batch.close()
-                            logger.error("process block failed")
+                            logger.error { "process block failed" }
                             break
                         }
                         pruneImpl(batch)
                         txDb.commitImpl()
                         if (i != 0 && i % 50000 == 0)
-                            logger.info("Processed $i blocks")
+                            logger.info { "Processed $i blocks" }
                     }
 
-                    logger.info("Finished reindex at height ${state.height}")
+                    logger.info { "Finished reindex at height ${state.height}" }
                 }
             } else {
                 throw Error("Unknown database version $version")
@@ -293,7 +293,7 @@ object LedgerDB {
     internal suspend fun processBlockImpl(txDb: Update, hash: ByteArray, block: Block, size: Int): Pair<Status, List<ByteArray>> {
         val state = state
         if (!block.previous.contentEquals(state.blockHash)) {
-            logger.error("${HashSerializer.encode(hash)} not on current chain ${HashSerializer.encode(state.blockHash)} previous ${HashSerializer.encode(block.previous)}")
+            logger.error { "${HashSerializer.encode(hash)} not on current chain ${HashSerializer.encode(state.blockHash)} previous ${HashSerializer.encode(block.previous)}" }
             return Pair(NotOnThisChain(HashSerializer.encode(block.previous)), emptyList())
         }
         if (size > state.maxBlockSize) {
@@ -428,7 +428,7 @@ object LedgerDB {
 
         list.asReversed().forEach { hash ->
             val (block, size) = BlockDB.blocks.getWithSize(hash) ?: return toRemove.also {
-                logger.error("${HashSerializer.encode(hash)} not found")
+                logger.error { "${HashSerializer.encode(hash)} not found" }
             }
 
             val batch = LevelDB.createWriteBatch()
@@ -436,7 +436,7 @@ object LedgerDB {
             val (status, _) = processBlockImpl(txDb, hash, block, size)
             if (status != Accepted) {
                 batch.close()
-                logger.error("$status block ${HashSerializer.encode(hash)}")
+                logger.error { "$status block ${HashSerializer.encode(hash)}" }
                 return toRemove
             }
             txDb.commitImpl()
@@ -780,7 +780,7 @@ object LedgerDB {
         )
 
         if (snapshot.supply() != state.supply)
-            logger.error("Snapshot supply does not match ledger")
+            logger.error { "Snapshot supply does not match ledger" }
 
         val batch = LevelDB.createWriteBatch()
         batch.put(SNAPSHOT_KEY, state.height.toByteArray(), binaryFormat.encodeToByteArray(Snapshot.serializer(), snapshot))

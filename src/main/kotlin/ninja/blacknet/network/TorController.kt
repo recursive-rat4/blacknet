@@ -44,10 +44,10 @@ object TorController {
             val file = File(dataDir, "privateKey.tor")
             val readPrivateKey = file.readText()
             if (readPrivateKey.startsWith("RSA1024:")) {
-                logger.info("Migration to Tor addresses version 3")
+                logger.info { "Migration to Tor addresses version 3" }
                 val newName = "privateKey.${currentTimeSeconds()}.tor"
                 moveFile(file, File(dataDir, newName))
-                logger.info("Renamed private key file to $newName")
+                logger.info { "Renamed private key file to $newName" }
             } else {
                 privateKey = readPrivateKey
             }
@@ -126,7 +126,7 @@ object TorController {
 
     private fun savePrivateKey(privKey: String) {
         privateKey = privKey
-        logger.info("Saving Tor private key")
+        logger.info { "Saving Tor private key" }
         try {
             FileOutputStream(File(dataDir, "privateKey.tor")).sync {
                 write(privateKey.toByteArray(Charsets.UTF_8))

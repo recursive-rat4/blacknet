@@ -72,7 +72,7 @@ object PeerDB {
             val batch = LevelDB.createWriteBatch()
 
             val updatedHashMap = if (stateBytes != null) {
-                logger.info("Upgrading PeerDB...")
+                logger.info { "Upgrading PeerDB..." }
                 val result = HashMap<Address, Entry>(expectedSize = MAX_SIZE)
                 try {
                     if (version == 3) {
@@ -111,14 +111,14 @@ object PeerDB {
             throw Error("Unknown database version $version")
         }
 
-        logger.info("Loaded ${hashMap.size} peer addresses")
+        logger.info { "Loaded ${hashMap.size} peer addresses" }
 
         peers.putAll(hashMap)
 
         if (peers.size < 100) {
             val added = add(listBuiltinPeers(), Network.LOOPBACK)
             if (added > 0) {
-                logger.info("Added $added built-in peer addresses to db")
+                logger.info { "Added $added built-in peer addresses to db" }
             }
         }
 
@@ -126,7 +126,7 @@ object PeerDB {
 
         ShutdownHooks.add {
             proberJob.cancel()
-            logger.info("Saving PeerDB")
+            logger.info { "Saving PeerDB" }
             commit()
         }
     }

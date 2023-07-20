@@ -51,7 +51,7 @@ object Main {
             fileInputStream.close()
         }
         ShutdownHooks.add {
-            logger.info("Shutting down logger")
+            logger.info { "Shutting down logger" }
             (LogManager.getLogManager() as ninja.blacknet.logging.LogManager).shutDown()
         }
 
@@ -60,13 +60,13 @@ object Main {
             logger.error(e)
         }
 
-        logger.info("Starting up ${Version.name} node ${Version.revision}")
-        logger.info("CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}")
-        logger.info("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}")
-        logger.info("VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}")
-        logger.info("Using config directory ${configDir.absolutePath}")
-        logger.info("Using data directory ${dataDir.absolutePath}")
-        logger.info("Using state directory ${stateDir.absolutePath}")
+        logger.info { "Starting up ${Version.name} node ${Version.revision}" }
+        logger.info { "CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}" }
+        logger.info { "OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}" }
+        logger.info { "VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}" }
+        logger.info { "Using config directory ${configDir.absolutePath}" }
+        logger.info { "Using data directory ${dataDir.absolutePath}" }
+        logger.info { "Using state directory ${stateDir.absolutePath}" }
 
         Security.addProvider(Blake2bProvider())
         Security.addProvider(BouncyCastleProvider())
@@ -76,13 +76,13 @@ object Main {
         //WINDOWS system user, admin rights, and whatever
         //XXX root may be renamed
         if (!Runtime.windowsOS && System.getProperty("user.name") == "root")
-            logger.warn("Running as root")
+            logger.warn { "Running as root" }
 
         if (Config.instance.debugcoroutines) {
-            logger.warn("Installing debug probes...")
+            logger.warn { "Installing debug probes..." }
             DebugProbes.ignoreCoroutinesWithEmptyContext = false
             DebugProbes.install()
-            logger.warn("Node may work significally slower")
+            logger.warn { "Node may work significally slower" }
         }
 
         LevelDB

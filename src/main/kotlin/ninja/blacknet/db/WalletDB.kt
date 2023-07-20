@@ -78,9 +78,9 @@ object WalletDB {
                     wallets.put(publicKey, wallet)
                 }
                 if (wallets.size == 1)
-                    logger.info("Loaded wallet with $txns transactions")
+                    logger.info { "Loaded wallet with $txns transactions" }
                 else
-                    logger.info("Loaded ${wallets.size} wallets with $txns transactions")
+                    logger.info { "Loaded ${wallets.size} wallets with $txns transactions" }
             }
         } else if (version in 1 until VERSION) {
             val batch = LevelDB.createWriteBatch()
@@ -140,12 +140,12 @@ object WalletDB {
         }
 
         if (poolAccepted != 0) {
-            logger.info("Added ${inv.size} transactions to pool")
+            logger.info { "Added ${inv.size} transactions to pool" }
         }
 
         if (inv.isNotEmpty()) {
             val n = Node.broadcastInv(inv)
-            logger.info("Announced ${inv.size} transactions to $n peers")
+            logger.info { "Announced ${inv.size} transactions to $n peers" }
         }
 
         delay(30 * 60 * 1000L)
@@ -289,7 +289,7 @@ object WalletDB {
                 val data = binaryFormat.decodeFromByteArray(CancelLease.serializer(), bytes)
                 if (from) {
                     if (!wallet.outLeases.remove(AccountState.Lease(data.to, data.height, data.amount)))
-                        logger.warn("Lease not found")
+                        logger.warn { "Lease not found" }
                     true
                 } else {
                     data.involves(publicKey)
@@ -341,7 +341,7 @@ object WalletDB {
                     if (lease != null)
                         lease.amount -= data.withdraw
                     else
-                        logger.warn("Lease not found")
+                        logger.warn { "Lease not found" }
                     true
                 } else {
                     data.involves(publicKey)
@@ -357,7 +357,7 @@ object WalletDB {
                 }
             }
             else -> {
-                logger.warn("Unexpected TxType $type")
+                logger.warn { "Unexpected TxType $type" }
                 from
             }
         }
@@ -374,7 +374,7 @@ object WalletDB {
                     if (tx.seq == wallet.seq)
                         wallet.seq += 1
                     else
-                        logger.warn("Out of order sequence ${tx.seq} ${wallet.seq} ${HashSerializer.encode(hash)}")
+                        logger.warn { "Out of order sequence ${tx.seq} ${wallet.seq} ${HashSerializer.encode(hash)}" }
                 }
                 if (tx.type != TxType.Batch.type) {
                     if (processTransactionDataImpl(publicKey, wallet, hash, 0, tx.type, tx.data, height, from))
@@ -519,13 +519,13 @@ object WalletDB {
                     val height = LedgerDB.state().height
                     val n = height - index.height + 1
                     if (n > 0) {
-                        logger.info("Rescanning $n blocks...")
+                        logger.info { "Rescanning $n blocks..." }
                         do {
                             rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
                             hash = index.next
                             index = LedgerDB.chainIndexes.get(hash)!!
                         } while (index.height != height)
-                        logger.info("Finished rescan")
+                        logger.info { "Finished rescan" }
                     }
                 }
             }
@@ -562,7 +562,7 @@ object WalletDB {
     private fun clear(batch: LevelDB.WriteBatch) {
         val backupDir = File(dataDir, "walletdb.backup.${currentTimeSeconds()}")
         backupDir.mkdir()
-        logger.info("Saving backup to $backupDir")
+        logger.info { "Saving backup to $backupDir" }
         wallets.clear()
 
         batch.delete(PUBLIC_KEYS_KEY)

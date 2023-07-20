@@ -122,7 +122,7 @@ class Connection(
         } catch (e: CancellationException) {
         } catch (e: IOException) {
         } catch (e: Throwable) {
-            logger.error("Exception in receiver ${debugName()}", e)
+            logger.error(e) { "Exception in receiver ${debugName()}" }
         } finally {
             close()
         }
@@ -132,7 +132,7 @@ class Connection(
         val size = readChannel.readInt()
         if (size > Node.getMaxPacketSize()) {
             if (state.isConnected()) {
-                logger.info("Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}")
+                logger.info { "Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}" }
             }
             close()
         }
@@ -152,7 +152,7 @@ class Connection(
         } catch (e: ClosedWriteChannelException) {
         } catch (e: CancellationException) {
         } catch (e: Throwable) {
-            logger.error("Exception in sender ${debugName()}", e)
+            logger.error(e) { "Exception in sender ${debugName()}" }
         } finally {
             close()
         }
@@ -207,7 +207,7 @@ class Connection(
         val score = dosScore.incrementAndGet()
         if (score == 100)
             close()
-        logger.info("$reason ${debugName()} DoS $score")
+        logger.info { "$reason ${debugName()} DoS $score" }
     }
 
     fun dosScore(): Int {
@@ -300,7 +300,7 @@ class Connection(
                     sendPing()
                 }
             } else {
-                logger.info("Disconnecting ${debugName()} on ping timeout")
+                logger.info { "Disconnecting ${debugName()} on ping timeout" }
                 close()
                 return
             }
@@ -328,7 +328,7 @@ class Connection(
                 val i = Random.nextInt(randomPeers.size * 4)
                 if (i < randomPeers.size) {
                     randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
-                    logger.info("Whispering ${randomPeers[i].debugName()} to ${debugName()}")
+                    logger.info { "Whispering ${randomPeers[i].debugName()} to ${debugName()}" }
                 }
             }
 

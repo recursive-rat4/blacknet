@@ -54,7 +54,7 @@ object I2PSAM {
             val lastModified = file.lastModified()
             if (lastModified != 0L && lastModified < 1550000000000) {
                 moveFile(file, File(dataDir, "privateKey.$lastModified.i2p"))
-                logger.info("Renamed private key file to privateKey.$lastModified.i2p")
+                logger.info { "Renamed private key file to privateKey.$lastModified.i2p" }
             } else {
                 privateKey = file.readText()
             }
@@ -130,7 +130,7 @@ object I2PSAM {
         try {
             connection.checkResult(answer)
         } catch (e: Throwable) {
-            logger.info("STREAM ACCEPT failed: ${e.message}")
+            logger.info { "STREAM ACCEPT failed: ${e.message}" }
             throw e
         }
 
@@ -226,7 +226,7 @@ object I2PSAM {
 
     private fun savePrivateKey(dest: String) {
         privateKey = dest
-        logger.info("Saving I2P private key")
+        logger.info { "Saving I2P private key" }
         try {
             FileOutputStream(File(dataDir, "privateKey.i2p")).sync {
                 write(privateKey.toByteArray(Charsets.UTF_8))
