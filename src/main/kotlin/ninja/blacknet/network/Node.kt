@@ -352,8 +352,8 @@ object Node {
         val filter = getFilter()
         val address = PeerDB.getCandidate { address, _ -> !filter.contains(address) }
         if (address == null) {
-            //UPSTREAM https://github.com/oshai/kotlin-logging/issues/338
-            logger.info { "Don't have candidates in PeerDB. ${runBlocking { outgoing() }} connections, max ${Config.instance.outgoingconnections}" }
+            val outgoing = outgoing()
+            logger.info { "Don't have candidates in PeerDB. $outgoing connections, max ${Config.instance.outgoingconnections}" }
             delay(15 * 60 * 1000L)
             return
         }
