@@ -11,21 +11,37 @@ package ninja.blacknet.jsonrpc
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 
+/**
+ * Routing for [Request]s.
+ */
 internal inline class Routing private constructor(
     private val routes: HashMap<String, DeserializationStrategy<Handler<*>>>
 ) {
     constructor() : this(HashMap())
 
+    /**
+     * Register a [handler] for a [method] name.
+     */
     fun <T> add(method: String, handler: DeserializationStrategy<Handler<T>>) {
         routes.put(method, handler)
+        //XXX what if handler already registered?
     }
 
+    /**
+     * Handle a [request] by a registered handler.
+     */
     fun <T> handle(request: Request): T {
         @Suppress("UNCHECKED_CAST")
         val serializer = routes.get(request.method.value) as? DeserializationStrategy<Handler<T>> ?: throw MethodNotFound()
-        val handler: Handler<T> = Json.decodeFromJsonElement(serializer, request.params?.value ?: JsonNull)
+        val handler: Handler<T> = when (val jsonElement = request.params?.value ?: JsonNull) {
+            is JsonObject -> Json.decodeNamedParameters(serializer, jsonElement)
+            is JsonArray -> Json.decodePositionalParameters(serializer, jsonElement)
+            else -> TODO()
+        }
         return handler.handle()
     }
 }

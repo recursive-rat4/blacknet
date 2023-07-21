@@ -20,6 +20,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":blacknet-serialization"))
     api(libs.kotlin.stdlib)
     api(libs.kotlin.serialization)
     api(libs.kotlin.serialization.json)

@@ -30,9 +30,8 @@ class RoutingTest {
         val request3 = Json.decodeFromString(Request.serializer(), request3Json)
         val request4 = Json.decodeFromString(Request.serializer(), request4Json)
 
-        //FIXME positional parameters
-        // assertEquals(19, routing.handle(request1))
-        // assertEquals(-19, routing.handle(request2))
+        assertEquals(19, routing.handle(request1))
+        assertEquals(-19, routing.handle(request2))
         assertEquals(19, routing.handle(request3))
         assertEquals(19, routing.handle(request4))
     }
