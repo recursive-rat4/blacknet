@@ -12,6 +12,9 @@ rootProject.name = "blacknet"
 include(":blacknet-cli")
 project(":blacknet-cli").projectDir = file("cli")
 
+include(":blacknet-desktop")
+project(":blacknet-desktop").projectDir = file("desktop")
+
 include(":blacknet-json-rpc")
 project(":blacknet-json-rpc").projectDir = file("json-rpc")
 
