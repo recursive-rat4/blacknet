@@ -155,7 +155,7 @@ object PeerDB {
         if (entry != null)
             entry.connected(time, userAgent, prober)
         else
-            peers.put(address, Entry.newConnected(time, userAgent))
+            peers.put(address, Entry(time, userAgent))
     }
 
     suspend fun failed(address: Address, time: Long) {
@@ -245,7 +245,7 @@ object PeerDB {
             return false
         if (peers.containsKey(peer))
             return false
-        peers.put(peer, Entry.new(from))
+        peers.put(peer, Entry(from))
         return true
     }
 
@@ -320,6 +320,9 @@ object PeerDB {
         internal constructor(entry: EntryV2) : this(Address(entry.from), entry.attempts, entry.lastTry, entry.stat?.let { NetworkStat(it) })
         internal constructor(entry: EntryV3) : this(entry.from, entry.attempts, entry.lastTry, entry.stat?.let { NetworkStat(it) })
 
+        constructor(from: Address) : this(from, 0, 0, null)
+        constructor(time: Long, userAgent: String) : this(Network.LOOPBACK, 0, 0, NetworkStat(time, userAgent))
+
         fun failed(time: Long) {
             stat?.let { updateUptimeStat(it, false, time) }
             attempts += 1
@@ -387,11 +390,6 @@ object PeerDB {
             stat.stat1D.update(good, age, 3600.0f * 24)
             stat.stat1W.update(good, age, 3600.0f * 24 * 7)
             stat.stat1M.update(good, age, 3600.0f * 24 * 30)
-        }
-
-        companion object {
-            fun new(from: Address) = Entry(from, 0, 0, null)
-            fun newConnected(time: Long, userAgent: String) = Entry(Network.LOOPBACK, 0, 0, NetworkStat(time, userAgent))
         }
 
         @Suppress("unused")
