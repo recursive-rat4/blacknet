@@ -16,6 +16,9 @@ Kotlin multiplatform / multi-format reflectionless serialization
 https://github.com/Kotlin/kotlinx.serialization is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
+kotlinx.benchmark toolkit https://github.com/Kotlin/kotlinx-benchmark is licensed under the
+Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
 Gradle https://gradle.org/ is licensed under the
 Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 

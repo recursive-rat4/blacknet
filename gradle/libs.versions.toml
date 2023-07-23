@@ -12,6 +12,7 @@ kotlin = "1.9.0"
 coroutines = "1.7.2"
 serialization = "1.5.1"
 ktor = "2.3.2"
+benchmark = "0.4.8"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -27,6 +28,7 @@ ktor-default-headers = { module = "io.ktor:ktor-server-default-headers", version
 ktor-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.21.0"
+kotlin-benchmark = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "benchmark" }
 apache-collections = "org.apache.commons:commons-collections4:4.4"
 eddsa = "net.i2p.crypto:eddsa:0.3.0"
 blake2b = "com.rfksystems:blake2b:1.0.0"
@@ -39,6 +41,8 @@ weupnp = "org.bitlet:weupnp:0.1.4"
 jgit = "org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r"
 
 [plugins]
+kotlin-allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
+kotlin-benchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "benchmark" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 licenses = "com.github.hierynomus.license-report:0.16.1"

@@ -9,6 +9,9 @@
 
 rootProject.name = "blacknet"
 
+include(":blacknet-benchmarks")
+project(":blacknet-benchmarks").projectDir = file("benchmarks")
+
 include(":blacknet-cli")
 project(":blacknet-cli").projectDir = file("cli")
 
