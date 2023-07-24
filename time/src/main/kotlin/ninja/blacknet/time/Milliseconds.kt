@@ -83,21 +83,21 @@ public inline class Milliseconds(
         /**
          * @return the converted number of seconds into [Milliseconds].
          */
-        public fun fromSeconds(number: Long): Milliseconds = Milliseconds(number * 1000)
+        public val Int.seconds: Milliseconds get() = Milliseconds(this * 1000L)
 
         /**
          * @return the converted number of minutes into [Milliseconds].
          */
-        public fun fromMinutes(number: Long): Milliseconds = Milliseconds(number * 60 * 1000)
+        public val Int.minutes: Milliseconds get() = Milliseconds(this * 60 * 1000L)
 
         /**
          * @return the converted number of hours into [Milliseconds].
          */
-        public fun fromHours(number: Long): Milliseconds = Milliseconds(number * 60 * 60 * 1000)
+        public val Int.hours: Milliseconds get() = Milliseconds(this * 60 * 60 * 1000L)
 
         /**
          * @return the converted number of days into [Milliseconds].
          */
-        public fun fromDays(number: Long): Milliseconds = Milliseconds(number * 24 * 60 * 60 * 1000)
+        public val Int.days: Milliseconds get() = Milliseconds(this * 24 * 60 * 60 * 1000L)
     }
 }
