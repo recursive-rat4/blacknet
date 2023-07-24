@@ -88,16 +88,16 @@ public inline class Milliseconds(
         /**
          * @return the converted number of minutes into [Milliseconds].
          */
-        public val Int.minutes: Milliseconds get() = Milliseconds(this * 60 * 1000L)
+        public val Int.minutes: Milliseconds get() = Milliseconds(this * 60000L)
 
         /**
          * @return the converted number of hours into [Milliseconds].
          */
-        public val Int.hours: Milliseconds get() = Milliseconds(this * 60 * 60 * 1000L)
+        public val Int.hours: Milliseconds get() = Milliseconds(this * 3600000L)
 
         /**
          * @return the converted number of days into [Milliseconds].
          */
-        public val Int.days: Milliseconds get() = Milliseconds(this * 24 * 60 * 60 * 1000L)
+        public val Int.days: Milliseconds get() = Milliseconds(this * 86400000L)
     }
 }

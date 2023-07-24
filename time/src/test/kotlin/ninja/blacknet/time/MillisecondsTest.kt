@@ -59,9 +59,9 @@ class MillisecondsTest {
 
     @Test
     fun conversion() {
-        assertEquals(Milliseconds(4000), 4.seconds)
-        assertEquals(Milliseconds(240000), 4.minutes)
-        assertEquals(Milliseconds(14400000), 4.hours)
-        assertEquals(Milliseconds(345600000), 4.days)
+        assertEquals(Milliseconds(4 * 1000), 4.seconds)
+        assertEquals(Milliseconds(4 * 60 * 1000), 4.minutes)
+        assertEquals(Milliseconds(4 * 60 * 60 * 1000), 4.hours)
+        assertEquals(Milliseconds(4 * 24 * 60 * 60 * 1000), 4.days)
     }
 }
