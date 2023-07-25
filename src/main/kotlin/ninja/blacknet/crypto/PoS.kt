@@ -175,13 +175,23 @@ object PoS {
 /*
  * History of changes
  *
- * Version 4:
- * Switched to accounts
- * Added cold staking
- * Added dynamic block size
+ * Version 4, 21 Nov 2018
+ * Eliminate loss of maturity
+ * Add cold staking
+ * Add dynamic block size
  *
- * Version 3:
- * Switched to NXTRNG
- * Removed coin age
- * Added rolling checkpoint
+ * Version 3, 20 Aug 2015
+ * Shuffle stakers every block
+ * Remove coin age
+ * Remove signature on checkpoint
+ *
+ * Version 2, 01 Jul 2014
+ * Stricten block timestamp rules
+ * Introduce time slot
+ * Switch from coin offset to hash
+ *
+ * Version 1, 21 Feb 2014
+ * Disable PoW after initial distribution
+ * Lower required coin age
+ * Recommend more confirmations
  */
