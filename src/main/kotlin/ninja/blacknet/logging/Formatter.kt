@@ -11,6 +11,7 @@ package ninja.blacknet.logging
 
 import com.google.common.base.Throwables
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.logging.Formatter
 import java.util.logging.LogRecord
 
@@ -35,6 +36,8 @@ class Formatter : Formatter() {
             zeroed(2, instant.getMinute())
             append(':')
             zeroed(2, instant.getSecond())
+            append('.')
+            zeroed(3, instant.getMilli())
             append(' ')
             //append(record.getLoggerName())
             //append(' ')
@@ -54,6 +57,7 @@ class Formatter : Formatter() {
     }
 
     override fun formatMessage(record: LogRecord): String {
+        // this method is supposed to localize, but that compromises anonymity
         return format(record)
     }
 
@@ -63,5 +67,9 @@ class Formatter : Formatter() {
         for (i in 0 until padding)
             append('0')
         append(string)
+    }
+
+    private fun ZonedDateTime.getMilli(): Int {
+        return getNano() / 1000000
     }
 }
