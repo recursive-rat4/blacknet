@@ -106,9 +106,9 @@ object ChainFetcher {
             //TODO process deferred blocks
 
             if (blocks.blocks.isNotEmpty()) {
-                logger.debug { "Skipped ${blocks.blocks.size} blocks" }
+                logger.info { "Skipped deferred ${blocks.blocks.size} blocks" }
             } else if (blocks.hashes.isNotEmpty()) {
-                logger.debug { "Skipped ${blocks.hashes.size} hashes" }
+                logger.info { "Skipped deferred ${blocks.hashes.size} hashes" }
             } else {
                 logger.error { "Invalid packet Blocks" }
             }
@@ -256,7 +256,7 @@ object ChainFetcher {
         if (request == null || syncConnection != connection) {
             deferChannel.send(Pair(blocks, requestedDifficulty))
             announces.trySend(null)
-            logger.debug { "Deferred packet Blocks from ${connection.debugName()}" }
+            logger.info { "Deferred packet Blocks from ${connection.debugName()}" }
             return
         }
 
