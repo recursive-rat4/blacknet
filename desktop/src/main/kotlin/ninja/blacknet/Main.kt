@@ -16,6 +16,7 @@ object Main {
     fun main(args: Array<String>) {
         SwingUtilities.invokeLater {
             TrayIcon()
+            MainWindow()
         }
     }
 }
