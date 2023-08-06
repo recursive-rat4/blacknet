@@ -9,9 +9,13 @@
 
 package ninja.blacknet
 
+import javax.swing.SwingUtilities
+
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        TODO()
+        SwingUtilities.invokeLater {
+            TrayIcon()
+        }
     }
 }
