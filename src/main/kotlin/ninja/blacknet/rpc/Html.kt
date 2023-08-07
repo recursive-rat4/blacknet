@@ -7,23 +7,18 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("DEPRECATION")
-
 package ninja.blacknet.rpc
 
 import io.ktor.server.application.call
-import io.ktor.server.http.content.static
+import io.ktor.server.http.content.staticResources
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
-import ninja.blacknet.Main
 
 fun Route.html() {
     get("/") {
         call.respondRedirect("static/index.html")
     }
 
-    static("static") {
-        resources(Main::class.java, "html")
-    }
+    staticResources("static", "html", null)
 }
