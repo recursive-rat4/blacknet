@@ -18,14 +18,8 @@ import kotlin.test.assertFails
 class ErrorTest {
     @Test
     fun serialization() {
-        val parseError = Error.fromException(ParseError())
-        val applicationError = Error.fromException(
-            Exception(
-                -31000,
-                "Something went wrong",
-                JsonPrimitive("Report this to developers"),
-            )
-        )
+        val parseError = Error.parseError()
+        val applicationError = Error.of(-31000, "Something went wrong", JsonPrimitive("Report this to developers"))
         val parseErrorJson = """{"code":-32700,"message":"Parse error"}"""
         val applicationErrorJson = """{"code":-31000,"message":"Something went wrong","data":"Report this to developers"}"""
         val badJson = """{"code":0.777,"message":"Custom error"}"""
@@ -38,13 +32,12 @@ class ErrorTest {
     }
 
     @Test
-    fun conversion() {
-        Error.fromException(ParseError())
-        Error.fromException(InvalidRequest())
-        Error.fromException(MethodNotFound())
-        Error.fromException(InvalidParams())
-        Error.fromException(InternalError())
-        Error.fromException(InternalError())
-        Error.fromException(Exception(-30000, "Application error"))
+    fun code() {
+        Error.parseError()
+        Error.invalidRequest()
+        Error.methodNotFound()
+        Error.invalidParams()
+        Error.internalError()
+        assertFails { Error.of(-32099, "Server error") }
     }
 }

@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class RoutingTest {
     @Test
@@ -30,10 +31,20 @@ class RoutingTest {
         val request3 = Json.decodeFromString(Request.serializer(), request3Json)
         val request4 = Json.decodeFromString(Request.serializer(), request4Json)
 
-        assertEquals(19, routing.handle(request1))
-        assertEquals(-19, routing.handle(request2))
-        assertEquals(19, routing.handle(request3))
-        assertEquals(19, routing.handle(request4))
+        val result1 = routing.handle<Int>(request1)
+        val result2 = routing.handle<Int>(request2)
+        val result3 = routing.handle<Int>(request3)
+        val result4 = routing.handle<Int>(request4)
+
+        assertIs<Right<Int>>(result1)
+        assertIs<Right<Int>>(result2)
+        assertIs<Right<Int>>(result3)
+        assertIs<Right<Int>>(result4)
+
+        assertEquals(19, result1.right)
+        assertEquals(-19, result2.right)
+        assertEquals(19, result3.right)
+        assertEquals(19, result4.right)
     }
 
     @Serializable
@@ -41,8 +52,6 @@ class RoutingTest {
         private val minuend: Int,
         private val subtrahend: Int
     ) : Handler<Int> {
-        override fun handle(): Int {
-            return minuend - subtrahend
-        }
+        override fun handle() = Right(minuend - subtrahend)
     }
 }

@@ -34,9 +34,9 @@ internal inline class Routing private constructor(
     /**
      * Handle a [request] by a registered handler.
      */
-    fun <T> handle(request: Request): T {
+    fun <T> handle(request: Request): Either<Error, T> {
         @Suppress("UNCHECKED_CAST")
-        val serializer = routes.get(request.method.value) as? DeserializationStrategy<Handler<T>> ?: throw MethodNotFound()
+        val serializer = routes.get(request.method.value) as? DeserializationStrategy<Handler<T>> ?: return Left(Error.methodNotFound())
         val handler: Handler<T> = when (val jsonElement = request.params?.value ?: JsonNull) {
             is JsonObject -> Json.decodeNamedParameters(serializer, jsonElement)
             is JsonArray -> Json.decodePositionalParameters(serializer, jsonElement)

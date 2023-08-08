@@ -16,21 +16,48 @@ import kotlinx.serialization.json.JsonElement
  * A type for the `error` field in a [Response].
  */
 @Serializable
-internal class Error private constructor(
+public class Error private constructor(
     private val code: Int,
     private val message: String,
     private val data: JsonElement? = null
 ) {
-    companion object {
+    public companion object {
+        // Pre-defined errors -32768 to -32000
+
         /**
-         * Convert [Exception] to [Error].
+         * Invalid JSON was received by the server.
+         * An error occurred on the server while parsing the JSON text.
          */
-        fun fromException(exception: Exception): Error {
-            return Error(
-                exception.code,
-                exception.message,
-                exception.data,
-            )
+        internal fun parseError(data: JsonElement? = null) = Error(-32700, "Parse error", data)
+
+        /**
+         * The JSON sent is not a valid Request object.
+         */
+        internal fun invalidRequest(data: JsonElement? = null) = Error(-32600, "Invalid Request", data)
+
+        /**
+         * The method does not exist / is not available.
+         */
+        internal fun methodNotFound(data: JsonElement? = null) = Error(-32601, "Method not found", data)
+
+        /**
+         * Invalid method parameter(s).
+         */
+        internal fun invalidParams(data: JsonElement? = null) = Error(-32602, "Invalid params", data)
+
+        /**
+         * Internal JSON-RPC error.
+         */
+        internal fun internalError(data: JsonElement? = null) = Error(-32603, "Internal error", data)
+
+        // Implementation-defined server-errors -32099 to -32000
+
+        /**
+         * An application-defined error.
+         */
+        public fun of(code: Int, message: String, data: JsonElement? = null): Error {
+            require(code < -32768 || code > -32000) { "code $code is reserved for server errors" }
+            return Error(code, message, data)
         }
     }
 }

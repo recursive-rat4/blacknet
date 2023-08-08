@@ -10,19 +10,37 @@
 package ninja.blacknet.jsonrpc
 
 import kotlin.test.Test
-import kotlin.test.assertFails
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 
 class HandlerTest {
     @Test
-    fun test() {
+    fun right() {
+        val string = "Pong"
         val ping = object : Handler<String> {
-            override fun handle(): String = "Pong"
+            override fun handle() = Right(string)
         }
-        ping.handle()
+        val pong = ping.handle()
+        assertIs<Right<String>>(pong)
+        assertEquals(string, pong.right)
+    }
 
-        val erroneous = object : Handler<Nothing> {
-            override fun handle() = throw Exception(0, "Error success")
+    @Test
+    fun left() {
+        val ping = object : Handler<String> {
+            override fun handle() = Left(Error.of(0, "Error success"))
         }
-        assertFails { erroneous.handle() }
+        val pong = ping.handle()
+        assertIs<Left<Error>>(pong)
+    }
+
+    @Test
+    fun exception() {
+        class CustomException : RuntimeException()
+        val erroneous = object : Handler<String> {
+            override fun handle() = throw CustomException()
+        }
+        assertFailsWith<CustomException> { erroneous.handle() }
     }
 }

@@ -18,7 +18,7 @@ public interface Handler<T> {
     /**
      * Handle a JSON-RPC request and return a result to respond if the request is not a notification.
      *
-     * @throws Exception in case of any specific error.
+     * @return either [Right] with a result or [Left] in case of any specific [Error].
      */
-    public fun handle(): T
+    public fun handle(): Either<Error, T>
 }
