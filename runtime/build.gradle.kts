@@ -20,8 +20,6 @@ repositories {
 
 dependencies {
     api(libs.kotlin.stdlib)
-    api(libs.kotlin.serialization)
-    api(libs.kotlin.serialization.json)
     testImplementation(libs.kotlin.testng) {
         exclude("aopalliance", "aopalliance")
         exclude("junit", "junit")
