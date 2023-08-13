@@ -34,6 +34,7 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
         freeCompilerArgs = listOf(
+            "-Xcontext-receivers",
             "-Xjvm-default=all",
             *optOut(project),
         )

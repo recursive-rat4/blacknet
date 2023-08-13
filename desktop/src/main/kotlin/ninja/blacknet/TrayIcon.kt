@@ -14,14 +14,11 @@ import java.awt.PopupMenu
 import java.awt.SystemTray
 import java.awt.Toolkit
 import java.awt.TrayIcon
-import kotlin.system.exitProcess
 
 fun TrayIcon() {
     val image = Toolkit.getDefaultToolkit().getImage(Main::class.java.classLoader.getResource("logo.png"))
     val quitItem = MenuItem("Quit")
-    quitItem.addActionListener {
-        exitProcess(0)
-    }
+    quitItem.addActionListener(QuitAction)
     val popup = PopupMenu()
     popup.add(quitItem)
     val trayIcon = TrayIcon(image, "Blacknet", popup)

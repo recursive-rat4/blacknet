@@ -18,6 +18,7 @@ fun MainWindow() = JFrame().apply {
     defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     title = "Blacknet - Wallet"
     iconImage = Toolkit.getDefaultToolkit().getImage(Main::class.java.classLoader.getResource("logo.png"))
+    jMenuBar = MainMenu()
     size = Dimension(950, 550)
     isVisible = true
 }
