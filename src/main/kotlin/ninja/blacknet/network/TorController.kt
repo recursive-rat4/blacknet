@@ -21,7 +21,6 @@ import io.ktor.utils.io.close
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import java.io.File
-import java.io.FileOutputStream
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import ninja.blacknet.Config
@@ -128,7 +127,7 @@ object TorController {
         privateKey = privKey
         logger.info { "Saving Tor private key" }
         try {
-            FileOutputStream(File(dataDir, "privateKey.tor")).sync {
+            File(dataDir, "privateKey.tor").outputStream().sync {
                 write(privateKey.toByteArray(Charsets.UTF_8))
             }
         } catch (e: Throwable) {

@@ -21,7 +21,6 @@ import io.ktor.utils.io.close
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import java.io.File
-import java.io.FileOutputStream
 import kotlin.random.Random
 import kotlinx.coroutines.launch
 import ninja.blacknet.Config
@@ -228,7 +227,7 @@ object I2PSAM {
         privateKey = dest
         logger.info { "Saving I2P private key" }
         try {
-            FileOutputStream(File(dataDir, "privateKey.i2p")).sync {
+            File(dataDir, "privateKey.i2p").outputStream().sync {
                 write(privateKey.toByteArray(Charsets.UTF_8))
             }
         } catch (e: Throwable) {
