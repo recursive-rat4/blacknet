@@ -42,7 +42,7 @@ class Version(
         connection.feeFilter = feeFilter
         connection.lastChain = chainAnnounce
 
-        if (version < Node.minVersion) {
+        if (version < Node.MIN_PROTOCOL_VERSION) {
             logger.info { "Obsolete protocol version $version ${connection.debugName()} $agent" }
             connection.close()
             return

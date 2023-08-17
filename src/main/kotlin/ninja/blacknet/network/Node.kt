@@ -43,8 +43,8 @@ private val logger = KotlinLogging.logger {}
 
 object Node {
     const val NETWORK_TIMEOUT = 90 * 1000L
-    const val version = 13
-    const val minVersion = 12
+    const val PROTOCOL_VERSION = 13
+    const val MIN_PROTOCOL_VERSION = 12
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
@@ -183,7 +183,7 @@ object Node {
         connection.sendPacket(PacketType.Version, if (prober) {
             Version(
                     NETWORK_MAGIC,
-                    version,
+                    PROTOCOL_VERSION,
                     currentTimeSeconds(),
                     nonce,
                     UserAgent.prober,
@@ -194,7 +194,7 @@ object Node {
             val state = LedgerDB.state()
             Version(
                     NETWORK_MAGIC,
-                    version,
+                    PROTOCOL_VERSION,
                     currentTimeSeconds(),
                     nonce,
                     UserAgent.string,

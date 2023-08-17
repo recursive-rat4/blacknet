@@ -35,7 +35,7 @@ class NodeInfo(
                     UserAgent.string,
                     Version.name,
                     Version.version,
-                    Node.version,
+                    Node.PROTOCOL_VERSION,
                     Node.outgoing(),
                     Node.incoming(),
                     listening,
