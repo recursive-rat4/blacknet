@@ -9,14 +9,13 @@
 
 import nl.javadude.gradle.plugins.license.DownloadLicenses
 import nl.javadude.gradle.plugins.license.LicenseMetadata
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 allprojects {
     group = "ninja.blacknet"
     version = "0.3-SNAPSHOT"
 }
 
+//UPSTREAM must be in subproject
 buildscript {
     dependencies {
         classpath(libs.kotlin.atomicfu)
@@ -24,85 +23,46 @@ buildscript {
 }
 
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.serialization)
-    application
+    alias(libs.plugins.kotlin.jvm) apply false //UPSTREAM must be in subproject
     distribution
     alias(libs.plugins.licenses)
 }
-
-apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation(project(":blacknet-json-rpc"))
-    implementation(project(":blacknet-runtime"))
-    implementation(project(":blacknet-serialization"))
-    implementation(project(":blacknet-time"))
-    implementation(libs.kotlin.stdlib)
-    implementation(libs.ktor.cio)
-    implementation(libs.ktor.default.headers)
-    implementation(libs.ktor.status.pages)
-    implementation(libs.ktor.io)
-    implementation(libs.ktor.network)
-    implementation(libs.ktor.websockets)
-    implementation(libs.kotlin.coroutines)
-    implementation(libs.kotlin.coroutines.debug)
-    implementation(libs.kotlin.serialization)
-    implementation(libs.kotlin.serialization.json)
-    implementation(libs.apache.collections)
-    implementation(libs.eddsa)
-    implementation(libs.blake2b)
-    implementation(libs.bouncycastle)
-    implementation(libs.leveldb.java)
-    implementation(libs.slf4j)
-    implementation(libs.kotlin.logging)
-    implementation(libs.guava)
-    implementation(libs.weupnp)
-    implementation(files("buildSrc/libs/leveldbjni-all-1.18.3.jar"))
-    testImplementation(libs.kotlin.testng) {
-        exclude("aopalliance", "aopalliance")
-        exclude("junit", "junit")
-    }
-}
-
-application {
-    mainClass = "ninja.blacknet.Main"
-}
+val dependencies = arrayOf(
+    project(":blacknet-daemon"),
+)
 
 distributions {
     main {
         contents {
             from("LICENSE.txt")
             from("3RD-PARTY-LICENSES.txt")
+            dependencies.forEach {
+                from(it.buildDir.resolve("install").resolve(it.name))
+            }
         }
     }
 }
 
-val compileJava by tasks.existing(JavaCompile::class) {
-    targetCompatibility = "11"
-}
-
-val compileTestJava by tasks.existing(JavaCompile::class) {
-    targetCompatibility = "11"
-}
-
-val compileKotlin by tasks.existing(KotlinCompile::class) {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
-        freeCompilerArgs = listOf(
-            "-Xjvm-default=all",
-            *optOut(project),
-        )
+val distTar by tasks.existing(Tar::class) {
+    dependencies.forEach {
+        dependsOn(it.tasks.installDist)
     }
 }
 
-val compileTestKotlin by tasks.existing(KotlinCompile::class) {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
+val distZip by tasks.existing(Zip::class) {
+    dependencies.forEach {
+        dependsOn(it.tasks.installDist)
+    }
+}
+
+val installDist by tasks.existing(Sync::class) {
+    dependencies.forEach {
+        dependsOn(it.tasks.installDist)
     }
 }
 
@@ -118,43 +78,8 @@ val downloadLicenses by tasks.existing(DownloadLicenses::class) {
     dependencyConfiguration = "xonfigurations"
 }
 
-val jar by tasks.existing(Jar::class) {
-    manifest {
-        dirtyDescribeGit(buildDir.getParentFile())?.let { revision ->
-            attributes("Build-Revision" to revision)
-        }
-        attributes(
-                "Implementation-Title" to project.name.toString(),
-                "Implementation-Vendor" to "Blacknet Team",
-                "Implementation-Version" to project.version.toString()
-        )
-    }
-}
-
-val run by tasks.existing(JavaExec::class) {
-    classpath = files(tasks.jar) + classpath.filter { !it.startsWith(buildDir) }
-    systemProperties = defaultSystemProperties
-}
-
-val startScripts by tasks.existing(CreateStartScripts::class) {
-    defaultJvmOpts = defaultSystemProperties.map { (key, value) -> "-D$key=$value" }
-}
-
-val test by tasks.existing(Test::class) {
-    useTestNG()
-}
-
 val wrapper by tasks.existing(Wrapper::class) {
     gradleVersion = "8.2.1"
     distributionType = Wrapper.DistributionType.BIN
     distributionSha256Sum = "03ec176d388f2aa99defcadc3ac6adf8dd2bce5145a129659537c0874dea5ad1"
 }
-
-val defaultSystemProperties: Map<String, Any> = mapOf(
-    // Output hexadecimal values with lower case letters
-    // "ninja.blacknet.codec.base.hex.lowercase" to true,
-    // Indent JSON returned by RPC API
-    // "ninja.blacknet.serialization.json.indented" to true,
-    // Regression testing mode
-    // "ninja.blacknet.regtest" to true,
-)

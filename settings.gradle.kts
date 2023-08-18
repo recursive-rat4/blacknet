@@ -15,6 +15,9 @@ project(":blacknet-benchmarks").projectDir = file("benchmarks")
 include(":blacknet-cli")
 project(":blacknet-cli").projectDir = file("cli")
 
+include(":blacknet-daemon")
+project(":blacknet-daemon").projectDir = file("daemon")
+
 include(":blacknet-desktop")
 project(":blacknet-desktop").projectDir = file("desktop")
 
