@@ -15,14 +15,20 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import java.io.File
+import java.io.FileNotFoundException
 import java.math.BigInteger
 import kotlin.random.Random
+import kotlin.random.nextULong
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.Serializable
 import ninja.blacknet.regtest
+import ninja.blacknet.stateDir
 import ninja.blacknet.Config
 import ninja.blacknet.NETWORK_MAGIC
 import ninja.blacknet.Runtime
@@ -31,13 +37,20 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.logging.error
 import ninja.blacknet.network.packet.*
+import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
+import ninja.blacknet.util.buffered
+import ninja.blacknet.util.data
+import ninja.blacknet.util.moveFile
 import ninja.blacknet.util.rotate
+import ninja.blacknet.util.sync
+import ninja.blacknet.util.toByteArray
 
 private val logger = KotlinLogging.logger {}
 
@@ -45,10 +58,13 @@ object Node {
     const val NETWORK_TIMEOUT = 90 * 1000L
     const val PROTOCOL_VERSION = 13
     const val MIN_PROTOCOL_VERSION = 12
+    private const val DATA_VERSION = 1
+    private const val DATA_FILENAME = "node.dat"
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
     val listenAddress = SynchronizedHashSet<Address>()
     private val nextPeerId = atomic(1L)
+    private val queuedPeers = Channel<Address>(Config.instance.outgoingconnections)
 
     init {
         if (!regtest) {
@@ -69,18 +85,48 @@ object Node {
             if (Config.instance.i2p) {
                 Runtime.rotate(Network.Companion::listenOnI2P)
             }
+            try {
+                val file = File(stateDir, DATA_FILENAME)
+                file.inputStream().buffered().data().use { stream ->
+                    val version = stream.readInt()
+                    val bytes = stream.readAllBytes()
+                    if (version == DATA_VERSION) {
+                        val persistent = binaryFormat.decodeFromByteArray(Persistent.serializer(), bytes)
+                        persistent.peers.forEach { peer ->
+                            queuedPeers.trySend(peer)
+                        }
+                    } else {
+                        logger.warn { "Unknown node data version $version" }
+                    }
+                }
+            } catch (e: FileNotFoundException) {
+                // first run or unlinked file
+            } catch (e: Exception) {
+                logger.error(e)
+            }
             repeat(Config.instance.outgoingconnections) {
                 Runtime.rotate(::connector)
             }
             Runtime.rotate(::prober)
             ShutdownHooks.add {
                 runBlocking {
+                    val persistent = Persistent(ArrayList(Config.instance.outgoingconnections))
                     connections.mutex.withLock {
                         logger.info { "Closing ${connections.list.size} p2p connections" }
                         connections.list.forEach { connection ->
+                            // probers ain't interesting
+                            if (connection.state == Connection.State.OUTGOING_CONNECTED)
+                                persistent.peers.add(connection.remoteAddress)
                             connection.close()
                         }
                     }
+                    logger.info { "Saving node state" }
+                    val tmpFile = File(stateDir, "$DATA_FILENAME.${Random.nextULong()}")
+                    tmpFile.outputStream().sync {
+                        write(DATA_VERSION.toByteArray())
+                        write(binaryFormat.encodeToByteArray(Persistent.serializer(), persistent))
+                    }
+                    moveFile(tmpFile, File(stateDir, DATA_FILENAME))
                 }
             }
         }
@@ -350,7 +396,7 @@ object Node {
 
     private suspend fun connector() {
         val filter = getFilter()
-        val address = PeerDB.getCandidate { address, _ -> !filter.contains(address) }
+        val address = queuedPeers.tryReceive().getOrNull() ?: PeerDB.getCandidate { address, _ -> !filter.contains(address) }
         if (address == null) {
             val outgoing = outgoing()
             logger.info { "Don't have candidates in PeerDB. $outgoing connections, max ${Config.instance.outgoingconnections}" }
@@ -399,4 +445,9 @@ object Node {
             PeerDB.failed(address, time / 1000L)
         }
     }
+
+    @Serializable
+    private class Persistent(
+        val peers: ArrayList<Address>
+    )
 }
