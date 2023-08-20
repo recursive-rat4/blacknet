@@ -13,14 +13,14 @@
 
 ## Setup the environment
 
-Install the Java JDK (not only JRE) version 11th number or greater.
+Install the Java JDK (not only JRE) version 17th number or greater.
 
 - Debian & Ubuntu: `sudo apt-get install default-jdk git`
-- Red Hat & Oracle: `sudo yum install java-11-openjdk git`
-- SUSE: `sudo zypper install java-11-openjdk git`
+- Red Hat & Oracle: `sudo yum install java-17-openjdk git`
+- SUSE: `sudo zypper install java-17-openjdk git`
 - Arch GNU/Linux: `sudo pacman -S --needed jdk-openjdk git`
 - Gentoo: `sudo emerge -av1 --noreplace virtual/jdk dev-vcs/git`
-- FreeBSD: `sudo pkg install openjdk11 git`
+- FreeBSD: `sudo pkg install openjdk17 git`
 - OpenBSD: `sudo pkg_add jdk git`
 
 ## Make the build

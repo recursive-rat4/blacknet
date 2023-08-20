@@ -59,16 +59,16 @@ application {
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {
-    targetCompatibility = "11"
+    targetCompatibility = "17"
 }
 
 val compileTestJava by tasks.existing(JavaCompile::class) {
-    targetCompatibility = "11"
+    targetCompatibility = "17"
 }
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
+        jvmTarget = JvmTarget.JVM_17
         freeCompilerArgs = listOf(
             "-Xjvm-default=all",
             *optOut(project),
@@ -78,7 +78,7 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
 
 val compileTestKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
+        jvmTarget = JvmTarget.JVM_17
     }
 }
 
