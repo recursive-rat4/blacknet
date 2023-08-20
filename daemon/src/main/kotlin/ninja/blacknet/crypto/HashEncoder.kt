@@ -13,13 +13,11 @@ import io.ktor.utils.io.bits.*
 import io.ktor.utils.io.charsets.Charset
 import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.SequentialEncoder
-import ninja.blacknet.serialization.SerializationError
 import ninja.blacknet.serialization.binaryModule
 
 class HashEncoder(
         val writer: HashWriter,
         val charset: Charset? = Charsets.UTF_8,
-        val allowFloatingPointValues: Boolean = false,
         override val serializersModule: SerializersModule = binaryModule
 ) : SequentialEncoder() {
     private val buffer = ByteArray(Long.SIZE_BYTES)
@@ -57,19 +55,11 @@ class HashEncoder(
     }
 
     override fun encodeFloat(value: Float) {
-        if (allowFloatingPointValues) {
-            encodeInt(value.toBits())
-        } else {
-            throw floatingPointValueError()
-        }
+        encodeInt(value.toBits())
     }
 
     override fun encodeDouble(value: Double) {
-        if (allowFloatingPointValues) {
-            encodeLong(value.toBits())
-        } else {
-            throw floatingPointValueError()
-        }
+        encodeLong(value.toBits())
     }
 
     override fun encodeChar(value: Char) {
@@ -90,10 +80,6 @@ class HashEncoder(
                 encodeShort(value[i].code.toShort())
             }
         }
-    }
-
-    private fun floatingPointValueError(): Throwable {
-        return SerializationError("You can enable floating point number values with 'allowFloatingPointNumbers' flag in HashEncoder.")
     }
 
     companion object {

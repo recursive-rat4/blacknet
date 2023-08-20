@@ -45,7 +45,6 @@ object SipHash {
             return HashEncoder(
                     KeyedHashWriterJvm("SIPHASH-2-4", Salt.salt),
                     charset = null,
-                    allowFloatingPointValues = true
             )
         }
 
