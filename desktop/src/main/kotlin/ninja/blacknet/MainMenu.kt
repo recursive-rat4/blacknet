@@ -9,29 +9,15 @@
 
 package ninja.blacknet
 
-import javax.swing.Action
-import javax.swing.JMenu
-import javax.swing.JMenuBar
-
-fun MainMenu() = JMenuBar().apply {
-    +JMenu().apply {
+fun MainMenu() = jMenuBar {
+    +jMenu {
         text = "File"
         +QuitAction
     }
-    +JMenu().apply {
+    +jMenu {
         text = "Edit"
     }
-    +JMenu().apply {
+    +jMenu {
         text = "Help"
     }
-}
-
-context(JMenu)
-private operator fun Action.unaryPlus() {
-    this@JMenu.add(this@Action)
-}
-
-context(JMenuBar)
-private operator fun JMenu.unaryPlus() {
-    this@JMenuBar.add(this@JMenu)
 }

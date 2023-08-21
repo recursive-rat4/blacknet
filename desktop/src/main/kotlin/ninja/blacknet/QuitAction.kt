@@ -23,7 +23,3 @@ object QuitAction : AbstractAction() {
         System.exit(0)
     }
 }
-
-private var Action.name: String?
-    get() = getValue(NAME) as String?
-    set(value) = putValue(NAME, value)
