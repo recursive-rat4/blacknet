@@ -11,14 +11,45 @@ package ninja.blacknet
 
 import java.awt.Dimension
 import java.awt.Toolkit
-import javax.swing.JFrame
+import javax.swing.JTabbedPane
 import javax.swing.WindowConstants
 
-fun MainWindow() = JFrame().apply {
+fun MainWindow() = jFrame {
     defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     title = "Blacknet - Wallet"
     iconImage = Toolkit.getDefaultToolkit().getImage(Main::class.java.classLoader.getResource("logo.png"))
     jMenuBar = MainMenu()
     size = Dimension(950, 550)
+    contentPane = jTabbedPane {
+        tabPlacement = JTabbedPane.LEFT
+        +jPanel {
+            name = "Dashboard"
+            isDoubleBuffered = false
+        }
+        +jPanel {
+            name = "Transfer"
+            isDoubleBuffered = false
+        }
+        +jPanel {
+            name = "Atomic swap"
+            isDoubleBuffered = false
+        }
+        +jPanel {
+            name = "History"
+            isDoubleBuffered = false
+        }
+        +jPanel {
+            name = "Leasing"
+            isDoubleBuffered = false
+        }
+        +jPanel {
+            name = "Staking"
+            isDoubleBuffered = false
+        }
+        +jPanel {
+            name = "Address book"
+            isDoubleBuffered = false
+        }
+    }
     isVisible = true
 }
