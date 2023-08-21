@@ -14,13 +14,13 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import ninja.blacknet.codec.stringCodec
+import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.encode
 import java.io.File
 
 object B2Sum {
     @JvmStatic
     fun main(args: Array<String>) {
-        val hex = stringCodec("hex")
         val jobs = ArrayList<Job>(args.size)
 
         val DIGEST_SIZE_BITS = 256
@@ -50,7 +50,7 @@ object B2Sum {
                 stream.close()
                 val bytes = ByteArray(DIGEST_SIZE_BYTES)
                 b2.digest(bytes, 0)
-                println("${hex.encode(bytes)} $arg")
+                println("${Base16.encode(bytes)} $arg")
             }
 
             jobs.add(job)
