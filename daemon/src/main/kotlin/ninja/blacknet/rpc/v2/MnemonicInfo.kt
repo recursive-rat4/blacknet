@@ -11,6 +11,7 @@ package ninja.blacknet.rpc.v2
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.encode
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.Mnemonic

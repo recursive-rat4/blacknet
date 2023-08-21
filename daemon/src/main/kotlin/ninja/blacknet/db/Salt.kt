@@ -11,6 +11,7 @@ package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.encode
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PublicKeySerializer
 import ninja.blacknet.crypto.nextBytes

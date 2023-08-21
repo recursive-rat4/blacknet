@@ -12,20 +12,21 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.codec.base.Base16
-import ninja.blacknet.codec.base.HexCodecException
+import ninja.blacknet.codec.base.decode
+import ninja.blacknet.codec.base.encode
 
 /**
  * Returns the byte array representation of a hex-string.
  * @param string the hex-string
  * @param length the expected length of the byte array
  * @return the decoded [ByteArray]
- * @throws HexCodecException if the string is not a hexadecimal number or its length does not match the expected value
+ * @throws IllegalArgumentException if the string is not a hexadecimal number or its length does not match the expected value
  */
-@Throws(HexCodecException::class)
+@Throws(IllegalArgumentException::class)
 fun decodeHex(string: String, length: Int): ByteArray {
     return Base16.decode(string).also { bytes ->
         if (string.length != length)
-            throw HexCodecException("Expected length $length actual ${string.length}")
+            throw IllegalArgumentException("Expected length $length actual ${string.length}")
     }
 }
 
@@ -34,12 +35,12 @@ fun decodeHex(string: String, length: Int): ByteArray {
  * @param bytes the byte array
  * @param length the expected length of the byte array
  * @return the decoded [String]
- * @throws HexCodecException if length of the string does not match the expected value
+ * @throws IllegalArgumentException if length of the string does not match the expected value
  */
-@Throws(HexCodecException::class)
+@Throws(IllegalArgumentException::class)
 fun encodeHex(bytes: ByteArray, length: Int): String {
     return Base16.encode(bytes).also { string ->
         if (string.length != length)
-            throw HexCodecException("Expected length $length actual ${string.length}")
+            throw IllegalArgumentException("Expected length $length actual ${string.length}")
     }
 }

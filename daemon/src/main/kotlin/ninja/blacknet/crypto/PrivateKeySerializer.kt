@@ -16,7 +16,6 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import ninja.blacknet.codec.base.HexCodecException
 import ninja.blacknet.serialization.ContextualSerializer
 import ninja.blacknet.serialization.notSupportedFormatError
 import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
@@ -33,7 +32,7 @@ object PrivateKeySerializer : ContextualSerializer<ByteArray>() {
     fun decode(string: String): ByteArray {
         return try {
             decodeHex(string, SIZE_BYTES * 2)
-        } catch (e: HexCodecException) {
+        } catch (e: IllegalArgumentException) {
             Mnemonic.fromString(string)
         }
     }

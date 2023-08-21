@@ -13,26 +13,24 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import ninja.blacknet.codec.base.Base16.encode
-import ninja.blacknet.codec.base.Base16.decode
 
 class Base16Test {
     @Test
     fun decode() {
-        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), decode("01020A0B"))
-        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), decode("01020a0b"))
-        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), decode("01020A0b"))
-        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), decode("01020a0B"))
+        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), Base16.decode("01020A0B"))
+        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), Base16.decode("01020a0b"))
+        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), Base16.decode("01020A0b"))
+        assertEquals(byteArrayOf(0x01, 0x02, 0x0A, 0x0B), Base16.decode("01020a0B"))
 
-        assertFailsWith(HexCodecException::class) { decode("0") }
-        assertFailsWith(HexCodecException::class) { decode("0Z") }
-        assertFailsWith(HexCodecException::class) { decode("000") }
-        assertFailsWith(HexCodecException::class) { decode("000Z") }
+        assertFailsWith(IllegalArgumentException::class) { Base16.decode("0") }
+        assertFailsWith(IllegalArgumentException::class) { Base16.decode("0Z") }
+        assertFailsWith(IllegalArgumentException::class) { Base16.decode("000") }
+        assertFailsWith(IllegalArgumentException::class) { Base16.decode("000Z") }
     }
 
     @Test
     fun encode() {
-        assertTrue(encode(byteArrayOf(0x01, 0x02, 0x0A, 0x0B)).let {
+        assertTrue(Base16.encode(byteArrayOf(0x01, 0x02, 0x0A, 0x0B)).let {
             it == "01020A0B"
          || it == "01020a0b"
          // it == "01020A0b"

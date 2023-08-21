@@ -10,6 +10,7 @@
 package ninja.blacknet.core
 
 import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.decode
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.SignatureSerializer

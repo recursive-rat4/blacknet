@@ -19,6 +19,8 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.decode
+import ninja.blacknet.codec.base.encode
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.crypto.Ed25519.x25519
 import ninja.blacknet.serialization.ByteArraySerializer

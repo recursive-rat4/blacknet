@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import ninja.blacknet.DEFAULT_P2P_PORT
 import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.encode
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.HashSerializer

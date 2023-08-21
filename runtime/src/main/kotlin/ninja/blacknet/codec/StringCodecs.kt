@@ -20,10 +20,10 @@ import ninja.blacknet.codec.base.*
 @Throws(CodecException::class)
 public fun stringCodec(codec: String): StringCodec {
     return when (codec) {
-        "base16" -> Base16
+        "base16" -> throw NotImplementedError()
         "base32" -> throw NotImplementedError()
         "base64" -> throw NotImplementedError()
-        "hex" -> Base16
+        "hex" -> throw NotImplementedError()
         else -> throw CodecException("No such codec $codec")
     }
 }
