@@ -12,12 +12,10 @@ package ninja.blacknet
 
 import java.io.File
 import java.io.FileOutputStream
+import java.util.jar.JarFile
 import ninja.blacknet.util.Resources
 
-//TODO populate config dir in another place
 //FIXME permission 0700
-
-var configDirCreated: Boolean = false
 
 val configDir: File = run {
     val custom = System.getProperty("ninja.blacknet.configDir")
@@ -34,18 +32,7 @@ val configDir: File = run {
     } else {
         XDGConfigDirectory(XDG_SUBDIRECTORY)
     }
-    if (dir.mkdirs()) {
-        val jar = Resources.jar(Main::class.java)
-        configFiles().forEach { name ->
-            val input = jar.getInputStream(jar.getJarEntry("config/$name"))
-            val output = FileOutputStream(File(dir, name))
-            input.transferTo(output)
-            input.close()
-            output.close()
-        }
-        jar.close()
-        configDirCreated = true
-    }
+    dir.mkdirs()
     dir
 }
 
@@ -55,3 +42,25 @@ private fun configFiles() = arrayOf(
         "rpc.conf",
         "rpcregtest.conf"
 )
+
+fun populateConfigDir(): Int {
+    var createdFiles = 0
+
+    var jar: JarFile? = null
+    for (name in configFiles()) {
+        val file = File(configDir, name)
+        if (file.exists())
+            continue
+        if (jar == null)
+            jar = Resources.jar(Main::class.java)
+        val input = jar.getInputStream(jar.getJarEntry("config/$name"))
+        val output = FileOutputStream(file)
+        input.transferTo(output)
+        input.close()
+        output.close()
+        ++createdFiles
+    }
+    jar?.close()
+
+    return createdFiles
+}

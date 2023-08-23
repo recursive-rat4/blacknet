@@ -34,15 +34,18 @@ private val logger = KotlinLogging.logger {}
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        if (System.getProperty("ninja.blacknet.createConfigAndExit") != null) {
-            configDir
-            exitProcess(status = if (configDirCreated) {
-                println("Created configuration directory $configDir")
-                0
-            } else {
-                println("Configuration directory already exists or cannot be created $configDir")
-                1
-            })
+        populateConfigDir().let { createdFiles ->
+            if (System.getProperty("ninja.blacknet.createConfigAndExit") != null) {
+                exitProcess(
+                    status = if (createdFiles != 0) {
+                        println("Created $createdFiles files in $configDir")
+                        0
+                    } else {
+                        println("Configuration already exists or cannot be created in $configDir")
+                        1
+                    }
+                )
+            }
         }
 
         System.setProperty("java.util.logging.manager", "ninja.blacknet.logging.LogManager")
