@@ -14,6 +14,12 @@ import javax.swing.SwingUtilities
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
+        Thread.setDefaultUncaughtExceptionHandler { _, e ->
+            SwingUtilities.invokeLater {
+                ErrorDialog(e)
+            }
+        }
+
         SwingUtilities.invokeLater {
             TrayIcon()
             MainWindow()
