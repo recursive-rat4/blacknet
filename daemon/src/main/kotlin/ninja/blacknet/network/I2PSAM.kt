@@ -160,8 +160,9 @@ object I2PSAM {
         return answer
     }
 
-    private fun hash(destination: String): ByteArray {
-        val decoded = Base64.decode(destination, i2p = true)!!
+    internal fun hash(destination: String): ByteArray {
+        val base64 = destination.replace('-', '+').replace('~', '/') //XXX optimize?
+        val decoded = Base64.decode(base64)
         return buildHash("SHA-256") { encodeByteArray(decoded) }
     }
 
