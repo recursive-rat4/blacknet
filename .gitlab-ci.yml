@@ -10,9 +10,6 @@
 
 image: eclipse-temurin:17.0.8_7-jdk@sha256:b817bf26f878c20996fa0def35fc8b694c2f2785dfe9405c25c07066a2b9595f
 
-include:
-  - template: License-Scanning.gitlab-ci.yml
-
 variables:
   GRADLE_USER_HOME: ".gradle"
 
@@ -22,25 +19,28 @@ cache:
     - .gradle/caches
 
 stages:
-  - license_scanning
+#FIXME report is empty
+#TODO how to properly upload report for gitlab ui?
+#  - license_scanning
   - test
   - build
 
-license_scanning:
-  stage: license_scanning
-  allow_failure: false
-  rules:
-    - changes:
-      - 3RD-PARTY-LICENSES.txt
-      - LICENSE.txt
-      - gradle/libs.versions.toml
-      - gradle/verification-metadata.xml
-      - gradle/wrapper/gradle-wrapper.properties
-      when: on_success
-    - when: never
-  artifacts:
-    reports:
-      license_scanning: gl-license-scanning-report.json
+#license_scanning:
+#  stage: license_scanning
+#  script:
+#    - ./gradlew downloadLicenses
+#  rules:
+#    - changes:
+#      - 3RD-PARTY-LICENSES.txt
+#      - LICENSE.txt
+#      - gradle/libs.versions.toml
+#      - gradle/verification-metadata.xml
+#      - gradle/wrapper/gradle-wrapper.properties
+#      when: on_success
+#    - when: never
+#  artifacts:
+#    reports:
+#      license_scanning: gl-license-scanning-report.json
 
 test:
   stage: test
