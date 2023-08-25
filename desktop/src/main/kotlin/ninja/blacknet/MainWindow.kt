@@ -31,9 +31,7 @@ fun MainWindow() = jFrame {
         +jPanel {
             name = "Atomic swap"
         }
-        +jPanel {
-            name = "History"
-        }
+        +HistoryPane()
         +jPanel {
             name = "Leasing"
         }
