@@ -24,31 +24,24 @@ fun MainWindow() = jFrame {
         tabPlacement = JTabbedPane.LEFT
         +jPanel {
             name = "Dashboard"
-            isDoubleBuffered = false
         }
         +jPanel {
             name = "Transfer"
-            isDoubleBuffered = false
         }
         +jPanel {
             name = "Atomic swap"
-            isDoubleBuffered = false
         }
         +jPanel {
             name = "History"
-            isDoubleBuffered = false
         }
         +jPanel {
             name = "Leasing"
-            isDoubleBuffered = false
         }
         +jPanel {
             name = "Staking"
-            isDoubleBuffered = false
         }
         +jPanel {
             name = "Address book"
-            isDoubleBuffered = false
         }
     }
     isVisible = true

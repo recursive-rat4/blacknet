@@ -21,7 +21,7 @@ import javax.swing.JTabbedPane
 inline fun jFrame(build: JFrame.() -> Unit) = JFrame().apply(build)
 inline fun jMenu(build: JMenu.() -> Unit) = JMenu().apply(build)
 inline fun jMenuBar(build: JMenuBar.() -> Unit) = JMenuBar().apply(build)
-inline fun jPanel(build: JPanel.() -> Unit) = JPanel().apply(build)
+inline fun jPanel(build: JPanel.() -> Unit) = JPanel(false).apply(build)
 inline fun jTabbedPane(build: JTabbedPane.() -> Unit) = JTabbedPane().apply(build)
 
 context(Container)
