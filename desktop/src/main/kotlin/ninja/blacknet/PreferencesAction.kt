@@ -9,16 +9,15 @@
 
 package ninja.blacknet
 
-fun MainMenu() = jMenuBar {
-    +jMenu {
-        text = "File"
-        +QuitAction
+import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
+
+class PreferencesAction : AbstractAction() {
+    init {
+        name = "Preferences"
     }
-    +jMenu {
-        text = "Edit"
-        +PreferencesAction()
-    }
-    +jMenu {
-        text = "Help"
+
+    override fun actionPerformed(e: ActionEvent) {
+        PreferencesDialog()
     }
 }

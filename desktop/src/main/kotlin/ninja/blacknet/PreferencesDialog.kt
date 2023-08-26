@@ -9,16 +9,16 @@
 
 package ninja.blacknet
 
-fun MainMenu() = jMenuBar {
-    +jMenu {
-        text = "File"
-        +QuitAction
+import java.awt.Dimension
+
+fun PreferencesDialog() = jDialog {
+    isModal = true
+    title = "Blacknet - Preferences"
+    size = Dimension(540, 380)
+    contentPane = jTabbedPane {
+        +jPanel {
+            name = "Interface"
+        }
     }
-    +jMenu {
-        text = "Edit"
-        +PreferencesAction()
-    }
-    +jMenu {
-        text = "Help"
-    }
+    isVisible = true
 }
