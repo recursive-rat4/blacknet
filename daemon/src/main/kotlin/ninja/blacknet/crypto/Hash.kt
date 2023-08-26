@@ -36,8 +36,7 @@ class Hash(private val bytes: ByteArray) : Comparable<Hash> {
     }
 
     override fun compareTo(other: Hash): Int {
-        // non-numerical comparison only to make hashed data structures DoS resistant
-        return Arrays.compare(bytes, other.bytes)
+        return Arrays.compareUnsigned(bytes, other.bytes)
     }
 }
 
