@@ -260,17 +260,18 @@ object PeerDB {
         if (Node.isOffline())
             return
 
-        val toRemove = ArrayList<Address>()
+        var removed = 0
         val currTime = currentTimeSeconds()
         peers.forEach { (address, entry) ->
-            if (entry.isOld(currTime))
-                toRemove.add(address)
+            if (entry.isOld(currTime)) {
+                peers.remove(address)
+                ++removed
+            }
         }
-        if (!toRemove.isEmpty()) {
-            toRemove.forEach { peers.remove(it) }
+        if (removed != 0) {
             val batch = LevelDB.createWriteBatch()
             commitImpl(peers, batch)
-            logger.debug { "Probed ${toRemove.size} entries" }
+            logger.debug { "Probed $removed entries" }
         }
     }
 
