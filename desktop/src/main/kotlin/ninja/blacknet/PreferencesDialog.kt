@@ -20,6 +20,7 @@ fun PreferencesDialog() = jDialog {
     contentPane = jTabbedPane {
         +jPanel {
             name = "Interface"
+            +LookAndFeelComboBox()
         }
     }
     isVisible = true

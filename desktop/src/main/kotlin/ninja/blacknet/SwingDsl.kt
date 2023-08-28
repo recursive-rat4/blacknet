@@ -12,6 +12,7 @@ package ninja.blacknet
 import java.awt.Component
 import java.awt.Container
 import javax.swing.Action
+import javax.swing.JComboBox
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JMenu
@@ -20,6 +21,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTabbedPane
 
+inline fun <T> jComboBox(build: JComboBox<T>.() -> Unit) = JComboBox<T>().apply(build)
 inline fun jDialog(build: JDialog.() -> Unit) = JDialog().apply(build)
 inline fun jFrame(build: JFrame.() -> Unit) = JFrame().apply(build)
 inline fun jMenu(build: JMenu.() -> Unit) = JMenu().apply(build)
@@ -31,6 +33,11 @@ inline fun jTabbedPane(build: JTabbedPane.() -> Unit) = JTabbedPane().apply(buil
 context(Container)
 operator fun Component.unaryPlus() {
     this@Container.add(this@Component)
+}
+
+context(JComboBox<T>)
+operator fun <T> T.unaryPlus() {
+    this@JComboBox.addItem(this@T)
 }
 
 context(JMenu)
