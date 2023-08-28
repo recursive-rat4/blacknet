@@ -12,10 +12,10 @@ package ninja.blacknet
 import java.awt.Dimension
 import java.awt.Toolkit
 import javax.swing.JTabbedPane
-import javax.swing.WindowConstants
+import javax.swing.WindowConstants.EXIT_ON_CLOSE
 
 fun MainWindow() = jFrame {
-    defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
+    defaultCloseOperation = EXIT_ON_CLOSE
     title = "Blacknet - Wallet"
     iconImage = Toolkit.getDefaultToolkit().getImage(Main::class.java.classLoader.getResource("logo.png"))
     jMenuBar = MainMenu()

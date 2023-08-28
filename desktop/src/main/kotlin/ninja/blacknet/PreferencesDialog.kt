@@ -10,8 +10,10 @@
 package ninja.blacknet
 
 import java.awt.Dimension
+import javax.swing.WindowConstants.DISPOSE_ON_CLOSE
 
 fun PreferencesDialog() = jDialog {
+    defaultCloseOperation = DISPOSE_ON_CLOSE
     isModal = true
     title = "Blacknet - Preferences"
     size = Dimension(540, 380)
