@@ -9,18 +9,18 @@
 
 package ninja.blacknet
 
-import javax.swing.SwingUtilities
+import java.awt.EventQueue
 
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
-            SwingUtilities.invokeLater {
+            EventQueue.invokeLater {
                 ErrorDialog(e)
             }
         }
 
-        SwingUtilities.invokeLater {
+        EventQueue.invokeLater {
             TrayIcon()
             MainWindow()
         }
