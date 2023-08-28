@@ -11,5 +11,5 @@ package ninja.blacknet
 
 fun HistoryPane() = jScrollPane {
     name = "History"
-    //border?
+    border = null // no visual difference, so just unset
 }
