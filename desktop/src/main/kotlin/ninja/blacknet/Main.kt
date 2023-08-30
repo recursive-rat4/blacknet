@@ -16,7 +16,7 @@ object Main {
     fun main(args: Array<String>) {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
             EventQueue.invokeLater {
-                ErrorDialog(e)
+                ExceptionDialog(e)
             }
         }
 

@@ -14,9 +14,9 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.logging.Formatter
 import java.util.logging.LogRecord
+import ninja.blacknet.TERMINAL_WIDTH
 
 private val UTC = ZoneId.of("UTC")
-private const val TERMINAL_WIDTH = 80
 
 /**
  * A [Formatter] that does not disclose a locale and a time zone.

@@ -20,6 +20,9 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":blacknet-runtime"))
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.guava)
 }
 
 application {

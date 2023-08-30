@@ -23,6 +23,7 @@ inline fun jMenuBar(build: JMenuBar.() -> Unit) = JMenuBar().apply(build)
 inline fun jPanel(build: JPanel.() -> Unit) = JPanel(false).apply(build)
 inline fun jScrollPane(build: JScrollPane.() -> Unit) = JScrollPane().apply(build)
 inline fun jTabbedPane(build: JTabbedPane.() -> Unit) = JTabbedPane().apply(build)
+inline fun jTextArea(build: JTextArea.() -> Unit) = JTextArea().apply(build)
 
 context(Container)
 operator fun Component.unaryPlus() {
