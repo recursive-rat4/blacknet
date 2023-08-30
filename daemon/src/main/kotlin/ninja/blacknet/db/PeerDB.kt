@@ -18,6 +18,9 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.DEFAULT_P2P_PORT
@@ -46,6 +49,7 @@ object PeerDB {
     private val peers = ConcurrentHashMap<Address, Entry>(MAX_SIZE)
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)
+    private val writeToDiskMutex = Mutex()
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val versionBytes = binaryFormat.encodeToByteArray(VarIntSerializer, VERSION)
@@ -122,12 +126,17 @@ object PeerDB {
             }
         }
 
-        val proberJob = Runtime.rotate(::prober)
+        Runtime.rotate(::prober)
 
         ShutdownHooks.add {
-            proberJob.cancel()
-            logger.info { "Saving PeerDB" }
-            commit()
+            if (writeToDiskMutex.tryLock()) {
+                logger.info { "Saving PeerDB" }
+                commit()
+            } else runBlocking {
+                logger.info { "Waiting PeerDB saver" }
+                writeToDiskMutex.lock()
+            }
+            // hodl mutex so others don't acquire it
         }
     }
 
@@ -269,8 +278,10 @@ object PeerDB {
             }
         }
         if (removed != 0) {
-            val batch = LevelDB.createWriteBatch()
-            commitImpl(peers, batch)
+            writeToDiskMutex.withLock {
+                val batch = LevelDB.createWriteBatch()
+                commitImpl(peers, batch)
+            }
             logger.debug { "Probed $removed entries" }
         }
     }
