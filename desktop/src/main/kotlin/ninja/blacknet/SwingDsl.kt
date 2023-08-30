@@ -11,16 +11,10 @@ package ninja.blacknet
 
 import java.awt.Component
 import java.awt.Container
-import javax.swing.Action
-import javax.swing.JComboBox
-import javax.swing.JDialog
-import javax.swing.JFrame
-import javax.swing.JMenu
-import javax.swing.JMenuBar
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JTabbedPane
+import javax.swing.*
+import javax.swing.Action.*
 
+inline fun jCheckBox(build: JCheckBox.() -> Unit) = JCheckBox().apply(build)
 inline fun <T> jComboBox(build: JComboBox<T>.() -> Unit) = JComboBox<T>().apply(build)
 inline fun jDialog(build: JDialog.() -> Unit) = JDialog().apply(build)
 inline fun jFrame(build: JFrame.() -> Unit) = JFrame().apply(build)
@@ -46,5 +40,13 @@ operator fun Action.unaryPlus() {
 }
 
 var Action.name: String?
-    get() = getValue(Action.NAME) as String?
-    set(value) = putValue(Action.NAME, value)
+    get() = getValue(NAME) as String?
+    set(value) = putValue(NAME, value)
+
+var Action.selected: Boolean?
+    get() = getValue(SELECTED_KEY) as Boolean?
+    set(value) = putValue(SELECTED_KEY, value)
+
+var Action.toolTipText: String?
+    get() = getValue(SHORT_DESCRIPTION) as String?
+    set(value) = putValue(SHORT_DESCRIPTION, value)

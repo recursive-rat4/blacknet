@@ -22,7 +22,7 @@ object Main {
 
         EventQueue.invokeLater {
             TrayIcon()
-            MainWindow()
+            MainWindow
         }
     }
 }

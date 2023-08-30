@@ -11,36 +11,48 @@ package ninja.blacknet
 
 import java.awt.Dimension
 import java.awt.Toolkit
-import javax.swing.JTabbedPane
-import javax.swing.WindowConstants.EXIT_ON_CLOSE
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import javax.swing.JFrame
+import javax.swing.JTabbedPane.LEFT
 
-fun MainWindow() = jFrame {
-    defaultCloseOperation = EXIT_ON_CLOSE
-    title = "Blacknet - Wallet"
-    iconImage = Toolkit.getDefaultToolkit().getImage(Main::class.java.classLoader.getResource("logo.png"))
-    jMenuBar = MainMenu()
-    size = Dimension(950, 550)
-    contentPane = jTabbedPane {
-        tabPlacement = JTabbedPane.LEFT
-        +jPanel {
-            name = "Dashboard"
+object MainWindow : JFrame() {
+    init {
+        defaultCloseOperation = DO_NOTHING_ON_CLOSE
+        title = "Blacknet - Wallet"
+        iconImage = Toolkit.getDefaultToolkit().getImage(Main::class.java.classLoader.getResource("logo.png"))
+        jMenuBar = MainMenu()
+        size = Dimension(950, 550)
+        contentPane = jTabbedPane {
+            tabPlacement = LEFT
+            +jPanel {
+                name = "Dashboard"
+            }
+            +jPanel {
+                name = "Transfer"
+            }
+            +jPanel {
+                name = "Atomic swap"
+            }
+            +HistoryPane()
+            +jPanel {
+                name = "Leasing"
+            }
+            +jPanel {
+                name = "Staking"
+            }
+            +jPanel {
+                name = "Address book"
+            }
         }
-        +jPanel {
-            name = "Transfer"
-        }
-        +jPanel {
-            name = "Atomic swap"
-        }
-        +HistoryPane()
-        +jPanel {
-            name = "Leasing"
-        }
-        +jPanel {
-            name = "Staking"
-        }
-        +jPanel {
-            name = "Address book"
-        }
+        addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(e: WindowEvent) {
+                if (Config.hideOnClose)
+                    isVisible = false
+                else
+                    System.exit(0)
+            }
+        })
+        isVisible = true
     }
-    isVisible = true
 }

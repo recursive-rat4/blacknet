@@ -23,5 +23,8 @@ fun TrayIcon() {
     popup.add(quitItem)
     val trayIcon = TrayIcon(image, "Blacknet", popup)
     trayIcon.isImageAutoSize = true
+    trayIcon.addActionListener {
+        MainWindow.isVisible = !MainWindow.isVisible
+    }
     SystemTray.getSystemTray().add(trayIcon)
 }

@@ -21,6 +21,9 @@ fun PreferencesDialog() = jDialog {
         +jPanel {
             name = "Interface"
             +LookAndFeelComboBox()
+            +jCheckBox {
+                action = HideOnCloseAction()
+            }
         }
     }
     isVisible = true
