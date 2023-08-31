@@ -52,17 +52,17 @@ class Version(
             if (nonce != Node.nonce) {
                 // echo the nonce
                 Node.sendVersion(connection, nonce, prober = false)
-                connection.state = Connection.State.INCOMING_CONNECTED
                 logger.info { "Accepted connection from ${connection.debugName()} $agent" }
+                connection.state = Connection.State.INCOMING_CONNECTED
             } else {
                 // connected to self or bad luck
                 connection.close()
                 return
             }
         } else if (connection.state == Connection.State.OUTGOING_WAITING) {
+            logger.info { "Connected to ${connection.debugName()} $agent" }
             connection.state = Connection.State.OUTGOING_CONNECTED
             PeerDB.connected(connection.remoteAddress, connection.connectedAt, connection.agent, prober = false)
-            logger.info { "Connected to ${connection.debugName()} $agent" }
         } else if (connection.state == Connection.State.PROBER_WAITING) {
             // keeping track of online peers
             connection.state = Connection.State.PROBER_CONNECTED
