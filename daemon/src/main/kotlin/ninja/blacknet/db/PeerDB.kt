@@ -37,6 +37,7 @@ import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.HashMap
+import ninja.blacknet.util.HashMapSerializer
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.Resources
 import ninja.blacknet.util.rotate
@@ -51,73 +52,13 @@ object PeerDB {
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)
     private val writeToDiskMutex = Mutex()
 
-    private fun setVersion(batch: LevelDB.WriteBatch) {
-        val versionBytes = binaryFormat.encodeToByteArray(VarIntSerializer, VERSION)
-        batch.put(VERSION_KEY, versionBytes)
-    }
-
     init {
-        val stateBytes = LevelDB.get(STATE_KEY)
-        val versionBytes = LevelDB.get(VERSION_KEY)
+        val hashMap = loadFromLevelDB()
 
-        val version = if (versionBytes != null) {
-            binaryFormat.decodeFromByteArray(VarIntSerializer, versionBytes)
-        } else {
-            1
+        if (hashMap != null) {
+            logger.info { "Loaded ${hashMap.size} peer addresses" }
+            peers.putAll(hashMap)
         }
-
-        val hashMap = if (version == VERSION) {
-            if (stateBytes != null) {
-                binaryFormat.decodeFromByteArray(MapSerializer(Address.serializer(), Entry.serializer()), stateBytes)
-            } else {
-                emptyMap<Address, Entry>()
-            }
-        } else if (version in 1 until VERSION) {
-            val batch = LevelDB.createWriteBatch()
-
-            val updatedHashMap = if (stateBytes != null) {
-                logger.info { "Upgrading PeerDB..." }
-                val result = HashMap<Address, Entry>(expectedSize = MAX_SIZE)
-                try {
-                    if (version == 3) {
-                        val stateV3 = binaryFormat.decodeFromByteArray(MapSerializer(Address.serializer(), EntryV3.serializer()), stateBytes)
-                        stateV3.forEach { (address, entryV3) ->
-                            result.put(address, Entry(entryV3))
-                        }
-                    } else if (version == 2) {
-                        val stateV2 = binaryFormat.decodeFromByteArray(MapSerializer(AddressV1.serializer(), EntryV2.serializer()), stateBytes)
-                        stateV2.forEach { (addressV1, entryV2) ->
-                            result.put(Address(addressV1), Entry(entryV2))
-                        }
-                    } else if (version == 1) {
-                        val stateV1 = binaryFormat.decodeFromByteArray(MapSerializer(AddressV1.serializer(), EntryV1.serializer()), stateBytes)
-                        stateV1.forEach { (addressV1, entryV1) ->
-                            result.put(Address(addressV1), Entry(entryV1))
-                        }
-                    }
-                } catch (e: Throwable) {
-                    logger.error(e)
-                }
-                result
-            } else {
-                emptyMap<Address, Entry>()
-            }
-
-            setVersion(batch)
-
-            if (updatedHashMap.isEmpty())
-                batch.write()
-            else
-                commitImpl(updatedHashMap, batch)
-
-            updatedHashMap
-        } else {
-            throw Error("Unknown database version $version")
-        }
-
-        logger.info { "Loaded ${hashMap.size} peer addresses" }
-
-        peers.putAll(hashMap)
 
         if (peers.size < 100) {
             val added = add(listBuiltinPeers(), Network.LOOPBACK)
@@ -138,6 +79,60 @@ object PeerDB {
             }
             // hodl mutex so others don't acquire it
         }
+    }
+
+    private fun loadFromLevelDB(): HashMap<Address, Entry>? {
+        val stateBytes = LevelDB.get(STATE_KEY)
+
+        if (stateBytes == null)
+            return null
+
+        val versionBytes = LevelDB.get(VERSION_KEY)
+
+        val version = if (versionBytes != null) {
+            binaryFormat.decodeFromByteArray(VarIntSerializer, versionBytes)
+        } else {
+            1
+        }
+
+        val hashMap = if (version == VERSION) {
+            binaryFormat.decodeFromByteArray(HashMapSerializer(Address.serializer(), Entry.serializer()), stateBytes)
+        } else if (version in 1 until VERSION) {
+            val updatedHashMap = run {
+                logger.info { "Upgrading PeerDB..." }
+                val result = HashMap<Address, Entry>(expectedSize = MAX_SIZE)
+                try {
+                    if (version == 3) {
+                        val stateV3 = binaryFormat.decodeFromByteArray(HashMapSerializer(Address.serializer(), EntryV3.serializer()), stateBytes)
+                        stateV3.forEach { (address, entryV3) ->
+                            result.put(address, Entry(entryV3))
+                        }
+                    } else if (version == 2) {
+                        val stateV2 = binaryFormat.decodeFromByteArray(HashMapSerializer(AddressV1.serializer(), EntryV2.serializer()), stateBytes)
+                        stateV2.forEach { (addressV1, entryV2) ->
+                            result.put(Address(addressV1), Entry(entryV2))
+                        }
+                    } else if (version == 1) {
+                        val stateV1 = binaryFormat.decodeFromByteArray(HashMapSerializer(AddressV1.serializer(), EntryV1.serializer()), stateBytes)
+                        stateV1.forEach { (addressV1, entryV1) ->
+                            result.put(Address(addressV1), Entry(entryV1))
+                        }
+                    }
+                } catch (e: Throwable) {
+                    logger.error(e)
+                }
+                result
+            }
+
+            val batch = LevelDB.createWriteBatch()
+            commitImpl(updatedHashMap, batch)
+
+            updatedHashMap
+        } else {
+            throw Error("Unknown database version $version")
+        }
+
+        return hashMap
     }
 
     private fun listBuiltinPeers(): List<Address> {
@@ -292,6 +287,8 @@ object PeerDB {
     }
 
     private fun commitImpl(map: Map<Address, Entry>, batch: LevelDB.WriteBatch) {
+        val versionBytes = binaryFormat.encodeToByteArray(VarIntSerializer, VERSION)
+        batch.put(VERSION_KEY, versionBytes)
         val bytes = binaryFormat.encodeToByteArray(MapSerializer(Address.serializer(), Entry.serializer()), map)
         batch.put(STATE_KEY, bytes)
         batch.write()
