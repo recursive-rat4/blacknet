@@ -19,7 +19,6 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.math.BigInteger
 import kotlin.random.Random
-import kotlin.random.nextULong
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -121,7 +120,7 @@ object Node {
                         }
                     }
                     logger.info { "Saving node state" }
-                    val tmpFile = File(stateDir, "$DATA_FILENAME.${Random.nextULong()}")
+                    val tmpFile = File.createTempFile(DATA_FILENAME + '-', null, stateDir)
                     tmpFile.outputStream().sync {
                         write(DATA_VERSION.toByteArray())
                         write(binaryFormat.encodeToByteArray(Persistent.serializer(), persistent))
