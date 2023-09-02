@@ -11,6 +11,8 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.File
+import java.io.FileNotFoundException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.exp
 import kotlin.math.max
@@ -28,6 +30,7 @@ import ninja.blacknet.regtest
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.contract.BAppIdSerializer
+import ninja.blacknet.dataDir
 import ninja.blacknet.logging.error
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
@@ -40,20 +43,25 @@ import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.HashMapSerializer
 import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.Resources
+import ninja.blacknet.util.buffered
+import ninja.blacknet.util.data
+import ninja.blacknet.util.replaceFile
 import ninja.blacknet.util.rotate
+import ninja.blacknet.util.toByteArray
 
 private val logger = KotlinLogging.logger {}
 
 object PeerDB {
     const val MAX_SIZE = 8192
     private const val VERSION = 4
+    private const val FILENAME = "peers.dat"
     private val peers = ConcurrentHashMap<Address, Entry>(MAX_SIZE)
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)
     private val writeToDiskMutex = Mutex()
 
     init {
-        val hashMap = loadFromLevelDB()
+        val hashMap = loadFromFile() ?: extractFromLevelDB()
 
         if (hashMap != null) {
             logger.info { "Loaded ${hashMap.size} peer addresses" }
@@ -72,7 +80,7 @@ object PeerDB {
         ShutdownHooks.add {
             if (writeToDiskMutex.tryLock()) {
                 logger.info { "Saving PeerDB" }
-                commit()
+                saveToFile()
             } else runBlocking {
                 logger.info { "Waiting PeerDB saver" }
                 writeToDiskMutex.lock()
@@ -81,7 +89,24 @@ object PeerDB {
         }
     }
 
-    private fun loadFromLevelDB(): HashMap<Address, Entry>? {
+    private fun loadFromFile(): HashMap<Address, Entry>? {
+        try {
+            File(dataDir, FILENAME).inputStream().buffered().data().use { stream ->
+                val version = stream.readInt()
+                val bytes = stream.readAllBytes()
+                if (version == VERSION) {
+                    return binaryFormat.decodeFromByteArray(HashMapSerializer(Address.serializer(), Entry.serializer()), bytes)
+                } else {
+                    throw Error("Unknown database version $version")
+                }
+            }
+        } catch (e: FileNotFoundException) {
+            // first run or unlinked file
+        }
+        return null
+    }
+
+    private fun extractFromLevelDB(): HashMap<Address, Entry>? {
         val stateBytes = LevelDB.get(STATE_KEY)
 
         if (stateBytes == null)
@@ -124,13 +149,15 @@ object PeerDB {
                 result
             }
 
-            val batch = LevelDB.createWriteBatch()
-            commitImpl(updatedHashMap, batch)
-
             updatedHashMap
         } else {
             throw Error("Unknown database version $version")
         }
+
+        val batch = LevelDB.createWriteBatch()
+        batch.delete(VERSION_KEY)
+        batch.delete(STATE_KEY)
+        batch.write()
 
         return hashMap
     }
@@ -274,24 +301,17 @@ object PeerDB {
         }
         if (removed != 0) {
             writeToDiskMutex.withLock {
-                val batch = LevelDB.createWriteBatch()
-                commitImpl(peers, batch)
+                saveToFile()
             }
             logger.debug { "Probed $removed entries" }
         }
     }
 
-    private fun commit() {
-        val batch = LevelDB.createWriteBatch()
-        commitImpl(peers, batch)
-    }
-
-    private fun commitImpl(map: Map<Address, Entry>, batch: LevelDB.WriteBatch) {
-        val versionBytes = binaryFormat.encodeToByteArray(VarIntSerializer, VERSION)
-        batch.put(VERSION_KEY, versionBytes)
-        val bytes = binaryFormat.encodeToByteArray(MapSerializer(Address.serializer(), Entry.serializer()), map)
-        batch.put(STATE_KEY, bytes)
-        batch.write()
+    private fun saveToFile() {
+        replaceFile(dataDir, FILENAME) {
+            write(VERSION.toByteArray())
+            write(binaryFormat.encodeToByteArray(MapSerializer(Address.serializer(), Entry.serializer()), peers))
+        }
     }
 
     @Serializable
