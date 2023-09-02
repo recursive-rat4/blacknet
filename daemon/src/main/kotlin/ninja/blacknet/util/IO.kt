@@ -34,3 +34,9 @@ inline fun FileOutputStream.sync(action: FileOutputStream.() -> Unit): Unit = us
         fd.sync()
     }
 }
+
+inline fun replaceFile(dir: File, name: String, action: FileOutputStream.() -> Unit) {
+    val tmpFile = File.createTempFile(name + '-', null, dir)
+    tmpFile.outputStream().sync(action)
+    moveFile(tmpFile, File(dir, name))
+}

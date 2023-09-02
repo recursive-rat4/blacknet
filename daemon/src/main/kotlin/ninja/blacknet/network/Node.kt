@@ -46,9 +46,8 @@ import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
-import ninja.blacknet.util.moveFile
+import ninja.blacknet.util.replaceFile
 import ninja.blacknet.util.rotate
-import ninja.blacknet.util.sync
 import ninja.blacknet.util.toByteArray
 
 private val logger = KotlinLogging.logger {}
@@ -120,12 +119,10 @@ object Node {
                         }
                     }
                     logger.info { "Saving node state" }
-                    val tmpFile = File.createTempFile(DATA_FILENAME + '-', null, stateDir)
-                    tmpFile.outputStream().sync {
+                    replaceFile(stateDir, DATA_FILENAME) {
                         write(DATA_VERSION.toByteArray())
                         write(binaryFormat.encodeToByteArray(Persistent.serializer(), persistent))
                     }
-                    moveFile(tmpFile, File(stateDir, DATA_FILENAME))
                 }
             }
         }
