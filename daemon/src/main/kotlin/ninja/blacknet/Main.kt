@@ -71,6 +71,8 @@ object Main {
         logger.info { "Using data directory ${dataDir.absolutePath}" }
         logger.info { "Using state directory ${stateDir.absolutePath}" }
 
+        testAtomicFileMove(dataDir)
+
         Security.addProvider(Blake2bProvider())
         Security.addProvider(BouncyCastleProvider())
 
