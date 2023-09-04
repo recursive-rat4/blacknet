@@ -50,3 +50,23 @@ var Container.south: Component?
         else
             remove(south)
     }
+
+context(BorderLayout)
+var Container.west: Component?
+    get() = getLayoutComponent(WEST)
+    set(value) {
+        if (value != null)
+            add(value, WEST)
+        else
+            remove(west)
+    }
+
+context(BorderLayout)
+var Container.east: Component?
+    get() = getLayoutComponent(EAST)
+    set(value) {
+        if (value != null)
+            add(value, EAST)
+        else
+            remove(east)
+    }

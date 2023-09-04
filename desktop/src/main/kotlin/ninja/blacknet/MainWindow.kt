@@ -32,18 +32,7 @@ object MainWindow : JFrame() {
             +jPanel {
                 name = "Transfer"
             }
-            +jTabbedPane {
-                name = "Atomic swap"
-                +jPanel {
-                    name = "Create"
-                }
-                +jPanel {
-                    name = "Claim"
-                }
-                +jPanel {
-                    name = "Refund"
-                }
-            }
+            +AtomicSwapPane()
             +HistoryPane()
             +jPanel {
                 name = "Leasing"

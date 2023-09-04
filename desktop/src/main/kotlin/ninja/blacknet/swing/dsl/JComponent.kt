@@ -26,6 +26,7 @@ inline fun jScrollPane(build: JScrollPane.() -> Unit) = JScrollPane().apply(buil
 inline fun jTabbedPane(build: JTabbedPane.() -> Unit) = JTabbedPane().apply(build)
 inline fun jTable(build: JTable.() -> Unit) = JTable().apply(build)
 inline fun jTextArea(build: JTextArea.() -> Unit) = JTextArea().apply(build)
+inline fun jTextField(build: JTextField.() -> Unit) = JTextField().apply(build)
 
 context(Container)
 operator fun Component.unaryPlus() {
