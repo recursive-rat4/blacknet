@@ -7,18 +7,14 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.swing.dsl
 
-import java.awt.event.ActionEvent
-import javax.swing.AbstractAction
-import ninja.blacknet.swing.dsl.*
+import java.awt.Container
+import java.awt.FlowLayout
 
-class PreferencesAction : AbstractAction() {
-    init {
-        name = "Preferences"
-    }
-
-    override fun actionPerformed(e: ActionEvent) {
-        PreferencesDialog()
+inline fun Container.flowLayout(build: FlowLayout.() -> Unit) {
+    FlowLayout().apply {
+        layout = this
+        build()
     }
 }

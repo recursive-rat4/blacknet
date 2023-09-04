@@ -11,6 +11,7 @@ package ninja.blacknet
 
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
+import ninja.blacknet.swing.dsl.*
 
 object QuitAction : AbstractAction() {
     init {

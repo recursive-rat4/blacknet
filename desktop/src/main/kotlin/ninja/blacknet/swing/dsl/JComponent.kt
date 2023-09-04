@@ -7,12 +7,11 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.swing.dsl
 
 import java.awt.Component
 import java.awt.Container
 import javax.swing.*
-import javax.swing.Action.*
 
 inline fun jCheckBox(build: JCheckBox.() -> Unit) = JCheckBox().apply(build)
 inline fun <T> jComboBox(build: JComboBox<T>.() -> Unit) = JComboBox<T>().apply(build)
@@ -34,20 +33,3 @@ context(JComboBox<T>)
 operator fun <T> T.unaryPlus() {
     this@JComboBox.addItem(this@T)
 }
-
-context(JMenu)
-operator fun Action.unaryPlus() {
-    this@JMenu.add(this@Action)
-}
-
-var Action.name: String?
-    get() = getValue(NAME) as String?
-    set(value) = putValue(NAME, value)
-
-var Action.selected: Boolean?
-    get() = getValue(SELECTED_KEY) as Boolean?
-    set(value) = putValue(SELECTED_KEY, value)
-
-var Action.toolTipText: String?
-    get() = getValue(SHORT_DESCRIPTION) as String?
-    set(value) = putValue(SHORT_DESCRIPTION, value)

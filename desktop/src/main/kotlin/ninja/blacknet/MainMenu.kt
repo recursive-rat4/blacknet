@@ -9,6 +9,8 @@
 
 package ninja.blacknet
 
+import ninja.blacknet.swing.dsl.*
+
 fun MainMenu() = jMenuBar {
     +jMenu {
         text = "File"

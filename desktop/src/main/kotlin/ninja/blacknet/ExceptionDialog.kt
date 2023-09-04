@@ -10,6 +10,7 @@
 package ninja.blacknet
 
 import com.google.common.base.Throwables
+import ninja.blacknet.swing.dsl.*
 
 fun ExceptionDialog(
     e: Throwable

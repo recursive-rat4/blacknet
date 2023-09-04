@@ -9,6 +9,8 @@
 
 package ninja.blacknet
 
+import ninja.blacknet.swing.dsl.*
+
 fun HistoryPane() = jScrollPane {
     name = "History"
     border = null // no visual difference, so just unset

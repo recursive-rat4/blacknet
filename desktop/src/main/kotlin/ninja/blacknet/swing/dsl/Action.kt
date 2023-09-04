@@ -1,0 +1,31 @@
+/*
+ * Copyright (c) 2023 Pavel Vasin
+ *
+ * Licensed under the Jelurida Public License version 1.1
+ * for the Blacknet Public Blockchain Platform (the "License");
+ * you may not use this file except in compliance with the License.
+ * See the LICENSE.txt file at the top-level directory of this distribution.
+ */
+
+package ninja.blacknet.swing.dsl
+
+import javax.swing.Action
+import javax.swing.Action.*
+import javax.swing.JMenu
+
+context(JMenu)
+operator fun Action.unaryPlus() {
+    this@JMenu.add(this@Action)
+}
+
+var Action.name: String?
+    get() = getValue(NAME) as String?
+    set(value) = putValue(NAME, value)
+
+var Action.selected: Boolean?
+    get() = getValue(SELECTED_KEY) as Boolean?
+    set(value) = putValue(SELECTED_KEY, value)
+
+var Action.toolTipText: String?
+    get() = getValue(SHORT_DESCRIPTION) as String?
+    set(value) = putValue(SHORT_DESCRIPTION, value)

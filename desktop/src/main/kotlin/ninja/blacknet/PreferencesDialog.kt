@@ -11,6 +11,7 @@ package ninja.blacknet
 
 import java.awt.Dimension
 import javax.swing.WindowConstants.DISPOSE_ON_CLOSE
+import ninja.blacknet.swing.dsl.*
 
 fun PreferencesDialog() = jDialog {
     defaultCloseOperation = DISPOSE_ON_CLOSE
