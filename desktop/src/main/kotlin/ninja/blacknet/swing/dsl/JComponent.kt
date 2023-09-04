@@ -13,15 +13,18 @@ import java.awt.Component
 import java.awt.Container
 import javax.swing.*
 
+inline fun jButton(build: JButton.() -> Unit) = JButton().apply(build)
 inline fun jCheckBox(build: JCheckBox.() -> Unit) = JCheckBox().apply(build)
 inline fun <T> jComboBox(build: JComboBox<T>.() -> Unit) = JComboBox<T>().apply(build)
 inline fun jDialog(build: JDialog.() -> Unit) = JDialog().apply(build)
 inline fun jFrame(build: JFrame.() -> Unit) = JFrame().apply(build)
+inline fun jLabel(build: JLabel.() -> Unit) = JLabel().apply(build)
 inline fun jMenu(build: JMenu.() -> Unit) = JMenu().apply(build)
 inline fun jMenuBar(build: JMenuBar.() -> Unit) = JMenuBar().apply(build)
 inline fun jPanel(build: JPanel.() -> Unit) = JPanel(false).apply(build)
 inline fun jScrollPane(build: JScrollPane.() -> Unit) = JScrollPane().apply(build)
 inline fun jTabbedPane(build: JTabbedPane.() -> Unit) = JTabbedPane().apply(build)
+inline fun jTable(build: JTable.() -> Unit) = JTable().apply(build)
 inline fun jTextArea(build: JTextArea.() -> Unit) = JTextArea().apply(build)
 
 context(Container)

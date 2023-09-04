@@ -51,9 +51,7 @@ object MainWindow : JFrame() {
             +jPanel {
                 name = "Staking"
             }
-            +jPanel {
-                name = "Address book"
-            }
+            +AddressBookPanel()
         }
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent) {

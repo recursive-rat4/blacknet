@@ -10,6 +10,7 @@
 package ninja.blacknet.swing.dsl
 
 import java.awt.BorderLayout
+import java.awt.BorderLayout.*
 import java.awt.Component
 import java.awt.Container
 
@@ -22,20 +23,30 @@ inline fun Container.borderLayout(build: BorderLayout.() -> Unit) {
 
 context(BorderLayout)
 var Container.center: Component?
-    get() = getLayoutComponent(BorderLayout.CENTER)
+    get() = getLayoutComponent(CENTER)
     set(value) {
         if (value != null)
-            add(value, BorderLayout.CENTER)
+            add(value, CENTER)
         else
             remove(center)
     }
 
 context(BorderLayout)
-var Container.south: Component?
-    get() = getLayoutComponent(BorderLayout.SOUTH)
+var Container.north: Component?
+    get() = getLayoutComponent(NORTH)
     set(value) {
         if (value != null)
-            add(value, BorderLayout.SOUTH)
+            add(value, NORTH)
+        else
+            remove(north)
+    }
+
+context(BorderLayout)
+var Container.south: Component?
+    get() = getLayoutComponent(SOUTH)
+    set(value) {
+        if (value != null)
+            add(value, SOUTH)
         else
             remove(south)
     }
