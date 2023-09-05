@@ -17,6 +17,8 @@ fun AddressBookPanel() = jPanel {
     borderLayout {
         center = jScrollPane {
             viewport.view = jTable {
+                autoCreateRowSorter = true
+                model = AddressBookTableModel()
             }
         }
         south = jPanel {
