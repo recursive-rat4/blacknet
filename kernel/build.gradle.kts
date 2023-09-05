@@ -12,25 +12,45 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    application
+    alias(libs.plugins.kotlin.serialization)
 }
+
+apply<kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin>()
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(project(":blacknet-kernel"))
+    implementation(project(":blacknet-json-rpc"))
+    implementation(project(":blacknet-runtime"))
+    implementation(project(":blacknet-serialization"))
+    implementation(project(":blacknet-time"))
     implementation(libs.kotlin.stdlib)
     implementation(libs.ktor.cio)
+    implementation(libs.ktor.default.headers)
+    implementation(libs.ktor.status.pages)
+    implementation(libs.ktor.io)
+    implementation(libs.ktor.network)
+    implementation(libs.ktor.websockets)
+    implementation(libs.kotlin.coroutines)
     implementation(libs.kotlin.coroutines.debug)
+    implementation(libs.kotlin.serialization)
+    implementation(libs.kotlin.serialization.json)
+    implementation(libs.apache.collections)
+    implementation(libs.eddsa)
     implementation(libs.blake2b)
     implementation(libs.bouncycastle)
+    implementation(libs.leveldb.java)
+    implementation(libs.slf4j)
     implementation(libs.kotlin.logging)
-}
-
-application {
-    mainClass = "ninja.blacknet.Main"
+    implementation(libs.guava)
+    implementation(libs.weupnp)
+    implementation(files("../buildSrc/libs/leveldbjni-all-1.18.3.jar"))
+    testImplementation(libs.kotlin.testng) {
+        exclude("aopalliance", "aopalliance")
+        exclude("junit", "junit")
+    }
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {
@@ -59,6 +79,9 @@ val compileTestKotlin by tasks.existing(KotlinCompile::class) {
 
 val jar by tasks.existing(Jar::class) {
     manifest {
+        dirtyDescribeGit(buildDir.getParentFile().getParentFile())?.let { revision ->
+            attributes("Build-Revision" to revision)
+        }
         attributes(
                 "Implementation-Title" to project.name.toString(),
                 "Implementation-Vendor" to "Blacknet Team",
@@ -67,20 +90,6 @@ val jar by tasks.existing(Jar::class) {
     }
 }
 
-val run by tasks.existing(JavaExec::class) {
-    classpath = files(tasks.jar) + classpath.filter { !it.startsWith(buildDir) }
-    systemProperties = defaultSystemProperties
+val test by tasks.existing(Test::class) {
+    useTestNG()
 }
-
-val startScripts by tasks.existing(CreateStartScripts::class) {
-    defaultJvmOpts = defaultSystemProperties.map { (key, value) -> "-D$key=$value" }
-}
-
-val defaultSystemProperties: Map<String, Any> = mapOf(
-    // Output hexadecimal values with lower case letters
-    // "ninja.blacknet.codec.base.hex.lowercase" to true,
-    // Indent JSON returned by RPC API
-    // "ninja.blacknet.serialization.json.indented" to true,
-    // Regression testing mode
-    // "ninja.blacknet.regtest" to true,
-)

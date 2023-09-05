@@ -24,6 +24,9 @@ project(":blacknet-desktop").projectDir = file("desktop")
 include(":blacknet-json-rpc")
 project(":blacknet-json-rpc").projectDir = file("json-rpc")
 
+include(":blacknet-kernel")
+project(":blacknet-kernel").projectDir = file("kernel")
+
 include(":blacknet-runtime")
 project(":blacknet-runtime").projectDir = file("runtime")
 

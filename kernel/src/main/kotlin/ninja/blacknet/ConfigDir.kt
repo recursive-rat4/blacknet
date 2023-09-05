@@ -52,7 +52,7 @@ fun populateConfigDir(): Int {
         if (file.exists())
             continue
         if (jar == null)
-            jar = Resources.jar(Main::class.java)
+            jar = Resources.jar(Version::class.java)
         val input = jar.getInputStream(jar.getJarEntry("config/$name"))
         val output = FileOutputStream(file)
         input.transferTo(output)

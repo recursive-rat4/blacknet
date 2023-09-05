@@ -49,8 +49,8 @@ test:
   artifacts:
     reports:
       junit:
-        - daemon/build/test-results/test/TEST-*.xml
         - json-rpc/build/test-results/test/TEST-*.xml
+        - kernel/build/test-results/test/TEST-*.xml
         - runtime/build/test-results/test/TEST-*.xml
         - serialization/build/test-results/test/TEST-*.xml
         - time/build/test-results/test/TEST-*.xml
