@@ -11,6 +11,7 @@ package ninja.blacknet
 
 import java.awt.EventQueue
 import java.awt.Window
+import java.awt.event.ItemEvent.SELECTED
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import ninja.blacknet.swing.dsl.*
@@ -20,8 +21,10 @@ fun LookAndFeelComboBox() = jComboBox {
         +info.name
     }
     selectedItem = UIManager.getLookAndFeel().getName()
-    addActionListener {
-        val name = selectedItem as String
+    addItemListener { e ->
+        if (e.stateChange != SELECTED)
+            return@addItemListener
+        val name = e.item as String
         UIManager.setLookAndFeel(UIManager.createLookAndFeel(name))
         // invoke later to work around an exception when triggered from keyboard
         EventQueue.invokeLater {
