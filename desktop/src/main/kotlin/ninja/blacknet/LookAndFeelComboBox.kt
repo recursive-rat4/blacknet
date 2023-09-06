@@ -9,6 +9,7 @@
 
 package ninja.blacknet
 
+import java.awt.EventQueue
 import java.awt.Window
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
@@ -22,8 +23,11 @@ fun LookAndFeelComboBox() = jComboBox {
     addActionListener {
         val name = selectedItem as String
         UIManager.setLookAndFeel(UIManager.createLookAndFeel(name))
-        Window.getWindows().forEach { window ->
-            SwingUtilities.updateComponentTreeUI(window)
+        // invoke later to work around an exception when triggered from keyboard
+        EventQueue.invokeLater {
+            Window.getWindows().forEach { window ->
+                SwingUtilities.updateComponentTreeUI(window)
+            }
         }
     }
 }
