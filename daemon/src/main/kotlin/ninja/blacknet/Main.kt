@@ -19,7 +19,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.security.Security
 import java.util.logging.LogManager
-import kotlin.system.exitProcess
 import kotlinx.coroutines.debug.DebugProbes
 import ninja.blacknet.core.Staker
 import ninja.blacknet.core.TxPool
@@ -36,8 +35,8 @@ object Main {
     fun main(args: Array<String>) {
         populateConfigDir().let { createdFiles ->
             if (System.getProperty("ninja.blacknet.createConfigAndExit") != null) {
-                exitProcess(
-                    status = if (createdFiles != 0) {
+                System.exit(
+                    if (createdFiles != 0) {
                         println("Created $createdFiles files in $configDir")
                         0
                     } else {
@@ -132,7 +131,7 @@ object Main {
         } catch (e: Throwable) {
             logger.error(e)
         } finally {
-            exitProcess(1) //FIXME non-main threads shouldn't inhibit shutdown
+            System.exit(1) //FIXME non-main threads shouldn't inhibit shutdown
         }
     }
 }
