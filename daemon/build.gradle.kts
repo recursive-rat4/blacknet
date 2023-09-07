@@ -22,10 +22,6 @@ repositories {
 dependencies {
     implementation(project(":blacknet-kernel"))
     implementation(libs.kotlin.stdlib)
-    implementation(libs.ktor.cio)
-    implementation(libs.kotlin.coroutines.debug)
-    implementation(libs.blake2b)
-    implementation(libs.bouncycastle)
     implementation(libs.kotlin.logging)
 }
 

@@ -52,7 +52,7 @@ object ChainFetcher {
 
     private val coroutine = Runtime.rotate(::implementation)
 
-    fun run(): Nothing = runBlocking {
+    fun join(): Nothing = runBlocking {
         coroutine.join()
         throw RuntimeException("ChainFetcher exited")
     }
