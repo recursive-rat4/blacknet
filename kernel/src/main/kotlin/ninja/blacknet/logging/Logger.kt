@@ -7,20 +7,23 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+@file:Suppress("NOTHING_TO_INLINE")
+
 package ninja.blacknet.logging
 
 import io.github.oshai.kotlinlogging.KLogger
-import kotlin.Throwable
 
-fun KLogger.debug(throwable: Throwable) = debug(throwable) {
+// Inline to get meaningful source class and method
+
+inline fun KLogger.debug(throwable: Throwable) = debug(throwable) {
     throwable.debugMessage()
 }
 
-fun KLogger.error(throwable: Throwable) = error(throwable) {
+inline fun KLogger.error(throwable: Throwable) = error(throwable) {
     throwable.debugMessage()
 }
 
-fun KLogger.info(throwable: Throwable) = info(throwable) {
+inline fun KLogger.info(throwable: Throwable) = info(throwable) {
     throwable.debugMessage()
 }
 
