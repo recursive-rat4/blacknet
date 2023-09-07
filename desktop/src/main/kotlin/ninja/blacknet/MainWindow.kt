@@ -21,7 +21,7 @@ object MainWindow : JFrame() {
     init {
         defaultCloseOperation = DO_NOTHING_ON_CLOSE
         title = "Blacknet - Wallet"
-        iconImage = Toolkit.getDefaultToolkit().getImage(Main::class.java.classLoader.getResource("logo.png"))
+        iconImage = Toolkit.getDefaultToolkit().getImage(Desktop::class.java.classLoader.getResource("logo.png"))
         jMenuBar = MainMenu()
         size = Dimension(950, 550)
         contentPane = jTabbedPane {

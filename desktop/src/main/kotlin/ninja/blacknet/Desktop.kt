@@ -11,7 +11,7 @@ package ninja.blacknet
 
 import java.awt.EventQueue
 
-object Main {
+object Desktop {
     @JvmStatic
     fun main(args: Array<String>) {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->

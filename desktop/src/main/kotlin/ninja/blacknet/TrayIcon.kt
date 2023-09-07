@@ -16,7 +16,7 @@ import java.awt.Toolkit
 import java.awt.TrayIcon
 
 fun TrayIcon() {
-    val image = Toolkit.getDefaultToolkit().getImage(Main::class.java.classLoader.getResource("logo.png"))
+    val image = Toolkit.getDefaultToolkit().getImage(Desktop::class.java.classLoader.getResource("logo.png"))
     val quitItem = MenuItem("Quit")
     quitItem.addActionListener(QuitAction)
     val popup = PopupMenu()

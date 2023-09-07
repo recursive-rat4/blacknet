@@ -26,7 +26,7 @@ dependencies {
 }
 
 application {
-    mainClass = "ninja.blacknet.Main"
+    mainClass = "ninja.blacknet.Desktop"
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {

@@ -30,7 +30,7 @@ dependencies {
 }
 
 application {
-    mainClass = "ninja.blacknet.Main"
+    mainClass = "ninja.blacknet.Daemon"
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {

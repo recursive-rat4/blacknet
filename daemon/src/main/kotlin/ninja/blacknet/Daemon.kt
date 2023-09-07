@@ -30,7 +30,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 private val logger = KotlinLogging.logger {}
 
-object Main {
+object Daemon {
     @JvmStatic
     fun main(args: Array<String>) {
         populateConfigDir().let { createdFiles ->
