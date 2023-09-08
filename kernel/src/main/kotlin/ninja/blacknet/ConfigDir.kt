@@ -12,10 +12,9 @@ package ninja.blacknet
 
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.Files
 import java.util.jar.JarFile
 import ninja.blacknet.util.Resources
-
-//FIXME permission 0700
 
 val configDir: File = run {
     val custom = System.getProperty("ninja.blacknet.configDir")
@@ -30,9 +29,11 @@ val configDir: File = run {
     } else if (Runtime.windowsOS) {
         File(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
     } else {
-        XDGConfigDirectory(XDG_SUBDIRECTORY)
+        XDGConfigDirectory(XDG_SUBDIRECTORY).toFile()
     }
-    dir.mkdirs()
+    dir.toPath().let {
+        Files.createDirectories(it, *XDGDirectoryPermissions(it))
+    }
     dir
 }
 
@@ -52,7 +53,7 @@ fun populateConfigDir(): Int {
         if (file.exists())
             continue
         if (jar == null)
-            jar = Resources.jar(Version::class.java)
+            jar = Resources.jar(Kernel::class.java)
         val input = jar.getInputStream(jar.getJarEntry("config/$name"))
         val output = FileOutputStream(file)
         input.transferTo(output)

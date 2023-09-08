@@ -9,21 +9,49 @@
 
 package ninja.blacknet
 
-import java.io.File
+import java.lang.UnsupportedOperationException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.FileAttribute
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermission.*
+import java.nio.file.attribute.PosixFilePermissions
+import java.util.EnumSet
 
 // https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.8.html
 
-private fun XDGBaseDirectory(subdirectory: String, environmentVariable: String, defaultBase: String): File {
-    val baseDir = System.getenv(environmentVariable)?.let { File(it) }
+private fun XDGBaseDirectory(subdirectory: String, environmentVariable: String, defaultBase: String): Path {
+    val baseDir = System.getenv(environmentVariable)?.let { Path.of(it) }
     return if (baseDir != null && baseDir.isAbsolute) {
-        File(baseDir, subdirectory)
+        baseDir.resolve(subdirectory)
     } else {
-        File("${System.getProperty("user.home")}/$defaultBase/$subdirectory")
+        Path.of(System.getProperty("user.home"), defaultBase, subdirectory)
     }
 }
 
-public fun XDGConfigDirectory(subdirectory: String): File = XDGBaseDirectory(subdirectory, "XDG_CONFIG_HOME", ".config")
+public fun XDGConfigDirectory(subdirectory: String): Path = XDGBaseDirectory(subdirectory, "XDG_CONFIG_HOME", ".config")
 
-public fun XDGDataDirectory(subdirectory: String): File = XDGBaseDirectory(subdirectory, "XDG_DATA_HOME", ".local/share")
+public fun XDGDataDirectory(subdirectory: String): Path = XDGBaseDirectory(subdirectory, "XDG_DATA_HOME", ".local/share")
 
-public fun XDGStateDirectory(subdirectory: String): File = XDGBaseDirectory(subdirectory, "XDG_STATE_HOME", ".local/state")
+public fun XDGStateDirectory(subdirectory: String): Path = XDGBaseDirectory(subdirectory, "XDG_STATE_HOME", ".local/state")
+
+public fun XDGDirectoryPermissions(path: Path): Array<FileAttribute<Set<PosixFilePermission>>> {
+    val fileStore = Files.getFileStore(path)
+    return if (fileStore.supportsFileAttributeView("posix")) {
+        arrayOf(PosixFilePermissions.asFileAttribute(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE)))
+    } else if (fileStore.supportsFileAttributeView("acl")) {
+        emptyArray() //WINDOWS are default permissions ok?
+    } else {
+        val builder = StringBuilder()
+        builder.append("Mount point ")
+        builder.append(fileStore)
+        builder.append(" supports only following permissions:")
+        path.fileSystem.supportedFileAttributeViews().forEach { name ->
+            if (fileStore.supportsFileAttributeView(name)) {
+                builder.append(' ')
+                builder.append(name)
+            }
+        }
+        throw UnsupportedOperationException(builder.toString())
+    }
+}

@@ -11,8 +11,7 @@
 package ninja.blacknet
 
 import java.io.File
-
-//FIXME permission 0700
+import java.nio.file.Files
 
 val dataDir: File = run {
     val custom = System.getProperty("ninja.blacknet.dataDir")
@@ -23,7 +22,7 @@ val dataDir: File = run {
     } else if (Runtime.windowsOS) {
         File(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
     } else {
-        val new = XDGDataDirectory(XDG_SUBDIRECTORY)
+        val new = XDGDataDirectory(XDG_SUBDIRECTORY).toFile()
         val old = File(System.getProperty("user.home"), ".blacknet")
         if (old.exists()) {
             if (new.exists()) throw RuntimeException("Both $old and $new exist")
@@ -35,6 +34,8 @@ val dataDir: File = run {
     if (regtest) {
         dir = File(dir, "regtest")
     }
-    dir.mkdirs()
+    dir.toPath().let {
+        Files.createDirectories(it, *XDGDirectoryPermissions(it))
+    }
     dir
 }
