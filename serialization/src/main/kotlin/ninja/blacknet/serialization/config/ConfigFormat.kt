@@ -9,17 +9,17 @@
 
 package ninja.blacknet.serialization.config
 
-import io.ktor.utils.io.charsets.Charset
+import java.nio.charset.Charset
+import java.nio.file.Path
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialFormat
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import java.io.File
 
 public class ConfigFormat(
         override val serializersModule: SerializersModule = EmptySerializersModule()
 ) : SerialFormat {
-    public fun <T : Any?> decodeFromFile(strategy: DeserializationStrategy<T>, file: File, charset: Charset = Charsets.UTF_8): T {
+    public fun <T : Any?> decodeFromFile(strategy: DeserializationStrategy<T>, file: Path, charset: Charset = Charsets.UTF_8): T {
         val decoder = ConfigDecoder(ConfigReader(file, charset), serializersModule)
         return strategy.deserialize(decoder)
     }

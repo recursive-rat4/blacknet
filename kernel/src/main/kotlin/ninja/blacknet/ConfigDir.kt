@@ -10,30 +10,28 @@
 
 package ninja.blacknet
 
-import java.io.File
-import java.io.FileOutputStream
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption.CREATE_NEW
 import java.util.jar.JarFile
 import ninja.blacknet.util.Resources
 
-val configDir: File = run {
+val configDir: Path = run {
     val custom = System.getProperty("ninja.blacknet.configDir")
     val dir = if (System.getProperty("org.gradle.test.worker") != null) {
-        File("build/resources/main/config").also {
-            println("Using config directory ${it.absolutePath}")
+        Path.of("build/resources/main/config").also {
+            println("Using config directory ${it.toAbsolutePath()}")
         }
     } else if (custom != null) {
-        File(custom)
+        Path.of(custom)
     } else if (Runtime.macOS) {
-        File(System.getProperty("user.home"), "Library/Application Support/$XDG_SUBDIRECTORY")
+        Path.of(System.getProperty("user.home"), "Library/Application Support/$XDG_SUBDIRECTORY")
     } else if (Runtime.windowsOS) {
-        File(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
+        Path.of(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
     } else {
-        XDGConfigDirectory(XDG_SUBDIRECTORY).toFile()
+        XDGConfigDirectory(XDG_SUBDIRECTORY)
     }
-    dir.toPath().let {
-        Files.createDirectories(it, *XDGDirectoryPermissions(it))
-    }
+    Files.createDirectories(dir, *XDGDirectoryPermissions(dir))
     dir
 }
 
@@ -44,18 +42,19 @@ private fun configFiles() = arrayOf(
         "rpcregtest.conf"
 )
 
+//XXX atomicity
 fun populateConfigDir(): Int {
     var createdFiles = 0
 
     var jar: JarFile? = null
     for (name in configFiles()) {
-        val file = File(configDir, name)
-        if (file.exists())
+        val file = configDir.resolve(name)
+        if (Files.exists(file))
             continue
         if (jar == null)
             jar = Resources.jar(Kernel::class.java)
         val input = jar.getInputStream(jar.getJarEntry("config/$name"))
-        val output = FileOutputStream(file)
+        val output = Files.newOutputStream(file, CREATE_NEW)
         input.transferTo(output)
         input.close()
         output.close()

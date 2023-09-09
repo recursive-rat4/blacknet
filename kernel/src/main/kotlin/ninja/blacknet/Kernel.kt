@@ -15,9 +15,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
-import java.io.File
-import java.io.FileInputStream
 import java.lang.Thread.UncaughtExceptionHandler
+import java.nio.file.Files
 import java.security.Security
 import java.util.logging.LogManager
 import kotlinx.coroutines.debug.DebugProbes
@@ -58,9 +57,9 @@ object Kernel {
         }
 
         System.setProperty("java.util.logging.manager", "ninja.blacknet.logging.LogManager")
-        FileInputStream(File(configDir, "logging.properties")).let { fileInputStream ->
-            LogManager.getLogManager().readConfiguration(fileInputStream)
-            fileInputStream.close()
+        Files.newInputStream(configDir.resolve("logging.properties")).let { inputStream ->
+            LogManager.getLogManager().readConfiguration(inputStream)
+            inputStream.close()
         }
         ShutdownHooks.add {
             logger.info { "Shutting down logger" }
@@ -74,7 +73,7 @@ object Kernel {
         logger.info { "CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}" }
         logger.info { "OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}" }
         logger.info { "VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}" }
-        logger.info { "Using config directory ${configDir.absolutePath}" }
+        logger.info { "Using config directory ${configDir.toAbsolutePath()}" }
         logger.info { "Using data directory ${dataDir.absolutePath}" }
         logger.info { "Using state directory ${stateDir.absolutePath}" }
 
@@ -126,7 +125,7 @@ object Kernel {
         if (Config.instance.rpcserver) {
             embeddedServer(
                 CIO,
-                commandLineEnvironment(arrayOf("-config=${File(configDir,
+                commandLineEnvironment(arrayOf("-config=${configDir.resolve(
                     if (regtest)
                         "rpcregtest.conf"
                     else
