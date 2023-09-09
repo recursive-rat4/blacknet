@@ -10,11 +10,10 @@
 package ninja.blacknet.logging
 
 import ninja.blacknet.stateDir
-import java.io.File
 import java.util.logging.FileHandler
 
 class FileHandler : FileHandler(
-        File(stateDir, "debug.log").getPath(),
+        stateDir.resolve("debug.log").toString(),
         5000000,
         2,
         true

@@ -9,8 +9,23 @@
 
 package ninja.blacknet
 
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
-//TODO use XDGStateDirectory
-
-val stateDir: File = dataDir.toFile()
+val stateDir: Path = run {
+    val custom = System.getProperty("ninja.blacknet.stateDir")
+    var dir = if (custom != null) {
+        Path.of(custom)
+    } else if (Runtime.macOS) {
+        Path.of(System.getProperty("user.home"), "Library/Application Support/$XDG_SUBDIRECTORY")
+    } else if (Runtime.windowsOS) {
+        Path.of(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
+    } else {
+        XDGStateDirectory(XDG_SUBDIRECTORY)
+    }
+    if (regtest) {
+        dir = dir.resolve("regtest")
+    }
+    Files.createDirectories(dir, *XDGDirectoryPermissions(dir))
+    dir
+}

@@ -15,9 +15,10 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import java.io.File
 import java.io.FileNotFoundException
 import java.math.BigInteger
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption.READ
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.channels.Channel
@@ -46,9 +47,9 @@ import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
+import ninja.blacknet.util.inputStream
 import ninja.blacknet.util.replaceFile
 import ninja.blacknet.util.rotate
-import ninja.blacknet.util.toByteArray
 
 private val logger = KotlinLogging.logger {}
 
@@ -84,8 +85,8 @@ object Node {
                 Runtime.rotate(Network.Companion::listenOnI2P)
             }
             try {
-                val file = File(stateDir, DATA_FILENAME)
-                file.inputStream().buffered().data().use { stream ->
+                val file = stateDir.resolve(DATA_FILENAME)
+                FileChannel.open(file, READ).inputStream().buffered().data().use { stream ->
                     val version = stream.readInt()
                     val bytes = stream.readAllBytes()
                     if (version == DATA_VERSION) {
@@ -120,7 +121,7 @@ object Node {
                     }
                     logger.info { "Saving node state" }
                     replaceFile(stateDir, DATA_FILENAME) {
-                        write(DATA_VERSION.toByteArray())
+                        writeInt(DATA_VERSION)
                         write(binaryFormat.encodeToByteArray(Persistent.serializer(), persistent))
                     }
                 }

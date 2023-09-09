@@ -13,8 +13,6 @@ import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.channels.Channels
@@ -34,21 +32,6 @@ fun OutputStream.data(): DataOutputStream = DataOutputStream(this)
 
 fun ReadableByteChannel.inputStream(): InputStream = Channels.newInputStream(this)
 fun WritableByteChannel.outputStream(): OutputStream = Channels.newOutputStream(this)
-
-fun moveFile(source: File, destination: File) = Files.move(source.toPath(), destination.toPath(), ATOMIC_MOVE)
-
-inline fun FileOutputStream.sync(action: FileOutputStream.() -> Unit): Unit = use {
-    action().also {
-        flush()
-        fd.sync()
-    }
-}
-
-inline fun replaceFile(dir: File, name: String, action: FileOutputStream.() -> Unit) {
-    val tmpFile = File.createTempFile(name + '-', null, dir)
-    tmpFile.outputStream().sync(action)
-    moveFile(tmpFile, File(dir, name))
-}
 
 inline fun replaceFile(dir: Path, name: String, action: DataOutputStream.() -> Unit) {
     val tmpFile = Files.createTempFile(dir, name + '-', null)
