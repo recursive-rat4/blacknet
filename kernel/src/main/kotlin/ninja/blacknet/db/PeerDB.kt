@@ -11,8 +11,9 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.io.File
 import java.io.FileNotFoundException
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption.READ
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.exp
 import kotlin.math.max
@@ -45,9 +46,9 @@ import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.Resources
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
+import ninja.blacknet.util.inputStream
 import ninja.blacknet.util.replaceFile
 import ninja.blacknet.util.rotate
-import ninja.blacknet.util.toByteArray
 
 private val logger = KotlinLogging.logger {}
 
@@ -91,7 +92,7 @@ object PeerDB {
 
     private fun loadFromFile(): HashMap<Address, Entry>? {
         try {
-            File(dataDir, FILENAME).inputStream().buffered().data().use { stream ->
+            FileChannel.open(dataDir.resolve(FILENAME), READ).inputStream().buffered().data().use { stream ->
                 val version = stream.readInt()
                 val bytes = stream.readAllBytes()
                 if (version == VERSION) {
@@ -309,7 +310,7 @@ object PeerDB {
 
     private fun saveToFile() {
         replaceFile(dataDir, FILENAME) {
-            write(VERSION.toByteArray())
+            writeInt(VERSION)
             write(binaryFormat.encodeToByteArray(MapSerializer(Address.serializer(), Entry.serializer()), peers))
         }
     }

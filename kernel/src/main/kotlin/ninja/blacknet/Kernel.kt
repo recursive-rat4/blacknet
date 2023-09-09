@@ -74,7 +74,7 @@ object Kernel {
         logger.info { "OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}" }
         logger.info { "VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}" }
         logger.info { "Using config directory ${configDir.toAbsolutePath()}" }
-        logger.info { "Using data directory ${dataDir.absolutePath}" }
+        logger.info { "Using data directory ${dataDir.toAbsolutePath()}" }
         logger.info { "Using state directory ${stateDir.absolutePath}" }
 
         testAtomicFileMove(dataDir)

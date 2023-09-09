@@ -10,7 +10,11 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.io.File
+import java.nio.channels.FileChannel
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption.CREATE
+import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+import java.nio.file.StandardOpenOption.WRITE
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -560,8 +564,8 @@ object WalletDB {
     }
 
     private fun clear(batch: LevelDB.WriteBatch) {
-        val backupDir = File(dataDir, "walletdb.backup.${currentTimeSeconds()}")
-        backupDir.mkdir()
+        val backupDir = dataDir.resolve("walletdb.backup.${currentTimeSeconds()}")
+        Files.createDirectories(backupDir)
         logger.info { "Saving backup to $backupDir" }
         wallets.clear()
 
@@ -570,8 +574,8 @@ object WalletDB {
         val iterator = LevelDB.iterator()
 
         if (LevelDB.seek(iterator, TX_KEY)) {
-            val file = File(backupDir, "transactions")
-            val stream = file.outputStream().buffered().data()
+            val file = backupDir.resolve("transactions")
+            val stream = FileChannel.open(file, CREATE, TRUNCATE_EXISTING, WRITE).outputStream().buffered().data()
 
             while (iterator.hasNext()) {
                 val entry = iterator.next()
@@ -592,8 +596,8 @@ object WalletDB {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
                 val key = WALLET_KEY - entry ?: break
-                val file = File(backupDir, Address.encode(key))
-                val stream = file.outputStream().buffered().data()
+                val file = backupDir.resolve(Address.encode(key))
+                val stream = FileChannel.open(file, CREATE, TRUNCATE_EXISTING, WRITE).outputStream().buffered().data()
 
                 val bytes = entry.value
                 stream.write(bytes, 0, bytes.size)

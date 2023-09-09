@@ -13,4 +13,4 @@ import java.io.File
 
 //TODO use XDGStateDirectory
 
-val stateDir: File = dataDir
+val stateDir: File = dataDir.toFile()

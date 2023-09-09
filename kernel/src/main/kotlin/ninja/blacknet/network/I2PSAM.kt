@@ -20,7 +20,9 @@ import io.ktor.utils.io.cancel
 import io.ktor.utils.io.close
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption.ATOMIC_MOVE
+import kotlin.io.path.readText
 import kotlin.random.Random
 import kotlinx.coroutines.launch
 import ninja.blacknet.Config
@@ -29,9 +31,7 @@ import ninja.blacknet.dataDir
 import ninja.blacknet.codec.base.Base64
 import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.logging.error
-import ninja.blacknet.util.moveFile
-import ninja.blacknet.util.sync
+import ninja.blacknet.util.replaceFile
 
 private val logger = KotlinLogging.logger {}
 
@@ -49,10 +49,10 @@ object I2PSAM {
             sam = null
 
         try {
-            val file = File(dataDir, "privateKey.i2p")
-            val lastModified = file.lastModified()
+            val file = dataDir.resolve("privateKey.i2p")
+            val lastModified = Files.getLastModifiedTime(file).toMillis()
             if (lastModified != 0L && lastModified < 1550000000000) {
-                moveFile(file, File(dataDir, "privateKey.$lastModified.i2p"))
+                Files.move(file, dataDir.resolve("privateKey.$lastModified.i2p"), ATOMIC_MOVE)
                 logger.info { "Renamed private key file to privateKey.$lastModified.i2p" }
             } else {
                 privateKey = file.readText()
@@ -227,12 +227,8 @@ object I2PSAM {
     private fun savePrivateKey(dest: String) {
         privateKey = dest
         logger.info { "Saving I2P private key" }
-        try {
-            File(dataDir, "privateKey.i2p").outputStream().sync {
-                write(privateKey.toByteArray(Charsets.UTF_8))
-            }
-        } catch (e: Throwable) {
-            logger.error(e)
+        replaceFile(dataDir, "privateKey.i2p") {
+            write(privateKey.toByteArray(Charsets.UTF_8))
         }
     }
 }

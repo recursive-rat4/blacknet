@@ -10,6 +10,7 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.nio.file.Files
 import java.util.Collections
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -38,6 +39,8 @@ object BlockDB {
             return size > PoS.ROLLBACK_LIMIT
         }
     })
+
+    private val fs = Files.getFileStore(dataDir)
 
     internal fun isRejectedImpl(hash: ByteArray): Boolean {
         return rejects.contains(Hash(hash))
@@ -112,7 +115,7 @@ object BlockDB {
     }
 
     fun warnings(): List<String> {
-        return if (dataDir.getUsableSpace() > MIN_DISK_SPACE)
+        return if (fs.getUsableSpace() > MIN_DISK_SPACE)
             emptyList()
         else
             listOf("Disk space is low!")

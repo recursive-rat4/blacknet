@@ -10,6 +10,14 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.nio.channels.FileChannel
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption.ATOMIC_MOVE
+import java.nio.file.StandardOpenOption.CREATE
+import java.nio.file.StandardOpenOption.READ
+import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+import java.nio.file.StandardOpenOption.WRITE
 import kotlinx.coroutines.runBlocking
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.AlreadyHave
@@ -19,8 +27,8 @@ import ninja.blacknet.dataDir
 import ninja.blacknet.logging.info
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
-import ninja.blacknet.util.moveFile
-import java.io.File
+import ninja.blacknet.util.inputStream
+import ninja.blacknet.util.outputStream
 
 private val logger = KotlinLogging.logger {}
 
@@ -29,14 +37,14 @@ object Bootstrap {
      * Imports a bootstrap if the file exists.
      */
     fun import() {
-        val bootstrap = File(dataDir, "bootstrap.dat")
-        if (bootstrap.exists()) {
+        val bootstrap = dataDir.resolve("bootstrap.dat")
+        if (Files.exists(bootstrap)) {
             runBlocking {
                 logger.info { "Found bootstrap" }
                 var n = 0
 
                 try {
-                    bootstrap.inputStream().buffered().data().use {
+                    FileChannel.open(bootstrap, READ).inputStream().buffered().data().use {
                         while (true) {
                             val size = it.readInt()
                             val bytes = ByteArray(size)
@@ -58,7 +66,7 @@ object Bootstrap {
                     logger.info(e)
                 }
 
-                moveFile(bootstrap, File(dataDir, "bootstrap.dat.old"))
+                Files.move(bootstrap, dataDir.resolve("bootstrap.dat.old"), ATOMIC_MOVE)
 
                 logger.info { "Imported $n blocks" }
             }
@@ -66,15 +74,15 @@ object Bootstrap {
     }
 
     /**
-     * @return a [File] or `null` if blockchain is not synchronized
+     * @return a [Path] or `null` if blockchain is not synchronized
      */
-    fun export(): File? {
+    fun export(): Path? {
         val checkpoint = LedgerDB.state().rollingCheckpoint
         if (checkpoint.contentEquals(Genesis.BLOCK_HASH))
             return null
 
-        val file = File(dataDir, "bootstrap.dat.new")
-        val stream = file.outputStream().buffered().data()
+        val file = dataDir.resolve("bootstrap.dat.new")
+        val stream = FileChannel.open(file, CREATE, TRUNCATE_EXISTING, WRITE).outputStream().buffered().data()
 
         var hash = Genesis.BLOCK_HASH
         var index = LedgerDB.chainIndexes.get(hash)!!

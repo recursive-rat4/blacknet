@@ -10,32 +10,30 @@
 
 package ninja.blacknet
 
-import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 
-val dataDir: File = run {
+val dataDir: Path = run {
     val custom = System.getProperty("ninja.blacknet.dataDir")
     var dir = if (custom != null) {
-        File(custom)
+        Path.of(custom)
     } else if (Runtime.macOS) {
-        File(System.getProperty("user.home"), "Library/Application Support/$XDG_SUBDIRECTORY")
+        Path.of(System.getProperty("user.home"), "Library/Application Support/$XDG_SUBDIRECTORY")
     } else if (Runtime.windowsOS) {
-        File(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
+        Path.of(System.getProperty("user.home"), "AppData\\Roaming\\$XDG_SUBDIRECTORY")
     } else {
         val new = XDGDataDirectory(XDG_SUBDIRECTORY).toFile()
-        val old = File(System.getProperty("user.home"), ".blacknet")
+        val old = Path.of(System.getProperty("user.home"), ".blacknet").toFile()
         if (old.exists()) {
             if (new.exists()) throw RuntimeException("Both $old and $new exist")
             new.parentFile.mkdirs()
             if (!old.renameTo(new)) throw RuntimeException("Rename $old to $new not succeeded")
         }
-        new
+        new.toPath()
     }
     if (regtest) {
-        dir = File(dir, "regtest")
+        dir = dir.resolve("regtest")
     }
-    dir.toPath().let {
-        Files.createDirectories(it, *XDGDirectoryPermissions(it))
-    }
+    Files.createDirectories(dir, *XDGDirectoryPermissions(dir))
     dir
 }

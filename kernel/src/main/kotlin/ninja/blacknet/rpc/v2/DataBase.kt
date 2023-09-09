@@ -119,7 +119,7 @@ class MakeBootstrap : Request {
     override suspend fun handle(): TextContent {
         val file = Bootstrap.export()
         return if (file != null)
-            respondText(file.absolutePath)
+            respondText(file.toAbsolutePath().toString())
         else
             respondError("Not synchronized")
     }

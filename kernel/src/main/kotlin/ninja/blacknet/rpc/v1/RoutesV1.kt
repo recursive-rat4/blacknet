@@ -183,7 +183,7 @@ fun Route.APIV1() {
     get("/api/v1/blockdb/makebootstrap") {
         val file = Bootstrap.export()
         if (file != null)
-            call.respond(file.absolutePath)
+            call.respond(file.toAbsolutePath().toString())
         else
             call.respond(HttpStatusCode.BadRequest, "not synchronized")
     }

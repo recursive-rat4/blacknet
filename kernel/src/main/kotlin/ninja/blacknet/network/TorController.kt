@@ -20,7 +20,9 @@ import io.ktor.utils.io.cancel
 import io.ktor.utils.io.close
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption.ATOMIC_MOVE
+import kotlin.io.path.readText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import ninja.blacknet.Config
@@ -28,10 +30,8 @@ import ninja.blacknet.Runtime
 import ninja.blacknet.dataDir
 import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.logging.error
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.moveFile
-import ninja.blacknet.util.sync
+import ninja.blacknet.util.replaceFile
 
 private val logger = KotlinLogging.logger {}
 
@@ -40,12 +40,12 @@ object TorController {
 
     init {
         try {
-            val file = File(dataDir, "privateKey.tor")
+            val file = dataDir.resolve("privateKey.tor")
             val readPrivateKey = file.readText()
             if (readPrivateKey.startsWith("RSA1024:")) {
                 logger.info { "Migration to Tor addresses version 3" }
                 val newName = "privateKey.${currentTimeSeconds()}.tor"
-                moveFile(file, File(dataDir, newName))
+                Files.move(file, dataDir.resolve(newName), ATOMIC_MOVE)
                 logger.info { "Renamed private key file to $newName" }
             } else {
                 privateKey = readPrivateKey
@@ -126,12 +126,8 @@ object TorController {
     private fun savePrivateKey(privKey: String) {
         privateKey = privKey
         logger.info { "Saving Tor private key" }
-        try {
-            File(dataDir, "privateKey.tor").outputStream().sync {
-                write(privateKey.toByteArray(Charsets.UTF_8))
-            }
-        } catch (e: Throwable) {
-            logger.error(e)
+        replaceFile(dataDir, "privateKey.tor") {
+            write(privateKey.toByteArray(Charsets.UTF_8))
         }
     }
 

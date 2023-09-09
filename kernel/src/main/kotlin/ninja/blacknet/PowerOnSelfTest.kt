@@ -9,22 +9,23 @@
 
 package ninja.blacknet
 
-import java.io.File
 import java.io.IOException
-import ninja.blacknet.util.moveFile
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption.ATOMIC_MOVE
 
 /**
  * Atomic file move depends on Java implementation and filesystem of [dir].
  * @param dir directory where atomic moves will occur.
  * @throws IOException if not supported.
  */
-fun testAtomicFileMove(dir: File) {
-    val source = File.createTempFile("PowerOnSelfTest-", null, dir)
-    val destination = File.createTempFile("PowerOnSelfTest-", null, dir)
+fun testAtomicFileMove(dir: Path) {
+    val source = Files.createTempFile(dir, "PowerOnSelfTest-", null)
+    val destination = Files.createTempFile(dir, "PowerOnSelfTest-", null)
     try {
-        moveFile(source, destination)
+        Files.move(source, destination, ATOMIC_MOVE)
     } finally {
-        source.delete()
-        destination.delete()
+        Files.deleteIfExists(source)
+        Files.deleteIfExists(destination)
     }
 }
