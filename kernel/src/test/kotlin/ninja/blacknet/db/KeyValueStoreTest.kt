@@ -9,14 +9,20 @@
 
 package ninja.blacknet.db
 
+import java.security.Security
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.test.assertNull
 import ninja.blacknet.util.hashMapOf
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 class KeyValueStoreTest {
+    init {
+        Security.addProvider(BouncyCastleProvider())
+    }
+
     @Test
     fun test() {
         val key0 = byteArrayOf(0)

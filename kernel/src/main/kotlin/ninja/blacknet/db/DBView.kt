@@ -11,6 +11,8 @@ package ninja.blacknet.db
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.DeserializationStrategy
+import ninja.blacknet.codec.base.Base16
+import ninja.blacknet.codec.base.encode
 
 /**
  * A view of [KeyValueStore] using the given [DBKey], [DeserializationStrategy], [BinaryFormat].
@@ -38,6 +40,14 @@ class DBView<T>(
     }
 
     /**
+     * @return the object that ought to be associated with the given key.
+     * @throws Error if the database is inconsistent.
+     */
+    fun getOrThrow(key: ByteArray): T {
+        return get(key) ?: throw notInDB(key)
+    }
+
+    /**
      * @return the object and its serialized size or `null` if there is none.
      */
     fun getWithSize(key: ByteArray): Pair<T, Int>? {
@@ -50,13 +60,33 @@ class DBView<T>(
     }
 
     /**
+     * @return the object that ought to be associated with the given key and its serialized size.
+     * @throws Error if the database is inconsistent.
+     */
+    fun getWithSizeOrThrow(key: ByteArray): Pair<T, Int> {
+        return getWithSize(key) ?: throw notInDB(key)
+    }
+
+    /**
      * @return the [ByteArray] associated with the given key or `null` if there is none.
      */
     fun getBytes(key: ByteArray): ByteArray? {
         return store.get(dbKey + key)
     }
 
+    /**
+     * @return the [ByteArray] that ought to be associated with the given key.
+     * @throws Error if the database is inconsistent.
+     */
+    fun getBytesOrThrow(key: ByteArray): ByteArray {
+        return getBytes(key) ?: throw notInDB(key)
+    }
+
     private fun decode(bytes: ByteArray): T {
         return format.decodeFromByteArray(deserializer, bytes)
+    }
+
+    private fun notInDB(key: ByteArray): Throwable {
+        return Error("Not in DB ${Base16.encode(key)}")
     }
 }

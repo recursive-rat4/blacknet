@@ -78,20 +78,20 @@ class BlockHash(
         var index: ChainIndex
         if (height < state.height / 2) {
             hash = Genesis.BLOCK_HASH
-            index = LedgerDB.chainIndexes.get(hash)!!
+            index = LedgerDB.chainIndexes.getOrThrow(hash)
         } else {
             hash = state.blockHash
-            index = LedgerDB.chainIndexes.get(hash)!!
+            index = LedgerDB.chainIndexes.getOrThrow(hash)
         }
         if (lastIndex != null && abs(height - index.height) > abs(height - lastIndex.second.height))
             index = lastIndex.second
         while (index.height > height) {
             hash = index.previous
-            index = LedgerDB.chainIndexes.get(hash)!!
+            index = LedgerDB.chainIndexes.getOrThrow(hash)
         }
         while (index.height < height) {
             hash = index.next
-            index = LedgerDB.chainIndexes.get(hash)!!
+            index = LedgerDB.chainIndexes.getOrThrow(hash)
         }
         if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
             RPCServer.lastIndex = Pair(hash, index)

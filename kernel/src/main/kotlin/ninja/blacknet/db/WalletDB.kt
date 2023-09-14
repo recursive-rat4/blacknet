@@ -201,7 +201,7 @@ object WalletDB {
     suspend fun disconnectBlock(blockHash: ByteArray, batch: LevelDB.WriteBatch) = mutex.withLock {
         if (wallets.isEmpty()) return@withLock
 
-        val block = BlockDB.blocks.get(blockHash)!!
+        val block = BlockDB.blocks.getOrThrow(blockHash)
         val txHashes = block.transactions.map { Transaction.hash(it) }
 
         val updated = HashMap<ByteArray, Wallet>(wallets.size)
@@ -519,7 +519,7 @@ object WalletDB {
             BlockDB.mutex.withLock {
                 mutex.withLock {
                     var hash = Genesis.BLOCK_HASH
-                    var index = LedgerDB.chainIndexes.get(hash)!!
+                    var index = LedgerDB.chainIndexes.getOrThrow(hash)
                     val height = LedgerDB.state().height
                     val n = height - index.height + 1
                     if (n > 0) {
@@ -527,7 +527,7 @@ object WalletDB {
                         do {
                             rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
                             hash = index.next
-                            index = LedgerDB.chainIndexes.get(hash)!!
+                            index = LedgerDB.chainIndexes.getOrThrow(hash)
                         } while (index.height != height)
                         logger.info { "Finished rescan" }
                     }
@@ -551,7 +551,7 @@ object WalletDB {
 
     private suspend fun rescanBlockImpl(publicKey: ByteArray, wallet: Wallet, hash: ByteArray, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
         if (height != 0) {
-            val block = BlockDB.blocks.get(hash)!!
+            val block = BlockDB.blocks.getOrThrow(hash)
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
                 val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)

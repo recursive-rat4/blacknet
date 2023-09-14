@@ -9,8 +9,10 @@
 
 package ninja.blacknet.db
 
+import java.security.Security
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.test.assertNull
@@ -19,6 +21,7 @@ import ninja.blacknet.serialization.bbf.BinaryFormat
 import ninja.blacknet.util.hashMapOf
 import ninja.blacknet.util.plus
 import ninja.blacknet.util.toByteArray
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 class DBViewTest {
     private val prefix = 0.toByte()
@@ -42,6 +45,10 @@ class DBViewTest {
         BinaryFormat()
     )
 
+    init {
+        Security.addProvider(BouncyCastleProvider())
+    }
+
     @Test
     fun contains() {
         assertTrue(view.contains(key0))
@@ -55,14 +62,32 @@ class DBViewTest {
     }
 
     @Test
+    fun getOrThrow() {
+        assertEquals(value0, view.getOrThrow(key0))
+        assertFailsWith<Error> { view.getOrThrow(key2) }
+    }
+
+    @Test
     fun getWithSize() {
         assertEquals(Pair(value0, valueBytes0.size), view.getWithSize(key0))
         assertNull(view.getWithSize(key2))
     }
 
     @Test
+    fun getWithSizeOrThrow() {
+        assertEquals(Pair(value0, valueBytes0.size), view.getWithSizeOrThrow(key0))
+        assertFailsWith<Error> { view.getWithSizeOrThrow(key2) }
+    }
+
+    @Test
     fun getBytes() {
         assertEquals(valueBytes0, view.getBytes(key0))
         assertNull(view.getBytes(key2))
+    }
+
+    @Test
+    fun getBytesOrThrow() {
+        assertEquals(valueBytes0, view.getBytesOrThrow(key0))
+        assertFailsWith<Error> { view.getBytesOrThrow(key2) }
     }
 }
