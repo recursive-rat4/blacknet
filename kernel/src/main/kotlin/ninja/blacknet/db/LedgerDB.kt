@@ -23,6 +23,7 @@ import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
@@ -498,33 +499,36 @@ object LedgerDB {
     }
 
     suspend fun check(): Check = BlockDB.mutex.withLock {
-        var supply = 0L
-        val result = Check(false, 0, 0, 0)
+        val result = Check(false, 0, 0, 0, state.supply, 0L)
         iterateImpl(
-                { _, account ->
-                    supply += account.totalBalance()
-                    result.accounts += 1
-                },
-                { _, htlc ->
-                    supply += htlc.amount
-                    result.htlcs += 1
-                },
-                { _, multisig ->
-                    supply += multisig.amount()
-                    result.multisigs += 1
-                }
+            { _, account ->
+                result.actualSupply += account.totalBalance()
+                result.accounts += 1
+            },
+            { _, htlc ->
+                result.actualSupply += htlc.amount
+                result.htlcs += 1
+            },
+            { _, multisig ->
+                result.actualSupply += multisig.amount()
+                result.multisigs += 1
+            }
         )
-        if (supply == state.supply)
+        if (result.actualSupply == result.expectedSupply)
             result.result = true
         return@withLock result
     }
 
     @Serializable
     class Check(
-            var result: Boolean,
-            var accounts: Int,
-            var htlcs: Int,
-            var multisigs: Int
+        var result: Boolean,
+        var accounts: Int,
+        var htlcs: Int,
+        var multisigs: Int,
+        @Serializable(with = LongSerializer::class)
+        val expectedSupply: Long,
+        @Serializable(with = LongSerializer::class)
+        var actualSupply: Long,
     )
 
     private fun iterateImpl(
