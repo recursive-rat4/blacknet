@@ -36,7 +36,10 @@ public fun XDGDataDirectory(subdirectory: String): Path = XDGBaseDirectory(subdi
 public fun XDGStateDirectory(subdirectory: String): Path = XDGBaseDirectory(subdirectory, "XDG_STATE_HOME", ".local/state")
 
 public fun XDGDirectoryPermissions(path: Path): Array<FileAttribute<Set<PosixFilePermission>>> {
-    val fileStore = Files.getFileStore(path)
+    var target = path
+    while (Files.notExists(target))
+        target = path.parent
+    val fileStore = Files.getFileStore(target)
     return if (fileStore.supportsFileAttributeView("posix")) {
         arrayOf(PosixFilePermissions.asFileAttribute(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE)))
     } else if (fileStore.supportsFileAttributeView("acl")) {
@@ -46,7 +49,7 @@ public fun XDGDirectoryPermissions(path: Path): Array<FileAttribute<Set<PosixFil
         builder.append("Mount point ")
         builder.append(fileStore)
         builder.append(" supports only following permissions:")
-        path.fileSystem.supportedFileAttributeViews().forEach { name ->
+        target.fileSystem.supportedFileAttributeViews().forEach { name ->
             if (fileStore.supportsFileAttributeView(name)) {
                 builder.append(' ')
                 builder.append(name)
