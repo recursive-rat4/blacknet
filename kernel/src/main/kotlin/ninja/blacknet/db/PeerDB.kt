@@ -11,8 +11,8 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.io.FileNotFoundException
 import java.nio.channels.FileChannel
+import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.exp
@@ -101,7 +101,7 @@ object PeerDB {
                     throw Error("Unknown database version $version")
                 }
             }
-        } catch (e: FileNotFoundException) {
+        } catch (e: NoSuchFileException) {
             // first run or unlinked file
         }
         return null

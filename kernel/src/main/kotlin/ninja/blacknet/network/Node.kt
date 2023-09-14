@@ -15,9 +15,9 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import java.io.FileNotFoundException
 import java.math.BigInteger
 import java.nio.channels.FileChannel
+import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
@@ -98,7 +98,7 @@ object Node {
                         logger.warn { "Unknown node data version $version" }
                     }
                 }
-            } catch (e: FileNotFoundException) {
+            } catch (e: NoSuchFileException) {
                 // first run or unlinked file
             } catch (e: Exception) {
                 logger.error(e)
