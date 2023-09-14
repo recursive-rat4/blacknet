@@ -14,6 +14,7 @@ import java.nio.file.Files
 import java.util.Collections
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.HashSerializer
@@ -120,4 +121,36 @@ object BlockDB {
         else
             listOf("Disk space is low!")
     }
+
+    suspend fun check(): Check = mutex.withLock {
+        val result = Check(false, LedgerDB.state().height, 0, 0)
+        val iterator = LevelDB.iterator()
+        if (LevelDB.seek(iterator, LedgerDB.CHAIN_KEY)) {
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                if (LedgerDB.CHAIN_KEY - entry != null)
+                    result.indexes += 1
+            }
+        }
+        if (LevelDB.seek(iterator, BLOCK_KEY)) {
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                if (BLOCK_KEY - entry != null)
+                    result.blocks += 1
+            }
+        }
+        iterator.close()
+        // genesis is not in blocks, but is in indexes
+        if (result.height + 1 == result.indexes && result.height == result.blocks)
+            result.result = true
+        return@withLock result
+    }
+
+    @Serializable
+    class Check(
+        var result: Boolean,
+        val height: Int,
+        var indexes: Int,
+        var blocks: Int,
+    )
 }

@@ -58,6 +58,13 @@ class Block(
 }
 
 @Serializable
+class BlockDBCheck : Request {
+    override suspend fun handle(): TextContent {
+        return respondJson(BlockDB.Check.serializer(), BlockDB.check())
+    }
+}
+
+@Serializable
 class BlockHash(
     val height: Int
 ) : Request {
@@ -148,7 +155,7 @@ class Account(
 }
 
 @Serializable
-class Check : Request {
+class LedgerDBCheck : Request {
     override suspend fun handle(): TextContent {
         return respondJson(LedgerDB.Check.serializer(), LedgerDB.check())
     }
@@ -187,6 +194,8 @@ fun Route.dataBase() {
     get(Block.serializer(), "/api/v2/block")
     get(Block.serializer(), "/api/v2/block/{hash}/{txdetail?}")
 
+    get(BlockDBCheck.serializer(), "/api/v2/blockdb/check")
+
     get(BlockHash.serializer(), "/api/v2/blockhash")
     get(BlockHash.serializer(), "/api/v2/blockhash/{height}")
 
@@ -202,7 +211,7 @@ fun Route.dataBase() {
     get(Account.serializer(), "/api/v2/account")
     get(Account.serializer(), "/api/v2/account/{address}/{confirmations?}")
 
-    get(Check.serializer(), "/api/v2/ledger/check")
+    get(LedgerDBCheck.serializer(), "/api/v2/ledger/check")
 
     get(ScheduleSnapshot.serializer(), "/api/v2/ledger/schedulesnapshot")
     get(ScheduleSnapshot.serializer(), "/api/v2/ledger/schedulesnapshot/{height}")

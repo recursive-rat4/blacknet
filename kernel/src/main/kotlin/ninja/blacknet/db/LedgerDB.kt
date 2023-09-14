@@ -37,7 +37,7 @@ private val logger = KotlinLogging.logger {}
 object LedgerDB {
     private const val VERSION = 10
     private val ACCOUNT_KEY = DBKey(1, PublicKeySerializer.SIZE_BYTES)
-    private val CHAIN_KEY = DBKey(2, HashSerializer.SIZE_BYTES)
+    internal val CHAIN_KEY = DBKey(2, HashSerializer.SIZE_BYTES)
     private val HTLC_KEY = DBKey(3, HashTimeLockContractIdSerializer.SIZE_BYTES)
     private val MULTISIG_KEY = DBKey(4, MultiSignatureLockContractIdSerializer.SIZE_BYTES)
     private val UNDO_KEY = DBKey(5, HashSerializer.SIZE_BYTES)
