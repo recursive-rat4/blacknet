@@ -38,7 +38,7 @@ public fun XDGStateDirectory(subdirectory: String): Path = XDGBaseDirectory(subd
 public fun XDGDirectoryPermissions(path: Path): Array<FileAttribute<Set<PosixFilePermission>>> {
     var target = path
     while (Files.notExists(target))
-        target = path.parent
+        target = target.parent
     val fileStore = Files.getFileStore(target)
     return if (fileStore.supportsFileAttributeView("posix")) {
         arrayOf(PosixFilePermissions.asFileAttribute(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE)))
