@@ -10,6 +10,7 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.EOFException
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -24,7 +25,7 @@ import ninja.blacknet.core.AlreadyHave
 import ninja.blacknet.core.Block
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.dataDir
-import ninja.blacknet.logging.info
+import ninja.blacknet.logging.error
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.inputStream
@@ -62,8 +63,10 @@ object Bootstrap {
                             }
                         }
                     }
+                } catch (e: EOFException) {
+                    // DataInputStream reached end of file
                 } catch (e: Throwable) {
-                    logger.info(e)
+                    logger.error(e)
                 }
 
                 Files.move(bootstrap, dataDir.resolve("bootstrap.dat.old"), ATOMIC_MOVE)
