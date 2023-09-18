@@ -11,6 +11,9 @@ package ninja.blacknet.network
 
 import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
 import io.ktor.network.sockets.SocketAddress as KtorSocketAddress
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import kotlin.experimental.and
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
@@ -27,18 +30,15 @@ import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.notSupportedFormatError
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import kotlin.experimental.and
 
 /**
  * Network address
  */
 @Serializable(Address.Companion::class)
 class Address(
-        val network: Network,
-        val port: Short,
-        val bytes: ByteArray
+    val network: Network,
+    val port: Short,
+    val bytes: ByteArray,
 ) {
     internal constructor(address: AddressV1) : this(Network.get(address.network), address.port.toPort(), address.bytes)
 
@@ -108,14 +108,14 @@ class Address(
         // ::1
         if (bytes.contentEquals(Network.IPv6_LOOPBACK_BYTES)) return true
         // fe80:: - febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-        if (       bytes[0] == 0xFE.toByte()
-                && bytes[1] == 0x80.toByte()
-                && bytes[2] == 0x00.toByte()
-                && bytes[3] == 0x00.toByte()
-                && bytes[4] == 0x00.toByte()
-                && bytes[5] == 0x00.toByte()
-                && bytes[6] == 0x00.toByte()
-                && bytes[7] == 0x00.toByte()
+        if (   bytes[0] == 0xFE.toByte()
+            && bytes[1] == 0x80.toByte()
+            && bytes[2] == 0x00.toByte()
+            && bytes[3] == 0x00.toByte()
+            && bytes[4] == 0x00.toByte()
+            && bytes[5] == 0x00.toByte()
+            && bytes[6] == 0x00.toByte()
+            && bytes[7] == 0x00.toByte()
         ) return true
 
         return false
@@ -160,9 +160,11 @@ class Address(
             return when (decoder) {
                 is BinaryDecoder -> {
                     val network = Network.get(decoder.decodeByte())
-                    Address(network,
-                            decoder.decodeShort(),
-                            decoder.decodeFixedByteArray(network.addrSize))
+                    Address(
+                        network,
+                        decoder.decodeShort(),
+                        decoder.decodeFixedByteArray(network.addrSize)
+                    )
                 }
                 else -> throw notSupportedFormatError(decoder, this)
             }
@@ -188,7 +190,7 @@ class Address(
 
 @Serializable
 internal class AddressV1(
-        val network: Byte,
-        val port: Int,
-        val bytes: ByteArray
+    val network: Byte,
+    val port: Int,
+    val bytes: ByteArray
 )
