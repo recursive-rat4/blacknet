@@ -27,12 +27,13 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.DEFAULT_P2P_PORT
-import ninja.blacknet.regtest
+import ninja.blacknet.Mode.*
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.contract.BAppIdSerializer
 import ninja.blacknet.dataDir
 import ninja.blacknet.logging.error
+import ninja.blacknet.mode
 import ninja.blacknet.network.Address
 import ninja.blacknet.network.AddressV1
 import ninja.blacknet.network.Network
@@ -163,14 +164,16 @@ object PeerDB {
         return hashMap
     }
 
-    private fun listBuiltinPeers(): List<Address> {
-        return if (regtest)
-            emptyList()
-        else
+    private fun listBuiltinPeers(): List<Address> = when (mode) {
+        MainNet -> {
             Resources.lines(PeerDB::class.java, "peers.txt", Charsets.UTF_8)
-                    .map {
-                        Network.parse(it, DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
-                    }
+                .map {
+                    Network.parse(it, DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
+                }
+        }
+        RegTest -> {
+            emptyList()
+        }
     }
 
     fun size(): Int {

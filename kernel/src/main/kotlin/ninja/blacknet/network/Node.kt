@@ -27,7 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import ninja.blacknet.regtest
 import ninja.blacknet.stateDir
 import ninja.blacknet.Config
 import ninja.blacknet.NETWORK_MAGIC
@@ -38,6 +37,7 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.logging.error
+import ninja.blacknet.mode
 import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
@@ -66,7 +66,7 @@ object Node {
     private val queuedPeers = Channel<Address>(Config.instance.outgoingconnections)
 
     init {
-        if (!regtest) {
+        if (mode.requiresNetwork) {
             if (Config.instance.listen) {
                 try {
                     listenOnIP()
@@ -258,7 +258,7 @@ object Node {
     suspend fun broadcastBlock(hash: ByteArray, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
-            if (!regtest)
+            if (mode.requiresNetwork)
                 logger.info { "Announced to $n peers" }
             return true
         } else {

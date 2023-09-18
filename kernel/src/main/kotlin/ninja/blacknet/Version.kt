@@ -21,10 +21,10 @@ object Version {
         val attributes = jar.getManifest().getMainAttributes()
         jar.close()
 
-        name = if (regtest)
-            "$AGENT_NAME-regtest"
-        else
-            AGENT_NAME
+        name = when (val suffix = mode.agentSuffix) {
+            null -> AGENT_NAME
+            else -> AGENT_NAME + '-' + suffix
+        }
 
         version = attributes.getValue("Implementation-Version")
 

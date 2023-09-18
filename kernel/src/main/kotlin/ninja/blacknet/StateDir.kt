@@ -23,8 +23,8 @@ val stateDir: Path = run {
     } else {
         XDGStateDirectory(XDG_SUBDIRECTORY)
     }
-    if (regtest) {
-        dir = dir.resolve("regtest")
+    mode.subdirectory?.let {
+        dir = dir.resolve(it)
     }
     Files.createDirectories(dir, *XDGDirectoryPermissions(dir))
     dir

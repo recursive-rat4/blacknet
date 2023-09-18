@@ -20,6 +20,7 @@ import java.nio.file.Files
 import java.security.Security
 import java.util.logging.LogManager
 import kotlinx.coroutines.debug.DebugProbes
+import ninja.blacknet.Mode.*
 import ninja.blacknet.core.Staker
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.db.*
@@ -126,10 +127,10 @@ object Kernel {
             embeddedServer(
                 CIO,
                 commandLineEnvironment(arrayOf("-config=${configDir.resolve(
-                    if (regtest)
-                        "rpcregtest.conf"
-                    else
-                        "rpc.conf"
+                    when (mode) {
+                        MainNet -> "rpc.conf"
+                        RegTest -> "rpcregtest.conf"
+                    }
                 )}"))
             ).start(wait = false)
         }

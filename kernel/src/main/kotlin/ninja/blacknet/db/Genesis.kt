@@ -9,14 +9,15 @@
 
 package ninja.blacknet.db
 
+import java.math.BigInteger
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import ninja.blacknet.Mode.*
 import ninja.blacknet.crypto.*
-import ninja.blacknet.regtest
+import ninja.blacknet.mode
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.Resources
-import java.math.BigInteger
 
 object Genesis {
     const val TIME: Long = 1545555600
@@ -26,14 +27,17 @@ object Genesis {
     val balances by lazy {
         val map = HashMap<ByteArray, Long>()
 
-        if (regtest) {
-            map.put(RegTest.publicKey1, 1000000000 * PoS.COIN)
-            map.put(RegTest.publicKey2, 10101010 * PoS.COIN)
-        } else {
-            val genesis = Resources.string(Genesis::class.java, "genesis.json", Charsets.UTF_8)
-            val entries = json.decodeFromString(ListSerializer(GenesisJsonEntry.serializer()), genesis)
-            entries.forEach { entry ->
-                map.put(entry.publicKey, entry.balance)
+        when (mode) {
+            MainNet -> {
+                val genesis = Resources.string(Genesis::class.java, "genesis.json", Charsets.UTF_8)
+                val entries = json.decodeFromString(ListSerializer(GenesisJsonEntry.serializer()), genesis)
+                entries.forEach { entry ->
+                    map.put(entry.publicKey, entry.balance)
+                }
+            }
+            RegTest -> {
+                map.put(RegTestGenesis.publicKey1, 1000000000 * PoS.COIN)
+                map.put(RegTestGenesis.publicKey2, 10101010 * PoS.COIN)
             }
         }
 
@@ -47,7 +51,7 @@ object Genesis {
             val balance: Long
     )
 
-    object RegTest {
+    object RegTestGenesis {
         // rblacknet1y73v0n57axhsgkyrypusz7jlhwclz4gextzvhyqnj6awjhmapu9qklf7u2
         val mnemonic1 = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖"
         val privateKey1 = Mnemonic.fromString(mnemonic1)

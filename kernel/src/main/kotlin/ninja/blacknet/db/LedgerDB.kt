@@ -18,11 +18,12 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import ninja.blacknet.regtest
+import ninja.blacknet.Mode.*
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
+import ninja.blacknet.mode
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.VarIntSerializer
@@ -202,11 +203,9 @@ object LedgerDB {
         return state
     }
 
-    fun forkV2(): Boolean {
-        return if (regtest)
-            true
-        else
-            state.forkV2 == (PoS.UPGRADE_THRESHOLD + 1).toShort()
+    fun forkV2(): Boolean = when (mode) {
+        MainNet -> state.forkV2 == (PoS.UPGRADE_THRESHOLD + 1).toShort()
+        RegTest -> true
     }
 
     fun scheduleSnapshotImpl(height: Int): Boolean {

@@ -78,5 +78,5 @@ val defaultSystemProperties: Map<String, Any> = mapOf(
     // Indent JSON returned by RPC API
     // "ninja.blacknet.serialization.json.indented" to true,
     // Regression testing mode
-    // "ninja.blacknet.regtest" to true,
+    // "ninja.blacknet.mode" to "RegTest",
 )

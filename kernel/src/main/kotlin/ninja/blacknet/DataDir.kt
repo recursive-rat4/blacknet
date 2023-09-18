@@ -31,8 +31,8 @@ val dataDir: Path = run {
         }
         new.toPath()
     }
-    if (regtest) {
-        dir = dir.resolve("regtest")
+    mode.subdirectory?.let {
+        dir = dir.resolve(it)
     }
     Files.createDirectories(dir, *XDGDirectoryPermissions(dir))
     dir

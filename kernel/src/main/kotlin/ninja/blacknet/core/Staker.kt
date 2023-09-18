@@ -16,12 +16,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
-import ninja.blacknet.regtest
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.mode
 import ninja.blacknet.network.Node
 import ninja.blacknet.rpc.v2.StakingInfo
 import ninja.blacknet.time.currentTimeMillis
@@ -93,7 +93,7 @@ object Staker {
         job.join()
         awaitsNextTimeSlot = null
 
-        if (!regtest) {
+        if (mode.requiresNetwork) {
             if (Node.isOffline()) {
                 state = "Awaiting to get online"
                 return

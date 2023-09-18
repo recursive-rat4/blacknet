@@ -14,7 +14,7 @@ import java.security.Security
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import ninja.blacknet.db.Genesis.RegTest
+import ninja.blacknet.db.Genesis.RegTestGenesis
 
 class MessageTest {
     init {
@@ -24,9 +24,9 @@ class MessageTest {
     @Test
     fun signAndVerify() {
         val message = "Blacknet test message 1"
-        val signature = Message.sign(RegTest.privateKey1, message)
+        val signature = Message.sign(RegTestGenesis.privateKey1, message)
 
-        assertTrue(Message.verify(RegTest.publicKey1, signature, message))
+        assertTrue(Message.verify(RegTestGenesis.publicKey1, signature, message))
     }
 
     @Test
@@ -36,7 +36,7 @@ class MessageTest {
         val signature1 = SignatureSerializer.decode("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
         val signature2 = SignatureSerializer.EMPTY
 
-        assertTrue(Message.verifyWithMagic(RegTest.publicKey1, signature1, message, magic))
-        assertFalse(Message.verifyWithMagic(RegTest.publicKey1, signature2, message, magic))
+        assertTrue(Message.verifyWithMagic(RegTestGenesis.publicKey1, signature1, message, magic))
+        assertFalse(Message.verifyWithMagic(RegTestGenesis.publicKey1, signature2, message, magic))
     }
 }
