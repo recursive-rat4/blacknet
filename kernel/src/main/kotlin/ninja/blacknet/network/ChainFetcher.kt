@@ -196,10 +196,10 @@ object ChainFetcher {
                 if (undoDifficulty >= state.cumulativeDifficulty) {
                     logger.info { "Reconnecting ${it.size} blocks" }
                     val toRemove = LedgerDB.undoRollbackImpl(rollbackTo!!, it)
-                    BlockDB.removeImpl(toRemove)
+                    BlockDB.deleteImpl(toRemove)
                 } else {
-                    logger.debug { "Removing ${it.size} blocks from db" }
-                    BlockDB.removeImpl(it)
+                    logger.debug { "Deleting ${it.size} blocks from db" }
+                    BlockDB.deleteImpl(it)
                 }
                 undoRollback = null
             }
