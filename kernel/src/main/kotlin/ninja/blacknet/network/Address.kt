@@ -13,6 +13,7 @@ import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
 import io.ktor.network.sockets.SocketAddress as KtorSocketAddress
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.util.Arrays
 import kotlin.experimental.and
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -39,7 +40,7 @@ class Address(
     val network: Network,
     val port: Short,
     val bytes: ByteArray,
-) {
+) : Comparable<Address> {
     internal constructor(address: AddressV1) : this(Network.get(address.network), address.port.toPort(), address.bytes)
 
     fun isLocal(): Boolean = when (network) {
@@ -89,6 +90,21 @@ class Address(
             "${getAddressString()}:${port.toPort()}"
         else
             "[${getAddressString()}]:${port.toPort()}"
+    }
+
+    // not meaningful, but needed for hash tables
+    override fun compareTo(other: Address): Int {
+        var d: Int
+        d = network.type.compareTo(other.network.type)
+        if (d != 0)
+            return d
+        d = port.compareTo(other.port)
+        if (d != 0)
+            return d
+        d = Arrays.compareUnsigned(bytes, other.bytes)
+        if (d != 0)
+            return d
+        return 0
     }
 
     private fun isLocalIPv4(): Boolean {

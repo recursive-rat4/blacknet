@@ -14,10 +14,22 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 class AddressTest {
+    @Test
+    fun comparison() {
+        val a = Address(Network.IPv4, 12345, byteArrayOf(127, 0, 0, 1))
+        val b = Address(Network.IPv4, 12345, byteArrayOf(127, 0, 0, 2))
+        val c = Address(Network.I2P, 0, ByteArray(32))
+        val d = Address(Network.I2P, 0, ByteArray(32))
+        assertNotEquals(0, a.compareTo(b))
+        assertNotEquals(0, b.compareTo(c))
+        assertEquals(0, c.compareTo(d))
+    }
+
     @Test
     fun ipv4() {
         for ((string, local, private) in arrayOf(
