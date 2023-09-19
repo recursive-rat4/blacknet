@@ -15,6 +15,7 @@ import kotlin.math.min
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Config
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
@@ -22,13 +23,12 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.util.HashMap
-import ninja.blacknet.util.HashSet
 
 private val logger = KotlinLogging.logger {}
 
 object TxPool : MemPool(), Ledger {
     internal val mutex = Mutex()
-    private val rejects = HashSet<ByteArray>()
+    private val rejects = HashSet<Hash>()
     private val undoAccounts = HashMap<ByteArray, AccountState?>()
     private val undoHtlcs = HashMap<ByteArray, Pair<Boolean, HTLC?>>()
     private val undoMultisigs = HashMap<ByteArray, Pair<Boolean, Multisig?>>()
@@ -73,7 +73,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     suspend fun isInteresting(hash: ByteArray): Boolean = mutex.withLock {
-        return !rejects.contains(hash) && !containsImpl(hash)
+        return !rejects.contains(Hash(hash)) && !containsImpl(hash)
     }
 
     suspend fun getSequence(key: ByteArray): Int = mutex.withLock {
@@ -236,7 +236,7 @@ object TxPool : MemPool(), Ledger {
     }
 
     suspend fun process(hash: ByteArray, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = mutex.withLock {
-        if (rejects.contains(hash))
+        if (rejects.contains(Hash(hash)))
             return Pair(Invalid("Already rejected tx"), 0)
         if (containsImpl(hash))
             return Pair(AlreadyHave(HashSerializer.encode(hash)), 0)
@@ -248,7 +248,7 @@ object TxPool : MemPool(), Ledger {
         }
         val result = TxPool.processImplWithFee(hash, bytes, time)
         if (result.first is Invalid || result.first is InFuture) {
-            rejects.add(hash)
+            rejects.add(Hash(hash))
         }
         return result
     }

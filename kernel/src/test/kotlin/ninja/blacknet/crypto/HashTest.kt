@@ -10,6 +10,7 @@
 package ninja.blacknet.crypto
 
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import ninja.blacknet.util.byteArrayOfInts
 
@@ -33,5 +34,19 @@ class HashTest {
         assertTrue(f < g)
         assertTrue(g < h)
         assertTrue(h < i)
+    }
+
+    @Test
+    fun hashTable() {
+        val bytes1 = ByteArray(HashSerializer.SIZE_BYTES) { 1 }
+        val bytes2 = ByteArray(HashSerializer.SIZE_BYTES) { 2 }
+        val a = Hash(bytes1)
+        val b = Hash(bytes1)
+        val c = Hash(bytes2)
+        val table = HashSet<Hash>()
+        assertTrue(table.add(a))
+        assertFalse(table.add(a))
+        assertFalse(table.add(b))
+        assertTrue(table.add(c))
     }
 }
