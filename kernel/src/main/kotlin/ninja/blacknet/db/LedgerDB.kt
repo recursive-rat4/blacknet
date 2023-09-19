@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.SetSerializer
 import ninja.blacknet.Mode.*
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
@@ -29,8 +30,6 @@ import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.HashMap
-import ninja.blacknet.util.HashSet
-import ninja.blacknet.util.HashSetSerializer
 import ninja.blacknet.util.toByteArray
 
 private val logger = KotlinLogging.logger {}
@@ -127,14 +126,14 @@ object LedgerDB {
     }
 
     private fun writeSnapshotHeights(batch: LevelDB.WriteBatch) {
-        val snapshotHeightsBytes = binaryFormat.encodeToByteArray(HashSetSerializer(VarIntSerializer), snapshotHeights)
+        val snapshotHeightsBytes = binaryFormat.encodeToByteArray(SetSerializer(VarIntSerializer), snapshotHeights)
         batch.put(SNAPSHOTHEIGHTS_KEY, snapshotHeightsBytes)
     }
 
     init {
         val snapshotHeightsBytes = LevelDB.get(SNAPSHOTHEIGHTS_KEY)
         if (snapshotHeightsBytes != null) {
-            binaryFormat.decodeFromByteArray(HashSetSerializer(VarIntSerializer), snapshotHeightsBytes).forEach { height ->
+            binaryFormat.decodeFromByteArray(SetSerializer(VarIntSerializer), snapshotHeightsBytes).forEach { height ->
                 snapshotHeights.add(height)
             }
         }
