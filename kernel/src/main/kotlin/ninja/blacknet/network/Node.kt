@@ -42,11 +42,11 @@ import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
+import ninja.blacknet.util.initialHashTableCapacity
 import ninja.blacknet.util.inputStream
 import ninja.blacknet.util.replaceFile
 import ninja.blacknet.util.rotate
@@ -385,7 +385,7 @@ object Node {
     }
 
     private suspend fun getFilter(): HashSet<Address> {
-        val filter = HashSet<Address>(expectedSize = connections.size() + listenAddress.size())
+        val filter = HashSet<Address>(initialHashTableCapacity(connections.size() + listenAddress.size()))
         connections.forEach { filter.add(it.remoteAddress) }
         listenAddress.forEach { filter.add(it) }
         return filter

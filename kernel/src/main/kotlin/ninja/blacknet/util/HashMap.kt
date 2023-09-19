@@ -18,6 +18,9 @@ import ninja.blacknet.serialization.MapSerializer
 import ninja.blacknet.serialization.descriptor.MapSerialDescriptor
 import org.apache.commons.collections4.map.AbstractHashedMap
 
+//JAVA 19
+fun initialHashTableCapacity(expectedSize: Int): Int =  (expectedSize / 0.75f + 1.0f).toInt()
+
 inline fun <T, K, V> makeMap(content: Array<out Pair<K, V>>, factory: () -> T): T
     where T : MutableMap<K, V> = factory().apply { putAll(content) }
 
@@ -30,7 +33,7 @@ open class HashMap<K, V>(
         loadFactor: Float = DEFAULT_LOAD_FACTOR,
         threshold: Int = DEFAULT_THRESHOLD,
 ) : AbstractHashedMap<K, V>(initialCapacity, loadFactor, threshold) {
-    constructor(expectedSize: Int) : this(initialCapacity = (expectedSize / DEFAULT_LOAD_FACTOR + 1.0f).toInt())
+    constructor(expectedSize: Int) : this(initialCapacity = initialHashTableCapacity(expectedSize))
 
     override fun hash(key: Any): Int = if (key is ByteArray)
                                            hashCode(ByteArraySerializer, key)
