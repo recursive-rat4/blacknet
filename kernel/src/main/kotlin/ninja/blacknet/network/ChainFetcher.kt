@@ -36,7 +36,7 @@ private val logger = KotlinLogging.logger {}
  */
 object ChainFetcher {
     private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
-    private val deferChannel = Channel<Pair<Blocks, BigInteger>>(16)
+    private val deferChannel = Channel<Triple<Connection, Blocks, BigInteger>>(16)
     private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     @Volatile
     private var request: Deferred<Blocks>? = null
@@ -99,19 +99,11 @@ object ChainFetcher {
             deferred.complete(Pair(status, n))
         }
 
-        deferChannel.tryReceive().getOrNull()?.let { (blocks, requestedDifficulty) ->
+        deferChannel.tryReceive().getOrNull()?.let { (connection, answer, requestedDifficulty) ->
             if (requestedDifficulty <= LedgerDB.state().cumulativeDifficulty)
                 return@let
 
-            //TODO process deferred blocks
-
-            if (blocks.blocks.isNotEmpty()) {
-                logger.info { "Skipped deferred ${blocks.blocks.size} blocks" }
-            } else if (blocks.hashes.isNotEmpty()) {
-                logger.info { "Skipped deferred ${blocks.hashes.size} hashes" }
-            } else {
-                logger.error { "Invalid packet Blocks" }
-            }
+            processDeferred(connection, answer)
         }
 
         if (data == null)
@@ -254,9 +246,8 @@ object ChainFetcher {
         }
 
         if (request == null || syncConnection != connection) {
-            deferChannel.send(Pair(blocks, requestedDifficulty))
+            deferChannel.send(Triple(connection, blocks, requestedDifficulty))
             announces.trySend(null)
-            logger.info { "Deferred packet Blocks from ${connection.debugName()}" }
             return
         }
 
@@ -287,6 +278,53 @@ object ChainFetcher {
         if (answer.blocks.size >= 10)
             logger.info { "Connected ${answer.blocks.size} blocks" }
         return true
+    }
+
+    // Blocks were received after timeout. During lags, processing these helps to stay in sync.
+    private suspend fun processDeferred(connection: Connection, answer: Blocks) {
+        if (answer.blocks.isNotEmpty()) {
+            logger.info { "Mongering ${answer.blocks.size} deferred blocks from ${connection.debugName()}" }
+            BlockDB.mutex.withLock {
+                for (i in answer.blocks) {
+                    val hash = Block.hash(i)
+                    val status = try {
+                        BlockDB.processImpl(hash, i)
+                    } catch (e: Throwable) {
+                        logger.error(e) { "Exception in processDeferred ${connection.debugName()}" }
+                        connection.close()
+                        return
+                    }
+                    when (status) {
+                        Accepted -> {
+                            // Continue catching up
+                            logger.info { "Accepted ${HashSerializer.encode(hash)}" }
+                            continue
+                        }
+                        is AlreadyHave -> {
+                            // Perhaps sequent blocks will be useful
+                            logger.debug { "AlreadyHave ${HashSerializer.encode(hash)}" }
+                            continue
+                        }
+                        is InFuture, is Invalid -> {
+                            // No way
+                            connection.dos(status.toString())
+                            break
+                        }
+                        is NotOnThisChain -> {
+                            // Ain't useful without fork resolution
+                            logger.debug { "NotOnThisChain ${HashSerializer.encode(hash)}" }
+                            break
+                        }
+                    }
+                }
+            }
+        } else if (answer.hashes.isNotEmpty()) {
+            //XXX Can be used somehow?
+            logger.debug { "Skipped ${answer.hashes.size} deferred hashes" }
+        } else {
+            // Must not happen
+            logger.error { "Invalid packet Blocks" }
+        }
     }
 
     private fun requestBlocks(
