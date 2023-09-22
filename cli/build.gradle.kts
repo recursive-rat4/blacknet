@@ -33,6 +33,10 @@ val compileJava by tasks.existing(JavaCompile::class) {
     targetCompatibility = "17"
 }
 
+val compileTestJava by tasks.existing(JavaCompile::class) {
+    targetCompatibility = "17"
+}
+
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
@@ -40,6 +44,12 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
             "-Xjvm-default=all",
             *optOut(project),
         )
+    }
+}
+
+val compileTestKotlin by tasks.existing(KotlinCompile::class) {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
