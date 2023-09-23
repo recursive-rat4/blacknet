@@ -9,18 +9,22 @@
 
 package ninja.blacknet
 
+import java.awt.event.KeyEvent
 import ninja.blacknet.swing.dsl.*
 
 fun MainMenu() = jMenuBar {
     +jMenu {
         text = "File"
+        mnemonic = KeyEvent.VK_F
         +QuitAction
     }
     +jMenu {
         text = "Edit"
+        mnemonic = KeyEvent.VK_E
         +PreferencesAction()
     }
     +jMenu {
         text = "Help"
+        mnemonic = KeyEvent.VK_H
     }
 }
