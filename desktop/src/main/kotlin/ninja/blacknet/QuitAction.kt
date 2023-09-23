@@ -10,12 +10,15 @@
 package ninja.blacknet
 
 import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import javax.swing.AbstractAction
 import ninja.blacknet.swing.dsl.*
 
 object QuitAction : AbstractAction() {
     init {
         name = "Quit"
+        accelerator = KeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK)
     }
 
     override fun actionPerformed(e: ActionEvent) {

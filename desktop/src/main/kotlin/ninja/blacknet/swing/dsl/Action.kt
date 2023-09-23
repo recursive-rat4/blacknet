@@ -12,11 +12,16 @@ package ninja.blacknet.swing.dsl
 import javax.swing.Action
 import javax.swing.Action.*
 import javax.swing.JMenu
+import javax.swing.KeyStroke
 
 context(JMenu)
 operator fun Action.unaryPlus() {
     this@JMenu.add(this@Action)
 }
+
+var Action.accelerator: KeyStroke?
+    get() = getValue(ACCELERATOR_KEY) as KeyStroke?
+    set(value) = putValue(ACCELERATOR_KEY, value)
 
 var Action.name: String?
     get() = getValue(NAME) as String?
