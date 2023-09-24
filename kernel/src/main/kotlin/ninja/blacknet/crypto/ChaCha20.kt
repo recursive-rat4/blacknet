@@ -9,25 +9,30 @@
 
 package ninja.blacknet.crypto
 
-import org.bouncycastle.crypto.engines.ChaCha7539Engine
-import org.bouncycastle.crypto.params.KeyParameter
-import org.bouncycastle.crypto.params.ParametersWithIV
 import java.security.SecureRandom
+import javax.crypto.Cipher
+import javax.crypto.Cipher.DECRYPT_MODE
+import javax.crypto.Cipher.ENCRYPT_MODE
+import javax.crypto.spec.ChaCha20ParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 /**
  * ChaCha20 stream cipher.
  */
 object ChaCha20 {
+    private const val ALGORITHM = "ChaCha20"
     private const val IV_SIZE = 12
     private val random = SecureRandom()
 
     internal fun encrypt(key: ByteArray, iv: ByteArray, bytes: ByteArray): ByteArray {
         val encrypted = ByteArray(bytes.size + IV_SIZE)
         System.arraycopy(iv, 0, encrypted, 0, IV_SIZE)
-        val engine = ChaCha7539Engine()
-        engine.init(true, ParametersWithIV(KeyParameter(key), iv))
-        engine.processBytes(bytes, 0, bytes.size, encrypted, IV_SIZE)
-        return encrypted
+        val cipher = Cipher.getInstance(ALGORITHM)
+        cipher.init(ENCRYPT_MODE, SecretKeySpec(key, ALGORITHM), ChaCha20ParameterSpec(iv, 0))
+        return if (cipher.doFinal(bytes, 0, bytes.size, encrypted, IV_SIZE) == bytes.size)
+            encrypted
+        else
+            throw IllegalStateException("Unexpected number of bytes")
     }
 
     /**
@@ -46,9 +51,9 @@ object ChaCha20 {
         if (size < 0) return null
         val iv = bytes.copyOf(IV_SIZE)
         val decrypted = ByteArray(size)
-        val engine = ChaCha7539Engine()
-        engine.init(false, ParametersWithIV(KeyParameter(key), iv))
-        return if (engine.processBytes(bytes, IV_SIZE, size, decrypted, 0) == size)
+        val cipher = Cipher.getInstance(ALGORITHM)
+        cipher.init(DECRYPT_MODE, SecretKeySpec(key, ALGORITHM), ChaCha20ParameterSpec(iv, 0))
+        return if (cipher.doFinal(bytes, IV_SIZE, size, decrypted, 0) == size)
             decrypted
         else
             null
