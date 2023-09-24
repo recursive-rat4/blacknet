@@ -21,17 +21,21 @@ object ChaCha20 {
     private const val IV_SIZE = 12
     private val random = SecureRandom()
 
-    /**
-     * Returns a [ByteArray] encrypted with [key].
-     */
-    fun encrypt(key: ByteArray, bytes: ByteArray): ByteArray {
+    internal fun encrypt(key: ByteArray, iv: ByteArray, bytes: ByteArray): ByteArray {
         val encrypted = ByteArray(bytes.size + IV_SIZE)
-        val iv = random.nextBytes(IV_SIZE)
         System.arraycopy(iv, 0, encrypted, 0, IV_SIZE)
         val engine = ChaCha7539Engine()
         engine.init(true, ParametersWithIV(KeyParameter(key), iv))
         engine.processBytes(bytes, 0, bytes.size, encrypted, IV_SIZE)
         return encrypted
+    }
+
+    /**
+     * Returns a [ByteArray] encrypted with [key].
+     */
+    fun encrypt(key: ByteArray, bytes: ByteArray): ByteArray {
+        val iv = random.nextBytes(IV_SIZE)
+        return encrypt(key, iv, bytes)
     }
 
     /**
