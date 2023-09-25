@@ -10,15 +10,14 @@
 package ninja.blacknet
 
 import java.awt.event.ActionEvent
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
+import java.awt.event.KeyEvent.*
 import javax.swing.AbstractAction
 import ninja.blacknet.swing.dsl.*
 
 class PreferencesAction : AbstractAction() {
     init {
         name = "Preferences"
-        accelerator = KeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)
+        accelerator = KeyStroke(VK_P, CTRL_DOWN_MASK)
     }
 
     override fun actionPerformed(e: ActionEvent) {
