@@ -24,6 +24,10 @@ fun ExceptionDialog(
                 text = Throwables.getStackTraceAsString(e)
                 caretPosition = 0
                 isEditable = false
+                componentPopupMenu = jPopupMenu {
+                    +CopyAction()
+                    +SelectAllAction()
+                }
             }
         },
     )

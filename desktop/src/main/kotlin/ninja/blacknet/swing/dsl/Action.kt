@@ -12,11 +12,17 @@ package ninja.blacknet.swing.dsl
 import javax.swing.Action
 import javax.swing.Action.*
 import javax.swing.JMenu
+import javax.swing.JPopupMenu
 import javax.swing.KeyStroke
 
 context(JMenu)
 operator fun Action.unaryPlus() {
     this@JMenu.add(this@Action)
+}
+
+context(JPopupMenu)
+operator fun Action.unaryPlus() {
+    this@JPopupMenu.add(this@Action)
 }
 
 var Action.accelerator: KeyStroke?
