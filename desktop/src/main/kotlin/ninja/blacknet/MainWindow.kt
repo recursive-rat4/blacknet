@@ -11,6 +11,7 @@ package ninja.blacknet
 
 import java.awt.Dimension
 import java.awt.Toolkit
+import java.awt.event.KeyEvent.VK_1
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
@@ -41,6 +42,10 @@ object MainWindow : JFrame() {
                 name = "Staking"
             }
             +AddressBookPanel()
+        }.apply {
+            require(tabCount <= 9)
+            for (i in 0 until tabCount)
+                setMnemonicAt(i, VK_1 + i)
         }
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent) {
