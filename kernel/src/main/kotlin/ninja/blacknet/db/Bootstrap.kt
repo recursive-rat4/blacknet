@@ -88,19 +88,11 @@ object Bootstrap {
         val stream = FileChannel.open(file, CREATE, TRUNCATE_EXISTING, WRITE).outputStream().buffered().data()
 
         var hash = Genesis.BLOCK_HASH
-        var index = LedgerDB.chainIndexes.get(hash)
+        var index = LedgerDB.chainIndexes.getOrThrow(hash)
         do {
-            if (index == null) {
-                logger.error { "${HashSerializer.encode(hash)} not in ChainIndex" }
-                break
-            }
             hash = index.next
-            index = LedgerDB.chainIndexes.get(hash)
-            val bytes = BlockDB.blocks.getBytes(hash)
-            if (bytes == null) {
-                logger.error { "${HashSerializer.encode(hash)} not in BlockDB" }
-                break
-            }
+            index = LedgerDB.chainIndexes.getOrThrow(hash)
+            val bytes = BlockDB.blocks.getBytesOrThrow(hash)
             stream.writeInt(bytes.size)
             stream.write(bytes, 0, bytes.size)
         } while (!hash.contentEquals(checkpoint))
