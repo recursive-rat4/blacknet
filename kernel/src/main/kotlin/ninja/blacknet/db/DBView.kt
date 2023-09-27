@@ -87,6 +87,8 @@ class DBView<T>(
     }
 
     private fun notInDB(key: ByteArray): Throwable {
-        return Error("Not in DB ${Base16.encode(key)}")
+        val className = deserializer.descriptor.serialName.substringAfterLast('.')
+        val keyString = Base16.encode(key)
+        return Error("Not in DB $className $keyString")
     }
 }
