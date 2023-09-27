@@ -85,19 +85,17 @@ object Bootstrap {
             return null
 
         val file = dataDir.resolve("bootstrap.dat.new")
-        val stream = FileChannel.open(file, CREATE, TRUNCATE_EXISTING, WRITE).outputStream().buffered().data()
-
-        var hash = Genesis.BLOCK_HASH
-        var index = LedgerDB.chainIndexes.getOrThrow(hash)
-        do {
-            hash = index.next
-            index = LedgerDB.chainIndexes.getOrThrow(hash)
-            val bytes = BlockDB.blocks.getBytesOrThrow(hash)
-            stream.writeInt(bytes.size)
-            stream.write(bytes, 0, bytes.size)
-        } while (!hash.contentEquals(checkpoint))
-
-        stream.close()
+        FileChannel.open(file, CREATE, TRUNCATE_EXISTING, WRITE).outputStream().buffered().data().use { stream ->
+            var hash = Genesis.BLOCK_HASH
+            var index = LedgerDB.chainIndexes.getOrThrow(hash)
+            do {
+                hash = index.next
+                index = LedgerDB.chainIndexes.getOrThrow(hash)
+                val bytes = BlockDB.blocks.getBytesOrThrow(hash)
+                stream.writeInt(bytes.size)
+                stream.write(bytes, 0, bytes.size)
+            } while (!hash.contentEquals(checkpoint))
+        }
 
         return file
     }
