@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.window.main
 
 import java.awt.Dimension
 import java.awt.Toolkit
@@ -16,6 +16,8 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
 import javax.swing.JTabbedPane.LEFT
+import ninja.blacknet.Config
+import ninja.blacknet.Desktop
 import ninja.blacknet.swing.dsl.*
 
 object MainWindow : JFrame() {

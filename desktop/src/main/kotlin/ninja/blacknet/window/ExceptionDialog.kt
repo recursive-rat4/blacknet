@@ -7,9 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.window
 
 import com.google.common.base.Throwables
+import ninja.blacknet.TERMINAL_HEIGHT
+import ninja.blacknet.TERMINAL_WIDTH
+import ninja.blacknet.swing.action.CopyAction
+import ninja.blacknet.swing.action.SelectAllAction
 import ninja.blacknet.swing.dsl.*
 
 fun ExceptionDialog(

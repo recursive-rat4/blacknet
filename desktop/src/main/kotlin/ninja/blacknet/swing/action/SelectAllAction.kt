@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.swing.action
 
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent.*

@@ -7,20 +7,25 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.window.main
 
-import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent.*
-import javax.swing.AbstractAction
+import ninja.blacknet.swing.action.QuitAction
 import ninja.blacknet.swing.dsl.*
 
-class PreferencesAction : AbstractAction() {
-    init {
-        name = "Preferences"
-        accelerator = KeyStroke(VK_P, CTRL_DOWN_MASK)
+fun MainMenu() = jMenuBar {
+    +jMenu {
+        text = "File"
+        mnemonic = VK_F
+        +QuitAction
     }
-
-    override fun actionPerformed(e: ActionEvent) {
-        PreferencesDialog()
+    +jMenu {
+        text = "Edit"
+        mnemonic = VK_E
+        +PreferencesAction()
+    }
+    +jMenu {
+        text = "Help"
+        mnemonic = VK_H
     }
 }

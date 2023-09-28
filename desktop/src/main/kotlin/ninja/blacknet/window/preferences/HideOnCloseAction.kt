@@ -7,20 +7,21 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.window.preferences
 
 import java.awt.event.ActionEvent
-import java.awt.event.KeyEvent.*
 import javax.swing.AbstractAction
+import ninja.blacknet.Config
 import ninja.blacknet.swing.dsl.*
 
-object QuitAction : AbstractAction() {
+class HideOnCloseAction : AbstractAction() {
     init {
-        name = "Quit"
-        accelerator = KeyStroke(VK_Q, CTRL_DOWN_MASK)
+        name = "Hide on close"
+        toolTipText = "When the main window is closed, the tray icon stays."
+        selected = Config.hideOnClose
     }
 
     override fun actionPerformed(e: ActionEvent) {
-        System.exit(0)
+        Config.hideOnClose = !Config.hideOnClose
     }
 }

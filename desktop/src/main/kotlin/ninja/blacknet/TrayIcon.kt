@@ -14,6 +14,8 @@ import java.awt.PopupMenu
 import java.awt.SystemTray
 import java.awt.Toolkit
 import java.awt.TrayIcon
+import ninja.blacknet.swing.action.QuitAction
+import ninja.blacknet.window.main.MainWindow
 
 fun TrayIcon() {
     val image = Toolkit.getDefaultToolkit().getImage(Desktop::class.java.classLoader.getResource("logo.png"))

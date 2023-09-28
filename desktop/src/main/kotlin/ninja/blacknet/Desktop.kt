@@ -10,6 +10,8 @@
 package ninja.blacknet
 
 import java.awt.EventQueue
+import ninja.blacknet.window.ExceptionDialog
+import ninja.blacknet.window.main.MainWindow
 
 object Desktop {
     @JvmStatic

@@ -7,16 +7,12 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet
+package ninja.blacknet.window.main
 
-import javax.swing.JOptionPane.ERROR_MESSAGE
-import javax.swing.JOptionPane.showMessageDialog
+import ninja.blacknet.swing.dsl.*
 
-fun ErrorDialog(
-    message: Any,
-) = showMessageDialog(
-    null,
-    message,
-    "Blacknet - Error",
-    ERROR_MESSAGE,
-)
+fun HistoryPane() = jScrollPane {
+    name = "History"
+    viewport.view = jTable {
+    }
+}
