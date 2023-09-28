@@ -56,6 +56,10 @@ object MainWindow : JFrame() {
                 else
                     System.exit(0)
             }
+            override fun windowIconified(e: WindowEvent) {
+                if (Config.hideOnMinimize)
+                    isVisible = false
+            }
         })
         isVisible = true
     }

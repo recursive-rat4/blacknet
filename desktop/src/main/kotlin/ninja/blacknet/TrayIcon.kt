@@ -9,6 +9,7 @@
 
 package ninja.blacknet
 
+import java.awt.Frame.NORMAL
 import java.awt.MenuItem
 import java.awt.PopupMenu
 import java.awt.SystemTray
@@ -26,7 +27,14 @@ fun TrayIcon() {
     val trayIcon = TrayIcon(image, "Blacknet", popup)
     trayIcon.isImageAutoSize = true
     trayIcon.addActionListener {
-        MainWindow.isVisible = !MainWindow.isVisible
+        MainWindow.apply {
+            if (isVisible) {
+                isVisible = false
+            } else {
+                isVisible = true
+                state = NORMAL
+            }
+        }
     }
     SystemTray.getSystemTray().add(trayIcon)
 }

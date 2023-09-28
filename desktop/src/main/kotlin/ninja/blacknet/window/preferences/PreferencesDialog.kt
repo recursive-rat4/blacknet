@@ -25,6 +25,9 @@ fun PreferencesDialog() = jDialog {
             +jCheckBox {
                 action = HideOnCloseAction()
             }
+            +jCheckBox {
+                action = HideOnMinimizeAction()
+            }
         }
     }
     isVisible = true

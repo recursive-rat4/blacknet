@@ -12,4 +12,5 @@ package ninja.blacknet
 object Config {
     // var lookAndFeel = "TODO"
     var hideOnClose = true
+    var hideOnMinimize = false
 }

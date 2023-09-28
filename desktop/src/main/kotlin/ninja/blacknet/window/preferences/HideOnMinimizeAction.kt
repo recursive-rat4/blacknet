@@ -14,16 +14,16 @@ import javax.swing.AbstractAction
 import ninja.blacknet.Config
 import ninja.blacknet.swing.dsl.*
 
-class HideOnCloseAction : AbstractAction() {
+class HideOnMinimizeAction : AbstractAction() {
     init {
-        name = "Hide on close"
-        toolTipText = "When the main window is closed, the tray icon stays."
-        selected = Config.hideOnClose
+        name = "Hide on minimize"
+        toolTipText = "When the main window is minimized, the tray icon stays."
+        selected = Config.hideOnMinimize
     }
 
     override fun actionPerformed(e: ActionEvent) {
         Config.apply {
-            hideOnClose = !hideOnClose
+            hideOnMinimize = !hideOnMinimize
         }
     }
 }
