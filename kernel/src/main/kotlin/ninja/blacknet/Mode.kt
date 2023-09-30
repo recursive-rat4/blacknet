@@ -9,6 +9,7 @@
 
 package ninja.blacknet
 
+import kotlin.system.exitProcess
 import ninja.blacknet.Mode.*
 
 /**
@@ -55,5 +56,9 @@ val mode: Mode = when (val property = System.getProperty("ninja.blacknet.mode"))
     "TestNet" -> throw NotImplementedError("TestNet was not tested")
     "SigNet" -> throw NotImplementedError("SigNet was not signed")
     "RegTest" -> RegTest
-    else -> throw IllegalArgumentException("Unrecognized mode: $property. Possible values: MainNet, RegTest.")
+    else -> {
+        // logging is not yet available
+        System.err.println("Unrecognized mode: $property. Possible values: MainNet, RegTest.")
+        exitProcess(1)
+    }
 }
