@@ -53,12 +53,14 @@ enum class Mode(
 val mode: Mode = when (val property = System.getProperty("ninja.blacknet.mode")) {
     null -> MainNet
     "MainNet" -> MainNet
-    "TestNet" -> throw NotImplementedError("TestNet was not tested")
-    "SigNet" -> throw NotImplementedError("SigNet was not signed")
+    "TestNet" -> notImplementedError("TestNet was not tested")
+    "SigNet" -> notImplementedError("SigNet was not signed")
     "RegTest" -> RegTest
-    else -> {
-        // logging is not yet available
-        System.err.println("Unrecognized mode: $property. Possible values: MainNet, RegTest.")
-        exitProcess(1)
-    }
+    else -> notImplementedError("Unrecognized mode: $property. Possible values: MainNet, RegTest.")
+}
+
+private fun notImplementedError(message: String): Nothing {
+    // logging is not yet available
+    System.err.println(message)
+    exitProcess(1)
 }
