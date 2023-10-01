@@ -18,7 +18,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Runtime
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
@@ -48,7 +48,7 @@ object ChainFetcher {
     private var originalChain: ByteArray? = null
     private var rollbackTo: ByteArray? = null
     private var undoDifficulty = BigInteger.ZERO
-    private var undoRollback: List<ByteArray>? = null
+    private var undoRollback: List<Hash>? = null
 
     private val coroutine = Runtime.rotate(::implementation)
 
@@ -125,7 +125,7 @@ object ChainFetcher {
                 return
             }
 
-            logger.info { "Fetching ${HashSerializer.encode(announce.chain)}" }
+            logger.info { "Fetching ${Hash(announce.chain)}" }
             syncConnection = connection
             originalChain = state.blockHash
 
@@ -261,12 +261,12 @@ object ChainFetcher {
             logger.info { "Disconnected ${undoRollback!!.size} blocks" }
         }
         for (i in answer.blocks) {
-            val hash = Block.hash(i)
+            val hash = Hash(Block.hash(i))
             if (undoRollback?.contains(hash) == true) {
-                connection.dos("Rollback contains ${HashSerializer.encode(hash)}")
+                connection.dos("Rollback contains $hash}")
                 return false
             }
-            val status = BlockDB.processImpl(hash, i)
+            val status = BlockDB.processImpl(hash.bytes, i)
             if (status != Accepted) {
                 connection.dos(status.toString())
                 return false
@@ -286,9 +286,9 @@ object ChainFetcher {
             logger.info { "Mongering ${answer.blocks.size} deferred blocks from ${connection.debugName()}" }
             BlockDB.mutex.withLock {
                 for (i in answer.blocks) {
-                    val hash = Block.hash(i)
+                    val hash = Hash(Block.hash(i))
                     val status = try {
-                        BlockDB.processImpl(hash, i)
+                        BlockDB.processImpl(hash.bytes, i)
                     } catch (e: Throwable) {
                         logger.error(e) { "Exception in processDeferred ${connection.debugName()}" }
                         connection.close()
@@ -297,12 +297,12 @@ object ChainFetcher {
                     when (status) {
                         Accepted -> {
                             // Continue catching up
-                            logger.info { "Accepted ${HashSerializer.encode(hash)}" }
+                            logger.info { "Accepted $hash" }
                             continue
                         }
                         is AlreadyHave -> {
                             // Perhaps sequent blocks will be useful
-                            logger.debug { "AlreadyHave ${HashSerializer.encode(hash)}" }
+                            logger.debug { "AlreadyHave $hash" }
                             continue
                         }
                         is InFuture, is Invalid -> {
@@ -312,7 +312,7 @@ object ChainFetcher {
                         }
                         is NotOnThisChain -> {
                             // Ain't useful without fork resolution
-                            logger.debug { "NotOnThisChain ${HashSerializer.encode(hash)}" }
+                            logger.debug { "NotOnThisChain $hash" }
                             break
                         }
                     }

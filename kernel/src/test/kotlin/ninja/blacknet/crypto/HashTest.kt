@@ -10,11 +10,23 @@
 package ninja.blacknet.crypto
 
 import kotlin.test.Test
-import kotlin.test.assertFalse
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import ninja.blacknet.util.byteArrayOfInts
 
 class HashTest {
+    @Test
+    fun data() {
+        val a = Hash(ByteArray(HashSerializer.SIZE_BYTES) { 21 })
+        val b = Hash(ByteArray(HashSerializer.SIZE_BYTES) { 21 })
+        val c = Hash(ByteArray(HashSerializer.SIZE_BYTES) { -1 })
+        assertEquals(a, b)
+        assertEquals(a.hashCode(), b.hashCode())
+        assertNotEquals(a, c)
+        assertEquals(0, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF".compareTo(c.toString(), ignoreCase = true))
+    }
+
     @Test
     fun comparison() {
         val a = Hash(byteArrayOfInts(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
@@ -34,19 +46,5 @@ class HashTest {
         assertTrue(f < g)
         assertTrue(g < h)
         assertTrue(h < i)
-    }
-
-    @Test
-    fun hashTable() {
-        val bytes1 = ByteArray(HashSerializer.SIZE_BYTES) { 1 }
-        val bytes2 = ByteArray(HashSerializer.SIZE_BYTES) { 2 }
-        val a = Hash(bytes1)
-        val b = Hash(bytes1)
-        val c = Hash(bytes2)
-        val table = HashSet<Hash>()
-        assertTrue(table.add(a))
-        assertFalse(table.add(a))
-        assertFalse(table.add(b))
-        assertTrue(table.add(c))
     }
 }

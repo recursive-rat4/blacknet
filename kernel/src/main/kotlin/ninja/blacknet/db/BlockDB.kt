@@ -47,10 +47,10 @@ object BlockDB {
         return rejects.contains(Hash(hash))
     }
 
-    internal fun deleteImpl(list: List<ByteArray>) {
+    internal fun deleteImpl(list: List<Hash>) {
         val batch = LevelDB.createWriteBatch()
         list.forEach { hash ->
-            batch.delete(BLOCK_KEY, hash)
+            batch.delete(BLOCK_KEY, hash.bytes)
         }
         batch.write()
     }

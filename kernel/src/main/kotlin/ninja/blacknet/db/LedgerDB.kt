@@ -414,28 +414,28 @@ object LedgerDB {
         return hash
     }
 
-    internal suspend fun rollbackToImpl(hash: ByteArray): List<ByteArray> {
-        val result = ArrayList<ByteArray>()
+    internal suspend fun rollbackToImpl(hash: ByteArray): List<Hash> {
+        val result = ArrayList<Hash>()
         do {
-            result.add(undoBlockImpl())
+            result.add(Hash(undoBlockImpl()))
         } while (!state.blockHash.contentEquals(hash))
         return result
     }
 
-    internal suspend fun undoRollbackImpl(rollbackTo: ByteArray, list: List<ByteArray>): List<ByteArray> {
+    internal suspend fun undoRollbackImpl(rollbackTo: ByteArray, list: List<Hash>): List<Hash> {
         val toRemove = if (!state.blockHash.contentEquals(rollbackTo)) rollbackToImpl(rollbackTo) else emptyList()
 
         list.asReversed().forEach { hash ->
-            val (block, size) = BlockDB.blocks.getWithSize(hash) ?: return toRemove.also {
-                logger.error { "${HashSerializer.encode(hash)} not found" }
+            val (block, size) = BlockDB.blocks.getWithSize(hash.bytes) ?: return toRemove.also {
+                logger.error { "$hash not found" }
             }
 
             val batch = LevelDB.createWriteBatch()
-            val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
-            val (status, _) = processBlockImpl(txDb, hash, block, size)
+            val txDb = LedgerDB.Update(batch, block.version, hash.bytes, block.previous, block.time, size, block.generator)
+            val (status, _) = processBlockImpl(txDb, hash.bytes, block, size)
             if (status != Accepted) {
                 batch.close()
-                logger.error { "$status block ${HashSerializer.encode(hash)}" }
+                logger.error { "$status block $hash}" }
                 return toRemove
             }
             txDb.commitImpl()

@@ -17,6 +17,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.ContextualSerializer
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
@@ -26,13 +27,19 @@ import ninja.blacknet.serialization.notSupportedFormatError
 /**
  * Represents a BLAKE2b-256 hash.
  */
-class Hash(private val bytes: ByteArray) : Comparable<Hash> {
+class Hash(
+    val bytes: ByteArray
+) : Comparable<Hash> {
     override fun equals(other: Any?): Boolean {
         return (other is Hash) && bytes.contentEquals(other.bytes)
     }
 
     override fun hashCode(): Int {
-        return bytes.contentHashCode()
+        return hashCode(HashAsBinarySerializer, bytes)
+    }
+
+    override fun toString(): String {
+        return HashSerializer.encode(bytes)
     }
 
     override fun compareTo(other: Hash): Int {
