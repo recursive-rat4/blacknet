@@ -18,11 +18,13 @@ import ninja.blacknet.util.Resources
 
 val configDir: Path = run {
     val custom = System.getProperty("ninja.blacknet.configDir")
-    val dir = if (System.getProperty("org.gradle.test.worker") != null) {
-        Path.of("build/resources/main/config").also {
+    if (System.getProperty("org.gradle.test.worker") != null) {
+        //TODO eliminate and generalize
+        return@run Path.of("build/resources/main/config").also {
             println("Using config directory ${it.toAbsolutePath()}")
         }
-    } else if (custom != null) {
+    }
+    var dir = if (custom != null) {
         Path.of(custom)
     } else if (Runtime.macOS) {
         Path.of(System.getProperty("user.home"), "Library/Application Support/$XDG_SUBDIRECTORY")
@@ -31,15 +33,17 @@ val configDir: Path = run {
     } else {
         XDGConfigDirectory(XDG_SUBDIRECTORY)
     }
+    mode.subdirectory?.let {
+        dir = dir.resolve(it)
+    }
     Files.createDirectories(dir, *XDGDirectoryPermissions(dir))
     dir
 }
 
 private fun configFiles() = arrayOf(
-        "blacknet.conf",
-        "logging.properties",
-        "rpc.conf",
-        "rpcregtest.conf"
+    "blacknet.conf",
+    "logging.properties",
+    "rpc.conf",
 )
 
 //XXX atomicity
@@ -53,7 +57,11 @@ fun populateConfigDir(): Int {
             continue
         if (jar == null)
             jar = Resources.jar(Kernel::class.java)
-        val input = jar.getInputStream(jar.getJarEntry("config/$name"))
+        val input = jar.getInputStream(
+            jar.getJarEntry(
+                "config/${mode.subdirectory?.plus('/') ?: ""}$name"
+            )
+        )
         val output = Files.newOutputStream(file, CREATE_NEW)
         input.transferTo(output)
         input.close()

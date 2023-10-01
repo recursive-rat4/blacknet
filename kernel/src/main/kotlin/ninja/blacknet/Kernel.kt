@@ -20,7 +20,6 @@ import java.nio.file.Files
 import java.security.Security
 import java.util.logging.LogManager
 import kotlinx.coroutines.debug.DebugProbes
-import ninja.blacknet.Mode.*
 import ninja.blacknet.core.Staker
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.db.*
@@ -117,21 +116,16 @@ object Kernel {
          * in connected systems using the powerful Kotlin programming language.
          * https://ktor.io/
          *
-         * Ktor configuration is stored in
-         * rpc.conf for main network
-         * rpcregtest.conf for regression testing mode
+         * Ktor configuration is stored in rpc.conf
          * https://ktor.io/servers/engine.html
          *
          */
         if (Config.instance.rpcserver) {
             embeddedServer(
                 CIO,
-                commandLineEnvironment(arrayOf("-config=${configDir.resolve(
-                    when (mode) {
-                        MainNet -> "rpc.conf"
-                        RegTest -> "rpcregtest.conf"
-                    }
-                )}"))
+                commandLineEnvironment(arrayOf(
+                    "-config=${configDir.resolve("rpc.conf")}",
+                ))
             ).start(wait = false)
         }
     }
