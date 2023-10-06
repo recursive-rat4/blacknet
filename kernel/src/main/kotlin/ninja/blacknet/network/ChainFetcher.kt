@@ -263,7 +263,7 @@ object ChainFetcher {
         for (i in answer.blocks) {
             val hash = Hash(Block.hash(i))
             if (undoRollback?.contains(hash) == true) {
-                connection.dos("Rollback contains $hash}")
+                connection.dos("Rollback contains $hash")
                 return false
             }
             val status = BlockDB.processImpl(hash.bytes, i)
