@@ -32,11 +32,13 @@ object Version {
                 ?: version
     }
 
+    //TODO unhardcode
+
     const val http_server = "Ktor"
 
-    const val http_server_version = "2.3.3"
+    const val http_server_version = "2.3.5"
 
     const val http_server_engine = "CIO"
 
-    const val http_server_engine_version = "2.3.3"
+    const val http_server_engine_version = "2.3.5"
 }
