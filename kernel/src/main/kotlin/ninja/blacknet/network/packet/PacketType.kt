@@ -13,7 +13,7 @@ import kotlinx.serialization.KSerializer
 
 enum class PacketType {
     Version,
-    Ping,
+    PingV1,
     Pong,
     GetPeers,
     PeersV1,
@@ -28,13 +28,14 @@ enum class PacketType {
     GetTransactions,
     Transactions,
     Peers,
+    Ping,
     ;
 
     companion object {
         fun getSerializer(type: Int): KSerializer<out Packet> {
             return when (type) {
                 Version.ordinal -> ninja.blacknet.network.packet.Version.serializer()
-                Ping.ordinal -> ninja.blacknet.network.packet.Ping.serializer()
+                PingV1.ordinal -> ninja.blacknet.network.packet.PingV1.serializer()
                 Pong.ordinal -> ninja.blacknet.network.packet.Pong.serializer()
                 GetPeers.ordinal -> throw RuntimeException("Obsolete packet type GetPeers")
                 PeersV1.ordinal -> throw RuntimeException("Obsolete packet type PeersV1")
@@ -49,6 +50,7 @@ enum class PacketType {
                 GetTransactions.ordinal -> ninja.blacknet.network.packet.GetTransactions.serializer()
                 Transactions.ordinal -> ninja.blacknet.network.packet.Transactions.serializer()
                 Peers.ordinal -> ninja.blacknet.network.packet.Peers.serializer()
+                Ping.ordinal -> ninja.blacknet.network.packet.Ping.serializer()
                 else -> throw RuntimeException("Unknown packet type $type")
             }
         }

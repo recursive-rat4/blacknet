@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2023 Pavel Vasin
+ * Copyright (c) 2018-2020 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -11,20 +11,17 @@ package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.NETWORK_MAGIC
+import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
-import ninja.blacknet.time.currentTimeSeconds
+import ninja.blacknet.util.fromBytes
 
 @Serializable
-class Ping(
-    private val challenge: Int,
-    private val time: Long,
+class PingV1(
+    val challenge: Int
 ) : Packet {
     override suspend fun process(connection: Connection) {
-        connection.timeOffset = time - currentTimeSeconds()
-
-        connection.sendPacket(PacketType.Pong, Pong(solve(challenge)))
-
+        connection.sendPacket(PacketType.Pong, Pong(if (connection.version == 13) solveV1(challenge) else challenge))
         val lastPacketTime = connection.lastPacketTime
         val lastPingTime = connection.lastPingTime
         connection.lastPingTime = lastPacketTime
@@ -33,12 +30,12 @@ class Ping(
         else
             connection.dos("Too many ping requests")
     }
-
-    companion object {
-        const val MIN_VERSION = 14
-    }
 }
 
-fun solve(challenge: Int): Int {
-    return challenge xor NETWORK_MAGIC
+fun solveV1(challenge: Int): Int {
+    val hash = buildHash {
+        encodeInt(NETWORK_MAGIC)
+        encodeInt(challenge)
+    }
+    return Int.fromBytes(hash[0], hash[1], hash[2], hash[3])
 }

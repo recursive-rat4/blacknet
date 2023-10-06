@@ -14,13 +14,15 @@ import ninja.blacknet.network.Connection
 
 @Serializable
 class Pong(
-        val response: Int
+    private val response: Int,
 ) : Packet {
     override suspend fun process(connection: Connection) {
         val (challenge, requestTime) = connection.pingRequest ?: return connection.dos("Unexpected packet Pong")
 
-        val solution = if (connection.version >= 13)
+        val solution = if (connection.version >= Ping.MIN_VERSION)
             solve(challenge)
+        else if (connection.version == 13)
+            solveV1(challenge)
         else
             challenge
 

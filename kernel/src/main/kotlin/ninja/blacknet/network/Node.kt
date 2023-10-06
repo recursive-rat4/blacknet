@@ -55,7 +55,7 @@ private val logger = KotlinLogging.logger {}
 
 object Node {
     const val NETWORK_TIMEOUT = 90 * 1000L
-    const val PROTOCOL_VERSION = 13
+    const val PROTOCOL_VERSION = 14
     const val MIN_PROTOCOL_VERSION = 12
     private const val DATA_VERSION = 1
     private const val DATA_FILENAME = "node.dat"
