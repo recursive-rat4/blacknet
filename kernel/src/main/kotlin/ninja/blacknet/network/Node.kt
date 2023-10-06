@@ -66,64 +66,62 @@ object Node {
     private val queuedPeers = Channel<Address>(Config.instance.outgoingconnections)
 
     init {
-        if (mode.requiresNetwork) {
-            if (Config.instance.listen) {
-                try {
-                    listenOnIP()
-                    if (Config.instance.upnp) {
-                        Runtime.launch { UPnP.forward() }
-                    }
-                } catch (e: Throwable) {
-                }
-            }
-            if (Config.instance.tor) {
-                if (!Config.instance.listen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
-                    listenOn(Network.LOOPBACK)
-                Runtime.rotate(Network.Companion::listenOnTor)
-            }
-            if (Config.instance.i2p) {
-                Runtime.rotate(Network.Companion::listenOnI2P)
-            }
+        if (Config.instance.listen) {
             try {
-                val file = stateDir.resolve(DATA_FILENAME)
-                FileChannel.open(file, READ).inputStream().buffered().data().use { stream ->
-                    val version = stream.readInt()
-                    val bytes = stream.readAllBytes()
-                    if (version == DATA_VERSION) {
-                        val persistent = binaryFormat.decodeFromByteArray(Persistent.serializer(), bytes)
-                        persistent.peers.forEach { peer ->
-                            queuedPeers.trySend(peer)
-                        }
-                    } else {
-                        logger.warn { "Unknown node data version $version" }
+                listenOnIP()
+                if (Config.instance.upnp) {
+                    Runtime.launch { UPnP.forward() }
+                }
+            } catch (e: Throwable) {
+            }
+        }
+        if (Config.instance.tor) {
+            if (!Config.instance.listen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+                listenOn(Network.LOOPBACK)
+            Runtime.rotate(Network.Companion::listenOnTor)
+        }
+        if (Config.instance.i2p) {
+            Runtime.rotate(Network.Companion::listenOnI2P)
+        }
+        try {
+            val file = stateDir.resolve(DATA_FILENAME)
+            FileChannel.open(file, READ).inputStream().buffered().data().use { stream ->
+                val version = stream.readInt()
+                val bytes = stream.readAllBytes()
+                if (version == DATA_VERSION) {
+                    val persistent = binaryFormat.decodeFromByteArray(Persistent.serializer(), bytes)
+                    persistent.peers.forEach { peer ->
+                        queuedPeers.trySend(peer)
+                    }
+                } else {
+                    logger.warn { "Unknown node data version $version" }
+                }
+            }
+        } catch (e: NoSuchFileException) {
+            // first run or unlinked file
+        } catch (e: Exception) {
+            logger.error(e)
+        }
+        repeat(Config.instance.outgoingconnections) {
+            Runtime.rotate(::connector)
+        }
+        Runtime.rotate(::prober)
+        ShutdownHooks.add {
+            runBlocking {
+                val persistent = Persistent(ArrayList(Config.instance.outgoingconnections))
+                connections.mutex.withLock {
+                    logger.info { "Closing ${connections.list.size} p2p connections" }
+                    connections.list.forEach { connection ->
+                        // probers ain't interesting
+                        if (connection.state == Connection.State.OUTGOING_CONNECTED)
+                            persistent.peers.add(connection.remoteAddress)
+                        connection.close()
                     }
                 }
-            } catch (e: NoSuchFileException) {
-                // first run or unlinked file
-            } catch (e: Exception) {
-                logger.error(e)
-            }
-            repeat(Config.instance.outgoingconnections) {
-                Runtime.rotate(::connector)
-            }
-            Runtime.rotate(::prober)
-            ShutdownHooks.add {
-                runBlocking {
-                    val persistent = Persistent(ArrayList(Config.instance.outgoingconnections))
-                    connections.mutex.withLock {
-                        logger.info { "Closing ${connections.list.size} p2p connections" }
-                        connections.list.forEach { connection ->
-                            // probers ain't interesting
-                            if (connection.state == Connection.State.OUTGOING_CONNECTED)
-                                persistent.peers.add(connection.remoteAddress)
-                            connection.close()
-                        }
-                    }
-                    logger.info { "Saving node state" }
-                    replaceFile(stateDir, DATA_FILENAME) {
-                        writeInt(DATA_VERSION)
-                        write(binaryFormat.encodeToByteArray(Persistent.serializer(), persistent))
-                    }
+                logger.info { "Saving node state" }
+                replaceFile(stateDir, DATA_FILENAME) {
+                    writeInt(DATA_VERSION)
+                    write(binaryFormat.encodeToByteArray(Persistent.serializer(), persistent))
                 }
             }
         }
