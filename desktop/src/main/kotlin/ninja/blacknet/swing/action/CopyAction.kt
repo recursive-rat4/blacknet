@@ -11,17 +11,18 @@ package ninja.blacknet.swing.action
 
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent.*
-import javax.swing.text.TextAction
+import javax.swing.AbstractAction
+import javax.swing.text.JTextComponent
 import ninja.blacknet.swing.dsl.*
 
-class CopyAction : TextAction("Copy") {
+context(JTextComponent)
+class CopyAction : AbstractAction() {
     init {
+        name = "Copy"
         accelerator = KeyStroke(VK_C, CTRL_DOWN_MASK)
     }
 
     override fun actionPerformed(e: ActionEvent) {
-        getTextComponent(e)?.apply {
-            copy()
-        }
+        copy()
     }
 }

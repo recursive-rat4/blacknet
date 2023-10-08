@@ -11,17 +11,20 @@ package ninja.blacknet.swing.action
 
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent.*
-import javax.swing.text.TextAction
+import javax.swing.AbstractAction
+import javax.swing.text.JTextComponent
 import ninja.blacknet.swing.dsl.*
 
-class SelectAllAction : TextAction("Select all") {
+context(JTextComponent)
+class SelectAllAction : AbstractAction() {
     init {
+        name = "Select all"
         accelerator = KeyStroke(VK_A, CTRL_DOWN_MASK)
     }
 
     override fun actionPerformed(e: ActionEvent) {
-        getTextComponent(e)?.apply {
-            selectAll()
-        }
+        selectAll()
+        // selection ain't automatically visible if component never was focused
+        caret.isSelectionVisible = true
     }
 }
