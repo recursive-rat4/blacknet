@@ -12,8 +12,7 @@ package ninja.blacknet.window
 import com.google.common.base.Throwables
 import ninja.blacknet.TERMINAL_HEIGHT
 import ninja.blacknet.TERMINAL_WIDTH
-import ninja.blacknet.swing.action.CopyAction
-import ninja.blacknet.swing.action.SelectAllAction
+import ninja.blacknet.swing.TextComponentPopupMenu
 import ninja.blacknet.swing.dsl.*
 
 fun ExceptionDialog(
@@ -28,10 +27,7 @@ fun ExceptionDialog(
                 text = Throwables.getStackTraceAsString(e)
                 caretPosition = 0
                 isEditable = false
-                componentPopupMenu = jPopupMenu {
-                    +CopyAction()
-                    +SelectAllAction()
-                }
+                componentPopupMenu = TextComponentPopupMenu()
             }
         },
     )

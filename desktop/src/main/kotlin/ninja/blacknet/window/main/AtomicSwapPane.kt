@@ -9,6 +9,7 @@
 
 package ninja.blacknet.window.main
 
+import ninja.blacknet.swing.TextComponentPopupMenu
 import ninja.blacknet.swing.dsl.*
 
 fun AtomicSwapPane() = jTabbedPane {
@@ -38,6 +39,7 @@ fun AtomicSwapPane() = jTabbedPane {
                         text = "Preimage"
                     }
                     center = jTextField {
+                        componentPopupMenu = TextComponentPopupMenu()
                     }
                     east = jButton {
                         text = "Send"
