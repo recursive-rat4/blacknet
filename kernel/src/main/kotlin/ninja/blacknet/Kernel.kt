@@ -97,7 +97,7 @@ object Kernel {
         }
 
         LevelDB
-        Salt
+        Convertor
         BlockDB
         WalletDB
         LedgerDB

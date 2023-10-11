@@ -14,37 +14,21 @@ import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.encode
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PublicKeySerializer
-import ninja.blacknet.crypto.nextBytes
-import java.security.SecureRandom
 
 private val logger = KotlinLogging.logger {}
 
-object Salt {
+internal object Convertor {
     private val OLD_VERSION_KEY = "ledgerversion".toByteArray()
     private val SALT_KEY = DBKey(11, 0)
-    private const val SALT_SIZE_BYTES = 16
-    val salt: ByteArray
 
     init {
-        if (System.getProperty("org.gradle.test.worker") != null) {
-            logger.info { "測試避免數據庫" }
-            salt = ByteArray(SALT_SIZE_BYTES) { it.toByte() }
+        if (LevelDB.get(SALT_KEY) != null) {
+            val batch = LevelDB.createWriteBatch()
+            batch.delete(SALT_KEY)
+            batch.write()
         } else {
-            val saltBytes = LevelDB.get(SALT_KEY)
-            salt = if (saltBytes != null && saltBytes.size == SALT_SIZE_BYTES) {
-                saltBytes
-            } else {
-                if (LevelDB.get(OLD_VERSION_KEY) != null)
-                    convertor()
-
-                val bytes = SecureRandom().nextBytes(SALT_SIZE_BYTES)
-
-                val batch = LevelDB.createWriteBatch()
-                batch.put(SALT_KEY, bytes)
-                batch.write()
-
-                bytes
-            }
+            if (LevelDB.get(OLD_VERSION_KEY) != null)
+                convertor()
         }
     }
 

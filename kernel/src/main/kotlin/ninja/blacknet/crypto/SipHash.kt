@@ -13,14 +13,17 @@ import io.ktor.utils.io.bits.Memory
 import io.ktor.utils.io.bits.loadIntAt
 import io.ktor.utils.io.bits.of
 import io.ktor.utils.io.pool.DefaultPool
+import kotlin.random.Random
 import kotlinx.serialization.SerializationStrategy
 import ninja.blacknet.Runtime
-import ninja.blacknet.db.Salt
 
 /**
  * SipHash-2-4 keyed hash function.
  */
 object SipHash {
+    private const val KEY_SIZE_BYTES = 16
+    private val hashCodeKey = Random.nextBytes(KEY_SIZE_BYTES)
+
     /**
      * Computes a hash code value with given serializer and value.
      *
@@ -43,7 +46,7 @@ object SipHash {
     private val pool = object : DefaultPool<HashEncoder>(Runtime.availableProcessors) {
         override fun produceInstance(): HashEncoder {
             return HashEncoder(
-                    KeyedHashWriterJvm("SIPHASH-2-4", Salt.salt),
+                    KeyedHashWriterJvm("SIPHASH-2-4", hashCodeKey),
                     charset = null,
             )
         }
