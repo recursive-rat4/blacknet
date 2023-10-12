@@ -204,6 +204,8 @@ object LedgerDB {
 
     fun forkV2(): Boolean = when (mode) {
         MainNet -> state.forkV2 == (PoS.UPGRADE_THRESHOLD + 1).toShort()
+        TestNet -> throw NotImplementedError("$mode fork activation is missing")
+        SigNet -> throw NotImplementedError("$mode fork activation is missing")
         RegTest -> true
     }
 

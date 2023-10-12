@@ -170,6 +170,12 @@ object PeerDB {
                     Network.parse(it, DEFAULT_P2P_PORT) ?: throw RuntimeException("Failed to parse $it")
                 }
         }
+        TestNet -> {
+            throw NotImplementedError("$mode peers.txt is missing")
+        }
+        SigNet -> {
+            throw NotImplementedError("$mode peers.txt is missing")
+        }
         RegTest -> {
             emptyList()
         }

@@ -35,6 +35,12 @@ object Genesis {
                     map.put(entry.publicKey, entry.balance)
                 }
             }
+            TestNet -> {
+                throw NotImplementedError("$mode genesis.json is missing")
+            }
+            SigNet -> {
+                throw NotImplementedError("$mode genesis.json is missing")
+            }
             RegTest -> {
                 map.put(RegTestGenesis.publicKey1, 1000000000 * PoS.COIN)
                 map.put(RegTestGenesis.publicKey2, 10101010 * PoS.COIN)

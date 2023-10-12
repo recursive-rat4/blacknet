@@ -36,6 +36,20 @@ enum class Mode(
         true,
     ),
 
+    TestNet(
+        "TestNet",
+        "t",
+        "TestNet",
+        true
+    ),
+
+    SigNet(
+        "SigNet",
+        "s",
+        "SigNet",
+        true
+    ),
+
     /**
      * A regression testing mode. Usually it's a sole offline node, or else it can be a tiny private network.
      */
