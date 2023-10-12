@@ -26,11 +26,11 @@ import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
-import ninja.blacknet.DEFAULT_P2P_PORT
 import ninja.blacknet.rpc.*
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.*
+import ninja.blacknet.mode
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.bbf.*
@@ -365,7 +365,7 @@ fun Route.APIV1() {
     }
 
     get("/api/v1/addpeer/{address}/{port?}/{force?}") {
-        val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: DEFAULT_P2P_PORT
+        val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: mode.defaultP2PPort
         val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
         val force = call.parameters["force"]?.toBoolean() ?: false
 
@@ -383,7 +383,7 @@ fun Route.APIV1() {
     }
 
     get("/api/v1/disconnectpeer/{address}/{port?}/{force?}") {
-        val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: DEFAULT_P2P_PORT
+        val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: mode.defaultP2PPort
         val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
         @Suppress("UNUSED_VARIABLE")
         val force = call.parameters["force"]?.toBoolean() ?: false

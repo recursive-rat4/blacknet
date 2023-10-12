@@ -12,12 +12,12 @@ package ninja.blacknet.rpc.v2
 import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import ninja.blacknet.DEFAULT_P2P_PORT
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.encode
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.mode
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.toPort
@@ -69,7 +69,7 @@ class TxPoolTransaction(
 
 @Serializable
 class AddPeer(
-    val port: String = DEFAULT_P2P_PORT.toPort().toString(),
+    val port: String = mode.defaultP2PPort.toPort().toString(),
     val address: String,
     val force: Boolean = false
 ) : Request {
@@ -89,7 +89,7 @@ class AddPeer(
 
 @Serializable
 class DisconnectPeerByAddress(
-    val port: String = DEFAULT_P2P_PORT.toPort().toString(),
+    val port: String = mode.defaultP2PPort.toPort().toString(),
     val address: String,
     @Suppress("unused")
     val force: Boolean = false

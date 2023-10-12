@@ -62,6 +62,14 @@ enum class Mode(
 
     ;
 
+    /**
+     * @see DEFAULT_P2P_PORT
+     */
+    val defaultP2PPort = (DEFAULT_P2P_PORT + ordinal).toShort()
+
+    /**
+     * @see NETWORK_MAGIC
+     */
     val networkMagic = NETWORK_MAGIC + ordinal
 }
 
