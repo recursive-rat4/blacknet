@@ -29,7 +29,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.stateDir
 import ninja.blacknet.Config
-import ninja.blacknet.NETWORK_MAGIC
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
@@ -223,7 +222,7 @@ object Node {
     fun sendVersion(connection: Connection, nonce: Long, prober: Boolean) {
         connection.sendPacket(PacketType.Version, if (prober) {
             Version(
-                    NETWORK_MAGIC,
+                    mode.networkMagic,
                     PROTOCOL_VERSION,
                     currentTimeSeconds(),
                     nonce,
@@ -234,7 +233,7 @@ object Node {
         } else {
             val state = LedgerDB.state()
             Version(
-                    NETWORK_MAGIC,
+                    mode.networkMagic,
                     PROTOCOL_VERSION,
                     currentTimeSeconds(),
                     nonce,

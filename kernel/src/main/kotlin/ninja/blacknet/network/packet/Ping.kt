@@ -10,7 +10,7 @@
 package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.NETWORK_MAGIC
+import ninja.blacknet.mode
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.time.currentTimeSeconds
@@ -40,5 +40,5 @@ class Ping(
 }
 
 fun solve(challenge: Int): Int {
-    return challenge xor NETWORK_MAGIC
+    return challenge xor mode.networkMagic
 }

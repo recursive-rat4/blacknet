@@ -10,8 +10,8 @@
 package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.NETWORK_MAGIC
 import ninja.blacknet.crypto.Blake2b.buildHash
+import ninja.blacknet.mode
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.util.fromBytes
@@ -34,7 +34,7 @@ class PingV1(
 
 fun solveV1(challenge: Int): Int {
     val hash = buildHash {
-        encodeInt(NETWORK_MAGIC)
+        encodeInt(mode.networkMagic)
         encodeInt(challenge)
     }
     return Int.fromBytes(hash[0], hash[1], hash[2], hash[3])

@@ -59,6 +59,10 @@ enum class Mode(
         "RegTest",
         false,
     ),
+
+    ;
+
+    val networkMagic = NETWORK_MAGIC + ordinal
 }
 
 /**

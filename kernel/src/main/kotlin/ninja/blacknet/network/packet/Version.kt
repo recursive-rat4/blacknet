@@ -11,8 +11,8 @@ package ninja.blacknet.network.packet
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.Serializable
-import ninja.blacknet.NETWORK_MAGIC
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.mode
 import ninja.blacknet.network.*
 import ninja.blacknet.time.currentTimeSeconds
 
@@ -29,7 +29,7 @@ class Version(
         private val chainAnnounce: ChainAnnounce
 ) : Packet {
     override suspend fun process(connection: Connection) {
-        if (magic != NETWORK_MAGIC) {
+        if (magic != mode.networkMagic) {
             // connection from another network
             connection.close()
             return
