@@ -7,6 +7,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
+@file:Suppress("INLINE_CLASS_DEPRECATED")
+
 package ninja.blacknet.jsonrpc
 
 import kotlinx.serialization.Serializable
