@@ -102,10 +102,10 @@ class Connection(
                 val type = bytes.readInt()
 
                 if (state.isConnected()) {
-                    if (type == PacketType.Version.ordinal)
+                    if (type == PacketType.Version.ordinal || type == PacketType.Hello.ordinal)
                         break
                 } else {
-                    if (type != PacketType.Version.ordinal)
+                    if (type != PacketType.Version.ordinal && type != PacketType.Hello.ordinal)
                         break
                 }
 

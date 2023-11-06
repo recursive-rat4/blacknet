@@ -29,6 +29,7 @@ enum class PacketType {
     Transactions,
     Peers,
     Ping,
+    Hello,
     ;
 
     companion object {
@@ -51,6 +52,7 @@ enum class PacketType {
                 Transactions.ordinal -> ninja.blacknet.network.packet.Transactions.serializer()
                 Peers.ordinal -> ninja.blacknet.network.packet.Peers.serializer()
                 Ping.ordinal -> ninja.blacknet.network.packet.Ping.serializer()
+                Hello.ordinal -> ninja.blacknet.network.packet.Hello.serializer()
                 else -> throw RuntimeException("Unknown packet type $type")
             }
         }

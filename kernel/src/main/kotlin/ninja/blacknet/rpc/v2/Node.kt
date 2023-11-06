@@ -79,7 +79,7 @@ class AddPeer(
 
         val connection = Node.connections.find { it.remoteAddress == address }
         return if (force || connection == null) {
-            Node.connectTo(address)
+            Node.connectTo(address, v2 = false)
             respondText(true.toString())
         } else {
             respondError("Already connected on ${connection.localAddress}")

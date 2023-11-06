@@ -54,7 +54,7 @@ private val logger = KotlinLogging.logger {}
 
 object Node {
     const val NETWORK_TIMEOUT = 90 * 1000L
-    const val PROTOCOL_VERSION = 14
+    const val PROTOCOL_VERSION = 15
     const val MIN_PROTOCOL_VERSION = 12
     private const val DATA_VERSION = 1
     private const val DATA_FILENAME = "node.dat"
@@ -209,13 +209,16 @@ object Node {
         listenOn(Address.IPv4_ANY(Config.instance.port.toPort()))
     }
 
-    suspend fun connectTo(address: Address, prober: Boolean = false): Connection {
+    suspend fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
         val connection = Network.connect(address, prober)
         connections.mutex.withLock {
             connections.list.add(connection)
             connection.launch()
         }
-        sendVersion(connection, nonce(address.network), prober)
+        if (v2)
+            sendHandshake(connection)
+        else
+            sendVersion(connection, nonce(address.network), prober)
         return connection
     }
 
@@ -242,6 +245,28 @@ object Node {
                     ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
             )
         })
+    }
+
+    fun sendHandshake(connection: Connection) {
+        val hello = Hello().apply {
+            magic = mode.networkMagic
+            version = PROTOCOL_VERSION
+            if (connection.state == Connection.State.OUTGOING_WAITING)
+                nonce = nonce(connection.remoteAddress.network) //TODO send only when needed
+            agent = if (connection.state == Connection.State.PROBER_WAITING)
+                UserAgent.prober
+            else
+                UserAgent.string
+            feeFilter = if (connection.state == Connection.State.PROBER_WAITING)
+                Long.MAX_VALUE
+            else
+                TxPool.minFeeRate
+        }
+        connection.sendPacket(PacketType.Hello, hello)
+        if (connection.state != Connection.State.PROBER_WAITING) {
+            val state = LedgerDB.state()
+            connection.sendPacket(PacketType.ChainAnnounce, ChainAnnounce(state.blockHash, state.cumulativeDifficulty))
+        }
     }
 
     suspend fun announceChain(hash: ByteArray, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
@@ -401,7 +426,11 @@ object Node {
         val time = currentTimeMillis()
 
         try {
-            connectTo(address).job.join()
+            val connection = connectTo(address, v2 = true)
+            connection.job.join()
+            // try v1 if accepted without reply
+            if (connection.totalBytesRead == 0L)
+                connectTo(address, v2 = false).job.join()
         } catch (e: Throwable) {
             PeerDB.failed(address, time / 1000L)
         }
@@ -434,7 +463,11 @@ object Node {
         } ?: return
 
         try {
-            connectTo(address, prober = true)
+            val connection = connectTo(address, v2 = true, prober = true)
+            connection.job.join()
+            // try v1 if accepted without reply
+            if (connection.totalBytesRead == 0L)
+                connectTo(address, v2 = false, prober = true)
         } catch (e: Throwable) {
             PeerDB.failed(address, time / 1000L)
         }

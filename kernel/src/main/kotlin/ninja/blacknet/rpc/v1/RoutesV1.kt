@@ -372,7 +372,7 @@ fun Route.APIV1() {
         try {
             val connection = Node.connections.find { it.remoteAddress == address }
             if (force || connection == null) {
-                Node.connectTo(address)
+                Node.connectTo(address, v2 = false)
                 call.respond("Connected")
             } else {
                 call.respond("Already connected on ${connection.localAddress}")
