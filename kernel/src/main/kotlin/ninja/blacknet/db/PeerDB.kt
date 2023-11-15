@@ -40,7 +40,7 @@ import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.HashSet
+import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.Resources
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
@@ -206,7 +206,7 @@ object PeerDB {
         peers.get(address)?.stat?.subnetworks?.let { subnetworks ->
             announce.forEach { id ->
                 if (BAppDB.isInteresting(id)) {
-                    subnetworks.add(id)
+                    subnetworks.put(id, Unit)
                 }
             }
         }
@@ -331,7 +331,7 @@ object PeerDB {
             val stat1D: UptimeStat,
             val stat1W: UptimeStat,
             val stat1M: UptimeStat,
-            val subnetworks: HashSet<@Serializable(BAppIdSerializer::class) ByteArray>
+            val subnetworks: HashMap<@Serializable(BAppIdSerializer::class) ByteArray, Unit>
     ) {
         constructor(lastConnected: Long, userAgent: String) : this(
                 lastConnected,
@@ -341,9 +341,9 @@ object PeerDB {
                 UptimeStat(),
                 UptimeStat(),
                 UptimeStat(),
-                HashSet(expectedSize = 0)
+                HashMap(expectedSize = 0),
         )
-        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, HashSet(expectedSize = 0))
+        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, HashMap(expectedSize = 0))
     }
 
     @Serializable

@@ -17,7 +17,7 @@ import ninja.blacknet.db.PeerDB.NetworkStat
 import ninja.blacknet.db.PeerDB.UptimeStat
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.util.byteArrayOfInts
-import ninja.blacknet.util.hashSetOf
+import ninja.blacknet.util.hashMapOf
 
 class PeerDBTest {
     @Test
@@ -30,8 +30,8 @@ class PeerDBTest {
             UptimeStat(0f, 0f, 0f),
             UptimeStat(0f, 0f, 0f),
             UptimeStat(0f, 0f, 0f),
-            hashSetOf(
-                ByteArray(BAppIdSerializer.SIZE_BYTES),
+            hashMapOf(
+                ByteArray(BAppIdSerializer.SIZE_BYTES) to Unit,
             ),
         )
         val bytes = byteArrayOfInts(
