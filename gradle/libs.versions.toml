@@ -27,7 +27,7 @@ ktor-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-default-headers = { module = "io.ktor:ktor-server-default-headers", version.ref = "ktor" }
 ktor-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
-kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.0"
+kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.1"
 kotlin-benchmark = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "benchmark" }
 apache-collections = "org.apache.commons:commons-collections4:4.4"
 eddsa = "net.i2p.crypto:eddsa:0.3.0"
