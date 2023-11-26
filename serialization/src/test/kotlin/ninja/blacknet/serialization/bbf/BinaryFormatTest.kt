@@ -14,6 +14,8 @@ package ninja.blacknet.serialization.bbf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.DoubleArraySerializer
+import kotlinx.serialization.builtins.FloatArraySerializer
 import ninja.blacknet.util.byteArrayOfInts
 
 class BinaryFormatTest {
@@ -74,6 +76,68 @@ class BinaryFormatTest {
         assertEquals(
             bytes,
             format.encodeToByteArray(Structure.serializer(), structure)
+        )
+    }
+
+    @Test
+    fun float() {
+        val bytes = byteArrayOfInts(
+            128 + 7,
+            0x40, 0xA0, 0x00, 0x00,
+            0xC0, 0xA0, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x80, 0x00, 0x00, 0x00,
+            0x7F, 0x80, 0x00, 0x00,
+            0xFF, 0x80, 0x00, 0x00,
+            0x7F, 0xC0, 0x00, 0x00,
+        )
+        val floats = floatArrayOf(
+            +5.0f,
+            -5.0f,
+            +0.0f,
+            -0.0f,
+            Float.POSITIVE_INFINITY,
+            Float.NEGATIVE_INFINITY,
+            Float.NaN,
+        )
+        assertEquals(
+            floats,
+            format.decodeFromByteArray(FloatArraySerializer(), bytes)
+        )
+        assertEquals(
+            bytes,
+            format.encodeToByteArray(FloatArraySerializer(), floats)
+        )
+    }
+
+    @Test
+    fun double() {
+        val bytes = byteArrayOfInts(
+            128 + 7,
+            0x40, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0xC0, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x7F, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        )
+        val doubles = doubleArrayOf(
+            +5.0,
+            -5.0,
+            +0.0,
+            -0.0,
+            Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY,
+            Double.NaN,
+        )
+        assertEquals(
+            doubles,
+            format.decodeFromByteArray(DoubleArraySerializer(), bytes)
+        )
+        assertEquals(
+            bytes,
+            format.encodeToByteArray(DoubleArraySerializer(), doubles)
         )
     }
 }
