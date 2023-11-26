@@ -45,6 +45,7 @@ stages:
 test:
   stage: test
   script:
+    - rm ./gradle/verification-metadata.xml #FIXME
     - ./gradlew test
   artifacts:
     reports:
