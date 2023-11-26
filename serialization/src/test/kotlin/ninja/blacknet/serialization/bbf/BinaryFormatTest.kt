@@ -13,6 +13,7 @@ package ninja.blacknet.serialization.bbf
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.DoubleArraySerializer
 import kotlinx.serialization.builtins.FloatArraySerializer
@@ -77,6 +78,12 @@ class BinaryFormatTest {
             bytes,
             format.encodeToByteArray(Structure.serializer(), structure)
         )
+    }
+
+    @Test
+    fun invalidSize() {
+        assertFails { format.decodeFromByteArray(Structure.serializer(), bytes.copyOf(bytes.size - 1)) }
+        assertFails { format.decodeFromByteArray(Structure.serializer(), bytes.plus(1)) }
     }
 
     @Test
