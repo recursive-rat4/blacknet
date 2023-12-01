@@ -17,17 +17,21 @@ import kotlin.test.assertFails
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.DoubleArraySerializer
 import kotlinx.serialization.builtins.FloatArraySerializer
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.builtins.serializer
 import ninja.blacknet.util.byteArrayOfInts
 
 class BinaryFormatTest {
     @Serializable
     private data class Structure(
-        val boolean: Boolean,
+        val boolean1: Boolean,
+        val boolean2: Boolean,
         val byte: Byte,
         val short: Short,
         val int: Int,
         val long: Long,
-        val unit: Unit,
+        val nullable1: Unit?,
+        val nullable2: Unit?,
         val string: String,
         val inline: InlineClass,
         val list: List<Byte>,
@@ -40,10 +44,12 @@ class BinaryFormatTest {
 
     private val structure = Structure(
         false,
+        true,
         0,
         0x01FF,
         0x0201FFFE,
         0x04030201FFFEFDFC,
+        null,
         Unit,
         "八",
         InlineClass(0x0201FFFE),
@@ -52,11 +58,13 @@ class BinaryFormatTest {
 
     private val bytes = byteArrayOfInts(
         0,
+        1,
         0,
         1, -1,
         2, 1, -1, -2,
         4, 3, 2, 1, -1, -2, -3, -4,
-        // Unit //
+        0,
+        1, // Unit //
         0x83, 0xE5, 0x85, 0xAB,
         2, 1, -1, -2,
         0x84, 0x01, 0x02, 0x03, 0x04,
@@ -78,6 +86,13 @@ class BinaryFormatTest {
             bytes,
             format.encodeToByteArray(Structure.serializer(), structure)
         )
+    }
+
+    @Test
+    fun invalidMark() {
+        val bytes = ByteArray(1) { 2 }
+        assertFails { format.decodeFromByteArray(Boolean.serializer(), bytes) }
+        assertFails { format.decodeFromByteArray(Unit.serializer().nullable, bytes) }
     }
 
     @Test
