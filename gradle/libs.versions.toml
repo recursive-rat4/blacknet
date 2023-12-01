@@ -10,7 +10,7 @@
 [versions]
 kotlin = "1.9.21"
 coroutines = "1.7.3"
-serialization = "1.6.1"
+serialization = "1.6.2"
 ktor = "2.3.6"
 benchmark = "0.4.9"
 
