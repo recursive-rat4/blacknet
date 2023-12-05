@@ -324,7 +324,7 @@ object Node {
     private suspend inline fun timeOffset(): Long = connections.mutex.withLock {
         val size = connections.list.size
         return if (size >= 5) {
-            val offsets = Array(size) { connections.list[it].timeOffset }
+            val offsets = LongArray(size) { connections.list[it].timeOffset }
             offsets.sort()
             val median = offsets[size / 2]
             median
