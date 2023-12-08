@@ -36,9 +36,9 @@ object Version {
 
     const val http_server = "Ktor"
 
-    const val http_server_version = "2.3.6"
+    const val http_server_version = "2.3.7"
 
     const val http_server_engine = "CIO"
 
-    const val http_server_engine_version = "2.3.6"
+    const val http_server_engine_version = "2.3.7"
 }
