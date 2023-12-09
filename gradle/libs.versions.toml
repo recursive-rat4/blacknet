@@ -12,7 +12,7 @@ kotlin = "1.9.21"
 coroutines = "1.7.3"
 serialization = "1.6.2"
 ktor = "2.3.7"
-benchmark = "0.4.9"
+benchmark = "0.4.10"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
