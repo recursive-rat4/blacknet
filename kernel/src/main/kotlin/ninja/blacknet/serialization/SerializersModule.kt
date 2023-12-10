@@ -26,7 +26,6 @@ fun <T : Any> SerializersModuleBuilder.contextual(kClass: KClass<out ContextualS
 }
 
 val binaryModule: SerializersModule = SerializersModule {
-    contextual(BAppIdSerializer::class, BAppIdAsBinarySerializer)
     contextual(BigIntegerSerializer::class, BigIntegerAsBinarySerializer)
     contextual(ByteArraySerializer::class, ByteArrayAsBinarySerializer)
     contextual(HashSerializer::class, HashAsBinarySerializer)
@@ -38,7 +37,6 @@ val binaryModule: SerializersModule = SerializersModule {
 }
 
 val textModule: SerializersModule = SerializersModule {
-    contextual(BAppIdSerializer::class, BAppIdAsStringSerializer)
     contextual(BigIntegerSerializer::class, BigIntegerAsStringSerializer)
     contextual(ByteArraySerializer::class, ByteArrayAsStringSerializer)
     contextual(HashSerializer::class, HashAsStringSerializer)

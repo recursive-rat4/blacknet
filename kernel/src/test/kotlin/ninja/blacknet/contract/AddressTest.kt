@@ -11,6 +11,7 @@ package ninja.blacknet.contract
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import ninja.blacknet.crypto.Address
 
 class AddressTest {
     @Test
@@ -28,7 +29,7 @@ class AddressTest {
     @Test
     fun bapp() {
         val string = "blacknet1q07le7l69mvwv3"
-        val address = BAppIdSerializer.decode(string)
-        assertTrue(BAppIdSerializer.encode(address).compareTo(string, ignoreCase = true) == 0)
+        val address = Address.decode(Address.BAPP, string)
+        assertTrue(Address.encode(Address.BAPP, address).compareTo(string, ignoreCase = true) == 0)
     }
 }

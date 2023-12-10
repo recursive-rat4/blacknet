@@ -14,7 +14,7 @@ import io.ktor.server.routing.Route
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.BAppIdSerializer
+import ninja.blacknet.contract.BAppId
 import ninja.blacknet.contract.HashLock
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.TimeLock
@@ -180,8 +180,7 @@ class BundleRequest(
     @Serializable(with = PrivateKeySerializer::class)
     val privateKey: ByteArray,
     val fee: Long,
-    @Serializable(with = BAppIdSerializer::class)
-    val id: ByteArray,
+    val id: BAppId,
     @Serializable(with = ByteArraySerializer::class)
     val data: ByteArray,
     @Serializable(with = HashSerializer::class)

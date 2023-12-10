@@ -12,12 +12,14 @@ package ninja.blacknet.db
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import ninja.blacknet.contract.BAppIdSerializer
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import ninja.blacknet.contract.BAppId
 import ninja.blacknet.db.PeerDB.NetworkStat
 import ninja.blacknet.db.PeerDB.UptimeStat
 import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.byteArrayOfInts
-import ninja.blacknet.util.hashMapOf
 
 class PeerDBTest {
     @Test
@@ -31,7 +33,7 @@ class PeerDBTest {
             UptimeStat(0f, 0f, 0f),
             UptimeStat(0f, 0f, 0f),
             hashMapOf(
-                ByteArray(BAppIdSerializer.SIZE_BYTES) to Unit,
+                BAppId(ByteArray(BAppId.SIZE_BYTES)) to Unit,
             ),
         )
         val bytes = byteArrayOfInts(
@@ -50,6 +52,9 @@ class PeerDBTest {
         assertEquals(
             bytes,
             binaryFormat.encodeToByteArray(NetworkStat.serializer(), stat)
+        )
+        assertIs<JsonObject>(
+            json.encodeToJsonElement(NetworkStat.serializer(), stat).jsonObject.get("subnetworks")
         )
     }
 }

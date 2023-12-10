@@ -9,17 +9,16 @@
 
 package ninja.blacknet.db
 
-import ninja.blacknet.contract.BAppIdSerializer
-import ninja.blacknet.util.HashMap
+import ninja.blacknet.contract.BAppId
 
 object BAppDB {
-    private val bapps: Map<ByteArray, *> = emptyMap<ByteArray, Unit>()
+    private val bapps: Map<BAppId, *> = emptyMap<BAppId, Unit>()
 
     init {
 
     }
 
-    fun isInteresting(id: ByteArray): Boolean {
+    fun isInteresting(id: BAppId): Boolean {
         return bapps.containsKey(id)
     }
 }

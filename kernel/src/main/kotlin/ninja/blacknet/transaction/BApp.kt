@@ -10,7 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.BAppIdSerializer
+import ninja.blacknet.contract.BAppId
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Status
@@ -22,10 +22,9 @@ import ninja.blacknet.serialization.ByteArraySerializer
  */
 @Serializable
 class BApp(
-        @Serializable(with = BAppIdSerializer::class)
-        val id: ByteArray,
-        @Serializable(with = ByteArraySerializer::class)
-        val data: ByteArray
+    val id: BAppId,
+    @Serializable(with = ByteArraySerializer::class)
+    val data: ByteArray
 ) : TxData {
     override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         return Accepted

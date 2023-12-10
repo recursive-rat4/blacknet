@@ -16,7 +16,7 @@ import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
 import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.SequentialDecoder
 
-internal class ConfigDecoder(
+public class ConfigDecoder internal constructor(
         private val reader: ConfigReader,
         override val serializersModule: SerializersModule
 ) : SequentialDecoder() {

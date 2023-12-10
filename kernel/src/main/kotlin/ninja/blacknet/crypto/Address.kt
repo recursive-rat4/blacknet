@@ -10,10 +10,10 @@
 package ninja.blacknet.crypto
 
 import ninja.blacknet.BECH32_HRP
-import ninja.blacknet.contract.BAppIdSerializer
+import ninja.blacknet.codec.base.Bech32
 import ninja.blacknet.contract.HashTimeLockContractIdSerializer
 import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
-import ninja.blacknet.codec.base.Bech32
+import ninja.blacknet.contract.BAppId
 import ninja.blacknet.mode
 import ninja.blacknet.util.plus
 
@@ -74,7 +74,7 @@ object Address {
         STAKER -> throw Error("保留地址版本字節")
         HTLC -> HashTimeLockContractIdSerializer.SIZE_BYTES
         MULTISIG -> MultiSignatureLockContractIdSerializer.SIZE_BYTES
-        BAPP -> BAppIdSerializer.SIZE_BYTES
+        BAPP -> BAppId.SIZE_BYTES
         else -> throw Exception("Unknown address version $version")
     }
 

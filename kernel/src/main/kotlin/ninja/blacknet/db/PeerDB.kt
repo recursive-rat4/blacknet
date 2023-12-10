@@ -29,7 +29,7 @@ import kotlinx.serialization.builtins.*
 import ninja.blacknet.Mode.*
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
-import ninja.blacknet.contract.BAppIdSerializer
+import ninja.blacknet.contract.BAppId
 import ninja.blacknet.dataDir
 import ninja.blacknet.logging.error
 import ninja.blacknet.mode
@@ -40,7 +40,6 @@ import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.Resources
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
@@ -202,7 +201,7 @@ object PeerDB {
         peers.get(address)?.failed(time)
     }
 
-    fun subnetworksAnnounce(address: Address, announce: List<ByteArray>): Unit {
+    fun subnetworksAnnounce(address: Address, announce: List<BAppId>): Unit {
         peers.get(address)?.stat?.subnetworks?.let { subnetworks ->
             announce.forEach { id ->
                 if (BAppDB.isInteresting(id)) {
@@ -212,7 +211,7 @@ object PeerDB {
         }
     }
 
-    fun getSubnetwork(id: ByteArray): List<Address> {
+    fun getSubnetwork(id: BAppId): List<Address> {
         val result = ArrayList<Address>(peers.size)
         peers.forEach { (address, entry) -> if (entry.stat?.subnetworks?.contains(id) == true) result.add(address) }
         return result
@@ -331,7 +330,7 @@ object PeerDB {
             val stat1D: UptimeStat,
             val stat1W: UptimeStat,
             val stat1M: UptimeStat,
-            val subnetworks: HashMap<@Serializable(BAppIdSerializer::class) ByteArray, Unit>
+            val subnetworks: HashMap<BAppId, Unit>,
     ) {
         constructor(lastConnected: Long, userAgent: String) : this(
                 lastConnected,
@@ -341,9 +340,9 @@ object PeerDB {
                 UptimeStat(),
                 UptimeStat(),
                 UptimeStat(),
-                HashMap(expectedSize = 0),
+                HashMap(0), //JAVA 19
         )
-        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, HashMap(expectedSize = 0))
+        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, HashMap(0)) //JAVA 19
     }
 
     @Serializable
