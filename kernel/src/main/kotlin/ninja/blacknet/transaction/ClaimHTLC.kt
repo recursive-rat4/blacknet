@@ -12,6 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.core.*
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.ByteArraySerializer
 
 /**
@@ -23,7 +24,7 @@ class ClaimHTLC(
         @Serializable(with = ByteArraySerializer::class)
         val preimage: ByteArray
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             return Invalid("HTLC not found")

@@ -15,7 +15,7 @@ import kotlin.math.abs
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.ChainIndex
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.*
@@ -47,12 +47,11 @@ class LevelDBStats : Request {
 
 @Serializable
 class Block(
-    @Serializable(with = HashSerializer::class)
-    val hash: ByteArray,
+    val hash: Hash,
     val txdetail: Boolean = false
 ) : Request {
     override suspend fun handle(): TextContent {
-        val (block, size) = BlockDB.blocks.getWithSize(hash) ?: return respondError("Block not found")
+        val (block, size) = BlockDB.blocks.getWithSize(hash.bytes) ?: return respondError("Block not found")
         return respondJson(BlockInfo.serializer(), BlockInfo(block, hash, size, txdetail))
     }
 }
@@ -73,47 +72,46 @@ class BlockHash(
         if (height < 0 || height > state.height)
             return respondError("Block not found")
         else if (height == 0)
-            return respondText(HashSerializer.encode(Genesis.BLOCK_HASH))
+            return respondText(Genesis.BLOCK_HASH.toString())
         else if (height == state.height)
-            return respondText(HashSerializer.encode(state.blockHash))
+            return respondText(state.blockHash.toString())
 
         val lastIndex = RPCServer.lastIndex
         if (lastIndex != null && lastIndex.second.height == height)
-            return respondText(HashSerializer.encode(lastIndex.first))
+            return respondText(lastIndex.first.toString())
 
-        var hash: ByteArray
+        var hash: Hash
         var index: ChainIndex
         if (height < state.height / 2) {
             hash = Genesis.BLOCK_HASH
-            index = LedgerDB.chainIndexes.getOrThrow(hash)
+            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
         } else {
             hash = state.blockHash
-            index = LedgerDB.chainIndexes.getOrThrow(hash)
+            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
         }
         if (lastIndex != null && abs(height - index.height) > abs(height - lastIndex.second.height))
             index = lastIndex.second
         while (index.height > height) {
             hash = index.previous
-            index = LedgerDB.chainIndexes.getOrThrow(hash)
+            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
         }
         while (index.height < height) {
             hash = index.next
-            index = LedgerDB.chainIndexes.getOrThrow(hash)
+            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
         }
         if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
             RPCServer.lastIndex = Pair(hash, index)
 
-        return respondText(HashSerializer.encode(hash))
+        return respondText(hash.toString())
     }
 }
 
 @Serializable
 class BlockIndex(
-    @Serializable(with = HashSerializer::class)
-    val hash: ByteArray
+    val hash: Hash
 ) : Request {
     override suspend fun handle(): TextContent {
-        val index = LedgerDB.chainIndexes.get(hash)
+        val index = LedgerDB.chainIndexes.get(hash.bytes)
         return if (index != null)
             respondJson(ChainIndex.serializer(), index)
         else

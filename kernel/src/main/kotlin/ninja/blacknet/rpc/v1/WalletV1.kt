@@ -21,7 +21,6 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonPrimitive
-import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.notSupportedFormatError
 
@@ -29,7 +28,7 @@ import ninja.blacknet.serialization.notSupportedFormatError
 class WalletV1(val seq: Int, val transactions: ArrayList<JsonElement>) {
     constructor(wallet: WalletDB.Wallet) : this(wallet.seq, ArrayList(wallet.transactions.size)) {
         wallet.transactions.forEach { (hash, txData) ->
-            transactions.add(JsonPrimitive(HashSerializer.encode(hash)))
+            transactions.add(JsonPrimitive(hash.toString()))
             transactions.add(TransactionDataV1(txData).toJson())
         }
     }

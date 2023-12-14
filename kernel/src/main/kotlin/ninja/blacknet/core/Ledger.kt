@@ -11,13 +11,13 @@ package ninja.blacknet.core
 
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 
 interface Ledger {
     fun addSupply(amount: Long)
-    fun checkReferenceChain(hash: ByteArray): Boolean
-    fun blockHash(): ByteArray
+    fun checkReferenceChain(hash: Hash): Boolean
+    fun blockHash(): Hash
     fun blockTime(): Long
     fun height(): Int
     fun getAccount(key: PublicKey): AccountState?
@@ -30,12 +30,12 @@ interface Ledger {
     fun getMultisig(id: MultiSignatureLockContractId): Multisig?
     fun removeMultisig(id: MultiSignatureLockContractId)
 
-    fun processTransactionImpl(tx: Transaction, hash: ByteArray): Status {
+    fun processTransactionImpl(tx: Transaction, hash: Hash): Status {
         if (!tx.verifySignature(hash)) {
             return Invalid("Invalid signature")
         }
         if (!checkReferenceChain(tx.referenceChain)) {
-            return NotOnThisChain(HashSerializer.encode(tx.referenceChain))
+            return NotOnThisChain(tx.referenceChain.toString())
         }
         if (tx.fee < 0) {
             return Invalid("Negative fee")

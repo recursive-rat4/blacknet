@@ -11,6 +11,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.ByteArraySerializer
 
@@ -31,7 +32,7 @@ class Batch(
         operator fun component2() = data
     }
 
-    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (dataIndex != 0) {
             return Invalid("Batch is not permitted to contain Batch")
         }

@@ -26,6 +26,7 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
@@ -51,7 +52,7 @@ class Connection(
     private val dosScore = atomic(0)
     //TODO review capacity
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
-    private val inventoryToSend = SynchronizedArrayList<ByteArray>(Inventory.SEND_MAX)
+    private val inventoryToSend = SynchronizedArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = currentTimeSeconds()
 
     @Volatile
@@ -159,14 +160,14 @@ class Connection(
         }
     }
 
-    suspend fun inventory(inv: ByteArray) = inventoryToSend.mutex.withLock {
+    suspend fun inventory(inv: Hash) = inventoryToSend.mutex.withLock {
         inventoryToSend.list.add(inv)
         if (inventoryToSend.list.size == Inventory.SEND_MAX) {
             sendInventoryImpl(currentTimeMillis())
         }
     }
 
-    suspend fun inventory(inv: ArrayList<ByteArray>): Unit = inventoryToSend.mutex.withLock {
+    suspend fun inventory(inv: ArrayList<Hash>): Unit = inventoryToSend.mutex.withLock {
         val newSize = inventoryToSend.list.size + inv.size
         if (newSize < Inventory.SEND_MAX) {
             inventoryToSend.list.addAll(inv)

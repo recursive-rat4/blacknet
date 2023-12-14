@@ -27,10 +27,10 @@ object Message {
         return Ed25519.verify(signature, hash(magic, message), publicKey)
     }
 
-    private fun hash(magic: String, message: String): ByteArray {
-        return buildHash {
+    private fun hash(magic: String, message: String): Hash {
+        return Hash(buildHash {
             encodeString(magic)
             encodeString(message)
-        }
+        })
     }
 }

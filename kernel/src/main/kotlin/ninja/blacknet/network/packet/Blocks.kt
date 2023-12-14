@@ -10,7 +10,7 @@
 package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Connection
@@ -18,7 +18,7 @@ import ninja.blacknet.serialization.ByteArraySerializer
 
 @Serializable
 class Blocks(
-        val hashes: List<@Serializable(HashSerializer::class) ByteArray>,
+        val hashes: List<Hash>,
         val blocks: List<@Serializable(ByteArraySerializer::class) ByteArray>
 ) : Packet {
     override suspend fun process(connection: Connection) {

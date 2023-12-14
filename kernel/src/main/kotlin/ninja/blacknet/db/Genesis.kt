@@ -16,12 +16,11 @@ import ninja.blacknet.Mode.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.mode
 import ninja.blacknet.serialization.json.json
-import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.Resources
 
 object Genesis {
     const val TIME: Long = 1545555600
-    val BLOCK_HASH = HashSerializer.ZERO
+    val BLOCK_HASH = Hash.ZERO
     val CUMULATIVE_DIFFICULTY = BigInteger.ZERO
 
     val balances by lazy {

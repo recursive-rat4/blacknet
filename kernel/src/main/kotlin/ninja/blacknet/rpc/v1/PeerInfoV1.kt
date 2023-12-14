@@ -10,12 +10,11 @@
 package ninja.blacknet.rpc.v1
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.packet.ChainAnnounce
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
-import ninja.blacknet.util.HashMap
 
 @Serializable
 class PeerInfoV1(
@@ -41,18 +40,18 @@ class PeerInfoV1(
             val fork: Boolean
     ) {
         constructor(chain: ChainAnnounce, fork: Boolean) : this(
-                HashSerializer.encode(chain.chain),
+                chain.chain.toString(),
                 chain.cumulativeDifficulty.toString(),
                 fork
         )
 
         companion object {
-            fun get(chain: ChainAnnounce, forkCache: HashMap<ByteArray, Boolean>): ChainInfo {
+            fun get(chain: ChainAnnounce, forkCache: HashMap<Hash, Boolean>): ChainInfo {
                 val cached = forkCache.get(chain.chain)
                 return if (cached != null) {
                     ChainInfo(chain, cached)
                 } else {
-                    val fork = !LedgerDB.chainIndexes.contains(chain.chain)
+                    val fork = !LedgerDB.chainIndexes.contains(chain.chain.bytes)
                     forkCache.put(chain.chain, fork)
                     ChainInfo(chain, fork)
                 }
@@ -61,7 +60,7 @@ class PeerInfoV1(
     }
 
     companion object {
-        fun get(connection: Connection, forkCache: HashMap<ByteArray, Boolean>): PeerInfoV1 {
+        fun get(connection: Connection, forkCache: HashMap<Hash, Boolean>): PeerInfoV1 {
             return PeerInfoV1(
                     connection.peerId,
                     connection.remoteAddress.toString(),
@@ -81,7 +80,7 @@ class PeerInfoV1(
         }
 
         suspend fun getAll(): List<PeerInfoV1> {
-            val forkCache = HashMap<ByteArray, Boolean>()
+            val forkCache = HashMap<Hash, Boolean>()
             return Node.connections.map { PeerInfoV1.get(it, forkCache) }
         }
     }

@@ -10,14 +10,14 @@
 package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.TxFetcher
 import ninja.blacknet.network.Node
 
 @Serializable
 class Inventory(
-        private val list: List<@Serializable(HashSerializer::class) ByteArray>
+        private val list: List<Hash>
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {
@@ -38,4 +38,4 @@ class Inventory(
     }
 }
 
-typealias UnfilteredInvList = ArrayList<Triple<ByteArray, Int, Long>>
+typealias UnfilteredInvList = ArrayList<Triple<Hash, Int, Long>>

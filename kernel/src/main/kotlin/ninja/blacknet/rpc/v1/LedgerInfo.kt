@@ -12,18 +12,16 @@ package ninja.blacknet.rpc.v1
 import java.math.BigInteger
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.LongSerializer
 
 @Serializable
 class LedgerInfo(
         val height: Int,
-        @Serializable(with = HashSerializer::class)
-        val blockHash: ByteArray,
+        val blockHash: Hash,
         val blockTime: Long,
-        @Serializable(with = HashSerializer::class)
-        val rollingCheckpoint: ByteArray,
+        val rollingCheckpoint: Hash,
         @Serializable(with = BigIntegerSerializer::class)
         val difficulty: BigInteger,
         @Serializable(with = BigIntegerSerializer::class)
@@ -31,8 +29,7 @@ class LedgerInfo(
         @Serializable(with = LongSerializer::class)
         val supply: Long,
         val maxBlockSize: Int,
-        @Serializable(with = HashSerializer::class)
-        val nxtrng: ByteArray
+        val nxtrng: Hash
 ) {
     companion object {
         fun get(): LedgerInfo {

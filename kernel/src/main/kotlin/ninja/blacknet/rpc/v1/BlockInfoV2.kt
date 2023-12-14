@@ -18,7 +18,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
 
@@ -34,14 +34,14 @@ class BlockInfoV2(
         val signature: String,
         val transactions: JsonElement
 ) {
-    constructor(block: Block, hash: ByteArray, size: Int, txdetail: Boolean) : this(
-            HashSerializer.encode(hash),
+    constructor(block: Block, hash: Hash, size: Int, txdetail: Boolean) : this(
+            hash.toString(),
             size,
             block.version,
-            HashSerializer.encode(block.previous),
+            block.previous.toString(),
             block.time,
             Address.encode(block.generator.bytes),
-            HashSerializer.encode(block.contentHash),
+            block.contentHash.toString(),
             SignatureSerializer.encode(block.signature),
             transactions(block, txdetail)
     )

@@ -11,13 +11,13 @@ package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.TxPool
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 
 @Serializable
 class GetTransactions(
-        private val list: List<@Serializable(HashSerializer::class) ByteArray>
+        private val list: List<Hash>
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (list.size > Transactions.MAX) {

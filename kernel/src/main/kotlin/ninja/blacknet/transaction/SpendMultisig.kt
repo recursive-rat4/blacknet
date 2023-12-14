@@ -16,7 +16,6 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.LongSerializer
-import ninja.blacknet.util.HashMap
 import ninja.blacknet.util.exactSum
 
 /**
@@ -65,13 +64,13 @@ class SpendMultisig(
             Invalid("Invalid sender")
     }
 
-    private fun hash(): ByteArray {
+    private fun hash(): Hash {
         val copy = SpendMultisig(id, amounts, ArrayList())
         val bytes = binaryFormat.encodeToByteArray(serializer(), copy)
-        return buildHash { encodeByteArray(bytes) }
+        return Hash(buildHash { encodeByteArray(bytes) })
     }
 
-    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val multisig = ledger.getMultisig(id)
         if (multisig == null) {
             return Invalid("Multisig not found")

@@ -47,9 +47,9 @@ class CreateMultisig(
         operator fun component2() = signature
     }
 
-    fun id(hash: ByteArray, dataIndex: Int) = MultiSignatureLockContractId(
+    fun id(hash: Hash, dataIndex: Int) = MultiSignatureLockContractId(
         buildHash {
-            encodeByteArray(hash);
+            encodeByteArray(hash.bytes);
             encodeInt(dataIndex);
         }
     )
@@ -63,18 +63,18 @@ class CreateMultisig(
         return true
     }
 
-    private fun hash(from: PublicKey, seq: Int, dataIndex: Int): ByteArray {
+    private fun hash(from: PublicKey, seq: Int, dataIndex: Int): Hash {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = binaryFormat.encodeToByteArray(serializer(), copy)
-        return buildHash {
+        return Hash(buildHash {
             encodeByteArray(from.bytes)
             encodeInt(seq)
             encodeInt(dataIndex)
             encodeByteArray(bytes)
-        }
+        })
     }
 
-    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         if (n < 0 || n > deposits.size) {
             return Invalid("Invalid n")
         }

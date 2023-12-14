@@ -12,7 +12,6 @@ package ninja.blacknet.rpc.v1
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.TxPool
-import ninja.blacknet.crypto.HashSerializer
 
 @Serializable
 class TxPoolInfo(
@@ -22,7 +21,7 @@ class TxPoolInfo(
 ) {
     companion object {
         suspend fun get(): TxPoolInfo = TxPool.mutex.withLock {
-            val tx = TxPool.mapHashesToListImpl { HashSerializer.encode(it) }
+            val tx = TxPool.mapHashesToListImpl { it.toString() }
             return TxPoolInfo(TxPool.sizeImpl(), TxPool.dataSizeImpl(), tx)
         }
     }

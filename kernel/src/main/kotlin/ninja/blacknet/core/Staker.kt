@@ -42,7 +42,7 @@ object Staker {
     ) {
         val startTime = currentTimeMillis()
         var hashCounter = 0
-        var lastBlock = HashSerializer.ZERO
+        var lastBlock = Hash.ZERO
         var stake = 0L
 
         fun hashRate(): Double {
@@ -114,7 +114,7 @@ object Staker {
             return
 
         stakers.forEach { staker ->
-            if (!staker.lastBlock.contentEquals(state.blockHash)) {
+            if (staker.lastBlock != state.blockHash) {
                 BlockDB.mutex.withLock {
                     state = LedgerDB.state()
                     staker.updateImpl(state)
@@ -126,7 +126,7 @@ object Staker {
                 val block = Block.create(state.blockHash, timeSlot, staker.publicKey)
                 TxPool.fill(block)
                 val (hash, bytes) = block.sign(staker.privateKey)
-                logger.info { "Staked ${HashSerializer.encode(hash)}" }
+                logger.info { "Staked $hash" }
                 if (Node.broadcastBlock(hash, bytes)) {
                     return
                 } else @Suppress("NAME_SHADOWING") {
@@ -140,7 +140,7 @@ object Staker {
                         TxPool.fill(block)
                         if (block.transactions.isNotEmpty()) {
                             val (hash, bytes) = block.sign(staker.privateKey)
-                            logger.warn { "Retry ${HashSerializer.encode(hash)}" }
+                            logger.warn { "Retry $hash" }
                             if (Node.broadcastBlock(hash, bytes))
                                 return
                             else
@@ -148,7 +148,7 @@ object Staker {
                         }
                     }
                     val (hash, bytes) = block.sign(staker.privateKey)
-                    logger.warn { "Empty ${HashSerializer.encode(hash)}" }
+                    logger.warn { "Empty $hash" }
                     Node.broadcastBlock(hash, bytes)
                 }
             }

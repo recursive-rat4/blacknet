@@ -16,7 +16,7 @@ import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.encode
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.mode
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
@@ -49,8 +49,7 @@ class TxPoolRequest : Request {
 
 @Serializable
 class TxPoolTransaction(
-    @Serializable(with = HashSerializer::class)
-    val hash: ByteArray,
+    val hash: Hash,
     val raw: Boolean = false
 ) : Request {
     override suspend fun handle(): TextContent {

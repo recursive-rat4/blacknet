@@ -15,6 +15,7 @@ import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.TimeLock
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Blake2b.buildHash
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.serialization.LongSerializer
@@ -30,14 +31,14 @@ class CreateHTLC(
         val timeLock: TimeLock,
         val hashLock: HashLock
 ) : TxData {
-    fun id(hash: ByteArray, dataIndex: Int) = HashTimeLockContractId(
+    fun id(hash: Hash, dataIndex: Int) = HashTimeLockContractId(
         buildHash {
-            encodeByteArray(hash);
+            encodeByteArray(hash.bytes);
             encodeInt(dataIndex);
         }
     )
 
-    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         try {
             timeLock.validate()
         } catch (e: Throwable) {

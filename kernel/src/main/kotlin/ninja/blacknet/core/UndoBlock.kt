@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.BigIntegerSerializer
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.ByteArraySerializer
 
@@ -26,10 +26,8 @@ class UndoBlock(
         @Serializable(with = BigIntegerSerializer::class)
         val cumulativeDifficulty: BigInteger,
         val supply: Long,
-        @Serializable(with = HashSerializer::class)
-        val nxtrng: ByteArray,
-        @Serializable(with = HashSerializer::class)
-        val rollingCheckpoint: ByteArray,
+        val nxtrng: Hash,
+        val rollingCheckpoint: Hash,
         val upgraded: Short,
         val blockSize: Int,
         val accounts: ArrayList<Pair<

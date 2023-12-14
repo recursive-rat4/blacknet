@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.db.WalletDB
@@ -27,20 +27,18 @@ import ninja.blacknet.transaction.TxType
 
 @Serializable
 class TransactionInfo(
-        @Serializable(with = HashSerializer::class)
-        val hash: ByteArray,
+        val hash: Hash,
         val size: Int,
         @Serializable(with = SignatureSerializer::class)
         val signature: ByteArray,
         val from: PublicKey,
         val seq: Int,
-        @Serializable(with = HashSerializer::class)
-        val referenceChain: ByteArray,
+        val referenceChain: Hash,
         @Serializable(with = LongSerializer::class)
         val fee: Long,
         val data: List<DataInfo>
 ) {
-    constructor(tx: Transaction, hash: ByteArray, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
+    constructor(tx: Transaction, hash: Hash, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
             hash,
             size,
             tx.signature,

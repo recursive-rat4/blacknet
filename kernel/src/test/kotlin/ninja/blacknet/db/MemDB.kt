@@ -9,19 +9,41 @@
 
 package ninja.blacknet.db
 
-import ninja.blacknet.util.HashMap
+import ninja.blacknet.util.initialHashTableCapacity
 
 /**
  * A simple implementation of [KeyValueStore] that keeps all its data in the main memory.
  */
-class MemDB(
-    private val map: HashMap<ByteArray, ByteArray> = HashMap(0)
+class MemDB private constructor(
+    private val map: HashMap<Wrapper, Wrapper> = HashMap(0)
 ) : KeyValueStore {
     override fun contains(key: ByteArray): Boolean {
-        return map.containsKey(key)
+        return map.containsKey(Wrapper(key))
     }
 
     override fun get(key: ByteArray): ByteArray? {
-        return map.get(key)
+        return map.get(Wrapper(key))?.bytes
+    }
+
+    companion object {
+        fun memDBOf(vararg content: Pair<ByteArray, ByteArray>) = MemDB(
+            HashMap(initialHashTableCapacity(expectedSize = content.size))
+        ).apply {
+            content.forEach { (k, v) ->
+                map.put(Wrapper(k), Wrapper(v))
+            }
+        }
+    }
+
+    private class Wrapper(
+        internal val bytes: ByteArray
+    ) {
+        override fun equals(other: Any?): Boolean {
+            return other is Wrapper && bytes.contentEquals(other.bytes)
+        }
+
+        override fun hashCode(): Int {
+            return bytes.contentHashCode()
+        }
     }
 }

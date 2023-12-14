@@ -18,9 +18,9 @@ import ninja.blacknet.util.byteArrayOfInts
 class HashTest {
     @Test
     fun data() {
-        val a = Hash(ByteArray(HashSerializer.SIZE_BYTES) { 21 })
-        val b = Hash(ByteArray(HashSerializer.SIZE_BYTES) { 21 })
-        val c = Hash(ByteArray(HashSerializer.SIZE_BYTES) { -1 })
+        val a = Hash(ByteArray(Hash.SIZE_BYTES) { 21 })
+        val b = Hash(ByteArray(Hash.SIZE_BYTES) { 21 })
+        val c = Hash(ByteArray(Hash.SIZE_BYTES) { -1 })
         assertEquals(a, b)
         assertEquals(a.hashCode(), b.hashCode())
         assertNotEquals(a, c)

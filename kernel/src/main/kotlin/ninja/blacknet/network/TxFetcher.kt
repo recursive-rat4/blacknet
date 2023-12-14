@@ -25,7 +25,7 @@ import ninja.blacknet.util.rotate
  * 交易獲取器
  */
 object TxFetcher {
-    private val inventoryChannel: Channel<Pair<Connection, List<ByteArray>>> = Channel(Channel.UNLIMITED)
+    private val inventoryChannel: Channel<Pair<Connection, List<Hash>>> = Channel(Channel.UNLIMITED)
     private val requested = ConcurrentHashMap<Hash, Long>()
 
     init {
@@ -33,27 +33,27 @@ object TxFetcher {
         Runtime.rotate(::watchdog)
     }
 
-    fun offer(connection: Connection, list: List<ByteArray>) {
+    fun offer(connection: Connection, list: List<Hash>) {
         inventoryChannel.trySend(Pair(connection, list))
     }
 
-    fun fetched(hash: ByteArray): Boolean {
-        return requested.remove(Hash(hash)) != null
+    fun fetched(hash: Hash): Boolean {
+        return requested.remove(hash) != null
     }
 
     private suspend fun implementation() {
         val (connection, inventory) = inventoryChannel.receive()
 
-        val request = ArrayList<ByteArray>(inventory.size)
+        val request = ArrayList<Hash>(inventory.size)
         val currTime = currentTimeMillis()
 
         for (hash in inventory) {
-            if (requested.containsKey(Hash(hash))) {
+            if (requested.containsKey(hash)) {
                 continue
             }
 
             if (TxPool.isInteresting(hash)) {
-                requested.put(Hash(hash), currTime)
+                requested.put(hash, currTime)
                 request.add(hash)
             }
 
@@ -68,7 +68,7 @@ object TxFetcher {
         }
     }
 
-    private fun sendRequest(connection: Connection, request: ArrayList<ByteArray>) {
+    private fun sendRequest(connection: Connection, request: ArrayList<Hash>) {
         connection.sendPacket(PacketType.GetTransactions, GetTransactions(request))
     }
 

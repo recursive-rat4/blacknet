@@ -15,6 +15,7 @@ import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Ledger
 import ninja.blacknet.core.Status
 import ninja.blacknet.core.Transaction
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.serialization.ByteArraySerializer
 
 /**
@@ -26,7 +27,7 @@ class BApp(
     @Serializable(with = ByteArraySerializer::class)
     val data: ByteArray
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         return Accepted
     }
 

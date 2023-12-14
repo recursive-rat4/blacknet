@@ -21,7 +21,7 @@ import ninja.blacknet.contract.TimeLock
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Ed25519
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.crypto.PublicKey
@@ -43,8 +43,7 @@ class TransferRequest(
     val to: PublicKey,
     val encrypted: Byte? = null,
     val message: String? = null,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val message = PaymentId.create(message, encrypted, privateKey, to) ?: return respondError("Failed to create payment id")
@@ -56,7 +55,7 @@ class TransferRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -71,8 +70,7 @@ class BurnRequest(
     val amount: Long,
     @Serializable(with = ByteArraySerializer::class)
     val message: ByteArray,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
@@ -83,7 +81,7 @@ class BurnRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -97,8 +95,7 @@ class LeaseRequest(
     val fee: Long,
     val amount: Long,
     val to: PublicKey,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
@@ -109,7 +106,7 @@ class LeaseRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -124,8 +121,7 @@ class CancelLeaseRequest(
     val amount: Long,
     val to: PublicKey,
     val height: Int,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
@@ -136,7 +132,7 @@ class CancelLeaseRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -152,8 +148,7 @@ class WithdrawFromLeaseRequest(
     val amount: Long,
     val to: PublicKey,
     val height: Int,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
@@ -164,7 +159,7 @@ class WithdrawFromLeaseRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -179,8 +174,7 @@ class BundleRequest(
     val id: BAppId,
     @Serializable(with = ByteArraySerializer::class)
     val data: ByteArray,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
@@ -191,7 +185,7 @@ class BundleRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -210,8 +204,7 @@ class CreateSwapRequest(
     val hashLockType: Byte,
     @Serializable(with = ByteArraySerializer::class)
     val hashLockData: ByteArray,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val timeLock = TimeLock(timeLockType, timeLockData).also { it.validate() }
@@ -224,7 +217,7 @@ class CreateSwapRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -239,8 +232,7 @@ class ClaimSwapRequest(
     val id: HashTimeLockContractId,
     @Serializable(with = ByteArraySerializer::class)
     val preimage: ByteArray,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
@@ -251,7 +243,7 @@ class ClaimSwapRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -264,8 +256,7 @@ class RefundSwapRequest(
     val privateKey: ByteArray,
     val fee: Long,
     val id: HashTimeLockContractId,
-    @Serializable(with = HashSerializer::class)
-    val referenceChain: ByteArray? = null
+    val referenceChain: Hash? = null
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
@@ -276,7 +267,7 @@ class RefundSwapRequest(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }
@@ -293,7 +284,7 @@ class SendRawTransaction(
 
         val status = Node.broadcastTx(hash, bytes)
         return if (status == Accepted)
-            respondText(HashSerializer.encode(hash))
+            respondText(hash.toString())
         else
             respondError("Transaction rejected: $status")
     }

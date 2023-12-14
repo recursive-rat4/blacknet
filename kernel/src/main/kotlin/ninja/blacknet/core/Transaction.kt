@@ -25,8 +25,7 @@ class Transaction(
         var signature: ByteArray,
         val from: PublicKey,
         val seq: Int,
-        @Serializable(with = HashSerializer::class)
-        val referenceChain: ByteArray,
+        val referenceChain: Hash,
         @Serializable(with = LongSerializer::class)
         val fee: Long,
         val type: Byte,
@@ -38,7 +37,7 @@ class Transaction(
         return binaryFormat.decodeFromByteArray(serializer, data)
     }
 
-    fun sign(privateKey: ByteArray): Pair<ByteArray, ByteArray> {
+    fun sign(privateKey: ByteArray): Pair<Hash, ByteArray> {
         val bytes = binaryFormat.encodeToByteArray(serializer(), this)
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
@@ -46,18 +45,18 @@ class Transaction(
         return Pair(hash, bytes)
     }
 
-    fun verifySignature(hash: ByteArray): Boolean {
+    fun verifySignature(hash: Hash): Boolean {
         return Ed25519.verify(signature, hash, from)
     }
 
     companion object {
-        fun hash(bytes: ByteArray): ByteArray {
-            return buildHash {
+        fun hash(bytes: ByteArray) = Hash(
+            buildHash {
                 encodeByteArray(bytes, SignatureSerializer.SIZE_BYTES, bytes.size - SignatureSerializer.SIZE_BYTES)
             }
-        }
+        )
 
-        fun create(from: PublicKey, seq: Int, referenceChain: ByteArray, fee: Long, type: Byte, data: ByteArray): Transaction {
+        fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
             return Transaction(SignatureSerializer.EMPTY, from, seq, referenceChain, fee, type, data)
         }
 
@@ -80,7 +79,7 @@ class Transaction(
          *
          * @return the constructed [Transaction]
          */
-        fun generated(from: PublicKey, height: Int, referenceChain: ByteArray, amount: Long): Transaction {
+        fun generated(from: PublicKey, height: Int, referenceChain: Hash, amount: Long): Transaction {
             return Transaction(SignatureSerializer.EMPTY, from, height, referenceChain, amount, TxType.Generated.type, emptyByteArray())
         }
     }

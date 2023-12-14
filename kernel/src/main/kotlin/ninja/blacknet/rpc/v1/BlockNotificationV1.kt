@@ -12,7 +12,7 @@ package ninja.blacknet.rpc.v1
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Block
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 
 @Serializable
 class BlockNotificationV1(
@@ -25,12 +25,12 @@ class BlockNotificationV1(
         val generator: String,
         val txns: Int
 ) {
-    constructor(block: Block, hash: ByteArray, height: Int, size: Int) : this(
-            HashSerializer.encode(hash),
+    constructor(block: Block, hash: Hash, height: Int, size: Int) : this(
+            hash.toString(),
             height,
             size,
             block.version,
-            HashSerializer.encode(block.previous),
+            block.previous.toString(),
             block.time,
             Address.encode(block.generator.bytes),
             block.transactions.size

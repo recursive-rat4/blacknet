@@ -23,7 +23,7 @@ import kotlinx.coroutines.runBlocking
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.AlreadyHave
 import ninja.blacknet.core.Block
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.dataDir
 import ninja.blacknet.logging.error
 import ninja.blacknet.util.buffered
@@ -58,7 +58,7 @@ object Bootstrap {
                                     logger.info { "Processed $n blocks" }
                                 LedgerDB.pruneImpl()
                             } else if (status !is AlreadyHave) {
-                                logger.info { "$status block ${HashSerializer.encode(hash)}" }
+                                logger.info { "$status block $hash" }
                                 break
                             }
                         }
@@ -81,20 +81,20 @@ object Bootstrap {
      */
     fun export(): Path? {
         val checkpoint = LedgerDB.state().rollingCheckpoint
-        if (checkpoint.contentEquals(Genesis.BLOCK_HASH))
+        if (checkpoint == Genesis.BLOCK_HASH)
             return null
 
         val file = dataDir.resolve("bootstrap.dat.new")
         FileChannel.open(file, CREATE, TRUNCATE_EXISTING, WRITE).outputStream().buffered().data().use { stream ->
             var hash = Genesis.BLOCK_HASH
-            var index = LedgerDB.chainIndexes.getOrThrow(hash)
+            var index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
             do {
                 hash = index.next
-                index = LedgerDB.chainIndexes.getOrThrow(hash)
-                val bytes = BlockDB.blocks.getBytesOrThrow(hash)
+                index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+                val bytes = BlockDB.blocks.getBytesOrThrow(hash.bytes)
                 stream.writeInt(bytes.size)
                 stream.write(bytes, 0, bytes.size)
-            } while (!hash.contentEquals(checkpoint))
+            } while (hash != checkpoint)
         }
 
         return file

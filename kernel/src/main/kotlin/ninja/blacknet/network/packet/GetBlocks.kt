@@ -10,7 +10,7 @@
 package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Connection
@@ -18,22 +18,20 @@ import ninja.blacknet.network.Node
 
 @Serializable
 class GetBlocks(
-        @Serializable(with = HashSerializer::class)
-        private val best: ByteArray,
-        @Serializable(with = HashSerializer::class)
-        private val checkpoint: ByteArray
+        private val best: Hash,
+        private val checkpoint: Hash
 ) : Packet {
     override suspend fun process(connection: Connection) {
         val cachedBlock = BlockDB.cachedBlock
         if (cachedBlock != null) {
             val (previousHash, bytes) = cachedBlock
-            if (previousHash.contentEquals(best)) {
+            if (previousHash == best) {
                 connection.sendPacket(PacketType.Blocks, Blocks(emptyList(), listOf(bytes)))
                 return
             }
         }
 
-        var chainIndex = LedgerDB.chainIndexes.get(best)
+        var chainIndex = LedgerDB.chainIndexes.get(best.bytes)
 
         if (chainIndex == null) {
             val nextBlockHashes = LedgerDB.getNextBlockHashes(checkpoint, Blocks.MAX_HASHES)
@@ -55,18 +53,18 @@ class GetBlocks(
             if (chainIndex == null)
                 break
             val hash = chainIndex.next
-            if (hash.contentEquals(HashSerializer.ZERO))
+            if (hash == Hash.ZERO)
                 break
             size += chainIndex.nextSize + 4 //TODO VarInt.size()
             if (response.isNotEmpty() && size >= maxSize)
                 break
-            val bytes = BlockDB.blocks.getBytes(hash)
+            val bytes = BlockDB.blocks.getBytes(hash.bytes)
             if (bytes == null)
                 break
             response.add(bytes)
             if (response.size == Blocks.MAX_BLOCKS)
                 break
-            chainIndex = LedgerDB.chainIndexes.get(hash)
+            chainIndex = LedgerDB.chainIndexes.get(hash.bytes)
         }
 
         connection.sendPacket(PacketType.Blocks, Blocks(emptyList(), response))

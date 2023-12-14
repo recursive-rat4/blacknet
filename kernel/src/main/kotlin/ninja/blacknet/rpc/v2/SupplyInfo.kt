@@ -11,7 +11,7 @@ package ninja.blacknet.rpc.v2
 
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.serialization.LongSerializer
@@ -19,8 +19,7 @@ import ninja.blacknet.serialization.LongSerializer
 @Serializable
 class SupplyInfo(
         val height: Int,
-        @Serializable(with = HashSerializer::class)
-        val blockHash: ByteArray,
+        val blockHash: Hash,
         val blockTime: Long,
         @Serializable(with = LongSerializer::class)
         val supply: Long

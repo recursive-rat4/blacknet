@@ -9,20 +9,14 @@
 
 package ninja.blacknet.db
 
-import java.security.Security
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.test.assertNull
-import ninja.blacknet.util.hashMapOf
-import org.bouncycastle.jce.provider.BouncyCastleProvider
+import ninja.blacknet.db.MemDB.Companion.memDBOf
 
 class KeyValueStoreTest {
-    init {
-        Security.addProvider(BouncyCastleProvider())
-    }
-
     @Test
     fun test() {
         val key0 = byteArrayOf(0)
@@ -34,12 +28,10 @@ class KeyValueStoreTest {
         val value1 = byteArrayOf(0)
         val value2 = byteArrayOf(2)
 
-        val store = MemDB(
-            hashMapOf(
-                key0 to value0,
-                key1 to value1,
-                key2 to value2,
-            )
+        val store = memDBOf(
+            key0 to value0,
+            key1 to value1,
+            key2 to value2,
         )
 
         assertTrue(store.contains(key0))

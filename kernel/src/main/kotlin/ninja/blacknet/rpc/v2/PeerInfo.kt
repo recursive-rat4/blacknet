@@ -12,14 +12,13 @@ package ninja.blacknet.rpc.v2
 import java.math.BigInteger
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.Genesis
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.packet.ChainAnnounce
 import ninja.blacknet.serialization.LongSerializer
-import ninja.blacknet.util.HashMap
 
 @Serializable
 class PeerInfo(
@@ -42,8 +41,7 @@ class PeerInfo(
 ) {
     @Serializable
     class ChainInfo(
-            @Serializable(with = HashSerializer::class)
-            val chain: ByteArray,
+            val chain: Hash,
             @Serializable(with = BigIntegerSerializer::class)
             val cumulativeDifficulty: BigInteger,
             val fork: Boolean
@@ -55,15 +53,15 @@ class PeerInfo(
         )
 
         companion object {
-            fun get(chain: ChainAnnounce, forkCache: HashMap<ByteArray, Boolean>): ChainInfo {
-                val fork = forkCache.computeIfAbsent(chain.chain) { !LedgerDB.chainIndexes.contains(it) }
+            fun get(chain: ChainAnnounce, forkCache: HashMap<Hash, Boolean>): ChainInfo {
+                val fork = forkCache.computeIfAbsent(chain.chain) { !LedgerDB.chainIndexes.contains(it.bytes) }
                 return ChainInfo(chain, fork)
             }
         }
     }
 
     companion object {
-        fun get(connection: Connection, forkCache: HashMap<ByteArray, Boolean>): PeerInfo {
+        fun get(connection: Connection, forkCache: HashMap<Hash, Boolean>): PeerInfo {
             return PeerInfo(
                     connection.peerId,
                     connection.remoteAddress.toString(),
@@ -84,7 +82,7 @@ class PeerInfo(
         }
 
         suspend fun getAll(): List<PeerInfo> {
-            val forkCache = HashMap<ByteArray, Boolean>()
+            val forkCache = HashMap<Hash, Boolean>()
             forkCache.put(Genesis.BLOCK_HASH, false)
             return Node.connections.map { PeerInfo.get(it, forkCache) }
         }

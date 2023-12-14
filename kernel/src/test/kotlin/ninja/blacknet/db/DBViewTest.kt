@@ -9,7 +9,6 @@
 
 package ninja.blacknet.db
 
-import java.security.Security
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -17,11 +16,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.test.assertNull
 import kotlinx.serialization.builtins.serializer
+import ninja.blacknet.db.MemDB.Companion.memDBOf
 import ninja.blacknet.serialization.bbf.BinaryFormat
-import ninja.blacknet.util.hashMapOf
 import ninja.blacknet.util.plus
 import ninja.blacknet.util.toByteArray
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 class DBViewTest {
     private val prefix = 0.toByte()
@@ -34,20 +32,14 @@ class DBViewTest {
     private val valueBytes1 = value1.toByteArray()
 
     private val view = DBView(
-        MemDB(
-            hashMapOf(
-                prefix + key0 to valueBytes0,
-                prefix + key1 to valueBytes1,
-            )
+        memDBOf(
+            prefix + key0 to valueBytes0,
+            prefix + key1 to valueBytes1,
         ),
         DBKey(prefix, 2),
         Int.serializer(),
         BinaryFormat()
     )
-
-    init {
-        Security.addProvider(BouncyCastleProvider())
-    }
 
     @Test
     fun contains() {

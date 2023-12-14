@@ -16,6 +16,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
@@ -30,8 +31,7 @@ import ninja.blacknet.rpc.v1.NewMnemonicInfo
 import ninja.blacknet.rpc.v1.toHex
 import ninja.blacknet.transaction.TxType
 import ninja.blacknet.serialization.bbf.binaryFormat
-import ninja.blacknet.util.HashMap
-import ninja.blacknet.util.HashMapSerializer
+import ninja.blacknet.util.initialHashTableCapacity
 
 @Serializable
 class GenerateAccount(
@@ -119,12 +119,12 @@ class Transactions(
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
-        val transactions = HashMap<String, TransactionDataInfo>(expectedSize = wallet.transactions.size)
+        val transactions = HashMap<String, TransactionDataInfo>(initialHashTableCapacity(expectedSize = wallet.transactions.size))
         wallet.transactions.forEach { (hash, txData) ->
-            transactions.put(HashSerializer.encode(hash), TransactionDataInfo(txData))
+            transactions.put(hash.toString(), TransactionDataInfo(txData))
         }
 
-        return respondJson(HashMapSerializer(String.serializer(), TransactionDataInfo.serializer()), transactions)
+        return respondJson(MapSerializer(String.serializer(), TransactionDataInfo.serializer()), transactions)
     }
 }
 
@@ -154,8 +154,7 @@ class Sequence(
 class TransactionRequest(
     @SerialName("address")
     val publicKey: PublicKey,
-    @Serializable(with = HashSerializer::class)
-    val hash: ByteArray,
+    val hash: Hash,
     val raw: Boolean = false
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
@@ -179,8 +178,7 @@ class TransactionRequest(
 class Confirmations(
     @SerialName("address")
     val publicKey: PublicKey,
-    @Serializable(with = HashSerializer::class)
-    val hash: ByteArray
+    val hash: Hash
 ) : Request {
     override suspend fun handle(): TextContent {
         val result = WalletDB.getConfirmations(publicKey, hash)
@@ -198,7 +196,7 @@ class ReferenceChain(
 ) : Request {
     override suspend fun handle(): TextContent {
         val result = WalletDB.referenceChain()
-        return respondText(HashSerializer.encode(result))
+        return respondText(result.toString())
     }
 }
 
@@ -277,21 +275,19 @@ class ListTransactions(
 @Serializable
 class ListSinceBlockInfo(
     val transactions: List<WalletTransactionInfo>,
-    @Serializable(with = HashSerializer::class)
-    val lastBlockHash: ByteArray
+    val lastBlockHash: Hash
 )
 
 @Serializable
 class ListSinceBlock(
     @SerialName("address")
     val publicKey: PublicKey,
-    @Serializable(with = HashSerializer::class)
-    val hash: ByteArray = Genesis.BLOCK_HASH
+    val hash: Hash = Genesis.BLOCK_HASH
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
         BlockDB.mutex.withLock<TextContent> {
-            val height = LedgerDB.chainIndexes.get(hash)?.height ?: return respondError("Block not found")
+            val height = LedgerDB.chainIndexes.get(hash.bytes)?.height ?: return respondError("Block not found")
             val state = LedgerDB.state()
             if (height >= state.height - PoS.ROLLBACK_LIMIT)
                 return respondError("Block not checkpointed")

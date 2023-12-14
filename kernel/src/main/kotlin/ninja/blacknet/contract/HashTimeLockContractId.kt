@@ -20,8 +20,8 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.crypto.Address
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.HashEncoder
-import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.rpc.requests.RequestDecoder
@@ -57,7 +57,7 @@ class HashTimeLockContractId(
         /**
          * The number of bytes in a binary representation of the hash time lock contract id.
          */
-        const val SIZE_BYTES = HashSerializer.SIZE_BYTES
+        const val SIZE_BYTES = Hash.SIZE_BYTES
 
         //JSON override val descriptor: SerialDescriptor = ListSerialDescriptor("ninja.blacknet.contract.HashTimeLockContractId", Byte.serializer().descriptor)
         override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("ninja.blacknet.contract.HashTimeLockContractId", PrimitiveKind.STRING)

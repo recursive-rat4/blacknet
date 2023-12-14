@@ -42,11 +42,11 @@ object ChainFetcher {
     private var request: Deferred<Blocks>? = null
     private var connectedBlocks = 0
     @Volatile
-    private var stakedBlock: Triple<ByteArray, ByteArray, CompletableDeferred<Pair<Status, Int>>>? = null
+    private var stakedBlock: Triple<Hash, ByteArray, CompletableDeferred<Pair<Status, Int>>>? = null
     @Volatile
     private var syncConnection: Connection? = null
-    private var originalChain: ByteArray? = null
-    private var rollbackTo: ByteArray? = null
+    private var originalChain: Hash? = null
+    private var rollbackTo: Hash? = null
     private var undoDifficulty = BigInteger.ZERO
     private var undoRollback: List<Hash>? = null
 
@@ -75,7 +75,7 @@ object ChainFetcher {
         announces.trySend(Pair(connection, announce))
     }
 
-    suspend fun stakedBlock(hash: ByteArray, bytes: ByteArray): Pair<Status, Int> {
+    suspend fun stakedBlock(hash: Hash, bytes: ByteArray): Pair<Status, Int> {
         val deferred = CompletableDeferred<Pair<Status, Int>>()
         stakedBlock = Triple(hash, bytes, deferred)
         request?.cancel(CancellationException("Staked new block"))
@@ -125,7 +125,7 @@ object ChainFetcher {
                 return
             }
 
-            logger.info { "Fetching ${Hash(announce.chain)}" }
+            logger.info { "Fetching ${announce.chain}" }
             syncConnection = connection
             originalChain = state.blockHash
 
@@ -159,7 +159,7 @@ object ChainFetcher {
                                 connection.dos("Rejected chain")
                                 break@requestLoop
                             }
-                            val chainIndex = LedgerDB.chainIndexes.get(hash)
+                            val chainIndex = LedgerDB.chainIndexes.get(hash.bytes)
                             if (chainIndex == null)
                                 break
                             if (chainIndex.height < state.height - PoS.ROLLBACK_LIMIT) {
@@ -198,7 +198,7 @@ object ChainFetcher {
         }
 
         state = LedgerDB.state()
-        if (!state.blockHash.contentEquals(originalChain!!)) {
+        if (state.blockHash != originalChain!!) {
             Node.announceChain(state.blockHash, state.cumulativeDifficulty, connection)
             connection.lastBlockTime = connection.lastPacketTime
         }
@@ -261,12 +261,12 @@ object ChainFetcher {
             logger.info { "Disconnected ${undoRollback!!.size} blocks" }
         }
         for (i in answer.blocks) {
-            val hash = Hash(Block.hash(i))
+            val hash = Block.hash(i)
             if (undoRollback?.contains(hash) == true) {
                 connection.dos("Rollback contains $hash")
                 return false
             }
-            val status = BlockDB.processImpl(hash.bytes, i)
+            val status = BlockDB.processImpl(hash, i)
             if (status != Accepted) {
                 connection.dos(status.toString())
                 return false
@@ -286,9 +286,9 @@ object ChainFetcher {
             logger.info { "Mongering ${answer.blocks.size} deferred blocks from ${connection.debugName()}" }
             BlockDB.mutex.withLock {
                 for (i in answer.blocks) {
-                    val hash = Hash(Block.hash(i))
+                    val hash = Block.hash(i)
                     val status = try {
-                        BlockDB.processImpl(hash.bytes, i)
+                        BlockDB.processImpl(hash, i)
                     } catch (e: Throwable) {
                         logger.error(e) { "Exception in processDeferred ${connection.debugName()}" }
                         connection.close()
@@ -329,8 +329,8 @@ object ChainFetcher {
 
     private fun requestBlocks(
             connection: Connection,
-            hash: ByteArray,
-            checkpoint: ByteArray,
+            hash: Hash,
+            checkpoint: Hash,
             difficulty: BigInteger,
     ) {
         request = Runtime.async { recvChannel.receive() }

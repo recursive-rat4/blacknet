@@ -12,7 +12,6 @@ package ninja.blacknet.serialization
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.SerializersModuleBuilder
-import ninja.blacknet.contract.*
 import ninja.blacknet.crypto.*
 import kotlin.reflect.KClass
 
@@ -28,7 +27,6 @@ fun <T : Any> SerializersModuleBuilder.contextual(kClass: KClass<out ContextualS
 val binaryModule: SerializersModule = SerializersModule {
     contextual(BigIntegerSerializer::class, BigIntegerAsBinarySerializer)
     contextual(ByteArraySerializer::class, ByteArrayAsBinarySerializer)
-    contextual(HashSerializer::class, HashAsBinarySerializer)
     contextual(PrivateKeySerializer::class, PrivateKeyAsBinarySerializer)
     contextual(SignatureSerializer::class, SignatureAsBinarySerializer)
 }
@@ -36,7 +34,6 @@ val binaryModule: SerializersModule = SerializersModule {
 val textModule: SerializersModule = SerializersModule {
     contextual(BigIntegerSerializer::class, BigIntegerAsStringSerializer)
     contextual(ByteArraySerializer::class, ByteArrayAsStringSerializer)
-    contextual(HashSerializer::class, HashAsStringSerializer)
     contextual(PrivateKeySerializer::class, PrivateKeyAsStringSerializer)
     contextual(SignatureSerializer::class, SignatureAsStringSerializer)
 }

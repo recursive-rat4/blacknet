@@ -14,7 +14,7 @@ package ninja.blacknet.rpc.v1
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
-import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.transaction.*
@@ -31,13 +31,13 @@ class TransactionInfoV1(
         val type: Int,
         val data: String
 ) {
-    constructor(tx: Transaction, hash: ByteArray, size: Int) : this(
-            HashSerializer.encode(hash),
+    constructor(tx: Transaction, hash: Hash, size: Int) : this(
+            hash.toString(),
             size,
             SignatureSerializer.encode(tx.signature),
             Address.encode(tx.from.bytes),
             tx.seq,
-            HashSerializer.encode(tx.referenceChain),
+            tx.referenceChain.toString(),
             tx.fee,
             tx.type.toUByte().toInt(),
             data(tx.type, tx.data)

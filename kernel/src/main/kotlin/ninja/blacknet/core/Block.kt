@@ -18,20 +18,18 @@ import ninja.blacknet.serialization.ByteArraySerializer
 @Serializable
 class Block(
         val version: UInt,
-        @Serializable(with = HashSerializer::class)
-        val previous: ByteArray,
+        val previous: Hash,
         val time: Long,
         val generator: PublicKey,
-        @Serializable(with = HashSerializer::class)
-        var contentHash: ByteArray,
+        var contentHash: Hash,
         @Serializable(with = SignatureSerializer::class)
         var signature: ByteArray,
         val transactions: ArrayList<@Serializable(ByteArraySerializer::class) ByteArray>
 ) {
-    fun sign(privateKey: ByteArray): Pair<ByteArray, ByteArray> {
+    fun sign(privateKey: ByteArray): Pair<Hash, ByteArray> {
         val bytes = binaryFormat.encodeToByteArray(serializer(), this)
         contentHash = contentHash(bytes)
-        System.arraycopy(contentHash, 0, bytes, CONTENT_HASH_POS, HashSerializer.SIZE_BYTES)
+        System.arraycopy(contentHash, 0, bytes, CONTENT_HASH_POS, Hash.SIZE_BYTES)
         val hash = hash(bytes)
         signature = Ed25519.sign(hash, privateKey)
         System.arraycopy(signature, 0, bytes, SIGNATURE_POS, SignatureSerializer.SIZE_BYTES)
@@ -39,33 +37,33 @@ class Block(
     }
 
     fun verifyContentHash(bytes: ByteArray): Boolean {
-        return contentHash.contentEquals(contentHash(bytes))
+        return contentHash == contentHash(bytes)
     }
 
-    fun verifySignature(hash: ByteArray): Boolean {
+    fun verifySignature(hash: Hash): Boolean {
         return Ed25519.verify(signature, hash, generator)
     }
 
-    private fun contentHash(bytes: ByteArray): ByteArray {
-        return buildHash {
+    private fun contentHash(bytes: ByteArray) = Hash(
+        buildHash {
             encodeByteArray(bytes, HEADER_SIZE_BYTES, bytes.size - HEADER_SIZE_BYTES)
         }
-    }
+    )
 
     companion object {
         const val VERSION = 2u
-        const val CONTENT_HASH_POS = Int.SIZE_BYTES + HashSerializer.SIZE_BYTES + Long.SIZE_BYTES + PublicKey.SIZE_BYTES
-        const val SIGNATURE_POS = CONTENT_HASH_POS + HashSerializer.SIZE_BYTES
+        const val CONTENT_HASH_POS = Int.SIZE_BYTES + Hash.SIZE_BYTES + Long.SIZE_BYTES + PublicKey.SIZE_BYTES
+        const val SIGNATURE_POS = CONTENT_HASH_POS + Hash.SIZE_BYTES
         const val HEADER_SIZE_BYTES = SIGNATURE_POS + SignatureSerializer.SIZE_BYTES
 
-        fun hash(bytes: ByteArray): ByteArray {
-            return buildHash {
+        fun hash(bytes: ByteArray) = Hash(
+            buildHash {
                 encodeByteArray(bytes, 0, HEADER_SIZE_BYTES - SignatureSerializer.SIZE_BYTES)
             }
-        }
+        )
 
-        fun create(previous: ByteArray, time: Long, generator: PublicKey): Block {
-            return Block(VERSION, previous, time, generator, HashSerializer.ZERO, SignatureSerializer.EMPTY, ArrayList())
+        fun create(previous: Hash, time: Long, generator: PublicKey): Block {
+            return Block(VERSION, previous, time, generator, Hash.ZERO, SignatureSerializer.EMPTY, ArrayList())
         }
     }
 }

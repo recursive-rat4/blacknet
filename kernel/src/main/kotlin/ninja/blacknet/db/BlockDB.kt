@@ -17,7 +17,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.LedgerDB.forkV2
@@ -29,9 +28,9 @@ private val logger = KotlinLogging.logger {}
 object BlockDB {
     private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
     internal val mutex = Mutex()
-    private val BLOCK_KEY = DBKey(0xC0.toByte(), HashSerializer.SIZE_BYTES)
+    private val BLOCK_KEY = DBKey(0xC0.toByte(), Hash.SIZE_BYTES)
     @Volatile
-    internal var cachedBlock: Pair<ByteArray, ByteArray>? = null
+    internal var cachedBlock: Pair<Hash, ByteArray>? = null
 
     val blocks = DBView(LevelDB, BLOCK_KEY, Block.serializer(), binaryFormat)
 
@@ -43,8 +42,8 @@ object BlockDB {
 
     private val fs = Files.getFileStore(dataDir)
 
-    internal fun isRejectedImpl(hash: ByteArray): Boolean {
-        return rejects.contains(Hash(hash))
+    internal fun isRejectedImpl(hash: Hash): Boolean {
+        return rejects.contains(hash)
     }
 
     internal fun deleteImpl(list: List<Hash>) {
@@ -55,11 +54,11 @@ object BlockDB {
         batch.write()
     }
 
-    private fun containsImpl(hash: ByteArray): Boolean {
-        return LedgerDB.chainIndexes.contains(hash)
+    private fun containsImpl(hash: Hash): Boolean {
+        return LedgerDB.chainIndexes.contains(hash.bytes)
     }
 
-    private suspend fun processBlockImpl(hash: ByteArray, bytes: ByteArray): Status {
+    private suspend fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
         val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
         val state = LedgerDB.state()
         if (block.version > Block.VERSION) {
@@ -83,14 +82,14 @@ object BlockDB {
         if (!block.verifySignature(hash)) {
             return Invalid("Invalid signature")
         }
-        if (!block.previous.contentEquals(state.blockHash)) {
-            return NotOnThisChain(HashSerializer.encode(block.previous))
+        if (block.previous != state.blockHash) {
+            return NotOnThisChain(block.previous.toString())
         }
         val batch = LevelDB.createWriteBatch()
         val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
         val (status, txHashes) = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
         if (status == Accepted) {
-            batch.put(BLOCK_KEY, hash, bytes)
+            batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
             TxPool.mutex.withLock {
                 TxPool.clearRejectsImpl()
@@ -104,14 +103,14 @@ object BlockDB {
         return status
     }
 
-    internal suspend fun processImpl(hash: ByteArray, bytes: ByteArray): Status {
-        if (rejects.contains(Hash(hash)))
+    internal suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+        if (rejects.contains(hash))
             return Invalid("Already rejected block")
         if (containsImpl(hash))
-            return AlreadyHave(HashSerializer.encode(hash))
+            return AlreadyHave(hash.toString())
         val status = processBlockImpl(hash, bytes)
         if (status is Invalid)
-            rejects.add(Hash(hash))
+            rejects.add(hash)
         return status
     }
 

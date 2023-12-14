@@ -12,6 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
+import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.LongSerializer
@@ -24,7 +25,7 @@ class Transfer(
         @SerialName("message")
         val paymentId: PaymentId
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
+    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
         val account = ledger.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
