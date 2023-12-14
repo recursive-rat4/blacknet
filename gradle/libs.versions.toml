@@ -29,7 +29,6 @@ ktor-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref =
 ktor-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.1"
 kotlin-benchmark = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "benchmark" }
-apache-collections = "org.apache.commons:commons-collections4:4.4"
 eddsa = "net.i2p.crypto:eddsa:0.3.0"
 blake2b = "com.rfksystems:blake2b:1.0.0"
 bouncycastle = "org.bouncycastle:bcprov-jdk18on:1.77"

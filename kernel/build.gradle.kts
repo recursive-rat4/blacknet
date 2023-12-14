@@ -37,7 +37,6 @@ dependencies {
     implementation(libs.kotlin.coroutines.debug)
     implementation(libs.kotlin.serialization)
     implementation(libs.kotlin.serialization.json)
-    implementation(libs.apache.collections)
     implementation(libs.eddsa)
     implementation(libs.blake2b)
     implementation(libs.bouncycastle)
