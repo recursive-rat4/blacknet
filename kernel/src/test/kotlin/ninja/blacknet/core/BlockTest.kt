@@ -11,11 +11,13 @@ package ninja.blacknet.core
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.decode
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.crypto.SignatureSerializer
+import ninja.blacknet.db.Genesis
 import ninja.blacknet.serialization.bbf.binaryFormat
 
 class BlockTest {
@@ -43,5 +45,12 @@ class BlockTest {
     @Test
     fun deserialize() {
         binaryFormat.decodeFromByteArray(Block.serializer(), raw)
+    }
+
+    @Test
+    fun sign() {
+        val newBlock = Block.create(Hash.ZERO, 0, PublicKey(ByteArray(PublicKey.SIZE_BYTES)))
+        newBlock.sign(Genesis.RegTestGenesis.privateKey1)
+        assertNotEquals(SignatureSerializer.EMPTY, newBlock.signature)
     }
 }
