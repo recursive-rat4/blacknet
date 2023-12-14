@@ -12,7 +12,6 @@ package ninja.blacknet.contract
 import java.util.Arrays
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -29,7 +28,6 @@ import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.config.ConfigDecoder
 import ninja.blacknet.serialization.notSupportedFormatError
-import ninja.blacknet.serialization.descriptor.ListSerialDescriptor
 
 /**
  * A Blacknet blockchain application id.
