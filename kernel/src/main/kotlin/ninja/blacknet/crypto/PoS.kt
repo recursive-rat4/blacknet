@@ -28,14 +28,14 @@ object PoS {
         return supply / 100 / BLOCKS_IN_YEAR
     }
 
-    fun nxtrng(nxtrng: ByteArray, generator: ByteArray): ByteArray {
+    fun nxtrng(nxtrng: ByteArray, generator: PublicKey): ByteArray {
         return buildHash {
             encodeByteArray(nxtrng)
-            encodeByteArray(generator)
+            encodeByteArray(generator.bytes)
         }
     }
 
-    fun check(time: Long, generator: ByteArray, nxtrng: ByteArray, difficulty: BigInteger, prevTime: Long, stake: Long): Status {
+    fun check(time: Long, generator: PublicKey, nxtrng: ByteArray, difficulty: BigInteger, prevTime: Long, stake: Long): Status {
         if (stake <= 0) {
             return Invalid("Invalid stake amount")
         }
@@ -45,7 +45,7 @@ object PoS {
         val hash = buildHash {
             encodeByteArray(nxtrng)
             encodeLong(prevTime)
-            encodeByteArray(generator)
+            encodeByteArray(generator.bytes)
             encodeLong(time)
         }
         return if (BigInteger(1, hash) < difficulty * stake)

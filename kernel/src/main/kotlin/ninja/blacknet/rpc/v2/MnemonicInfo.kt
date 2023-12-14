@@ -25,7 +25,7 @@ class MnemonicInfo(
         fun fromString(string: String): MnemonicInfo {
             val privateKey = Mnemonic.fromString(string)
             val publicKey = Ed25519.toPublicKey(privateKey)
-            return MnemonicInfo(Address.encode(publicKey), Base16.encode(publicKey))
+            return MnemonicInfo(Address.encode(publicKey.bytes), Base16.encode(publicKey.bytes))
         }
     }
 }

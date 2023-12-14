@@ -34,7 +34,7 @@ class TransactionNotificationV2(
             time,
             size,
             SignatureSerializer.encode(tx.signature),
-            Address.encode(tx.from),
+            Address.encode(tx.from.bytes),
             tx.seq,
             HashSerializer.encode(tx.referenceChain),
             tx.fee.toString(),

@@ -22,7 +22,7 @@ class TransferInfo(
 ) {
     constructor(data: Transfer) : this(
             data.amount,
-            Address.encode(data.to),
+            Address.encode(data.to.bytes),
             when (data.paymentId.type) {
                 PaymentId.PLAIN -> String(data.paymentId.payload)
                 PaymentId.ENCRYPTED -> "ENCRYPTED:${data.paymentId.payload}"

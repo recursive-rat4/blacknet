@@ -19,7 +19,7 @@ class SynchronizedHashSet<T>(
         val mutex: Mutex = Mutex(),
         val set: MutableSet<T> = HashSet()
 ) {
-    constructor(expectedSize: Int) : this(set = HashSet(expectedSize = expectedSize))
+    constructor(expectedSize: Int) : this(set = HashSet(initialHashTableCapacity(expectedSize = expectedSize)))
 
     suspend inline fun isEmpty() = mutex.withLock { set.isEmpty() }
 

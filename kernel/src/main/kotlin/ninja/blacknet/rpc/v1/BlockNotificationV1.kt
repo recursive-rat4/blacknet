@@ -32,7 +32,7 @@ class BlockNotificationV1(
             block.version,
             HashSerializer.encode(block.previous),
             block.time,
-            Address.encode(block.generator),
+            Address.encode(block.generator.bytes),
             block.transactions.size
     )
 }

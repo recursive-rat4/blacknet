@@ -10,7 +10,7 @@
 package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.LongSerializer
 import ninja.blacknet.serialization.VarLongSerializer
 import ninja.blacknet.util.exactSumOf
@@ -27,8 +27,7 @@ class Multisig(
 
     @Serializable
     class DepositElement(
-            @Serializable(with = PublicKeySerializer::class)
-            val from: ByteArray,
+            val from: PublicKey,
             @Serializable(with = LongSerializer::class)
             val amount: Long
     ) {

@@ -19,11 +19,11 @@ object Message {
         return Ed25519.sign(hash(SIGN_MAGIC, message), privateKey)
     }
 
-    fun verify(publicKey: ByteArray, signature: ByteArray, message: String): Boolean {
+    fun verify(publicKey: PublicKey, signature: ByteArray, message: String): Boolean {
         return verifyWithMagic(publicKey, signature, message, SIGN_MAGIC)
     }
 
-    internal fun verifyWithMagic(publicKey: ByteArray, signature: ByteArray, message: String, magic: String): Boolean {
+    internal fun verifyWithMagic(publicKey: PublicKey, signature: ByteArray, message: String, magic: String): Boolean {
         return Ed25519.verify(signature, hash(magic, message), publicKey)
     }
 

@@ -11,7 +11,7 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.LongSerializer
 
 /**
@@ -21,8 +21,7 @@ import ninja.blacknet.serialization.LongSerializer
 class CancelLease(
         @Serializable(with = LongSerializer::class)
         val amount: Long,
-        @Serializable(with = PublicKeySerializer::class)
-        val to: ByteArray,
+        val to: PublicKey,
         val height: Int
 ) : TxData {
     override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
@@ -40,5 +39,5 @@ class CancelLease(
         return Invalid("Lease not found")
     }
 
-    fun involves(publicKey: ByteArray) = to.contentEquals(publicKey)
+    fun involves(publicKey: PublicKey) = to == publicKey
 }

@@ -10,6 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
@@ -28,8 +29,7 @@ class CreateMultisig(
 ) : TxData {
     @Serializable
     class DepositElement(
-            @Serializable(with = PublicKeySerializer::class)
-            val from: ByteArray,
+            val from: PublicKey,
             @Serializable(with = LongSerializer::class)
             val amount: Long
     ) {
@@ -47,26 +47,27 @@ class CreateMultisig(
         operator fun component2() = signature
     }
 
-    fun id(hash: ByteArray, dataIndex: Int): ByteArray =
+    fun id(hash: ByteArray, dataIndex: Int) = MultiSignatureLockContractId(
         buildHash {
             encodeByteArray(hash);
             encodeInt(dataIndex);
         }
+    )
 
-    fun sign(from: ByteArray, seq: Int, dataIndex: Int, privateKey: ByteArray): Boolean {
+    fun sign(from: PublicKey, seq: Int, dataIndex: Int, privateKey: ByteArray): Boolean {
         val publicKey = Ed25519.toPublicKey(privateKey)
-        val index = deposits.indexOfFirst { it.from.contentEquals(publicKey) }
+        val index = deposits.indexOfFirst { it.from == publicKey }
         if (index == -1) return false
         val signature = Ed25519.sign(hash(from, seq, dataIndex), privateKey)
         signatures.add(SignatureElement(index.toByte(), signature))
         return true
     }
 
-    private fun hash(from: ByteArray, seq: Int, dataIndex: Int): ByteArray {
+    private fun hash(from: PublicKey, seq: Int, dataIndex: Int): ByteArray {
         val copy = CreateMultisig(n, deposits, ArrayList())
         val bytes = binaryFormat.encodeToByteArray(serializer(), copy)
         return buildHash {
-            encodeByteArray(from)
+            encodeByteArray(from.bytes)
             encodeInt(seq)
             encodeInt(dataIndex)
             encodeByteArray(bytes)
@@ -121,5 +122,5 @@ class CreateMultisig(
         return Accepted
     }
 
-    fun involves(publicKey: ByteArray) = deposits.find { it.from.contentEquals(publicKey) } != null
+    fun involves(publicKey: PublicKey) = deposits.find { it.from == publicKey } != null
 }

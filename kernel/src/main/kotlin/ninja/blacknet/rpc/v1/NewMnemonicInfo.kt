@@ -26,13 +26,13 @@ class NewMnemonicInfo(
         fun new(wordlist: Array<String>): NewMnemonicInfo {
             val (mnemonic, privateKey) = Mnemonic.generate(wordlist)
             val publicKey = Ed25519.toPublicKey(privateKey)
-            return NewMnemonicInfo(mnemonic, Address.encode(publicKey), Base16.encode(publicKey))
+            return NewMnemonicInfo(mnemonic, Address.encode(publicKey.bytes), Base16.encode(publicKey.bytes))
         }
 
         fun fromString(string: String): NewMnemonicInfo {
             val privateKey = Mnemonic.fromString(string)
             val publicKey = Ed25519.toPublicKey(privateKey)
-            return NewMnemonicInfo(string, Address.encode(publicKey), Base16.encode(publicKey))
+            return NewMnemonicInfo(string, Address.encode(publicKey.bytes), Base16.encode(publicKey.bytes))
         }
     }
 }

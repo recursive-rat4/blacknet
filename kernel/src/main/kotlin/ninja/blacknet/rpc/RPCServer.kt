@@ -30,6 +30,7 @@ import ninja.blacknet.Version
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.core.Transaction
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.logging.debug
 import ninja.blacknet.logging.debugMessage
@@ -49,7 +50,7 @@ object RPCServer {
     internal var lastIndex: Pair<ByteArray, ChainIndex>? = null
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
-    internal val walletNotify = SynchronizedHashMap<ByteArray, ArrayList<SendChannel<Frame>>>()
+    internal val walletNotify = SynchronizedHashMap<PublicKey, ArrayList<SendChannel<Frame>>>()
 
     suspend fun blockNotify(block: Block, hash: ByteArray, height: Int, size: Int) {
         RPCServerV1.blockNotify(block, hash, height, size)
@@ -87,7 +88,7 @@ object RPCServer {
         }
     }
 
-    suspend fun walletNotify(tx: Transaction, hash: ByteArray, time: Long, size: Int, publicKey: ByteArray, filter: List<WalletDB.TransactionDataType>) {
+    suspend fun walletNotify(tx: Transaction, hash: ByteArray, time: Long, size: Int, publicKey: PublicKey, filter: List<WalletDB.TransactionDataType>) {
         RPCServerV1.walletNotify(tx, hash, time, size, publicKey, filter)
 
         walletNotify.mutex.withLock {

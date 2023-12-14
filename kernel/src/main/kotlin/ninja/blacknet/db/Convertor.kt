@@ -13,7 +13,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.encode
 import ninja.blacknet.crypto.HashSerializer
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 
 private val logger = KotlinLogging.logger {}
 
@@ -39,7 +39,7 @@ internal object Convertor {
         while (iterator.hasNext()) {
             val entry = iterator.next()
             var key: ByteArray?
-            key = Pair("account", PublicKeySerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(1, PublicKeySerializer.SIZE_BYTES)); continue }
+            key = Pair("account", PublicKey.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(1, PublicKey.SIZE_BYTES)); continue }
             key = Pair("chain", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(2, HashSerializer.SIZE_BYTES)); continue }
             key = Pair("htlc", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(3, HashSerializer.SIZE_BYTES)); continue }
             key = Pair("multisig", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(4, HashSerializer.SIZE_BYTES)); continue }
@@ -52,7 +52,7 @@ internal object Convertor {
             key = Pair("walletkeys", 0) - entry; if (key != null) { nibble(entry, key, DBKey(64, 0)); continue }
             key = Pair("tx", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(65, HashSerializer.SIZE_BYTES)); continue }
             key = Pair("walletversion", 0) - entry; if (key != null) { nibble(entry, key, DBKey(66, 0)); continue }
-            key = Pair("wallet", PublicKeySerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(67, PublicKeySerializer.SIZE_BYTES)); continue }
+            key = Pair("wallet", PublicKey.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(67, PublicKey.SIZE_BYTES)); continue }
             key = Pair("peerdb", 0) - entry; if (key != null) { nibble(entry, key, DBKey(0x80.toByte(), 0)); continue }
             key = Pair("peerversion", 0) - entry; if (key != null) { nibble(entry, key, DBKey(0x81.toByte(), 0)); continue }
             key = Pair("block", HashSerializer.SIZE_BYTES) - entry; if (key != null) { nibble(entry, key, DBKey(0xC0.toByte(), HashSerializer.SIZE_BYTES)); continue }

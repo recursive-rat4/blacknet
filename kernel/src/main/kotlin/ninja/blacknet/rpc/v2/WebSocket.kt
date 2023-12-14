@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import ninja.blacknet.crypto.Address
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.json.json
 
@@ -40,7 +41,7 @@ fun Route.webSocket() {
                         RPCServer.txPoolNotify.add(outgoing)
                     } else if (route == "wallet") {
                         val address = request.getString("address")
-                        val publicKey = Address.decode(address)
+                        val publicKey = PublicKey(Address.decode(address))
 
                         RPCServer.walletNotify.mutex.withLock {
                             val subscribers = RPCServer.walletNotify.map.get(publicKey)
@@ -63,7 +64,7 @@ fun Route.webSocket() {
                         RPCServer.txPoolNotify.remove(outgoing)
                     } else if (route == "wallet") {
                         val address = request.getString("address")
-                        val publicKey = Address.decode(address)
+                        val publicKey = PublicKey(Address.decode(address))
 
                         RPCServer.walletNotify.mutex.withLock {
                             val subscribers = RPCServer.walletNotify.map.get(publicKey)

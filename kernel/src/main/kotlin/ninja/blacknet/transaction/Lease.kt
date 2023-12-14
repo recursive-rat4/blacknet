@@ -12,7 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.LongSerializer
 
 /**
@@ -22,8 +22,7 @@ import ninja.blacknet.serialization.LongSerializer
 class Lease(
         @Serializable(with = LongSerializer::class)
         val amount: Long,
-        @Serializable(with = PublicKeySerializer::class)
-        val to: ByteArray
+        val to: PublicKey
 ) : TxData {
     override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         if (amount < PoS.MIN_LEASE) {
@@ -41,5 +40,5 @@ class Lease(
         return Accepted
     }
 
-    fun involves(publicKey: ByteArray) = to.contentEquals(publicKey)
+    fun involves(publicKey: PublicKey) = to == publicKey
 }

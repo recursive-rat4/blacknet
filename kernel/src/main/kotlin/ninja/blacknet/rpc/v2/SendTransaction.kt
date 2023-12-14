@@ -16,7 +16,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.BAppId
 import ninja.blacknet.contract.HashLock
-import ninja.blacknet.contract.HashTimeLockContractIdSerializer
+import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.TimeLock
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Transaction
@@ -24,7 +24,7 @@ import ninja.blacknet.crypto.Ed25519
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PrivateKeySerializer
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.rpc.RPCServer
@@ -40,8 +40,7 @@ class TransferRequest(
     val privateKey: ByteArray,
     val fee: Long,
     val amount: Long,
-    @Serializable(with = PublicKeySerializer::class)
-    val to: ByteArray,
+    val to: PublicKey,
     val encrypted: Byte? = null,
     val message: String? = null,
     @Serializable(with = HashSerializer::class)
@@ -97,8 +96,7 @@ class LeaseRequest(
     val privateKey: ByteArray,
     val fee: Long,
     val amount: Long,
-    @Serializable(with = PublicKeySerializer::class)
-    val to: ByteArray,
+    val to: PublicKey,
     @Serializable(with = HashSerializer::class)
     val referenceChain: ByteArray? = null
 ) : Request {
@@ -124,8 +122,7 @@ class CancelLeaseRequest(
     val privateKey: ByteArray,
     val fee: Long,
     val amount: Long,
-    @Serializable(with = PublicKeySerializer::class)
-    val to: ByteArray,
+    val to: PublicKey,
     val height: Int,
     @Serializable(with = HashSerializer::class)
     val referenceChain: ByteArray? = null
@@ -153,8 +150,7 @@ class WithdrawFromLeaseRequest(
     val fee: Long,
     val withdraw: Long,
     val amount: Long,
-    @Serializable(with = PublicKeySerializer::class)
-    val to: ByteArray,
+    val to: PublicKey,
     val height: Int,
     @Serializable(with = HashSerializer::class)
     val referenceChain: ByteArray? = null
@@ -208,8 +204,7 @@ class CreateSwapRequest(
     val privateKey: ByteArray,
     val fee: Long,
     val amount: Long,
-    @Serializable(with = PublicKeySerializer::class)
-    val to: ByteArray,
+    val to: PublicKey,
     val timeLockType: Byte,
     val timeLockData: Long,
     val hashLockType: Byte,
@@ -241,8 +236,7 @@ class ClaimSwapRequest(
     @Serializable(with = PrivateKeySerializer::class)
     val privateKey: ByteArray,
     val fee: Long,
-    @Serializable(with = HashTimeLockContractIdSerializer::class)
-    val id: ByteArray,
+    val id: HashTimeLockContractId,
     @Serializable(with = ByteArraySerializer::class)
     val preimage: ByteArray,
     @Serializable(with = HashSerializer::class)
@@ -269,8 +263,7 @@ class RefundSwapRequest(
     @Serializable(with = PrivateKeySerializer::class)
     val privateKey: ByteArray,
     val fee: Long,
-    @Serializable(with = HashTimeLockContractIdSerializer::class)
-    val id: ByteArray,
+    val id: HashTimeLockContractId,
     @Serializable(with = HashSerializer::class)
     val referenceChain: ByteArray? = null
 ) : Request {

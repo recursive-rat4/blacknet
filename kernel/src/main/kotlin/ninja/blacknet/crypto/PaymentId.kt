@@ -39,7 +39,7 @@ class PaymentId(
         return type == PLAIN && payload.isEmpty()
     }
 
-    fun decrypt(privateKey: ByteArray, publicKey: ByteArray): String? {
+    fun decrypt(privateKey: ByteArray, publicKey: PublicKey): String? {
         val sharedKey = sharedKey(privateKey, publicKey)
         return ChaCha20.decryptUtf8(sharedKey, payload)
     }
@@ -49,7 +49,7 @@ class PaymentId(
         const val ENCRYPTED: Byte = 1
         val EMPTY = PaymentId(PLAIN, emptyByteArray())
 
-        fun create(string: String?, type: Byte?, privateKey: ByteArray?, publicKey: ByteArray?): PaymentId? {
+        fun create(string: String?, type: Byte?, privateKey: ByteArray?, publicKey: PublicKey?): PaymentId? {
             if (string == null)
                 return EMPTY
 
@@ -66,12 +66,12 @@ class PaymentId(
             return PaymentId(PLAIN, string.toByteArray(Charsets.UTF_8))
         }
 
-        fun encrypted(string: String, privateKey: ByteArray, publicKey: ByteArray): PaymentId {
+        fun encrypted(string: String, privateKey: ByteArray, publicKey: PublicKey): PaymentId {
             val sharedKey = sharedKey(privateKey, publicKey)
             return PaymentId(ENCRYPTED, ChaCha20.encryptUtf8(sharedKey, string))
         }
 
-        fun decrypt(privateKey: ByteArray, publicKey: ByteArray, hex: String): String? {
+        fun decrypt(privateKey: ByteArray, publicKey: PublicKey, hex: String): String? {
             val sharedKey = sharedKey(privateKey, publicKey)
             val bytes = try {
                 Base16.decode(hex)
@@ -81,7 +81,7 @@ class PaymentId(
             return ChaCha20.decryptUtf8(sharedKey, bytes)
         }
 
-        private fun sharedKey(privateKey: ByteArray, publicKey: ByteArray): ByteArray {
+        private fun sharedKey(privateKey: ByteArray, publicKey: PublicKey): ByteArray {
             val sharedSecret = x25519(privateKey, publicKey)
             return buildHash {
                 encodeByteArray(sharedSecret)

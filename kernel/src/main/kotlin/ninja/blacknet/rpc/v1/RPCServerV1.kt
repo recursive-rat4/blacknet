@@ -20,9 +20,9 @@ import ninja.blacknet.Runtime
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.json.json
-import ninja.blacknet.util.HashSet
 import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
 
@@ -31,7 +31,7 @@ private val logger = KotlinLogging.logger {}
 object RPCServerV1 {
     internal val blockNotifyV0 = SynchronizedArrayList<SendChannel<Frame>>()
     internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
-    internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<ByteArray>>()
+    internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
 
     suspend fun blockNotify(block: Block, hash: ByteArray, height: Int, size: Int) {
         blockNotifyV0.forEach {
@@ -59,7 +59,7 @@ object RPCServerV1 {
         }
     }
 
-    suspend fun walletNotify(tx: Transaction, hash: ByteArray, time: Long, size: Int, publicKey: ByteArray, filter: List<WalletDB.TransactionDataType>) {
+    suspend fun walletNotify(tx: Transaction, hash: ByteArray, time: Long, size: Int, publicKey: PublicKey, filter: List<WalletDB.TransactionDataType>) {
         walletNotifyV1.mutex.withLock {
             if (walletNotifyV1.map.isNotEmpty()) {
                 val notification = TransactionNotificationV2(tx, hash, time, size)

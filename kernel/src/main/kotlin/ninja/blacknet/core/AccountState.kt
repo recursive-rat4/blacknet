@@ -11,7 +11,7 @@ package ninja.blacknet.core
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.crypto.SipHash.hashCode
 import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
@@ -113,14 +113,13 @@ class AccountState(
 
     @Serializable
     class Lease(
-        @Serializable(with = PublicKeySerializer::class)
-        val publicKey: ByteArray,
+        val publicKey: PublicKey,
         @Serializable(with = VarIntSerializer::class)
         val height: Int,
         @Serializable(with = VarLongSerializer::class)
         var amount: Long
     ) {
-        override fun equals(other: Any?): Boolean = (other is Lease) && publicKey.contentEquals(other.publicKey) && height == other.height && amount == other.amount
+        override fun equals(other: Any?): Boolean = (other is Lease) && publicKey == other.publicKey && height == other.height && amount == other.amount
         override fun hashCode(): Int = hashCode(serializer(), this)
         fun copy(): Lease = Lease(publicKey, height, amount)
         fun isMature(height: Int): Boolean = height > this.height + PoS.MATURITY

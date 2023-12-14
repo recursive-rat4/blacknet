@@ -10,7 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.crypto.Blake2b.buildHash
@@ -24,8 +24,7 @@ import ninja.blacknet.util.exactSum
  */
 @Serializable
 class SpendMultisig(
-        @Serializable(with = MultiSignatureLockContractIdSerializer::class)
-        val id: ByteArray,
+        val id: MultiSignatureLockContractId,
         val amounts: ArrayList<@Serializable(LongSerializer::class) Long>,
         val signatures: ArrayList<SignatureElement>
 ) : TxData {
@@ -45,9 +44,9 @@ class SpendMultisig(
         return true
     }
 
-    private fun verifySignatures(multisig: Multisig, sender: ByteArray): Status {
+    private fun verifySignatures(multisig: Multisig, sender: PublicKey): Status {
         val multisigHash = hash()
-        val unsigned = HashMap<Byte, ByteArray>(multisig.deposits.size)
+        val unsigned = HashMap<Byte, PublicKey>(multisig.deposits.size)
         for (i in 0 until multisig.deposits.size) {
             unsigned.put(i.toByte(), multisig.deposits[i].from)
         }
@@ -113,5 +112,5 @@ class SpendMultisig(
         return Accepted
     }
 
-    fun involves(ids: Set<ByteArray>) = ids.contains(id)
+    fun involves(ids: Set<MultiSignatureLockContractId>) = ids.contains(id)
 }

@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.*
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.rpc.requests.*
@@ -141,8 +141,7 @@ class Ledger : Request {
 
 @Serializable
 class Account(
-    @Serializable(with = PublicKeySerializer::class)
-    val address: ByteArray,
+    val address: PublicKey,
     val confirmations: Int = PoS.DEFAULT_CONFIRMATIONS
 ) : Request {
     override suspend fun handle(): TextContent {

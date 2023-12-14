@@ -13,15 +13,14 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.PaymentId
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.LongSerializer
 
 @Serializable
 class Transfer(
         @Serializable(with = LongSerializer::class)
         val amount: Long,
-        @Serializable(with = PublicKeySerializer::class)
-        val to: ByteArray,
+        val to: PublicKey,
         @SerialName("message")
         val paymentId: PaymentId
 ) : TxData {
@@ -38,5 +37,5 @@ class Transfer(
         return Accepted
     }
 
-    fun involves(publicKey: ByteArray) = to.contentEquals(publicKey)
+    fun involves(publicKey: PublicKey) = to == publicKey
 }

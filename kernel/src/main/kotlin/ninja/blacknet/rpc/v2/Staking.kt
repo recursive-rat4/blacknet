@@ -15,7 +15,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Staker
 import ninja.blacknet.crypto.PrivateKeySerializer
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.rpc.requests.*
 
 @Serializable
@@ -54,8 +54,7 @@ class IsStaking(
 @Serializable
 class Staking(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray? = null
+    val publicKey: PublicKey? = null
 ) : Request {
     override suspend fun handle(): TextContent {
         return respondJson(StakingInfo.serializer(), Staker.info(publicKey))

@@ -25,7 +25,7 @@ object Genesis {
     val CUMULATIVE_DIFFICULTY = BigInteger.ZERO
 
     val balances by lazy {
-        val map = HashMap<ByteArray, Long>()
+        val map = HashMap<PublicKey, Long>()
 
         when (mode) {
             MainNet -> {
@@ -52,8 +52,7 @@ object Genesis {
 
     @Serializable
     private class GenesisJsonEntry(
-            @Serializable(with = PublicKeySerializer::class)
-            val publicKey: ByteArray,
+            val publicKey: PublicKey,
             val balance: Long
     )
 

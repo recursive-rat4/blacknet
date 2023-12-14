@@ -15,7 +15,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.HashSerializer
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.bbf.binaryFormat
@@ -32,8 +32,7 @@ class TransactionInfo(
         val size: Int,
         @Serializable(with = SignatureSerializer::class)
         val signature: ByteArray,
-        @Serializable(with = PublicKeySerializer::class)
-        val from: ByteArray,
+        val from: PublicKey,
         val seq: Int,
         @Serializable(with = HashSerializer::class)
         val referenceChain: ByteArray,

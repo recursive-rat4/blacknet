@@ -29,10 +29,7 @@ val binaryModule: SerializersModule = SerializersModule {
     contextual(BigIntegerSerializer::class, BigIntegerAsBinarySerializer)
     contextual(ByteArraySerializer::class, ByteArrayAsBinarySerializer)
     contextual(HashSerializer::class, HashAsBinarySerializer)
-    contextual(HashTimeLockContractIdSerializer::class, HashTimeLockContractIdAsBinarySerializer)
-    contextual(MultiSignatureLockContractIdSerializer::class, MultiSignatureLockContractIdAsBinarySerializer)
     contextual(PrivateKeySerializer::class, PrivateKeyAsBinarySerializer)
-    contextual(PublicKeySerializer::class, PublicKeyAsBinarySerializer)
     contextual(SignatureSerializer::class, SignatureAsBinarySerializer)
 }
 
@@ -40,9 +37,6 @@ val textModule: SerializersModule = SerializersModule {
     contextual(BigIntegerSerializer::class, BigIntegerAsStringSerializer)
     contextual(ByteArraySerializer::class, ByteArrayAsStringSerializer)
     contextual(HashSerializer::class, HashAsStringSerializer)
-    contextual(HashTimeLockContractIdSerializer::class, HashTimeLockContractIdAsStringSerializer)
-    contextual(MultiSignatureLockContractIdSerializer::class, MultiSignatureLockContractIdAsStringSerializer)
     contextual(PrivateKeySerializer::class, PrivateKeyAsStringSerializer)
-    contextual(PublicKeySerializer::class, PublicKeyAsStringSerializer)
     contextual(SignatureSerializer::class, SignatureAsStringSerializer)
 }

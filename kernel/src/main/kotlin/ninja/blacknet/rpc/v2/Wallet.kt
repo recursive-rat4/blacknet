@@ -71,8 +71,7 @@ class DecryptPaymentId(
     @SerialName("mnemonic")
     @Serializable(with = PrivateKeySerializer::class)
     val privateKey: ByteArray,
-    @Serializable(with = PublicKeySerializer::class)
-    val from: ByteArray,
+    val from: PublicKey,
     val message: String
 ) : Request {
     override suspend fun handle(): TextContent {
@@ -101,8 +100,7 @@ class SignMessage(
 
 @Serializable
 class VerifyMessage(
-    @Serializable(with = PublicKeySerializer::class)
-    val from: ByteArray,
+    val from: PublicKey,
     @Serializable(with = SignatureSerializer::class)
     val signature: ByteArray,
     val message: String
@@ -117,8 +115,7 @@ class VerifyMessage(
 @Serializable
 class Transactions(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray
+    val publicKey: PublicKey
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
@@ -134,8 +131,7 @@ class Transactions(
 @Serializable
 class OutLeases(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray
+    val publicKey: PublicKey
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
@@ -147,8 +143,7 @@ class OutLeases(
 @Serializable
 class Sequence(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray
+    val publicKey: PublicKey
 ) : Request {
     override suspend fun handle(): TextContent {
         return respondText(WalletDB.getSequence(publicKey).toString())
@@ -158,8 +153,7 @@ class Sequence(
 @Serializable
 class TransactionRequest(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray,
+    val publicKey: PublicKey,
     @Serializable(with = HashSerializer::class)
     val hash: ByteArray,
     val raw: Boolean = false
@@ -184,8 +178,7 @@ class TransactionRequest(
 @Serializable
 class Confirmations(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray,
+    val publicKey: PublicKey,
     @Serializable(with = HashSerializer::class)
     val hash: ByteArray
 ) : Request {
@@ -201,8 +194,7 @@ class Confirmations(
 @Serializable
 class ReferenceChain(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray
+    val publicKey: PublicKey
 ) : Request {
     override suspend fun handle(): TextContent {
         val result = WalletDB.referenceChain()
@@ -213,8 +205,7 @@ class ReferenceChain(
 @Serializable
 class TxCount(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray
+    val publicKey: PublicKey
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
@@ -226,8 +217,7 @@ class TxCount(
 @Serializable
 class ListTransactions(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray,
+    val publicKey: PublicKey,
     val offset: Int = 0,
     val max: Int = 100,
     val type: Int? = null
@@ -294,8 +284,7 @@ class ListSinceBlockInfo(
 @Serializable
 class ListSinceBlock(
     @SerialName("address")
-    @Serializable(with = PublicKeySerializer::class)
-    val publicKey: ByteArray,
+    val publicKey: PublicKey,
     @Serializable(with = HashSerializer::class)
     val hash: ByteArray = Genesis.BLOCK_HASH
 ) : Request {

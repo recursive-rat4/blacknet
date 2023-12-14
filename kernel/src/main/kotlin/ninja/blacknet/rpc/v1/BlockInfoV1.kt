@@ -35,7 +35,7 @@ class BlockInfoV1(
             block.version,
             HashSerializer.encode(block.previous),
             block.time,
-            Address.encode(block.generator),
+            Address.encode(block.generator.bytes),
             HashSerializer.encode(block.contentHash),
             SignatureSerializer.encode(block.signature),
             block.transactions.map {

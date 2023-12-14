@@ -9,7 +9,10 @@
 
 package ninja.blacknet.core
 
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.HashSerializer
+import ninja.blacknet.crypto.PublicKey
 
 interface Ledger {
     fun addSupply(amount: Long)
@@ -17,15 +20,15 @@ interface Ledger {
     fun blockHash(): ByteArray
     fun blockTime(): Long
     fun height(): Int
-    fun getAccount(key: ByteArray): AccountState?
-    fun getOrCreate(key: ByteArray): AccountState
-    fun setAccount(key: ByteArray, state: AccountState)
-    fun addHTLC(id: ByteArray, htlc: HTLC)
-    fun getHTLC(id: ByteArray): HTLC?
-    fun removeHTLC(id: ByteArray)
-    fun addMultisig(id: ByteArray, multisig: Multisig)
-    fun getMultisig(id: ByteArray): Multisig?
-    fun removeMultisig(id: ByteArray)
+    fun getAccount(key: PublicKey): AccountState?
+    fun getOrCreate(key: PublicKey): AccountState
+    fun setAccount(key: PublicKey, state: AccountState)
+    fun addHTLC(id: HashTimeLockContractId, htlc: HTLC)
+    fun getHTLC(id: HashTimeLockContractId): HTLC?
+    fun removeHTLC(id: HashTimeLockContractId)
+    fun addMultisig(id: MultiSignatureLockContractId, multisig: Multisig)
+    fun getMultisig(id: MultiSignatureLockContractId): Multisig?
+    fun removeMultisig(id: MultiSignatureLockContractId)
 
     fun processTransactionImpl(tx: Transaction, hash: ByteArray): Status {
         if (!tx.verifySignature(hash)) {

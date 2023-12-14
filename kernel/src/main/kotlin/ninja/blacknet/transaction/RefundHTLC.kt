@@ -10,7 +10,7 @@
 package ninja.blacknet.transaction
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.HashTimeLockContractIdSerializer
+import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.core.*
 
 /**
@@ -18,15 +18,14 @@ import ninja.blacknet.core.*
  */
 @Serializable
 class RefundHTLC(
-        @Serializable(with = HashTimeLockContractIdSerializer::class)
-        val id: ByteArray
+        val id: HashTimeLockContractId
 ) : TxData {
     override fun processLedgerImpl(tx: Transaction, hash: ByteArray, dataIndex: Int, ledger: Ledger): Status {
         val htlc = ledger.getHTLC(id)
         if (htlc == null) {
             return Invalid("HTLC not found")
         }
-        if (!tx.from.contentEquals(htlc.from)) {
+        if (tx.from != htlc.from) {
             return Invalid("Invalid sender")
         }
         if (!htlc.timeLock.verify(htlc.height, htlc.time, ledger.height(), ledger.blockTime())) {
@@ -40,5 +39,5 @@ class RefundHTLC(
         return Accepted
     }
 
-    fun involves(ids: Set<ByteArray>) = ids.contains(id)
+    fun involves(ids: Set<HashTimeLockContractId>) = ids.contains(id)
 }

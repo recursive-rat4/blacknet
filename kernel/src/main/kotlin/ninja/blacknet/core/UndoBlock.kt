@@ -11,11 +11,11 @@ package ninja.blacknet.core
 
 import java.math.BigInteger
 import kotlinx.serialization.Serializable
-import ninja.blacknet.contract.HashTimeLockContractIdSerializer
-import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.HashSerializer
-import ninja.blacknet.crypto.PublicKeySerializer
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.serialization.ByteArraySerializer
 
 @Serializable
@@ -33,15 +33,15 @@ class UndoBlock(
         val upgraded: Short,
         val blockSize: Int,
         val accounts: ArrayList<Pair<
-            @Serializable(with = PublicKeySerializer::class) ByteArray,
+            PublicKey,
             @Serializable(with = ByteArraySerializer::class) ByteArray?
         >>,
         val htlcs: ArrayList<Pair<
-            @Serializable(with = HashTimeLockContractIdSerializer::class) ByteArray,
+            HashTimeLockContractId,
             @Serializable(with = ByteArraySerializer::class) ByteArray?
         >>,
         val multisigs: ArrayList<Pair<
-            @Serializable(with = MultiSignatureLockContractIdSerializer::class) ByteArray,
+            MultiSignatureLockContractId,
             @Serializable(with = ByteArraySerializer::class) ByteArray?
         >>,
         val forkV2: Short,
@@ -50,15 +50,15 @@ class UndoBlock(
                 @Serializable(with = ByteArraySerializer::class) ByteArray?
         >>
 ) {
-    fun add(publicKey: ByteArray, account: ByteArray?) {
+    fun add(publicKey: PublicKey, account: ByteArray?) {
         accounts.add(Pair(publicKey, account))
     }
 
-    fun addHTLC(id: ByteArray, htlc: ByteArray?) {
+    fun addHTLC(id: HashTimeLockContractId, htlc: ByteArray?) {
         htlcs.add(Pair(id, htlc))
     }
 
-    fun addMultisig(id: ByteArray, multisig: ByteArray?) {
+    fun addMultisig(id: MultiSignatureLockContractId, multisig: ByteArray?) {
         multisigs.add(Pair(id, multisig))
     }
 

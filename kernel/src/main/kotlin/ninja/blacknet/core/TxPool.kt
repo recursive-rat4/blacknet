@@ -15,9 +15,12 @@ import kotlin.math.min
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Config
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.HashSerializer
 import ninja.blacknet.crypto.PoS
+import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.rpc.RPCServer
@@ -29,12 +32,12 @@ private val logger = KotlinLogging.logger {}
 object TxPool : MemPool(), Ledger {
     internal val mutex = Mutex()
     private val rejects = HashSet<Hash>()
-    private val undoAccounts = HashMap<ByteArray, AccountState?>()
-    private val undoHtlcs = HashMap<ByteArray, Pair<Boolean, HTLC?>>()
-    private val undoMultisigs = HashMap<ByteArray, Pair<Boolean, Multisig?>>()
-    private val accounts = HashMap<ByteArray, AccountState>()
-    private val htlcs = HashMap<ByteArray, HTLC?>()
-    private val multisigs = HashMap<ByteArray, Multisig?>()
+    private val undoAccounts = HashMap<PublicKey, AccountState?>()
+    private val undoHtlcs = HashMap<HashTimeLockContractId, Pair<Boolean, HTLC?>>()
+    private val undoMultisigs = HashMap<MultiSignatureLockContractId, Pair<Boolean, Multisig?>>()
+    private val accounts = HashMap<PublicKey, AccountState>()
+    private val htlcs = HashMap<HashTimeLockContractId, HTLC?>()
+    private val multisigs = HashMap<MultiSignatureLockContractId, Multisig?>()
     private var transactions = ArrayList<ByteArray>(maxSeenSizeImpl())
     internal var minFeeRate = parseAmount(Config.instance.minrelayfeerate)
 
@@ -76,7 +79,7 @@ object TxPool : MemPool(), Ledger {
         return !rejects.contains(Hash(hash)) && !containsImpl(hash)
     }
 
-    suspend fun getSequence(key: ByteArray): Int = mutex.withLock {
+    suspend fun getSequence(key: PublicKey): Int = mutex.withLock {
         val account = accounts.get(key)
         if (account != null)
             return account.seq
@@ -109,7 +112,7 @@ object TxPool : MemPool(), Ledger {
         return LedgerDB.state().height
     }
 
-    override fun getAccount(key: ByteArray): AccountState? {
+    override fun getAccount(key: PublicKey): AccountState? {
         val account = accounts.get(key)
         if (account != null) {
             if (!undoAccounts.containsKey(key))
@@ -122,7 +125,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    override fun getOrCreate(key: ByteArray): AccountState {
+    override fun getOrCreate(key: PublicKey): AccountState {
         val account = getAccount(key)
         return if (account != null) {
             account
@@ -132,16 +135,16 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    override fun setAccount(key: ByteArray, state: AccountState) {
+    override fun setAccount(key: PublicKey, state: AccountState) {
         accounts.put(key, state)
     }
 
-    override fun addHTLC(id: ByteArray, htlc: HTLC) {
+    override fun addHTLC(id: HashTimeLockContractId, htlc: HTLC) {
         undoHtlcs.put(id, Pair(false, null))
         htlcs.put(id, htlc)
     }
 
-    override fun getHTLC(id: ByteArray): HTLC? {
+    override fun getHTLC(id: HashTimeLockContractId): HTLC? {
         return if (!htlcs.containsKey(id)) {
             undoHtlcs.put(id, Pair(false, null))
             LedgerDB.getHTLC(id)
@@ -152,16 +155,16 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    override fun removeHTLC(id: ByteArray) {
+    override fun removeHTLC(id: HashTimeLockContractId) {
         htlcs.put(id, null)
     }
 
-    override fun addMultisig(id: ByteArray, multisig: Multisig) {
+    override fun addMultisig(id: MultiSignatureLockContractId, multisig: Multisig) {
         undoMultisigs.put(id, Pair(false, null))
         multisigs.put(id, multisig)
     }
 
-    override fun getMultisig(id: ByteArray): Multisig? {
+    override fun getMultisig(id: MultiSignatureLockContractId): Multisig? {
         return if (!multisigs.containsKey(id)) {
             undoMultisigs.put(id, Pair(false, null))
             LedgerDB.getMultisig(id)
@@ -172,7 +175,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    override fun removeMultisig(id: ByteArray) {
+    override fun removeMultisig(id: MultiSignatureLockContractId) {
         multisigs.put(id, null)
     }
 

@@ -29,8 +29,8 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
-import ninja.blacknet.contract.HashTimeLockContractIdSerializer
-import ninja.blacknet.contract.MultiSignatureLockContractIdSerializer
+import ninja.blacknet.contract.HashTimeLockContractId
+import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
@@ -43,7 +43,11 @@ import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.transaction.*
-import ninja.blacknet.util.*
+import ninja.blacknet.util.HashMap
+import ninja.blacknet.util.data
+import ninja.blacknet.util.outputStream
+import ninja.blacknet.util.rotate
+import ninja.blacknet.util.withUnlock
 
 private val logger = KotlinLogging.logger {}
 
@@ -53,8 +57,8 @@ object WalletDB {
     private val PUBLIC_KEYS_KEY = DBKey(64, 0)
     private val TX_KEY = DBKey(65, HashSerializer.SIZE_BYTES)
     private val VERSION_KEY = DBKey(66, 0)
-    private val WALLET_KEY = DBKey(67, PublicKeySerializer.SIZE_BYTES)
-    private val wallets = HashMap<ByteArray, Wallet>()
+    private val WALLET_KEY = DBKey(67, PublicKey.SIZE_BYTES)
+    private val wallets = HashMap<PublicKey, Wallet>()
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val versionBytes = binaryFormat.encodeToByteArray(VarIntSerializer, VERSION)
@@ -74,9 +78,9 @@ object WalletDB {
             val publicKeysBytes = LevelDB.get(PUBLIC_KEYS_KEY)
             if (publicKeysBytes != null) {
                 var txns = 0
-                val publicKeys = binaryFormat.decodeFromByteArray(SetSerializer(PublicKeySerializer), publicKeysBytes)
+                val publicKeys = binaryFormat.decodeFromByteArray(SetSerializer(PublicKey.serializer()), publicKeysBytes)
                 publicKeys.forEach { publicKey ->
-                    val walletBytes = LevelDB.get(WALLET_KEY, publicKey)!!
+                    val walletBytes = LevelDB.get(WALLET_KEY, publicKey.bytes)!!
                     val wallet = binaryFormat.decodeFromByteArray(Wallet.serializer(), walletBytes)
                     txns += wallet.transactions.size
                     wallets.put(publicKey, wallet)
@@ -169,7 +173,7 @@ object WalletDB {
         }
     }
 
-    suspend fun getConfirmations(publicKey: ByteArray, hash: ByteArray): Int? = BlockDB.mutex.withLock {
+    suspend fun getConfirmations(publicKey: PublicKey, hash: ByteArray): Int? = BlockDB.mutex.withLock {
         return mutex.withLock {
             val wallet = wallets.get(publicKey)
             if (wallet != null) {
@@ -185,7 +189,7 @@ object WalletDB {
         }
     }
 
-    suspend fun getSequence(publicKey: ByteArray): Int = mutex.withLock {
+    suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
         val wallet = getWalletImpl(publicKey)
         val seq = wallet.seq
         return@withLock if (seq < Config.instance.seqthreshold)
@@ -204,7 +208,7 @@ object WalletDB {
         val block = BlockDB.blocks.getOrThrow(blockHash)
         val txHashes = block.transactions.map { Transaction.hash(it) }
 
-        val updated = HashMap<ByteArray, Wallet>(wallets.size)
+        val updated = HashMap<PublicKey, Wallet>(wallets.size)
         wallets.forEach { (publicKey, wallet) ->
             val generated = wallet.transactions.get(blockHash)
             if (generated != null) {
@@ -221,7 +225,7 @@ object WalletDB {
         }
 
         updated.forEach { (publicKey, wallet) ->
-            batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
+            batch.put(WALLET_KEY, publicKey.bytes, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
         }
     }
 
@@ -231,9 +235,9 @@ object WalletDB {
         }
     }
 
-    private suspend fun processBlockImpl(publicKey: ByteArray, wallet: Wallet, hash: ByteArray, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch, rescan: Boolean) {
+    private suspend fun processBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: ByteArray, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch, rescan: Boolean) {
         if (height != 0) {
-            if (block!!.generator.contentEquals(publicKey)) {
+            if (block!!.generator == publicKey) {
                 val tx = Transaction.generated(publicKey, height, hash, generated)
                 val txBytes = binaryFormat.encodeToByteArray(Transaction.serializer(), tx)
                 val txHash = hash // re-use block hash as hash of Generated tx
@@ -268,7 +272,7 @@ object WalletDB {
         }
     }
 
-    private fun processTransactionDataImpl(publicKey: ByteArray, wallet: Wallet, hash: ByteArray, dataIndex: Int, type: Byte, bytes: ByteArray, height: Int, from: Boolean): Boolean {
+    private fun processTransactionDataImpl(publicKey: PublicKey, wallet: Wallet, hash: ByteArray, dataIndex: Int, type: Byte, bytes: ByteArray, height: Int, from: Boolean): Boolean {
         return when (type) {
             TxType.Transfer.type -> {
                 if (from) {
@@ -341,7 +345,7 @@ object WalletDB {
             TxType.WithdrawFromLease.type -> {
                 val data = binaryFormat.decodeFromByteArray(WithdrawFromLease.serializer(), bytes)
                 if (from) {
-                    val lease = wallet.outLeases.find { it.publicKey.contentEquals(data.to) && it.height == data.height && it.amount == data.amount }
+                    val lease = wallet.outLeases.find { it.publicKey == data.to && it.height == data.height && it.amount == data.amount }
                     if (lease != null)
                         lease.amount -= data.withdraw
                     else
@@ -367,10 +371,10 @@ object WalletDB {
         }
     }
 
-    private suspend fun processTransactionImpl(publicKey: ByteArray, wallet: Wallet, hash: ByteArray, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
+    private suspend fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: ByteArray, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
         val txData = wallet.transactions.get(hash)
         if (txData == null) {
-            val from = tx.from.contentEquals(publicKey)
+            val from = tx.from == publicKey
             val types = if (tx.type == TxType.Generated.type) {
                 listOf(TransactionDataType(tx.type, 0))
             } else {
@@ -402,7 +406,7 @@ object WalletDB {
 
                 if (!rescan) {
                     RPCServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
-                    batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
+                    batch.put(WALLET_KEY, publicKey.bytes, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
                 }
                 if (store) {
                     batch.put(TX_KEY, hash, bytes)
@@ -416,7 +420,7 @@ object WalletDB {
             txData.height = height
 
             if (!rescan) {
-                batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
+                batch.put(WALLET_KEY, publicKey.bytes, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
             }
 
             return true
@@ -492,26 +496,26 @@ object WalletDB {
     class Wallet(
             @Serializable(with = VarIntSerializer::class)
             var seq: Int = 0,
-            val htlcs: HashSet<@Serializable(HashTimeLockContractIdSerializer::class) ByteArray> = HashSet(),
-            val multisigs: HashSet<@Serializable(MultiSignatureLockContractIdSerializer::class) ByteArray> = HashSet(),
+            val htlcs: HashSet<HashTimeLockContractId> = HashSet(),
+            val multisigs: HashSet<MultiSignatureLockContractId> = HashSet(),
             val outLeases: ArrayList<AccountState.Lease> = ArrayList(),
             val transactions: HashMap<@Serializable(HashSerializer::class) ByteArray, TransactionData> = HashMap()
     )
 
-    private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: ByteArray, wallet: Wallet) {
+    private fun addWalletImpl(batch: LevelDB.WriteBatch, publicKey: PublicKey, wallet: Wallet) {
         wallets.put(publicKey, wallet)
-        batch.put(WALLET_KEY, publicKey, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
+        batch.put(WALLET_KEY, publicKey.bytes, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
         val publicKeys = wallets.keys
-        val publicKeysBytes = binaryFormat.encodeToByteArray(SetSerializer(PublicKeySerializer), publicKeys)
+        val publicKeysBytes = binaryFormat.encodeToByteArray(SetSerializer(PublicKey.serializer()), publicKeys)
         batch.put(PUBLIC_KEYS_KEY, publicKeysBytes)
     }
 
-    internal suspend fun getWalletImpl(publicKey: ByteArray): Wallet {
+    internal suspend fun getWalletImpl(publicKey: PublicKey): Wallet {
         var wallet = wallets.get(publicKey)
         if (wallet != null)
             return wallet
 
-        logger.debug { "Creating new wallet for ${Address.encode(publicKey)}" }
+        logger.debug { "Creating new wallet for ${Address.encode(publicKey.bytes)}" }
         val batch = LevelDB.createWriteBatch()
         wallet = Wallet()
 
@@ -549,7 +553,7 @@ object WalletDB {
             Genesis.BLOCK_HASH
     }
 
-    private suspend fun rescanBlockImpl(publicKey: ByteArray, wallet: Wallet, hash: ByteArray, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
+    private suspend fun rescanBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: ByteArray, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
         if (height != 0) {
             val block = BlockDB.blocks.getOrThrow(hash)
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
