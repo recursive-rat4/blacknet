@@ -22,7 +22,7 @@ private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Transactions(
-        private val list: ArrayList<@Serializable(ByteArraySerializer::class) ByteArray>
+    private val list: ArrayList<@Serializable(ByteArraySerializer::class) ByteArray>
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {

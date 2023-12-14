@@ -19,7 +19,7 @@ private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Peers(
-        private val list: ArrayList<Address>
+    private val list: ArrayList<Address>
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {

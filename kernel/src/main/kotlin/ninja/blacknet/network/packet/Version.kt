@@ -20,13 +20,13 @@ private val logger = KotlinLogging.logger {}
 
 @Serializable
 class Version(
-        private val magic: Int,
-        private val version: Int,
-        private val time: Long,
-        private val nonce: Long,
-        private val agent: String,
-        private val feeFilter: Long,
-        private val chainAnnounce: ChainAnnounce
+    private val magic: Int,
+    private val version: Int,
+    private val time: Long,
+    private val nonce: Long,
+    private val agent: String,
+    private val feeFilter: Long,
+    private val chainAnnounce: ChainAnnounce
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (magic != mode.networkMagic) {

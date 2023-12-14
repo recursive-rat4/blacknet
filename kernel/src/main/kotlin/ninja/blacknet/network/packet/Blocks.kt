@@ -18,8 +18,8 @@ import ninja.blacknet.serialization.ByteArraySerializer
 
 @Serializable
 class Blocks(
-        val hashes: List<Hash>,
-        val blocks: List<@Serializable(ByteArraySerializer::class) ByteArray>
+    val hashes: List<Hash>,
+    val blocks: List<@Serializable(ByteArraySerializer::class) ByteArray>
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (hashes.size > MAX_HASHES) {

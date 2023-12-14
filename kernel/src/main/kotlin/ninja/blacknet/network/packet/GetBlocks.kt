@@ -18,8 +18,8 @@ import ninja.blacknet.network.Node
 
 @Serializable
 class GetBlocks(
-        private val best: Hash,
-        private val checkpoint: Hash
+    private val best: Hash,
+    private val checkpoint: Hash
 ) : Packet {
     override suspend fun process(connection: Connection) {
         val cachedBlock = BlockDB.cachedBlock

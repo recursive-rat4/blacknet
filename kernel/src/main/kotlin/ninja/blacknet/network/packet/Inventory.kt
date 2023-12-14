@@ -17,7 +17,7 @@ import ninja.blacknet.network.Node
 
 @Serializable
 class Inventory(
-        private val list: List<Hash>
+    private val list: List<Hash>
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (list.size > MAX) {

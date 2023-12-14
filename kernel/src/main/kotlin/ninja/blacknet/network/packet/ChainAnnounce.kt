@@ -19,9 +19,9 @@ import ninja.blacknet.network.Connection
 
 @Serializable
 class ChainAnnounce(
-        internal val chain: Hash,
-        @Serializable(with = BigIntegerSerializer::class)
-        internal val cumulativeDifficulty: BigInteger
+    internal val chain: Hash,
+    @Serializable(with = BigIntegerSerializer::class)
+    internal val cumulativeDifficulty: BigInteger
 ) : Packet {
     override suspend fun process(connection: Connection) {
         if (cumulativeDifficulty < Genesis.CUMULATIVE_DIFFICULTY) {
