@@ -36,8 +36,11 @@ class ByteArrayTest {
 
     @Test
     fun plus() {
-        val a = ByteArray(4) { (it + 0).toByte() }
-        val b = ByteArray(4) { (it + 4).toByte() }
-        assertEquals(a + b, ByteArray(8) { it.toByte() })
+        val a = 0.toByte()
+        val b = ByteArray(3) { (it + 1).toByte() }
+        assertEquals(
+            ByteArray(4) { it.toByte() },
+            a + b
+        )
     }
 }
