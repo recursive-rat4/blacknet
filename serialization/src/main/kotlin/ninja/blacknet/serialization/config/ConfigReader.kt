@@ -9,15 +9,14 @@
 
 package ninja.blacknet.serialization.config
 
-import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 
 internal class ConfigReader(
         private val input: ConfigInput
 ) {
-    constructor(file: Path, charset: Charset) : this(ConfigInput()) {
-        Files.newInputStream(file).reader(charset).use {
+    constructor(file: Path) : this(ConfigInput()) {
+        Files.newBufferedReader(file).use {
             input.load(it)
         }
     }
