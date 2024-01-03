@@ -1,17 +1,17 @@
-## Blacknet Full Node Wallet
+# Blacknet Full Node Wallet
 
-[![Pipeline status][]](https://gitlab.com/blacknet-ninja/blacknet/pipelines)
-[![Web chat][]](https://app.element.io/#/room/#blacknet-space:matrix.org)
-[![Web site][]](https://blacknet.ninja)
+[![Pipeline Status][]](https://gitlab.com/blacknet-ninja/blacknet/pipelines)
+[![Web Chat][]](https://app.element.io/#/room/#blacknet-space:matrix.org)
+[![Web Site][]](https://blacknet.ninja)
 
-#### Blacknet is decentralized peer-to-peer network that secures public blockchain platform with proof of stake consensus.
+**Blacknet is decentralized peer-to-peer network that secures public blockchain platform with proof of stake consensus.**
 
-## Get the source code
+## Get the Source Code
 
-- [Release tags][]
+- [Release Tags][]
 - `git clone https://gitlab.com/blacknet-ninja/blacknet.git`
 
-## Setup the environment
+## Setup the Environment
 
 Install the Java JDK (not only JRE) version 17th number or greater.
 
@@ -23,7 +23,7 @@ Install the Java JDK (not only JRE) version 17th number or greater.
 - FreeBSD: `sudo pkg install openjdk17 git`
 - OpenBSD: `sudo pkg_add jdk git`
 
-## Make the build
+## Make the Build
 
 ```
 ./gradlew installDist
@@ -35,10 +35,10 @@ To run use `./blacknet`, or on Windows use `.\blacknet.bat`
 
 Gradle `:run` task is supported but not recommended.
 
-## How to contribute
+## How to Contribute
 
 You are welcome to report a theoretical or practical [Issue][],
-or send changes as a [Pull request][] to the master branch.
+or send changes as a [Pull Request][] to the master branch.
 
 ## License
 
@@ -47,8 +47,8 @@ version 1.1 for the Blacknet Public Blockchain Platform. See the [LICENSE][] fil
 
 [Issue]: https://gitlab.com/blacknet-ninja/blacknet/issues
 [LICENSE]: https://gitlab.com/blacknet-ninja/blacknet/-/blob/master/LICENSE.txt
-[Pipeline status]: https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg
-[Pull request]: https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests
-[Release tags]: https://gitlab.com/blacknet-ninja/blacknet/-/tags
-[Web chat]: https://img.shields.io/matrix/blacknet:matrix.org
-[Web site]: https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja
+[Pipeline Status]: https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg
+[Pull Request]: https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests
+[Release Tags]: https://gitlab.com/blacknet-ninja/blacknet/-/tags
+[Web Chat]: https://img.shields.io/matrix/blacknet:matrix.org
+[Web Site]: https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja
