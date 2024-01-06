@@ -31,7 +31,7 @@ Install the Java JDK (not only JRE) version 17th number or greater.
 
 The built program is in `./build/install/`
 
-To run use `./blacknet`, or on Windows use `.\blacknet.bat`
+To run use `./blacknet-daemon`, or on Windows use `.\blacknet-daemon.bat`
 
 Gradle `:run` task is supported but not recommended.
 
