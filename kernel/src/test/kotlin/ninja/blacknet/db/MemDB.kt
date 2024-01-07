@@ -9,7 +9,7 @@
 
 package ninja.blacknet.db
 
-import ninja.blacknet.util.initialHashTableCapacity
+import java.util.HashMap.newHashMap
 
 /**
  * A simple implementation of [KeyValueStore] that keeps all its data in the main memory.
@@ -27,7 +27,7 @@ class MemDB private constructor(
 
     companion object {
         fun memDBOf(vararg content: Pair<ByteArray, ByteArray>) = MemDB(
-            HashMap(initialHashTableCapacity(expectedSize = content.size))
+            newHashMap(content.size)
         ).apply {
             content.forEach { (k, v) ->
                 map.put(Wrapper(k), Wrapper(v))

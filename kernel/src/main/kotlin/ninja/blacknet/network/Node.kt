@@ -19,6 +19,7 @@ import java.math.BigInteger
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
+import java.util.HashSet.newHashSet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.channels.Channel
@@ -46,7 +47,6 @@ import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
-import ninja.blacknet.util.initialHashTableCapacity
 import ninja.blacknet.util.inputStream
 import ninja.blacknet.util.replaceFile
 import ninja.blacknet.util.rotate
@@ -416,7 +416,7 @@ object Node {
     }
 
     private suspend fun getFilter(): HashSet<Address> {
-        val filter = HashSet<Address>(initialHashTableCapacity(connections.size() + listenAddress.size()))
+        val filter = newHashSet<Address>(connections.size() + listenAddress.size())
         connections.forEach { filter.add(it.remoteAddress) }
         listenAddress.forEach { filter.add(it) }
         return filter

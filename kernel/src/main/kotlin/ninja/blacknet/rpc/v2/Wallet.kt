@@ -11,6 +11,7 @@
 package ninja.blacknet.rpc.v2
 
 import io.ktor.server.routing.Route
+import java.util.HashMap.newHashMap
 import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
@@ -31,7 +32,6 @@ import ninja.blacknet.rpc.v1.NewMnemonicInfo
 import ninja.blacknet.rpc.v1.toHex
 import ninja.blacknet.transaction.TxType
 import ninja.blacknet.serialization.bbf.binaryFormat
-import ninja.blacknet.util.initialHashTableCapacity
 
 @Serializable
 class GenerateAccount(
@@ -119,7 +119,7 @@ class Transactions(
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
-        val transactions = HashMap<String, TransactionDataInfo>(initialHashTableCapacity(expectedSize = wallet.transactions.size))
+        val transactions = newHashMap<String, TransactionDataInfo>(wallet.transactions.size)
         wallet.transactions.forEach { (hash, txData) ->
             transactions.put(hash.toString(), TransactionDataInfo(txData))
         }

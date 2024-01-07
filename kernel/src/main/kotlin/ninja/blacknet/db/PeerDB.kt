@@ -14,6 +14,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
+import java.util.HashMap.newHashMap
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.exp
 import kotlin.math.max
@@ -43,7 +44,6 @@ import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.Resources
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
-import ninja.blacknet.util.initialHashTableCapacity
 import ninja.blacknet.util.inputStream
 import ninja.blacknet.util.replaceFile
 import ninja.blacknet.util.rotate
@@ -124,7 +124,7 @@ object PeerDB {
         } else if (version in 1 until VERSION) {
             val updatedMap = run {
                 logger.info { "Upgrading PeerDB..." }
-                val result = HashMap<Address, Entry>(initialHashTableCapacity(MAX_SIZE))
+                val result = newHashMap<Address, Entry>(MAX_SIZE)
                 try {
                     if (version == 3) {
                         val stateV3 = binaryFormat.decodeFromByteArray(MapSerializer(Address.serializer(), EntryV3.serializer()), stateBytes)
@@ -340,9 +340,9 @@ object PeerDB {
                 UptimeStat(),
                 UptimeStat(),
                 UptimeStat(),
-                HashMap(0), //JAVA 19
+                newHashMap(0),
         )
-        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, HashMap(0)) //JAVA 19
+        internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, newHashMap(0))
     }
 
     @Serializable

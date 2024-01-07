@@ -9,6 +9,7 @@
 
 package ninja.blacknet.util
 
+import java.util.HashMap.newHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -19,7 +20,7 @@ class SynchronizedHashMap<K, V>(
         val mutex: Mutex = Mutex(),
         val map: HashMap<K, V> = HashMap()
 ) {
-    constructor(expectedSize: Int) : this(map = HashMap(initialHashTableCapacity(expectedSize = expectedSize)))
+    constructor(expectedSize: Int) : this(map = newHashMap(expectedSize))
 
     suspend inline fun copy() = mutex.withLock { HashMap(map) }
 
