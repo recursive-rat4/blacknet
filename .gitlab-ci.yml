@@ -8,7 +8,7 @@
 # See the LICENSE.txt file at the top-level directory of this distribution.
 #
 
-image: eclipse-temurin:18.0.2.1_1-jdk@sha256:b58430116602b6ae7d6afa347138a7d74fad6629a0156d58e434e9881920f3ad
+image: eclipse-temurin:19.0.2_7-jdk@sha256:81b8481b570155419ec2b057f4a367d6f0f22a5700aa01b7de7ceaa731519b1f
 
 variables:
   GRADLE_USER_HOME: ".gradle"
