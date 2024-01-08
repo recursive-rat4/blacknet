@@ -13,14 +13,14 @@
 
 ## Setup the Environment
 
-Install the Java JDK (not only JRE) version 19th number or greater.
+Install the Java JDK (not only JRE) version 20th number or greater.
 
 - Debian & Ubuntu: `sudo apt-get install default-jdk git`
-- Red Hat & Oracle: `sudo yum install java-19-openjdk git`
-- SUSE: `sudo zypper install java-19-openjdk git`
+- Red Hat & Oracle: `sudo yum install java-20-openjdk git`
+- SUSE: `sudo zypper install java-20-openjdk git`
 - Arch GNU/Linux: `sudo pacman -S --needed jdk-openjdk git`
 - Gentoo: `sudo emerge -av1 --noreplace virtual/jdk dev-vcs/git`
-- FreeBSD: `sudo pkg install openjdk19 git`
+- FreeBSD: `sudo pkg install openjdk20 git`
 - OpenBSD: `sudo pkg_add jdk git`
 
 ## Make the Build
