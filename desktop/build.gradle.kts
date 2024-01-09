@@ -30,16 +30,16 @@ application {
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {
-    targetCompatibility = "20"
+    targetCompatibility = "21"
 }
 
 val compileTestJava by tasks.existing(JavaCompile::class) {
-    targetCompatibility = "20"
+    targetCompatibility = "21"
 }
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget = JvmTarget.JVM_20
+        jvmTarget = JvmTarget.JVM_21
         freeCompilerArgs = listOf(
             "-Xcontext-receivers",
             "-Xjvm-default=all",
@@ -50,7 +50,7 @@ val compileKotlin by tasks.existing(KotlinCompile::class) {
 
 val compileTestKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget = JvmTarget.JVM_20
+        jvmTarget = JvmTarget.JVM_21
     }
 }
 

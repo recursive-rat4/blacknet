@@ -24,10 +24,10 @@ dependencies {
 
 val compileKotlin by tasks.existing(KotlinCompile::class) {
     compilerOptions {
-        jvmTarget = JvmTarget.JVM_20
+        jvmTarget = JvmTarget.JVM_21
     }
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {
-    targetCompatibility = "20"
+    targetCompatibility = "21"
 }
