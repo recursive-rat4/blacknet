@@ -1,9 +1,5 @@
 # Blacknet Full Node Wallet
 
-[![Pipeline Status][]](https://gitlab.com/blacknet-ninja/blacknet/pipelines)
-[![Web Chat][]](https://app.element.io/#/room/#blacknet-space:matrix.org)
-[![Web Site][]](https://blacknet.ninja)
-
 **Blacknet is decentralized peer-to-peer network that secures public blockchain platform with proof of stake consensus.**
 
 ## Get the Source Code
@@ -47,8 +43,5 @@ version 1.1 for the Blacknet Public Blockchain Platform. See the [LICENSE][] fil
 
 [Issue]: https://gitlab.com/blacknet-ninja/blacknet/issues
 [LICENSE]: https://gitlab.com/blacknet-ninja/blacknet/-/blob/master/LICENSE.txt
-[Pipeline Status]: https://gitlab.com/blacknet-ninja/blacknet/badges/master/pipeline.svg
 [Pull Request]: https://gitlab.com/blacknet-ninja/blacknet/-/merge_requests
 [Release Tags]: https://gitlab.com/blacknet-ninja/blacknet/-/tags
-[Web Chat]: https://img.shields.io/matrix/blacknet:matrix.org
-[Web Site]: https://img.shields.io/website?url=https%3A%2F%2Fblacknet.ninja
