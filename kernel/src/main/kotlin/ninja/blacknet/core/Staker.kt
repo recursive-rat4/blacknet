@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
+import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
@@ -76,6 +77,12 @@ object Staker {
                     startStaking(privateKey)
                 }
                 Config.instance.mnemonics = null
+                ShutdownHooks.add {
+                    coroutine?.let {
+                        state = "Terminating staker"
+                        it.cancel()
+                    }
+                }
             }
         }
     }
