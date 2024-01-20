@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -29,6 +29,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.Config
 import ninja.blacknet.Runtime
+import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
@@ -98,7 +99,12 @@ object WalletDB {
             throw Error("Unknown database version $version")
         }
 
-        Runtime.rotate(::announcer)
+        val job = Runtime.rotate(::announcer)
+
+        ShutdownHooks.add {
+            logger.info { "Silencing WalletDB announcer" }
+            job.cancel()
+        }
     }
 
     private suspend fun announcer() {
