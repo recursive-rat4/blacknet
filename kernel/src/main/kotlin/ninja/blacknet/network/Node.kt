@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -22,6 +22,7 @@ import java.nio.file.StandardOpenOption.READ
 import java.util.HashSet.newHashSet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -66,22 +67,35 @@ object Node {
     private val queuedPeers = Channel<Address>(Config.instance.outgoingconnections)
 
     init {
+        // All connectors, including listeners and probers
+        val connectors = ArrayList<Job>(Config.instance.outgoingconnections + 3 + 1)
+
         if (Config.instance.listen) {
             try {
-                listenOnIP()
-                if (Config.instance.upnp) {
-                    Runtime.launch { UPnP.forward() }
+                if (!Network.IPv4.isDisabled() || !Network.IPv6.isDisabled()) {
+                    connectors.add(
+                        listenOnIP()
+                    )
+                    if (Config.instance.upnp) {
+                        Runtime.launch { UPnP.forward() }
+                    }
                 }
             } catch (e: Throwable) {
             }
         }
         if (Config.instance.tor) {
             if (!Config.instance.listen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
-                listenOn(Network.LOOPBACK)
-            Runtime.rotate(Network.Companion::listenOnTor)
+                connectors.add(
+                    listenOn(Network.LOOPBACK)
+                )
+            connectors.add(
+                Runtime.rotate(Network.Companion::listenOnTor)
+            )
         }
         if (Config.instance.i2p) {
-            Runtime.rotate(Network.Companion::listenOnI2P)
+            connectors.add(
+                Runtime.rotate(Network.Companion::listenOnI2P)
+            )
         }
         try {
             val file = stateDir.resolve(DATA_FILENAME)
@@ -103,11 +117,17 @@ object Node {
             logger.error(e)
         }
         repeat(Config.instance.outgoingconnections) {
-            Runtime.rotate(::connector)
+            connectors.add(
+                Runtime.rotate(::connector)
+            )
         }
-        Runtime.rotate(::prober)
+        connectors.add(
+            Runtime.rotate(::prober)
+        )
         ShutdownHooks.add {
             runBlocking {
+                logger.info { "Unbinding ${connectors.size} connectors" }
+                connectors.forEach(Job::cancel)
                 val persistent = Persistent(ArrayList(Config.instance.outgoingconnections))
                 connections.mutex.withLock {
                     logger.info { "Closing ${connections.list.size} p2p connections" }
@@ -189,25 +209,25 @@ object Node {
         return ChainFetcher.isSynchronizing() && PoS.guessInitialSynchronization()
     }
 
-    fun listenOn(address: Address) {
+    fun listenOn(address: Address): Job {
         val addr = when (address.network) {
             Network.IPv4, Network.IPv6 -> address.getSocketAddress()
             else -> throw NotImplementedError("Not implemented for " + address.network)
         }
         val server = aSocket(Network.selector).tcp().bind(addr)
         logger.info { "Listening on ${address.debugName()}" }
-        Runtime.launch {
+        return Runtime.launch {
             listenAddress.add(address)
             listener(server)
         }
     }
 
-    private fun listenOnIP() {
+    private fun listenOnIP(): Job {
         if (Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
-            return
+            throw IllegalStateException("Both IPv4 and IPv6 are disabled")
         if (Network.IPv4.isDisabled())
             return listenOn(Address.IPv6_ANY(Config.instance.port.toPort()))
-        listenOn(Address.IPv4_ANY(Config.instance.port.toPort()))
+        return listenOn(Address.IPv4_ANY(Config.instance.port.toPort()))
     }
 
     suspend fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
