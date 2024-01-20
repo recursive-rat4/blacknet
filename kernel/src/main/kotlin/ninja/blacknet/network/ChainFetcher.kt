@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -17,6 +17,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Runtime
+import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
@@ -50,11 +51,22 @@ object ChainFetcher {
     private var undoDifficulty = BigInteger.ZERO
     private var undoRollback: List<Hash>? = null
 
+    @Volatile
+    private var shutdown = false
     private val coroutine = Runtime.rotate(::implementation)
 
-    fun join(): Nothing = runBlocking {
+    init {
+        ShutdownHooks.add {
+            logger.info { "Interrupting ChainFetcher" }
+            shutdown = true
+            coroutine.cancel()
+        }
+    }
+
+    fun join(): Unit = runBlocking {
         coroutine.join()
-        throw RuntimeException("ChainFetcher exited")
+        if (!shutdown)
+            throw RuntimeException("ChainFetcher exited")
     }
 
     fun isSynchronizing(): Boolean {
