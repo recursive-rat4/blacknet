@@ -232,7 +232,7 @@ object PeerDB {
         }
     }
 
-    suspend fun failed(address: Address, time: Long) {
+    fun failed(address: Address, time: Long) {
         if (Node.isOffline()) return
         peers.get(address)?.failed(time)
     }

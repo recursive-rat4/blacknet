@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -81,7 +81,7 @@ class PeerInfo(
             )
         }
 
-        suspend fun getAll(): List<PeerInfo> {
+        fun getAll(): List<PeerInfo> {
             val forkCache = HashMap<Hash, Boolean>()
             forkCache.put(Genesis.BLOCK_HASH, false)
             return Node.connections.map { PeerInfo.get(it, forkCache) }

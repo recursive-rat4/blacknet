@@ -226,23 +226,24 @@ class Connection(
             socket.close()
             readChannel.cancel()
             writeChannel.close()
-            Runtime.launch {
+
+            synchronized(Node.connections) {
                 Node.connections.remove(this@Connection)
-
-                when (state) {
-                    State.INCOMING_CONNECTED, State.OUTGOING_CONNECTED -> {
-                        ChainFetcher.disconnected(this@Connection)
-                    }
-                    State.OUTGOING_WAITING, State.PROBER_WAITING -> {
-                    }
-                    State.INCOMING_WAITING, State.PROBER_CONNECTED -> {
-                    }
-                }
-
-                cancel()
-                sendChannel.cancel()
-                job.cancel()
             }
+
+            when (state) {
+                State.INCOMING_CONNECTED, State.OUTGOING_CONNECTED -> {
+                    ChainFetcher.disconnected(this@Connection)
+                }
+                State.OUTGOING_WAITING, State.PROBER_WAITING -> {
+                }
+                State.INCOMING_WAITING, State.PROBER_CONNECTED -> {
+                }
+            }
+
+            cancel()
+            sendChannel.cancel()
+            job.cancel()
         }
     }
 

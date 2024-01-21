@@ -19,6 +19,7 @@ import java.math.BigInteger
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
@@ -26,8 +27,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.stateDir
 import ninja.blacknet.Config
@@ -44,7 +43,6 @@ import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.inputStream
@@ -60,7 +58,7 @@ object Node {
     private const val DATA_VERSION = 1
     private const val DATA_FILENAME = "node.dat"
     val nonce = Random.nextLong()
-    val connections = SynchronizedArrayList<Connection>()
+    val connections = CopyOnWriteArrayList<Connection>()
     private val listenAddress = CopyOnWriteArraySet<Address>()
     private val nextPeerId = atomic(1L)
     private val queuedPeers = Channel<Address>(Config.instance.outgoingconnections)
@@ -123,24 +121,22 @@ object Node {
             Runtime.rotate(::prober)
         )
         ShutdownHooks.add {
-            runBlocking {
-                logger.info { "Unbinding ${connectors.size} connectors" }
-                connectors.forEach(Job::cancel)
-                val persistent = Persistent(ArrayList(Config.instance.outgoingconnections))
-                connections.mutex.withLock {
-                    logger.info { "Closing ${connections.list.size} p2p connections" }
-                    connections.list.forEach { connection ->
-                        // probers ain't interesting
-                        if (connection.state == Connection.State.OUTGOING_CONNECTED)
-                            persistent.peers.add(connection.remoteAddress)
-                        connection.close()
-                    }
+            logger.info { "Unbinding ${connectors.size} connectors" }
+            connectors.forEach(Job::cancel)
+            val persistent = Persistent(ArrayList(Config.instance.outgoingconnections))
+            synchronized(connections) {
+                logger.info { "Closing ${connections.size} p2p connections" }
+                connections.forEach { connection ->
+                    // probers ain't interesting
+                    if (connection.state == Connection.State.OUTGOING_CONNECTED)
+                        persistent.peers.add(connection.remoteAddress)
+                    connection.close()
                 }
-                logger.info { "Saving node state" }
-                replaceFile(stateDir, DATA_FILENAME) {
-                    writeInt(DATA_VERSION)
-                    binaryFormat.encodeToStream(Persistent.serializer(), persistent, this)
-                }
+            }
+            logger.info { "Saving node state" }
+            replaceFile(stateDir, DATA_FILENAME) {
+                writeInt(DATA_VERSION)
+                binaryFormat.encodeToStream(Persistent.serializer(), persistent, this)
             }
         }
     }
@@ -154,7 +150,7 @@ object Node {
         else -> Random.nextLong()
     }
 
-    suspend fun outgoing(): Int {
+    fun outgoing(): Int {
         return connections.count {
             when (it.state) {
                 Connection.State.OUTGOING_CONNECTED -> true
@@ -163,7 +159,7 @@ object Node {
         }
     }
 
-    suspend fun incoming(includeWaiting: Boolean = false): Int {
+    fun incoming(includeWaiting: Boolean = false): Int {
         return if (includeWaiting)
             connections.count {
                 when (it.state) {
@@ -181,7 +177,7 @@ object Node {
             }
     }
 
-    suspend fun connected(): Int {
+    fun connected(): Int {
         return connections.count {
             when (it.state) {
                 Connection.State.INCOMING_CONNECTED -> true
@@ -191,7 +187,7 @@ object Node {
         }
     }
 
-    suspend fun isOffline(): Boolean {
+    fun isOffline(): Boolean {
         return connections.find { it.state.isConnected() } == null
     }
 
@@ -244,8 +240,8 @@ object Node {
 
     suspend fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
         val connection = Network.connect(address, prober)
-        connections.mutex.withLock {
-            connections.list.add(connection)
+        synchronized(connections) {
+            connections.add(connection)
             connection.launch()
         }
         if (v2)
@@ -302,7 +298,7 @@ object Node {
         }
     }
 
-    suspend fun announceChain(hash: Hash, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
+    fun announceChain(hash: Hash, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
         Staker.awaitsNextTimeSlot?.cancel()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         return broadcastPacket(PacketType.ChainAnnounce, ann) {
@@ -354,9 +350,9 @@ object Node {
         return n
     }
 
-    private suspend inline fun timeOffset(): Long = connections.mutex.withLock {
+    private fun timeOffset(): Long =
         Config.instance.outgoingconnections.let { min ->
-            connections.list.fold(
+            connections.fold(
                 ArrayList<Long>(min)
             ) { accumulator, element ->
                 accumulator.apply {
@@ -372,9 +368,8 @@ object Node {
                 }
             }
         }
-    }
 
-    suspend fun warnings(): List<String> {
+    fun warnings(): List<String> {
         val timeOffset = timeOffset()
 
         return if (timeOffset >- PoS.TIME_SLOT && timeOffset <+ PoS.TIME_SLOT)
@@ -383,7 +378,7 @@ object Node {
             listOf("Please check your system clock. Many peers report different time.")
     }
 
-    private suspend inline fun broadcastPacket(type: PacketType, packet: Packet, filter: (Connection) -> Boolean = { true }): Int {
+    private inline fun broadcastPacket(type: PacketType, packet: Packet, filter: (Connection) -> Boolean = { true }): Int {
         var n = 0
         connections.forEach {
             if (filter(it)) {
@@ -406,27 +401,27 @@ object Node {
         }
     }
 
-    suspend fun addConnection(connection: Connection) {
-        if (!haveSlot()) {
-            logger.info { "Too many connections, dropping ${connection.debugName()}" }
-            connection.close()
-            return
-        }
-        connections.mutex.withLock {
-            connections.list.add(connection)
+    fun addConnection(connection: Connection) {
+        synchronized(connections) {
+            if (!haveSlot()) {
+                logger.info { "Too many connections, dropping ${connection.debugName()}" }
+                connection.close()
+                return
+            }
+            connections.add(connection)
             connection.launch()
         }
     }
 
-    private suspend fun haveSlot(): Boolean {
+    private fun haveSlot(): Boolean {
         return if (incoming(true) < Config.instance.incomingconnections)
             true
         else
             evictConnection()
     }
 
-    private suspend fun evictConnection(): Boolean {
-        val candidates = connections.filter { it.state.isIncoming() }.asSequence()
+    private fun evictConnection(): Boolean {
+        val candidates = connections.asSequence().filter { it.state.isIncoming() }
                 .sortedBy { if (it.ping != 0L) it.ping else Long.MAX_VALUE }.drop(4)
                 .sortedByDescending { it.lastTxTime }.drop(4)
                 .sortedByDescending { it.lastBlockTime }.drop(4)
