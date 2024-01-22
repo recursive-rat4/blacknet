@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -10,7 +10,6 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.runBlocking
 import ninja.blacknet.Config
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.Version
@@ -45,9 +44,7 @@ object UPnP {
         } catch (e: Throwable) {
         }
         if (address != null) {
-            runBlocking {
-                Node.listenAddress.add(address)
-            }
+            Node.listenAddress.add(address)
             logger.info { "Mapped to ${address.debugName()}" }
         } else {
             logger.info { "Mapped to unknown external address" }

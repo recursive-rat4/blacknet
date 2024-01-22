@@ -20,6 +20,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
 import java.util.HashSet.newHashSet
+import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Job
@@ -45,7 +46,6 @@ import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.SynchronizedArrayList
-import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.buffered
 import ninja.blacknet.util.data
 import ninja.blacknet.util.inputStream
@@ -62,7 +62,7 @@ object Node {
     private const val DATA_FILENAME = "node.dat"
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
-    val listenAddress = SynchronizedHashSet<Address>()
+    val listenAddress = CopyOnWriteArraySet<Address>()
     private val nextPeerId = atomic(1L)
     private val queuedPeers = Channel<Address>(Config.instance.outgoingconnections)
 
@@ -436,7 +436,7 @@ object Node {
     }
 
     private suspend fun getFilter(): HashSet<Address> {
-        val filter = newHashSet<Address>(connections.size() + listenAddress.size())
+        val filter = newHashSet<Address>(connections.size() + listenAddress.size)
         connections.forEach { filter.add(it.remoteAddress) }
         listenAddress.forEach { filter.add(it) }
         return filter

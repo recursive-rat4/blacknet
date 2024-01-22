@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -29,7 +29,7 @@ class NodeInfo(
 ) {
     companion object {
         suspend fun get(): NodeInfo {
-            val listening = Node.listenAddress.mapToList { it.toString() }
+            val listening = Node.listenAddress.map { it.toString() }
             val warnings = BlockDB.warnings() + LedgerDB.warnings() + Node.warnings()
             return NodeInfo(
                     UserAgent.string,

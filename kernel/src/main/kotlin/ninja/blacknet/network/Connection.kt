@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -328,7 +328,7 @@ class Connection(
             if (randomPeers.size == 0)
                 continue
 
-            val myAddress = Node.listenAddress.filterToList { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
+            val myAddress = Node.listenAddress.filter { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
             if (myAddress.size != 0) {
                 val i = Random.nextInt(randomPeers.size * 4)
                 if (i < randomPeers.size) {
