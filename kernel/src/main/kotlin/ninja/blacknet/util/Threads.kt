@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -18,6 +18,17 @@ import kotlinx.coroutines.launch
  */
 inline fun CoroutineScope.rotate(crossinline wheel: suspend () -> Unit): Job {
     return launch {
+        while (true) {
+            wheel()
+        }
+    }
+}
+
+/**
+ * Rotate a [name]d [wheel].
+ */
+inline fun rotate(name: String, crossinline wheel: () -> Unit): Thread {
+    return Thread.ofVirtual().name(name).start {
         while (true) {
             wheel()
         }

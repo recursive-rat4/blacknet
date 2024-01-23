@@ -11,6 +11,7 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.lang.Thread.sleep
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
@@ -22,17 +23,14 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.atomicfu.locks.ReentrantLock
+import kotlinx.atomicfu.locks.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.Config
 import ninja.blacknet.Kernel
 import ninja.blacknet.Mode.*
-import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.contract.BAppId
 import ninja.blacknet.dataDir
@@ -62,7 +60,7 @@ object PeerDB {
     private val peers = ConcurrentHashMap<Address, Entry>(MAX_SIZE)
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)
-    private val writeToDiskMutex = Mutex()
+    private val writeToDiskLock = ReentrantLock()
 
     init {
         val decodedMap = loadFromFile() ?: extractFromLevelDB()
@@ -79,15 +77,15 @@ object PeerDB {
             }
         }
 
-        Runtime.rotate(::prober)
+        rotate("PeerDB::prober", ::prober)
 
         ShutdownHooks.add {
-            if (writeToDiskMutex.tryLock()) {
+            if (writeToDiskLock.tryLock()) {
                 logger.info { "Saving PeerDB" }
                 saveToFile()
-            } else runBlocking {
+            } else {
                 logger.info { "Waiting PeerDB saver" }
-                writeToDiskMutex.lock()
+                writeToDiskLock.lock()
             }
             // hodl mutex so others don't acquire it
         }
@@ -325,8 +323,8 @@ object PeerDB {
         return peers.containsKey(peer)
     }
 
-    private suspend fun prober() {
-        delay(1 * 60 * 60 * 1000L)
+    private fun prober() {
+        sleep(1 * 60 * 60 * 1000L)
 
         // Await while node is offline
         if (Node.isOffline())
@@ -341,7 +339,7 @@ object PeerDB {
             }
         }
         if (removed != 0) {
-            writeToDiskMutex.withLock {
+            writeToDiskLock.withLock {
                 saveToFile()
             }
             logger.debug { "Probed $removed entries" }
