@@ -66,12 +66,13 @@ object Node {
 
     init {
         // All connectors, including listeners and probers
-        val connectors = ArrayList<Job>(Kernel.config().outgoingconnections + 3 + 1)
+        val konnectors = ArrayList<Job>(Kernel.config().outgoingconnections + 3 + 1)
+        val connectors = ArrayList<Thread>(Kernel.config().outgoingconnections + 3 + 1)
 
         if (Kernel.config().listen) {
             try {
                 if (!router.isDisabled(Network.IPv4) || !router.isDisabled(Network.IPv6)) {
-                    connectors.add(
+                    konnectors.add(
                         listenOnIP()
                     )
                     if (Kernel.config().upnp) {
@@ -83,15 +84,15 @@ object Node {
         }
         if (Kernel.config().tor) {
             if (!Kernel.config().listen || router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
-                connectors.add(
+                konnectors.add(
                     listenOn(Network.LOOPBACK(Kernel.config().port))
                 )
             connectors.add(
-                Runtime.rotate(router::listenOnTor)
+                rotate("Node.router::listenOnTor", router::listenOnTor)
             )
         }
         if (Kernel.config().i2p) {
-            connectors.add(
+            konnectors.add(
                 Runtime.rotate(router::listenOnI2P)
             )
         }
@@ -114,16 +115,17 @@ object Node {
             logger.error(e)
         }
         repeat(Kernel.config().outgoingconnections) {
-            connectors.add(
+            konnectors.add(
                 Runtime.rotate(::connector)
             )
         }
-        connectors.add(
+        konnectors.add(
             Runtime.rotate(::prober)
         )
         ShutdownHooks.add {
-            logger.info { "Unbinding ${connectors.size} connectors" }
-            connectors.forEach(Job::cancel)
+            logger.info { "Unbinding ${konnectors.size + connectors.size} connectors" }
+            konnectors.forEach(Job::cancel)
+            connectors.forEach(Thread::interrupt)
             val persistent = Persistent(ArrayList(Kernel.config().outgoingconnections))
             synchronized(connections) {
                 logger.info { "Closing ${connections.size} p2p connections" }

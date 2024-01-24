@@ -28,9 +28,31 @@ inline fun CoroutineScope.rotate(crossinline wheel: suspend () -> Unit): Job {
  * Rotate a [name]d [wheel].
  */
 inline fun rotate(name: String, crossinline wheel: () -> Unit): Thread {
-    return Thread.ofVirtual().name(name).start {
+    return startInterruptible(name) {
         while (true) {
             wheel()
         }
+    }
+}
+
+/**
+ * Run an interruption-safe [block] in a new [name]d virtual thread.
+ */
+inline fun startInterruptible(name: String, crossinline block: () -> Unit): Thread {
+    return Thread.ofVirtual().name(name).start {
+        interruptible {
+            block()
+        }
+    }
+}
+
+/**
+ * Run an interruption-safe [block].
+ */
+inline fun interruptible(block: () -> Unit) {
+    try {
+        block()
+    } catch (e: InterruptedException) {
+        // Interruptible
     }
 }

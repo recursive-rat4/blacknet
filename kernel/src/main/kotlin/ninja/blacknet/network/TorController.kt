@@ -10,29 +10,20 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.network.sockets.ASocket
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.cancel
-import io.ktor.utils.io.close
-import io.ktor.utils.io.readUTF8Line
-import io.ktor.utils.io.writeStringUtf8
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.net.InetAddress
+import java.net.Socket
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption.ATOMIC_MOVE
 import kotlin.io.path.readText
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import ninja.blacknet.Config
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.dataDir
 import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.io.replaceFile
 import ninja.blacknet.time.currentTimeSeconds
+import ninja.blacknet.util.startInterruptible
 
 private val logger = KotlinLogging.logger {}
 
@@ -56,14 +47,14 @@ object TorController {
     }
 
     class Connection(
-            val socket: ASocket,
-            val readChannel: ByteReadChannel,
-            val writeChannel: ByteWriteChannel
+        val socket: Socket,
+        val bufferedReader: BufferedReader,
+        val bufferedWriter: BufferedWriter,
     ) {
-        suspend fun authenticate() {
-            writeChannel.writeStringUtf8("AUTHENTICATE\r\n")
-            writeChannel.flush()
-            val replyLine = readChannel.readUTF8Line()
+        fun authenticate() {
+            bufferedWriter.write("AUTHENTICATE\r\n")
+            bufferedWriter.flush()
+            val replyLine = bufferedReader.readLine()
             when (replyLine) {
                 "250 OK" -> Unit
                 null -> throw RuntimeException("Tor controller connection unexpectedly closed")
@@ -71,13 +62,13 @@ object TorController {
             }
         }
 
-        suspend fun addOnion(): Pair<String?, String?> {
-            writeChannel.writeStringUtf8("ADD_ONION $privateKey Port=${Kernel.config().port}\r\n")
-            writeChannel.flush()
+        fun addOnion(): Pair<String?, String?> {
+            bufferedWriter.write("ADD_ONION $privateKey Port=${Kernel.config().port}\r\n")
+            bufferedWriter.flush()
             var serviceID: String? = null
             var newPrivateKey: String? = null
             while (true) {
-                val replyLine = readChannel.readUTF8Line()
+                val replyLine = bufferedReader.readLine()
                 if (replyLine == null)
                     throw RuntimeException("Tor controller connection unexpectedly closed")
                 else if (replyLine == "250 OK")
@@ -94,8 +85,8 @@ object TorController {
 
         fun close() {
             socket.close()
-            readChannel.cancel()
-            writeChannel.close()
+            bufferedReader.close()
+            bufferedWriter.close()
         }
 
         fun exception(message: String): Nothing {
@@ -104,10 +95,10 @@ object TorController {
         }
     }
 
-    suspend fun listen(): Pair<Job, Address> {
+    fun listen(): Pair<Thread, Address> {
         //TODO configure host
-        val socket = aSocket(Network.selector).tcp().connect(Address.IPv4_LOOPBACK(Kernel.config().torcontrol).getSocketAddress())
-        val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel())
+        val socket = Socket(InetAddress.getByAddress(Network.IPv4_LOOPBACK_BYTES), Kernel.config().torcontrol.toJava())
+        val connection = Connection(socket, socket.getInputStream().bufferedReader(), socket.getOutputStream().bufferedWriter())
         //TODO cookie, password
         connection.authenticate()
         val (serviceID, newPrivateKey) = connection.addOnion()
@@ -117,8 +108,8 @@ object TorController {
         if (privateKey.startsWith("NEW:"))
             savePrivateKey(newPrivateKey ?: connection.exception("Failed to get new private key"))
 
-        return Pair(Runtime.launch {
-            val replyLine = connection.readChannel.readUTF8Line()
+        return Pair(startInterruptible("TorController::listen") {
+            val replyLine = connection.bufferedReader.readLine()
             if (replyLine != null)
                 connection.exception("Unknown Tor reply line $replyLine")
             else

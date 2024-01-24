@@ -14,6 +14,7 @@ import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import java.lang.Thread.sleep
 import java.net.ConnectException
 import kotlinx.coroutines.delay
 import ninja.blacknet.Config
@@ -87,16 +88,22 @@ class Router(
     private var torTimeout = INIT_TIMEOUT
     private var i2pTimeout = INIT_TIMEOUT
 
-    suspend fun listenOnTor() {
+    fun listenOnTor() {
         try {
-            val (coroutine, localAddress) = TorController.listen()
+            val (vThread, localAddress) = TorController.listen()
 
             logger.info { "Listening on ${localAddress.debugName()}" }
             Node.addListenAddress(localAddress)
 
-            coroutine.join()
+            try {
+                vThread.join()
+            } catch (e: InterruptedException) {
+                vThread.interrupt()
+                throw e
+            } finally {
+                Node.removeListenAddress(localAddress)
+            }
 
-            Node.removeListenAddress(localAddress)
             logger.info { "Lost connection to tor controller" }
 
             torTimeout = INIT_TIMEOUT
@@ -104,7 +111,7 @@ class Router(
             logger.debug { "Can't connect to tor controller: ${e.message}" }
         }
 
-        delay(torTimeout)
+        sleep(torTimeout)
         torTimeout = minOf(torTimeout * 2, MAX_TIMEOUT)
     }
 
