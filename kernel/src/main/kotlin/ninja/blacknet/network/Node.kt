@@ -19,12 +19,12 @@ import java.math.BigInteger
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -62,7 +62,7 @@ object Node {
     val connections = CopyOnWriteArrayList<Connection>()
     private val listenAddress = CopyOnWriteArraySet<Address>()
     private val nextPeerId = atomic(1L)
-    private val queuedPeers = Channel<Address>(Kernel.config().outgoingconnections)
+    private val queuedPeers = ConcurrentLinkedQueue<Address>()
 
     init {
         // All connectors, including listeners and probers
@@ -103,7 +103,7 @@ object Node {
                 if (version == DATA_VERSION) {
                     val persistent = binaryFormat.decodeFromStream(Persistent.serializer(), stream)
                     persistent.peers.forEach { peer ->
-                        queuedPeers.trySend(peer)
+                        queuedPeers.offer(peer)
                     }
                 } else {
                     logger.warn { "Unknown node data version $version" }
@@ -443,7 +443,7 @@ object Node {
     }
 
     private suspend fun connector() {
-        val address = queuedPeers.tryReceive().getOrNull()
+        val address = queuedPeers.poll()
             ?.let { if (PeerDB.tryContact(it)) it else null }
             ?: PeerDB.getCandidate { _, _ -> true }
         if (address == null) {
