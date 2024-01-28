@@ -302,14 +302,14 @@ object Node {
     }
 
     fun announceChain(hash: Hash, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
-        Staker.awaitsNextTimeSlot?.cancel()
+        Staker.awaitsNextTimeSlot?.interrupt()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         return broadcastPacket(PacketType.ChainAnnounce, ann) {
             it != source && it.state.isConnected() && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
         }
     }
 
-    suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
+    fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
             if (mode.requiresNetwork)

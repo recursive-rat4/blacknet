@@ -12,6 +12,7 @@ package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigInteger
+import java.util.concurrent.CompletableFuture
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
@@ -43,7 +44,7 @@ object ChainFetcher {
     private var request: CompletableDeferred<Blocks>? = null
     private var connectedBlocks = 0
     @Volatile
-    private var stakedBlock: Triple<Hash, ByteArray, CompletableDeferred<Pair<Status, Int>>>? = null
+    private var stakedBlock: Triple<Hash, ByteArray, CompletableFuture<Pair<Status, Int>>>? = null
     @Volatile
     private var syncConnection: Connection? = null
     private var originalChain: Hash? = null
@@ -87,18 +88,18 @@ object ChainFetcher {
         announces.trySend(Pair(connection, announce))
     }
 
-    suspend fun stakedBlock(hash: Hash, bytes: ByteArray): Pair<Status, Int> {
-        val deferred = CompletableDeferred<Pair<Status, Int>>()
-        stakedBlock = Triple(hash, bytes, deferred)
+    fun stakedBlock(hash: Hash, bytes: ByteArray): Pair<Status, Int> {
+        val future = CompletableFuture<Pair<Status, Int>>()
+        stakedBlock = Triple(hash, bytes, future)
         request?.cancel(CancellationException("Staked new block"))
         announces.trySend(null)
-        return deferred.await()
+        return future.get()
     }
 
     private suspend fun implementation() {
         val data = announces.receive()
 
-        stakedBlock?.let { (hash, bytes, deferred) ->
+        stakedBlock?.let { (hash, bytes, future) ->
             val status = Kernel.blockDB().mutex.withLock {
                 Kernel.blockDB().processImpl(hash, bytes)
             }
@@ -108,7 +109,7 @@ object ChainFetcher {
             }
 
             stakedBlock = null
-            deferred.complete(Pair(status, n))
+            future.complete(Pair(status, n))
         }
 
         deferChannel.tryReceive().getOrNull()?.let { (connection, answer, requestedDifficulty) ->
