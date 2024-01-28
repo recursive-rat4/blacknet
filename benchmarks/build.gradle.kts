@@ -31,7 +31,10 @@ benchmark {
 }
 
 dependencies {
+    implementation(project(":blacknet-kernel"))
+    implementation(project(":blacknet-serialization"))
     implementation(libs.kotlin.benchmark)
+    implementation(libs.kotlin.serialization)
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {
