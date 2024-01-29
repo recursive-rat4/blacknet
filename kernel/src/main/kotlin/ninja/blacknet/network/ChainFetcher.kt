@@ -13,6 +13,8 @@ package ninja.blacknet.network
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigInteger
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
@@ -41,7 +43,7 @@ object ChainFetcher {
     private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
     private val deferChannel = Channel<Triple<Connection, Blocks, BigInteger>>(16)
     @Volatile
-    private var request: CompletableDeferred<Blocks>? = null
+    private var request: CompletableFuture<Blocks>? = null
     private var connectedBlocks = 0
     @Volatile
     private var stakedBlock: Triple<Hash, ByteArray, CompletableFuture<Pair<Status, Int>>>? = null
@@ -78,7 +80,7 @@ object ChainFetcher {
         if (syncConnection != connection)
             return
 
-        request?.cancel(CancellationException("Connection closed"))
+        request?.completeExceptionally(CancellationException("Connection closed"))
     }
 
     fun offer(connection: Connection, announce: ChainAnnounce) {
@@ -91,7 +93,7 @@ object ChainFetcher {
     fun stakedBlock(hash: Hash, bytes: ByteArray): Pair<Status, Int> {
         val future = CompletableFuture<Pair<Status, Int>>()
         stakedBlock = Triple(hash, bytes, future)
-        request?.cancel(CancellationException("Staked new block"))
+        request?.completeExceptionally(CancellationException("Staked new block"))
         announces.trySend(null)
         return future.get()
     }
@@ -146,9 +148,7 @@ object ChainFetcher {
                 requestBlocks(connection, state.blockHash, state.rollingCheckpoint, announce.cumulativeDifficulty)
 
                 requestLoop@ while (true) {
-                    val answer = withTimeout(timeout()) {
-                        request!!.await()
-                    }
+                    val answer = request!!.get(timeout(), TimeUnit.MILLISECONDS)
                     if (answer.blocks.isNotEmpty()) {
                         val accepted = processBlocks(connection, answer)
                         if (!accepted)
@@ -188,8 +188,8 @@ object ChainFetcher {
                     }
                 }
             } catch (e: ClosedSendChannelException) {
-            } catch (e: TimeoutCancellationException) {
-                connection.dos("Fetching cancelled: ${e.message}")
+            } catch (e: TimeoutException) {
+                connection.dos("Fetching cancelled: ${e.message ?: "Request timed out"}")
             } catch (e: CancellationException) {
                 logger.info { "Fetching cancelled: ${e.message}" }
             } catch (e: Throwable) {
@@ -222,7 +222,7 @@ object ChainFetcher {
             logger.info { "Fetched $connectedBlocks blocks from ${connection.debugName()}" }
 
         request?.let {
-            it.cancel()
+            it.cancel(true)
             request = null
         }
         syncConnection = null
@@ -244,7 +244,7 @@ object ChainFetcher {
         if (syncConnection != connection)
             return
 
-        request?.cancel(CancellationException("Fork longer than the rolling checkpoint"))
+        request?.completeExceptionally(CancellationException("Fork longer than the rolling checkpoint"))
     }
 
     suspend fun blocks(connection: Connection, blocks: Blocks) {
@@ -345,9 +345,8 @@ object ChainFetcher {
             checkpoint: Hash,
             difficulty: BigInteger,
     ) {
-        request = CompletableDeferred()
+        request = CompletableFuture()
         connection.requestedDifficulty = difficulty
-        // 緊湊型區塊轉發
         connection.sendPacket(PacketType.GetBlocks, GetBlocks(hash, checkpoint))
     }
 
