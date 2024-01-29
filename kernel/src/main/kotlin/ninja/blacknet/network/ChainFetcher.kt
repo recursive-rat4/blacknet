@@ -38,9 +38,8 @@ private val logger = KotlinLogging.logger {}
 object ChainFetcher {
     private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
     private val deferChannel = Channel<Triple<Connection, Blocks, BigInteger>>(16)
-    private val recvChannel = Channel<Blocks>(Channel.RENDEZVOUS)
     @Volatile
-    private var request: Deferred<Blocks>? = null
+    private var request: CompletableDeferred<Blocks>? = null
     private var connectedBlocks = 0
     @Volatile
     private var stakedBlock: Triple<Hash, ByteArray, CompletableDeferred<Pair<Status, Int>>>? = null
@@ -220,7 +219,6 @@ object ChainFetcher {
         else
             logger.info { "Fetched $connectedBlocks blocks from ${connection.debugName()}" }
 
-        recvChannel.tryReceive()
         request?.let {
             it.cancel()
             request = null
@@ -263,7 +261,7 @@ object ChainFetcher {
             return
         }
 
-        recvChannel.send(blocks)
+        request!!.complete(blocks)
     }
 
     private suspend fun processBlocks(connection: Connection, answer: Blocks): Boolean {
@@ -345,7 +343,7 @@ object ChainFetcher {
             checkpoint: Hash,
             difficulty: BigInteger,
     ) {
-        request = Runtime.async { recvChannel.receive() }
+        request = CompletableDeferred()
         connection.requestedDifficulty = difficulty
         // 緊湊型區塊轉發
         connection.sendPacket(PacketType.GetBlocks, GetBlocks(hash, checkpoint))
