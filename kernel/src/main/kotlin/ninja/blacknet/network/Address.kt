@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -38,10 +38,10 @@ import ninja.blacknet.serialization.notSupportedFormatError
 @Serializable(Address.Companion::class)
 class Address(
     val network: Network,
-    val port: Short,
+    val port: Port,
     val bytes: ByteArray,
 ) : Comparable<Address> {
-    internal constructor(address: AddressV1) : this(Network.get(address.network), address.port.toPort(), address.bytes)
+    internal constructor(address: AddressV1) : this(Network.get(address.network), Port(address.port), address.bytes)
 
     fun isLocal(): Boolean = when (network) {
         Network.IPv4 -> isLocalIPv4()
@@ -58,7 +58,7 @@ class Address(
     }
 
     fun getAddressString(): String = when (network) {
-        Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(bytes), port.toPort()).getHostString()
+        Network.IPv4, Network.IPv6 -> InetSocketAddress(InetAddress.getByAddress(bytes), port.toJava()).getHostString()
         Network.TORv2 -> Base32.encode(bytes) + Network.TOR_SUFFIX
         Network.TORv3 -> Base32.encode(bytes + TorController.checksum(bytes, TorController.V3) + TorController.V3) + Network.TOR_SUFFIX
         Network.I2P -> Base32.encode(bytes) + Network.I2P_SUFFIX
@@ -67,7 +67,7 @@ class Address(
     fun getSocketAddress(): KtorSocketAddress {
         require(network == Network.IPv4 || network == Network.IPv6) { "$network is not IP" }
         //UPSTREAM KtorSocketAddress requires round trip though string
-        return KtorInetSocketAddress(getAddressString(), port.toPort())
+        return KtorInetSocketAddress(getAddressString(), port.toJava())
     }
 
     fun debugName(): String {
@@ -87,9 +87,9 @@ class Address(
 
     override fun toString(): String {
         return if (network != Network.IPv6)
-            "${getAddressString()}:${port.toPort()}"
+            "${getAddressString()}:$port"
         else
-            "[${getAddressString()}]:${port.toPort()}"
+            "[${getAddressString()}]:$port"
     }
 
     // not meaningful, but needed for hash tables
@@ -159,10 +159,10 @@ class Address(
     }
 
     companion object : KSerializer<Address> {
-        fun IPv4_ANY(port: Short) = Address(Network.IPv4, port, ByteArray(Network.IPv4.addrSize))
-        fun IPv4_LOOPBACK(port: Short) = Address(Network.IPv4, port, Network.IPv4_LOOPBACK_BYTES)
-        fun IPv6_ANY(port: Short) = Address(Network.IPv6, port, Network.IPv6_ANY_BYTES)
-        fun IPv6_LOOPBACK(port: Short) = Address(Network.IPv6, port, Network.IPv6_LOOPBACK_BYTES)
+        fun IPv4_ANY(port: Port) = Address(Network.IPv4, port, ByteArray(Network.IPv4.addrSize))
+        fun IPv4_LOOPBACK(port: Port) = Address(Network.IPv4, port, Network.IPv4_LOOPBACK_BYTES)
+        fun IPv6_ANY(port: Port) = Address(Network.IPv6, port, Network.IPv6_ANY_BYTES)
+        fun IPv6_LOOPBACK(port: Port) = Address(Network.IPv6, port, Network.IPv6_LOOPBACK_BYTES)
 
         override val descriptor: SerialDescriptor = buildClassSerialDescriptor(
             "ninja.blacknet.network.Address"
@@ -178,7 +178,7 @@ class Address(
                     val network = Network.get(decoder.decodeByte())
                     Address(
                         network,
-                        decoder.decodeShort(),
+                        Port(decoder.decodeShort().toUShort()),
                         decoder.decodeFixedByteArray(network.addrSize)
                     )
                 }
@@ -190,12 +190,12 @@ class Address(
             when (encoder) {
                 is BinaryEncoder -> {
                     encoder.encodeByte(value.network.type)
-                    encoder.encodeShort(value.port)
+                    encoder.encodeShort(value.port.value.toShort())
                     encoder.encodeFixedByteArray(value.bytes)
                 }
                 is HashEncoder -> {
                     encoder.encodeByte(value.network.type)
-                    encoder.encodeShort(value.port)
+                    encoder.encodeShort(value.port.value.toShort())
                     encoder.encodeByteArray(value.bytes)
                 }
                 else -> throw notSupportedFormatError(encoder, this)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Pavel Vasin
+ * Copyright (c) 2023-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -16,6 +16,7 @@ private val compilerArgs = mapOf(
     "kotlinx-coroutines-core" to "kotlinx.coroutines.DelicateCoroutinesApi",
     "kotlinx-coroutines-debug" to "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlinx-serialization-core" to "kotlinx.serialization.ExperimentalSerializationApi",
+    "ktor-io" to "kotlin.ExperimentalUnsignedTypes",
 ).asSequence().associate { (name, annotation) ->
     name to "-opt-in=$annotation"
 }

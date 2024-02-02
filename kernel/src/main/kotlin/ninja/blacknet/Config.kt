@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -12,6 +12,7 @@ package ninja.blacknet
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PrivateKeySerializer
+import ninja.blacknet.network.Port
 import ninja.blacknet.serialization.config.ConfigFormat
 import ninja.blacknet.serialization.textModule
 
@@ -21,19 +22,19 @@ class Config(
         val ipv4: Boolean,
         val ipv6: Boolean,
         val listen: Boolean,
-        val port: Int,
+        val port: Port,
         val tor: Boolean,
         val i2p: Boolean,
         val upnp: Boolean,
         val incomingconnections: Int,
         val outgoingconnections: Int,
         val proxyhost: String? = null,
-        val proxyport: Int? = null,
+        val proxyport: Port? = null,
         val torhost: String? = null,
-        val torport: Int? = null,
-        val torcontrol: Int,
+        val torport: Port? = null,
+        val torcontrol: Port,
         val i2psamhost: String? = null,
-        val i2psamport: Int? = null,
+        val i2psamport: Port? = null,
         val dbcache: Size,
         var mnemonics: List<@Serializable(PrivateKeySerializer::class) ByteArray>? = null,
         // val master: String,

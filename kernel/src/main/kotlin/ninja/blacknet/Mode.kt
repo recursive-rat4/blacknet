@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -11,6 +11,7 @@ package ninja.blacknet
 
 import kotlin.system.exitProcess
 import ninja.blacknet.Mode.*
+import ninja.blacknet.network.Port
 
 /**
  * An enumeration of implemented modes: production or various research, development, testing.
@@ -65,7 +66,7 @@ enum class Mode(
     /**
      * @see DEFAULT_P2P_PORT
      */
-    val defaultP2PPort = (DEFAULT_P2P_PORT + ordinal).toShort()
+    val defaultP2PPort = Port(DEFAULT_P2P_PORT + ordinal)
 
     /**
      * @see NETWORK_MAGIC

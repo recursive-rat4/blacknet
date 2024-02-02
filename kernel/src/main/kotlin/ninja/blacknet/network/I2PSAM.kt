@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -44,7 +44,7 @@ object I2PSAM {
 
     init {
         if (Config.instance.i2psamhost != null && Config.instance.i2psamport != null)
-            sam = Network.resolve(Config.instance.i2psamhost, Config.instance.i2psamport.toPort())
+            sam = Network.resolve(Config.instance.i2psamhost, Config.instance.i2psamport)
         else
             sam = null
 
@@ -86,7 +86,7 @@ object I2PSAM {
         val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("invalid response")
 
         val destination = lookup(connection, "ME")
-        val localAddress = Address(Network.I2P, Config.instance.port.toPort(), hash(destination))
+        val localAddress = Address(Network.I2P, Config.instance.port, hash(destination))
 
         if (this.privateKey == "TRANSIENT")
             savePrivateKey(privateKey)
@@ -141,7 +141,7 @@ object I2PSAM {
                 connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
             } else {
                 val destination = message.takeWhile { it != ' ' }
-                val remoteAddress = Address(Network.I2P, Config.instance.port.toPort(), hash(destination))
+                val remoteAddress = Address(Network.I2P, Config.instance.port, hash(destination))
                 return Accepted(connection.socket, connection.readChannel, connection.writeChannel, remoteAddress)
             }
         }

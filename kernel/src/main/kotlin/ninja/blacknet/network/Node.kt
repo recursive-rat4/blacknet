@@ -226,8 +226,8 @@ object Node {
         if (Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
             throw IllegalStateException("Both IPv4 and IPv6 are disabled")
         if (Network.IPv4.isDisabled())
-            return listenOn(Address.IPv6_ANY(Config.instance.port.toPort()))
-        return listenOn(Address.IPv4_ANY(Config.instance.port.toPort()))
+            return listenOn(Address.IPv6_ANY(Config.instance.port))
+        return listenOn(Address.IPv4_ANY(Config.instance.port))
     }
 
     suspend fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {

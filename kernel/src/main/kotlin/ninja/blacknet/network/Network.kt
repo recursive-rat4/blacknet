@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -52,19 +52,19 @@ enum class Network(val type: Byte, val addrSize: Int) {
         val IPv4_LOOPBACK_BYTES = byteArrayOf(127, 0, 0, 1)
         val IPv6_ANY_BYTES = ByteArray(Network.IPv6.addrSize)
         val IPv6_LOOPBACK_BYTES = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
-        val LOOPBACK = Address.IPv4_LOOPBACK(Config.instance.port.toPort())
+        val LOOPBACK = Address.IPv4_LOOPBACK(Config.instance.port)
 
         private val socksProxy: Address?
         private val torProxy: Address?
 
         init {
             if (Config.instance.proxyhost != null && Config.instance.proxyport != null)
-                socksProxy = Network.resolve(Config.instance.proxyhost, Config.instance.proxyport.toPort())
+                socksProxy = Network.resolve(Config.instance.proxyhost, Config.instance.proxyport)
             else
                 socksProxy = null
 
             if (Config.instance.torhost != null && Config.instance.torport != null)
-                torProxy = Network.resolve(Config.instance.torhost, Config.instance.torport.toPort())
+                torProxy = Network.resolve(Config.instance.torhost, Config.instance.torport)
             else
                 torProxy = null
         }
@@ -81,19 +81,19 @@ enum class Network(val type: Byte, val addrSize: Int) {
         }
 
         fun address(inet: InetSocketAddress): Address {
-            return address(inet.getAddress(), inet.port.toPort())
+            return address(inet.getAddress(), Port(inet.port))
         }
 
         fun address(inet: KtorInetSocketAddress): Address {
             //UPSTREAM KtorInetSocketAddress doesn't provide access to bytes
             val hostname = inet.hostname
             return if (hostname != "localhost")
-                address(InetAddresses.forString(hostname), inet.port.toPort())
+                address(InetAddresses.forString(hostname), Port(inet.port))
             else
-                address(InetAddress.getByAddress(IPv4_LOOPBACK_BYTES), inet.port.toPort())
+                address(InetAddress.getByAddress(IPv4_LOOPBACK_BYTES), Port(inet.port))
         }
 
-        fun address(inet: InetAddress, port: Short): Address {
+        fun address(inet: InetAddress, port: Port): Address {
             val bytes = inet.getAddress()
             return when (bytes.size) {
                 IPv6.addrSize -> Address(IPv6, port, bytes)
@@ -114,7 +114,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
                         if (Config.instance.listen && !localAddress.isLocal())
-                            Node.listenAddress.add(Address(localAddress.network, Config.instance.port.toPort(), localAddress.bytes))
+                            Node.listenAddress.add(Address(localAddress.network, Config.instance.port, localAddress.bytes))
                         return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, state)
                     }
                 }
@@ -198,7 +198,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
             i2pTimeout = minOf(i2pTimeout * 2, MAX_TIMEOUT)
         }
 
-        fun parse(string: String?, port: Short): Address? {
+        fun parse(string: String?, port: Port): Address? {
             if (string == null) return null
             val host = string.lowercase()
 
@@ -241,19 +241,19 @@ enum class Network(val type: Byte, val addrSize: Int) {
             return null
         }
 
-        fun parsePort(string: String): Short? {
+        fun parsePort(string: String): Port? {
             return try {
-                string.toInt().toPort()
+                Port(string.toUShort())
             } catch (e: Throwable) {
                 null
             }
         }
 
-        fun resolve(string: String, port: Short): Address? {
+        fun resolve(string: String, port: Port): Address? {
             return resolveAll(string, port).firstOrNull()
         }
 
-        fun resolveAll(string: String, port: Short): List<Address> {
+        fun resolveAll(string: String, port: Port): List<Address> {
             val parsed = parse(string, port)
             if (parsed != null)
                 return listOf(parsed)
@@ -267,13 +267,4 @@ enum class Network(val type: Byte, val addrSize: Int) {
 
         val selector = ActorSelectorManager(Dispatchers.IO)
     }
-}
-
-fun Int.toPort(): Short {
-    require(this in 0..65535) { "Port must be in range 0..65535" }
-    return toUShort().toShort()
-}
-
-fun Short.toPort(): Int {
-    return toUShort().toInt()
 }

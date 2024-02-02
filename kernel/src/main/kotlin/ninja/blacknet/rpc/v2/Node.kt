@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -20,7 +20,6 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.mode
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.toPort
 import ninja.blacknet.rpc.requests.*
 import ninja.blacknet.rpc.v1.NodeInfo
 import ninja.blacknet.rpc.v1.TxPoolInfo
@@ -68,7 +67,7 @@ class TxPoolTransaction(
 
 @Serializable
 class AddPeer(
-    val port: String = mode.defaultP2PPort.toPort().toString(),
+    val port: String = mode.defaultP2PPort.toString(),
     val address: String,
     val force: Boolean = false
 ) : Request {
@@ -88,7 +87,7 @@ class AddPeer(
 
 @Serializable
 class DisconnectPeerByAddress(
-    val port: String = mode.defaultP2PPort.toPort().toString(),
+    val port: String = mode.defaultP2PPort.toString(),
     val address: String,
     @Suppress("unused")
     val force: Boolean = false

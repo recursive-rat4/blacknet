@@ -33,14 +33,14 @@ object UPnP {
         }
 
         logger.info { "Sending port mapping request" }
-        if (!gateway.addPortMapping(Config.instance.port.toPort().toPort(), Config.instance.port.toPort().toPort(), gateway.localAddress.hostAddress, PROTOCOL, Version.name)) {
+        if (!gateway.addPortMapping(Config.instance.port.toJava(), Config.instance.port.toJava(), gateway.localAddress.hostAddress, PROTOCOL, Version.name)) {
             logger.info { "Port mapping failed" }
             return
         }
 
         var address: Address? = null
         try {
-            address = Network.parse(gateway.externalIPAddress, Config.instance.port.toPort())
+            address = Network.parse(gateway.externalIPAddress, Config.instance.port)
         } catch (e: Throwable) {
         }
         if (address != null) {
@@ -57,6 +57,6 @@ object UPnP {
 
     private fun remove(gateway: GatewayDevice) {
         logger.info { "Removing port mapping" }
-        gateway.deletePortMapping(Config.instance.port.toPort().toPort(), PROTOCOL)
+        gateway.deletePortMapping(Config.instance.port.toJava(), PROTOCOL)
     }
 }

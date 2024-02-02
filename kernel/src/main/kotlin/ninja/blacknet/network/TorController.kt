@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -70,7 +70,7 @@ object TorController {
         }
 
         suspend fun addOnion(): Pair<String?, String?> {
-            writeChannel.writeStringUtf8("ADD_ONION $privateKey Port=${Config.instance.port.toPort().toPort()}\r\n")
+            writeChannel.writeStringUtf8("ADD_ONION $privateKey Port=${Config.instance.port}\r\n")
             var serviceID: String? = null
             var newPrivateKey: String? = null
             while (true) {
@@ -103,12 +103,12 @@ object TorController {
 
     suspend fun listen(): Pair<Job, Address> {
         //TODO configure host
-        val socket = aSocket(Network.selector).tcp().connect(Address.IPv4_LOOPBACK(Config.instance.torcontrol.toPort()).getSocketAddress())
+        val socket = aSocket(Network.selector).tcp().connect(Address.IPv4_LOOPBACK(Config.instance.torcontrol).getSocketAddress())
         val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true))
         //TODO cookie, password
         connection.authenticate()
         val (serviceID, newPrivateKey) = connection.addOnion()
-        val address = Network.parse(serviceID + Network.TOR_SUFFIX, Config.instance.port.toPort()) ?: connection.exception("Failed to parse Onion Service ID $serviceID")
+        val address = Network.parse(serviceID + Network.TOR_SUFFIX, Config.instance.port) ?: connection.exception("Failed to parse Onion Service ID $serviceID")
         require(address.network == Network.TORv2 || address.network == Network.TORv3)
 
         if (privateKey.startsWith("NEW:"))

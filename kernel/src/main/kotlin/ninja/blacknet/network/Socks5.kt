@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -19,7 +19,7 @@ import io.ktor.utils.io.cancel
 import io.ktor.utils.io.close
 import io.ktor.utils.io.core.BytePacketBuilder
 import io.ktor.utils.io.core.writeFully
-import io.ktor.utils.io.core.writeShort
+import io.ktor.utils.io.core.writeUShort
 
 /**
  * 代理客戶端
@@ -69,7 +69,7 @@ object Socks5 {
             }
             else -> connection.exception("Not implemented for ${destination.network}")
         }
-        builder.writeShort(destination.port.toShort())
+        builder.writeUShort(destination.port.value)
         writeChannel.writePacket(builder.build())
 
         if (readChannel.readByte() != VERSION) {
