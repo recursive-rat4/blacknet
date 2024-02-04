@@ -154,8 +154,6 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 torTimeout = INIT_TIMEOUT
             } catch (e: ConnectException) {
                 logger.debug { "Can't connect to tor controller: ${e.message}" }
-            } catch (e: Throwable) {
-                logger.info { e.message }
             }
 
             delay(torTimeout)
@@ -190,8 +188,6 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 logger.info { e.message }
             } catch (e: ConnectException) {
                 logger.debug { "Can't connect to I2P SAM: ${e.message}" }
-            } catch (e: Throwable) {
-                logger.error(e)
             }
 
             delay(i2pTimeout)
