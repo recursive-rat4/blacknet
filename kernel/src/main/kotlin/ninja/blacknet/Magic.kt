@@ -37,6 +37,6 @@ const val BECH32_HRP = "blacknet"
 const val DEFAULT_P2P_PORT: Short = 28453
 
 /**
- * The nonce that is used for quickly distinguishing blockchains.
+ * The nonce that is used for quickly distinguishing ledgers.
  */
 const val NETWORK_MAGIC = 0x17895E7D

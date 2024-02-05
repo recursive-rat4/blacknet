@@ -77,7 +77,7 @@ object Bootstrap {
     }
 
     /**
-     * @return a [Path] or `null` if blockchain is not synchronized
+     * @return a [Path] or `null` if ledger is not synchronized
      */
     fun export(): Path? {
         val checkpoint = LedgerDB.state().rollingCheckpoint

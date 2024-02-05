@@ -1,6 +1,6 @@
 # Blacknet Full Node Wallet
 
-**Blacknet is decentralized peer-to-peer network that secures public blockchain platform with proof of stake consensus.**
+**Blacknet is a decentralized peer-to-peer network that secures a public zero-knowledge platform with the proof of stake consensus.**
 
 ## Get the Source Code
 

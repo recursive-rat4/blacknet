@@ -149,10 +149,10 @@ object LedgerDB {
 
             if (version == VERSION) {
                 val state = binaryFormat.decodeFromByteArray(LedgerDB.State.serializer(), stateBytes)
-                logger.info { "Blockchain height ${state.height}" }
+                logger.info { "Ledger height ${state.height}" }
                 this.state = state
             } else if (version in 1 until VERSION) {
-                logger.info { "Reindexing blockchain..." }
+                logger.info { "Reindexing ledger..." }
 
                 runBlocking {
                     val blockHashes = ArrayList<Hash>(500000)
