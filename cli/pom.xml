@@ -35,10 +35,6 @@
             <artifactId>kotlin-stdlib</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-coroutines-core-jvm</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.rfksystems</groupId>
             <artifactId>blake2b</artifactId>
         </dependency>
@@ -50,16 +46,6 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <version>${kotlin.version}</version>
-                <executions>
-                    <execution>
-                        <id>compile</id>
-                        <configuration>
-                            <args combine.children="append">
-                                <arg>-opt-in=kotlinx.coroutines.DelicateCoroutinesApi</arg>
-                            </args>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
