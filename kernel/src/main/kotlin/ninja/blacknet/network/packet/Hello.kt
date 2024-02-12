@@ -41,7 +41,6 @@ class Hello(
                 return
             }
         }
-        connection.peerId = Node.newPeerId()
         // if not provided, the oldest supported version may be tried
         connection.version = version ?: Node.MIN_PROTOCOL_VERSION
         agent?.let {

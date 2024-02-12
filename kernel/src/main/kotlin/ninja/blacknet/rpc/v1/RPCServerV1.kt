@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -23,14 +23,14 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.json.json
-import ninja.blacknet.util.SynchronizedArrayList
 import ninja.blacknet.util.SynchronizedHashMap
+import ninja.blacknet.util.SynchronizedHashSet
 
 private val logger = KotlinLogging.logger {}
 
 object RPCServerV1 {
-    internal val blockNotifyV0 = SynchronizedArrayList<SendChannel<Frame>>()
-    internal val blockNotifyV1 = SynchronizedArrayList<SendChannel<Frame>>()
+    internal val blockNotifyV0 = SynchronizedHashSet<SendChannel<Frame>>()
+    internal val blockNotifyV1 = SynchronizedHashSet<SendChannel<Frame>>()
     internal val walletNotifyV1 = SynchronizedHashMap<SendChannel<Frame>, HashSet<PublicKey>>()
 
     suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
@@ -44,10 +44,10 @@ object RPCServerV1 {
         }
 
         blockNotifyV1.mutex.withLock {
-            if (blockNotifyV1.list.isNotEmpty()) {
+            if (blockNotifyV1.set.isNotEmpty()) {
                 val notification = BlockNotificationV1(block, hash, height, size)
                 val message = json.encodeToString(BlockNotificationV1.serializer(), notification)
-                blockNotifyV1.list.forEach {
+                blockNotifyV1.set.forEach {
                     Runtime.launch {
                         try {
                             it.send(Frame.Text(message))

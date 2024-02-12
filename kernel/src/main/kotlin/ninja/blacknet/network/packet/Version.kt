@@ -36,7 +36,6 @@ class Version(
         }
 
         connection.timeOffset = time - currentTimeSeconds()
-        connection.peerId = Node.newPeerId()
         connection.version = version
         connection.agent = UserAgent.sanitize(agent)
         connection.feeFilter = feeFilter

@@ -15,6 +15,7 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.ByteReadPacket
 import io.ktor.utils.io.core.readInt
 import io.ktor.utils.io.errors.IOException
+import java.lang.Thread.sleep
 import java.math.BigInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
@@ -23,7 +24,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.Hash
@@ -32,7 +32,7 @@ import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.SynchronizedArrayList
+import ninja.blacknet.util.startInterruptible
 
 private val logger = KotlinLogging.logger {}
 
@@ -44,7 +44,7 @@ class Connection(
         val localAddress: Address,
         var state: State
 ) : CoroutineScope {
-    //TODO Socket now implements CoroutineScope, should it be used instead?
+    private val vThreads = ArrayList<Thread>()
     val job = Job()
     override val coroutineContext: CoroutineContext = Runtime.coroutineContext + job
 
@@ -52,7 +52,7 @@ class Connection(
     private val dosScore = atomic(0)
     private val sendQueueSize = atomic(0L)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
-    private val inventoryToSend = SynchronizedArrayList<Hash>(Inventory.SEND_MAX)
+    private val inventoryToSend = ArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = currentTimeSeconds()
 
     @Volatile
@@ -83,15 +83,15 @@ class Connection(
     inline val requestedBlocks: Boolean
         get() = requestedDifficulty != BigInteger.ZERO
 
-    var peerId: Long = 0
+    val peerId: Long = Node.newPeerId()
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
 
     fun launch() {
-        launch { pinger() }
-        launch { peerAnnouncer() }
-        launch { inventoryBroadcaster() }
+        vThreads.add(startInterruptible("Connection::pinger ${debugName()}", ::pinger))
+        vThreads.add(startInterruptible("Connection::whisperer ${debugName()}", ::whisperer))
+        vThreads.add(startInterruptible("Connection::pusher ${debugName()}", ::pusher))
         launch { receiver() }
         launch { sender() }
     }
@@ -162,39 +162,39 @@ class Connection(
         }
     }
 
-    suspend fun inventory(inv: Hash) = inventoryToSend.mutex.withLock {
-        inventoryToSend.list.add(inv)
-        if (inventoryToSend.list.size == Inventory.SEND_MAX) {
+    fun inventory(inv: Hash) = synchronized(inventoryToSend) {
+        inventoryToSend.add(inv)
+        if (inventoryToSend.size == Inventory.SEND_MAX) {
             sendInventoryImpl(currentTimeMillis())
         }
     }
 
-    suspend fun inventory(inv: ArrayList<Hash>): Unit = inventoryToSend.mutex.withLock {
-        val newSize = inventoryToSend.list.size + inv.size
+    fun inventory(inv: ArrayList<Hash>): Unit = synchronized(inventoryToSend) {
+        val newSize = inventoryToSend.size + inv.size
         if (newSize < Inventory.SEND_MAX) {
-            inventoryToSend.list.addAll(inv)
+            inventoryToSend.addAll(inv)
         } else if (newSize > Inventory.SEND_MAX) {
-            val n = Inventory.SEND_MAX - inventoryToSend.list.size
+            val n = Inventory.SEND_MAX - inventoryToSend.size
             for (i in 0 until n)
-                inventoryToSend.list.add(inv[i])
+                inventoryToSend.add(inv[i])
             sendInventoryImpl(currentTimeMillis())
             for (i in n until inv.size)
-                inventoryToSend.list.add(inv[i])
+                inventoryToSend.add(inv[i])
         } else {
-            inventoryToSend.list.addAll(inv)
+            inventoryToSend.addAll(inv)
             sendInventoryImpl(currentTimeMillis())
         }
     }
 
-    private suspend fun sendInventory(time: Long) = inventoryToSend.mutex.withLock {
-        if (inventoryToSend.list.size != 0) {
+    private fun sendInventory(time: Long) = synchronized(inventoryToSend) {
+        if (inventoryToSend.size != 0) {
             sendInventoryImpl(time)
         }
     }
 
     private fun sendInventoryImpl(time: Long) {
-        sendPacket(PacketType.Inventory, Inventory(inventoryToSend.list))
-        inventoryToSend.list.clear()
+        sendPacket(PacketType.Inventory, Inventory(inventoryToSend))
+        inventoryToSend.clear()
         lastInvSentTime = time
     }
 
@@ -241,6 +241,7 @@ class Connection(
                 }
             }
 
+            vThreads.forEach(Thread::interrupt)
             cancel()
             sendChannel.cancel()
             job.cancel()
@@ -288,11 +289,11 @@ class Connection(
         }
     }
 
-    private suspend fun pinger() {
-        delay(Node.NETWORK_TIMEOUT)
+    private fun pinger() {
+        sleep(Node.NETWORK_TIMEOUT)
 
         if (state.isConnected()) {
-            delay(Random.nextLong(Node.NETWORK_TIMEOUT))
+            sleep(Random.nextLong(Node.NETWORK_TIMEOUT))
             pingPong()
         } else {
             close()
@@ -304,7 +305,7 @@ class Connection(
             val nextPing = lastPacketTime + Node.NETWORK_TIMEOUT
             val d = nextPing - currTime
             if (d > 0) {
-                delay(d)
+                sleep(d)
                 continue
             } else {
                 pingPong()
@@ -312,9 +313,9 @@ class Connection(
         }
     }
 
-    private suspend fun pingPong() {
+    private fun pingPong() {
         sendPing()
-        delay(Node.NETWORK_TIMEOUT)
+        sleep(Node.NETWORK_TIMEOUT)
         if (pingRequest == null)
             return
         logger.info { "Disconnecting ${debugName()} on ping timeout" }
@@ -330,8 +331,8 @@ class Connection(
             sendPacket(PacketType.PingV1, PingV1(challenge))
     }
 
-    private suspend fun peerAnnouncer() {
-        delay(Random.nextLong(10 * 60 * 1000L, 20 * 60 * 1000L))
+    private fun whisperer() {
+        sleep(Random.nextLong(10 * 60 * 1000L, 20 * 60 * 1000L))
 
         while (true) {
             val n = Random.nextInt(Peers.MAX + 1)
@@ -339,20 +340,20 @@ class Connection(
             if (randomPeers.size > 0)
                 sendPacket(PacketType.Peers, Peers(randomPeers))
 
-            delay(Random.nextLong(4 * 60 * 60 * 1000L, 20 * 60 * 60 * 1000L))
+            sleep(Random.nextLong(4 * 60 * 60 * 1000L, 20 * 60 * 60 * 1000L))
         }
     }
 
-    private suspend fun inventoryBroadcaster() {
+    private fun pusher() {
         while (!state.isConnected()) {
-            delay(Inventory.SEND_TIMEOUT)
+            sleep(Inventory.SEND_TIMEOUT)
         }
         while (true) {
             val currTime = currentTimeMillis()
             if (currTime >= lastInvSentTime + Inventory.SEND_TIMEOUT) {
                 sendInventory(currTime)
             }
-            delay(Inventory.SEND_TIMEOUT)
+            sleep(Inventory.SEND_TIMEOUT)
         }
     }
 }

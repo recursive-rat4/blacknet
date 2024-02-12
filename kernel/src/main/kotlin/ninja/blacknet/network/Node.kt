@@ -333,7 +333,7 @@ object Node {
         return status
     }
 
-    suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null): Int {
+    fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null): Int {
         var n = 0
         val toSend = ArrayList<Hash>(unfiltered.size)
         connections.forEach {
