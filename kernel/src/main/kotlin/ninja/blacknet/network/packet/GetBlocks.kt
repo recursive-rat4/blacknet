@@ -9,6 +9,7 @@
 
 package ninja.blacknet.network.packet
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
@@ -21,7 +22,7 @@ class GetBlocks(
     private val best: Hash,
     private val checkpoint: Hash
 ) : Packet {
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         val cachedBlock = Kernel.blockDB().cachedBlock
         if (cachedBlock != null) {
             val (previousHash, bytes) = cachedBlock
@@ -34,7 +35,7 @@ class GetBlocks(
         var chainIndex = LedgerDB.chainIndexes.get(best.bytes)
 
         if (chainIndex == null) {
-            val nextBlockHashes = LedgerDB.getNextBlockHashes(checkpoint, Blocks.MAX_HASHES)
+            val nextBlockHashes = runBlocking { LedgerDB.getNextBlockHashes(checkpoint, Blocks.MAX_HASHES) }
             if (nextBlockHashes != null) {
                 connection.sendPacket(PacketType.Blocks, Blocks(nextBlockHashes, emptyList()))
                 return

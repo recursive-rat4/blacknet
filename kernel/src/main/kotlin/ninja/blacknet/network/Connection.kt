@@ -17,12 +17,12 @@ import io.ktor.utils.io.core.readInt
 import io.ktor.utils.io.errors.IOException
 import java.lang.Thread.sleep
 import java.math.BigInteger
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
@@ -51,7 +51,7 @@ class Connection(
     private val closed = atomic(false)
     private val dosScore = atomic(0)
     private val sendQueueSize = atomic(0L)
-    private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
+    private val sendQueue = LinkedBlockingQueue<ByteReadPacket>()
     private val inventoryToSend = ArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = currentTimeSeconds()
 
@@ -92,11 +92,11 @@ class Connection(
         vThreads.add(startInterruptible("Connection::pinger ${debugName()}", ::pinger))
         vThreads.add(startInterruptible("Connection::whisperer ${debugName()}", ::whisperer))
         vThreads.add(startInterruptible("Connection::pusher ${debugName()}", ::pusher))
-        launch { receiver() }
-        launch { sender() }
+        vThreads.add(startInterruptible("Connection::receiver ${debugName()}", ::receiver))
+        vThreads.add(startInterruptible("Connection::sender ${debugName()}", ::sender))
     }
 
-    private suspend fun receiver() {
+    private fun receiver() {
         try {
             while (true) {
                 val bytes = recvPacket()
@@ -118,45 +118,42 @@ class Connection(
                     continue
                 }
                 logger.debug { "Received ${packet::class.simpleName} from ${debugName()}" }
-                packet.process(this)
+                packet.handle(this)
             }
         } catch (e: ClosedReceiveChannelException) {
         } catch (e: CancellationException) {
         } catch (e: IOException) {
-        } catch (e: Throwable) {
-            logger.error(e) { "Exception in receiver ${debugName()}" }
         } finally {
             close()
         }
     }
 
-    private suspend fun recvPacket(): ByteReadPacket {
-        val size = readChannel.readInt()
+    private fun recvPacket(): ByteReadPacket {
+        val size = runBlocking { readChannel.readInt() }
         if (size > Node.getMaxPacketSize()) {
             if (state.isConnected()) {
                 logger.info { "Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}" }
             }
             close()
         }
-        val result = readChannel.readPacket(size)
+        val result = runBlocking { readChannel.readPacket(size) }
         lastPacketTime = currentTimeMillis()
         totalBytesRead += size + 4
         return result
     }
 
-    private suspend fun sender() {
+    private fun sender() {
         try {
-            for (packet in sendChannel) {
+            while (true) {
+                val packet = sendQueue.take()
                 val size = packet.remaining
-                writeChannel.writePacket(packet)
+                runBlocking { writeChannel.writePacket(packet) }
                 writeChannel.flush()
                 sendQueueSize -= size
                 totalBytesWritten += size
             }
         } catch (e: ClosedWriteChannelException) {
         } catch (e: CancellationException) {
-        } catch (e: Throwable) {
-            logger.error(e) { "Exception in sender ${debugName()}" }
         } finally {
             close()
         }
@@ -203,7 +200,7 @@ class Connection(
         val bytes = buildPacket(type, packet)
         //TODO review threshold
         if (sendQueueSize.addAndGet(bytes.remaining) <= Node.getMaxPacketSize() * 10) {
-            sendChannel.trySend(bytes)
+            sendQueue.offer(bytes)
         } else {
             logger.info { "Disconnecting ${debugName()} on send queue overflow" }
             close()
@@ -243,7 +240,6 @@ class Connection(
 
             vThreads.forEach(Thread::interrupt)
             cancel()
-            sendChannel.cancel()
             job.cancel()
         }
     }

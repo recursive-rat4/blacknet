@@ -18,7 +18,7 @@ import ninja.blacknet.serialization.bbf.binaryFormat
 const val PACKET_HEADER_SIZE_BYTES = 4
 
 interface Packet {
-    suspend fun process(connection: Connection)
+    fun handle(connection: Connection)
 }
 
 fun <T : Packet> buildPacket(type: PacketType, packet: T): ByteReadPacket {

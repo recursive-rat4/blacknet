@@ -10,6 +10,7 @@
 package ninja.blacknet.network.packet
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.core.*
@@ -25,7 +26,7 @@ private val logger = KotlinLogging.logger {}
 class Transactions(
     private val list: ArrayList<@Serializable(ByteArraySerializer::class) ByteArray>
 ) : Packet {
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         if (list.size > MAX) {
             connection.dos("Invalid Transactions size ${list.size}")
             return
@@ -42,7 +43,7 @@ class Transactions(
                 continue
             }
 
-            val (status, fee) = Kernel.txPool().process(hash, bytes, time / 1000L, true)
+            val (status, fee) = runBlocking { Kernel.txPool().process(hash, bytes, time / 1000L, true) }
 
             when (status) {
                 Accepted -> inv.add(Triple(hash, bytes.size, fee))
