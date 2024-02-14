@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -79,7 +79,7 @@ val downloadLicenses by tasks.existing(DownloadLicenses::class) {
 }
 
 val wrapper by tasks.existing(Wrapper::class) {
-    gradleVersion = "8.5"
+    gradleVersion = "8.6"
     distributionType = Wrapper.DistributionType.BIN
-    distributionSha256Sum = "9d926787066a081739e8200858338b4a69e837c3a821a33aca9db09dd4a41026"
+    distributionSha256Sum = "9631d53cf3e74bfa726893aee1f8994fee4e060c401335946dba2156f440f24c"
 }
