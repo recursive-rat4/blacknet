@@ -36,6 +36,7 @@ private val logger = KotlinLogging.logger {}
  * 區塊鏈獲取器
  */
 object ChainFetcher {
+    //TODO review capacity
     private val announces = Channel<Pair<Connection, ChainAnnounce>?>(16)
     private val deferChannel = Channel<Triple<Connection, Blocks, BigInteger>>(16)
     @Volatile

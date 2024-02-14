@@ -50,7 +50,7 @@ class Connection(
 
     private val closed = atomic(false)
     private val dosScore = atomic(0)
-    //TODO review capacity
+    private val sendQueueSize = atomic(0L)
     private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
     private val inventoryToSend = SynchronizedArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = currentTimeSeconds()
@@ -149,6 +149,7 @@ class Connection(
             for (packet in sendChannel) {
                 val size = packet.remaining
                 writeChannel.writePacket(packet)
+                sendQueueSize.addAndGet(-size) //UPSTREAM https://github.com/Kotlin/kotlinx-atomicfu/issues/274
                 totalBytesWritten += size
             }
         } catch (e: ClosedWriteChannelException) {
@@ -198,11 +199,17 @@ class Connection(
 
     fun sendPacket(type: PacketType, packet: Packet) {
         logger.debug { "Sending $type to ${debugName()}" }
-        sendChannel.trySend(buildPacket(type, packet))
+        sendPacket(buildPacket(type, packet))
     }
 
     internal fun sendPacket(bytes: ByteReadPacket) {
-        sendChannel.trySend(bytes)
+        //TODO review threshold
+        if (sendQueueSize.addAndGet(bytes.remaining) <= Node.getMaxPacketSize() * 10) {
+            sendChannel.trySend(bytes)
+        } else {
+            logger.info { "Disconnecting ${debugName()} on send queue overflow" }
+            close()
+        }
     }
 
     fun dos(reason: String) {
