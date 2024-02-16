@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2018 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -91,6 +91,7 @@ object Kernel {
 
         if (Config.instance.debugcoroutines) {
             logger.warn { "Installing debug probes..." }
+            DebugProbes.enableCreationStackTraces = true
             DebugProbes.ignoreCoroutinesWithEmptyContext = false
             DebugProbes.install()
             logger.warn { "Node may work significally slower" }
