@@ -321,7 +321,7 @@ object Node {
         }
     }
 
-    suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
+    fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
         val currTime = currentTimeSeconds()
         val (status, fee) = Kernel.txPool().process(hash, bytes, currTime, false)
         if (status == Accepted) {

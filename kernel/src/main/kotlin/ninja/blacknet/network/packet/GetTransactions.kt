@@ -9,7 +9,6 @@
 
 package ninja.blacknet.network.packet
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
@@ -31,7 +30,7 @@ class GetTransactions(
         val response = ArrayList<ByteArray>(list.size)
 
         for (hash in list) {
-            val value = runBlocking { Kernel.txPool().get(hash) } ?: continue
+            val value = Kernel.txPool().get(hash) ?: continue
             val newSize = size + value.size + 4
 
             if (response.isEmpty()) {

@@ -12,7 +12,6 @@ package ninja.blacknet.network
 import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
-import kotlinx.coroutines.runBlocking
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.packet.GetTransactions
@@ -53,7 +52,7 @@ object TxFetcher {
                 continue
             }
 
-            if (runBlocking { Kernel.txPool().isInteresting(hash) }) {
+            if (Kernel.txPool().isInteresting(hash)) {
                 requested.put(hash, currTime)
                 request.add(hash)
             }

@@ -10,7 +10,6 @@
 package ninja.blacknet.network.packet
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.core.*
@@ -43,7 +42,7 @@ class Transactions(
                 continue
             }
 
-            val (status, fee) = runBlocking { Kernel.txPool().process(hash, bytes, time / 1000L, true) }
+            val (status, fee) = Kernel.txPool().process(hash, bytes, time / 1000L, true)
 
             when (status) {
                 Accepted -> inv.add(Triple(hash, bytes.size, fee))

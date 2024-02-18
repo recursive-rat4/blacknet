@@ -11,10 +11,10 @@ package ninja.blacknet.core
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigDecimal
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
 import kotlin.math.min
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Config
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
@@ -33,7 +33,7 @@ class TxPool(
     private val config: Config,
     private val blockDB: BlockDB,
 ) : MemPool(), Ledger {
-    internal val mutex = Mutex()
+    internal val reentrant = ReentrantReadWriteLock()
     private val rejects = HashSet<Hash>()
     private val undoAccounts = HashMap<PublicKey, AccountState?>()
     private val undoHtlcs = HashMap<HashTimeLockContractId, Pair<Boolean, HTLC?>>()
@@ -50,7 +50,7 @@ class TxPool(
         blockDB.blockNotify.connect(::blockNotify)
     }
 
-    suspend fun check(): Boolean = mutex.withLock {
+    fun check(): Boolean = reentrant.writeLock().withLock {
         var result = true
         val (txs, map) = steal()
         for (hash in txs)
@@ -61,7 +61,7 @@ class TxPool(
         result
     }
 
-    suspend fun fill(block: Block) = mutex.withLock {
+    fun fill(block: Block) = reentrant.readLock().withLock {
         val poolSize = sizeImpl()
         var freeBlockSize = min(LedgerDB.state().maxBlockSize, config.softblocksizelimit.bytes) - 176
         var i = 0
@@ -84,18 +84,18 @@ class TxPool(
         rejects.clear()
     }
 
-    suspend fun isInteresting(hash: Hash): Boolean = mutex.withLock {
+    fun isInteresting(hash: Hash): Boolean = reentrant.readLock().withLock {
         return !rejects.contains(hash) && !containsImpl(hash)
     }
 
-    suspend fun getSequence(key: PublicKey): Int = mutex.withLock {
+    fun getSequence(key: PublicKey): Int = reentrant.readLock().withLock {
         val account = accounts.get(key)
         if (account != null)
             return account.seq
         return LedgerDB.get(key)?.seq ?: 0
     }
 
-    suspend fun get(hash: Hash): ByteArray? = mutex.withLock {
+    fun get(hash: Hash): ByteArray? = reentrant.readLock().withLock {
         return@withLock getImpl(hash)
     }
 
@@ -230,7 +230,7 @@ class TxPool(
         return status
     }
 
-    private suspend fun processImplWithFee(hash: Hash, bytes: ByteArray, time: Long): Pair<Status, Long> {
+    private fun processImplWithFee(hash: Hash, bytes: ByteArray, time: Long): Pair<Status, Long> {
         val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
         if (!checkFee(bytes.size, tx.fee)) {
             return Pair(Invalid("Too low fee ${tx.fee}"), tx.fee)
@@ -239,7 +239,9 @@ class TxPool(
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
-            WalletDB.processTransaction(hash, tx, bytes, time)
+            runBlocking {
+                WalletDB.processTransaction(hash, tx, bytes, time)
+            }
             txNotify(tx, hash, time, bytes.size)
             logger.debug { "Accepted $hash" }
         }
@@ -247,7 +249,7 @@ class TxPool(
         return Pair(status, tx.fee)
     }
 
-    suspend fun process(hash: Hash, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = mutex.withLock {
+    fun process(hash: Hash, bytes: ByteArray, time: Long, remote: Boolean): Pair<Status, Long> = reentrant.writeLock().withLock {
         if (rejects.contains(hash))
             return Pair(Invalid("Already rejected tx"), 0)
         if (containsImpl(hash))
@@ -292,8 +294,8 @@ class TxPool(
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private fun blockNotify(block: Block, hash: Hash, height: Int, size: Int, txHashes: List<Hash>) = runBlocking {
-        mutex.withLock {
+    private fun blockNotify(block: Block, hash: Hash, height: Int, size: Int, txHashes: List<Hash>) {
+        reentrant.writeLock().withLock {
             clearRejectsImpl()
             removeImpl(txHashes)
         }

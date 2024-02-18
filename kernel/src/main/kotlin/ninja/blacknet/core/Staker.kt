@@ -130,7 +130,7 @@ object Staker {
             val pos = PoS.check(timeSlot, staker.publicKey, state.nxtrng, state.difficulty, state.blockTime, staker.stake)
             if (pos == Accepted) {
                 val block = Block.create(state.blockHash, timeSlot, staker.publicKey)
-                runBlocking { Kernel.txPool().fill(block) }
+                Kernel.txPool().fill(block)
                 val (hash, bytes) = block.sign(staker.privateKey)
                 logger.info { "Staked $hash" }
                 if (Node.broadcastBlock(hash, bytes)) {
@@ -142,8 +142,8 @@ object Staker {
                     if (block.transactions.isEmpty())
                         return
                     block.transactions.clear()
-                    if (runBlocking { Kernel.txPool().check() } == false) {
-                        runBlocking { Kernel.txPool().fill(block) }
+                    if (Kernel.txPool().check() == false) {
+                        Kernel.txPool().fill(block)
                         if (block.transactions.isNotEmpty()) {
                             val (hash, bytes) = block.sign(staker.privateKey)
                             logger.warn { "Retry $hash" }

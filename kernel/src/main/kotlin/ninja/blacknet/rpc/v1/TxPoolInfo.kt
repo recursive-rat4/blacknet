@@ -9,7 +9,7 @@
 
 package ninja.blacknet.rpc.v1
 
-import kotlinx.coroutines.sync.withLock
+import kotlin.concurrent.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 
@@ -20,7 +20,7 @@ class TxPoolInfo(
         val tx: List<String>
 ) {
     companion object {
-        suspend fun get(): TxPoolInfo = Kernel.txPool().mutex.withLock {
+        fun get(): TxPoolInfo = Kernel.txPool().reentrant.readLock().withLock {
             val tx = Kernel.txPool().mapHashesToListImpl { it.toString() }
             return TxPoolInfo(Kernel.txPool().sizeImpl(), Kernel.txPool().dataSizeImpl(), tx)
         }
