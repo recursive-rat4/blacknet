@@ -24,8 +24,10 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlin.math.abs
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.Kernel
@@ -135,17 +137,17 @@ fun Route.APIV1() {
     get("/api/v1/blockdb/getblockhash/{height}") {
         val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
 
-        Kernel.blockDB().mutex.withLock {
+        Kernel.blockDB().reentrant.readLock().withLock { runBlocking {
             val state = LedgerDB.state()
             if (height < 0 || height > state.height)
-                return@get call.respond(HttpStatusCode.NotFound, "block not found")
+                return@runBlocking call.respond(HttpStatusCode.NotFound, "block not found")
             else if (height == 0)
-                return@get call.respond(Genesis.BLOCK_HASH.toString())
+                return@runBlocking call.respond(Genesis.BLOCK_HASH.toString())
             else if (height == state.height)
-                return@get call.respond(state.blockHash.toString())
+                return@runBlocking call.respond(state.blockHash.toString())
 
             if (RPCServer.lastIndex != null && RPCServer.lastIndex!!.second.height == height)
-                return@get call.respond(RPCServer.lastIndex!!.first.toString())
+                return@runBlocking call.respond(RPCServer.lastIndex!!.first.toString())
 
             var hash: Hash
             var index: ChainIndex
@@ -169,7 +171,7 @@ fun Route.APIV1() {
             if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
                 RPCServer.lastIndex = Pair(hash, index)
             call.respond(hash.toString())
-        }
+        }}
     }
 
     get("/api/v1/blockdb/getblockindex/{hash}/") {

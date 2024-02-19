@@ -12,6 +12,7 @@ package ninja.blacknet.rpc.v2
 
 import io.ktor.server.routing.Route
 import java.util.HashMap.newHashMap
+import kotlin.concurrent.withLock
 import kotlin.math.min
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
@@ -223,7 +224,7 @@ class ListTransactions(
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
-        Kernel.blockDB().mutex.withLock<TextContent> {
+        Kernel.blockDB().reentrant.readLock().withLock<TextContent> {
             val size = wallet.transactions.size
             if (offset < 0 || offset > size)
                 return respondError("Invalid offset")
@@ -287,7 +288,7 @@ class ListSinceBlock(
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
-        Kernel.blockDB().mutex.withLock<TextContent> {
+        Kernel.blockDB().reentrant.readLock().withLock<TextContent> {
             val height = LedgerDB.chainIndexes.get(hash.bytes)?.height ?: return respondError("Block not found")
             val state = LedgerDB.state()
             if (height >= state.height - PoS.ROLLBACK_LIMIT)

@@ -16,9 +16,9 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Kernel
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
@@ -93,27 +93,27 @@ object ChainFetcher {
         return future.get()
     }
 
-    private fun implementation() = runBlocking {
+    private fun implementation() {
         val source = blocksQueue.take()
 
         if (source is Staked) {
-            val status = Kernel.blockDB().mutex.withLock {
-                Kernel.blockDB().processImpl(source.hash, source.bytes)
+            val status = Kernel.blockDB().reentrant.writeLock().withLock {
+                runBlocking { Kernel.blockDB().processImpl(source.hash, source.bytes) }
             }
             val n = when (status) {
                 Accepted -> Node.announceChain(source.hash, LedgerDB.state().cumulativeDifficulty)
                 else -> 0
             }
             source.future.complete(Pair(status, n))
-            return@runBlocking
+            return
         }
 
         if (source is Deferred) {
             if (source.requestedDifficulty <= LedgerDB.state().cumulativeDifficulty)
-                return@runBlocking
+                return
 
             processDeferred(source.connection, source.answer)
-            return@runBlocking
+            return
         }
 
         source as Remote
@@ -121,17 +121,17 @@ object ChainFetcher {
         val announce = source.announce
 
         if (connection.requestedBlocks) {
-            return@runBlocking
+            return
         }
 
         var state = LedgerDB.state()
         if (announce.cumulativeDifficulty <= state.cumulativeDifficulty)
-            return@runBlocking
+            return
 
-        Kernel.blockDB().mutex.withLock {
+        Kernel.blockDB().reentrant.writeLock().withLock {
             if (Kernel.blockDB().isRejectedImpl(announce.chain)) {
                 connection.dos("Rejected chain")
-                return@runBlocking
+                return
             }
 
             logger.info { "Fetching ${announce.chain}" }
@@ -198,7 +198,7 @@ object ChainFetcher {
             undoRollback?.let {
                 if (undoDifficulty >= state.cumulativeDifficulty) {
                     logger.info { "Reconnecting ${it.size} blocks" }
-                    val toRemove = LedgerDB.undoRollbackImpl(rollbackTo!!, it)
+                    val toRemove = runBlocking { LedgerDB.undoRollbackImpl(rollbackTo!!, it) }
                     Kernel.blockDB().deleteImpl(toRemove)
                 } else {
                     logger.debug { "Deleting ${it.size} blocks from db" }
@@ -263,22 +263,22 @@ object ChainFetcher {
         request!!.complete(blocks)
     }
 
-    private fun processBlocks(connection: Connection, answer: Blocks): Boolean = runBlocking {
+    private fun processBlocks(connection: Connection, answer: Blocks): Boolean {
         if (rollbackTo != null && undoRollback == null) {
             undoDifficulty = LedgerDB.state().cumulativeDifficulty
-            undoRollback = LedgerDB.rollbackToImpl(rollbackTo!!)
+            undoRollback = runBlocking { LedgerDB.rollbackToImpl(rollbackTo!!) }
             logger.info { "Disconnected ${undoRollback!!.size} blocks" }
         }
         for (i in answer.blocks) {
             val hash = Block.hash(i)
             if (undoRollback?.contains(hash) == true) {
                 connection.dos("Rollback contains $hash")
-                return@runBlocking false
+                return false
             }
-            val status = Kernel.blockDB().processImpl(hash, i)
+            val status = runBlocking { Kernel.blockDB().processImpl(hash, i) }
             if (status != Accepted) {
                 connection.dos(status.toString())
-                return@runBlocking false
+                return false
             }
         }
         if (undoRollback == null)
@@ -286,22 +286,22 @@ object ChainFetcher {
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
             logger.info { "Connected ${answer.blocks.size} blocks" }
-        return@runBlocking true
+        return true
     }
 
     // Blocks were received after timeout. During lags, processing these helps to stay in sync.
-    private fun processDeferred(connection: Connection, answer: Blocks) = runBlocking {
+    private fun processDeferred(connection: Connection, answer: Blocks) {
         if (answer.blocks.isNotEmpty()) {
             logger.info { "Mongering ${answer.blocks.size} deferred blocks from ${connection.debugName()}" }
-            Kernel.blockDB().mutex.withLock {
+            Kernel.blockDB().reentrant.writeLock().withLock {
                 for (i in answer.blocks) {
                     val hash = Block.hash(i)
                     val status = try {
-                        Kernel.blockDB().processImpl(hash, i)
+                        runBlocking { Kernel.blockDB().processImpl(hash, i) }
                     } catch (e: Throwable) {
                         logger.error(e) { "Exception in processDeferred ${connection.debugName()}" }
                         connection.close()
-                        return@runBlocking
+                        return
                     }
                     when (status) {
                         Accepted -> {

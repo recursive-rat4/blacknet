@@ -11,8 +11,8 @@
 package ninja.blacknet.rpc.v2
 
 import io.ktor.server.routing.Route
+import kotlin.concurrent.withLock
 import kotlin.math.abs
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.core.ChainIndex
@@ -68,7 +68,7 @@ class BlockDBCheck : Request {
 class BlockHash(
     val height: Int
 ) : Request {
-    override suspend fun handle(): TextContent = Kernel.blockDB().mutex.withLock {
+    override suspend fun handle(): TextContent = Kernel.blockDB().reentrant.readLock().withLock {
         val state = LedgerDB.state()
         if (height < 0 || height > state.height)
             return respondError("Block not found")
@@ -163,7 +163,7 @@ class LedgerDBCheck : Request {
 class ScheduleSnapshot(
     val height: Int
 ) : Request {
-    override suspend fun handle(): TextContent = Kernel.blockDB().mutex.withLock {
+    override suspend fun handle(): TextContent = Kernel.blockDB().reentrant.writeLock().withLock {
         val scheduled = LedgerDB.scheduleSnapshotImpl(height)
         return respondText(scheduled.toString())
     }

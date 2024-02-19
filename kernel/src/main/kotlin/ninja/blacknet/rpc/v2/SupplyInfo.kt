@@ -9,7 +9,7 @@
 
 package ninja.blacknet.rpc.v2
 
-import kotlinx.coroutines.sync.withLock
+import kotlin.concurrent.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
@@ -25,7 +25,7 @@ class SupplyInfo(
         val supply: Long
 ) {
     companion object {
-        suspend fun get(): SupplyInfo = Kernel.blockDB().mutex.withLock {
+        fun get(): SupplyInfo = Kernel.blockDB().reentrant.readLock().withLock {
             val state = LedgerDB.state()
             return SupplyInfo(
                     state.height,

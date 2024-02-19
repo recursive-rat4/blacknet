@@ -12,10 +12,10 @@ package ninja.blacknet.db
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigInteger
 import java.util.ArrayDeque //TODO check kotlin.collections.ArrayDeque
+import kotlin.concurrent.withLock
 import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.SetSerializer
@@ -253,7 +253,7 @@ object LedgerDB {
         return hash == Genesis.BLOCK_HASH || chainIndexes.contains(hash.bytes)
     }
 
-    suspend fun getNextBlockHashes(start: Hash, max: Int): List<Hash>? = Kernel.blockDB().mutex.withLock {
+    fun getNextBlockHashes(start: Hash, max: Int): List<Hash>? = Kernel.blockDB().reentrant.readLock().withLock {
         var chainIndex = chainIndexes.get(start.bytes) ?: return@withLock null
         val result = ArrayList<Hash>(max)
         while (true) {
@@ -495,7 +495,7 @@ object LedgerDB {
             listOf("This version is obsolete, upgrade required!")
     }
 
-    suspend fun check(): Check = Kernel.blockDB().mutex.withLock {
+    fun check(): Check = Kernel.blockDB().reentrant.readLock().withLock {
         val result = Check(false, 0, 0, 0, state.supply, 0L)
         iterateImpl(
             { _, account ->

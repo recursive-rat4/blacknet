@@ -13,9 +13,8 @@ package ninja.blacknet.core
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.Thread.sleep
 import java.util.concurrent.CopyOnWriteArrayList
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Kernel
+import kotlin.concurrent.withLock
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
@@ -119,11 +118,9 @@ object Staker {
 
         stakers.forEach { staker ->
             if (staker.lastBlock != state.blockHash) {
-                runBlocking {
-                    Kernel.blockDB().mutex.withLock {
-                        state = LedgerDB.state()
-                        staker.updateImpl(state)
-                    }
+                Kernel.blockDB().reentrant.readLock().withLock {
+                    state = LedgerDB.state()
+                    staker.updateImpl(state)
                 }
             }
             staker.hashCounter += 1
@@ -170,11 +167,9 @@ object Staker {
         }
 
         val staker = StakerState(publicKey, privateKey)
-        runBlocking {
-            Kernel.blockDB().mutex.withLock {
-                val state = LedgerDB.state()
-                staker.updateImpl(state)
-            }
+        Kernel.blockDB().reentrant.readLock().withLock {
+            val state = LedgerDB.state()
+            staker.updateImpl(state)
         }
         if (staker.stake == 0L) {
             logger.warn { "Stakeholder has zero active balance" }

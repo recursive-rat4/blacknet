@@ -15,7 +15,9 @@ import java.nio.file.Files
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.nio.file.StandardOpenOption.WRITE
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
@@ -166,22 +168,22 @@ object WalletDB {
         delay(30 * 60 * 1000L)
     }
 
-    suspend fun getConfirmations(hash: Hash): Int? = Kernel.blockDB().mutex.withLock {
-        mutex.withLock<Int?> {
+    fun getConfirmations(hash: Hash): Int? = Kernel.blockDB().reentrant.readLock().withLock {
+        runBlocking { mutex.withLock<Int?> {
             wallets.forEach { (_, wallet) ->
                 val data = wallet.transactions.get(hash)
                 if (data != null) {
-                    return data.confirmationsImpl(LedgerDB.state())
+                    return@withLock data.confirmationsImpl(LedgerDB.state())
                 } else {
                     Unit
                 }
             }
-            return null
-        }
+            return@withLock null
+        }}
     }
 
-    suspend fun getConfirmations(publicKey: PublicKey, hash: Hash): Int? = Kernel.blockDB().mutex.withLock {
-        return mutex.withLock {
+    fun getConfirmations(publicKey: PublicKey, hash: Hash): Int? = Kernel.blockDB().reentrant.readLock().withLock {
+        return runBlocking { mutex.withLock {
             val wallet = wallets.get(publicKey)
             if (wallet != null) {
                 val txData = wallet.transactions.get(hash)
@@ -193,7 +195,7 @@ object WalletDB {
             } else {
                 wallet
             }
-        }
+        }}
     }
 
     suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
@@ -527,8 +529,8 @@ object WalletDB {
         wallet = Wallet()
 
         mutex.withUnlock {
-            Kernel.blockDB().mutex.withLock {
-                mutex.withLock {
+            Kernel.blockDB().reentrant.readLock().withLock {
+                runBlocking { mutex.withLock {
                     var hash = Genesis.BLOCK_HASH
                     var index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
                     val height = LedgerDB.state().height
@@ -542,7 +544,7 @@ object WalletDB {
                         } while (index.height != height)
                         logger.info { "Finished rescan" }
                     }
-                }
+                }}
             }
         }
 
