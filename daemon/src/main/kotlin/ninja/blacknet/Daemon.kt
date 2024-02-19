@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -18,8 +18,8 @@ private val logger = KotlinLogging.logger {}
 object Daemon {
     @JvmStatic
     fun main(args: Array<String>) {
-        Kernel.init(args) { _, e ->
-            logger.error(e)
+        Kernel.init(args) { t, e ->
+            logger.error(e) { "Uncaught exception in thread ${t.name}" }
         }
 
         try {
