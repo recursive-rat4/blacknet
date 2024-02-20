@@ -19,7 +19,6 @@ import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.READ
 import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.nio.file.StandardOpenOption.WRITE
-import kotlinx.coroutines.runBlocking
 import ninja.blacknet.Kernel
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.AlreadyHave
@@ -41,39 +40,37 @@ object Bootstrap {
     fun import() {
         val bootstrap = dataDir.resolve("bootstrap.dat")
         if (Files.exists(bootstrap)) {
-            runBlocking {
-                logger.info { "Found bootstrap" }
-                var n = 0
+            logger.info { "Found bootstrap" }
+            var n = 0
 
-                try {
-                    FileChannel.open(bootstrap, READ).inputStream().buffered().data().use {
-                        while (true) {
-                            val size = it.readInt()
-                            val bytes = ByteArray(size)
-                            it.readFully(bytes)
+            try {
+                FileChannel.open(bootstrap, READ).inputStream().buffered().data().use {
+                    while (true) {
+                        val size = it.readInt()
+                        val bytes = ByteArray(size)
+                        it.readFully(bytes)
 
-                            val hash = Block.hash(bytes)
-                            val status = Kernel.blockDB().processImpl(hash, bytes)
-                            if (status == Accepted) {
-                                if (++n % 50000 == 0)
-                                    logger.info { "Processed $n blocks" }
-                                LedgerDB.pruneImpl()
-                            } else if (status !is AlreadyHave) {
-                                logger.info { "$status block $hash" }
-                                break
-                            }
+                        val hash = Block.hash(bytes)
+                        val status = Kernel.blockDB().processImpl(hash, bytes)
+                        if (status == Accepted) {
+                            if (++n % 50000 == 0)
+                                logger.info { "Processed $n blocks" }
+                            LedgerDB.pruneImpl()
+                        } else if (status !is AlreadyHave) {
+                            logger.info { "$status block $hash" }
+                            break
                         }
                     }
-                } catch (e: EOFException) {
-                    // DataInputStream reached end of file
-                } catch (e: Throwable) {
-                    logger.error(e)
                 }
-
-                Files.move(bootstrap, dataDir.resolve("bootstrap.dat.old"), ATOMIC_MOVE)
-
-                logger.info { "Imported $n blocks" }
+            } catch (e: EOFException) {
+                // DataInputStream reached end of file
+            } catch (e: Throwable) {
+                logger.error(e)
             }
+
+            Files.move(bootstrap, dataDir.resolve("bootstrap.dat.old"), ATOMIC_MOVE)
+
+            logger.info { "Imported $n blocks" }
         }
     }
 

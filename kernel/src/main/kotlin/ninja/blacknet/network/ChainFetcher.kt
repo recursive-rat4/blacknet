@@ -98,7 +98,7 @@ object ChainFetcher {
 
         if (source is Staked) {
             val status = Kernel.blockDB().reentrant.writeLock().withLock {
-                runBlocking { Kernel.blockDB().processImpl(source.hash, source.bytes) }
+                Kernel.blockDB().processImpl(source.hash, source.bytes)
             }
             val n = when (status) {
                 Accepted -> Node.announceChain(source.hash, LedgerDB.state().cumulativeDifficulty)
@@ -198,7 +198,7 @@ object ChainFetcher {
             undoRollback?.let {
                 if (undoDifficulty >= state.cumulativeDifficulty) {
                     logger.info { "Reconnecting ${it.size} blocks" }
-                    val toRemove = runBlocking { LedgerDB.undoRollbackImpl(rollbackTo!!, it) }
+                    val toRemove = LedgerDB.undoRollbackImpl(rollbackTo!!, it)
                     Kernel.blockDB().deleteImpl(toRemove)
                 } else {
                     logger.debug { "Deleting ${it.size} blocks from db" }
@@ -266,7 +266,7 @@ object ChainFetcher {
     private fun processBlocks(connection: Connection, answer: Blocks): Boolean {
         if (rollbackTo != null && undoRollback == null) {
             undoDifficulty = LedgerDB.state().cumulativeDifficulty
-            undoRollback = runBlocking { LedgerDB.rollbackToImpl(rollbackTo!!) }
+            undoRollback = LedgerDB.rollbackToImpl(rollbackTo!!)
             logger.info { "Disconnected ${undoRollback!!.size} blocks" }
         }
         for (i in answer.blocks) {
@@ -275,7 +275,7 @@ object ChainFetcher {
                 connection.dos("Rollback contains $hash")
                 return false
             }
-            val status = runBlocking { Kernel.blockDB().processImpl(hash, i) }
+            val status = Kernel.blockDB().processImpl(hash, i)
             if (status != Accepted) {
                 connection.dos(status.toString())
                 return false
@@ -297,7 +297,7 @@ object ChainFetcher {
                 for (i in answer.blocks) {
                     val hash = Block.hash(i)
                     val status = try {
-                        runBlocking { Kernel.blockDB().processImpl(hash, i) }
+                        Kernel.blockDB().processImpl(hash, i)
                     } catch (e: Throwable) {
                         logger.error(e) { "Exception in processDeferred ${connection.debugName()}" }
                         connection.close()

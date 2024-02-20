@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,18 +9,18 @@
 
 package ninja.blacknet.util
 
-import kotlinx.coroutines.sync.Mutex
+import java.util.concurrent.locks.Lock
 
-suspend inline fun <T> Mutex.withUnlock(owner: Any? = null, action: () -> T): T {
+inline fun <T> Lock.withUnlock(action: () -> T): T {
     // Experimental contracts
     // import kotlin.contracts.*
     // contract {
     //     callsInPlace(action, InvocationKind.EXACTLY_ONCE)
     // }
-    unlock(owner)
+    unlock()
     try {
         return action()
     } finally {
-        lock(owner)
+        lock()
     }
 }

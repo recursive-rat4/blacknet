@@ -10,16 +10,14 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.lang.Thread.sleep
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.nio.file.StandardOpenOption.WRITE
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.SetSerializer
@@ -30,7 +28,6 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
@@ -55,7 +52,7 @@ private val logger = KotlinLogging.logger {}
 
 object WalletDB {
     private const val VERSION = 9
-    internal val mutex = Mutex()
+    internal val reentrant = ReentrantReadWriteLock()
     private val PUBLIC_KEYS_KEY = DBKey(64, 0)
     private val TX_KEY = DBKey(65, Hash.SIZE_BYTES)
     private val VERSION_KEY = DBKey(66, 0)
@@ -103,18 +100,18 @@ object WalletDB {
             throw Error("Unknown database version $version")
         }
 
-        val job = Runtime.rotate(::announcer)
+        val vThread = rotate("WalletDB::announcer", ::announcer)
 
         ShutdownHooks.add {
             logger.info { "Silencing WalletDB announcer" }
-            job.cancel()
+            vThread.interrupt()
         }
     }
 
-    private suspend fun announcer() {
+    private fun announcer() {
         val allUnconfirmed = ArrayList<ArrayList<Triple<Hash, ByteArray, Int>>>()
 
-        mutex.withLock {
+        reentrant.readLock().withLock {
             wallets.forEach { (_, wallet) ->
                 val unconfirmed = ArrayList<Triple<Hash, ByteArray, Int>>()
 
@@ -165,25 +162,25 @@ object WalletDB {
             logger.info { "Announced ${inv.size} transactions to $n peers" }
         }
 
-        delay(30 * 60 * 1000L)
+        sleep(30 * 60 * 1000L)
     }
 
     fun getConfirmations(hash: Hash): Int? = Kernel.blockDB().reentrant.readLock().withLock {
-        runBlocking { mutex.withLock<Int?> {
+        reentrant.readLock().withLock<Int?> {
             wallets.forEach { (_, wallet) ->
                 val data = wallet.transactions.get(hash)
                 if (data != null) {
-                    return@withLock data.confirmationsImpl(LedgerDB.state())
+                    return data.confirmationsImpl(LedgerDB.state())
                 } else {
                     Unit
                 }
             }
-            return@withLock null
-        }}
+            return null
+        }
     }
 
     fun getConfirmations(publicKey: PublicKey, hash: Hash): Int? = Kernel.blockDB().reentrant.readLock().withLock {
-        return runBlocking { mutex.withLock {
+        return reentrant.readLock().withLock {
             val wallet = wallets.get(publicKey)
             if (wallet != null) {
                 val txData = wallet.transactions.get(hash)
@@ -195,10 +192,10 @@ object WalletDB {
             } else {
                 wallet
             }
-        }}
+        }
     }
 
-    suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
+    fun getSequence(publicKey: PublicKey): Int = reentrant.readLock().withLock {
         val wallet = getWalletImpl(publicKey)
         val seq = wallet.seq
         return@withLock if (seq < Kernel.config().seqthreshold)
@@ -211,7 +208,7 @@ object WalletDB {
         return LevelDB.get(TX_KEY, hash.bytes)
     }
 
-    suspend fun disconnectBlock(blockHash: Hash, batch: LevelDB.WriteBatch) = mutex.withLock {
+    fun disconnectBlock(blockHash: Hash, batch: LevelDB.WriteBatch) = reentrant.writeLock().withLock {
         if (wallets.isEmpty()) return@withLock
 
         val block = Kernel.blockDB().blocks.getOrThrow(blockHash.bytes)
@@ -238,13 +235,13 @@ object WalletDB {
         }
     }
 
-    suspend fun processBlock(hash: Hash, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch) = mutex.withLock {
+    fun processBlock(hash: Hash, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch) = reentrant.writeLock().withLock {
         wallets.forEach { (publicKey, wallet) ->
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, false)
         }
     }
 
-    private suspend fun processBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch, rescan: Boolean) {
+    private fun processBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, block: Block?, height: Int, generated: Long, batch: LevelDB.WriteBatch, rescan: Boolean) {
         if (height != 0) {
             if (block!!.generator == publicKey) {
                 val tx = Transaction.generated(publicKey, height, hash, generated)
@@ -262,17 +259,17 @@ object WalletDB {
         }
     }
 
-    suspend fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long) = mutex.withLock {
+    fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long) = reentrant.writeLock().withLock {
         val batch = LevelDB.createWriteBatch()
         processTransactionImpl(hash, tx, bytes, time, 0, batch)
         batch.write()
     }
 
-    suspend fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch) = mutex.withLock {
+    fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch) = reentrant.writeLock().withLock {
         processTransactionImpl(hash, tx, bytes, time, height, batch)
     }
 
-    private suspend fun processTransactionImpl(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch) {
+    private fun processTransactionImpl(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch) {
         var store = !LevelDB.contains(TX_KEY, hash.bytes)
 
         wallets.forEach { (publicKey, wallet) ->
@@ -380,7 +377,7 @@ object WalletDB {
         }
     }
 
-    private suspend fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
+    private fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
         val txData = wallet.transactions.get(hash)
         if (txData == null) {
             val from = tx.from == publicKey
@@ -519,7 +516,7 @@ object WalletDB {
         batch.put(PUBLIC_KEYS_KEY, publicKeysBytes)
     }
 
-    internal suspend fun getWalletImpl(publicKey: PublicKey): Wallet {
+    internal fun getWalletImpl(publicKey: PublicKey): Wallet {
         var wallet = wallets.get(publicKey)
         if (wallet != null)
             return wallet
@@ -528,9 +525,9 @@ object WalletDB {
         val batch = LevelDB.createWriteBatch()
         wallet = Wallet()
 
-        mutex.withUnlock {
+        reentrant.readLock().withUnlock {
             Kernel.blockDB().reentrant.readLock().withLock {
-                runBlocking { mutex.withLock {
+                reentrant.writeLock().withLock {
                     var hash = Genesis.BLOCK_HASH
                     var index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
                     val height = LedgerDB.state().height
@@ -544,14 +541,13 @@ object WalletDB {
                         } while (index.height != height)
                         logger.info { "Finished rescan" }
                     }
-                }}
+                    //TODO 重掃描交易池
+                    addWalletImpl(batch, publicKey, wallet)
+                    batch.write()
+                }
             }
         }
 
-        // 重掃描交易池
-
-        addWalletImpl(batch, publicKey, wallet)
-        batch.write()
         return wallet
     }
 
@@ -562,7 +558,7 @@ object WalletDB {
             Genesis.BLOCK_HASH
     }
 
-    private suspend fun rescanBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
+    private fun rescanBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
         if (height != 0) {
             val block = Kernel.blockDB().blocks.getOrThrow(hash.bytes)
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)

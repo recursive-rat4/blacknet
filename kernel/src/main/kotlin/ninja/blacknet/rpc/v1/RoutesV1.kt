@@ -460,17 +460,21 @@ fun Route.APIV1() {
     get("/api/v1/walletdb/getwallet/{address}") {
         val publicKey = call.parameters["address"]?.let { PublicKey(Address.decode(it)) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
 
-        WalletDB.mutex.withLock {
-            call.respond(Json.stringify(WalletV1.serializer(), WalletV1(WalletDB.getWalletImpl(publicKey))))
+        WalletDB.reentrant.readLock().withLock {
+            runBlocking {
+                call.respond(Json.stringify(WalletV1.serializer(), WalletV1(WalletDB.getWalletImpl(publicKey))))
+            }
         }
     }
 
     get("/api/v1/walletdb/getoutleases/{address}") {
         val publicKey = call.parameters["address"]?.let { PublicKey(Address.decode(it)) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
 
-        WalletDB.mutex.withLock {
+        WalletDB.reentrant.readLock().withLock {
             val wallet = WalletDB.getWalletImpl(publicKey)
-            call.respond(Json.stringify(ListSerializer(AccountState.Lease.serializer()), wallet.outLeases))
+            runBlocking {
+                call.respond(Json.stringify(ListSerializer(AccountState.Lease.serializer()), wallet.outLeases))
+            }
         }
     }
 
@@ -484,7 +488,7 @@ fun Route.APIV1() {
         val hash = call.parameters["hash"]?.let { Hash(Hash.fromString(it)) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
         val raw = call.parameters["raw"]?.toBoolean() ?: false
 
-        val result = WalletDB.mutex.withLock {
+        val result = WalletDB.reentrant.readLock().withLock {
             WalletDB.getTransactionImpl(hash)
         }
         if (result != null) {

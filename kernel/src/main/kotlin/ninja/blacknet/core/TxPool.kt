@@ -14,7 +14,6 @@ import java.math.BigDecimal
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.math.min
-import kotlinx.coroutines.runBlocking
 import ninja.blacknet.Config
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
@@ -239,9 +238,7 @@ class TxPool(
         if (status == Accepted) {
             addImpl(hash, bytes)
             transactions.add(hash)
-            runBlocking {
-                WalletDB.processTransaction(hash, tx, bytes, time)
-            }
+            WalletDB.processTransaction(hash, tx, bytes, time)
             txNotify(tx, hash, time, bytes.size)
             logger.debug { "Accepted $hash" }
         }

@@ -14,7 +14,6 @@ import io.ktor.server.routing.Route
 import java.util.HashMap.newHashMap
 import kotlin.concurrent.withLock
 import kotlin.math.min
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -119,7 +118,7 @@ class Transactions(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
+    override suspend fun handle(): TextContent = WalletDB.reentrant.readLock().withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
         val transactions = newHashMap<String, TransactionDataInfo>(wallet.transactions.size)
         wallet.transactions.forEach { (hash, txData) ->
@@ -135,7 +134,7 @@ class OutLeases(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
+    override suspend fun handle(): TextContent = WalletDB.reentrant.readLock().withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
 
         return respondJson(ListSerializer(AccountState.Lease.serializer()), wallet.outLeases)
@@ -159,7 +158,7 @@ class TransactionRequest(
     val hash: Hash,
     val raw: Boolean = false
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
+    override suspend fun handle(): TextContent = WalletDB.reentrant.readLock().withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
         val txData = wallet.transactions.get(hash)
         return if (txData != null) {
@@ -207,7 +206,7 @@ class TxCount(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
+    override suspend fun handle(): TextContent = WalletDB.reentrant.readLock().withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
         val count = wallet.transactions.size
         return respondText(count.toString())
@@ -222,9 +221,9 @@ class ListTransactions(
     val max: Int = 100,
     val type: UByte? = null
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
-        val wallet = WalletDB.getWalletImpl(publicKey)
-        Kernel.blockDB().reentrant.readLock().withLock<TextContent> {
+    override suspend fun handle(): TextContent = Kernel.blockDB().reentrant.readLock().withLock {
+        WalletDB.reentrant.readLock().withLock<TextContent> {
+            val wallet = WalletDB.getWalletImpl(publicKey)
             val size = wallet.transactions.size
             if (offset < 0 || offset > size)
                 return respondError("Invalid offset")
@@ -286,9 +285,9 @@ class ListSinceBlock(
     val publicKey: PublicKey,
     val hash: Hash = Genesis.BLOCK_HASH
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
-        val wallet = WalletDB.getWalletImpl(publicKey)
-        Kernel.blockDB().reentrant.readLock().withLock<TextContent> {
+    override suspend fun handle(): TextContent = Kernel.blockDB().reentrant.readLock().withLock {
+        WalletDB.reentrant.readLock().withLock<TextContent> {
+            val wallet = WalletDB.getWalletImpl(publicKey)
             val height = LedgerDB.chainIndexes.get(hash.bytes)?.height ?: return respondError("Block not found")
             val state = LedgerDB.state()
             if (height >= state.height - PoS.ROLLBACK_LIMIT)

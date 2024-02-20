@@ -62,7 +62,7 @@ class BlockDB(
         return LedgerDB.chainIndexes.contains(hash.bytes)
     }
 
-    private suspend fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
+    private fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
         val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
         val state = LedgerDB.state()
         if (block.version > Block.VERSION) {
@@ -103,7 +103,7 @@ class BlockDB(
         return status
     }
 
-    internal suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+    internal fun processImpl(hash: Hash, bytes: ByteArray): Status {
         if (rejects.contains(hash))
             return Invalid("Already rejected block")
         if (containsImpl(hash))
