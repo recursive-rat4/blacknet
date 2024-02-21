@@ -62,7 +62,7 @@ object Node {
     private const val DATA_FILENAME = "node.dat"
     val nonce = Random.nextLong()
     val connections = SynchronizedArrayList<Connection>()
-    val listenAddress = CopyOnWriteArraySet<Address>()
+    private val listenAddress = CopyOnWriteArraySet<Address>()
     private val nextPeerId = atomic(1L)
     private val queuedPeers = Channel<Address>(Config.instance.outgoingconnections)
 
@@ -197,6 +197,18 @@ object Node {
         return connections.find { it.state.isConnected() } == null
     }
 
+    fun getListenAddress(): Set<Address> {
+        return listenAddress
+    }
+
+    fun addListenAddress(address: Address) {
+        listenAddress.add(address)
+    }
+
+    fun removeListenAddress(address: Address) {
+        listenAddress.remove(address)
+    }
+
     fun getMaxPacketSize(): Int {
         return LedgerDB.state().maxBlockSize + PoS.BLOCK_RESERVED_SIZE
     }
@@ -217,7 +229,7 @@ object Node {
         val server = aSocket(Network.selector).tcp().bind(addr)
         logger.info { "Listening on ${address.debugName()}" }
         return Runtime.launch {
-            listenAddress.add(address)
+            addListenAddress(address)
             listener(server)
         }
     }
@@ -391,7 +403,7 @@ object Node {
             val remoteAddress = Network.address(socket.remoteAddress as KtorInetSocketAddress)
             val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
             if (!localAddress.isLocal())
-                listenAddress.add(localAddress)
+                addListenAddress(localAddress)
             val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
             addConnection(connection)
         }
@@ -436,9 +448,9 @@ object Node {
     }
 
     private suspend fun getFilter(): HashSet<Address> {
-        val filter = newHashSet<Address>(connections.size() + listenAddress.size)
+        val filter = newHashSet<Address>(connections.size() + getListenAddress().size)
         connections.forEach { filter.add(it.remoteAddress) }
-        listenAddress.forEach { filter.add(it) }
+        getListenAddress().forEach { filter.add(it) }
         return filter
     }
 

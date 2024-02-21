@@ -342,7 +342,7 @@ class Connection(
             if (randomPeers.size == 0)
                 continue
 
-            val myAddress = Node.listenAddress.filter { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
+            val myAddress = Node.getListenAddress().filter { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
             if (myAddress.size != 0) {
                 val i = Random.nextInt(randomPeers.size * 4)
                 if (i < randomPeers.size) {

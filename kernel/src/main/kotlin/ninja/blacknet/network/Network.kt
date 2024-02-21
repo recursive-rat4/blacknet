@@ -114,7 +114,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                         val socket = aSocket(selector).tcp().connect(address.getSocketAddress())
                         val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
                         if (Config.instance.listen && !localAddress.isLocal())
-                            Node.listenAddress.add(Address(localAddress.network, Config.instance.port, localAddress.bytes))
+                            Node.addListenAddress(Address(localAddress.network, Config.instance.port, localAddress.bytes))
                         return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, state)
                     }
                 }
@@ -144,11 +144,11 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 val (coroutine, localAddress) = TorController.listen()
 
                 logger.info { "Listening on ${localAddress.debugName()}" }
-                Node.listenAddress.add(localAddress)
+                Node.addListenAddress(localAddress)
 
                 coroutine.join()
 
-                Node.listenAddress.remove(localAddress)
+                Node.removeListenAddress(localAddress)
                 logger.info { "Lost connection to tor controller" }
 
                 torTimeout = INIT_TIMEOUT
@@ -165,7 +165,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 val (_, localAddress) = I2PSAM.createSession()
 
                 logger.info { "Listening on ${localAddress.debugName()}" }
-                Node.listenAddress.add(localAddress)
+                Node.addListenAddress(localAddress)
 
                 while (true) {
                     val a = try {
@@ -177,7 +177,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                     Node.addConnection(connection)
                 }
 
-                Node.listenAddress.remove(localAddress)
+                Node.removeListenAddress(localAddress)
                 logger.info { "I2P SAM session closed" }
 
                 i2pTimeout = INIT_TIMEOUT

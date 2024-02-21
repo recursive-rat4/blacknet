@@ -29,7 +29,7 @@ class NodeInfo(
 ) {
     companion object {
         suspend fun get(): NodeInfo {
-            val listening = Node.listenAddress.map { it.toString() }
+            val listening = Node.getListenAddress().map { it.toString() }
             val warnings = BlockDB.warnings() + LedgerDB.warnings() + Node.warnings()
             return NodeInfo(
                     UserAgent.string,

@@ -44,7 +44,7 @@ object UPnP {
         } catch (e: Throwable) {
         }
         if (address != null) {
-            Node.listenAddress.add(address)
+            Node.addListenAddress(address)
             logger.info { "Mapped to ${address.debugName()}" }
         } else {
             logger.info { "Mapped to unknown external address" }
