@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Pavel Vasin
+ * Copyright (c) 2023-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -15,13 +15,40 @@ import kotlin.test.assertIs
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import ninja.blacknet.contract.BAppId
+import ninja.blacknet.db.PeerDB.Entry
 import ninja.blacknet.db.PeerDB.NetworkStat
 import ninja.blacknet.db.PeerDB.UptimeStat
+import ninja.blacknet.network.Address
+import ninja.blacknet.network.Network
+import ninja.blacknet.network.Port
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.byteArrayOfInts
 
 class PeerDBTest {
+    @Test
+    fun entry() {
+        val entry = Entry(
+            Address(Network.IPv4, Port(255u), byteArrayOf(127, 0, 0, 1)),
+            0,
+            0,
+            null,
+        )
+        val bytes = byteArrayOfInts(
+            128, 0, 255, 127, 0, 0, 1,
+            0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0,
+        )
+        assertIs<Entry>(
+            binaryFormat.decodeFromByteArray(Entry.serializer(), bytes)
+        )
+        assertEquals(
+            bytes,
+            binaryFormat.encodeToByteArray(Entry.serializer(), entry)
+        )
+    }
+
     @Test
     fun networkStat() {
         val stat = NetworkStat(
