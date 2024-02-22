@@ -9,14 +9,12 @@
 
 package ninja.blacknet.network
 
-import java.security.Security
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 class AddressTest {
     @Test
@@ -62,8 +60,6 @@ class AddressTest {
 
     @Test
     fun torv3() {
-        Security.addProvider(BouncyCastleProvider())
-
         // https://gitweb.torproject.org/torspec.git/tree/rend-spec-v3.txt
         for (string in arrayOf(
             "pg6mmjiyjmcrsslvykfwnntlaru7p5svn6y2ymmju6nubxndf4pscryd.onion",
