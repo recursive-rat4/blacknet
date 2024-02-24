@@ -80,9 +80,9 @@ object TxFetcher {
         delay(Node.NETWORK_TIMEOUT)
 
         val currTime = currentTimeMillis()
-        requested.asSequence()
-            .filter { (_, time) -> currTime > time + Node.NETWORK_TIMEOUT }
-            .map { (hash, _) -> hash }
-            .forEach { hash -> requested.remove(hash) }
+        requested.forEach { (hash, time) ->
+            if (currTime > time + Node.NETWORK_TIMEOUT)
+                requested.remove(hash)
+        }
     }
 }
