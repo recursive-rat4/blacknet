@@ -465,15 +465,19 @@ object Node {
         }
 
         val time = currentTimeMillis()
-
+        var connection: Connection? = null
         try {
-            val connection = connectTo(address, v2 = true)
+            connection = connectTo(address, v2 = true)
             connection.job.join()
             // try v1 if accepted without reply
-            if (connection.totalBytesRead == 0L)
-                connectTo(address, v2 = false).job.join()
+            if (connection.totalBytesRead == 0L) {
+                connection = connectTo(address, v2 = false)
+                connection.job.join()
+            }
         } catch (e: Throwable) {
-            PeerDB.failed(address, time / 1000L)
+        } finally {
+            if (connection == null || connection.state == Connection.State.OUTGOING_WAITING)
+                PeerDB.failed(address, time / 1000L)
         }
 
         val x = 4 * 1000L - (currentTimeMillis() - time)
@@ -503,14 +507,19 @@ object Node {
             (time / 1000L > entry.lastTry + 4 * 60 * 60) && !filter.contains(address)
         } ?: return
 
+        var connection: Connection? = null
         try {
-            val connection = connectTo(address, v2 = true, prober = true)
+            connection = connectTo(address, v2 = true, prober = true)
             connection.job.join()
             // try v1 if accepted without reply
-            if (connection.totalBytesRead == 0L)
-                connectTo(address, v2 = false, prober = true)
+            if (connection.totalBytesRead == 0L) {
+                connection = connectTo(address, v2 = false, prober = true)
+                connection.job.join()
+            }
         } catch (e: Throwable) {
-            PeerDB.failed(address, time / 1000L)
+        } finally {
+            if (connection == null || connection.state == Connection.State.PROBER_WAITING)
+                PeerDB.failed(address, time / 1000L)
         }
     }
 
