@@ -19,7 +19,6 @@ import java.math.BigInteger
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
-import java.util.HashSet.newHashSet
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
@@ -202,11 +201,13 @@ object Node {
     }
 
     fun addListenAddress(address: Address) {
-        listenAddress.add(address)
+        if (listenAddress.add(address))
+            PeerDB.contacted(address)
     }
 
     fun removeListenAddress(address: Address) {
-        listenAddress.remove(address)
+        if (listenAddress.remove(address))
+            PeerDB.discontacted(address)
     }
 
     fun getMaxPacketSize(): Int {
@@ -447,16 +448,10 @@ object Node {
         return true
     }
 
-    private suspend fun getFilter(): HashSet<Address> {
-        val filter = newHashSet<Address>(connections.size() + getListenAddress().size)
-        connections.forEach { filter.add(it.remoteAddress) }
-        getListenAddress().forEach { filter.add(it) }
-        return filter
-    }
-
     private suspend fun connector() {
-        val filter = getFilter()
-        val address = queuedPeers.tryReceive().getOrNull() ?: PeerDB.getCandidate { address, _ -> !filter.contains(address) }
+        val address = queuedPeers.tryReceive().getOrNull()
+            ?.let { if (PeerDB.tryContact(it)) it else null }
+            ?: PeerDB.getCandidate { _, _ -> true }
         if (address == null) {
             val outgoing = outgoing()
             logger.info { "Don't have candidates in PeerDB. $outgoing connections, max ${Config.instance.outgoingconnections}" }
@@ -478,6 +473,7 @@ object Node {
         } finally {
             if (connection == null || connection.state == Connection.State.OUTGOING_WAITING)
                 PeerDB.failed(address, time / 1000L)
+            PeerDB.discontacted(address)
         }
 
         val x = 4 * 1000L - (currentTimeMillis() - time)
@@ -501,10 +497,9 @@ object Node {
         if (outgoing() < Config.instance.outgoingconnections)
             return
 
-        val filter = getFilter()
         val time = currentTimeMillis()
-        val address = PeerDB.getCandidate { address, entry ->
-            (time / 1000L > entry.lastTry + 4 * 60 * 60) && !filter.contains(address)
+        val address = PeerDB.getCandidate { _, entry ->
+            (time / 1000L > entry.lastTry + 4 * 60 * 60)
         } ?: return
 
         var connection: Connection? = null
@@ -520,6 +515,7 @@ object Node {
         } finally {
             if (connection == null || connection.state == Connection.State.PROBER_WAITING)
                 PeerDB.failed(address, time / 1000L)
+            PeerDB.discontacted(address)
         }
     }
 

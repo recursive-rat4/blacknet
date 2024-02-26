@@ -10,13 +10,16 @@
 package ninja.blacknet.rpc.v2
 
 import io.ktor.server.routing.Route
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import ninja.blacknet.Runtime
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.encode
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.PeerDB
 import ninja.blacknet.mode
 import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
@@ -69,18 +72,23 @@ class TxPoolTransaction(
 class AddPeer(
     val port: String = mode.defaultP2PPort.toString(),
     val address: String,
-    val force: Boolean = false
+    val force: Boolean = false, // ignored
 ) : Request {
     override suspend fun handle(): TextContent {
         val port = Network.parsePort(port) ?: return respondError("Invalid port")
         val address = Network.parse(address, port) ?: return respondError("Invalid address")
 
-        val connection = Node.connections.find { it.remoteAddress == address }
-        return if (force || connection == null) {
-            Node.connectTo(address, v2 = false)
+        val lp = address.isLocal() || address.isPrivate()
+        val contact = PeerDB.tryContact(address)
+        return if (contact || lp) {
+            val connection = Node.connectTo(address, v2 = false)
+            if (contact) Runtime.launch {
+                connection.job.join()
+                PeerDB.discontacted(address)
+            }
             respondText(true.toString())
         } else {
-            respondError("Already connected on ${connection.localAddress}")
+            respondError("Already in contact")
         }
     }
 }

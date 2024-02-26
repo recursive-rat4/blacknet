@@ -21,12 +21,19 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import ninja.blacknet.Mode.*
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
@@ -196,6 +203,36 @@ object PeerDB {
             peers.put(address, Entry(time, userAgent))
     }
 
+    fun tryContact(address: Address): Boolean {
+        if (address.isLocal() || address.isPrivate()) return false
+        // ignore max size
+        val entry = peers.computeIfAbsent(address) { Entry(Network.LOOPBACK) }
+        return entry.inContact.compareAndSet(false, true)
+    }
+
+    fun contacted(address: Address) {
+        if (address.isLocal() || address.isPrivate()) return
+        // ignore max size
+        val entry = peers.computeIfAbsent(address) { Entry(Network.LOOPBACK) }
+        if (entry.inContact.compareAndSet(false, true))
+            return
+        else
+            logger.error { "Inconsistent PeerDB.Entry of ${address.debugName()}" }
+    }
+
+    fun discontacted(address: Address) {
+        if (address.isLocal() || address.isPrivate()) return
+        val entry = peers.get(address)
+        if (entry != null) {
+            if (entry.inContact.compareAndSet(true, false))
+                return
+            else
+                logger.error { "Inconsistent PeerDB.Entry of ${address.debugName()}" }
+        } else {
+            logger.error { "Not found PeerDB.Entry of ${address.debugName()}" }
+        }
+    }
+
     suspend fun failed(address: Address, time: Long) {
         if (Node.isOffline()) return
         peers.get(address)?.failed(time)
@@ -228,21 +265,23 @@ object PeerDB {
     }
 
     fun getCandidate(predicate: (Address, Entry) -> Boolean): Address? {
-        val candidates = ArrayList<Pair<Address, Float>>(peers.size)
+        val candidates = ArrayList<Triple<Address, Entry, Float>>(peers.size)
         val currTime = currentTimeSeconds()
         peers.forEach { (address, entry) ->
             if (predicate(address, entry))
-                candidates.add(Pair(address, entry.chance(currTime)))
+                candidates.add(Triple(address, entry, entry.chance(currTime)))
         }
-        if (candidates.isNotEmpty()) {
-            while (true) {
-                val (address, chance) = candidates.random()
-                if (chance > Random.nextFloat())
+        while (candidates.isNotEmpty()) {
+            val random = Random.nextInt(candidates.size)
+            val (address, entry, chance) = candidates[random]
+            if (chance > Random.nextFloat()) {
+                if (entry.inContact.compareAndSet(false, true))
                     return address
+                else
+                    candidates.removeAt(random)
             }
-        } else {
-            return null
         }
+        return null
     }
 
     fun getRandom(n: Int): ArrayList<Address> {
@@ -343,7 +382,7 @@ object PeerDB {
         internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, newHashMap(0))
     }
 
-    @Serializable
+    @Serializable(Entry.Companion::class)
     class Entry(
             val from: Address,
             var attempts: Int,
@@ -356,6 +395,9 @@ object PeerDB {
 
         constructor(from: Address) : this(from, 0, 0, null)
         constructor(time: Long, userAgent: String) : this(Network.LOOPBACK, 0, 0, NetworkStat(time, userAgent))
+
+        @Transient
+        internal val inContact = atomic(false)
 
         fun failed(time: Long) {
             stat?.let { updateUptimeStat(it, false, time) }
@@ -424,6 +466,32 @@ object PeerDB {
             stat.stat1D.update(good, age, 3600.0f * 24)
             stat.stat1W.update(good, age, 3600.0f * 24 * 7)
             stat.stat1M.update(good, age, 3600.0f * 24 * 30)
+        }
+
+        //UPSTREAM https://github.com/Kotlin/kotlinx.serialization/issues/2578
+        companion object : KSerializer<Entry> {
+            override val descriptor: SerialDescriptor = buildClassSerialDescriptor(
+                "ninja.blacknet.db.PeerDB.Entry"
+            ) {
+                element("from", Address.serializer().descriptor)
+                element("attempts", Int.serializer().descriptor)
+                element("lastTry", Long.serializer().descriptor)
+                element("stat", NetworkStat.serializer().descriptor, isOptional = true)
+            }
+
+            override fun deserialize(decoder: Decoder) = Entry(
+                decoder.decodeSerializableValue(Address.serializer()),
+                decoder.decodeInt(),
+                decoder.decodeLong(),
+                decoder.decodeNullableSerializableValue(NetworkStat.serializer())
+            )
+
+            override fun serialize(encoder: Encoder, value: Entry) {
+                encoder.encodeSerializableValue(Address.serializer(), value.from)
+                encoder.encodeInt(value.attempts)
+                encoder.encodeLong(value.lastTry)
+                encoder.encodeNullableSerializableValue(NetworkStat.serializer(), value.stat)
+            }
         }
 
         @Suppress("unused")

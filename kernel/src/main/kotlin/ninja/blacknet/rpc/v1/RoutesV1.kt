@@ -24,8 +24,10 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
+import ninja.blacknet.Runtime
 import ninja.blacknet.rpc.*
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -366,15 +368,21 @@ fun Route.APIV1() {
     get("/api/v1/addpeer/{address}/{port?}/{force?}") {
         val port = call.parameters["port"]?.let { Network.parsePort(it) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid port") } ?: mode.defaultP2PPort
         val address = Network.parse(call.parameters["address"], port) ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
+        @Suppress("UNUSED_VARIABLE")
         val force = call.parameters["force"]?.toBoolean() ?: false
 
         try {
-            val connection = Node.connections.find { it.remoteAddress == address }
-            if (force || connection == null) {
-                Node.connectTo(address, v2 = false)
+            val lp = address.isLocal() || address.isPrivate()
+            val contact = PeerDB.tryContact(address)
+            if (contact || lp) {
+                val connection = Node.connectTo(address, v2 = false)
+                if (contact) Runtime.launch {
+                    connection.job.join()
+                    PeerDB.discontacted(address)
+                }
                 call.respond("Connected")
             } else {
-                call.respond("Already connected on ${connection.localAddress}")
+                call.respond("Already in contact")
             }
         } catch (e: Throwable) {
             call.respond(e.message ?: "unknown error")

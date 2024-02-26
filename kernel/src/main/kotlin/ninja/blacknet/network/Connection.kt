@@ -336,22 +336,10 @@ class Connection(
         delay(Random.nextLong(10 * 60 * 1000L, 20 * 60 * 1000L))
 
         while (true) {
-            val n = Random.nextInt(Peers.MAX) + 1
-
+            val n = Random.nextInt(Peers.MAX + 1)
             val randomPeers = PeerDB.getRandom(n)
-            if (randomPeers.size == 0)
-                continue
-
-            val myAddress = Node.getListenAddress().filter { !it.isLocal() && !it.isPrivate() && !PeerDB.contains(it) }
-            if (myAddress.size != 0) {
-                val i = Random.nextInt(randomPeers.size * 4)
-                if (i < randomPeers.size) {
-                    randomPeers[i] = myAddress[Random.nextInt(myAddress.size)]
-                    logger.info { "Whispering ${randomPeers[i].debugName()} to ${debugName()}" }
-                }
-            }
-
-            sendPacket(PacketType.Peers, Peers(randomPeers))
+            if (randomPeers.size > 0)
+                sendPacket(PacketType.Peers, Peers(randomPeers))
 
             delay(Random.nextLong(4 * 60 * 60 * 1000L, 20 * 60 * 60 * 1000L))
         }
