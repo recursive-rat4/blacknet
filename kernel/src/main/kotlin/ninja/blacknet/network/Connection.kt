@@ -236,7 +236,6 @@ class Connection(
                         ChainFetcher.disconnected(this@Connection)
                     }
                     State.OUTGOING_WAITING, State.PROBER_WAITING -> {
-                        PeerDB.failed(remoteAddress, connectedAt)
                     }
                     State.INCOMING_WAITING, State.PROBER_CONNECTED -> {
                     }
