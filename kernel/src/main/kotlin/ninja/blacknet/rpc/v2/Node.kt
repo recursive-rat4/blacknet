@@ -10,11 +10,9 @@
 package ninja.blacknet.rpc.v2
 
 import io.ktor.server.routing.Route
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.encode
 import ninja.blacknet.core.Transaction
@@ -27,6 +25,7 @@ import ninja.blacknet.rpc.requests.*
 import ninja.blacknet.rpc.v1.NodeInfo
 import ninja.blacknet.rpc.v1.TxPoolInfo
 import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.util.startInterruptible
 
 @Serializable
 class Peers : Request {
@@ -85,8 +84,8 @@ class AddPeer(
                 PeerDB.discontacted(address)
                 throw e
             }
-            Runtime.launch {
-                connection.job.join()
+            startInterruptible("AddPeer::discontactor ${connection.debugName()}") {
+                connection.join()
                 PeerDB.discontacted(address)
             }
             respondText(true.toString())

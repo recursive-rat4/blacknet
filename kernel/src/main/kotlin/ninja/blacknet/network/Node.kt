@@ -15,6 +15,7 @@ import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import java.lang.Thread.sleep
 import java.math.BigInteger
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
@@ -25,8 +26,8 @@ import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import ninja.blacknet.stateDir
 import ninja.blacknet.Kernel
@@ -115,12 +116,12 @@ object Node {
             logger.error(e)
         }
         repeat(Kernel.config().outgoingconnections) {
-            konnectors.add(
-                Runtime.rotate(::connector)
+            connectors.add(
+                rotate("Node::connector $it", ::connector)
             )
         }
-        konnectors.add(
-            Runtime.rotate(::prober)
+        connectors.add(
+            rotate("Node::prober", ::prober)
         )
         ShutdownHooks.add {
             logger.info { "Unbinding ${konnectors.size + connectors.size} connectors" }
@@ -241,8 +242,8 @@ object Node {
         return listenOn(Address.IPv4_ANY(Kernel.config().port))
     }
 
-    suspend fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
-        val connection = router.connect(address, prober)
+    fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
+        val connection = runBlocking { router.connect(address, prober) }
         synchronized(connections) {
             connections.add(connection)
             connection.launch()
@@ -400,11 +401,11 @@ object Node {
             if (!localAddress.isLocal())
                 addListenAddress(localAddress)
             val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
-            addConnection(connection)
+            addIncomingConnection(connection)
         }
     }
 
-    fun addConnection(connection: Connection) {
+    fun addIncomingConnection(connection: Connection) {
         synchronized(connections) {
             if (!haveSlot()) {
                 logger.info { "Too many connections, dropping ${connection.debugName()}" }
@@ -442,14 +443,14 @@ object Node {
         return true
     }
 
-    private suspend fun connector() {
+    private fun connector() {
         val address = queuedPeers.poll()
             ?.let { if (PeerDB.tryContact(it)) it else null }
             ?: PeerDB.getCandidate { _, _ -> true }
         if (address == null) {
             val outgoing = outgoing()
             logger.info { "Don't have candidates in PeerDB. $outgoing connections, max ${Kernel.config().outgoingconnections}" }
-            delay(15 * 60 * 1000L)
+            sleep(15 * 60 * 1000L)
             return
         }
 
@@ -457,11 +458,11 @@ object Node {
         var connection: Connection? = null
         try {
             connection = connectTo(address, v2 = true)
-            connection.job.join()
+            connection.join()
             // try v1 if accepted without reply
             if (connection.totalBytesRead == 0L) {
                 connection = connectTo(address, v2 = false)
-                connection.job.join()
+                connection.join()
             }
         } catch (e: Throwable) {
         } finally {
@@ -472,7 +473,7 @@ object Node {
 
         val x = 4 * 1000L - (currentTimeMillis() - time)
         if (x > 0L)
-            delay(x) // 請在繼續之前等待或延遲
+            sleep(x) // 請在繼續之前等待或延遲
     }
 
     /**
@@ -480,8 +481,8 @@ object Node {
      * outgoing connection in order to provide statistic for the peer database
      * prober.
      */
-    private suspend fun prober() {
-        delay(4 * 60 * 1000L)
+    private fun prober() {
+        sleep(4 * 60 * 1000L)
 
         // Await peer network address announce
         if (PeerDB.size() < PeerDB.MAX_SIZE / 2)
@@ -499,11 +500,11 @@ object Node {
         var connection: Connection? = null
         try {
             connection = connectTo(address, v2 = true, prober = true)
-            connection.job.join()
+            connection.join()
             // try v1 if accepted without reply
             if (connection.totalBytesRead == 0L) {
                 connection = connectTo(address, v2 = false, prober = true)
-                connection.job.join()
+                connection.join()
             }
         } catch (e: Throwable) {
         } finally {

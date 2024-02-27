@@ -18,14 +18,12 @@ import io.ktor.utils.io.errors.IOException
 import java.lang.Thread.sleep
 import java.math.BigInteger
 import java.util.concurrent.LinkedBlockingQueue
-import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.network.packet.*
@@ -43,10 +41,8 @@ class Connection(
         val remoteAddress: Address,
         val localAddress: Address,
         var state: State
-) : CoroutineScope {
+) {
     private val vThreads = ArrayList<Thread>()
-    val job = Job()
-    override val coroutineContext: CoroutineContext = Runtime.coroutineContext + job
 
     private val closed = atomic(false)
     private val dosScore = atomic(0)
@@ -94,6 +90,10 @@ class Connection(
         vThreads.add(startInterruptible("Connection::pusher ${debugName()}", ::pusher))
         vThreads.add(startInterruptible("Connection::receiver ${debugName()}", ::receiver))
         vThreads.add(startInterruptible("Connection::sender ${debugName()}", ::sender))
+    }
+
+    fun join() {
+        vThreads.forEach(Thread::join)
     }
 
     private fun receiver() {
@@ -239,8 +239,6 @@ class Connection(
             }
 
             vThreads.forEach(Thread::interrupt)
-            cancel()
-            job.cancel()
         }
     }
 

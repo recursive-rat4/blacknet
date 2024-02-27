@@ -26,12 +26,10 @@ import io.ktor.websocket.readText
 import kotlin.math.abs
 import kotlin.concurrent.withLock
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.rpc.*
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -41,6 +39,7 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.bbf.*
 import ninja.blacknet.transaction.*
+import ninja.blacknet.util.startInterruptible
 
 fun Route.APIV1() {
     webSocket("/api/v1/notify/block") {
@@ -382,8 +381,8 @@ fun Route.APIV1() {
                     PeerDB.discontacted(address)
                     throw e
                 }
-                Runtime.launch {
-                    connection.job.join()
+                startInterruptible("AddPeer::discontactor ${connection.debugName()}") {
+                    connection.join()
                     PeerDB.discontacted(address)
                 }
                 call.respond("Connected")

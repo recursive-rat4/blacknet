@@ -129,7 +129,7 @@ class Router(
                     break
                 }
                 val connection = Connection(a.socket, a.readChannel, a.writeChannel, a.remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
-                Node.addConnection(connection)
+                Node.addIncomingConnection(connection)
             }
 
             Node.removeListenAddress(localAddress)
