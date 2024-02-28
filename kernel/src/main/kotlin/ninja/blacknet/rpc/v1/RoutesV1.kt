@@ -372,14 +372,20 @@ fun Route.APIV1() {
         val force = call.parameters["force"]?.toBoolean() ?: false
 
         try {
-            val lp = address.isLocal() || address.isPrivate()
-            val contact = PeerDB.tryContact(address)
-            if (contact || lp) {
-                val connection = Node.connectTo(address, v2 = false)
-                if (contact) Runtime.launch {
+            if (PeerDB.tryContact(address)) {
+                val connection = try {
+                    Node.connectTo(address, v2 = false)
+                } catch (e: Throwable) {
+                    PeerDB.discontacted(address)
+                    throw e
+                }
+                Runtime.launch {
                     connection.job.join()
                     PeerDB.discontacted(address)
                 }
+                call.respond("Connected")
+            } else if (address.isLocal() || address.isPrivate()) {
+                Node.connectTo(address, v2 = false)
                 call.respond("Connected")
             } else {
                 call.respond("Already in contact")

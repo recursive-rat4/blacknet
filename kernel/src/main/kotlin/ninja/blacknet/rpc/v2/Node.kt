@@ -78,14 +78,20 @@ class AddPeer(
         val port = Network.parsePort(port) ?: return respondError("Invalid port")
         val address = Network.parse(address, port) ?: return respondError("Invalid address")
 
-        val lp = address.isLocal() || address.isPrivate()
-        val contact = PeerDB.tryContact(address)
-        return if (contact || lp) {
-            val connection = Node.connectTo(address, v2 = false)
-            if (contact) Runtime.launch {
+        return if (PeerDB.tryContact(address)) {
+            val connection = try {
+                Node.connectTo(address, v2 = false)
+            } catch (e: Throwable) {
+                PeerDB.discontacted(address)
+                throw e
+            }
+            Runtime.launch {
                 connection.job.join()
                 PeerDB.discontacted(address)
             }
+            respondText(true.toString())
+        } else if (address.isLocal() || address.isPrivate()) {
+            Node.connectTo(address, v2 = false)
             respondText(true.toString())
         } else {
             respondError("Already in contact")
