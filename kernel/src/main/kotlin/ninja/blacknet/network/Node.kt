@@ -100,9 +100,8 @@ object Node {
             val file = stateDir.resolve(DATA_FILENAME)
             FileChannel.open(file, READ).inputStream().buffered().data().use { stream ->
                 val version = stream.readInt()
-                val bytes = stream.readAllBytes()
                 if (version == DATA_VERSION) {
-                    val persistent = binaryFormat.decodeFromByteArray(Persistent.serializer(), bytes)
+                    val persistent = binaryFormat.decodeFromStream(Persistent.serializer(), stream)
                     persistent.peers.forEach { peer ->
                         queuedPeers.trySend(peer)
                     }
@@ -140,7 +139,7 @@ object Node {
                 logger.info { "Saving node state" }
                 replaceFile(stateDir, DATA_FILENAME) {
                     writeInt(DATA_VERSION)
-                    write(binaryFormat.encodeToByteArray(Persistent.serializer(), persistent))
+                    binaryFormat.encodeToStream(Persistent.serializer(), persistent, this)
                 }
             }
         }

@@ -10,6 +10,7 @@
 package ninja.blacknet.serialization.bbf
 
 import io.ktor.utils.io.core.BytePacketBuilder
+import java.io.DataOutputStream
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.modules.SerializersModule
@@ -23,6 +24,7 @@ public class BinaryEncoder(
     override val serializersModule: SerializersModule,
 ) : SequentialEncoder() {
     public constructor(builder: BytePacketBuilder, serializersModule: SerializersModule) : this(PacketWriter(builder), serializersModule)
+    public constructor(stream: DataOutputStream, serializersModule: SerializersModule) : this(StreamWriter(stream), serializersModule)
 
     override fun encodeByte(value: Byte): Unit = writer.writeByte(value)
     override fun encodeShort(value: Short): Unit = writer.writeShort(value)

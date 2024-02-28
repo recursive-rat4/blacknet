@@ -99,9 +99,8 @@ object PeerDB {
         try {
             FileChannel.open(dataDir.resolve(FILENAME), READ).inputStream().buffered().data().use { stream ->
                 val version = stream.readInt()
-                val bytes = stream.readAllBytes()
                 if (version == VERSION) {
-                    return binaryFormat.decodeFromByteArray(MapSerializer(Address.serializer(), Entry.serializer()), bytes)
+                    return binaryFormat.decodeFromStream(MapSerializer(Address.serializer(), Entry.serializer()), stream)
                 } else {
                     throw Error("Unknown database version $version")
                 }
@@ -354,7 +353,7 @@ object PeerDB {
     private fun saveToFile() {
         replaceFile(dataDir, FILENAME) {
             writeInt(VERSION)
-            write(binaryFormat.encodeToByteArray(MapSerializer(Address.serializer(), Entry.serializer()), peers))
+            binaryFormat.encodeToStream(MapSerializer(Address.serializer(), Entry.serializer()), peers, this)
         }
     }
 
