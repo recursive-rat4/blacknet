@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,10 +9,9 @@
 
 package ninja.blacknet.serialization.bbf
 
-import io.ktor.utils.io.core.*
+import io.ktor.utils.io.core.BytePacketBuilder
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
-import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.SequentialEncoder
 
@@ -20,25 +19,27 @@ import ninja.blacknet.serialization.SequentialEncoder
  * Encoder to the Blacknet Binary Format
  */
 public class BinaryEncoder(
-        internal val output: BytePacketBuilder = BytePacketBuilder(),
-        override val serializersModule: SerializersModule = EmptySerializersModule()
+    private val writer: BinaryWriter,
+    override val serializersModule: SerializersModule,
 ) : SequentialEncoder() {
-    override fun encodeByte(value: Byte): Unit = output.writeByte(value)
-    override fun encodeShort(value: Short): Unit = output.writeShort(value)
-    override fun encodeInt(value: Int): Unit = output.writeInt(value)
-    override fun encodeLong(value: Long): Unit = output.writeLong(value)
+    public constructor(builder: BytePacketBuilder, serializersModule: SerializersModule) : this(PacketWriter(builder), serializersModule)
 
-    override fun encodeFloat(value: Float): Unit = output.writeFloat(value)
-    override fun encodeDouble(value: Double): Unit = output.writeDouble(value)
+    override fun encodeByte(value: Byte): Unit = writer.writeByte(value)
+    override fun encodeShort(value: Short): Unit = writer.writeShort(value)
+    override fun encodeInt(value: Int): Unit = writer.writeInt(value)
+    override fun encodeLong(value: Long): Unit = writer.writeLong(value)
 
-    override fun encodeNull(): Unit = output.writeByte(0)
-    override fun encodeNotNullMark(): Unit = output.writeByte(1)
-    override fun encodeBoolean(value: Boolean): Unit = output.writeByte(if (value) 1 else 0)
+    override fun encodeFloat(value: Float): Unit = writer.writeFloat(value)
+    override fun encodeDouble(value: Double): Unit = writer.writeDouble(value)
+
+    override fun encodeNull(): Unit = writer.writeByte(0)
+    override fun encodeNotNullMark(): Unit = writer.writeByte(1)
+    override fun encodeBoolean(value: Boolean): Unit = writer.writeByte(if (value) 1 else 0)
 
     override fun encodeString(value: String) {
         val bytes = value.toByteArray()
         encodeVarInt(bytes.size)
-        output.writeFully(bytes, 0, bytes.size)
+        writer.writeBytes(bytes)
     }
 
     override fun beginCollection(descriptor: SerialDescriptor, collectionSize: Int): CompositeEncoder {
@@ -49,10 +50,10 @@ public class BinaryEncoder(
 
     public fun encodeByteArray(value: ByteArray) {
         encodeVarInt(value.size)
-        output.writeFully(value, 0, value.size)
+        writer.writeBytes(value)
     }
 
     public fun encodeFixedByteArray(value: ByteArray) {
-        output.writeFully(value, 0, value.size)
+        writer.writeBytes(value)
     }
 }

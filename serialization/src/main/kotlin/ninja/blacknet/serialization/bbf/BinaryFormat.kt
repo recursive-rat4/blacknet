@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -19,8 +19,11 @@ import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 
+/**
+ * The Blacknet Binary Format
+ */
 public class BinaryFormat(
-        override val serializersModule: SerializersModule = EmptySerializersModule()
+    override val serializersModule: SerializersModule = EmptySerializersModule()
 ) : BinaryFormat {
     override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
         return decodeFromPacket(deserializer, ByteReadPacket(bytes))
@@ -29,11 +32,11 @@ public class BinaryFormat(
     public fun <T : Any?> decodeFromPacket(strategy: DeserializationStrategy<T>, packet: ByteReadPacket): T {
         val decoder = BinaryDecoder(packet, serializersModule)
         val value = strategy.deserialize(decoder)
-        val remaining = decoder.input.remaining
+        val remaining = packet.remaining
         return if (remaining == 0L) {
             value
         } else {
-            decoder.input.release()
+            packet.release()
             throw SerializationException("$remaining trailing bytes")
         }
     }
@@ -43,8 +46,9 @@ public class BinaryFormat(
     }
 
     public fun <T : Any?> encodeToPacket(strategy: SerializationStrategy<T>, value: T): ByteReadPacket {
-        val encoder = BinaryEncoder(BytePacketBuilder(), serializersModule)
+        val output = BytePacketBuilder()
+        val encoder = BinaryEncoder(output, serializersModule)
         strategy.serialize(encoder, value)
-        return encoder.output.build()
+        return output.build()
     }
 }
