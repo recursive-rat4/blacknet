@@ -38,7 +38,7 @@ slf4j = "org.slf4j:slf4j-jdk14:2.0.12"
 kotlin-logging = "io.github.oshai:kotlin-logging-jvm:6.0.3"
 guava = "com.google.guava:guava:33.0.0-jre"
 weupnp = "org.bitlet:weupnp:0.1.4"
-jgit = "org.eclipse.jgit:org.eclipse.jgit:6.7.0.202309050840-r"
+jgit = "org.eclipse.jgit:org.eclipse.jgit:6.8.0.202311291450-r"
 
 [plugins]
 kotlin-allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
