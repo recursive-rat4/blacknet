@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2023 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -12,8 +12,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.benchmark)
     alias(libs.plugins.kotlin.allopen)
+    kotlin("kapt")
+    application
 }
 
 repositories {
@@ -24,17 +25,16 @@ allOpen {
     annotation("org.openjdk.jmh.annotations.State")
 }
 
-benchmark {
-    targets {
-        register("main")
-    }
-}
-
 dependencies {
     implementation(project(":blacknet-kernel"))
     implementation(project(":blacknet-serialization"))
-    implementation(libs.kotlin.benchmark)
     implementation(libs.kotlin.serialization)
+    implementation(libs.jmh.core)
+    kapt(libs.jmh.generator.annprocess)
+}
+
+application {
+    mainClass = "org.openjdk.jmh.Main"
 }
 
 val compileJava by tasks.existing(JavaCompile::class) {

@@ -11,9 +11,6 @@ package ninja.blacknet.core
 
 import kotlin.random.Random
 import kotlin.random.nextUInt
-import kotlinx.benchmark.Benchmark
-import kotlinx.benchmark.Scope
-import kotlinx.benchmark.State
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PaymentId
 import ninja.blacknet.crypto.PublicKey
@@ -21,6 +18,9 @@ import ninja.blacknet.crypto.SignatureSerializer
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.transaction.Transfer
 import ninja.blacknet.transaction.TxType
+import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.Scope
+import org.openjdk.jmh.annotations.State
 
 @State(Scope.Benchmark)
 class BlockBenchmark {
