@@ -306,7 +306,7 @@ object Node {
         Staker.awaitsNextTimeSlot?.cancel()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         return broadcastPacket(PacketType.ChainAnnounce, ann) {
-            it != source && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
+            it != source && it.state.isConnected() && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
         }
     }
 
@@ -383,17 +383,14 @@ object Node {
             listOf("Please check your system clock. Many peers report different time.")
     }
 
-    private suspend fun broadcastPacket(type: PacketType, packet: Packet, filter: (Connection) -> Boolean = { true }): Int {
-        logger.debug { "Broadcasting $type" }
+    private suspend inline fun broadcastPacket(type: PacketType, packet: Packet, filter: (Connection) -> Boolean = { true }): Int {
         var n = 0
-        val bytes = buildPacket(type, packet)
         connections.forEach {
-            if (it.state.isConnected() && filter(it)) {
-                it.sendPacket(bytes.copy())
+            if (filter(it)) {
+                it.sendPacket(type, packet)
                 n += 1
             }
         }
-        bytes.release()
         return n
     }
 

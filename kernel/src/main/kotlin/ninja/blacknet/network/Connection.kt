@@ -199,10 +199,7 @@ class Connection(
 
     fun sendPacket(type: PacketType, packet: Packet) {
         logger.debug { "Sending $type to ${debugName()}" }
-        sendPacket(buildPacket(type, packet))
-    }
-
-    internal fun sendPacket(bytes: ByteReadPacket) {
+        val bytes = buildPacket(type, packet)
         //TODO review threshold
         if (sendQueueSize.addAndGet(bytes.remaining) <= Node.getMaxPacketSize() * 10) {
             sendChannel.trySend(bytes)
