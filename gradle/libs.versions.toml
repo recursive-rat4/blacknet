@@ -31,7 +31,7 @@ kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.2"
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 eddsa = "net.i2p.crypto:eddsa:0.3.0"
-blake2b = "com.rfksystems:blake2b:1.0.0"
+blake2b = "com.rfksystems:blake2b:2.0.0"
 bouncycastle = "org.bouncycastle:bcprov-jdk18on:1.77"
 leveldb-java = "org.iq80.leveldb:leveldb:0.12"
 slf4j = "org.slf4j:slf4j-jdk14:2.0.12"
