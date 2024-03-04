@@ -381,7 +381,7 @@ object PeerDB {
         internal constructor(stat: NetworkStatV1) : this(stat.lastConnected, stat.userAgent, stat.stat2H, stat.stat8H, stat.stat1D, stat.stat1W, stat.stat1M, newHashMap(0))
     }
 
-    @Serializable(Entry.Companion::class)
+    @Serializable
     class Entry(
             val from: Address,
             var attempts: Int,
@@ -465,32 +465,6 @@ object PeerDB {
             stat.stat1D.update(good, age, 3600.0f * 24)
             stat.stat1W.update(good, age, 3600.0f * 24 * 7)
             stat.stat1M.update(good, age, 3600.0f * 24 * 30)
-        }
-
-        //UPSTREAM https://github.com/Kotlin/kotlinx.serialization/issues/2578
-        companion object : KSerializer<Entry> {
-            override val descriptor: SerialDescriptor = buildClassSerialDescriptor(
-                "ninja.blacknet.db.PeerDB.Entry"
-            ) {
-                element("from", Address.serializer().descriptor)
-                element("attempts", Int.serializer().descriptor)
-                element("lastTry", Long.serializer().descriptor)
-                element("stat", NetworkStat.serializer().descriptor, isOptional = true)
-            }
-
-            override fun deserialize(decoder: Decoder) = Entry(
-                decoder.decodeSerializableValue(Address.serializer()),
-                decoder.decodeInt(),
-                decoder.decodeLong(),
-                decoder.decodeNullableSerializableValue(NetworkStat.serializer())
-            )
-
-            override fun serialize(encoder: Encoder, value: Entry) {
-                encoder.encodeSerializableValue(Address.serializer(), value.from)
-                encoder.encodeInt(value.attempts)
-                encoder.encodeLong(value.lastTry)
-                encoder.encodeNullableSerializableValue(NetworkStat.serializer(), value.stat)
-            }
         }
 
         @Suppress("unused")
