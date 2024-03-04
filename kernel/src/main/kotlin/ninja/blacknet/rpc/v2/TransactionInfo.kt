@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -51,7 +51,7 @@ class TransactionInfo(
 
     @Serializable
     class DataInfo(
-            val type: Int,
+            val type: UByte,
             val dataIndex: Int,
             val data: JsonElement
     )
@@ -59,12 +59,12 @@ class TransactionInfo(
     companion object {
         fun data(type: Byte, bytes: ByteArray, filter: List<WalletDB.TransactionDataType>?): List<DataInfo> {
             val data = if (type == TxType.Generated.type) {
-                listOf(DataInfo(type.toUByte().toInt(), 0, JsonObject(emptyMap())))
+                listOf(DataInfo(type.toUByte(), 0, JsonObject(emptyMap())))
             } else if (type != TxType.Batch.type) {
                 @Suppress("UNCHECKED_CAST")
                 val serializer = TxType.getSerializer(type) as KSerializer<TxData>
                 val data = binaryFormat.decodeFromByteArray(serializer, bytes)
-                listOf(DataInfo(type.toUByte().toInt(), 0, json.encodeToJsonElement(serializer, data)))
+                listOf(DataInfo(type.toUByte(), 0, json.encodeToJsonElement(serializer, data)))
             } else {
                 val multiData = binaryFormat.decodeFromByteArray(Batch.serializer(), bytes)
                 val list = ArrayList<DataInfo>(multiData.multiData.size)
@@ -74,7 +74,7 @@ class TransactionInfo(
                         @Suppress("UNCHECKED_CAST")
                         val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
                         val data = binaryFormat.decodeFromByteArray(serializer, dataBytes)
-                        list.add(DataInfo(dataType.toUByte().toInt(), index + 1, json.encodeToJsonElement(serializer, data)))
+                        list.add(DataInfo(dataType.toUByte(), index + 1, json.encodeToJsonElement(serializer, data)))
                     }
                 } else {
                     for (i in 0 until filter.size) {
@@ -83,7 +83,7 @@ class TransactionInfo(
                         @Suppress("UNCHECKED_CAST")
                         val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
                         val data = binaryFormat.decodeFromByteArray(serializer, dataBytes)
-                        list.add(DataInfo(dataType.toUByte().toInt(), dataIndex, json.encodeToJsonElement(serializer, data)))
+                        list.add(DataInfo(dataType.toUByte(), dataIndex, json.encodeToJsonElement(serializer, data)))
                     }
                 }
                 list

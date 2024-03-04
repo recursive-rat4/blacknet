@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -218,7 +218,7 @@ class ListTransactions(
     val publicKey: PublicKey,
     val offset: Int = 0,
     val max: Int = 100,
-    val type: Int? = null
+    val type: UByte? = null
 ) : Request {
     override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)

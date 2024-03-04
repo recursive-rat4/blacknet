@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -26,7 +26,7 @@ class TransactionNotification(
         val seq: Int,
         val referenceChain: String,
         val fee: String,
-        val type: Int,
+        val type: UByte,
         val data: List<TransactionInfo.DataInfo>
 ) {
     constructor(tx: Transaction, hash: Hash, time: Long, size: Int, filter: List<WalletDB.TransactionDataType>? = null) : this(
@@ -38,7 +38,7 @@ class TransactionNotification(
             tx.seq,
             tx.referenceChain.toString(),
             tx.fee.toString(),
-            tx.type.toUByte().toInt(),
+            tx.type.toUByte(),
             TransactionInfo.data(tx.type, tx.data, filter)
     )
 }
