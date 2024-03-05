@@ -11,7 +11,7 @@
 kotlin = "1.9.22"
 coroutines = "1.8.0"
 serialization = "1.6.3"
-ktor = "2.3.8"
+ktor = "2.3.9"
 jmh = "1.37"
 
 [libraries]
