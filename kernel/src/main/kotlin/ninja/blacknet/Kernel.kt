@@ -30,6 +30,8 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 private val logger = KotlinLogging.logger {}
 
 object Kernel {
+    internal val ktorEngine = CIO
+
     /**
      * Initialize the kernel library: logging, database, network and other essentials.
      *
@@ -123,7 +125,7 @@ object Kernel {
          */
         if (Config.instance.rpcserver) {
             embeddedServer(
-                CIO,
+                ktorEngine,
                 commandLineEnvironment(arrayOf(
                     "-config=${configDir.resolve("rpc.conf")}",
                 ))
