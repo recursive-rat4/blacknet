@@ -149,7 +149,7 @@ class Connection(
             for (packet in sendChannel) {
                 val size = packet.remaining
                 writeChannel.writePacket(packet)
-                sendQueueSize.addAndGet(-size) //UPSTREAM https://github.com/Kotlin/kotlinx-atomicfu/issues/274
+                sendQueueSize -= size
                 totalBytesWritten += size
             }
         } catch (e: ClosedWriteChannelException) {
