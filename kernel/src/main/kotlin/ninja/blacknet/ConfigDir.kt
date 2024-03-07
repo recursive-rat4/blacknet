@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -18,9 +18,9 @@ import ninja.blacknet.util.Resources
 
 val configDir: Path = run {
     val custom = System.getProperty("ninja.blacknet.configDir")
-    if (System.getProperty("org.gradle.test.worker") != null) {
+    if (System.getProperty("surefire.test.class.path") != null) {
         //TODO eliminate and generalize
-        return@run Path.of("build/resources/main/config").also {
+        return@run Path.of("target/classes/config").also {
             println("Using config directory ${it.toAbsolutePath()}")
         }
     }

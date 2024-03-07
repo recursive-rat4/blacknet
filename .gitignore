@@ -1,6 +1,5 @@
-# Gradle
-.gradle
-build/
+# Maven
+target/
 
 # IDEA
 .idea
@@ -14,6 +13,3 @@ build/
 .project
 .classpath
 .settings
-
-# Scripts
-update-verification-metadata.log

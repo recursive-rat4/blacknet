@@ -30,7 +30,10 @@ object Version {
 
         attributes(Kernel::class.java).run {
             version = getValue("Implementation-Version")
-            revision = getValue("Build-Revision") ?: version
+            revision = when (val value = getValue("Build-Revision")) {
+                null, "" -> version
+                else -> value
+            }
         }
 
         attributes(ApplicationEngine::class.java).run {

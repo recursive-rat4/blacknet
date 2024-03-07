@@ -1,6 +1,6 @@
 #!/bin/false
 #
-# Copyright (c) 2020 Pavel Vasin
+# Copyright (c) 2020-2024 Pavel Vasin
 #
 # Licensed under the Jelurida Public License version 1.1
 # for the Blacknet Public Blockchain Platform (the "License");
@@ -8,59 +8,51 @@
 # See the LICENSE.txt file at the top-level directory of this distribution.
 #
 
-image: eclipse-temurin:21.0.1_12-jdk@sha256:dd7c71ee2e3564d88178b9cdd8dbe83c337d13bf19d0c3038c6f6b3b33186488
+image: maven:3.9.6-eclipse-temurin-21@sha256:9d65a155951f0c6481a89b9d7c6e2eafe45843c0c47b71a997bfc7206c822800
 
 variables:
-  GRADLE_USER_HOME: ".gradle"
+  MAVEN: "mvn --batch-mode --no-transfer-progress" #TODO 4
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
 
 cache:
   paths:
-    - .gradle/wrapper
-    - .gradle/caches
+    - .m2/repository
 
 stages:
-#FIXME report is empty
-#TODO how to properly upload report for gitlab ui?
-#  - license_scanning
+  - cyclonedx
   - test
   - build
 
-#license_scanning:
-#  stage: license_scanning
-#  script:
-#    - ./gradlew downloadLicenses
-#  rules:
-#    - changes:
-#      - 3RD-PARTY-LICENSES.txt
-#      - LICENSE.txt
-#      - gradle/libs.versions.toml
-#      - gradle/verification-metadata.xml
-#      - gradle/wrapper/gradle-wrapper.properties
-#      when: on_success
-#    - when: never
-#  artifacts:
-#    reports:
-#      license_scanning: gl-license-scanning-report.json
+cyclonedx:
+  stage: cyclonedx
+  script:
+    - $MAVEN cyclonedx:makeAggregateBom
+  rules:
+    - changes:
+      - pom.xml
+      when: on_success
+    - when: never
+  artifacts:
+    reports:
+      cyclonedx: target/bom.json
 
 test:
   stage: test
   script:
-    - rm ./gradle/verification-metadata.xml #FIXME
-    - ./gradlew test
+    - $MAVEN test
   artifacts:
     reports:
       junit:
-        - json-rpc/build/test-results/test/TEST-*.xml
-        - kernel/build/test-results/test/TEST-*.xml
-        - runtime/build/test-results/test/TEST-*.xml
-        - serialization/build/test-results/test/TEST-*.xml
-        - time/build/test-results/test/TEST-*.xml
+        - "**/target/surefire-reports/TEST-*.xml"
 
 build:
   stage: build
+  variables:
+    DESTDIR: "blacknet-$CI_COMMIT_TAG"
   script:
-    - ./gradlew distTar
-    - tar -xf build/distributions/blacknet-*.*.*.tar
+    - $MAVEN verify
+    - mkdir -p $DESTDIR
+    - cp -a daemon/target/appassembler/* $DESTDIR
   rules:
     - if: $CI_COMMIT_TAG
       when: on_success
@@ -68,4 +60,4 @@ build:
   artifacts:
     name: blacknet-gitlab-build
     paths:
-      - blacknet-*.*.*
+      - $DESTDIR
