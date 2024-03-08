@@ -86,7 +86,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>atomicfu</artifactId>
+            <artifactId>atomicfu-jvm</artifactId>
         </dependency>
         <dependency>
             <groupId>net.i2p.crypto</groupId>

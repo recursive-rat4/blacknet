@@ -146,7 +146,7 @@
             </dependency>
             <dependency>
                 <groupId>org.jetbrains.kotlinx</groupId>
-                <artifactId>atomicfu</artifactId>
+                <artifactId>atomicfu-jvm</artifactId>
                 <version>${atomicfu.version}</version>
                 <scope>provided</scope>
             </dependency>
