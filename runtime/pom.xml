@@ -42,7 +42,9 @@
                         <id>compile</id>
                         <configuration>
                             <args combine.children="append">
+                                <!--UPSTREAM https://youtrack.jetbrains.com/issue/KTIJ-18922/Maven-Explicit-Api-false-positive-explicit-API-errors-in-test-when-explicit-API-is-main-only
                                 <arg>-Xexplicit-api=strict</arg>
+                                -->
                             </args>
                         </configuration>
                     </execution>

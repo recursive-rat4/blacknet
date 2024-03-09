@@ -54,12 +54,19 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <version>${kotlin.version}</version>
+                <configuration>
+                    <compilerPlugins>
+                        <plugin>kotlinx-serialization</plugin>
+                    </compilerPlugins>
+                </configuration>
                 <executions>
                     <execution>
                         <id>compile</id>
                         <configuration>
                             <args combine.children="append">
+                                <!--UPSTREAM https://youtrack.jetbrains.com/issue/KTIJ-18922/Maven-Explicit-Api-false-positive-explicit-API-errors-in-test-when-explicit-API-is-main-only
                                 <arg>-Xexplicit-api=strict</arg>
+                                -->
                                 <arg>-opt-in=kotlinx.serialization.ExperimentalSerializationApi</arg>
                             </args>
                         </configuration>
