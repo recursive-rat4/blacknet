@@ -22,9 +22,15 @@ import java.util.logging.LogManager
 import kotlinx.coroutines.debug.DebugProbes
 import ninja.blacknet.core.Staker
 import ninja.blacknet.core.TxPool
-import ninja.blacknet.db.*
+import ninja.blacknet.db.BlockDB
+import ninja.blacknet.db.Convertor
+import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.LevelDB
+import ninja.blacknet.db.PeerDB
+import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
+import ninja.blacknet.rpc.RPCServer
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 private val logger = KotlinLogging.logger {}
@@ -124,6 +130,7 @@ object Kernel {
          *
          */
         if (Config.instance.rpcserver) {
+            RPCServer
             embeddedServer(
                 ktorEngine,
                 commandLineEnvironment(arrayOf(

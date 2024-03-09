@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -22,8 +22,8 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.signal.Signal4
 
 private val logger = KotlinLogging.logger {}
 
@@ -38,6 +38,8 @@ object TxPool : MemPool(), Ledger {
     private val multisigs = HashMap<MultiSignatureLockContractId, Multisig?>()
     private var transactions = ArrayList<Hash>(maxSeenSizeImpl())
     internal var minFeeRate = parseAmount(Config.instance.minrelayfeerate)
+
+    val txNotify = Signal4<Transaction, Hash, Long, Int>()
 
     suspend fun check(): Boolean = mutex.withLock {
         var result = true
@@ -229,7 +231,7 @@ object TxPool : MemPool(), Ledger {
             addImpl(hash, bytes)
             transactions.add(hash)
             WalletDB.processTransaction(hash, tx, bytes, time)
-            RPCServer.txPoolNotify(tx, hash, time, bytes.size)
+            txNotify(tx, hash, time, bytes.size)
             logger.debug { "Accepted $hash" }
         }
         undoImpl(status)

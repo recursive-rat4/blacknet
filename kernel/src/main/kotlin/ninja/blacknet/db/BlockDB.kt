@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -20,8 +20,8 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.LedgerDB.forkV2
-import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.signal.Signal4
 
 private val logger = KotlinLogging.logger {}
 
@@ -33,6 +33,8 @@ object BlockDB {
     internal var cachedBlock: Pair<Hash, ByteArray>? = null
 
     val blocks = DBView(LevelDB, BLOCK_KEY, Block.serializer(), binaryFormat)
+
+    val blockNotify = Signal4<Block, Hash, Int, Int>()
 
     private val rejects = Collections.newSetFromMap(object : LinkedHashMap<Hash, Boolean>() {
         override fun removeEldestEntry(eldest: Map.Entry<Hash, Boolean>): Boolean {
@@ -95,7 +97,7 @@ object BlockDB {
                 TxPool.clearRejectsImpl()
                 TxPool.removeImpl(txHashes)
             }
-            RPCServer.blockNotify(block, hash, state.height + 1, bytes.size)
+            blockNotify(block, hash, state.height + 1, bytes.size)
             cachedBlock = Pair(block.previous, bytes)
         } else {
             batch.close()

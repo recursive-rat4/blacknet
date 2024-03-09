@@ -37,11 +37,11 @@ import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.packet.UnfilteredInvList
-import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.*
 import ninja.blacknet.serialization.bbf.BinaryDecoder
 import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.bbf.binaryFormat
+import ninja.blacknet.signal.Signal6
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.transaction.*
 import ninja.blacknet.util.data
@@ -59,6 +59,8 @@ object WalletDB {
     private val VERSION_KEY = DBKey(66, 0)
     private val WALLET_KEY = DBKey(67, PublicKey.SIZE_BYTES)
     private val wallets = HashMap<PublicKey, Wallet>()
+
+    val txNotify = Signal6<Transaction, Hash, Long, Int, PublicKey, List<TransactionDataType>>()
 
     private fun setVersion(batch: LevelDB.WriteBatch) {
         val versionBytes = binaryFormat.encodeToByteArray(VarIntSerializer, VERSION)
@@ -410,7 +412,7 @@ object WalletDB {
                 wallet.transactions.put(hash, TransactionData(types, time, height))
 
                 if (!rescan) {
-                    RPCServer.walletNotify(tx, hash, time, bytes.size, publicKey, types)
+                    txNotify(tx, hash, time, bytes.size, publicKey, types)
                     batch.put(WALLET_KEY, publicKey.bytes, binaryFormat.encodeToByteArray(Wallet.serializer(), wallet))
                 }
                 if (store) {

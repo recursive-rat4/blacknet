@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -23,6 +23,7 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.websocket.Frame
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Runtime
@@ -30,8 +31,10 @@ import ninja.blacknet.Version
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.core.Transaction
+import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.logging.debug
 import ninja.blacknet.logging.debugMessage
@@ -53,7 +56,25 @@ object RPCServer {
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val walletNotify = SynchronizedHashMap<PublicKey, ArrayList<SendChannel<Frame>>>()
 
-    suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
+    init {
+        BlockDB.blockNotify.connect { block, hash, height, size ->
+            runBlocking {
+                blockNotify(block, hash, height, size)
+            }
+        }
+        TxPool.txNotify.connect { tx, hash, time, size ->
+            runBlocking {
+                txPoolNotify(tx, hash, time, size)
+            }
+        }
+        WalletDB.txNotify.connect { tx, hash, time, size, publicKey, filter ->
+            runBlocking {
+                walletNotify(tx, hash, time, size, publicKey, filter)
+            }
+        }
+    }
+
+    private suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
         RPCServerV1.blockNotify(block, hash, height, size)
 
         blockNotify.mutex.withLock {
@@ -72,7 +93,7 @@ object RPCServer {
         }
     }
 
-    suspend fun txPoolNotify(tx: Transaction, hash: Hash, time: Long, size: Int) {
+    private suspend fun txPoolNotify(tx: Transaction, hash: Hash, time: Long, size: Int) {
         txPoolNotify.mutex.withLock {
             if (txPoolNotify.set.isNotEmpty()) {
                 val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
@@ -89,7 +110,7 @@ object RPCServer {
         }
     }
 
-    suspend fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey, filter: List<WalletDB.TransactionDataType>) {
+    private suspend fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey, filter: List<WalletDB.TransactionDataType>) {
         RPCServerV1.walletNotify(tx, hash, time, size, publicKey, filter)
 
         walletNotify.mutex.withLock {
