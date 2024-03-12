@@ -9,8 +9,6 @@
 
 package ninja.blacknet.serialization.bbf
 
-import io.ktor.utils.io.core.ByteReadPacket
-import java.io.DataInputStream
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.SerializersModule
@@ -23,9 +21,6 @@ public class BinaryDecoder(
     private val reader: BinaryReader,
     override val serializersModule: SerializersModule,
 ) : SequentialDecoder() {
-    public constructor(packet: ByteReadPacket, serializersModule: SerializersModule) : this(PacketReader(packet), serializersModule)
-    public constructor(stream: DataInputStream, serializersModule: SerializersModule) : this(StreamReader(stream), serializersModule)
-
     override fun decodeByte(): Byte = reader.readByte()
     override fun decodeShort(): Short = reader.readShort()
     override fun decodeInt(): Int = reader.readInt()

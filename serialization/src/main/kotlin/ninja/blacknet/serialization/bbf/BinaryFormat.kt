@@ -37,7 +37,7 @@ public class BinaryFormat(
     }
 
     public fun <T : Any?> decodeFromPacket(strategy: DeserializationStrategy<T>, packet: ByteReadPacket): T {
-        val decoder = BinaryDecoder(packet, serializersModule)
+        val decoder = BinaryDecoder(PacketReader(packet), serializersModule)
         val value = strategy.deserialize(decoder)
         val remaining = packet.remaining
         return if (remaining == 0L) {
@@ -49,7 +49,7 @@ public class BinaryFormat(
     }
 
     public fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, stream: DataInputStream): T {
-        val decoder = BinaryDecoder(stream, serializersModule)
+        val decoder = BinaryDecoder(StreamReader(stream), serializersModule)
         val value = deserializer.deserialize(decoder)
         val remaining = stream.available()
         return if (remaining == 0) {
@@ -70,13 +70,13 @@ public class BinaryFormat(
 
     public fun <T : Any?> encodeToPacket(strategy: SerializationStrategy<T>, value: T): ByteReadPacket {
         val output = BytePacketBuilder()
-        val encoder = BinaryEncoder(output, serializersModule)
+        val encoder = BinaryEncoder(PacketWriter(output), serializersModule)
         strategy.serialize(encoder, value)
         return output.build()
     }
 
     public fun <T> encodeToStream(serializer: SerializationStrategy<T>, value: T, stream: DataOutputStream) {
-        val encoder = BinaryEncoder(stream, serializersModule)
+        val encoder = BinaryEncoder(StreamWriter(stream), serializersModule)
         serializer.serialize(encoder, value)
     }
 }
