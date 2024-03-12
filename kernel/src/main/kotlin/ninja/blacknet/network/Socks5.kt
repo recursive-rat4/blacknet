@@ -17,9 +17,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.close
-import io.ktor.utils.io.core.BytePacketBuilder
-import io.ktor.utils.io.core.writeFully
-import io.ktor.utils.io.core.writeUShort
+import io.ktor.utils.io.writeFully
 
 /**
  * 代理客戶端
@@ -31,14 +29,13 @@ object Socks5 {
     suspend fun connect(proxy: Address, destination: Address): Triple<ASocket, ByteReadChannel, ByteWriteChannel> {
         val socket = aSocket(Network.selector).tcp().connect(proxy.getSocketAddress())
         val readChannel = socket.openReadChannel()
-        val writeChannel = socket.openWriteChannel(true)
+        val writeChannel = socket.openWriteChannel()
         val connection = Triple(socket, readChannel, writeChannel)
-        val builder = BytePacketBuilder()
 
-        builder.writeByte(VERSION)
-        builder.writeByte(1) // number of authentication methods supported
-        builder.writeByte(NO_AUTHENTICATION)
-        writeChannel.writePacket(builder.build())
+        writeChannel.writeByte(VERSION)
+        writeChannel.writeByte(1) // number of authentication methods supported
+        writeChannel.writeByte(NO_AUTHENTICATION)
+        writeChannel.flush()
 
         if (readChannel.readByte() != VERSION) {
             connection.exception("Unknown socks version")
@@ -47,30 +44,30 @@ object Socks5 {
             connection.exception("Socks auth not accepted")
         }
 
-        builder.writeByte(VERSION)
-        builder.writeByte(TCP_CONNECTION)
-        builder.writeByte(0) // reserved
+        writeChannel.writeByte(VERSION)
+        writeChannel.writeByte(TCP_CONNECTION)
+        writeChannel.writeByte(0) // reserved
         when (destination.network) {
             Network.IPv4 -> {
-                builder.writeByte(IPv4_ADDRESS)
-                builder.writeFully(destination.bytes)
+                writeChannel.writeByte(IPv4_ADDRESS)
+                writeChannel.writeFully(destination.bytes)
             }
             Network.IPv6 -> {
-                builder.writeByte(IPv6_ADDRESS)
-                builder.writeFully(destination.bytes)
+                writeChannel.writeByte(IPv6_ADDRESS)
+                writeChannel.writeFully(destination.bytes)
             }
             Network.TORv2, Network.TORv3 -> {
                 val bytes = destination.getAddressString().toByteArray(Charsets.US_ASCII)
                 if (bytes.size < 1 || bytes.size > 255)
                     connection.exception("Invalid length of domain name")
-                builder.writeByte(DOMAIN_NAME)
-                builder.writeByte(bytes.size.toByte())
-                builder.writeFully(bytes)
+                writeChannel.writeByte(DOMAIN_NAME)
+                writeChannel.writeByte(bytes.size.toByte())
+                writeChannel.writeFully(bytes)
             }
             else -> connection.exception("Not implemented for ${destination.network}")
         }
-        builder.writeUShort(destination.port.value)
-        writeChannel.writePacket(builder.build())
+        writeChannel.writeUShort(destination.port.value)
+        writeChannel.flush()
 
         if (readChannel.readByte() != VERSION) {
             connection.exception("Unknown socks version")
@@ -112,5 +109,9 @@ object Socks5 {
 
     private suspend fun ByteReadChannel.skip(num: Int) {
         readFully(ByteArray(num), 0, num)
+    }
+
+    private suspend fun ByteWriteChannel.writeUShort(value: UShort) {
+        writeShort(value.toShort())
     }
 }

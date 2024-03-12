@@ -115,7 +115,7 @@ enum class Network(val type: Byte, val addrSize: Int) {
                         val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
                         if (Config.instance.listen && !localAddress.isLocal())
                             Node.addListenAddress(Address(localAddress.network, Config.instance.port, localAddress.bytes))
-                        return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), address, localAddress, state)
+                        return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(), address, localAddress, state)
                     }
                 }
                 TORv3 -> {

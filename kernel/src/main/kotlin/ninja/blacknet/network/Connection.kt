@@ -149,6 +149,7 @@ class Connection(
             for (packet in sendChannel) {
                 val size = packet.remaining
                 writeChannel.writePacket(packet)
+                writeChannel.flush()
                 sendQueueSize -= size
                 totalBytesWritten += size
             }

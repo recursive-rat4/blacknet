@@ -401,7 +401,7 @@ object Node {
             val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
             if (!localAddress.isLocal())
                 addListenAddress(localAddress)
-            val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+            val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
             addConnection(connection)
         }
     }

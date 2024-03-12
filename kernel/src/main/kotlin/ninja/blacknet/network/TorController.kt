@@ -61,6 +61,7 @@ object TorController {
     ) {
         suspend fun authenticate() {
             writeChannel.writeStringUtf8("AUTHENTICATE\r\n")
+            writeChannel.flush()
             val replyLine = readChannel.readUTF8Line()
             when (replyLine) {
                 "250 OK" -> Unit
@@ -71,6 +72,7 @@ object TorController {
 
         suspend fun addOnion(): Pair<String?, String?> {
             writeChannel.writeStringUtf8("ADD_ONION $privateKey Port=${Config.instance.port}\r\n")
+            writeChannel.flush()
             var serviceID: String? = null
             var newPrivateKey: String? = null
             while (true) {
@@ -104,7 +106,7 @@ object TorController {
     suspend fun listen(): Pair<Job, Address> {
         //TODO configure host
         val socket = aSocket(Network.selector).tcp().connect(Address.IPv4_LOOPBACK(Config.instance.torcontrol).getSocketAddress())
-        val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true))
+        val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel())
         //TODO cookie, password
         connection.authenticate()
         val (serviceID, newPrivateKey) = connection.addOnion()

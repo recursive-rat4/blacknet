@@ -67,7 +67,7 @@ object I2PSAM {
 
     private suspend fun connectToSAM(): Connection {
         val socket = aSocket(Network.selector).tcp().connect(sam?.getSocketAddress() ?: throw NotConfigured)
-        val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(true))
+        val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel())
 
         val answer = request(connection, "HELLO VERSION MIN=3.2\n")
         connection.checkResult(answer)
@@ -100,6 +100,7 @@ object I2PSAM {
 
                 if (message.startsWith("PING")) {
                     connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
+                    connection.writeChannel.flush()
                 }
             }
             session = null
@@ -139,6 +140,7 @@ object I2PSAM {
 
             if (message.startsWith("PING")) {
                 connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
+                connection.writeChannel.flush()
             } else {
                 val destination = message.takeWhile { it != ' ' }
                 val remoteAddress = Address(Network.I2P, Config.instance.port, hash(destination))
@@ -156,6 +158,7 @@ object I2PSAM {
     private suspend fun request(connection: Connection, request: String): String? {
         logger.debug { request.dropLast(1) }
         connection.writeChannel.writeStringUtf8(request)
+        connection.writeChannel.flush()
         val answer = connection.readChannel.readUTF8Line()
         logger.debug { "$answer" }
         return answer
