@@ -44,6 +44,12 @@ class BlockBenchmark {
     @Benchmark
     fun deserializeThousandTx() = binaryFormat.decodeFromByteArray(Block.serializer(), thousandTxBytes)
 
+    @Benchmark
+    fun sizeEmpty() = binaryFormat.computeSize(Block.serializer(), empty)
+
+    @Benchmark
+    fun sizeThousandTx() = binaryFormat.computeSize(Block.serializer(), thousandTx)
+
     private fun makeBlock(tx: Int) = Block(
         random.nextUInt(),
         Hash(random.nextBytes(Hash.SIZE_BYTES)),

@@ -79,4 +79,11 @@ public class BinaryFormat(
         val encoder = BinaryEncoder(StreamWriter(stream), serializersModule)
         serializer.serialize(encoder, value)
     }
+
+    public fun <T> computeSize(serializer: SerializationStrategy<T>, value: T): Int {
+        val writer = SizeWriter()
+        val encoder = BinaryEncoder(writer, serializersModule)
+        serializer.serialize(encoder, value)
+        return writer.output()
+    }
 }

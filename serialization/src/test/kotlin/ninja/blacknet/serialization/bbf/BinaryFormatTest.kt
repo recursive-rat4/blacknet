@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -89,6 +89,14 @@ class BinaryFormatTest {
     }
 
     @Test
+    fun computeSize() {
+        assertEquals(
+            bytes.size,
+            format.computeSize(Structure.serializer(), structure)
+        )
+    }
+
+    @Test
     fun invalidMark() {
         val bytes = ByteArray(1) { 2 }
         assertFails { format.decodeFromByteArray(Boolean.serializer(), bytes) }
@@ -130,6 +138,10 @@ class BinaryFormatTest {
             bytes,
             format.encodeToByteArray(FloatArraySerializer(), floats)
         )
+        assertEquals(
+            bytes.size,
+            format.computeSize(FloatArraySerializer(), floats)
+        )
     }
 
     @Test
@@ -160,6 +172,10 @@ class BinaryFormatTest {
         assertEquals(
             bytes,
             format.encodeToByteArray(DoubleArraySerializer(), doubles)
+        )
+        assertEquals(
+            bytes.size,
+            format.computeSize(DoubleArraySerializer(), doubles)
         )
     }
 }
