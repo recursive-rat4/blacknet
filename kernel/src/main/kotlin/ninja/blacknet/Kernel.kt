@@ -77,7 +77,7 @@ object Kernel {
         // exceptions from coroutines should end up here too
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler)
 
-        logger.info { "Starting up ${Version.name} node ${Version.revision}" }
+        logger.info { "Starting up ${Version.name} node ${Version.version}" }
         logger.info { "CPU: ${Runtime.availableProcessors} cores ${System.getProperty("os.arch")}" }
         logger.info { "OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}" }
         logger.info { "VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}" }

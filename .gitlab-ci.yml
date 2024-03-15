@@ -19,17 +19,18 @@ cache:
     - .m2/repository
 
 stages:
-  - cyclonedx
+  - scan
   - test
   - build
 
-cyclonedx:
-  stage: cyclonedx
+scan:
+  stage: scan
   script:
-    - $MAVEN cyclonedx:makeAggregateBom
+    - $MAVEN artifact:check-buildplan cyclonedx:makeAggregateBom
   rules:
     - changes:
       - pom.xml
+      - "**/pom.xml"
       when: on_success
     - when: never
   artifacts:

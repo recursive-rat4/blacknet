@@ -6,13 +6,13 @@
 
 Install the Java JDK (not only JRE) version 21th number or greater, the Apache Maven version 3rd number or greater.
 
-- Debian & Ubuntu: `sudo apt-get install default-jdk maven git`
-- Red Hat & Oracle: `sudo yum install java-21-openjdk maven git`
-- SUSE: `sudo zypper install java-21-openjdk maven git`
-- Arch: `sudo pacman -S --needed jdk-openjdk maven git`
-- Gentoo: `sudo emerge -av1 --noreplace virtual/jdk dev-java/maven-bin dev-vcs/git`
-- FreeBSD: `sudo pkg install openjdk21 maven git`
-- OpenBSD: `sudo pkg_add jdk maven git`
+- Debian & Ubuntu: `sudo apt-get install default-jdk maven`
+- Red Hat & Oracle: `sudo yum install java-21-openjdk maven`
+- SUSE: `sudo zypper install java-21-openjdk maven`
+- Arch: `sudo pacman -S --needed jdk-openjdk maven`
+- Gentoo: `sudo emerge -av1 --noreplace virtual/jdk dev-java/maven-bin`
+- FreeBSD: `sudo pkg install openjdk21 maven`
+- OpenBSD: `sudo pkg_add jdk maven`
 
 ## Get the Source Code
 

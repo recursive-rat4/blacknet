@@ -15,7 +15,6 @@ import ninja.blacknet.util.Resources
 object Version {
     val name: String
     val version: String
-    val revision: String
 
     val http_server: String
     val http_server_version: String
@@ -30,10 +29,6 @@ object Version {
 
         attributes(Kernel::class.java).run {
             version = getValue("Implementation-Version")
-            revision = when (val value = getValue("Build-Revision")) {
-                null, "" -> version
-                else -> value
-            }
         }
 
         attributes(ApplicationEngine::class.java).run {

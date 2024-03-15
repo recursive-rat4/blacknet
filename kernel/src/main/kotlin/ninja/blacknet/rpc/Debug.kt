@@ -29,7 +29,7 @@ fun Route.debug() {
         if (Config.instance.debugcoroutines) {
             val file = stateDir.resolve("coroutines_${currentTimeSeconds()}.log")
             val stream = PrintStream(file.toString())
-            stream.println("${Version.name} ${Version.revision}")
+            stream.println("${Version.name} ${Version.version}")
             DebugProbes.dumpCoroutines(stream)
             stream.close()
             call.respond(file.toAbsolutePath())
