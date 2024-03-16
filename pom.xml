@@ -87,8 +87,8 @@
 
         <project.build.outputTimestamp>2024-01-01T00:00:00Z</project.build.outputTimestamp>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <!--UPSTREAM https://youtrack.jetbrains.com/issue/KT-61667/Maven-Xjdk-release20-leads-to-Xjdk-release20-option-conflicts-with-jvm-target-1.8.-Please-remove-the-jvm-target-option -->
         <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     </properties>
@@ -233,6 +233,7 @@
                                 <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
                             </sourceDirs>
                             <args>
+                                <arg>-Xjdk-release=${java.version}</arg>
                                 <arg>-Xjvm-default=all</arg>
                             </args>
                         </configuration>
