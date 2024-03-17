@@ -57,6 +57,7 @@ object Node {
     const val MIN_PROTOCOL_VERSION = 12
     private const val DATA_VERSION = 1
     private const val DATA_FILENAME = "node.dat"
+    private val router = Router(Config.instance)
     val nonce = Random.nextLong()
     val connections = CopyOnWriteArrayList<Connection>()
     private val listenAddress = CopyOnWriteArraySet<Address>()
@@ -69,7 +70,7 @@ object Node {
 
         if (Config.instance.listen) {
             try {
-                if (!Network.IPv4.isDisabled() || !Network.IPv6.isDisabled()) {
+                if (!router.isDisabled(Network.IPv4) || !router.isDisabled(Network.IPv6)) {
                     connectors.add(
                         listenOnIP()
                     )
@@ -81,17 +82,17 @@ object Node {
             }
         }
         if (Config.instance.tor) {
-            if (!Config.instance.listen || Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+            if (!Config.instance.listen || router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
                 connectors.add(
-                    listenOn(Network.LOOPBACK)
+                    listenOn(Network.LOOPBACK(Config.instance.port))
                 )
             connectors.add(
-                Runtime.rotate(Network.Companion::listenOnTor)
+                Runtime.rotate(router::listenOnTor)
             )
         }
         if (Config.instance.i2p) {
             connectors.add(
-                Runtime.rotate(Network.Companion::listenOnI2P)
+                Runtime.rotate(router::listenOnI2P)
             )
         }
         try {
@@ -231,15 +232,15 @@ object Node {
     }
 
     private fun listenOnIP(): Job {
-        if (Network.IPv4.isDisabled() && Network.IPv6.isDisabled())
+        if (router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
             throw IllegalStateException("Both IPv4 and IPv6 are disabled")
-        if (Network.IPv4.isDisabled())
+        if (router.isDisabled(Network.IPv4))
             return listenOn(Address.IPv6_ANY(Config.instance.port))
         return listenOn(Address.IPv4_ANY(Config.instance.port))
     }
 
     suspend fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
-        val connection = Network.connect(address, prober)
+        val connection = router.connect(address, prober)
         synchronized(connections) {
             connections.add(connection)
             connection.launch()

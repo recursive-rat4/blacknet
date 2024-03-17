@@ -29,6 +29,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.*
+import ninja.blacknet.Config
 import ninja.blacknet.Mode.*
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
@@ -56,6 +57,7 @@ object PeerDB {
     const val MAX_SIZE = 8192
     private const val VERSION = 4
     private const val FILENAME = "peers.dat"
+    private val LOCALHOST = Network.LOOPBACK(Config.instance.port)
     private val peers = ConcurrentHashMap<Address, Entry>(MAX_SIZE)
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)
@@ -70,7 +72,7 @@ object PeerDB {
         }
 
         if (peers.size < 100) {
-            val added = add(listBuiltinPeers(), Network.LOOPBACK)
+            val added = add(listBuiltinPeers(), LOCALHOST)
             if (added > 0) {
                 logger.info { "Added $added built-in peer addresses to db" }
             }
@@ -200,14 +202,14 @@ object PeerDB {
     fun tryContact(address: Address): Boolean {
         if (address.isLocal() || address.isPrivate()) return false
         // ignore max size
-        val entry = peers.computeIfAbsent(address) { Entry(Network.LOOPBACK) }
+        val entry = peers.computeIfAbsent(address) { Entry(LOCALHOST) }
         return entry.inContact.compareAndSet(false, true)
     }
 
     fun contacted(address: Address) {
         if (address.isLocal() || address.isPrivate()) return
         // ignore max size
-        val entry = peers.computeIfAbsent(address) { Entry(Network.LOOPBACK) }
+        val entry = peers.computeIfAbsent(address) { Entry(LOCALHOST) }
         if (entry.inContact.compareAndSet(false, true))
             return
         else
@@ -388,7 +390,7 @@ object PeerDB {
         internal constructor(entry: EntryV3) : this(entry.from, entry.attempts, entry.lastTry, entry.stat?.let { NetworkStat(it) })
 
         constructor(from: Address) : this(from, 0, 0, null)
-        constructor(time: Long, userAgent: String) : this(Network.LOOPBACK, 0, 0, NetworkStat(time, userAgent))
+        constructor(time: Long, userAgent: String) : this(LOCALHOST, 0, 0, NetworkStat(time, userAgent))
 
         @Transient
         internal val inContact = atomic(false)
