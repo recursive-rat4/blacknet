@@ -28,6 +28,7 @@ class Router(
 ) {
     private val socksProxy: Address?
     private val torProxy: Address?
+    private val sam: I2PSAM
 
     init {
         if (config.proxyhost != null && config.proxyport != null)
@@ -39,6 +40,8 @@ class Router(
             torProxy = Network.resolve(config.torhost, config.torport)
         else
             torProxy = null
+
+        sam = I2PSAM(config)
     }
 
     fun isDisabled(network: Network): Boolean {
@@ -72,8 +75,8 @@ class Router(
                 return Connection(socket, readChannel, writeChannel, address, torProxy, state)
             }
             Network.I2P -> {
-                val c = I2PSAM.connect(address)
-                return Connection(c.socket, c.readChannel, c.writeChannel, address, I2PSAM.session().second, state)
+                val c = sam.connect(address)
+                return Connection(c.socket, c.readChannel, c.writeChannel, address, sam.session().second, state)
             }
             Network.TORv2 -> {
                 throw RuntimeException("${address.network} is obsolete")
@@ -107,14 +110,14 @@ class Router(
 
     suspend fun listenOnI2P() {
         try {
-            val (_, localAddress) = I2PSAM.createSession()
+            val (_, localAddress) = sam.createSession()
 
             logger.info { "Listening on ${localAddress.debugName()}" }
             Node.addListenAddress(localAddress)
 
             while (true) {
                 val a = try {
-                    I2PSAM.accept()
+                    sam.accept()
                 } catch (e: Throwable) {
                     break
                 }

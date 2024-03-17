@@ -36,15 +36,17 @@ import ninja.blacknet.util.replaceFile
 private val logger = KotlinLogging.logger {}
 
 // https://geti2p.net/en/docs/api/samv3
-object I2PSAM {
+class I2PSAM(
+    private val config: Config,
+) {
     private var privateKey = "TRANSIENT"
     private val sam: Address?
     @Volatile
     private var session: Pair<String, Address>? = null
 
     init {
-        if (Config.instance.i2psamhost != null && Config.instance.i2psamport != null)
-            sam = Network.resolve(Config.instance.i2psamhost, Config.instance.i2psamport)
+        if (config.i2psamhost != null && config.i2psamport != null)
+            sam = Network.resolve(config.i2psamhost, config.i2psamport)
         else
             sam = null
 
@@ -86,7 +88,7 @@ object I2PSAM {
         val privateKey = getValue(answer, "DESTINATION") ?: throw I2PException("invalid response")
 
         val destination = lookup(connection, "ME")
-        val localAddress = Address(Network.I2P, Config.instance.port, hash(destination))
+        val localAddress = Address(Network.I2P, config.port, hash(destination))
 
         if (this.privateKey == "TRANSIENT")
             savePrivateKey(privateKey)
@@ -143,7 +145,7 @@ object I2PSAM {
                 connection.writeChannel.flush()
             } else {
                 val destination = message.takeWhile { it != ' ' }
-                val remoteAddress = Address(Network.I2P, Config.instance.port, hash(destination))
+                val remoteAddress = Address(Network.I2P, config.port, hash(destination))
                 return Accepted(connection.socket, connection.readChannel, connection.writeChannel, remoteAddress)
             }
         }
@@ -164,12 +166,6 @@ object I2PSAM {
         return answer
     }
 
-    internal fun hash(destination: String): ByteArray {
-        val base64 = destination.replace('-', '+').replace('~', '/') //XXX optimize?
-        val decoded = Base64.decode(base64)
-        return buildHash("SHA-256") { encodeByteArray(decoded) }
-    }
-
     private fun generateId(): String {
         val size = 8
         val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -179,23 +175,6 @@ object I2PSAM {
             builder.append(alphabet[rnd])
         }
         return builder.toString()
-    }
-
-    private fun getValue(answer: String?, key: String): String? {
-        if (answer == null) return null
-        val keyPattern = ' ' + key + '='
-        val i = answer.indexOf(keyPattern)
-        if (i == -1)
-            return null
-        val valueStart = i + keyPattern.length
-        if (valueStart == answer.length)
-            return String()
-        if (answer[valueStart] == '"')
-            return answer.substring(valueStart + 1, answer.indexOf('"', valueStart + 1))
-        val valueEnd = answer.indexOf(' ', valueStart)
-        if (valueEnd == -1)
-            return answer.substring(valueStart)
-        return answer.substring(valueStart, valueEnd)
     }
 
     class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel) {
@@ -233,6 +212,31 @@ object I2PSAM {
         logger.info { "Saving I2P private key" }
         replaceFile(dataDir, "privateKey.i2p") {
             write(privateKey.toByteArray(Charsets.UTF_8))
+        }
+    }
+
+    companion object {
+        internal fun hash(destination: String): ByteArray {
+            val base64 = destination.replace('-', '+').replace('~', '/') //XXX optimize?
+            val decoded = Base64.decode(base64)
+            return buildHash("SHA-256") { encodeByteArray(decoded) }
+        }
+
+        private fun getValue(answer: String?, key: String): String? {
+            if (answer == null) return null
+            val keyPattern = ' ' + key + '='
+            val i = answer.indexOf(keyPattern)
+            if (i == -1)
+                return null
+            val valueStart = i + keyPattern.length
+            if (valueStart == answer.length)
+                return String()
+            if (answer[valueStart] == '"')
+                return answer.substring(valueStart + 1, answer.indexOf('"', valueStart + 1))
+            val valueEnd = answer.indexOf(' ', valueStart)
+            if (valueEnd == -1)
+                return answer.substring(valueStart)
+            return answer.substring(valueStart, valueEnd)
         }
     }
 }
