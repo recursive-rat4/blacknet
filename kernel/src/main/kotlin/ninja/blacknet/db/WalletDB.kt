@@ -553,7 +553,7 @@ object WalletDB {
         return wallet
     }
 
-    fun referenceChain(): Hash {
+    fun anchor(): Hash {
         return if (!PoS.guessInitialSynchronization())
             LedgerDB.state().rollingCheckpoint
         else

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -25,7 +25,7 @@ class Transaction(
         var signature: ByteArray,
         val from: PublicKey,
         val seq: Int,
-        val referenceChain: Hash,
+        val anchor: Hash,
         @Serializable(with = LongSerializer::class)
         val fee: Long,
         val type: Byte,
@@ -56,8 +56,8 @@ class Transaction(
             }
         )
 
-        fun create(from: PublicKey, seq: Int, referenceChain: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
-            return Transaction(SignatureSerializer.EMPTY, from, seq, referenceChain, fee, type, data)
+        fun create(from: PublicKey, seq: Int, anchor: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
+            return Transaction(SignatureSerializer.EMPTY, from, seq, anchor, fee, type, data)
         }
 
         /**
@@ -69,7 +69,7 @@ class Transaction(
          *
          * [Transaction.seq] height of the block
          *
-         * [Transaction.referenceChain] hash of the block
+         * [Transaction.anchor] hash of the block
          *
          * [Transaction.fee] the amount
          *
@@ -79,8 +79,8 @@ class Transaction(
          *
          * @return the constructed [Transaction]
          */
-        fun generated(from: PublicKey, height: Int, referenceChain: Hash, amount: Long): Transaction {
-            return Transaction(SignatureSerializer.EMPTY, from, height, referenceChain, amount, TxType.Generated.type, emptyByteArray())
+        fun generated(from: PublicKey, height: Int, anchor: Hash, amount: Long): Transaction {
+            return Transaction(SignatureSerializer.EMPTY, from, height, anchor, amount, TxType.Generated.type, emptyByteArray())
         }
     }
 }

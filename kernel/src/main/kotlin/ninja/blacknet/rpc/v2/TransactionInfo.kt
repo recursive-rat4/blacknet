@@ -10,6 +10,7 @@
 package ninja.blacknet.rpc.v2
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -33,7 +34,8 @@ class TransactionInfo(
         val signature: ByteArray,
         val from: PublicKey,
         val seq: Int,
-        val referenceChain: Hash,
+        @SerialName("referenceChain")
+        val anchor: Hash,
         @Serializable(with = LongSerializer::class)
         val fee: Long,
         val data: List<DataInfo>
@@ -44,7 +46,7 @@ class TransactionInfo(
             tx.signature,
             tx.from,
             tx.seq,
-            tx.referenceChain,
+            tx.anchor,
             tx.fee,
             data(tx.type, tx.data, filter)
     )

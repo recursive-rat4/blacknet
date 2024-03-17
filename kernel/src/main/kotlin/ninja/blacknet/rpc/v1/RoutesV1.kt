@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -244,7 +244,7 @@ fun Route.APIV1() {
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
             val data = binaryFormat.encodeToByteArray(Transfer.serializer(), Transfer(amount, to, message))
             val tx = Transaction.create(from, seq, blockHash
-                    ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
+                    ?: WalletDB.anchor(), fee, TxType.Transfer.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
@@ -266,7 +266,7 @@ fun Route.APIV1() {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
             val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
-            val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
+            val tx = Transaction.create(from, seq, blockHash ?: WalletDB.anchor(), fee, TxType.Burn.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
@@ -288,7 +288,7 @@ fun Route.APIV1() {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
             val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
-            val tx = Transaction.create(from, seq, blockHash ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
+            val tx = Transaction.create(from, seq, blockHash ?: WalletDB.anchor(), fee, TxType.Lease.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
@@ -312,7 +312,7 @@ fun Route.APIV1() {
             val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
             val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
             val tx = Transaction.create(from, seq, blockHash
-                    ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
+                    ?: WalletDB.anchor(), fee, TxType.CancelLease.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)

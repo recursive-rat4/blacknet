@@ -37,7 +37,7 @@ class TransactionInfoV1(
             SignatureSerializer.encode(tx.signature),
             Address.encode(tx.from.bytes),
             tx.seq,
-            tx.referenceChain.toString(),
+            tx.anchor.toString(),
             tx.fee,
             tx.type.toUByte(),
             data(tx.type, tx.data)

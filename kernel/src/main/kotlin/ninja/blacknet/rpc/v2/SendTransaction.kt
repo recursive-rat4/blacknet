@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -43,14 +43,15 @@ class TransferRequest(
     val to: PublicKey,
     val encrypted: Byte? = null,
     val message: String? = null,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val message = PaymentId.create(message, encrypted, privateKey, to) ?: return respondError("Failed to create payment id")
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(Transfer.serializer(), Transfer(amount, to, message))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Transfer.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.Transfer.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)
@@ -70,13 +71,14 @@ class BurnRequest(
     val amount: Long,
     @Serializable(with = ByteArraySerializer::class)
     val message: ByteArray,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Burn.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.Burn.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)
@@ -95,13 +97,14 @@ class LeaseRequest(
     val fee: Long,
     val amount: Long,
     val to: PublicKey,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.Lease.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.Lease.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)
@@ -121,13 +124,14 @@ class CancelLeaseRequest(
     val amount: Long,
     val to: PublicKey,
     val height: Int,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CancelLease.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.CancelLease.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)
@@ -148,13 +152,14 @@ class WithdrawFromLeaseRequest(
     val amount: Long,
     val to: PublicKey,
     val height: Int,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.WithdrawFromLease.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.WithdrawFromLease.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)
@@ -174,13 +179,14 @@ class BundleRequest(
     val id: BAppId,
     @Serializable(with = ByteArraySerializer::class)
     val data: ByteArray,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(BApp.serializer(), BApp(id, data))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.BApp.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.BApp.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)
@@ -204,7 +210,8 @@ class CreateSwapRequest(
     val hashLockType: Byte,
     @Serializable(with = ByteArraySerializer::class)
     val hashLockData: ByteArray,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val timeLock = TimeLock(timeLockType, timeLockData).also { it.validate() }
@@ -212,7 +219,7 @@ class CreateSwapRequest(
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(CreateHTLC.serializer(), CreateHTLC(amount, to, timeLock, hashLock))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.CreateHTLC.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.CreateHTLC.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)
@@ -232,13 +239,14 @@ class ClaimSwapRequest(
     val id: HashTimeLockContractId,
     @Serializable(with = ByteArraySerializer::class)
     val preimage: ByteArray,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(ClaimHTLC.serializer(), ClaimHTLC(id, preimage))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.ClaimHTLC.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.ClaimHTLC.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)
@@ -256,13 +264,14 @@ class RefundSwapRequest(
     val privateKey: ByteArray,
     val fee: Long,
     val id: HashTimeLockContractId,
-    val referenceChain: Hash? = null
+    @SerialName("referenceChain")
+    val anchor: Hash? = null,
 ) : Request {
     override suspend fun handle(): TextContent = RPCServer.txMutex.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(RefundHTLC.serializer(), RefundHTLC(id))
-        val tx = Transaction.create(from, seq, referenceChain ?: WalletDB.referenceChain(), fee, TxType.RefundHTLC.type, data)
+        val tx = Transaction.create(from, seq, anchor ?: WalletDB.anchor(), fee, TxType.RefundHTLC.type, data)
         val (hash, bytes) = tx.sign(privateKey)
 
         val status = Node.broadcastTx(hash, bytes)

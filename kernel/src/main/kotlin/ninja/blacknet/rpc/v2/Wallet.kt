@@ -190,12 +190,12 @@ class Confirmations(
 }
 
 @Serializable
-class ReferenceChain(
+class Anchor(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
     override suspend fun handle(): TextContent {
-        val result = WalletDB.referenceChain()
+        val result = WalletDB.anchor()
         return respondText(result.toString())
     }
 }
@@ -345,9 +345,9 @@ fun Route.wallet() {
     //get(Confirmations.serializer(), "/api/v2/wallet/confirmations/{address}/{hash}")
     get(Confirmations.serializer(), "/api/v2/wallet/{address}/confirmations/{hash}")
 
-    //get(ReferenceChain.serializer(), "/api/v2/wallet/referencechain")
-    //get(ReferenceChain.serializer(), "/api/v2/wallet/referencechain/{address}")
-    get(ReferenceChain.serializer(), "/api/v2/wallet/{address}/referencechain")
+    //get(Anchor.serializer(), "/api/v2/wallet/referencechain")
+    //get(Anchor.serializer(), "/api/v2/wallet/referencechain/{address}")
+    get(Anchor.serializer(), "/api/v2/wallet/{address}/referencechain")
 
     //get(TxCount.serializer(), "/api/v2/wallet/txcount")
     //get(TxCount.serializer(), "/api/v2/wallet/txcount/{address}")

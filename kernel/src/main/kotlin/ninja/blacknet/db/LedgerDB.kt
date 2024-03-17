@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -248,7 +248,7 @@ object LedgerDB {
         }
     }
 
-    fun checkReferenceChain(hash: Hash): Boolean {
+    fun checkAnchor(hash: Hash): Boolean {
         return hash == Genesis.BLOCK_HASH || chainIndexes.contains(hash.bytes)
     }
 
@@ -594,8 +594,8 @@ object LedgerDB {
             supply += amount
         }
 
-        override fun checkReferenceChain(hash: Hash): Boolean {
-            return LedgerDB.checkReferenceChain(hash)
+        override fun checkAnchor(hash: Hash): Boolean {
+            return LedgerDB.checkAnchor(hash)
         }
 
         override fun blockHash(): Hash {

@@ -9,6 +9,7 @@
 
 package ninja.blacknet.rpc.v2
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
@@ -24,7 +25,8 @@ class TransactionNotification(
         val signature: String,
         val from: String,
         val seq: Int,
-        val referenceChain: String,
+        @SerialName("referenceChain")
+        val anchor: String,
         val fee: String,
         val type: UByte,
         val data: List<TransactionInfo.DataInfo>
@@ -36,7 +38,7 @@ class TransactionNotification(
             SignatureSerializer.encode(tx.signature),
             Address.encode(tx.from.bytes),
             tx.seq,
-            tx.referenceChain.toString(),
+            tx.anchor.toString(),
             tx.fee.toString(),
             tx.type.toUByte(),
             TransactionInfo.data(tx.type, tx.data, filter)
