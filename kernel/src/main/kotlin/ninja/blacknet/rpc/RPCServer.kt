@@ -57,24 +57,12 @@ object RPCServer {
     internal val walletNotify = SynchronizedHashMap<PublicKey, ArrayList<SendChannel<Frame>>>()
 
     init {
-        BlockDB.blockNotify.connect { block, hash, height, size ->
-            runBlocking {
-                blockNotify(block, hash, height, size)
-            }
-        }
-        TxPool.txNotify.connect { tx, hash, time, size ->
-            runBlocking {
-                txPoolNotify(tx, hash, time, size)
-            }
-        }
-        WalletDB.txNotify.connect { tx, hash, time, size, publicKey, filter ->
-            runBlocking {
-                walletNotify(tx, hash, time, size, publicKey, filter)
-            }
-        }
+        BlockDB.blockNotify.connect(::blockNotify)
+        TxPool.txNotify.connect(::txPoolNotify)
+        WalletDB.txNotify.connect(::walletNotify)
     }
 
-    private suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
+    private fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) = runBlocking {
         RPCServerV1.blockNotify(block, hash, height, size)
 
         blockNotify.mutex.withLock {
@@ -93,7 +81,7 @@ object RPCServer {
         }
     }
 
-    private suspend fun txPoolNotify(tx: Transaction, hash: Hash, time: Long, size: Int) {
+    private fun txPoolNotify(tx: Transaction, hash: Hash, time: Long, size: Int) = runBlocking {
         txPoolNotify.mutex.withLock {
             if (txPoolNotify.set.isNotEmpty()) {
                 val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
@@ -110,7 +98,7 @@ object RPCServer {
         }
     }
 
-    private suspend fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey, filter: List<WalletDB.TransactionDataType>) {
+    private fun walletNotify(tx: Transaction, hash: Hash, time: Long, size: Int, publicKey: PublicKey, filter: List<WalletDB.TransactionDataType>) = runBlocking {
         RPCServerV1.walletNotify(tx, hash, time, size, publicKey, filter)
 
         walletNotify.mutex.withLock {
