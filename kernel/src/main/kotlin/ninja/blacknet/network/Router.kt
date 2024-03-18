@@ -64,8 +64,8 @@ class Router(
                 } else {
                     val socket = aSocket(Network.selector).tcp().connect(address.getSocketAddress())
                     val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
-                    if (Config.instance.listen && !localAddress.isLocal())
-                        Node.addListenAddress(Address(localAddress.network, Config.instance.port, localAddress.bytes))
+                    if (config.listen && !localAddress.isLocal())
+                        Node.addListenAddress(Address(localAddress.network, config.port, localAddress.bytes))
                     return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(), address, localAddress, state)
                 }
             }

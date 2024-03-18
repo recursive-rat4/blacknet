@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -15,18 +15,18 @@ import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import java.io.PrintStream
 import kotlinx.coroutines.debug.DebugProbes
-import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.Version
 import ninja.blacknet.stateDir
 import ninja.blacknet.time.currentTimeSeconds
-import java.io.PrintStream
 
 private val logger = KotlinLogging.logger {}
 
 fun Route.debug() {
     get("/api/dumpcoroutines") {
-        if (Config.instance.debugcoroutines) {
+        if (Kernel.config().debugcoroutines) {
             val file = stateDir.resolve("coroutines_${currentTimeSeconds()}.log")
             val stream = PrintStream(file.toString())
             stream.println("${Version.name} ${Version.version}")

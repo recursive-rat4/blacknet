@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Pavel Vasin
+ * Copyright (c) 2021-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -13,26 +13,29 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import ninja.blacknet.Config
 import ninja.blacknet.crypto.PoS
+import ninja.blacknet.db.BlockDB
+import ninja.blacknet.db.MemDB
 
 class TxPoolTest {
-    @Test
-    fun initialization() {
-        TxPool
-    }
+    private val txPool = TxPool(
+        Config(),
+        BlockDB(MemDB()),
+    )
 
     @Test
     fun setFee() {
-        TxPool.minFeeRate = 0
-        assertEquals(0, TxPool.minFeeRate)
+        txPool.minFeeRate = 0
+        assertEquals(0, txPool.minFeeRate)
 
-        TxPool.minFeeRate = 4 * PoS.COIN
-        assertEquals(4 * PoS.COIN, TxPool.minFeeRate)
+        txPool.minFeeRate = 4 * PoS.COIN
+        assertEquals(4 * PoS.COIN, txPool.minFeeRate)
     }
 
     @Test
     fun checkFee() {
-        TxPool.minFeeRate = 100000
+        txPool.minFeeRate = 100000
 
         for ((size, amount) in arrayOf(
                 Pair(184, 100000L),
@@ -40,7 +43,7 @@ class TxPoolTest {
                 Pair(194, 100000L),
                 Pair(999, 100000L),
         )) {
-            assertTrue(TxPool.checkFee(size, amount))
+            assertTrue(txPool.checkFee(size, amount))
         }
 
         for ((size, amount) in arrayOf(
@@ -49,7 +52,7 @@ class TxPoolTest {
                 Pair(194, 50000L),
                 Pair(1000, 100000L),
         )) {
-            assertFalse(TxPool.checkFee(size, amount))
+            assertFalse(txPool.checkFee(size, amount))
         }
     }
 }

@@ -26,6 +26,7 @@ import kotlin.io.path.readText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.dataDir
 import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
@@ -71,7 +72,7 @@ object TorController {
         }
 
         suspend fun addOnion(): Pair<String?, String?> {
-            writeChannel.writeStringUtf8("ADD_ONION $privateKey Port=${Config.instance.port}\r\n")
+            writeChannel.writeStringUtf8("ADD_ONION $privateKey Port=${Kernel.config().port}\r\n")
             writeChannel.flush()
             var serviceID: String? = null
             var newPrivateKey: String? = null
@@ -105,12 +106,12 @@ object TorController {
 
     suspend fun listen(): Pair<Job, Address> {
         //TODO configure host
-        val socket = aSocket(Network.selector).tcp().connect(Address.IPv4_LOOPBACK(Config.instance.torcontrol).getSocketAddress())
+        val socket = aSocket(Network.selector).tcp().connect(Address.IPv4_LOOPBACK(Kernel.config().torcontrol).getSocketAddress())
         val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel())
         //TODO cookie, password
         connection.authenticate()
         val (serviceID, newPrivateKey) = connection.addOnion()
-        val address = Network.parse(serviceID + Network.TOR_SUFFIX, Config.instance.port) ?: connection.exception("Failed to parse Onion Service ID $serviceID")
+        val address = Network.parse(serviceID + Network.TOR_SUFFIX, Kernel.config().port) ?: connection.exception("Failed to parse Onion Service ID $serviceID")
         require(address.network == Network.TORv2 || address.network == Network.TORv3)
 
         if (privateKey.startsWith("NEW:"))

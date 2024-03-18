@@ -23,7 +23,7 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.listSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.codec.base.Base32
 import ninja.blacknet.crypto.HashEncoder
 import ninja.blacknet.crypto.SipHash.hashCode
@@ -71,7 +71,7 @@ class Address(
     }
 
     fun debugName(): String {
-        return if (Config.instance.logips)
+        return if (Kernel.config().logips)
             toString()
         else
             "$network address"

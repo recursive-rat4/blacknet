@@ -32,7 +32,6 @@ import ninja.blacknet.Version
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
@@ -58,11 +57,12 @@ object RPCServer {
 
     init {
         Kernel.blockDB().blockNotify.connect(::blockNotify)
-        TxPool.txNotify.connect(::txPoolNotify)
+        Kernel.txPool().txNotify.connect(::txPoolNotify)
         WalletDB.txNotify.connect(::walletNotify)
     }
 
-    private fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) = runBlocking {
+    @Suppress("UNUSED_PARAMETER")
+    private fun blockNotify(block: Block, hash: Hash, height: Int, size: Int, txHashes: List<Hash>) = runBlocking {
         RPCServerV1.blockNotify(block, hash, height, size)
 
         blockNotify.mutex.withLock {

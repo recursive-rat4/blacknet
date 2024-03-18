@@ -30,6 +30,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.Mode.*
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
@@ -57,7 +58,7 @@ object PeerDB {
     const val MAX_SIZE = 8192
     private const val VERSION = 4
     private const val FILENAME = "peers.dat"
-    private val LOCALHOST = Network.LOOPBACK(Config.instance.port)
+    private val LOCALHOST = Network.LOOPBACK(Kernel.config().port)
     private val peers = ConcurrentHashMap<Address, Entry>(MAX_SIZE)
     private val STATE_KEY = DBKey(0x80.toByte(), 0)
     private val VERSION_KEY = DBKey(0x81.toByte(), 0)

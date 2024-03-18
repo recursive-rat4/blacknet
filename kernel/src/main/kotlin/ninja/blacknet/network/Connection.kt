@@ -24,7 +24,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.withLock
-import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
@@ -258,7 +258,7 @@ class Connection(
     }
 
     fun debugName(): String {
-        return if (Config.instance.logips)
+        return if (Kernel.config().logips)
             remoteAddress.toString()
         else
             "peer $peerId"

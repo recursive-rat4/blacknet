@@ -16,7 +16,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
-import ninja.blacknet.Config
 import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
@@ -70,13 +69,13 @@ object Staker {
         }
 
     init {
-        Config.instance.mnemonics?.let { mnemonics ->
+        Kernel.config().mnemonics?.let { mnemonics ->
             runBlocking {
                 mnemonics.forEach { mnemonic ->
                     val privateKey = mnemonic
                     startStaking(privateKey)
                 }
-                Config.instance.mnemonics = null
+                Kernel.config().mnemonics = null
                 ShutdownHooks.add {
                     coroutine?.let {
                         state = "Terminating staker"
@@ -131,7 +130,7 @@ object Staker {
             val pos = PoS.check(timeSlot, staker.publicKey, state.nxtrng, state.difficulty, state.blockTime, staker.stake)
             if (pos == Accepted) {
                 val block = Block.create(state.blockHash, timeSlot, staker.publicKey)
-                TxPool.fill(block)
+                Kernel.txPool().fill(block)
                 val (hash, bytes) = block.sign(staker.privateKey)
                 logger.info { "Staked $hash" }
                 if (Node.broadcastBlock(hash, bytes)) {
@@ -143,8 +142,8 @@ object Staker {
                     if (block.transactions.isEmpty())
                         return
                     block.transactions.clear()
-                    if (TxPool.check() == false) {
-                        TxPool.fill(block)
+                    if (Kernel.txPool().check() == false) {
+                        Kernel.txPool().fill(block)
                         if (block.transactions.isNotEmpty()) {
                             val (hash, bytes) = block.sign(staker.privateKey)
                             logger.warn { "Retry $hash" }

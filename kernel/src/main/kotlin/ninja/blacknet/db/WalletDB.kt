@@ -27,7 +27,6 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
-import ninja.blacknet.Config
 import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
@@ -139,7 +138,7 @@ object WalletDB {
             unconfirmed.sortBy { (_, _, seq) -> seq }
 
             unconfirmed.forEach { (hash, bytes, _) ->
-                val (status, fee) = TxPool.process(hash, bytes, currTime, false)
+                val (status, fee) = Kernel.txPool().process(hash, bytes, currTime, false)
                 when (status) {
                     Accepted -> {
                         poolAccepted += 1
@@ -200,7 +199,7 @@ object WalletDB {
     suspend fun getSequence(publicKey: PublicKey): Int = mutex.withLock {
         val wallet = getWalletImpl(publicKey)
         val seq = wallet.seq
-        return@withLock if (seq < Config.instance.seqthreshold)
+        return@withLock if (seq < Kernel.config().seqthreshold)
             seq
         else
             throw RuntimeException("Wallet reached sequence threshold")

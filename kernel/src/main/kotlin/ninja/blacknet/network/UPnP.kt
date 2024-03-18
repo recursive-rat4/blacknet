@@ -10,7 +10,7 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.Version
 import org.bitlet.weupnp.GatewayDevice
@@ -33,14 +33,14 @@ object UPnP {
         }
 
         logger.info { "Sending port mapping request" }
-        if (!gateway.addPortMapping(Config.instance.port.toJava(), Config.instance.port.toJava(), gateway.localAddress.hostAddress, PROTOCOL, Version.name)) {
+        if (!gateway.addPortMapping(Kernel.config().port.toJava(), Kernel.config().port.toJava(), gateway.localAddress.hostAddress, PROTOCOL, Version.name)) {
             logger.info { "Port mapping failed" }
             return
         }
 
         var address: Address? = null
         try {
-            address = Network.parse(gateway.externalIPAddress, Config.instance.port)
+            address = Network.parse(gateway.externalIPAddress, Kernel.config().port)
         } catch (e: Throwable) {
         }
         if (address != null) {
@@ -57,6 +57,6 @@ object UPnP {
 
     private fun remove(gateway: GatewayDevice) {
         logger.info { "Removing port mapping" }
-        gateway.deletePortMapping(Config.instance.port.toJava(), PROTOCOL)
+        gateway.deletePortMapping(Kernel.config().port.toJava(), PROTOCOL)
     }
 }

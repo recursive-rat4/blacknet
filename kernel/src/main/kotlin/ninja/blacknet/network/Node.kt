@@ -29,7 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ninja.blacknet.stateDir
-import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
@@ -57,40 +57,40 @@ object Node {
     const val MIN_PROTOCOL_VERSION = 12
     private const val DATA_VERSION = 1
     private const val DATA_FILENAME = "node.dat"
-    private val router = Router(Config.instance)
+    private val router = Router(Kernel.config())
     val nonce = Random.nextLong()
     val connections = CopyOnWriteArrayList<Connection>()
     private val listenAddress = CopyOnWriteArraySet<Address>()
     private val nextPeerId = atomic(1L)
-    private val queuedPeers = Channel<Address>(Config.instance.outgoingconnections)
+    private val queuedPeers = Channel<Address>(Kernel.config().outgoingconnections)
 
     init {
         // All connectors, including listeners and probers
-        val connectors = ArrayList<Job>(Config.instance.outgoingconnections + 3 + 1)
+        val connectors = ArrayList<Job>(Kernel.config().outgoingconnections + 3 + 1)
 
-        if (Config.instance.listen) {
+        if (Kernel.config().listen) {
             try {
                 if (!router.isDisabled(Network.IPv4) || !router.isDisabled(Network.IPv6)) {
                     connectors.add(
                         listenOnIP()
                     )
-                    if (Config.instance.upnp) {
+                    if (Kernel.config().upnp) {
                         Runtime.launch { UPnP.forward() }
                     }
                 }
             } catch (e: Throwable) {
             }
         }
-        if (Config.instance.tor) {
-            if (!Config.instance.listen || router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
+        if (Kernel.config().tor) {
+            if (!Kernel.config().listen || router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
                 connectors.add(
-                    listenOn(Network.LOOPBACK(Config.instance.port))
+                    listenOn(Network.LOOPBACK(Kernel.config().port))
                 )
             connectors.add(
                 Runtime.rotate(router::listenOnTor)
             )
         }
-        if (Config.instance.i2p) {
+        if (Kernel.config().i2p) {
             connectors.add(
                 Runtime.rotate(router::listenOnI2P)
             )
@@ -113,7 +113,7 @@ object Node {
         } catch (e: Exception) {
             logger.error(e)
         }
-        repeat(Config.instance.outgoingconnections) {
+        repeat(Kernel.config().outgoingconnections) {
             connectors.add(
                 Runtime.rotate(::connector)
             )
@@ -124,7 +124,7 @@ object Node {
         ShutdownHooks.add {
             logger.info { "Unbinding ${connectors.size} connectors" }
             connectors.forEach(Job::cancel)
-            val persistent = Persistent(ArrayList(Config.instance.outgoingconnections))
+            val persistent = Persistent(ArrayList(Kernel.config().outgoingconnections))
             synchronized(connections) {
                 logger.info { "Closing ${connections.size} p2p connections" }
                 connections.forEach { connection ->
@@ -235,8 +235,8 @@ object Node {
         if (router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
             throw IllegalStateException("Both IPv4 and IPv6 are disabled")
         if (router.isDisabled(Network.IPv4))
-            return listenOn(Address.IPv6_ANY(Config.instance.port))
-        return listenOn(Address.IPv4_ANY(Config.instance.port))
+            return listenOn(Address.IPv6_ANY(Kernel.config().port))
+        return listenOn(Address.IPv4_ANY(Kernel.config().port))
     }
 
     suspend fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
@@ -271,7 +271,7 @@ object Node {
                     currentTimeSeconds(),
                     nonce,
                     UserAgent.string,
-                    TxPool.minFeeRate,
+                    Kernel.txPool().minFeeRate,
                     ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
             )
         })
@@ -290,7 +290,7 @@ object Node {
             feeFilter = if (connection.state == Connection.State.PROBER_WAITING)
                 Long.MAX_VALUE
             else
-                TxPool.minFeeRate
+                Kernel.txPool().minFeeRate
         }
         connection.sendPacket(PacketType.Hello, hello)
         if (connection.state != Connection.State.PROBER_WAITING) {
@@ -321,7 +321,7 @@ object Node {
 
     suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
         val currTime = currentTimeSeconds()
-        val (status, fee) = TxPool.process(hash, bytes, currTime, false)
+        val (status, fee) = Kernel.txPool().process(hash, bytes, currTime, false)
         if (status == Accepted) {
             connections.forEach {
                 if (it.state.isConnected() && it.checkFeeFilter(bytes.size, fee))
@@ -352,7 +352,7 @@ object Node {
     }
 
     private fun timeOffset(): Long =
-        Config.instance.outgoingconnections.let { min ->
+        Kernel.config().outgoingconnections.let { min ->
             connections.fold(
                 ArrayList<Long>(min)
             ) { accumulator, element ->
@@ -415,7 +415,7 @@ object Node {
     }
 
     private fun haveSlot(): Boolean {
-        return if (incoming(true) < Config.instance.incomingconnections)
+        return if (incoming(true) < Kernel.config().incomingconnections)
             true
         else
             evictConnection()
@@ -446,7 +446,7 @@ object Node {
             ?: PeerDB.getCandidate { _, _ -> true }
         if (address == null) {
             val outgoing = outgoing()
-            logger.info { "Don't have candidates in PeerDB. $outgoing connections, max ${Config.instance.outgoingconnections}" }
+            logger.info { "Don't have candidates in PeerDB. $outgoing connections, max ${Kernel.config().outgoingconnections}" }
             delay(15 * 60 * 1000L)
             return
         }
@@ -486,7 +486,7 @@ object Node {
             return
 
         // Await while connectors are working
-        if (outgoing() < Config.instance.outgoingconnections)
+        if (outgoing() < Kernel.config().outgoingconnections)
             return
 
         val time = currentTimeMillis()

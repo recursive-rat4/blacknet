@@ -13,8 +13,6 @@ import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.network.Port
-import ninja.blacknet.serialization.config.ConfigFormat
-import ninja.blacknet.serialization.textModule
 
 @Serializable
 class Config(
@@ -48,12 +46,4 @@ class Config(
         val rpcserver: Boolean = true,
         val seqthreshold: Int = Int.MAX_VALUE - 1,
 ) {
-    companion object {
-        val instance = ConfigFormat(serializersModule = textModule).decodeFromFile(serializer(), configDir.resolve("blacknet.conf")).also {
-            if (it.dbcache.bytes < 1024 * 1024) throw ConfigError("dbcache ${it.dbcache.hrp(false)} is unrealistically low")
-            if (it.txpoolsize.bytes < 1024 * 1024) throw ConfigError("txpoolsize ${it.txpoolsize.hrp(false)} is unrealistically low")
-        }
-    }
 }
-
-private class ConfigError(message: String) : Error(message)

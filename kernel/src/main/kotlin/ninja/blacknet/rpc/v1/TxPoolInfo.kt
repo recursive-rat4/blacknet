@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -11,7 +11,7 @@ package ninja.blacknet.rpc.v1
 
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.TxPool
+import ninja.blacknet.Kernel
 
 @Serializable
 class TxPoolInfo(
@@ -20,9 +20,9 @@ class TxPoolInfo(
         val tx: List<String>
 ) {
     companion object {
-        suspend fun get(): TxPoolInfo = TxPool.mutex.withLock {
-            val tx = TxPool.mapHashesToListImpl { it.toString() }
-            return TxPoolInfo(TxPool.sizeImpl(), TxPool.dataSizeImpl(), tx)
+        suspend fun get(): TxPoolInfo = Kernel.txPool().mutex.withLock {
+            val tx = Kernel.txPool().mapHashesToListImpl { it.toString() }
+            return TxPoolInfo(Kernel.txPool().sizeImpl(), Kernel.txPool().dataSizeImpl(), tx)
         }
     }
 }

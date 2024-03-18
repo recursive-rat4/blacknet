@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -10,7 +10,7 @@
 package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.core.TxPool
+import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
@@ -30,7 +30,7 @@ class GetTransactions(
         val response = ArrayList<ByteArray>(list.size)
 
         for (hash in list) {
-            val value = TxPool.get(hash) ?: continue
+            val value = Kernel.txPool().get(hash) ?: continue
             val newSize = size + value.size + 4
 
             if (response.isEmpty()) {

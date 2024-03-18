@@ -13,11 +13,11 @@ import io.ktor.server.routing.Route
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.encode
 import ninja.blacknet.core.Transaction
-import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.mode
@@ -55,7 +55,7 @@ class TxPoolTransaction(
     val raw: Boolean = false
 ) : Request {
     override suspend fun handle(): TextContent {
-        val result = TxPool.get(hash)
+        val result = Kernel.txPool().get(hash)
         return if (result != null) {
             if (raw)
                 return respondText(Base16.encode(result))

@@ -31,6 +31,8 @@ import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.ChainFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.rpc.RPCServer
+import ninja.blacknet.serialization.config.ConfigFormat
+import ninja.blacknet.serialization.textModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 private val logger = KotlinLogging.logger {}
@@ -38,8 +40,12 @@ private val logger = KotlinLogging.logger {}
 object Kernel {
     internal val ktorEngine = CIO
 
+    private var config: Config? = null
+    fun config() = config ?: notInitialized()
     private var blockDB: BlockDB? = null
-    fun blockDB() = blockDB ?: throw IllegalStateException("Kernel not initialized")
+    fun blockDB() = blockDB ?: notInitialized()
+    private var txPool: TxPool? = null
+    fun txPool() = txPool ?: notInitialized()
 
     /**
      * Initialize the kernel library: logging, database, network and other essentials.
@@ -93,14 +99,14 @@ object Kernel {
         Security.addProvider(Blake2bProvider())
         Security.addProvider(BouncyCastleProvider())
 
-        Config.instance
+        config = ConfigFormat(serializersModule = textModule).decodeFromFile(Config.serializer(), configDir.resolve("blacknet.conf"))
 
         //WINDOWS system user, admin rights, and whatever
         //XXX root may be renamed
         if (!Runtime.windowsOS && System.getProperty("user.name") == "root")
             logger.warn { "Running as root" }
 
-        if (Config.instance.debugcoroutines) {
+        if (config().debugcoroutines) {
             logger.warn { "Installing debug probes..." }
             DebugProbes.enableCreationStackTraces = true
             DebugProbes.ignoreCoroutinesWithEmptyContext = false
@@ -114,7 +120,7 @@ object Kernel {
         WalletDB
         LedgerDB
         PeerDB
-        TxPool
+        txPool = TxPool(config(), blockDB())
         Node
         ChainFetcher
         Staker
@@ -132,7 +138,7 @@ object Kernel {
          * https://ktor.io/servers/engine.html
          *
          */
-        if (Config.instance.rpcserver) {
+        if (config().rpcserver) {
             RPCServer
             embeddedServer(
                 ktorEngine,
@@ -142,4 +148,6 @@ object Kernel {
             ).start(wait = false)
         }
     }
+
+    private fun notInitialized(): Nothing = throw IllegalStateException("Kernel not initialized")
 }

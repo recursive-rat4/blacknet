@@ -18,12 +18,6 @@ import ninja.blacknet.util.Resources
 
 val configDir: Path = run {
     val custom = System.getProperty("ninja.blacknet.configDir")
-    if (System.getProperty("surefire.test.class.path") != null) {
-        //TODO eliminate and generalize
-        return@run Path.of("target/classes/config").also {
-            println("Using config directory ${it.toAbsolutePath()}")
-        }
-    }
     var dir = if (custom != null) {
         Path.of(custom)
     } else if (Runtime.macOS) {

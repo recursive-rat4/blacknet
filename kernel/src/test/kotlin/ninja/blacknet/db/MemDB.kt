@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Pavel Vasin
+ * Copyright (c) 2023-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -15,8 +15,10 @@ import java.util.HashMap.newHashMap
  * A simple implementation of [KeyValueStore] that keeps all its data in the main memory.
  */
 class MemDB private constructor(
-    private val map: HashMap<Wrapper, Wrapper> = HashMap(0)
+    private val map: HashMap<Wrapper, Wrapper>
 ) : KeyValueStore {
+    constructor() : this(HashMap(0))
+
     override fun contains(key: ByteArray): Boolean {
         return map.containsKey(Wrapper(key))
     }

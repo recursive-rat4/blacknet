@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -11,6 +11,7 @@ package ninja.blacknet.network.packet
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Kernel
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.Connection
@@ -41,7 +42,7 @@ class Transactions(
                 continue
             }
 
-            val (status, fee) = TxPool.process(hash, bytes, time / 1000L, true)
+            val (status, fee) = Kernel.txPool().process(hash, bytes, time / 1000L, true)
 
             when (status) {
                 Accepted -> inv.add(Triple(hash, bytes.size, fee))

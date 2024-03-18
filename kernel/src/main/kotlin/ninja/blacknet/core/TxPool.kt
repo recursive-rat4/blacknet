@@ -12,6 +12,7 @@ package ninja.blacknet.core
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigDecimal
 import kotlin.math.min
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Config
@@ -20,6 +21,7 @@ import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
+import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.bbf.binaryFormat
@@ -27,7 +29,10 @@ import ninja.blacknet.signal.Signal4
 
 private val logger = KotlinLogging.logger {}
 
-object TxPool : MemPool(), Ledger {
+class TxPool(
+    private val config: Config,
+    private val blockDB: BlockDB,
+) : MemPool(), Ledger {
     internal val mutex = Mutex()
     private val rejects = HashSet<Hash>()
     private val undoAccounts = HashMap<PublicKey, AccountState?>()
@@ -37,9 +42,13 @@ object TxPool : MemPool(), Ledger {
     private val htlcs = HashMap<HashTimeLockContractId, HTLC?>()
     private val multisigs = HashMap<MultiSignatureLockContractId, Multisig?>()
     private var transactions = ArrayList<Hash>(maxSeenSizeImpl())
-    internal var minFeeRate = parseAmount(Config.instance.minrelayfeerate)
+    internal var minFeeRate = parseAmount(config.minrelayfeerate)
 
     val txNotify = Signal4<Transaction, Hash, Long, Int>()
+
+    init {
+        blockDB.blockNotify.connect(::blockNotify)
+    }
 
     suspend fun check(): Boolean = mutex.withLock {
         var result = true
@@ -54,7 +63,7 @@ object TxPool : MemPool(), Ledger {
 
     suspend fun fill(block: Block) = mutex.withLock {
         val poolSize = sizeImpl()
-        var freeBlockSize = min(LedgerDB.state().maxBlockSize, Config.instance.softblocksizelimit.bytes) - 176
+        var freeBlockSize = min(LedgerDB.state().maxBlockSize, config.softblocksizelimit.bytes) - 176
         var i = 0
         while (freeBlockSize > 0 && i < poolSize) {
             val hash = transactions.get(i++)
@@ -71,7 +80,7 @@ object TxPool : MemPool(), Ledger {
         }
     }
 
-    internal fun clearRejectsImpl() {
+    private fun clearRejectsImpl() {
         rejects.clear()
     }
 
@@ -243,20 +252,20 @@ object TxPool : MemPool(), Ledger {
             return Pair(Invalid("Already rejected tx"), 0)
         if (containsImpl(hash))
             return Pair(AlreadyHave(hash.toString()), 0)
-        if (TxPool.dataSizeImpl() + bytes.size > Config.instance.txpoolsize.bytes) {
+        if (dataSizeImpl() + bytes.size > config.txpoolsize.bytes) {
             if (remote)
                 return Pair(InFuture("TxPool is full"), 0)
             else
                 logger.warn { "TxPool is full" }
         }
-        val result = TxPool.processImplWithFee(hash, bytes, time)
+        val result = processImplWithFee(hash, bytes, time)
         if (result.first is Invalid || result.first is InFuture) {
             rejects.add(hash)
         }
         return result
     }
 
-    internal fun removeImpl(hashes: List<Hash>) {
+    private fun removeImpl(hashes: List<Hash>) {
         if (hashes.isEmpty() || transactions.isEmpty())
             return
 
@@ -280,5 +289,13 @@ object TxPool : MemPool(), Ledger {
         val n = (BigDecimal(string) * BigDecimal(PoS.COIN)).longValueExact()
         if (n < 0) throw IllegalArgumentException("Negative amount")
         return n
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun blockNotify(block: Block, hash: Hash, height: Int, size: Int, txHashes: List<Hash>) = runBlocking {
+        mutex.withLock {
+            clearRejectsImpl()
+            removeImpl(txHashes)
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -10,7 +10,7 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.dataDir
@@ -113,7 +113,7 @@ object LevelDB : KeyValueStore {
     }
 
     private fun options(): Options {
-        val cacheSize = Config.instance.dbcache.bytes
+        val cacheSize = Kernel.config().dbcache.bytes
         val options = Options()
                 .createIfMissing(true)
                 .paranoidChecks(true)
@@ -122,7 +122,7 @@ object LevelDB : KeyValueStore {
                 .writeBufferSize(cacheSize / 4)
                 .xMaxOpenFiles()
                 .logger(DBLogger)
-        logger.info { "LevelDB cache ${Config.instance.dbcache.hrp(false)}, max open files ${options.maxOpenFiles()}" }
+        logger.info { "LevelDB cache ${Kernel.config().dbcache.hrp(false)}, max open files ${options.maxOpenFiles()}" }
         return options
     }
 

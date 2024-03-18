@@ -21,7 +21,7 @@ import ninja.blacknet.crypto.PoS
 import ninja.blacknet.dataDir
 import ninja.blacknet.db.LedgerDB.forkV2
 import ninja.blacknet.serialization.bbf.binaryFormat
-import ninja.blacknet.signal.Signal4
+import ninja.blacknet.signal.Signal5
 
 private val logger = KotlinLogging.logger {}
 private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
@@ -36,7 +36,7 @@ class BlockDB(
 
     val blocks = DBView(store, BLOCK_KEY, Block.serializer(), binaryFormat)
 
-    val blockNotify = Signal4<Block, Hash, Int, Int>()
+    val blockNotify = Signal5<Block, Hash, Int, Int, List<Hash>>()
 
     private val rejects = Collections.newSetFromMap(object : LinkedHashMap<Hash, Boolean>() {
         override fun removeEldestEntry(eldest: Map.Entry<Hash, Boolean>): Boolean {
@@ -95,11 +95,7 @@ class BlockDB(
         if (status == Accepted) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
             txDb.commitImpl()
-            TxPool.mutex.withLock {
-                TxPool.clearRejectsImpl()
-                TxPool.removeImpl(txHashes)
-            }
-            blockNotify(block, hash, state.height + 1, bytes.size)
+            blockNotify(block, hash, state.height + 1, bytes.size, txHashes)
             cachedBlock = Pair(block.previous, bytes)
         } else {
             batch.close()
