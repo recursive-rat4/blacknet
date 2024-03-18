@@ -16,12 +16,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.sync.withLock
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.packet.Blocks
 import ninja.blacknet.network.packet.ChainAnnounce
@@ -99,8 +99,8 @@ object ChainFetcher {
         val data = announces.receive()
 
         stakedBlock?.let { (hash, bytes, deferred) ->
-            val status = BlockDB.mutex.withLock {
-                BlockDB.processImpl(hash, bytes)
+            val status = Kernel.blockDB().mutex.withLock {
+                Kernel.blockDB().processImpl(hash, bytes)
             }
             val n = when (status) {
                 Accepted -> Node.announceChain(hash, LedgerDB.state().cumulativeDifficulty)
@@ -131,8 +131,8 @@ object ChainFetcher {
         if (announce.cumulativeDifficulty <= state.cumulativeDifficulty)
             return
 
-        BlockDB.mutex.withLock {
-            if (BlockDB.isRejectedImpl(announce.chain)) {
+        Kernel.blockDB().mutex.withLock {
+            if (Kernel.blockDB().isRejectedImpl(announce.chain)) {
                 connection.dos("Rejected chain")
                 return
             }
@@ -167,7 +167,7 @@ object ChainFetcher {
                         }
                         var prev = state.rollingCheckpoint
                         for (hash in answer.hashes) {
-                            if (BlockDB.isRejectedImpl(hash)) {
+                            if (Kernel.blockDB().isRejectedImpl(hash)) {
                                 connection.dos("Rejected chain")
                                 break@requestLoop
                             }
@@ -200,10 +200,10 @@ object ChainFetcher {
                 if (undoDifficulty >= state.cumulativeDifficulty) {
                     logger.info { "Reconnecting ${it.size} blocks" }
                     val toRemove = LedgerDB.undoRollbackImpl(rollbackTo!!, it)
-                    BlockDB.deleteImpl(toRemove)
+                    Kernel.blockDB().deleteImpl(toRemove)
                 } else {
                     logger.debug { "Deleting ${it.size} blocks from db" }
-                    BlockDB.deleteImpl(it)
+                    Kernel.blockDB().deleteImpl(it)
                 }
                 undoRollback = null
             }
@@ -277,7 +277,7 @@ object ChainFetcher {
                 connection.dos("Rollback contains $hash")
                 return false
             }
-            val status = BlockDB.processImpl(hash, i)
+            val status = Kernel.blockDB().processImpl(hash, i)
             if (status != Accepted) {
                 connection.dos(status.toString())
                 return false
@@ -295,11 +295,11 @@ object ChainFetcher {
     private suspend fun processDeferred(connection: Connection, answer: Blocks) {
         if (answer.blocks.isNotEmpty()) {
             logger.info { "Mongering ${answer.blocks.size} deferred blocks from ${connection.debugName()}" }
-            BlockDB.mutex.withLock {
+            Kernel.blockDB().mutex.withLock {
                 for (i in answer.blocks) {
                     val hash = Block.hash(i)
                     val status = try {
-                        BlockDB.processImpl(hash, i)
+                        Kernel.blockDB().processImpl(hash, i)
                     } catch (e: Throwable) {
                         logger.error(e) { "Exception in processDeferred ${connection.debugName()}" }
                         connection.close()

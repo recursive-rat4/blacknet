@@ -28,6 +28,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.contract.HashTimeLockContractId
@@ -166,7 +167,7 @@ object WalletDB {
         delay(30 * 60 * 1000L)
     }
 
-    suspend fun getConfirmations(hash: Hash): Int? = BlockDB.mutex.withLock {
+    suspend fun getConfirmations(hash: Hash): Int? = Kernel.blockDB().mutex.withLock {
         mutex.withLock<Int?> {
             wallets.forEach { (_, wallet) ->
                 val data = wallet.transactions.get(hash)
@@ -180,7 +181,7 @@ object WalletDB {
         }
     }
 
-    suspend fun getConfirmations(publicKey: PublicKey, hash: Hash): Int? = BlockDB.mutex.withLock {
+    suspend fun getConfirmations(publicKey: PublicKey, hash: Hash): Int? = Kernel.blockDB().mutex.withLock {
         return mutex.withLock {
             val wallet = wallets.get(publicKey)
             if (wallet != null) {
@@ -212,7 +213,7 @@ object WalletDB {
     suspend fun disconnectBlock(blockHash: Hash, batch: LevelDB.WriteBatch) = mutex.withLock {
         if (wallets.isEmpty()) return@withLock
 
-        val block = BlockDB.blocks.getOrThrow(blockHash.bytes)
+        val block = Kernel.blockDB().blocks.getOrThrow(blockHash.bytes)
         val txHashes = block.transactions.map { Transaction.hash(it) }
 
         val updated = HashMap<PublicKey, Wallet>(wallets.size)
@@ -527,7 +528,7 @@ object WalletDB {
         wallet = Wallet()
 
         mutex.withUnlock {
-            BlockDB.mutex.withLock {
+            Kernel.blockDB().mutex.withLock {
                 mutex.withLock {
                     var hash = Genesis.BLOCK_HASH
                     var index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
@@ -562,7 +563,7 @@ object WalletDB {
 
     private suspend fun rescanBlockImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, height: Int, generated: Long, batch: LevelDB.WriteBatch) {
         if (height != 0) {
-            val block = BlockDB.blocks.getOrThrow(hash.bytes)
+            val block = Kernel.blockDB().blocks.getOrThrow(hash.bytes)
             processBlockImpl(publicKey, wallet, hash, block, height, generated, batch, true)
             for (bytes in block.transactions) {
                 val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -12,12 +12,12 @@
 package ninja.blacknet.rpc.v1
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Kernel
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Address
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.SignatureSerializer
-import ninja.blacknet.db.BlockDB
 
 @Serializable
 class BlockInfoV1(
@@ -48,7 +48,7 @@ class BlockInfoV1(
 
     companion object {
         suspend fun get(hash: Hash, txdetail: Boolean): BlockInfoV1? {
-            val block = BlockDB.blocks.getWithSize(hash.bytes) ?: return null
+            val block = Kernel.blockDB().blocks.getWithSize(hash.bytes) ?: return null
             return BlockInfoV1(block.first, block.second, txdetail)
         }
     }

@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.Version
 import ninja.blacknet.core.Block
@@ -34,7 +35,6 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.logging.debug
 import ninja.blacknet.logging.debugMessage
@@ -57,7 +57,7 @@ object RPCServer {
     internal val walletNotify = SynchronizedHashMap<PublicKey, ArrayList<SendChannel<Frame>>>()
 
     init {
-        BlockDB.blockNotify.connect(::blockNotify)
+        Kernel.blockDB().blockNotify.connect(::blockNotify)
         TxPool.txNotify.connect(::txPoolNotify)
         WalletDB.txNotify.connect(::walletNotify)
     }

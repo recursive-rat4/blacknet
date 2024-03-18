@@ -19,6 +19,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.SetSerializer
+import ninja.blacknet.Kernel
 import ninja.blacknet.Mode.*
 import ninja.blacknet.contract.HashTimeLockContractId
 import ninja.blacknet.contract.MultiSignatureLockContractId
@@ -167,7 +168,7 @@ object LedgerDB {
 
                     for (i in 0 until blockHashes.size) {
                         val hash = blockHashes[i]
-                        val (block, size) = BlockDB.blocks.getWithSizeOrThrow(hash.bytes)
+                        val (block, size) = Kernel.blockDB().blocks.getWithSizeOrThrow(hash.bytes)
                         val batch = LevelDB.createWriteBatch()
                         val txDb = Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
                         val (status, _) = processBlockImpl(txDb, hash, block, size)
@@ -252,7 +253,7 @@ object LedgerDB {
         return hash == Genesis.BLOCK_HASH || chainIndexes.contains(hash.bytes)
     }
 
-    suspend fun getNextBlockHashes(start: Hash, max: Int): List<Hash>? = BlockDB.mutex.withLock {
+    suspend fun getNextBlockHashes(start: Hash, max: Int): List<Hash>? = Kernel.blockDB().mutex.withLock {
         var chainIndex = chainIndexes.get(start.bytes) ?: return@withLock null
         val result = ArrayList<Hash>(max)
         while (true) {
@@ -424,7 +425,7 @@ object LedgerDB {
         val toRemove = if (state.blockHash != rollbackTo) rollbackToImpl(rollbackTo) else emptyList()
 
         list.asReversed().forEach { hash ->
-            val (block, size) = BlockDB.blocks.getWithSize(hash.bytes) ?: return toRemove.also {
+            val (block, size) = Kernel.blockDB().blocks.getWithSize(hash.bytes) ?: return toRemove.also {
                 logger.error { "$hash not found" }
             }
 
@@ -494,7 +495,7 @@ object LedgerDB {
             listOf("This version is obsolete, upgrade required!")
     }
 
-    suspend fun check(): Check = BlockDB.mutex.withLock {
+    suspend fun check(): Check = Kernel.blockDB().mutex.withLock {
         val result = Check(false, 0, 0, 0, state.supply, 0L)
         iterateImpl(
             { _, account ->

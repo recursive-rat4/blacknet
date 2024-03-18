@@ -38,6 +38,9 @@ private val logger = KotlinLogging.logger {}
 object Kernel {
     internal val ktorEngine = CIO
 
+    private var blockDB: BlockDB? = null
+    fun blockDB() = blockDB ?: throw IllegalStateException("Kernel not initialized")
+
     /**
      * Initialize the kernel library: logging, database, network and other essentials.
      *
@@ -107,7 +110,7 @@ object Kernel {
 
         LevelDB
         Convertor
-        BlockDB
+        blockDB = BlockDB(LevelDB)
         WalletDB
         LedgerDB
         PeerDB

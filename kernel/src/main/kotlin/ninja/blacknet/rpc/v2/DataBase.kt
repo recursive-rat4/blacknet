@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -14,6 +14,7 @@ import io.ktor.server.routing.Route
 import kotlin.math.abs
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Kernel
 import ninja.blacknet.core.ChainIndex
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
@@ -51,7 +52,7 @@ class Block(
     val txdetail: Boolean = false
 ) : Request {
     override suspend fun handle(): TextContent {
-        val (block, size) = BlockDB.blocks.getWithSize(hash.bytes) ?: return respondError("Block not found")
+        val (block, size) = Kernel.blockDB().blocks.getWithSize(hash.bytes) ?: return respondError("Block not found")
         return respondJson(BlockInfo.serializer(), BlockInfo(block, hash, size, txdetail))
     }
 }
@@ -59,7 +60,7 @@ class Block(
 @Serializable
 class BlockDBCheck : Request {
     override suspend fun handle(): TextContent {
-        return respondJson(BlockDB.Check.serializer(), BlockDB.check())
+        return respondJson(BlockDB.Check.serializer(), Kernel.blockDB().check())
     }
 }
 
@@ -67,7 +68,7 @@ class BlockDBCheck : Request {
 class BlockHash(
     val height: Int
 ) : Request {
-    override suspend fun handle(): TextContent = BlockDB.mutex.withLock {
+    override suspend fun handle(): TextContent = Kernel.blockDB().mutex.withLock {
         val state = LedgerDB.state()
         if (height < 0 || height > state.height)
             return respondError("Block not found")
@@ -162,7 +163,7 @@ class LedgerDBCheck : Request {
 class ScheduleSnapshot(
     val height: Int
 ) : Request {
-    override suspend fun handle(): TextContent = BlockDB.mutex.withLock {
+    override suspend fun handle(): TextContent = Kernel.blockDB().mutex.withLock {
         val scheduled = LedgerDB.scheduleSnapshotImpl(height)
         return respondText(scheduled.toString())
     }

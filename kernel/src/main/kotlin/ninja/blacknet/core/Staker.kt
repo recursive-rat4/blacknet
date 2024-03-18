@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -17,10 +17,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Config
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.mode
 import ninja.blacknet.network.Node
@@ -122,7 +122,7 @@ object Staker {
 
         stakers.forEach { staker ->
             if (staker.lastBlock != state.blockHash) {
-                BlockDB.mutex.withLock {
+                Kernel.blockDB().mutex.withLock {
                     state = LedgerDB.state()
                     staker.updateImpl(state)
                 }
@@ -171,7 +171,7 @@ object Staker {
         }
 
         val staker = StakerState(publicKey, privateKey)
-        BlockDB.mutex.withLock {
+        Kernel.blockDB().mutex.withLock {
             val state = LedgerDB.state()
             staker.updateImpl(state)
         }

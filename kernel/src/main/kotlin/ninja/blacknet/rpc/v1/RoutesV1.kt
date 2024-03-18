@@ -23,10 +23,12 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlin.math.abs
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
+import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.rpc.*
 import ninja.blacknet.core.*
@@ -37,7 +39,6 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.bbf.*
 import ninja.blacknet.transaction.*
-import kotlin.math.abs
 
 fun Route.APIV1() {
     webSocket("/api/v1/notify/block") {
@@ -124,7 +125,7 @@ fun Route.APIV1() {
         val hash = call.parameters["hash"]?.let { Hash(Hash.fromString(it)) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
         val txdetail = call.parameters["txdetail"]?.toBoolean() ?: false
 
-        val result = BlockDB.blocks.getWithSize(hash.bytes)
+        val result = Kernel.blockDB().blocks.getWithSize(hash.bytes)
         if (result != null)
             call.respond(Json.stringify(BlockInfoV2.serializer(), BlockInfoV2(result.first, hash, result.second, txdetail)))
         else
@@ -134,7 +135,7 @@ fun Route.APIV1() {
     get("/api/v1/blockdb/getblockhash/{height}") {
         val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
 
-        BlockDB.mutex.withLock {
+        Kernel.blockDB().mutex.withLock {
             val state = LedgerDB.state()
             if (height < 0 || height > state.height)
                 return@get call.respond(HttpStatusCode.NotFound, "block not found")

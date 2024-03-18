@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -11,8 +11,8 @@ package ninja.blacknet.rpc.v1
 
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 
 @Serializable
@@ -23,7 +23,7 @@ class AccountInfoV1(
         val stakingBalance: Long
 ) {
     companion object {
-        suspend fun get(publicKey: PublicKey, confirmations: Int): AccountInfoV1? = BlockDB.mutex.withLock {
+        suspend fun get(publicKey: PublicKey, confirmations: Int): AccountInfoV1? = Kernel.blockDB().mutex.withLock {
             val account = LedgerDB.get(publicKey) ?: return null
             val state = LedgerDB.state()
             return AccountInfoV1(

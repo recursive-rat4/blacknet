@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -10,8 +10,8 @@
 package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
+import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.BlockDB
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
@@ -22,7 +22,7 @@ class GetBlocks(
     private val checkpoint: Hash
 ) : Packet {
     override suspend fun process(connection: Connection) {
-        val cachedBlock = BlockDB.cachedBlock
+        val cachedBlock = Kernel.blockDB().cachedBlock
         if (cachedBlock != null) {
             val (previousHash, bytes) = cachedBlock
             if (previousHash == best) {
@@ -58,7 +58,7 @@ class GetBlocks(
             size += chainIndex.nextSize + 4 //TODO VarInt.size()
             if (response.isNotEmpty() && size >= maxSize)
                 break
-            val bytes = BlockDB.blocks.getBytes(hash.bytes)
+            val bytes = Kernel.blockDB().blocks.getBytes(hash.bytes)
             if (bytes == null)
                 break
             response.add(bytes)

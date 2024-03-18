@@ -24,15 +24,17 @@ import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.signal.Signal4
 
 private val logger = KotlinLogging.logger {}
+private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
 
-object BlockDB {
-    private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
+class BlockDB(
+    private val store: KeyValueStore,
+) {
     internal val mutex = Mutex()
     private val BLOCK_KEY = DBKey(0xC0.toByte(), Hash.SIZE_BYTES)
     @Volatile
     internal var cachedBlock: Pair<Hash, ByteArray>? = null
 
-    val blocks = DBView(LevelDB, BLOCK_KEY, Block.serializer(), binaryFormat)
+    val blocks = DBView(store, BLOCK_KEY, Block.serializer(), binaryFormat)
 
     val blockNotify = Signal4<Block, Hash, Int, Int>()
 

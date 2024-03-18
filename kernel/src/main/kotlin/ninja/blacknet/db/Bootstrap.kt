@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -20,6 +20,7 @@ import java.nio.file.StandardOpenOption.READ
 import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.nio.file.StandardOpenOption.WRITE
 import kotlinx.coroutines.runBlocking
+import ninja.blacknet.Kernel
 import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.AlreadyHave
 import ninja.blacknet.core.Block
@@ -52,7 +53,7 @@ object Bootstrap {
                             it.readFully(bytes)
 
                             val hash = Block.hash(bytes)
-                            val status = BlockDB.processImpl(hash, bytes)
+                            val status = Kernel.blockDB().processImpl(hash, bytes)
                             if (status == Accepted) {
                                 if (++n % 50000 == 0)
                                     logger.info { "Processed $n blocks" }
@@ -91,7 +92,7 @@ object Bootstrap {
             do {
                 hash = index.next
                 index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
-                val bytes = BlockDB.blocks.getBytesOrThrow(hash.bytes)
+                val bytes = Kernel.blockDB().blocks.getBytesOrThrow(hash.bytes)
                 stream.writeInt(bytes.size)
                 stream.write(bytes, 0, bytes.size)
             } while (hash != checkpoint)
