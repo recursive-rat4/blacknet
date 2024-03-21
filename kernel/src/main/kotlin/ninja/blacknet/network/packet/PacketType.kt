@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -33,7 +33,8 @@ enum class PacketType {
     ;
 
     companion object {
-        fun getSerializer(type: Int): KSerializer<out Packet> {
+        fun <T : Packet> getSerializer(type: Int): KSerializer<T> {
+            @Suppress("UNCHECKED_CAST")
             return when (type) {
                 Version.ordinal -> ninja.blacknet.network.packet.Version.serializer()
                 PingV1.ordinal -> ninja.blacknet.network.packet.PingV1.serializer()
@@ -54,7 +55,7 @@ enum class PacketType {
                 Ping.ordinal -> ninja.blacknet.network.packet.Ping.serializer()
                 Hello.ordinal -> ninja.blacknet.network.packet.Hello.serializer()
                 else -> throw RuntimeException("Unknown packet type $type")
-            }
+            } as KSerializer<T>
         }
     }
 }

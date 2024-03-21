@@ -111,7 +111,7 @@ class Connection(
                 }
 
                 val packet = try {
-                    val serializer = PacketType.getSerializer(type)
+                    val serializer = PacketType.getSerializer<Packet>(type)
                     binaryFormat.decodeFromPacket(serializer, bytes)
                 } catch (e: Throwable) {
                     dos("Deserialization failed: ${e.message}")

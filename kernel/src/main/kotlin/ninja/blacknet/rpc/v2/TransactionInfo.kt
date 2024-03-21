@@ -63,8 +63,7 @@ class TransactionInfo(
             val data = if (type == TxType.Generated.type) {
                 listOf(DataInfo(type.toUByte(), 0, JsonObject(emptyMap())))
             } else if (type != TxType.Batch.type) {
-                @Suppress("UNCHECKED_CAST")
-                val serializer = TxType.getSerializer(type) as KSerializer<TxData>
+                val serializer = TxType.getSerializer<TxData>(type)
                 val data = binaryFormat.decodeFromByteArray(serializer, bytes)
                 listOf(DataInfo(type.toUByte(), 0, json.encodeToJsonElement(serializer, data)))
             } else {
@@ -73,8 +72,7 @@ class TransactionInfo(
                 if (filter == null) {
                     for (index in 0 until multiData.multiData.size) {
                         val (dataType, dataBytes) = multiData.multiData[index]
-                        @Suppress("UNCHECKED_CAST")
-                        val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
+                        val serializer = TxType.getSerializer<TxData>(dataType)
                         val data = binaryFormat.decodeFromByteArray(serializer, dataBytes)
                         list.add(DataInfo(dataType.toUByte(), index + 1, json.encodeToJsonElement(serializer, data)))
                     }
@@ -82,8 +80,7 @@ class TransactionInfo(
                     for (i in 0 until filter.size) {
                         val dataIndex = filter[i].dataIndex.toInt()
                         val (dataType, dataBytes) = multiData.multiData[dataIndex - 1]
-                        @Suppress("UNCHECKED_CAST")
-                        val serializer = TxType.getSerializer(dataType) as KSerializer<TxData>
+                        val serializer = TxType.getSerializer<TxData>(dataType)
                         val data = binaryFormat.decodeFromByteArray(serializer, dataBytes)
                         list.add(DataInfo(dataType.toUByte(), dataIndex, json.encodeToJsonElement(serializer, data)))
                     }

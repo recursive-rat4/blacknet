@@ -52,8 +52,7 @@ class TransactionInfoV2(
     companion object {
         fun data(type: Byte, bytes: ByteArray): JsonElement {
             if (type == TxType.Generated.type) return buildJsonObject {}
-            @Suppress("UNCHECKED_CAST")
-            val serializer = TxType.getSerializer(type) as KSerializer<TxData>
+            val serializer = TxType.getSerializer<TxData>(type)
             val txData = binaryFormat.decodeFromByteArray(serializer, bytes)
             return Json.toJson(serializer, txData)
         }

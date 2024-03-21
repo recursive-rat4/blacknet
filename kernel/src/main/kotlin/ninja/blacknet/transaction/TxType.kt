@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -32,7 +32,8 @@ enum class TxType(val type: Byte) {
     ;
 
     companion object {
-        fun getSerializer(type: Byte): KSerializer<out TxData> {
+        fun <T : TxData> getSerializer(type: Byte): KSerializer<T> {
+            @Suppress("UNCHECKED_CAST")
             return when (type) {
                 Transfer.type -> ninja.blacknet.transaction.Transfer.serializer()
                 Burn.type -> ninja.blacknet.transaction.Burn.serializer()
@@ -51,7 +52,7 @@ enum class TxType(val type: Byte) {
                 Batch.type -> ninja.blacknet.transaction.Batch.serializer()
                 Generated.type -> throw RuntimeException("Generated as individual tx")
                 else -> throw RuntimeException("Unknown transaction type $type")
-            }
+            } as KSerializer<T>
         }
     }
 }

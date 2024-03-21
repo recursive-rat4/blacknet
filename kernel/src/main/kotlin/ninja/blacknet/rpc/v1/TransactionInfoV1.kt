@@ -50,7 +50,7 @@ class TransactionInfoV1(
         }
 
         private fun data(type: Byte, bytes: ByteArray): String {
-            val serializer = TxType.getSerializer(type)
+            val serializer = TxType.getSerializer<TxData>(type)
             val txData = binaryFormat.decodeFromByteArray(serializer, bytes)
             return when (type) {
                 TxType.Transfer.type -> Json.stringify(TransferInfo.serializer(), TransferInfo(txData as Transfer))

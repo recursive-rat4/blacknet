@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -42,7 +42,7 @@ class Batch(
 
         for (index in 0 until multiData.size) {
             val (type, bytes) = multiData[index]
-            val serializer = TxType.getSerializer(type)
+            val serializer = TxType.getSerializer<TxData>(type)
             val data = binaryFormat.decodeFromByteArray(serializer, bytes)
             val status = data.processLedgerImpl(tx, hash, index + 1, ledger)
             if (status != Accepted) {

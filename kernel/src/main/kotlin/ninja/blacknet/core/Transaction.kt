@@ -33,7 +33,7 @@ class Transaction(
         val data: ByteArray
 ) {
     fun data(): TxData {
-        val serializer = TxType.getSerializer(type)
+        val serializer = TxType.getSerializer<TxData>(type)
         return binaryFormat.decodeFromByteArray(serializer, data)
     }
 
