@@ -23,6 +23,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.serialization.KSerializer
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
@@ -47,8 +48,9 @@ class Connection(
     private val closed = atomic(false)
     private val dosScore = atomic(0)
     private val sendQueueSize = atomic(0L)
-    private val sendQueue = LinkedBlockingQueue<ByteReadPacket>()
-    private val inventoryToSend = ArrayList<Hash>(Inventory.SEND_MAX)
+    private val sendQueue = LinkedBlockingQueue<QueuedPacket>()
+    private val inventoryMonitor = Any()
+    private var inventoryToSend = ArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = currentTimeSeconds()
 
     @Volatile
@@ -138,19 +140,20 @@ class Connection(
         }
         val result = runBlocking { readChannel.readPacket(size) }
         lastPacketTime = currentTimeMillis()
-        totalBytesRead += size + 4
+        totalBytesRead += size + PACKET_LENGTH_SIZE_BYTES
         return result
     }
 
     private fun sender() {
         try {
             while (true) {
-                val packet = sendQueue.take()
-                val size = packet.remaining
-                runBlocking { writeChannel.writePacket(packet) }
+                val e = sendQueue.take()
+                logger.debug { "Sending ${e.type} to ${debugName()}" }
+                val bytes = buildPacket(e.serializer, e.packet, e.type)
+                runBlocking { writeChannel.writePacket(bytes) }
                 writeChannel.flush()
-                sendQueueSize -= size
-                totalBytesWritten += size
+                sendQueueSize -= e.size
+                totalBytesWritten += e.size + PACKET_HEADER_SIZE_BYTES + PACKET_LENGTH_SIZE_BYTES
             }
         } catch (e: ClosedWriteChannelException) {
         } catch (e: CancellationException) {
@@ -159,14 +162,14 @@ class Connection(
         }
     }
 
-    fun inventory(inv: Hash) = synchronized(inventoryToSend) {
+    fun inventory(inv: Hash) = synchronized(inventoryMonitor) {
         inventoryToSend.add(inv)
         if (inventoryToSend.size == Inventory.SEND_MAX) {
             sendInventoryImpl(currentTimeMillis())
         }
     }
 
-    fun inventory(inv: ArrayList<Hash>): Unit = synchronized(inventoryToSend) {
+    fun inventory(inv: ArrayList<Hash>): Unit = synchronized(inventoryMonitor) {
         val newSize = inventoryToSend.size + inv.size
         if (newSize < Inventory.SEND_MAX) {
             inventoryToSend.addAll(inv)
@@ -183,7 +186,7 @@ class Connection(
         }
     }
 
-    private fun sendInventory(time: Long) = synchronized(inventoryToSend) {
+    private fun sendInventory(time: Long) = synchronized(inventoryMonitor) {
         if (inventoryToSend.size != 0) {
             sendInventoryImpl(time)
         }
@@ -191,16 +194,16 @@ class Connection(
 
     private fun sendInventoryImpl(time: Long) {
         sendPacket(PacketType.Inventory, Inventory(inventoryToSend))
-        inventoryToSend.clear()
+        inventoryToSend = ArrayList(Inventory.SEND_MAX)
         lastInvSentTime = time
     }
 
     fun sendPacket(type: PacketType, packet: Packet) {
-        logger.debug { "Sending $type to ${debugName()}" }
-        val bytes = buildPacket(type, packet)
+        val serializer = PacketType.getSerializer<Packet>(type.ordinal)
+        val size = binaryFormat.computeSize(serializer, packet).toLong()
         //TODO review threshold
-        if (sendQueueSize.addAndGet(bytes.remaining) <= Node.getMaxPacketSize() * 10) {
-            sendQueue.offer(bytes)
+        if (sendQueueSize.addAndGet(size) <= Node.getMaxPacketSize() * 10) {
+            sendQueue.offer(QueuedPacket(serializer, packet, type, size))
         } else {
             logger.info { "Disconnecting ${debugName()} on send queue overflow" }
             close()
@@ -350,4 +353,11 @@ class Connection(
             sleep(Inventory.SEND_TIMEOUT)
         }
     }
+
+    private class QueuedPacket(
+        val serializer: KSerializer<Packet>,
+        val packet: Packet,
+        val type: PacketType,
+        val size: Long,
+    )
 }

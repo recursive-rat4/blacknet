@@ -44,7 +44,7 @@ object TxFetcher {
     private fun implementation() {
         val (connection, inventory) = inventoryQueue.take()
 
-        val request = ArrayList<Hash>(inventory.size)
+        var request = ArrayList<Hash>(inventory.size)
         val currTime = currentTimeMillis()
 
         for (hash in inventory) {
@@ -59,7 +59,7 @@ object TxFetcher {
 
             if (request.size == Transactions.MAX) {
                 sendRequest(connection, request)
-                request.clear()
+                request = ArrayList(inventory.size)
             }
         }
 
