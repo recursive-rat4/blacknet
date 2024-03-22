@@ -11,7 +11,6 @@ package ninja.blacknet.serialization.bbf
 
 import io.ktor.utils.io.core.BytePacketBuilder
 import io.ktor.utils.io.core.ByteReadPacket
-import io.ktor.utils.io.core.readBytes
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import kotlinx.serialization.BinaryFormat
@@ -28,12 +27,9 @@ public class BinaryFormat(
     override val serializersModule: SerializersModule = EmptySerializersModule()
 ) : BinaryFormat {
     override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
-        return decodeFromPacket(deserializer, ByteReadPacket(bytes))
-        /*
         val stream = DataInputStream(ByteArrayInputStream(bytes))
         val value = decodeFromStream(deserializer, stream)
         return value
-        */
     }
 
     public fun <T : Any?> decodeFromPacket(strategy: DeserializationStrategy<T>, packet: ByteReadPacket): T {
@@ -60,12 +56,11 @@ public class BinaryFormat(
     }
 
     override fun <T> encodeToByteArray(serializer: SerializationStrategy<T>, value: T): ByteArray {
-        return encodeToPacket(serializer, value).readBytes()
-        /*
-        val stream = ByteArrayOutputStream()
+        val size = computeSize(serializer, value)
+        val bytes = ByteArray(size)
+        val stream = ByteArrayOutputStream(bytes)
         encodeToStream(serializer, value, DataOutputStream(stream))
-        return stream.toByteArray()
-        */
+        return bytes
     }
 
     public fun <T : Any?> encodeToPacket(strategy: SerializationStrategy<T>, value: T): ByteReadPacket {
