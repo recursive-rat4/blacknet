@@ -233,7 +233,9 @@
                                 <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
                             </sourceDirs>
                             <args>
+                                <!--UPSTREAM java.lang.IllegalStateException: Could not load module definition from
                                 <arg>-Xjdk-release=${java.version}</arg>
+                                -->
                                 <arg>-Xjvm-default=all</arg>
                             </args>
                         </configuration>
