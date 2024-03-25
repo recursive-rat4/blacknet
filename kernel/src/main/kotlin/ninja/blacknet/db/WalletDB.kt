@@ -35,6 +35,8 @@ import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
 import ninja.blacknet.dataDir
+import ninja.blacknet.io.data
+import ninja.blacknet.io.outputStream
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.packet.UnfilteredInvList
 import ninja.blacknet.serialization.*
@@ -44,8 +46,6 @@ import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.signal.Signal6
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.transaction.*
-import ninja.blacknet.util.data
-import ninja.blacknet.util.outputStream
 import ninja.blacknet.util.rotate
 import ninja.blacknet.util.withUnlock
 

@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.util
+package ninja.blacknet.io
 
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream

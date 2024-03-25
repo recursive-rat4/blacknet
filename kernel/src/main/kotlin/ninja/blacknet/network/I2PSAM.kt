@@ -31,7 +31,7 @@ import ninja.blacknet.dataDir
 import ninja.blacknet.codec.base.Base64
 import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
-import ninja.blacknet.util.replaceFile
+import ninja.blacknet.io.replaceFile
 
 private val logger = KotlinLogging.logger {}
 

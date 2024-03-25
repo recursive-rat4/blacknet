@@ -19,6 +19,9 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import ninja.blacknet.io.data
+import ninja.blacknet.io.inputStream
+import ninja.blacknet.io.outputStream
 
 /**
  * The Blacknet Binary Format
@@ -27,7 +30,7 @@ public class BinaryFormat(
     override val serializersModule: SerializersModule = EmptySerializersModule()
 ) : BinaryFormat {
     override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
-        val stream = DataInputStream(ByteArrayInputStream(bytes))
+        val stream = bytes.inputStream().data()
         val value = decodeFromStream(deserializer, stream)
         return value
     }
@@ -58,8 +61,8 @@ public class BinaryFormat(
     override fun <T> encodeToByteArray(serializer: SerializationStrategy<T>, value: T): ByteArray {
         val size = computeSize(serializer, value)
         val bytes = ByteArray(size)
-        val stream = ByteArrayOutputStream(bytes)
-        encodeToStream(serializer, value, DataOutputStream(stream))
+        val stream = bytes.outputStream().data()
+        encodeToStream(serializer, value, stream)
         return bytes
     }
 

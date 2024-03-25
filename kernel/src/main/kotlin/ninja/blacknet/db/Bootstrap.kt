@@ -26,11 +26,11 @@ import ninja.blacknet.core.AlreadyHave
 import ninja.blacknet.core.Block
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.dataDir
+import ninja.blacknet.io.buffered
+import ninja.blacknet.io.data
+import ninja.blacknet.io.inputStream
+import ninja.blacknet.io.outputStream
 import ninja.blacknet.logging.error
-import ninja.blacknet.util.buffered
-import ninja.blacknet.util.data
-import ninja.blacknet.util.inputStream
-import ninja.blacknet.util.outputStream
 
 private val logger = KotlinLogging.logger {}
 

@@ -18,7 +18,7 @@
         <version>0.3-SNAPSHOT</version>
     </parent>
 
-    <artifactId>blacknet-serialization</artifactId>
+    <artifactId>blacknet-io</artifactId>
 
     <properties>
         <project.build.outputTimestamp>2024-01-01T00:00:00Z</project.build.outputTimestamp>
@@ -26,30 +26,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>ninja.blacknet</groupId>
-            <artifactId>blacknet-io</artifactId>
-            <version>0.3-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>ninja.blacknet</groupId>
-            <artifactId>blacknet-runtime</artifactId>
-            <version>0.3-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-serialization-core-jvm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-serialization-json-jvm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-io-jvm</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
@@ -63,11 +41,6 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <version>${kotlin.version}</version>
-                <configuration>
-                    <compilerPlugins>
-                        <plugin>kotlinx-serialization</plugin>
-                    </compilerPlugins>
-                </configuration>
                 <executions>
                     <execution>
                         <id>compile</id>
@@ -76,18 +49,10 @@
                                 <!--UPSTREAM https://youtrack.jetbrains.com/issue/KTIJ-18922/Maven-Explicit-Api-false-positive-explicit-API-errors-in-test-when-explicit-API-is-main-only
                                 <arg>-Xexplicit-api=strict</arg>
                                 -->
-                                <arg>-opt-in=kotlinx.serialization.ExperimentalSerializationApi</arg>
                             </args>
                         </configuration>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-serialization</artifactId>
-                        <version>${kotlin.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>
