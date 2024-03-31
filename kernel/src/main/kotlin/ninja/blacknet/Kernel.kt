@@ -11,6 +11,8 @@
 package ninja.blacknet
 
 import com.rfksystems.blake2b.security.Blake2bProvider
+import com.sun.security.auth.module.NTSystem
+import com.sun.security.auth.module.UnixSystem
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
@@ -101,9 +103,9 @@ object Kernel {
 
         config = ConfigFormat(serializersModule = textModule).decodeFromFile(Config.serializer(), configDir.resolve("blacknet.conf"))
 
-        //WINDOWS system user, admin rights, and whatever
-        //XXX root may be renamed
-        if (!Runtime.windowsOS && System.getProperty("user.name") == "root")
+        if (Runtime.windowsOS && NTSystem().userSID == "S-1-5-18")
+            logger.warn { "Running as SYSTEM" }
+        else if (UnixSystem().uid == 0L)
             logger.warn { "Running as root" }
 
         if (config().debugcoroutines) {
