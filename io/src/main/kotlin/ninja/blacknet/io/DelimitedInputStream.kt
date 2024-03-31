@@ -47,6 +47,31 @@ class DelimitedInputStream(
     override fun available(): Int = stream.available()
 
     override fun close(): Unit = stream.close()
+
+    override fun skip(n: Long): Long {
+        return if (n > 0) {
+            val s = stream.skip(n)
+            if (s <= message) {
+                message -= s.toInt()
+                s
+            } else {
+                throw IOException("${-(message - s)} bytes read past end of message")
+            }
+        } else {
+            0
+        }
+    }
+
+    override fun skipNBytes(n: Long) {
+        if (n > 0) {
+            if (n <= message) {
+                stream.skipNBytes(n)
+                message -= n.toInt()
+            } else {
+                throw IOException("${-(message - n)} bytes read past end of message")
+            }
+        }
+    }
 }
 
 fun InputStream.delimited(): DelimitedInputStream = DelimitedInputStream(this)

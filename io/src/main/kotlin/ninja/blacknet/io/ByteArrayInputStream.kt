@@ -9,6 +9,7 @@
 
 package ninja.blacknet.io
 
+import java.io.EOFException
 import java.io.InputStream
 
 class ByteArrayInputStream(
@@ -30,6 +31,23 @@ class ByteArrayInputStream(
 
     override fun available(): Int {
         return bytes.size - i
+    }
+
+    override fun skip(n: Long): Long {
+        return if (n > 0) {
+            val s = minOf(n, available().toLong()).toInt()
+            i += s
+            s.toLong()
+        } else {
+            0
+        }
+    }
+
+    override fun skipNBytes(n: Long) {
+        if (available() >= n)
+            i += n.toInt()
+        else
+            throw EOFException()
     }
 }
 

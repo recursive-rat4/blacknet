@@ -16,12 +16,20 @@ class CountedInputStreamTest {
     @Test
     fun test() {
         ZeroInputStream().counted().apply {
+            skip(0)
+            assertEquals(0, bytesRead)
+            skipNBytes(0)
+            assertEquals(0, bytesRead)
             read(ByteArray(0))
             assertEquals(0, bytesRead)
             read()
             assertEquals(1, bytesRead)
             read(ByteArray(3))
             assertEquals(4, bytesRead)
+            skip(1)
+            assertEquals(5, bytesRead)
+            skipNBytes(1)
+            assertEquals(6, bytesRead)
         }.close()
     }
 }

@@ -31,6 +31,23 @@ class CountedInputStream(
     override fun available(): Int = stream.available()
 
     override fun close(): Unit = stream.close()
+
+    override fun skip(n: Long): Long {
+        return if (n > 0) {
+            val s = stream.skip(n)
+            bytesRead += s
+            s
+        } else {
+            0
+        }
+    }
+
+    override fun skipNBytes(n: Long) {
+        if (n > 0) {
+            stream.skipNBytes(n)
+            bytesRead += n
+        }
+    }
 }
 
 fun InputStream.counted(): CountedInputStream = CountedInputStream(this)

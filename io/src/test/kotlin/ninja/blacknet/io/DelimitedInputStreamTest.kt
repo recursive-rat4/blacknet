@@ -16,14 +16,21 @@ class DelimitedInputStreamTest {
     @Test
     fun valid() {
         ZeroInputStream().delimited().apply {
+            skip(0)
             read(ByteArray(0))
             read()
             begin(1)
+            skip(0)
             read(ByteArray(0))
             read()
             end()
+            skip(0)
             read(ByteArray(0))
             read()
+            begin(2)
+            skip(1)
+            skipNBytes(1)
+            end()
         }.close()
     }
 
@@ -43,6 +50,16 @@ class DelimitedInputStreamTest {
             begin(1)
             read()
             assertFails { read() }
+        }.close()
+        DelimitedInputStream(ZeroInputStream()).apply {
+            begin(1)
+            skip(1)
+            assertFails { skip(1) }
+        }.close()
+        DelimitedInputStream(ZeroInputStream()).apply {
+            begin(1)
+            skipNBytes(1)
+            assertFails { skipNBytes(1) }
         }.close()
     }
 }
