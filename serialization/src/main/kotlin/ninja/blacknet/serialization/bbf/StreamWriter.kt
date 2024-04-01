@@ -10,6 +10,8 @@
 package ninja.blacknet.serialization.bbf
 
 import java.io.DataOutputStream
+import ninja.blacknet.io.writeByte
+import ninja.blacknet.io.writeShort
 
 /**
  * Writer to [DataOutputStream] for the Blacknet Binary Format
@@ -17,8 +19,8 @@ import java.io.DataOutputStream
 public class StreamWriter(
     private val output: DataOutputStream,
 ) : BinaryWriter {
-    override fun writeByte(value: Byte): Unit = output.writeByte(value.toInt())
-    override fun writeShort(value: Short): Unit = output.writeShort(value.toInt())
+    override fun writeByte(value: Byte): Unit = output.writeByte(value)
+    override fun writeShort(value: Short): Unit = output.writeShort(value)
     override fun writeInt(value: Int): Unit = output.writeInt(value)
     override fun writeLong(value: Long): Unit = output.writeLong(value)
 
