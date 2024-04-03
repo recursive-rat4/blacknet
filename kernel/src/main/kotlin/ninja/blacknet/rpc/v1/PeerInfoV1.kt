@@ -79,7 +79,7 @@ class PeerInfoV1(
             )
         }
 
-        suspend fun getAll(): List<PeerInfoV1> {
+        fun getAll(): List<PeerInfoV1> {
             val forkCache = HashMap<Hash, Boolean>()
             return Node.connections.map { PeerInfoV1.get(it, forkCache) }
         }

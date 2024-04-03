@@ -21,10 +21,10 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.websocket.Frame
+import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
@@ -42,14 +42,12 @@ import ninja.blacknet.rpc.requests.Requests
 import ninja.blacknet.rpc.v1.*
 import ninja.blacknet.rpc.v2.*
 import ninja.blacknet.serialization.json.json
-import ninja.blacknet.util.SynchronizedHashMap
-import ninja.blacknet.util.SynchronizedHashSet
 import ninja.blacknet.util.statusMessage
 
 private val logger = KotlinLogging.logger {}
 
 object RPCServer {
-    internal val txMutex = Mutex()
+    internal val txLock = ReentrantLock(true)
     internal var lastIndex: Pair<Hash, ChainIndex>? = null
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()

@@ -29,21 +29,21 @@ import ninja.blacknet.util.startInterruptible
 
 @Serializable
 class Peers : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(ListSerializer(PeerInfo.serializer()), PeerInfo.getAll())
     }
 }
 
 @Serializable
 class NodeRequest : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(NodeInfo.serializer(), NodeInfo.get())
     }
 }
 
 @Serializable
 class TxPoolRequest : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(TxPoolInfo.serializer(), TxPoolInfo.get())
     }
 }
@@ -53,7 +53,7 @@ class TxPoolTransaction(
     val hash: Hash,
     val raw: Boolean = false
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val result = Kernel.txPool().get(hash)
         return if (result != null) {
             if (raw)
@@ -73,7 +73,7 @@ class AddPeer(
     val address: String,
     val force: Boolean = false, // ignored
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val port = Network.parsePort(port) ?: return respondError("Invalid port")
         val address = Network.parse(address, port) ?: return respondError("Invalid address")
 
@@ -105,7 +105,7 @@ class DisconnectPeerByAddress(
     @Suppress("unused")
     val force: Boolean = false
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val port = Network.parsePort(port) ?: return respondError("Invalid port")
         val address = Network.parse(address, port) ?: return respondError("Invalid address")
 
@@ -125,7 +125,7 @@ class DisconnectPeer(
     @Suppress("unused")
     val force: Boolean = false
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val connection = Node.connections.find { it.peerId == id }
         return if (connection != null) {
             connection.close()

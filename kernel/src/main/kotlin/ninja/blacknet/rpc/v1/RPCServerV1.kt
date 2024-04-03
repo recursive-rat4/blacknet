@@ -22,9 +22,9 @@ import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
+import ninja.blacknet.rpc.SynchronizedHashMap
+import ninja.blacknet.rpc.SynchronizedHashSet
 import ninja.blacknet.serialization.json.json
-import ninja.blacknet.util.SynchronizedHashMap
-import ninja.blacknet.util.SynchronizedHashSet
 
 private val logger = KotlinLogging.logger {}
 
