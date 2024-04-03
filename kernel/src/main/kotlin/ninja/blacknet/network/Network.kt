@@ -10,12 +10,9 @@
 package ninja.blacknet.network
 
 import com.google.common.net.InetAddresses
-import io.ktor.network.selector.ActorSelectorManager
-import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
-import kotlinx.coroutines.Dispatchers
-import ninja.blacknet.codec.base.Base32
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import ninja.blacknet.codec.base.Base32
 
 enum class Network(val type: Byte, val addrSize: Int) {
     IPv4(128, 4),
@@ -48,15 +45,6 @@ enum class Network(val type: Byte, val addrSize: Int) {
 
         fun address(inet: InetSocketAddress): Address {
             return address(inet.getAddress(), Port(inet.port))
-        }
-
-        fun address(inet: KtorInetSocketAddress): Address {
-            //UPSTREAM KtorInetSocketAddress doesn't provide access to bytes
-            val hostname = inet.hostname
-            return if (hostname != "localhost")
-                address(InetAddresses.forString(hostname), Port(inet.port))
-            else
-                address(InetAddress.getByAddress(IPv4_LOOPBACK_BYTES), Port(inet.port))
         }
 
         fun address(inet: InetAddress, port: Port): Address {
@@ -134,7 +122,5 @@ enum class Network(val type: Byte, val addrSize: Int) {
                 return emptyList()
             }
         }
-
-        val selector = ActorSelectorManager(Dispatchers.IO)
     }
 }

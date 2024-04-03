@@ -19,6 +19,8 @@ import kotlinx.serialization.builtins.DoubleArraySerializer
 import kotlinx.serialization.builtins.FloatArraySerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
+import ninja.blacknet.io.data
+import ninja.blacknet.io.inputStream
 import ninja.blacknet.util.byteArrayOfInts
 
 class BinaryFormatTest {
@@ -94,6 +96,23 @@ class BinaryFormatTest {
             bytes.size,
             format.computeSize(Structure.serializer(), structure)
         )
+    }
+
+    @Test
+    fun decodeStream() {
+        byteArrayOfInts(1, 2).apply {
+            inputStream().data().apply {
+                assertEquals(1, format.decodeFromStream(Byte.serializer(), this, false))
+                assertEquals(2, format.decodeFromStream(Byte.serializer(), this, false))
+            }
+            inputStream().data().apply {
+                assertEquals(1, format.decodeFromStream(Byte.serializer(), this, false))
+                assertEquals(2, format.decodeFromStream(Byte.serializer(), this, true))
+            }
+            inputStream().data().apply {
+                assertFails { format.decodeFromStream(Byte.serializer(), this, true) }
+            }
+        }
     }
 
     @Test

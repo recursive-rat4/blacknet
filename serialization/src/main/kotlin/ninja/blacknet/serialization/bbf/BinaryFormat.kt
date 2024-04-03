@@ -31,7 +31,7 @@ public class BinaryFormat(
 ) : BinaryFormat {
     override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
         val stream = bytes.inputStream().data()
-        val value = decodeFromStream(deserializer, stream)
+        val value = decodeFromStream(deserializer, stream, true)
         return value
     }
 
@@ -47,11 +47,11 @@ public class BinaryFormat(
         }
     }
 
-    public fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, stream: DataInputStream): T {
+    public fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, stream: DataInputStream, last: Boolean): T {
         val decoder = BinaryDecoder(StreamReader(stream), serializersModule)
         val value = deserializer.deserialize(decoder)
         val remaining = stream.available()
-        return if (remaining == 0) {
+        return if (!last || remaining == 0) {
             value
         } else {
             throw SerializationException("$remaining trailing bytes")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -74,8 +74,8 @@ class PeerInfoV1(
                     connection.feeFilter.toString(),
                     connection.connectedAt,
                     ChainInfo.get(connection.lastChain, forkCache),
-                    connection.totalBytesRead,
-                    connection.totalBytesWritten
+                    connection.getTotalBytesRead(),
+                    connection.getTotalBytesWritten(),
             )
         }
 

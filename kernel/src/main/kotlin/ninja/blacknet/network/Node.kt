@@ -10,13 +10,11 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
-import io.ktor.network.sockets.ServerSocket
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
 import java.lang.Thread.sleep
 import java.math.BigInteger
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.SocketException
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
@@ -25,9 +23,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import ninja.blacknet.stateDir
 import ninja.blacknet.Kernel
@@ -49,6 +45,7 @@ import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.rotate
+import ninja.blacknet.util.startInterruptible
 
 private val logger = KotlinLogging.logger {}
 
@@ -67,13 +64,12 @@ object Node {
 
     init {
         // All connectors, including listeners and probers
-        val konnectors = ArrayList<Job>(Kernel.config().outgoingconnections + 3 + 1)
         val connectors = ArrayList<Thread>(Kernel.config().outgoingconnections + 3 + 1)
 
         if (Kernel.config().listen) {
             try {
                 if (!router.isDisabled(Network.IPv4) || !router.isDisabled(Network.IPv6)) {
-                    konnectors.add(
+                    connectors.add(
                         listenOnIP()
                     )
                     if (Kernel.config().upnp) {
@@ -85,7 +81,7 @@ object Node {
         }
         if (Kernel.config().tor) {
             if (!Kernel.config().listen || router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
-                konnectors.add(
+                connectors.add(
                     listenOn(Network.LOOPBACK(Kernel.config().port))
                 )
             connectors.add(
@@ -93,8 +89,8 @@ object Node {
             )
         }
         if (Kernel.config().i2p) {
-            konnectors.add(
-                Runtime.rotate(router::listenOnI2P)
+            connectors.add(
+                rotate("Node.router::listenOnI2P", router::listenOnI2P)
             )
         }
         try {
@@ -102,7 +98,7 @@ object Node {
             FileChannel.open(file, READ).inputStream().buffered().data().use { stream ->
                 val version = stream.readInt()
                 if (version == DATA_VERSION) {
-                    val persistent = binaryFormat.decodeFromStream(Persistent.serializer(), stream)
+                    val persistent = binaryFormat.decodeFromStream(Persistent.serializer(), stream, true)
                     persistent.peers.forEach { peer ->
                         queuedPeers.offer(peer)
                     }
@@ -124,8 +120,7 @@ object Node {
             rotate("Node::prober", ::prober)
         )
         ShutdownHooks.add {
-            logger.info { "Unbinding ${konnectors.size + connectors.size} connectors" }
-            konnectors.forEach(Job::cancel)
+            logger.info { "Unbinding ${connectors.size} connectors" }
             connectors.forEach(Thread::interrupt)
             val persistent = Persistent(ArrayList(Kernel.config().outgoingconnections))
             synchronized(connections) {
@@ -221,20 +216,27 @@ object Node {
         return ChainFetcher.isSynchronizing() && PoS.guessInitialSynchronization()
     }
 
-    fun listenOn(address: Address): Job {
+    fun listenOn(address: Address): Thread {
         val addr = when (address.network) {
-            Network.IPv4, Network.IPv6 -> address.getSocketAddress()
+            Network.IPv4, Network.IPv6 -> address.getInetAddress()
             else -> throw NotImplementedError("Not implemented for " + address.network)
         }
-        val server = aSocket(Network.selector).tcp().bind(addr)
+        val server = ServerSocket(address.port.toJava(), Kernel.config().incomingconnections, addr)
         logger.info { "Listening on ${address.debugName()}" }
-        return Runtime.launch {
+        return startInterruptible("Node::listener ${address.debugName()}") {
             addListenAddress(address)
-            listener(server)
+            try {
+                listener(server)
+            } catch (e: SocketException) {
+                if (!Thread.currentThread().isInterrupted())
+                    logger.error(e) { "Lost binding to ${address.debugName()}" }
+            } finally {
+                removeListenAddress(address)
+            }
         }
     }
 
-    private fun listenOnIP(): Job {
+    private fun listenOnIP(): Thread {
         if (router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
             throw IllegalStateException("Both IPv4 and IPv6 are disabled")
         if (router.isDisabled(Network.IPv4))
@@ -243,7 +245,7 @@ object Node {
     }
 
     fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
-        val connection = runBlocking { router.connect(address, prober) }
+        val connection = router.connect(address, prober)
         synchronized(connections) {
             connections.add(connection)
             connection.launch()
@@ -393,14 +395,14 @@ object Node {
         return n
     }
 
-    private suspend fun listener(server: ServerSocket) {
+    private fun listener(server: ServerSocket) {
         while (true) {
             val socket = server.accept()
-            val remoteAddress = Network.address(socket.remoteAddress as KtorInetSocketAddress)
-            val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
+            val remoteAddress = Network.address(socket.remoteSocketAddress as InetSocketAddress)
+            val localAddress = Network.address(socket.localSocketAddress as InetSocketAddress)
             if (!localAddress.isLocal())
                 addListenAddress(localAddress)
-            val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+            val connection = Connection(socket, remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
             addIncomingConnection(connection)
         }
     }
@@ -460,7 +462,7 @@ object Node {
             connection = connectTo(address, v2 = true)
             connection.join()
             // try v1 if accepted without reply
-            if (connection.totalBytesRead == 0L) {
+            if (connection.getTotalBytesRead() == 0L) {
                 connection = connectTo(address, v2 = false)
                 connection.join()
             }
@@ -502,7 +504,7 @@ object Node {
             connection = connectTo(address, v2 = true, prober = true)
             connection.join()
             // try v1 if accepted without reply
-            if (connection.totalBytesRead == 0L) {
+            if (connection.getTotalBytesRead() == 0L) {
                 connection = connectTo(address, v2 = false, prober = true)
                 connection.join()
             }

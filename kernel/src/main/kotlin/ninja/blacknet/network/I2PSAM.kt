@@ -9,29 +9,25 @@
 
 package ninja.blacknet.network
 
+import com.google.common.base.Utf8
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.network.sockets.ASocket
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.cancel
-import io.ktor.utils.io.close
-import io.ktor.utils.io.readUTF8Line
-import io.ktor.utils.io.writeStringUtf8
+import java.io.Closeable
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.Socket
+import java.net.SocketException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption.ATOMIC_MOVE
+import java.util.Arrays
 import kotlin.io.path.readText
 import kotlin.random.Random
-import kotlinx.coroutines.launch
 import ninja.blacknet.Config
-import ninja.blacknet.Runtime
 import ninja.blacknet.dataDir
 import ninja.blacknet.codec.base.Base64
 import ninja.blacknet.crypto.HashEncoder.Companion.buildHash
 import ninja.blacknet.crypto.encodeByteArray
 import ninja.blacknet.io.replaceFile
+import ninja.blacknet.util.startInterruptible
 
 private val logger = KotlinLogging.logger {}
 
@@ -42,7 +38,7 @@ class I2PSAM(
     private var privateKey = "TRANSIENT"
     private val sam: Address?
     @Volatile
-    private var session: Pair<String, Address>? = null
+    private var session: Triple<String, Address, Closeable>? = null
 
     init {
         if (config.i2psamhost != null && config.i2psamport != null)
@@ -63,13 +59,13 @@ class I2PSAM(
         }
     }
 
-    fun session(): Pair<String, Address> {
+    fun session(): Triple<String, Address, Closeable> {
         return session ?: throw I2PException("session is not available")
     }
 
-    private suspend fun connectToSAM(): Connection {
-        val socket = aSocket(Network.selector).tcp().connect(sam?.getSocketAddress() ?: throw NotConfigured)
-        val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel())
+    private fun connectToSAM(): Connection {
+        val socket = sam?.run { Socket(getInetAddress(), port.toJava()) } ?: throw NotConfigured
+        val connection = Connection(socket, socket.getInputStream(), socket.getOutputStream())
 
         val answer = request(connection, "HELLO VERSION MIN=3.2\n")
         connection.checkResult(answer)
@@ -77,7 +73,7 @@ class I2PSAM(
         return connection
     }
 
-    suspend fun createSession(): Pair<String, Address> {
+    fun createSession(): Triple<String, Address, Closeable> {
         val connection = connectToSAM()
 
         val sessionId = generateId()
@@ -93,25 +89,30 @@ class I2PSAM(
         if (this.privateKey == "TRANSIENT")
             savePrivateKey(privateKey)
 
-        val newSession = Pair(sessionId, localAddress)
+        val newSession = Triple(sessionId, localAddress, connection.socket)
         session = newSession
 
-        Runtime.launch {
-            while (true) {
-                val message = connection.readChannel.readUTF8Line() ?: break
+        startInterruptible("I2PSAM::createSession") {
+            try {
+                while (true) {
+                    val message = connection.inputStream.readUTF8Line() ?: break
 
-                if (message.startsWith("PING")) {
-                    connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
-                    connection.writeChannel.flush()
+                    if (message.startsWith("PING")) {
+                        connection.outputStream.writeStringUtf8("PONG" + message.drop(4) + '\n')
+                        connection.outputStream.flush()
+                    }
                 }
+            } catch (e: SocketException) {
+                //XXX probably should be interruptible instead of closeable
+            } finally {
+                session = null
             }
-            session = null
         }
 
         return newSession
     }
 
-    suspend fun connect(address: Address): Connection {
+    fun connect(address: Address): Connection {
         val (sessionId, _) = session()
 
         val connection = connectToSAM()
@@ -124,7 +125,7 @@ class I2PSAM(
         return connection
     }
 
-    suspend fun accept(): Accepted {
+    fun accept(): Accepted {
         val (sessionId, _) = session()
 
         val connection = connectToSAM()
@@ -138,30 +139,30 @@ class I2PSAM(
         }
 
         while (true) {
-            val message = connection.readChannel.readUTF8Line() ?: throw I2PException("connection closed")
+            val message = connection.inputStream.readUTF8Line() ?: throw I2PException("connection closed")
 
             if (message.startsWith("PING")) {
-                connection.writeChannel.writeStringUtf8("PONG" + message.drop(4) + '\n')
-                connection.writeChannel.flush()
+                connection.outputStream.writeStringUtf8("PONG" + message.drop(4) + '\n')
+                connection.outputStream.flush()
             } else {
                 val destination = message.takeWhile { it != ' ' }
                 val remoteAddress = Address(Network.I2P, config.port, hash(destination))
-                return Accepted(connection.socket, connection.readChannel, connection.writeChannel, remoteAddress)
+                return Accepted(connection.socket, connection.inputStream, connection.outputStream, remoteAddress)
             }
         }
     }
 
-    private suspend fun lookup(connection: Connection, name: String): String {
+    private fun lookup(connection: Connection, name: String): String {
         val answer = request(connection, "NAMING LOOKUP NAME=$name\n")
         connection.checkResult(answer)
         return getValue(answer, "VALUE")!!
     }
 
-    private suspend fun request(connection: Connection, request: String): String? {
+    private fun request(connection: Connection, request: String): String? {
         logger.debug { request.dropLast(1) }
-        connection.writeChannel.writeStringUtf8(request)
-        connection.writeChannel.flush()
-        val answer = connection.readChannel.readUTF8Line()
+        connection.outputStream.writeStringUtf8(request)
+        connection.outputStream.flush()
+        val answer = connection.inputStream.readUTF8Line()
         logger.debug { "$answer" }
         return answer
     }
@@ -177,7 +178,7 @@ class I2PSAM(
         return builder.toString()
     }
 
-    class Connection(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel) {
+    class Connection(val socket: Socket, val inputStream: InputStream, val outputStream: OutputStream) {
         internal fun checkResult(answer: String?) {
             if (answer == null)
                 exception("connection closed")
@@ -197,13 +198,13 @@ class I2PSAM(
 
         private fun exception(message: String): Nothing {
             socket.close()
-            readChannel.cancel()
-            writeChannel.close()
+            inputStream.close()
+            outputStream.close()
             throw I2PException(message)
         }
     }
 
-    class Accepted(val socket: ASocket, val readChannel: ByteReadChannel, val writeChannel: ByteWriteChannel, val remoteAddress: Address)
+    class Accepted(val socket: Socket, val inputStream: InputStream, val outputStream: OutputStream, val remoteAddress: Address)
     open class I2PException(message: String) : RuntimeException("I2P SAM $message")
     object NotConfigured : I2PException("is not configured")
 
@@ -238,5 +239,39 @@ class I2PSAM(
                 return answer.substring(valueStart)
             return answer.substring(valueStart, valueEnd)
         }
+
+        internal fun InputStream.readUTF8Line(): String? {
+            // Because java.io.InputStreamReader buffers...
+            val builder = StringBuilder(80)
+            val scratch = ByteArray(4)
+            var eos = false
+            var i = 0
+            while (true) {
+                val read = read()
+                if (read == -1) {
+                    eos = true
+                    break
+                }
+                scratch[i++] = read.toByte()
+                if (Utf8.isWellFormed(scratch, 0, i)) {
+                    val str = String(scratch, 0, i)
+                    if (str == "\n")
+                        break
+                    builder.append(str)
+                    Arrays.fill(scratch, 0, i, 0)
+                    i = 0
+                    continue
+                }
+                if (i == 4)
+                    throw RuntimeException("Malformed UTF-8 character")
+            }
+            return if (builder.isNotEmpty())
+                builder.toString()
+            else if (!eos)
+                ""
+            else
+                null
+        }
+        internal fun OutputStream.writeStringUtf8(string: String): Unit = write(string.toByteArray(Charsets.UTF_8))
     }
 }

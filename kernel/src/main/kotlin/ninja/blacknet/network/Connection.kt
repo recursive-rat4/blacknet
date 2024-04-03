@@ -10,23 +10,21 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.network.sockets.ASocket
-import io.ktor.utils.io.*
-import io.ktor.utils.io.core.ByteReadPacket
-import io.ktor.utils.io.core.readInt
-import io.ktor.utils.io.errors.IOException
+import java.io.IOException
 import java.lang.Thread.sleep
 import java.math.BigInteger
+import java.net.Socket
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.KSerializer
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.io.buffered
+import ninja.blacknet.io.counted
+import ninja.blacknet.io.data
+import ninja.blacknet.io.delimited
 import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
@@ -36,13 +34,16 @@ import ninja.blacknet.util.startInterruptible
 private val logger = KotlinLogging.logger {}
 
 class Connection(
-        private val socket: ASocket,
-        private val readChannel: ByteReadChannel,
-        private val writeChannel: ByteWriteChannel,
-        val remoteAddress: Address,
-        val localAddress: Address,
-        var state: State
+    private val socket: Socket,
+    val remoteAddress: Address,
+    val localAddress: Address,
+    var state: State,
 ) {
+    private val countedInput = socket.inputStream.counted()
+    private val countedOutput = socket.outputStream.counted()
+    private val delimitedInput = countedInput.buffered().delimited()
+    private val inputStream = delimitedInput.data()
+    private val outputStream = countedOutput.buffered().data()
     private val vThreads = ArrayList<Thread>()
 
     private val closed = atomic(false)
@@ -55,10 +56,6 @@ class Connection(
 
     @Volatile
     var lastPacketTime: Long = 0
-    @Volatile
-    var totalBytesRead: Long = 0
-    @Volatile
-    var totalBytesWritten: Long = 0
     @Volatile
     var lastChain: ChainAnnounce = ChainAnnounce.GENESIS
     @Volatile
@@ -77,6 +74,9 @@ class Connection(
     var pingRequest: Pair<Int, Long>? = null
     @Volatile
     var requestedDifficulty: BigInteger = BigInteger.ZERO
+
+    fun getTotalBytesRead(): Long = countedInput.bytesRead
+    fun getTotalBytesWritten(): Long = countedOutput.bytesWritten
 
     inline val requestedBlocks: Boolean
         get() = requestedDifficulty != BigInteger.ZERO
@@ -101,8 +101,18 @@ class Connection(
     private fun receiver() {
         try {
             while (true) {
-                val bytes = recvPacket()
-                val type = bytes.readInt()
+                val size = inputStream.readInt()
+                if (size > Node.getMaxPacketSize()) {
+                    if (state.isConnected()) {
+                        logger.info { "Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}" }
+                    }
+                    close()
+                }
+                delimitedInput.begin(size)
+                val type = inputStream.readInt()
+                val serializer = PacketType.getSerializer<Packet>(type)
+                val packet = binaryFormat.decodeFromStream(serializer, inputStream, false)
+                delimitedInput.end()
 
                 if (state.isConnected()) {
                     if (type == PacketType.Version.ordinal || type == PacketType.Hello.ordinal)
@@ -112,36 +122,14 @@ class Connection(
                         break
                 }
 
-                val packet = try {
-                    val serializer = PacketType.getSerializer<Packet>(type)
-                    binaryFormat.decodeFromPacket(serializer, bytes)
-                } catch (e: Throwable) {
-                    dos("Deserialization failed: ${e.message}")
-                    continue
-                }
+                lastPacketTime = currentTimeMillis()
                 logger.debug { "Received ${packet::class.simpleName} from ${debugName()}" }
                 packet.handle(this)
             }
-        } catch (e: ClosedReceiveChannelException) {
-        } catch (e: CancellationException) {
         } catch (e: IOException) {
         } finally {
             close()
         }
-    }
-
-    private fun recvPacket(): ByteReadPacket {
-        val size = runBlocking { readChannel.readInt() }
-        if (size > Node.getMaxPacketSize()) {
-            if (state.isConnected()) {
-                logger.info { "Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}" }
-            }
-            close()
-        }
-        val result = runBlocking { readChannel.readPacket(size) }
-        lastPacketTime = currentTimeMillis()
-        totalBytesRead += size + PACKET_LENGTH_SIZE_BYTES
-        return result
     }
 
     private fun sender() {
@@ -149,14 +137,13 @@ class Connection(
             while (true) {
                 val e = sendQueue.take()
                 logger.debug { "Sending ${e.type} to ${debugName()}" }
-                val bytes = buildPacket(e.serializer, e.packet, e.type)
-                runBlocking { writeChannel.writePacket(bytes) }
-                writeChannel.flush()
-                sendQueueSize -= e.size
-                totalBytesWritten += e.size + PACKET_HEADER_SIZE_BYTES + PACKET_LENGTH_SIZE_BYTES
+                outputStream.writeInt(e.size + PACKET_HEADER_SIZE_BYTES)
+                outputStream.writeInt(e.type.ordinal)
+                binaryFormat.encodeToStream(e.serializer, e.packet, outputStream)
+                outputStream.flush()
+                sendQueueSize -= e.size.toLong()
             }
-        } catch (e: ClosedWriteChannelException) {
-        } catch (e: CancellationException) {
+        } catch (e: IOException) {
         } finally {
             close()
         }
@@ -200,9 +187,9 @@ class Connection(
 
     fun sendPacket(type: PacketType, packet: Packet) {
         val serializer = PacketType.getSerializer<Packet>(type.ordinal)
-        val size = binaryFormat.computeSize(serializer, packet).toLong()
+        val size = binaryFormat.computeSize(serializer, packet)
         //TODO review threshold
-        if (sendQueueSize.addAndGet(size) <= Node.getMaxPacketSize() * 10) {
+        if (sendQueueSize.addAndGet(size.toLong()) <= Node.getMaxPacketSize() * 10) {
             sendQueue.offer(QueuedPacket(serializer, packet, type, size))
         } else {
             logger.info { "Disconnecting ${debugName()} on send queue overflow" }
@@ -224,8 +211,8 @@ class Connection(
     fun close() {
         if (closed.compareAndSet(false, true)) {
             socket.close()
-            readChannel.cancel()
-            writeChannel.close()
+            inputStream.close()
+            outputStream.close()
 
             synchronized(Node.connections) {
                 Node.connections.remove(this@Connection)
@@ -358,6 +345,6 @@ class Connection(
         val serializer: KSerializer<Packet>,
         val packet: Packet,
         val type: PacketType,
-        val size: Long,
+        val size: Int,
     )
 }

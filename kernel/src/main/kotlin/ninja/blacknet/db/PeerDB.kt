@@ -96,7 +96,7 @@ object PeerDB {
             FileChannel.open(dataDir.resolve(FILENAME), READ).inputStream().buffered().data().use { stream ->
                 val version = stream.readInt()
                 if (version == VERSION) {
-                    return binaryFormat.decodeFromStream(MapSerializer(Address.serializer(), Entry.serializer()), stream)
+                    return binaryFormat.decodeFromStream(MapSerializer(Address.serializer(), Entry.serializer()), stream, true)
                 } else {
                     throw Error("Unknown database version $version")
                 }

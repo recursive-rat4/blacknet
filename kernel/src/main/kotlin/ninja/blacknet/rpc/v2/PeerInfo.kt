@@ -76,8 +76,8 @@ class PeerInfo(
                     connection.connectedAt,
                     ChainInfo.get(connection.lastChain, forkCache),
                     connection.requestedBlocks,
-                    connection.totalBytesRead,
-                    connection.totalBytesWritten,
+                    connection.getTotalBytesRead(),
+                    connection.getTotalBytesWritten(),
             )
         }
 
