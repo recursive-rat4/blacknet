@@ -123,11 +123,6 @@
             </dependency>
             <dependency>
                 <groupId>io.ktor</groupId>
-                <artifactId>ktor-io-jvm</artifactId>
-                <version>${ktor.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.ktor</groupId>
                 <artifactId>ktor-server-cio-jvm</artifactId>
                 <version>${ktor.version}</version>
             </dependency>

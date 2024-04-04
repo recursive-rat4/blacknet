@@ -48,10 +48,6 @@
             <artifactId>kotlinx-serialization-json-jvm</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-io-jvm</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test-testng</artifactId>
         </dependency>

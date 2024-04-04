@@ -9,8 +9,6 @@
 
 package ninja.blacknet.serialization.bbf
 
-import io.ktor.utils.io.core.BytePacketBuilder
-import io.ktor.utils.io.core.ByteReadPacket
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import kotlinx.serialization.BinaryFormat
@@ -35,18 +33,6 @@ public class BinaryFormat(
         return value
     }
 
-    public fun <T : Any?> decodeFromPacket(strategy: DeserializationStrategy<T>, packet: ByteReadPacket): T {
-        val decoder = BinaryDecoder(PacketReader(packet), serializersModule)
-        val value = strategy.deserialize(decoder)
-        val remaining = packet.remaining
-        return if (remaining == 0L) {
-            value
-        } else {
-            packet.release()
-            throw SerializationException("$remaining trailing bytes")
-        }
-    }
-
     public fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, stream: DataInputStream, last: Boolean): T {
         val decoder = BinaryDecoder(StreamReader(stream), serializersModule)
         val value = deserializer.deserialize(decoder)
@@ -64,13 +50,6 @@ public class BinaryFormat(
         val stream = bytes.outputStream().data()
         encodeToStream(serializer, value, stream)
         return bytes
-    }
-
-    public fun <T : Any?> encodeToPacket(strategy: SerializationStrategy<T>, value: T): ByteReadPacket {
-        val output = BytePacketBuilder()
-        val encoder = BinaryEncoder(PacketWriter(output), serializersModule)
-        strategy.serialize(encoder, value)
-        return output.build()
     }
 
     public fun <T> encodeToStream(serializer: SerializationStrategy<T>, value: T, stream: DataOutputStream) {
