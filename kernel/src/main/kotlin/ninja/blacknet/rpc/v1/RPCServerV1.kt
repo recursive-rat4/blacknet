@@ -16,12 +16,12 @@ import io.ktor.websocket.Frame
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
-import ninja.blacknet.Runtime
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
+import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.rpc.SynchronizedHashMap
 import ninja.blacknet.rpc.SynchronizedHashSet
 import ninja.blacknet.serialization.json.json
@@ -35,7 +35,7 @@ object RPCServerV1 {
 
     suspend fun blockNotify(block: Block, hash: Hash, height: Int, size: Int) {
         blockNotifyV0.forEach {
-            Runtime.launch {
+            RPCServer.launch {
                 try {
                     it.send(Frame.Text(hash.toString()))
                 } finally {
@@ -48,7 +48,7 @@ object RPCServerV1 {
                 val notification = BlockNotificationV1(block, hash, height, size)
                 val message = json.encodeToString(BlockNotificationV1.serializer(), notification)
                 blockNotifyV1.set.forEach {
-                    Runtime.launch {
+                    RPCServer.launch {
                         try {
                             it.send(Frame.Text(message))
                         } finally {
@@ -66,7 +66,7 @@ object RPCServerV1 {
                 val message = json.encodeToString(TransactionNotificationV2.serializer(), notification)
                 walletNotifyV1.map.forEach {
                     if (it.value.contains(publicKey)) {
-                        Runtime.launch {
+                        RPCServer.launch {
                             try {
                                 it.key.send(Frame.Text(message))
                             } finally {

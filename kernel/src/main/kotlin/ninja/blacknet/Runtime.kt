@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,13 +9,7 @@
 
 package ninja.blacknet
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlin.coroutines.CoroutineContext
-
-object Runtime : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Dispatchers.Default
-
+object Runtime {
     /**
      * The number of available CPU, including virtual cores.
      */

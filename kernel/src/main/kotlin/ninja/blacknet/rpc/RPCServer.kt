@@ -21,13 +21,15 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.websocket.Frame
+import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.locks.ReentrantLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.Version
 import ninja.blacknet.core.Block
 import ninja.blacknet.core.ChainIndex
@@ -46,7 +48,8 @@ import ninja.blacknet.util.statusMessage
 
 private val logger = KotlinLogging.logger {}
 
-object RPCServer {
+object RPCServer : CoroutineScope {
+    override val coroutineContext: CoroutineContext = Dispatchers.Default
     internal val txLock = ReentrantLock(true)
     internal var lastIndex: Pair<Hash, ChainIndex>? = null
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
@@ -68,7 +71,7 @@ object RPCServer {
                 val notification = WebSocketNotification(BlockNotification(block, hash, height, size))
                 val message = json.encodeToString(WebSocketNotification.serializer(), notification)
                 blockNotify.set.forEach {
-                    Runtime.launch {
+                    RPCServer.launch {
                         try {
                             it.send(Frame.Text(message))
                         } finally {
@@ -85,7 +88,7 @@ object RPCServer {
                 val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size))
                 val message = json.encodeToString(WebSocketNotification.serializer(), notification)
                 txPoolNotify.set.forEach {
-                    Runtime.launch {
+                    RPCServer.launch {
                         try {
                             it.send(Frame.Text(message))
                         } finally {
@@ -106,7 +109,7 @@ object RPCServer {
                     val notification = WebSocketNotification(TransactionNotification(tx, hash, time, size, filter))
                     val message = json.encodeToString(WebSocketNotification.serializer(), notification)
                     subscribers.forEach {
-                        Runtime.launch {
+                        RPCServer.launch {
                             try {
                                 it.send(Frame.Text(message))
                             } finally {

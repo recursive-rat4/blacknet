@@ -23,11 +23,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ninja.blacknet.stateDir
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
@@ -73,7 +71,7 @@ object Node {
                         listenOnIP()
                     )
                     if (Kernel.config().upnp) {
-                        Runtime.launch { UPnP.forward() }
+                        startInterruptible("Node::init_UPNP") { UPnP.forward() }
                     }
                 }
             } catch (e: Throwable) {

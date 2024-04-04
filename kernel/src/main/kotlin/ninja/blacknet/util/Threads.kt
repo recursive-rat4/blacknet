@@ -9,21 +9,6 @@
 
 package ninja.blacknet.util
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-
-/**
- * Rotate [wheel].
- */
-inline fun CoroutineScope.rotate(crossinline wheel: suspend () -> Unit): Job {
-    return launch {
-        while (true) {
-            wheel()
-        }
-    }
-}
-
 /**
  * Rotate a [name]d [wheel].
  */
