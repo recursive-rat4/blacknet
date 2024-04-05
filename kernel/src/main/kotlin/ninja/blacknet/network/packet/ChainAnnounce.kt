@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -23,7 +23,7 @@ class ChainAnnounce(
     @Serializable(with = BigIntegerSerializer::class)
     internal val cumulativeDifficulty: BigInteger
 ) : Packet {
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         if (cumulativeDifficulty < Genesis.CUMULATIVE_DIFFICULTY) {
             connection.dos("Invalid cumulative difficulty ${cumulativeDifficulty}")
             return

@@ -7,7 +7,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization.bbf
+package ninja.blacknet.io
 
 import java.io.OutputStream
 
@@ -26,3 +26,5 @@ class ByteArrayOutputStream(
         i += len
     }
 }
+
+fun ByteArray.outputStream(): ByteArrayOutputStream = ByteArrayOutputStream(this)

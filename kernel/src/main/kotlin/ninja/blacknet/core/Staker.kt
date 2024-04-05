@@ -11,13 +11,10 @@
 package ninja.blacknet.core
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.withLock
+import java.lang.Thread.sleep
+import java.util.concurrent.CopyOnWriteArrayList
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
+import kotlin.concurrent.withLock
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.crypto.*
 import ninja.blacknet.db.LedgerDB
@@ -26,9 +23,8 @@ import ninja.blacknet.network.Node
 import ninja.blacknet.rpc.v2.StakingInfo
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.SynchronizedArrayList
-import ninja.blacknet.util.exactSumOf
 import ninja.blacknet.util.rotate
+import ninja.blacknet.util.startInterruptible
 
 private val logger = KotlinLogging.logger {}
 
@@ -59,7 +55,7 @@ object Staker {
         }
     }
 
-    private val stakers = SynchronizedArrayList<StakerState>()
+    private val stakers = CopyOnWriteArrayList<StakerState>()
     private var state: String = "Initializing staker"
         set(value) {
             if (field === value)
@@ -70,34 +66,35 @@ object Staker {
 
     init {
         Kernel.config().mnemonics?.let { mnemonics ->
-            runBlocking {
-                mnemonics.forEach { mnemonic ->
-                    val privateKey = mnemonic
-                    startStaking(privateKey)
-                }
-                Kernel.config().mnemonics = null
-                ShutdownHooks.add {
-                    coroutine?.let {
-                        state = "Terminating staker"
-                        it.cancel()
-                    }
+            mnemonics.forEach { mnemonic ->
+                val privateKey = mnemonic
+                startStaking(privateKey)
+            }
+            Kernel.config().mnemonics = null
+            ShutdownHooks.add {
+                vThread?.let {
+                    state = "Terminating staker"
+                    it.interrupt()
                 }
             }
         }
     }
 
     @Volatile
-    var awaitsNextTimeSlot: Job? = null
-    private var coroutine: Job? = null
-    private suspend fun implementation() {
-        val job = Runtime.launch {
-            val currTime = currentTimeSeconds()
-            val nextTimeSlot = currTime - currTime % PoS.TIME_SLOT + PoS.TIME_SLOT
-            delay(nextTimeSlot * 1000L - currentTimeMillis())
+    var awaitsNextTimeSlot: Thread? = null
+    private var vThread: Thread? = null
+    private fun implementation() {
+        val enterTime = currentTimeSeconds()
+        val nextTimeSlot = enterTime - enterTime % PoS.TIME_SLOT + PoS.TIME_SLOT
+        val d = nextTimeSlot * 1000L - currentTimeMillis()
+        if (d > 0) {
+            val job = startInterruptible("Staker::awaitNextTimeSlot") {
+                sleep(d)
+            }
+            awaitsNextTimeSlot = job
+            job.join()
+            awaitsNextTimeSlot = null
         }
-        awaitsNextTimeSlot = job
-        job.join()
-        awaitsNextTimeSlot = null
 
         if (mode.requiresNetwork) {
             if (Node.isOffline()) {
@@ -121,7 +118,7 @@ object Staker {
 
         stakers.forEach { staker ->
             if (staker.lastBlock != state.blockHash) {
-                Kernel.blockDB().mutex.withLock {
+                Kernel.blockDB().reentrant.readLock().withLock {
                     state = LedgerDB.state()
                     staker.updateImpl(state)
                 }
@@ -161,16 +158,16 @@ object Staker {
         }
     }
 
-    suspend fun startStaking(privateKey: ByteArray): Boolean = stakers.mutex.withLock {
+    fun startStaking(privateKey: ByteArray): Boolean = synchronized(stakers) {
         val publicKey = Ed25519.toPublicKey(privateKey)
 
-        if (stakers.list.find { it.publicKey == publicKey } != null) {
+        if (stakers.find { it.publicKey == publicKey } != null) {
             logger.info { "Stakeholder is already active" }
             return false
         }
 
         val staker = StakerState(publicKey, privateKey)
-        Kernel.blockDB().mutex.withLock {
+        Kernel.blockDB().reentrant.readLock().withLock {
             val state = LedgerDB.state()
             staker.updateImpl(state)
         }
@@ -178,50 +175,51 @@ object Staker {
             logger.warn { "Stakeholder has zero active balance" }
         }
 
-        stakers.list.add(staker)
-        if (stakers.list.size == 1) {
-            coroutine = Runtime.rotate(::implementation)
+        stakers.add(staker)
+        if (stakers.size == 1) {
+            vThread = rotate("Staker::implementation", ::implementation)
             state = "Started staker"
         }
         return true
     }
 
-    suspend fun stopStaking(privateKey: ByteArray): Boolean = stakers.mutex.withLock {
+    fun stopStaking(privateKey: ByteArray): Boolean = synchronized(stakers) {
         val publicKey = Ed25519.toPublicKey(privateKey)
-        val i = stakers.list.indexOfFirst { it.publicKey == publicKey }
+        val i = stakers.indexOfFirst { it.publicKey == publicKey }
         if (i != -1) {
-            stakers.list.removeAt(i)
+            stakers.removeAt(i)
         } else {
             logger.info { "Stakeholder is not active" }
             return false
         }
-        if (stakers.list.size == 0) {
-            coroutine!!.cancel()
-            coroutine = null
+        if (stakers.size == 0) {
+            vThread!!.interrupt()
+            vThread = null
             awaitsNextTimeSlot = null
             state = "Stopped staker"
         }
         return true
     }
 
-    suspend fun isStaking(privateKey: ByteArray): Boolean = stakers.mutex.withLock {
-        return stakers.list.find { it.privateKey.contentEquals(privateKey) } != null
+    fun isStaking(privateKey: ByteArray): Boolean {
+        return stakers.find { it.privateKey.contentEquals(privateKey) } != null
     }
 
-    suspend fun info(publicKey: PublicKey?): StakingInfo {
-        val (nAccounts, hashRate, weight) = stakers.mutex.withLock {
-            if (publicKey == null) {
-                Triple(
-                        stakers.list.size,
-                        stakers.list.sumOf { it.hashRate() },
-                        stakers.list.exactSumOf { it.stake }
-                )
-            } else {
-                val staker = stakers.list.find { it.publicKey == publicKey }
-                if (staker != null)
-                    Triple(1, staker.hashRate(), staker.stake)
-                else
-                    Triple(0, 0.0, 0L)
+    fun info(publicKey: PublicKey?): StakingInfo {
+        var nAccounts: Int = 0
+        var hashRate: Double = 0.0
+        var weight: Long = 0L
+        if (publicKey == null) {
+            stakers.forEach {
+                nAccounts += 1
+                hashRate += it.hashRate()
+                weight = Math.addExact(weight, it.stake)
+            }
+        } else {
+            stakers.find { it.publicKey == publicKey }?.let {
+                nAccounts = 1
+                hashRate = it.hashRate()
+                weight = it.stake
             }
         }
         val state = LedgerDB.state()

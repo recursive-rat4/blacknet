@@ -7,28 +7,19 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.serialization.bbf
+package ninja.blacknet.io
 
 import java.io.InputStream
+import java.util.Arrays
 
-class ByteArrayInputStream(
-    private val bytes: ByteArray,
+class ZeroInputStream(
 ) : InputStream() {
-    private var i = 0
-
     override fun read(): Int {
-        val byte = bytes[i]
-        i += 1
-        return byte.toUByte().toInt()
+        return 0
     }
 
     override fun read(b: ByteArray, off: Int, len: Int): Int {
-        System.arraycopy(bytes, i, b, off, len)
-        i += len
+        Arrays.fill(b, off, off + len, 0)
         return len
-    }
-
-    override fun available(): Int {
-        return bytes.size - i
     }
 }

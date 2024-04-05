@@ -11,7 +11,6 @@ module ninja.blacknet.cli {
     requires java.base;
 
     requires kotlin.stdlib;
-    requires kotlinx.coroutines.core;
 
     requires ninja.blacknet.runtime;
 

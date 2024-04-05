@@ -10,44 +10,40 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
-import io.ktor.network.sockets.ServerSocket
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
+import java.lang.Thread.sleep
 import java.math.BigInteger
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.SocketException
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ninja.blacknet.stateDir
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.io.buffered
+import ninja.blacknet.io.data
+import ninja.blacknet.io.inputStream
+import ninja.blacknet.io.replaceFile
 import ninja.blacknet.logging.error
 import ninja.blacknet.mode
 import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.buffered
-import ninja.blacknet.util.data
-import ninja.blacknet.util.inputStream
-import ninja.blacknet.util.replaceFile
 import ninja.blacknet.util.rotate
+import ninja.blacknet.util.startInterruptible
 
 private val logger = KotlinLogging.logger {}
 
@@ -62,11 +58,11 @@ object Node {
     val connections = CopyOnWriteArrayList<Connection>()
     private val listenAddress = CopyOnWriteArraySet<Address>()
     private val nextPeerId = atomic(1L)
-    private val queuedPeers = Channel<Address>(Kernel.config().outgoingconnections)
+    private val queuedPeers = ConcurrentLinkedQueue<Address>()
 
     init {
         // All connectors, including listeners and probers
-        val connectors = ArrayList<Job>(Kernel.config().outgoingconnections + 3 + 1)
+        val connectors = ArrayList<Thread>(Kernel.config().outgoingconnections + 3 + 1)
 
         if (Kernel.config().listen) {
             try {
@@ -75,7 +71,7 @@ object Node {
                         listenOnIP()
                     )
                     if (Kernel.config().upnp) {
-                        Runtime.launch { UPnP.forward() }
+                        startInterruptible("Node::init_UPNP") { UPnP.forward() }
                     }
                 }
             } catch (e: Throwable) {
@@ -87,12 +83,12 @@ object Node {
                     listenOn(Network.LOOPBACK(Kernel.config().port))
                 )
             connectors.add(
-                Runtime.rotate(router::listenOnTor)
+                rotate("Node.router::listenOnTor", router::listenOnTor)
             )
         }
         if (Kernel.config().i2p) {
             connectors.add(
-                Runtime.rotate(router::listenOnI2P)
+                rotate("Node.router::listenOnI2P", router::listenOnI2P)
             )
         }
         try {
@@ -100,9 +96,9 @@ object Node {
             FileChannel.open(file, READ).inputStream().buffered().data().use { stream ->
                 val version = stream.readInt()
                 if (version == DATA_VERSION) {
-                    val persistent = binaryFormat.decodeFromStream(Persistent.serializer(), stream)
+                    val persistent = binaryFormat.decodeFromStream(Persistent.serializer(), stream, true)
                     persistent.peers.forEach { peer ->
-                        queuedPeers.trySend(peer)
+                        queuedPeers.offer(peer)
                     }
                 } else {
                     logger.warn { "Unknown node data version $version" }
@@ -115,15 +111,15 @@ object Node {
         }
         repeat(Kernel.config().outgoingconnections) {
             connectors.add(
-                Runtime.rotate(::connector)
+                rotate("Node::connector $it", ::connector)
             )
         }
         connectors.add(
-            Runtime.rotate(::prober)
+            rotate("Node::prober", ::prober)
         )
         ShutdownHooks.add {
             logger.info { "Unbinding ${connectors.size} connectors" }
-            connectors.forEach(Job::cancel)
+            connectors.forEach(Thread::interrupt)
             val persistent = Persistent(ArrayList(Kernel.config().outgoingconnections))
             synchronized(connections) {
                 logger.info { "Closing ${connections.size} p2p connections" }
@@ -218,20 +214,27 @@ object Node {
         return ChainFetcher.isSynchronizing() && PoS.guessInitialSynchronization()
     }
 
-    fun listenOn(address: Address): Job {
+    fun listenOn(address: Address): Thread {
         val addr = when (address.network) {
-            Network.IPv4, Network.IPv6 -> address.getSocketAddress()
+            Network.IPv4, Network.IPv6 -> address.getInetAddress()
             else -> throw NotImplementedError("Not implemented for " + address.network)
         }
-        val server = aSocket(Network.selector).tcp().bind(addr)
+        val server = ServerSocket(address.port.toJava(), Kernel.config().incomingconnections, addr)
         logger.info { "Listening on ${address.debugName()}" }
-        return Runtime.launch {
+        return startInterruptible("Node::listener ${address.debugName()}") {
             addListenAddress(address)
-            listener(server)
+            try {
+                listener(server)
+            } catch (e: SocketException) {
+                if (!Thread.currentThread().isInterrupted())
+                    logger.error(e) { "Lost binding to ${address.debugName()}" }
+            } finally {
+                removeListenAddress(address)
+            }
         }
     }
 
-    private fun listenOnIP(): Job {
+    private fun listenOnIP(): Thread {
         if (router.isDisabled(Network.IPv4) && router.isDisabled(Network.IPv6))
             throw IllegalStateException("Both IPv4 and IPv6 are disabled")
         if (router.isDisabled(Network.IPv4))
@@ -239,7 +242,7 @@ object Node {
         return listenOn(Address.IPv4_ANY(Kernel.config().port))
     }
 
-    suspend fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
+    fun connectTo(address: Address, v2: Boolean, prober: Boolean = false): Connection {
         val connection = router.connect(address, prober)
         synchronized(connections) {
             connections.add(connection)
@@ -300,14 +303,14 @@ object Node {
     }
 
     fun announceChain(hash: Hash, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
-        Staker.awaitsNextTimeSlot?.cancel()
+        Staker.awaitsNextTimeSlot?.interrupt()
         val ann = ChainAnnounce(hash, cumulativeDifficulty)
         return broadcastPacket(PacketType.ChainAnnounce, ann) {
             it != source && it.state.isConnected() && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
         }
     }
 
-    suspend fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
+    fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
         val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
             if (mode.requiresNetwork)
@@ -319,7 +322,7 @@ object Node {
         }
     }
 
-    suspend fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
+    fun broadcastTx(hash: Hash, bytes: ByteArray): Status {
         val currTime = currentTimeSeconds()
         val (status, fee) = Kernel.txPool().process(hash, bytes, currTime, false)
         if (status == Accepted) {
@@ -331,7 +334,7 @@ object Node {
         return status
     }
 
-    suspend fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null): Int {
+    fun broadcastInv(unfiltered: UnfilteredInvList, source: Connection? = null): Int {
         var n = 0
         val toSend = ArrayList<Hash>(unfiltered.size)
         connections.forEach {
@@ -390,19 +393,19 @@ object Node {
         return n
     }
 
-    private suspend fun listener(server: ServerSocket) {
+    private fun listener(server: ServerSocket) {
         while (true) {
             val socket = server.accept()
-            val remoteAddress = Network.address(socket.remoteAddress as KtorInetSocketAddress)
-            val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
+            val remoteAddress = Network.address(socket.remoteSocketAddress as InetSocketAddress)
+            val localAddress = Network.address(socket.localSocketAddress as InetSocketAddress)
             if (!localAddress.isLocal())
                 addListenAddress(localAddress)
-            val connection = Connection(socket, socket.openReadChannel(), socket.openWriteChannel(), remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
-            addConnection(connection)
+            val connection = Connection(socket, remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+            addIncomingConnection(connection)
         }
     }
 
-    fun addConnection(connection: Connection) {
+    fun addIncomingConnection(connection: Connection) {
         synchronized(connections) {
             if (!haveSlot()) {
                 logger.info { "Too many connections, dropping ${connection.debugName()}" }
@@ -440,14 +443,14 @@ object Node {
         return true
     }
 
-    private suspend fun connector() {
-        val address = queuedPeers.tryReceive().getOrNull()
+    private fun connector() {
+        val address = queuedPeers.poll()
             ?.let { if (PeerDB.tryContact(it)) it else null }
             ?: PeerDB.getCandidate { _, _ -> true }
         if (address == null) {
             val outgoing = outgoing()
             logger.info { "Don't have candidates in PeerDB. $outgoing connections, max ${Kernel.config().outgoingconnections}" }
-            delay(15 * 60 * 1000L)
+            sleep(15 * 60 * 1000L)
             return
         }
 
@@ -455,11 +458,11 @@ object Node {
         var connection: Connection? = null
         try {
             connection = connectTo(address, v2 = true)
-            connection.job.join()
+            connection.join()
             // try v1 if accepted without reply
-            if (connection.totalBytesRead == 0L) {
+            if (connection.getTotalBytesRead() == 0L) {
                 connection = connectTo(address, v2 = false)
-                connection.job.join()
+                connection.join()
             }
         } catch (e: Throwable) {
         } finally {
@@ -470,7 +473,7 @@ object Node {
 
         val x = 4 * 1000L - (currentTimeMillis() - time)
         if (x > 0L)
-            delay(x) // 請在繼續之前等待或延遲
+            sleep(x) // 請在繼續之前等待或延遲
     }
 
     /**
@@ -478,8 +481,8 @@ object Node {
      * outgoing connection in order to provide statistic for the peer database
      * prober.
      */
-    private suspend fun prober() {
-        delay(4 * 60 * 1000L)
+    private fun prober() {
+        sleep(4 * 60 * 1000L)
 
         // Await peer network address announce
         if (PeerDB.size() < PeerDB.MAX_SIZE / 2)
@@ -497,11 +500,11 @@ object Node {
         var connection: Connection? = null
         try {
             connection = connectTo(address, v2 = true, prober = true)
-            connection.job.join()
+            connection.join()
             // try v1 if accepted without reply
-            if (connection.totalBytesRead == 0L) {
+            if (connection.getTotalBytesRead() == 0L) {
                 connection = connectTo(address, v2 = false, prober = true)
-                connection.job.join()
+                connection.join()
             }
         } catch (e: Throwable) {
         } finally {

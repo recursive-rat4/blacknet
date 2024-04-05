@@ -21,7 +21,7 @@ class GetBlocks(
     private val best: Hash,
     private val checkpoint: Hash
 ) : Packet {
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         val cachedBlock = Kernel.blockDB().cachedBlock
         if (cachedBlock != null) {
             val (previousHash, bytes) = cachedBlock

@@ -11,8 +11,8 @@
 package ninja.blacknet.rpc.v2
 
 import io.ktor.server.routing.Route
+import kotlin.concurrent.withLock
 import kotlin.math.abs
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.core.ChainIndex
@@ -27,21 +27,21 @@ import ninja.blacknet.rpc.v1.PeerDBInfo
 
 @Serializable
 class PeerDB : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(PeerDBInfo.serializer(), PeerDBInfo.get())
     }
 }
 
 @Serializable
 class NetworkStat : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(PeerDBInfo.serializer(), PeerDBInfo.get(true))
     }
 }
 
 @Serializable
 class LevelDBStats : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondText(LevelDB.getProperty("leveldb.stats") ?: "Not implemented")
     }
 }
@@ -51,7 +51,7 @@ class Block(
     val hash: Hash,
     val txdetail: Boolean = false
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val (block, size) = Kernel.blockDB().blocks.getWithSize(hash.bytes) ?: return respondError("Block not found")
         return respondJson(BlockInfo.serializer(), BlockInfo(block, hash, size, txdetail))
     }
@@ -59,7 +59,7 @@ class Block(
 
 @Serializable
 class BlockDBCheck : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(BlockDB.Check.serializer(), Kernel.blockDB().check())
     }
 }
@@ -68,7 +68,7 @@ class BlockDBCheck : Request {
 class BlockHash(
     val height: Int
 ) : Request {
-    override suspend fun handle(): TextContent = Kernel.blockDB().mutex.withLock {
+    override fun handle(): TextContent = Kernel.blockDB().reentrant.readLock().withLock {
         val state = LedgerDB.state()
         if (height < 0 || height > state.height)
             return respondError("Block not found")
@@ -111,7 +111,7 @@ class BlockHash(
 class BlockIndex(
     val hash: Hash
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val index = LedgerDB.chainIndexes.get(hash.bytes)
         return if (index != null)
             respondJson(ChainIndex.serializer(), index)
@@ -122,7 +122,7 @@ class BlockIndex(
 
 @Serializable
 class MakeBootstrap : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val file = Bootstrap.export()
         return if (file != null)
             respondText(file.toAbsolutePath().toString())
@@ -133,7 +133,7 @@ class MakeBootstrap : Request {
 
 @Serializable
 class Ledger : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(LedgerInfo.serializer(), LedgerInfo.get())
     }
 }
@@ -143,7 +143,7 @@ class Account(
     val address: PublicKey,
     val confirmations: Int = PoS.DEFAULT_CONFIRMATIONS
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val info = AccountInfo.get(address, confirmations)
         return if (info != null)
             respondJson(AccountInfo.serializer(), info)
@@ -154,7 +154,7 @@ class Account(
 
 @Serializable
 class LedgerDBCheck : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(LedgerDB.Check.serializer(), LedgerDB.check())
     }
 }
@@ -163,7 +163,7 @@ class LedgerDBCheck : Request {
 class ScheduleSnapshot(
     val height: Int
 ) : Request {
-    override suspend fun handle(): TextContent = Kernel.blockDB().mutex.withLock {
+    override fun handle(): TextContent = Kernel.blockDB().reentrant.writeLock().withLock {
         val scheduled = LedgerDB.scheduleSnapshotImpl(height)
         return respondText(scheduled.toString())
     }
@@ -173,7 +173,7 @@ class ScheduleSnapshot(
 class Snapshot(
     val height: Int
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val snapshot = LedgerDB.getSnapshot(height)
         return if (snapshot != null)
             respondJson(LedgerDB.Snapshot.serializer(), snapshot)

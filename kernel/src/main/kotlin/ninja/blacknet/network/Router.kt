@@ -10,12 +10,10 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.network.sockets.InetSocketAddress as KtorInetSocketAddress
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
+import java.lang.Thread.sleep
 import java.net.ConnectException
-import kotlinx.coroutines.delay
+import java.net.InetSocketAddress
+import java.net.Socket
 import ninja.blacknet.Config
 
 //UPSTREAM https://github.com/Kotlin/KEEP/issues/348
@@ -53,30 +51,30 @@ class Router(
         }
     }
 
-    suspend fun connect(address: Address, prober: Boolean): Connection {
+    fun connect(address: Address, prober: Boolean): Connection {
         if (isDisabled(address.network)) throw RuntimeException("${address.network} is disabled")
         val state = if (prober) Connection.State.PROBER_WAITING else Connection.State.OUTGOING_WAITING
         when (address.network) {
             Network.IPv4, Network.IPv6 -> {
                 if (socksProxy != null) {
-                    val (socket, readChannel, writeChannel) = Socks5.connect(socksProxy, address)
-                    return Connection(socket, readChannel, writeChannel, address, socksProxy, state)
+                    val socket = Socks5.connect(socksProxy, address)
+                    return Connection(socket, address, socksProxy, state)
                 } else {
-                    val socket = aSocket(Network.selector).tcp().connect(address.getSocketAddress())
-                    val localAddress = Network.address(socket.localAddress as KtorInetSocketAddress)
+                    val socket = Socket(address.getInetAddress(), address.port.toJava())
+                    val localAddress = Network.address(socket.localSocketAddress as InetSocketAddress)
                     if (config.listen && !localAddress.isLocal())
                         Node.addListenAddress(Address(localAddress.network, config.port, localAddress.bytes))
-                    return Connection(socket, socket.openReadChannel(), socket.openWriteChannel(), address, localAddress, state)
+                    return Connection(socket, address, localAddress, state)
                 }
             }
             Network.TORv3 -> {
                 if (torProxy == null) throw RuntimeException("Tor proxy is not set")
-                val (socket, readChannel, writeChannel) = Socks5.connect(torProxy, address)
-                return Connection(socket, readChannel, writeChannel, address, torProxy, state)
+                val socket = Socks5.connect(torProxy, address)
+                return Connection(socket, address, torProxy, state)
             }
             Network.I2P -> {
                 val c = sam.connect(address)
-                return Connection(c.socket, c.readChannel, c.writeChannel, address, sam.session().second, state)
+                return Connection(c.socket, address, sam.session().second, state)
             }
             Network.TORv2 -> {
                 throw RuntimeException("${address.network} is obsolete")
@@ -87,16 +85,22 @@ class Router(
     private var torTimeout = INIT_TIMEOUT
     private var i2pTimeout = INIT_TIMEOUT
 
-    suspend fun listenOnTor() {
+    fun listenOnTor() {
         try {
-            val (coroutine, localAddress) = TorController.listen()
+            val (vThread, localAddress) = TorController.listen()
 
             logger.info { "Listening on ${localAddress.debugName()}" }
             Node.addListenAddress(localAddress)
 
-            coroutine.join()
+            try {
+                vThread.join()
+            } catch (e: InterruptedException) {
+                vThread.interrupt()
+                throw e
+            } finally {
+                Node.removeListenAddress(localAddress)
+            }
 
-            Node.removeListenAddress(localAddress)
             logger.info { "Lost connection to tor controller" }
 
             torTimeout = INIT_TIMEOUT
@@ -104,13 +108,13 @@ class Router(
             logger.debug { "Can't connect to tor controller: ${e.message}" }
         }
 
-        delay(torTimeout)
+        sleep(torTimeout)
         torTimeout = minOf(torTimeout * 2, MAX_TIMEOUT)
     }
 
-    suspend fun listenOnI2P() {
+    fun listenOnI2P() {
         try {
-            val (_, localAddress) = sam.createSession()
+            val (_, localAddress, closeable) = sam.createSession()
 
             logger.info { "Listening on ${localAddress.debugName()}" }
             Node.addListenAddress(localAddress)
@@ -119,10 +123,11 @@ class Router(
                 val a = try {
                     sam.accept()
                 } catch (e: Throwable) {
+                    closeable.close()
                     break
                 }
-                val connection = Connection(a.socket, a.readChannel, a.writeChannel, a.remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
-                Node.addConnection(connection)
+                val connection = Connection(a.socket, a.remoteAddress, localAddress, Connection.State.INCOMING_WAITING)
+                Node.addIncomingConnection(connection)
             }
 
             Node.removeListenAddress(localAddress)
@@ -138,7 +143,7 @@ class Router(
             logger.debug { "Can't connect to I2P SAM: ${e.message}" }
         }
 
-        delay(i2pTimeout)
+        sleep(i2pTimeout)
         i2pTimeout = minOf(i2pTimeout * 2, MAX_TIMEOUT)
     }
 }

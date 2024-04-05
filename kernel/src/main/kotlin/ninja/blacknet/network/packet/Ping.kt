@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2023 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -20,7 +20,7 @@ class Ping(
     private val challenge: Int,
     private val time: Long,
 ) : Packet {
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         connection.timeOffset = time - currentTimeSeconds()
 
         connection.sendPacket(PacketType.Pong, Pong(solve(challenge)))

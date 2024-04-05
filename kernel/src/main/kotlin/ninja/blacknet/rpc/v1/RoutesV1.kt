@@ -24,12 +24,12 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlin.math.abs
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.*
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.rpc.*
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.*
@@ -39,6 +39,7 @@ import ninja.blacknet.network.Network
 import ninja.blacknet.network.Node
 import ninja.blacknet.serialization.bbf.*
 import ninja.blacknet.transaction.*
+import ninja.blacknet.util.startInterruptible
 
 fun Route.APIV1() {
     webSocket("/api/v1/notify/block") {
@@ -135,17 +136,17 @@ fun Route.APIV1() {
     get("/api/v1/blockdb/getblockhash/{height}") {
         val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
 
-        Kernel.blockDB().mutex.withLock {
+        Kernel.blockDB().reentrant.readLock().withLock { runBlocking {
             val state = LedgerDB.state()
             if (height < 0 || height > state.height)
-                return@get call.respond(HttpStatusCode.NotFound, "block not found")
+                return@runBlocking call.respond(HttpStatusCode.NotFound, "block not found")
             else if (height == 0)
-                return@get call.respond(Genesis.BLOCK_HASH.toString())
+                return@runBlocking call.respond(Genesis.BLOCK_HASH.toString())
             else if (height == state.height)
-                return@get call.respond(state.blockHash.toString())
+                return@runBlocking call.respond(state.blockHash.toString())
 
             if (RPCServer.lastIndex != null && RPCServer.lastIndex!!.second.height == height)
-                return@get call.respond(RPCServer.lastIndex!!.first.toString())
+                return@runBlocking call.respond(RPCServer.lastIndex!!.first.toString())
 
             var hash: Hash
             var index: ChainIndex
@@ -169,7 +170,7 @@ fun Route.APIV1() {
             if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
                 RPCServer.lastIndex = Pair(hash, index)
             call.respond(hash.toString())
-        }
+        }}
     }
 
     get("/api/v1/blockdb/getblockindex/{hash}/") {
@@ -240,18 +241,18 @@ fun Route.APIV1() {
         val message = PaymentId.create(call.parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash(Hash.fromString(it)) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
-        RPCServer.txMutex.withLock {
+        RPCServer.txLock.withLock {
             @Suppress("USELESS_ELVIS")
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
+            val seq = WalletDB.getSequence(from) ?: return@post runBlocking { call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold") }
             val data = binaryFormat.encodeToByteArray(Transfer.serializer(), Transfer(amount, to, message))
             val tx = Transaction.create(from, seq, blockHash
                     ?: WalletDB.anchor(), fee, TxType.Transfer.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                call.respond(signed.first.bytes.toHex())
+                runBlocking { call.respond(signed.first.bytes.toHex()) }
             else
-                call.respond("Transaction rejected")
+                runBlocking { call.respond("Transaction rejected") }
         }
     }
 
@@ -263,17 +264,17 @@ fun Route.APIV1() {
         val message = call.parameters["message"]?.let { fromHex(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash(Hash.fromString(it)) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
-        RPCServer.txMutex.withLock {
+        RPCServer.txLock.withLock {
             @Suppress("USELESS_ELVIS")
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
+            val seq = WalletDB.getSequence(from) ?: return@post runBlocking { call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold") }
             val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
             val tx = Transaction.create(from, seq, blockHash ?: WalletDB.anchor(), fee, TxType.Burn.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                call.respond(signed.first.bytes.toHex())
+                runBlocking { call.respond(signed.first.bytes.toHex()) }
             else
-                call.respond("Transaction rejected")
+                runBlocking { call.respond("Transaction rejected") }
         }
     }
 
@@ -285,17 +286,17 @@ fun Route.APIV1() {
         val to = call.parameters["to"]?.let { PublicKey(Address.decode(it)) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash(Hash.fromString(it)) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
-        RPCServer.txMutex.withLock {
+        RPCServer.txLock.withLock {
             @Suppress("USELESS_ELVIS")
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
+            val seq = WalletDB.getSequence(from) ?: return@post runBlocking { call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold") }
             val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
             val tx = Transaction.create(from, seq, blockHash ?: WalletDB.anchor(), fee, TxType.Lease.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                call.respond(signed.first.bytes.toHex())
+                runBlocking { call.respond(signed.first.bytes.toHex()) }
             else
-                call.respond("Transaction rejected")
+                runBlocking { call.respond("Transaction rejected") }
         }
     }
 
@@ -308,18 +309,18 @@ fun Route.APIV1() {
         val height = call.parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash(Hash.fromString(it)) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
-        RPCServer.txMutex.withLock {
+        RPCServer.txLock.withLock {
             @Suppress("USELESS_ELVIS")
-            val seq = WalletDB.getSequence(from) ?: return@post call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold")
+            val seq = WalletDB.getSequence(from) ?: return@post runBlocking { call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold") }
             val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
             val tx = Transaction.create(from, seq, blockHash
                     ?: WalletDB.anchor(), fee, TxType.CancelLease.type, data)
             val signed = tx.sign(privateKey)
 
             if (Node.broadcastTx(signed.first, signed.second) == Accepted)
-                call.respond(signed.first.bytes.toHex())
+                runBlocking { call.respond(signed.first.bytes.toHex()) }
             else
-                call.respond("Transaction rejected")
+                runBlocking { call.respond("Transaction rejected") }
         }
     }
 
@@ -327,11 +328,11 @@ fun Route.APIV1() {
         val serialized = call.parameters["serialized"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
         val hash = Transaction.hash(serialized)
 
-        RPCServer.txMutex.withLock {
+        RPCServer.txLock.withLock {
             if (Node.broadcastTx(hash, serialized) == Accepted)
-                call.respond(hash.bytes.toHex())
+                runBlocking { call.respond(hash.bytes.toHex()) }
             else
-                call.respond("Transaction rejected")
+                runBlocking { call.respond("Transaction rejected") }
         }
     }
 
@@ -380,8 +381,8 @@ fun Route.APIV1() {
                     PeerDB.discontacted(address)
                     throw e
                 }
-                Runtime.launch {
-                    connection.job.join()
+                startInterruptible("AddPeer::discontactor ${connection.debugName()}") {
+                    connection.join()
                     PeerDB.discontacted(address)
                 }
                 call.respond("Connected")
@@ -458,17 +459,21 @@ fun Route.APIV1() {
     get("/api/v1/walletdb/getwallet/{address}") {
         val publicKey = call.parameters["address"]?.let { PublicKey(Address.decode(it)) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
 
-        WalletDB.mutex.withLock {
-            call.respond(Json.stringify(WalletV1.serializer(), WalletV1(WalletDB.getWalletImpl(publicKey))))
+        WalletDB.reentrant.readLock().withLock {
+            runBlocking {
+                call.respond(Json.stringify(WalletV1.serializer(), WalletV1(WalletDB.getWalletImpl(publicKey))))
+            }
         }
     }
 
     get("/api/v1/walletdb/getoutleases/{address}") {
         val publicKey = call.parameters["address"]?.let { PublicKey(Address.decode(it)) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid address")
 
-        WalletDB.mutex.withLock {
+        WalletDB.reentrant.readLock().withLock {
             val wallet = WalletDB.getWalletImpl(publicKey)
-            call.respond(Json.stringify(ListSerializer(AccountState.Lease.serializer()), wallet.outLeases))
+            runBlocking {
+                call.respond(Json.stringify(ListSerializer(AccountState.Lease.serializer()), wallet.outLeases))
+            }
         }
     }
 
@@ -482,7 +487,7 @@ fun Route.APIV1() {
         val hash = call.parameters["hash"]?.let { Hash(Hash.fromString(it)) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
         val raw = call.parameters["raw"]?.toBoolean() ?: false
 
-        val result = WalletDB.mutex.withLock {
+        val result = WalletDB.reentrant.readLock().withLock {
             WalletDB.getTransactionImpl(hash)
         }
         if (result != null) {

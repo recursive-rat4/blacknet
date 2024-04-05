@@ -25,7 +25,7 @@ private val logger = KotlinLogging.logger {}
 class Transactions(
     private val list: ArrayList<@Serializable(ByteArraySerializer::class) ByteArray>
 ) : Packet {
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         if (list.size > MAX) {
             connection.dos("Invalid Transactions size ${list.size}")
             return

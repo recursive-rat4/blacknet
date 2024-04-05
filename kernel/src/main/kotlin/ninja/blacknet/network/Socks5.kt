@@ -9,15 +9,10 @@
 
 package ninja.blacknet.network
 
-import io.ktor.network.sockets.ASocket
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.cancel
-import io.ktor.utils.io.close
-import io.ktor.utils.io.writeFully
+import java.net.Socket
+import ninja.blacknet.io.data
+import ninja.blacknet.io.writeByte
+import ninja.blacknet.io.writeUShort
 
 /**
  * 代理客戶端
@@ -26,74 +21,70 @@ import io.ktor.utils.io.writeFully
  * RFC 1929 Username/Password Authentication for SOCKS V5
  */
 object Socks5 {
-    suspend fun connect(proxy: Address, destination: Address): Triple<ASocket, ByteReadChannel, ByteWriteChannel> {
-        val socket = aSocket(Network.selector).tcp().connect(proxy.getSocketAddress())
-        val readChannel = socket.openReadChannel()
-        val writeChannel = socket.openWriteChannel()
-        val connection = Triple(socket, readChannel, writeChannel)
+    fun connect(proxy: Address, destination: Address): Socket {
+        val socket = Socket(proxy.getInetAddress(), proxy.port.toJava())
+        val inputStream = socket.inputStream.data()
+        val outputStream = socket.outputStream.data()
 
-        writeChannel.writeByte(VERSION)
-        writeChannel.writeByte(1) // number of authentication methods supported
-        writeChannel.writeByte(NO_AUTHENTICATION)
-        writeChannel.flush()
+        outputStream.writeByte(VERSION)
+        outputStream.writeByte(1) // number of authentication methods supported
+        outputStream.writeByte(NO_AUTHENTICATION)
+        outputStream.flush()
 
-        if (readChannel.readByte() != VERSION) {
-            connection.exception("Unknown socks version")
+        if (inputStream.readByte() != VERSION) {
+            socket.exception("Unknown socks version")
         }
-        if (readChannel.readByte() != NO_AUTHENTICATION) {
-            connection.exception("Socks auth not accepted")
+        if (inputStream.readByte() != NO_AUTHENTICATION) {
+            socket.exception("Socks auth not accepted")
         }
 
-        writeChannel.writeByte(VERSION)
-        writeChannel.writeByte(TCP_CONNECTION)
-        writeChannel.writeByte(0) // reserved
+        outputStream.writeByte(VERSION)
+        outputStream.writeByte(TCP_CONNECTION)
+        outputStream.writeByte(0) // reserved
         when (destination.network) {
             Network.IPv4 -> {
-                writeChannel.writeByte(IPv4_ADDRESS)
-                writeChannel.writeFully(destination.bytes)
+                outputStream.writeByte(IPv4_ADDRESS)
+                outputStream.write(destination.bytes)
             }
             Network.IPv6 -> {
-                writeChannel.writeByte(IPv6_ADDRESS)
-                writeChannel.writeFully(destination.bytes)
+                outputStream.writeByte(IPv6_ADDRESS)
+                outputStream.write(destination.bytes)
             }
             Network.TORv2, Network.TORv3 -> {
                 val bytes = destination.getAddressString().toByteArray(Charsets.US_ASCII)
                 if (bytes.size < 1 || bytes.size > 255)
-                    connection.exception("Invalid length of domain name")
-                writeChannel.writeByte(DOMAIN_NAME)
-                writeChannel.writeByte(bytes.size.toByte())
-                writeChannel.writeFully(bytes)
+                    socket.exception("Invalid length of domain name")
+                outputStream.writeByte(DOMAIN_NAME)
+                outputStream.writeByte(bytes.size.toByte())
+                outputStream.write(bytes)
             }
-            else -> connection.exception("Not implemented for ${destination.network}")
+            else -> socket.exception("Not implemented for ${destination.network}")
         }
-        writeChannel.writeUShort(destination.port.value)
-        writeChannel.flush()
+        outputStream.writeUShort(destination.port.value)
+        outputStream.flush()
 
-        if (readChannel.readByte() != VERSION) {
-            connection.exception("Unknown socks version")
+        if (inputStream.readByte() != VERSION) {
+            socket.exception("Unknown socks version")
         }
-        if (readChannel.readByte() != REQUEST_GRANTED) {
-            connection.exception("Connection failed")
+        if (inputStream.readByte() != REQUEST_GRANTED) {
+            socket.exception("Connection failed")
         }
-        if (readChannel.readByte() != 0.toByte()) {
-            connection.exception("Invalid socks response")
+        if (inputStream.readByte() != 0.toByte()) {
+            socket.exception("Invalid socks response")
         }
-        val addrType = readChannel.readByte()
+        val addrType = inputStream.readByte()
         when (addrType) {
-            IPv4_ADDRESS -> readChannel.skip(4 + 2)
-            IPv6_ADDRESS -> readChannel.skip(16 + 2)
-            DOMAIN_NAME -> readChannel.skip(readChannel.readByte().toInt() + 2)
-            else -> connection.exception("Unknown socks response")
+            IPv4_ADDRESS -> inputStream.skipNBytes(4 + 2)
+            IPv6_ADDRESS -> inputStream.skipNBytes(16 + 2)
+            DOMAIN_NAME -> inputStream.skipNBytes(inputStream.readByte().toLong() + 2)
+            else -> socket.exception("Unknown socks response")
         }
 
-        return connection
+        return socket
     }
 
-    private fun Triple<ASocket, ByteReadChannel, ByteWriteChannel>.exception(message: String) {
-        val socket = first; val readChannel = second; val writeChannel = third;
-        socket.close()
-        readChannel.cancel()
-        writeChannel.close()
+    private fun Socket.exception(message: String) {
+        close()
         throw RuntimeException(message)
     }
 
@@ -106,12 +97,4 @@ object Socks5 {
     private const val IPv4_ADDRESS = 1.toByte()
     private const val DOMAIN_NAME = 3.toByte()
     private const val IPv6_ADDRESS = 4.toByte()
-
-    private suspend fun ByteReadChannel.skip(num: Int) {
-        readFully(ByteArray(num), 0, num)
-    }
-
-    private suspend fun ByteWriteChannel.writeUShort(value: UShort) {
-        writeShort(value.toShort())
-    }
 }

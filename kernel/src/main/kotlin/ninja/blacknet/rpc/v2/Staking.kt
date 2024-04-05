@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  * Copyright (c) 2019 Blacknet Team
  *
  * Licensed under the Jelurida Public License version 1.1
@@ -24,7 +24,7 @@ class StartStaking(
     @Serializable(with = PrivateKeySerializer::class)
     val privateKey: ByteArray
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondText(Staker.startStaking(privateKey).toString())
     }
 }
@@ -35,7 +35,7 @@ class StopStaking(
     @Serializable(with = PrivateKeySerializer::class)
     val privateKey: ByteArray
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondText(Staker.stopStaking(privateKey).toString())
     }
 }
@@ -46,7 +46,7 @@ class IsStaking(
     @Serializable(with = PrivateKeySerializer::class)
     val privateKey: ByteArray
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondText(Staker.isStaking(privateKey).toString())
     }
 }
@@ -56,7 +56,7 @@ class Staking(
     @SerialName("address")
     val publicKey: PublicKey? = null
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondJson(StakingInfo.serializer(), Staker.info(publicKey))
     }
 }

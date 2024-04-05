@@ -23,6 +23,11 @@
     <dependencies>
         <dependency>
             <groupId>ninja.blacknet</groupId>
+            <artifactId>blacknet-io</artifactId>
+            <version>0.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>ninja.blacknet</groupId>
             <artifactId>blacknet-runtime</artifactId>
             <version>0.3-SNAPSHOT</version>
         </dependency>
@@ -37,10 +42,6 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-serialization-json-jvm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-io-jvm</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>

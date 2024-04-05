@@ -19,7 +19,7 @@ import ninja.blacknet.network.Node
 class GetTransactions(
     private val list: List<Hash>
 ) : Packet {
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         if (list.size > Transactions.MAX) {
             connection.dos("Invalid GetTransactions size ${list.size}")
             return
@@ -27,7 +27,7 @@ class GetTransactions(
 
         var size = PACKET_HEADER_SIZE_BYTES + 2
         val maxSize = Node.getMinPacketSize() // we don't know actual value, so assume minimum
-        val response = ArrayList<ByteArray>(list.size)
+        var response = ArrayList<ByteArray>(list.size)
 
         for (hash in list) {
             val value = Kernel.txPool().get(hash) ?: continue
@@ -38,13 +38,13 @@ class GetTransactions(
                 size = newSize
                 if (size > maxSize) {
                     connection.sendPacket(PacketType.Transactions, Transactions(response))
-                    response.clear()
+                    response = ArrayList(list.size)
                     size = PACKET_HEADER_SIZE_BYTES + 2
                 }
             } else {
                 if (newSize > maxSize) {
                     connection.sendPacket(PacketType.Transactions, Transactions(response))
-                    response.clear()
+                    response = ArrayList(list.size)
                     size = PACKET_HEADER_SIZE_BYTES + 2
                 }
                 response.add(value)

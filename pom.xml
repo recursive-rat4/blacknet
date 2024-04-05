@@ -21,6 +21,7 @@
     <modules>
         <module>benchmarks</module>
         <module>cli</module>
+        <module>io</module>
         <module>daemon</module>
         <module>desktop</module>
         <module>json-rpc</module>
@@ -119,11 +120,6 @@
                 <groupId>org.jetbrains.kotlinx</groupId>
                 <artifactId>kotlinx-serialization-json-jvm</artifactId>
                 <version>${serialization.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.ktor</groupId>
-                <artifactId>ktor-io-jvm</artifactId>
-                <version>${ktor.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.ktor</groupId>

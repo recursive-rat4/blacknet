@@ -47,7 +47,7 @@ class BlockInfoV1(
     )
 
     companion object {
-        suspend fun get(hash: Hash, txdetail: Boolean): BlockInfoV1? {
+        fun get(hash: Hash, txdetail: Boolean): BlockInfoV1? {
             val block = Kernel.blockDB().blocks.getWithSize(hash.bytes) ?: return null
             return BlockInfoV1(block.first, block.second, txdetail)
         }

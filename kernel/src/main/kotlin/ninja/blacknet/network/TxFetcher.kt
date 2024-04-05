@@ -9,11 +9,10 @@
 
 package ninja.blacknet.network
 
+import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.channels.Channel
+import java.util.concurrent.LinkedBlockingQueue
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.network.packet.GetTransactions
 import ninja.blacknet.network.packet.PacketType
@@ -25,27 +24,27 @@ import ninja.blacknet.util.rotate
  * 交易獲取器
  */
 object TxFetcher {
-    private val inventoryChannel: Channel<Pair<Connection, List<Hash>>> = Channel(Channel.UNLIMITED)
+    private val inventoryQueue = LinkedBlockingQueue<Pair<Connection, List<Hash>>>()
     //TODO review capacity
     private val requested = ConcurrentHashMap<Hash, Long>()
 
     init {
-        Runtime.rotate(::implementation)
-        Runtime.rotate(::watchdog)
+        rotate("TxFetcher::implementation", ::implementation)
+        rotate("TxFetcher::watchdog", ::watchdog)
     }
 
     fun offer(connection: Connection, list: List<Hash>) {
-        inventoryChannel.trySend(Pair(connection, list))
+        inventoryQueue.offer(Pair(connection, list))
     }
 
     fun fetched(hash: Hash): Boolean {
         return requested.remove(hash) != null
     }
 
-    private suspend fun implementation() {
-        val (connection, inventory) = inventoryChannel.receive()
+    private fun implementation() {
+        val (connection, inventory) = inventoryQueue.take()
 
-        val request = ArrayList<Hash>(inventory.size)
+        var request = ArrayList<Hash>(inventory.size)
         val currTime = currentTimeMillis()
 
         for (hash in inventory) {
@@ -60,7 +59,7 @@ object TxFetcher {
 
             if (request.size == Transactions.MAX) {
                 sendRequest(connection, request)
-                request.clear()
+                request = ArrayList(inventory.size)
             }
         }
 
@@ -76,8 +75,8 @@ object TxFetcher {
     /**
      * 看門狗計時器
      */
-    private suspend fun watchdog() {
-        delay(Node.NETWORK_TIMEOUT)
+    private fun watchdog() {
+        sleep(Node.NETWORK_TIMEOUT)
 
         val currTime = currentTimeMillis()
         requested.forEach { (hash, time) ->

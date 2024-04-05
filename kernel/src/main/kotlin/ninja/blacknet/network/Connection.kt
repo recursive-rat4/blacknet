@@ -10,57 +10,52 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.network.sockets.ASocket
-import io.ktor.utils.io.*
-import io.ktor.utils.io.core.ByteReadPacket
-import io.ktor.utils.io.core.readInt
-import io.ktor.utils.io.errors.IOException
+import java.io.IOException
+import java.lang.Thread.sleep
 import java.math.BigInteger
-import kotlin.coroutines.CoroutineContext
+import java.net.Socket
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.KSerializer
 import ninja.blacknet.Kernel
-import ninja.blacknet.Runtime
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
+import ninja.blacknet.io.buffered
+import ninja.blacknet.io.counted
+import ninja.blacknet.io.data
+import ninja.blacknet.io.delimited
 import ninja.blacknet.network.packet.*
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.time.currentTimeMillis
 import ninja.blacknet.time.currentTimeSeconds
-import ninja.blacknet.util.SynchronizedArrayList
+import ninja.blacknet.util.startInterruptible
 
 private val logger = KotlinLogging.logger {}
 
 class Connection(
-        private val socket: ASocket,
-        private val readChannel: ByteReadChannel,
-        private val writeChannel: ByteWriteChannel,
-        val remoteAddress: Address,
-        val localAddress: Address,
-        var state: State
-) : CoroutineScope {
-    //TODO Socket now implements CoroutineScope, should it be used instead?
-    val job = Job()
-    override val coroutineContext: CoroutineContext = Runtime.coroutineContext + job
+    private val socket: Socket,
+    val remoteAddress: Address,
+    val localAddress: Address,
+    var state: State,
+) {
+    private val countedInput = socket.inputStream.counted()
+    private val countedOutput = socket.outputStream.counted()
+    private val delimitedInput = countedInput.buffered().delimited()
+    private val inputStream = delimitedInput.data()
+    private val outputStream = countedOutput.buffered().data()
+    private val vThreads = ArrayList<Thread>()
 
     private val closed = atomic(false)
     private val dosScore = atomic(0)
     private val sendQueueSize = atomic(0L)
-    private val sendChannel: Channel<ByteReadPacket> = Channel(Channel.UNLIMITED)
-    private val inventoryToSend = SynchronizedArrayList<Hash>(Inventory.SEND_MAX)
+    private val sendQueue = LinkedBlockingQueue<QueuedPacket>()
+    private val inventoryMonitor = Any()
+    private var inventoryToSend = ArrayList<Hash>(Inventory.SEND_MAX)
     val connectedAt = currentTimeSeconds()
 
     @Volatile
     var lastPacketTime: Long = 0
-    @Volatile
-    var totalBytesRead: Long = 0
-    @Volatile
-    var totalBytesWritten: Long = 0
     @Volatile
     var lastChain: ChainAnnounce = ChainAnnounce.GENESIS
     @Volatile
@@ -80,27 +75,44 @@ class Connection(
     @Volatile
     var requestedDifficulty: BigInteger = BigInteger.ZERO
 
+    fun getTotalBytesRead(): Long = countedInput.bytesRead
+    fun getTotalBytesWritten(): Long = countedOutput.bytesWritten
+
     inline val requestedBlocks: Boolean
         get() = requestedDifficulty != BigInteger.ZERO
 
-    var peerId: Long = 0
+    val peerId: Long = Node.newPeerId()
     var version: Int = 0
     var agent: String = ""
     var feeFilter: Long = 0
 
     fun launch() {
-        launch { pinger() }
-        launch { peerAnnouncer() }
-        launch { inventoryBroadcaster() }
-        launch { receiver() }
-        launch { sender() }
+        vThreads.add(startInterruptible("Connection::pinger ${debugName()}", ::pinger))
+        vThreads.add(startInterruptible("Connection::whisperer ${debugName()}", ::whisperer))
+        vThreads.add(startInterruptible("Connection::pusher ${debugName()}", ::pusher))
+        vThreads.add(startInterruptible("Connection::receiver ${debugName()}", ::receiver))
+        vThreads.add(startInterruptible("Connection::sender ${debugName()}", ::sender))
     }
 
-    private suspend fun receiver() {
+    fun join() {
+        vThreads.forEach(Thread::join)
+    }
+
+    private fun receiver() {
         try {
             while (true) {
-                val bytes = recvPacket()
-                val type = bytes.readInt()
+                val size = inputStream.readInt()
+                if (size > Node.getMaxPacketSize()) {
+                    if (state.isConnected()) {
+                        logger.info { "Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}" }
+                    }
+                    close()
+                }
+                delimitedInput.begin(size)
+                val type = inputStream.readInt()
+                val serializer = PacketType.getSerializer<Packet>(type)
+                val packet = binaryFormat.decodeFromStream(serializer, inputStream, false)
+                delimitedInput.end()
 
                 if (state.isConnected()) {
                     if (type == PacketType.Version.ordinal || type == PacketType.Hello.ordinal)
@@ -110,100 +122,75 @@ class Connection(
                         break
                 }
 
-                val packet = try {
-                    val serializer = PacketType.getSerializer<Packet>(type)
-                    binaryFormat.decodeFromPacket(serializer, bytes)
-                } catch (e: Throwable) {
-                    dos("Deserialization failed: ${e.message}")
-                    continue
-                }
+                lastPacketTime = currentTimeMillis()
                 logger.debug { "Received ${packet::class.simpleName} from ${debugName()}" }
-                packet.process(this)
+                packet.handle(this)
             }
-        } catch (e: ClosedReceiveChannelException) {
-        } catch (e: CancellationException) {
         } catch (e: IOException) {
-        } catch (e: Throwable) {
-            logger.error(e) { "Exception in receiver ${debugName()}" }
         } finally {
             close()
         }
     }
 
-    private suspend fun recvPacket(): ByteReadPacket {
-        val size = readChannel.readInt()
-        if (size > Node.getMaxPacketSize()) {
-            if (state.isConnected()) {
-                logger.info { "Too long packet $size max ${Node.getMaxPacketSize()} Disconnecting ${debugName()}" }
-            }
-            close()
-        }
-        val result = readChannel.readPacket(size)
-        lastPacketTime = currentTimeMillis()
-        totalBytesRead += size + 4
-        return result
-    }
-
-    private suspend fun sender() {
+    private fun sender() {
         try {
-            for (packet in sendChannel) {
-                val size = packet.remaining
-                writeChannel.writePacket(packet)
-                writeChannel.flush()
-                sendQueueSize -= size
-                totalBytesWritten += size
+            while (true) {
+                val e = sendQueue.take()
+                logger.debug { "Sending ${e.type} to ${debugName()}" }
+                outputStream.writeInt(e.size + PACKET_HEADER_SIZE_BYTES)
+                outputStream.writeInt(e.type.ordinal)
+                binaryFormat.encodeToStream(e.serializer, e.packet, outputStream)
+                outputStream.flush()
+                sendQueueSize -= e.size.toLong()
             }
-        } catch (e: ClosedWriteChannelException) {
-        } catch (e: CancellationException) {
-        } catch (e: Throwable) {
-            logger.error(e) { "Exception in sender ${debugName()}" }
+        } catch (e: IOException) {
         } finally {
             close()
         }
     }
 
-    suspend fun inventory(inv: Hash) = inventoryToSend.mutex.withLock {
-        inventoryToSend.list.add(inv)
-        if (inventoryToSend.list.size == Inventory.SEND_MAX) {
+    fun inventory(inv: Hash) = synchronized(inventoryMonitor) {
+        inventoryToSend.add(inv)
+        if (inventoryToSend.size == Inventory.SEND_MAX) {
             sendInventoryImpl(currentTimeMillis())
         }
     }
 
-    suspend fun inventory(inv: ArrayList<Hash>): Unit = inventoryToSend.mutex.withLock {
-        val newSize = inventoryToSend.list.size + inv.size
+    fun inventory(inv: ArrayList<Hash>): Unit = synchronized(inventoryMonitor) {
+        val newSize = inventoryToSend.size + inv.size
         if (newSize < Inventory.SEND_MAX) {
-            inventoryToSend.list.addAll(inv)
+            inventoryToSend.addAll(inv)
         } else if (newSize > Inventory.SEND_MAX) {
-            val n = Inventory.SEND_MAX - inventoryToSend.list.size
+            val n = Inventory.SEND_MAX - inventoryToSend.size
             for (i in 0 until n)
-                inventoryToSend.list.add(inv[i])
+                inventoryToSend.add(inv[i])
             sendInventoryImpl(currentTimeMillis())
             for (i in n until inv.size)
-                inventoryToSend.list.add(inv[i])
+                inventoryToSend.add(inv[i])
         } else {
-            inventoryToSend.list.addAll(inv)
+            inventoryToSend.addAll(inv)
             sendInventoryImpl(currentTimeMillis())
         }
     }
 
-    private suspend fun sendInventory(time: Long) = inventoryToSend.mutex.withLock {
-        if (inventoryToSend.list.size != 0) {
+    private fun sendInventory(time: Long) = synchronized(inventoryMonitor) {
+        if (inventoryToSend.size != 0) {
             sendInventoryImpl(time)
         }
     }
 
     private fun sendInventoryImpl(time: Long) {
-        sendPacket(PacketType.Inventory, Inventory(inventoryToSend.list))
-        inventoryToSend.list.clear()
+        sendPacket(PacketType.Inventory, Inventory(inventoryToSend))
+        inventoryToSend = ArrayList(Inventory.SEND_MAX)
         lastInvSentTime = time
     }
 
     fun sendPacket(type: PacketType, packet: Packet) {
-        logger.debug { "Sending $type to ${debugName()}" }
-        val bytes = buildPacket(type, packet)
+        val serializer = PacketType.getSerializer<Packet>(type.ordinal)
+        val size = binaryFormat.computeSize(serializer, packet)
         //TODO review threshold
-        if (sendQueueSize.addAndGet(bytes.remaining) <= Node.getMaxPacketSize() * 10) {
-            sendChannel.trySend(bytes)
+        if (sendQueueSize.addAndGet(size.toLong()) <= Node.getMaxPacketSize() * 10) {
+            sendQueue.offer(QueuedPacket(serializer, packet, type, size))
         } else {
             logger.info { "Disconnecting ${debugName()} on send queue overflow" }
             close()
@@ -224,8 +211,8 @@ class Connection(
     fun close() {
         if (closed.compareAndSet(false, true)) {
             socket.close()
-            readChannel.cancel()
-            writeChannel.close()
+            inputStream.close()
+            outputStream.close()
 
             synchronized(Node.connections) {
                 Node.connections.remove(this@Connection)
@@ -241,9 +228,7 @@ class Connection(
                 }
             }
 
-            cancel()
-            sendChannel.cancel()
-            job.cancel()
+            vThreads.forEach(Thread::interrupt)
         }
     }
 
@@ -288,11 +273,11 @@ class Connection(
         }
     }
 
-    private suspend fun pinger() {
-        delay(Node.NETWORK_TIMEOUT)
+    private fun pinger() {
+        sleep(Node.NETWORK_TIMEOUT)
 
         if (state.isConnected()) {
-            delay(Random.nextLong(Node.NETWORK_TIMEOUT))
+            sleep(Random.nextLong(Node.NETWORK_TIMEOUT))
             pingPong()
         } else {
             close()
@@ -304,7 +289,7 @@ class Connection(
             val nextPing = lastPacketTime + Node.NETWORK_TIMEOUT
             val d = nextPing - currTime
             if (d > 0) {
-                delay(d)
+                sleep(d)
                 continue
             } else {
                 pingPong()
@@ -312,9 +297,9 @@ class Connection(
         }
     }
 
-    private suspend fun pingPong() {
+    private fun pingPong() {
         sendPing()
-        delay(Node.NETWORK_TIMEOUT)
+        sleep(Node.NETWORK_TIMEOUT)
         if (pingRequest == null)
             return
         logger.info { "Disconnecting ${debugName()} on ping timeout" }
@@ -330,8 +315,8 @@ class Connection(
             sendPacket(PacketType.PingV1, PingV1(challenge))
     }
 
-    private suspend fun peerAnnouncer() {
-        delay(Random.nextLong(10 * 60 * 1000L, 20 * 60 * 1000L))
+    private fun whisperer() {
+        sleep(Random.nextLong(10 * 60 * 1000L, 20 * 60 * 1000L))
 
         while (true) {
             val n = Random.nextInt(Peers.MAX + 1)
@@ -339,20 +324,27 @@ class Connection(
             if (randomPeers.size > 0)
                 sendPacket(PacketType.Peers, Peers(randomPeers))
 
-            delay(Random.nextLong(4 * 60 * 60 * 1000L, 20 * 60 * 60 * 1000L))
+            sleep(Random.nextLong(4 * 60 * 60 * 1000L, 20 * 60 * 60 * 1000L))
         }
     }
 
-    private suspend fun inventoryBroadcaster() {
+    private fun pusher() {
         while (!state.isConnected()) {
-            delay(Inventory.SEND_TIMEOUT)
+            sleep(Inventory.SEND_TIMEOUT)
         }
         while (true) {
             val currTime = currentTimeMillis()
             if (currTime >= lastInvSentTime + Inventory.SEND_TIMEOUT) {
                 sendInventory(currTime)
             }
-            delay(Inventory.SEND_TIMEOUT)
+            sleep(Inventory.SEND_TIMEOUT)
         }
     }
+
+    private class QueuedPacket(
+        val serializer: KSerializer<Packet>,
+        val packet: Packet,
+        val type: PacketType,
+        val size: Int,
+    )
 }

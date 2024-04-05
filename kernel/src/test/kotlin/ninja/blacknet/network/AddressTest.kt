@@ -41,6 +41,7 @@ class AddressTest {
             assertEquals(string, address.getAddressString())
             assertEquals(local, address.isLocal())
             assertEquals(private, address.isPrivate())
+            address.getInetAddress()
             address.getSocketAddress()
         }
     }
@@ -54,6 +55,7 @@ class AddressTest {
         )) {
             val address = Network.parse(string, Port(0)) ?: throw AssertionError("Network.parse failed")
             assertTrue(address.getAddressString().compareTo(string, ignoreCase = true) == 0)
+            address.getInetAddress()
             address.getSocketAddress()
         }
     }
@@ -70,6 +72,7 @@ class AddressTest {
             assertTrue(address.getAddressString().compareTo(string, ignoreCase = true) == 0)
             assertFalse(address.isLocal())
             assertFalse(address.isPrivate())
+            assertFails { address.getInetAddress() }
             assertFails { address.getSocketAddress() }
         }
     }
@@ -83,6 +86,7 @@ class AddressTest {
             assertTrue(address.getAddressString().compareTo(string, ignoreCase = true) == 0)
             assertFalse(address.isLocal())
             assertFalse(address.isPrivate())
+            assertFails { address.getInetAddress() }
             assertFails { address.getSocketAddress() }
         }
     }

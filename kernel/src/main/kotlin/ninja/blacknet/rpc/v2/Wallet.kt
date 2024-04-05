@@ -12,8 +12,8 @@ package ninja.blacknet.rpc.v2
 
 import io.ktor.server.routing.Route
 import java.util.HashMap.newHashMap
+import kotlin.concurrent.withLock
 import kotlin.math.min
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -38,7 +38,7 @@ import ninja.blacknet.transaction.TxType
 class GenerateAccount(
     val wordlist: String = "english"
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val wordlist = Wordlists.get(wordlist)
 
         return respondJson(NewMnemonicInfo.serializer(), NewMnemonicInfo.new(wordlist))
@@ -49,7 +49,7 @@ class GenerateAccount(
 class Address(
     val address: String
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val info = AddressInfo.fromString(address)
 
         return respondJson(AddressInfo.serializer(), info)
@@ -60,7 +60,7 @@ class Address(
 class Mnemonic(
     val mnemonic: String
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val info = MnemonicInfo.fromString(mnemonic)
 
         return respondJson(MnemonicInfo.serializer(), info)
@@ -75,7 +75,7 @@ class DecryptPaymentId(
     val from: PublicKey,
     val message: String
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val decrypted = PaymentId.decrypt(privateKey, from, message)
 
         return if (decrypted != null)
@@ -92,7 +92,7 @@ class SignMessage(
     val privateKey: ByteArray,
     val message: String
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val signature = Message.sign(privateKey, message)
 
         return respondText(SignatureSerializer.encode(signature))
@@ -106,7 +106,7 @@ class VerifyMessage(
     val signature: ByteArray,
     val message: String
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val result = Message.verify(from, signature, message)
 
         return respondText(result.toString())
@@ -118,7 +118,7 @@ class Transactions(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
+    override fun handle(): TextContent = WalletDB.reentrant.readLock().withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
         val transactions = newHashMap<String, TransactionDataInfo>(wallet.transactions.size)
         wallet.transactions.forEach { (hash, txData) ->
@@ -134,7 +134,7 @@ class OutLeases(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
+    override fun handle(): TextContent = WalletDB.reentrant.readLock().withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
 
         return respondJson(ListSerializer(AccountState.Lease.serializer()), wallet.outLeases)
@@ -146,7 +146,7 @@ class Sequence(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         return respondText(WalletDB.getSequence(publicKey).toString())
     }
 }
@@ -158,7 +158,7 @@ class TransactionRequest(
     val hash: Hash,
     val raw: Boolean = false
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
+    override fun handle(): TextContent = WalletDB.reentrant.readLock().withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
         val txData = wallet.transactions.get(hash)
         return if (txData != null) {
@@ -181,7 +181,7 @@ class Confirmations(
     val publicKey: PublicKey,
     val hash: Hash
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val result = WalletDB.getConfirmations(publicKey, hash)
         return if (result != null)
             respondText(result.toString())
@@ -195,7 +195,7 @@ class Anchor(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
-    override suspend fun handle(): TextContent {
+    override fun handle(): TextContent {
         val result = WalletDB.anchor()
         return respondText(result.toString())
     }
@@ -206,7 +206,7 @@ class TxCount(
     @SerialName("address")
     val publicKey: PublicKey
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
+    override fun handle(): TextContent = WalletDB.reentrant.readLock().withLock {
         val wallet = WalletDB.getWalletImpl(publicKey)
         val count = wallet.transactions.size
         return respondText(count.toString())
@@ -221,9 +221,9 @@ class ListTransactions(
     val max: Int = 100,
     val type: UByte? = null
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
-        val wallet = WalletDB.getWalletImpl(publicKey)
-        Kernel.blockDB().mutex.withLock<TextContent> {
+    override fun handle(): TextContent = Kernel.blockDB().reentrant.readLock().withLock {
+        WalletDB.reentrant.readLock().withLock<TextContent> {
+            val wallet = WalletDB.getWalletImpl(publicKey)
             val size = wallet.transactions.size
             if (offset < 0 || offset > size)
                 return respondError("Invalid offset")
@@ -285,9 +285,9 @@ class ListSinceBlock(
     val publicKey: PublicKey,
     val hash: Hash = Genesis.BLOCK_HASH
 ) : Request {
-    override suspend fun handle(): TextContent = WalletDB.mutex.withLock {
-        val wallet = WalletDB.getWalletImpl(publicKey)
-        Kernel.blockDB().mutex.withLock<TextContent> {
+    override fun handle(): TextContent = Kernel.blockDB().reentrant.readLock().withLock {
+        WalletDB.reentrant.readLock().withLock<TextContent> {
+            val wallet = WalletDB.getWalletImpl(publicKey)
             val height = LedgerDB.chainIndexes.get(hash.bytes)?.height ?: return respondError("Block not found")
             val state = LedgerDB.state()
             if (height >= state.height - PoS.ROLLBACK_LIMIT)

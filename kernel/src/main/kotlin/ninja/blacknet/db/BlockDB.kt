@@ -12,8 +12,8 @@ package ninja.blacknet.db
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Files
 import java.util.Collections
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
@@ -29,7 +29,7 @@ private const val MIN_DISK_SPACE = PoS.MAX_BLOCK_SIZE * 2L
 class BlockDB(
     private val store: KeyValueStore,
 ) {
-    internal val mutex = Mutex()
+    internal val reentrant = ReentrantReadWriteLock()
     private val BLOCK_KEY = DBKey(0xC0.toByte(), Hash.SIZE_BYTES)
     @Volatile
     internal var cachedBlock: Pair<Hash, ByteArray>? = null
@@ -62,7 +62,7 @@ class BlockDB(
         return LedgerDB.chainIndexes.contains(hash.bytes)
     }
 
-    private suspend fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
+    private fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
         val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
         val state = LedgerDB.state()
         if (block.version > Block.VERSION) {
@@ -103,7 +103,7 @@ class BlockDB(
         return status
     }
 
-    internal suspend fun processImpl(hash: Hash, bytes: ByteArray): Status {
+    internal fun processImpl(hash: Hash, bytes: ByteArray): Status {
         if (rejects.contains(hash))
             return Invalid("Already rejected block")
         if (containsImpl(hash))
@@ -121,7 +121,7 @@ class BlockDB(
             listOf("Disk space is low!")
     }
 
-    suspend fun check(): Check = mutex.withLock {
+    fun check(): Check = reentrant.readLock().withLock {
         val result = Check(false, LedgerDB.state().height, 0, 0)
         val iterator = LevelDB.iterator()
         if (LevelDB.seek(iterator, LedgerDB.CHAIN_KEY)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2023 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -33,7 +33,7 @@ class Hello(
     var agent: String? by Delegate(AGENT, String.serializer())
     var feeFilter: Long? by Delegate(FEE_FILTER, Long.serializer())
 
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         magic?.let {
             if (it != mode.networkMagic) {
                 // connection from another network
@@ -41,7 +41,6 @@ class Hello(
                 return
             }
         }
-        connection.peerId = Node.newPeerId()
         // if not provided, the oldest supported version may be tried
         connection.version = version ?: Node.MIN_PROTOCOL_VERSION
         agent?.let {

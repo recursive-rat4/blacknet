@@ -12,10 +12,9 @@ package ninja.blacknet.db
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigInteger
 import java.util.ArrayDeque //TODO check kotlin.collections.ArrayDeque
+import kotlin.concurrent.withLock
 import kotlin.math.max
 import kotlin.math.min
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.SetSerializer
@@ -155,36 +154,34 @@ object LedgerDB {
             } else if (version in 1 until VERSION) {
                 logger.info { "Reindexing ledger..." }
 
-                runBlocking {
-                    val blockHashes = ArrayList<Hash>(500000)
-                    var index = chainIndexes.getOrThrow(Genesis.BLOCK_HASH.bytes)
-                    while (index.next != Hash.ZERO) {
-                        blockHashes.add(index.next)
-                        index = chainIndexes.getOrThrow(index.next.bytes)
-                    }
-                    logger.info { "Found ${blockHashes.size} blocks" }
-
-                    clear()
-
-                    for (i in 0 until blockHashes.size) {
-                        val hash = blockHashes[i]
-                        val (block, size) = Kernel.blockDB().blocks.getWithSizeOrThrow(hash.bytes)
-                        val batch = LevelDB.createWriteBatch()
-                        val txDb = Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
-                        val (status, _) = processBlockImpl(txDb, hash, block, size)
-                        if (status != Accepted) {
-                            batch.close()
-                            logger.error { "process block failed" }
-                            break
-                        }
-                        pruneImpl(batch)
-                        txDb.commitImpl()
-                        if (i != 0 && i % 50000 == 0)
-                            logger.info { "Processed $i blocks" }
-                    }
-
-                    logger.info { "Finished reindex at height ${state.height}" }
+                val blockHashes = ArrayList<Hash>(10000000)
+                var index = chainIndexes.getOrThrow(Genesis.BLOCK_HASH.bytes)
+                while (index.next != Hash.ZERO) {
+                    blockHashes.add(index.next)
+                    index = chainIndexes.getOrThrow(index.next.bytes)
                 }
+                logger.info { "Found ${blockHashes.size} blocks" }
+
+                clear()
+
+                for (i in 0 until blockHashes.size) {
+                    val hash = blockHashes[i]
+                    val (block, size) = Kernel.blockDB().blocks.getWithSizeOrThrow(hash.bytes)
+                    val batch = LevelDB.createWriteBatch()
+                    val txDb = Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
+                    val (status, _) = processBlockImpl(txDb, hash, block, size)
+                    if (status != Accepted) {
+                        batch.close()
+                        logger.error { "process block failed" }
+                        break
+                    }
+                    pruneImpl(batch)
+                    txDb.commitImpl()
+                    if (i != 0 && i % 50000 == 0)
+                        logger.info { "Processed $i blocks" }
+                }
+
+                logger.info { "Finished reindex at height ${state.height}" }
             } else {
                 throw Error("Unknown database version $version")
             }
@@ -253,7 +250,7 @@ object LedgerDB {
         return hash == Genesis.BLOCK_HASH || chainIndexes.contains(hash.bytes)
     }
 
-    suspend fun getNextBlockHashes(start: Hash, max: Int): List<Hash>? = Kernel.blockDB().mutex.withLock {
+    fun getNextBlockHashes(start: Hash, max: Int): List<Hash>? = Kernel.blockDB().reentrant.readLock().withLock {
         var chainIndex = chainIndexes.get(start.bytes) ?: return@withLock null
         val result = ArrayList<Hash>(max)
         while (true) {
@@ -288,7 +285,7 @@ object LedgerDB {
         }
     }
 
-    internal suspend fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): Pair<Status, List<Hash>> {
+    internal fun processBlockImpl(txDb: Update, hash: Hash, block: Block, size: Int): Pair<Status, List<Hash>> {
         val state = state
         if (block.previous != state.blockHash) {
             logger.error { "$hash not on current chain ${state.blockHash} previous ${block.previous}" }
@@ -349,7 +346,7 @@ object LedgerDB {
         return Pair(Accepted, txHashes)
     }
 
-    private suspend fun undoBlockImpl(): Hash {
+    private fun undoBlockImpl(): Hash {
         val state = state
         val batch = LevelDB.createWriteBatch()
         val hash = state.blockHash
@@ -413,7 +410,7 @@ object LedgerDB {
         return hash
     }
 
-    internal suspend fun rollbackToImpl(hash: Hash): List<Hash> {
+    internal fun rollbackToImpl(hash: Hash): List<Hash> {
         val result = ArrayList<Hash>()
         do {
             result.add(undoBlockImpl())
@@ -421,7 +418,7 @@ object LedgerDB {
         return result
     }
 
-    internal suspend fun undoRollbackImpl(rollbackTo: Hash, list: List<Hash>): List<Hash> {
+    internal fun undoRollbackImpl(rollbackTo: Hash, list: List<Hash>): List<Hash> {
         val toRemove = if (state.blockHash != rollbackTo) rollbackToImpl(rollbackTo) else emptyList()
 
         list.asReversed().forEach { hash ->
@@ -495,7 +492,7 @@ object LedgerDB {
             listOf("This version is obsolete, upgrade required!")
     }
 
-    suspend fun check(): Check = Kernel.blockDB().mutex.withLock {
+    fun check(): Check = Kernel.blockDB().reentrant.readLock().withLock {
         val result = Check(false, 0, 0, 0, state.supply, 0L)
         iterateImpl(
             { _, account ->

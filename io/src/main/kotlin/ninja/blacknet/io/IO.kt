@@ -7,11 +7,10 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-package ninja.blacknet.util
+package ninja.blacknet.io
 
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
-import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -25,10 +24,8 @@ import java.nio.file.StandardCopyOption.ATOMIC_MOVE
 import java.nio.file.StandardOpenOption.WRITE
 
 fun InputStream.buffered(bufferSize: Int = DEFAULT_BUFFER_SIZE): BufferedInputStream = BufferedInputStream(this, bufferSize)
-fun InputStream.data(): DataInputStream = DataInputStream(this)
 
 fun OutputStream.buffered(bufferSize: Int = DEFAULT_BUFFER_SIZE): BufferedOutputStream = BufferedOutputStream(this, bufferSize)
-fun OutputStream.data(): DataOutputStream = DataOutputStream(this)
 
 fun ReadableByteChannel.inputStream(): InputStream = Channels.newInputStream(this)
 fun WritableByteChannel.outputStream(): OutputStream = Channels.newOutputStream(this)

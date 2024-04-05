@@ -35,6 +35,11 @@
         </dependency>
         <dependency>
             <groupId>ninja.blacknet</groupId>
+            <artifactId>blacknet-io</artifactId>
+            <version>0.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>ninja.blacknet</groupId>
             <artifactId>blacknet-runtime</artifactId>
             <version>0.3-SNAPSHOT</version>
         </dependency>

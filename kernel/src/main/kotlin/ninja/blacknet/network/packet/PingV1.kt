@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -20,7 +20,7 @@ import ninja.blacknet.util.fromBytes
 class PingV1(
     val challenge: Int
 ) : Packet {
-    override suspend fun process(connection: Connection) {
+    override fun handle(connection: Connection) {
         connection.sendPacket(PacketType.Pong, Pong(if (connection.version == 13) solveV1(challenge) else challenge))
         val lastPacketTime = connection.lastPacketTime
         val lastPingTime = connection.lastPingTime

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -10,30 +10,27 @@
 package ninja.blacknet
 
 import com.rfksystems.blake2b.Blake2b
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import java.nio.file.Files
+import java.nio.file.Path
 import ninja.blacknet.codec.base.Base16
 import ninja.blacknet.codec.base.encode
-import java.io.File
 
 object B2Sum {
     @JvmStatic
     fun main(args: Array<String>) {
-        val jobs = ArrayList<Job>(args.size)
+        val threads = ArrayList<Thread>(args.size)
 
         val DIGEST_SIZE_BITS = 256
         val DIGEST_SIZE_BYTES = DIGEST_SIZE_BITS / Byte.SIZE_BITS
 
         args.forEach { arg ->
-            val job = GlobalScope.launch {
-                val file = File(arg)
+            val vThread = Thread.ofVirtual().start {
+                val path = Path.of(arg)
                 val stream = try {
-                    file.inputStream()
+                    Files.newInputStream(path)
                 } catch (e: Throwable) {
-                    println("B2Sum: ${e.message}")
-                    return@launch
+                    println("B2Sum: ${e.message} ${e::class.simpleName}")
+                    return@start
                 }
                 val b2 = Blake2b(DIGEST_SIZE_BITS)
                 val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
@@ -53,13 +50,9 @@ object B2Sum {
                 println("${Base16.encode(bytes)} $arg")
             }
 
-            jobs.add(job)
+            threads.add(vThread)
         }
 
-        runBlocking {
-            jobs.forEach { job ->
-                job.join()
-            }
-        }
+        threads.forEach(Thread::join)
     }
 }
