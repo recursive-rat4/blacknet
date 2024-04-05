@@ -20,10 +20,6 @@
 
     <artifactId>blacknet-desktop</artifactId>
 
-    <properties>
-        <project.build.outputTimestamp>2024-01-01T00:00:00Z</project.build.outputTimestamp>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>ninja.blacknet</groupId>
