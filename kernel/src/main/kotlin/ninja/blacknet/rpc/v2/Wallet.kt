@@ -23,8 +23,8 @@ import ninja.blacknet.Kernel
 import ninja.blacknet.core.AccountState
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.*
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.db.Genesis
-import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.rpc.requests.*
 import ninja.blacknet.rpc.v1.AddressInfo
@@ -231,7 +231,7 @@ class ListTransactions(
                 return respondError("Invalid max")
             val toIndex = min(offset + max, size)
             val transactions = ArrayList<WalletTransactionInfo>(min(max, size))
-            val state = LedgerDB.state()
+            val state = CoinDB.state()
             val list = wallet.transactions.entries.sortedByDescending { (_, txData) -> txData.time }
             if (type == null) {
                 for (index in offset until toIndex) {
@@ -288,8 +288,8 @@ class ListSinceBlock(
     override fun handle(): TextContent = Kernel.blockDB().reentrant.readLock().withLock {
         WalletDB.reentrant.readLock().withLock<TextContent> {
             val wallet = WalletDB.getWalletImpl(publicKey)
-            val height = LedgerDB.chainIndexes.get(hash.bytes)?.height ?: return respondError("Block not found")
-            val state = LedgerDB.state()
+            val height = CoinDB.blockIndexes.get(hash.bytes)?.height ?: return respondError("Block not found")
+            val state = CoinDB.state()
             if (height >= state.height - PoS.ROLLBACK_LIMIT)
                 return respondError("Block not checkpointed")
             val transactions = ArrayList<WalletTransactionInfo>()

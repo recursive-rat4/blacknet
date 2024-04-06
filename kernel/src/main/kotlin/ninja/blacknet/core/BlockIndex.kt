@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -15,7 +15,7 @@ import ninja.blacknet.serialization.VarIntSerializer
 import ninja.blacknet.serialization.VarLongSerializer
 
 @Serializable
-class ChainIndex(
+class BlockIndex(
         val previous: Hash,
         var next: Hash,
         @Serializable(with = VarIntSerializer::class)

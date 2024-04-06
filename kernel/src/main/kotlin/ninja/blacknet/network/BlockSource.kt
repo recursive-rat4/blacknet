@@ -13,14 +13,14 @@ import java.math.BigInteger
 import java.util.concurrent.CompletableFuture
 import ninja.blacknet.core.Status
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.network.packet.BlockAnnounce
 import ninja.blacknet.network.packet.Blocks
-import ninja.blacknet.network.packet.ChainAnnounce
 
 sealed class BlockSource : Comparable<BlockSource>
 
 class Remote(
     val connection: Connection,
-    val announce: ChainAnnounce,
+    val announce: BlockAnnounce,
 ) : BlockSource() {
     override fun compareTo(other: BlockSource): Int = when (other) {
         is Remote -> 0

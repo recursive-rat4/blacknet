@@ -12,7 +12,7 @@ package ninja.blacknet.network.packet
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.network.ChainFetcher
+import ninja.blacknet.network.BlockFetcher
 import ninja.blacknet.network.Connection
 import ninja.blacknet.serialization.ByteArraySerializer
 
@@ -35,7 +35,7 @@ class Blocks(
             return
         }
 
-        ChainFetcher.blocks(connection, this)
+        BlockFetcher.blocks(connection, this)
     }
 
     companion object {

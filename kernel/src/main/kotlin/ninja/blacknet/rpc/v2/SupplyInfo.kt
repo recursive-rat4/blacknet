@@ -13,7 +13,7 @@ import kotlin.concurrent.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.serialization.LongSerializer
 
 @Serializable
@@ -26,7 +26,7 @@ class SupplyInfo(
 ) {
     companion object {
         fun get(): SupplyInfo = Kernel.blockDB().reentrant.readLock().withLock {
-            val state = LedgerDB.state()
+            val state = CoinDB.state()
             return SupplyInfo(
                     state.height,
                     state.blockHash,

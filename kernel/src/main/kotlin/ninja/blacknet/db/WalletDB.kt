@@ -170,7 +170,7 @@ object WalletDB {
             wallets.forEach { (_, wallet) ->
                 val data = wallet.transactions.get(hash)
                 if (data != null) {
-                    return data.confirmationsImpl(LedgerDB.state())
+                    return data.confirmationsImpl(CoinDB.state())
                 } else {
                     Unit
                 }
@@ -185,7 +185,7 @@ object WalletDB {
             if (wallet != null) {
                 val txData = wallet.transactions.get(hash)
                 if (txData != null) {
-                    txData.confirmationsImpl(LedgerDB.state())
+                    txData.confirmationsImpl(CoinDB.state())
                 } else {
                     txData
                 }
@@ -490,9 +490,9 @@ object WalletDB {
             @Serializable(with = VarIntSerializer::class)
             var height: Int
     ) {
-        internal fun confirmationsImpl(ledger: LedgerDB.State): Int {
+        internal fun confirmationsImpl(state: CoinDB.State): Int {
             return if (height != 0)
-                ledger.height - height + 1
+                state.height - height + 1
             else
                 0
         }
@@ -529,15 +529,15 @@ object WalletDB {
             Kernel.blockDB().reentrant.readLock().withLock {
                 reentrant.writeLock().withLock {
                     var hash = Genesis.BLOCK_HASH
-                    var index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
-                    val height = LedgerDB.state().height
+                    var index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
+                    val height = CoinDB.state().height
                     val n = height - index.height + 1
                     if (n > 0) {
                         logger.info { "Rescanning $n blocks..." }
                         do {
                             rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
                             hash = index.next
-                            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+                            index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
                         } while (index.height != height)
                         logger.info { "Finished rescan" }
                     }
@@ -553,7 +553,7 @@ object WalletDB {
 
     fun anchor(): Hash {
         return if (!PoS.guessInitialSynchronization())
-            LedgerDB.state().rollingCheckpoint
+            CoinDB.state().rollingCheckpoint
         else
             Genesis.BLOCK_HASH
     }

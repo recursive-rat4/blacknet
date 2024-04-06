@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -13,10 +13,10 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 
 interface TxData {
-    fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status
+    fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status
 
-    fun processLedger(tx: Transaction, hash: Hash, ledger: Ledger): Status {
-        val account = ledger.getAccount(tx.from)
+    fun processCoin(tx: Transaction, hash: Hash, coinTx: CoinTx): Status {
+        val account = coinTx.getAccount(tx.from)
         if (account == null) {
             return Invalid("Sender account not found")
         }
@@ -33,7 +33,7 @@ interface TxData {
             return notAccepted("Transaction fee", status)
         }
         account.seq += 1
-        ledger.setAccount(tx.from, account)
-        return processLedgerImpl(tx, hash, 0, ledger)
+        coinTx.setAccount(tx.from, account)
+        return processCoinImpl(tx, hash, 0, coinTx)
     }
 }

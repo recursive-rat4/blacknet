@@ -10,14 +10,14 @@
 package ninja.blacknet.network.packet
 
 import kotlinx.serialization.Serializable
-import ninja.blacknet.network.ChainFetcher
+import ninja.blacknet.network.BlockFetcher
 import ninja.blacknet.network.Connection
 
 @Serializable
-class ChainFork(
+class ConsensusFault(
 ) : Packet {
     override fun handle(connection: Connection) {
 
-        ChainFetcher.chainFork(connection, this)
+        BlockFetcher.consensusFault(connection, this)
     }
 }

@@ -24,10 +24,10 @@ import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
+import ninja.blacknet.network.packet.BlockAnnounce
 import ninja.blacknet.network.packet.Blocks
-import ninja.blacknet.network.packet.ChainAnnounce
-import ninja.blacknet.network.packet.ChainFork
+import ninja.blacknet.network.packet.ConsensusFault
 import ninja.blacknet.network.packet.GetBlocks
 import ninja.blacknet.network.packet.PacketType
 import ninja.blacknet.util.rotate
@@ -35,9 +35,9 @@ import ninja.blacknet.util.rotate
 private val logger = KotlinLogging.logger {}
 
 /**
- * 區塊鏈獲取器
+ * 區塊有向無環圖獲取器
  */
-object ChainFetcher {
+object BlockFetcher {
     //TODO review capacity
     private val blocksQueue = PriorityBlockingQueue<BlockSource>()
     @Volatile
@@ -52,11 +52,11 @@ object ChainFetcher {
 
     @Volatile
     private var shutdown = false
-    private val vThread = rotate("ChainFetcher::implementation", ::implementation)
+    private val vThread = rotate("BlockFetcher::implementation", ::implementation)
 
     init {
         ShutdownHooks.add {
-            logger.info { "Interrupting ChainFetcher" }
+            logger.info { "Interrupting BlockFetcher" }
             shutdown = true
             vThread.interrupt()
         }
@@ -65,7 +65,7 @@ object ChainFetcher {
     fun join() {
         vThread.join()
         if (!shutdown)
-            throw Error("ChainFetcher exited")
+            throw Error("BlockFetcher exited")
     }
 
     fun isSynchronizing(): Boolean {
@@ -79,8 +79,8 @@ object ChainFetcher {
         request?.completeExceptionally(CancellationException("Connection closed"))
     }
 
-    fun offer(connection: Connection, announce: ChainAnnounce) {
-        if (announce.cumulativeDifficulty <= LedgerDB.state().cumulativeDifficulty)
+    fun offer(connection: Connection, announce: BlockAnnounce) {
+        if (announce.cumulativeDifficulty <= CoinDB.state().cumulativeDifficulty)
             return
 
         blocksQueue.offer(Remote(connection, announce))
@@ -101,7 +101,7 @@ object ChainFetcher {
                 Kernel.blockDB().processImpl(source.hash, source.bytes)
             }
             val n = when (status) {
-                Accepted -> Node.announceChain(source.hash, LedgerDB.state().cumulativeDifficulty)
+                Accepted -> Node.announceBlock(source.hash, CoinDB.state().cumulativeDifficulty)
                 else -> 0
             }
             source.future.complete(Pair(status, n))
@@ -109,7 +109,7 @@ object ChainFetcher {
         }
 
         if (source is Deferred) {
-            if (source.requestedDifficulty <= LedgerDB.state().cumulativeDifficulty)
+            if (source.requestedDifficulty <= CoinDB.state().cumulativeDifficulty)
                 return
 
             processDeferred(source.connection, source.answer)
@@ -124,17 +124,17 @@ object ChainFetcher {
             return
         }
 
-        var state = LedgerDB.state()
+        var state = CoinDB.state()
         if (announce.cumulativeDifficulty <= state.cumulativeDifficulty)
             return
 
         Kernel.blockDB().reentrant.writeLock().withLock {
-            if (Kernel.blockDB().isRejectedImpl(announce.chain)) {
-                connection.dos("Rejected chain")
+            if (Kernel.blockDB().isRejectedImpl(announce.hash)) {
+                connection.dos("Rejected block")
                 return
             }
 
-            logger.info { "Fetching ${announce.chain}" }
+            logger.info { "Fetching ${announce.hash}" }
             syncConnection = connection
             originalChain = state.blockHash
 
@@ -148,7 +148,7 @@ object ChainFetcher {
                         if (!accepted)
                             break
 
-                        state = LedgerDB.state()
+                        state = CoinDB.state()
 
                         if (announce.cumulativeDifficulty > state.cumulativeDifficulty) {
                             requestBlocks(connection, state.blockHash, state.rollingCheckpoint, announce.cumulativeDifficulty)
@@ -163,14 +163,14 @@ object ChainFetcher {
                         var prev = state.rollingCheckpoint
                         for (hash in answer.hashes) {
                             if (Kernel.blockDB().isRejectedImpl(hash)) {
-                                connection.dos("Rejected chain")
+                                connection.dos("Rejected block")
                                 break@requestLoop
                             }
-                            val chainIndex = LedgerDB.chainIndexes.get(hash.bytes)
-                            if (chainIndex == null)
+                            val blockIndex = CoinDB.blockIndexes.get(hash.bytes)
+                            if (blockIndex == null)
                                 break
-                            if (chainIndex.height < state.height - PoS.ROLLBACK_LIMIT) {
-                                connection.dos("Rollback to ${chainIndex.height}")
+                            if (blockIndex.height < state.height - PoS.ROLLBACK_LIMIT) {
+                                connection.dos("Rollback to ${blockIndex.height}")
                                 break@requestLoop
                             }
                             prev = hash
@@ -198,7 +198,7 @@ object ChainFetcher {
             undoRollback?.let {
                 if (undoDifficulty >= state.cumulativeDifficulty) {
                     logger.info { "Reconnecting ${it.size} blocks" }
-                    val toRemove = LedgerDB.undoRollbackImpl(rollbackTo!!, it)
+                    val toRemove = CoinDB.undoRollbackImpl(rollbackTo!!, it)
                     Kernel.blockDB().deleteImpl(toRemove)
                 } else {
                     logger.debug { "Deleting ${it.size} blocks from db" }
@@ -208,9 +208,9 @@ object ChainFetcher {
             }
         }
 
-        state = LedgerDB.state()
+        state = CoinDB.state()
         if (state.blockHash != originalChain!!) {
-            Node.announceChain(state.blockHash, state.cumulativeDifficulty, connection)
+            Node.announceBlock(state.blockHash, state.cumulativeDifficulty, connection)
             connection.lastBlockTime = connection.lastPacketTime
         }
 
@@ -231,9 +231,9 @@ object ChainFetcher {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun chainFork(connection: Connection, chainFork: ChainFork) {
+    fun consensusFault(connection: Connection, consensusFault: ConsensusFault) {
         if (!connection.requestedBlocks) {
-            connection.dos("Unexpected packet ChainFork")
+            connection.dos("Unexpected packet ConsensusFault")
             return
         }
 
@@ -242,7 +242,7 @@ object ChainFetcher {
         if (syncConnection != connection)
             return
 
-        request?.completeExceptionally(CancellationException("Fork longer than the rolling checkpoint"))
+        request?.completeExceptionally(CancellationException("Dipath longer than the rolling checkpoint"))
     }
 
     fun blocks(connection: Connection, blocks: Blocks) {
@@ -265,8 +265,8 @@ object ChainFetcher {
 
     private fun processBlocks(connection: Connection, answer: Blocks): Boolean {
         if (rollbackTo != null && undoRollback == null) {
-            undoDifficulty = LedgerDB.state().cumulativeDifficulty
-            undoRollback = LedgerDB.rollbackToImpl(rollbackTo!!)
+            undoDifficulty = CoinDB.state().cumulativeDifficulty
+            undoRollback = CoinDB.rollbackToImpl(rollbackTo!!)
             logger.info { "Disconnected ${undoRollback!!.size} blocks" }
         }
         for (i in answer.blocks) {
@@ -282,7 +282,7 @@ object ChainFetcher {
             }
         }
         if (undoRollback == null)
-            LedgerDB.pruneImpl()
+            CoinDB.pruneImpl()
         connectedBlocks += answer.blocks.size
         if (answer.blocks.size >= 10)
             logger.info { "Connected ${answer.blocks.size} blocks" }
@@ -319,9 +319,9 @@ object ChainFetcher {
                             connection.dos(status.toString())
                             break
                         }
-                        is NotOnThisChain -> {
-                            // Ain't useful without fork resolution
-                            logger.debug { "NotOnThisChain $hash" }
+                        is NotReachableVertex -> {
+                            // 何罵
+                            logger.debug { "NotReachableVertex $hash" }
                             break
                         }
                     }

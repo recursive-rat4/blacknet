@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -25,16 +25,16 @@ class CancelLease(
         val to: PublicKey,
         val height: Int
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
-        val toAccount = ledger.getAccount(to)
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
+        val toAccount = coinTx.getAccount(to)
         if (toAccount == null) {
             return Invalid("Account not found")
         }
         if (toAccount.leases.remove(AccountState.Lease(tx.from, height, amount))) {
-            ledger.setAccount(to, toAccount)
-            val account = ledger.getAccount(tx.from)!!
-            account.debit(ledger.height(), amount)
-            ledger.setAccount(tx.from, account)
+            coinTx.setAccount(to, toAccount)
+            val account = coinTx.getAccount(tx.from)!!
+            account.debit(coinTx.height(), amount)
+            coinTx.setAccount(tx.from, account)
             return Accepted
         }
         return Invalid("Lease not found")

@@ -13,7 +13,7 @@ import kotlin.concurrent.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.PublicKey
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
 
 @Serializable
 class AccountInfo(
@@ -24,8 +24,8 @@ class AccountInfo(
 ) {
     companion object {
         fun get(publicKey: PublicKey, confirmations: Int): AccountInfo? = Kernel.blockDB().reentrant.readLock().withLock {
-            val account = LedgerDB.get(publicKey) ?: return null
-            val state = LedgerDB.state()
+            val account = CoinDB.get(publicKey) ?: return null
+            val state = CoinDB.state()
             return AccountInfo(
                     account.seq,
                     account.balance().toString(),

@@ -15,7 +15,7 @@ import kotlin.concurrent.withLock
 import kotlin.math.abs
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
-import ninja.blacknet.core.ChainIndex
+import ninja.blacknet.core.BlockIndex
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
@@ -69,7 +69,7 @@ class BlockHash(
     val height: Int
 ) : Request {
     override fun handle(): TextContent = Kernel.blockDB().reentrant.readLock().withLock {
-        val state = LedgerDB.state()
+        val state = CoinDB.state()
         if (height < 0 || height > state.height)
             return respondError("Block not found")
         else if (height == 0)
@@ -82,23 +82,23 @@ class BlockHash(
             return respondText(lastIndex.first.toString())
 
         var hash: Hash
-        var index: ChainIndex
+        var index: BlockIndex
         if (height < state.height / 2) {
             hash = Genesis.BLOCK_HASH
-            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+            index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
         } else {
             hash = state.blockHash
-            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+            index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
         }
         if (lastIndex != null && abs(height - index.height) > abs(height - lastIndex.second.height))
             index = lastIndex.second
         while (index.height > height) {
             hash = index.previous
-            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+            index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
         }
         while (index.height < height) {
             hash = index.next
-            index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+            index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
         }
         if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
             RPCServer.lastIndex = Pair(hash, index)
@@ -108,13 +108,13 @@ class BlockHash(
 }
 
 @Serializable
-class BlockIndex(
+class BlockIndexRequest(
     val hash: Hash
 ) : Request {
     override fun handle(): TextContent {
-        val index = LedgerDB.chainIndexes.get(hash.bytes)
+        val index = CoinDB.blockIndexes.get(hash.bytes)
         return if (index != null)
-            respondJson(ChainIndex.serializer(), index)
+            respondJson(BlockIndex.serializer(), index)
         else
             respondError("Block not found")
     }
@@ -155,7 +155,7 @@ class Account(
 @Serializable
 class LedgerDBCheck : Request {
     override fun handle(): TextContent {
-        return respondJson(LedgerDB.Check.serializer(), LedgerDB.check())
+        return respondJson(CoinDB.Check.serializer(), CoinDB.check())
     }
 }
 
@@ -164,7 +164,7 @@ class ScheduleSnapshot(
     val height: Int
 ) : Request {
     override fun handle(): TextContent = Kernel.blockDB().reentrant.writeLock().withLock {
-        val scheduled = LedgerDB.scheduleSnapshotImpl(height)
+        val scheduled = CoinDB.scheduleSnapshotImpl(height)
         return respondText(scheduled.toString())
     }
 }
@@ -174,9 +174,9 @@ class Snapshot(
     val height: Int
 ) : Request {
     override fun handle(): TextContent {
-        val snapshot = LedgerDB.getSnapshot(height)
+        val snapshot = CoinDB.getSnapshot(height)
         return if (snapshot != null)
-            respondJson(LedgerDB.Snapshot.serializer(), snapshot)
+            respondJson(CoinDB.Snapshot.serializer(), snapshot)
         else
             respondError("Snapshot not found")
     }
@@ -197,10 +197,10 @@ fun Route.dataBase() {
     get(BlockHash.serializer(), "/api/v2/blockhash")
     get(BlockHash.serializer(), "/api/v2/blockhash/{height}")
 
-    get(BlockIndex.serializer(), "/api/v2/blockindex")
-    get(BlockIndex.serializer(), "/api/v2/blockindex/{hash}/")
+    get(BlockIndexRequest.serializer(), "/api/v2/blockindex")
+    get(BlockIndexRequest.serializer(), "/api/v2/blockindex/{hash}/")
 
-    get(BlockIndex.serializer(), "/api/v2/blockindex/{hash}")
+    get(BlockIndexRequest.serializer(), "/api/v2/blockindex/{hash}")
 
     get(MakeBootstrap.serializer(), "/api/v2/makebootstrap")
 

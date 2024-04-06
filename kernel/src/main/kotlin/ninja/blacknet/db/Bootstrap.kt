@@ -55,7 +55,7 @@ object Bootstrap {
                         if (status == Accepted) {
                             if (++n % 50000 == 0)
                                 logger.info { "Processed $n blocks" }
-                            LedgerDB.pruneImpl()
+                            CoinDB.pruneImpl()
                         } else if (status !is AlreadyHave) {
                             logger.info { "$status block $hash" }
                             break
@@ -75,20 +75,20 @@ object Bootstrap {
     }
 
     /**
-     * @return a [Path] or `null` if ledger is not synchronized
+     * @return a [Path] of written data or `null` if not synchronized
      */
     fun export(): Path? {
-        val checkpoint = LedgerDB.state().rollingCheckpoint
+        val checkpoint = CoinDB.state().rollingCheckpoint
         if (checkpoint == Genesis.BLOCK_HASH)
             return null
 
         val file = dataDir.resolve("bootstrap.dat.new")
         FileChannel.open(file, CREATE, TRUNCATE_EXISTING, WRITE).outputStream().buffered().data().use { stream ->
             var hash = Genesis.BLOCK_HASH
-            var index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+            var index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
             do {
                 hash = index.next
-                index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+                index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
                 val bytes = Kernel.blockDB().blocks.getBytesOrThrow(hash.bytes)
                 stream.writeInt(bytes.size)
                 stream.write(bytes, 0, bytes.size)

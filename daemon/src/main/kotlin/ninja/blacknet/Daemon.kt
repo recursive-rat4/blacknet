@@ -11,7 +11,7 @@ package ninja.blacknet
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import ninja.blacknet.logging.error
-import ninja.blacknet.network.ChainFetcher
+import ninja.blacknet.network.BlockFetcher
 
 private val logger = KotlinLogging.logger {}
 
@@ -23,7 +23,7 @@ object Daemon {
         }
 
         try {
-            ChainFetcher.join()
+            BlockFetcher.join()
         } catch (e: Throwable) {
             logger.error(e)
         } finally {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -70,8 +70,8 @@ class SpendMultisig(
         return Hash(buildHash { encodeByteArray(bytes) })
     }
 
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
-        val multisig = ledger.getMultisig(id)
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
+        val multisig = coinTx.getMultisig(id)
         if (multisig == null) {
             return Invalid("Multisig not found")
         }
@@ -94,20 +94,20 @@ class SpendMultisig(
             return status
         }
 
-        val height = ledger.height()
+        val height = coinTx.height()
 
         for (index in 0 until multisig.deposits.size) {
             if (amounts[index] < 0) {
                 return Invalid("Negative amount index $index")
             } else if (amounts[index] != 0L) {
                 val publicKey = multisig.deposits[index].from
-                val toAccount = ledger.getOrCreate(publicKey)
+                val toAccount = coinTx.getOrCreate(publicKey)
                 toAccount.debit(height, amounts[index])
-                ledger.setAccount(publicKey, toAccount)
+                coinTx.setAccount(publicKey, toAccount)
             }
         }
 
-        ledger.removeMultisig(id)
+        coinTx.removeMultisig(id)
         return Accepted
     }
 

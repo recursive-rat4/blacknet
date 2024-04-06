@@ -13,11 +13,11 @@ import java.math.BigInteger
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.Hash
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.db.Genesis
-import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
-import ninja.blacknet.network.packet.ChainAnnounce
+import ninja.blacknet.network.packet.BlockAnnounce
 import ninja.blacknet.serialization.LongSerializer
 
 @Serializable
@@ -46,15 +46,15 @@ class PeerInfo(
             val cumulativeDifficulty: BigInteger,
             val fork: Boolean
     ) {
-        constructor(chain: ChainAnnounce, fork: Boolean) : this(
-                chain.chain,
+        constructor(chain: BlockAnnounce, fork: Boolean) : this(
+                chain.hash,
                 chain.cumulativeDifficulty,
                 fork
         )
 
         companion object {
-            fun get(chain: ChainAnnounce, forkCache: HashMap<Hash, Boolean>): ChainInfo {
-                val fork = forkCache.computeIfAbsent(chain.chain) { !LedgerDB.chainIndexes.contains(it.bytes) }
+            fun get(chain: BlockAnnounce, forkCache: HashMap<Hash, Boolean>): ChainInfo {
+                val fork = forkCache.computeIfAbsent(chain.hash) { !CoinDB.blockIndexes.contains(it.bytes) }
                 return ChainInfo(chain, fork)
             }
         }
@@ -74,7 +74,7 @@ class PeerInfo(
                     connection.dosScore(),
                     connection.feeFilter,
                     connection.connectedAt,
-                    ChainInfo.get(connection.lastChain, forkCache),
+                    ChainInfo.get(connection.lastBlock, forkCache),
                     connection.requestedBlocks,
                     connection.getTotalBytesRead(),
                     connection.getTotalBytesWritten(),

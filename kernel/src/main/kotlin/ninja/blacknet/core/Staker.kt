@@ -17,7 +17,7 @@ import ninja.blacknet.Kernel
 import kotlin.concurrent.withLock
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.crypto.*
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.mode
 import ninja.blacknet.network.Node
 import ninja.blacknet.rpc.v2.StakingInfo
@@ -49,9 +49,9 @@ object Staker {
                 0.0
         }
 
-        fun updateImpl(state: LedgerDB.State) {
+        fun updateImpl(state: CoinDB.State) {
             lastBlock = state.blockHash
-            stake = LedgerDB.get(publicKey)?.stakingBalance(state.height) ?: 0
+            stake = CoinDB.get(publicKey)?.stakingBalance(state.height) ?: 0
         }
     }
 
@@ -110,7 +110,7 @@ object Staker {
 
         state = "Staking"
 
-        var state = LedgerDB.state()
+        var state = CoinDB.state()
         val currTime = currentTimeSeconds()
         val timeSlot = currTime - currTime % PoS.TIME_SLOT
         if (timeSlot <= state.blockTime)
@@ -119,7 +119,7 @@ object Staker {
         stakers.forEach { staker ->
             if (staker.lastBlock != state.blockHash) {
                 Kernel.blockDB().reentrant.readLock().withLock {
-                    state = LedgerDB.state()
+                    state = CoinDB.state()
                     staker.updateImpl(state)
                 }
             }
@@ -133,7 +133,7 @@ object Staker {
                 if (Node.broadcastBlock(hash, bytes)) {
                     return
                 } else @Suppress("NAME_SHADOWING") {
-                    state = LedgerDB.state()
+                    state = CoinDB.state()
                     if (timeSlot <= state.blockTime)
                         return
                     if (block.transactions.isEmpty())
@@ -168,7 +168,7 @@ object Staker {
 
         val staker = StakerState(publicKey, privateKey)
         Kernel.blockDB().reentrant.readLock().withLock {
-            val state = LedgerDB.state()
+            val state = CoinDB.state()
             staker.updateImpl(state)
         }
         if (staker.stake == 0L) {
@@ -222,7 +222,7 @@ object Staker {
                 weight = it.stake
             }
         }
-        val state = LedgerDB.state()
+        val state = CoinDB.state()
         val networkWeight = (PoS.MAX_DIFFICULTY / state.difficulty).toLong() / PoS.TARGET_BLOCK_TIME * PoS.TIME_SLOT
         val expectedTime = if (weight != 0L) PoS.TARGET_BLOCK_TIME * networkWeight / weight else 0L
         return StakingInfo(nAccounts, hashRate, weight.toString(), networkWeight.toString(), expectedTime)

@@ -26,7 +26,7 @@ class Version(
     private val nonce: Long,
     private val agent: String,
     private val feeFilter: Long,
-    private val chainAnnounce: ChainAnnounce
+    private val chainAnnounce: BlockAnnounce,
 ) : Packet {
     override fun handle(connection: Connection) {
         if (magic != mode.networkMagic) {
@@ -39,7 +39,7 @@ class Version(
         connection.version = version
         connection.agent = UserAgent.sanitize(agent)
         connection.feeFilter = feeFilter
-        connection.lastChain = chainAnnounce
+        connection.lastBlock = chainAnnounce
 
         if (version < Node.MIN_PROTOCOL_VERSION) {
             logger.info { "Obsolete protocol version $version ${connection.debugName()} ${connection.agent}" }
@@ -74,6 +74,6 @@ class Version(
         }
 
         // got anything?
-        ChainFetcher.offer(connection, chainAnnounce)
+        BlockFetcher.offer(connection, chainAnnounce)
     }
 }

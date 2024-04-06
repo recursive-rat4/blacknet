@@ -22,8 +22,8 @@ enum class PacketType {
     Data,
     GetBlocks,
     Blocks,
-    ChainAnnounce,
-    ChainFork,
+    BlockAnnounce,
+    ConsensusFault,
     Inventory,
     GetTransactions,
     Transactions,
@@ -46,8 +46,8 @@ enum class PacketType {
                 Data.ordinal -> throw RuntimeException("Obsolete packet type Data")
                 GetBlocks.ordinal -> ninja.blacknet.network.packet.GetBlocks.serializer()
                 Blocks.ordinal -> ninja.blacknet.network.packet.Blocks.serializer()
-                ChainAnnounce.ordinal -> ninja.blacknet.network.packet.ChainAnnounce.serializer()
-                ChainFork.ordinal -> ninja.blacknet.network.packet.ChainFork.serializer()
+                BlockAnnounce.ordinal -> ninja.blacknet.network.packet.BlockAnnounce.serializer()
+                ConsensusFault.ordinal -> ninja.blacknet.network.packet.ConsensusFault.serializer()
                 Inventory.ordinal -> ninja.blacknet.network.packet.Inventory.serializer()
                 GetTransactions.ordinal -> ninja.blacknet.network.packet.GetTransactions.serializer()
                 Transactions.ordinal -> ninja.blacknet.network.packet.Transactions.serializer()

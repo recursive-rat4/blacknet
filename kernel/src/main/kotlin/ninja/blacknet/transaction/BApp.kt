@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -12,7 +12,7 @@ package ninja.blacknet.transaction
 import kotlinx.serialization.Serializable
 import ninja.blacknet.contract.BAppId
 import ninja.blacknet.core.Accepted
-import ninja.blacknet.core.Ledger
+import ninja.blacknet.core.CoinTx
 import ninja.blacknet.core.Status
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
@@ -27,7 +27,7 @@ class BApp(
     @Serializable(with = ByteArraySerializer::class)
     val data: ByteArray
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
         return Accepted
     }
 

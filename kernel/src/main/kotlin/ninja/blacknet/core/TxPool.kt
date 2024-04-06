@@ -21,7 +21,7 @@ import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.BlockDB
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.signal.Signal4
@@ -31,7 +31,7 @@ private val logger = KotlinLogging.logger {}
 class TxPool(
     private val config: Config,
     private val blockDB: BlockDB,
-) : MemPool(), Ledger {
+) : MemPool(), CoinTx {
     internal val reentrant = ReentrantReadWriteLock()
     private val rejects = HashSet<Hash>()
     private val undoAccounts = HashMap<PublicKey, AccountState?>()
@@ -62,7 +62,7 @@ class TxPool(
 
     fun fill(block: Block) = reentrant.readLock().withLock {
         val poolSize = sizeImpl()
-        var freeBlockSize = min(LedgerDB.state().maxBlockSize, config.softblocksizelimit.bytes) - 176
+        var freeBlockSize = min(CoinDB.state().maxBlockSize, config.softblocksizelimit.bytes) - 176
         var i = 0
         while (freeBlockSize > 0 && i < poolSize) {
             val hash = transactions.get(i++)
@@ -91,7 +91,7 @@ class TxPool(
         val account = accounts.get(key)
         if (account != null)
             return account.seq
-        return LedgerDB.get(key)?.seq ?: 0
+        return CoinDB.get(key)?.seq ?: 0
     }
 
     fun get(hash: Hash): ByteArray? = reentrant.readLock().withLock {
@@ -101,7 +101,7 @@ class TxPool(
     override fun addSupply(amount: Long) {}
 
     override fun checkAnchor(hash: Hash): Boolean {
-        return LedgerDB.checkAnchor(hash)
+        return CoinDB.checkAnchor(hash)
     }
 
     fun checkFee(size: Int, amount: Long): Boolean {
@@ -109,15 +109,15 @@ class TxPool(
     }
 
     override fun blockHash(): Hash {
-        return LedgerDB.state().blockHash
+        return CoinDB.state().blockHash
     }
 
     override fun blockTime(): Long {
-        return LedgerDB.state().blockTime
+        return CoinDB.state().blockTime
     }
 
     override fun height(): Int {
-        return LedgerDB.state().height
+        return CoinDB.state().height
     }
 
     override fun getAccount(key: PublicKey): AccountState? {
@@ -127,7 +127,7 @@ class TxPool(
                 undoAccounts.put(key, account.copy())
             return account
         } else {
-            val dbAccount = LedgerDB.get(key)
+            val dbAccount = CoinDB.get(key)
             undoAccounts.put(key, null)
             return dbAccount
         }
@@ -155,7 +155,7 @@ class TxPool(
     override fun getHTLC(id: HashTimeLockContractId): HTLC? {
         return if (!htlcs.containsKey(id)) {
             undoHtlcs.put(id, Pair(false, null))
-            LedgerDB.getHTLC(id)
+            CoinDB.getHTLC(id)
         } else {
             val htlc = htlcs.get(id)
             undoHtlcs.putIfAbsent(id, Pair(true, htlc))
@@ -175,7 +175,7 @@ class TxPool(
     override fun getMultisig(id: MultiSignatureLockContractId): Multisig? {
         return if (!multisigs.containsKey(id)) {
             undoMultisigs.put(id, Pair(false, null))
-            LedgerDB.getMultisig(id)
+            CoinDB.getMultisig(id)
         } else {
             val multisig = multisigs.get(id)
             undoMultisigs.putIfAbsent(id, Pair(true, multisig))

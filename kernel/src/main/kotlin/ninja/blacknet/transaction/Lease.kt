@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -25,19 +25,19 @@ class Lease(
         val amount: Long,
         val to: PublicKey
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
         if (amount < PoS.MIN_LEASE) {
             return Invalid("$amount less than minimal ${PoS.MIN_LEASE}")
         }
-        val account = ledger.getAccount(tx.from)!!
+        val account = coinTx.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
             return status
         }
-        ledger.setAccount(tx.from, account)
-        val toAccount = ledger.getOrCreate(to)
-        toAccount.leases.add(AccountState.Lease(tx.from, ledger.height(), amount))
-        ledger.setAccount(to, toAccount)
+        coinTx.setAccount(tx.from, account)
+        val toAccount = coinTx.getOrCreate(to)
+        toAccount.leases.add(AccountState.Lease(tx.from, coinTx.height(), amount))
+        coinTx.setAccount(to, toAccount)
         return Accepted
     }
 

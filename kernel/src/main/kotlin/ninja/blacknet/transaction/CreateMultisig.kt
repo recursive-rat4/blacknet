@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -74,7 +74,7 @@ class CreateMultisig(
         })
     }
 
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
         if (n < 0 || n > deposits.size) {
             return Invalid("Invalid n")
         }
@@ -104,7 +104,7 @@ class CreateMultisig(
                 if (!Ed25519.verify(signature, multisigHash, publicKey)) {
                     return Invalid("Invalid signature $index")
                 }
-                val depositAccount = ledger.getAccount(publicKey)
+                val depositAccount = coinTx.getAccount(publicKey)
                 if (depositAccount == null) {
                     return Invalid("Account not found $index")
                 }
@@ -112,13 +112,13 @@ class CreateMultisig(
                 if (status != Accepted) {
                     return notAccepted("CreateMultisig at index $index", status)
                 }
-                ledger.setAccount(publicKey, depositAccount)
+                coinTx.setAccount(publicKey, depositAccount)
             }
         }
 
         val id = id(hash, dataIndex)
         val multisig = Multisig(n, deposits.map { (from, amount) -> Multisig.DepositElement(from, amount) })
-        ledger.addMultisig(id, multisig)
+        coinTx.addMultisig(id, multisig)
         return Accepted
     }
 

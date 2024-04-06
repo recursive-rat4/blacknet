@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -30,7 +30,7 @@ import ninja.blacknet.serialization.config.ConfigDecoder
 import ninja.blacknet.serialization.notSupportedFormatError
 
 /**
- * A Blacknet blockchain application id.
+ * A Blacknet blob application id.
  */
 @Serializable(BAppId.Companion::class)
 class BAppId(
@@ -54,7 +54,7 @@ class BAppId(
 
     companion object : KSerializer<BAppId> {
         /**
-         * The number of bytes in a binary representation of the Blacknet blockchain application id.
+         * The number of bytes in a binary representation of the Blacknet blob application id.
          */
         const val SIZE_BYTES = 4
 

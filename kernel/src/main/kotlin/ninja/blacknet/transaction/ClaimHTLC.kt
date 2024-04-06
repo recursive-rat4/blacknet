@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -24,8 +24,8 @@ class ClaimHTLC(
         @Serializable(with = ByteArraySerializer::class)
         val preimage: ByteArray
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
-        val htlc = ledger.getHTLC(id)
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
+        val htlc = coinTx.getHTLC(id)
         if (htlc == null) {
             return Invalid("HTLC not found")
         }
@@ -36,10 +36,10 @@ class ClaimHTLC(
             return Invalid("Invalid hash lock")
         }
 
-        val account = ledger.getAccount(tx.from)!!
-        account.debit(ledger.height(), htlc.amount)
-        ledger.setAccount(tx.from, account)
-        ledger.removeHTLC(id)
+        val account = coinTx.getAccount(tx.from)!!
+        account.debit(coinTx.height(), htlc.amount)
+        coinTx.setAccount(tx.from, account)
+        coinTx.removeHTLC(id)
         return Accepted
     }
 

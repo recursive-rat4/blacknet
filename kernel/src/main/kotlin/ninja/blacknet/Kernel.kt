@@ -25,12 +25,12 @@ import kotlinx.coroutines.debug.DebugProbes
 import ninja.blacknet.core.Staker
 import ninja.blacknet.core.TxPool
 import ninja.blacknet.db.BlockDB
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.db.Convertor
-import ninja.blacknet.db.LedgerDB
 import ninja.blacknet.db.LevelDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.db.WalletDB
-import ninja.blacknet.network.ChainFetcher
+import ninja.blacknet.network.BlockFetcher
 import ninja.blacknet.network.Node
 import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.serialization.config.ConfigFormat
@@ -120,11 +120,11 @@ object Kernel {
         Convertor
         blockDB = BlockDB(LevelDB)
         WalletDB
-        LedgerDB
+        CoinDB
         PeerDB
         txPool = TxPool(config(), blockDB())
         Node
-        ChainFetcher
+        BlockFetcher
         Staker
 
         /* Launch Blacknet RPC API server using Ktor.

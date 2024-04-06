@@ -32,7 +32,7 @@ import kotlinx.coroutines.sync.withLock
 import ninja.blacknet.Kernel
 import ninja.blacknet.Version
 import ninja.blacknet.core.Block
-import ninja.blacknet.core.ChainIndex
+import ninja.blacknet.core.BlockIndex
 import ninja.blacknet.core.Transaction
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
@@ -51,7 +51,7 @@ private val logger = KotlinLogging.logger {}
 object RPCServer : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
     internal val txLock = ReentrantLock(true)
-    internal var lastIndex: Pair<Hash, ChainIndex>? = null
+    internal var lastIndex: Pair<Hash, BlockIndex>? = null
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val walletNotify = SynchronizedHashMap<PublicKey, ArrayList<SendChannel<Frame>>>()

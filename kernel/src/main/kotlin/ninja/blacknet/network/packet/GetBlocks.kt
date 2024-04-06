@@ -12,7 +12,7 @@ package ninja.blacknet.network.packet
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 
@@ -31,16 +31,16 @@ class GetBlocks(
             }
         }
 
-        var chainIndex = LedgerDB.chainIndexes.get(best.bytes)
+        var blockIndex = CoinDB.blockIndexes.get(best.bytes)
 
-        if (chainIndex == null) {
-            val nextBlockHashes = LedgerDB.getNextBlockHashes(checkpoint, Blocks.MAX_HASHES)
+        if (blockIndex == null) {
+            val nextBlockHashes = CoinDB.getNextBlockHashes(checkpoint, Blocks.MAX_HASHES)
             if (nextBlockHashes != null) {
                 connection.sendPacket(PacketType.Blocks, Blocks(nextBlockHashes, emptyList()))
                 return
             } else {
-                connection.sendPacket(PacketType.ChainFork, ChainFork())
-                connection.dos("Chain fork")
+                connection.sendPacket(PacketType.ConsensusFault, ConsensusFault())
+                connection.dos("Consensus fault")
                 return
             }
         }
@@ -50,12 +50,12 @@ class GetBlocks(
         val response = ArrayList<ByteArray>()
 
         while (true) {
-            if (chainIndex == null)
+            if (blockIndex == null)
                 break
-            val hash = chainIndex.next
+            val hash = blockIndex.next
             if (hash == Hash.ZERO)
                 break
-            size += chainIndex.nextSize + 4 //TODO VarInt.size()
+            size += blockIndex.nextSize + 4 //TODO VarInt.size()
             if (response.isNotEmpty() && size >= maxSize)
                 break
             val bytes = Kernel.blockDB().blocks.getBytes(hash.bytes)
@@ -64,7 +64,7 @@ class GetBlocks(
             response.add(bytes)
             if (response.size == Blocks.MAX_BLOCKS)
                 break
-            chainIndex = LedgerDB.chainIndexes.get(hash.bytes)
+            blockIndex = CoinDB.blockIndexes.get(hash.bytes)
         }
 
         connection.sendPacket(PacketType.Blocks, Blocks(emptyList(), response))

@@ -30,7 +30,7 @@ import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.db.PeerDB
 import ninja.blacknet.io.buffered
 import ninja.blacknet.io.data
@@ -203,7 +203,7 @@ object Node {
     }
 
     fun getMaxPacketSize(): Int {
-        return LedgerDB.state().maxBlockSize + PoS.BLOCK_RESERVED_SIZE
+        return CoinDB.state().maxBlockSize + PoS.BLOCK_RESERVED_SIZE
     }
 
     fun getMinPacketSize(): Int {
@@ -211,7 +211,7 @@ object Node {
     }
 
     fun isInitialSynchronization(): Boolean {
-        return ChainFetcher.isSynchronizing() && PoS.guessInitialSynchronization()
+        return BlockFetcher.isSynchronizing() && PoS.guessInitialSynchronization()
     }
 
     fun listenOn(address: Address): Thread {
@@ -264,10 +264,10 @@ object Node {
                     nonce,
                     UserAgent.prober,
                     Long.MAX_VALUE,
-                    ChainAnnounce.GENESIS
+                    BlockAnnounce.GENESIS
             )
         } else {
-            val state = LedgerDB.state()
+            val state = CoinDB.state()
             Version(
                     mode.networkMagic,
                     PROTOCOL_VERSION,
@@ -275,7 +275,7 @@ object Node {
                     nonce,
                     UserAgent.string,
                     Kernel.txPool().minFeeRate,
-                    ChainAnnounce(state.blockHash, state.cumulativeDifficulty)
+                    BlockAnnounce(state.blockHash, state.cumulativeDifficulty)
             )
         })
     }
@@ -297,21 +297,21 @@ object Node {
         }
         connection.sendPacket(PacketType.Hello, hello)
         if (connection.state != Connection.State.PROBER_WAITING) {
-            val state = LedgerDB.state()
-            connection.sendPacket(PacketType.ChainAnnounce, ChainAnnounce(state.blockHash, state.cumulativeDifficulty))
+            val state = CoinDB.state()
+            connection.sendPacket(PacketType.BlockAnnounce, BlockAnnounce(state.blockHash, state.cumulativeDifficulty))
         }
     }
 
-    fun announceChain(hash: Hash, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
+    fun announceBlock(hash: Hash, cumulativeDifficulty: BigInteger, source: Connection? = null): Int {
         Staker.awaitsNextTimeSlot?.interrupt()
-        val ann = ChainAnnounce(hash, cumulativeDifficulty)
-        return broadcastPacket(PacketType.ChainAnnounce, ann) {
-            it != source && it.state.isConnected() && it.lastChain.cumulativeDifficulty < cumulativeDifficulty
+        val ann = BlockAnnounce(hash, cumulativeDifficulty)
+        return broadcastPacket(PacketType.BlockAnnounce, ann) {
+            it != source && it.state.isConnected() && it.lastBlock.cumulativeDifficulty < cumulativeDifficulty
         }
     }
 
     fun broadcastBlock(hash: Hash, bytes: ByteArray): Boolean {
-        val (status, n) = ChainFetcher.stakedBlock(hash, bytes)
+        val (status, n) = BlockFetcher.stakedBlock(hash, bytes)
         if (status == Accepted) {
             if (mode.requiresNetwork)
                 logger.info { "Announced to $n peers" }

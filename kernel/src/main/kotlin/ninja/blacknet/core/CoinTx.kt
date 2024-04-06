@@ -14,7 +14,7 @@ import ninja.blacknet.contract.MultiSignatureLockContractId
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PublicKey
 
-interface Ledger {
+interface CoinTx {
     fun addSupply(amount: Long)
     fun checkAnchor(hash: Hash): Boolean
     fun blockHash(): Hash
@@ -35,12 +35,12 @@ interface Ledger {
             return Invalid("Invalid signature")
         }
         if (!checkAnchor(tx.anchor)) {
-            return NotOnThisChain(tx.anchor.toString())
+            return NotReachableVertex(tx.anchor.toString())
         }
         if (tx.fee < 0) {
             return Invalid("Negative fee")
         }
         val data = tx.data()
-        return data.processLedger(tx, hash, this)
+        return data.processCoin(tx, hash, this)
     }
 }

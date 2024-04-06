@@ -48,7 +48,7 @@ class Transactions(
                 Accepted -> inv.add(Triple(hash, bytes.size, fee))
                 is Invalid -> connection.dos("$status $hash")
                 is InFuture -> logger.debug { "$status $hash" }
-                is NotOnThisChain -> logger.debug { "$status $hash" }
+                is NotReachableVertex -> logger.debug { "$status $hash" }
                 is AlreadyHave -> logger.debug { "$status $hash" }
             }
         }

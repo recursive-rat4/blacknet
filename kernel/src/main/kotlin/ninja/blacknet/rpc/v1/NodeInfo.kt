@@ -12,7 +12,7 @@ package ninja.blacknet.rpc.v1
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
 import ninja.blacknet.Version
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.UserAgent
 
@@ -30,7 +30,7 @@ class NodeInfo(
     companion object {
         fun get(): NodeInfo {
             val listening = Node.getListenAddress().map { it.toString() }
-            val warnings = Kernel.blockDB().warnings() + LedgerDB.warnings() + Node.warnings()
+            val warnings = Kernel.blockDB().warnings() + CoinDB.warnings() + Node.warnings()
             return NodeInfo(
                     UserAgent.string,
                     Version.name,

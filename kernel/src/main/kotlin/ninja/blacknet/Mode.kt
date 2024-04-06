@@ -17,7 +17,7 @@ import ninja.blacknet.network.Port
  * An enumeration of implemented modes: production or various research, development, testing.
  *
  * @property subdirectory to separate data.
- * @property addressPrefix to designate a different ledger.
+ * @property addressPrefix to designate a different network.
  * @property agentSuffix for network indication.
  * @property requiresNetwork whether the node is supposed to have peers.
  */

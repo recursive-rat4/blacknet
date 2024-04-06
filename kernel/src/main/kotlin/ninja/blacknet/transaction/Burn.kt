@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -22,17 +22,17 @@ class Burn(
         @Serializable(with = ByteArraySerializer::class)
         val message: ByteArray
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
         if (amount == 0L) {
             return Invalid("Invalid amount")
         }
-        val account = ledger.getAccount(tx.from)!!
+        val account = coinTx.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
             return status
         }
-        ledger.setAccount(tx.from, account)
-        ledger.addSupply(-amount)
+        coinTx.setAccount(tx.from, account)
+        coinTx.addSupply(-amount)
         return Accepted
     }
 }

@@ -137,7 +137,7 @@ fun Route.APIV1() {
         val height = call.parameters["height"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid height")
 
         Kernel.blockDB().reentrant.readLock().withLock { runBlocking {
-            val state = LedgerDB.state()
+            val state = CoinDB.state()
             if (height < 0 || height > state.height)
                 return@runBlocking call.respond(HttpStatusCode.NotFound, "block not found")
             else if (height == 0)
@@ -149,23 +149,23 @@ fun Route.APIV1() {
                 return@runBlocking call.respond(RPCServer.lastIndex!!.first.toString())
 
             var hash: Hash
-            var index: ChainIndex
+            var index: BlockIndex
             if (height < state.height / 2) {
                 hash = Genesis.BLOCK_HASH
-                index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+                index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
             } else {
                 hash = state.blockHash
-                index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+                index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
             }
             if (RPCServer.lastIndex != null && abs(height - index.height) > abs(height - RPCServer.lastIndex!!.second.height))
                 index = RPCServer.lastIndex!!.second
             while (index.height > height) {
                 hash = index.previous
-                index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+                index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
             }
             while (index.height < height) {
                 hash = index.next
-                index = LedgerDB.chainIndexes.getOrThrow(hash.bytes)
+                index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
             }
             if (index.height < state.height - PoS.ROLLBACK_LIMIT + 1)
                 RPCServer.lastIndex = Pair(hash, index)
@@ -176,9 +176,9 @@ fun Route.APIV1() {
     get("/api/v1/blockdb/getblockindex/{hash}/") {
         val hash = call.parameters["hash"]?.let { Hash(Hash.fromString(it)) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid hash")
 
-        val result = LedgerDB.chainIndexes.get(hash.bytes)
+        val result = CoinDB.blockIndexes.get(hash.bytes)
         if (result != null)
-            call.respond(Json.stringify(ChainIndex.serializer(), result))
+            call.respond(Json.stringify(BlockIndex.serializer(), result))
         else
             call.respond(HttpStatusCode.NotFound, "block not found")
     }
@@ -206,7 +206,7 @@ fun Route.APIV1() {
     }
 
     get("/api/v1/ledger/check") {
-        call.respond(Json.stringify(LedgerDB.Check.serializer(), LedgerDB.check()))
+        call.respond(Json.stringify(CoinDB.Check.serializer(), CoinDB.check()))
     }
 
     get("/api/v1/txpool") {

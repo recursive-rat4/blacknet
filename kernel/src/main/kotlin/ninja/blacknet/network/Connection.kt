@@ -57,7 +57,7 @@ class Connection(
     @Volatile
     var lastPacketTime: Long = 0
     @Volatile
-    var lastChain: ChainAnnounce = ChainAnnounce.GENESIS
+    var lastBlock: BlockAnnounce = BlockAnnounce.GENESIS
     @Volatile
     var lastBlockTime: Long = 0
     @Volatile
@@ -220,7 +220,7 @@ class Connection(
 
             when (state) {
                 State.INCOMING_CONNECTED, State.OUTGOING_CONNECTED -> {
-                    ChainFetcher.disconnected(this@Connection)
+                    BlockFetcher.disconnected(this@Connection)
                 }
                 State.OUTGOING_WAITING, State.PROBER_WAITING -> {
                 }

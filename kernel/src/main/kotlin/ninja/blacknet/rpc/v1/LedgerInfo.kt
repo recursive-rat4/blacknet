@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -13,7 +13,7 @@ import java.math.BigInteger
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.LedgerDB
+import ninja.blacknet.db.CoinDB
 import ninja.blacknet.serialization.LongSerializer
 
 @Serializable
@@ -33,7 +33,7 @@ class LedgerInfo(
 ) {
     companion object {
         fun get(): LedgerInfo {
-            val state = LedgerDB.state()
+            val state = CoinDB.state()
             return LedgerInfo(
                     state.height,
                     state.blockHash,

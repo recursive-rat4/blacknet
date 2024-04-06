@@ -10,16 +10,18 @@
 package ninja.blacknet.network.packet
 
 import java.math.BigInteger
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.BigIntegerSerializer
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.Genesis
-import ninja.blacknet.network.ChainFetcher
+import ninja.blacknet.network.BlockFetcher
 import ninja.blacknet.network.Connection
 
 @Serializable
-class ChainAnnounce(
-    internal val chain: Hash,
+class BlockAnnounce(
+    @SerialName("chain")
+    internal val hash: Hash,
     @Serializable(with = BigIntegerSerializer::class)
     internal val cumulativeDifficulty: BigInteger
 ) : Packet {
@@ -29,12 +31,12 @@ class ChainAnnounce(
             return
         }
 
-        connection.lastChain = this
+        connection.lastBlock = this
 
-        ChainFetcher.offer(connection, this)
+        BlockFetcher.offer(connection, this)
     }
 
     companion object {
-        val GENESIS = ChainAnnounce(Genesis.BLOCK_HASH, Genesis.CUMULATIVE_DIFFICULTY)
+        val GENESIS = BlockAnnounce(Genesis.BLOCK_HASH, Genesis.CUMULATIVE_DIFFICULTY)
     }
 }

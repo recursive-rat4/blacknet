@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -38,7 +38,7 @@ class CreateHTLC(
         }
     )
 
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
         try {
             timeLock.validate()
         } catch (e: Throwable) {
@@ -54,16 +54,16 @@ class CreateHTLC(
             return Invalid("Invalid amount")
         }
 
-        val account = ledger.getAccount(tx.from)!!
+        val account = coinTx.getAccount(tx.from)!!
         val status = account.credit(amount)
         if (status != Accepted) {
             return status
         }
 
         val id = id(hash, dataIndex)
-        val htlc = HTLC(ledger.height(), ledger.blockTime(), amount, tx.from, to, timeLock, hashLock)
-        ledger.setAccount(tx.from, account)
-        ledger.addHTLC(id, htlc)
+        val htlc = HTLC(coinTx.height(), coinTx.blockTime(), amount, tx.from, to, timeLock, hashLock)
+        coinTx.setAccount(tx.from, account)
+        coinTx.addHTLC(id, htlc)
         return Accepted
     }
 

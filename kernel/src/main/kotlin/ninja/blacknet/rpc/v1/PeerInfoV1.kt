@@ -11,8 +11,8 @@ package ninja.blacknet.rpc.v1
 
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.Hash
-import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.network.packet.ChainAnnounce
+import ninja.blacknet.db.CoinDB
+import ninja.blacknet.network.packet.BlockAnnounce
 import ninja.blacknet.network.Connection
 import ninja.blacknet.network.Node
 
@@ -39,20 +39,20 @@ class PeerInfoV1(
             val cumulativeDifficulty: String,
             val fork: Boolean
     ) {
-        constructor(chain: ChainAnnounce, fork: Boolean) : this(
-                chain.chain.toString(),
+        constructor(chain: BlockAnnounce, fork: Boolean) : this(
+                chain.hash.toString(),
                 chain.cumulativeDifficulty.toString(),
                 fork
         )
 
         companion object {
-            fun get(chain: ChainAnnounce, forkCache: HashMap<Hash, Boolean>): ChainInfo {
-                val cached = forkCache.get(chain.chain)
+            fun get(chain: BlockAnnounce, forkCache: HashMap<Hash, Boolean>): ChainInfo {
+                val cached = forkCache.get(chain.hash)
                 return if (cached != null) {
                     ChainInfo(chain, cached)
                 } else {
-                    val fork = !LedgerDB.chainIndexes.contains(chain.chain.bytes)
-                    forkCache.put(chain.chain, fork)
+                    val fork = !CoinDB.blockIndexes.contains(chain.hash.bytes)
+                    forkCache.put(chain.hash, fork)
                     ChainInfo(chain, fork)
                 }
             }
@@ -73,7 +73,7 @@ class PeerInfoV1(
                     connection.dosScore(),
                     connection.feeFilter.toString(),
                     connection.connectedAt,
-                    ChainInfo.get(connection.lastChain, forkCache),
+                    ChainInfo.get(connection.lastBlock, forkCache),
                     connection.getTotalBytesRead(),
                     connection.getTotalBytesWritten(),
             )

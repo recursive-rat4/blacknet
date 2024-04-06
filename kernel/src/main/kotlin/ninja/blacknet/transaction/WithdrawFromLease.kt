@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -28,14 +28,14 @@ class WithdrawFromLease(
         val to: PublicKey,
         val height: Int
 ) : TxData {
-    override fun processLedgerImpl(tx: Transaction, hash: Hash, dataIndex: Int, ledger: Ledger): Status {
+    override fun processCoinImpl(tx: Transaction, hash: Hash, dataIndex: Int, coinTx: CoinTx): Status {
         if (withdraw <= 0 || withdraw > amount) {
             return Invalid("Invalid withdraw amount")
         }
         if (withdraw > amount - PoS.MIN_LEASE) {
             return Invalid("Can not withdraw more than ${amount - PoS.MIN_LEASE}")
         }
-        val toAccount = ledger.getAccount(to)
+        val toAccount = coinTx.getAccount(to)
         if (toAccount == null) {
             return Invalid("Account not found")
         }
@@ -44,10 +44,10 @@ class WithdrawFromLease(
             return Invalid("Lease not found")
         }
         lease.amount -= withdraw
-        ledger.setAccount(to, toAccount)
-        val account = ledger.getAccount(tx.from)!!
-        account.debit(ledger.height(), withdraw)
-        ledger.setAccount(tx.from, account)
+        coinTx.setAccount(to, toAccount)
+        val account = coinTx.getAccount(tx.from)!!
+        account.debit(coinTx.height(), withdraw)
+        coinTx.setAccount(tx.from, account)
         return Accepted
     }
 

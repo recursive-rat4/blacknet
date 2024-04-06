@@ -15,8 +15,8 @@ import ninja.blacknet.core.Accepted
 import ninja.blacknet.core.Invalid
 import ninja.blacknet.core.Status
 import ninja.blacknet.crypto.Blake2b.buildHash
-import ninja.blacknet.db.LedgerDB
-import ninja.blacknet.db.LedgerDB.forkV2
+import ninja.blacknet.db.CoinDB
+import ninja.blacknet.db.CoinDB.forkV2
 import ninja.blacknet.time.currentTimeSeconds
 import ninja.blacknet.util.byteArrayOfInts
 
@@ -68,7 +68,7 @@ object PoS {
     }
 
     fun guessInitialSynchronization(): Boolean {
-        return currentTimeSeconds() > LedgerDB.state().blockTime + TARGET_BLOCK_TIME * ROLLBACK_LIMIT
+        return currentTimeSeconds() > CoinDB.state().blockTime + TARGET_BLOCK_TIME * ROLLBACK_LIMIT
     }
 
     fun maxBlockSize(blockSizes: Collection<Int>): Int {

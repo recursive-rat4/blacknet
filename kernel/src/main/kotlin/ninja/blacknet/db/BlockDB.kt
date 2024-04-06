@@ -19,7 +19,7 @@ import ninja.blacknet.core.*
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.dataDir
-import ninja.blacknet.db.LedgerDB.forkV2
+import ninja.blacknet.db.CoinDB.forkV2
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.signal.Signal5
 
@@ -59,12 +59,12 @@ class BlockDB(
     }
 
     private fun containsImpl(hash: Hash): Boolean {
-        return LedgerDB.chainIndexes.contains(hash.bytes)
+        return CoinDB.blockIndexes.contains(hash.bytes)
     }
 
     private fun processBlockImpl(hash: Hash, bytes: ByteArray): Status {
         val block = binaryFormat.decodeFromByteArray(Block.serializer(), bytes)
-        val state = LedgerDB.state()
+        val state = CoinDB.state()
         if (block.version > Block.VERSION) {
             val percent = 100 * state.upgraded / PoS.UPGRADE_THRESHOLD
             if (percent > 9)
@@ -87,14 +87,14 @@ class BlockDB(
             return Invalid("Invalid signature")
         }
         if (block.previous != state.blockHash) {
-            return NotOnThisChain(block.previous.toString())
+            return NotReachableVertex(block.previous.toString())
         }
         val batch = LevelDB.createWriteBatch()
-        val txDb = LedgerDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
-        val (status, txHashes) = LedgerDB.processBlockImpl(txDb, hash, block, bytes.size)
+        val coinTx = CoinDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
+        val (status, txHashes) = CoinDB.processBlockImpl(coinTx, hash, block, bytes.size)
         if (status == Accepted) {
             batch.put(BLOCK_KEY, hash.bytes, bytes)
-            txDb.commitImpl()
+            coinTx.commitImpl()
             blockNotify(block, hash, state.height + 1, bytes.size, txHashes)
             cachedBlock = Pair(block.previous, bytes)
         } else {
@@ -122,12 +122,12 @@ class BlockDB(
     }
 
     fun check(): Check = reentrant.readLock().withLock {
-        val result = Check(false, LedgerDB.state().height, 0, 0)
+        val result = Check(false, CoinDB.state().height, 0, 0)
         val iterator = LevelDB.iterator()
-        if (LevelDB.seek(iterator, LedgerDB.CHAIN_KEY)) {
+        if (LevelDB.seek(iterator, CoinDB.INDEX_KEY)) {
             while (iterator.hasNext()) {
                 val entry = iterator.next()
-                if (LedgerDB.CHAIN_KEY - entry != null)
+                if (CoinDB.INDEX_KEY - entry != null)
                     result.indexes += 1
             }
         }
