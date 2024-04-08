@@ -155,10 +155,11 @@ object PeerDB {
             throw Error("Unknown database version $version")
         }
 
-        val batch = LevelDB.createWriteBatch()
-        batch.delete(VERSION_KEY)
-        batch.delete(STATE_KEY)
-        batch.write()
+        LevelDB.createWriteBatch().use { batch ->
+            batch.delete(VERSION_KEY)
+            batch.delete(STATE_KEY)
+            batch.write()
+        }
 
         return decodedMap
     }

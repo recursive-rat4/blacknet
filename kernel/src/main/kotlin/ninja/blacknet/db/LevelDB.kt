@@ -10,6 +10,7 @@
 package ninja.blacknet.db
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.Closeable
 import ninja.blacknet.Kernel
 import ninja.blacknet.Runtime
 import ninja.blacknet.ShutdownHooks
@@ -81,7 +82,7 @@ object LevelDB : KeyValueStore {
         return WriteBatch(db.createWriteBatch())
     }
 
-    class WriteBatch internal constructor(private val batch: org.iq80.leveldb.WriteBatch) {
+    class WriteBatch internal constructor(private val batch: org.iq80.leveldb.WriteBatch) : Closeable {
         fun put(dbKey: DBKey, bytes: ByteArray) {
             batch.put(+dbKey, bytes)
         }
@@ -104,10 +105,9 @@ object LevelDB : KeyValueStore {
 
         fun write() {
             db.write(batch, writeOptions)
-            batch.close()
         }
 
-        fun close() {
+        override fun close() {
             batch.close()
         }
     }

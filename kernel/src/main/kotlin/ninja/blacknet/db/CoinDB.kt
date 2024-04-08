@@ -73,9 +73,7 @@ object CoinDB {
     private val blockSizes = ArrayDeque<Int>(PoS.BLOCK_SIZE_SPAN)
     private val snapshotHeights = HashSet<Int>()
 
-    private fun loadGenesisState() {
-        val batch = LevelDB.createWriteBatch()
-
+    private fun loadGenesisState() = LevelDB.createWriteBatch().use { batch ->
         var supply = 0L
         Genesis.balances.forEach { (publicKey, balance) ->
             val account = AccountState()
@@ -167,16 +165,16 @@ object CoinDB {
                 for (i in 0 until blockHashes.size) {
                     val hash = blockHashes[i]
                     val (block, size) = Kernel.blockDB().blocks.getWithSizeOrThrow(hash.bytes)
-                    val batch = LevelDB.createWriteBatch()
-                    val coinTx = Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
-                    val (status, _) = processBlockImpl(coinTx, hash, block, size)
-                    if (status != Accepted) {
-                        batch.close()
-                        logger.error { "process block failed" }
-                        break
+                    LevelDB.createWriteBatch().use { batch ->
+                        val coinTx = Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
+                        val (status, _) = processBlockImpl(coinTx, hash, block, size)
+                        if (status != Accepted) {
+                            logger.error { "process block failed" }
+                            break
+                        }
+                        pruneImpl(batch)
+                        coinTx.commitImpl()
                     }
-                    pruneImpl(batch)
-                    coinTx.commitImpl()
                     if (i != 0 && i % 50000 == 0)
                         logger.info { "Processed $i blocks" }
                 }
@@ -207,9 +205,10 @@ object CoinDB {
         if (height <= state.height)
             return false
         if (snapshotHeights.add(height)) {
-            val batch = LevelDB.createWriteBatch()
-            writeSnapshotHeights(batch)
-            batch.write()
+            LevelDB.createWriteBatch().use { batch ->
+                writeSnapshotHeights(batch)
+                batch.write()
+            }
         }
         return true
     }
@@ -346,9 +345,8 @@ object CoinDB {
         return Pair(Accepted, txHashes)
     }
 
-    private fun undoBlockImpl(): Hash {
+    private fun undoBlockImpl(): Hash = LevelDB.createWriteBatch().use { batch ->
         val state = state
-        val batch = LevelDB.createWriteBatch()
         val hash = state.blockHash
         val blockIndex = blockIndexes.getOrThrow(hash.bytes)
         val undo = undos.getOrThrow(hash.bytes)
@@ -426,22 +424,21 @@ object CoinDB {
                 logger.error { "$hash not found" }
             }
 
-            val batch = LevelDB.createWriteBatch()
-            val coinTx = CoinDB.Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
-            val (status, _) = processBlockImpl(coinTx, hash, block, size)
-            if (status != Accepted) {
-                batch.close()
-                logger.error { "$status block $hash}" }
-                return toRemove
+            LevelDB.createWriteBatch().use { batch ->
+                val coinTx = CoinDB.Update(batch, block.version, hash, block.previous, block.time, size, block.generator)
+                val (status, _) = processBlockImpl(coinTx, hash, block, size)
+                if (status != Accepted) {
+                    logger.error { "$status block $hash}" }
+                    return toRemove
+                }
+                coinTx.commitImpl()
             }
-            coinTx.commitImpl()
         }
 
         return toRemove
     }
 
-    internal fun pruneImpl() {
-        val batch = LevelDB.createWriteBatch()
+    internal fun pruneImpl() = LevelDB.createWriteBatch().use { batch ->
         pruneImpl(batch)
         batch.write()
     }
@@ -460,12 +457,12 @@ object CoinDB {
     }
 
     private fun clear() {
-        val batch = LevelDB.createWriteBatch()
-        val iterator = LevelDB.iterator()
-        iterator.seekToFirst()
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            if (ACCOUNT_KEY % entry ||
+        LevelDB.createWriteBatch().use { batch ->
+            val iterator = LevelDB.iterator()
+            iterator.seekToFirst()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                if (ACCOUNT_KEY % entry ||
                     INDEX_KEY % entry ||
                     HTLC_KEY % entry ||
                     MULTISIG_KEY % entry ||
@@ -473,12 +470,14 @@ object CoinDB {
                     SIZES_KEY % entry ||
                     SNAPSHOT_KEY % entry ||
                     STATE_KEY % entry ||
-                    VERSION_KEY % entry) {
-                batch.delete(entry.key)
+                    VERSION_KEY % entry
+                ) {
+                    batch.delete(entry.key)
+                }
             }
+            iterator.close()
+            batch.write()
         }
-        iterator.close()
-        batch.write()
 
         blockSizes.clear()
 
@@ -780,8 +779,9 @@ object CoinDB {
         if (snapshot.supply() != state.supply)
             logger.error { "Snapshot supply does not match CoinDB" }
 
-        val batch = LevelDB.createWriteBatch()
-        batch.put(SNAPSHOT_KEY, state.height.toByteArray(), binaryFormat.encodeToByteArray(Snapshot.serializer(), snapshot))
-        batch.write()
+        LevelDB.createWriteBatch().use { batch ->
+            batch.put(SNAPSHOT_KEY, state.height.toByteArray(), binaryFormat.encodeToByteArray(Snapshot.serializer(), snapshot))
+            batch.write()
+        }
     }
 }

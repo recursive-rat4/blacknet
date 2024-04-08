@@ -92,10 +92,11 @@ object WalletDB {
                     logger.info { "Loaded ${wallets.size} wallets with $txns transactions" }
             }
         } else if (version in 1 until VERSION) {
-            val batch = LevelDB.createWriteBatch()
-            clear(batch)
-            setVersion(batch)
-            batch.write()
+            LevelDB.createWriteBatch().use { batch ->
+                clear(batch)
+                setVersion(batch)
+                batch.write()
+            }
         } else {
             throw Error("Unknown database version $version")
         }
@@ -260,9 +261,10 @@ object WalletDB {
     }
 
     fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long) = reentrant.writeLock().withLock {
-        val batch = LevelDB.createWriteBatch()
-        processTransactionImpl(hash, tx, bytes, time, 0, batch)
-        batch.write()
+        LevelDB.createWriteBatch().use { batch ->
+            processTransactionImpl(hash, tx, bytes, time, 0, batch)
+            batch.write()
+        }
     }
 
     fun processTransaction(hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch) = reentrant.writeLock().withLock {
@@ -517,38 +519,37 @@ object WalletDB {
     }
 
     internal fun getWalletImpl(publicKey: PublicKey): Wallet {
-        var wallet = wallets.get(publicKey)
-        if (wallet != null)
-            return wallet
+        wallets.get(publicKey)?.let { return it }
 
         logger.debug { "Creating new wallet for ${Address.encode(publicKey.bytes)}" }
-        val batch = LevelDB.createWriteBatch()
-        wallet = Wallet()
+        return LevelDB.createWriteBatch().use { batch ->
+            val wallet = Wallet()
 
-        reentrant.readLock().withUnlock {
-            Kernel.blockDB().reentrant.readLock().withLock {
-                reentrant.writeLock().withLock {
-                    var hash = Genesis.BLOCK_HASH
-                    var index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
-                    val height = CoinDB.state().height
-                    val n = height - index.height + 1
-                    if (n > 0) {
-                        logger.info { "Rescanning $n blocks..." }
-                        do {
-                            rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
-                            hash = index.next
-                            index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
-                        } while (index.height != height)
-                        logger.info { "Finished rescan" }
+            reentrant.readLock().withUnlock {
+                Kernel.blockDB().reentrant.readLock().withLock {
+                    reentrant.writeLock().withLock {
+                        var hash = Genesis.BLOCK_HASH
+                        var index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
+                        val height = CoinDB.state().height
+                        val n = height - index.height + 1
+                        if (n > 0) {
+                            logger.info { "Rescanning $n blocks..." }
+                            do {
+                                rescanBlockImpl(publicKey, wallet, hash, index.height, index.generated, batch)
+                                hash = index.next
+                                index = CoinDB.blockIndexes.getOrThrow(hash.bytes)
+                            } while (index.height != height)
+                            logger.info { "Finished rescan" }
+                        }
+                        //TODO 重掃描交易池
+                        addWalletImpl(batch, publicKey, wallet)
+                        batch.write()
                     }
-                    //TODO 重掃描交易池
-                    addWalletImpl(batch, publicKey, wallet)
-                    batch.write()
                 }
             }
-        }
 
-        return wallet
+            wallet
+        }
     }
 
     fun anchor(): Hash {

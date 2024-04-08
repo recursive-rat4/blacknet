@@ -50,8 +50,7 @@ class BlockDB(
         return rejects.contains(hash)
     }
 
-    internal fun deleteImpl(list: List<Hash>) {
-        val batch = LevelDB.createWriteBatch()
+    internal fun deleteImpl(list: List<Hash>) = LevelDB.createWriteBatch().use { batch ->
         list.forEach { hash ->
             batch.delete(BLOCK_KEY, hash.bytes)
         }
@@ -89,18 +88,17 @@ class BlockDB(
         if (block.previous != state.blockHash) {
             return NotReachableVertex(block.previous.toString())
         }
-        val batch = LevelDB.createWriteBatch()
-        val coinTx = CoinDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
-        val (status, txHashes) = CoinDB.processBlockImpl(coinTx, hash, block, bytes.size)
-        if (status == Accepted) {
-            batch.put(BLOCK_KEY, hash.bytes, bytes)
-            coinTx.commitImpl()
-            blockNotify(block, hash, state.height + 1, bytes.size, txHashes)
-            cachedBlock = Pair(block.previous, bytes)
-        } else {
-            batch.close()
+        LevelDB.createWriteBatch().use { batch ->
+            val coinTx = CoinDB.Update(batch, block.version, hash, block.previous, block.time, bytes.size, block.generator)
+            val (status, txHashes) = CoinDB.processBlockImpl(coinTx, hash, block, bytes.size)
+            if (status == Accepted) {
+                batch.put(BLOCK_KEY, hash.bytes, bytes)
+                coinTx.commitImpl()
+                blockNotify(block, hash, state.height + 1, bytes.size, txHashes)
+                cachedBlock = Pair(block.previous, bytes)
+            }
+            return status
         }
-        return status
     }
 
     internal fun processImpl(hash: Hash, bytes: ByteArray): Status {

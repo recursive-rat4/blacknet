@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -23,9 +23,10 @@ internal object Convertor {
 
     init {
         if (LevelDB.get(SALT_KEY) != null) {
-            val batch = LevelDB.createWriteBatch()
-            batch.delete(SALT_KEY)
-            batch.write()
+            LevelDB.createWriteBatch().use { batch ->
+                batch.delete(SALT_KEY)
+                batch.write()
+            }
         } else {
             if (LevelDB.get(OLD_VERSION_KEY) != null)
                 convertor()
@@ -59,18 +60,20 @@ internal object Convertor {
             logger.debug { "Unknown key ${Base16.encode(entry.key)}" }
         }
         iterator.close()
-        val batch = LevelDB.createWriteBatch()
-        val value = LevelDB.get(OLD_VERSION_KEY)!!
-        batch.put(DBKey(10, 0), value)
-        batch.delete(OLD_VERSION_KEY)
-        batch.write()
+        LevelDB.createWriteBatch().use { batch ->
+            val value = LevelDB.get(OLD_VERSION_KEY)!!
+            batch.put(DBKey(10, 0), value)
+            batch.delete(OLD_VERSION_KEY)
+            batch.write()
+        }
     }
 
     private fun nibble(entry: Map.Entry<ByteArray, ByteArray>, key: ByteArray, dbKey: DBKey) {
-        val batch = LevelDB.createWriteBatch()
-        batch.put(dbKey, key, entry.value)
-        batch.delete(entry.key)
-        batch.write()
+        LevelDB.createWriteBatch().use { batch ->
+            batch.put(dbKey, key, entry.value)
+            batch.delete(entry.key)
+            batch.write()
+        }
     }
 }
 
