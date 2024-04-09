@@ -241,7 +241,7 @@ fun Route.APIV1() {
         val message = PaymentId.create(call.parameters["message"], encrypted, privateKey, to) ?: return@post call.respond(HttpStatusCode.BadRequest, "failed to create message")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash(Hash.fromString(it)) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
-        RPCServer.txLock.withLock {
+        WalletDB.txLock.withLock {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post runBlocking { call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold") }
             val data = binaryFormat.encodeToByteArray(Transfer.serializer(), Transfer(amount, to, message))
@@ -264,7 +264,7 @@ fun Route.APIV1() {
         val message = call.parameters["message"]?.let { fromHex(it) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid message")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash(Hash.fromString(it)) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
-        RPCServer.txLock.withLock {
+        WalletDB.txLock.withLock {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post runBlocking { call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold") }
             val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
@@ -286,7 +286,7 @@ fun Route.APIV1() {
         val to = call.parameters["to"]?.let { PublicKey(Address.decode(it)) } ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid to")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash(Hash.fromString(it)) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
-        RPCServer.txLock.withLock {
+        WalletDB.txLock.withLock {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post runBlocking { call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold") }
             val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
@@ -309,7 +309,7 @@ fun Route.APIV1() {
         val height = call.parameters["height"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid height")
         val blockHash = call.parameters["blockHash"]?.let @Suppress("USELESS_ELVIS") { Hash(Hash.fromString(it)) ?: return@post call.respond(HttpStatusCode.BadRequest, "invalid blockHash") }
 
-        RPCServer.txLock.withLock {
+        WalletDB.txLock.withLock {
             @Suppress("USELESS_ELVIS")
             val seq = WalletDB.getSequence(from) ?: return@post runBlocking { call.respond(HttpStatusCode.BadRequest, "wallet reached sequence threshold") }
             val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
@@ -328,7 +328,7 @@ fun Route.APIV1() {
         val serialized = call.parameters["serialized"]?.let { fromHex(it) } ?: return@get call.respond(HttpStatusCode.BadRequest, "invalid serialized")
         val hash = Transaction.hash(serialized)
 
-        RPCServer.txLock.withLock {
+        WalletDB.txLock.withLock {
             if (Node.broadcastTx(hash, serialized) == Accepted)
                 runBlocking { call.respond(hash.bytes.toHex()) }
             else

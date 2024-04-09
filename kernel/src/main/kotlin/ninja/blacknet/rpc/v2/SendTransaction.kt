@@ -27,7 +27,6 @@ import ninja.blacknet.crypto.PrivateKeySerializer
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.WalletDB
 import ninja.blacknet.network.Node
-import ninja.blacknet.rpc.RPCServer
 import ninja.blacknet.rpc.requests.*
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.ByteArraySerializer
@@ -46,7 +45,7 @@ class TransferRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val message = PaymentId.create(message, encrypted, privateKey, to) ?: return respondError("Failed to create payment id")
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
@@ -74,7 +73,7 @@ class BurnRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(Burn.serializer(), Burn(amount, message))
@@ -100,7 +99,7 @@ class LeaseRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(Lease.serializer(), Lease(amount, to))
@@ -127,7 +126,7 @@ class CancelLeaseRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(CancelLease.serializer(), CancelLease(amount, to, height))
@@ -155,7 +154,7 @@ class WithdrawFromLeaseRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(WithdrawFromLease.serializer(), WithdrawFromLease(withdraw, amount, to, height))
@@ -182,7 +181,7 @@ class BundleRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(BApp.serializer(), BApp(id, data))
@@ -213,7 +212,7 @@ class CreateSwapRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val timeLock = TimeLock(timeLockType, timeLockData).also { it.validate() }
         val hashLock = HashLock(hashLockType, hashLockData).also { it.validate() }
         val from = Ed25519.toPublicKey(privateKey)
@@ -242,7 +241,7 @@ class ClaimSwapRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(ClaimHTLC.serializer(), ClaimHTLC(id, preimage))
@@ -267,7 +266,7 @@ class RefundSwapRequest(
     @SerialName("referenceChain")
     val anchor: Hash? = null,
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val from = Ed25519.toPublicKey(privateKey)
         val seq = WalletDB.getSequence(from)
         val data = binaryFormat.encodeToByteArray(RefundHTLC.serializer(), RefundHTLC(id))
@@ -288,7 +287,7 @@ class SendRawTransaction(
     @Serializable(with = ByteArraySerializer::class)
     val bytes: ByteArray
 ) : Request {
-    override fun handle(): TextContent = RPCServer.txLock.withLock {
+    override fun handle(): TextContent = WalletDB.txLock.withLock {
         val hash = Transaction.hash(bytes)
 
         val status = Node.broadcastTx(hash, bytes)

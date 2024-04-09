@@ -22,7 +22,6 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.websocket.Frame
 import kotlin.coroutines.CoroutineContext
-import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.SendChannel
@@ -50,7 +49,6 @@ private val logger = KotlinLogging.logger {}
 
 object RPCServer : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default
-    internal val txLock = ReentrantLock(true)
     internal var lastIndex: Pair<Hash, BlockIndex>? = null
     internal val blockNotify = SynchronizedHashSet<SendChannel<Frame>>()
     internal val txPoolNotify = SynchronizedHashSet<SendChannel<Frame>>()

@@ -12,6 +12,7 @@ package ninja.blacknet.db
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import ninja.blacknet.db.WalletDB.TransactionDataType
+import ninja.blacknet.db.WalletDB.Wallet
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.serialization.json.json
 import ninja.blacknet.util.byteArrayOfInts
@@ -39,4 +40,22 @@ class WalletDBTest {
             json.encodeToString(TransactionDataType.serializer(), txDataType)
         )
     }
+
+    @Test
+    fun walletSerialization() {
+        val wallet = Wallet()
+        val bytes = byteArrayOfInts(
+            0x80,
+            0x80,
+            0x80,
+            0x80,
+            0x80,
+        )
+        binaryFormat.decodeFromByteArray(Wallet.serializer(), bytes)
+        assertEquals(
+            bytes,
+            binaryFormat.encodeToByteArray(Wallet.serializer(), wallet)
+        )
+    }
+
 }

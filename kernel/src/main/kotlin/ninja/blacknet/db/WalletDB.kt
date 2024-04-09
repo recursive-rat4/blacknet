@@ -18,6 +18,7 @@ import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.nio.file.StandardOpenOption.WRITE
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
+import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.SetSerializer
 import ninja.blacknet.Kernel
@@ -43,6 +44,7 @@ private val logger = KotlinLogging.logger {}
 
 object WalletDB {
     private const val VERSION = 9
+    internal val txLock = ReentrantLock(true)
     internal val reentrant = ReentrantReadWriteLock()
     private val PUBLIC_KEYS_KEY = DBKey(64, 0)
     private val TX_KEY = DBKey(65, Hash.SIZE_BYTES)
