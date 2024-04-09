@@ -18,15 +18,8 @@ import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.nio.file.StandardOpenOption.WRITE
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.SetSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonEncoder
 import ninja.blacknet.Kernel
 import ninja.blacknet.ShutdownHooks
 import ninja.blacknet.contract.HashTimeLockContractId
@@ -39,8 +32,6 @@ import ninja.blacknet.io.outputStream
 import ninja.blacknet.network.Node
 import ninja.blacknet.network.packet.UnfilteredInvList
 import ninja.blacknet.serialization.*
-import ninja.blacknet.serialization.bbf.BinaryDecoder
-import ninja.blacknet.serialization.bbf.BinaryEncoder
 import ninja.blacknet.serialization.bbf.binaryFormat
 import ninja.blacknet.signal.Signal6
 import ninja.blacknet.time.currentTimeSeconds
@@ -117,7 +108,7 @@ object WalletDB {
                 val unconfirmed = ArrayList<Triple<Hash, ByteArray, Int>>()
 
                 wallet.transactions.forEach { (hash, txData) ->
-                    if (txData.height == 0 && txData.types[0].type != TxType.Generated.type) {
+                    if (txData.height == 0 && txData.types[0].type != TxType.Generated.type.toUByte()) {
                         val bytes = getTransactionImpl(hash)!!
                         val tx = binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes)
                         unconfirmed.add(Triple(hash, bytes, tx.seq))
@@ -384,7 +375,7 @@ object WalletDB {
         if (txData == null) {
             val from = tx.from == publicKey
             val types = if (tx.type == TxType.Generated.type) {
-                listOf(TransactionDataType(tx.type, 0))
+                listOf(TransactionDataType(tx.type.toUByte(), 0u))
             } else {
                 if (from) {
                     if (tx.seq == wallet.seq)
@@ -394,7 +385,7 @@ object WalletDB {
                 }
                 if (tx.type != TxType.Batch.type) {
                     if (processTransactionDataImpl(publicKey, wallet, hash, 0, tx.type, tx.data, height, from))
-                        listOf(TransactionDataType(tx.type, 0))
+                        listOf(TransactionDataType(tx.type.toUByte(), 0u))
                     else
                         emptyList()
                 } else {
@@ -404,7 +395,7 @@ object WalletDB {
                         val (dataType, dataBytes) = data.multiData[index]
                         val dataIndex = index + 1
                         if (processTransactionDataImpl(publicKey, wallet, hash, dataIndex, dataType, dataBytes, height, from))
-                            types.add(TransactionDataType(dataType, dataIndex.toByte()))
+                            types.add(TransactionDataType(dataType.toUByte(), dataIndex.toUByte()))
                     }
                     types
                 }
@@ -437,48 +428,11 @@ object WalletDB {
         }
     }
 
-    @Serializable(TransactionDataType.Companion::class)
+    @Serializable
     class TransactionDataType(
-            val type: Byte,
-            val dataIndex: Byte
+        val type: UByte,
+        val dataIndex: UByte,
     ) {
-        companion object : KSerializer<TransactionDataType> {
-            override val descriptor: SerialDescriptor = buildClassSerialDescriptor(
-                "ninja.blacknet.db.WalletDB.TransactionDataType"
-            ) {
-                element("type", Byte.serializer().descriptor)
-                element("dataIndex", Byte.serializer().descriptor)
-            }
-
-            override fun deserialize(decoder: Decoder): TransactionDataType {
-                return when (decoder) {
-                    is BinaryDecoder -> {
-                        TransactionDataType(
-                                decoder.decodeByte(),
-                                decoder.decodeByte()
-                        )
-                    }
-                    else -> throw notSupportedFormatError(decoder, this)
-                }
-            }
-
-            override fun serialize(encoder: Encoder, value: TransactionDataType) {
-                when (encoder) {
-                    is BinaryEncoder -> {
-                        encoder.encodeByte(value.type)
-                        encoder.encodeByte(value.dataIndex)
-                    }
-                    is JsonEncoder -> {
-                        @Suppress("NAME_SHADOWING")
-                        val encoder = encoder.beginStructure(descriptor)
-                        encoder.encodeSerializableElement(descriptor, 0, Int.serializer(), value.type.toUByte().toInt())
-                        encoder.encodeSerializableElement(descriptor, 1, Int.serializer(), value.dataIndex.toInt())
-                        encoder.endStructure(descriptor)
-                    }
-                    else -> throw notSupportedFormatError(encoder, this)
-                }
-            }
-        }
     }
 
     @Serializable

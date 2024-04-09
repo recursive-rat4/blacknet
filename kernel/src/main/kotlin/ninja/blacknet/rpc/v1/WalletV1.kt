@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Pavel Vasin
+ * Copyright (c) 2019-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -40,7 +40,7 @@ class TransactionDataV1(
         val time: Long,
         var height: Int
 ) {
-    constructor(txData: WalletDB.TransactionData) : this(txData.types[0].type, txData.time, txData.height)
+    constructor(txData: WalletDB.TransactionData) : this(txData.types[0].type.toByte(), txData.time, txData.height)
     fun toJson() = Json.toJson(serializer(), this)
 
     @Serializer(forClass = TransactionDataV1::class)
