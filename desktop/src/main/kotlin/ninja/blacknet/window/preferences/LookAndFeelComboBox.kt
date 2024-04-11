@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Pavel Vasin
+ * Copyright (c) 2023-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -16,7 +16,7 @@ import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import ninja.blacknet.swing.dsl.*
 
-fun LookAndFeelComboBox() = jComboBox {
+fun LookAndFeelComboBox() = jComboBox<String> {
     UIManager.getInstalledLookAndFeels().forEach { info ->
         +info.name
     }
