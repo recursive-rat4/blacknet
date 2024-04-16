@@ -18,7 +18,7 @@
         <version>0.3-SNAPSHOT</version>
     </parent>
 
-    <artifactId>blacknet-io</artifactId>
+    <artifactId>blacknet-crypto</artifactId>
 
     <dependencies>
         <dependency>
