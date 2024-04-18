@@ -18,6 +18,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import ninja.blacknet.Kernel
 import ninja.blacknet.crypto.Hash
 import ninja.blacknet.db.PeerDB
@@ -126,7 +127,10 @@ class Connection(
                 logger.debug { "Received ${packet::class.simpleName} from ${debugName()}" }
                 packet.handle(this)
             }
+        } catch (e: SerializationException) {
+            logger.debug(e) { "Exception in receiver ${debugName()}" }
         } catch (e: IOException) {
+            logger.debug(e) { "Exception in receiver ${debugName()}" }
         } finally {
             close()
         }
@@ -143,7 +147,10 @@ class Connection(
                 outputStream.flush()
                 sendQueueSize -= e.size.toLong()
             }
+        } catch (e: SerializationException) {
+            logger.error(e) { "Exception in sender ${debugName()}" }
         } catch (e: IOException) {
+            logger.debug(e) { "Exception in sender ${debugName()}" }
         } finally {
             close()
         }
