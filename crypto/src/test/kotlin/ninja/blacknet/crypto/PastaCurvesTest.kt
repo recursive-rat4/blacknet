@@ -53,4 +53,13 @@ class PastaCurvesTest {
         assertEquals(c, PallasFieldElement(a) / PallasFieldElement(b))
         assertEquals(d, VestaFieldElement(a) / VestaFieldElement(b))
     }
+
+    @Test
+    fun fieldNeg() {
+        val a = BigInteger("12610bc44a0bbc319a91fc24e99a98ef2bd29a2b535bbd1a74bc100a698e34fa", 16)
+        val b = PallasFieldElement(BigInteger("2d9ef43bb5f443ce656e03db16656710f673fed0b5f13c01247120e29671cb07", 16))
+        val c = VestaFieldElement(BigInteger("2d9ef43bb5f443ce656e03db16656710f673fed0b638ebc3178adb169671cb07", 16))
+        assertEquals(b, -PallasFieldElement(a))
+        assertEquals(c, -VestaFieldElement(a))
+    }
 }
