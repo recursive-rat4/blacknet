@@ -334,9 +334,10 @@ object PeerDB {
         var removed = 0
         val currTime = currentTimeSeconds()
         peers.forEach { (address, entry) ->
-            if (entry.isOld(currTime)) {
+            if (entry.isOld(currTime) && entry.inContact.compareAndSet(false, true)) {
                 peers.remove(address)
                 ++removed
+                // hodl mutex so others don't acquire it
             }
         }
         if (removed != 0) {
