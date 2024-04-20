@@ -19,7 +19,8 @@ abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> pro
 
     internal abstract fun element(n: BigInteger): E
 
-    internal val ZERO: E = element(BigInteger.ZERO)
+    //internal val ZERO: E = element(BigInteger.ZERO)
+    internal abstract val ZERO: E //UPSTREAM don't create uninitialized objects
 
     internal fun random(random: Random): E {
         while (true) {

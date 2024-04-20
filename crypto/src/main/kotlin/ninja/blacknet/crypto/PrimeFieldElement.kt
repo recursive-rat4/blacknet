@@ -37,7 +37,7 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
     )
 
     operator fun unaryMinus(): E = field.element(
-        field.order - n
+        field.order - n mod field.order
     )
 
     private operator fun BigInteger.div(other: BigInteger) = multiply(other.modInverse(field.order))
