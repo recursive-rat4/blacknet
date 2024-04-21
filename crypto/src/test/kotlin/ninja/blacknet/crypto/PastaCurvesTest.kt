@@ -25,6 +25,8 @@ class PastaCurvesTest {
         assertEquals(d, VestaFieldElement(a) + VestaFieldElement(b))
         assertEquals(c, PallasField.ZERO + c)
         assertEquals(d, d + VestaField.ZERO)
+        assertEquals(PallasField.ONE, PallasField.ONE + PallasField.ZERO)
+        assertEquals(VestaField.ONE, VestaField.ZERO + VestaField.ONE)
     }
 
     @Test
@@ -37,6 +39,8 @@ class PastaCurvesTest {
         assertEquals(d, VestaFieldElement(a) * VestaFieldElement(b))
         assertEquals(PallasField.ZERO, PallasField.ZERO * c)
         assertEquals(VestaField.ZERO, d * VestaField.ZERO)
+        assertEquals(c, c * PallasField.ONE)
+        assertEquals(d, VestaField.ONE * d)
     }
 
     @Test
@@ -49,6 +53,8 @@ class PastaCurvesTest {
         assertEquals(d, VestaFieldElement(a) - VestaFieldElement(b))
         assertEquals(c, c - PallasField.ZERO)
         assertEquals(d, d - VestaField.ZERO)
+        assertEquals(PallasField.ZERO, PallasField.ONE - PallasField.ONE)
+        assertEquals(VestaField.ZERO, VestaField.ONE - VestaField.ONE)
     }
 
     @Test
@@ -61,6 +67,8 @@ class PastaCurvesTest {
         assertEquals(d, VestaFieldElement(a) / VestaFieldElement(b))
         assertEquals(PallasField.ZERO, PallasField.ZERO / c)
         assertFailsWith<ArithmeticException> { d / VestaField.ZERO }
+        assertEquals(PallasField.ONE, PallasField.ONE / PallasField.ONE)
+        assertEquals(d, d / VestaField.ONE)
     }
 
     @Test
@@ -72,5 +80,7 @@ class PastaCurvesTest {
         assertEquals(c, -VestaFieldElement(a))
         assertEquals(PallasField.ZERO, -PallasField.ZERO)
         assertEquals(VestaField.ZERO, -VestaField.ZERO)
+        assertEquals(PallasFieldElement(PallasField.order - BigInteger.ONE), -PallasField.ONE)
+        assertEquals(VestaFieldElement(VestaField.order - BigInteger.ONE), -VestaField.ONE)
     }
 }

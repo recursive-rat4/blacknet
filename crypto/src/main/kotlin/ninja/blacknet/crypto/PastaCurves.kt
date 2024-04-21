@@ -23,6 +23,7 @@ object PallasField : PrimeField<PallasField, PallasFieldElement>(
 ) {
     override fun element(n: BigInteger) = PallasFieldElement(n)
     override val ZERO = PallasFieldElement(BigInteger.ZERO)
+    override val ONE = PallasFieldElement(BigInteger.ONE)
 }
 
 class PallasFieldElement internal constructor(
@@ -36,6 +37,7 @@ object VestaField : PrimeField<VestaField, VestaFieldElement>(
 ) {
     override fun element(n: BigInteger) = VestaFieldElement(n)
     override val ZERO = VestaFieldElement(BigInteger.ZERO)
+    override val ONE = VestaFieldElement(BigInteger.ONE)
 }
 
 class VestaFieldElement internal constructor(
