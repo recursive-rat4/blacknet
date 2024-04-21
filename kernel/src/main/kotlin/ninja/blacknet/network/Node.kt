@@ -18,9 +18,11 @@ import java.net.SocketException
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.StandardOpenOption.READ
+import java.util.Comparator.comparingLong
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
+import java.util.stream.Collectors.toCollection
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.serialization.Serializable
@@ -425,12 +427,12 @@ object Node {
     }
 
     private fun evictConnection(): Boolean {
-        val candidates = connections.asSequence().filter { it.state.isIncoming() }
-                .sortedBy { if (it.ping != 0L) it.ping else Long.MAX_VALUE }.drop(4)
-                .sortedByDescending { it.lastTxTime }.drop(4)
-                .sortedByDescending { it.lastBlockTime }.drop(4)
-                .sortedBy { it.connectedAt }.drop(4)
-                .toMutableList()
+        val candidates = connections.stream().filter { it.state.isIncoming() }
+                .sorted(comparingLong<Connection> { if (it.ping != 0L) it.ping else Long.MAX_VALUE }).skip(4)
+                .sorted(comparingLong<Connection> { it.lastTxTime }.reversed()).skip(4)
+                .sorted(comparingLong<Connection> { it.lastBlockTime }.reversed()).skip(4)
+                .sorted(comparingLong<Connection> { it.connectedAt }).skip(4)
+                .collect(toCollection { ArrayList(connections.size) })
 
         //TODO network groups
 

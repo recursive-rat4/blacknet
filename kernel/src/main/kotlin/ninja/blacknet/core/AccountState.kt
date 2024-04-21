@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,6 +9,7 @@
 
 package ninja.blacknet.core
 
+import java.util.stream.Collectors.toCollection
 import kotlinx.serialization.Serializable
 import ninja.blacknet.crypto.PoS
 import ninja.blacknet.crypto.PublicKey
@@ -90,7 +91,7 @@ class AccountState(
             false
         } else {
             stake += mature
-            immature = immature.asSequence().filter { !it.isMature(height) }.toMutableList()
+            immature = immature.stream().filter { !it.isMature(height) }.collect(toCollection { ArrayList(immature.size) })
             true
         }
     }
