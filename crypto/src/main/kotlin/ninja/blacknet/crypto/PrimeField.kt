@@ -30,4 +30,11 @@ abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> pro
                 return element(n)
         }
     }
+
+    @Suppress("UNCHECKED_CAST")
+    internal fun random(random: Random, n: Int) = Vector<E, F>(
+        Array<PrimeFieldElement<E, F>>(n) {
+            random(random)
+        } as Array<E>
+    )
 }
