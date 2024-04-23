@@ -11,7 +11,6 @@ package ninja.blacknet.crypto
 
 import java.math.BigInteger
 import java.util.Arrays
-import java.util.Random
 
 class Vector<E : PrimeFieldElement<E, F>, F : PrimeField<F, E>> internal constructor(
     private val array: Array<E>,
@@ -19,6 +18,8 @@ class Vector<E : PrimeFieldElement<E, F>, F : PrimeField<F, E>> internal constru
     override fun equals(other: Any?) = other is Vector<E, F> && Arrays.equals(array, other.array)
     override fun hashCode() = Arrays.hashCode(array)
     override fun toString() = Arrays.toString(array)
+
+    operator fun get(i: Int): E = array[i]
 
     @Suppress("UNCHECKED_CAST")
     operator fun plus(other: Vector<E, F>) = Vector<E, F>(

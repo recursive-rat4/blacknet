@@ -15,6 +15,20 @@ import kotlin.test.assertEquals
 
 class VectorTest {
     @Test
+    fun `get`() {
+        val a = arrayOf(
+            PallasFieldElement(BigInteger.valueOf(100)),
+            PallasFieldElement(BigInteger.valueOf(101)),
+            PallasFieldElement(BigInteger.valueOf(110)),
+            PallasFieldElement(BigInteger.valueOf(111)),
+        )
+        val v = Vector(a)
+        a.forEachIndexed { i, e ->
+            assertEquals(e, v[i])
+        }
+    }
+
+    @Test
     fun `Hadamard product`() {
         val a = Vector(arrayOf(
             PallasFieldElement(BigInteger.valueOf(2)),
