@@ -34,4 +34,11 @@ class Vector<E : PrimeFieldElement<E, F>, F : PrimeField<F, E>> internal constru
             array[i] * other.array[i]
         } as Array<E>
     )
+
+    @Suppress("UNCHECKED_CAST")
+    operator fun times(other: E) = Vector<E, F>(
+        Array<PrimeFieldElement<E, F>>(array.size) { i ->
+            array[i] * other
+        } as Array<E>
+    )
 }

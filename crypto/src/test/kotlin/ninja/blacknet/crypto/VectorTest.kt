@@ -69,4 +69,20 @@ class VectorTest {
         assertEquals(c, a + b)
         assertEquals(c, b + a)
     }
+
+    @Test
+    fun `Scalar product`() {
+        val a = Vector(arrayOf(
+            PallasFieldElement(BigInteger.valueOf(4)),
+            PallasFieldElement(BigInteger.valueOf(5)),
+            PallasFieldElement(BigInteger.valueOf(6)),
+        ))
+        val b = PallasFieldElement(BigInteger.valueOf(2))
+        val c = Vector(arrayOf(
+            PallasFieldElement(BigInteger.valueOf(8)),
+            PallasFieldElement(BigInteger.valueOf(10)),
+            PallasFieldElement(BigInteger.valueOf(12)),
+        ))
+        assertEquals(c, a * b)
+    }
 }
