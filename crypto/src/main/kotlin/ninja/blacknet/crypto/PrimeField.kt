@@ -17,6 +17,22 @@ abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> pro
 ) {
     private val bits: Int = (order - BigInteger.ONE).bitLength()
 
+    internal val S: BigInteger
+    internal val Q: BigInteger
+
+    init {
+        require(order > BigInteger.TWO) { "Odd prime" }
+
+        var s = BigInteger.ZERO
+        var q = order - BigInteger.ONE
+        while (q mod BigInteger.TWO == BigInteger.ZERO) {
+            s += BigInteger.ONE
+            q /= BigInteger.TWO
+        }
+        S = s
+        Q = q
+    }
+
     internal abstract fun element(n: BigInteger): E
 
     //internal val ZERO: E = element(BigInteger.ZERO)

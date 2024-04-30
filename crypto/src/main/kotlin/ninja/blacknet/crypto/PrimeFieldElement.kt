@@ -33,13 +33,50 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
     )
 
     operator fun div(other: E): E = field.element(
-        n / other.n mod field.order
+        n * other.n.inv() mod field.order
     )
 
     operator fun unaryMinus(): E = field.element(
         field.order - n mod field.order
     )
 
-    private operator fun BigInteger.div(other: BigInteger) = multiply(other.modInverse(field.order))
-    private infix fun BigInteger.mod(mod: BigInteger) = mod(mod)
+    fun sqrt(): E? {
+        // Tonelli–Shanks algorithm
+        when (n.isQuadraticResidue()) {
+            BigInteger.ONE -> {
+                var z = BigInteger.TWO
+                while (z.isQuadraticResidue() < BigInteger.TWO)
+                    z += BigInteger.ONE
+                var m = field.S
+                var c = z.modPow(field.Q, field.order)
+                var t = n.modPow(field.Q, field.order)
+                var r = n.modPow((field.Q + BigInteger.ONE) / BigInteger.TWO, field.order)
+                while (true) {
+                    if (t == BigInteger.ZERO)
+                        return field.ZERO
+                    else if (t == BigInteger.ONE)
+                        return field.element(r)
+                    else {
+                        var i = BigInteger.ONE
+                        while (t.modPow(BigInteger.TWO.pow(i.intValueExact()), field.order) != BigInteger.ONE)
+                            i += BigInteger.ONE
+                        val b = c.modPow(BigInteger.TWO.pow((m - i - BigInteger.ONE).intValueExact()), field.order)
+                        m = i
+                        c = b.pow(2) mod field.order
+                        t = t * b.pow(2) mod field.order
+                        r = r * b mod field.order
+                    }
+                }
+            }
+            BigInteger.ZERO -> return field.ZERO
+            else -> return null
+        }
+    }
+
+    // Legendre symbol
+    private fun BigInteger.isQuadraticResidue() = modPow((field.order - BigInteger.ONE) / BigInteger.TWO, field.order)
+
+    private fun BigInteger.inv() = modInverse(field.order)
 }
+
+internal infix fun BigInteger.mod(mod: BigInteger) = mod(mod)

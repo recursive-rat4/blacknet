@@ -13,6 +13,7 @@ import java.math.BigInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 class PastaCurvesTest {
     @Test
@@ -82,5 +83,21 @@ class PastaCurvesTest {
         assertEquals(VestaField.ZERO, -VestaField.ZERO)
         assertEquals(PallasFieldElement(PallasField.order - BigInteger.ONE), -PallasField.ONE)
         assertEquals(VestaFieldElement(VestaField.order - BigInteger.ONE), -VestaField.ONE)
+    }
+
+    @Test
+    fun fieldSqrt() {
+        val a = BigInteger("35aeb661a5f2e7df341a8f256036c025e07b8e45002f7d9da0c8f7b5aa744aea", 16)
+        val b = PallasFieldElement(BigInteger("344a642baaa8f21985d0757617709370cdc5b87574ecd97b4cf3c9d915689609", 16))
+        val c = BigInteger("39fce7dbf35569b5dc603860e3254bf9e61e3b57ba958a05a121b318906fe126", 16)
+        val d = VestaFieldElement(BigInteger("2fd1206ca31cb1de80ffb18d6b4e5095edafca2beb056dfe0125bf1e0cae890a", 16))
+        assertEquals(b, PallasFieldElement(a).sqrt())
+        assertNull(VestaFieldElement(a).sqrt())
+        assertEquals(d, VestaFieldElement(c).sqrt())
+        assertNull(PallasFieldElement(c).sqrt())
+        assertEquals(PallasField.ZERO, PallasField.ZERO.sqrt())
+        assertEquals(VestaField.ZERO, VestaField.ZERO.sqrt())
+        assertEquals(PallasField.ONE, PallasField.ONE.sqrt())
+        assertEquals(VestaField.ONE, VestaField.ONE.sqrt())
     }
 }
