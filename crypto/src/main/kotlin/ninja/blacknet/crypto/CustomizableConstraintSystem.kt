@@ -24,6 +24,7 @@ class CustomizableConstraintSystem<E : PrimeFieldElement<E, F>, F : PrimeField<F
     private val s: Array<Array<Int>>,
     private val c: Array<E>,
 ) {
+    @Suppress("UNCHECKED_CAST")
     fun isSatisfied(z: Vector<E, F>): Boolean {
         var sigma = Vector(Array<PrimeFieldElement<E, F>>(rows) { field.ZERO } as Array<E>)
         for (i in 0 until c.size) {
