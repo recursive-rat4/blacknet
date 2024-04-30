@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -66,8 +66,10 @@ class Bech32Test {
             assertTrue(Bech32.encode(hrp, data).compareTo(string, ignoreCase = true) == 0)
         }
 
-        @Suppress("ControlFlowWithEmptyBody")
-        @Suppress("UNUSED_VARIABLE")
+        @Suppress(
+            "ControlFlowWithEmptyBody",
+            "UNUSED_VARIABLE",
+        )
         for ((string, reason) in arrayOf(
                 Pair("tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty", "Invalid human-readable part"),
                 Pair("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5", "Invalid checksum"),
