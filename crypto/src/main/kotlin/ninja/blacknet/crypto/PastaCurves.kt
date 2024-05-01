@@ -45,3 +45,51 @@ class VestaFieldElement internal constructor(
 ) : PrimeFieldElement<VestaFieldElement, VestaField>(n) {
     override val field = VestaField
 }
+
+object PallasGroup : EllipticCurveGroup<
+    PallasGroup, PallasGroupElement,
+    PallasFieldElement, PallasField,
+    VestaFieldElement, VestaField,
+>(PallasField) {
+    override val a = PallasField.ZERO
+    override val b = PallasFieldElement(BigInteger.valueOf(5))
+
+    override fun element(x: PallasFieldElement, y: PallasFieldElement) = PallasGroupElement(x, y)
+
+    override val INFINITY = element(PallasField.ZERO, PallasField.ZERO)
+}
+
+class PallasGroupElement internal constructor(
+    x: PallasFieldElement,
+    y: PallasFieldElement,
+) : EllipticCurveGroupElement<
+    PallasGroupElement, PallasGroup,
+    PallasFieldElement, PallasField,
+    VestaFieldElement, VestaField,
+>(x, y) {
+    override val group = PallasGroup
+}
+
+object VestaGroup : EllipticCurveGroup<
+    VestaGroup, VestaGroupElement,
+    VestaFieldElement, VestaField,
+    PallasFieldElement, PallasField,
+>(VestaField) {
+    override val a = VestaField.ZERO
+    override val b = VestaFieldElement(BigInteger.valueOf(5))
+
+    override fun element(x: VestaFieldElement, y: VestaFieldElement) = VestaGroupElement(x, y)
+
+    override val INFINITY = element(VestaField.ZERO, VestaField.ZERO)
+}
+
+class VestaGroupElement internal constructor(
+    x: VestaFieldElement,
+    y: VestaFieldElement,
+) : EllipticCurveGroupElement<
+    VestaGroupElement, VestaGroup,
+    VestaFieldElement, VestaField,
+    PallasFieldElement, PallasField,
+>(x, y) {
+    override val group = VestaGroup
+}
