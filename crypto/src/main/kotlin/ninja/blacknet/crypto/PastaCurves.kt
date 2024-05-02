@@ -50,7 +50,7 @@ object PallasGroup : EllipticCurveGroup<
     PallasGroup, PallasGroupElement,
     PallasFieldElement, PallasField,
     VestaFieldElement, VestaField,
->(PallasField) {
+>(PallasField, VestaField) {
     override val a = PallasField.ZERO
     override val b = PallasFieldElement(BigInteger.valueOf(5))
 
@@ -74,7 +74,7 @@ object VestaGroup : EllipticCurveGroup<
     VestaGroup, VestaGroupElement,
     VestaFieldElement, VestaField,
     PallasFieldElement, PallasField,
->(VestaField) {
+>(VestaField, PallasField) {
     override val a = VestaField.ZERO
     override val b = VestaFieldElement(BigInteger.valueOf(5))
 

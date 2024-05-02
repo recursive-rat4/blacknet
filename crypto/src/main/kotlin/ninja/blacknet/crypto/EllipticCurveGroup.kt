@@ -18,6 +18,7 @@ abstract class EllipticCurveGroup<
     SE : PrimeFieldElement<SE, SF>, SF : PrimeField<SF, SE>,
 > protected constructor(
     private val base: BF,
+    internal val scalar: SF,
 ) {
     init {
         require(base.order > BigInteger.valueOf(3)) { "Affine double" }

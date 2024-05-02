@@ -51,4 +51,17 @@ abstract class EllipticCurveGroupElement<
             group.INFINITY
         }
     }
+
+    @Suppress("UNCHECKED_CAST")
+    operator fun times(other: SE): E {
+        // Double-and-add method
+        var r = group.INFINITY
+        var t = this as E
+        for (i in 0 until group.scalar.bits) {
+            if (other[i])
+                r += t
+            t += t
+        }
+        return r
+    }
 }

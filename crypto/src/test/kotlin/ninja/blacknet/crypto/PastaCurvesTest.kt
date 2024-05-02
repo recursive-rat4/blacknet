@@ -159,4 +159,22 @@ class PastaCurvesTest {
         assertEquals(c, c + PallasGroup.INFINITY)
         assertEquals(VestaGroup.INFINITY, VestaGroup.INFINITY + VestaGroup.INFINITY)
     }
+
+    @Test
+    fun groupMul() {
+        val a = PallasGroupElement(
+            PallasFieldElement(BigInteger("3aed134ed42ad34f18db7529fb0ed4470dbb0a157d676eca74f7789208b87676", 16)),
+            PallasFieldElement(BigInteger("2a7a1566f8a07fe9bc87e23a8556e2e144afbe659053d2bfcbbaaa5a42ed856b", 16)),
+        )
+        val b = VestaFieldElement(BigInteger("e18ddb951f8a3a10c33028e6cd15a9b4480c3c825f515b6da24b75e7c813623", 16))
+        val c = PallasGroupElement(
+            PallasFieldElement(BigInteger("2a0da0b30d7ff6d2956f3eeb2f72dc75310b85f70aa9123640ed78f1b6c3ff03", 16)),
+            PallasFieldElement(BigInteger("2ddbebbf3c0412bc46ffaec08aaebc3c6bd717f3205bb841814983d016f79ec0", 16)),
+        )
+        val d = PallasFieldElement(BigInteger("251d364ed569cbf14184665ce3fa321e9678002959e04609d1a0ecc692cee9e1", 16))
+        assertEquals(c, a * b)
+        assertEquals(a, a * VestaField.ONE)
+        assertEquals(PallasGroup.INFINITY, a * VestaField.ZERO)
+        assertEquals(VestaGroup.INFINITY, VestaGroup.INFINITY * d)
+    }
 }

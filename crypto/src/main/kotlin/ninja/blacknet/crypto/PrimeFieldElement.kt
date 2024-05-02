@@ -73,6 +73,8 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
         }
     }
 
+    internal operator fun get(index: Int) = n.testBit(index)
+
     // Legendre symbol
     private fun BigInteger.isQuadraticResidue() = modPow((field.order - BigInteger.ONE) / BigInteger.TWO, field.order)
 

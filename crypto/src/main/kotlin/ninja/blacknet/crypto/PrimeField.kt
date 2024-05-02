@@ -15,7 +15,7 @@ import java.util.Random
 abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> protected constructor(
     internal val order: BigInteger,
 ) {
-    private val bits: Int = (order - BigInteger.ONE).bitLength()
+    internal val bits: Int = (order - BigInteger.ONE).bitLength()
 
     internal val S: BigInteger
     internal val Q: BigInteger
