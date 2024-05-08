@@ -34,7 +34,7 @@ abstract class EllipticCurveGroup<
 
     internal abstract val INFINITY: E
 
-    internal fun random(random: Random): E {
+    fun random(random: Random): E {
         while (true) {
             val x = base.random(random)
             val y = (x * x * x + a * x + b).sqrt() ?: continue

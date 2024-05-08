@@ -39,7 +39,7 @@ abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> pro
     internal abstract val ZERO: E //UPSTREAM don't create uninitialized objects
     internal abstract val ONE: E
 
-    internal fun random(random: Random): E {
+    fun random(random: Random): E {
         while (true) {
             val n = BigInteger(bits, random)
             if (n < order)
@@ -48,7 +48,7 @@ abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> pro
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal fun random(random: Random, n: Int) = Vector<E, F>(
+    fun random(random: Random, n: Int) = Vector<E, F>(
         Array<PrimeFieldElement<E, F>>(n) {
             random(random)
         } as Array<E>
