@@ -14,48 +14,22 @@ abstract class EllipticCurveGroupElement<
     BE : PrimeFieldElement<BE, BF>, BF : PrimeField<BF, BE>,
     SE : PrimeFieldElement<SE, SF>, SF : PrimeField<SF, SE>,
 > protected constructor(
-    private val x: BE,
-    private val y: BE,
 ) {
     protected abstract val group: G
+    protected abstract val INFINITY: E
 
-    override fun equals(other: Any?) = other is EllipticCurveGroupElement<E, G, BE, BF, SE, SF> && x == other.x && y == other.y && group === other.group
-    override fun hashCode() = x.hashCode() xor y.hashCode()
-    override fun toString() = if (this != group.INFINITY) "(${x.toString()}, ${y.toString()})" else "Infinity"
+    override abstract fun equals(other: Any?): Boolean
+    override abstract fun hashCode(): Int
+    override abstract fun toString(): String
 
-    operator fun unaryMinus(): E {
-        return if (this != group.INFINITY)
-            group.element(x, -y)
-        else
-            group.INFINITY
-    }
+    abstract operator fun unaryMinus(): E
 
-    @Suppress("UNCHECKED_CAST")
-    operator fun plus(other: E): E {
-        if (this == group.INFINITY)
-            return other
-        if (other == group.INFINITY)
-            return this as E
-
-        return if (x != other.x) {
-            val k = (other.y - y) / (other.x - x)
-            val xr = k * k - x - other.x
-            val yr = k * (x - xr) - y
-            group.element(xr, yr)
-        } else if (y == other.y) {
-            val k = (group.THREE * x * x + group.a) / (group.TWO * y)
-            val xr = k * k - x - x
-            val yr = k * (x - xr) - y
-            group.element(xr, yr)
-        } else {
-            group.INFINITY
-        }
-    }
+    abstract operator fun plus(other: E): E
 
     @Suppress("UNCHECKED_CAST")
     operator fun times(other: SE): E {
         // Double-and-add method
-        var r = group.INFINITY
+        var r = INFINITY
         var t = this as E
         for (i in 0 until group.scalar.bits) {
             if (other[i])

@@ -47,23 +47,23 @@ class VestaFieldElement internal constructor(
 }
 
 object PallasGroup : EllipticCurveGroup<
-    PallasGroup, PallasGroupElement,
+    PallasGroup, PallasGroupElementAffine,
     PallasFieldElement, PallasField,
     VestaFieldElement, VestaField,
 >(PallasField, VestaField) {
     override val a = PallasField.ZERO
     override val b = PallasFieldElement(BigInteger.valueOf(5))
 
-    override fun element(x: PallasFieldElement, y: PallasFieldElement) = PallasGroupElement(x, y)
+    override fun elementAffine(x: PallasFieldElement, y: PallasFieldElement) = PallasGroupElementAffine(x, y)
 
-    override val INFINITY = element(PallasField.ZERO, PallasField.ZERO)
+    override val INFINITY_AFFINE = elementAffine(PallasField.ZERO, PallasField.ZERO)
 }
 
-class PallasGroupElement internal constructor(
+class PallasGroupElementAffine internal constructor(
     x: PallasFieldElement,
     y: PallasFieldElement,
-) : EllipticCurveGroupElement<
-    PallasGroupElement, PallasGroup,
+) : EllipticCurveGroupElementAffine<
+    PallasGroupElementAffine, PallasGroup,
     PallasFieldElement, PallasField,
     VestaFieldElement, VestaField,
 >(x, y) {
@@ -71,23 +71,23 @@ class PallasGroupElement internal constructor(
 }
 
 object VestaGroup : EllipticCurveGroup<
-    VestaGroup, VestaGroupElement,
+    VestaGroup, VestaGroupElementAffine,
     VestaFieldElement, VestaField,
     PallasFieldElement, PallasField,
 >(VestaField, PallasField) {
     override val a = VestaField.ZERO
     override val b = VestaFieldElement(BigInteger.valueOf(5))
 
-    override fun element(x: VestaFieldElement, y: VestaFieldElement) = VestaGroupElement(x, y)
+    override fun elementAffine(x: VestaFieldElement, y: VestaFieldElement) = VestaGroupElementAffine(x, y)
 
-    override val INFINITY = element(VestaField.ZERO, VestaField.ZERO)
+    override val INFINITY_AFFINE = elementAffine(VestaField.ZERO, VestaField.ZERO)
 }
 
-class VestaGroupElement internal constructor(
+class VestaGroupElementAffine internal constructor(
     x: VestaFieldElement,
     y: VestaFieldElement,
-) : EllipticCurveGroupElement<
-    VestaGroupElement, VestaGroup,
+) : EllipticCurveGroupElementAffine<
+    VestaGroupElementAffine, VestaGroup,
     VestaFieldElement, VestaField,
     PallasFieldElement, PallasField,
 >(x, y) {

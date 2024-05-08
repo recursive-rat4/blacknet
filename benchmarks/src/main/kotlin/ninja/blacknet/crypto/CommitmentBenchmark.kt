@@ -19,8 +19,8 @@ class CommitmentBenchmark {
     private val seed = 20240508L
     private val random = Random(seed)
 
-    private var g = PallasGroup.random(random)
-    private var h = PallasGroup.random(random)
+    private var g = PallasGroup.randomAffine(random)
+    private var h = PallasGroup.randomAffine(random)
     private var pc = PedersenCommitment(g, h)
     private var m = VestaField.random(random)
     private var r = VestaField.random(random)

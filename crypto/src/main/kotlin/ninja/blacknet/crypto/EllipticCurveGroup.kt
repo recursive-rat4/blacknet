@@ -30,15 +30,15 @@ abstract class EllipticCurveGroup<
     internal abstract val a: BE
     internal abstract val b: BE
 
-    internal abstract fun element(x: BE, y: BE): E
+    internal abstract fun elementAffine(x: BE, y: BE): E
 
-    internal abstract val INFINITY: E
+    internal abstract val INFINITY_AFFINE: E
 
-    fun random(random: Random): E {
+    fun randomAffine(random: Random): E {
         while (true) {
             val x = base.random(random)
             val y = (x * x * x + a * x + b).sqrt() ?: continue
-            return element(x, if (random.nextBoolean()) y else -y)
+            return elementAffine(x, if (random.nextBoolean()) y else -y)
         }
     }
 }

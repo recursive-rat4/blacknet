@@ -102,79 +102,79 @@ class PastaCurvesTest {
     }
 
     @Test
-    fun groupNeg() {
-        val a = PallasGroupElement(
+    fun groupNegAffine() {
+        val a = PallasGroupElementAffine(
             PallasFieldElement(BigInteger("2c998f5cd6f89a5323244238dcb0e122f3c48b690d17895d64c622fe7b134872", 16)),
             PallasFieldElement(BigInteger("2376d983140e67283c34cb1b20d3a6889b55892b51c224c059ba1f97a768959b", 16)),
         )
-        val b = PallasGroupElement(
+        val b = PallasGroupElementAffine(
             PallasFieldElement(BigInteger("2c998f5cd6f89a5323244238dcb0e122f3c48b690d17895d64c622fe7b134872", 16)),
             PallasFieldElement(BigInteger("1c89267cebf198d7c3cb34e4df2c597786f10fd0b78ad45b3f73115558976a66", 16)),
         )
-        val c = VestaGroupElement(
+        val c = VestaGroupElementAffine(
             VestaFieldElement(BigInteger("2b84f575fc91b8f506713c696425fd86ea1f134bdb0f2821816f00ab1eeeaa92", 16)),
             VestaFieldElement(BigInteger("179180e8abc3d15ed1d6bc287b7debe66b7c386cad750458ad956514255556bd", 16)),
         )
-        val d = VestaGroupElement(
+        val d = VestaGroupElementAffine(
             VestaFieldElement(BigInteger("2b84f575fc91b8f506713c696425fd86ea1f134bdb0f2821816f00ab1eeeaa92", 16)),
             VestaFieldElement(BigInteger("286e7f17543c2ea12e2943d784821419b6ca608f5c1fa484deb1860cdaaaa944", 16)),
         )
         assertEquals(b, -a)
         assertEquals(d, -c)
-        assertEquals(PallasGroup.INFINITY, -PallasGroup.INFINITY)
-        assertEquals(VestaGroup.INFINITY, -VestaGroup.INFINITY)
+        assertEquals(PallasGroup.INFINITY_AFFINE, -PallasGroup.INFINITY_AFFINE)
+        assertEquals(VestaGroup.INFINITY_AFFINE, -VestaGroup.INFINITY_AFFINE)
     }
 
     @Test
-    fun groupAdd() {
-        val a = PallasGroupElement(
+    fun groupAddAffine() {
+        val a = PallasGroupElementAffine(
             PallasFieldElement(BigInteger("1e3dbd8ef7121f586a32c8789be6c1bd516ea0b7b5e00d356527f3b9137c7f13", 16)),
             PallasFieldElement(BigInteger("c09c8b193a30e6989afa1cd8e3f468529cc2294b5111c80dc53080d10a133e3", 16)),
         )
-        val b = PallasGroupElement(
+        val b = PallasGroupElementAffine(
             PallasFieldElement(BigInteger("172c422e616dc9017cb392143dcdb133e1071d8e87806ccd9b222d82665aac69", 16)),
             PallasFieldElement(BigInteger("fb0e51efc9e8cd9c0a70e8fa507ec59fcb5da21d8cac79550c4f98d1dc2d362", 16)),
         )
-        val c = PallasGroupElement(
+        val c = PallasGroupElementAffine(
             PallasFieldElement(BigInteger("3105fd2e4cf209b0db4e0e0772661ffaee9083b4e5faac71251d9ddbf05c2f23", 16)),
             PallasFieldElement(BigInteger("67e082d0d17fffdd4de37c218a55e188dbb09200621dad577fab3b592cf9ef4", 16)),
         )
-        val d = VestaGroupElement(
+        val d = VestaGroupElementAffine(
             VestaFieldElement(BigInteger("3d3b0ea90d13082aa6862f0dac1e211c286614f222bafe7210862d448ef0e466", 16)),
             VestaFieldElement(BigInteger("2b63efb469e111e71293b98fbe5008688cb8de0ca571a0075ea200e74abca6f9", 16)),
         )
-        val e = VestaGroupElement(
+        val e = VestaGroupElementAffine(
             VestaFieldElement(BigInteger("1f85aa11a81f4464c19b28e5c55ace5b51689ef25f63156cce7d59e28969a639", 16)),
             VestaFieldElement(BigInteger("3816248bb82336b770bc06e56883e8fa92c4557f4b16f1ab9fbd831db7750df8", 16)),
         )
-        val f = VestaGroupElement(
+        val f = VestaGroupElementAffine(
             VestaFieldElement(BigInteger("1f85aa11a81f4464c19b28e5c55ace5b51689ef25f63156cce7d59e28969a639", 16)),
             VestaFieldElement(BigInteger("7e9db7447dcc9488f43f91a977c17058f82437cbe7db731ec896803488af209", 16)),
         )
         assertEquals(c, a + b)
         assertEquals(c, b + a)
         assertEquals(e, d + d)
-        assertEquals(VestaGroup.INFINITY, e + f)
-        assertEquals(c, PallasGroup.INFINITY + c)
-        assertEquals(c, c + PallasGroup.INFINITY)
-        assertEquals(VestaGroup.INFINITY, VestaGroup.INFINITY + VestaGroup.INFINITY)
+        assertEquals(VestaGroup.INFINITY_AFFINE, e + f)
+        assertEquals(c, PallasGroup.INFINITY_AFFINE + c)
+        assertEquals(c, c + PallasGroup.INFINITY_AFFINE)
+        assertEquals(VestaGroup.INFINITY_AFFINE, VestaGroup.INFINITY_AFFINE + VestaGroup.INFINITY_AFFINE)
     }
 
     @Test
-    fun groupMul() {
-        val a = PallasGroupElement(
+    fun groupMulAffine() {
+        val a = PallasGroupElementAffine(
             PallasFieldElement(BigInteger("3aed134ed42ad34f18db7529fb0ed4470dbb0a157d676eca74f7789208b87676", 16)),
             PallasFieldElement(BigInteger("2a7a1566f8a07fe9bc87e23a8556e2e144afbe659053d2bfcbbaaa5a42ed856b", 16)),
         )
         val b = VestaFieldElement(BigInteger("e18ddb951f8a3a10c33028e6cd15a9b4480c3c825f515b6da24b75e7c813623", 16))
-        val c = PallasGroupElement(
+        val c = PallasGroupElementAffine(
             PallasFieldElement(BigInteger("2a0da0b30d7ff6d2956f3eeb2f72dc75310b85f70aa9123640ed78f1b6c3ff03", 16)),
             PallasFieldElement(BigInteger("2ddbebbf3c0412bc46ffaec08aaebc3c6bd717f3205bb841814983d016f79ec0", 16)),
         )
         val d = PallasFieldElement(BigInteger("251d364ed569cbf14184665ce3fa321e9678002959e04609d1a0ecc692cee9e1", 16))
         assertEquals(c, a * b)
         assertEquals(a, a * VestaField.ONE)
-        assertEquals(PallasGroup.INFINITY, a * VestaField.ZERO)
-        assertEquals(VestaGroup.INFINITY, VestaGroup.INFINITY * d)
+        assertEquals(PallasGroup.INFINITY_AFFINE, a * VestaField.ZERO)
+        assertEquals(VestaGroup.INFINITY_AFFINE, VestaGroup.INFINITY_AFFINE * d)
     }
 }
