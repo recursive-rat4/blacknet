@@ -47,7 +47,7 @@ class VestaFieldElement internal constructor(
 }
 
 object PallasGroup : EllipticCurveGroup<
-    PallasGroup, PallasGroupElementAffine,
+    PallasGroup, PallasGroupElementAffine, PallasGroupElementProjective,
     PallasFieldElement, PallasField,
     VestaFieldElement, VestaField,
 >(PallasField, VestaField) {
@@ -55,23 +55,37 @@ object PallasGroup : EllipticCurveGroup<
     override val b = PallasFieldElement(BigInteger.valueOf(5))
 
     override fun elementAffine(x: PallasFieldElement, y: PallasFieldElement) = PallasGroupElementAffine(x, y)
+    override fun elementProjective(x: PallasFieldElement, y: PallasFieldElement, z: PallasFieldElement) = PallasGroupElementProjective(x, y, z)
 
     override val INFINITY_AFFINE = elementAffine(PallasField.ZERO, PallasField.ZERO)
+    override val INFINITY_PROJECTIVE = elementProjective(PallasField.ZERO, PallasField.ZERO, PallasField.ZERO)
 }
 
 class PallasGroupElementAffine internal constructor(
     x: PallasFieldElement,
     y: PallasFieldElement,
 ) : EllipticCurveGroupElementAffine<
-    PallasGroupElementAffine, PallasGroup,
+    PallasGroupElementAffine, PallasGroup, PallasGroupElementProjective,
     PallasFieldElement, PallasField,
     VestaFieldElement, VestaField,
 >(x, y) {
     override val group = PallasGroup
 }
 
+class PallasGroupElementProjective internal constructor(
+    x: PallasFieldElement,
+    y: PallasFieldElement,
+    z: PallasFieldElement,
+) : EllipticCurveGroupElementProjective<
+    PallasGroupElementProjective, PallasGroup, PallasGroupElementAffine,
+    PallasFieldElement, PallasField,
+    VestaFieldElement, VestaField,
+>(x, y, z) {
+    override val group = PallasGroup
+}
+
 object VestaGroup : EllipticCurveGroup<
-    VestaGroup, VestaGroupElementAffine,
+    VestaGroup, VestaGroupElementAffine, VestaGroupElementProjective,
     VestaFieldElement, VestaField,
     PallasFieldElement, PallasField,
 >(VestaField, PallasField) {
@@ -79,17 +93,31 @@ object VestaGroup : EllipticCurveGroup<
     override val b = VestaFieldElement(BigInteger.valueOf(5))
 
     override fun elementAffine(x: VestaFieldElement, y: VestaFieldElement) = VestaGroupElementAffine(x, y)
+    override fun elementProjective(x: VestaFieldElement, y: VestaFieldElement, z: VestaFieldElement) = VestaGroupElementProjective(x, y, z)
 
     override val INFINITY_AFFINE = elementAffine(VestaField.ZERO, VestaField.ZERO)
+    override val INFINITY_PROJECTIVE = elementProjective(VestaField.ZERO, VestaField.ZERO, VestaField.ZERO)
 }
 
 class VestaGroupElementAffine internal constructor(
     x: VestaFieldElement,
     y: VestaFieldElement,
 ) : EllipticCurveGroupElementAffine<
-    VestaGroupElementAffine, VestaGroup,
+    VestaGroupElementAffine, VestaGroup, VestaGroupElementProjective,
     VestaFieldElement, VestaField,
     PallasFieldElement, PallasField,
 >(x, y) {
+    override val group = VestaGroup
+}
+
+class VestaGroupElementProjective internal constructor(
+    x: VestaFieldElement,
+    y: VestaFieldElement,
+    z: VestaFieldElement,
+) : EllipticCurveGroupElementProjective<
+    VestaGroupElementProjective, VestaGroup, VestaGroupElementAffine,
+    VestaFieldElement, VestaField,
+    PallasFieldElement, PallasField,
+>(x, y, z) {
     override val group = VestaGroup
 }

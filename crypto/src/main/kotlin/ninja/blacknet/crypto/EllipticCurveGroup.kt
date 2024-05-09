@@ -13,32 +13,46 @@ import java.math.BigInteger
 import java.util.Random
 
 abstract class EllipticCurveGroup<
-    G : EllipticCurveGroup<G, E, BE, BF, SE, SF>, E : EllipticCurveGroupElement<E, G, BE, BF, SE, SF>,
+    G : EllipticCurveGroup<G, EA, EP, BE, BF, SE, SF>,
+    EA : EllipticCurveGroupElementAffine<EA, G, EP, BE, BF, SE, SF>,
+    EP : EllipticCurveGroupElementProjective<EP, G, EA, BE, BF, SE, SF>,
     BE : PrimeFieldElement<BE, BF>, BF : PrimeField<BF, BE>,
     SE : PrimeFieldElement<SE, SF>, SF : PrimeField<SF, SE>,
 > protected constructor(
-    private val base: BF,
+    internal val base: BF,
     internal val scalar: SF,
 ) {
     init {
-        require(base.order > BigInteger.valueOf(3)) { "Affine double" }
+        require(base.order > BigInteger.valueOf(8)) { "Projective double" }
     }
 
     internal val TWO = base.element(BigInteger.TWO)
     internal val THREE = base.element(BigInteger.valueOf(3))
+    internal val FOUR = base.element(BigInteger.valueOf(4))
+    internal val EIGHT = base.element(BigInteger.valueOf(8))
 
     internal abstract val a: BE
     internal abstract val b: BE
 
-    internal abstract fun elementAffine(x: BE, y: BE): E
+    internal abstract fun elementAffine(x: BE, y: BE): EA
+    internal abstract fun elementProjective(x: BE, y: BE, z: BE): EP
 
-    internal abstract val INFINITY_AFFINE: E
+    internal abstract val INFINITY_AFFINE: EA
+    internal abstract val INFINITY_PROJECTIVE: EP
 
-    fun randomAffine(random: Random): E {
+    fun randomAffine(random: Random): EA {
         while (true) {
             val x = base.random(random)
             val y = (x * x * x + a * x + b).sqrt() ?: continue
             return elementAffine(x, if (random.nextBoolean()) y else -y)
+        }
+    }
+
+    fun randomProjective(random: Random): EP {
+        while (true) {
+            val x = base.random(random)
+            val y = (x * x * x + a * x + b).sqrt() ?: continue
+            return elementProjective(x, if (random.nextBoolean()) y else -y, base.ONE)
         }
     }
 }

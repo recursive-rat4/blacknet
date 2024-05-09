@@ -10,21 +10,22 @@
 package ninja.blacknet.crypto
 
 abstract class EllipticCurveGroupElementAffine<
-    E : EllipticCurveGroupElementAffine<E, G, BE, BF, SE, SF>, G : EllipticCurveGroup<G, E, BE, BF, SE, SF>,
+    EA : EllipticCurveGroupElementAffine<EA, G, EP, BE, BF, SE, SF>, G : EllipticCurveGroup<G, EA, EP, BE, BF, SE, SF>,
+    EP : EllipticCurveGroupElementProjective<EP, G, EA, BE, BF, SE, SF>,
     BE : PrimeFieldElement<BE, BF>, BF : PrimeField<BF, BE>,
     SE : PrimeFieldElement<SE, SF>, SF : PrimeField<SF, SE>,
 > protected constructor(
     private val x: BE,
     private val y: BE,
-) : EllipticCurveGroupElement<E, G, BE, BF, SE, SF>() {
-    override val INFINITY: E
+) : EllipticCurveGroupElement<EA, G, EA, EP, BE, BF, SE, SF>() {
+    override val INFINITY: EA
         get() = group.INFINITY_AFFINE //UPSTREAM don't create uninitialized objects
 
-    override fun equals(other: Any?) = other is EllipticCurveGroupElementAffine<E, G, BE, BF, SE, SF> && x == other.x && y == other.y && group === other.group
+    override fun equals(other: Any?) = other is EllipticCurveGroupElementAffine<EA, G, EP, BE, BF, SE, SF> && x == other.x && y == other.y && group === other.group
     override fun hashCode() = x.hashCode() xor y.hashCode()
     override fun toString() = if (this != INFINITY) "(${x.toString()}, ${y.toString()})" else "Infinity"
 
-    override operator fun unaryMinus(): E {
+    override operator fun unaryMinus(): EA {
         return if (this != INFINITY)
             group.elementAffine(x, -y)
         else
@@ -32,11 +33,11 @@ abstract class EllipticCurveGroupElementAffine<
     }
 
     @Suppress("UNCHECKED_CAST")
-    override operator fun plus(other: E): E {
+    override operator fun plus(other: EA): EA {
         if (this == INFINITY)
             return other
         if (other == INFINITY)
-            return this as E
+            return this as EA
 
         return if (x != other.x) {
             val k = (other.y - y) / (other.x - x)

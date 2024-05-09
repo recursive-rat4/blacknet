@@ -177,4 +177,93 @@ class PastaCurvesTest {
         assertEquals(PallasGroup.INFINITY_AFFINE, a * VestaField.ZERO)
         assertEquals(VestaGroup.INFINITY_AFFINE, VestaGroup.INFINITY_AFFINE * d)
     }
+
+    @Test
+    fun groupNegProjective() {
+        val a = PallasGroupElementProjective(
+            PallasFieldElement(BigInteger("1c92e421c15f698f5f595eb458e7ce36f9fa43fc4d06591aacd1658a92722cd5", 16)),
+            PallasFieldElement(BigInteger("2f89c29d9ae36f7c0f20ef5d73f85cea5fdc1cfeae3b96e36c377d3b2f1afb4d", 16)),
+            PallasField.ONE,
+        )
+        val b = PallasGroupElementProjective(
+            PallasFieldElement(BigInteger("1c92e421c15f698f5f595eb458e7ce36f9fa43fc4d06591aacd1658a92722cd5", 16)),
+            PallasFieldElement(BigInteger("10763d62651c9083f0df10a28c07a315c26a7bfd5b1162382cf5b3b1d0e504b4", 16)),
+            PallasField.ONE,
+        )
+        val c = VestaGroupElementProjective(
+            VestaFieldElement(BigInteger("29ccc7054c866d02883e099de5420e2bd07ca59ebc8f1901696496382d2b1c17", 16)),
+            VestaFieldElement(BigInteger("e2e3683b3e12f2b986560a0b3a208f29066185aad807056b440e687f990a70a", 16)),
+            VestaField.ONE,
+        )
+        val d = VestaGroupElementProjective(
+            VestaFieldElement(BigInteger("29ccc7054c866d02883e099de5420e2bd07ca59ebc8f1901696496382d2b1c17", 16)),
+            VestaFieldElement(BigInteger("31d1c97c4c1ed0d4679a9f5f4c5df70d91e080a15c143886d8060499066f58f7", 16)),
+            VestaField.ONE,
+        )
+        assertEquals(b, -a)
+        assertEquals(d, -c)
+        assertEquals(PallasGroup.INFINITY_PROJECTIVE, -PallasGroup.INFINITY_PROJECTIVE)
+        assertEquals(VestaGroup.INFINITY_PROJECTIVE, -VestaGroup.INFINITY_PROJECTIVE)
+    }
+
+    @Test
+    fun groupAddProjective() {
+        val a = PallasGroupElementProjective(
+            PallasFieldElement(BigInteger("248949bf1e33e577c48df9037c0fedce42ea070f91125cd796f49349a994794c", 16)),
+            PallasFieldElement(BigInteger("1a384ee0cd22f32777ff370d3ed17b85b3837a61f7c3c9d3097f06799303d15", 16)),
+            PallasField.ONE,
+        )
+        val b = PallasGroupElementProjective(
+            PallasFieldElement(BigInteger("342cfacf5781efbb03d6326015c9078aac0fbc7e5f17d6ad71c9bd8d5bb0e41c", 16)),
+            PallasFieldElement(BigInteger("37fd32ff6401ce86774f1b494ee915cec66be45e02981274e16e725eedf671ba", 16)),
+            PallasField.ONE,
+        )
+        val c = PallasGroupElementProjective(
+            PallasFieldElement(BigInteger("201da427944269dee8b83e3cb8400f980a26ca9b89e6787e97c70ab09460d2e", 16)),
+            PallasFieldElement(BigInteger("1d7929dcd5888af7651396fbcf1c145e178f5cbbbc9f497496c9b531692df787", 16)),
+            PallasField.ONE,
+        )
+        val d = VestaGroupElementProjective(
+            VestaFieldElement(BigInteger("2e3f99264efffdf2e6a620de2fd553baadc50da215ba7d2cace02a1843cab60e", 16)),
+            VestaFieldElement(BigInteger("3076516f0a8d132db8e5d71e15f1455c39b6cffa67946cd15b5daeb331557ba4", 16)),
+            VestaField.ONE,
+        )
+        val e = VestaGroupElementProjective(
+            VestaFieldElement(BigInteger("20902e52296c05a0a09ef0150af8bafe836cb1f934f0325abc1afbebc93c09c8", 16)),
+            VestaFieldElement(BigInteger("1d858f8d8cbea25bc870538280467c2ca440be332b2e33860552b61476160a0", 16)),
+            VestaField.ONE,
+        )
+        val f = VestaGroupElementProjective(
+            VestaFieldElement(BigInteger("20902e52296c05a0a09ef0150af8bafe836cb1f934f0325abc1afbebc93c09c8", 16)),
+            VestaFieldElement(BigInteger("3e27a707273415da4378fac7d7fb983d58028d18d6e1c5a52bf1bfbfb89e9f61", 16)),
+            VestaField.ONE,
+        )
+        assertEquals(c, a + b)
+        assertEquals(c, b + a)
+        assertEquals(e, d + d)
+        assertEquals(VestaGroup.INFINITY_PROJECTIVE, e + f)
+        assertEquals(c, PallasGroup.INFINITY_PROJECTIVE + c)
+        assertEquals(c, c + PallasGroup.INFINITY_PROJECTIVE)
+        assertEquals(VestaGroup.INFINITY_PROJECTIVE, VestaGroup.INFINITY_PROJECTIVE + VestaGroup.INFINITY_PROJECTIVE)
+    }
+
+    @Test
+    fun groupMulProjective() {
+        val a = PallasGroupElementProjective(
+            PallasFieldElement(BigInteger("1cb441132f1df394ea0b892518b5f8143814ca5afb8bfcb2cd0b8eaba568b29c", 16)),
+            PallasFieldElement(BigInteger("1b01d848ea1769e4e319244446ceebeab80d1687ecd75e1191f8c158a02aaec6", 16)),
+            PallasField.ONE,
+        )
+        val b = VestaFieldElement(BigInteger("27d286de826c7abc89876e85217410148a67ed053968ac6d326ae99eeb11d7f1", 16))
+        val c = PallasGroupElementProjective(
+            PallasFieldElement(BigInteger("3ae71da7c530d0bbb097cc6b688bb849d1ee146e167637e27486eb874a015ded", 16)),
+            PallasFieldElement(BigInteger("101f7a91b0e870b0626c7234eb0024120b66bd06109e55f892fdd00bd5192419", 16)),
+            PallasField.ONE,
+        )
+        val d = PallasFieldElement(BigInteger("8f41a93bb8c52e757404c04e2519c5f66b126176b9f7307de457606b2be8946", 16))
+        assertEquals(c, a * b)
+        assertEquals(a, a * VestaField.ONE)
+        assertEquals(PallasGroup.INFINITY_PROJECTIVE, a * VestaField.ZERO)
+        assertEquals(VestaGroup.INFINITY_PROJECTIVE, VestaGroup.INFINITY_PROJECTIVE * d)
+    }
 }

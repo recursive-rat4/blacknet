@@ -17,7 +17,9 @@ package ninja.blacknet.crypto
  */
 
 class PedersenCommitment<
-    E : EllipticCurveGroupElement<E, G, BE, BF, SE, SF>, G : EllipticCurveGroup<G, E, BE, BF, SE, SF>,
+    E : EllipticCurveGroupElement<E, G, EA, EP, BE, BF, SE, SF>, G : EllipticCurveGroup<G, EA, EP, BE, BF, SE, SF>,
+    EA : EllipticCurveGroupElementAffine<EA, G, EP, BE, BF, SE, SF>,
+    EP : EllipticCurveGroupElementProjective<EP, G, EA, BE, BF, SE, SF>,
     BE : PrimeFieldElement<BE, BF>, BF : PrimeField<BF, BE>,
     SE : PrimeFieldElement<SE, SF>, SF : PrimeField<SF, SE>,
 > constructor(
