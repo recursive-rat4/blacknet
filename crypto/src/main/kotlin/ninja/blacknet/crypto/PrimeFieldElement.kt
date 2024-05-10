@@ -40,6 +40,10 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
         field.order - n mod field.order
     )
 
+    fun inv(): E = field.element(
+        n.inv()
+    )
+
     fun sqrt(): E? {
         // Tonelli–Shanks algorithm
         when (n.isQuadraticResidue()) {

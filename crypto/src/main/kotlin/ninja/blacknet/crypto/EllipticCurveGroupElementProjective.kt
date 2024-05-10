@@ -20,7 +20,7 @@ abstract class EllipticCurveGroupElementProjective<
     private val z: BE,
 ) : EllipticCurveGroupElement<EP, G, EA, EP, BE, BF, SE, SF>() {
     override val INFINITY: EP
-        get() = group.INFINITY_PROJECTIVE //UPSTREAM don't create uninitialized objects
+        get() = group.INFINITY_PROJECTIVE
 
     override fun equals(other: Any?): Boolean {
         other as? EllipticCurveGroupElementProjective<EP, G, EA, BE, BF, SE, SF> ?: return false
@@ -33,7 +33,14 @@ abstract class EllipticCurveGroupElementProjective<
         else
             (x * other.z == z * other.x) && (y * other.z == z * other.y)
     }
-    override fun hashCode() = if (this != INFINITY) (x / z).hashCode() xor (y / z).hashCode() else 0
+    override fun hashCode(): Int {
+        return if (this != INFINITY) {
+            val a = z.inv()
+            (x * a).hashCode() xor (y * a).hashCode()
+        } else {
+            0
+        }
+    }
     override fun toString() = if (this != INFINITY) "(${x.toString()}, ${y.toString()}, ${z.toString()})" else "Infinity"
 
     override operator fun unaryMinus(): EP {
@@ -57,26 +64,39 @@ abstract class EllipticCurveGroupElementProjective<
 
         return if (v1 != v2) {
             val u = u1 - u2
+            val uu = u * u
             val v = v1 - v2
+            val vv = v * v
+            val vvv = v * vv
             val w = z * other.z
-            val a = u * u * w - v * v * v - group.TWO * v * v * v2
+            val r = vv * v2
+            val a = uu * w - vvv - group.TWO * r
             val xr = v * a
-            val yr = u * (v * v * v2 - a) - v * v * v * u2
-            val zr = v * v * v * w
+            val yr = u * (r - a) - vvv * u2
+            val zr = vvv * w
             group.elementProjective(xr, yr, zr)
         } else if (u1 == u2) {
             val w = group.a * z * z + group.THREE * x * x
             val s = y * z
-            val b = x * y * s
+            val sss = s * s * s
+            val r = y * s
+            val b = x * r
             val h = w * w - group.EIGHT * b
             val xr = group.TWO * h * s
-            val yr = w * (group.FOUR * b - h) - group.EIGHT * y * y * s * s
-            val zr = group.EIGHT * s * s * s
+            val yr = w * (group.FOUR * b - h) - group.EIGHT * r * r
+            val zr = group.EIGHT * sss
             group.elementProjective(xr, yr, zr)
         } else {
             INFINITY
         }
     }
 
-    internal fun scale(): EP = if (this != INFINITY) group.elementProjective(x / z, y / z, group.base.ONE) else INFINITY
+    internal fun scale(): EP {
+        return if (this != INFINITY) {
+            val a = z.inv()
+            group.elementProjective(x * a, y * a, group.base.ONE)
+        } else {
+            INFINITY
+        }
+    }
 }

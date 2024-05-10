@@ -86,6 +86,15 @@ class PastaCurvesTest {
     }
 
     @Test
+    fun fieldInv() {
+        val a = PallasFieldElement(BigInteger("f34fe2fd15703dc7eba4a68d48fa9ee0e9ab8746f759eb8fc23828a4aa48900", 16))
+        val b = PallasFieldElement(BigInteger("87f2909b3c53a656a9f0f126b8458afa89ececeb5676d93c9d4594c4aacc34d", 16))
+        assertEquals(a, b.inv())
+        assertEquals(b, a.inv())
+        assertFailsWith<ArithmeticException> { VestaField.ZERO.inv() }
+    }
+
+    @Test
     fun fieldSqrt() {
         val a = BigInteger("35aeb661a5f2e7df341a8f256036c025e07b8e45002f7d9da0c8f7b5aa744aea", 16)
         val b = PallasFieldElement(BigInteger("344a642baaa8f21985d0757617709370cdc5b87574ecd97b4cf3c9d915689609", 16))

@@ -19,7 +19,7 @@ abstract class EllipticCurveGroupElementAffine<
     private val y: BE,
 ) : EllipticCurveGroupElement<EA, G, EA, EP, BE, BF, SE, SF>() {
     override val INFINITY: EA
-        get() = group.INFINITY_AFFINE //UPSTREAM don't create uninitialized objects
+        get() = group.INFINITY_AFFINE
 
     override fun equals(other: Any?) = other is EllipticCurveGroupElementAffine<EA, G, EP, BE, BF, SE, SF> && x == other.x && y == other.y && group === other.group
     override fun hashCode() = x.hashCode() xor y.hashCode()
