@@ -16,7 +16,7 @@ import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import ninja.blacknet.swing.dsl.*
 
-fun LookAndFeelComboBox() = jComboBox<String> {
+fun LookAndFeelComboBox() = jComboBox {
     UIManager.getInstalledLookAndFeels().forEach { info ->
         +info.name
     }
