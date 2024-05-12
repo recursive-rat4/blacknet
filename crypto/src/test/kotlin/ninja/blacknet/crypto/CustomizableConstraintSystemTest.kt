@@ -9,7 +9,6 @@
 
 package ninja.blacknet.crypto
 
-import java.math.BigInteger
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -22,20 +21,20 @@ class CustomizableConstraintSystemTest {
         val b = Matrix(PallasField, 1, 3, arrayOf(PallasField.ZERO, PallasField.ZERO, PallasField.ONE))
         val c = Matrix(PallasField, 1, 3, arrayOf(PallasField.ONE, PallasField.ZERO, PallasField.ZERO))
         val z1 = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(9)),
-            PallasFieldElement(BigInteger.valueOf(1)),
-            PallasFieldElement(BigInteger.valueOf(2)),
+            PallasFieldElement(9),
+            PallasField.ONE,
+            PallasFieldElement(2),
         ))
         val z2 = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(4)),
-            PallasFieldElement(BigInteger.valueOf(1)),
-            PallasFieldElement(BigInteger.valueOf(2)),
+            PallasFieldElement(4),
+            PallasField.ONE,
+            PallasFieldElement(2),
         ))
         val ccs = CustomizableConstraintSystem(
             PallasField, 1, 3,
             arrayOf(a, b, c),
             arrayOf(arrayOf(0, 1), arrayOf(2)),
-            arrayOf(PallasFieldElement(BigInteger.ONE), PallasFieldElement(PallasField.order - BigInteger.ONE)),
+            arrayOf(PallasFieldElement(1), -PallasFieldElement(1)),
         )
         assertFalse(ccs.isSatisfied(z1))
         assertTrue(ccs.isSatisfied(z2))

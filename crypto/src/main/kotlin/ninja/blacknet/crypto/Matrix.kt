@@ -9,7 +9,6 @@
 
 package ninja.blacknet.crypto
 
-import java.math.BigInteger
 import java.util.Arrays
 
 class Matrix<E : PrimeFieldElement<E, F>, F : PrimeField<F, E>> internal constructor(

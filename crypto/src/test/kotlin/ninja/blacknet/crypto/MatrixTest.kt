@@ -9,7 +9,6 @@
 
 package ninja.blacknet.crypto
 
-import java.math.BigInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -17,15 +16,15 @@ class MatrixTest {
     @Test
     fun product() {
         val a = Matrix(PallasField, 3, 2, arrayOf(
-            PallasFieldElement(BigInteger.valueOf(17)), PallasFieldElement(BigInteger.valueOf(18)),
-            PallasFieldElement(BigInteger.valueOf(33)), PallasFieldElement(BigInteger.valueOf(34)),
-            PallasFieldElement(BigInteger.valueOf(49)), PallasFieldElement(BigInteger.valueOf(50)),
+            PallasFieldElement(17), PallasFieldElement(18),
+            PallasFieldElement(33), PallasFieldElement(34),
+            PallasFieldElement(49), PallasFieldElement(50),
         ))
-        val b = Vector(arrayOf(PallasFieldElement(BigInteger.valueOf(2)), PallasFieldElement(BigInteger.valueOf(3))))
+        val b = Vector(arrayOf(PallasFieldElement(2), PallasFieldElement(3)))
         val c = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(88)),
-            PallasFieldElement(BigInteger.valueOf(168)),
-            PallasFieldElement(BigInteger.valueOf(248)),
+            PallasFieldElement(88),
+            PallasFieldElement(168),
+            PallasFieldElement(248),
         ))
         assertEquals(c, a * b)
     }

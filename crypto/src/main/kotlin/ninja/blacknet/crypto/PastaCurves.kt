@@ -22,28 +22,54 @@ object PallasField : PrimeField<PallasField, PallasFieldElement>(
     BigInteger("40000000000000000000000000000000224698fc094cf91b992d30ed00000001", 16),
 ) {
     override fun element(n: BigInteger) = PallasFieldElement(n)
-    override val ZERO = PallasFieldElement(BigInteger.ZERO)
-    override val ONE = PallasFieldElement(BigInteger.ONE)
+
+    override val bits = 255
+    override val S = BigInteger.valueOf(32)
+    override val Q = BigInteger("40000000000000000000000000000000224698fc094cf91b992d30ed", 16)
+
+    override val ZERO = PallasFieldElement(0)
+    override val ONE = PallasFieldElement(1)
+
+    override val TWO = PallasFieldElement(2)
+    override val THREE = PallasFieldElement(3)
+    override val FOUR = PallasFieldElement(4)
+    override val EIGHT = PallasFieldElement(8)
 }
 
 class PallasFieldElement internal constructor(
     n: BigInteger,
 ) : PrimeFieldElement<PallasFieldElement, PallasField>(n) {
     override val field = PallasField
+
+    constructor(n: Long) : this(BigInteger.valueOf(n))
+    constructor(string: String, radix: Int) : this(BigInteger(string, radix))
 }
 
 object VestaField : PrimeField<VestaField, VestaFieldElement>(
     BigInteger("40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001", 16),
 ) {
     override fun element(n: BigInteger) = VestaFieldElement(n)
-    override val ZERO = VestaFieldElement(BigInteger.ZERO)
-    override val ONE = VestaFieldElement(BigInteger.ONE)
+
+    override val bits = 255
+    override val S = BigInteger.valueOf(32)
+    override val Q = BigInteger("40000000000000000000000000000000224698fc0994a8dd8c46eb21", 16)
+
+    override val ZERO = VestaFieldElement(0)
+    override val ONE = VestaFieldElement(1)
+
+    override val TWO = VestaFieldElement(2)
+    override val THREE = VestaFieldElement(3)
+    override val FOUR = VestaFieldElement(4)
+    override val EIGHT = VestaFieldElement(8)
 }
 
 class VestaFieldElement internal constructor(
     n: BigInteger,
 ) : PrimeFieldElement<VestaFieldElement, VestaField>(n) {
     override val field = VestaField
+
+    constructor(n: Long) : this(BigInteger.valueOf(n))
+    constructor(string: String, radix: Int) : this(BigInteger(string, radix))
 }
 
 object PallasGroup : EllipticCurveGroup<
@@ -52,7 +78,7 @@ object PallasGroup : EllipticCurveGroup<
     VestaFieldElement, VestaField,
 >(PallasField, VestaField) {
     override val a = PallasField.ZERO
-    override val b = PallasFieldElement(BigInteger.valueOf(5))
+    override val b = PallasFieldElement(5)
 
     override fun elementAffine(x: PallasFieldElement, y: PallasFieldElement) = PallasGroupElementAffine(x, y)
     override fun elementProjective(x: PallasFieldElement, y: PallasFieldElement, z: PallasFieldElement) = PallasGroupElementProjective(x, y, z)
@@ -90,7 +116,7 @@ object VestaGroup : EllipticCurveGroup<
     PallasFieldElement, PallasField,
 >(VestaField, PallasField) {
     override val a = VestaField.ZERO
-    override val b = VestaFieldElement(BigInteger.valueOf(5))
+    override val b = VestaFieldElement(5)
 
     override fun elementAffine(x: VestaFieldElement, y: VestaFieldElement) = VestaGroupElementAffine(x, y)
     override fun elementProjective(x: VestaFieldElement, y: VestaFieldElement, z: VestaFieldElement) = VestaGroupElementProjective(x, y, z)

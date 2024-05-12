@@ -9,7 +9,6 @@
 
 package ninja.blacknet.crypto
 
-import java.math.BigInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -17,10 +16,10 @@ class VectorTest {
     @Test
     fun `get`() {
         val a = arrayOf(
-            PallasFieldElement(BigInteger.valueOf(100)),
-            PallasFieldElement(BigInteger.valueOf(101)),
-            PallasFieldElement(BigInteger.valueOf(110)),
-            PallasFieldElement(BigInteger.valueOf(111)),
+            PallasFieldElement(100),
+            PallasFieldElement(101),
+            PallasFieldElement(110),
+            PallasFieldElement(111),
         )
         val v = Vector(a)
         a.forEachIndexed { i, e ->
@@ -31,19 +30,19 @@ class VectorTest {
     @Test
     fun `Hadamard product`() {
         val a = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(2)),
-            PallasFieldElement(BigInteger.valueOf(2)),
-            PallasFieldElement(BigInteger.valueOf(2)),
+            PallasFieldElement(2),
+            PallasFieldElement(2),
+            PallasFieldElement(2),
         ))
         val b = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(1)),
-            PallasFieldElement(BigInteger.valueOf(2)),
-            PallasFieldElement(BigInteger.valueOf(4)),
+            PallasFieldElement(1),
+            PallasFieldElement(2),
+            PallasFieldElement(4),
         ))
         val c = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(2)),
-            PallasFieldElement(BigInteger.valueOf(4)),
-            PallasFieldElement(BigInteger.valueOf(8)),
+            PallasFieldElement(2),
+            PallasFieldElement(4),
+            PallasFieldElement(8),
         ))
         assertEquals(c, a * b)
         assertEquals(c, b * a)
@@ -52,19 +51,19 @@ class VectorTest {
     @Test
     fun `Hadamard summation`() {
         val a = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(0)),
-            PallasFieldElement(BigInteger.valueOf(4)),
-            PallasFieldElement(BigInteger.valueOf(2)),
+            PallasFieldElement(0),
+            PallasFieldElement(4),
+            PallasFieldElement(2),
         ))
         val b = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(7)),
-            PallasFieldElement(BigInteger.valueOf(3)),
-            PallasFieldElement(BigInteger.valueOf(5)),
+            PallasFieldElement(7),
+            PallasFieldElement(3),
+            PallasFieldElement(5),
         ))
         val c = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(7)),
-            PallasFieldElement(BigInteger.valueOf(7)),
-            PallasFieldElement(BigInteger.valueOf(7)),
+            PallasFieldElement(7),
+            PallasFieldElement(7),
+            PallasFieldElement(7),
         ))
         assertEquals(c, a + b)
         assertEquals(c, b + a)
@@ -73,15 +72,15 @@ class VectorTest {
     @Test
     fun `Scalar product`() {
         val a = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(4)),
-            PallasFieldElement(BigInteger.valueOf(5)),
-            PallasFieldElement(BigInteger.valueOf(6)),
+            PallasFieldElement(4),
+            PallasFieldElement(5),
+            PallasFieldElement(6),
         ))
-        val b = PallasFieldElement(BigInteger.valueOf(2))
+        val b = PallasFieldElement(2)
         val c = Vector(arrayOf(
-            PallasFieldElement(BigInteger.valueOf(8)),
-            PallasFieldElement(BigInteger.valueOf(10)),
-            PallasFieldElement(BigInteger.valueOf(12)),
+            PallasFieldElement(8),
+            PallasFieldElement(10),
+            PallasFieldElement(12),
         ))
         assertEquals(c, a * b)
     }

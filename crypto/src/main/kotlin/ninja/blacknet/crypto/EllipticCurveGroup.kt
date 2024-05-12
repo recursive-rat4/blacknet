@@ -9,7 +9,6 @@
 
 package ninja.blacknet.crypto
 
-import java.math.BigInteger
 import java.util.Random
 
 abstract class EllipticCurveGroup<
@@ -22,15 +21,6 @@ abstract class EllipticCurveGroup<
     internal val base: BF,
     internal val scalar: SF,
 ) {
-    init {
-        require(base.order > BigInteger.valueOf(8)) { "Projective double" }
-    }
-
-    internal val TWO = base.element(BigInteger.TWO)
-    internal val THREE = base.element(BigInteger.valueOf(3))
-    internal val FOUR = base.element(BigInteger.valueOf(4))
-    internal val EIGHT = base.element(BigInteger.valueOf(8))
-
     internal abstract val a: BE
     internal abstract val b: BE
 

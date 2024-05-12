@@ -15,29 +15,21 @@ import java.util.Random
 abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> protected constructor(
     internal val order: BigInteger,
 ) {
-    internal val bits: Int = (order - BigInteger.ONE).bitLength()
+    internal abstract val bits: Int
 
-    internal val S: BigInteger
-    internal val Q: BigInteger
-
-    init {
-        require(order > BigInteger.TWO) { "Odd prime" }
-
-        var s = BigInteger.ZERO
-        var q = order - BigInteger.ONE
-        while (q mod BigInteger.TWO == BigInteger.ZERO) {
-            s += BigInteger.ONE
-            q /= BigInteger.TWO
-        }
-        S = s
-        Q = q
-    }
+    internal abstract val S: BigInteger
+    internal abstract val Q: BigInteger
 
     internal abstract fun element(n: BigInteger): E
 
     //internal val ZERO: E = element(BigInteger.ZERO)
     internal abstract val ZERO: E //UPSTREAM don't create uninitialized objects
     internal abstract val ONE: E
+
+    internal abstract val TWO: E
+    internal abstract val THREE: E
+    internal abstract val FOUR: E
+    internal abstract val EIGHT: E
 
     fun random(random: Random): E {
         while (true) {
