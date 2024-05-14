@@ -12,5 +12,7 @@ module ninja.blacknet.crypto {
 
     requires kotlin.stdlib;
 
+    requires org.bouncycastle.provider;
+
     exports ninja.blacknet.crypto;
 }

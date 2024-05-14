@@ -11,20 +11,22 @@ package ninja.blacknet.crypto
 
 import java.math.BigInteger
 import java.util.Random
+import org.bouncycastle.math.raw.Nat256
 
 abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> protected constructor(
-    internal val order: BigInteger,
+    internal val order: IntArray,
 ) {
     internal abstract val bits: Int
 
+    internal val orderBN = Nat256.toBigInteger(order)
     internal abstract val S: BigInteger
     internal abstract val Q: BigInteger
 
-    internal abstract fun element(n: BigInteger): E
+    internal abstract fun element(n: IntArray): E
 
-    //internal val ZERO: E = element(BigInteger.ZERO)
-    internal abstract val ZERO: E //UPSTREAM don't create uninitialized objects
-    internal abstract val ONE: E
+    //val ZERO: E = element(BigInteger.ZERO)
+    abstract val ZERO: E //UPSTREAM don't create uninitialized objects
+    abstract val ONE: E
 
     internal abstract val TWO: E
     internal abstract val THREE: E
@@ -32,11 +34,13 @@ abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> pro
     internal abstract val EIGHT: E
 
     fun random(random: Random): E {
-        while (true) {
-            val n = BigInteger(bits, random)
-            if (n < order)
-                return element(n)
+        val tt = Nat256.create()
+        for (i in 0 until 8)
+            tt[i] = random.nextInt()
+        while (Nat256.gte(tt, order)) {
+            tt[7] = random.nextInt()
         }
+        return element(tt)
     }
 
     @Suppress("UNCHECKED_CAST")

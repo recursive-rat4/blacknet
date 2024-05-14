@@ -10,6 +10,7 @@
 package ninja.blacknet.crypto
 
 import java.math.BigInteger
+import org.bouncycastle.math.raw.Nat256
 
 /*
  * The Pasta Curves for Halo 2 and Beyond
@@ -19,9 +20,9 @@ import java.math.BigInteger
  */
 
 object PallasField : PrimeField<PallasField, PallasFieldElement>(
-    BigInteger("40000000000000000000000000000000224698fc094cf91b992d30ed00000001", 16),
+    Nat256.fromBigInteger(BigInteger("40000000000000000000000000000000224698fc094cf91b992d30ed00000001", 16)),
 ) {
-    override fun element(n: BigInteger) = PallasFieldElement(n)
+    override fun element(n: IntArray) = PallasFieldElement(n)
 
     override val bits = 255
     override val S = BigInteger.valueOf(32)
@@ -37,18 +38,18 @@ object PallasField : PrimeField<PallasField, PallasFieldElement>(
 }
 
 class PallasFieldElement internal constructor(
-    n: BigInteger,
+    n: IntArray,
 ) : PrimeFieldElement<PallasFieldElement, PallasField>(n) {
     override val field = PallasField
 
-    constructor(n: Long) : this(BigInteger.valueOf(n))
-    constructor(string: String, radix: Int) : this(BigInteger(string, radix))
+    constructor(n: Int) : this(Nat256.create().apply { set(0, n) })
+    constructor(string: String, radix: Int) : this(Nat256.fromBigInteger(BigInteger(string, radix)))
 }
 
 object VestaField : PrimeField<VestaField, VestaFieldElement>(
-    BigInteger("40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001", 16),
+    Nat256.fromBigInteger(BigInteger("40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001", 16)),
 ) {
-    override fun element(n: BigInteger) = VestaFieldElement(n)
+    override fun element(n: IntArray) = VestaFieldElement(n)
 
     override val bits = 255
     override val S = BigInteger.valueOf(32)
@@ -64,12 +65,12 @@ object VestaField : PrimeField<VestaField, VestaFieldElement>(
 }
 
 class VestaFieldElement internal constructor(
-    n: BigInteger,
+    n: IntArray,
 ) : PrimeFieldElement<VestaFieldElement, VestaField>(n) {
     override val field = VestaField
 
-    constructor(n: Long) : this(BigInteger.valueOf(n))
-    constructor(string: String, radix: Int) : this(BigInteger(string, radix))
+    constructor(n: Int) : this(Nat256.create().apply { set(0, n) })
+    constructor(string: String, radix: Int) : this(Nat256.fromBigInteger(BigInteger(string, radix)))
 }
 
 object PallasGroup : EllipticCurveGroup<

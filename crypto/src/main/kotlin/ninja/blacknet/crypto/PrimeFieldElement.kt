@@ -10,65 +10,90 @@
 package ninja.blacknet.crypto
 
 import java.math.BigInteger
+import java.util.Arrays
+import org.bouncycastle.math.raw.Mod
+import org.bouncycastle.math.raw.Nat
+import org.bouncycastle.math.raw.Nat256
 
 abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, E>> protected constructor(
-    private val n: BigInteger,
+    private val limbs: IntArray,
 ) {
     protected abstract val field: F
 
-    override fun equals(other: Any?) = other is PrimeFieldElement<E, F> && n == other.n && field === other.field
-    override fun hashCode() = n.hashCode()
-    override fun toString() = n.toString(16)
+    override fun equals(other: Any?) = other is PrimeFieldElement<E, F> && Arrays.equals(limbs, other.limbs) && field === other.field
+    override fun hashCode() = Arrays.hashCode(limbs)
+    override fun toString() = Nat256.toBigInteger(limbs).toString(16)
 
-    operator fun plus(other: E): E = field.element(
-        n + other.n mod field.order
-    )
+    operator fun plus(other: E): E {
+        val tt = Nat256.create()
+        Nat256.add(limbs, other.limbs, tt)
+        if (Nat256.gte(tt, field.order))
+            Nat256.sub(tt, field.order, tt)
+        return field.element(tt)
+    }
 
-    operator fun times(other: E): E = field.element(
-        n * other.n mod field.order
-    )
+    operator fun times(other: E): E {
+        val tt = Nat256.createExt()
+        Nat256.mul(limbs, other.limbs, tt)
+        //
+        return field.element(Nat256.fromBigInteger(Nat.toBigInteger(16, tt) mod field.orderBN))
+    }
 
-    operator fun minus(other: E): E = field.element(
-        n - other.n mod field.order
-    )
+    operator fun minus(other: E): E {
+        val tt = Nat256.create()
+        Nat256.sub(limbs, other.limbs, tt)
+        if (Nat256.gte(tt, field.order))
+            Nat256.add(tt, field.order, tt)
+        return field.element(tt)
+    }
 
-    operator fun div(other: E): E = field.element(
-        n * other.n.inv() mod field.order
-    )
+    operator fun div(other: E): E {
+        //
+        return this * other.inv()
+    }
 
-    operator fun unaryMinus(): E = field.element(
-        field.order - n mod field.order
-    )
+    operator fun unaryMinus(): E {
+        return if (this != field.ZERO) {
+            val tt = Nat256.create()
+            Nat256.sub(field.order, limbs, tt)
+            field.element(tt)
+        } else {
+            field.ZERO
+        }
+    }
 
-    fun inv(): E = field.element(
-        n.inv()
-    )
+    fun inv(): E {
+        val tt = Nat256.create()
+        Mod.checkedModOddInverseVar(field.order, limbs, tt)
+        return field.element(tt)
+    }
 
     fun sqrt(): E? {
         // Tonelli–Shanks algorithm
+        val n = Nat256.toBigInteger(limbs)
         when (n.isQuadraticResidue()) {
             BigInteger.ONE -> {
                 var z = BigInteger.TWO
                 while (z.isQuadraticResidue() < BigInteger.TWO)
                     z += BigInteger.ONE
                 var m = field.S
-                var c = z.modPow(field.Q, field.order)
-                var t = n.modPow(field.Q, field.order)
-                var r = n.modPow((field.Q + BigInteger.ONE) / BigInteger.TWO, field.order)
+                var c = z.modPow(field.Q, field.orderBN)
+                var t = n.modPow(field.Q, field.orderBN)
+                var r = n.modPow((field.Q + BigInteger.ONE) / BigInteger.TWO, field.orderBN)
                 while (true) {
                     if (t == BigInteger.ZERO)
                         return field.ZERO
                     else if (t == BigInteger.ONE)
-                        return field.element(r)
+                        return field.element(Nat256.fromBigInteger(r))
                     else {
                         var i = BigInteger.ONE
-                        while (t.modPow(BigInteger.TWO.pow(i.intValueExact()), field.order) != BigInteger.ONE)
+                        while (t.modPow(BigInteger.TWO.pow(i.intValueExact()), field.orderBN) != BigInteger.ONE)
                             i += BigInteger.ONE
-                        val b = c.modPow(BigInteger.TWO.pow((m - i - BigInteger.ONE).intValueExact()), field.order)
+                        val b = c.modPow(BigInteger.TWO.pow((m - i - BigInteger.ONE).intValueExact()), field.orderBN)
                         m = i
-                        c = b.pow(2) mod field.order
-                        t = t * b.pow(2) mod field.order
-                        r = r * b mod field.order
+                        c = b.pow(2) mod field.orderBN
+                        t = t * b.pow(2) mod field.orderBN
+                        r = r * b mod field.orderBN
                     }
                 }
             }
@@ -77,12 +102,10 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
         }
     }
 
-    internal operator fun get(index: Int) = n.testBit(index)
+    internal operator fun get(index: Int) = Nat256.getBit(limbs, index) == 1
 
     // Legendre symbol
-    private fun BigInteger.isQuadraticResidue() = modPow((field.order - BigInteger.ONE) / BigInteger.TWO, field.order)
-
-    private fun BigInteger.inv() = modInverse(field.order)
+    private fun BigInteger.isQuadraticResidue() = modPow((field.orderBN - BigInteger.ONE) / BigInteger.TWO, field.orderBN)
 }
 
-internal infix fun BigInteger.mod(mod: BigInteger) = mod(mod)
+private infix fun BigInteger.mod(mod: BigInteger) = mod(mod)
