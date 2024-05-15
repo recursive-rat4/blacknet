@@ -35,8 +35,7 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
     operator fun times(other: E): E {
         val tt = Nat256.createExt()
         Nat256.mul(limbs, other.limbs, tt)
-        //
-        return field.element(Nat256.fromBigInteger(Nat.toBigInteger(16, tt) mod field.orderBN))
+        return field.element(reduce(tt))
     }
 
     operator fun minus(other: E): E {
@@ -106,6 +105,17 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
 
     // Legendre symbol
     private fun BigInteger.isQuadraticResidue() = modPow((field.orderBN - BigInteger.ONE) / BigInteger.TWO, field.orderBN)
+
+    private fun reduce(xx: IntArray): IntArray {
+        // Barrett reduction
+        var a = Nat.toBigInteger(16, xx)
+        val q = (a * field.m).shiftRight(512)
+        a -= q * field.orderBN
+        if (a >= field.orderBN)
+            a -= field.orderBN
+        val tt = Nat256.fromBigInteger(a)
+        return tt
+    }
 }
 
 private infix fun BigInteger.mod(mod: BigInteger) = mod(mod)

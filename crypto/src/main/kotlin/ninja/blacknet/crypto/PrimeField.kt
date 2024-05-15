@@ -22,6 +22,8 @@ abstract class PrimeField<F : PrimeField<F, E>, E : PrimeFieldElement<E, F>> pro
     internal abstract val S: BigInteger
     internal abstract val Q: BigInteger
 
+    internal val m = BigInteger.TWO.pow(512) / orderBN
+
     internal abstract fun element(n: IntArray): E
 
     //val ZERO: E = element(BigInteger.ZERO)
