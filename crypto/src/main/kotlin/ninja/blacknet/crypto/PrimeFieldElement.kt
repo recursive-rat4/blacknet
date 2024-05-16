@@ -14,6 +14,7 @@ import java.util.Arrays
 import org.bouncycastle.math.raw.Mod
 import org.bouncycastle.math.raw.Nat
 import org.bouncycastle.math.raw.Nat256
+import org.bouncycastle.math.raw.Nat512
 
 abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, E>> protected constructor(
     private val limbs: IntArray,
@@ -33,9 +34,11 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
     }
 
     operator fun times(other: E): E {
-        val tt = Nat256.createExt()
-        Nat256.mul(limbs, other.limbs, tt)
-        return field.element(reduce(tt))
+        val tt = Nat256.create()
+        val ttt = Nat256.createExt()
+        Nat256.mul(limbs, other.limbs, ttt)
+        reduce(ttt, tt)
+        return field.element(tt)
     }
 
     operator fun minus(other: E): E {
@@ -47,7 +50,6 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
     }
 
     operator fun div(other: E): E {
-        //
         return this * other.inv()
     }
 
@@ -100,22 +102,23 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
             else -> return null
         }
     }
+    private infix fun BigInteger.mod(mod: BigInteger) = mod(mod)
 
     internal operator fun get(index: Int) = Nat256.getBit(limbs, index) == 1
 
     // Legendre symbol
     private fun BigInteger.isQuadraticResidue() = modPow((field.orderBN - BigInteger.ONE) / BigInteger.TWO, field.orderBN)
 
-    private fun reduce(xx: IntArray): IntArray {
+    private fun reduce(xx: IntArray, z: IntArray) {
         // Barrett reduction
-        var a = Nat.toBigInteger(16, xx)
-        val q = (a * field.m).shiftRight(512)
-        a -= q * field.orderBN
-        if (a >= field.orderBN)
-            a -= field.orderBN
-        val tt = Nat256.fromBigInteger(a)
-        return tt
+        val ttt = Nat256.createExt()
+        val tttt = Nat.create(32)
+        Nat512.mul(xx, field.m, tttt)
+        Nat256.copy(tttt, 16, ttt, 0)
+        Nat.mul(ttt, 0, 16, field.order, 0, 8, tttt, 0)
+        Nat.subFrom(16, tttt, 0, xx, 0)
+        if (Nat256.gte(xx, field.order))
+            Nat256.subFrom(field.order, xx)
+        Nat256.copy(xx, z)
     }
 }
-
-private infix fun BigInteger.mod(mod: BigInteger) = mod(mod)

@@ -10,6 +10,7 @@
 package ninja.blacknet.crypto
 
 import java.math.BigInteger
+import org.bouncycastle.math.raw.Nat
 import org.bouncycastle.math.raw.Nat256
 
 /*
@@ -27,6 +28,8 @@ object PallasField : PrimeField<PallasField, PallasFieldElement>(
     override val bits = 255
     override val S = BigInteger.valueOf(32)
     override val Q = BigInteger("40000000000000000000000000000000224698fc094cf91b992d30ed", 16)
+
+    override val m = Nat.fromBigInteger(512, BigInteger("3fffffffffffffffffffffffffffffffddb96703f6b306e466d2cf12ffffffff1", 16))
 
     override val ZERO = PallasFieldElement(0)
     override val ONE = PallasFieldElement(1)
@@ -54,6 +57,8 @@ object VestaField : PrimeField<VestaField, VestaFieldElement>(
     override val bits = 255
     override val S = BigInteger.valueOf(32)
     override val Q = BigInteger("40000000000000000000000000000000224698fc0994a8dd8c46eb21", 16)
+
+    override val m = Nat.fromBigInteger(512, BigInteger("3fffffffffffffffffffffffffffffffddb96703f66b572273b914deffffffff1", 16))
 
     override val ZERO = VestaFieldElement(0)
     override val ONE = VestaFieldElement(1)
