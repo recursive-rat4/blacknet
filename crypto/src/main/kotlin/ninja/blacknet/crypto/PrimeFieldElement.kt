@@ -63,6 +63,14 @@ abstract class PrimeFieldElement<E : PrimeFieldElement<E, F>, F : PrimeField<F, 
         }
     }
 
+    fun square(): E {
+        val tt = Nat256.create()
+        val ttt = Nat256.createExt()
+        Nat256.square(limbs, ttt)
+        reduce(ttt, tt)
+        return field.element(tt)
+    }
+
     fun inv(): E {
         val tt = Nat256.create()
         Mod.checkedModOddInverseVar(field.order, limbs, tt)

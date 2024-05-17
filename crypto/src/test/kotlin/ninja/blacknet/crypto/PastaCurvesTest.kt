@@ -85,6 +85,15 @@ class PastaCurvesTest {
     }
 
     @Test
+    fun fieldSquare() {
+        val a = PallasFieldElement("2f4564953a3b3bf9fffa19e805dfcd1b1b8381501d83664a5203d7cafa95c2ad", 16)
+        val b = PallasFieldElement("2e4f0f106b3a0c9948816bf44d2587f755014bcbfb7150a2030c0f3eb82402b1", 16)
+        assertEquals(b, a.square())
+        assertEquals(VestaField.ZERO, VestaField.ZERO.square())
+        assertEquals(VestaField.ONE, VestaField.ONE.square())
+    }
+
+    @Test
     fun fieldInv() {
         val a = PallasFieldElement("f34fe2fd15703dc7eba4a68d48fa9ee0e9ab8746f759eb8fc23828a4aa48900", 16)
         val b = PallasFieldElement("87f2909b3c53a656a9f0f126b8458afa89ececeb5676d93c9d4594c4aacc34d", 16)

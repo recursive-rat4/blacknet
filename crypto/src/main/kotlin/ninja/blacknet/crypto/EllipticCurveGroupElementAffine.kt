@@ -41,12 +41,12 @@ abstract class EllipticCurveGroupElementAffine<
 
         return if (x != other.x) {
             val k = (other.y - y) / (other.x - x)
-            val xr = k * k - x - other.x
+            val xr = k.square() - x - other.x
             val yr = k * (x - xr) - y
             group.elementAffine(xr, yr)
         } else if (y == other.y) {
-            val k = (group.base.THREE * x * x + group.a) / (group.base.TWO * y)
-            val xr = k * k - x - x
+            val k = (group.base.THREE * x.square() + group.a) / (group.base.TWO * y)
+            val xr = k.square() - x - x
             val yr = k * (x - xr) - y
             group.elementAffine(xr, yr)
         } else {

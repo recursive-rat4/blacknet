@@ -64,9 +64,9 @@ abstract class EllipticCurveGroupElementProjective<
 
         return if (v1 != v2) {
             val u = u1 - u2
-            val uu = u * u
+            val uu = u.square()
             val v = v1 - v2
-            val vv = v * v
+            val vv = v.square()
             val vvv = v * vv
             val w = z * other.z
             val r = vv * v2
@@ -76,14 +76,14 @@ abstract class EllipticCurveGroupElementProjective<
             val zr = vvv * w
             group.elementProjective(xr, yr, zr)
         } else if (u1 == u2) {
-            val w = group.a * z * z + group.base.THREE * x * x
+            val w = group.a * z.square() + group.base.THREE * x.square()
             val s = y * z
-            val sss = s * s * s
+            val sss = s * s.square()
             val r = y * s
             val b = x * r
-            val h = w * w - group.base.EIGHT * b
+            val h = w.square() - group.base.EIGHT * b
             val xr = group.base.TWO * h * s
-            val yr = w * (group.base.FOUR * b - h) - group.base.EIGHT * r * r
+            val yr = w * (group.base.FOUR * b - h) - group.base.EIGHT * r.square()
             val zr = group.base.EIGHT * sss
             group.elementProjective(xr, yr, zr)
         } else {

@@ -33,7 +33,7 @@ abstract class EllipticCurveGroup<
     fun randomAffine(random: Random): EA {
         while (true) {
             val x = base.random(random)
-            val y = (x * x * x + a * x + b).sqrt() ?: continue
+            val y = (x * x.square() + a * x + b).sqrt() ?: continue
             return elementAffine(x, if (random.nextBoolean()) y else -y)
         }
     }
@@ -41,7 +41,7 @@ abstract class EllipticCurveGroup<
     fun randomProjective(random: Random): EP {
         while (true) {
             val x = base.random(random)
-            val y = (x * x * x + a * x + b).sqrt() ?: continue
+            val y = (x * x.square() + a * x + b).sqrt() ?: continue
             return elementProjective(x, if (random.nextBoolean()) y else -y, base.ONE)
         }
     }
