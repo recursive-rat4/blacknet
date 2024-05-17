@@ -26,7 +26,7 @@ import ninja.blacknet.util.rotate
 object TxFetcher {
     private val inventoryQueue = LinkedBlockingQueue<Pair<Connection, List<Hash>>>()
     //TODO review capacity
-    private val requested = ConcurrentHashMap<Hash, Long>()
+    private val requested = ConcurrentHashMap<Hash, Request>()
 
     init {
         rotate("TxFetcher::implementation", ::implementation)
@@ -37,8 +37,12 @@ object TxFetcher {
         inventoryQueue.offer(Pair(connection, list))
     }
 
-    fun fetched(hash: Hash): Boolean {
-        return requested.remove(hash) != null
+    fun fetched(connection: Connection, hash: Hash): Boolean {
+        val request = requested.get(hash)
+        if (request != null && request.connection == connection) {
+            return requested.remove(hash) != null
+        }
+        return false
     }
 
     private fun implementation() {
@@ -53,7 +57,7 @@ object TxFetcher {
             }
 
             if (Kernel.txPool().isInteresting(hash)) {
-                requested.put(hash, currTime)
+                requested.put(hash, Request(currTime, connection))
                 request.add(hash)
             }
 
@@ -79,9 +83,14 @@ object TxFetcher {
         sleep(Node.NETWORK_TIMEOUT)
 
         val currTime = currentTimeMillis()
-        requested.forEach { (hash, time) ->
-            if (currTime > time + Node.NETWORK_TIMEOUT)
+        requested.forEach { (hash, request) ->
+            if (currTime > request.time + Node.NETWORK_TIMEOUT)
                 requested.remove(hash)
         }
     }
+
+    private class Request(
+        val time: Long,
+        val connection: Connection,
+    )
 }

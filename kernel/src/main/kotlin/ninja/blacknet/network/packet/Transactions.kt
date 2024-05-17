@@ -37,7 +37,7 @@ class Transactions(
         for (bytes in list) {
             val hash = Transaction.hash(bytes)
 
-            if (!TxFetcher.fetched(hash)) {
+            if (!TxFetcher.fetched(connection, hash)) {
                 connection.dos("Unrequested $hash")
                 continue
             }
