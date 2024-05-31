@@ -73,7 +73,7 @@
         <versions-maven-plugin.version>2.16.2</versions-maven-plugin.version>
         <cyclonedx-maven-plugin.version>2.8.0</cyclonedx-maven-plugin.version>
 
-        <kotlin.version>2.0.0-RC3</kotlin.version>
+        <kotlin.version>2.0.0</kotlin.version>
         <coroutines.version>1.8.1</coroutines.version>
         <serialization.version>1.7.0-RC</serialization.version>
         <ktor.version>2.3.11</ktor.version>
@@ -359,7 +359,7 @@
                     <artifactId>versions-maven-plugin</artifactId>
                     <version>${versions-maven-plugin.version}</version>
                     <configuration>
-                        <ignoredVersions>(?i).*(alpha|beta).*</ignoredVersions>
+                        <ignoredVersions>(?i).*(alpha|beta|rc).*</ignoredVersions>
                     </configuration>
                 </plugin>
                 <plugin>
