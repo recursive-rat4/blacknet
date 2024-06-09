@@ -58,16 +58,23 @@ public:
             BF yr(k * (x - xr) - y);
             return WeierstrassGroupAffine(xr, yr);
         } else if (y == other.y) {
-            BF k(BF(3) * x.square());
-            if constexpr (A != BF(0))
-                k += A;
-            k /= y + y;
-            BF xr(k.square() - x - x);
-            BF yr(k * (x - xr) - y);
-            return WeierstrassGroupAffine(xr, yr);
+            return douple();
         } else {
             return WeierstrassGroupAffine();
         }
+    }
+
+    constexpr WeierstrassGroupAffine douple() const {
+        if (*this == WeierstrassGroupAffine())
+            return WeierstrassGroupAffine();
+
+        BF k(BF(3) * x.square());
+        if constexpr (A != BF(0))
+            k += A;
+        k /= y + y;
+        BF xr(k.square() - x - x);
+        BF yr(k * (x - xr) - y);
+        return WeierstrassGroupAffine(xr, yr);
     }
 
     constexpr WeierstrassGroupAffine& operator += (const WeierstrassGroupAffine& other) {

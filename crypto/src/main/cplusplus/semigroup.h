@@ -26,7 +26,7 @@ constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
     for (std::size_t i = 0; i < SG::Scalar::BITS(); ++i) {
         if (s[i])
             r += t;
-        t += t;
+        t = t.douple();
     }
     return r;
 }
@@ -39,7 +39,7 @@ constexpr SG power(const SG& e, const typename SG::Scalar& s) {
     for (std::size_t i = 0; i < SG::Scalar::BITS(); ++i) {
         if (s[i])
             r *= t;
-        t *= t;
+        t = t.square();
     }
     return r;
 }

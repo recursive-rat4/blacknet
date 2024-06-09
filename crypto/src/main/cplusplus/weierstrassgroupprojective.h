@@ -66,6 +66,7 @@ public:
         BF v2(x * other.z);
 
         if (v1 != v2) {
+            // add-1998-cmo-2
             BF u(u1 - u2);
             BF uu(u.square());
             BF v(v1 - v2);
@@ -79,21 +80,28 @@ public:
             BF zr(vvv * w);
             return WeierstrassGroupProjective(xr, yr, zr);
         } else if (u1 == u2) {
-            BF w(BF(3) * x.square());
-            if constexpr (A != BF(0))
-                w += A * z.square();
-            BF s(y * z);
-            BF sss(s * s.square());
-            BF r(y * s);
-            BF b(x * r);
-            BF h(w.square() - BF(8) * b);
-            BF xr(BF(2) * h * s);
-            BF yr(w * (BF(4) * b - h) - BF(8) * r.square());
-            BF zr(BF(8) * sss);
-            return WeierstrassGroupProjective(xr, yr, zr);
+            return douple();
         } else {
             return WeierstrassGroupProjective();
         }
+    }
+
+    constexpr WeierstrassGroupProjective douple() const {
+        if (*this == WeierstrassGroupProjective())
+            return WeierstrassGroupProjective();
+        // dbl-1998-cmo-2
+        BF w(BF(3) * x.square());
+        if constexpr (A != BF(0))
+            w += A * z.square();
+        BF s(y * z);
+        BF sss(s * s.square());
+        BF r(y * s);
+        BF b(x * r);
+        BF h(w.square() - BF(8) * b);
+        BF xr(BF(2) * h * s);
+        BF yr(w * (BF(4) * b - h) - BF(8) * r.square());
+        BF zr(BF(8) * sss);
+        return WeierstrassGroupProjective(xr, yr, zr);
     }
 
     constexpr WeierstrassGroupProjective& operator += (const WeierstrassGroupProjective& other) {
