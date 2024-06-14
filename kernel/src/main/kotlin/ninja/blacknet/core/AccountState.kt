@@ -116,7 +116,7 @@ class AccountState(
     class Lease(
         val publicKey: PublicKey,
         @Serializable(with = VarIntSerializer::class)
-        val height: Int,
+        var height: Int,
         @Serializable(with = VarLongSerializer::class)
         var amount: Long
     ) {

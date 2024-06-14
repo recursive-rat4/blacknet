@@ -373,9 +373,9 @@ object WalletDB {
     }
 
     private fun processTransactionImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, tx: Transaction, bytes: ByteArray, time: Long, height: Int, batch: LevelDB.WriteBatch, rescan: Boolean, store: Boolean = true): Boolean {
+        val from = tx.from == publicKey
         val txData = wallet.transactions.get(hash)
         if (txData == null) {
-            val from = tx.from == publicKey
             val types = if (tx.type == TxType.Generated.type) {
                 listOf(TransactionDataType(tx.type.toUByte(), 0u))
             } else {
@@ -418,6 +418,20 @@ object WalletDB {
                 return false
             }
         } else if (txData.height != height) {
+            //TODO Batch
+            if (tx.type == TxType.Lease.type && from) {
+                val data = binaryFormat.decodeFromByteArray(Lease.serializer(), tx.data)
+                val lease = wallet.outLeases.find {
+                    it.publicKey == data.to &&
+                    it.height == txData.height &&
+                    it.amount == data.amount
+                }
+                if (lease != null)
+                    lease.height = height
+                else
+                    logger.warn { "Lease not found" }
+            }
+
             txData.height = height
 
             if (!rescan) {
