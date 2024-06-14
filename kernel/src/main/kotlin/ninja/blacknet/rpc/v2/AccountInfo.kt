@@ -12,6 +12,7 @@ package ninja.blacknet.rpc.v2
 import kotlin.concurrent.withLock
 import kotlinx.serialization.Serializable
 import ninja.blacknet.Kernel
+import ninja.blacknet.core.AccountState
 import ninja.blacknet.crypto.PublicKey
 import ninja.blacknet.db.CoinDB
 
@@ -20,7 +21,8 @@ class AccountInfo(
         val seq: Int,
         val balance: String,
         val confirmedBalance: String,
-        val stakingBalance: String
+        val stakingBalance: String,
+        val inLeases: List<AccountState.Lease>,
 ) {
     companion object {
         fun get(publicKey: PublicKey, confirmations: Int): AccountInfo? = Kernel.blockDB().reentrant.readLock().withLock {
@@ -30,7 +32,9 @@ class AccountInfo(
                     account.seq,
                     account.balance().toString(),
                     account.confirmedBalance(state.height, confirmations).toString(),
-                    account.stakingBalance(state.height).toString())
+                    account.stakingBalance(state.height).toString(),
+                    account.leases,
+            )
         }
     }
 }
