@@ -22,63 +22,81 @@
 BOOST_AUTO_TEST_SUITE(PastaCurves)
 
 BOOST_AUTO_TEST_CASE(fieldAdd) {
-    UInt256     a; std::istringstream("2c5a3233336a186012edd7a62943cf0ae38a93b9454d5791b9825d4531fbf11c") >> a;
-    UInt256     b; std::istringstream("34a99c1d1ad68aeb1d35bcf74ddb040b86ba0a05331200ef3e995b42c73be34a") >> b;
-    PallasField c; std::istringstream("2103ce504e40a34b3023949d771ed31647fe04c26f125f655eee879af937d465") >> c;
-    VestaField  d; std::istringstream("2103ce504e40a34b3023949d771ed31647fe04c26ecaafa36bd4cd66f937d465") >> d;
-    BOOST_TEST(c == PallasField(a) + PallasField(b));
-    BOOST_TEST(d == VestaField(a) + VestaField(b));
-    BOOST_TEST(c == PallasField(0) + c);
-    BOOST_TEST(d == d + VestaField(0));
+    std::string a("2c5a3233336a186012edd7a62943cf0ae38a93b9454d5791b9825d4531fbf11c");
+    std::string b("34a99c1d1ad68aeb1d35bcf74ddb040b86ba0a05331200ef3e995b42c73be34a");
+    PallasField a1; std::istringstream(a) >> a1;
+    PallasField b1; std::istringstream(b) >> b1;
+    PallasField c1; std::istringstream("2103ce504e40a34b3023949d771ed31647fe04c26f125f655eee879af937d465") >> c1;
+    VestaField  a2; std::istringstream(a) >> a2;
+    VestaField  b2; std::istringstream(b) >> b2;
+    VestaField  c2; std::istringstream("2103ce504e40a34b3023949d771ed31647fe04c26ecaafa36bd4cd66f937d465") >> c2;
+    BOOST_TEST(c1 == a1 + b1);
+    BOOST_TEST(c2 == a2 + b2);
+    BOOST_TEST(c1 == PallasField(0) + c1);
+    BOOST_TEST(c2 == c2 + VestaField(0));
     BOOST_TEST(PallasField(1) == PallasField(1) + PallasField(0));
     BOOST_TEST(VestaField(1) == VestaField(0) + VestaField(1));
 }
 
 BOOST_AUTO_TEST_CASE(fieldMul) {
-    UInt256     a; std::istringstream("11640cdb3d3a126dabde403009808a4cae45ec00ffac7480d80ac9142abb607f") >> a;
-    UInt256     b; std::istringstream("0a5111b1ee7f41260df2a030fc99d5aa095ae34332a190ba7ca6d9b54a5d1c85") >> b;
-    PallasField c; std::istringstream("0b5842e91b2c5b9b253f653330dcf9d57d1d745479140a959684c13a5a25b6e6") >> c;
-    VestaField  d; std::istringstream("0158030f7f4f7138ea54d0e0a8797e99ee4c3526ef9c67ccede788174b1f2172") >> d;
-    BOOST_TEST(c == PallasField(a) * PallasField(b));
-    BOOST_TEST(d == VestaField(a) * VestaField(b));
-    BOOST_TEST(PallasField(0) == PallasField(0) * c);
-    BOOST_TEST(VestaField(0) == d * VestaField(0));
-    BOOST_TEST(c == c * PallasField(1));
-    BOOST_TEST(d == VestaField(1) * d);
+    std::string a("11640cdb3d3a126dabde403009808a4cae45ec00ffac7480d80ac9142abb607f");
+    std::string b("0a5111b1ee7f41260df2a030fc99d5aa095ae34332a190ba7ca6d9b54a5d1c85");
+    PallasField a1; std::istringstream(a) >> a1;
+    PallasField b1; std::istringstream(b) >> b1;
+    PallasField c1; std::istringstream("0b5842e91b2c5b9b253f653330dcf9d57d1d745479140a959684c13a5a25b6e6") >> c1;
+    VestaField  a2; std::istringstream(a) >> a2;
+    VestaField  b2; std::istringstream(b) >> b2;
+    VestaField  c2; std::istringstream("0158030f7f4f7138ea54d0e0a8797e99ee4c3526ef9c67ccede788174b1f2172") >> c2;
+    BOOST_TEST(c1 == a1 * b1);
+    BOOST_TEST(c2 == a2 * b2);
+    BOOST_TEST(PallasField(0) == PallasField(0) * c1);
+    BOOST_TEST(VestaField(0) == c2 * VestaField(0));
+    BOOST_TEST(c1 == c1 * PallasField(1));
+    BOOST_TEST(c2 == VestaField(1) * c2);
 }
 
 BOOST_AUTO_TEST_CASE(fieldSub) {
-    UInt256     a; std::istringstream("063c6fa6bc7df187ee00659a73a97b1589892a4ae753fe00c7b3764ddd663cd2") >> a;
-    UInt256     b; std::istringstream("20ac2a42b38f940e1bdc81e7b258588c04aee2f11a782e579033601a00df0730") >> b;
-    PallasField c; std::istringstream("2590456408ee5d79d223e3b2c1512289a720e055d628c8c4d0ad4720dc8735a3") >> c;
-    VestaField  d; std::istringstream("2590456408ee5d79d223e3b2c1512289a720e055d6707886c3c70154dc8735a3") >> d;
-    BOOST_TEST(c == PallasField(a) - PallasField(b));
-    BOOST_TEST(d == VestaField(a) - VestaField(b));
-    BOOST_TEST(c == c - PallasField(0));
-    BOOST_TEST(d == d - VestaField(0));
+    std::string a("063c6fa6bc7df187ee00659a73a97b1589892a4ae753fe00c7b3764ddd663cd2");
+    std::string b("20ac2a42b38f940e1bdc81e7b258588c04aee2f11a782e579033601a00df0730");
+    PallasField a1; std::istringstream(a) >> a1;
+    PallasField b1; std::istringstream(b) >> b1;
+    PallasField c1; std::istringstream("2590456408ee5d79d223e3b2c1512289a720e055d628c8c4d0ad4720dc8735a3") >> c1;
+    VestaField  a2; std::istringstream(a) >> a2;
+    VestaField  b2; std::istringstream(b) >> b2;
+    VestaField  c2; std::istringstream("2590456408ee5d79d223e3b2c1512289a720e055d6707886c3c70154dc8735a3") >> c2;
+    BOOST_TEST(c1 == a1 - b1);
+    BOOST_TEST(c2 == a2 - b2);
+    BOOST_TEST(c1 == c1 - PallasField(0));
+    BOOST_TEST(c2 == c2 - VestaField(0));
     BOOST_TEST(PallasField(0) == PallasField(1) - PallasField(1));
     BOOST_TEST(VestaField(0) == VestaField(1) - VestaField(1));
 }
 
 BOOST_AUTO_TEST_CASE(fieldDiv) {
-    UInt256     a; std::istringstream("3faced132f5641f57b1162d06ed827d8ca9fa69f0c7b14822818eef4db6f6fdc") >> a;
-    UInt256     b; std::istringstream("152d43a9a19991aa7f8c98ed185a79eda9b2562e4c456bb554c0c0d4d0362904") >> b;
-    PallasField c; std::istringstream("3112d3dbd9cb47dd10c20edd49686b9713d5160fb2560360acc84d06bada7442") >> c;
-    VestaField  d; std::istringstream("0e1fd01ec64fffe6a6fc237d1608308ddaa1efcb579ea243a347caaf8778061c") >> d;
-    BOOST_TEST(c == PallasField(a) / PallasField(b));
-    BOOST_TEST(d == VestaField(a) / VestaField(b));
-    BOOST_TEST(PallasField(0) == PallasField(0) / c);
-    BOOST_CHECK_THROW(d / VestaField(0), ArithmeticException);
+    std::string a("3faced132f5641f57b1162d06ed827d8ca9fa69f0c7b14822818eef4db6f6fdc");
+    std::string b("152d43a9a19991aa7f8c98ed185a79eda9b2562e4c456bb554c0c0d4d0362904");
+    PallasField a1; std::istringstream(a) >> a1;
+    PallasField b1; std::istringstream(b) >> b1;
+    PallasField c1; std::istringstream("3112d3dbd9cb47dd10c20edd49686b9713d5160fb2560360acc84d06bada7442") >> c1;
+    VestaField  a2; std::istringstream(a) >> a2;
+    VestaField  b2; std::istringstream(b) >> b2;
+    VestaField  c2; std::istringstream("0e1fd01ec64fffe6a6fc237d1608308ddaa1efcb579ea243a347caaf8778061c") >> c2;
+    BOOST_TEST(c1 == a1 / b1);
+    BOOST_TEST(c2 == a2 / b2);
+    BOOST_TEST(PallasField(0) == PallasField(0) / c1);
+    BOOST_CHECK_THROW(c2 / VestaField(0), ArithmeticException);
     BOOST_TEST(PallasField(1) == PallasField(1) / PallasField(1));
-    BOOST_TEST(d == d / VestaField(1));
+    BOOST_TEST(c2 == c2 / VestaField(1));
 }
 
 BOOST_AUTO_TEST_CASE(fieldNeg) {
-    UInt256     a; std::istringstream("12610bc44a0bbc319a91fc24e99a98ef2bd29a2b535bbd1a74bc100a698e34fa") >> a;
-    PallasField b; std::istringstream("2d9ef43bb5f443ce656e03db16656710f673fed0b5f13c01247120e29671cb07") >> b;
-    VestaField  c; std::istringstream("2d9ef43bb5f443ce656e03db16656710f673fed0b638ebc3178adb169671cb07") >> c;
-    BOOST_TEST(b == -PallasField(a));
-    BOOST_TEST(c == -VestaField(a));
+    std::string a("12610bc44a0bbc319a91fc24e99a98ef2bd29a2b535bbd1a74bc100a698e34fa");
+    PallasField a1; std::istringstream(a) >> a1;
+    VestaField  a2; std::istringstream(a) >> a2;
+    PallasField b1; std::istringstream("2d9ef43bb5f443ce656e03db16656710f673fed0b5f13c01247120e29671cb07") >> b1;
+    VestaField  b2; std::istringstream("2d9ef43bb5f443ce656e03db16656710f673fed0b638ebc3178adb169671cb07") >> b2;
+    BOOST_TEST(b1 == -a1);
+    BOOST_TEST(b2 == -a2);
     BOOST_TEST(PallasField(0) == -PallasField(0));
     BOOST_TEST(VestaField(0) == -VestaField(0));
     BOOST_TEST(PallasField(1) == -(-PallasField(1)));
@@ -102,14 +120,18 @@ BOOST_AUTO_TEST_CASE(fieldInv) {
 }
 
 BOOST_AUTO_TEST_CASE(fieldSqrt) {
-    UInt256     a; std::istringstream("35aeb661a5f2e7df341a8f256036c025e07b8e45002f7d9da0c8f7b5aa744aea") >> a;
-    PallasField b; std::istringstream("344a642baaa8f21985d0757617709370cdc5b87574ecd97b4cf3c9d915689609") >> b;
-    UInt256     c; std::istringstream("39fce7dbf35569b5dc603860e3254bf9e61e3b57ba958a05a121b318906fe126") >> c;
-    VestaField  d; std::istringstream("2fd1206ca31cb1de80ffb18d6b4e5095edafca2beb056dfe0125bf1e0cae890a") >> d;
-    BOOST_TEST(b == *PallasField(a).sqrt());
-    BOOST_TEST(!VestaField(a).sqrt());
-    BOOST_TEST(d == *VestaField(c).sqrt());
-    BOOST_TEST(!PallasField(c).sqrt());
+    std::string a("35aeb661a5f2e7df341a8f256036c025e07b8e45002f7d9da0c8f7b5aa744aea");
+    std::string b("39fce7dbf35569b5dc603860e3254bf9e61e3b57ba958a05a121b318906fe126");
+    PallasField a1; std::istringstream(a) >> a1;
+    PallasField b1; std::istringstream(b) >> b1;
+    PallasField c1; std::istringstream("344a642baaa8f21985d0757617709370cdc5b87574ecd97b4cf3c9d915689609") >> c1;
+    VestaField  a2; std::istringstream(a) >> a2;
+    VestaField  b2; std::istringstream(b) >> b2;
+    VestaField  c2; std::istringstream("2fd1206ca31cb1de80ffb18d6b4e5095edafca2beb056dfe0125bf1e0cae890a") >> c2;
+    BOOST_TEST(c1 == *a1.sqrt());
+    BOOST_TEST(!a2.sqrt());
+    BOOST_TEST(c2 == *b2.sqrt());
+    BOOST_TEST(!b1.sqrt());
     BOOST_TEST(PallasField(0) == *PallasField(0).sqrt());
     BOOST_TEST(VestaField(0) == *VestaField(0).sqrt());
     BOOST_TEST(PallasField(1) == *PallasField(1).sqrt());

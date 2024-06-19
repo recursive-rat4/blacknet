@@ -45,6 +45,7 @@ template<
     UInt256 Q_PLUS_1_HALVED
 >
 class PrimeField {
+    constexpr PrimeField(const UInt256& n) : n(n) {}
 public:
     typedef PrimeField Scalar;
     consteval static PrimeField LEFT_ADDITIVE_IDENTITY() { return PrimeField(0); }
@@ -54,7 +55,6 @@ public:
 
     consteval PrimeField() : n() {}
     consteval PrimeField(uint8_t n) : n(n) {}
-    constexpr PrimeField(const UInt256& n) : n(n) {}
 
     constexpr bool operator == (const PrimeField&) const = default;
 
