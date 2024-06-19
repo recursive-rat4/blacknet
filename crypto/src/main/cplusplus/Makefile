@@ -15,6 +15,12 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
+# Boost Test
 test: $(wildcard *test.cpp *.h)
 	$(CXX) -std=c++26 -Wall -Wextra $(filter %.cpp,$^) -lboost_unit_test_framework -pipe -o test
 	./test
+
+# Google Benchmark
+benchmark: $(wildcard benchmark.cpp *.h)
+	$(CXX) -std=c++26 -O3 $(filter %.cpp,$^) -lbenchmark -lbenchmark_main -pipe -o benchmark
+	./benchmark
