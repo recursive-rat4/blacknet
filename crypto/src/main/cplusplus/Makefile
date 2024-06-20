@@ -21,6 +21,6 @@ test: $(wildcard *test.cpp *.h)
 	./test
 
 # Google Benchmark
-benchmark: $(wildcard benchmark.cpp *.h)
-	$(CXX) -std=c++26 -O3 $(filter %.cpp,$^) -lbenchmark -lbenchmark_main -pipe -o benchmark
+benchmark: $(wildcard *benchmark.cpp *.h)
+	$(CXX) -std=c++26 -O3 $(filter %.cpp,$^) -lbenchmark -pipe -o benchmark
 	./benchmark

@@ -84,6 +84,13 @@ public:
         return PrimeField(t);
     }
 
+    constexpr PrimeField& operator -= (const PrimeField& other) {
+        n -= other.n;
+        if (n >= M)
+            n += M;
+        return *this;
+    }
+
     constexpr PrimeField operator - (const PrimeField& other) const {
         UInt256 t(n - other.n);
         if (t >= M)
