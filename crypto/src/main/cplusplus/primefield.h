@@ -18,7 +18,6 @@
 #ifndef BLACKNET_CRYPTO_PRIMEFIELD_H
 #define BLACKNET_CRYPTO_PRIMEFIELD_H
 
-#include <exception>
 #include <iostream>
 #include <iterator>
 #include <optional>
@@ -26,24 +25,17 @@
 #include "bigint.h"
 #include "semigroup.h"
 
-class ArithmeticException : public std::exception {
-    std::string message;
-public:
-    ArithmeticException(const std::string& message) : message(message) {}
-    virtual const char* what() const noexcept override {
-        return message.c_str();
-    }
-};
-
 template<
     std::size_t B,
     UInt256 M,
-    UInt512 M2,
-    UInt256 PHI_MINUS_1,
-    UInt256 P_MINUS_1_HALVED,
-    UInt256 Q,
-    UInt256 S,
-    UInt256 Q_PLUS_1_HALVED
+    UInt256 R2,
+    UInt256 R3,
+    typename UInt256::L RN,
+    UInt256 _PHI_MINUS_1,
+    UInt256 _P_MINUS_1_HALVED,
+    UInt256 _Q,
+    UInt256 _S,
+    UInt256 _Q_PLUS_1_HALVED
 >
 class PrimeField {
     constexpr PrimeField(const UInt256& n) : n(n) {}
@@ -55,7 +47,7 @@ public:
     UInt256 n;
 
     consteval PrimeField() : n() {}
-    consteval PrimeField(uint8_t n) : n(n) {}
+    consteval PrimeField(uint8_t n) : n(toForm(n)) {}
 
     constexpr bool operator == (const PrimeField&) const = default;
 
@@ -167,9 +159,9 @@ public:
 
     class BitIterator {
         friend PrimeField;
-        const UInt256* data;
+        UInt256 data;
         std::size_t index;
-        constexpr BitIterator(const PrimeField& e) : data(&e.n), index(0) {}
+        constexpr BitIterator(const PrimeField& e) : data(fromForm(e.n)), index(0) {}
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = bool;
@@ -182,7 +174,7 @@ public:
             return index == B;
         }
         constexpr bool operator * () const {
-            return (*data)[index];
+            return data[index];
         }
         constexpr BitIterator& operator ++ () {
             ++index;
@@ -204,12 +196,14 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const PrimeField& val)
     {
-        return out << val.n;
+        return out << fromForm(val.n);
     }
 
     friend std::istream& operator >> (std::istream& in, PrimeField& val)
     {
-        return in >> val.n;
+        in >> val.n;
+        val.n = toForm(val.n);
+        return in;
     }
 
     template<typename RNG>
@@ -217,24 +211,48 @@ public:
         UInt256 t(UInt256::random(rng));
         while (t >= M)
             t = UInt256::random(rng);
-        return PrimeField(t);
+        return PrimeField(toForm(t));
     }
 private:
     constexpr static UInt256 reduce(const UInt512& x) {
-        // Barrett reduction
-        UInt1024 ttt(x * M2);
-        UInt256 t1{ttt.limbs[11], ttt.limbs[10], ttt.limbs[9], ttt.limbs[8]};
-        UInt512 tt(x - t1 * M);
-        UInt256 t2{tt.limbs[3], tt.limbs[2], tt.limbs[1], tt.limbs[0]};
-        if (t2 >= M)
-            t2 -= M;
-        return t2;
+        // Montgomery reduction
+        UInt512 tt(x);
+        typename UInt256::LL c = 0;
+        for (std::size_t i = 0; i < UInt256::LIMBS(); ++i) {
+            typename UInt256::LL ll = 0;
+            typename UInt256::L l = tt.limbs[i] * RN;
+            for (std::size_t j = 0; j < UInt256::LIMBS(); ++j) {
+                ll += UInt256::LL(l) * UInt256::LL(M.limbs[j]) + UInt256::LL(tt.limbs[i + j]);
+                tt.limbs[i + j] = ll;
+                ll >>= sizeof(typename UInt256::L) * 8;
+            }
+            c += UInt256::LL(tt.limbs[i + UInt256::LIMBS()]) + ll;
+            tt.limbs[i + UInt256::LIMBS()] = c;
+            c >>= sizeof(typename UInt256::L) * 8;
+        }
+        UInt256 t{tt.limbs[7], tt.limbs[6], tt.limbs[5], tt.limbs[4]};
+        if (t >= M)
+            t -= M;
+        return t;
+    }
+
+    constexpr static UInt256 toForm(const UInt256& n) {
+        return reduce(n * R2);
+    }
+    constexpr static UInt256 fromForm(const UInt256& n) {
+        return reduce(UInt512(0, 0, 0, 0, n.limbs[3], n.limbs[2], n.limbs[1], n.limbs[0]));
     }
 
     constexpr PrimeField isQuadraticResidue() const {
         // Legendre symbol
         return power(*this, P_MINUS_1_HALVED);
     }
+
+    constexpr static const UInt256 PHI_MINUS_1 = toForm(_PHI_MINUS_1);
+    constexpr static const UInt256 P_MINUS_1_HALVED = toForm(_P_MINUS_1_HALVED);
+    constexpr static const UInt256 Q = toForm(_Q);
+    constexpr static const UInt256 S = toForm(_S);
+    constexpr static const UInt256 Q_PLUS_1_HALVED = toForm(_Q_PLUS_1_HALVED);
 };
 
 #endif

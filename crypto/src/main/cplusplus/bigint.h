@@ -19,10 +19,20 @@
 #define BLACKNET_CRYPTO_BIGINT_H
 
 #include <cmath>
+#include <exception>
 #include <iostream>
 #include <iomanip>
 #include <boost/io/ios_state.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+
+class ArithmeticException : public std::exception {
+    std::string message;
+public:
+    ArithmeticException(const std::string& message) : message(message) {}
+    virtual const char* what() const noexcept override {
+        return message.c_str();
+    }
+};
 
 template<std::size_t N>
 requires(N > 0)
@@ -167,6 +177,8 @@ public:
     }
 
     consteval static std::size_t BITS() { return N * sizeof(L) * 8; }
+
+    consteval static std::size_t LIMBS() { return N; }
 
     template<typename RNG>
     static BigInt random(RNG& rng) {
