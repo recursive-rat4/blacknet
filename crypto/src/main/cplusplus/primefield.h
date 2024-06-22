@@ -20,6 +20,7 @@
 
 #include <exception>
 #include <iostream>
+#include <iterator>
 #include <optional>
 
 #include "bigint.h"
@@ -164,9 +165,42 @@ public:
         }
     }
 
-    constexpr bool operator [] (std::size_t index) const { return n[index]; }
-
-    consteval static std::size_t BITS() { return B; }
+    class BitIterator {
+        friend PrimeField;
+        const UInt256* data;
+        std::size_t index;
+        constexpr BitIterator(const PrimeField& e) : data(&e.n), index(0) {}
+    public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = bool;
+        constexpr BitIterator& operator = (const BitIterator& other) {
+            data = other.data;
+            index = other.index;
+            return *this;
+        }
+        constexpr bool operator == (std::default_sentinel_t) const {
+            return index == B;
+        }
+        constexpr bool operator * () const {
+            return (*data)[index];
+        }
+        constexpr BitIterator& operator ++ () {
+            ++index;
+            return *this;
+        }
+        constexpr BitIterator operator ++ (int) {
+            BitIterator old(*this);
+            ++*this;
+            return old;
+        }
+    };
+    static_assert(std::input_iterator<BitIterator>);
+    constexpr BitIterator bitsBegin() const {
+        return BitIterator(*this);
+    }
+    consteval std::default_sentinel_t bitsEnd() const {
+        return std::default_sentinel;
+    }
 
     friend std::ostream& operator << (std::ostream& out, const PrimeField& val)
     {

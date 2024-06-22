@@ -18,16 +18,18 @@
 #ifndef BLACKNET_CRYPTO_SEMIGROUP_H
 #define BLACKNET_CRYPTO_SEMIGROUP_H
 
+#include <algorithm>
+
 template<typename SG>
 constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
     // Double-and-add method
     SG r(SG::LEFT_ADDITIVE_IDENTITY());
     SG t(e);
-    for (std::size_t i = 0; i < SG::Scalar::BITS(); ++i) {
-        if (s[i])
+    std::ranges::for_each(s.bitsBegin(), s.bitsEnd(), [&](bool bit) {
+        if (bit)
             r += t;
         t = t.douple();
-    }
+    });
     return r;
 }
 
@@ -36,11 +38,11 @@ constexpr SG power(const SG& e, const typename SG::Scalar& s) {
     // Square-and-multiply method
     SG r(SG::LEFT_MULTIPLICATIVE_IDENTITY());
     SG t(e);
-    for (std::size_t i = 0; i < SG::Scalar::BITS(); ++i) {
-        if (s[i])
+    std::ranges::for_each(s.bitsBegin(), s.bitsEnd(), [&](bool bit) {
+        if (bit)
             r *= t;
         t = t.square();
-    }
+    });
     return r;
 }
 
