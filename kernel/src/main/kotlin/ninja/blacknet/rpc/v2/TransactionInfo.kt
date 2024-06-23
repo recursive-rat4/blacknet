@@ -59,13 +59,13 @@ class TransactionInfo(
     )
 
     companion object {
-        fun data(type: Byte, bytes: ByteArray, filter: List<WalletDB.TransactionDataType>?): List<DataInfo> {
+        fun data(type: UByte, bytes: ByteArray, filter: List<WalletDB.TransactionDataType>?): List<DataInfo> {
             val data = if (type == TxType.Generated.type) {
-                listOf(DataInfo(type.toUByte(), 0, JsonObject(emptyMap())))
+                listOf(DataInfo(type, 0, JsonObject(emptyMap())))
             } else if (type != TxType.Batch.type) {
                 val serializer = TxType.getSerializer<TxData>(type)
                 val data = binaryFormat.decodeFromByteArray(serializer, bytes)
-                listOf(DataInfo(type.toUByte(), 0, json.encodeToJsonElement(serializer, data)))
+                listOf(DataInfo(type, 0, json.encodeToJsonElement(serializer, data)))
             } else {
                 val multiData = binaryFormat.decodeFromByteArray(Batch.serializer(), bytes)
                 val list = ArrayList<DataInfo>(multiData.multiData.size)
@@ -74,7 +74,7 @@ class TransactionInfo(
                         val (dataType, dataBytes) = multiData.multiData[index]
                         val serializer = TxType.getSerializer<TxData>(dataType)
                         val data = binaryFormat.decodeFromByteArray(serializer, dataBytes)
-                        list.add(DataInfo(dataType.toUByte(), index + 1, json.encodeToJsonElement(serializer, data)))
+                        list.add(DataInfo(dataType, index + 1, json.encodeToJsonElement(serializer, data)))
                     }
                 } else {
                     for (i in 0 until filter.size) {
@@ -82,7 +82,7 @@ class TransactionInfo(
                         val (dataType, dataBytes) = multiData.multiData[dataIndex - 1]
                         val serializer = TxType.getSerializer<TxData>(dataType)
                         val data = binaryFormat.decodeFromByteArray(serializer, dataBytes)
-                        list.add(DataInfo(dataType.toUByte(), dataIndex, json.encodeToJsonElement(serializer, data)))
+                        list.add(DataInfo(dataType, dataIndex, json.encodeToJsonElement(serializer, data)))
                     }
                 }
                 list

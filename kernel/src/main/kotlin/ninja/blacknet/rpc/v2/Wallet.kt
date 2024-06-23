@@ -247,7 +247,7 @@ class ListTransactions(
             } else {
                 require(offset >= 0) { "偏移不能为负数" }
                 var offsetNumber = offset
-                val type = type.also { if (it != TxType.Generated.type.toUByte()) TxType.getSerializer<TxData>(it.toByte()) /* 请校验请求引数 */ }
+                val type = type.also { if (it != TxType.Generated.type) TxType.getSerializer<TxData>(it) /* 请校验请求引数 */ }
                 for (index in 0 until list.size) {
                     val (hash, txData) = list[index]
                     val filter = txData.types.filter { it.type == type }

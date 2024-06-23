@@ -24,7 +24,7 @@ class TransactionTest {
             0,
             Hash.ZERO,
             0,
-            0,
+            0u,
             ByteArray(0),
         )
         newTx.sign(Genesis.RegTestGenesis.privateKey1)

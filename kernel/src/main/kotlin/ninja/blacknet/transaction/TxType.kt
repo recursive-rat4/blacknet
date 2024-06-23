@@ -11,28 +11,28 @@ package ninja.blacknet.transaction
 
 import kotlinx.serialization.KSerializer
 
-enum class TxType(val type: Byte) {
-    Transfer(0),
-    Burn(1),
-    Lease(2),
-    CancelLease(3),
-    BApp(4),
-    CreateHTLC(5),
-    UnlockHTLC(6),
-    RefundHTLC(7),
-    SpendHTLC(8),
-    CreateMultisig(9),
-    SpendMultisig(10),
-    WithdrawFromLease(11),
-    ClaimHTLC(12),
-    //TODO Dispel(13),
-    Batch(16),
-    // Genesis(125),
-    Generated(254.toByte()),
+enum class TxType(val type: UByte) {
+    Transfer(0u),
+    Burn(1u),
+    Lease(2u),
+    CancelLease(3u),
+    BApp(4u),
+    CreateHTLC(5u),
+    UnlockHTLC(6u),
+    RefundHTLC(7u),
+    SpendHTLC(8u),
+    CreateMultisig(9u),
+    SpendMultisig(10u),
+    WithdrawFromLease(11u),
+    ClaimHTLC(12u),
+    //TODO Dispel(13u),
+    Batch(16u),
+    // Genesis(125u),
+    Generated(254u),
     ;
 
     companion object {
-        fun <T : TxData> getSerializer(type: Byte): KSerializer<T> {
+        fun <T : TxData> getSerializer(type: UByte): KSerializer<T> {
             @Suppress("UNCHECKED_CAST")
             return when (type) {
                 Transfer.type -> ninja.blacknet.transaction.Transfer.serializer()

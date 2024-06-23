@@ -39,7 +39,7 @@ class TransactionInfoV1(
             tx.seq,
             tx.anchor.toString(),
             tx.fee,
-            tx.type.toUByte(),
+            tx.type,
             data(tx.type, tx.data)
     )
 
@@ -49,7 +49,7 @@ class TransactionInfoV1(
             return TransactionInfoV1(binaryFormat.decodeFromByteArray(Transaction.serializer(), bytes), hash, bytes.size)
         }
 
-        private fun data(type: Byte, bytes: ByteArray): String {
+        private fun data(type: UByte, bytes: ByteArray): String {
             val serializer = TxType.getSerializer<TxData>(type)
             val txData = binaryFormat.decodeFromByteArray(serializer, bytes)
             return when (type) {

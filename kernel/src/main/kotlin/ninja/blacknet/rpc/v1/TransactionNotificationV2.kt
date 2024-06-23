@@ -38,7 +38,7 @@ class TransactionNotificationV2(
             tx.seq,
             tx.anchor.toString(),
             tx.fee.toString(),
-            tx.type.toUByte(),
+            tx.type,
             TransactionInfoV2.data(tx.type, tx.data)
     )
 }

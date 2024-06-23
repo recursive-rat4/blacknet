@@ -28,7 +28,7 @@ class Transaction(
         val anchor: Hash,
         @Serializable(with = LongSerializer::class)
         val fee: Long,
-        val type: Byte,
+        val type: UByte,
         @Serializable(with = ByteArraySerializer::class)
         val data: ByteArray
 ) {
@@ -56,7 +56,7 @@ class Transaction(
             }
         )
 
-        fun create(from: PublicKey, seq: Int, anchor: Hash, fee: Long, type: Byte, data: ByteArray): Transaction {
+        fun create(from: PublicKey, seq: Int, anchor: Hash, fee: Long, type: UByte, data: ByteArray): Transaction {
             return Transaction(SignatureSerializer.EMPTY, from, seq, anchor, fee, type, data)
         }
 

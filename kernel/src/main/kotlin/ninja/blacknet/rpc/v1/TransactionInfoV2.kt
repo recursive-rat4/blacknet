@@ -43,14 +43,14 @@ class TransactionInfoV2(
             tx.seq,
             tx.anchor.toString(),
             tx.fee.toString(),
-            tx.type.toUByte(),
+            tx.type,
             data(tx.type, tx.data)
     )
 
     fun toJson() = Json.toJson(serializer(), this)
 
     companion object {
-        fun data(type: Byte, bytes: ByteArray): JsonElement {
+        fun data(type: UByte, bytes: ByteArray): JsonElement {
             if (type == TxType.Generated.type) return buildJsonObject {}
             val serializer = TxType.getSerializer<TxData>(type)
             val txData = binaryFormat.decodeFromByteArray(serializer, bytes)

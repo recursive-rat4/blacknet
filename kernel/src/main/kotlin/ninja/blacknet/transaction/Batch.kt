@@ -24,7 +24,7 @@ class Batch(
 ) : TxData {
     @Serializable
     class TxDataData(
-            val type: Byte,
+            val type: UByte,
             @Serializable(with = ByteArraySerializer::class)
             val data: ByteArray
     ) {

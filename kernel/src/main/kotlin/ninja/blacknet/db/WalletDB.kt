@@ -273,7 +273,7 @@ object WalletDB {
         }
     }
 
-    private fun processTransactionDataImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, dataIndex: Int, type: Byte, bytes: ByteArray, height: Int, from: Boolean): Boolean {
+    private fun processTransactionDataImpl(publicKey: PublicKey, wallet: Wallet, hash: Hash, dataIndex: Int, type: UByte, bytes: ByteArray, height: Int, from: Boolean): Boolean {
         return when (type) {
             TxType.Transfer.type -> {
                 if (from) {
