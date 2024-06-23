@@ -68,7 +68,8 @@ public:
         if (*this == WeierstrassGroupAffine())
             return WeierstrassGroupAffine();
 
-        BF k(BF(3) * x.square());
+        BF xx(x.square());
+        BF k(xx + xx + xx);
         if constexpr (A != BF(0))
             k += A;
         k /= y + y;

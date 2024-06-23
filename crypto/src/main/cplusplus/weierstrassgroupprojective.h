@@ -74,7 +74,7 @@ public:
             BF vvv(v * vv);
             BF w(z * other.z);
             BF r(vv * v2);
-            BF a(uu * w - vvv - BF(2) * r);
+            BF a(uu * w - vvv - r - r);
             BF xr(v * a);
             BF yr(u * (r - a) - vvv * u2);
             BF zr(vvv * w);
@@ -90,17 +90,22 @@ public:
         if (*this == WeierstrassGroupProjective())
             return WeierstrassGroupProjective();
         // dbl-1998-cmo-2
-        BF w(BF(3) * x.square());
+        BF xx(x.square());
+        BF w(xx + xx + xx);
         if constexpr (A != BF(0))
             w += A * z.square();
         BF s(y * z);
-        BF sss(s * s.square());
+        BF sss8(s * s.square()); sss8 += sss8; sss8 += sss8; sss8 += sss8;
         BF r(y * s);
+        BF rr8(r.square()); rr8 += rr8; rr8 += rr8; rr8 += rr8;
         BF b(x * r);
-        BF h(w.square() - BF(8) * b);
-        BF xr(BF(2) * h * s);
-        BF yr(w * (BF(4) * b - h) - BF(8) * r.square());
-        BF zr(BF(8) * sss);
+        BF b4(b + b); b4 += b4;
+        BF b8(b4 + b4);
+        BF h(w.square() - b8);
+        BF hs(h * s);
+        BF xr(hs + hs);
+        BF yr(w * (b4 - h) - rr8);
+        BF zr(sss8);
         return WeierstrassGroupProjective(xr, yr, zr);
     }
 
