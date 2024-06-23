@@ -37,6 +37,20 @@ static void BM_PedersenCommitmentAffine(benchmark::State& state) {
 }
 BENCHMARK(BM_PedersenCommitmentAffine);
 
+static void BM_PedersenCommitmentJacobian(benchmark::State& state) {
+    auto g = VestaGroupJacobian::random(rng);
+    auto h = VestaGroupJacobian::random(rng);
+    PedersenCommitment cs(g, h);
+    auto m = PallasField::random(rng);
+    auto r = PallasField::random(rng);
+
+    for (auto _ : state)
+        benchmark::DoNotOptimize(
+            cs.commit(m, r)
+        );
+}
+BENCHMARK(BM_PedersenCommitmentJacobian);
+
 static void BM_PedersenCommitmentProjective(benchmark::State& state) {
     auto g = VestaGroupProjective::random(rng);
     auto h = VestaGroupProjective::random(rng);

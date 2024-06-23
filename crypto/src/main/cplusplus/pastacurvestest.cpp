@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(groupMulAffine) {
     BOOST_TEST(VestaGroupAffine() == VestaGroupAffine() * d);
 }
 
-BOOST_AUTO_TEST_CASE(groupNegProjective) {
+BOOST_AUTO_TEST_CASE(groupNegJacobian) {
     PallasField ax; std::istringstream("1c92e421c15f698f5f595eb458e7ce36f9fa43fc4d06591aacd1658a92722cd5") >> ax;
     PallasField ay; std::istringstream("2f89c29d9ae36f7c0f20ef5d73f85cea5fdc1cfeae3b96e36c377d3b2f1afb4d") >> ay;
     PallasField bx; std::istringstream("1c92e421c15f698f5f595eb458e7ce36f9fa43fc4d06591aacd1658a92722cd5") >> bx;
@@ -209,17 +209,17 @@ BOOST_AUTO_TEST_CASE(groupNegProjective) {
     VestaField  cy; std::istringstream("0e2e3683b3e12f2b986560a0b3a208f29066185aad807056b440e687f990a70a") >> cy;
     VestaField  dx; std::istringstream("29ccc7054c866d02883e099de5420e2bd07ca59ebc8f1901696496382d2b1c17") >> dx;
     VestaField  dy; std::istringstream("31d1c97c4c1ed0d4679a9f5f4c5df70d91e080a15c143886d8060499066f58f7") >> dy;
-    PallasGroupProjective a(ax, ay, PallasField(1));
-    PallasGroupProjective b(bx, by, PallasField(1));
-    VestaGroupProjective  c(cx, cy, VestaField(1));
-    VestaGroupProjective  d(dx, dy, VestaField(1));
+    PallasGroupJacobian a(ax, ay, PallasField(1));
+    PallasGroupJacobian b(bx, by, PallasField(1));
+    VestaGroupJacobian  c(cx, cy, VestaField(1));
+    VestaGroupJacobian  d(dx, dy, VestaField(1));
     BOOST_TEST(b == -a);
     BOOST_TEST(d == -c);
-    BOOST_TEST(PallasGroupProjective() == -PallasGroupProjective());
-    BOOST_TEST(VestaGroupProjective() == -VestaGroupProjective());
+    BOOST_TEST(PallasGroupJacobian() == -PallasGroupJacobian());
+    BOOST_TEST(VestaGroupJacobian() == -VestaGroupJacobian());
 }
 
-BOOST_AUTO_TEST_CASE(groupAddProjective) {
+BOOST_AUTO_TEST_CASE(groupAddJacobian) {
     PallasField ax; std::istringstream("248949bf1e33e577c48df9037c0fedce42ea070f91125cd796f49349a994794c") >> ax;
     PallasField ay; std::istringstream("01a384ee0cd22f32777ff370d3ed17b85b3837a61f7c3c9d3097f06799303d15") >> ay;
     PallasField bx; std::istringstream("342cfacf5781efbb03d6326015c9078aac0fbc7e5f17d6ad71c9bd8d5bb0e41c") >> bx;
@@ -232,34 +232,34 @@ BOOST_AUTO_TEST_CASE(groupAddProjective) {
     VestaField  ey; std::istringstream("01d858f8d8cbea25bc870538280467c2ca440be332b2e33860552b61476160a0") >> ey;
     VestaField  fx; std::istringstream("20902e52296c05a0a09ef0150af8bafe836cb1f934f0325abc1afbebc93c09c8") >> fx;
     VestaField  fy; std::istringstream("3e27a707273415da4378fac7d7fb983d58028d18d6e1c5a52bf1bfbfb89e9f61") >> fy;
-    PallasGroupProjective a(ax, ay, PallasField(1));
-    PallasGroupProjective b(bx, by, PallasField(1));
-    PallasGroupProjective c(cx, cy, PallasField(1));
-    VestaGroupProjective  d(dx, dy, VestaField(1));
-    VestaGroupProjective  e(ex, ey, VestaField(1));
-    VestaGroupProjective  f(fx, fy, VestaField(1));
+    PallasGroupJacobian a(ax, ay, PallasField(1));
+    PallasGroupJacobian b(bx, by, PallasField(1));
+    PallasGroupJacobian c(cx, cy, PallasField(1));
+    VestaGroupJacobian  d(dx, dy, VestaField(1));
+    VestaGroupJacobian  e(ex, ey, VestaField(1));
+    VestaGroupJacobian  f(fx, fy, VestaField(1));
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
     BOOST_TEST(e == d + d);
-    BOOST_TEST(VestaGroupProjective() == e + f);
-    BOOST_TEST(c == PallasGroupProjective() + c);
-    BOOST_TEST(c == c + PallasGroupProjective());
-    BOOST_TEST(VestaGroupProjective() == VestaGroupProjective() + VestaGroupProjective());
+    BOOST_TEST(VestaGroupJacobian() == e + f);
+    BOOST_TEST(c == PallasGroupJacobian() + c);
+    BOOST_TEST(c == c + PallasGroupJacobian());
+    BOOST_TEST(VestaGroupJacobian() == VestaGroupJacobian() + VestaGroupJacobian());
 }
 
-BOOST_AUTO_TEST_CASE(groupMulProjective) {
+BOOST_AUTO_TEST_CASE(groupMulJacobian) {
     PallasField ax; std::istringstream("1cb441132f1df394ea0b892518b5f8143814ca5afb8bfcb2cd0b8eaba568b29c") >> ax;
     PallasField ay; std::istringstream("1b01d848ea1769e4e319244446ceebeab80d1687ecd75e1191f8c158a02aaec6") >> ay;
     PallasField cx; std::istringstream("3ae71da7c530d0bbb097cc6b688bb849d1ee146e167637e27486eb874a015ded") >> cx;
     PallasField cy; std::istringstream("101f7a91b0e870b0626c7234eb0024120b66bd06109e55f892fdd00bd5192419") >> cy;
-    PallasGroupProjective a(ax, ay, PallasField(1));
+    PallasGroupJacobian a(ax, ay, PallasField(1));
     VestaField   b; std::istringstream("27d286de826c7abc89876e85217410148a67ed053968ac6d326ae99eeb11d7f1") >> b;
-    PallasGroupProjective c(cx, cy, PallasField(1));
+    PallasGroupJacobian c(cx, cy, PallasField(1));
     PallasField  d; std::istringstream("08f41a93bb8c52e757404c04e2519c5f66b126176b9f7307de457606b2be8946") >> d;
     BOOST_TEST(c == a * b);
     BOOST_TEST(a == a * VestaField(1));
-    BOOST_TEST(PallasGroupProjective() == a * VestaField(0));
-    BOOST_TEST(VestaGroupProjective() == VestaGroupProjective() * d);
+    BOOST_TEST(PallasGroupJacobian() == a * VestaField(0));
+    BOOST_TEST(VestaGroupJacobian() == VestaGroupJacobian() * d);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

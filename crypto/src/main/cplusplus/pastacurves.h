@@ -22,6 +22,7 @@
 #include "primefield.h"
 #include "primefieldbarrett.h"
 #include "weierstrassgroupaffine.h"
+#include "weierstrassgroupjacobian.h"
 #include "weierstrassgroupprojective.h"
 
 /*
@@ -108,5 +109,19 @@ typedef WeierstrassGroupProjective<
     VestaField(0),
     VestaField(5)
 > VestaGroupProjective;
+
+typedef WeierstrassGroupJacobian<
+    PallasField,
+    VestaField,
+    PallasField(0),
+    PallasField(5)
+> PallasGroupJacobian;
+
+typedef WeierstrassGroupJacobian<
+    VestaField,
+    PallasField,
+    VestaField(0),
+    VestaField(5)
+> VestaGroupJacobian;
 
 #endif

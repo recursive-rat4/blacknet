@@ -35,11 +35,11 @@ BOOST_AUTO_TEST_CASE(single) {
     PallasField m2; std::istringstream("374bb94b3a48c4cadbc80878bf5082692a25001e84865cbd73f3f0cb7308bc72") >> m2;
     PallasField r1; std::istringstream("1ab0bd7178dbc83ec8ec11aa0bf46e5cae406812d865fa9a96beccac98aa0f5d") >> r1;
     PallasField r2; std::istringstream("10af23b9642c311b7b270d22fd0cb8efbcdee017d8d25246dedeb7bf06064906") >> r2;
-    VestaGroupProjective g(gx, gy, VestaField(1));
-    VestaGroupProjective h(hx, hy, VestaField(1));
-    PedersenCommitment<VestaGroupProjective> cs(g, h);
-    VestaGroupProjective c1(c1x, c1y, VestaField(1));
-    VestaGroupProjective c2(c2x, c2y, VestaField(1));
+    VestaGroupJacobian g(gx, gy, VestaField(1));
+    VestaGroupJacobian h(hx, hy, VestaField(1));
+    PedersenCommitment<VestaGroupJacobian> cs(g, h);
+    VestaGroupJacobian c1(c1x, c1y, VestaField(1));
+    VestaGroupJacobian c2(c2x, c2y, VestaField(1));
     BOOST_TEST(cs.open(c1, m1, r1), "Opening");
     BOOST_TEST(!cs.open(c2, m1, r1), "Binding");
     BOOST_TEST(!cs.open(c1, r1, m1), "Positional binding");

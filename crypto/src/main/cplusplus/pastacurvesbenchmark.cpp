@@ -23,8 +23,8 @@
 static boost::random::mt19937 rng;
 
 static void BM_CurveAdd(benchmark::State& state) {
-    auto a = PallasGroupProjective::random(rng);
-    auto b = PallasGroupProjective::random(rng);
+    auto a = PallasGroupJacobian::random(rng);
+    auto b = PallasGroupJacobian::random(rng);
 
     for (auto _ : state)
         a = a + b;
@@ -35,7 +35,7 @@ static void BM_CurveAdd(benchmark::State& state) {
 BENCHMARK(BM_CurveAdd);
 
 static void BM_CurveDbl(benchmark::State& state) {
-    auto a = PallasGroupProjective::random(rng);
+    auto a = PallasGroupJacobian::random(rng);
 
     for (auto _ : state)
         a = a.douple();
