@@ -89,22 +89,19 @@ public:
     constexpr WeierstrassGroupProjective douple() const {
         if (*this == WeierstrassGroupProjective())
             return WeierstrassGroupProjective();
-        // dbl-1998-cmo-2
+        // dbl-2007-bl
         BF xx(x.square());
         BF w(xx + xx + xx);
         if constexpr (A != BF(0))
             w += A * z.square();
-        BF s(y * z);
-        BF sss8(s * s.square()); sss8 += sss8; sss8 += sss8; sss8 += sss8;
-        BF r(y * s);
-        BF rr8(r.square()); rr8 += rr8; rr8 += rr8; rr8 += rr8;
-        BF b(x * r);
-        BF b4(b + b); b4 += b4;
-        BF b8(b4 + b4);
-        BF h(w.square() - b8);
-        BF hs(h * s);
-        BF xr(hs + hs);
-        BF yr(w * (b4 - h) - rr8);
+        BF s2(y * z); s2 += s2;
+        BF sss8(s2 * s2.square());
+        BF r(y * s2);
+        BF rr(r.square());
+        BF b((x + r).square() - xx - rr);
+        BF h(w.square() - b - b);
+        BF xr(h * s2);
+        BF yr(w * (b - h) - rr - rr);
         BF zr(sss8);
         return WeierstrassGroupProjective(xr, yr, zr);
     }
