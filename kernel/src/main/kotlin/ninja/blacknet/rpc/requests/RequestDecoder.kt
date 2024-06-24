@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -11,8 +11,10 @@ package ninja.blacknet.rpc.requests
 
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.SequentialDecoder
+import ninja.blacknet.serialization.descriptor.isUnsignedNumber
 
 class RequestDecoder(
         private val reader: RequestReader,
@@ -63,6 +65,13 @@ class RequestDecoder(
         return string.toString()
     }
 
+    override fun decodeInline(descriptor: SerialDescriptor): Decoder {
+        return if (!descriptor.isUnsignedNumber())
+            this
+        else
+            UnsignedDecoder(serializersModule)
+    }
+
     private var elementIndex: Int = -1
     private var elementName: String = ""
 
@@ -75,6 +84,30 @@ class RequestDecoder(
                 return elementIndex
         }
         return CompositeDecoder.DECODE_DONE
+    }
+
+    private inner class UnsignedDecoder(
+        override val serializersModule: SerializersModule,
+    ) : SequentialDecoder() {
+        override fun decodeByte(): Byte {
+            val string = reader.readString(elementName)
+            return string.toUByte().toByte()
+        }
+
+        override fun decodeShort(): Short {
+            val string = reader.readString(elementName)
+            return string.toUShort().toShort()
+        }
+
+        override fun decodeInt(): Int {
+            val string = reader.readString(elementName)
+            return string.toUInt().toInt()
+        }
+
+        override fun decodeLong(): Long {
+            val string = reader.readString(elementName)
+            return string.toULong().toLong()
+        }
     }
 
     // 打破空值字串
