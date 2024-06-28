@@ -170,6 +170,20 @@ public:
 #endif
     }
 
+    constexpr BigInt halve() const {
+        L c = 0;
+        BigInt r;
+        for (std::size_t i = N; i --> 0;) {
+            r.limbs[i] = (limbs[i] >> 1) | (c << (sizeof(L) * 8 - 1));
+            c = limbs[i] & 1;
+        }
+        return r;
+    }
+
+    constexpr bool isEven() const {
+        return !(*this)[0];
+    }
+
     constexpr bool operator [] (std::size_t index) const {
         std::size_t w = std::log2(sizeof(L) * 8);
         std::size_t b = sizeof(L) * 8 - 1;
