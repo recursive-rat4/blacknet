@@ -78,12 +78,24 @@ public:
         return WeierstrassGroupAffine(xr, yr);
     }
 
+    constexpr WeierstrassGroupAffine operator * (const SF& other) const {
+        return multiply(*this, other);
+    }
+
+    constexpr WeierstrassGroupAffine operator - (const WeierstrassGroupAffine& other) const {
+        return *this + -other;
+    }
+
     constexpr WeierstrassGroupAffine& operator += (const WeierstrassGroupAffine& other) {
         return *this = *this + other;
     }
 
-    constexpr WeierstrassGroupAffine operator * (const SF& other) const {
-        return multiply(*this, other);
+    constexpr WeierstrassGroupAffine& operator -= (const WeierstrassGroupAffine& other) {
+        return *this = *this - other;
+    }
+
+    constexpr WeierstrassGroupAffine& operator *= (const SF& other) {
+        return *this = *this * other;
     }
 
     friend std::ostream& operator << (std::ostream& out, const WeierstrassGroupAffine& val)

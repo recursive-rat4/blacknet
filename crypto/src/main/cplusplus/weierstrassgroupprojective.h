@@ -106,12 +106,24 @@ public:
         return WeierstrassGroupProjective(xr, yr, zr);
     }
 
+    constexpr WeierstrassGroupProjective operator * (const SF& other) const {
+        return multiply(*this, other);
+    }
+
+    constexpr WeierstrassGroupProjective operator - (const WeierstrassGroupProjective& other) const {
+        return *this + -other;
+    }
+
     constexpr WeierstrassGroupProjective& operator += (const WeierstrassGroupProjective& other) {
         return *this = *this + other;
     }
 
-    constexpr WeierstrassGroupProjective operator * (const SF& other) const {
-        return multiply(*this, other);
+    constexpr WeierstrassGroupProjective& operator -= (const WeierstrassGroupProjective& other) {
+        return *this = *this - other;
+    }
+
+    constexpr WeierstrassGroupProjective& operator *= (const SF& other) {
+        return *this = *this * other;
     }
 
     constexpr WeierstrassGroupProjective scale() const {

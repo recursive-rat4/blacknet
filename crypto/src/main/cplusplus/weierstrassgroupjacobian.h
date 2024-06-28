@@ -110,12 +110,24 @@ public:
         return WeierstrassGroupJacobian(xr, yr, zr);
     }
 
+    constexpr WeierstrassGroupJacobian operator * (const SF& other) const {
+        return multiply(*this, other);
+    }
+
+    constexpr WeierstrassGroupJacobian operator - (const WeierstrassGroupJacobian& other) const {
+        return *this + -other;
+    }
+
     constexpr WeierstrassGroupJacobian& operator += (const WeierstrassGroupJacobian& other) {
         return *this = *this + other;
     }
 
-    constexpr WeierstrassGroupJacobian operator * (const SF& other) const {
-        return multiply(*this, other);
+    constexpr WeierstrassGroupJacobian& operator -= (const WeierstrassGroupJacobian& other) {
+        return *this = *this - other;
+    }
+
+    constexpr WeierstrassGroupJacobian& operator *= (const SF& other) {
+        return *this = *this * other;
     }
 
     constexpr WeierstrassGroupJacobian scale() const {
