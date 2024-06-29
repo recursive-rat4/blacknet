@@ -21,7 +21,7 @@
 
 #include <algorithm>
 // Speeding up the computations on an elliptic curve using addition-subtraction chains
-// ADDSUBCHAIN-A
+// ADDSUBCHAIN-B
 // http://www.numdam.org/item/ITA_1990__24_6_531_0/
 
 template<typename SG>
@@ -56,7 +56,18 @@ constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
                 if(bit) {
                     Q = Q.douple();
                 } else {
+                    state = 110;
+                }
+                break;
+            case 110:
+                if(bit) {
+                    P = P - Q;
+                    Q = Q.douple();
+                    Q = Q.douple();
+                    state = 11;
+                } else {
                     P = P + Q;
+                    Q = Q.douple();
                     Q = Q.douple();
                     state = 0;
                 }
@@ -64,7 +75,7 @@ constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
         }
     });
 
-    if(state==1||state==11){
+    if(state!=0){
         P = P + Q;
     }
 
