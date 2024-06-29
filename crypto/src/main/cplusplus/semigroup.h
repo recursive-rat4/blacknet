@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024 Xerxes Rånby
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,18 +20,55 @@
 #define BLACKNET_CRYPTO_SEMIGROUP_H
 
 #include <algorithm>
+// Speeding up the computations on an elliptic curve using addition-subtraction chains
+// ADDSUBCHAIN-A
+// http://www.numdam.org/item/ITA_1990__24_6_531_0/
 
 template<typename SG>
 constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
-    // Double-and-add method
-    SG r(SG::LEFT_ADDITIVE_IDENTITY());
-    SG t(e);
+    SG P(SG::LEFT_ADDITIVE_IDENTITY());
+    SG Q(e);
+
+    int state = 0;
     std::ranges::for_each(s.bitsBegin(), s.bitsEnd(), [&](bool bit) {
-        if (bit)
-            r += t;
-        t = t.douple();
+        switch(state){
+            case 0:
+                if(bit) {
+                    state = 1;
+                } else {
+                    Q = Q.douple();
+                }
+                break;
+            case 1:
+                if(bit) {
+                    P = P - Q;
+                    Q = Q.douple();
+                    Q = Q.douple();
+                    state = 11;
+                } else {
+                    P = P + Q;
+                    Q = Q.douple();
+                    Q = Q.douple();
+                    state = 0;
+                }
+                break;
+            case 11:
+                if(bit) {
+                    Q = Q.douple();
+                } else {
+                    P = P + Q;
+                    Q = Q.douple();
+                    state = 0;
+                }
+                break;
+        }
     });
-    return r;
+
+    if(state==1||state==11){
+        P = P + Q;
+    }
+
+    return P;
 }
 
 template<typename SG>
