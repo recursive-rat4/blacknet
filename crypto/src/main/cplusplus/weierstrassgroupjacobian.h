@@ -115,7 +115,35 @@ public:
     }
 
     constexpr WeierstrassGroupJacobian operator - (const WeierstrassGroupJacobian& other) const {
-        return *this + -other;
+        if (*this == WeierstrassGroupJacobian())
+            return -other;
+        if (other == WeierstrassGroupJacobian())
+            return *this;
+
+        BF z1z1(z.square());
+        BF z2z2(other.z.square());
+        BF u1(x * z2z2);
+        BF u2(other.x * z1z1);
+        BF v1(y * other.z * z2z2);
+        BF v2(other.y * z * z1z1);
+
+        if (u1 != u2) {
+            // sub-2024-v
+            BF u(u2 - u1);
+            BF uu(u.square());
+            BF uuu(u * uu);
+            BF v(v2 + v1);
+            BF vv(v.square());
+            BF h(u1 * uu);
+            BF xr(vv - uuu - h - h);
+            BF yr(v * (xr - h) - v1 * uuu);
+            BF zr(z * other.z * u);
+            return WeierstrassGroupJacobian(xr, yr, zr);
+        } else if (v1 == -v2) {
+            return douple();
+        } else {
+            return WeierstrassGroupJacobian();
+        }
     }
 
     constexpr WeierstrassGroupJacobian& operator += (const WeierstrassGroupJacobian& other) {

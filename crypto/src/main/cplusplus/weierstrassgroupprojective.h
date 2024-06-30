@@ -111,7 +111,35 @@ public:
     }
 
     constexpr WeierstrassGroupProjective operator - (const WeierstrassGroupProjective& other) const {
-        return *this + -other;
+        if (*this == WeierstrassGroupProjective())
+            return -other;
+        if (other == WeierstrassGroupProjective())
+            return *this;
+
+        BF u1(other.y * z);
+        BF u2(y * other.z);
+        BF v1(other.x * z);
+        BF v2(x * other.z);
+
+        if (v1 != v2) {
+            // sub-2024-v
+            BF u(u1 + u2);
+            BF uu(u.square());
+            BF v(v1 - v2);
+            BF vv(v.square());
+            BF vvv(v * vv);
+            BF w(z * other.z);
+            BF r(vv * v2);
+            BF a(uu * w - vvv - r - r);
+            BF xr(v * a);
+            BF yr(u * (a - r) - vvv * u2);
+            BF zr(vvv * w);
+            return WeierstrassGroupProjective(xr, yr, zr);
+        } else if (-u1 == u2) {
+            return douple();
+        } else {
+            return WeierstrassGroupProjective();
+        }
     }
 
     constexpr WeierstrassGroupProjective& operator += (const WeierstrassGroupProjective& other) {

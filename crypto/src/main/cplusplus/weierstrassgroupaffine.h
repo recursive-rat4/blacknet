@@ -83,7 +83,22 @@ public:
     }
 
     constexpr WeierstrassGroupAffine operator - (const WeierstrassGroupAffine& other) const {
-        return *this + -other;
+        if (*this == WeierstrassGroupAffine())
+            return -other;
+        if (other == WeierstrassGroupAffine())
+            return *this;
+
+        if (x != other.x) {
+            // sub-2024-v
+            BF k((other.y + y) / (other.x - x));
+            BF xr(k.square() - x - other.x);
+            BF yr(k * (xr - x) - y);
+            return WeierstrassGroupAffine(xr, yr);
+        } else if (y == -other.y) {
+            return douple();
+        } else {
+            return WeierstrassGroupAffine();
+        }
     }
 
     constexpr WeierstrassGroupAffine& operator += (const WeierstrassGroupAffine& other) {

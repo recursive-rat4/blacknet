@@ -43,3 +43,15 @@ static void BM_CurveDbl(benchmark::State& state) {
     benchmark::DoNotOptimize(a);
 }
 BENCHMARK(BM_CurveDbl);
+
+static void BM_CurveSub(benchmark::State& state) {
+    auto a = PallasGroupJacobian::random(rng);
+    auto b = PallasGroupJacobian::random(rng);
+
+    for (auto _ : state)
+        a = a - b;
+
+    benchmark::DoNotOptimize(a);
+    benchmark::DoNotOptimize(b);
+}
+BENCHMARK(BM_CurveSub);
