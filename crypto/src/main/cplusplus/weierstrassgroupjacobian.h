@@ -115,6 +115,9 @@ public:
     }
 
     constexpr WeierstrassGroupJacobian operator - (const WeierstrassGroupJacobian& other) const {
+#if 3
+        return *this + -other;
+#else
         if (*this == WeierstrassGroupJacobian())
             return -other;
         if (other == WeierstrassGroupJacobian())
@@ -144,6 +147,7 @@ public:
         } else {
             return WeierstrassGroupJacobian();
         }
+#endif
     }
 
     constexpr WeierstrassGroupJacobian& operator += (const WeierstrassGroupJacobian& other) {

@@ -83,6 +83,9 @@ public:
     }
 
     constexpr WeierstrassGroupAffine operator - (const WeierstrassGroupAffine& other) const {
+#if 3
+        return *this + -other;
+#else
         if (*this == WeierstrassGroupAffine())
             return -other;
         if (other == WeierstrassGroupAffine())
@@ -99,6 +102,7 @@ public:
         } else {
             return WeierstrassGroupAffine();
         }
+#endif
     }
 
     constexpr WeierstrassGroupAffine& operator += (const WeierstrassGroupAffine& other) {

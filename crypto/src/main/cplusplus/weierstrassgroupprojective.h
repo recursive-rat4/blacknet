@@ -111,6 +111,9 @@ public:
     }
 
     constexpr WeierstrassGroupProjective operator - (const WeierstrassGroupProjective& other) const {
+#if 3
+        return *this + -other;
+#else
         if (*this == WeierstrassGroupProjective())
             return -other;
         if (other == WeierstrassGroupProjective())
@@ -140,6 +143,7 @@ public:
         } else {
             return WeierstrassGroupProjective();
         }
+#endif
     }
 
     constexpr WeierstrassGroupProjective& operator += (const WeierstrassGroupProjective& other) {
