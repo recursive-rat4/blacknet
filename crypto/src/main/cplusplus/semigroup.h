@@ -29,6 +29,7 @@ constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
     SG P(SG::LEFT_ADDITIVE_IDENTITY());
     SG Q(e);
 
+    int QisQdouple = 0;
     int state = 0;
     std::ranges::for_each(s.bitsBegin(), s.bitsEnd(), [&](bool bit) {
         switch(state){
@@ -36,39 +37,47 @@ constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
                 if(bit) {
                     state = 1;
                 } else {
-                    Q = Q.douple();
+                    QisQdouple += 1;
                 }
                 break;
             case 1:
+                // Q only needs to be updated in case P gets updated
+                for(int i = 0;i<QisQdouple;i++){
+                    Q = Q.douple();
+                }
+                QisQdouple = 0;
+
                 if(bit) {
                     P = P - Q;
-                    Q = Q.douple();
-                    Q = Q.douple();
+                    QisQdouple += 2;
                     state = 11;
                 } else {
                     P = P + Q;
-                    Q = Q.douple();
-                    Q = Q.douple();
+                    QisQdouple += 2;
                     state = 0;
                 }
                 break;
             case 11:
                 if(bit) {
-                    Q = Q.douple();
+                    QisQdouple += 1;
                 } else {
                     state = 110;
                 }
                 break;
             case 110:
+                // Q only needs to be updated in case P gets updated
+                for(int i = 0;i<QisQdouple;i++){
+                    Q = Q.douple();
+                }
+                QisQdouple = 0;
+
                 if(bit) {
                     P = P - Q;
-                    Q = Q.douple();
-                    Q = Q.douple();
+                    QisQdouple += 2;
                     state = 11;
                 } else {
                     P = P + Q;
-                    Q = Q.douple();
-                    Q = Q.douple();
+                    QisQdouple += 2;
                     state = 0;
                 }
                 break;
@@ -76,6 +85,11 @@ constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
     });
 
     if(state!=0){
+        // Q only needs to be updated in case P gets updated
+        for(int i = 0;i<QisQdouple;i++){
+            Q = Q.douple();
+        }
+
         P = P + Q;
     }
 
