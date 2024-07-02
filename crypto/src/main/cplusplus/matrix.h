@@ -27,10 +27,11 @@
 
 template<typename E>
 class Matrix {
+public:
     std::size_t rows;
     std::size_t columns;
     std::vector<E> elements;
-public:
+
     constexpr Matrix(std::size_t rows, std::size_t columns)
         : rows(rows), columns(columns), elements(rows * columns) {}
     constexpr Matrix(std::size_t rows, std::size_t columns, std::initializer_list<E> init)

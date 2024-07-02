@@ -15,34 +15,29 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_EQEXTENSION_H
-#define BLACKNET_CRYPTO_EQEXTENSION_H
+#ifndef BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
+#define BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
 
 #include <vector>
 
+#include "eqextension.h"
+#include "matrix.h"
+#include "vector.h"
+
 template<typename E>
-class EqExtension {
+class MultilinearExtension {
     std::vector<E> coefficients;
 public:
-    constexpr EqExtension(const std::vector<E>& coefficients) : coefficients(coefficients) {}
-
-    constexpr std::vector<E> operator () () const {
-        std::vector<E> r(1 << coefficients.size(), E::LEFT_ADDITIVE_IDENTITY());
-        r[0] = E::LEFT_MULTIPLICATIVE_IDENTITY();
-        for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
-            for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
-                r[l] = r[k] * coefficients[i];
-                r[k] -= r[l];
-            }
-        }
-        return r;
-    }
+    constexpr MultilinearExtension(const Matrix<E>& matrix) : coefficients(matrix.elements) {}
+    constexpr MultilinearExtension(const Vector<E>& vector) : coefficients(vector.elements) {}
 
     constexpr E operator () (const std::vector<E>& point) const {
-        E pi(E::LEFT_MULTIPLICATIVE_IDENTITY());
+        EqExtension eq(point);
+        std::vector<E> pis(eq());
+        E sigma(E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < coefficients.size(); ++i)
-            pi *= coefficients[i] * point[i] + (E(1) - coefficients[i]) * (E(1) - point[i]);
-        return pi;
+            sigma += pis[i] * coefficients[i];
+        return sigma;
     }
 };
 
