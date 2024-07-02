@@ -18,6 +18,8 @@
 #ifndef BLACKNET_CRYPTO_PEDERSENCOMMITMENT_H
 #define BLACKNET_CRYPTO_PEDERSENCOMMITMENT_H
 
+#include <vector>
+
 /*
  * Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing
  * Torben Pryds Pedersen
@@ -27,17 +29,28 @@
 
 template<typename G>
 class PedersenCommitment {
-    G g;
-    G h;
+    std::vector<G> pp;
 public:
-    constexpr PedersenCommitment(const G& g, const G& h) : g{g}, h(h) {}
+    constexpr PedersenCommitment(const std::vector<G>& pp) : pp(pp) {}
+    constexpr PedersenCommitment(std::vector<G>&& pp) : pp(std::move(pp)) {}
 
     constexpr G commit(const G::Scalar& s, const G::Scalar& t) const {
-        return g * s + h * t;
+        return pp[0] * s + pp[1] * t;
     }
 
     constexpr bool open(const G& e, const G::Scalar& s, const G::Scalar& t) const {
         return e == commit(s, t);
+    }
+
+    constexpr G commit(const std::vector<typename G::Scalar>& v) const {
+        G sigma(G::LEFT_ADDITIVE_IDENTITY());
+        for (std::size_t i = 0; i < v.size(); ++i)
+            sigma += pp[i] * v[i];
+        return sigma;
+    }
+
+    constexpr bool open(const G& e, const std::vector<typename G::Scalar>& v) const {
+        return e == commit(v);
     }
 };
 

@@ -17,50 +17,72 @@
 
 #include <benchmark/benchmark.h>
 #include <boost/random/mersenne_twister.hpp>
+#include <vector>
 
 #include "pastacurves.h"
 #include "pedersencommitment.h"
 
 static boost::random::mt19937 rng;
 
-static void BM_PedersenCommitmentAffine(benchmark::State& state) {
-    auto g = VestaGroupAffine::random(rng);
-    auto h = VestaGroupAffine::random(rng);
-    PedersenCommitment cs(g, h);
-    auto m = PallasField::random(rng);
-    auto r = PallasField::random(rng);
+static void BM_PedersenCommitmentAffineX4(benchmark::State& state) {
+    PedersenCommitment<VestaGroupAffine> cs({
+        VestaGroupAffine::random(rng),
+        VestaGroupAffine::random(rng),
+        VestaGroupAffine::random(rng),
+        VestaGroupAffine::random(rng),
+    });
+    std::vector<PallasField> v{
+        PallasField::random(rng),
+        PallasField::random(rng),
+        PallasField::random(rng),
+        PallasField::random(rng),
+    };
 
     for (auto _ : state)
         benchmark::DoNotOptimize(
-            cs.commit(m, r)
+            cs.commit(v)
         );
 }
-BENCHMARK(BM_PedersenCommitmentAffine);
+BENCHMARK(BM_PedersenCommitmentAffineX4);
 
-static void BM_PedersenCommitmentJacobian(benchmark::State& state) {
-    auto g = VestaGroupJacobian::random(rng);
-    auto h = VestaGroupJacobian::random(rng);
-    PedersenCommitment cs(g, h);
-    auto m = PallasField::random(rng);
-    auto r = PallasField::random(rng);
+static void BM_PedersenCommitmentJacobianX4(benchmark::State& state) {
+    PedersenCommitment<VestaGroupJacobian> cs({
+        VestaGroupJacobian::random(rng),
+        VestaGroupJacobian::random(rng),
+        VestaGroupJacobian::random(rng),
+        VestaGroupJacobian::random(rng),
+    });
+    std::vector<PallasField> v{
+        PallasField::random(rng),
+        PallasField::random(rng),
+        PallasField::random(rng),
+        PallasField::random(rng),
+    };
 
     for (auto _ : state)
         benchmark::DoNotOptimize(
-            cs.commit(m, r)
+            cs.commit(v)
         );
 }
-BENCHMARK(BM_PedersenCommitmentJacobian);
+BENCHMARK(BM_PedersenCommitmentJacobianX4);
 
-static void BM_PedersenCommitmentProjective(benchmark::State& state) {
-    auto g = VestaGroupProjective::random(rng);
-    auto h = VestaGroupProjective::random(rng);
-    PedersenCommitment cs(g, h);
-    auto m = PallasField::random(rng);
-    auto r = PallasField::random(rng);
+static void BM_PedersenCommitmentProjectiveX4(benchmark::State& state) {
+    PedersenCommitment<VestaGroupProjective> cs({
+        VestaGroupProjective::random(rng),
+        VestaGroupProjective::random(rng),
+        VestaGroupProjective::random(rng),
+        VestaGroupProjective::random(rng),
+    });
+    std::vector<PallasField> v{
+        PallasField::random(rng),
+        PallasField::random(rng),
+        PallasField::random(rng),
+        PallasField::random(rng),
+    };
 
     for (auto _ : state)
         benchmark::DoNotOptimize(
-            cs.commit(m, r)
+            cs.commit(v)
         );
 }
-BENCHMARK(BM_PedersenCommitmentProjective);
+BENCHMARK(BM_PedersenCommitmentProjectiveX4);

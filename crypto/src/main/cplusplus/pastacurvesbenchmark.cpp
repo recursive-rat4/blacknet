@@ -55,3 +55,15 @@ static void BM_CurveSub(benchmark::State& state) {
     benchmark::DoNotOptimize(b);
 }
 BENCHMARK(BM_CurveSub);
+
+static void BM_CurveMul(benchmark::State& state) {
+    auto a = PallasGroupJacobian::random(rng);
+    auto b = VestaField::random(rng);
+
+    for (auto _ : state)
+        a = a * b;
+
+    benchmark::DoNotOptimize(a);
+    benchmark::DoNotOptimize(b);
+}
+BENCHMARK(BM_CurveMul);
