@@ -41,7 +41,9 @@ public:
     consteval IntegerRing() : n() {}
     constexpr IntegerRing(I n) : n(toForm(n)) {}
 
-    constexpr bool operator == (const IntegerRing&) const = default;
+    constexpr bool operator == (const IntegerRing& other) const {
+        return REDUCE(n) == REDUCE(other.n);
+    }
 
     constexpr IntegerRing& operator += (const IntegerRing& other) {
         n += other.n;

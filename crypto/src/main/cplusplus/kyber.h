@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_KYBER_H
 #define BLACKNET_CRYPTO_KYBER_H
 
+#include "cyclotomicring.h"
 #include "integerring.h"
 
 /*
@@ -31,6 +32,7 @@
 
 namespace kyber {
     const int16_t Q = 3329;
+    const std::size_t N = 256;
 
     using Zq = IntegerRing<
         int16_t,
@@ -43,6 +45,11 @@ namespace kyber {
             int16_t t((int32_t(x) * int32_t(M2) + (1 << 25)) >> 26);
             return x - t * Q;
         }
+    >;
+
+    using Rq = CyclotomicRing<
+        Zq,
+        N
     >;
 }
 
