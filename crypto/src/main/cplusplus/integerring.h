@@ -27,7 +27,8 @@ template<
     I M,
     I R2,
     I RN,
-    I(*REDUCE)(I)
+    I(*REDUCE)(I),
+    I(*FREEZE)(I)
 >
 class IntegerRing {
     constexpr IntegerRing(I n, int) : n(n) {}
@@ -42,7 +43,7 @@ public:
     constexpr IntegerRing(I n) : n(toForm(n)) {}
 
     constexpr bool operator == (const IntegerRing& other) const {
-        return REDUCE(n) == REDUCE(other.n);
+        return FREEZE(REDUCE(n)) == FREEZE(REDUCE(other.n));
     }
 
     constexpr IntegerRing& operator += (const IntegerRing& other) {
@@ -58,13 +59,13 @@ public:
     }
 
     constexpr IntegerRing& operator *= (const IntegerRing& other) {
-        L tt(n * other.n);
+        L tt(L(n) * L(other.n));
         n = reduce(tt);
         return *this;
     }
 
     constexpr IntegerRing operator * (const IntegerRing& other) const {
-        L tt(n * other.n);
+        L tt(L(n) * L(other.n));
         I t(reduce(tt));
         return IntegerRing(t, 0);
     }

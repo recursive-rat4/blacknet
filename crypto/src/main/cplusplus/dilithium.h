@@ -15,38 +15,36 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_KYBER_H
-#define BLACKNET_CRYPTO_KYBER_H
+#ifndef BLACKNET_CRYPTO_DILITHIUM_H
+#define BLACKNET_CRYPTO_DILITHIUM_H
 
 #include "cyclotomicring.h"
 #include "integerring.h"
 
 /*
- * CRYSTALS-Kyber (version 3.02)
- * Roberto Avanzi, Joppe Bos, Léo Ducas, Eike Kiltz, Tancrède Lepoint,
- * Vadim Lyubashevsky, John M. Schanck, Peter Schwabe, Gregor Seiler,
- * Damien Stehlé
- * August 4, 2021
- * https://pq-crystals.org/kyber/data/kyber-specification-round3-20210804.pdf
+ * CRYSTALS-Dilithium (Version 3.1)
+ * Shi Bai, Léo Ducas, Eike Kiltz, Tancrède Lepoint, Vadim Lyubashevsky,
+ * Peter Schwabe, Gregor Seiler, Damien Stehlé
+ * February 8, 2021
+ * https://pq-crystals.org/dilithium/data/dilithium-specification-round3-20210208.pdf
  */
 
-namespace kyber {
-    const int16_t Q = 3329;
+namespace dilithium {
+    const int32_t Q = 8380417;
     const std::size_t N = 256;
 
     using Zq = IntegerRing<
-        int16_t,
         int32_t,
+        int64_t,
         Q,
-        1353,
-        -3327,
-        [] (int16_t x) -> int16_t {
-            constexpr int16_t M2 = ((1 << 26) + Q / 2) / Q;
-            int16_t t((int32_t(x) * int32_t(M2) + (1 << 25)) >> 26);
+        2365951,
+        58728449,
+        [] (int32_t x) -> int32_t {
+            int32_t t((x + (1 << 22)) >> 23);
             return x - t * Q;
         },
-        [] (int16_t x) -> int16_t {
-            return x;
+        [] (int32_t x) -> int32_t {
+            return x + ((x >> 31) & Q);
         }
     >;
 
