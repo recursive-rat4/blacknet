@@ -107,7 +107,7 @@ public:
     }
 
     constexpr WeierstrassGroupProjective operator * (const SF& other) const {
-        return multiply(*this, other);
+        return semigroup::multiply(*this, other);
     }
 
     constexpr WeierstrassGroupProjective operator - (const WeierstrassGroupProjective& other) const {

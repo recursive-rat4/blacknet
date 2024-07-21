@@ -108,6 +108,13 @@ public:
         }
     }
 
+    constexpr PrimeField douple() const {
+        UInt256 t(n.douple());
+        if (t >= M)
+            t -= M;
+        return PrimeField(t);
+    }
+
     constexpr PrimeField square() const {
         UInt512 tt(n.square());
         UInt256 t(reduce(tt));
@@ -117,7 +124,7 @@ public:
     constexpr PrimeField invert() const noexcept(false) {
         if (*this != PrimeField(0)) {
             // Euler's theorem
-            return power(*this, PHI_MINUS_1);
+            return semigroup::power(*this, PHI_MINUS_1);
         } else {
             throw ArithmeticException("Noninvertible field element");
         }
@@ -125,6 +132,7 @@ public:
 
     constexpr std::optional<PrimeField> sqrt() const {
         // Tonelli–Shanks algorithm
+        using namespace semigroup;
         auto iqr = isQuadraticResidue();
         if (iqr == PrimeField(1)) {
             PrimeField z(2);
@@ -245,7 +253,7 @@ private:
 
     constexpr PrimeField isQuadraticResidue() const {
         // Legendre symbol
-        return power(*this, P_MINUS_1_HALVED);
+        return semigroup::power(*this, P_MINUS_1_HALVED);
     }
 
     constexpr static const UInt256 PHI_MINUS_1 = toForm(_PHI_MINUS_1);

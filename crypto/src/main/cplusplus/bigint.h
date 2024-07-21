@@ -170,6 +170,16 @@ public:
 #endif
     }
 
+    constexpr BigInt douple() const {
+        L c = 0;
+        BigInt r;
+        for (std::size_t i = 0; i < N; ++i) {
+            r.limbs[i] = (limbs[i] << 1) | c;
+            c = limbs[i] >> (sizeof(L) * 8 - 1);
+        }
+        return r;
+    }
+
     constexpr BigInt halve() const {
         L c = 0;
         BigInt r;

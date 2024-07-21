@@ -79,7 +79,7 @@ public:
     }
 
     constexpr WeierstrassGroupAffine operator * (const SF& other) const {
-        return multiply(*this, other);
+        return semigroup::multiply(*this, other);
     }
 
     constexpr WeierstrassGroupAffine operator - (const WeierstrassGroupAffine& other) const {

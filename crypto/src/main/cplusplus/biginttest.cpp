@@ -44,4 +44,16 @@ BOOST_AUTO_TEST_CASE(halve) {
     BOOST_TEST(e == d.halve());
 }
 
+BOOST_AUTO_TEST_CASE(douple) {
+    UInt256 a; std::istringstream("e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39cae0") >> a;
+    UInt256 b; std::istringstream("7134668bfd6894362a3f27b8f08eaef78e6b36388bce631301ca14b53e9ce570") >> b;
+    UInt256 c; std::istringstream("389a3345feb44a1b151f93dc7847577bc7359b1c45e7318980e50a5a9f4e72b8") >> c;
+    UInt256 d; std::istringstream("1c4d19a2ff5a250d8a8fc9ee3c23abbde39acd8e22f398c4c072852d4fa7395c") >> d;
+    UInt256 e; std::istringstream("0e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39cae") >> e;
+    BOOST_TEST(a == b.douple());
+    BOOST_TEST(b == c.douple());
+    BOOST_TEST(c == d.douple());
+    BOOST_TEST(d == e.douple());
+}
+
 BOOST_AUTO_TEST_SUITE_END()

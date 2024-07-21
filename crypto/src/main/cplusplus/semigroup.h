@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+namespace semigroup {
+
 template<typename SG>
 constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
     // Double-and-add method
@@ -44,6 +46,8 @@ constexpr SG power(const SG& e, const typename SG::Scalar& s) {
         t = t.square();
     });
     return r;
+}
+
 }
 
 #endif
