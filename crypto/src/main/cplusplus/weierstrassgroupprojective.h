@@ -21,7 +21,7 @@
 #include <iostream>
 #include <boost/random/uniform_int_distribution.hpp>
 
-#include "semigroup.h"
+#include "abeliangroup.h"
 
 template<typename BF, typename SF, BF A, BF B>
 class WeierstrassGroupProjective {
@@ -107,7 +107,7 @@ public:
     }
 
     constexpr WeierstrassGroupProjective operator * (const SF& other) const {
-        return semigroup::multiply(*this, other);
+        return abeliangroup::multiply(*this, other);
     }
 
     constexpr WeierstrassGroupProjective operator - (const WeierstrassGroupProjective& other) const {
