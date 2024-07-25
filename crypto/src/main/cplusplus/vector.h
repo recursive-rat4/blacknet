@@ -87,6 +87,14 @@ public:
         std::copy(val.elements.begin(), val.elements.end(), boost::io::make_ostream_joiner(out, ", "));
         return out << ']';
     }
+
+    template<typename RNG>
+    static Vector random(RNG& rng, std::size_t size) {
+        Vector t(size);
+        for (std::size_t i = 0; i < size; ++i)
+            t.elements[i] = E::random(rng);
+        return t;
+    }
 };
 
 #endif

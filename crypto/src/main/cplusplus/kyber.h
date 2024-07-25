@@ -34,6 +34,9 @@ namespace kyber {
     const int16_t Q = 3329;
     const std::size_t N = 256;
 
+    // Kyber768
+    const std::size_t K = 3;
+
     using Zq = IntegerRing<
         int16_t,
         int32_t,

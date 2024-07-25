@@ -63,6 +63,15 @@ public:
         std::copy(val.elements.begin(), val.elements.end(), boost::io::make_ostream_joiner(out, ", "));
         return out << ']';
     }
+
+    template<typename RNG>
+    static Matrix random(RNG& rng, std::size_t rows, std::size_t columns) {
+        Matrix t(rows, columns);
+        for (std::size_t i = 0; i < rows; ++i)
+            for (std::size_t j = 0; j < columns; ++j)
+                t[i, j] = E::random(rng);
+        return t;
+    }
 };
 
 #endif

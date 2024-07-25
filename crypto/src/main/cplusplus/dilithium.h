@@ -33,6 +33,10 @@ namespace dilithium {
     const int32_t Q = 8380417;
     const std::size_t N = 256;
 
+    // Dilithium3
+    const std::size_t K = 6;
+    const std::size_t L = 5;
+
     using Zq = IntegerRing<
         int32_t,
         int64_t,
