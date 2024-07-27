@@ -45,7 +45,7 @@ public:
     UInt256 n;
 
     consteval PrimeFieldBarrett() : n() {}
-    consteval PrimeFieldBarrett(uint8_t n) : n(n) {}
+    constexpr PrimeFieldBarrett(uint8_t n) : n(n) {}
 
     constexpr bool operator == (const PrimeFieldBarrett&) const = default;
 

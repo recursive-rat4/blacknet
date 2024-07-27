@@ -46,7 +46,7 @@ public:
     L limbs[N];
 
     consteval BigInt() : limbs{} {}
-    consteval BigInt(uint8_t n) : limbs{n} {}
+    constexpr BigInt(uint8_t n) : limbs{n} {}
     constexpr BigInt(L l0, L l1, L l2, L l3) : limbs{l3, l2, l1, l0} {
         static_assert(N == 4);
     }

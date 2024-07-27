@@ -47,7 +47,7 @@ public:
     UInt256 n;
 
     consteval PrimeField() : n() {}
-    consteval PrimeField(uint8_t n) : n(toForm(n)) {}
+    constexpr PrimeField(uint8_t n) : n(toForm(n)) {}
 
     constexpr bool operator == (const PrimeField&) const = default;
 

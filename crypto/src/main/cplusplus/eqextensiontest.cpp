@@ -18,41 +18,36 @@
 #include <boost/test/unit_test.hpp>
 
 #include "eqextension.h"
+#include "hypercube.h"
 #include "pastacurves.h"
 
 BOOST_AUTO_TEST_SUITE(EqExtensions)
 
 BOOST_AUTO_TEST_CASE(point) {
     using E = PallasField;
+    Hypercube<E> hc(3);
     std::vector<E> a{E(1), E(0), E(0)};
-    std::vector<E> b(3);
     EqExtension eq(a);
-    for (std::size_t i = 0; i <= 1; ++i) {
-        for (std::size_t j = 0; j <= 1; ++j) {
-            for (std::size_t k = 0; k <= 1; ++k) {
-                b[0] = i ? E(1) : E(0);
-                b[1] = j ? E(1) : E(0);
-                b[2] = k ? E(1) : E(0);
-                if (a == b)
-                    BOOST_TEST(E(1) == eq(b));
-                else
-                    BOOST_TEST(E(0) == eq(b));
-            }
-        }
-    }
+    std::ranges::for_each(hc.decomposedBegin(), hc.decomposedEnd(), [&](const std::vector<E>& b) {
+        if (a == b)
+            BOOST_TEST(E(1) == eq(b));
+        else
+            BOOST_TEST(E(0) == eq(b));
+    });
 }
 
 BOOST_AUTO_TEST_CASE(hypercube) {
     using E = PallasField;
+    Hypercube<E> hc(3);
     std::vector<E> a{E(1), E(0), E(0)};
     EqExtension eq(a);
     std::vector<E> pis(eq());
-    for (std::size_t i = 0; i < 8; ++i) {
+    std::ranges::for_each(hc.composedBegin(), hc.composedEnd(), [&](const std::size_t& i) {
         if (i == 4)
             BOOST_TEST(E(1) == pis[i]);
         else
             BOOST_TEST(E(0) == pis[i]);
-    }
+    });
 }
 
 BOOST_AUTO_TEST_SUITE_END()
