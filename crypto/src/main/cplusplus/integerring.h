@@ -33,6 +33,8 @@ template<
 class IntegerRing {
     constexpr IntegerRing(I n, int) : n(n) {}
 public:
+    typedef I value_type;
+
     typedef IntegerRing Scalar;
     consteval static IntegerRing LEFT_ADDITIVE_IDENTITY() { return IntegerRing(0); }
     consteval static IntegerRing LEFT_MULTIPLICATIVE_IDENTITY() { return IntegerRing(1); }
@@ -80,6 +82,15 @@ public:
         I t(n - other.n);
         t = REDUCE(t);
         return IntegerRing(t, 0);
+    }
+
+    constexpr bool checkInfiniteNorm(I bound) const {
+        I nn(fromForm(n));
+        I t(nn >> (sizeof(I) * 8 - 1));
+        t = nn - (t & nn << 1);
+        if (t < bound)
+            return true;
+        return false;
     }
 
     friend std::ostream& operator << (std::ostream& out, const IntegerRing& val)

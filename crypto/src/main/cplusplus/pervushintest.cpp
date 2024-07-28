@@ -57,4 +57,17 @@ BOOST_AUTO_TEST_CASE(ZqSub) {
     BOOST_TEST(Zq(0) == Zq(1) - Zq(1));
 }
 
+BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
+    Zq a(-677133638855483916);
+    Zq b(1140329745848183219);
+    int64_t ab = 677133638855483916;
+    int64_t ag = 677133638855483917;
+    int64_t bb = 1140329745848183219;
+    int64_t bg = 1140329745848183220;
+    BOOST_TEST(!a.checkInfiniteNorm(ab));
+    BOOST_TEST(a.checkInfiniteNorm(ag));
+    BOOST_TEST(!b.checkInfiniteNorm(bb));
+    BOOST_TEST(b.checkInfiniteNorm(bg));
+}
+
 BOOST_AUTO_TEST_SUITE_END()

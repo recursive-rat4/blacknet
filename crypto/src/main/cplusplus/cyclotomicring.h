@@ -107,6 +107,16 @@ public:
         return t;
     }
 
+    constexpr bool checkInfiniteNorm(typename Z::value_type bound) const {
+        for (std::size_t i = 0; i < N; ++i) {
+            if (coefficients[i].checkInfiniteNorm(bound))
+                continue;
+            else
+                return false;
+        }
+        return true;
+    }
+
     friend std::ostream& operator << (std::ostream& out, const CyclotomicRing& val)
     {
         out << '[';
