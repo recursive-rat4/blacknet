@@ -21,6 +21,8 @@
 #include <iostream>
 #include <boost/io/ostream_joiner.hpp>
 
+#include "convolution.h"
+
 template<
     typename Z,
     std::size_t N
@@ -68,17 +70,7 @@ public:
     }
 
     constexpr CyclotomicRing operator * (const CyclotomicRing& other) const {
-        // Negacyclic convolution
-        CyclotomicRing t(LEFT_ADDITIVE_IDENTITY());
-        for (std::size_t k = 0; k < N; ++k) {
-            for (std::size_t i = 0; i <= k; ++i) {
-                t.coefficients[k] += coefficients[i] * other.coefficients[k - i];
-            }
-            for (std::size_t i = k + 1; i < N; ++i) {
-                t.coefficients[k] -= coefficients[i] * other.coefficients[k + N - i];
-            }
-        }
-        return t;
+        return convolution::negacyclic(*this, other);
     }
 
     constexpr CyclotomicRing& operator *= (const Scalar& other) {
@@ -131,6 +123,8 @@ public:
             t.coefficients[i] = Z::random(rng);
         return t;
     }
+
+    consteval static std::size_t DEGREE() { return N; }
 };
 
 #endif
