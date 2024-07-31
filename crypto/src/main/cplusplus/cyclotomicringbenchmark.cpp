@@ -39,7 +39,7 @@ static void BM_CyclotomicMul_16_256(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_16_256);
 
 static void BM_CyclotomicMul_16_64(benchmark::State& state) {
-    using R = CyclotomicRing<kyber::Zq, 64>;
+    using R = CyclotomicRing<kyber::Zq, 64, convolution::negacyclic>;
 
     auto a = R::random(rng);
     auto b = R::random(rng);
@@ -67,7 +67,7 @@ static void BM_CyclotomicMul_32_256(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_32_256);
 
 static void BM_CyclotomicMul_32_64(benchmark::State& state) {
-    using R = CyclotomicRing<dilithium::Zq, 64>;
+    using R = CyclotomicRing<dilithium::Zq, 64, convolution::negacyclic>;
 
     auto a = R::random(rng);
     auto b = R::random(rng);
@@ -81,7 +81,7 @@ static void BM_CyclotomicMul_32_64(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_32_64);
 
 static void BM_CyclotomicMul_64_256(benchmark::State& state) {
-    using R = CyclotomicRing<PervushinRing, 256>;
+    using R = CyclotomicRing<PervushinRing, 256, convolution::negacyclic>;
 
     auto a = R::random(rng);
     auto b = R::random(rng);
@@ -95,7 +95,7 @@ static void BM_CyclotomicMul_64_256(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_64_256);
 
 static void BM_CyclotomicMul_64_64(benchmark::State& state) {
-    using R = CyclotomicRing<PervushinRing, 64>;
+    using R = CyclotomicRing<PervushinRing, 64, convolution::negacyclic>;
 
     auto a = R::random(rng);
     auto b = R::random(rng);

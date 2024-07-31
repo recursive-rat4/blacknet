@@ -17,10 +17,10 @@
 
 # Boost Test
 test: $(wildcard *test.cpp *.h)
-	$(CXX) -std=c++26 -Wall -Wextra $(filter %.cpp,$^) -lboost_unit_test_framework -pipe -o test
+	$(CXX) -std=c++26 -Wall -Wextra -fwrapv $(filter %.cpp,$^) -lboost_unit_test_framework -pipe -o test
 	./test
 
 # Google Benchmark
 benchmark: $(wildcard *benchmark.cpp *.h)
-	$(CXX) -std=c++26 -O3 $(filter %.cpp,$^) -lbenchmark -pipe -o benchmark
+	$(CXX) -std=c++26 -O3 -fwrapv $(filter %.cpp,$^) -lbenchmark -pipe -o benchmark
 	./benchmark
