@@ -29,7 +29,7 @@ static boost::random::mt19937 rng;
 
 static void BM_AjtaiCommitment_1KB(benchmark::State& state) {
     using R = CyclotomicRing<PervushinRing, latticefold::D>;
-    std::size_t M = 4;
+    std::size_t M = 1;
 
     AjtaiCommitment<R> cs(
         Matrix<R>::random(rng, latticefold::K, M)

@@ -21,13 +21,14 @@
 /*
  * LatticeFold: A Lattice-based Folding Scheme and its Applications to Succinct Proof Systems
  * Dan Boneh, Binyi Chen
- * March 6, 2024
+ * July 29, 2024
  * https://eprint.iacr.org/2024/257
  */
 
 namespace latticefold {
+    const std::size_t B = 65536;
     const std::size_t D = 64;
-    const std::size_t K = 9;
+    const std::size_t K = 16;
 }
 
 #endif
