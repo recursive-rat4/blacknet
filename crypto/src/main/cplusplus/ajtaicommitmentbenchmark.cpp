@@ -19,6 +19,7 @@
 #include <boost/random/mersenne_twister.hpp>
 
 #include "ajtaicommitment.h"
+#include "convolution.h"
 #include "cyclotomicring.h"
 #include "latticefold.h"
 #include "matrix.h"
@@ -28,7 +29,7 @@
 static boost::random::mt19937 rng;
 
 static void BM_AjtaiCommitment_1KB(benchmark::State& state) {
-    using R = CyclotomicRing<PervushinRing, latticefold::D>;
+    using R = CyclotomicRing<PervushinRing, latticefold::D, convolution::negacyclic>;
     std::size_t M = 1;
 
     AjtaiCommitment<R> cs(

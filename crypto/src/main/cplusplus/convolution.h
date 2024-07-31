@@ -18,19 +18,19 @@
 #ifndef BLACKNET_CRYPTO_CONVOLUTION_H
 #define BLACKNET_CRYPTO_CONVOLUTION_H
 
+#include <array>
+
 namespace convolution {
-    template<typename CR>
-    constexpr CR negacyclic(const CR& a, const CR& b) {
-        CR t(CR::LEFT_ADDITIVE_IDENTITY());
-        for (std::size_t k = 0; k < CR::DEGREE(); ++k) {
+    template<typename Z, std::size_t N>
+    constexpr void negacyclic(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+        for (std::size_t k = 0; k < N; ++k) {
             for (std::size_t i = 0; i <= k; ++i) {
-                t.coefficients[k] += a.coefficients[i] * b.coefficients[k - i];
+                r[k] += a[i] * b[k - i];
             }
-            for (std::size_t i = k + 1; i < CR::DEGREE(); ++i) {
-                t.coefficients[k] -= a.coefficients[i] * b.coefficients[k + CR::DEGREE() - i];
+            for (std::size_t i = k + 1; i < N; ++i) {
+                r[k] -= a[i] * b[k + N - i];
             }
         }
-        return t;
     }
 }
 

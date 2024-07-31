@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_KYBER_H
 #define BLACKNET_CRYPTO_KYBER_H
 
+#include "convolution.h"
 #include "cyclotomicring.h"
 #include "integerring.h"
 
@@ -55,7 +56,8 @@ namespace kyber {
 
     using Rq = CyclotomicRing<
         Zq,
-        N
+        N,
+        convolution::negacyclic
     >;
 }
 

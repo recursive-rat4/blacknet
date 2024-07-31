@@ -18,14 +18,14 @@
 #ifndef BLACKNET_CRYPTO_CYCLOTOMICRING_H
 #define BLACKNET_CRYPTO_CYCLOTOMICRING_H
 
+#include <array>
 #include <iostream>
 #include <boost/io/ostream_joiner.hpp>
 
-#include "convolution.h"
-
 template<
     typename Z,
-    std::size_t N
+    std::size_t N,
+    void(*CONVOLUTE)(std::array<Z,N>&, const std::array<Z,N>&, const std::array<Z,N>&)
 >
 class CyclotomicRing {
 public:
@@ -44,7 +44,7 @@ public:
         return t;
     }
 
-    Z coefficients[N];
+    std::array<Z, N> coefficients;
 
     consteval CyclotomicRing() : coefficients() {}
     template<typename ...E>
@@ -70,7 +70,9 @@ public:
     }
 
     constexpr CyclotomicRing operator * (const CyclotomicRing& other) const {
-        return convolution::negacyclic(*this, other);
+        CyclotomicRing t(CyclotomicRing::LEFT_ADDITIVE_IDENTITY());
+        CONVOLUTE(t.coefficients, this->coefficients, other.coefficients);
+        return t;
     }
 
     constexpr CyclotomicRing& operator *= (const Scalar& other) {
@@ -123,8 +125,6 @@ public:
             t.coefficients[i] = Z::random(rng);
         return t;
     }
-
-    consteval static std::size_t DEGREE() { return N; }
 };
 
 #endif

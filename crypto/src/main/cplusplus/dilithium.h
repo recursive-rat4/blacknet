@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_DILITHIUM_H
 #define BLACKNET_CRYPTO_DILITHIUM_H
 
+#include "convolution.h"
 #include "cyclotomicring.h"
 #include "integerring.h"
 
@@ -54,7 +55,8 @@ namespace dilithium {
 
     using Rq = CyclotomicRing<
         Zq,
-        N
+        N,
+        convolution::negacyclic
     >;
 }
 
