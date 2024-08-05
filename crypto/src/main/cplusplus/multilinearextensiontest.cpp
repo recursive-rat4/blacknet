@@ -21,13 +21,24 @@
 #include "hypercube.h"
 #include "matrix.h"
 #include "multilinearextension.h"
-#include "pastacurves.h"
+#include "pervushin.h"
 #include "vector.h"
+
+using E = PervushinRing;
 
 BOOST_AUTO_TEST_SUITE(MultilinearExtensions)
 
+BOOST_AUTO_TEST_CASE(bind) {
+    MultilinearExtension a{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};
+    MultilinearExtension b{E(1), E(2), E(3), E(4)};
+    MultilinearExtension c{E(3), E(4)};
+    MultilinearExtension d{E(4)};
+    BOOST_TEST(b == a.bind(E(0)));
+    BOOST_TEST(c == b.bind(E(1)));
+    BOOST_TEST(d == c.bind(E(1)));
+}
+
 BOOST_AUTO_TEST_CASE(matrix) {
-    using E = PallasField;
     Hypercube<E> hc(3);
     Matrix<E> a(2, 4, {
         E(30), E(31), E(32), E(33),
@@ -46,7 +57,6 @@ BOOST_AUTO_TEST_CASE(matrix) {
 }
 
 BOOST_AUTO_TEST_CASE(vector) {
-    using E = PallasField;
     Hypercube<E> hc(3);
     Vector<E> a{E(63), E(64), E(65), E(66), E(67), E(68), E(69), E(70)};
     MultilinearExtension mle(a);
