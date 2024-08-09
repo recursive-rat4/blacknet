@@ -18,28 +18,28 @@
 #include <boost/test/unit_test.hpp>
 
 #include "customizableconstraintsystem.h"
-#include "pastacurves.h"
+#include "pervushin.h"
+
+using E = PervushinRing;
 
 BOOST_AUTO_TEST_SUITE(CustomizableConstraintSystems)
 
-BOOST_AUTO_TEST_CASE(r1cs) {
-    // x = w²
-    Matrix<PallasField> a(1, 3, { PallasField(0), PallasField(0), PallasField(1) });
-    Matrix<PallasField> b(1, 3, { PallasField(0), PallasField(0), PallasField(1) });
-    Matrix<PallasField> c(1, 3, { PallasField(1), PallasField(0), PallasField(0) });
-    Vector<PallasField> z1{ PallasField(9), PallasField(1), PallasField(2) };
-    Vector<PallasField> z2{ PallasField(4), PallasField(1), PallasField(2) };
+BOOST_AUTO_TEST_CASE(ccs) {
+    // Quarte
+    Matrix<E> m1(1, 3, { E(0), E(0), E(1) });
+    Matrix<E> m2(1, 3, { E(1), E(0), E(0) });
+    Vector<E> z1{ E(81), E(1), E(2) };
+    Vector<E> z2{ E(16), E(1), E(2) };
 
-    std::vector<Matrix<PallasField>> m;
-    m.emplace_back(std::move(a));
-    m.emplace_back(std::move(b));
-    m.emplace_back(std::move(c));
+    std::vector<Matrix<E>> ms;
+    ms.emplace_back(std::move(m1));
+    ms.emplace_back(std::move(m2));
 
-    CustomizableConstraintSystem<PallasField> ccs(
+    CustomizableConstraintSystem<E> ccs(
         1, 3,
-        std::move(m),
-        {{0, 1}, {2}},
-        {PallasField(1), -PallasField(1)}
+        std::move(ms),
+        {{0, 0, 0, 0}, {1}},
+        {E(1), E(-1)}
     );
     BOOST_TEST(!ccs.isSatisfied(z1));
     BOOST_TEST(ccs.isSatisfied(z2));
