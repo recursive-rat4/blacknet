@@ -1,0 +1,48 @@
+/*
+ * Copyright (c) 2024 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#ifndef BLACKNET_CRYPTO_LWEMONGRASS_H
+#define BLACKNET_CRYPTO_LWEMONGRASS_H
+
+#include "integerring.h"
+
+/*
+ * DoS-resistant Oblivious Message Retrieval and Snake-eye Resistant PKE from LWE
+ * Zeyu Liu, Katerina Sotiraki, Eran Tromer, Yunhao Wang
+ * June 8, 2024
+ * https://eprint.iacr.org/2024/510
+ */
+
+namespace lwemongrass {
+    const int32_t Q = 65537;
+
+    using Zq = IntegerRing<
+        int32_t,
+        int64_t,
+        Q,
+        1,
+        -65535,
+        [] (int32_t x) -> int32_t {
+            return (x & 0xFFFF) - (x >> 16);
+        },
+        [] (int32_t x) -> int32_t {
+            return x;
+        }
+    >;
+}
+
+#endif

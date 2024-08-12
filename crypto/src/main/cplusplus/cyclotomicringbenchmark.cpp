@@ -19,38 +19,9 @@
 #include <boost/random/mersenne_twister.hpp>
 
 #include "dilithium.h"
-#include "kyber.h"
 #include "pervushin.h"
 
 static boost::random::mt19937 rng;
-
-static void BM_CyclotomicMul_16_256(benchmark::State& state) {
-    using R = kyber::Rq;
-
-    auto a = R::random(rng);
-    auto b = R::random(rng);
-
-    for (auto _ : state)
-        a = a * b;
-
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
-}
-BENCHMARK(BM_CyclotomicMul_16_256);
-
-static void BM_CyclotomicMul_16_64(benchmark::State& state) {
-    using R = CyclotomicRing<kyber::Zq, 64, convolution::negacyclic>;
-
-    auto a = R::random(rng);
-    auto b = R::random(rng);
-
-    for (auto _ : state)
-        a = a * b;
-
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
-}
-BENCHMARK(BM_CyclotomicMul_16_64);
 
 static void BM_CyclotomicMul_32_256(benchmark::State& state) {
     using R = dilithium::Rq;
