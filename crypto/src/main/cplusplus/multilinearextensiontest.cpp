@@ -21,10 +21,10 @@
 #include "hypercube.h"
 #include "matrix.h"
 #include "multilinearextension.h"
-#include "pervushin.h"
+#include "solinas62.h"
 #include "vector.h"
 
-using E = PervushinRing;
+using E = Solinas62Ring;
 
 BOOST_AUTO_TEST_SUITE(MultilinearExtensions)
 

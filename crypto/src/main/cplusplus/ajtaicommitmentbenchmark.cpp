@@ -23,13 +23,13 @@
 #include "cyclotomicring.h"
 #include "latticefold.h"
 #include "matrix.h"
-#include "pervushin.h"
+#include "solinas62.h"
 #include "vector.h"
 
 static boost::random::mt19937 rng;
 
 static void BM_AjtaiCommitment_1KB(benchmark::State& state) {
-    using R = CyclotomicRing<PervushinRing, latticefold::D, convolution::negacyclic>;
+    using R = CyclotomicRing<Solinas62Ring, latticefold::D, convolution::negacyclic>;
     std::size_t M = 1;
 
     AjtaiCommitment<R> cs(

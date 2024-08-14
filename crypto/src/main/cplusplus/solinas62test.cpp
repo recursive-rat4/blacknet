@@ -17,16 +17,16 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "pervushin.h"
+#include "solinas62.h"
 
-using Zq = PervushinRing;
+using Zq = Solinas62Ring;
 
-BOOST_AUTO_TEST_SUITE(Pervushins)
+BOOST_AUTO_TEST_SUITE(Solinas62)
 
 BOOST_AUTO_TEST_CASE(ZqAdd) {
     Zq a(1152921504606846974);
     Zq b(1152921504606846970);
-    Zq c(-7);
+    Zq c(-2305843009213693673);
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
     BOOST_TEST(c == Zq(0) + c);
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(ZqAdd) {
 BOOST_AUTO_TEST_CASE(ZqMul) {
     Zq a(1152102451225612864);
     Zq b(-32);
-    Zq c(26209708199491568);
+    Zq c(26209708199489288);
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
     BOOST_TEST(Zq(0) == Zq(0) * c);

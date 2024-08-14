@@ -19,7 +19,7 @@
 #include <boost/random/mersenne_twister.hpp>
 
 #include "dilithium.h"
-#include "pervushin.h"
+#include "solinas62.h"
 
 static boost::random::mt19937 rng;
 
@@ -52,7 +52,7 @@ static void BM_CyclotomicMul_32_64(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_32_64);
 
 static void BM_CyclotomicMul_64_256(benchmark::State& state) {
-    using R = CyclotomicRing<PervushinRing, 256, convolution::negacyclic>;
+    using R = CyclotomicRing<Solinas62Ring, 256, convolution::negacyclic>;
 
     auto a = R::random(rng);
     auto b = R::random(rng);
@@ -66,7 +66,7 @@ static void BM_CyclotomicMul_64_256(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_64_256);
 
 static void BM_CyclotomicMul_64_64(benchmark::State& state) {
-    using R = CyclotomicRing<PervushinRing, 64, convolution::negacyclic>;
+    using R = CyclotomicRing<Solinas62Ring, 64, convolution::negacyclic>;
 
     auto a = R::random(rng);
     auto b = R::random(rng);

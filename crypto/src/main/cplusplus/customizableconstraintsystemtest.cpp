@@ -18,9 +18,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include "customizableconstraintsystem.h"
-#include "pervushin.h"
+#include "solinas62.h"
 
-using E = PervushinRing;
+using E = Solinas62Ring;
 
 BOOST_AUTO_TEST_SUITE(CustomizableConstraintSystems)
 

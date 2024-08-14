@@ -15,25 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_PERVUSHIN_H
-#define BLACKNET_CRYPTO_PERVUSHIN_H
+#ifndef BLACKNET_CRYPTO_SOLINAS62_H
+#define BLACKNET_CRYPTO_SOLINAS62_H
 
 #include "integerring.h"
 
-constexpr int64_t PervushinNumber(2305843009213693951);
+// 2⁶² - 2⁸ - 2⁵ + 1
+constexpr int64_t Solinas62Prime(0x3ffffffffffffee1);
 
 typedef IntegerRing<
     int64_t,
     __int128_t,
-    PervushinNumber,
-    64,
-    -2305843009213693953,
+    Solinas62Prime,
+    1317904,
+    -3454747365720865503,
     [] (int64_t x) -> int64_t {
-        return (x & PervushinNumber) + (x >> 61);
+        int32_t t((x + (1l << 61)) >> 62);
+        return x - t * Solinas62Prime;
     },
     [] (int64_t x) -> int64_t {
-        return x + ((x >> 63) & PervushinNumber);
+        return x + ((x >> 63) & Solinas62Prime);
     }
-> PervushinRing;
+> Solinas62Ring;
 
 #endif
