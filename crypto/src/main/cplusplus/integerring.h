@@ -84,6 +84,18 @@ public:
         return IntegerRing(t, 0);
     }
 
+    constexpr IntegerRing douple() const {
+        I t(n << 1);
+        t = REDUCE(t);
+        return IntegerRing(t, 0);
+    }
+
+    constexpr IntegerRing square() const {
+        L tt(L(n) * L(n));
+        I t(reduce(tt));
+        return IntegerRing(t, 0);
+    }
+
     constexpr bool checkInfiniteNorm(I bound) const {
         I nn(fromForm(n));
         I t(nn >> (sizeof(I) * 8 - 1));
