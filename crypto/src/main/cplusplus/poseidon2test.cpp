@@ -17,9 +17,26 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "poseidon2pasta.h"
 #include "poseidon2solinas62.h"
 
 BOOST_AUTO_TEST_SUITE(Poseidons)
+
+BOOST_AUTO_TEST_CASE(block256) {
+    using E = PallasField;
+    const auto& params = Poseidon2Pallas;
+    std::vector<E> a{
+        0,
+        1,
+        2,
+    };
+    std::vector<E> b{
+        E("1a9b54c7512a914dd778282c44b3513fea7251420b9d95750baae059b2268d7a"),
+        E("1c48ea0994a7d7984ea338a54dbf0c8681f5af883fe988d59ba3380c9f7901fc"),
+        E("079ddd0a80a3e9414489b526a2770448964766685f4c4842c838f8a23120b401"),
+    };
+    BOOST_TEST(b == poseidon2::permute(params, a));
+}
 
 BOOST_AUTO_TEST_CASE(block64) {
     using E = Solinas62Ring;
