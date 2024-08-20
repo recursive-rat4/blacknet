@@ -22,10 +22,10 @@
 BOOST_AUTO_TEST_SUITE(BigInts)
 
 BOOST_AUTO_TEST_CASE(even) {
-    UInt256 a; std::istringstream("0000000000000000000000000000000000000000000000000000000000000000") >> a;
-    UInt256 b; std::istringstream("0000000000000000000000000000000000000000000000000000000000000001") >> b;
-    UInt256 c; std::istringstream("8000000000000000000000000000000000000000000000000000000000000000") >> c;
-    UInt256 d; std::istringstream("8000000000000000000000000000000000000000000000000000000000000001") >> d;
+    constexpr UInt256 a("0000000000000000000000000000000000000000000000000000000000000000");
+    constexpr UInt256 b("0000000000000000000000000000000000000000000000000000000000000001");
+    constexpr UInt256 c("8000000000000000000000000000000000000000000000000000000000000000");
+    constexpr UInt256 d("8000000000000000000000000000000000000000000000000000000000000001");
     BOOST_TEST(a.isEven());
     BOOST_TEST(!b.isEven());
     BOOST_TEST(c.isEven());
@@ -33,11 +33,11 @@ BOOST_AUTO_TEST_CASE(even) {
 }
 
 BOOST_AUTO_TEST_CASE(halve) {
-    UInt256 a; std::istringstream("e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39caea") >> a;
-    UInt256 b; std::istringstream("7134668bfd6894362a3f27b8f08eaef78e6b36388bce631301ca14b53e9ce575") >> b;
-    UInt256 c; std::istringstream("389a3345feb44a1b151f93dc7847577bc7359b1c45e7318980e50a5a9f4e72ba") >> c;
-    UInt256 d; std::istringstream("1c4d19a2ff5a250d8a8fc9ee3c23abbde39acd8e22f398c4c072852d4fa7395d") >> d;
-    UInt256 e; std::istringstream("0e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39cae") >> e;
+    constexpr UInt256 a("e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39caea");
+    constexpr UInt256 b("7134668bfd6894362a3f27b8f08eaef78e6b36388bce631301ca14b53e9ce575");
+    constexpr UInt256 c("389a3345feb44a1b151f93dc7847577bc7359b1c45e7318980e50a5a9f4e72ba");
+    constexpr UInt256 d("1c4d19a2ff5a250d8a8fc9ee3c23abbde39acd8e22f398c4c072852d4fa7395d");
+    constexpr UInt256 e("0e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39cae");
     BOOST_TEST(b == a.halve());
     BOOST_TEST(c == b.halve());
     BOOST_TEST(d == c.halve());
@@ -45,11 +45,11 @@ BOOST_AUTO_TEST_CASE(halve) {
 }
 
 BOOST_AUTO_TEST_CASE(douple) {
-    UInt256 a; std::istringstream("e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39cae0") >> a;
-    UInt256 b; std::istringstream("7134668bfd6894362a3f27b8f08eaef78e6b36388bce631301ca14b53e9ce570") >> b;
-    UInt256 c; std::istringstream("389a3345feb44a1b151f93dc7847577bc7359b1c45e7318980e50a5a9f4e72b8") >> c;
-    UInt256 d; std::istringstream("1c4d19a2ff5a250d8a8fc9ee3c23abbde39acd8e22f398c4c072852d4fa7395c") >> d;
-    UInt256 e; std::istringstream("0e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39cae") >> e;
+    constexpr UInt256 a("e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39cae0");
+    constexpr UInt256 b("7134668bfd6894362a3f27b8f08eaef78e6b36388bce631301ca14b53e9ce570");
+    constexpr UInt256 c("389a3345feb44a1b151f93dc7847577bc7359b1c45e7318980e50a5a9f4e72b8");
+    constexpr UInt256 d("1c4d19a2ff5a250d8a8fc9ee3c23abbde39acd8e22f398c4c072852d4fa7395c");
+    constexpr UInt256 e("0e268cd17fad1286c547e4f71e11d5def1cd66c71179cc6260394296a7d39cae");
     BOOST_TEST(a == b.douple());
     BOOST_TEST(b == c.douple());
     BOOST_TEST(c == d.douple());

@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_BIGINT_H
 #define BLACKNET_CRYPTO_BIGINT_H
 
+#include <charconv>
 #include <cmath>
 #include <exception>
 #include <iostream>
@@ -46,6 +47,10 @@ public:
     L limbs[N];
 
     consteval BigInt() : limbs{} {}
+    consteval BigInt(const std::string& hex) {
+        for (std::size_t i = 0; i < N; ++i)
+            std::from_chars(hex.data() + i * sizeof(L) * 2, hex.data() + (i + 1) * sizeof(L) * 2, limbs[N - i - 1], 16);
+    }
     constexpr BigInt(uint8_t n) : limbs{n} {}
     constexpr BigInt(L l0, L l1, L l2, L l3) : limbs{l3, l2, l1, l0} {
         static_assert(N == 4);
@@ -221,16 +226,6 @@ public:
         for (std::size_t i = N; i --> 0;)
             out << std::setw(sizeof(L) * 2) << val.limbs[i];
         return out;
-    }
-
-    friend std::istream& operator >> (std::istream& in, BigInt& val)
-    {
-        std::string wtf;
-        for (std::size_t i = N; i --> 0;) {
-            in >> std::setw(sizeof(L) * 2) >> wtf;
-            std::istringstream(wtf) >> std::hex >> val.limbs[i];
-        }
-        return in;
     }
 };
 

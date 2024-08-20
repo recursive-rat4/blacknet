@@ -45,6 +45,7 @@ public:
     UInt256 n;
 
     consteval PrimeFieldBarrett() : n() {}
+    consteval PrimeFieldBarrett(const std::string& hex) : n(hex) {}
     constexpr PrimeFieldBarrett(uint8_t n) : n(n) {}
 
     constexpr bool operator == (const PrimeFieldBarrett&) const = default;
@@ -203,11 +204,6 @@ public:
     friend std::ostream& operator << (std::ostream& out, const PrimeFieldBarrett& val)
     {
         return out << val.n;
-    }
-
-    friend std::istream& operator >> (std::istream& in, PrimeFieldBarrett& val)
-    {
-        return in >> val.n;
     }
 
     template<typename RNG>

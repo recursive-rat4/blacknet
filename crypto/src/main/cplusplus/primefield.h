@@ -47,6 +47,7 @@ public:
     UInt256 n;
 
     consteval PrimeField() : n() {}
+    consteval PrimeField(const std::string& hex) : n(toForm(hex)) {}
     constexpr PrimeField(uint8_t n) : n(toForm(n)) {}
 
     constexpr bool operator == (const PrimeField&) const = default;
@@ -205,13 +206,6 @@ public:
     friend std::ostream& operator << (std::ostream& out, const PrimeField& val)
     {
         return out << fromForm(val.n);
-    }
-
-    friend std::istream& operator >> (std::istream& in, PrimeField& val)
-    {
-        in >> val.n;
-        val.n = toForm(val.n);
-        return in;
     }
 
     template<typename RNG>
