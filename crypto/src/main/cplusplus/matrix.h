@@ -23,7 +23,7 @@
 #include <vector>
 #include <boost/io/ostream_joiner.hpp>
 
-#include "vector.h"
+template<typename E>class Vector;
 
 template<typename E>
 class Matrix {

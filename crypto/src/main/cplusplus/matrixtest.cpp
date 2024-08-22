@@ -18,24 +18,27 @@
 #include <boost/test/unit_test.hpp>
 
 #include "matrix.h"
-#include "pastacurves.h"
+#include "solinas62.h"
+#include "vector.h"
+
+using R = Solinas62Ring;
 
 BOOST_AUTO_TEST_SUITE(Matrices)
 
 BOOST_AUTO_TEST_CASE(product) {
-    Matrix<PallasField> a(3, 2, {
-        PallasField(17), PallasField(18),
-        PallasField(33), PallasField(34),
-        PallasField(49), PallasField(50),
+    Matrix<R> a(3, 2, {
+        R(17), R(18),
+        R(33), R(34),
+        R(49), R(50),
     });
-    Vector<PallasField> b{
-        PallasField(2),
-        PallasField(3),
+    Vector<R> b{
+        R(2),
+        R(3),
     };
-    Vector<PallasField> c{
-        PallasField(88),
-        PallasField(168),
-        PallasField(248),
+    Vector<R> c{
+        R(88),
+        R(168),
+        R(248),
     };
     BOOST_TEST(c == a * b);
 }

@@ -23,9 +23,13 @@
 #include <vector>
 #include <boost/io/ostream_joiner.hpp>
 
+template<typename E>class Matrix;
+
 template<typename E>
 class Vector {
 public:
+    constexpr static Vector identity(std::size_t size) { return Vector(size, E(1)); }
+
     std::vector<E> elements;
 
     constexpr Vector(std::size_t size) : elements(size) {}
@@ -78,6 +82,16 @@ public:
         Vector r(size);
         for (std::size_t i = 0; i < size; ++i)
             r.elements[i] = elements[i] * other;
+        return r;
+    }
+
+    constexpr Matrix<E> tensor(const Vector& other) const {
+        std::size_t m = elements.size();
+        std::size_t n = other.elements.size();
+        Matrix<E> r(m, n);
+        for (std::size_t i = 0; i < m; ++i)
+            for (std::size_t j = 0; j < n; ++j)
+                r[i, j] = elements[i] * other.elements[j];
         return r;
     }
 

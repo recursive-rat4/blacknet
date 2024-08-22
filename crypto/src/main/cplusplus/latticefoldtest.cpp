@@ -15,32 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_LATTICEFOLD_H
-#define BLACKNET_CRYPTO_LATTICEFOLD_H
+#include <boost/test/unit_test.hpp>
 
+#include "latticefold.h"
 #include "matrix.h"
+#include "solinas62.h"
 #include "vector.h"
 
-/*
- * LatticeFold: A Lattice-based Folding Scheme and its Applications to Succinct Proof Systems
- * Dan Boneh, Binyi Chen
- * July 29, 2024
- * https://eprint.iacr.org/2024/257
- */
+using Z = Solinas62Ring;
 
-namespace latticefold {
-    const std::size_t B = 65536;
-    const std::size_t D = 64;
-    const std::size_t K = 16;
+BOOST_AUTO_TEST_SUITE(LatticeFolds)
 
-    template<typename R>
-    constexpr Matrix<R> gadget(std::size_t m, std::size_t n) {
-        Vector<R> bpm(n);
-        bpm[0] = R(1);
-        for (std::size_t i = 1; i < n; ++i)
-            bpm[i] = bpm[i - 1] * B;
-        return Vector<R>::identity(m).tensor(bpm);
-    }
+BOOST_AUTO_TEST_CASE(gadget) {
+    auto g = latticefold::gadget<Z>(1, 4);
+    auto a = Vector<Z>{ 3, 2, 1, 0 };
+    auto b = Vector<Z>{ 4295098371 };
+    BOOST_TEST(b == g * a);
 }
 
-#endif
+BOOST_AUTO_TEST_SUITE_END()

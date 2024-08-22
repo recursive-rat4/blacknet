@@ -17,64 +17,90 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "pastacurves.h"
+#include "matrix.h"
+#include "solinas62.h"
 #include "vector.h"
+
+using R = Solinas62Ring;
 
 BOOST_AUTO_TEST_SUITE(Vectors)
 
 BOOST_AUTO_TEST_CASE(HadamardSummation) {
-    Vector<PallasField> a{
-        PallasField(0),
-        PallasField(4),
-        PallasField(2),
+    Vector<R> a{
+        R(0),
+        R(4),
+        R(2),
     };
-    Vector<PallasField> b{
-        PallasField(7),
-        PallasField(3),
-        PallasField(5),
+    Vector<R> b{
+        R(7),
+        R(3),
+        R(5),
     };
-    Vector<PallasField> c{
-        PallasField(7),
-        PallasField(7),
-        PallasField(7),
+    Vector<R> c{
+        R(7),
+        R(7),
+        R(7),
     };
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
 }
 
 BOOST_AUTO_TEST_CASE(HadamardProduct) {
-    Vector<PallasField> a{
-        PallasField(2),
-        PallasField(2),
-        PallasField(2),
+    Vector<R> a{
+        R(2),
+        R(2),
+        R(2),
     };
-    Vector<PallasField> b{
-        PallasField(1),
-        PallasField(2),
-        PallasField(4),
+    Vector<R> b{
+        R(1),
+        R(2),
+        R(4),
     };
-    Vector<PallasField> c{
-        PallasField(2),
-        PallasField(4),
-        PallasField(8),
+    Vector<R> c{
+        R(2),
+        R(4),
+        R(8),
     };
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
 }
 
 BOOST_AUTO_TEST_CASE(ScalarProduct) {
-    Vector<PallasField> a{
-        PallasField(4),
-        PallasField(5),
-        PallasField(6),
+    Vector<R> a{
+        R(4),
+        R(5),
+        R(6),
     };
-    PallasField b(2);
-    Vector<PallasField> c{
-        PallasField(8),
-        PallasField(10),
-        PallasField(12),
+    R b(2);
+    Vector<R> c{
+        R(8),
+        R(10),
+        R(12),
     };
     BOOST_TEST(c == a * b);
+}
+
+BOOST_AUTO_TEST_CASE(TensorProduct) {
+    Vector<R> a{
+        R(0),
+        R(1),
+        R(2),
+    };
+    Vector<R> b{
+        R(3),
+        R(4),
+    };
+    Matrix<R> c{3, 2, {
+        R(0), R(0),
+        R(3), R(4),
+        R(6), R(8),
+    }};
+    Matrix<R> d{2, 3, {
+        R(0), R(3), R(6),
+        R(0), R(4), R(8),
+    }};
+    BOOST_TEST(c == a.tensor(b));
+    BOOST_TEST(d == b.tensor(a));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
