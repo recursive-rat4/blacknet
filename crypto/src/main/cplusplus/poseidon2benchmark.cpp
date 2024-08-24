@@ -25,28 +25,28 @@ static boost::random::mt19937 rng;
 
 static void BM_Poseidon2_256(benchmark::State& state) {
     using F = PallasField;
-    const auto& params = Poseidon2Pallas;
+    constexpr auto& params = Poseidon2Pallas;
 
-    std::vector<F> m(params.t);
-    for (std::size_t i = 0; i < params.t; ++i) m[i] = F::random(rng);
+    std::array<F, params.t()> m;
+    for (std::size_t i = 0; i < params.t(); ++i) m[i] = F::random(rng);
 
     for (auto _ : state)
-        benchmark::DoNotOptimize(
-            poseidon2::permute(params, m)
-        );
+        poseidon2::permute(params, m);
+
+    benchmark::DoNotOptimize(m);
 }
 BENCHMARK(BM_Poseidon2_256);
 
 static void BM_Poseidon2_64(benchmark::State& state) {
     using R = Solinas62Ring;
-    const auto& params = Poseidon2Solinas62;
+    constexpr auto& params = Poseidon2Solinas62;
 
-    std::vector<R> m(params.t);
-    for (std::size_t i = 0; i < params.t; ++i) m[i] = R::random(rng);
+    std::array<R, params.t()> m;
+    for (std::size_t i = 0; i < params.t(); ++i) m[i] = R::random(rng);
 
     for (auto _ : state)
-        benchmark::DoNotOptimize(
-            poseidon2::permute(params, m)
-        );
+        poseidon2::permute(params, m);
+
+    benchmark::DoNotOptimize(m);
 }
 BENCHMARK(BM_Poseidon2_64);

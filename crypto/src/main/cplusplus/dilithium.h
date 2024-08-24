@@ -41,6 +41,8 @@ namespace dilithium {
     using Zq = IntegerRing<
         int32_t,
         int64_t,
+        uint32_t,
+        uint64_t,
         Q,
         2365951,
         58728449,

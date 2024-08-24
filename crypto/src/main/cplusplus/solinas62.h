@@ -26,6 +26,8 @@ constexpr int64_t Solinas62Prime(0x3ffffffffffffee1);
 typedef IntegerRing<
     int64_t,
     __int128_t,
+    uint64_t,
+    __uint128_t,
     Solinas62Prime,
     1317904,
     -3454747365720865503,

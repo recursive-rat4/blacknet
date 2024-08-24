@@ -18,12 +18,15 @@
 #ifndef BLACKNET_CRYPTO_INTEGERRING_H
 #define BLACKNET_CRYPTO_INTEGERRING_H
 
+#include <charconv>
 #include <iostream>
 #include <boost/random/uniform_int_distribution.hpp>
 
 template<
     typename I,
     typename L,
+    typename UI,
+    typename UL,
     I M,
     I R2,
     I RN,
@@ -42,6 +45,12 @@ public:
     I n;
 
     consteval IntegerRing() : n() {}
+    consteval IntegerRing(const std::string& hex) {
+        // Undefined behaviour is prohibited in consteval
+        UI un;
+        std::from_chars(hex.data(), hex.data() + sizeof(UI) * 2, un, 16);
+        n = I(toForm<UI, UL>(un));
+    }
     constexpr IntegerRing(I n) : n(toForm(n)) {}
 
     constexpr bool operator == (const IntegerRing& other) const {
@@ -123,16 +132,19 @@ public:
         return IntegerRing(ud(rng));
     }
 private:
-    constexpr static I reduce(L x) {
-        // Signed Montgomery reduction
-        I t(x * RN);
-        return (x - L(t) * L(M)) >> sizeof(I) * 8;
+    template<typename MRI = I, typename MRL = L>
+    constexpr static MRI reduce(MRL x) {
+        // Partial Montgomery reduction
+        MRI t(x * MRI(RN));
+        return (x - MRL(t) * MRL(M)) >> sizeof(MRI) * 8;
     }
-    constexpr static I toForm(I n) {
-        return reduce(L(n) * L(R2));
+    template<typename MRI = I, typename MRL = L>
+    constexpr static MRI toForm(MRI n) {
+        return reduce<MRI, MRL>(MRL(n) * MRL(R2));
     }
-    constexpr static I fromForm(I n) {
-        return reduce(L(n));
+    template<typename MRI = I, typename MRL = L>
+    constexpr static MRI fromForm(MRI n) {
+        return reduce<MRI, MRL>(MRL(n));
     }
 };
 

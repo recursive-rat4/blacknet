@@ -23,6 +23,15 @@ using Zq = Solinas62Ring;
 
 BOOST_AUTO_TEST_SUITE(Solinas62)
 
+BOOST_AUTO_TEST_CASE(ZqHex) {
+    constexpr Zq a("396a250883366674");
+    constexpr Zq b("123c53eebb61ea24");
+    Zq c(0x396a250883366674);
+    Zq d(0x123c53eebb61ea24);
+    BOOST_TEST(c == a);
+    BOOST_TEST(d == b);
+}
+
 BOOST_AUTO_TEST_CASE(ZqAdd) {
     Zq a(1152921504606846974);
     Zq b(1152921504606846970);

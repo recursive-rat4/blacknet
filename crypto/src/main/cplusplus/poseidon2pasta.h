@@ -21,13 +21,15 @@
 #include "pastacurves.h"
 #include "poseidon2.h"
 
-const poseidon2::Params<PallasField> Poseidon2Pallas{
-   3,
+constexpr const poseidon2::Params<
+   PallasField,
    5,
+   3,
+   64
+> Poseidon2Pallas{
    4,
    60,
-   64,
-   std::vector<PallasField>{
+   std::array<PallasField, 192>{
         PallasField("360d7470611e473d353f628f76d110f34e71162f31003b7057538c2596426303"),
         PallasField("2bab94d7ae222d135dc3c6c5febfaa314908ac2f12ebe06fbdb74213bf63188b"),
         PallasField("150c93fef652fb1c2bf03e1a29aa871fef77e7d736766c5d0939d92753cc5dc8"),
@@ -221,7 +223,7 @@ const poseidon2::Params<PallasField> Poseidon2Pallas{
         PallasField("39fce308b7d43c574962ae3c0da17e313889c57863446d88bbf04f5252de4279"),
         PallasField("1aae18833f8e1d3ac0fdf01662f60d22bef00a08c6ed38d23b57e34489b53fad"),
     },
-    std::vector<PallasField>{
+    std::array<PallasField, 3>{
         1,
         1,
         2,
