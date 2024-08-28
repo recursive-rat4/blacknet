@@ -142,8 +142,8 @@ constexpr void sbox(const Params<F, A, T, R>& params, std::array<F, T>& x) {
 
 }
 
-template<typename F, std::size_t A, std::size_t T, std::size_t R>
-constexpr void permute(const Params<F, A, T, R>& params, std::array<F, T>& x) {
+template<Params params>
+constexpr void permute(auto& x) {
     external(params, x);
 
     for (std::size_t round = 0; round < params.rfb; ++round) {
@@ -153,12 +153,12 @@ constexpr void permute(const Params<F, A, T, R>& params, std::array<F, T>& x) {
     }
 
     for (std::size_t round = params.rfb; round < params.rpe; ++round) {
-        x[0] += params.rc[round * T];
+        x[0] += params.rc[round * params.t()];
         x[0] = sbox(params, x[0]);
         internal(params, x);
     }
 
-    for (std::size_t round = params.rpe; round < R; ++round) {
+    for (std::size_t round = params.rpe; round < params.r(); ++round) {
         rc(params, round, x);
         sbox(params, x);
         external(params, x);

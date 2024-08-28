@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(block256) {
         E("1c48ea0994a7d7984ea338a54dbf0c8681f5af883fe988d59ba3380c9f7901fc"),
         E("079ddd0a80a3e9414489b526a2770448964766685f4c4842c838f8a23120b401"),
     };
-    poseidon2::permute(params, a);
+    poseidon2::permute<params>(a);
     BOOST_TEST(b == a);
 }
 
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(block64) {
         0x121111905f948bd4,
         0x0bce9d1ef0e19aeb,
     };
-    poseidon2::permute(params, a);
+    poseidon2::permute<params>(a);
     BOOST_TEST(b == a);
 }
 

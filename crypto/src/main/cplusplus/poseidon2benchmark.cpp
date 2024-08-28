@@ -31,7 +31,7 @@ static void BM_Poseidon2_256(benchmark::State& state) {
     for (std::size_t i = 0; i < params.t(); ++i) m[i] = F::random(rng);
 
     for (auto _ : state)
-        poseidon2::permute(params, m);
+        poseidon2::permute<params>(m);
 
     benchmark::DoNotOptimize(m);
 }
@@ -45,7 +45,7 @@ static void BM_Poseidon2_64(benchmark::State& state) {
     for (std::size_t i = 0; i < params.t(); ++i) m[i] = R::random(rng);
 
     for (auto _ : state)
-        poseidon2::permute(params, m);
+        poseidon2::permute<params>(m);
 
     benchmark::DoNotOptimize(m);
 }
