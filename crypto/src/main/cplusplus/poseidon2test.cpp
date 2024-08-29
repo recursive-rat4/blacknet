@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_SUITE(Poseidons)
 
 BOOST_AUTO_TEST_CASE(block256) {
     using E = PallasField;
-    const auto& params = Poseidon2Pallas;
+    const auto& params = Poseidon2PallasParams;
     std::array<E, 3> a{
         0,
         1,
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(block256) {
 
 BOOST_AUTO_TEST_CASE(block64) {
     using E = Solinas62Ring;
-    const auto& params = Poseidon2Solinas62;
+    const auto& params = Poseidon2Solinas62Params;
     std::array<E, 12> a{
         0x0000000000000000,
         0x0000000000000001,

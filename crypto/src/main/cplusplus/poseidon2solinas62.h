@@ -20,13 +20,14 @@
 
 #include "poseidon2.h"
 #include "solinas62.h"
+#include "sponge.h"
 
 constexpr const poseidon2::Params<
     Solinas62Ring,
     3,
     12,
     49
-> Poseidon2Solinas62{
+> Poseidon2Solinas62Params{
     4,
     45,
     std::array<Solinas62Ring, 588>{
@@ -634,5 +635,12 @@ constexpr const poseidon2::Params<
         Solinas62Ring("2e34079861bf1802"),
     }
 };
+
+using Poseidon2Solinas62 = Sponge<
+    Solinas62Ring,
+    8,
+    4,
+    poseidon2::permute<Poseidon2Solinas62Params>
+>;
 
 #endif

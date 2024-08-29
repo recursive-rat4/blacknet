@@ -126,6 +126,11 @@ public:
         return in;
     }
 
+    template<typename DRG>
+    constexpr static IntegerRing squeeze(DRG& drg) {
+        return drg.squeeze();
+    }
+
     template<typename RNG>
     static IntegerRing random(RNG& rng) {
         boost::random::uniform_int_distribution<I> ud(-(M - 1) / 2, (M - 1) / 2);

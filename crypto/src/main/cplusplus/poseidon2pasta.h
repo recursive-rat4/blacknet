@@ -20,13 +20,14 @@
 
 #include "pastacurves.h"
 #include "poseidon2.h"
+#include "sponge.h"
 
 constexpr const poseidon2::Params<
    PallasField,
    5,
    3,
    64
-> Poseidon2Pallas{
+> Poseidon2PallasParams{
    4,
    60,
    std::array<PallasField, 192>{
@@ -229,5 +230,12 @@ constexpr const poseidon2::Params<
         2,
     }
 };
+
+using Poseidon2Pallas = Sponge<
+    PallasField,
+    2,
+    1,
+    poseidon2::permute<Poseidon2PallasParams>
+>;
 
 #endif

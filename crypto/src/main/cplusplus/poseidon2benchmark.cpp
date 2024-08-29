@@ -25,7 +25,7 @@ static boost::random::mt19937 rng;
 
 static void BM_Poseidon2_256(benchmark::State& state) {
     using F = PallasField;
-    constexpr auto& params = Poseidon2Pallas;
+    constexpr auto& params = Poseidon2PallasParams;
 
     std::array<F, params.t()> m;
     for (std::size_t i = 0; i < params.t(); ++i) m[i] = F::random(rng);
@@ -39,7 +39,7 @@ BENCHMARK(BM_Poseidon2_256);
 
 static void BM_Poseidon2_64(benchmark::State& state) {
     using R = Solinas62Ring;
-    constexpr auto& params = Poseidon2Solinas62;
+    constexpr auto& params = Poseidon2Solinas62Params;
 
     std::array<R, params.t()> m;
     for (std::size_t i = 0; i < params.t(); ++i) m[i] = R::random(rng);

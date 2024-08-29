@@ -35,6 +35,15 @@ public:
     constexpr AjtaiCommitment(const Matrix<R>& a) : a(a) {}
     constexpr AjtaiCommitment(Matrix<R>&& a) : a(std::move(a)) {}
 
+    template<typename DRG>
+    constexpr static Matrix<R> setup(DRG& drg, std::size_t rows, std::size_t columns) {
+        Matrix<R> t(rows, columns);
+        for (std::size_t i = 0; i < rows; ++i)
+            for (std::size_t j = 0; j < columns; ++j)
+                t[i, j] = R::squeeze(drg);
+        return t;
+    }
+
     constexpr Vector<R> commit(const Vector<R>& m) const {
         return a * m;
     }

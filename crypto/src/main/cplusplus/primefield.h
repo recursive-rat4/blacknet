@@ -208,6 +208,11 @@ public:
         return out << fromForm(val.n);
     }
 
+    template<typename DRG>
+    constexpr static PrimeField squeeze(DRG& drg) {
+        return drg.squeeze();
+    }
+
     template<typename RNG>
     static PrimeField random(RNG& rng) {
         UInt256 t(UInt256::random(rng));
@@ -244,12 +249,12 @@ private:
     constexpr static UInt256 fromForm(const UInt256& n) {
         return reduce(UInt512(0, 0, 0, 0, n.limbs[3], n.limbs[2], n.limbs[1], n.limbs[0]));
     }
-
+public:
     constexpr PrimeField isQuadraticResidue() const {
         // Legendre symbol
         return semigroup::power(*this, P_MINUS_1_HALVED);
     }
-
+private:
     constexpr static const UInt256 PHI_MINUS_1 = toForm(_PHI_MINUS_1);
     constexpr static const UInt256 P_MINUS_1_HALVED = toForm(_P_MINUS_1_HALVED);
     constexpr static const UInt256 Q = toForm(_Q);

@@ -126,6 +126,27 @@ public:
         return out;
     }
 
+    template<typename DRG>
+    constexpr static WeierstrassGroupAffine squeeze(DRG& drg) {
+        BF ySign;
+        while ((ySign = BF::squeeze(drg).isQuadraticResidue()) == BF(0))
+            continue; // Euler's criterion
+        while (true) {
+            BF x(BF::squeeze(drg));
+            BF yy(x * x.square());
+            if constexpr (A != BF(0))
+                yy += A * x;
+            if constexpr (B != BF(0))
+                yy += B;
+            if (auto maybeY = yy.sqrt()) {
+                BF& y = *maybeY;
+                if (ySign != BF(1))
+                    y = -y;
+                return WeierstrassGroupAffine(x, y);
+            }
+        }
+    }
+
     template<typename RNG>
     static WeierstrassGroupAffine random(RNG& rng) {
         boost::random::uniform_int_distribution<uint8_t> ud(0, 1);

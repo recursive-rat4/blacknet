@@ -47,8 +47,7 @@ public:
     std::array<Z, N> coefficients;
 
     consteval CyclotomicRing() : coefficients() {}
-    template<typename ...E>
-    constexpr CyclotomicRing(E&&...e) : coefficients{std::forward<E>(e)...} {}
+    constexpr CyclotomicRing(const std::array<Z, N>& coefficients) : coefficients(coefficients) {}
 
     constexpr bool operator == (const CyclotomicRing&) const = default;
 
@@ -116,6 +115,14 @@ public:
         out << '[';
         std::copy(std::begin(val.coefficients), std::end(val.coefficients), boost::io::make_ostream_joiner(out, ", "));
         return out << ']';
+    }
+
+    template<typename DRG>
+    constexpr static CyclotomicRing squeeze(DRG& drg) {
+        CyclotomicRing t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.coefficients[i] = Z::squeeze(drg);
+        return t;
     }
 
     template<typename RNG>

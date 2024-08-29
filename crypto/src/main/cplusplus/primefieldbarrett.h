@@ -206,6 +206,11 @@ public:
         return out << val.n;
     }
 
+    template<typename DRG>
+    constexpr static PrimeFieldBarrett squeeze(DRG& drg) {
+        return drg.squeeze();
+    }
+
     template<typename RNG>
     static PrimeFieldBarrett random(RNG& rng) {
         UInt256 t(UInt256::random(rng));
@@ -224,11 +229,12 @@ private:
             t2 -= M;
         return t2;
     }
-
+public:
     constexpr PrimeFieldBarrett isQuadraticResidue() const {
         // Legendre symbol
         return semigroup::power(*this, P_MINUS_1_HALVED);
     }
+private:
 };
 
 #endif

@@ -20,8 +20,15 @@
 
 #include "pastacurves.h"
 #include "pedersencommitment.h"
+#include "poseidon2pasta.h"
 
 BOOST_AUTO_TEST_SUITE(PedersenCommitments)
+
+BOOST_AUTO_TEST_CASE(setup) {
+    using CS = PedersenCommitment<PallasGroupAffine>;
+    auto drg = Poseidon2Pallas();
+    CS::setup(drg, 2);
+}
 
 BOOST_AUTO_TEST_CASE(single) {
     constexpr VestaField  gx("33074014122d93a8ac69e0bbc472768ebf2760c0e53f73abf0e395d8b1b5b478");
