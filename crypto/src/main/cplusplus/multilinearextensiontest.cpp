@@ -28,6 +28,12 @@ using E = Solinas62Ring;
 
 BOOST_AUTO_TEST_SUITE(MultilinearExtensions)
 
+BOOST_AUTO_TEST_CASE(meta) {
+    MultilinearExtension mle{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};
+    BOOST_TEST(1 == mle.degree());
+    BOOST_TEST(3 == mle.variables());
+}
+
 BOOST_AUTO_TEST_CASE(bind) {
     MultilinearExtension a{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};
     MultilinearExtension b{E(1), E(2), E(3), E(4)};

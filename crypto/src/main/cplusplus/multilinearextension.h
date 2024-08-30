@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
 #define BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
 
+#include <cmath>
 #include <initializer_list>
 #include <iostream>
 #include <vector>
@@ -56,6 +57,14 @@ public:
             r.coefficients[i] = coefficients[i] + e * (coefficients[j] - coefficients[i]);
         }
         return r;
+    }
+
+    constexpr std::size_t degree() const {
+        return 1;
+    }
+
+    constexpr std::size_t variables() const {
+        return std::log2(coefficients.size());
     }
 
     friend std::ostream& operator << (std::ostream& out, const MultilinearExtension& val)
