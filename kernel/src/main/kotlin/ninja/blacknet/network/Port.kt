@@ -7,8 +7,6 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("INLINE_CLASS_DEPRECATED")
-
 package ninja.blacknet.network
 
 import kotlinx.serialization.Serializable
@@ -16,8 +14,9 @@ import kotlinx.serialization.Serializable
 /**
  * Network port
  */
+@JvmInline
 @Serializable
-inline class Port(
+value class Port(
     internal val value: UShort
 ) : Comparable<Port> {
     override fun toString(): String = value.toString()

@@ -7,11 +7,10 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("INLINE_CLASS_DEPRECATED")
-
 package ninja.blacknet.signal
 
-inline class Signal5<A1, A2, A3, A4, A5>(
+@JvmInline
+value class Signal5<A1, A2, A3, A4, A5>(
     private val slots: ArrayList<(A1, A2, A3, A4, A5) -> Unit> = ArrayList()
 ) {
     fun connect(slot: (A1, A2, A3, A4, A5) -> Unit) = synchronized(slots) {

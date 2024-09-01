@@ -7,8 +7,6 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("INLINE_CLASS_DEPRECATED")
-
 package ninja.blacknet.serialization.bbf
 
 import kotlin.test.Test
@@ -39,8 +37,9 @@ class BinaryFormatTest {
         val list: List<Byte>,
     )
 
+    @JvmInline
     @Serializable
-    private inline class InlineClass(
+    private value class InlineClass(
         val int: Int,
     )
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -7,14 +7,13 @@
  * See the LICENSE.txt file at the top-level directory of this distribution.
  */
 
-@file:Suppress("INLINE_CLASS_DEPRECATED")
-
 package ninja.blacknet.time
 
 /**
  * A timestamp or a time interval measured in milliseconds. The value may be negative.
  */
-public inline class Milliseconds(
+@JvmInline
+public value class Milliseconds(
     /*TODO private*/public val milliseconds: Long
 ) : Comparable<Milliseconds> {
     override fun toString(): String = milliseconds.toString()
