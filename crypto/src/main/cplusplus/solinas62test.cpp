@@ -19,9 +19,9 @@
 
 #include "solinas62.h"
 
-using Zq = Solinas62Ring;
-
 BOOST_AUTO_TEST_SUITE(Solinas62)
+
+using Zq = Solinas62Ring;
 
 BOOST_AUTO_TEST_CASE(ZqHex) {
     constexpr Zq a("396a250883366674");

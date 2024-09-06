@@ -21,9 +21,9 @@
 #include "solinas62.h"
 #include "vector.h"
 
-using R = Solinas62Ring;
-
 BOOST_AUTO_TEST_SUITE(Vectors)
+
+using R = Solinas62Ring;
 
 BOOST_AUTO_TEST_CASE(HadamardSummation) {
     Vector<R> a{

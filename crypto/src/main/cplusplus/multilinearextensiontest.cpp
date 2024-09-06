@@ -24,9 +24,9 @@
 #include "solinas62.h"
 #include "vector.h"
 
-using E = Solinas62Ring;
-
 BOOST_AUTO_TEST_SUITE(MultilinearExtensions)
+
+using E = Solinas62Ring;
 
 BOOST_AUTO_TEST_CASE(meta) {
     MultilinearExtension mle{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};

@@ -22,9 +22,9 @@
 #include "solinas62.h"
 #include "vector.h"
 
-using Z = Solinas62Ring;
-
 BOOST_AUTO_TEST_SUITE(LatticeFolds)
+
+using Z = Solinas62Ring;
 
 BOOST_AUTO_TEST_CASE(gadget) {
     auto g = latticefold::gadget<Z>(1, 4);

@@ -19,9 +19,9 @@
 
 #include "lwemongrass.h"
 
-using namespace lwemongrass;
-
 BOOST_AUTO_TEST_SUITE(LWEmongrass)
+
+using namespace lwemongrass;
 
 BOOST_AUTO_TEST_CASE(ZqAdd) {
     Zq a(981);

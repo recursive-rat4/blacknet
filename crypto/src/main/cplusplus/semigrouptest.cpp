@@ -20,9 +20,9 @@
 #include "pastacurves.h"
 #include "semigroup.h"
 
-using namespace semigroup;
-
 BOOST_AUTO_TEST_SUITE(Semigroups)
+
+using namespace semigroup;
 
 BOOST_AUTO_TEST_CASE(Multiply) {
     constexpr PallasField a("11640cdb3d3a126dabde403009808a4cae45ec00ffac7480d80ac9142abb607f");

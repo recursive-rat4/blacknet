@@ -23,10 +23,10 @@
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
 
-using Z = Solinas62Ring;
-using R = CyclotomicRing<Z, 2, convolution::negacyclic>;;
-
 BOOST_AUTO_TEST_SUITE(AjtaiCommitments)
+
+using Z = Solinas62Ring;
+using R = CyclotomicRing<Z, 2, convolution::negacyclic>;
 
 BOOST_AUTO_TEST_CASE(Zq) {
     using CS = AjtaiCommitment<Z>;

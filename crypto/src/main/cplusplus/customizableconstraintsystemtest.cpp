@@ -20,9 +20,9 @@
 #include "customizableconstraintsystem.h"
 #include "solinas62.h"
 
-using E = Solinas62Ring;
-
 BOOST_AUTO_TEST_SUITE(CustomizableConstraintSystems)
+
+using E = Solinas62Ring;
 
 BOOST_AUTO_TEST_CASE(ccs) {
     // Quarte

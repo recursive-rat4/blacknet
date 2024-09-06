@@ -21,9 +21,9 @@
 #include "solinas62.h"
 #include "univariatepolynomial.h"
 
-using E = Solinas62Ring;
-
 BOOST_AUTO_TEST_SUITE(UnivariatePolynomials)
+
+using E = Solinas62Ring;
 
 BOOST_AUTO_TEST_CASE(meta) {
     UnivariatePolynomial up{E(2), E(3), E(4), E(5)};

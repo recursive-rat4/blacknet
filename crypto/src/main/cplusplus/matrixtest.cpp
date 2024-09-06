@@ -21,9 +21,9 @@
 #include "solinas62.h"
 #include "vector.h"
 
-using R = Solinas62Ring;
-
 BOOST_AUTO_TEST_SUITE(Matrices)
+
+using R = Solinas62Ring;
 
 BOOST_AUTO_TEST_CASE(product) {
     Matrix<R> a(3, 2, {

@@ -19,9 +19,9 @@
 
 #include "dilithium.h"
 
-using namespace dilithium;
-
 BOOST_AUTO_TEST_SUITE(DilithiumCrystals)
+
+using namespace dilithium;
 
 BOOST_AUTO_TEST_CASE(ZqAdd) {
     Zq a(3615562);

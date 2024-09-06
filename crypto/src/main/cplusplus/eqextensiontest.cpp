@@ -19,12 +19,13 @@
 
 #include "eqextension.h"
 #include "hypercube.h"
-#include "pastacurves.h"
+#include "solinas62.h"
 
 BOOST_AUTO_TEST_SUITE(EqExtensions)
 
+using E = Solinas62Ring;
+
 BOOST_AUTO_TEST_CASE(point) {
-    using E = PallasField;
     Hypercube<E> hc(3);
     std::vector<E> a{E(1), E(0), E(0)};
     EqExtension eq(a);
@@ -37,7 +38,6 @@ BOOST_AUTO_TEST_CASE(point) {
 }
 
 BOOST_AUTO_TEST_CASE(hypercube) {
-    using E = PallasField;
     Hypercube<E> hc(3);
     std::vector<E> a{E(1), E(0), E(0)};
     EqExtension eq(a);
