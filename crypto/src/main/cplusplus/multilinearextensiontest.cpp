@@ -42,6 +42,9 @@ BOOST_AUTO_TEST_CASE(bind) {
     BOOST_TEST(b == a.bind(E(0)));
     BOOST_TEST(c == b.bind(E(1)));
     BOOST_TEST(d == c.bind(E(1)));
+    BOOST_TEST(a.bind(E(0)) == a.bind<E(0)>());
+    BOOST_TEST(a.bind(E(1)) == a.bind<E(1)>());
+    BOOST_TEST(a.bind(E(2)) == a.bind<E(2)>());
 }
 
 BOOST_AUTO_TEST_CASE(matrix) {

@@ -42,4 +42,11 @@ BOOST_AUTO_TEST_CASE(point) {
     BOOST_TEST(E(2) == d(E(4)));
 }
 
+BOOST_AUTO_TEST_CASE(interpolation) {
+    UnivariatePolynomial lp{E(7), E(5)};
+    E lp0(7);
+    E lp1(12);
+    BOOST_TEST(lp == UnivariatePolynomial<E>::interpolate(lp0, lp1));
+}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -30,14 +30,25 @@
 
 template<typename E>
 class MultilinearExtension {
-    std::vector<E> coefficients;
 public:
+    std::vector<E> coefficients;
+
     constexpr MultilinearExtension(std::size_t size) : coefficients(size) {}
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
     constexpr MultilinearExtension(const Matrix<E>& matrix) : coefficients(matrix.elements) {}
     constexpr MultilinearExtension(const Vector<E>& vector) : coefficients(vector.elements) {}
+    constexpr MultilinearExtension(const MultilinearExtension& other) : coefficients(other.coefficients) {}
     constexpr MultilinearExtension(MultilinearExtension&& other) noexcept
         : coefficients(std::move(other.coefficients)) {}
+
+    constexpr MultilinearExtension& operator = (const MultilinearExtension& other) {
+        coefficients = other.coefficients;
+        return *this;
+    }
+    constexpr MultilinearExtension& operator = (MultilinearExtension&& other) {
+        coefficients = std::move(other.coefficients);
+        return *this;
+    }
 
     constexpr bool operator == (const MultilinearExtension&) const = default;
 
@@ -48,6 +59,24 @@ public:
         for (std::size_t i = 0; i < coefficients.size(); ++i)
             sigma += pis[i] * coefficients[i];
         return sigma;
+    }
+
+    template<E e>
+    constexpr MultilinearExtension bind() const {
+        std::size_t ns = coefficients.size() >> 1;
+        MultilinearExtension r(ns);
+        if constexpr (e == E(0)) {
+            std::copy(coefficients.begin(), coefficients.begin() + ns, r.coefficients.begin());
+        } else if constexpr (e == E(1)) {
+            std::copy(coefficients.begin() + ns, coefficients.end(), r.coefficients.begin());
+        } else if constexpr (e == E(2)) {
+            for (std::size_t i = 0, j = ns; i < ns; ++i, ++j) {
+                r.coefficients[i] = coefficients[i] + (coefficients[j] - coefficients[i]).douple();
+            }
+        } else {
+            static_assert(false);
+        }
+        return r;
     }
 
     constexpr MultilinearExtension bind(const E& e) const {
