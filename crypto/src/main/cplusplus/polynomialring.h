@@ -15,29 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_CYCLOTOMICRING_H
-#define BLACKNET_CRYPTO_CYCLOTOMICRING_H
+#ifndef BLACKNET_CRYPTO_POLYNOMIALRING_H
+#define BLACKNET_CRYPTO_POLYNOMIALRING_H
 
 #include <array>
 #include <iostream>
 #include <boost/io/ostream_joiner.hpp>
+
+#include "convolution.h"
 
 template<
     typename Z,
     std::size_t N,
     void(*CONVOLUTE)(std::array<Z,N>&, const std::array<Z,N>&, const std::array<Z,N>&)
 >
-class CyclotomicRing {
+class PolynomialRing {
 public:
     typedef Z Scalar;
-    consteval static CyclotomicRing LEFT_ADDITIVE_IDENTITY() {
-        CyclotomicRing t;
+    consteval static PolynomialRing LEFT_ADDITIVE_IDENTITY() {
+        PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = Z::LEFT_ADDITIVE_IDENTITY();
         return t;
     }
-    consteval static CyclotomicRing LEFT_MULTIPLICATIVE_IDENTITY() {
-        CyclotomicRing t;
+    consteval static PolynomialRing LEFT_MULTIPLICATIVE_IDENTITY() {
+        PolynomialRing t;
         t.coefficients[0] = Z::LEFT_MULTIPLICATIVE_IDENTITY();
         for (std::size_t i = 1; i < N; ++i)
             t.coefficients[i] = Z(0);
@@ -46,55 +48,62 @@ public:
 
     std::array<Z, N> coefficients;
 
-    consteval CyclotomicRing() : coefficients() {}
-    constexpr CyclotomicRing(const std::array<Z, N>& coefficients) : coefficients(coefficients) {}
+    consteval PolynomialRing() : coefficients() {}
+    consteval PolynomialRing(const Z& e) {
+        coefficients[0] = e;
+        std::fill_n(coefficients.begin() + 1, N - 1, Z(0));
+    }
+    constexpr PolynomialRing(std::initializer_list<Z> init) {
+        std::copy(init.begin(), init.end(), coefficients.begin());
+        std::fill_n(coefficients.begin() + init.size(), N - init.size(), Z(0));
+    }
 
-    constexpr bool operator == (const CyclotomicRing&) const = default;
+    constexpr bool operator == (const PolynomialRing&) const = default;
 
-    constexpr CyclotomicRing& operator += (const CyclotomicRing& other) {
+    constexpr PolynomialRing& operator += (const PolynomialRing& other) {
         for (std::size_t i = 0; i < N; ++i)
             coefficients[i] += other.coefficients[i];
         return *this;
     }
 
-    constexpr CyclotomicRing operator + (const CyclotomicRing& other) const {
-        CyclotomicRing t;
+    constexpr PolynomialRing operator + (const PolynomialRing& other) const {
+        PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = coefficients[i] + other.coefficients[i];
         return t;
     }
 
-    constexpr CyclotomicRing& operator *= (const CyclotomicRing& other) {
+    constexpr PolynomialRing& operator *= (const PolynomialRing& other) {
         return *this = *this * other;
     }
 
-    constexpr CyclotomicRing operator * (const CyclotomicRing& other) const {
-        CyclotomicRing t(CyclotomicRing::LEFT_ADDITIVE_IDENTITY());
+    constexpr PolynomialRing operator * (const PolynomialRing& other) const {
+        PolynomialRing t(PolynomialRing::LEFT_ADDITIVE_IDENTITY());
         CONVOLUTE(t.coefficients, this->coefficients, other.coefficients);
         return t;
     }
 
-    constexpr CyclotomicRing& operator *= (const Scalar& other) {
+    constexpr PolynomialRing& operator *= (const Scalar& other) {
         for (std::size_t i = 0; i < N; ++i)
             coefficients[i] *= other;
         return *this;
     }
 
-    constexpr CyclotomicRing operator * (const Scalar& other) const {
-        CyclotomicRing t;
+    constexpr PolynomialRing operator * (const Scalar& other) const {
+        PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = coefficients[i] * other;
         return t;
     }
 
-    constexpr CyclotomicRing& operator -= (const CyclotomicRing& other) {
+    constexpr PolynomialRing& operator -= (const PolynomialRing& other) {
         for (std::size_t i = 0; i < N; ++i)
             coefficients[i] -= other.coefficients[i];
         return *this;
     }
 
-    constexpr CyclotomicRing operator - (const CyclotomicRing& other) const {
-        CyclotomicRing t;
+    constexpr PolynomialRing operator - (const PolynomialRing& other) const {
+        PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = coefficients[i] - other.coefficients[i];
         return t;
@@ -110,7 +119,7 @@ public:
         return true;
     }
 
-    friend std::ostream& operator << (std::ostream& out, const CyclotomicRing& val)
+    friend std::ostream& operator << (std::ostream& out, const PolynomialRing& val)
     {
         out << '[';
         std::copy(std::begin(val.coefficients), std::end(val.coefficients), boost::io::make_ostream_joiner(out, ", "));
@@ -118,20 +127,47 @@ public:
     }
 
     template<typename DRG>
-    constexpr static CyclotomicRing squeeze(DRG& drg) {
-        CyclotomicRing t;
+    constexpr void absorb(DRG& drg) const {
+        for (std::size_t i = 0; i < N; ++i)
+            drg.absorb(coefficients[i]);
+    }
+
+    template<typename DRG>
+    constexpr static PolynomialRing squeeze(DRG& drg) {
+        PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = Z::squeeze(drg);
         return t;
     }
 
     template<typename RNG>
-    static CyclotomicRing random(RNG& rng) {
-        CyclotomicRing t;
+    static PolynomialRing random(RNG& rng) {
+        PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = Z::random(rng);
         return t;
     }
 };
+
+template<
+    typename Z,
+    std::size_t N
+>
+using CyclotomicRing = PolynomialRing<
+    Z,
+    N,
+    convolution::negacyclic<Z, N>
+>;
+
+template<
+    typename Z,
+    std::size_t N,
+    std::array<Z, N + 1> M
+>
+using ExtensionRing = PolynomialRing<
+    Z,
+    N,
+    convolution::quotient<Z, N, M>
+>;
 
 #endif

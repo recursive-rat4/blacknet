@@ -57,15 +57,16 @@ public:
         RO ro;
         MultilinearExtension<Z> state(polynomial);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
-            MultilinearExtension<Z> p0(state.template bind<0>());
-            MultilinearExtension<Z> p1(state.template bind<1>());
+            MultilinearExtension<Z> p0(state.template bind<Z(0)>());
+            MultilinearExtension<Z> p1(state.template bind<Z(1)>());
             Z v0(std::reduce(p0.coefficients.begin(), p0.coefficients.end()));
             Z v1(std::reduce(p1.coefficients.begin(), p1.coefficients.end()));
             auto claim(UnivariatePolynomial<Z>::interpolate(v0, v1));
             for (const Z& c : claim.coefficients)
-                ro.absorb(c);
+                c.absorb(ro);
             proof.claims.emplace_back(std::move(claim));
-            Z challenge(RO(ro).squeeze());
+            RO fork(ro);
+            Z challenge(Z::squeeze(fork));
             state = state.bind(challenge);
         }
         return proof;
@@ -81,11 +82,12 @@ public:
             const auto& claim = proof.claims[round];
             if (claim.degree() != polynomial.degree())
                 return false;
-            if (state != claim(0) + claim(1))
+            if (state != claim(Z(0)) + claim(Z(1)))
                 return false;
             for (const Z& c : claim.coefficients)
-                ro.absorb(c);
-            Z challenge(RO(ro).squeeze());
+                c.absorb(ro);
+            RO fork(ro);
+            Z challenge(Z::squeeze(fork));
             r[round] = challenge;
             state = claim(challenge);
         }

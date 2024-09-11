@@ -18,27 +18,48 @@
 #include <benchmark/benchmark.h>
 #include <boost/random/mersenne_twister.hpp>
 
-#include "ajtaicommitment.h"
-#include "latticefold.h"
-#include "matrix.h"
-#include "polynomialring.h"
 #include "solinas62.h"
-#include "vector.h"
 
 static boost::random::mt19937 rng;
 
-static void BM_AjtaiCommitment(benchmark::State& state) {
-    using R = CyclotomicRing<Solinas62Ring, latticefold::D>;
-    std::size_t M = 1;
+static void BM_ExtFieldAdd(benchmark::State& state) {
+    using F = Solinas62RingDegree2;
 
-    AjtaiCommitment<R> cs(
-        Matrix<R>::random(rng, latticefold::K, M)
-    );
-    Vector<R> m = Vector<R>::random(rng, M);
+    auto a = F::random(rng);
+    auto b = F::random(rng);
 
     for (auto _ : state)
-        benchmark::DoNotOptimize(
-            cs.commit(m)
-        );
+        a += b;
+
+    benchmark::DoNotOptimize(a);
+    benchmark::DoNotOptimize(b);
 }
-BENCHMARK(BM_AjtaiCommitment);
+BENCHMARK(BM_ExtFieldAdd);
+
+static void BM_ExtFieldSub(benchmark::State& state) {
+    using F = Solinas62RingDegree2;
+
+    auto a = F::random(rng);
+    auto b = F::random(rng);
+
+    for (auto _ : state)
+        a -= b;
+
+    benchmark::DoNotOptimize(a);
+    benchmark::DoNotOptimize(b);
+}
+BENCHMARK(BM_ExtFieldSub);
+
+static void BM_ExtFieldMul(benchmark::State& state) {
+    using F = Solinas62RingDegree2;
+
+    auto a = F::random(rng);
+    auto b = F::random(rng);
+
+    for (auto _ : state)
+        a *= b;
+
+    benchmark::DoNotOptimize(a);
+    benchmark::DoNotOptimize(b);
+}
+BENCHMARK(BM_ExtFieldMul);

@@ -18,15 +18,14 @@
 #include <boost/test/unit_test.hpp>
 
 #include "ajtaicommitment.h"
-#include "convolution.h"
-#include "cyclotomicring.h"
+#include "polynomialring.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
 
 BOOST_AUTO_TEST_SUITE(AjtaiCommitments)
 
 using Z = Solinas62Ring;
-using R = CyclotomicRing<Z, 2, convolution::negacyclic>;
+using R = CyclotomicRing<Z, 2>;
 
 BOOST_AUTO_TEST_CASE(Zq) {
     using CS = AjtaiCommitment<Z>;

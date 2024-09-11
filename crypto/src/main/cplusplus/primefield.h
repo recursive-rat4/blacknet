@@ -209,6 +209,11 @@ public:
     }
 
     template<typename DRG>
+    constexpr void absorb(DRG& drg) const {
+        drg.absorb(*this);
+    }
+
+    template<typename DRG>
     constexpr static PrimeField squeeze(DRG& drg) {
         return drg.squeeze();
     }

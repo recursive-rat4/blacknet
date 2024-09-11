@@ -24,7 +24,7 @@
 
 static boost::random::mt19937 rng;
 
-static void BM_PedersenCommitmentAffine_1KB(benchmark::State& state) {
+static void BM_PedersenCommitmentAffine(benchmark::State& state) {
     PedersenCommitment<VestaGroupAffine> cs({
         VestaGroupAffine::random(rng),
         VestaGroupAffine::random(rng),
@@ -43,9 +43,9 @@ static void BM_PedersenCommitmentAffine_1KB(benchmark::State& state) {
             cs.commit(v)
         );
 }
-BENCHMARK(BM_PedersenCommitmentAffine_1KB);
+BENCHMARK(BM_PedersenCommitmentAffine);
 
-static void BM_PedersenCommitmentJacobian_1KB(benchmark::State& state) {
+static void BM_PedersenCommitmentJacobian(benchmark::State& state) {
     PedersenCommitment<VestaGroupJacobian> cs({
         VestaGroupJacobian::random(rng),
         VestaGroupJacobian::random(rng),
@@ -64,9 +64,9 @@ static void BM_PedersenCommitmentJacobian_1KB(benchmark::State& state) {
             cs.commit(v)
         );
 }
-BENCHMARK(BM_PedersenCommitmentJacobian_1KB);
+BENCHMARK(BM_PedersenCommitmentJacobian);
 
-static void BM_PedersenCommitmentProjective_1KB(benchmark::State& state) {
+static void BM_PedersenCommitmentProjective(benchmark::State& state) {
     PedersenCommitment<VestaGroupProjective> cs({
         VestaGroupProjective::random(rng),
         VestaGroupProjective::random(rng),
@@ -85,4 +85,4 @@ static void BM_PedersenCommitmentProjective_1KB(benchmark::State& state) {
             cs.commit(v)
         );
 }
-BENCHMARK(BM_PedersenCommitmentProjective_1KB);
+BENCHMARK(BM_PedersenCommitmentProjective);

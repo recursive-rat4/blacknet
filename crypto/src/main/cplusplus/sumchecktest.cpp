@@ -17,14 +17,14 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "pastacurves.h"
-#include "poseidon2pasta.h"
+#include "poseidon2solinas62.h"
+#include "solinas62.h"
 #include "sumcheck.h"
 
 BOOST_AUTO_TEST_SUITE(SumChecks)
 
-using R = PallasField;
-using SumCheck = SumCheck<R, Poseidon2Pallas>;
+using R = Solinas62RingDegree2;
+using SumCheck = SumCheck<R, Poseidon2Solinas62>;
 
 BOOST_AUTO_TEST_CASE(mle) {
     MultilinearExtension p1{R(7), R(7), R(7), R(0)};
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(mle) {
     BOOST_TEST(!SumCheck::verify(p2, s1, proof));
     BOOST_TEST(!SumCheck::verify(p2, s2, proof));
     BOOST_TEST(!SumCheck::verify(p3, s1, proof));
-    proof.claims[1].coefficients[1] += 1;
+    proof.claims[1].coefficients[1].coefficients[1] += 1;
     BOOST_TEST(!SumCheck::verify(p1, s1, proof));
 }
 

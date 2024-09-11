@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_SOLINAS62_H
 
 #include "integerring.h"
+#include "polynomialring.h"
 
 // 2⁶² - 2⁸ - 2⁵ + 1
 constexpr int64_t Solinas62Prime(0x3ffffffffffffee1);
@@ -39,5 +40,27 @@ typedef IntegerRing<
         return x + ((x >> 63) & Solinas62Prime);
     }
 > Solinas62Ring;
+
+typedef ExtensionRing<
+    Solinas62Ring,
+    2,
+    std::array{
+        Solinas62Ring("0000000000000003"),
+        Solinas62Ring("24924924924923ed"),
+        Solinas62Ring("0000000000000001"),
+    }
+> Solinas62RingDegree2;
+
+typedef ExtensionRing<
+    Solinas62Ring,
+    4,
+    std::array{
+        Solinas62Ring("0000000000000003"),
+        Solinas62Ring("0cc486771cca1dc6"),
+        Solinas62Ring("396fb78c435f5ebb"),
+        Solinas62Ring("135d049622667f2e"),
+        Solinas62Ring("0000000000000001"),
+    }
+> Solinas62RingDegree4;
 
 #endif
