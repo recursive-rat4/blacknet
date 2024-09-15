@@ -34,6 +34,21 @@ BOOST_AUTO_TEST_CASE(meta) {
     BOOST_TEST(3 == mle.variables());
 }
 
+BOOST_AUTO_TEST_CASE(add) {
+    MultilinearExtension a{E(1), E(2), E(3), E(4)};
+    MultilinearExtension b{E(5), E(6), E(7), E(8)};
+    MultilinearExtension c{E(6), E(8), E(10), E(12)};
+    BOOST_TEST(c == a + b);
+    BOOST_TEST(c == b + a);
+}
+
+BOOST_AUTO_TEST_CASE(mul) {
+    MultilinearExtension a{E(1), E(2), E(3), E(4)};
+    E b(3);
+    MultilinearExtension c{E(3), E(6), E(9), E(12)};
+    BOOST_TEST(c == a * b);
+}
+
 BOOST_AUTO_TEST_CASE(bind) {
     MultilinearExtension a{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};
     MultilinearExtension b{E(1), E(2), E(3), E(4)};

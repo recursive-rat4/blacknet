@@ -61,6 +61,32 @@ public:
         return sigma;
     }
 
+    constexpr MultilinearExtension& operator += (const MultilinearExtension& other) {
+        for (std::size_t i = 0; i < coefficients.size(); ++i)
+            coefficients[i] += other.coefficients[i];
+        return *this;
+    }
+
+    constexpr MultilinearExtension operator + (const MultilinearExtension& other) const {
+        MultilinearExtension t(coefficients.size());
+        for (std::size_t i = 0; i < coefficients.size(); ++i)
+            t.coefficients[i] = coefficients[i] + other.coefficients[i];
+        return t;
+    }
+
+    constexpr MultilinearExtension& operator *= (const E& other) {
+        for (std::size_t i = 0; i < coefficients.size(); ++i)
+            coefficients[i] *= other;
+        return *this;
+    }
+
+    constexpr MultilinearExtension operator * (const E& other) const {
+        MultilinearExtension t(coefficients.size());
+        for (std::size_t i = 0; i < coefficients.size(); ++i)
+            t.coefficients[i] = coefficients[i] * other;
+        return t;
+    }
+
     template<E e>
     constexpr MultilinearExtension bind() const {
         std::size_t ns = coefficients.size() >> 1;
