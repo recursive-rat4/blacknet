@@ -95,7 +95,10 @@ public:
             std::size_t s = last;
             for (std::size_t i = 0; i < data.size(); ++i) {
                 s >>= 1;
-                data[i] = E((index & s) == s);
+                if ((index & s) == s)
+                    data[i] = E(1);
+                else
+                    data[i] = E(0);
             }
             return *this;
         }
