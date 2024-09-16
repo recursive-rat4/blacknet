@@ -19,12 +19,13 @@
 #define BLACKNET_CRYPTO_LATTICEFOLD_H
 
 #include "matrix.h"
+#include "polynomialring.h"
 #include "vector.h"
 
 /*
  * LatticeFold: A Lattice-based Folding Scheme and its Applications to Succinct Proof Systems
  * Dan Boneh, Binyi Chen
- * July 29, 2024
+ * July 30, 2024
  * https://eprint.iacr.org/2024/257
  */
 
@@ -32,6 +33,12 @@ namespace latticefold {
     const std::size_t B = 65536;
     const std::size_t D = 64;
     const std::size_t K = 16;
+
+    template<typename Z>
+    using Rq = CyclotomicRing<
+        Z,
+        D
+    >;
 
     template<typename R>
     constexpr Matrix<R> gadget(std::size_t m, std::size_t n) {

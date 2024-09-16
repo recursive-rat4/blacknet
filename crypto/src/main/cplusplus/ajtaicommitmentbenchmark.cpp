@@ -21,14 +21,13 @@
 #include "ajtaicommitment.h"
 #include "latticefold.h"
 #include "matrix.h"
-#include "polynomialring.h"
 #include "solinas62.h"
 #include "vector.h"
 
 static boost::random::mt19937 rng;
 
 static void BM_AjtaiCommitment(benchmark::State& state) {
-    using R = CyclotomicRing<Solinas62Ring, latticefold::D>;
+    using R = latticefold::Rq<Solinas62Ring>;
     std::size_t M = 1;
 
     AjtaiCommitment<R> cs(

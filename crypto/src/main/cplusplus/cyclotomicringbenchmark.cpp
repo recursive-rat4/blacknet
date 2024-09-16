@@ -19,6 +19,8 @@
 #include <boost/random/mersenne_twister.hpp>
 
 #include "dilithium.h"
+#include "latticefold.h"
+#include "polynomialring.h"
 #include "solinas62.h"
 
 static boost::random::mt19937 rng;
@@ -66,7 +68,7 @@ static void BM_CyclotomicMul_64_256(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_64_256);
 
 static void BM_CyclotomicMul_64_64(benchmark::State& state) {
-    using R = CyclotomicRing<Solinas62Ring, 64>;
+    using R = latticefold::Rq<Solinas62Ring>;
 
     auto a = R::random(rng);
     auto b = R::random(rng);
