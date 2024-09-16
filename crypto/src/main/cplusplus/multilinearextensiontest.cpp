@@ -49,6 +49,13 @@ BOOST_AUTO_TEST_CASE(mul) {
     BOOST_TEST(c == a * b);
 }
 
+BOOST_AUTO_TEST_CASE(sub) {
+    MultilinearExtension a{E(99), E(98), E(97), E(96)};
+    E b(3);
+    MultilinearExtension c{E(96), E(95), E(94), E(93)};
+    BOOST_TEST(c == a - b);
+}
+
 BOOST_AUTO_TEST_CASE(bind) {
     MultilinearExtension a{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};
     MultilinearExtension b{E(1), E(2), E(3), E(4)};
