@@ -159,6 +159,16 @@ public:
     consteval std::default_sentinel_t splittedEnd() const {
         return std::default_sentinel;
     }
+
+    template<typename P>
+    constexpr static bool checkZero(const P& p) {
+        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        Hypercube hc(p.variables());
+        for (auto i = hc.decomposedBegin(); i != hc.decomposedEnd(); ++i) {
+            sigma += p(*i);
+        }
+        return sigma == E(0);
+    }
 };
 
 #endif

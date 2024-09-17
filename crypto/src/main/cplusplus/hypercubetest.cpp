@@ -19,6 +19,8 @@
 #include <ranges>
 
 #include "hypercube.h"
+#include "multilinearextension.h"
+#include "solinas62.h"
 
 namespace std {
 template<typename A, typename B>
@@ -81,6 +83,14 @@ BOOST_AUTO_TEST_CASE(splitted) {
         )) {
         BOOST_TEST(std::get<0>(i) == std::get<1>(i));
     };
+}
+
+BOOST_AUTO_TEST_CASE(check) {
+    using R = Solinas62Ring;
+    MultilinearExtension<R> p0{R(1), R(2), R(3), R(-6)};
+    MultilinearExtension<R> p1{R(0), R(1), R(0), R(-0)};
+    BOOST_TEST(Hypercube<R>::checkZero(p0));
+    BOOST_TEST(!Hypercube<R>::checkZero(p1));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
