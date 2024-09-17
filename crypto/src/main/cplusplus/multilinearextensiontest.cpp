@@ -21,6 +21,7 @@
 #include "hypercube.h"
 #include "matrix.h"
 #include "multilinearextension.h"
+#include "polynomialring.h"
 #include "solinas62.h"
 #include "vector.h"
 
@@ -84,6 +85,21 @@ BOOST_AUTO_TEST_CASE(matrix) {
         const std::size_t& column = std::get<0>(i).second;
         const std::vector<E>& b = std::get<1>(i);
         BOOST_TEST((a[row, column] == mle(b)));
+    };
+}
+
+BOOST_AUTO_TEST_CASE(polynomial) {
+    using P = Solinas62RingDegree4;
+    Hypercube<E> hc(2);
+    P a{E(71), E(72), E(73), E(74)};
+    MultilinearExtension<E> mle(a);
+    for (std::tuple<const std::size_t&, const std::vector<E>&> i : std::views::zip(
+            std::ranges::subrange(hc.composedBegin(), hc.composedEnd()),
+            std::ranges::subrange(hc.decomposedBegin(), hc.decomposedEnd())
+        )) {
+        const std::size_t& index = std::get<0>(i);
+        const std::vector<E>& b = std::get<1>(i);
+        BOOST_TEST(a.coefficients[index] == mle(b));
     };
 }
 

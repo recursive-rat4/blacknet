@@ -26,6 +26,7 @@
 
 #include "eqextension.h"
 #include "matrix.h"
+#include "polynomialring.h"
 #include "vector.h"
 
 template<typename E>
@@ -36,6 +37,10 @@ public:
     constexpr MultilinearExtension(std::size_t size) : coefficients(size) {}
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
     constexpr MultilinearExtension(const Matrix<E>& matrix) : coefficients(matrix.elements) {}
+    template<auto... A>
+    constexpr MultilinearExtension(const PolynomialRing<E, A...>& polynomial) {
+        coefficients.assign(polynomial.coefficients.cbegin(), polynomial.coefficients.cend());
+    }
     constexpr MultilinearExtension(const Vector<E>& vector) : coefficients(vector.elements) {}
     constexpr MultilinearExtension(const MultilinearExtension& other) : coefficients(other.coefficients) {}
     constexpr MultilinearExtension(MultilinearExtension&& other) noexcept
