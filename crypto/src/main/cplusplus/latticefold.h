@@ -18,7 +18,9 @@
 #ifndef BLACKNET_CRYPTO_LATTICEFOLD_H
 #define BLACKNET_CRYPTO_LATTICEFOLD_H
 
+#include "eqextension.h"
 #include "matrix.h"
+#include "multilinearextension.h"
 #include "polynomialring.h"
 #include "vector.h"
 
@@ -30,6 +32,8 @@
  */
 
 namespace latticefold {
+    constexpr ssize_t b = 2;
+    const std::size_t k = 16;
     const std::size_t B = 65536;
     const std::size_t D = 64;
     const std::size_t K = 16;
@@ -48,6 +52,34 @@ namespace latticefold {
             bpm[i] = bpm[i - 1] * B;
         return Vector<R>::identity(m).tensor(bpm);
     }
+
+    template<typename Z, typename R>
+    class G2 {
+        EqExtension<Z> eq;
+        std::array<MultilinearExtension<Z>, b + b - 1> pis;
+    public:
+        constexpr G2(const std::vector<Z>& beta, const R& f) : eq(beta) {
+            std::size_t i = 0;
+            for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
+                pis[i++] = MultilinearExtension<Z>(f) - Z(j);
+            }
+        }
+
+        constexpr Z operator () (const std::vector<Z>& point) const {
+            Z pi(eq(point));
+            for (const auto& i : pis)
+                pi *= i(point);
+            return pi;
+        }
+
+        consteval std::size_t degree() const {
+            return eq.degree() + pis.size();
+        }
+
+        constexpr std::size_t variables() const {
+            return eq.variables();
+        }
+    };
 }
 
 #endif

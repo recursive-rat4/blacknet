@@ -34,6 +34,7 @@ class MultilinearExtension {
 public:
     std::vector<E> coefficients;
 
+    consteval MultilinearExtension() : coefficients() {}
     constexpr MultilinearExtension(std::size_t size) : coefficients(size) {}
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
     constexpr MultilinearExtension(const Matrix<E>& matrix) : coefficients(matrix.elements) {}

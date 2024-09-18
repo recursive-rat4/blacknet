@@ -17,6 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "hypercube.h"
 #include "latticefold.h"
 #include "matrix.h"
 #include "solinas62.h"
@@ -24,13 +25,28 @@
 
 BOOST_AUTO_TEST_SUITE(LatticeFolds)
 
-using Z = Solinas62Ring;
+using namespace latticefold;
 
-BOOST_AUTO_TEST_CASE(gadget) {
-    auto g = latticefold::gadget<Z>(1, 4);
+using Z = Solinas62Ring;
+using R = Rq<Z>;
+
+BOOST_AUTO_TEST_CASE(Gadget) {
+    auto g = gadget<Z>(1, 4);
     auto a = Vector<Z>{ 3, 2, 1, 0 };
     auto b = Vector<Z>{ 4295098371 };
     BOOST_TEST(b == g * a);
+}
+
+BOOST_AUTO_TEST_CASE(G2s) {
+    std::vector<Z> beta{0, 0, 0, 0, 0, 0};
+    R f1{1, -1};
+    R f2{2, -2};
+    auto g2_1 = G2<Z, R>(beta, f1);
+    auto g2_2 = G2<Z, R>(beta, f2);
+    BOOST_TEST(6 == g2_1.variables());
+    BOOST_TEST(4 == g2_1.degree());
+    BOOST_TEST(Hypercube<Z>::checkZero(g2_1));
+    BOOST_TEST(!Hypercube<Z>::checkZero(g2_2));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
