@@ -49,7 +49,7 @@ public:
         return coefficients.size() - 1;
     }
 
-    constexpr std::size_t variables() const {
+    consteval std::size_t variables() const {
         return 1;
     }
 

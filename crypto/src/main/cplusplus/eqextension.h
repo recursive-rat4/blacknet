@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_EQEXTENSION_H
 
 #include <vector>
+#include <boost/io/ostream_joiner.hpp>
 
 template<typename E>
 class EqExtension {
@@ -43,6 +44,21 @@ public:
         for (std::size_t i = 0; i < coefficients.size(); ++i)
             pi *= coefficients[i] * point[i] + (E(1) - coefficients[i]) * (E(1) - point[i]);
         return pi;
+    }
+
+    consteval std::size_t degree() const {
+        return 1;
+    }
+
+    constexpr std::size_t variables() const {
+        return coefficients.size();
+    }
+
+    friend std::ostream& operator << (std::ostream& out, const EqExtension& val)
+    {
+        out << '[';
+        std::copy(val.coefficients.begin(), val.coefficients.end(), boost::io::make_ostream_joiner(out, ", "));
+        return out << ']';
     }
 };
 

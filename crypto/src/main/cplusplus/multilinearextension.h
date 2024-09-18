@@ -132,7 +132,7 @@ public:
         return r;
     }
 
-    constexpr std::size_t degree() const {
+    consteval std::size_t degree() const {
         return 1;
     }
 

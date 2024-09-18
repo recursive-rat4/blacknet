@@ -25,6 +25,13 @@ BOOST_AUTO_TEST_SUITE(EqExtensions)
 
 using E = Solinas62Ring;
 
+BOOST_AUTO_TEST_CASE(meta) {
+    std::vector<E> a{E(1), E(0), E(0)};
+    EqExtension eq(a);
+    BOOST_TEST(1 == eq.degree());
+    BOOST_TEST(3 == eq.variables());
+}
+
 BOOST_AUTO_TEST_CASE(point) {
     Hypercube<E> hc(3);
     std::vector<E> a{E(1), E(0), E(0)};
