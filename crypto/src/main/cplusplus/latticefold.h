@@ -54,6 +54,26 @@ namespace latticefold {
     }
 
     template<typename Z, typename R>
+    class G1 {
+        EqExtension<Z> eq;
+        MultilinearExtension<Z> mle;
+    public:
+        constexpr G1(const std::vector<Z>& r, const R& f) : eq(r), mle(f) {}
+
+        constexpr Z operator () (const std::vector<Z>& point) const {
+            return eq(point) * mle(point);
+        }
+
+        consteval std::size_t degree() const {
+            return eq.degree() + mle.degree();
+        }
+
+        constexpr std::size_t variables() const {
+            return eq.variables();
+        }
+    };
+
+    template<typename Z, typename R>
     class G2 {
         EqExtension<Z> eq;
         std::array<MultilinearExtension<Z>, b + b - 1> pis;

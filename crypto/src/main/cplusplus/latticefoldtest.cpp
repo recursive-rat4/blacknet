@@ -37,6 +37,20 @@ BOOST_AUTO_TEST_CASE(Gadget) {
     BOOST_TEST(b == g * a);
 }
 
+BOOST_AUTO_TEST_CASE(G1s) {
+    std::vector<Z> r1{0, 0, 0, 0, 0, 0};
+    std::vector<Z> r2{0, 0, 0, 0, 0, 1};
+    R f{3, 4};
+    auto g1_1 = G1<Z, R>(r1, f);
+    auto g1_2 = G1<Z, R>(r2, f);
+    BOOST_TEST(6 == g1_1.variables());
+    BOOST_TEST(2 == g1_1.degree());
+    BOOST_TEST(Z(3) == g1_1(r1));
+    BOOST_TEST(Z(0) == g1_1(r2));
+    BOOST_TEST(Z(4) == g1_2(r2));
+    BOOST_TEST(Z(0) == g1_2(r1));
+}
+
 BOOST_AUTO_TEST_CASE(G2s) {
     std::vector<Z> beta{0, 0, 0, 0, 0, 0};
     R f1{1, -1};
