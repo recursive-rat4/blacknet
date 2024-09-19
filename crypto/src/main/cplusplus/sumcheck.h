@@ -20,7 +20,6 @@
 
 #include <numeric>
 
-#include "multilinearextension.h"
 #include "univariatepolynomial.h"
 
 /*
@@ -32,6 +31,7 @@
 
 template<
     typename Z,
+    typename P,
     typename RO
 >
 class SumCheck {
@@ -52,13 +52,14 @@ public:
         }
     };
 
-    constexpr static Proof prove(const MultilinearExtension<Z>& polynomial) {
+    constexpr static Proof prove(const P& polynomial) {
+        static_assert(polynomial.degree() == 1, "Not implemented");
         Proof proof(polynomial.variables());
         RO ro;
-        MultilinearExtension<Z> state(polynomial);
+        P state(polynomial);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
-            MultilinearExtension<Z> p0(state.template bind<Z(0)>());
-            MultilinearExtension<Z> p1(state.template bind<Z(1)>());
+            P p0(state.template bind<Z(0)>());
+            P p1(state.template bind<Z(1)>());
             Z v0(std::reduce(p0.coefficients.begin(), p0.coefficients.end()));
             Z v1(std::reduce(p1.coefficients.begin(), p1.coefficients.end()));
             auto claim(UnivariatePolynomial<Z>::interpolate(v0, v1));
@@ -72,7 +73,7 @@ public:
         return proof;
     }
 
-    constexpr static bool verify(const MultilinearExtension<Z>& polynomial, const Z& sum, const Proof& proof) {
+    constexpr static bool verify(const P& polynomial, const Z& sum, const Proof& proof) {
         if (proof.claims.size() != polynomial.variables())
             return false;
         RO ro;

@@ -17,6 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "multilinearextension.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
 #include "sumcheck.h"
@@ -24,7 +25,7 @@
 BOOST_AUTO_TEST_SUITE(SumChecks)
 
 using R = Solinas62RingDegree2;
-using SumCheck = SumCheck<R, Poseidon2Solinas62>;
+using SumCheck = SumCheck<R, MultilinearExtension<R>, Poseidon2Solinas62>;
 
 BOOST_AUTO_TEST_CASE(mle) {
     MultilinearExtension p1{R(7), R(7), R(7), R(0)};
