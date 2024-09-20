@@ -25,6 +25,7 @@
 BOOST_AUTO_TEST_SUITE(EqExtensions)
 
 using E = Solinas62Ring;
+using EE = Solinas62RingDegree2;
 
 BOOST_AUTO_TEST_CASE(meta) {
     std::vector<E> a{E(1), E(0), E(0)};
@@ -55,6 +56,14 @@ BOOST_AUTO_TEST_CASE(bind) {
         const std::vector<E>& b = std::get<1>(i);
         BOOST_TEST(eq2(b) == pis[index]);
     };
+}
+
+BOOST_AUTO_TEST_CASE(homomorphism) {
+    EqExtension<E> eq1({E(8), E(9), E(10)});
+    std::vector<E> r1{E(11), E(12), E(13)};
+    EqExtension<EE> eq2 = eq1.homomorph<EE>();
+    std::vector<EE> r2{EE(11), EE(12), EE(13)};
+    BOOST_TEST(EE(eq1(r1)) == eq2(r2));
 }
 
 BOOST_AUTO_TEST_CASE(point) {

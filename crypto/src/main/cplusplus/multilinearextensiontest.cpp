@@ -28,6 +28,7 @@
 BOOST_AUTO_TEST_SUITE(MultilinearExtensions)
 
 using E = Solinas62Ring;
+using EE = Solinas62RingDegree2;
 
 BOOST_AUTO_TEST_CASE(meta) {
     MultilinearExtension mle{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};
@@ -68,6 +69,14 @@ BOOST_AUTO_TEST_CASE(bind) {
     BOOST_TEST(a.bind(E(0)) == a.bind<E(0)>());
     BOOST_TEST(a.bind(E(1)) == a.bind<E(1)>());
     BOOST_TEST(a.bind(E(2)) == a.bind<E(2)>());
+}
+
+BOOST_AUTO_TEST_CASE(homomorphism) {
+    MultilinearExtension<E> mle1({E(14), E(15), E(16), E(17)});
+    std::vector<E> r1{E(18), E(19)};
+    MultilinearExtension<EE> mle2 = mle1.homomorph<EE>();
+    std::vector<EE> r2{EE(18), EE(19)};
+    BOOST_TEST(EE(mle1(r1)) == mle2(r2));
 }
 
 BOOST_AUTO_TEST_CASE(matrix) {

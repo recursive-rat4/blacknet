@@ -33,8 +33,10 @@ class EqExtension {
 public:
     constexpr EqExtension(const std::vector<E>& coefficients)
         : coefficients(coefficients), z(E::LEFT_MULTIPLICATIVE_IDENTITY()) {}
-    constexpr EqExtension(EqExtension&& other) noexcept
-        : coefficients(std::move(other.coefficients)), z(std::move(other.z)) {}
+    constexpr EqExtension(std::vector<E>&& coefficients)
+        : coefficients(std::move(coefficients)), z(E::LEFT_MULTIPLICATIVE_IDENTITY()) {}
+    constexpr EqExtension(std::vector<E>&& coefficients, E&& z)
+        : coefficients(std::move(coefficients)), z(std::move(z)) {}
 
     constexpr std::vector<E> operator () () const {
         std::vector<E> r(1 << coefficients.size(), E::LEFT_ADDITIVE_IDENTITY());
@@ -78,6 +80,15 @@ public:
 
     constexpr std::size_t variables() const {
         return coefficients.size();
+    }
+
+    template<typename S>
+    constexpr EqExtension<S> homomorph() const {
+        std::vector<S> t;
+        t.reserve(coefficients.size());
+        for (const auto& i : coefficients)
+            t.emplace_back(S(i));
+        return EqExtension<S>(std::move(t), S(z));
     }
 
     friend std::ostream& operator << (std::ostream& out, const EqExtension& val)

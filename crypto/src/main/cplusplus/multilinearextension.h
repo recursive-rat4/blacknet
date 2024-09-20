@@ -37,6 +37,7 @@ public:
     consteval MultilinearExtension() : coefficients() {}
     constexpr MultilinearExtension(std::size_t size) : coefficients(size) {}
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
+    constexpr MultilinearExtension(std::vector<E>&& coefficients) : coefficients(std::move(coefficients)) {}
     constexpr MultilinearExtension(const Matrix<E>& matrix) : coefficients(matrix.elements) {}
     template<auto... A>
     constexpr MultilinearExtension(const PolynomialRing<E, A...>& polynomial) {
@@ -139,6 +140,15 @@ public:
 
     constexpr std::size_t variables() const {
         return std::log2(coefficients.size());
+    }
+
+    template<typename S>
+    constexpr MultilinearExtension<S> homomorph() const {
+        std::vector<S> t;
+        t.reserve(coefficients.size());
+        for (const auto& i : coefficients)
+            t.emplace_back(S(i));
+        return MultilinearExtension<S>(std::move(t));
     }
 
     friend std::ostream& operator << (std::ostream& out, const MultilinearExtension& val)

@@ -49,7 +49,7 @@ public:
     std::array<Z, N> coefficients;
 
     consteval PolynomialRing() : coefficients() {}
-    consteval PolynomialRing(const Z& e) {
+    constexpr PolynomialRing(const Z& e) {
         coefficients[0] = e;
         std::fill_n(coefficients.begin() + 1, N - 1, Z(0));
     }
