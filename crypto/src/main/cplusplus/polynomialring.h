@@ -119,6 +119,13 @@ public:
         return true;
     }
 
+    constexpr PolynomialRing douple() const {
+        PolynomialRing t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.coefficients[i] = coefficients[i].douple();
+        return t;
+    }
+
     friend std::ostream& operator << (std::ostream& out, const PolynomialRing& val)
     {
         out << '[';
