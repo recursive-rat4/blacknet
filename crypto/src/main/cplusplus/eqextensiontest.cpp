@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <ranges>
 #include <boost/test/unit_test.hpp>
 
 #include "eqextension.h"
@@ -30,6 +31,30 @@ BOOST_AUTO_TEST_CASE(meta) {
     EqExtension eq(a);
     BOOST_TEST(1 == eq.degree());
     BOOST_TEST(3 == eq.variables());
+}
+
+BOOST_AUTO_TEST_CASE(bind) {
+    EqExtension<E> eq1({E(2), E(3), E(4)});
+    std::vector<E> r1{E(5), E(6), E(7)};
+    EqExtension<E> eq2 = eq1.bind(E(5));
+    std::vector<E> r2{E(6), E(7)};
+    EqExtension<E> eq3 = eq2.bind(E(6));
+    std::vector<E> r3{E(7)};
+    BOOST_TEST(eq1(r1) == eq2(r2));
+    BOOST_TEST(eq1(r1) == eq3(r3));
+    BOOST_TEST(eq1.bind(E(0))(r2) == eq1.bind<E(0)>()(r2));
+    BOOST_TEST(eq1.bind(E(1))(r2) == eq1.bind<E(1)>()(r2));
+    BOOST_TEST(eq1.bind(E(2))(r2) == eq1.bind<E(2)>()(r2));
+    std::vector<E> pis(eq2());
+    Hypercube<E> hc(eq2.variables());
+    for (std::tuple<const std::size_t&, const std::vector<E>&> i : std::views::zip(
+            std::ranges::subrange(hc.composedBegin(), hc.composedEnd()),
+            std::ranges::subrange(hc.decomposedBegin(), hc.decomposedEnd())
+        )) {
+        const std::size_t& index = std::get<0>(i);
+        const std::vector<E>& b = std::get<1>(i);
+        BOOST_TEST(eq2(b) == pis[index]);
+    };
 }
 
 BOOST_AUTO_TEST_CASE(point) {
