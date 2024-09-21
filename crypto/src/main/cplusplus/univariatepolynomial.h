@@ -63,6 +63,12 @@ public:
         std::copy(val.coefficients.begin(), val.coefficients.end(), boost::io::make_ostream_joiner(out, ", "));
         return out << ']';
     }
+
+    template<typename DRG>
+    constexpr void absorb(DRG& drg) const {
+        for (std::size_t i = 0; i < coefficients.size(); ++i)
+            coefficients[i].absorb(drg);
+    }
 };
 
 #endif

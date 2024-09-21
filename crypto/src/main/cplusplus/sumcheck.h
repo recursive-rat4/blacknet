@@ -18,7 +18,7 @@
 #ifndef BLACKNET_CRYPTO_SUMCHECK_H
 #define BLACKNET_CRYPTO_SUMCHECK_H
 
-#include <numeric>
+#include <algorithm>
 
 #include "univariatepolynomial.h"
 
@@ -31,14 +31,15 @@
 
 template<
     typename Z,
-    typename P,
+    typename F,
+    template<typename> typename P,
     typename RO
 >
 class SumCheck {
 public:
     class Proof {
     public:
-        std::vector<UnivariatePolynomial<Z>> claims;
+        std::vector<UnivariatePolynomial<F>> claims;
 
         constexpr Proof(std::size_t capacity) {
             claims.reserve(capacity);
@@ -52,47 +53,45 @@ public:
         }
     };
 
-    constexpr static Proof prove(const P& polynomial) {
+    constexpr static Proof prove(const P<Z>& polynomial) {
         static_assert(polynomial.degree() == 1, "Not implemented");
         Proof proof(polynomial.variables());
         RO ro;
-        P state(polynomial);
+        P<F> state(polynomial.template homomorph<F>());
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
-            P p0(state.template bind<Z(0)>());
-            P p1(state.template bind<Z(1)>());
-            Z v0(std::reduce(p0.coefficients.begin(), p0.coefficients.end()));
-            Z v1(std::reduce(p1.coefficients.begin(), p1.coefficients.end()));
-            auto claim(UnivariatePolynomial<Z>::interpolate(v0, v1));
-            for (const Z& c : claim.coefficients)
-                c.absorb(ro);
+            P<F> p0(state.template bind<F(0)>());
+            P<F> p1(state.template bind<F(1)>());
+            F v0(*std::ranges::fold_left_first(p0(), std::plus<F>()));
+            F v1(*std::ranges::fold_left_first(p1(), std::plus<F>()));
+            auto claim(UnivariatePolynomial<F>::interpolate(v0, v1));
+            claim.absorb(ro);
             proof.claims.emplace_back(std::move(claim));
             RO fork(ro);
-            Z challenge(Z::squeeze(fork));
+            F challenge(F::squeeze(fork));
             state = state.bind(challenge);
         }
         return proof;
     }
 
-    constexpr static bool verify(const P& polynomial, const Z& sum, const Proof& proof) {
+    constexpr static bool verify(const P<Z>& polynomial, const Z& sum, const Proof& proof) {
         if (proof.claims.size() != polynomial.variables())
             return false;
         RO ro;
-        std::vector<Z> r(polynomial.variables());
-        Z state(sum);
+        std::vector<F> r(polynomial.variables());
+        F state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
             const auto& claim = proof.claims[round];
             if (claim.degree() != polynomial.degree())
                 return false;
-            if (state != claim(Z(0)) + claim(Z(1)))
+            if (state != claim(F(0)) + claim(F(1)))
                 return false;
-            for (const Z& c : claim.coefficients)
-                c.absorb(ro);
+            claim.absorb(ro);
             RO fork(ro);
-            Z challenge(Z::squeeze(fork));
+            F challenge(F::squeeze(fork));
             r[round] = challenge;
             state = claim(challenge);
         }
-        if (state != polynomial(r))
+        if (state != polynomial.template homomorph<F>()(r))
             return false;
         return true;
     }

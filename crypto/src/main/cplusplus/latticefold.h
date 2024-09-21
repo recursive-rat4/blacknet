@@ -53,12 +53,12 @@ namespace latticefold {
         return Vector<R>::identity(m).tensor(bpm);
     }
 
-    template<typename Z, typename R>
+    template<typename Z>
     class G1 {
         EqExtension<Z> eq;
         MultilinearExtension<Z> mle;
     public:
-        constexpr G1(const std::vector<Z>& r, const R& f) : eq(r), mle(f) {}
+        constexpr G1(const std::vector<Z>& r, const Rq<Z>& f) : eq(r), mle(f) {}
 
         constexpr Z operator () (const std::vector<Z>& point) const {
             return eq(point) * mle(point);
@@ -73,12 +73,12 @@ namespace latticefold {
         }
     };
 
-    template<typename Z, typename R>
+    template<typename Z>
     class G2 {
         EqExtension<Z> eq;
         std::array<MultilinearExtension<Z>, b + b - 1> pis;
     public:
-        constexpr G2(const std::vector<Z>& beta, const R& f) : eq(beta) {
+        constexpr G2(const std::vector<Z>& beta, const Rq<Z>& f) : eq(beta) {
             std::size_t i = 0;
             for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
                 pis[i++] = MultilinearExtension<Z>(f) - Z(j);

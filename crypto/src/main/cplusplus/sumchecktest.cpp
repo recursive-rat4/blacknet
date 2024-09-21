@@ -17,6 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "eqextension.h"
 #include "multilinearextension.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
@@ -24,15 +25,17 @@
 
 BOOST_AUTO_TEST_SUITE(SumChecks)
 
-using R = Solinas62RingDegree2;
-using SumCheck = SumCheck<R, MultilinearExtension<R>, Poseidon2Solinas62>;
+using Z = Solinas62Ring;
+using F = Solinas62RingDegree2;
+using RO = Poseidon2Solinas62;
 
 BOOST_AUTO_TEST_CASE(mle) {
-    MultilinearExtension p1{R(7), R(7), R(7), R(0)};
-    MultilinearExtension p2{R(7), R(7), R(7), R(7)};
-    MultilinearExtension p3{R(7), R(7), R(0), R(7)};
-    R s1(21);
-    R s2(28);
+    using SumCheck = SumCheck<Z, F, MultilinearExtension, RO>;
+    MultilinearExtension p1{Z(7), Z(7), Z(7), Z(0)};
+    MultilinearExtension p2{Z(7), Z(7), Z(7), Z(7)};
+    MultilinearExtension p3{Z(7), Z(7), Z(0), Z(7)};
+    Z s1(21);
+    Z s2(28);
     auto proof = SumCheck::prove(p1);
     BOOST_TEST(SumCheck::verify(p1, s1, proof));
     BOOST_TEST(!SumCheck::verify(p1, s2, proof));
@@ -40,6 +43,21 @@ BOOST_AUTO_TEST_CASE(mle) {
     BOOST_TEST(!SumCheck::verify(p2, s2, proof));
     BOOST_TEST(!SumCheck::verify(p3, s1, proof));
     proof.claims[1].coefficients[1].coefficients[1] += 1;
+    BOOST_TEST(!SumCheck::verify(p1, s1, proof));
+}
+
+BOOST_AUTO_TEST_CASE(eq) {
+    using SumCheck = SumCheck<Z, F, EqExtension, RO>;
+    EqExtension<Z> p1({Z(45), Z(46), Z(47), Z(48)});
+    EqExtension<Z> p2({Z(45), Z(46), Z(48), Z(48)});
+    Z s1(1);
+    Z s2(2);
+    auto proof = SumCheck::prove(p1);
+    BOOST_TEST(SumCheck::verify(p1, s1, proof));
+    BOOST_TEST(!SumCheck::verify(p1, s2, proof));
+    BOOST_TEST(!SumCheck::verify(p2, s1, proof));
+    BOOST_TEST(!SumCheck::verify(p2, s2, proof));
+    proof.claims[3].coefficients[1].coefficients[1] += 1;
     BOOST_TEST(!SumCheck::verify(p1, s1, proof));
 }
 

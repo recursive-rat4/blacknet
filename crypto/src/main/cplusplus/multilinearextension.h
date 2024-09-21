@@ -31,9 +31,8 @@
 
 template<typename E>
 class MultilinearExtension {
-public:
     std::vector<E> coefficients;
-
+public:
     consteval MultilinearExtension() : coefficients() {}
     constexpr MultilinearExtension(std::size_t size) : coefficients(size) {}
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
@@ -58,6 +57,10 @@ public:
     }
 
     constexpr bool operator == (const MultilinearExtension&) const = default;
+
+    constexpr const std::vector<E>& operator () () const {
+        return coefficients;
+    }
 
     constexpr E operator () (const std::vector<E>& point) const {
         EqExtension eq(point);

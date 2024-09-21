@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_CASE(G1s) {
     std::vector<Z> r1{0, 0, 0, 0, 0, 0};
     std::vector<Z> r2{0, 0, 0, 0, 0, 1};
     R f{3, 4};
-    auto g1_1 = G1<Z, R>(r1, f);
-    auto g1_2 = G1<Z, R>(r2, f);
+    auto g1_1 = G1<Z>(r1, f);
+    auto g1_2 = G1<Z>(r2, f);
     BOOST_TEST(6 == g1_1.variables());
     BOOST_TEST(2 == g1_1.degree());
     BOOST_TEST(Z(3) == g1_1(r1));
@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(G2s) {
     std::vector<Z> beta{0, 0, 0, 0, 0, 0};
     R f1{1, -1};
     R f2{2, -2};
-    auto g2_1 = G2<Z, R>(beta, f1);
-    auto g2_2 = G2<Z, R>(beta, f2);
+    auto g2_1 = G2<Z>(beta, f1);
+    auto g2_2 = G2<Z>(beta, f2);
     BOOST_TEST(6 == g2_1.variables());
     BOOST_TEST(4 == g2_1.degree());
     BOOST_TEST(Hypercube<Z>::checkZero(g2_1));
