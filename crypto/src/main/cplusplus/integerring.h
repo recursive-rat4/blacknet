@@ -18,9 +18,13 @@
 #ifndef BLACKNET_CRYPTO_INTEGERRING_H
 #define BLACKNET_CRYPTO_INTEGERRING_H
 
+#include <cmath>
 #include <charconv>
 #include <iostream>
+#include <optional>
 #include <boost/random/uniform_int_distribution.hpp>
+
+#include "semigroup.h"
 
 template<
     typename I,
@@ -105,6 +109,15 @@ public:
         return IntegerRing(t, 0);
     }
 
+    constexpr std::optional<IntegerRing> invert() const {
+        if (*this != IntegerRing(0)) {
+            // Euler's theorem
+            return semigroup::power(*this, PHI_MINUS_1);
+        } else {
+            return std::nullopt;
+        }
+    }
+
     constexpr bool checkInfiniteNorm(I bound) const {
         I nn(fromForm(n));
         I t(nn >> (sizeof(I) * 8 - 1));
@@ -112,6 +125,43 @@ public:
         if (t < bound)
             return true;
         return false;
+    }
+
+    class BitIterator {
+        friend IntegerRing;
+        I data;
+        std::size_t index;
+        constexpr BitIterator(const IntegerRing& e) : data(FREEZE(fromForm(e.n))), index(0) {}
+    public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = bool;
+        constexpr BitIterator& operator = (const BitIterator& other) {
+            data = other.data;
+            index = other.index;
+            return *this;
+        }
+        constexpr bool operator == (std::default_sentinel_t) const {
+            return index == BITS;
+        }
+        constexpr bool operator * () const {
+            return (data >> index) & 1;
+        }
+        constexpr BitIterator& operator ++ () {
+            ++index;
+            return *this;
+        }
+        constexpr BitIterator operator ++ (int) {
+            BitIterator old(*this);
+            ++*this;
+            return old;
+        }
+    };
+    static_assert(std::input_iterator<BitIterator>);
+    constexpr BitIterator bitsBegin() const {
+        return BitIterator(*this);
+    }
+    consteval std::default_sentinel_t bitsEnd() const {
+        return std::default_sentinel;
     }
 
     friend std::ostream& operator << (std::ostream& out, const IntegerRing& val)
@@ -151,6 +201,9 @@ private:
     constexpr static MRI fromForm(MRI n) {
         return reduce<MRI, MRL>(MRL(n));
     }
+
+    constexpr static const std::size_t BITS = std::log2(M);
+    constexpr static const I PHI_MINUS_1 = M - I(2);
 };
 
 #endif

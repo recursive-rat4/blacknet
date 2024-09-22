@@ -83,6 +83,18 @@ BOOST_AUTO_TEST_CASE(ZqSub) {
     BOOST_TEST(Zq(0) == Zq(1) - Zq(1));
 }
 
+BOOST_AUTO_TEST_CASE(ZqInv) {
+    Zq a(24);
+    Zq b(1345075088707988055);
+    Zq c(-25);
+    Zq d(553402322211286514);
+    BOOST_TEST(a == b.invert().value());
+    BOOST_TEST(b == a.invert().value());
+    BOOST_TEST(c == d.invert().value());
+    BOOST_TEST(d == c.invert().value());
+    BOOST_TEST(!Zq(0).invert());
+}
+
 BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
     Zq a(-677133638855483916);
     Zq b(1140329745848183219);
