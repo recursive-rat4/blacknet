@@ -29,7 +29,6 @@ template<
     std::size_t B,
     UInt256 M,
     UInt512 M2,
-    UInt256 PHI_MINUS_1,
     UInt256 P_MINUS_1_HALVED,
     UInt256 Q,
     UInt256 S,
@@ -240,6 +239,7 @@ public:
         return semigroup::power(*this, P_MINUS_1_HALVED);
     }
 private:
+    constexpr static const UInt256 PHI_MINUS_1 = M - UInt256(2);
 };
 
 #endif

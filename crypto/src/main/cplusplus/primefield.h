@@ -31,7 +31,6 @@ template<
     UInt256 R2,
     UInt256 R3,
     typename UInt256::L RN,
-    UInt256 _PHI_MINUS_1,
     UInt256 _P_MINUS_1_HALVED,
     UInt256 _Q,
     UInt256 _S,
@@ -260,7 +259,7 @@ public:
         return semigroup::power(*this, P_MINUS_1_HALVED);
     }
 private:
-    constexpr static const UInt256 PHI_MINUS_1 = toForm(_PHI_MINUS_1);
+    constexpr static const UInt256 PHI_MINUS_1 = toForm(M - UInt256(2));
     constexpr static const UInt256 P_MINUS_1_HALVED = toForm(_P_MINUS_1_HALVED);
     constexpr static const UInt256 Q = toForm(_Q);
     constexpr static const UInt256 S = toForm(_S);
