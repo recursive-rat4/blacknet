@@ -4,6 +4,7 @@
 #define BLACKNET_CRYPTO_PERVUSHIN_H
 
 #include <array>
+#include <optional>
 
 #include "integerring.h"
 
@@ -21,6 +22,7 @@ struct PervushinRingParams {
     constexpr static const I M = 2305843009213693951;
     constexpr static const I R2 = 64;
     constexpr static const I RN = -2305843009213693953;
+    constexpr static const std::optional<I> two_inverted = 4;
 
     constexpr static I reduce(I x) {
         return (x & 2305843009213693951) + (x >> 61);

@@ -4,6 +4,7 @@
 #define BLACKNET_CRYPTO_SOLINAS62_H
 
 #include <array>
+#include <optional>
 
 #include "integerring.h"
 
@@ -23,6 +24,7 @@ struct Solinas62RingParams {
     constexpr static const I RN = -3454747365720865503;
     constexpr static const std::array<I, 16> TWIDDLES = {1148, 1909850507366759230, 1925695278238998043, -1196916019830996660, -990812595794006616, -750689347914722583, 25775166106861705, 147213721977915467, -769555794185807974, -500579210516158037, -1816761452615928001, 1463977254396149782, -1276567290860230089, -802780904022862126, 500001058544660596, -1174682222540695415};
     constexpr static const I INVERSE_TWIDDLES = 1152921504606846976;
+    constexpr static const std::optional<I> two_inverted = 574;
 
     constexpr static I reduce(I x) {
         int32_t t((x + (1l << 61)) >> 62);

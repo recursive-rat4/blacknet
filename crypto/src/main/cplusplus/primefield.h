@@ -133,11 +133,40 @@ public:
     }
 
     constexpr std::optional<PrimeField> invert() const {
-        if (*this != PrimeField(0)) {
-            // Euler's theorem
-            return semigroup::power(*this, PHI_MINUS_1);
+        if constexpr (Params::has_sparse_modulus) {
+            constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - UInt256(2);
+            if (*this != PrimeField(0)) {
+                // Euler's theorem
+                return semigroup::power(*this, PHI_MINUS_1);
+            } else {
+                return std::nullopt;
+            }
         } else {
-            return std::nullopt;
+            // Extended Binary GCD (classic algorithm)
+            // https://eprint.iacr.org/2020/972
+            constexpr PrimeField TWO_INVERTED = PrimeField(Params::toForm(Params::TWO_INVERTED), 0);
+            UInt256 a(canonical());
+            UInt256 b(modulus());
+            PrimeField c(1);
+            PrimeField d(0);
+            while (a != UInt256(0)) {
+                if (a.isEven()) {
+                    a = a.halve();
+                    c *= TWO_INVERTED;
+                } else {
+                    if (a < b) {
+                        std::swap(a, b);
+                        std::swap(c, d);
+                    }
+                    a -= b;
+                    a = a.halve();
+                    c -= d;
+                    c *= TWO_INVERTED;
+                }
+            }
+            if (b != 1)
+                return std::nullopt;
+            return d;
         }
     }
 
@@ -253,13 +282,11 @@ public:
             t = UInt256::random(rng);
         return PrimeField(t, 0);
     }
-public:
+private:
     constexpr PrimeField isQuadraticResidue() const {
         // Legendre symbol
         return semigroup::power(*this, Params::P_MINUS_1_HALVED);
     }
-private:
-    constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - UInt256(2);
 };
 
 }

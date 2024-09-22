@@ -40,6 +40,7 @@ class IntegerRingParams(NamedTuple):
     montgomery_modulus: int
     twiddles: Optional[list[int]]
     inv_ntt_scale: Optional[int]
+    two_inverted: Optional[int]
 
 def compute_bits(number):
     return ceil(log(number, 2))
@@ -93,6 +94,12 @@ def compute_bitreversal(number, bits):
         number >>= 1
     return reversed
 
+def compute_two_inverted(modulus):
+    try:
+        return inverse_mod(2, modulus)
+    except ZeroDivisionError:
+        return None
+
 def write_ring_cplusplus(spec, params):
     with open(spec.file_name, 'w', encoding="utf-8") as file:
         file.write("// Auto-generated with rings.sage\n")
@@ -101,6 +108,7 @@ def write_ring_cplusplus(spec, params):
         file.write(f"#define BLACKNET_CRYPTO_{spec.file_name.upper().replace('.', '_')}\n")
         file.write('\n')
         file.write('#include <array>\n')
+        file.write('#include <optional>\n')
         file.write('\n')
         file.write('#include "integerring.h"\n')
         file.write('\n')
@@ -133,6 +141,10 @@ def write_ring_cplusplus(spec, params):
             file.write(f"    constexpr static const std::array<I, {len(params.twiddles)}> TWIDDLES = {twiddles};\n")
         if params.inv_ntt_scale != None:
             file.write(f"    constexpr static const I INVERSE_TWIDDLES = {params.inv_ntt_scale};\n")
+        if params.two_inverted != None:
+            file.write(f"    constexpr static const std::optional<I> two_inverted = {params.two_inverted};\n")
+        else:
+            file.write("    constexpr static const std::optional<I> two_inverted = std::nullopt;\n")
         file.write(spec.reduce.replace("_Q_", str(spec.modulus)))
         file.write("};\n")
         file.write('\n')
@@ -213,5 +225,9 @@ for ring in rings:
     else:
         twiddles = None
         inv_ntt_scale = None
-    params = IntegerRingParams(bits, word_bits, division_ring, square_montgomery_modulus, montgomery_modulus, twiddles, inv_ntt_scale)
+    two_inverted = compute_two_inverted(ring.modulus)
+    if two_inverted != None:
+        two_inverted = compute_montgomery_form(two_inverted, ring.modulus, montgomery_modulus, square_montgomery_modulus, word_bits)
+        two_inverted = compute_centered_representation(two_inverted, ring.modulus)
+    params = IntegerRingParams(bits, word_bits, division_ring, square_montgomery_modulus, montgomery_modulus, twiddles, inv_ntt_scale, two_inverted)
     write_ring_cplusplus(ring, params)

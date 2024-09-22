@@ -55,6 +55,7 @@ compiler.compiles('''
         static_assert(__cpp_lib_ios_noreplace >= 202207L);
         static_assert(__cpp_lib_ranges_fold >= 202207L);
         static_assert(__cpp_lib_unreachable >= 202202L);
+        static_assert(__cpp_lib_optional >= 202106L);
         static_assert(__cpp_lib_concepts >= 202002L);
         static_assert(__cpp_lib_int_pow2 >= 202002L);
         static_assert(__cpp_lib_span >= 202002L);
@@ -69,7 +70,6 @@ compiler.compiles('''
         static_assert(__cpp_lib_atomic_shared_ptr >= 201711L);
         static_assert(__cpp_lib_starts_ends_with >= 201711L);
         static_assert(__cpp_lib_filesystem >= 201703L);
-        static_assert(__cpp_lib_optional >= 201606L);
         static_assert(__cpp_lib_string_view >= 201606L);
         static_assert(__cpp_lib_byte >= 201603L);
         static_assert(__cpp_lib_make_unique >= 201304L);

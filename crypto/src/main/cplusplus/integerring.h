@@ -115,13 +115,42 @@ public:
     }
 
     constexpr std::optional<IntegerRing> invert() const {
-        static_assert(Params::is_division_ring, "Not implemented");
-        constexpr BitInt<Params::BITS> PHI_MINUS_1 = Params::M - I(2);
-        if (*this != IntegerRing(0)) {
-            // Euler's theorem
-            return semigroup::power(*this, PHI_MINUS_1);
+        if constexpr (Params::is_division_ring) {
+            constexpr BitInt<Params::BITS> PHI_MINUS_1 = Params::M - I(2);
+            if (*this != IntegerRing(0)) {
+                // Euler's theorem
+                return semigroup::power(*this, PHI_MINUS_1);
+            } else {
+                return std::nullopt;
+            }
+        } else if constexpr (Params::two_inverted.has_value()) {
+            // Extended Binary GCD (classic algorithm)
+            // https://eprint.iacr.org/2020/972
+            constexpr IntegerRing TWO_INVERTED = IntegerRing(*Params::two_inverted, 0);
+            UI a(canonical());
+            UI b(modulus());
+            IntegerRing c(1);
+            IntegerRing d(0);
+            while (a != UI(0)) {
+                if ((a & 1) == 0) {
+                    a >>= 1;
+                    c *= TWO_INVERTED;
+                } else {
+                    if (a < b) {
+                        std::swap(a, b);
+                        std::swap(c, d);
+                    }
+                    a -= b;
+                    a >>= 1;
+                    c -= d;
+                    c *= TWO_INVERTED;
+                }
+            }
+            if (b != 1)
+                return std::nullopt;
+            return d;
         } else {
-            return std::nullopt;
+            static_assert(false, "Not implemented");
         }
     }
 
