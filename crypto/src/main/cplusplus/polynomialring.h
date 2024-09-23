@@ -109,6 +109,13 @@ public:
         return t;
     }
 
+    constexpr PolynomialRing operator - () const {
+        PolynomialRing t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.coefficients[i] = - coefficients[i];
+        return t;
+    }
+
     constexpr bool checkInfiniteNorm(typename Z::value_type bound) const {
         for (std::size_t i = 0; i < N; ++i) {
             if (coefficients[i].checkInfiniteNorm(bound))

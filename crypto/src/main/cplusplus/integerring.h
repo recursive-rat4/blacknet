@@ -97,6 +97,15 @@ public:
         return IntegerRing(t, 0);
     }
 
+    constexpr IntegerRing operator - () const {
+        if (*this != IntegerRing(0)) {
+            I t(M - n);
+            return IntegerRing(t, 0);
+        } else {
+            return IntegerRing(0);
+        }
+    }
+
     constexpr IntegerRing douple() const {
         I t(n << 1);
         t = REDUCE(t);
