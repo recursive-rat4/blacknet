@@ -29,6 +29,14 @@ using Z = Solinas62Ring;
 using F = Solinas62RingDegree2;
 using RO = Poseidon2Solinas62;
 
+BOOST_AUTO_TEST_CASE(interpolation) {
+    using SumCheck = SumCheck<Z, F, UnivariatePolynomial, RO>;
+    UnivariatePolynomial<F> p1{F(2), F(3)};
+    UnivariatePolynomial<F> p2{F(2), F(3), F(5)};
+    BOOST_TEST(p1 == SumCheck::interpolate(F(2), F(5)));
+    BOOST_TEST(p2 == SumCheck::interpolate(F(2), F(10), F(28)));
+}
+
 BOOST_AUTO_TEST_CASE(mle) {
     using SumCheck = SumCheck<Z, F, MultilinearExtension, RO>;
     MultilinearExtension p1{Z(7), Z(7), Z(7), Z(0)};

@@ -59,9 +59,27 @@ namespace latticefold {
         MultilinearExtension<Z> mle;
     public:
         constexpr G1(const std::vector<Z>& r, const Rq<Z>& f) : eq(r), mle(f) {}
+        constexpr G1(EqExtension<Z>&& eq, MultilinearExtension<Z>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
+
+        constexpr std::vector<Z> operator () () const {
+            std::vector<Z> evals(eq());
+            const auto& pi_evals = mle();
+            for (std::size_t j = 0; j < pi_evals.size(); ++j)
+                evals[j] *= pi_evals[j];
+            return evals;
+        }
 
         constexpr Z operator () (const std::vector<Z>& point) const {
             return eq(point) * mle(point);
+        }
+
+        template<Z e>
+        constexpr G1 bind() const {
+            return G1(eq.template bind<e>(), mle.template bind<e>());
+        }
+
+        constexpr G1 bind(const Z& e) const {
+            return G1(eq.bind(e), mle.bind(e));
         }
 
         consteval std::size_t degree() const {
@@ -70,6 +88,11 @@ namespace latticefold {
 
         constexpr std::size_t variables() const {
             return eq.variables();
+        }
+
+        template<typename S>
+        constexpr G1<S> homomorph() const {
+            return G1<S>(eq.template homomorph<S>(), mle.template homomorph<S>());
         }
     };
 

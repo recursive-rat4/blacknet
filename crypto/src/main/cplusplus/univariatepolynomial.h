@@ -28,10 +28,16 @@ class UnivariatePolynomial {
 public:
     std::vector<E> coefficients;
 
+    consteval UnivariatePolynomial() : coefficients() {}
     constexpr UnivariatePolynomial(std::size_t size) : coefficients(size) {}
     constexpr UnivariatePolynomial(std::initializer_list<E> init) : coefficients(init) {}
     constexpr UnivariatePolynomial(UnivariatePolynomial&& other) noexcept
         : coefficients(std::move(other.coefficients)) {}
+
+    constexpr UnivariatePolynomial& operator = (UnivariatePolynomial&& other) {
+        coefficients = std::move(other.coefficients);
+        return *this;
+    }
 
     constexpr bool operator == (const UnivariatePolynomial&) const = default;
 
@@ -51,10 +57,6 @@ public:
 
     consteval std::size_t variables() const {
         return 1;
-    }
-
-    constexpr static UnivariatePolynomial interpolate(const E& p0, const E& p1) {
-        return UnivariatePolynomial{p0, p1 - p0};
     }
 
     friend std::ostream& operator << (std::ostream& out, const UnivariatePolynomial& val)

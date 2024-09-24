@@ -41,6 +41,7 @@ public:
     public:
         std::vector<UnivariatePolynomial<F>> claims;
 
+        consteval Proof() : claims() {}
         constexpr Proof(std::size_t capacity) {
             claims.reserve(capacity);
         }
@@ -54,16 +55,28 @@ public:
     };
 
     constexpr static Proof prove(const P<Z>& polynomial) {
-        static_assert(polynomial.degree() == 1, "Not implemented");
         Proof proof(polynomial.variables());
         RO ro;
         P<F> state(polynomial.template homomorph<F>());
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
-            P<F> p0(state.template bind<F(0)>());
-            P<F> p1(state.template bind<F(1)>());
-            F v0(*std::ranges::fold_left_first(p0(), std::plus<F>()));
-            F v1(*std::ranges::fold_left_first(p1(), std::plus<F>()));
-            auto claim(UnivariatePolynomial<F>::interpolate(v0, v1));
+            UnivariatePolynomial<F> claim;
+            if constexpr (polynomial.degree() == 2) {
+                P<F> p0(state.template bind<F(0)>());
+                P<F> p1(state.template bind<F(1)>());
+                P<F> p2(state.template bind<F(2)>());
+                F v0(*std::ranges::fold_left_first(p0(), std::plus<F>()));
+                F v1(*std::ranges::fold_left_first(p1(), std::plus<F>()));
+                F v2(*std::ranges::fold_left_first(p2(), std::plus<F>()));
+                claim = interpolate(v0, v1, v2);
+            } else if constexpr (polynomial.degree() == 1) {
+                P<F> p0(state.template bind<F(0)>());
+                P<F> p1(state.template bind<F(1)>());
+                F v0(*std::ranges::fold_left_first(p0(), std::plus<F>()));
+                F v1(*std::ranges::fold_left_first(p1(), std::plus<F>()));
+                claim = interpolate(v0, v1);
+            } else {
+                static_assert(false, "Not implemented");
+            }
             claim.absorb(ro);
             proof.claims.emplace_back(std::move(claim));
             RO fork(ro);
@@ -94,6 +107,19 @@ public:
         if (state != polynomial.template homomorph<F>()(r))
             return false;
         return true;
+    }
+
+    constexpr static UnivariatePolynomial<F> interpolate(const F& p0, const F& p1) {
+        return UnivariatePolynomial<F>{p0, p1 - p0};
+    }
+    constexpr static UnivariatePolynomial<F> interpolate(const F& p0, const F& p1, const F& p2) {
+        // Undefined behaviour is prohibited in consteval
+        static const F inv2 = Z(2).invert().value();
+
+        F a(inv2 * (p2 - p1.douple() + p0));
+        F b(p1 - p0 - a);
+        F c(p0);
+        return UnivariatePolynomial<F>{c, b, a};
     }
 };
 
