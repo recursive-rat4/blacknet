@@ -25,52 +25,52 @@
 
 static boost::random::mt19937 rng;
 
-static void BM_LatticeFold_G1_SumCheck_Prove(benchmark::State& state) {
+static void BM_LatticeFold_G2_SumCheck_Prove(benchmark::State& state) {
     using Z = Solinas62Ring;
     using F = Solinas62RingDegree2;
     using R = latticefold::Rq<Z>;
     using S = Poseidon2Solinas62;
-    using SumCheck = SumCheck<Z, F, latticefold::G1, S>;
+    using SumCheck = SumCheck<Z, F, latticefold::G2, S>;
 
     std::vector<Z> beta(6);
     std::ranges::generate(beta, [] { return Z::random(rng); });
     R f = R::random(rng);
-    latticefold::G1<Z> g1(beta, f);
+    latticefold::G2<Z> g2(beta, f);
 
     SumCheck::Proof proof;
 
     for (auto _ : state) {
-        proof = SumCheck::prove(g1);
+        proof = SumCheck::prove(g2);
 
-        benchmark::DoNotOptimize(g1);
+        benchmark::DoNotOptimize(g2);
         benchmark::DoNotOptimize(proof);
     }
 }
-BENCHMARK(BM_LatticeFold_G1_SumCheck_Prove);
+BENCHMARK(BM_LatticeFold_G2_SumCheck_Prove);
 
-static void BM_LatticeFold_G1_SumCheck_Verify(benchmark::State& state) {
+static void BM_LatticeFold_G2_SumCheck_Verify(benchmark::State& state) {
     using Z = Solinas62Ring;
     using F = Solinas62RingDegree2;
     using R = latticefold::Rq<Z>;
     using S = Poseidon2Solinas62;
-    using SumCheck = SumCheck<Z, F, latticefold::G1, S>;
+    using SumCheck = SumCheck<Z, F, latticefold::G2, S>;
 
     std::vector<Z> beta(6);
     std::ranges::generate(beta, [] { return Z::random(rng); });
     R f = R::random(rng);
-    latticefold::G1<Z> g1(beta, f);
+    latticefold::G2<Z> g2(beta, f);
 
-    SumCheck::Proof proof = SumCheck::prove(g1);
+    SumCheck::Proof proof = SumCheck::prove(g2);
     Z sum = proof.claims[0](F(0)).coefficients[0] + proof.claims[0](F(1)).coefficients[0];
     bool result;
 
     for (auto _ : state) {
-        result = SumCheck::verify(g1, sum, proof);
+        result = SumCheck::verify(g2, sum, proof);
 
-        benchmark::DoNotOptimize(g1);
+        benchmark::DoNotOptimize(g2);
         benchmark::DoNotOptimize(proof);
         benchmark::DoNotOptimize(sum);
         benchmark::DoNotOptimize(result);
     }
 }
-BENCHMARK(BM_LatticeFold_G1_SumCheck_Verify);
+BENCHMARK(BM_LatticeFold_G2_SumCheck_Verify);

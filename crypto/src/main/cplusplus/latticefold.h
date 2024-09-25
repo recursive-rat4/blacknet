@@ -107,6 +107,20 @@ namespace latticefold {
                 pis[i++] = MultilinearExtension<Z>(f) - Z(j);
             }
         }
+        constexpr G2(EqExtension<Z>&& eq, std::array<MultilinearExtension<Z>, b + b - 1>&& pis) : eq(std::move(eq)) {
+            for (std::size_t i = 0; i < pis.size(); ++i)
+                this->pis[i] = std::move(pis[i]);
+        }
+
+        constexpr std::vector<Z> operator () () const {
+            std::vector<Z> evals(eq());
+            for (std::size_t i = 0; i < pis.size(); ++i) {
+                const auto& j = pis[i]();
+                for (std::size_t k = 0; k < j.size(); ++k)
+                    evals[k] *= j[k];
+            }
+            return evals;
+        }
 
         constexpr Z operator () (const std::vector<Z>& point) const {
             Z pi(eq(point));
@@ -115,12 +129,35 @@ namespace latticefold {
             return pi;
         }
 
+        template<Z e>
+        constexpr G2 bind() const {
+            std::array<MultilinearExtension<Z>, b + b - 1> pis;
+            for (std::size_t i = 0; i < pis.size(); ++i)
+                pis[i] = this->pis[i].template bind<e>();
+            return G2(eq.template bind<e>(), std::move(pis));
+        }
+
+        constexpr G2 bind(const Z& e) const {
+            std::array<MultilinearExtension<Z>, b + b - 1> pis;
+            for (std::size_t i = 0; i < pis.size(); ++i)
+                pis[i] = this->pis[i].bind(e);
+            return G2(eq.bind(e), std::move(pis));
+        }
+
         consteval std::size_t degree() const {
             return eq.degree() + pis.size();
         }
 
         constexpr std::size_t variables() const {
             return eq.variables();
+        }
+
+        template<typename S>
+        constexpr G2<S> homomorph() const {
+            std::array<MultilinearExtension<S>, b + b - 1> pis;
+            for (std::size_t i = 0; i < pis.size(); ++i)
+                pis[i] = this->pis[i].template homomorph<S>();
+            return G2<S>(eq.template homomorph<S>(), std::move(pis));
         }
     };
 }
