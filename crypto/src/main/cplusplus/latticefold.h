@@ -58,7 +58,7 @@ namespace latticefold {
         EqExtension<Z> eq;
         MultilinearExtension<Z> mle;
     public:
-        constexpr G1(const std::vector<Z>& r, const Rq<Z>& f) : eq(r), mle(f) {}
+        constexpr G1(const std::vector<Z>& r, const Vector<Rq<Z>>& f) : eq(r), mle(f) {}
         constexpr G1(EqExtension<Z>&& eq, MultilinearExtension<Z>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
         constexpr std::vector<Z> operator () () const {
@@ -101,7 +101,7 @@ namespace latticefold {
         EqExtension<Z> eq;
         std::array<MultilinearExtension<Z>, b + b - 1> pis;
     public:
-        constexpr G2(const std::vector<Z>& beta, const Rq<Z>& f) : eq(beta) {
+        constexpr G2(const std::vector<Z>& beta, const Vector<Rq<Z>>& f) : eq(beta) {
             std::size_t i = 0;
             for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
                 pis[i++] = MultilinearExtension<Z>(f) - Z(j);

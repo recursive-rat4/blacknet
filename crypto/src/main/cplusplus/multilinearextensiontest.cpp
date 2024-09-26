@@ -126,4 +126,24 @@ BOOST_AUTO_TEST_CASE(vector) {
     };
 }
 
+BOOST_AUTO_TEST_CASE(ringvector) {
+    Hypercube<E> hc(3);
+    Vector<EE> a{
+        EE{75, 76},
+        EE{77, 78},
+        EE{78, 79},
+        EE{79, 80},
+    };
+    MultilinearExtension<E> mle(a);
+    for (std::tuple<const std::pair<std::size_t, std::size_t>&, const std::vector<E>&> i : std::views::zip(
+            std::ranges::subrange(hc.splittedBegin(4, 2), hc.splittedEnd()),
+            std::ranges::subrange(hc.decomposedBegin(), hc.decomposedEnd())
+        )) {
+        const std::size_t& row = std::get<0>(i).first;
+        const std::size_t& column = std::get<0>(i).second;
+        const std::vector<E>& b = std::get<1>(i);
+        BOOST_TEST(a.elements[row].coefficients[column] == mle(b));
+    };
+}
+
 BOOST_AUTO_TEST_SUITE_END()

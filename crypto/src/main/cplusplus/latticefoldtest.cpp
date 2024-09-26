@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(Gadget) {
 BOOST_AUTO_TEST_CASE(G1s) {
     std::vector<Z> r1{0, 0, 0, 0, 0, 0};
     std::vector<Z> r2{0, 0, 0, 0, 0, 1};
-    R f{3, 4};
+    Vector<R> f{R{3, 4}};
     auto g1_1 = G1<Z>(r1, f);
     auto g1_2 = G1<Z>(r2, f);
     BOOST_TEST(6 == g1_1.variables());
@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(G1s) {
 
 BOOST_AUTO_TEST_CASE(G2s) {
     std::vector<Z> beta{0, 0, 0, 0, 0, 0};
-    R f1{1, -1};
-    R f2{2, -2};
+    Vector<R> f1{R{1, -1}};
+    Vector<R> f2{R{2, -2}};
     auto g2_1 = G2<Z>(beta, f1);
     auto g2_2 = G2<Z>(beta, f2);
     BOOST_TEST(6 == g2_1.variables());

@@ -22,6 +22,7 @@
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
 #include "sumcheck.h"
+#include "vector.h"
 
 static boost::random::mt19937 rng;
 
@@ -34,7 +35,7 @@ static void BM_LatticeFold_G2_SumCheck_Prove(benchmark::State& state) {
 
     std::vector<Z> beta(6);
     std::ranges::generate(beta, [] { return Z::random(rng); });
-    R f = R::random(rng);
+    Vector<R> f{R::random(rng)};
     latticefold::G2<Z> g2(beta, f);
 
     SumCheck::Proof proof;
@@ -57,7 +58,7 @@ static void BM_LatticeFold_G2_SumCheck_Verify(benchmark::State& state) {
 
     std::vector<Z> beta(6);
     std::ranges::generate(beta, [] { return Z::random(rng); });
-    R f = R::random(rng);
+    Vector<R> f{R::random(rng)};
     latticefold::G2<Z> g2(beta, f);
 
     SumCheck::Proof proof = SumCheck::prove(g2);

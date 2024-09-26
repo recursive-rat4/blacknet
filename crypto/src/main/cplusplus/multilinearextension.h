@@ -43,6 +43,16 @@ public:
         coefficients.assign(polynomial.coefficients.cbegin(), polynomial.coefficients.cend());
     }
     constexpr MultilinearExtension(const Vector<E>& vector) : coefficients(vector.elements) {}
+    template<std::size_t N, auto... A>
+    constexpr MultilinearExtension(const Vector<PolynomialRing<E, N, A...>>& vector) {
+        coefficients.reserve(vector.elements.size() * N);
+        for (std::size_t i = 0; i < vector.elements.size(); ++i)
+            std::copy(
+                vector.elements[i].coefficients.begin(),
+                vector.elements[i].coefficients.end(),
+                std::back_inserter(coefficients)
+            );
+    }
     constexpr MultilinearExtension(const MultilinearExtension& other) : coefficients(other.coefficients) {}
     constexpr MultilinearExtension(MultilinearExtension&& other) noexcept
         : coefficients(std::move(other.coefficients)) {}
