@@ -34,6 +34,13 @@ BOOST_AUTO_TEST_CASE(meta) {
     BOOST_TEST(3 == eq.variables());
 }
 
+BOOST_AUTO_TEST_CASE(mul) {
+    EqExtension<E> a({E(2), E(3), E(5), E(7)});
+    E b(11);
+    std::vector<E> r{E(13), E(17), E(23), E(27)};
+    BOOST_TEST(a(r) * b == (a * b)(r));
+}
+
 BOOST_AUTO_TEST_CASE(bind) {
     EqExtension<E> eq1({E(2), E(3), E(4)});
     std::vector<E> r1{E(5), E(6), E(7)};

@@ -57,6 +57,15 @@ public:
         return pi;
     }
 
+    constexpr EqExtension& operator *= (const E& other) {
+        z *= other;
+        return *this;
+    }
+
+    constexpr EqExtension operator * (const E& other) const {
+        return EqExtension(coefficients, 0, z * other);
+    }
+
     template<E e>
     constexpr EqExtension bind() const {
         if constexpr (e == E(0)) {
