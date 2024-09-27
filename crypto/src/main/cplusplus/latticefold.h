@@ -21,6 +21,7 @@
 #include "eqextension.h"
 #include "matrix.h"
 #include "multilinearextension.h"
+#include "polynomial.h"
 #include "polynomialring.h"
 #include "vector.h"
 
@@ -62,11 +63,9 @@ namespace latticefold {
         constexpr G1(EqExtension<Z>&& eq, MultilinearExtension<Z>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
         constexpr std::vector<Z> operator () () const {
-            std::vector<Z> evals(eq());
-            const auto& pi_evals = mle();
-            for (std::size_t j = 0; j < pi_evals.size(); ++j)
-                evals[j] *= pi_evals[j];
-            return evals;
+            std::vector<Z> r(eq());
+            mle.pi(r);
+            return r;
         }
 
         constexpr Z operator () (const std::vector<Z>& point) const {
@@ -98,54 +97,41 @@ namespace latticefold {
 
     template<typename Z>
     class G2 {
+        using P = Polynomial<Z, MultilinearExtension>;
+
         EqExtension<Z> eq;
-        std::array<MultilinearExtension<Z>, b + b - 1> pis;
+        P mles;
     public:
-        constexpr G2(const std::vector<Z>& beta, const Vector<Rq<Z>>& f) : eq(beta) {
-            std::size_t i = 0;
+        constexpr G2(const std::vector<Z>& beta, const Vector<Rq<Z>>& f) : eq(beta), mles(b + b - 1) {
             for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
-                pis[i++] = MultilinearExtension<Z>(f) - Z(j);
+                mles(MultilinearExtension<Z>(f) - Z(j));
             }
         }
-        constexpr G2(EqExtension<Z>&& eq, std::array<MultilinearExtension<Z>, b + b - 1>&& pis) : eq(std::move(eq)) {
-            for (std::size_t i = 0; i < pis.size(); ++i)
-                this->pis[i] = std::move(pis[i]);
-        }
+        constexpr G2(EqExtension<Z>&& eq, P&& mles) : eq(std::move(eq)), mles(std::move(mles)) {}
 
         constexpr std::vector<Z> operator () () const {
-            std::vector<Z> evals(eq());
-            for (std::size_t i = 0; i < pis.size(); ++i) {
-                const auto& j = pis[i]();
-                for (std::size_t k = 0; k < j.size(); ++k)
-                    evals[k] *= j[k];
-            }
-            return evals;
+            std::vector<Z> r(eq());
+            mles.pi(r);
+            return r;
         }
 
         constexpr Z operator () (const std::vector<Z>& point) const {
-            Z pi(eq(point));
-            for (const auto& i : pis)
-                pi *= i(point);
-            return pi;
+            Z r(eq(point));
+            mles.pi(r, point);
+            return r;
         }
 
         template<Z e>
         constexpr G2 bind() const {
-            std::array<MultilinearExtension<Z>, b + b - 1> pis;
-            for (std::size_t i = 0; i < pis.size(); ++i)
-                pis[i] = this->pis[i].template bind<e>();
-            return G2(eq.template bind<e>(), std::move(pis));
+            return G2(eq.template bind<e>(), mles.template bind<e>());
         }
 
         constexpr G2 bind(const Z& e) const {
-            std::array<MultilinearExtension<Z>, b + b - 1> pis;
-            for (std::size_t i = 0; i < pis.size(); ++i)
-                pis[i] = this->pis[i].bind(e);
-            return G2(eq.bind(e), std::move(pis));
+            return G2(eq.bind(e), mles.bind(e));
         }
 
         consteval std::size_t degree() const {
-            return eq.degree() + pis.size();
+            return eq.degree() + (b + b - 1);
         }
 
         constexpr std::size_t variables() const {
@@ -154,10 +140,7 @@ namespace latticefold {
 
         template<typename S>
         constexpr G2<S> homomorph() const {
-            std::array<MultilinearExtension<S>, b + b - 1> pis;
-            for (std::size_t i = 0; i < pis.size(); ++i)
-                pis[i] = this->pis[i].template homomorph<S>();
-            return G2<S>(eq.template homomorph<S>(), std::move(pis));
+            return G2<S>(eq.template homomorph<S>(), mles.template homomorph<S>());
         }
     };
 }

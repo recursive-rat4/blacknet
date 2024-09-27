@@ -120,6 +120,16 @@ public:
         return t;
     }
 
+    constexpr void sigma(std::vector<E>& r) const {
+        for (std::size_t i = 0; i < coefficients.size(); ++i)
+            r[i] += coefficients[i];
+    }
+
+    constexpr void pi(std::vector<E>& r) const {
+        for (std::size_t i = 0; i < coefficients.size(); ++i)
+            r[i] *= coefficients[i];
+    }
+
     template<E e>
     constexpr MultilinearExtension bind() const {
         std::size_t ns = coefficients.size() >> 1;

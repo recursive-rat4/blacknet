@@ -58,6 +58,22 @@ BOOST_AUTO_TEST_CASE(sub) {
     BOOST_TEST(c == a - b);
 }
 
+BOOST_AUTO_TEST_CASE(sigma) {
+    MultilinearExtension a{E(10), E(11), E(12), E(13)};
+    std::vector<E> b{E(14), E(15), E(16), E(17)};
+    std::vector<E> c{E(24), E(26), E(28), E(30)};
+    a.sigma(b);
+    BOOST_TEST(c == b);
+}
+
+BOOST_AUTO_TEST_CASE(pi) {
+    MultilinearExtension a{E(1), E(2), E(3), E(4)};
+    std::vector<E> b{E(5), E(6), E(7), E(8)};
+    std::vector<E> c{E(5), E(12), E(21), E(32)};
+    a.pi(b);
+    BOOST_TEST(c == b);
+}
+
 BOOST_AUTO_TEST_CASE(bind) {
     MultilinearExtension a{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};
     MultilinearExtension b{E(1), E(2), E(3), E(4)};
