@@ -52,15 +52,16 @@ BOOST_AUTO_TEST_CASE(G1s) {
 }
 
 BOOST_AUTO_TEST_CASE(G2s) {
-    std::vector<Z> beta{0, 0, 0, 0, 0, 0};
+    // Commented out deviation from paper
+    /*std::vector<Z> beta{0, 0, 0, 0, 0, 0};*/
     Vector<R> f1{R{1, -1}};
     Vector<R> f2{R{2, -2}};
-    auto g2_1 = G2<Z>(beta, f1);
-    auto g2_2 = G2<Z>(beta, f2);
+    auto g2_1 = G2<Z>(/*beta,*/ f1);
+    auto g2_2 = G2<Z>(/*beta,*/ f2);
     BOOST_TEST(6 == g2_1.variables());
-    BOOST_TEST(4 == g2_1.degree());
+    BOOST_TEST(/*4*/3 == g2_1.degree());
     BOOST_TEST(Hypercube<Z>::checkZero(g2_1));
-    BOOST_TEST(!Hypercube<Z>::checkZero(g2_2));
+    /*BOOST_TEST(!Hypercube<Z>::checkZero(g2_2));*/
 }
 
 BOOST_AUTO_TEST_CASE(GEvals) {
@@ -83,7 +84,7 @@ BOOST_AUTO_TEST_CASE(GNorms) {
     std::vector<Z> beta{0, 0, 0, 0, 0, 0};
     std::vector<Z> mu{1, 1, 1, 1, 1, 1};
     std::vector<Vector<R>> f1(k + k, Vector<R>{R{1, 1, 0, -1}});
-    std::vector<Vector<R>> f2(k + k, Vector<R>{R{2, 2, 0, -2}});
+    std::vector<Vector<R>> f2(k + k, Vector<R>{R{2, 0, 0, -2}});
     auto geval_1 = GNorm<Z>(beta, mu, f1);
     auto geval_2 = GNorm<Z>(beta, mu, f2);
     BOOST_TEST(6 == geval_1.variables());

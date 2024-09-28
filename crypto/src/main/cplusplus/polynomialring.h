@@ -46,6 +46,8 @@ public:
         return t;
     }
 
+    using NormType = Z::NormType;
+
     std::array<Z, N> coefficients;
 
     consteval PolynomialRing() : coefficients() {}
@@ -116,7 +118,7 @@ public:
         return t;
     }
 
-    constexpr bool checkInfiniteNorm(typename Z::value_type bound) const {
+    constexpr bool checkInfiniteNorm(const NormType& bound) const {
         for (std::size_t i = 0; i < N; ++i) {
             if (coefficients[i].checkInfiniteNorm(bound))
                 continue;

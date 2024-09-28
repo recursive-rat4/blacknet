@@ -106,31 +106,29 @@ namespace latticefold {
 
     template<typename Z>
     class G2 {
-        using P = Polynomial<Z, MultilinearExtension>;
-
-        EqExtension<Z> eq;
-        P mles;
+        // Beta vulgaris
+        Polynomial<Z, MultilinearExtension> mles;
     public:
-        constexpr G2(const std::vector<Z>& beta, const Vector<Rq<Z>>& f) : eq(beta), mles(b + b - 1) {
+        constexpr G2(const Vector<Rq<Z>>& f) : mles(b + b - 1) {
             for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
                 mles(MultilinearExtension<Z>(f) - Z(j));
             }
         }
-        constexpr G2(const std::vector<Z>& beta, const Z& mu, const Vector<Rq<Z>>& f) : eq(beta), mles(b + b - 1) {
+        constexpr G2(const Z& mu, const Vector<Rq<Z>>& f) : mles(b + b - 1) {
             for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
                 mles((MultilinearExtension<Z>(f) - Z(j)) * mu);
             }
         }
-        constexpr G2(EqExtension<Z>&& eq, P&& mles) : eq(std::move(eq)), mles(std::move(mles)) {}
+        constexpr G2(Polynomial<Z, MultilinearExtension>&& mles) : mles(std::move(mles)) {}
 
         constexpr std::vector<Z> operator () () const {
-            std::vector<Z> r(eq());
+            std::vector<Z> r(1 << variables(), Z::LEFT_MULTIPLICATIVE_IDENTITY());
             mles.pi(r);
             return r;
         }
 
         constexpr Z operator () (const std::vector<Z>& point) const {
-            Z r(eq(point));
+            Z r(Z::LEFT_MULTIPLICATIVE_IDENTITY());
             mles.pi(r, point);
             return r;
         }
@@ -143,24 +141,24 @@ namespace latticefold {
 
         template<Z e>
         constexpr G2 bind() const {
-            return G2(eq.template bind<e>(), mles.template bind<e>());
+            return G2(mles.template bind<e>());
         }
 
         constexpr G2 bind(const Z& e) const {
-            return G2(eq.bind(e), mles.bind(e));
+            return G2(mles.bind(e));
         }
 
         consteval std::size_t degree() const {
-            return eq.degree() + (b + b - 1);
+            return b + b - 1;
         }
 
         constexpr std::size_t variables() const {
-            return eq.variables();
+            return mles.variables();
         }
 
         template<typename S>
         constexpr G2<S> homomorph() const {
-            return G2<S>(eq.template homomorph<S>(), mles.template homomorph<S>());
+            return G2<S>(mles.template homomorph<S>());
         }
     };
 
@@ -216,51 +214,56 @@ namespace latticefold {
 
     template<typename Z>
     class GNorm {
+        // GNorm(x) = eq(β, x) Σ G2(μ, f, x)
+        EqExtension<Z> eq;
         Polynomial<Z, G2> g2s;
     public:
         constexpr GNorm(
             const std::vector<Z>& beta,
             const std::vector<Z>& mu,
             const std::vector<Vector<Rq<Z>>>& f
-        ) : g2s(k + k) {
+        ) : eq(beta), g2s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
-                g2s(G2<Z>(beta, mu[i], f[i]));
+                g2s(G2<Z>(mu[i], f[i]));
             }
         }
-        constexpr GNorm(Polynomial<Z, G2>&& g2s) : g2s(std::move(g2s)) {}
+        constexpr GNorm(EqExtension<Z>&& eq, Polynomial<Z, G2>&& g2s) : eq(std::move(eq)), g2s(std::move(g2s)) {}
 
         constexpr std::vector<Z> operator () () const {
             std::vector<Z> r(1 << variables(), Z::LEFT_ADDITIVE_IDENTITY());
             g2s.sigma(r);
+            const auto& e = eq();
+            for (std::size_t i = 0; i < e.size(); ++i)
+                r[i] *= e[i];
             return r;
         }
 
         constexpr Z operator () (const std::vector<Z>& point) const {
             Z r(Z::LEFT_ADDITIVE_IDENTITY());
             g2s.sigma(r, point);
-            return r;
+            return r * eq(point);
         }
 
         template<Z e>
         constexpr GNorm bind() const {
-            return GNorm(g2s.template bind<e>());
+            return GNorm(eq.template bind<e>(), g2s.template bind<e>());
         }
 
         constexpr GNorm bind(const Z& e) const {
-            return GNorm(g2s.bind(e));
+            return GNorm(eq.bind(e), g2s.bind(e));
         }
 
         consteval std::size_t degree() const {
-            return 1 + (b + b - 1);
+            return eq.degree() + (b + b - 1);
         }
 
         constexpr std::size_t variables() const {
-            return g2s.variables();
+            return eq.variables();
         }
 
         template<typename S>
         constexpr GNorm<S> homomorph() const {
-            return GNorm<S>(g2s.template homomorph<S>());
+            return GNorm<S>(eq.template homomorph<S>(), g2s.template homomorph<S>());
         }
     };
 }
