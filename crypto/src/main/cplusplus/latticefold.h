@@ -60,6 +60,9 @@ namespace latticefold {
         MultilinearExtension<Z> mle;
     public:
         constexpr G1(const std::vector<Z>& r, const Vector<Rq<Z>>& f) : eq(r), mle(f) {}
+        constexpr G1(const Z& alpha, const std::vector<Z>& r, const Vector<Rq<Z>>& f) : eq(r), mle(f) {
+            eq *= alpha;
+        }
         constexpr G1(EqExtension<Z>&& eq, MultilinearExtension<Z>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
         constexpr std::vector<Z> operator () () const {
@@ -70,6 +73,12 @@ namespace latticefold {
 
         constexpr Z operator () (const std::vector<Z>& point) const {
             return eq(point) * mle(point);
+        }
+
+        constexpr void sigma(std::vector<Z>& r) const {
+            const auto& e = (*this)();
+            for (std::size_t i = 0; i < e.size(); ++i)
+                r[i] += e[i];
         }
 
         template<Z e>
@@ -141,6 +150,56 @@ namespace latticefold {
         template<typename S>
         constexpr G2<S> homomorph() const {
             return G2<S>(eq.template homomorph<S>(), mles.template homomorph<S>());
+        }
+    };
+
+    template<typename Z>
+    class GEval {
+        Polynomial<Z, G1> g1s;
+    public:
+        constexpr GEval(
+            const std::vector<Z>& alpha,
+            const std::vector<std::vector<Z>>& r,
+            const std::vector<Vector<Rq<Z>>>& f
+        ) : g1s(k + k) {
+            for (std::size_t i = 0; i < k + k; ++i) {
+                g1s(G1<Z>(alpha[i], r[i], f[i]));
+            }
+        }
+        constexpr GEval(Polynomial<Z, G1>&& g1s) : g1s(std::move(g1s)) {}
+
+        constexpr std::vector<Z> operator () () const {
+            std::vector<Z> r(1 << variables(), Z::LEFT_ADDITIVE_IDENTITY());
+            g1s.sigma(r);
+            return r;
+        }
+
+        constexpr Z operator () (const std::vector<Z>& point) const {
+            Z r(Z::LEFT_ADDITIVE_IDENTITY());
+            g1s.sigma(r, point);
+            return r;
+        }
+
+        template<Z e>
+        constexpr GEval bind() const {
+            return GEval(g1s.template bind<e>());
+        }
+
+        constexpr GEval bind(const Z& e) const {
+            return GEval(g1s.bind(e));
+        }
+
+        consteval std::size_t degree() const {
+            return 1 + 1;
+        }
+
+        constexpr std::size_t variables() const {
+            return g1s.variables();
+        }
+
+        template<typename S>
+        constexpr GEval<S> homomorph() const {
+            return GEval<S>(g1s.template homomorph<S>());
         }
     };
 }

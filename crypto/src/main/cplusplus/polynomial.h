@@ -80,6 +80,10 @@ public:
         return Polynomial(std::move(t));
     }
 
+    constexpr std::size_t variables() const {
+        return polynomials[0].variables();
+    }
+
     template<typename S>
     constexpr Polynomial<S, P> homomorph() const {
         std::vector<P<S>> t;

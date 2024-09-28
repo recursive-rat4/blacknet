@@ -63,4 +63,20 @@ BOOST_AUTO_TEST_CASE(G2s) {
     BOOST_TEST(!Hypercube<Z>::checkZero(g2_2));
 }
 
+BOOST_AUTO_TEST_CASE(GEvals) {
+    std::vector<Z> alpha(k + k, Z(2));
+    std::vector<std::vector<Z>> r(k + k, {0, 0, 0, 0, 1, 0});
+    std::vector<Vector<R>> f;
+    for (std::size_t i = 0; i < k + k; ++i) {
+        R rq(0);
+        rq.coefficients[i] = Z(i);
+        f.emplace_back(Vector<R>{rq});
+    }
+    auto geval = GEval<Z>(alpha, r, f);
+    BOOST_TEST(6 == geval.variables());
+    BOOST_TEST(2 == geval.degree());
+    BOOST_TEST(Z(0) == geval({0, 0, 0, 0, 0, 1}));
+    BOOST_TEST(Z(4) == geval({0, 0, 0, 0, 1, 0}));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
