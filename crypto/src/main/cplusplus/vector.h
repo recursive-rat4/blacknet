@@ -32,10 +32,20 @@ public:
 
     std::vector<E> elements;
 
+    consteval Vector() : elements() {}
     constexpr Vector(std::size_t size) : elements(size) {}
     constexpr Vector(std::size_t size, const E& fill) : elements(size, fill) {}
     constexpr Vector(std::initializer_list<E> init) : elements(init) {}
+    constexpr Vector(const Vector& other) {
+        elements.reserve(other.elements.size());
+        std::copy(other.elements.begin(), other.elements.end(), std::back_inserter(elements));
+    }
     constexpr Vector(Vector&& other) noexcept : elements(std::move(other.elements)) {}
+
+    constexpr Vector& operator = (Vector&& other) {
+        elements = std::move(other.elements);
+        return *this;
+    }
 
     constexpr bool operator == (const Vector&) const = default;
 

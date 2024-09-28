@@ -26,52 +26,58 @@
 
 static boost::random::mt19937 rng;
 
-static void BM_LatticeFold_G2_SumCheck_Prove(benchmark::State& state) {
+static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     using Z = Solinas62Ring;
     using F = Solinas62RingDegree3;
     using R = latticefold::Rq<Z>;
     using S = Poseidon2Solinas62;
-    using SumCheck = SumCheck<Z, F, latticefold::G2, S>;
+    using SumCheck = SumCheck<Z, F, latticefold::GNorm, S>;
 
     std::vector<Z> beta(6);
     std::ranges::generate(beta, [] { return Z::random(rng); });
-    Vector<R> f{R::random(rng)};
-    latticefold::G2<Z> g2(beta, f);
+    std::vector<Z> mu(6);
+    std::ranges::generate(mu, [] { return Z::random(rng); });
+    std::vector<Vector<R>> f(latticefold::k * 2);
+    std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
+    latticefold::GNorm<Z> g(beta, mu, f);
 
     SumCheck::Proof proof;
 
     for (auto _ : state) {
-        proof = SumCheck::prove(g2);
+        proof = SumCheck::prove(g);
 
-        benchmark::DoNotOptimize(g2);
+        benchmark::DoNotOptimize(g);
         benchmark::DoNotOptimize(proof);
     }
 }
-BENCHMARK(BM_LatticeFold_G2_SumCheck_Prove);
+BENCHMARK(BM_LatticeFold_GNorm_SumCheck_Prove);
 
-static void BM_LatticeFold_G2_SumCheck_Verify(benchmark::State& state) {
+static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     using Z = Solinas62Ring;
     using F = Solinas62RingDegree3;
     using R = latticefold::Rq<Z>;
     using S = Poseidon2Solinas62;
-    using SumCheck = SumCheck<Z, F, latticefold::G2, S>;
+    using SumCheck = SumCheck<Z, F, latticefold::GNorm, S>;
 
     std::vector<Z> beta(6);
     std::ranges::generate(beta, [] { return Z::random(rng); });
-    Vector<R> f{R::random(rng)};
-    latticefold::G2<Z> g2(beta, f);
+    std::vector<Z> mu(6);
+    std::ranges::generate(mu, [] { return Z::random(rng); });
+    std::vector<Vector<R>> f(latticefold::k * 2);
+    std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
+    latticefold::GNorm<Z> g(beta, mu, f);
 
-    SumCheck::Proof proof = SumCheck::prove(g2);
+    SumCheck::Proof proof = SumCheck::prove(g);
     Z sum = proof.claims[0](F(0)).coefficients[0] + proof.claims[0](F(1)).coefficients[0];
     bool result;
 
     for (auto _ : state) {
-        result = SumCheck::verify(g2, sum, proof);
+        result = SumCheck::verify(g, sum, proof);
 
-        benchmark::DoNotOptimize(g2);
+        benchmark::DoNotOptimize(g);
         benchmark::DoNotOptimize(proof);
         benchmark::DoNotOptimize(sum);
         benchmark::DoNotOptimize(result);
     }
 }
-BENCHMARK(BM_LatticeFold_G2_SumCheck_Verify);
+BENCHMARK(BM_LatticeFold_GNorm_SumCheck_Verify);
