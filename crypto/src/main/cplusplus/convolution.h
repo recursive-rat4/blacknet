@@ -44,13 +44,21 @@ namespace convolution {
 
     template<typename Z, std::size_t N, std::array<Z, N+1> M>
     constexpr void quotient(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        static_assert(M[M.size()-1] == Z(1));
+        static_assert(M.back() == Z(1));
         std::array<Z, N + N - 1> t;
         t.fill(Z::LEFT_ADDITIVE_IDENTITY());
         lonk(t, a, b);
         if constexpr (N == 2) {
             r[0] = t[0] - t[2] * M[0];
             r[1] = t[1] - t[2] * M[1];
+        } else if constexpr (N == 3) {
+            r[1] = t[1] - t[4] * M[0];
+            r[2] = t[2] - t[4] * M[1];
+            t[3] -= t[4] * M[2];
+
+            r[0] = t[0] - t[3] * M[0];
+            r[1] -= t[3] * M[1];
+            r[2] -= t[3] * M[2];
         } else if constexpr (N == 4) {
             r[2] = t[2] - t[6] * M[0];
             r[3] = t[3] - t[6] * M[1];

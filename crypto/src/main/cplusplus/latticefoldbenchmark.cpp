@@ -28,7 +28,7 @@ static boost::random::mt19937 rng;
 
 static void BM_LatticeFold_G2_SumCheck_Prove(benchmark::State& state) {
     using Z = Solinas62Ring;
-    using F = Solinas62RingDegree2;
+    using F = Solinas62RingDegree3;
     using R = latticefold::Rq<Z>;
     using S = Poseidon2Solinas62;
     using SumCheck = SumCheck<Z, F, latticefold::G2, S>;
@@ -51,7 +51,7 @@ BENCHMARK(BM_LatticeFold_G2_SumCheck_Prove);
 
 static void BM_LatticeFold_G2_SumCheck_Verify(benchmark::State& state) {
     using Z = Solinas62Ring;
-    using F = Solinas62RingDegree2;
+    using F = Solinas62RingDegree3;
     using R = latticefold::Rq<Z>;
     using S = Poseidon2Solinas62;
     using SumCheck = SumCheck<Z, F, latticefold::G2, S>;

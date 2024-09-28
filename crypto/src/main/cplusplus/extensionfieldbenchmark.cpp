@@ -22,9 +22,8 @@
 
 static boost::random::mt19937 rng;
 
+template<typename F>
 static void BM_ExtFieldAdd(benchmark::State& state) {
-    using F = Solinas62RingDegree2;
-
     auto a = F::random(rng);
     auto b = F::random(rng);
 
@@ -34,11 +33,12 @@ static void BM_ExtFieldAdd(benchmark::State& state) {
     benchmark::DoNotOptimize(a);
     benchmark::DoNotOptimize(b);
 }
-BENCHMARK(BM_ExtFieldAdd);
+BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree2>);
+BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree3>);
+BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree4>);
 
+template<typename F>
 static void BM_ExtFieldSub(benchmark::State& state) {
-    using F = Solinas62RingDegree2;
-
     auto a = F::random(rng);
     auto b = F::random(rng);
 
@@ -48,11 +48,12 @@ static void BM_ExtFieldSub(benchmark::State& state) {
     benchmark::DoNotOptimize(a);
     benchmark::DoNotOptimize(b);
 }
-BENCHMARK(BM_ExtFieldSub);
+BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree2>);
+BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree3>);
+BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree4>);
 
+template<typename F>
 static void BM_ExtFieldMul(benchmark::State& state) {
-    using F = Solinas62RingDegree2;
-
     auto a = F::random(rng);
     auto b = F::random(rng);
 
@@ -62,4 +63,6 @@ static void BM_ExtFieldMul(benchmark::State& state) {
     benchmark::DoNotOptimize(a);
     benchmark::DoNotOptimize(b);
 }
-BENCHMARK(BM_ExtFieldMul);
+BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree2>);
+BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree3>);
+BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree4>);
