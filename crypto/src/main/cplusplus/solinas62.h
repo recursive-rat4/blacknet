@@ -45,9 +45,9 @@ typedef ExtensionRing<
     Solinas62Ring,
     2,
     std::array{
-        Solinas62Ring("0000000000000003"),
-        Solinas62Ring("24924924924923ed"),
-        Solinas62Ring("0000000000000001"),
+        Solinas62Ring("3f017d539af5221c"),
+        Solinas62Ring(0),
+        Solinas62Ring(1),
     }
 > Solinas62RingDegree2;
 
@@ -55,10 +55,10 @@ typedef ExtensionRing<
     Solinas62Ring,
     3,
     std::array{
-        Solinas62Ring("3ffffffffffffede"),
-        Solinas62Ring("11289e036bde0844"),
-        Solinas62Ring("0e718cc0a0a13b0b"),
-        Solinas62Ring("0000000000000001"),
+        Solinas62Ring(2),
+        Solinas62Ring(0),
+        Solinas62Ring(1),
+        Solinas62Ring(1),
     }
 > Solinas62RingDegree3;
 
@@ -66,11 +66,11 @@ typedef ExtensionRing<
     Solinas62Ring,
     4,
     std::array{
-        Solinas62Ring("0000000000000003"),
-        Solinas62Ring("0cc486771cca1dc6"),
-        Solinas62Ring("396fb78c435f5ebb"),
-        Solinas62Ring("135d049622667f2e"),
-        Solinas62Ring("0000000000000001"),
+        Solinas62Ring("3f017d539af5221c"),
+        Solinas62Ring(0),
+        Solinas62Ring(0),
+        Solinas62Ring(0),
+        Solinas62Ring(1),
     }
 > Solinas62RingDegree4;
 
