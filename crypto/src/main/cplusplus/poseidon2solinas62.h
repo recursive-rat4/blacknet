@@ -22,15 +22,16 @@
 #include "solinas62.h"
 #include "sponge.h"
 
-constexpr const poseidon2::Params<
-    Solinas62Ring,
-    3,
-    12,
-    49
-> Poseidon2Solinas62Params{
-    4,
-    45,
-    std::array<Solinas62Ring, 588>{
+struct Poseidon2Solinas62Params {
+    using F = Solinas62Ring;
+
+    constexpr static const std::size_t a = 3;
+    constexpr static const std::size_t t = 12;
+    constexpr static const std::size_t r = 49;
+
+    constexpr static const std::size_t rfb = 4;
+    constexpr static const std::size_t rpe = 45;
+    constexpr static const std::array<F, t*r> rc = std::array<Solinas62Ring, 588>{
         Solinas62Ring("03024d1b83f60218"),
         Solinas62Ring("1f1a7bee0137a8ff"),
         Solinas62Ring("10ce767b64d4e9ae"),
@@ -619,8 +620,8 @@ constexpr const poseidon2::Params<
         Solinas62Ring("34e52b800a8ce042"),
         Solinas62Ring("2107d2a0b329d613"),
         Solinas62Ring("175b52c635b13d54"),
-    },
-    std::array<Solinas62Ring, 12>{
+    };
+    constexpr static const std::array<F, t> m = std::array<Solinas62Ring, 12>{
         Solinas62Ring("3d67323c63da8c4b"),
         Solinas62Ring("2947213c8404dda8"),
         Solinas62Ring("3c3cf080900a6d34"),
@@ -633,7 +634,7 @@ constexpr const poseidon2::Params<
         Solinas62Ring("1ca2c05587c29791"),
         Solinas62Ring("1d15d923ad1d1722"),
         Solinas62Ring("2e34079861bf1802"),
-    }
+    };
 };
 
 using Poseidon2Solinas62 = Sponge<

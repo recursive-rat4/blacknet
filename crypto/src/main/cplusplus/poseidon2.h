@@ -30,24 +30,13 @@
 
 namespace poseidon2 {
 
-template<typename F, std::size_t A, std::size_t T, std::size_t R>
-class Params {
-public:
-    std::size_t rfb;
-    std::size_t rpe;
-    std::array<F, T*R> rc;
-    std::array<F, T> m;
-
-    consteval std::size_t a() const { return A; }
-    consteval std::size_t t() const { return T; }
-    consteval std::size_t r() const { return R; }
-};
-
 namespace {
 
-template<typename F, std::size_t A, std::size_t T, std::size_t R>
-constexpr void m4(const Params<F, A, T, R>& params, std::array<F, T>& x) {
-    (void)params;
+template<typename Params>
+constexpr void m4(std::array<typename Params::F, Params::t>& x) {
+    using F = Params::F;
+    constexpr std::size_t T = Params::t;
+
     for (std::size_t i = 0; i < T >> 2; ++i) {
         std::size_t j = i << 2;
         std::array<F, 8> t;
@@ -66,8 +55,11 @@ constexpr void m4(const Params<F, A, T, R>& params, std::array<F, T>& x) {
     }
 }
 
-template<typename F, std::size_t A, std::size_t T, std::size_t R>
-constexpr void external(const Params<F, A, T, R>& params, std::array<F, T>& x) {
+template<typename Params>
+constexpr void external(std::array<typename Params::F, Params::t>& x) {
+    using F = Params::F;
+    constexpr std::size_t T = Params::t;
+
     if constexpr (T == 2) {
         F s(x[0] + x[1]);
         x[0] += s;
@@ -78,9 +70,9 @@ constexpr void external(const Params<F, A, T, R>& params, std::array<F, T>& x) {
         x[1] += s;
         x[2] += s;
     } else if constexpr (T == 4) {
-        m4(params, x);
+        m4<Params>(x);
     } else if constexpr (T == 8 || T == 12 || T == 16 || T == 20 || T == 24) {
-        m4(params, x);
+        m4<Params>(x);
         std::array<F, 4> s;
         for (std::size_t i = 0; i < 4; ++i) {
             s[i] = x[i];
@@ -94,8 +86,11 @@ constexpr void external(const Params<F, A, T, R>& params, std::array<F, T>& x) {
     }
 }
 
-template<typename F, std::size_t A, std::size_t T, std::size_t R>
-constexpr void internal(const Params<F, A, T, R>& params, std::array<F, T>& x) {
+template<typename Params>
+constexpr void internal(std::array<typename Params::F, Params::t>& x) {
+    using F = Params::F;
+    constexpr std::size_t T = Params::t;
+
     if constexpr (T == 2) {
         F s(x[0] + x[1]);
         x[0] += s;
@@ -110,21 +105,24 @@ constexpr void internal(const Params<F, A, T, R>& params, std::array<F, T>& x) {
         for (std::size_t i = 1; i < T; ++i)
             s += x[i];
         for (std::size_t i = 0; i < T; ++i)
-            x[i] = x[i] * params.m[i] + s;
+            x[i] = x[i] * Params::m[i] + s;
     } else {
         static_assert(false);
     }
 }
 
-template<typename F, std::size_t A, std::size_t T, std::size_t R>
-constexpr void rc(const Params<F, A, T, R>& params, std::size_t round, std::array<F, T>& x) {
+template<typename Params>
+constexpr void rc(std::size_t round, std::array<typename Params::F, Params::t>& x) {
+    constexpr std::size_t T = Params::t;
+
     for (std::size_t i = 0; i < T; ++i)
-        x[i] += params.rc[round * T + i];
+        x[i] += Params::rc[round * T + i];
 }
 
-template<typename F, std::size_t A, std::size_t T, std::size_t R>
-constexpr F sbox(const Params<F, A, T, R>& params, const F& x) {
-    (void)params;
+template<typename Params>
+constexpr typename Params::F sbox(const typename Params::F& x) {
+    constexpr std::size_t A = Params::a;
+
     if constexpr (A == 3) {
         return x * x.square();
     } else if constexpr (A == 5) {
@@ -134,34 +132,36 @@ constexpr F sbox(const Params<F, A, T, R>& params, const F& x) {
     }
 }
 
-template<typename F, std::size_t A, std::size_t T, std::size_t R>
-constexpr void sbox(const Params<F, A, T, R>& params, std::array<F, T>& x) {
+template<typename Params>
+constexpr void sbox(std::array<typename Params::F, Params::t>& x) {
+    constexpr std::size_t T = Params::t;
+
     for (std::size_t i = 0; i < T; ++i)
-        x[i] = sbox(params, x[i]);
+        x[i] = sbox<Params>(x[i]);
 }
 
 }
 
-template<Params params>
-constexpr void permute(auto& x) {
-    external(params, x);
+template<typename Params>
+constexpr void permute(std::array<typename Params::F, Params::t>& x) {
+    external<Params>(x);
 
-    for (std::size_t round = 0; round < params.rfb; ++round) {
-        rc(params, round, x);
-        sbox(params, x);
-        external(params, x);
+    for (std::size_t round = 0; round < Params::rfb; ++round) {
+        rc<Params>(round, x);
+        sbox<Params>(x);
+        external<Params>(x);
     }
 
-    for (std::size_t round = params.rfb; round < params.rpe; ++round) {
-        x[0] += params.rc[round * params.t()];
-        x[0] = sbox(params, x[0]);
-        internal(params, x);
+    for (std::size_t round = Params::rfb; round < Params::rpe; ++round) {
+        x[0] += Params::rc[round * Params::t];
+        x[0] = sbox<Params>(x[0]);
+        internal<Params>(x);
     }
 
-    for (std::size_t round = params.rpe; round < params.r(); ++round) {
-        rc(params, round, x);
-        sbox(params, x);
-        external(params, x);
+    for (std::size_t round = Params::rpe; round < Params::r; ++round) {
+        rc<Params>(round, x);
+        sbox<Params>(x);
+        external<Params>(x);
     }
 }
 

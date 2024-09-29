@@ -22,15 +22,16 @@
 #include "poseidon2.h"
 #include "sponge.h"
 
-constexpr const poseidon2::Params<
-   PallasField,
-   5,
-   3,
-   64
-> Poseidon2PallasParams{
-   4,
-   60,
-   std::array<PallasField, 192>{
+struct Poseidon2PallasParams {
+    using F = PallasField;
+
+    constexpr static const std::size_t a = 5;
+    constexpr static const std::size_t t = 3;
+    constexpr static const std::size_t r = 64;
+
+    constexpr static const std::size_t rfb = 4;
+    constexpr static const std::size_t rpe = 60;
+    constexpr static const std::array<F, t*r> rc = std::array<PallasField, 192>{
         PallasField("360d7470611e473d353f628f76d110f34e71162f31003b7057538c2596426303"),
         PallasField("2bab94d7ae222d135dc3c6c5febfaa314908ac2f12ebe06fbdb74213bf63188b"),
         PallasField("150c93fef652fb1c2bf03e1a29aa871fef77e7d736766c5d0939d92753cc5dc8"),
@@ -223,12 +224,12 @@ constexpr const poseidon2::Params<
         PallasField("13a7785ae134ea92f1594a0763c611abb5e2ea3436eef957f1e4ccd73fa00a82"),
         PallasField("39fce308b7d43c574962ae3c0da17e313889c57863446d88bbf04f5252de4279"),
         PallasField("1aae18833f8e1d3ac0fdf01662f60d22bef00a08c6ed38d23b57e34489b53fad"),
-    },
-    std::array<PallasField, 3>{
+    };
+    constexpr static const std::array<F, t> m = std::array<PallasField, 3>{
         1,
         1,
         2,
-    }
+    };
 };
 
 using Poseidon2Pallas = Sponge<
