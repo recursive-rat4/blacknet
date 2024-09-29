@@ -42,6 +42,32 @@ namespace convolution {
         }
     }
 
+namespace {
+    template<typename Z, Z c>
+    constexpr void fuse(Z& r, const Z& a, const Z& b) {
+        if constexpr (c == Z(0))
+            r = a;
+        else if constexpr (c == Z(1))
+            r = a - b;
+        else if constexpr (c == Z(2))
+            r = a - b.douple();
+        else
+            r = a - b * c;
+    }
+
+    template<typename Z, Z b>
+    constexpr void fuse(Z& r, const Z& a) {
+        if constexpr (b == Z(0))
+            return;
+        else if constexpr (b == Z(1))
+            r -= a;
+        else if constexpr (b == Z(2))
+            r -= a.douple();
+        else
+            r -= a * b;
+    }
+}
+
     template<typename Z, std::size_t N, std::array<Z, N+1> M>
     constexpr void quotient(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         static_assert(M.back() == Z(1));
@@ -49,31 +75,31 @@ namespace convolution {
         t.fill(Z::LEFT_ADDITIVE_IDENTITY());
         lonk(t, a, b);
         if constexpr (N == 2) {
-            r[0] = t[0] - t[2] * M[0];
-            r[1] = t[1] - t[2] * M[1];
+            fuse<Z, M[0]>(r[0], t[0], t[2]);
+            fuse<Z, M[1]>(r[1], t[1], t[2]);
         } else if constexpr (N == 3) {
-            r[1] = t[1] - t[4] * M[0];
-            r[2] = t[2] - t[4] * M[1];
-            t[3] -= t[4] * M[2];
+            fuse<Z, M[0]>(r[1], t[1], t[4]);
+            fuse<Z, M[1]>(r[2], t[2], t[4]);
+            fuse<Z, M[2]>(t[3], t[4]);
 
-            r[0] = t[0] - t[3] * M[0];
-            r[1] -= t[3] * M[1];
-            r[2] -= t[3] * M[2];
+            fuse<Z, M[0]>(r[0], t[0], t[3]);
+            fuse<Z, M[1]>(r[1], t[3]);
+            fuse<Z, M[2]>(r[2], t[3]);
         } else if constexpr (N == 4) {
-            r[2] = t[2] - t[6] * M[0];
-            r[3] = t[3] - t[6] * M[1];
-            t[4] -= t[6] * M[2];
-            t[5] -= t[6] * M[3];
+            fuse<Z, M[0]>(r[2], t[2], t[6]);
+            fuse<Z, M[1]>(r[3], t[3], t[6]);
+            fuse<Z, M[2]>(t[4], t[6]);
+            fuse<Z, M[3]>(t[5], t[6]);
 
-            r[1] = t[1] - t[5] * M[0];
-            r[2] -= t[5] * M[1];
-            r[3] -= t[5] * M[2];
-            t[4] -= t[5] * M[3];
+            fuse<Z, M[0]>(r[1], t[1], t[5]);
+            fuse<Z, M[1]>(r[2], t[5]);
+            fuse<Z, M[2]>(r[3], t[5]);
+            fuse<Z, M[3]>(t[4], t[5]);
 
-            r[0] = t[0] - t[4] * M[0];
-            r[1] -= t[4] * M[1];
-            r[2] -= t[4] * M[2];
-            r[3] -= t[4] * M[3];
+            fuse<Z, M[0]>(r[0], t[0], t[4]);
+            fuse<Z, M[1]>(r[1], t[4]);
+            fuse<Z, M[2]>(r[2], t[4]);
+            fuse<Z, M[3]>(r[3], t[4]);
         } else {
             static_assert(false, "Not implemented");
         }
