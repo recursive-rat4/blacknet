@@ -18,13 +18,13 @@
 #include <benchmark/benchmark.h>
 #include <boost/random/mersenne_twister.hpp>
 
+#include "pervushin.h"
 #include "solinas62.h"
 
 static boost::random::mt19937 rng;
 
+template<typename Z>
 static void BM_IntegerRingAdd(benchmark::State& state) {
-    using Z = Solinas62Ring;
-
     auto a = Z::random(rng);
     auto b = Z::random(rng);
 
@@ -34,11 +34,11 @@ static void BM_IntegerRingAdd(benchmark::State& state) {
     benchmark::DoNotOptimize(a);
     benchmark::DoNotOptimize(b);
 }
-BENCHMARK(BM_IntegerRingAdd);
+BENCHMARK(BM_IntegerRingAdd<Solinas62Ring>);
+BENCHMARK(BM_IntegerRingAdd<PervushinRing>);
 
+template<typename Z>
 static void BM_IntegerRingSub(benchmark::State& state) {
-    using Z = Solinas62Ring;
-
     auto a = Z::random(rng);
     auto b = Z::random(rng);
 
@@ -48,11 +48,11 @@ static void BM_IntegerRingSub(benchmark::State& state) {
     benchmark::DoNotOptimize(a);
     benchmark::DoNotOptimize(b);
 }
-BENCHMARK(BM_IntegerRingSub);
+BENCHMARK(BM_IntegerRingSub<Solinas62Ring>);
+BENCHMARK(BM_IntegerRingSub<PervushinRing>);
 
+template<typename Z>
 static void BM_IntegerRingMul(benchmark::State& state) {
-    using Z = Solinas62Ring;
-
     auto a = Z::random(rng);
     auto b = Z::random(rng);
 
@@ -62,11 +62,11 @@ static void BM_IntegerRingMul(benchmark::State& state) {
     benchmark::DoNotOptimize(a);
     benchmark::DoNotOptimize(b);
 }
-BENCHMARK(BM_IntegerRingMul);
+BENCHMARK(BM_IntegerRingMul<Solinas62Ring>);
+BENCHMARK(BM_IntegerRingMul<PervushinRing>);
 
+template<typename Z>
 static void BM_IntegerRingInv(benchmark::State& state) {
-    using Z = Solinas62Ring;
-
     auto a = Z::random(rng);
 
     for (auto _ : state)
@@ -74,4 +74,5 @@ static void BM_IntegerRingInv(benchmark::State& state) {
 
     benchmark::DoNotOptimize(a);
 }
-BENCHMARK(BM_IntegerRingInv);
+BENCHMARK(BM_IntegerRingInv<Solinas62Ring>);
+BENCHMARK(BM_IntegerRingInv<PervushinRing>);

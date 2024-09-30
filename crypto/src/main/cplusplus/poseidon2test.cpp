@@ -18,11 +18,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include "poseidon2pasta.h"
+#include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
 
 BOOST_AUTO_TEST_SUITE(Poseidons)
 
-BOOST_AUTO_TEST_CASE(block256) {
+BOOST_AUTO_TEST_CASE(Pallas) {
     using E = PallasField;
     using Params = Poseidon2PallasParams;
     std::array<E, 3> a{
@@ -39,7 +40,7 @@ BOOST_AUTO_TEST_CASE(block256) {
     BOOST_TEST(b == a);
 }
 
-BOOST_AUTO_TEST_CASE(block64) {
+BOOST_AUTO_TEST_CASE(Solinas62) {
     using E = Solinas62Ring;
     using Params = Poseidon2Solinas62Params;
     std::array<E, 12> a{
@@ -69,6 +70,41 @@ BOOST_AUTO_TEST_CASE(block64) {
         0x059393d79ef06150,
         0x121111905f948bd4,
         0x0bce9d1ef0e19aeb,
+    };
+    poseidon2::permute<Params>(a);
+    BOOST_TEST(b == a);
+}
+
+BOOST_AUTO_TEST_CASE(Pervushin) {
+    using E = PervushinRing;
+    using Params = Poseidon2PervushinParams;
+    std::array<E, 12> a{
+        0x0000000000000000,
+        0x0000000000000001,
+        0x0000000000000002,
+        0x0000000000000003,
+        0x0000000000000004,
+        0x0000000000000005,
+        0x0000000000000006,
+        0x0000000000000007,
+        0x0000000000000008,
+        0x0000000000000009,
+        0x000000000000000a,
+        0x000000000000000b,
+    };
+    std::array<E, 12> b{
+        0x14ad43d6b732aa1f,
+        0x02fbf1c807dd0281,
+        0x13e01fc66d9b3d03,
+        0x11a1f9de5bad75f6,
+        0x18fda95519465f5e,
+        0x1a5e99d9a41fe4ce,
+        0x1e16576275d7822c,
+        0x1106a6eafa54ef7f,
+        0x1d5353e179478d6d,
+        0x09312dc75ae6f2b3,
+        0x1d00514d0694390a,
+        0x03f39f82fb43ef6c,
     };
     poseidon2::permute<Params>(a);
     BOOST_TEST(b == a);

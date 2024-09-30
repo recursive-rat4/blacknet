@@ -127,6 +127,8 @@ constexpr typename Params::F sbox(const typename Params::F& x) {
         return x * x.square();
     } else if constexpr (A == 5) {
         return x * x.square().square();
+    } else if constexpr (A == 17) {
+        return x * x.square().square().square().square();
     } else {
         static_assert(false);
     }

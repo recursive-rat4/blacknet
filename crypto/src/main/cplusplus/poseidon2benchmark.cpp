@@ -19,13 +19,14 @@
 #include <boost/random/mersenne_twister.hpp>
 
 #include "poseidon2pasta.h"
+#include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
 
 static boost::random::mt19937 rng;
 
-static void BM_Poseidon2_256(benchmark::State& state) {
-    using F = PallasField;
-    using Params = Poseidon2PallasParams;
+template<typename Params>
+static void BM_Poseidon2(benchmark::State& state) {
+    using F = Params::F;
 
     std::array<F, Params::t> m;
     for (std::size_t i = 0; i < Params::t; ++i) m[i] = F::random(rng);
@@ -35,18 +36,6 @@ static void BM_Poseidon2_256(benchmark::State& state) {
 
     benchmark::DoNotOptimize(m);
 }
-BENCHMARK(BM_Poseidon2_256);
-
-static void BM_Poseidon2_64(benchmark::State& state) {
-    using R = Solinas62Ring;
-    using Params = Poseidon2Solinas62Params;
-
-    std::array<R, Params::t> m;
-    for (std::size_t i = 0; i < Params::t; ++i) m[i] = R::random(rng);
-
-    for (auto _ : state)
-        poseidon2::permute<Params>(m);
-
-    benchmark::DoNotOptimize(m);
-}
-BENCHMARK(BM_Poseidon2_64);
+BENCHMARK(BM_Poseidon2<Poseidon2PallasParams>);
+BENCHMARK(BM_Poseidon2<Poseidon2Solinas62Params>);
+BENCHMARK(BM_Poseidon2<Poseidon2PervushinParams>);

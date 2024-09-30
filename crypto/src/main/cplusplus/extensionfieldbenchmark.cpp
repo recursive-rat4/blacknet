@@ -18,6 +18,7 @@
 #include <benchmark/benchmark.h>
 #include <boost/random/mersenne_twister.hpp>
 
+#include "pervushin.h"
 #include "solinas62.h"
 
 static boost::random::mt19937 rng;
@@ -36,6 +37,9 @@ static void BM_ExtFieldAdd(benchmark::State& state) {
 BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree2>);
 BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree3>);
 BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree4>);
+BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree2>);
+BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree3>);
+BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree4>);
 
 template<typename F>
 static void BM_ExtFieldSub(benchmark::State& state) {
@@ -51,6 +55,9 @@ static void BM_ExtFieldSub(benchmark::State& state) {
 BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree2>);
 BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree3>);
 BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree4>);
+BENCHMARK(BM_ExtFieldSub<PervushinRingDegree2>);
+BENCHMARK(BM_ExtFieldSub<PervushinRingDegree3>);
+BENCHMARK(BM_ExtFieldSub<PervushinRingDegree4>);
 
 template<typename F>
 static void BM_ExtFieldMul(benchmark::State& state) {
@@ -66,3 +73,6 @@ static void BM_ExtFieldMul(benchmark::State& state) {
 BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree2>);
 BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree3>);
 BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree4>);
+BENCHMARK(BM_ExtFieldMul<PervushinRingDegree2>);
+BENCHMARK(BM_ExtFieldMul<PervushinRingDegree3>);
+BENCHMARK(BM_ExtFieldMul<PervushinRingDegree4>);
