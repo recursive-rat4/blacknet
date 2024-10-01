@@ -74,6 +74,10 @@ public:
             return EqExtension(coefficients, 1, z * coefficients[0]);
         } else if constexpr (e == E(2)) {
             return EqExtension(coefficients, 1, z * (coefficients[0].douple() + coefficients[0] - E(1)));
+        } else if constexpr (e == E(3)) {
+            return EqExtension(coefficients, 1, z * (coefficients[0].douple().douple() + coefficients[0] - E(2)));
+        } else if constexpr (e == E(4)) {
+            return EqExtension(coefficients, 1, z * (coefficients[0].douple().douple().douple() - coefficients[0] - E(3)));
         } else {
             static_assert(false);
         }

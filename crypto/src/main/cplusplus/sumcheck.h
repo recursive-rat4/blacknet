@@ -64,8 +64,8 @@ public:
                 P<F> p0(state.template bind<F(0)>());
                 P<F> p1(state.template bind<F(1)>());
                 P<F> p2(state.template bind<F(2)>());
-                P<F> p3(state.bind(F(3)));
-                P<F> p4(state.bind(F(4)));
+                P<F> p3(state.template bind<F(3)>());
+                P<F> p4(state.template bind<F(4)>());
                 F v0(*std::ranges::fold_left_first(p0(), std::plus<F>()));
                 F v1(*std::ranges::fold_left_first(p1(), std::plus<F>()));
                 F v2(*std::ranges::fold_left_first(p2(), std::plus<F>()));

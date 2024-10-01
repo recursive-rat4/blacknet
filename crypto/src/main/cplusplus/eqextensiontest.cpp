@@ -53,6 +53,8 @@ BOOST_AUTO_TEST_CASE(bind) {
     BOOST_TEST(eq1.bind(E(0))(r2) == eq1.bind<E(0)>()(r2));
     BOOST_TEST(eq1.bind(E(1))(r2) == eq1.bind<E(1)>()(r2));
     BOOST_TEST(eq1.bind(E(2))(r2) == eq1.bind<E(2)>()(r2));
+    BOOST_TEST(eq1.bind(E(3))(r2) == eq1.bind<E(3)>()(r2));
+    BOOST_TEST(eq1.bind(E(4))(r2) == eq1.bind<E(4)>()(r2));
     std::vector<E> pis(eq2());
     Hypercube<E> hc(eq2.variables());
     for (std::tuple<const std::size_t&, const std::vector<E>&> i : std::views::zip(

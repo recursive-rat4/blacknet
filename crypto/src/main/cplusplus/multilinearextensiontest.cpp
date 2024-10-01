@@ -85,6 +85,8 @@ BOOST_AUTO_TEST_CASE(bind) {
     BOOST_TEST(a.bind(E(0)) == a.bind<E(0)>());
     BOOST_TEST(a.bind(E(1)) == a.bind<E(1)>());
     BOOST_TEST(a.bind(E(2)) == a.bind<E(2)>());
+    BOOST_TEST(a.bind(E(3)) == a.bind<E(3)>());
+    BOOST_TEST(a.bind(E(4)) == a.bind<E(4)>());
 }
 
 BOOST_AUTO_TEST_CASE(homomorphism) {

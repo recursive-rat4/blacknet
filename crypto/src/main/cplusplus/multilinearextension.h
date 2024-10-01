@@ -140,7 +140,15 @@ public:
             std::copy(coefficients.begin() + ns, coefficients.end(), r.coefficients.begin());
         } else if constexpr (e == E(2)) {
             for (std::size_t i = 0, j = ns; i < ns; ++i, ++j) {
-                r.coefficients[i] = coefficients[i] + (coefficients[j] - coefficients[i]).douple();
+                r.coefficients[i] = coefficients[j].douple() - coefficients[i];
+            }
+        } else if constexpr (e == E(3)) {
+            for (std::size_t i = 0, j = ns; i < ns; ++i, ++j) {
+                r.coefficients[i] = coefficients[j] + coefficients[j].douple() - coefficients[i].douple();
+            }
+        } else if constexpr (e == E(4)) {
+            for (std::size_t i = 0, j = ns; i < ns; ++i, ++j) {
+                r.coefficients[i] = coefficients[j].douple().douple() - coefficients[i].douple() - coefficients[i];
             }
         } else {
             static_assert(false);
