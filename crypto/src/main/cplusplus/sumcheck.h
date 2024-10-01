@@ -58,37 +58,17 @@ public:
         Proof proof(polynomial.variables());
         RO ro;
         P<F> state(polynomial.template homomorph<F>());
-        for (std::size_t round = 0; round < polynomial.variables(); ++round) {
-            UnivariatePolynomial<F> claim;
-            if constexpr (polynomial.degree() == 4) {
-                P<F> p0(state.template bind<F(0)>());
-                P<F> p1(state.template bind<F(1)>());
-                P<F> p2(state.template bind<F(2)>());
-                P<F> p3(state.template bind<F(3)>());
-                P<F> p4(state.template bind<F(4)>());
-                F v0(*std::ranges::fold_left_first(p0(), std::plus<F>()));
-                F v1(*std::ranges::fold_left_first(p1(), std::plus<F>()));
-                F v2(*std::ranges::fold_left_first(p2(), std::plus<F>()));
-                F v3(*std::ranges::fold_left_first(p3(), std::plus<F>()));
-                F v4(*std::ranges::fold_left_first(p4(), std::plus<F>()));
-                claim = interpolate(v0, v1, v2, v3, v4);
-            } else if constexpr (polynomial.degree() == 2) {
-                P<F> p0(state.template bind<F(0)>());
-                P<F> p1(state.template bind<F(1)>());
-                P<F> p2(state.template bind<F(2)>());
-                F v0(*std::ranges::fold_left_first(p0(), std::plus<F>()));
-                F v1(*std::ranges::fold_left_first(p1(), std::plus<F>()));
-                F v2(*std::ranges::fold_left_first(p2(), std::plus<F>()));
-                claim = interpolate(v0, v1, v2);
-            } else if constexpr (polynomial.degree() == 1) {
-                P<F> p0(state.template bind<F(0)>());
-                P<F> p1(state.template bind<F(1)>());
-                F v0(*std::ranges::fold_left_first(p0(), std::plus<F>()));
-                F v1(*std::ranges::fold_left_first(p1(), std::plus<F>()));
-                claim = interpolate(v0, v1);
-            } else {
-                static_assert(false, "Not implemented");
-            }
+        {
+            // Perform the zeroth round over the base structure abaft the strong sampling set
+            UnivariatePolynomial<F> claim(proveRound<Z>(polynomial).template homomorph<F>());
+            claim.absorb(ro);
+            proof.claims.emplace_back(std::move(claim));
+            RO fork(ro);
+            F challenge(F::squeeze(fork));
+            state = state.bind(challenge);
+        }
+        for (std::size_t round = 1; round < polynomial.variables(); ++round) {
+            UnivariatePolynomial<F> claim(proveRound<F>(state));
             claim.absorb(ro);
             proof.claims.emplace_back(std::move(claim));
             RO fork(ro);
@@ -121,33 +101,69 @@ public:
         return true;
     }
 
-    constexpr static UnivariatePolynomial<F> interpolate(const F& p0, const F& p1) {
-        return UnivariatePolynomial<F>{p0, p1 - p0};
+    template<typename S>
+    constexpr static UnivariatePolynomial<S> interpolate(const S& p0, const S& p1) {
+        return UnivariatePolynomial<S>{p0, p1 - p0};
     }
-    constexpr static UnivariatePolynomial<F> interpolate(const F& p0, const F& p1, const F& p2) {
+    template<typename S>
+    constexpr static UnivariatePolynomial<S> interpolate(const S& p0, const S& p1, const S& p2) {
         // Undefined behaviour is prohibited in consteval
-        static const F inv2 = Z(2).invert().value();
+        static const S inv2 = Z(2).invert().value();
 
-        F a(inv2 * (p2 - p1.douple() + p0));
-        F b(p1 - p0 - a);
-        F c(p0);
-        return UnivariatePolynomial<F>{c, b, a};
+        S a(inv2 * (p2 - p1.douple() + p0));
+        S b(p1 - p0 - a);
+        S c(p0);
+        return UnivariatePolynomial<S>{c, b, a};
     }
-    constexpr static UnivariatePolynomial<F> interpolate(const F& p0, const F& p1, const F& p2, const F& p3, const F& p4) {
+    template<typename S>
+    constexpr static UnivariatePolynomial<S> interpolate(const S& p0, const S& p1, const S& p2, const S& p3, const S& p4) {
         // Undefined behaviour is prohibited in consteval
-        static const F inv2 = Z(2).invert().value();
-        static const F inv3 = Z(3).invert().value();
-        static const F inv4 = Z(4).invert().value();
-        static const F inv6 = Z(6).invert().value();
-        static const F inv12 = Z(12).invert().value();
-        static const F inv24 = Z(24).invert().value();
+        static const S inv2 = Z(2).invert().value();
+        static const S inv3 = Z(3).invert().value();
+        static const S inv4 = Z(4).invert().value();
+        static const S inv6 = Z(6).invert().value();
+        static const S inv12 = Z(12).invert().value();
+        static const S inv24 = Z(24).invert().value();
 
-        F a(p4 * inv24 - p3 * inv6 + p2 * inv4 - p1 * inv6 + p0 * inv24);
-        F b(- p4 * inv4 + p3 * Z(7) * inv6 - p2.douple() + p1 * Z(3) * inv2 - p0 * Z(5) * inv12);
-        F c(p4 * Z(11) * inv24 - p3 * Z(7) * inv3 + p2 * Z(19) * inv4 - p1 * Z(13) * inv3 + p0 * Z(35) * inv24);
-        F d(- p4 * inv4 + p3 * Z(4) * inv3 - p2 * Z(3) + p1.douple().douple() - p0 * Z(25) * inv12);
-        F e(p0);
-        return UnivariatePolynomial<F>{e, d, c, b, a};
+        S a(p4 * inv24 - p3 * inv6 + p2 * inv4 - p1 * inv6 + p0 * inv24);
+        S b(- p4 * inv4 + p3 * Z(7) * inv6 - p2.douple() + p1 * Z(3) * inv2 - p0 * Z(5) * inv12);
+        S c(p4 * Z(11) * inv24 - p3 * Z(7) * inv3 + p2 * Z(19) * inv4 - p1 * Z(13) * inv3 + p0 * Z(35) * inv24);
+        S d(- p4 * inv4 + p3 * Z(4) * inv3 - p2 * Z(3) + p1.douple().douple() - p0 * Z(25) * inv12);
+        S e(p0);
+        return UnivariatePolynomial<S>{e, d, c, b, a};
+    }
+private:
+    template<typename S>
+    constexpr static UnivariatePolynomial<S> proveRound(const P<S>& state) {
+        if constexpr (state.degree() == 4) {
+            P<S> p0(state.template bind<S(0)>());
+            P<S> p1(state.template bind<S(1)>());
+            P<S> p2(state.template bind<S(2)>());
+            P<S> p3(state.template bind<S(3)>());
+            P<S> p4(state.template bind<S(4)>());
+            S v0(*std::ranges::fold_left_first(p0(), std::plus<S>()));
+            S v1(*std::ranges::fold_left_first(p1(), std::plus<S>()));
+            S v2(*std::ranges::fold_left_first(p2(), std::plus<S>()));
+            S v3(*std::ranges::fold_left_first(p3(), std::plus<S>()));
+            S v4(*std::ranges::fold_left_first(p4(), std::plus<S>()));
+            return interpolate<S>(v0, v1, v2, v3, v4);
+        } else if constexpr (state.degree() == 2) {
+            P<S> p0(state.template bind<S(0)>());
+            P<S> p1(state.template bind<S(1)>());
+            P<S> p2(state.template bind<S(2)>());
+            S v0(*std::ranges::fold_left_first(p0(), std::plus<S>()));
+            S v1(*std::ranges::fold_left_first(p1(), std::plus<S>()));
+            S v2(*std::ranges::fold_left_first(p2(), std::plus<S>()));
+            return interpolate<S>(v0, v1, v2);
+        } else if constexpr (state.degree() == 1) {
+            P<S> p0(state.template bind<S(0)>());
+            P<S> p1(state.template bind<S(1)>());
+            S v0(*std::ranges::fold_left_first(p0(), std::plus<S>()));
+            S v1(*std::ranges::fold_left_first(p1(), std::plus<S>()));
+            return interpolate<S>(v0, v1);
+        } else {
+            static_assert(false, "Not implemented");
+        }
     }
 };
 

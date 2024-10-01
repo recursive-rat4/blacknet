@@ -31,6 +31,7 @@ public:
     consteval UnivariatePolynomial() : coefficients() {}
     constexpr UnivariatePolynomial(std::size_t size) : coefficients(size) {}
     constexpr UnivariatePolynomial(std::initializer_list<E> init) : coefficients(init) {}
+    constexpr UnivariatePolynomial(std::vector<E>&& coefficients) : coefficients(std::move(coefficients)) {}
     constexpr UnivariatePolynomial(UnivariatePolynomial&& other) noexcept
         : coefficients(std::move(other.coefficients)) {}
 
@@ -57,6 +58,15 @@ public:
 
     consteval std::size_t variables() const {
         return 1;
+    }
+
+    template<typename S>
+    constexpr UnivariatePolynomial<S> homomorph() const {
+        std::vector<S> t;
+        t.reserve(coefficients.size());
+        for (const auto& i : coefficients)
+            t.emplace_back(S(i));
+        return UnivariatePolynomial<S>(std::move(t));
     }
 
     friend std::ostream& operator << (std::ostream& out, const UnivariatePolynomial& val)
