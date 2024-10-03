@@ -18,9 +18,8 @@
 #ifndef BLACKNET_CRYPTO_SUMCHECK_H
 #define BLACKNET_CRYPTO_SUMCHECK_H
 
-#include <algorithm>
-
 #include "univariatepolynomial.h"
+#include "util.h"
 
 /*
  * Algebraic Methods for Interactive Proof Systems
@@ -65,7 +64,7 @@ public:
             proof.claims.emplace_back(std::move(claim));
             RO fork(ro);
             F challenge(F::squeeze(fork));
-            state = state.bind(challenge);
+            state.bind(challenge);
         }
         for (std::size_t round = 1; round < polynomial.variables(); ++round) {
             UnivariatePolynomial<F> claim(proveRound<F>(state));
@@ -73,7 +72,7 @@ public:
             proof.claims.emplace_back(std::move(claim));
             RO fork(ro);
             F challenge(F::squeeze(fork));
-            state = state.bind(challenge);
+            state.bind(challenge);
         }
         return proof;
     }
@@ -135,31 +134,32 @@ public:
 private:
     template<typename S>
     constexpr static UnivariatePolynomial<S> proveRound(const P<S>& state) {
+        std::vector<S> evaluations(1 << (state.variables() - 1));
         if constexpr (state.degree() == 4) {
-            P<S> p0(state.template bind<S(0)>());
-            P<S> p1(state.template bind<S(1)>());
-            P<S> p2(state.template bind<S(2)>());
-            P<S> p3(state.template bind<S(3)>());
-            P<S> p4(state.template bind<S(4)>());
-            S v0(*std::ranges::fold_left_first(p0(), std::plus<S>()));
-            S v1(*std::ranges::fold_left_first(p1(), std::plus<S>()));
-            S v2(*std::ranges::fold_left_first(p2(), std::plus<S>()));
-            S v3(*std::ranges::fold_left_first(p3(), std::plus<S>()));
-            S v4(*std::ranges::fold_left_first(p4(), std::plus<S>()));
+            state.template bind<S(0), util::Assign<S>>(evaluations);
+            S v0(util::Sum<S>::call(evaluations));
+            state.template bind<S(1), util::Assign<S>>(evaluations);
+            S v1(util::Sum<S>::call(evaluations));
+            state.template bind<S(2), util::Assign<S>>(evaluations);
+            S v2(util::Sum<S>::call(evaluations));
+            state.template bind<S(3), util::Assign<S>>(evaluations);
+            S v3(util::Sum<S>::call(evaluations));
+            state.template bind<S(4), util::Assign<S>>(evaluations);
+            S v4(util::Sum<S>::call(evaluations));
             return interpolate<S>(v0, v1, v2, v3, v4);
         } else if constexpr (state.degree() == 2) {
-            P<S> p0(state.template bind<S(0)>());
-            P<S> p1(state.template bind<S(1)>());
-            P<S> p2(state.template bind<S(2)>());
-            S v0(*std::ranges::fold_left_first(p0(), std::plus<S>()));
-            S v1(*std::ranges::fold_left_first(p1(), std::plus<S>()));
-            S v2(*std::ranges::fold_left_first(p2(), std::plus<S>()));
+            state.template bind<S(0), util::Assign<S>>(evaluations);
+            S v0(util::Sum<S>::call(evaluations));
+            state.template bind<S(1), util::Assign<S>>(evaluations);
+            S v1(util::Sum<S>::call(evaluations));
+            state.template bind<S(2), util::Assign<S>>(evaluations);
+            S v2(util::Sum<S>::call(evaluations));
             return interpolate<S>(v0, v1, v2);
         } else if constexpr (state.degree() == 1) {
-            P<S> p0(state.template bind<S(0)>());
-            P<S> p1(state.template bind<S(1)>());
-            S v0(*std::ranges::fold_left_first(p0(), std::plus<S>()));
-            S v1(*std::ranges::fold_left_first(p1(), std::plus<S>()));
+            state.template bind<S(0), util::Assign<S>>(evaluations);
+            S v0(util::Sum<S>::call(evaluations));
+            state.template bind<S(1), util::Assign<S>>(evaluations);
+            S v1(util::Sum<S>::call(evaluations));
             return interpolate<S>(v0, v1);
         } else {
             static_assert(false, "Not implemented");

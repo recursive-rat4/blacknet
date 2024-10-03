@@ -24,6 +24,7 @@
 #include "polynomial.h"
 #include "polynomialring.h"
 #include "vector.h"
+#include "util.h"
 
 /*
  * LatticeFold: A Lattice-based Folding Scheme and its Applications to Succinct Proof Systems
@@ -65,29 +66,21 @@ namespace latticefold {
         }
         constexpr G1(EqExtension<Z>&& eq, MultilinearExtension<Z>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
-        constexpr std::vector<Z> operator () () const {
-            std::vector<Z> r(eq());
-            mle.pi(r);
-            return r;
-        }
-
         constexpr Z operator () (const std::vector<Z>& point) const {
             return eq(point) * mle(point);
         }
 
-        constexpr void sigma(std::vector<Z>& r) const {
-            const auto& e = (*this)();
-            for (std::size_t i = 0; i < e.size(); ++i)
-                r[i] += e[i];
+        template<Z e, typename Fuse>
+        constexpr void bind(std::vector<Z>& hypercube) const {
+            std::vector<Z> t(hypercube.size());
+            mle.template bind<e, util::Assign<Z>>(t);
+            eq.template bind<e, util::Mul<Z>>(t);
+            Fuse::call(hypercube, std::move(t));
         }
 
-        template<Z e>
-        constexpr G1 bind() const {
-            return G1(eq.template bind<e>(), mle.template bind<e>());
-        }
-
-        constexpr G1 bind(const Z& e) const {
-            return G1(eq.bind(e), mle.bind(e));
+        constexpr void bind(const Z& e) {
+            eq.bind(e);
+            mle.bind(e);
         }
 
         consteval std::size_t degree() const {
@@ -121,31 +114,21 @@ namespace latticefold {
         }
         constexpr G2(Polynomial<Z, MultilinearExtension>&& mles) : mles(std::move(mles)) {}
 
-        constexpr std::vector<Z> operator () () const {
-            std::vector<Z> r(1 << variables(), Z::LEFT_MULTIPLICATIVE_IDENTITY());
-            mles.pi(r);
-            return r;
-        }
-
         constexpr Z operator () (const std::vector<Z>& point) const {
-            Z r(Z::LEFT_MULTIPLICATIVE_IDENTITY());
-            mles.pi(r, point);
+            Z r;
+            mles.template apply<util::Mul<Z>, util::Assign<Z>>(r, point);
             return r;
         }
 
-        constexpr void sigma(std::vector<Z>& r) const {
-            const auto& e = (*this)();
-            for (std::size_t i = 0; i < e.size(); ++i)
-                r[i] += e[i];
+        template<Z e, typename Fuse>
+        constexpr void bind(std::vector<Z>& hypercube) const {
+            std::vector<Z> t(hypercube.size());
+            mles.template bind<e, util::Mul<Z>, util::Assign<Z>>(t);
+            Fuse::call(hypercube, std::move(t));
         }
 
-        template<Z e>
-        constexpr G2 bind() const {
-            return G2(mles.template bind<e>());
-        }
-
-        constexpr G2 bind(const Z& e) const {
-            return G2(mles.bind(e));
+        constexpr void bind(const Z& e) {
+            mles.bind(e);
         }
 
         consteval std::size_t degree() const {
@@ -177,25 +160,21 @@ namespace latticefold {
         }
         constexpr GEval(Polynomial<Z, G1>&& g1s) : g1s(std::move(g1s)) {}
 
-        constexpr std::vector<Z> operator () () const {
-            std::vector<Z> r(1 << variables(), Z::LEFT_ADDITIVE_IDENTITY());
-            g1s.sigma(r);
-            return r;
-        }
-
         constexpr Z operator () (const std::vector<Z>& point) const {
-            Z r(Z::LEFT_ADDITIVE_IDENTITY());
-            g1s.sigma(r, point);
+            Z r;
+            g1s.template apply<util::Add<Z>, util::Assign<Z>>(r, point);
             return r;
         }
 
-        template<Z e>
-        constexpr GEval bind() const {
-            return GEval(g1s.template bind<e>());
+        template<Z e, typename Fuse>
+        constexpr void bind(std::vector<Z>& hypercube) const {
+            std::vector<Z> t(hypercube.size());
+            g1s.template bind<e, util::Add<Z>, util::Assign<Z>>(t);
+            Fuse::call(hypercube, std::move(t));
         }
 
-        constexpr GEval bind(const Z& e) const {
-            return GEval(g1s.bind(e));
+        constexpr void bind(const Z& e) {
+            g1s.bind(e);
         }
 
         consteval std::size_t degree() const {
@@ -229,28 +208,23 @@ namespace latticefold {
         }
         constexpr GNorm(EqExtension<Z>&& eq, Polynomial<Z, G2>&& g2s) : eq(std::move(eq)), g2s(std::move(g2s)) {}
 
-        constexpr std::vector<Z> operator () () const {
-            std::vector<Z> r(1 << variables(), Z::LEFT_ADDITIVE_IDENTITY());
-            g2s.sigma(r);
-            const auto& e = eq();
-            for (std::size_t i = 0; i < e.size(); ++i)
-                r[i] *= e[i];
-            return r;
-        }
-
         constexpr Z operator () (const std::vector<Z>& point) const {
-            Z r(Z::LEFT_ADDITIVE_IDENTITY());
-            g2s.sigma(r, point);
+            Z r;
+            g2s.template apply<util::Add<Z>, util::Assign<Z>>(r, point);
             return r * eq(point);
         }
 
-        template<Z e>
-        constexpr GNorm bind() const {
-            return GNorm(eq.template bind<e>(), g2s.template bind<e>());
+        template<Z e, typename Fuse>
+        constexpr void bind(std::vector<Z>& hypercube) const {
+            std::vector<Z> t(hypercube.size());
+            g2s.template bind<e, util::Add<Z>, util::Assign<Z>>(t);
+            eq.template bind<e, util::Mul<Z>>(t);
+            Fuse::call(hypercube, std::move(t));
         }
 
-        constexpr GNorm bind(const Z& e) const {
-            return GNorm(eq.bind(e), g2s.bind(e));
+        constexpr void bind(const Z& e) {
+            eq.bind(e);
+            g2s.bind(e);
         }
 
         consteval std::size_t degree() const {

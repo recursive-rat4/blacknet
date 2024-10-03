@@ -24,6 +24,7 @@
 #include "polynomialring.h"
 #include "solinas62.h"
 #include "vector.h"
+#include "util.h"
 
 BOOST_AUTO_TEST_SUITE(MultilinearExtensions)
 
@@ -58,35 +59,41 @@ BOOST_AUTO_TEST_CASE(sub) {
     BOOST_TEST(c == a - b);
 }
 
-BOOST_AUTO_TEST_CASE(sigma) {
-    MultilinearExtension a{E(10), E(11), E(12), E(13)};
-    std::vector<E> b{E(14), E(15), E(16), E(17)};
-    std::vector<E> c{E(24), E(26), E(28), E(30)};
-    a.sigma(b);
-    BOOST_TEST(c == b);
-}
-
-BOOST_AUTO_TEST_CASE(pi) {
-    MultilinearExtension a{E(1), E(2), E(3), E(4)};
-    std::vector<E> b{E(5), E(6), E(7), E(8)};
-    std::vector<E> c{E(5), E(12), E(21), E(32)};
-    a.pi(b);
-    BOOST_TEST(c == b);
-}
-
 BOOST_AUTO_TEST_CASE(bind) {
     MultilinearExtension a{E(1), E(2), E(3), E(4), E(5), E(6), E(7), E(8)};
     MultilinearExtension b{E(1), E(2), E(3), E(4)};
     MultilinearExtension c{E(3), E(4)};
     MultilinearExtension d{E(4)};
-    BOOST_TEST(b == a.bind(E(0)));
-    BOOST_TEST(c == b.bind(E(1)));
-    BOOST_TEST(d == c.bind(E(1)));
-    BOOST_TEST(a.bind(E(0)) == a.bind<E(0)>());
-    BOOST_TEST(a.bind(E(1)) == a.bind<E(1)>());
-    BOOST_TEST(a.bind(E(2)) == a.bind<E(2)>());
-    BOOST_TEST(a.bind(E(3)) == a.bind<E(3)>());
-    BOOST_TEST(a.bind(E(4)) == a.bind<E(4)>());
+
+    MultilinearExtension mle(a);
+    mle.bind(E(0));
+    BOOST_TEST(b == mle);
+    mle.bind(E(1));
+    BOOST_TEST(c == mle);
+    mle.bind(E(1));
+    BOOST_TEST(d == mle);
+
+    std::vector<E> evaluations(4);
+    mle = a;
+    mle.bind(E(0));
+    a.bind<E(0), util::Assign<E>>(evaluations);
+    BOOST_TEST(mle() == evaluations);
+    mle = a;
+    mle.bind(E(1));
+    a.bind<E(1), util::Assign<E>>(evaluations);
+    BOOST_TEST(mle() == evaluations);
+    mle = a;
+    mle.bind(E(2));
+    a.bind<E(2), util::Assign<E>>(evaluations);
+    BOOST_TEST(mle() == evaluations);
+    mle = a;
+    mle.bind(E(3));
+    a.bind<E(3), util::Assign<E>>(evaluations);
+    BOOST_TEST(mle() == evaluations);
+    mle = a;
+    mle.bind(E(4));
+    a.bind<E(4), util::Assign<E>>(evaluations);
+    BOOST_TEST(mle() == evaluations);
 }
 
 BOOST_AUTO_TEST_CASE(homomorphism) {

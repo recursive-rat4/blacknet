@@ -25,14 +25,11 @@ template<typename E>
 class EqExtension {
     std::vector<E> coefficients;
     E z;
-
-    constexpr EqExtension(const std::vector<E>& coefficientz, std::size_t offset, const E& z) : z(z) {
-        coefficients.reserve(coefficientz.size() - offset);
-        std::copy(coefficientz.begin() + offset, coefficientz.end(), std::back_inserter(coefficients));
-    }
 public:
     constexpr EqExtension(const std::vector<E>& coefficients)
         : coefficients(coefficients), z(E::LEFT_MULTIPLICATIVE_IDENTITY()) {}
+    constexpr EqExtension(const std::vector<E>& coefficients, const E& z)
+        : coefficients(coefficients), z(z) {}
     constexpr EqExtension(std::vector<E>&& coefficients)
         : coefficients(std::move(coefficients)), z(E::LEFT_MULTIPLICATIVE_IDENTITY()) {}
     constexpr EqExtension(std::vector<E>&& coefficients, E&& z)
@@ -63,28 +60,39 @@ public:
     }
 
     constexpr EqExtension operator * (const E& other) const {
-        return EqExtension(coefficients, 0, z * other);
+        return EqExtension(coefficients, z * other);
     }
 
-    template<E e>
-    constexpr EqExtension bind() const {
+    template<E e, typename Fuse>
+    constexpr void bind(std::vector<E>& r) const {
+        E ze;
         if constexpr (e == E(0)) {
-            return EqExtension(coefficients, 1, z * (E(1) - coefficients[0]));
+            ze = z * (E(1) - coefficients[0]);
         } else if constexpr (e == E(1)) {
-            return EqExtension(coefficients, 1, z * coefficients[0]);
+            ze = z * coefficients[0];
         } else if constexpr (e == E(2)) {
-            return EqExtension(coefficients, 1, z * (coefficients[0].douple() + coefficients[0] - E(1)));
+            ze = z * (coefficients[0].douple() + coefficients[0] - E(1));
         } else if constexpr (e == E(3)) {
-            return EqExtension(coefficients, 1, z * (coefficients[0].douple().douple() + coefficients[0] - E(2)));
+            ze = z * (coefficients[0].douple().douple() + coefficients[0] - E(2));
         } else if constexpr (e == E(4)) {
-            return EqExtension(coefficients, 1, z * (coefficients[0].douple().douple().douple() - coefficients[0] - E(3)));
+            ze = z * (coefficients[0].douple().douple().douple() - coefficients[0] - E(3));
         } else {
             static_assert(false);
         }
+        std::vector<E> re(r.size(), E::LEFT_ADDITIVE_IDENTITY());
+        re[0] = ze;
+        for (std::size_t i = coefficients.size() - 1, j = 1; i --> 0; j <<= 1) {
+            for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
+                re[l] = re[k] * coefficients[i + 1];
+                re[k] -= re[l];
+            }
+        }
+        Fuse::call(r, std::move(re));
     }
 
-    constexpr EqExtension bind(const E& e) const {
-        return EqExtension(coefficients, 1, z * ((coefficients[0] * e).douple() - coefficients[0] - e + E(1)));
+    constexpr void bind(const E& e) {
+        z *= (coefficients[0] * e).douple() - coefficients[0] - e + E(1);
+        coefficients.erase(coefficients.begin());
     }
 
     consteval std::size_t degree() const {

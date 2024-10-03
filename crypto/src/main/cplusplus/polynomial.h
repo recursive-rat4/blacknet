@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_POLYNOMIAL_H
 
 #include <iostream>
+#include <type_traits>
 #include <vector>
 #include <boost/io/ostream_joiner.hpp>
 
@@ -38,24 +39,16 @@ public:
         return *this;
     }
 
-    constexpr void sigma(std::vector<R>& r) const {
-        for (const auto& i : polynomials)
-            i.sigma(r);
-    }
-
-    constexpr void sigma(R& r, const std::vector<R>& point) const {
-        for (const auto& i : polynomials)
-            r += i(point);
-    }
-
-    constexpr void pi(std::vector<R>& r) const {
-        for (const auto& i : polynomials)
-            i.pi(r);
-    }
-
-    constexpr void pi(R& r, const std::vector<R>& point) const {
-        for (const auto& i : polynomials)
-            r *= i(point);
+    template<typename Fuse1, typename Fuse0 = Fuse1>
+    constexpr void apply(R& r, const std::vector<R>& point) const {
+        if constexpr (std::is_same_v<Fuse1, Fuse0>) {
+            for (std::size_t i = 0; i < polynomials.size(); ++i)
+                Fuse1::call(r, polynomials[i](point));
+        } else {
+            Fuse0::call(r, polynomials[0](point));
+            for (std::size_t i = 1; i < polynomials.size(); ++i)
+                Fuse1::call(r, polynomials[i](point));
+        }
     }
 
     constexpr Polynomial& operator () (P<R>&& other) {
@@ -63,21 +56,21 @@ public:
         return *this;
     }
 
-    template<R e>
-    constexpr Polynomial bind() const {
-        std::vector<P<R>> t;
-        t.reserve(polynomials.size());
-        for (const auto& i : polynomials)
-            t.emplace_back(i.template bind<e>());
-        return Polynomial(std::move(t));
+    template<R e, typename Fuse1, typename Fuse0 = Fuse1>
+    constexpr void bind(std::vector<R>& r) const {
+        if constexpr (std::is_same_v<Fuse1, Fuse0>) {
+            for (std::size_t i = 0; i < polynomials.size(); ++i)
+                polynomials[i].template bind<e, Fuse1>(r);
+        } else {
+            polynomials[0].template bind<e, Fuse0>(r);
+            for (std::size_t i = 1; i < polynomials.size(); ++i)
+                polynomials[i].template bind<e, Fuse1>(r);
+        }
     }
 
-    constexpr Polynomial bind(const R& e) const {
-        std::vector<P<R>> t;
-        t.reserve(polynomials.size());
-        for (const auto& i : polynomials)
-            t.emplace_back(i.bind(e));
-        return Polynomial(std::move(t));
+    constexpr void bind(const R& e) {
+        for (auto& i : polynomials)
+            i.bind(e);
     }
 
     constexpr std::size_t variables() const {

@@ -21,6 +21,7 @@
 #include "eqextension.h"
 #include "hypercube.h"
 #include "solinas62.h"
+#include "util.h"
 
 BOOST_AUTO_TEST_SUITE(EqExtensions)
 
@@ -44,17 +45,37 @@ BOOST_AUTO_TEST_CASE(mul) {
 BOOST_AUTO_TEST_CASE(bind) {
     EqExtension<E> eq1({E(2), E(3), E(4)});
     std::vector<E> r1{E(5), E(6), E(7)};
-    EqExtension<E> eq2 = eq1.bind(E(5));
+    EqExtension<E> eq2(eq1);
+    eq2.bind(E(5));
     std::vector<E> r2{E(6), E(7)};
-    EqExtension<E> eq3 = eq2.bind(E(6));
+    EqExtension<E> eq3(eq2);
+    eq3.bind(E(6));
     std::vector<E> r3{E(7)};
     BOOST_TEST(eq1(r1) == eq2(r2));
     BOOST_TEST(eq1(r1) == eq3(r3));
-    BOOST_TEST(eq1.bind(E(0))(r2) == eq1.bind<E(0)>()(r2));
-    BOOST_TEST(eq1.bind(E(1))(r2) == eq1.bind<E(1)>()(r2));
-    BOOST_TEST(eq1.bind(E(2))(r2) == eq1.bind<E(2)>()(r2));
-    BOOST_TEST(eq1.bind(E(3))(r2) == eq1.bind<E(3)>()(r2));
-    BOOST_TEST(eq1.bind(E(4))(r2) == eq1.bind<E(4)>()(r2));
+
+    std::vector<E> evaluations(4);
+    EqExtension<E> eq = eq1;
+    eq.bind(E(0));
+    eq1.bind<E(0), util::Assign<E>>(evaluations);
+    BOOST_TEST(eq() == evaluations);
+    eq = eq1;
+    eq.bind(E(1));
+    eq1.bind<E(1), util::Assign<E>>(evaluations);
+    BOOST_TEST(eq() == evaluations);
+    eq = eq1;
+    eq.bind(E(2));
+    eq1.bind<E(2), util::Assign<E>>(evaluations);
+    BOOST_TEST(eq() == evaluations);
+    eq = eq1;
+    eq.bind(E(3));
+    eq1.bind<E(3), util::Assign<E>>(evaluations);
+    BOOST_TEST(eq() == evaluations);
+    eq = eq1;
+    eq.bind(E(4));
+    eq1.bind<E(4), util::Assign<E>>(evaluations);
+    BOOST_TEST(eq() == evaluations);
+
     std::vector<E> pis(eq2());
     Hypercube<E> hc(eq2.variables());
     for (std::tuple<const std::size_t&, const std::vector<E>&> i : std::views::zip(

@@ -120,49 +120,34 @@ public:
         return t;
     }
 
-    constexpr void sigma(std::vector<E>& r) const {
-        for (std::size_t i = 0; i < coefficients.size(); ++i)
-            r[i] += coefficients[i];
-    }
-
-    constexpr void pi(std::vector<E>& r) const {
-        for (std::size_t i = 0; i < coefficients.size(); ++i)
-            r[i] *= coefficients[i];
-    }
-
-    template<E e>
-    constexpr MultilinearExtension bind() const {
-        std::size_t ns = coefficients.size() >> 1;
-        MultilinearExtension r(ns);
+    template<E e, typename Fuse>
+    constexpr void bind(std::vector<E>& r) const {
         if constexpr (e == E(0)) {
-            std::copy(coefficients.begin(), coefficients.begin() + ns, r.coefficients.begin());
+            for (std::size_t i = 0; i < r.size(); ++i)
+                Fuse::call(r[i], coefficients[i]);
         } else if constexpr (e == E(1)) {
-            std::copy(coefficients.begin() + ns, coefficients.end(), r.coefficients.begin());
+            for (std::size_t i = 0, j = r.size(); i < r.size(); ++i, ++j)
+                Fuse::call(r[i], coefficients[j]);
         } else if constexpr (e == E(2)) {
-            for (std::size_t i = 0, j = ns; i < ns; ++i, ++j) {
-                r.coefficients[i] = coefficients[j].douple() - coefficients[i];
-            }
+            for (std::size_t i = 0, j = r.size(); i < r.size(); ++i, ++j)
+                Fuse::call(r[i], coefficients[j].douple() - coefficients[i]);
         } else if constexpr (e == E(3)) {
-            for (std::size_t i = 0, j = ns; i < ns; ++i, ++j) {
-                r.coefficients[i] = coefficients[j] + coefficients[j].douple() - coefficients[i].douple();
-            }
+            for (std::size_t i = 0, j = r.size(); i < r.size(); ++i, ++j)
+                Fuse::call(r[i], coefficients[j] + coefficients[j].douple() - coefficients[i].douple());
         } else if constexpr (e == E(4)) {
-            for (std::size_t i = 0, j = ns; i < ns; ++i, ++j) {
-                r.coefficients[i] = coefficients[j].douple().douple() - coefficients[i].douple() - coefficients[i];
-            }
+            for (std::size_t i = 0, j = r.size(); i < r.size(); ++i, ++j)
+                Fuse::call(r[i], coefficients[j].douple().douple() - coefficients[i].douple() - coefficients[i]);
         } else {
             static_assert(false);
         }
-        return r;
     }
 
-    constexpr MultilinearExtension bind(const E& e) const {
+    constexpr void bind(const E& e) {
         std::size_t ns = coefficients.size() >> 1;
-        MultilinearExtension r(ns);
         for (std::size_t i = 0, j = ns; i < ns; ++i, ++j) {
-            r.coefficients[i] = coefficients[i] + e * (coefficients[j] - coefficients[i]);
+            coefficients[i] = coefficients[i] + e * (coefficients[j] - coefficients[i]);
         }
-        return r;
+        coefficients.resize(ns);
     }
 
     consteval std::size_t degree() const {
