@@ -161,13 +161,13 @@ public:
     }
 
     template<typename P>
-    constexpr static bool checkZero(const P& p) {
+    constexpr static E sum(const P& p) {
         E sigma(E::LEFT_ADDITIVE_IDENTITY());
         Hypercube hc(p.variables());
         for (auto i = hc.decomposedBegin(); i != hc.decomposedEnd(); ++i) {
             sigma += p(*i);
         }
-        return sigma == E(0);
+        return sigma;
     }
 };
 

@@ -45,6 +45,8 @@ public:
             claims.reserve(capacity);
         }
 
+        constexpr bool operator == (const Proof&) const = default;
+
         friend std::ostream& operator << (std::ostream& out, const Proof& val)
         {
             out << '[';
@@ -53,26 +55,29 @@ public:
         }
     };
 
-    constexpr static Proof prove(const P<Z>& polynomial) {
+    constexpr static Proof prove(const P<Z>& polynomial, const Z& sum) {
         Proof proof(polynomial.variables());
         RO ro;
         P<F> state(polynomial.template homomorph<F>());
+        F hint;
         {
             // Perform the zeroth round over the base structure abaft the strong sampling set
-            UnivariatePolynomial<F> claim(proveRound<Z>(polynomial).template homomorph<F>());
+            UnivariatePolynomial<F> claim(proveRound<Z>(polynomial, sum).template homomorph<F>());
             claim.absorb(ro);
-            proof.claims.emplace_back(std::move(claim));
             RO fork(ro);
             F challenge(F::squeeze(fork));
             state.bind(challenge);
+            hint = claim(challenge);
+            proof.claims.emplace_back(std::move(claim));
         }
         for (std::size_t round = 1; round < polynomial.variables(); ++round) {
-            UnivariatePolynomial<F> claim(proveRound<F>(state));
+            UnivariatePolynomial<F> claim(proveRound<F>(state, hint));
             claim.absorb(ro);
-            proof.claims.emplace_back(std::move(claim));
             RO fork(ro);
             F challenge(F::squeeze(fork));
             state.bind(challenge);
+            hint = claim(challenge);
+            proof.claims.emplace_back(std::move(claim));
         }
         return proof;
     }
@@ -133,11 +138,10 @@ public:
     }
 private:
     template<typename S>
-    constexpr static UnivariatePolynomial<S> proveRound(const P<S>& state) {
+    constexpr static UnivariatePolynomial<S> proveRound(const P<S>& state, const S& hint) {
         std::vector<S> evaluations(1 << (state.variables() - 1));
+        // Lagrange basis aboard, take the hint for zero
         if constexpr (state.degree() == 4) {
-            state.template bind<S(0), util::Assign<S>>(evaluations);
-            S v0(util::Sum<S>::call(evaluations));
             state.template bind<S(1), util::Assign<S>>(evaluations);
             S v1(util::Sum<S>::call(evaluations));
             state.template bind<S(2), util::Assign<S>>(evaluations);
@@ -146,21 +150,17 @@ private:
             S v3(util::Sum<S>::call(evaluations));
             state.template bind<S(4), util::Assign<S>>(evaluations);
             S v4(util::Sum<S>::call(evaluations));
-            return interpolate<S>(v0, v1, v2, v3, v4);
+            return interpolate<S>(hint - v1, v1, v2, v3, v4);
         } else if constexpr (state.degree() == 2) {
-            state.template bind<S(0), util::Assign<S>>(evaluations);
-            S v0(util::Sum<S>::call(evaluations));
             state.template bind<S(1), util::Assign<S>>(evaluations);
             S v1(util::Sum<S>::call(evaluations));
             state.template bind<S(2), util::Assign<S>>(evaluations);
             S v2(util::Sum<S>::call(evaluations));
-            return interpolate<S>(v0, v1, v2);
+            return interpolate<S>(hint - v1, v1, v2);
         } else if constexpr (state.degree() == 1) {
-            state.template bind<S(0), util::Assign<S>>(evaluations);
-            S v0(util::Sum<S>::call(evaluations));
             state.template bind<S(1), util::Assign<S>>(evaluations);
             S v1(util::Sum<S>::call(evaluations));
-            return interpolate<S>(v0, v1);
+            return interpolate<S>(hint - v1, v1);
         } else {
             static_assert(false, "Not implemented");
         }

@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_CASE(G2s) {
     auto g2_2 = G2<Z>(/*beta,*/ f2);
     BOOST_TEST(6 == g2_1.variables());
     BOOST_TEST(/*4*/3 == g2_1.degree());
-    BOOST_TEST(Hypercube<Z>::checkZero(g2_1));
-    /*BOOST_TEST(!Hypercube<Z>::checkZero(g2_2));*/
+    BOOST_TEST(Z(0) == Hypercube<Z>::sum(g2_1));
+    /*BOOST_TEST(Z(0) != Hypercube<Z>::sum(g2_2));*/
 }
 
 BOOST_AUTO_TEST_CASE(GEvals) {
@@ -89,8 +89,8 @@ BOOST_AUTO_TEST_CASE(GNorms) {
     auto geval_2 = GNorm<Z>(beta, mu, f2);
     BOOST_TEST(6 == geval_1.variables());
     BOOST_TEST(4 == geval_1.degree());
-    BOOST_TEST(Hypercube<Z>::checkZero(geval_1));
-    BOOST_TEST(!Hypercube<Z>::checkZero(geval_2));
+    BOOST_TEST(Z(0) == Hypercube<Z>::sum(geval_1));
+    BOOST_TEST(Z(0) != Hypercube<Z>::sum(geval_2));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

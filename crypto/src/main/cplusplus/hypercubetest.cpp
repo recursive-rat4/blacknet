@@ -85,12 +85,12 @@ BOOST_AUTO_TEST_CASE(splitted) {
     };
 }
 
-BOOST_AUTO_TEST_CASE(check) {
+BOOST_AUTO_TEST_CASE(sum) {
     using R = Solinas62Ring;
     MultilinearExtension<R> p0{R(1), R(2), R(3), R(-6)};
     MultilinearExtension<R> p1{R(0), R(1), R(0), R(-0)};
-    BOOST_TEST(Hypercube<R>::checkZero(p0));
-    BOOST_TEST(!Hypercube<R>::checkZero(p1));
+    BOOST_TEST(R(0) == Hypercube<R>::sum(p0));
+    BOOST_TEST(R(1) == Hypercube<R>::sum(p1));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

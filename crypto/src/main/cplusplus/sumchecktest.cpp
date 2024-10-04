@@ -46,7 +46,8 @@ BOOST_AUTO_TEST_CASE(mle) {
     MultilinearExtension p3{Z(7), Z(7), Z(0), Z(7)};
     Z s1(21);
     Z s2(28);
-    auto proof = SumCheck::prove(p1);
+
+    auto proof = SumCheck::prove(p1, s1);
     BOOST_TEST(SumCheck::verify(p1, s1, proof));
     BOOST_TEST(!SumCheck::verify(p1, s2, proof));
     BOOST_TEST(!SumCheck::verify(p2, s1, proof));
@@ -54,6 +55,10 @@ BOOST_AUTO_TEST_CASE(mle) {
     BOOST_TEST(!SumCheck::verify(p3, s1, proof));
     proof.claims[1].coefficients[1].coefficients[1] += 1;
     BOOST_TEST(!SumCheck::verify(p1, s1, proof));
+
+    auto proof2 = SumCheck::prove(p1, s2);
+    BOOST_TEST(!SumCheck::verify(p1, s1, proof2));
+    BOOST_TEST(!SumCheck::verify(p1, s2, proof2));
 }
 
 BOOST_AUTO_TEST_CASE(eq) {
@@ -62,13 +67,18 @@ BOOST_AUTO_TEST_CASE(eq) {
     EqExtension<Z> p2({Z(45), Z(46), Z(48), Z(48)});
     Z s1(1);
     Z s2(2);
-    auto proof = SumCheck::prove(p1);
+
+    auto proof = SumCheck::prove(p1, s1);
     BOOST_TEST(SumCheck::verify(p1, s1, proof));
     BOOST_TEST(!SumCheck::verify(p1, s2, proof));
     BOOST_TEST(!SumCheck::verify(p2, s1, proof));
     BOOST_TEST(!SumCheck::verify(p2, s2, proof));
     proof.claims[3].coefficients[1].coefficients[1] += 1;
     BOOST_TEST(!SumCheck::verify(p1, s1, proof));
+
+    auto proof2 = SumCheck::prove(p1, s2);
+    BOOST_TEST(!SumCheck::verify(p1, s1, proof2));
+    BOOST_TEST(!SumCheck::verify(p1, s2, proof2));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

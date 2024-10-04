@@ -18,6 +18,7 @@
 #include <benchmark/benchmark.h>
 #include <boost/random/mersenne_twister.hpp>
 
+#include "hypercube.h"
 #include "latticefold.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
@@ -41,13 +42,15 @@ static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
     latticefold::GNorm<Z> g(beta, mu, f);
 
+    Z sum = Hypercube<Z>::sum(g);
     SumCheck::Proof proof;
 
     for (auto _ : state) {
-        proof = SumCheck::prove(g);
+        proof = SumCheck::prove(g, sum);
 
         benchmark::DoNotOptimize(g);
         benchmark::DoNotOptimize(proof);
+        benchmark::DoNotOptimize(sum);
     }
 }
 BENCHMARK(BM_LatticeFold_GNorm_SumCheck_Prove);
@@ -67,8 +70,8 @@ static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
     latticefold::GNorm<Z> g(beta, mu, f);
 
-    SumCheck::Proof proof = SumCheck::prove(g);
-    Z sum = proof.claims[0](F(0)).coefficients[0] + proof.claims[0](F(1)).coefficients[0];
+    Z sum = Hypercube<Z>::sum(g);
+    SumCheck::Proof proof = SumCheck::prove(g, sum);
     bool result;
 
     for (auto _ : state) {
