@@ -73,8 +73,7 @@ public:
     }
 
     constexpr E operator () (const std::vector<E>& point) const {
-        EqExtension eq(point);
-        std::vector<E> pis(eq());
+        const std::vector<E>& pis = EqExtension<E>::evaluate(point);
         E sigma(E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < coefficients.size(); ++i)
             sigma += pis[i] * coefficients[i];
@@ -121,22 +120,22 @@ public:
     }
 
     template<E e, typename Fuse>
-    constexpr void bind(std::vector<E>& r) const {
+    constexpr void bind(std::vector<E>& hypercube) const {
         if constexpr (e == E(0)) {
-            for (std::size_t i = 0; i < r.size(); ++i)
-                Fuse::call(r[i], coefficients[i]);
+            for (std::size_t i = 0; i < hypercube.size(); ++i)
+                Fuse::call(hypercube[i], coefficients[i]);
         } else if constexpr (e == E(1)) {
-            for (std::size_t i = 0, j = r.size(); i < r.size(); ++i, ++j)
-                Fuse::call(r[i], coefficients[j]);
+            for (std::size_t i = 0, j = hypercube.size(); i < hypercube.size(); ++i, ++j)
+                Fuse::call(hypercube[i], coefficients[j]);
         } else if constexpr (e == E(2)) {
-            for (std::size_t i = 0, j = r.size(); i < r.size(); ++i, ++j)
-                Fuse::call(r[i], coefficients[j].douple() - coefficients[i]);
+            for (std::size_t i = 0, j = hypercube.size(); i < hypercube.size(); ++i, ++j)
+                Fuse::call(hypercube[i], coefficients[j].douple() - coefficients[i]);
         } else if constexpr (e == E(3)) {
-            for (std::size_t i = 0, j = r.size(); i < r.size(); ++i, ++j)
-                Fuse::call(r[i], coefficients[j] + coefficients[j].douple() - coefficients[i].douple());
+            for (std::size_t i = 0, j = hypercube.size(); i < hypercube.size(); ++i, ++j)
+                Fuse::call(hypercube[i], coefficients[j] + coefficients[j].douple() - coefficients[i].douple());
         } else if constexpr (e == E(4)) {
-            for (std::size_t i = 0, j = r.size(); i < r.size(); ++i, ++j)
-                Fuse::call(r[i], coefficients[j].douple().douple() - coefficients[i].douple() - coefficients[i]);
+            for (std::size_t i = 0, j = hypercube.size(); i < hypercube.size(); ++i, ++j)
+                Fuse::call(hypercube[i], coefficients[j].douple().douple() - coefficients[i].douple() - coefficients[i]);
         } else {
             static_assert(false);
         }

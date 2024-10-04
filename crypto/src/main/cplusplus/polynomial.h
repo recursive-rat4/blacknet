@@ -57,14 +57,14 @@ public:
     }
 
     template<R e, typename Fuse1, typename Fuse0 = Fuse1>
-    constexpr void bind(std::vector<R>& r) const {
+    constexpr void bind(std::vector<R>& hypercube) const {
         if constexpr (std::is_same_v<Fuse1, Fuse0>) {
             for (std::size_t i = 0; i < polynomials.size(); ++i)
-                polynomials[i].template bind<e, Fuse1>(r);
+                polynomials[i].template bind<e, Fuse1>(hypercube);
         } else {
-            polynomials[0].template bind<e, Fuse0>(r);
+            polynomials[0].template bind<e, Fuse0>(hypercube);
             for (std::size_t i = 1; i < polynomials.size(); ++i)
-                polynomials[i].template bind<e, Fuse1>(r);
+                polynomials[i].template bind<e, Fuse1>(hypercube);
         }
     }
 

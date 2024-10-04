@@ -35,16 +35,24 @@ public:
     constexpr EqExtension(std::vector<E>&& coefficients, E&& z)
         : coefficients(std::move(coefficients)), z(std::move(z)) {}
 
-    constexpr std::vector<E> operator () () const {
-        std::vector<E> r(1 << coefficients.size(), E::LEFT_ADDITIVE_IDENTITY());
+    constexpr static std::vector<E> evaluate(
+        const std::vector<E>& coefficients,
+        const E& z = E::LEFT_MULTIPLICATIVE_IDENTITY(),
+        const std::size_t offset = 0
+    ) {
+        std::vector<E> r(1 << (coefficients.size() - offset), E::LEFT_ADDITIVE_IDENTITY());
         r[0] = z;
-        for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
+        for (std::size_t i = coefficients.size() - offset, j = 1; i --> 0; j <<= 1) {
             for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
-                r[l] = r[k] * coefficients[i];
+                r[l] = r[k] * coefficients[i + offset];
                 r[k] -= r[l];
             }
         }
         return r;
+    }
+
+    constexpr std::vector<E> operator () () const {
+        return evaluate(coefficients, z);
     }
 
     constexpr E operator () (const std::vector<E>& point) const {
@@ -64,7 +72,7 @@ public:
     }
 
     template<E e, typename Fuse>
-    constexpr void bind(std::vector<E>& r) const {
+    constexpr void bind(std::vector<E>& hypercube) const {
         E ze;
         if constexpr (e == E(0)) {
             ze = z * (E(1) - coefficients[0]);
@@ -79,15 +87,7 @@ public:
         } else {
             static_assert(false);
         }
-        std::vector<E> re(r.size(), E::LEFT_ADDITIVE_IDENTITY());
-        re[0] = ze;
-        for (std::size_t i = coefficients.size() - 1, j = 1; i --> 0; j <<= 1) {
-            for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
-                re[l] = re[k] * coefficients[i + 1];
-                re[k] -= re[l];
-            }
-        }
-        Fuse::call(r, std::move(re));
+        Fuse::call(hypercube, evaluate(coefficients, ze, 1));
     }
 
     constexpr void bind(const E& e) {
