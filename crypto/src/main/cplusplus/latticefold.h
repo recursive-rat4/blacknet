@@ -61,9 +61,7 @@ namespace latticefold {
         MultilinearExtension<Z> mle;
     public:
         constexpr G1(const std::vector<Z>& r, const Vector<Rq<Z>>& f) : eq(r), mle(f) {}
-        constexpr G1(const Z& alpha, const std::vector<Z>& r, const Vector<Rq<Z>>& f) : eq(r), mle(f) {
-            eq *= alpha;
-        }
+        constexpr G1(const Z& alpha, const std::vector<Z>& r, const Vector<Rq<Z>>& f) : eq(r, alpha), mle(f) {}
         constexpr G1(EqExtension<Z>&& eq, MultilinearExtension<Z>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
         constexpr Z operator () (const std::vector<Z>& point) const {
