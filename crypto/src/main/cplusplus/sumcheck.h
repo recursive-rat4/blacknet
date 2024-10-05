@@ -106,34 +106,33 @@ public:
     }
 
     template<typename S>
-    constexpr static UnivariatePolynomial<S> interpolate(const S& p0, const S& p1) {
-        return UnivariatePolynomial<S>{p0, p1 - p0};
+    constexpr static UnivariatePolynomial<S> interpolate(const S& z0, const S& p1) {
+        return UnivariatePolynomial<S>{z0, p1 - z0};
     }
     template<typename S>
-    constexpr static UnivariatePolynomial<S> interpolate(const S& p0, const S& p1, const S& p2) {
+    constexpr static UnivariatePolynomial<S> interpolate(const S& n1, const S& z0, const S& p1) {
         // Undefined behaviour is prohibited in consteval
         static const S inv2 = Z(2).invert().value();
 
-        S a(inv2 * (p2 - p1.douple() + p0));
-        S b(p1 - p0 - a);
-        S c(p0);
+        S a(p1 * inv2 + n1 * inv2 - z0);
+        S b(p1 * inv2 - n1 * inv2);
+        S c(z0);
         return UnivariatePolynomial<S>{c, b, a};
     }
     template<typename S>
-    constexpr static UnivariatePolynomial<S> interpolate(const S& p0, const S& p1, const S& p2, const S& p3, const S& p4) {
+    constexpr static UnivariatePolynomial<S> interpolate(const S& n2, const S& n1, const S& z0, const S& p1, const S& p2) {
         // Undefined behaviour is prohibited in consteval
-        static const S inv2 = Z(2).invert().value();
-        static const S inv3 = Z(3).invert().value();
+        static const S mul_2_div_3 = Z(2) * Z(3).invert().value();
         static const S inv4 = Z(4).invert().value();
         static const S inv6 = Z(6).invert().value();
         static const S inv12 = Z(12).invert().value();
         static const S inv24 = Z(24).invert().value();
 
-        S a(p4 * inv24 - p3 * inv6 + p2 * inv4 - p1 * inv6 + p0 * inv24);
-        S b(- p4 * inv4 + p3 * Z(7) * inv6 - p2.douple() + p1 * Z(3) * inv2 - p0 * Z(5) * inv12);
-        S c(p4 * Z(11) * inv24 - p3 * Z(7) * inv3 + p2 * Z(19) * inv4 - p1 * Z(13) * inv3 + p0 * Z(35) * inv24);
-        S d(- p4 * inv4 + p3 * Z(4) * inv3 - p2 * Z(3) + p1.douple().douple() - p0 * Z(25) * inv12);
-        S e(p0);
+        S a(z0 * inv4 - p1 * inv6 + p2 * inv24 - n1 * inv6 + n2 * inv24);
+        S b(- p1 * inv6 + p2 * inv12 + n1 * inv6 - n2 * inv12);
+        S c(- z0 * Z(5) * inv4 + p1 * mul_2_div_3 - p2 * inv24 + n1 * mul_2_div_3 - n2 * inv24);
+        S d(p1 * mul_2_div_3 - p2 * inv12 - n1 * mul_2_div_3 + n2 * inv12);
+        S e(z0);
         return UnivariatePolynomial<S>{e, d, c, b, a};
     }
 private:
@@ -142,25 +141,25 @@ private:
         std::vector<S> evaluations(1 << (state.variables() - 1));
         // Lagrange basis aboard, take the hint for zero
         if constexpr (state.degree() == 4) {
+            state.template bind<S(-2), util::Assign<S>>(evaluations);
+            S n2(util::Sum<S>::call(evaluations));
+            state.template bind<S(-1), util::Assign<S>>(evaluations);
+            S n1(util::Sum<S>::call(evaluations));
             state.template bind<S(1), util::Assign<S>>(evaluations);
-            S v1(util::Sum<S>::call(evaluations));
+            S p1(util::Sum<S>::call(evaluations));
             state.template bind<S(2), util::Assign<S>>(evaluations);
-            S v2(util::Sum<S>::call(evaluations));
-            state.template bind<S(3), util::Assign<S>>(evaluations);
-            S v3(util::Sum<S>::call(evaluations));
-            state.template bind<S(4), util::Assign<S>>(evaluations);
-            S v4(util::Sum<S>::call(evaluations));
-            return interpolate<S>(hint - v1, v1, v2, v3, v4);
+            S p2(util::Sum<S>::call(evaluations));
+            return interpolate<S>(n2, n1, hint - p1, p1, p2);
         } else if constexpr (state.degree() == 2) {
+            state.template bind<S(-1), util::Assign<S>>(evaluations);
+            S n1(util::Sum<S>::call(evaluations));
             state.template bind<S(1), util::Assign<S>>(evaluations);
-            S v1(util::Sum<S>::call(evaluations));
-            state.template bind<S(2), util::Assign<S>>(evaluations);
-            S v2(util::Sum<S>::call(evaluations));
-            return interpolate<S>(hint - v1, v1, v2);
+            S p1(util::Sum<S>::call(evaluations));
+            return interpolate<S>(n1, hint - p1, p1);
         } else if constexpr (state.degree() == 1) {
             state.template bind<S(1), util::Assign<S>>(evaluations);
-            S v1(util::Sum<S>::call(evaluations));
-            return interpolate<S>(hint - v1, v1);
+            S p1(util::Sum<S>::call(evaluations));
+            return interpolate<S>(hint - p1, p1);
         } else {
             static_assert(false, "Not implemented");
         }

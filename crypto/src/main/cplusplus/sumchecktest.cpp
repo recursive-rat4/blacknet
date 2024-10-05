@@ -35,8 +35,8 @@ BOOST_AUTO_TEST_CASE(interpolation) {
     UnivariatePolynomial<F> p2{F(2), F(3), F(5)};
     UnivariatePolynomial<F> p4{F(2), F(3), F(5), F(7), F(11)};
     BOOST_TEST(p1 == SumCheck::interpolate(F(2), F(5)));
-    BOOST_TEST(p2 == SumCheck::interpolate(F(2), F(10), F(28)));
-    BOOST_TEST(p4 == SumCheck::interpolate(F(2), F(28), F(260), F(1136), F(3358)));
+    BOOST_TEST(p2 == SumCheck::interpolate(F(4), F(2), F(10)));
+    BOOST_TEST(p4 == SumCheck::interpolate(F(136), F(8), F(2), F(28), F(260)));
 }
 
 BOOST_AUTO_TEST_CASE(mle) {

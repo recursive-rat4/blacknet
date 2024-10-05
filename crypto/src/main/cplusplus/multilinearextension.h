@@ -121,7 +121,13 @@ public:
 
     template<E e, typename Fuse>
     constexpr void bind(std::vector<E>& hypercube) const {
-        if constexpr (e == E(0)) {
+        if constexpr (e == E(-2)) {
+            for (std::size_t i = 0, j = hypercube.size(); i < hypercube.size(); ++i, ++j)
+                Fuse::call(hypercube[i], coefficients[i] + coefficients[i].douple() - coefficients[j].douple());
+        } else if constexpr (e == E(-1)) {
+            for (std::size_t i = 0, j = hypercube.size(); i < hypercube.size(); ++i, ++j)
+                Fuse::call(hypercube[i], coefficients[i].douple() - coefficients[j]);
+        } else if constexpr (e == E(0)) {
             for (std::size_t i = 0; i < hypercube.size(); ++i)
                 Fuse::call(hypercube[i], coefficients[i]);
         } else if constexpr (e == E(1)) {

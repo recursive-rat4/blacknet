@@ -75,6 +75,14 @@ BOOST_AUTO_TEST_CASE(bind) {
 
     std::vector<E> evaluations(4);
     mle = a;
+    mle.bind(E(-2));
+    a.bind<E(-2), util::Assign<E>>(evaluations);
+    BOOST_TEST(mle() == evaluations);
+    mle = a;
+    mle.bind(E(-1));
+    a.bind<E(-1), util::Assign<E>>(evaluations);
+    BOOST_TEST(mle() == evaluations);
+    mle = a;
     mle.bind(E(0));
     a.bind<E(0), util::Assign<E>>(evaluations);
     BOOST_TEST(mle() == evaluations);

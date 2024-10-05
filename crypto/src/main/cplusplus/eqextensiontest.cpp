@@ -56,6 +56,14 @@ BOOST_AUTO_TEST_CASE(bind) {
 
     std::vector<E> evaluations(4);
     EqExtension<E> eq = eq1;
+    eq.bind(E(-2));
+    eq1.bind<E(-2), util::Assign<E>>(evaluations);
+    BOOST_TEST(eq() == evaluations);
+    eq = eq1;
+    eq.bind(E(-1));
+    eq1.bind<E(-1), util::Assign<E>>(evaluations);
+    BOOST_TEST(eq() == evaluations);
+    eq = eq1;
     eq.bind(E(0));
     eq1.bind<E(0), util::Assign<E>>(evaluations);
     BOOST_TEST(eq() == evaluations);

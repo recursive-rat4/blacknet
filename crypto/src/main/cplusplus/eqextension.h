@@ -74,7 +74,11 @@ public:
     template<E e, typename Fuse>
     constexpr void bind(std::vector<E>& hypercube) const {
         E ze;
-        if constexpr (e == E(0)) {
+        if constexpr (e == E(-2)) {
+            ze = z * (E(3) - coefficients[0] - coefficients[0].douple().douple());
+        } else if constexpr (e == E(-1)) {
+            ze = z * (E(2) - coefficients[0] - coefficients[0].douple());
+        } else if constexpr (e == E(0)) {
             ze = z * (E(1) - coefficients[0]);
         } else if constexpr (e == E(1)) {
             ze = z * coefficients[0];
