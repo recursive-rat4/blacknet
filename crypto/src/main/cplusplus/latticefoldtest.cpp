@@ -85,12 +85,24 @@ BOOST_AUTO_TEST_CASE(GNorms) {
     std::vector<Z> mu{1, 1, 1, 1, 1, 1};
     std::vector<Vector<R>> f1(k + k, Vector<R>{R{1, 1, 0, -1}});
     std::vector<Vector<R>> f2(k + k, Vector<R>{R{2, 0, 0, -2}});
-    auto geval_1 = GNorm<Z>(beta, mu, f1);
-    auto geval_2 = GNorm<Z>(beta, mu, f2);
-    BOOST_TEST(6 == geval_1.variables());
-    BOOST_TEST(4 == geval_1.degree());
-    BOOST_TEST(Z(0) == Hypercube<Z>::sum(geval_1));
-    BOOST_TEST(Z(0) != Hypercube<Z>::sum(geval_2));
+    auto gnorm_1 = GNorm<Z>(beta, mu, f1);
+    auto gnorm_2 = GNorm<Z>(beta, mu, f2);
+    BOOST_TEST(6 == gnorm_1.variables());
+    BOOST_TEST(4 == gnorm_2.degree());
+    BOOST_TEST(Z(0) == Hypercube<Z>::sum(gnorm_1));
+    BOOST_TEST(Z(0) != Hypercube<Z>::sum(gnorm_2));
+}
+
+BOOST_AUTO_TEST_CASE(GFolds) {
+    std::vector<Z> alpha(k + k, Z(1));
+    std::vector<Z> beta{0, 0, 0, 0, 1, 1};
+    std::vector<Z> mu{1, 1, 1, 1, 1, 1};
+    std::vector<std::vector<Z>> r(k + k, {0, 0, 0, 0, 1, 1});
+    std::vector<Vector<R>> f(k + k, Vector<R>{R{-1, 0, 1, 1, 0, -1}});
+    auto gfold = GFold<Z>(alpha, beta, mu, r, f);
+    BOOST_TEST(6 == gfold.variables());
+    BOOST_TEST(4 == gfold.degree());
+    BOOST_TEST(Z(32) == Hypercube<Z>::sum(gfold));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

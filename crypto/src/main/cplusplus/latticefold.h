@@ -57,6 +57,7 @@ namespace latticefold {
 
     template<typename Z>
     class G1 {
+        // r 何处
         EqExtension<Z> eq;
         MultilinearExtension<Z> mle;
     public:
@@ -97,7 +98,7 @@ namespace latticefold {
 
     template<typename Z>
     class G2 {
-        // Beta vulgaris
+        // β 何处
         Polynomial<Z, MultilinearExtension> mles;
     public:
         constexpr G2(const Vector<Rq<Z>>& f) : mles(b + b - 1) {
@@ -236,6 +237,52 @@ namespace latticefold {
         template<typename S>
         constexpr GNorm<S> homomorph() const {
             return GNorm<S>(eq.template homomorph<S>(), g2s.template homomorph<S>());
+        }
+    };
+
+    // 从 Πꟳᴼᴸᴰ
+    template<typename Z>
+    class GFold {
+        GEval<Z> geval;
+        GNorm<Z> gnorm;
+    public:
+        constexpr GFold(
+            const std::vector<Z>& alpha,
+            const std::vector<Z>& beta,
+            const std::vector<Z>& mu,
+            const std::vector<std::vector<Z>>& r,
+            const std::vector<Vector<Rq<Z>>>& f
+        ) : geval(alpha, r, f), gnorm(beta, mu, f) {}
+        constexpr GFold(GEval<Z>&& geval, GNorm<Z>&& gnorm) : geval(std::move(geval)), gnorm(std::move(gnorm)) {}
+
+        constexpr Z operator () (const std::vector<Z>& point) const {
+            return geval(point) + gnorm(point);
+        }
+
+        template<Z e, typename Fuse>
+        constexpr void bind(std::vector<Z>& hypercube) const {
+            std::vector<Z> t(hypercube.size());
+            geval.template bind<e, util::Assign<Z>>(t);
+            gnorm.template bind<e, util::Add<Z>>(t);
+            Fuse::call(hypercube, std::move(t));
+        }
+
+        constexpr void bind(const Z& e) {
+            geval.bind(e);
+            gnorm.bind(e);
+        }
+
+        consteval std::size_t degree() const {
+            return gnorm.degree();
+        }
+
+        constexpr std::size_t variables() const {
+            return gnorm.variables();
+        }
+
+        template<typename S>
+        constexpr GFold<S> homomorph() const {
+            return GFold<S>(geval.template homomorph<S>(), gnorm.template homomorph<S>());
         }
     };
 }
