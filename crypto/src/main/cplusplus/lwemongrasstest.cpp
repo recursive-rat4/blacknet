@@ -33,6 +33,7 @@ BOOST_AUTO_TEST_CASE(ZqAdd) {
     BOOST_TEST(c == c + Zq(0));
     BOOST_TEST(Zq(1) == Zq(1) + Zq(0));
     BOOST_TEST(Zq(1) == Zq(0) + Zq(1));
+    BOOST_TEST(Zq(0) == Zq(-1) + Zq(1));
 }
 
 BOOST_AUTO_TEST_CASE(ZqMul) {
@@ -47,11 +48,19 @@ BOOST_AUTO_TEST_CASE(ZqMul) {
     BOOST_TEST(c == Zq(1) * c);
 }
 
+BOOST_AUTO_TEST_CASE(ZqSqr) {
+    BOOST_TEST(Zq(1) == Zq(-1).square());
+    BOOST_TEST(Zq(0) == Zq(0).square());
+    BOOST_TEST(Zq(1) == Zq(1).square());
+}
+
 BOOST_AUTO_TEST_CASE(ZqSub) {
     Zq a(-1045);
     Zq b(32750);
     Zq c(31742);
+    Zq d(-31742);
     BOOST_TEST(c == a - b);
+    BOOST_TEST(d == b - a);
     BOOST_TEST(c == c - Zq(0));
     BOOST_TEST(Zq(0) == Zq(0) - Zq(0));
     BOOST_TEST(Zq(0) == Zq(1) - Zq(1));

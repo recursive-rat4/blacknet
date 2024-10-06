@@ -20,6 +20,7 @@
 #include "pervushin.h"
 
 using Zq = PervushinRing;
+using Fe2 = PervushinRingDegree2;
 
 BOOST_AUTO_TEST_SUITE(Pervushins)
 
@@ -33,6 +34,7 @@ BOOST_AUTO_TEST_CASE(ZqAdd) {
     BOOST_TEST(c == c + Zq(0));
     BOOST_TEST(Zq(1) == Zq(1) + Zq(0));
     BOOST_TEST(Zq(1) == Zq(0) + Zq(1));
+    BOOST_TEST(Zq(0) == Zq(-1) + Zq(1));
 }
 
 BOOST_AUTO_TEST_CASE(ZqMul) {
@@ -47,11 +49,19 @@ BOOST_AUTO_TEST_CASE(ZqMul) {
     BOOST_TEST(c == Zq(1) * c);
 }
 
+BOOST_AUTO_TEST_CASE(ZqSqr) {
+    BOOST_TEST(Zq(1) == Zq(-1).square());
+    BOOST_TEST(Zq(0) == Zq(0).square());
+    BOOST_TEST(Zq(1) == Zq(1).square());
+}
+
 BOOST_AUTO_TEST_CASE(ZqSub) {
     Zq a(-2048);
     Zq b(65536);
     Zq c(-67584);
+    Zq d(67584);
     BOOST_TEST(c == a - b);
+    BOOST_TEST(d == b - a);
     BOOST_TEST(c == c - Zq(0));
     BOOST_TEST(Zq(0) == Zq(0) - Zq(0));
     BOOST_TEST(Zq(0) == Zq(1) - Zq(1));
@@ -68,6 +78,20 @@ BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
     BOOST_TEST(a.checkInfiniteNorm(ag));
     BOOST_TEST(!b.checkInfiniteNorm(bb));
     BOOST_TEST(b.checkInfiniteNorm(bg));
+}
+
+BOOST_AUTO_TEST_CASE(Fe2Mul) {
+    Fe2 a({-562956929497444169, 136532190776072177});
+    Zq b(51280928868087145);
+    Fe2 c({-557186355960048698, -800938371403945454});
+    Fe2 d({483463506662809566, -624462247079014308});
+    BOOST_TEST(c == a * b);
+    BOOST_TEST(d == a * c);
+    BOOST_TEST(d == c * a);
+    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == Fe2::LEFT_ADDITIVE_IDENTITY() * c);
+    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == c * Fe2::LEFT_ADDITIVE_IDENTITY());
+    BOOST_TEST(c == c * Fe2::LEFT_MULTIPLICATIVE_IDENTITY());
+    BOOST_TEST(c == Fe2::LEFT_MULTIPLICATIVE_IDENTITY() * c);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

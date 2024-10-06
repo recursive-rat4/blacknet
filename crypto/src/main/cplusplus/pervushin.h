@@ -40,14 +40,9 @@ typedef IntegerRing<
     }
 > PervushinRing;
 
-typedef ExtensionRing<
+typedef CyclotomicRing<
     PervushinRing,
-    2,
-    std::array{
-        PervushinRing(1),
-        PervushinRing(0),
-        PervushinRing(1),
-    }
+    2
 > PervushinRingDegree2;
 
 typedef ExtensionRing<
