@@ -36,6 +36,8 @@ public:
         : rows(rows), columns(columns), elements(rows * columns) {}
     constexpr Matrix(std::size_t rows, std::size_t columns, std::initializer_list<E> init)
         : rows(rows), columns(columns), elements(init) {}
+    constexpr Matrix(std::size_t rows, std::size_t columns, std::vector<E>&& elements)
+        : rows(rows), columns(columns), elements(std::move(elements)) {}
     constexpr Matrix(Matrix&& other) noexcept
         : rows(other.rows), columns(other.columns), elements(std::move(other.elements)) {}
 
@@ -55,6 +57,15 @@ public:
             for (std::size_t j = 0; j < columns; ++j)
                 r[i] += (*this)[i, j] * other[j];
         return r;
+    }
+
+    template<typename S>
+    constexpr Matrix<S> homomorph() const {
+        std::vector<S> t;
+        t.reserve(elements.size());
+        for (const auto& i : elements)
+            t.emplace_back(S(i));
+        return Matrix<S>(rows, columns, std::move(t));
     }
 
     friend std::ostream& operator << (std::ostream& out, const Matrix& val)

@@ -40,6 +40,7 @@ public:
         elements.reserve(other.elements.size());
         std::copy(other.elements.begin(), other.elements.end(), std::back_inserter(elements));
     }
+    constexpr Vector(std::vector<E>&& elements) : elements(std::move(elements)) {}
     constexpr Vector(Vector&& other) noexcept : elements(std::move(other.elements)) {}
 
     constexpr Vector& operator = (Vector&& other) {
@@ -103,6 +104,15 @@ public:
             for (std::size_t j = 0; j < n; ++j)
                 r[i, j] = elements[i] * other.elements[j];
         return r;
+    }
+
+    template<typename S>
+    constexpr Vector<S> homomorph() const {
+        std::vector<S> t;
+        t.reserve(elements.size());
+        for (const auto& i : elements)
+            t.emplace_back(S(i));
+        return Vector<S>(std::move(t));
     }
 
     friend std::ostream& operator << (std::ostream& out, const Vector& val)

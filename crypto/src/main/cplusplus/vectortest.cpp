@@ -18,12 +18,13 @@
 #include <boost/test/unit_test.hpp>
 
 #include "matrix.h"
-#include "solinas62.h"
+#include "pervushin.h"
 #include "vector.h"
 
 BOOST_AUTO_TEST_SUITE(Vectors)
 
-using R = Solinas62Ring;
+using R = PervushinRing;
+using RE = PervushinRingDegree2;
 
 BOOST_AUTO_TEST_CASE(HadamardSummation) {
     Vector<R> a{
@@ -101,6 +102,26 @@ BOOST_AUTO_TEST_CASE(TensorProduct) {
     }};
     BOOST_TEST(c == a.tensor(b));
     BOOST_TEST(d == b.tensor(a));
+}
+
+BOOST_AUTO_TEST_CASE(Homomorphism) {
+    Vector<R> a{
+        R(11),
+        R(12),
+        R(13),
+    };
+    Vector<R> b{
+        R(66),
+        R(65),
+        R(64),
+    };
+    Vector<R> c{
+        R(77),
+        R(77),
+        R(77),
+    };
+    BOOST_TEST(c.template homomorph<RE>() == a.template homomorph<RE>() + b.template homomorph<RE>());
+    BOOST_TEST(c.template homomorph<RE>() == b.template homomorph<RE>() + a.template homomorph<RE>());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

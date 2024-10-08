@@ -15,34 +15,36 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <boost/test/unit_test.hpp>
+#ifndef BLACKNET_CRYPTO_R1CS_H
+#define BLACKNET_CRYPTO_R1CS_H
+
+#include <vector>
 
 #include "matrix.h"
-#include "pervushin.h"
 #include "vector.h"
 
-BOOST_AUTO_TEST_SUITE(Matrices)
+template<typename E>
+class R1CS {
+    Matrix<E> a;
+    Matrix<E> b;
+    Matrix<E> c;
+public:
+    constexpr R1CS(
+        Matrix<E>&& a,
+        Matrix<E>&& b,
+        Matrix<E>&& c
+    ) : a(std::move(a)), b(std::move(b)), c(std::move(c)) {}
+    constexpr R1CS(R1CS&& other) noexcept
+        : a(std::move(other.a)), b(std::move(other.b)), c(std::move(other.c)) {}
 
-using R = PervushinRing;
-using RE = PervushinRingDegree2;
+    constexpr bool isSatisfied(const Vector<E>& z) const {
+        return (a * z) * (b * z) == c * z;
+    }
 
-BOOST_AUTO_TEST_CASE(Product) {
-    Matrix<R> a(3, 2, {
-        R(17), R(18),
-        R(33), R(34),
-        R(49), R(50),
-    });
-    Vector<R> b{
-        R(2),
-        R(3),
-    };
-    Vector<R> c{
-        R(88),
-        R(168),
-        R(248),
-    };
-    BOOST_TEST(c == a * b);
-    BOOST_TEST(c.template homomorph<RE>() == a.template homomorph<RE>() * b.template homomorph<RE>());
-}
+    template<typename S>
+    constexpr R1CS<S> homomorph() const {
+        return R1CS<S>(a.template homomorph<S>(), b.template homomorph<S>(), c.template homomorph<S>());
+    }
+};
 
-BOOST_AUTO_TEST_SUITE_END()
+#endif
