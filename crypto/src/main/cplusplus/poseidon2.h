@@ -112,23 +112,36 @@ constexpr void internal(std::array<typename Params::F, Params::t>& x) {
 }
 
 template<typename Params>
-constexpr void rc(std::size_t round, std::array<typename Params::F, Params::t>& x) {
+constexpr void rcb(std::size_t round, std::array<typename Params::F, Params::t>& x) {
     constexpr std::size_t T = Params::t;
 
     for (std::size_t i = 0; i < T; ++i)
-        x[i] += Params::rc[round * T + i];
+        x[i] += Params::rcb[round * T + i];
 }
 
 template<typename Params>
-constexpr typename Params::F sbox(const typename Params::F& x) {
+constexpr void rcp(std::size_t round, std::array<typename Params::F, Params::t>& x) {
+    x[0] += Params::rcp[round];
+}
+
+template<typename Params>
+constexpr void rce(std::size_t round, std::array<typename Params::F, Params::t>& x) {
+    constexpr std::size_t T = Params::t;
+
+    for (std::size_t i = 0; i < T; ++i)
+        x[i] += Params::rce[round * T + i];
+}
+
+template<typename Params>
+constexpr void sbox(typename Params::F& x) {
     constexpr std::size_t A = Params::a;
 
     if constexpr (A == 3) {
-        return x * x.square();
+        x *= x.square();
     } else if constexpr (A == 5) {
-        return x * x.square().square();
+        x *= x.square().square();
     } else if constexpr (A == 17) {
-        return x * x.square().square().square().square();
+        x *= x.square().square().square().square();
     } else {
         static_assert(false);
     }
@@ -139,7 +152,7 @@ constexpr void sbox(std::array<typename Params::F, Params::t>& x) {
     constexpr std::size_t T = Params::t;
 
     for (std::size_t i = 0; i < T; ++i)
-        x[i] = sbox<Params>(x[i]);
+        sbox<Params>(x[i]);
 }
 
 }
@@ -148,20 +161,20 @@ template<typename Params>
 constexpr void permute(std::array<typename Params::F, Params::t>& x) {
     external<Params>(x);
 
-    for (std::size_t round = 0; round < Params::rfb; ++round) {
-        rc<Params>(round, x);
+    for (std::size_t round = 0; round < Params::rb; ++round) {
+        rcb<Params>(round, x);
         sbox<Params>(x);
         external<Params>(x);
     }
 
-    for (std::size_t round = Params::rfb; round < Params::rpe; ++round) {
-        x[0] += Params::rc[round * Params::t];
-        x[0] = sbox<Params>(x[0]);
+    for (std::size_t round = 0; round < Params::rp; ++round) {
+        rcp<Params>(round, x);
+        sbox<Params>(x[0]);
         internal<Params>(x);
     }
 
-    for (std::size_t round = Params::rpe; round < Params::r; ++round) {
-        rc<Params>(round, x);
+    for (std::size_t round = 0; round < Params::re; ++round) {
+        rce<Params>(round, x);
         sbox<Params>(x);
         external<Params>(x);
     }
