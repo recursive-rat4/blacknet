@@ -27,9 +27,9 @@ using E = Solinas62Ring;
 BOOST_AUTO_TEST_CASE(ccs) {
     // Quarte
     Matrix<E> m1(1, 3, { E(0), E(0), E(1) });
-    Matrix<E> m2(1, 3, { E(1), E(0), E(0) });
-    Vector<E> z1{ E(81), E(1), E(2) };
-    Vector<E> z2{ E(16), E(1), E(2) };
+    Matrix<E> m2(1, 3, { E(0), E(1), E(0) });
+    Vector<E> z1{ E(1), E(81), E(2) };
+    Vector<E> z2{ E(1), E(16), E(2) };
 
     std::vector<Matrix<E>> ms;
     ms.emplace_back(std::move(m1));

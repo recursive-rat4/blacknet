@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_SUITE(R1CSs)
 using E = PervushinRing;
 using EE = PervushinRingDegree2;
 
-BOOST_AUTO_TEST_CASE(r1cs) {
+BOOST_AUTO_TEST_CASE(Satisfaction) {
     // Sixte
     Matrix<E> a(3, 5, {
         E(0), E(0), E(1), E(0), E(0),
@@ -38,12 +38,12 @@ BOOST_AUTO_TEST_CASE(r1cs) {
         E(0), E(0), E(0), E(0), E(1),
     });
     Matrix<E> c(3, 5, {
-        E(1), E(0), E(0), E(0), E(0),
+        E(0), E(1), E(0), E(0), E(0),
         E(0), E(0), E(1), E(0), E(0),
         E(0), E(0), E(0), E(1), E(0),
     });
-    Vector<E> z1{ E(64), E(1), E(16), E(4), E(1) };
-    Vector<E> z2{ E(64), E(1), E(16), E(4), E(2) };
+    Vector<E> z1{ E(1), E(64), E(16), E(4), E(1) };
+    Vector<E> z2{ E(1), E(64), E(16), E(4), E(2) };
 
     R1CS<E> r1cs(
         std::move(a),
@@ -55,6 +55,30 @@ BOOST_AUTO_TEST_CASE(r1cs) {
 
     BOOST_TEST(!r1cs.homomorph<EE>().isSatisfied(z1.homomorph<EE>()));
     BOOST_TEST(r1cs.homomorph<EE>().isSatisfied(z2.homomorph<EE>()));
+}
+
+BOOST_AUTO_TEST_CASE(Building) {
+    Matrix<E> m1(2, 3, {
+        E(10), E(11), E(12),
+        E(13), E(14), E(15),
+    });
+    Matrix<E> m2(3, 2, {
+        E(16), E(17),
+        E(18), E(19),
+        E(20), E(21),
+    });
+    Matrix<E> m3(5, 6, {
+        E(00), E(10), E(11), E(12), E(00), E(00),
+        E(00), E(13), E(14), E(15), E(00), E(00),
+        E(00), E(00), E(00), E(00), E(16), E(17),
+        E(00), E(00), E(00), E(00), E(18), E(19),
+        E(00), E(00), E(00), E(00), E(20), E(21),
+    });
+
+    R1CS<E>::Builder builder;
+    builder.append(m1, m1, m1);
+    builder.append(m2, m2, m2);
+    BOOST_TEST(R1CS(m3, m3, m3) == builder.build());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

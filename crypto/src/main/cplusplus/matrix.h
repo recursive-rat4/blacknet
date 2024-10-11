@@ -34,10 +34,14 @@ public:
 
     constexpr Matrix(std::size_t rows, std::size_t columns)
         : rows(rows), columns(columns), elements(rows * columns) {}
+    constexpr Matrix(std::size_t rows, std::size_t columns, const E& fill)
+        : rows(rows), columns(columns), elements(rows * columns, fill) {}
     constexpr Matrix(std::size_t rows, std::size_t columns, std::initializer_list<E> init)
         : rows(rows), columns(columns), elements(init) {}
     constexpr Matrix(std::size_t rows, std::size_t columns, std::vector<E>&& elements)
         : rows(rows), columns(columns), elements(std::move(elements)) {}
+    constexpr Matrix(const Matrix& other)
+        : rows(other.rows), columns(other.columns), elements(other.elements) {}
     constexpr Matrix(Matrix&& other) noexcept
         : rows(other.rows), columns(other.columns), elements(std::move(other.elements)) {}
 
