@@ -42,19 +42,28 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
         E(0), E(0), E(1), E(0), E(0),
         E(0), E(0), E(0), E(1), E(0),
     });
-    Vector<E> z1{ E(1), E(64), E(16), E(4), E(1) };
-    Vector<E> z2{ E(1), E(64), E(16), E(4), E(2) };
+    Vector<E> z{ E(1), E(64), E(16), E(4), E(2) };
 
     R1CS<E> r1cs(
         std::move(a),
         std::move(b),
         std::move(c)
     );
-    BOOST_TEST(!r1cs.isSatisfied(z1));
-    BOOST_TEST(r1cs.isSatisfied(z2));
+    BOOST_TEST(r1cs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!r1cs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 
-    BOOST_TEST(!r1cs.homomorph<EE>().isSatisfied(z1.homomorph<EE>()));
-    BOOST_TEST(r1cs.homomorph<EE>().isSatisfied(z2.homomorph<EE>()));
+    R1CS<EE> r1cs_morphed(r1cs.homomorph<EE>());
+    Vector<EE> z_morphed(z.homomorph<EE>());
+    BOOST_TEST(r1cs_morphed.isSatisfied(z_morphed));
+    for (std::size_t i = 1; i < z_morphed.size(); ++i) {
+        z_morphed[i] += EE(1);
+        BOOST_TEST(!r1cs_morphed.isSatisfied(z_morphed));
+        z_morphed[i] -= EE(1);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(Building) {
@@ -62,22 +71,24 @@ BOOST_AUTO_TEST_CASE(Building) {
         E(10), E(11), E(12),
         E(13), E(14), E(15),
     });
+    Vector<E> v1{ E(00), E(00) };
     Matrix<E> m2(3, 2, {
         E(16), E(17),
         E(18), E(19),
         E(20), E(21),
     });
+    Vector<E> v2{ E(00), E(04), E(00) };
     Matrix<E> m3(5, 6, {
         E(00), E(10), E(11), E(12), E(00), E(00),
         E(00), E(13), E(14), E(15), E(00), E(00),
         E(00), E(00), E(00), E(00), E(16), E(17),
-        E(00), E(00), E(00), E(00), E(18), E(19),
+        E(04), E(00), E(00), E(00), E(18), E(19),
         E(00), E(00), E(00), E(00), E(20), E(21),
     });
 
     R1CS<E>::Builder builder;
-    builder.append(m1, m1, m1);
-    builder.append(m2, m2, m2);
+    builder.append(m1, v1, m1, v1, m1, v1);
+    builder.append(m2, v2, m2, v2, m2, v2);
     BOOST_TEST(R1CS(m3, m3, m3) == builder.build());
 }
 

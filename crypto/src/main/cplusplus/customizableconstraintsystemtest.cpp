@@ -28,8 +28,7 @@ BOOST_AUTO_TEST_CASE(ccs) {
     // Quarte
     Matrix<E> m1(1, 3, { E(0), E(0), E(1) });
     Matrix<E> m2(1, 3, { E(0), E(1), E(0) });
-    Vector<E> z1{ E(1), E(81), E(2) };
-    Vector<E> z2{ E(1), E(16), E(2) };
+    Vector<E> z{ E(1), E(16), E(2) };
 
     std::vector<Matrix<E>> ms;
     ms.emplace_back(std::move(m1));
@@ -41,8 +40,12 @@ BOOST_AUTO_TEST_CASE(ccs) {
         {{0, 0, 0, 0}, {1}},
         {E(1), E(-1)}
     );
-    BOOST_TEST(!ccs.isSatisfied(z1));
-    BOOST_TEST(ccs.isSatisfied(z2));
+    BOOST_TEST(ccs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!ccs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

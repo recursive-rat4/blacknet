@@ -50,6 +50,10 @@ public:
 
     constexpr bool operator == (const Vector&) const = default;
 
+    constexpr std::size_t size() const {
+        return elements.size();
+    }
+
     constexpr E& operator [] (std::size_t i) {
         return elements[i];
     }
