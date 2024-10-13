@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "customizableconstraintsystem.h"
+#include "matrix.h"
 #include "solinas62.h"
 
 BOOST_AUTO_TEST_SUITE(CustomizableConstraintSystems)
@@ -30,9 +31,9 @@ BOOST_AUTO_TEST_CASE(ccs) {
     Matrix<E> m2(1, 3, { E(0), E(1), E(0) });
     Vector<E> z{ E(1), E(16), E(2) };
 
-    std::vector<Matrix<E>> ms;
-    ms.emplace_back(std::move(m1));
-    ms.emplace_back(std::move(m2));
+    std::vector<MatrixSparse<E>> ms;
+    ms.emplace_back(MatrixSparse(m1));
+    ms.emplace_back(MatrixSparse(m2));
 
     CustomizableConstraintSystem<E> ccs(
         1, 3,

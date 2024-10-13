@@ -1,0 +1,116 @@
+/*
+ * Copyright (c) 2024 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#ifndef BLACKNET_CRYPTO_MATRIXSPARSE_H
+#define BLACKNET_CRYPTO_MATRIXSPARSE_H
+
+#include <iostream>
+#include <vector>
+#include <boost/io/ostream_joiner.hpp>
+
+template<typename E>class Matrix;
+template<typename E>class Vector;
+
+// https://arxiv.org/abs/2404.06047
+// CSR format
+
+template<typename E>
+class MatrixSparse {
+    std::size_t columns;
+    std::vector<std::size_t> rIndex;
+    std::vector<std::size_t> cIndex;
+    std::vector<E> elements;
+public:
+    constexpr MatrixSparse(const Matrix<E>& dense) : columns(dense.columns) {
+        rIndex.reserve(dense.rows + 1);
+        for (std::size_t i = 0; i < dense.rows; ++i) {
+            rIndex.push_back(elements.size());
+            for (std::size_t j = 0; j < dense.columns; ++j) {
+                if (dense[i, j] != E(0)) {
+                    cIndex.push_back(j);
+                    elements.push_back(dense[i, j]);
+                }
+            }
+        }
+        rIndex.push_back(elements.size());
+    }
+    constexpr MatrixSparse(
+        std::size_t columns,
+        const std::vector<std::size_t>& rIndex, const std::vector<std::size_t>& cIndex,
+        std::vector<E>&& elements
+    ) : columns(columns), rIndex(rIndex), cIndex(cIndex), elements(std::move(elements)) {}
+    constexpr MatrixSparse(const MatrixSparse& other)
+        : columns(other.columns), rIndex(other.rIndex), cIndex(other.cIndex), elements(other.elements) {}
+    constexpr MatrixSparse(MatrixSparse&& other) noexcept
+        : columns(other.columns),
+          rIndex(std::move(other.rIndex)), cIndex(std::move(other.cIndex)),
+          elements(std::move(other.elements)) {}
+
+    constexpr bool operator == (const MatrixSparse&) const = default;
+
+    constexpr Vector<E> operator * (const Vector<E>& other) const {
+        std::size_t offset = 0;
+        std::size_t rows = rIndex.size() - 1;
+        Vector<E> r(rows, E::LEFT_ADDITIVE_IDENTITY());
+        for (std::size_t i = 0; i < rows; ++i) {
+            std::size_t columns = rIndex[i + 1] - rIndex[i];
+            for (std::size_t j = 0; j < columns; ++j) {
+                std::size_t column = cIndex[offset];
+                r[i] += elements[offset] * other[column];
+                offset += 1;
+            }
+        }
+        return r;
+    }
+
+    template<typename S>
+    constexpr MatrixSparse<S> homomorph() const {
+        std::vector<S> t;
+        t.reserve(elements.size());
+        for (const auto& i : elements)
+            t.emplace_back(S(i));
+        return MatrixSparse<S>(columns, rIndex, cIndex, std::move(t));
+    }
+
+    constexpr Matrix<E> dense() const {
+        std::size_t offset = 0;
+        std::size_t rows = rIndex.size() - 1;
+        Matrix<E> r(rows, columns, E(0));
+        for (std::size_t i = 0; i < rows; ++i) {
+            std::size_t columns = rIndex[i + 1] - rIndex[i];
+            for (std::size_t j = 0; j < columns; ++j) {
+                std::size_t column = cIndex[offset];
+                r[i, column] = elements[offset];
+                offset += 1;
+            }
+        }
+        return r;
+    }
+
+    friend std::ostream& operator << (std::ostream& out, const MatrixSparse& val)
+    {
+        out << "([";
+        std::copy(val.rIndex.begin(), val.rIndex.end(), boost::io::make_ostream_joiner(out, ", "));
+        out << "], [";
+        std::copy(val.cIndex.begin(), val.cIndex.end(), boost::io::make_ostream_joiner(out, ", "));
+        out << "], [";
+        std::copy(val.elements.begin(), val.elements.end(), boost::io::make_ostream_joiner(out, ", "));
+        return out << "])";
+    }
+};
+
+#endif

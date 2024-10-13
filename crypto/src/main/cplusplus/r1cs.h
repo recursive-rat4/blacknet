@@ -23,17 +23,18 @@
 #include <vector>
 
 #include "matrix.h"
+#include "matrixsparse.h"
 #include "vector.h"
 
 template<typename E>
 class R1CS {
-    Matrix<E> a;
-    Matrix<E> b;
-    Matrix<E> c;
+    MatrixSparse<E> a;
+    MatrixSparse<E> b;
+    MatrixSparse<E> c;
 public:
-    constexpr R1CS(const Matrix<E>& a, const Matrix<E>& b, const Matrix<E>& c)
+    constexpr R1CS(const MatrixSparse<E>& a, const MatrixSparse<E>& b, const MatrixSparse<E>& c)
         : a(a), b(b), c(c) {}
-    constexpr R1CS(Matrix<E>&& a, Matrix<E>&& b, Matrix<E>&& c)
+    constexpr R1CS(MatrixSparse<E>&& a, MatrixSparse<E>&& b, MatrixSparse<E>&& c)
         : a(std::move(a)), b(std::move(b)), c(std::move(c)) {}
     constexpr R1CS(R1CS&& other) noexcept
         : a(std::move(other.a)), b(std::move(other.b)), c(std::move(other.c)) {}
@@ -82,7 +83,7 @@ public:
             return R1CS(matrix(as), matrix(bs), matrix(cs));
         }
     private:
-        constexpr static Matrix<E> matrix(const auto& ms) {
+        constexpr static MatrixSparse<E> matrix(const auto& ms) {
             std::size_t rows = std::ranges::fold_left(ms, std::size_t(0), [] (auto&& a, auto&& i) { return a + i.first.rows; });
             std::size_t columns = std::ranges::fold_left(ms, std::size_t(1), [] (auto&& a, auto&& i) { return a + i.first.columns; });
             Matrix<E> l(rows, columns, E(0));
@@ -97,7 +98,7 @@ public:
                 m += k.rows;
                 n += k.columns;
             }
-            return l;
+            return MatrixSparse(l);
         }
     };
 };

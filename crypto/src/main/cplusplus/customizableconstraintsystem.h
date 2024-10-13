@@ -20,7 +20,7 @@
 
 #include <vector>
 
-#include "matrix.h"
+#include "matrixsparse.h"
 #include "vector.h"
 
 /*
@@ -34,14 +34,14 @@ template<typename E>
 class CustomizableConstraintSystem {
     std::size_t rows;
     std::size_t columns;
-    std::vector<Matrix<E>> m;
+    std::vector<MatrixSparse<E>> m;
     std::vector<std::vector<std::size_t>> s;
     std::vector<E> c;
 public:
     constexpr CustomizableConstraintSystem(
         std::size_t rows,
         std::size_t columns,
-        std::vector<Matrix<E>>&& m,
+        std::vector<MatrixSparse<E>>&& m,
         std::vector<std::vector<std::size_t>>&& s,
         std::vector<E>&& c
     ) : rows(rows), columns(columns), m(std::move(m)), s(std::move(s)), c(std::move(c)) {}
