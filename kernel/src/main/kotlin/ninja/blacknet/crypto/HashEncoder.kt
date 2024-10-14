@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,8 +9,8 @@
 
 package ninja.blacknet.crypto
 
-import io.ktor.utils.io.bits.*
-import io.ktor.utils.io.charsets.Charset
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
 import kotlinx.serialization.modules.SerializersModule
 import ninja.blacknet.serialization.SequentialEncoder
 import ninja.blacknet.serialization.binaryModule
@@ -21,7 +21,7 @@ class HashEncoder(
         override val serializersModule: SerializersModule = binaryModule
 ) : SequentialEncoder() {
     private val buffer = ByteArray(Long.SIZE_BYTES)
-    private val memory = Memory.of(buffer)
+    private val memory = ByteBuffer.wrap(buffer)
 
     override fun encodeNull() {
         writer.writeByte(0)
@@ -40,17 +40,17 @@ class HashEncoder(
     }
 
     override fun encodeShort(value: Short) {
-        memory.storeShortAt(0, value)
+        memory.putShort(0, value)
         writer.writeByteArray(buffer, 0, Short.SIZE_BYTES)
     }
 
     override fun encodeInt(value: Int) {
-        memory.storeIntAt(0, value)
+        memory.putInt(0, value)
         writer.writeByteArray(buffer, 0, Int.SIZE_BYTES)
     }
 
     override fun encodeLong(value: Long) {
-        memory.storeLongAt(0, value)
+        memory.putLong(0, value)
         writer.writeByteArray(buffer, 0, Long.SIZE_BYTES)
     }
 

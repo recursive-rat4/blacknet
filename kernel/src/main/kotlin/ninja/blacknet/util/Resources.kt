@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,10 +9,10 @@
 
 package ninja.blacknet.util
 
-import io.ktor.utils.io.charsets.Charset
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.nio.charset.Charset
 import java.util.jar.JarFile
 
 object Resources {

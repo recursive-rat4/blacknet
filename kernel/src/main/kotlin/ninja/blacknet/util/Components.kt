@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Pavel Vasin
+ * Copyright (c) 2020-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,7 +9,9 @@
 
 package ninja.blacknet.util
 
-import io.ktor.utils.io.bits.*
+import com.google.common.primitives.Shorts
+import com.google.common.primitives.Ints
+import com.google.common.primitives.Longs
 
 /**
  * Byte components of primitive types.
@@ -73,12 +75,7 @@ fun Long.Companion.fromBytes(b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b
  * @return the yielded [ByteArray]
  */
 fun Short.toByteArray(): ByteArray {
-    val result = ByteArray(Short.SIZE_BYTES)
-    this.let {
-        result[0] = it.highByte
-        result[1] = it.lowByte
-    }
-    return result
+    return Shorts.toByteArray(this);
 }
 
 /**
@@ -87,16 +84,7 @@ fun Short.toByteArray(): ByteArray {
  * @return the yielded [ByteArray]
  */
 fun Int.toByteArray(): ByteArray {
-    val result = ByteArray(Int.SIZE_BYTES)
-    highShort.let {
-        result[0] = it.highByte
-        result[1] = it.lowByte
-    }
-    lowShort.let {
-        result[2] = it.highByte
-        result[3] = it.lowByte
-    }
-    return result
+    return Ints.toByteArray(this);
 }
 
 /**
@@ -105,26 +93,5 @@ fun Int.toByteArray(): ByteArray {
  * @return the yielded [ByteArray]
  */
 fun Long.toByteArray(): ByteArray {
-    val result = ByteArray(Long.SIZE_BYTES)
-    highInt.let {
-        it.highShort.let {
-            result[0] = it.highByte
-            result[1] = it.lowByte
-        }
-        it.lowShort.let {
-            result[2] = it.highByte
-            result[3] = it.lowByte
-        }
-    }
-    lowInt.let {
-        it.highShort.let {
-            result[4] = it.highByte
-            result[5] = it.lowByte
-        }
-        it.lowShort.let {
-            result[6] = it.highByte
-            result[7] = it.lowByte
-        }
-    }
-    return result
+    return Longs.toByteArray(this);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Pavel Vasin
+ * Copyright (c) 2018-2024 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -9,9 +9,7 @@
 
 package ninja.blacknet.crypto
 
-import io.ktor.utils.io.bits.Memory
-import io.ktor.utils.io.bits.loadIntAt
-import io.ktor.utils.io.bits.of
+import java.nio.ByteBuffer
 import io.ktor.utils.io.pool.DefaultPool
 import kotlin.random.Random
 import kotlinx.serialization.SerializationStrategy
@@ -34,7 +32,7 @@ object SipHash {
         val coder = pool.borrow()
         return try {
             serializer.serialize(coder, value)
-            Memory.of(coder.writer.finish()).loadIntAt(4)
+            ByteBuffer.wrap(coder.writer.finish()).getInt(4)
         } catch (e: Throwable) {
             coder.writer.reset()
             throw e
