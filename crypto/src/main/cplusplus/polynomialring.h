@@ -98,6 +98,13 @@ public:
         return t;
     }
 
+    friend constexpr PolynomialRing operator * (const Scalar& lps, const PolynomialRing& rps) {
+        PolynomialRing t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.coefficients[i] = lps * rps.coefficients[i];
+        return t;
+    }
+
     constexpr PolynomialRing& operator -= (const PolynomialRing& other) {
         for (std::size_t i = 0; i < N; ++i)
             coefficients[i] -= other.coefficients[i];

@@ -41,13 +41,9 @@ public:
 
     constexpr bool operator == (const R1CS&) const = default;
 
-    constexpr bool isSatisfied(const Vector<E>& z) const {
+    template<typename S = E>
+    constexpr bool isSatisfied(const Vector<S>& z) const {
         return (a * z) * (b * z) == c * z;
-    }
-
-    template<typename S>
-    constexpr R1CS<S> homomorph() const {
-        return R1CS<S>(a.template homomorph<S>(), b.template homomorph<S>(), c.template homomorph<S>());
     }
 
     friend std::ostream& operator << (std::ostream& out, const R1CS& val)

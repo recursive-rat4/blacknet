@@ -42,6 +42,7 @@ BOOST_AUTO_TEST_CASE(Product) {
         R(248),
     };
     BOOST_TEST(c == a * b);
+    BOOST_TEST(c.template homomorph<RE>() == a * b.template homomorph<RE>());
     BOOST_TEST(c.template homomorph<RE>() == a.template homomorph<RE>() * b.template homomorph<RE>());
 }
 

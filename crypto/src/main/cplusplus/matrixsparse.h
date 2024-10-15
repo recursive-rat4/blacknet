@@ -62,10 +62,11 @@ public:
 
     constexpr bool operator == (const MatrixSparse&) const = default;
 
-    constexpr Vector<E> operator * (const Vector<E>& other) const {
+    template<typename S = E>
+    constexpr Vector<S> operator * (const Vector<S>& other) const {
         std::size_t offset = 0;
         std::size_t rows = rIndex.size() - 1;
-        Vector<E> r(rows, E::LEFT_ADDITIVE_IDENTITY());
+        Vector<S> r(rows, S::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < rows; ++i) {
             std::size_t columns = rIndex[i + 1] - rIndex[i];
             for (std::size_t j = 0; j < columns; ++j) {

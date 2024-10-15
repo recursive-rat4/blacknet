@@ -55,8 +55,9 @@ public:
         return elements[i * columns + j];
     }
 
-    constexpr Vector<E> operator * (const Vector<E>& other) const {
-        Vector<E> r(rows, E::LEFT_ADDITIVE_IDENTITY());
+    template<typename S = E>
+    constexpr Vector<S> operator * (const Vector<S>& other) const {
+        Vector<S> r(rows, S::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < columns; ++j)
                 r[i] += (*this)[i, j] * other[j];

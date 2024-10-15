@@ -56,12 +56,11 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
         z[i] -= E(1);
     }
 
-    R1CS<EE> r1cs_morphed(r1cs.homomorph<EE>());
     Vector<EE> z_morphed(z.homomorph<EE>());
-    BOOST_TEST(r1cs_morphed.isSatisfied(z_morphed));
+    BOOST_TEST(r1cs.isSatisfied(z_morphed));
     for (std::size_t i = 1; i < z_morphed.size(); ++i) {
         z_morphed[i] += EE(1);
-        BOOST_TEST(!r1cs_morphed.isSatisfied(z_morphed));
+        BOOST_TEST(!r1cs.isSatisfied(z_morphed));
         z_morphed[i] -= EE(1);
     }
 }

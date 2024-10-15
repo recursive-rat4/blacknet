@@ -112,7 +112,7 @@ public:
     template<typename S>
     constexpr static UnivariatePolynomial<S> interpolate(const S& n1, const S& z0, const S& p1) {
         // Undefined behaviour is prohibited in consteval
-        static const S inv2 = Z(2).invert().value();
+        static const Z inv2 = Z(2).invert().value();
 
         S a(p1 * inv2 + n1 * inv2 - z0);
         S b(p1 * inv2 - n1 * inv2);
@@ -122,11 +122,11 @@ public:
     template<typename S>
     constexpr static UnivariatePolynomial<S> interpolate(const S& n2, const S& n1, const S& z0, const S& p1, const S& p2) {
         // Undefined behaviour is prohibited in consteval
-        static const S mul_2_div_3 = Z(2) * Z(3).invert().value();
-        static const S inv4 = Z(4).invert().value();
-        static const S inv6 = Z(6).invert().value();
-        static const S inv12 = Z(12).invert().value();
-        static const S inv24 = Z(24).invert().value();
+        static const Z mul_2_div_3 = Z(2) * Z(3).invert().value();
+        static const Z inv4 = Z(4).invert().value();
+        static const Z inv6 = Z(6).invert().value();
+        static const Z inv12 = Z(12).invert().value();
+        static const Z inv24 = Z(24).invert().value();
 
         S a(z0 * inv4 - p1 * inv6 + p2 * inv24 - n1 * inv6 + n2 * inv24);
         S b(- p1 * inv6 + p2 * inv12 + n1 * inv6 - n2 * inv12);
