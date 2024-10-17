@@ -79,6 +79,44 @@ BOOST_AUTO_TEST_CASE(ScalarProduct) {
         R(12),
     };
     BOOST_TEST(c == a * b);
+    BOOST_TEST(c == b * a);
+}
+
+BOOST_AUTO_TEST_CASE(HadamardSubtraction) {
+    Vector<R> a{
+        R(8),
+        R(5),
+        R(1),
+    };
+    Vector<R> b{
+        R(7),
+        R(3),
+        R(0),
+    };
+    Vector<R> c{
+        R(1),
+        R(2),
+        R(1),
+    };
+    BOOST_TEST(c == a - b);
+}
+
+BOOST_AUTO_TEST_CASE(DotProduct) {
+    Vector<R> a{
+        R(1),
+        R(3),
+        R(-5),
+    };
+    Vector<R> b{
+        R(4),
+        R(-2),
+        R(-1),
+    };
+    R c(3);
+    R d(35);
+    BOOST_TEST(c == a.dot(b));
+    BOOST_TEST(c == b.dot(a));
+    BOOST_TEST(d == a.dot(a));
 }
 
 BOOST_AUTO_TEST_CASE(TensorProduct) {

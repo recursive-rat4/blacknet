@@ -100,6 +100,36 @@ public:
         return r;
     }
 
+    friend constexpr Vector operator * (const E& lps, const Vector& rps) {
+        std::size_t size = rps.elements.size();
+        Vector r(size);
+        for (std::size_t i = 0; i < size; ++i)
+            r.elements[i] = lps * rps.elements[i];
+        return r;
+    }
+
+    constexpr Vector& operator -= (const Vector& other) {
+        std::size_t size = elements.size();
+        for (std::size_t i = 0; i < size; ++i)
+            elements[i] -= other.elements[i];
+        return *this;
+    }
+
+    constexpr Vector operator - (const Vector& other) const {
+        std::size_t size = elements.size();
+        Vector r(size);
+        for (std::size_t i = 0; i < size; ++i)
+            r.elements[i] = elements[i] - other.elements[i];
+        return r;
+    }
+
+    constexpr E dot(const Vector& other) const {
+        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        for (std::size_t i = 0; i < elements.size(); ++i)
+            sigma += elements[i] * other.elements[i];
+        return sigma;
+    }
+
     constexpr Matrix<E> tensor(const Vector& other) const {
         std::size_t m = elements.size();
         std::size_t n = other.elements.size();
