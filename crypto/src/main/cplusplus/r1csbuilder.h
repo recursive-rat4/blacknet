@@ -190,9 +190,11 @@ struct R1CSBuilder {
         constexpr void operator () (LinearCombination& lc) const {
             static_assert(degree() <= 1 , "Can't mul non-constant expressions");
             if constexpr (std::is_same_v<L, Constant> && std::is_same_v<R, Variable>) {
-                lc.emplace(r, l.value);
+                if (auto [iterator, inserted] = lc.emplace(r, l.value); !inserted)
+                    iterator->second += l.value;
             } else if constexpr (std::is_same_v<L, Variable> && std::is_same_v<R, Constant>) {
-                lc.emplace(l, r.value);
+                if (auto [iterator, inserted] = lc.emplace(l, r.value); !inserted)
+                    iterator->second += r.value;
             } else {
                 l(lc);
                 r(lc);
