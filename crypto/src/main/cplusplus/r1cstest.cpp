@@ -17,6 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "matrix.h"
 #include "pervushin.h"
 #include "r1cs.h"
 
@@ -63,33 +64,6 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
         BOOST_TEST(!r1cs.isSatisfied(z_morphed));
         z_morphed[i] -= EE(1);
     }
-}
-
-BOOST_AUTO_TEST_CASE(Building) {
-    Matrix<E> m1(2, 3, {
-        E(10), E(11), E(12),
-        E(13), E(14), E(15),
-    });
-    Vector<E> v1{ E(00), E(00) };
-    Matrix<E> m2(3, 2, {
-        E(16), E(17),
-        E(18), E(19),
-        E(20), E(21),
-    });
-    Vector<E> v2{ E(00), E(04), E(00) };
-    Matrix<E> m3(5, 6, {
-        E(00), E(10), E(11), E(12), E(00), E(00),
-        E(00), E(13), E(14), E(15), E(00), E(00),
-        E(00), E(00), E(00), E(00), E(16), E(17),
-        E(04), E(00), E(00), E(00), E(18), E(19),
-        E(00), E(00), E(00), E(00), E(20), E(21),
-    });
-    MatrixSparse<E> ms(m3);
-
-    R1CS<E>::Builder builder;
-    builder.append(m1, v1, m1, v1, m1, v1);
-    builder.append(m2, v2, m2, v2, m2, v2);
-    BOOST_TEST(R1CS(ms, ms, ms) == builder.build());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

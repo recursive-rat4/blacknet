@@ -30,7 +30,9 @@ template<typename E>class Vector;
 
 template<typename E>
 class MatrixSparse {
+public:
     std::size_t columns;
+private:
     std::vector<std::size_t> rIndex;
     std::vector<std::size_t> cIndex;
     std::vector<E> elements;
@@ -61,6 +63,10 @@ public:
           elements(std::move(other.elements)) {}
 
     constexpr bool operator == (const MatrixSparse&) const = default;
+
+    constexpr std::size_t rows() const {
+        return rIndex.size() - 1;
+    }
 
     template<typename S = E>
     constexpr Vector<S> operator * (const Vector<S>& other) const {
