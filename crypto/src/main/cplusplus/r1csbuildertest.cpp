@@ -175,29 +175,32 @@ BOOST_AUTO_TEST_CASE(Muls) {
 }
 
 BOOST_AUTO_TEST_CASE(Boards) {
-    Matrix<E> am(6, 5, {
+    Matrix<E> am(7, 5, {
         E(0), E(1), E(1), E(0), E(0),
         E(0), E(0), E(0), E(1), E(0),
         E(4), E(1), E(1), E(1), E(0),
         E(8), E(0), E(1), E(1), E(0),
         E(0), E(0), E(2), E(2), E(0),
         E(0), E(6), E(0), E(0), E(0),
+        E(8), E(2), E(0), E(0), E(0),
     });
-    Matrix<E> bm(6, 5, {
+    Matrix<E> bm(7, 5, {
         E(0), E(0), E(0), E(1), E(1),
         E(0), E(0), E(0), E(1), E(0),
         E(1), E(0), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0), E(0),
+        E(1), E(0), E(0), E(0), E(0),
     });
-    Matrix<E> cm(6, 5, {
+    Matrix<E> cm(7, 5, {
         E(160), E(0), E(0), E(0), E(0),
         E(0), E(4), E(0), E(0), E(0),
         E(0), E(0), E(0), E(0), E(1),
         E(0), E(0), E(0), E(0), E(1),
         E(0), E(0), E(0), E(0), E(1),
         E(24), E(0), E(0), E(0), E(0),
+        E(0), E(0), E(0), E(0), E(1),
     });
     R1CS<E> r1cs{
         MatrixSparse<E>(am),
@@ -221,6 +224,7 @@ BOOST_AUTO_TEST_CASE(Boards) {
     circuit(w == c + y + z + c);
     circuit(w == b * y + z * b);
     circuit(d == b * x + x * c);
+    circuit(w == c + b * (x + b));
 
     BOOST_TEST(r1cs == circuit.r1cs());
 

@@ -30,7 +30,41 @@ template<typename E>
 struct R1CSBuilder {
     struct Variable;
 
-    using LinearCombination = std::map<Variable, E>;
+    struct LinearCombination {
+        std::map<Variable, E> terms;
+
+        decltype(auto) begin() const {
+            return terms.begin();
+        }
+
+        decltype(auto) end() const {
+            return terms.end();
+        }
+
+        template<class... Args>
+        decltype(auto) emplace(Args&&... args) {
+            return terms.emplace(std::forward<Args>(args)...);
+        }
+
+        constexpr LinearCombination& operator *= (const E& e) {
+            for (auto& [_, coefficient] : terms)
+                coefficient *= e;
+            return *this;
+        }
+
+        constexpr LinearCombination& operator += (const std::pair<Variable, E>& term) {
+            const auto& [variable, coefficient] = term;
+            if (auto [iterator, inserted] = terms.emplace(variable, coefficient); !inserted)
+                iterator->second += coefficient;
+            return *this;
+        }
+
+        constexpr LinearCombination& operator += (const LinearCombination& lc) {
+            for (const auto& term : lc)
+                (*this) += term;
+            return *this;
+        }
+    };
 
     struct QuadraticCombination {
         LinearCombination a;
@@ -135,20 +169,16 @@ struct R1CSBuilder {
         constexpr void operator () (LinearCombination& lc) const {
             static_assert(L::degree() <= 1 && R::degree() <= 1, "Can't add non-linear expressions");
             if constexpr (std::is_same_v<L, Constant>) {
-                if (auto [iterator, inserted] = lc.emplace(Variable::constant(), l.value); !inserted)
-                    iterator->second += l.value;
+                lc += std::make_pair(Variable::constant(), l.value);
             } else if constexpr (std::is_same_v<L, Variable>) {
-                if (auto [iterator, inserted] = lc.emplace(l, E(1)); !inserted)
-                    iterator->second += E(1);
+                lc += std::make_pair(l, E(1));
             } else {
                 l(lc);
             }
             if constexpr (std::is_same_v<R, Constant>) {
-                if (auto [iterator, inserted] = lc.emplace(Variable::constant(), r.value); !inserted)
-                    iterator->second += r.value;
+                lc += std::make_pair(Variable::constant(), r.value);
             } else if constexpr (std::is_same_v<R, Variable>) {
-                if (auto [iterator, inserted] = lc.emplace(r, E(1)); !inserted)
-                    iterator->second += E(1);
+                lc += std::make_pair(r, E(1));
             } else {
                 r(lc);
             }
@@ -188,16 +218,34 @@ struct R1CSBuilder {
         }
 
         constexpr void operator () (LinearCombination& lc) const {
-            static_assert(degree() <= 1 , "Can't mul non-constant expressions");
-            if constexpr (std::is_same_v<L, Constant> && std::is_same_v<R, Variable>) {
-                if (auto [iterator, inserted] = lc.emplace(r, l.value); !inserted)
-                    iterator->second += l.value;
-            } else if constexpr (std::is_same_v<L, Variable> && std::is_same_v<R, Constant>) {
-                if (auto [iterator, inserted] = lc.emplace(l, r.value); !inserted)
-                    iterator->second += r.value;
+            if constexpr (std::is_same_v<L, Constant>) {
+                if constexpr (std::is_same_v<R, Constant>) {
+                    static_assert(false, "Not implemented");
+                } else if constexpr (std::is_same_v<R, Variable>) {
+                    lc += std::make_pair(r, l.value);
+                } else if constexpr (R::degree() == 1) {
+                    LinearCombination t;
+                    r(t);
+                    t *= l.value;
+                    lc += t;
+                } else {
+                    static_assert(false, "Can't mul non-linear expressions");
+                }
+            } else if constexpr (std::is_same_v<R, Constant>) {
+                if constexpr (std::is_same_v<L, Constant>) {
+                    static_assert(false, "Not implemented");
+                } else if constexpr (std::is_same_v<L, Variable>) {
+                    lc += std::make_pair(l, r.value);
+                } else if constexpr (L::degree() == 1) {
+                    LinearCombination t;
+                    l(t);
+                    t *= r.value;
+                    lc += t;
+                } else {
+                    static_assert(false, "Can't mul non-linear expressions");
+                }
             } else {
-                l(lc);
-                r(lc);
+                static_assert(false, "Can't mul non-constant expressions");
             }
         }
 
