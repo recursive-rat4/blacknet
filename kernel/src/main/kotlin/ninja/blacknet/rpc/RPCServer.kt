@@ -18,7 +18,7 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.defaultheaders.DefaultHeaders
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
-import io.ktor.server.routing.Routing
+import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.websocket.Frame
 import kotlin.coroutines.CoroutineContext
@@ -136,7 +136,7 @@ fun Application.RPCServer() {
     }
     install(WebSockets)
     install(Requests)
-    install(Routing) {
+    routing {
         html()
 
         dataBase()

@@ -15,8 +15,8 @@ import com.sun.security.auth.module.NTSystem
 import com.sun.security.auth.module.UnixSystem
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.cio.CIO
-import io.ktor.server.engine.commandLineEnvironment
-import io.ktor.server.engine.embeddedServer
+import io.ktor.server.engine.CommandLineConfig
+import io.ktor.server.engine.EmbeddedServer
 import java.lang.Thread.UncaughtExceptionHandler
 import java.nio.file.Files
 import java.security.Security
@@ -142,12 +142,13 @@ object Kernel {
          */
         if (config().rpcserver) {
             RPCServer
-            embeddedServer(
-                ktorEngine,
-                commandLineEnvironment(arrayOf(
-                    "-config=${configDir.resolve("rpc.conf")}",
-                ))
-            ).start(wait = false)
+            val ktorConfig = CommandLineConfig(arrayOf(
+                "-config=${configDir.resolve("rpc.conf")}",
+            ))
+            val ktorServer = EmbeddedServer(ktorConfig.rootConfig, ktorEngine) {
+                takeFrom(ktorConfig.engineConfig)
+            }
+            ktorServer.start(wait = false)
         }
     }
 

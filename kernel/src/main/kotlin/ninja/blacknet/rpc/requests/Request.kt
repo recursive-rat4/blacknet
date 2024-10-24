@@ -17,8 +17,10 @@ import io.ktor.server.application.call
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.intercept
 import io.ktor.server.routing.route
 import io.ktor.util.AttributeKey
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import ninja.blacknet.serialization.json.json
@@ -83,7 +85,7 @@ private fun <T : Request> Route.handle(
     intercept(ApplicationCallPipeline.Plugins) {
         call.attributes.put(requestKey, requestFormat.decodeFromParameters(serializer, when (method) {
             HttpMethod.Get -> call.parameters
-            HttpMethod.Post -> call.receiveParameters()
+            HttpMethod.Post -> runBlocking { call.receiveParameters() }
             else -> throw Error("超文本傳輸協議請求方法 ${method.value} 的支持尚未實現")
         }))
     }
