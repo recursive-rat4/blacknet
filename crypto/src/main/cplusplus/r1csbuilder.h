@@ -98,6 +98,7 @@ struct R1CSBuilder {
     struct Constant : ConstraintExpression<Constant> {
         E value;
 
+        constexpr Constant() {}
         constexpr Constant(const E& value) : value(value) {}
 
         constexpr Constraint operator () () const {
@@ -118,11 +119,11 @@ struct R1CSBuilder {
     };
 
     struct Variable : ConstraintExpression<Variable> {
-        enum Type { Constant, Input, Auxiliary };
+        enum Type { Uninitialized, Constant, Input, Auxiliary };
         Type type;
         std::size_t number;
 
-        constexpr Variable() {}
+        consteval Variable() : type(Uninitialized), number(-1) {}
         constexpr Variable(Type type, std::size_t number) : type(type), number(number) {}
         consteval static Variable constant() { return Variable(Constant, 0); }
 
@@ -151,9 +152,10 @@ struct R1CSBuilder {
 
     template<typename L, typename R>
     struct AddExpression : ConstraintExpression<AddExpression<L, R>> {
-        const L l;
-        const R r;
+        L l;
+        R r;
 
+        constexpr AddExpression() {}
         constexpr AddExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {
@@ -191,9 +193,10 @@ struct R1CSBuilder {
 
     template<typename L, typename R>
     struct MulExpression : ConstraintExpression<MulExpression<L, R>> {
-        const L l;
-        const R r;
+        L l;
+        R r;
 
+        constexpr MulExpression() {}
         constexpr MulExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {
@@ -201,19 +204,23 @@ struct R1CSBuilder {
         }
 
         constexpr void operator () (QuadraticCombination& qc) const {
-            static_assert(L::degree() <= 1 && R::degree() <= 1, "Can't mul non-linear expressions");
-            if constexpr (std::is_same_v<L, Constant> && std::is_same_v<R, Variable>) {
-                qc.a.emplace(r, l.value);
-                qc.b.emplace(Variable::constant(), E(1));
-            } else if constexpr (std::is_same_v<L, Variable> && std::is_same_v<R, Constant>) {
-                qc.a.emplace(l, r.value);
+            if constexpr (std::is_same_v<L, Constant> || std::is_same_v<R, Constant>) {
+                (*this)(qc.a);
                 qc.b.emplace(Variable::constant(), E(1));
             } else if constexpr (std::is_same_v<L, Variable> && std::is_same_v<R, Variable>) {
                 qc.a.emplace(l, E(1));
                 qc.b.emplace(r, E(1));
-            } else {
+            } else if constexpr (std::is_same_v<L, Variable> && R::degree() == 1) {
+                qc.a.emplace(l, E(1));
+                r(qc.b);
+            } else if constexpr (std::is_same_v<R, Variable> && L::degree() == 1) {
+                l(qc.a);
+                qc.b.emplace(r, E(1));
+            } else if constexpr (L::degree() == 1 && R::degree() == 1) {
                 l(qc.a);
                 r(qc.b);
+            } else {
+                static_assert(false, "Can't mul non-linear expressions");
             }
         }
 
@@ -256,9 +263,10 @@ struct R1CSBuilder {
 
     template<typename L, typename R>
     struct EqExpression : ConstraintExpression<EqExpression<L, R>> {
-        const L l;
-        const R r;
+        L l;
+        R r;
 
+        constexpr EqExpression() {}
         constexpr EqExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {
@@ -311,47 +319,47 @@ struct R1CSBuilder {
     };
 
     template<typename L, typename R>
-    friend AddExpression<L, R> operator + (const ConstraintExpression<L>& l, const ConstraintExpression<R>& r) {
+    friend constexpr AddExpression<L, R> operator + (const ConstraintExpression<L>& l, const ConstraintExpression<R>& r) {
         return { static_cast<const L&>(l), static_cast<const R&>(r) };
     }
 
     template<typename L>
-    friend AddExpression<L, Constant> operator + (const ConstraintExpression<L>& l, const E& r) {
+    friend constexpr AddExpression<L, Constant> operator + (const ConstraintExpression<L>& l, const E& r) {
         return { static_cast<const L&>(l), Constant(r) };
     }
 
     template<typename R>
-    friend AddExpression<Constant, R> operator + (const E& l, const ConstraintExpression<R>& r) {
+    friend constexpr AddExpression<Constant, R> operator + (const E& l, const ConstraintExpression<R>& r) {
         return { Constant(l), static_cast<const R&>(r) };
     }
 
     template<typename L, typename R>
-    friend MulExpression<L, R> operator * (const ConstraintExpression<L>& l, const ConstraintExpression<R>& r) {
+    friend constexpr MulExpression<L, R> operator * (const ConstraintExpression<L>& l, const ConstraintExpression<R>& r) {
         return { static_cast<const L&>(l), static_cast<const R&>(r) };
     }
 
     template<typename L>
-    friend MulExpression<L, Constant> operator * (const ConstraintExpression<L>& l, const E& r) {
+    friend constexpr MulExpression<L, Constant> operator * (const ConstraintExpression<L>& l, const E& r) {
         return { static_cast<const L&>(l), Constant(r) };
     }
 
     template<typename R>
-    friend MulExpression<Constant, R> operator * (const E& l, const ConstraintExpression<R>& r) {
+    friend constexpr MulExpression<Constant, R> operator * (const E& l, const ConstraintExpression<R>& r) {
         return { Constant(l), static_cast<const R&>(r) };
     }
 
     template<typename L, typename R>
-    friend EqExpression<L, R> operator == (const ConstraintExpression<L>& l, const ConstraintExpression<R>& r) {
+    friend constexpr EqExpression<L, R> operator == (const ConstraintExpression<L>& l, const ConstraintExpression<R>& r) {
         return { static_cast<const L&>(l), static_cast<const R&>(r) };
     }
 
     template<typename L>
-    friend EqExpression<L, Constant> operator == (const ConstraintExpression<L>& l, const E& r) {
+    friend constexpr EqExpression<L, Constant> operator == (const ConstraintExpression<L>& l, const E& r) {
         return { static_cast<const L&>(l), Constant(r) };
     }
 
     template<typename R>
-    friend EqExpression<Constant, R> operator == (const E& l, const ConstraintExpression<R>& r) {
+    friend constexpr EqExpression<Constant, R> operator == (const E& l, const ConstraintExpression<R>& r) {
         return { Constant(l), static_cast<const R&>(r) };
     }
 
@@ -385,7 +393,7 @@ struct R1CSBuilder {
                     a[i, 0] = coefficient;
                 else if (variable.type == Variable::Type::Input)
                     a[i, variable.number] = coefficient;
-                else
+                else if (variable.type == Variable::Type::Auxiliary)
                     a[i, inputs + variable.number] = coefficient;
             }
             for (const auto& [variable, coefficient] : constraints[i].qc.b) {
@@ -393,7 +401,7 @@ struct R1CSBuilder {
                     b[i, 0] = coefficient;
                 else if (variable.type == Variable::Type::Input)
                     b[i, variable.number] = coefficient;
-                else
+                else if (variable.type == Variable::Type::Auxiliary)
                     b[i, inputs + variable.number] = coefficient;
             }
             for (const auto& [variable, coefficient] : constraints[i].lc) {
@@ -401,7 +409,7 @@ struct R1CSBuilder {
                     c[i, 0] = coefficient;
                 else if (variable.type == Variable::Type::Input)
                     c[i, variable.number] = coefficient;
-                else
+                else if (variable.type == Variable::Type::Auxiliary)
                     c[i, inputs + variable.number] = coefficient;
             }
         }
