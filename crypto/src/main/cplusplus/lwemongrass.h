@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_LWEMONGRASS_H
 
 #include "integerring.h"
+#include "matrix.h"
 
 /*
  * DoS-resistant Oblivious Message Retrieval and Snake-eye Resistant PKE from LWE
@@ -45,6 +46,13 @@ namespace lwemongrass {
             return x;
         }
     >;
+
+    using PrivateKey = Matrix<Zq>;
+
+    struct PublicKey {
+        Matrix<Zq> a;
+        Matrix<Zq> p;
+    };
 }
 
 #endif

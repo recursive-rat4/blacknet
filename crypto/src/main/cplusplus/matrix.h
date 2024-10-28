@@ -55,12 +55,49 @@ public:
         return elements[i * columns + j];
     }
 
+    constexpr Matrix operator + (const Matrix& other) const {
+        Matrix r(rows, columns);
+        for (std::size_t i = 0; i < rows; ++i)
+            for (std::size_t j = 0; j < columns; ++j)
+                r[i, j] = (*this)[i, j] + other[i, j];
+        return r;
+    }
+
+    constexpr Matrix operator * (const Matrix& other) const {
+        // Iterative algorithm
+        Matrix r(rows, other.columns, E::LEFT_ADDITIVE_IDENTITY());
+        for (std::size_t i = 0; i < rows; ++i)
+            for (std::size_t j = 0; j < other.columns; ++j)
+                for (std::size_t k = 0; k < columns; ++k)
+                    r[i, j] += (*this)[i, k] * other[k, j];
+        return r;
+    }
+
     template<typename S = E>
     constexpr Vector<S> operator * (const Vector<S>& other) const {
         Vector<S> r(rows, S::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < columns; ++j)
                 r[i] += (*this)[i, j] * other[j];
+        return r;
+    }
+
+    constexpr Matrix operator || (const Matrix& other) const {
+        Matrix r(rows, columns + other.columns);
+        for (std::size_t i = 0; i < rows; ++i) {
+            for (std::size_t j = 0; j < columns; ++j)
+                r[i, j] = (*this)[i, j];
+            for (std::size_t j = 0; j < other.columns; ++j)
+                r[i, j + columns] = other[i, j];
+        }
+        return r;
+    }
+
+    constexpr Matrix transpose() const {
+        Matrix r(columns, rows);
+        for (std::size_t i = 0; i < rows; ++i)
+            for (std::size_t j = 0; j < columns; ++j)
+                r[j, i] = (*this)[i, j];
         return r;
     }
 
