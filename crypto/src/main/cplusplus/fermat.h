@@ -15,28 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_LWEMONGRASS_H
-#define BLACKNET_CRYPTO_LWEMONGRASS_H
+#ifndef BLACKNET_CRYPTO_FERMAT_H
+#define BLACKNET_CRYPTO_FERMAT_H
 
-#include "fermat.h"
-#include "matrix.h"
+#include "integerring.h"
 
-/*
- * Snake-eye Resistance from LWE for Oblivious Message Retrieval and Robust Encryption
- * Zeyu Liu, Katerina Sotiraki, Eran Tromer, Yunhao Wang
- * August 19, 2024
- * https://eprint.iacr.org/2024/510
- */
+// 2¹⁶ + 1
+constexpr int32_t Fermat4Number(65537);
 
-namespace lwemongrass {
-    using Zq = FermatRing;
-
-    using PrivateKey = Matrix<Zq>;
-
-    struct PublicKey {
-        Matrix<Zq> a;
-        Matrix<Zq> p;
-    };
-}
+typedef IntegerRing<
+    int32_t,
+    int64_t,
+    uint32_t,
+    uint64_t,
+    Fermat4Number,
+    1,
+    -65535,
+    [] (int32_t x) -> int32_t {
+        return (x & 0xFFFF) - (x >> 16);
+    },
+    [] (int32_t x) -> int32_t {
+        return x;
+    }
+> FermatRing;
 
 #endif
