@@ -193,7 +193,12 @@ public:
     template<typename RNG>
     static IntegerRing random(RNG& rng) {
         boost::random::uniform_int_distribution<I> ud(-(M - 1) / 2, (M - 1) / 2);
-        return IntegerRing(ud(rng));
+        return random(rng, ud);
+    }
+
+    template<typename RNG, typename DST>
+    static IntegerRing random(RNG& rng, const DST& dst) {
+        return IntegerRing(dst(rng));
     }
 private:
     template<typename MRI = I, typename MRL = L>

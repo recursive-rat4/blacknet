@@ -125,6 +125,15 @@ public:
                 t[i, j] = E::random(rng);
         return t;
     }
+
+    template<typename RNG, typename DST>
+    static Matrix random(RNG& rng, const DST& dst, std::size_t rows, std::size_t columns) {
+        Matrix t(rows, columns);
+        for (std::size_t i = 0; i < rows; ++i)
+            for (std::size_t j = 0; j < columns; ++j)
+                t[i, j] = E::random(rng, dst);
+        return t;
+    }
 };
 
 #endif

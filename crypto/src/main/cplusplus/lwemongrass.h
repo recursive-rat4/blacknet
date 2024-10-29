@@ -18,8 +18,12 @@
 #ifndef BLACKNET_CRYPTO_LWEMONGRASS_H
 #define BLACKNET_CRYPTO_LWEMONGRASS_H
 
+#include <type_traits>
+#include <boost/random/uniform_int_distribution.hpp>
+
 #include "fermat.h"
 #include "matrix.h"
+#include "vector.h"
 
 /*
  * Snake-eye Resistance from LWE for Oblivious Message Retrieval and Robust Encryption
@@ -29,14 +33,34 @@
  */
 
 namespace lwemongrass {
+    constexpr std::size_t K = 1;
+    constexpr std::size_t ELL = 3;
+    constexpr std::size_t N1 = 936;
+    constexpr std::size_t N2 = 760;
+    constexpr std::size_t N = N1 - K;
+
     using Zq = FermatRing;
 
-    using PrivateKey = Matrix<Zq>;
+    using SecretKey = Matrix<Zq>;
 
     struct PublicKey {
         Matrix<Zq> a;
         Matrix<Zq> p;
     };
+
+    struct CipherText {
+        Vector<Zq> a;
+        Vector<Zq> b;
+    };
+
+    static_assert(std::is_signed_v<typename Zq::NormType>);
+    boost::random::uniform_int_distribution<typename Zq::NormType> bud(0, 1);
+    boost::random::uniform_int_distribution<typename Zq::NormType> tud(-1, 1);
+
+    template<typename RNG>
+    SecretKey generateSecretKey(RNG& rng) {
+        return (Matrix<Zq>::random(rng, tud, ELL, N) || Matrix<Zq>::random(rng, ELL, K)).transpose();
+    }
 }
 
 #endif

@@ -16,12 +16,18 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <boost/random/mersenne_twister.hpp>
 
 #include "lwemongrass.h"
+
+static boost::random::mt19937 rng;
 
 BOOST_AUTO_TEST_SUITE(LWEmongrass)
 
 using namespace lwemongrass;
 
+BOOST_AUTO_TEST_CASE(SecretKeys) {
+    auto sk = generateSecretKey(rng);
+}
 
 BOOST_AUTO_TEST_SUITE_END()
