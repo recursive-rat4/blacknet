@@ -21,6 +21,7 @@
 #include <type_traits>
 #include <boost/random/uniform_int_distribution.hpp>
 
+#include "discretegaussiandistribution.h"
 #include "fermat.h"
 #include "matrix.h"
 #include "vector.h"
@@ -38,6 +39,7 @@ namespace lwemongrass {
     constexpr std::size_t N1 = 936;
     constexpr std::size_t N2 = 760;
     constexpr std::size_t N = N1 - K;
+    constexpr double SIGMA = 0.5;
 
     using Zq = FermatRing;
 
@@ -56,10 +58,18 @@ namespace lwemongrass {
     static_assert(std::is_signed_v<typename Zq::NormType>);
     boost::random::uniform_int_distribution<typename Zq::NormType> bud(0, 1);
     boost::random::uniform_int_distribution<typename Zq::NormType> tud(-1, 1);
+    DiscreteGaussianDistribution<typename Zq::NormType> dgd(0.0, SIGMA);
 
     template<typename RNG>
     SecretKey generateSecretKey(RNG& rng) {
         return (Matrix<Zq>::random(rng, tud, ELL, N) || Matrix<Zq>::random(rng, ELL, K)).transpose();
+    }
+
+    template<typename RNG>
+    PublicKey generatePublicKey(RNG& rng, const SecretKey& sk) {
+        auto e = Matrix<Zq>::random(rng, dgd, N2, ELL);
+        auto a = Matrix<Zq>::random(rng, N2, N1);
+        return { a, a * sk + e };
     }
 }
 

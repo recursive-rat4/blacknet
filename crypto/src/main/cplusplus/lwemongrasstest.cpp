@@ -28,6 +28,7 @@ using namespace lwemongrass;
 
 BOOST_AUTO_TEST_CASE(SecretKeys) {
     auto sk = generateSecretKey(rng);
+    auto pk = generatePublicKey(rng, sk);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
