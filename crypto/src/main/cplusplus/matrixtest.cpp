@@ -82,9 +82,14 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
         R(168),
         R(248),
     };
+    Vector<R> d{
+        R(19192),
+        R(19696),
+    };
     BOOST_TEST(c == a * b);
     BOOST_TEST(c.template homomorph<RE>() == a * b.template homomorph<RE>());
     BOOST_TEST(c.template homomorph<RE>() == a.template homomorph<RE>() * b.template homomorph<RE>());
+    BOOST_TEST(d == c * a);
 }
 
 BOOST_AUTO_TEST_CASE(Concatectation) {

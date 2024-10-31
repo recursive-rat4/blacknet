@@ -82,6 +82,14 @@ public:
         return r;
     }
 
+    friend constexpr Vector<E> operator * (const Vector<E>& lps, const Matrix& rps) {
+        Vector<E> r(rps.columns, E::LEFT_ADDITIVE_IDENTITY());
+        for (std::size_t i = 0; i < rps.rows; ++i)
+            for (std::size_t j = 0; j < rps.columns; ++j)
+                r[j] += lps[i] * rps[i, j];
+        return r;
+    }
+
     constexpr Matrix operator || (const Matrix& other) const {
         Matrix r(rows, columns + other.columns);
         for (std::size_t i = 0; i < rows; ++i) {

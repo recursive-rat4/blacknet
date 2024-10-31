@@ -123,6 +123,15 @@ public:
         return r;
     }
 
+    constexpr Vector operator || (const Vector& other) const {
+        Vector r(size() + other.size());
+        for (std::size_t i = 0; i < size(); ++i)
+            r.elements[i] = elements[i];
+        for (std::size_t i = 0; i < other.size(); ++i)
+            r.elements[i + size()] = other.elements[i];
+        return r;
+    }
+
     constexpr E dot(const Vector& other) const {
         E sigma(E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < elements.size(); ++i)
@@ -161,6 +170,14 @@ public:
         Vector t(size);
         for (std::size_t i = 0; i < size; ++i)
             t.elements[i] = E::random(rng);
+        return t;
+    }
+
+    template<typename RNG, typename DST>
+    static Vector random(RNG& rng, const DST& dst, std::size_t size) {
+        Vector t(size);
+        for (std::size_t i = 0; i < size; ++i)
+            t.elements[i] = E::random(rng, dst);
         return t;
     }
 };

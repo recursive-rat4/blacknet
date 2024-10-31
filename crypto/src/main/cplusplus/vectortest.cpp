@@ -101,6 +101,23 @@ BOOST_AUTO_TEST_CASE(HadamardSubtraction) {
     BOOST_TEST(c == a - b);
 }
 
+BOOST_AUTO_TEST_CASE(Concatectation) {
+    Vector<R> a{
+        R(0), R(1),
+    };
+    Vector<R> b{
+        R(2), R(3), R(4),
+    };
+    Vector<R> c{
+        R(0), R(1), R(2), R(3), R(4),
+    };
+    Vector<R> d{
+        R(2), R(3), R(4), R(0), R(1),
+    };
+    BOOST_TEST(c == (a || b));
+    BOOST_TEST(d == (b || a));
+}
+
 BOOST_AUTO_TEST_CASE(DotProduct) {
     Vector<R> a{
         R(1),
