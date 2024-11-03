@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_LWEMONGRASS_H
 #define BLACKNET_CRYPTO_LWEMONGRASS_H
 
+#include <optional>
 #include <type_traits>
 #include <boost/random/uniform_int_distribution.hpp>
 
@@ -39,26 +40,41 @@ namespace lwemongrass {
     constexpr std::size_t N1 = 936;
     constexpr std::size_t N2 = 760;
     constexpr std::size_t N = N1 - K;
+    constexpr int R = 79;
     constexpr double SIGMA = 0.5;
 
     using Zq = FermatRing;
+    constexpr int q_div_p = 32768;
+    static_assert(std::is_signed_v<typename Zq::NormType>);
 
     using SecretKey = Matrix<Zq>;
 
-    struct PublicKey {
+    typedef struct {
         Matrix<Zq> a;
         Matrix<Zq> p;
-    };
+    } PublicKey;
 
-    struct CipherText {
+    typedef struct {
         Vector<Zq> a;
         Vector<Zq> b;
-    };
+    } CipherText;
 
-    static_assert(std::is_signed_v<typename Zq::NormType>);
+    using PlainText = Vector<Zq>;
+
     boost::random::uniform_int_distribution<typename Zq::NormType> bud(0, 1);
     boost::random::uniform_int_distribution<typename Zq::NormType> tud(-1, 1);
     DiscreteGaussianDistribution<typename Zq::NormType> dgd(0.0, SIGMA);
+
+    constexpr bool isZeroK(const Vector<Zq>& v) {
+        bool zero = true;
+        for (std::size_t i = N; i < N1; ++i) {
+            if (v[i] != Zq(0)) {
+                zero = false;
+                break;
+            }
+        }
+        return zero;
+    }
 
     template<typename RNG>
     SecretKey generateSecretKey(RNG& rng) {
@@ -70,6 +86,33 @@ namespace lwemongrass {
         auto e = Matrix<Zq>::random(rng, dgd, N2, ELL);
         auto a = Matrix<Zq>::random(rng, N2, N1);
         return { a, a * sk + e };
+    }
+
+    template<typename RNG>
+    CipherText encrypt(RNG& rng, const PublicKey& pk, const PlainText& pt) {
+        Vector<Zq> x;
+        do {
+            x = Vector<Zq>::random(rng, bud, N2);
+        } while (isZeroK(x * pk.a));
+        auto e1 = Vector<Zq>::random(rng, dgd, N) || Vector<Zq>(K, Zq(0));
+        auto e2 = Vector<Zq>::random(rng, dgd, ELL);
+        return { x * pk.a + e1, x * pk.p + e2 + pt * Zq(q_div_p) };
+    }
+
+    constexpr std::optional<PlainText> decrypt(const SecretKey& sk, const CipherText& ct) {
+        if (isZeroK(ct.a))
+            return std::nullopt;
+        auto d = ct.a * sk - ct.b;
+        auto pt = Vector<Zq>(ELL);
+        for (std::size_t i = 0; i < ELL; ++i) {
+            if (std::abs(d[i].number()) <= R)
+                pt[i] = Zq(0);
+            else if (q_div_p - std::abs(d[i].number()) <= R)
+                pt[i] = Zq(1);
+            else
+                return std::nullopt;
+        }
+        return pt;
     }
 }
 

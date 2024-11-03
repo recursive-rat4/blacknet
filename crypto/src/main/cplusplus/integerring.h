@@ -136,6 +136,10 @@ public:
         return false;
     }
 
+    constexpr I number() const {
+        return fromForm(n);
+    }
+
     class BitIterator {
         friend IntegerRing;
         I data;

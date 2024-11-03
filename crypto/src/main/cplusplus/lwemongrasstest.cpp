@@ -26,9 +26,18 @@ BOOST_AUTO_TEST_SUITE(LWEmongrass)
 
 using namespace lwemongrass;
 
-BOOST_AUTO_TEST_CASE(SecretKeys) {
+BOOST_AUTO_TEST_CASE(Tests) {
     auto sk = generateSecretKey(rng);
     auto pk = generatePublicKey(rng, sk);
+    Vector<Zq> pt{Zq(1), Zq(0), Zq(1)};
+    auto ct = encrypt(rng, pk, pt);
+    BOOST_TEST(pt == decrypt(sk, ct).value(), "Decryption");
+
+    auto snakeEye = CipherText{ Vector<Zq>(N1, Zq(1)), Vector<Zq>(ELL, Zq(0)) };
+    BOOST_TEST(!decrypt(sk, snakeEye).has_value(), "Snake-eye resistance");
+
+    auto sk2 = generateSecretKey(rng);
+    BOOST_TEST(!decrypt(sk2, ct).has_value(), "δ-snake-eye resistance");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
