@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_VECTOR_H
 #define BLACKNET_CRYPTO_VECTOR_H
 
+#include <algorithm>
 #include <initializer_list>
 #include <iostream>
 #include <vector>
@@ -168,16 +169,14 @@ public:
     template<typename RNG>
     static Vector random(RNG& rng, std::size_t size) {
         Vector t(size);
-        for (std::size_t i = 0; i < size; ++i)
-            t.elements[i] = E::random(rng);
+        std::ranges::generate(t.elements, [&] { return E::random(rng); });
         return t;
     }
 
     template<typename RNG, typename DST>
     static Vector random(RNG& rng, const DST& dst, std::size_t size) {
         Vector t(size);
-        for (std::size_t i = 0; i < size; ++i)
-            t.elements[i] = E::random(rng, dst);
+        std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });
         return t;
     }
 };

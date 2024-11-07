@@ -45,7 +45,7 @@ namespace lwemongrass {
 
     using Zq = FermatRing;
     constexpr int q_div_p = Zq::modulus() / 2;
-    static_assert(std::is_signed_v<typename Zq::NormType>);
+    static_assert(std::is_signed_v<typename Zq::NumericType>);
 
     using SecretKey = Matrix<Zq>;
 
@@ -61,9 +61,9 @@ namespace lwemongrass {
 
     using PlainText = Vector<Zq>;
 
-    boost::random::uniform_int_distribution<typename Zq::NormType> bud(0, 1);
-    boost::random::uniform_int_distribution<typename Zq::NormType> tud(-1, 1);
-    DiscreteGaussianDistribution<typename Zq::NormType> dgd(0.0, SIGMA);
+    boost::random::uniform_int_distribution<typename Zq::NumericType> bud(0, 1);
+    boost::random::uniform_int_distribution<typename Zq::NumericType> tud(-1, 1);
+    DiscreteGaussianDistribution<typename Zq::NumericType> dgd(0.0, SIGMA);
 
     constexpr bool isZeroK(const Vector<Zq>& v) {
         bool zero = true;

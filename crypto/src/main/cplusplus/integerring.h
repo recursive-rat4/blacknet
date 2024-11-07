@@ -44,7 +44,7 @@ public:
     consteval static IntegerRing LEFT_ADDITIVE_IDENTITY() { return IntegerRing(0); }
     consteval static IntegerRing LEFT_MULTIPLICATIVE_IDENTITY() { return IntegerRing(1); }
 
-    using NormType = I;
+    using NumericType = I;
 
     I n;
 
@@ -127,7 +127,7 @@ public:
         }
     }
 
-    constexpr bool checkInfiniteNorm(const NormType& bound) const {
+    constexpr bool checkInfiniteNorm(const NumericType& bound) const {
         I nn(fromForm(n));
         I t(nn >> (sizeof(I) * 8 - 1));
         t = nn - (t & nn << 1);

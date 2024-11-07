@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_POLYNOMIALRING_H
 #define BLACKNET_CRYPTO_POLYNOMIALRING_H
 
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <boost/io/ostream_joiner.hpp>
@@ -46,7 +47,7 @@ public:
         return t;
     }
 
-    using NormType = Z::NormType;
+    using NumericType = Z::NumericType;
 
     std::array<Z, N> coefficients;
 
@@ -125,7 +126,7 @@ public:
         return t;
     }
 
-    constexpr bool checkInfiniteNorm(const NormType& bound) const {
+    constexpr bool checkInfiniteNorm(const NumericType& bound) const {
         for (std::size_t i = 0; i < N; ++i) {
             if (coefficients[i].checkInfiniteNorm(bound))
                 continue;
@@ -166,16 +167,14 @@ public:
     template<typename RNG>
     static PolynomialRing random(RNG& rng) {
         PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = Z::random(rng);
+        std::ranges::generate(t.coefficients, [&] { return Z::random(rng); });
         return t;
     }
 
     template<typename RNG, typename DST>
     static PolynomialRing random(RNG& rng, const DST& dst) {
         PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = Z::random(rng, dst);
+        std::ranges::generate(t.coefficients, [&] { return Z::random(rng, dst); });
         return t;
     }
 };

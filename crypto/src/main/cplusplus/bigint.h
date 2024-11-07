@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_BIGINT_H
 #define BLACKNET_CRYPTO_BIGINT_H
 
+#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <exception>
@@ -213,9 +214,7 @@ public:
     static BigInt random(RNG& rng) {
         boost::random::uniform_int_distribution<L> ud;
         BigInt r;
-        for (std::size_t i = 0; i < N; ++i) {
-            r.limbs[i] = ud(rng);
-        }
+        std::ranges::generate(r.limbs, [&] { return ud(rng); });
         return r;
     }
 

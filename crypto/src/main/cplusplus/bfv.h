@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_BFV_H
 #define BLACKNET_CRYPTO_BFV_H
 
+#include <numbers>
 #include <type_traits>
 #include <boost/random/uniform_int_distribution.hpp>
 
@@ -35,7 +36,7 @@ struct BFV {
     using Rt = CyclotomicRing<Zt, D>;
     using Rq = CyclotomicRing<Zq, D>;
     constexpr static const auto DELTA = Zq::modulus() / Zt::modulus();
-    static_assert(std::is_signed_v<typename Zq::NormType>);
+    static_assert(std::is_signed_v<typename Zq::NumericType>);
 
     using SecretKey = Rq;
 
@@ -51,8 +52,8 @@ struct BFV {
 
     using PlainText = Rt;
 
-    boost::random::uniform_int_distribution<typename Zq::NormType> bud{0, 1};
-    DiscreteGaussianDistribution<typename Zq::NormType> dgd{0.0, SIGMA};
+    boost::random::uniform_int_distribution<typename Zq::NumericType> bud{0, 1};
+    DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
 
     constexpr Rq lift(const Rt& rt) const {
         Rq rq;
