@@ -170,6 +170,14 @@ public:
             t.coefficients[i] = Z::random(rng);
         return t;
     }
+
+    template<typename RNG, typename DST>
+    static PolynomialRing random(RNG& rng, const DST& dst) {
+        PolynomialRing t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.coefficients[i] = Z::random(rng, dst);
+        return t;
+    }
 };
 
 template<

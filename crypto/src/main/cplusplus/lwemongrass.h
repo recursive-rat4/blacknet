@@ -44,7 +44,7 @@ namespace lwemongrass {
     constexpr double SIGMA = 0.5;
 
     using Zq = FermatRing;
-    constexpr int q_div_p = 32768;
+    constexpr int q_div_p = Zq::modulus() / 2;
     static_assert(std::is_signed_v<typename Zq::NormType>);
 
     using SecretKey = Matrix<Zq>;

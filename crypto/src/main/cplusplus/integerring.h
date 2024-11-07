@@ -189,6 +189,10 @@ public:
         return in;
     }
 
+    consteval static I modulus() {
+        return M;
+    }
+
     template<typename DRG>
     constexpr static IntegerRing squeeze(DRG& drg) {
         return drg.squeeze();
