@@ -34,6 +34,14 @@ BOOST_AUTO_TEST_CASE(Tests) {
     BFV::PlainText pt{ 1, 2, 3, 4 };
     auto ct = bfv.encrypt(rng, pk, pt);
     BOOST_TEST(pt == bfv.decrypt(sk, ct), "Decryption");
+
+    BFV::PlainText pt1{ 2, };
+    BFV::PlainText pt2{ 4, };
+    auto ct1 = bfv.encrypt(rng, pk, pt1);
+    auto ct2 = bfv.encrypt(rng, pk, pt1);
+    BFV::Evaluator eval{ ct1 };
+    eval += ct2;
+    BOOST_TEST(pt2 == bfv.decrypt(sk, eval.ct), "Addition");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

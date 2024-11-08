@@ -40,17 +40,27 @@ struct BFV {
 
     using SecretKey = Rq;
 
-    typedef struct {
+    struct PublicKey {
         Rq a;
         Rq b;
-    } PublicKey;
+    };
 
-    typedef struct {
+    struct CipherText {
         Rq a;
         Rq b;
-    } CipherText;
+    };
 
     using PlainText = Rt;
+
+    struct Evaluator {
+        CipherText ct;
+
+        constexpr Evaluator& operator += (const CipherText& other) {
+            ct.a += other.a;
+            ct.b += other.b;
+            return *this;
+        }
+    };
 
     boost::random::uniform_int_distribution<typename Zq::NumericType> bud{0, 1};
     DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
@@ -64,7 +74,7 @@ struct BFV {
 
     template<typename RNG>
     SecretKey generateSecretKey(RNG& rng) {
-        return Rq::random(rng, dgd);
+        return Rq::random(rng, bud);
     }
 
     template<typename RNG>
@@ -76,7 +86,7 @@ struct BFV {
 
     template<typename RNG>
     CipherText encrypt(RNG& rng, const PublicKey& pk, const PlainText& pt) {
-        auto u = Rq::random(rng, dgd);
+        auto u = Rq::random(rng, bud);
         auto e1 = Rq::random(rng, dgd);
         auto e2 = Rq::random(rng, dgd);
         return { pk.a * u + e1 + Zq(DELTA) * lift(pt), pk.b * u + e2 };
