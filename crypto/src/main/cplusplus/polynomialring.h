@@ -143,6 +143,10 @@ public:
         return t;
     }
 
+    constexpr PolynomialRing square() const {
+        return *this * *this;
+    }
+
     friend std::ostream& operator << (std::ostream& out, const PolynomialRing& val)
     {
         out << '[';

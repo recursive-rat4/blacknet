@@ -23,6 +23,7 @@
 #include "multilinearextension.h"
 #include "polynomial.h"
 #include "polynomialring.h"
+#include "ringproduct.h"
 #include "vector.h"
 #include "util.h"
 
@@ -44,6 +45,10 @@ namespace latticefold {
     using Rq = CyclotomicRing<
         Z,
         D
+    >;
+    template<typename F>
+    using RqIso = RingProduct<
+        F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F // t = 16
     >;
 
     template<typename R>
