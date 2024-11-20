@@ -93,7 +93,9 @@ object WalletDB {
         } else {
             throw Error("Unknown database version $version")
         }
+    }
 
+    fun launch() {
         val vThread = rotate("WalletDB::announcer", ::announcer)
 
         ShutdownHooks.add {

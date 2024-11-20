@@ -127,6 +127,8 @@ object Kernel {
         BlockFetcher
         Staker
 
+        WalletDB.launch()
+
         /* Launch Blacknet RPC API server using Ktor.
          *
          * Blacknet RPC API server logic is implemented in
