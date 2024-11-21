@@ -26,6 +26,7 @@
 #include "ringproduct.h"
 #include "vector.h"
 #include "util.h"
+#include <boost/random/uniform_int_distribution.hpp>
 
 /*
  * LatticeFold: A Lattice-based Folding Scheme and its Applications to Succinct Proof Systems
@@ -50,6 +51,9 @@ namespace latticefold {
     using RqIso = RingProduct<
         F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F // t = 16
     >;
+
+    template<typename Z>
+    boost::random::uniform_int_distribution<typename Z::NumericType> small_distribution{-1, 2};
 
     template<typename R>
     constexpr Matrix<R> gadget(std::size_t m, std::size_t n) {
