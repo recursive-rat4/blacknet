@@ -27,11 +27,12 @@
 static boost::random::mt19937 rng;
 
 static void BM_AjtaiCommitment(benchmark::State& state) {
-    using R = latticefold::Rq<Solinas62Ring>;
+    using LatticeFold = LatticeFold<Solinas62Ring, Solinas62RingDegree4>;
+    using R = LatticeFold::Rq;
     std::size_t M = 1;
 
     AjtaiCommitment<R> cs(
-        Matrix<R>::random(rng, latticefold::K, M)
+        Matrix<R>::random(rng, LatticeFold::K, M)
     );
     Vector<R> m = Vector<R>::random(rng, M);
 

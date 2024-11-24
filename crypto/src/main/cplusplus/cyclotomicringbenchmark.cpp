@@ -68,7 +68,7 @@ static void BM_CyclotomicMul_64_256(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_64_256);
 
 static void BM_CyclotomicMul_64_64(benchmark::State& state) {
-    using R = latticefold::Rq<Solinas62Ring>;
+    using R = LatticeFold<Solinas62Ring, Solinas62RingDegree4>::Rq;
 
     auto a = R::random(rng);
     auto b = R::random(rng);

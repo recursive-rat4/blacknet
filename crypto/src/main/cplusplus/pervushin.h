@@ -32,6 +32,8 @@ typedef IntegerRing<
     PervushinNumber,
     64,
     -2305843009213693953,
+    2305843009213693950,
+    2,
     [] (int64_t x) -> int64_t {
         return (x & PervushinNumber) + (x >> 61);
     },

@@ -31,6 +31,8 @@ typedef IntegerRing<
     Fermat4Number,
     1,
     -65535,
+    431,
+    1024,
     [] (int32_t x) -> int32_t {
         return (x & 0xFFFF) - (x >> 16);
     },

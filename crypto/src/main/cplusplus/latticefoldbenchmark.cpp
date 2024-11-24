@@ -30,17 +30,18 @@ static boost::random::mt19937 rng;
 static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     using Z = Solinas62Ring;
     using F = Solinas62RingDegree3;
-    using R = latticefold::Rq<Z>;
+    using LatticeFold = LatticeFold<Z, F>;
+    using R = LatticeFold::Rq;
     using S = Poseidon2Solinas62;
-    using SumCheck = SumCheck<Z, F, latticefold::GNorm, S>;
+    using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
 
     std::vector<Z> beta(6);
     std::ranges::generate(beta, [] { return Z::random(rng); });
     std::vector<Z> mu(6);
     std::ranges::generate(mu, [] { return Z::random(rng); });
-    std::vector<Vector<R>> f(latticefold::k * 2);
+    std::vector<Vector<R>> f(LatticeFold::k * 2);
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
-    latticefold::GNorm<Z> g(beta, mu, f);
+    LatticeFold::GNorm<Z> g(beta, mu, f);
 
     Z sum = Hypercube<Z>::sum(g);
     SumCheck::Proof proof;
@@ -58,17 +59,18 @@ BENCHMARK(BM_LatticeFold_GNorm_SumCheck_Prove);
 static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     using Z = Solinas62Ring;
     using F = Solinas62RingDegree3;
-    using R = latticefold::Rq<Z>;
+    using LatticeFold = LatticeFold<Z, F>;
+    using R = LatticeFold::Rq;
     using S = Poseidon2Solinas62;
-    using SumCheck = SumCheck<Z, F, latticefold::GNorm, S>;
+    using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
 
     std::vector<Z> beta(6);
     std::ranges::generate(beta, [] { return Z::random(rng); });
     std::vector<Z> mu(6);
     std::ranges::generate(mu, [] { return Z::random(rng); });
-    std::vector<Vector<R>> f(latticefold::k * 2);
+    std::vector<Vector<R>> f(LatticeFold::k * 2);
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
-    latticefold::GNorm<Z> g(beta, mu, f);
+    LatticeFold::GNorm<Z> g(beta, mu, f);
 
     Z sum = Hypercube<Z>::sum(g);
     SumCheck::Proof proof = SumCheck::prove(g, sum);

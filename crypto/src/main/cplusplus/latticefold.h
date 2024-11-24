@@ -35,28 +35,29 @@
  * https://eprint.iacr.org/2024/257
  */
 
-namespace latticefold {
-    constexpr ssize_t b = 2;
-    const std::size_t k = 16;
-    const std::size_t B = 65536;
-    const std::size_t D = 64;
-    const std::size_t K = 16;
+template<typename Zq, typename F>
+struct LatticeFold {
+    constexpr static ssize_t b = 2;
+    static const std::size_t k = 16;
+    static const std::size_t t = 16;
+    static const std::size_t B = 65536;
+    static const std::size_t D = 64;
+    static const std::size_t K = 16;
 
-    template<typename Z>
+    static_assert(2 * t == Zq::primitive_root_of_unity_degree());
+
     using Rq = CyclotomicRing<
-        Z,
+        Zq,
         D
     >;
-    template<typename F>
     using RqIso = RingProduct<
         F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F // t = 16
     >;
 
-    template<typename Z>
-    boost::random::uniform_int_distribution<typename Z::NumericType> small_distribution{-1, 2};
+    boost::random::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
 
     template<typename R>
-    constexpr Matrix<R> gadget(std::size_t m, std::size_t n) {
+    constexpr static Matrix<R> gadget(std::size_t m, std::size_t n) {
         Vector<R> bpm(n);
         bpm[0] = R(1);
         for (std::size_t i = 1; i < n; ++i)
@@ -64,14 +65,14 @@ namespace latticefold {
         return Vector<R>::identity(m).tensor(bpm);
     }
 
-    template<typename Z>
+    template<typename Z = Zq>
     class G1 {
         // r 何处
         EqExtension<Z> eq;
         MultilinearExtension<Z> mle;
     public:
-        constexpr G1(const std::vector<Z>& r, const Vector<Rq<Z>>& f) : eq(r), mle(f) {}
-        constexpr G1(const Z& alpha, const std::vector<Z>& r, const Vector<Rq<Z>>& f) : eq(r, alpha), mle(f) {}
+        constexpr G1(const std::vector<Z>& r, const Vector<Rq>& f) : eq(r), mle(f) {}
+        constexpr G1(const Z& alpha, const std::vector<Z>& r, const Vector<Rq>& f) : eq(r, alpha), mle(f) {}
         constexpr G1(EqExtension<Z>&& eq, MultilinearExtension<Z>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
         constexpr Z operator () (const std::vector<Z>& point) const {
@@ -105,17 +106,17 @@ namespace latticefold {
         }
     };
 
-    template<typename Z>
+    template<typename Z = Zq>
     class G2 {
         // β 何处
         Polynomial<Z, MultilinearExtension> mles;
     public:
-        constexpr G2(const Vector<Rq<Z>>& f) : mles(b + b - 1) {
+        constexpr G2(const Vector<Rq>& f) : mles(b + b - 1) {
             for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
                 mles(MultilinearExtension<Z>(f) - Z(j));
             }
         }
-        constexpr G2(const Z& mu, const Vector<Rq<Z>>& f) : mles(b + b - 1) {
+        constexpr G2(const Z& mu, const Vector<Rq>& f) : mles(b + b - 1) {
             for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
                 mles((MultilinearExtension<Z>(f) - Z(j)) * mu);
             }
@@ -153,14 +154,14 @@ namespace latticefold {
         }
     };
 
-    template<typename Z>
+    template<typename Z = Zq>
     class GEval {
         Polynomial<Z, G1> g1s;
     public:
         constexpr GEval(
             const std::vector<Z>& alpha,
             const std::vector<std::vector<Z>>& r,
-            const std::vector<Vector<Rq<Z>>>& f
+            const std::vector<Vector<Rq>>& f
         ) : g1s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
                 g1s(G1<Z>(alpha[i], r[i], f[i]));
@@ -199,7 +200,7 @@ namespace latticefold {
         }
     };
 
-    template<typename Z>
+    template<typename Z = Zq>
     class GNorm {
         // GNorm(x) = eq(β, x) Σ G2(μ, f, x)
         EqExtension<Z> eq;
@@ -208,7 +209,7 @@ namespace latticefold {
         constexpr GNorm(
             const std::vector<Z>& beta,
             const std::vector<Z>& mu,
-            const std::vector<Vector<Rq<Z>>>& f
+            const std::vector<Vector<Rq>>& f
         ) : eq(beta), g2s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
                 g2s(G2<Z>(mu[i], f[i]));
@@ -250,7 +251,7 @@ namespace latticefold {
     };
 
     // 从 Πꟳᴼᴸᴰ
-    template<typename Z>
+    template<typename Z = Zq>
     class GFold {
         GEval<Z> geval;
         GNorm<Z> gnorm;
@@ -260,7 +261,7 @@ namespace latticefold {
             const std::vector<Z>& beta,
             const std::vector<Z>& mu,
             const std::vector<std::vector<Z>>& r,
-            const std::vector<Vector<Rq<Z>>>& f
+            const std::vector<Vector<Rq>>& f
         ) : geval(alpha, r, f), gnorm(beta, mu, f) {}
         constexpr GFold(GEval<Z>&& geval, GNorm<Z>&& gnorm) : geval(std::move(geval)), gnorm(std::move(gnorm)) {}
 
@@ -294,6 +295,6 @@ namespace latticefold {
             return GFold<S>(geval.template homomorph<S>(), gnorm.template homomorph<S>());
         }
     };
-}
+};
 
 #endif

@@ -45,6 +45,8 @@ namespace dilithium {
         Q,
         2365951,
         58728449,
+        1753,
+        512,
         [] (int32_t x) -> int32_t {
             int32_t t((x + (1 << 22)) >> 23);
             return x - t * Q;
@@ -53,6 +55,8 @@ namespace dilithium {
             return x + ((x >> 31) & Q);
         }
     >;
+
+    static_assert(2 * N == Zq::primitive_root_of_unity_degree());
 
     using Rq = CyclotomicRing<
         Zq,

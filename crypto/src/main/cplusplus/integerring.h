@@ -34,6 +34,8 @@ template<
     I M,
     I R2,
     I RN,
+    I PROU,
+    std::size_t PROUD,
     I(*REDUCE)(I),
     I(*FREEZE)(I)
 >
@@ -191,6 +193,15 @@ public:
 
     consteval static I modulus() {
         return M;
+    }
+
+    consteval static IntegerRing primitive_root_of_unity() {
+        // Undefined behaviour is prohibited in consteval
+        return IntegerRing(I(toForm<UI, UL>(PROU)), 0);
+    }
+
+    consteval static std::size_t primitive_root_of_unity_degree() {
+        return PROUD;
     }
 
     template<typename DRG>

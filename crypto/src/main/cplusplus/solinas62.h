@@ -32,6 +32,8 @@ typedef IntegerRing<
     Solinas62Prime,
     1317904,
     -3454747365720865503,
+    71638321025703109,
+    32,
     [] (int64_t x) -> int64_t {
         int32_t t((x + (1l << 61)) >> 62);
         return x - t * Solinas62Prime;
