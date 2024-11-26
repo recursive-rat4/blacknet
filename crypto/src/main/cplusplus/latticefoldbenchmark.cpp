@@ -22,6 +22,7 @@
 #include "latticefold.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 #include "sumcheck.h"
 #include "vector.h"
 

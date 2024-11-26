@@ -18,9 +18,10 @@
 #include <boost/test/unit_test.hpp>
 
 #include "fermat.h"
-#include "pervushin.h"
+#include "pervushinfield.h"
 #include "ringproduct.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 
 BOOST_AUTO_TEST_SUITE(ResidueNumberSystems)
 

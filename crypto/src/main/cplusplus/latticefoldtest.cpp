@@ -21,6 +21,7 @@
 #include "latticefold.h"
 #include "matrix.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 #include "vector.h"
 
 BOOST_AUTO_TEST_SUITE(LatticeFolds)

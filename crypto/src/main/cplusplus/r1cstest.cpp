@@ -19,6 +19,7 @@
 
 #include "matrix.h"
 #include "pervushin.h"
+#include "pervushinfield.h"
 #include "r1cs.h"
 
 BOOST_AUTO_TEST_SUITE(R1CSs)

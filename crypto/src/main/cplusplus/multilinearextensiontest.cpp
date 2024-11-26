@@ -23,6 +23,7 @@
 #include "multilinearextension.h"
 #include "polynomialring.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 #include "vector.h"
 #include "util.h"
 

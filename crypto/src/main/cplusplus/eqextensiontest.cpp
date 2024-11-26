@@ -21,6 +21,7 @@
 #include "eqextension.h"
 #include "hypercube.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 #include "util.h"
 
 BOOST_AUTO_TEST_SUITE(EqExtensions)

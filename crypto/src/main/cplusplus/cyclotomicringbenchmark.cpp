@@ -22,6 +22,7 @@
 #include "latticefold.h"
 #include "polynomialring.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 
 static boost::random::mt19937 rng;
 

@@ -20,6 +20,7 @@
 #include "matrix.h"
 #include "matrixsparse.h"
 #include "pervushin.h"
+#include "pervushinfield.h"
 #include "vector.h"
 
 BOOST_AUTO_TEST_SUITE(MatriceSparses)

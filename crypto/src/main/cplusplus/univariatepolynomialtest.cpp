@@ -19,6 +19,7 @@
 #include <ranges>
 
 #include "solinas62.h"
+#include "solinas62field.h"
 #include "univariatepolynomial.h"
 
 BOOST_AUTO_TEST_SUITE(UnivariatePolynomials)

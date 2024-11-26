@@ -18,8 +18,8 @@
 #include <benchmark/benchmark.h>
 #include <boost/random/mersenne_twister.hpp>
 
-#include "pervushin.h"
-#include "solinas62.h"
+#include "pervushinfield.h"
+#include "solinas62field.h"
 
 static boost::random::mt19937 rng;
 

@@ -21,6 +21,7 @@
 #include "multilinearextension.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 #include "sumcheck.h"
 
 BOOST_AUTO_TEST_SUITE(SumChecks)

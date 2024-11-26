@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "pervushin.h"
+#include "pervushinfield.h"
 
 using Zq = PervushinRing;
 using Fe2 = PervushinRingDegree2;

@@ -15,37 +15,43 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_DILITHIUM_H
-#define BLACKNET_CRYPTO_DILITHIUM_H
+#ifndef BLACKNET_CRYPTO_SOLINAS62FIELD_H
+#define BLACKNET_CRYPTO_SOLINAS62FIELD_H
 
-#include "dilithiumring.h"
-#include "integerring.h"
 #include "polynomialring.h"
+#include "solinas62.h"
 
-/*
- * CRYSTALS-Dilithium (Version 3.1)
- * Shi Bai, Léo Ducas, Eike Kiltz, Tancrède Lepoint, Vadim Lyubashevsky,
- * Peter Schwabe, Gregor Seiler, Damien Stehlé
- * February 8, 2021
- * https://pq-crystals.org/dilithium/data/dilithium-specification-round3-20210208.pdf
- */
+typedef ExtensionRing<
+    Solinas62Ring,
+    2,
+    std::array{
+        Solinas62Ring("3f017d539af5221c"),
+        Solinas62Ring(0),
+        Solinas62Ring(1),
+    }
+> Solinas62RingDegree2;
 
-namespace dilithium {
-    const int32_t Q = 8380417;
-    const std::size_t N = 256;
+typedef ExtensionRing<
+    Solinas62Ring,
+    3,
+    std::array{
+        Solinas62Ring(2),
+        Solinas62Ring(0),
+        Solinas62Ring(1),
+        Solinas62Ring(1),
+    }
+> Solinas62RingDegree3;
 
-    // Dilithium3
-    const std::size_t K = 6;
-    const std::size_t L = 5;
-
-    using Zq = DilithiumRing;
-
-    static_assert(2 * N == Zq::primitive_root_of_unity_degree());
-
-    using Rq = CyclotomicRing<
-        Zq,
-        N
-    >;
-}
+typedef ExtensionRing<
+    Solinas62Ring,
+    4,
+    std::array{
+        Solinas62Ring("3f017d539af5221c"),
+        Solinas62Ring(0),
+        Solinas62Ring(0),
+        Solinas62Ring(0),
+        Solinas62Ring(1),
+    }
+> Solinas62RingDegree4;
 
 #endif

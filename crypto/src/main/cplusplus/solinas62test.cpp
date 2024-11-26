@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "solinas62.h"
+#include "solinas62field.h"
 
 BOOST_AUTO_TEST_SUITE(Solinas62)
 

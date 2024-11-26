@@ -15,31 +15,38 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#ifndef BLACKNET_CRYPTO_PERVUSHINFIELD_H
+#define BLACKNET_CRYPTO_PERVUSHINFIELD_H
 
-#include "ajtaicommitment.h"
-#include "latticefold.h"
-#include "matrix.h"
-#include "solinas62.h"
-#include "solinas62field.h"
-#include "vector.h"
+#include "pervushin.h"
+#include "polynomialring.h"
 
-static boost::random::mt19937 rng;
+typedef CyclotomicRing<
+    PervushinRing,
+    2
+> PervushinRingDegree2;
 
-static void BM_AjtaiCommitment(benchmark::State& state) {
-    using LatticeFold = LatticeFold<Solinas62Ring, Solinas62RingDegree4>;
-    using R = LatticeFold::Rq;
-    std::size_t M = 1;
+typedef ExtensionRing<
+    PervushinRing,
+    3,
+    std::array{
+        PervushinRing(2),
+        PervushinRing(0),
+        PervushinRing(1),
+        PervushinRing(1),
+    }
+> PervushinRingDegree3;
 
-    AjtaiCommitment<R> cs(
-        Matrix<R>::random(rng, LatticeFold::K, M)
-    );
-    Vector<R> m = Vector<R>::random(rng, M);
+typedef ExtensionRing<
+    PervushinRing,
+    4,
+    std::array{
+        PervushinRing(1),
+        PervushinRing(0),
+        PervushinRing(0),
+        PervushinRing(1),
+        PervushinRing(1),
+    }
+> PervushinRingDegree4;
 
-    for (auto _ : state)
-        benchmark::DoNotOptimize(
-            cs.commit(m)
-        );
-}
-BENCHMARK(BM_AjtaiCommitment);
+#endif

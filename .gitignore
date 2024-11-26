@@ -1,3 +1,6 @@
+# SageMath
+*.py
+
 # Maven
 target/
 
