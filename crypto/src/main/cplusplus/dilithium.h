@@ -40,7 +40,7 @@ namespace dilithium {
 
     using Zq = DilithiumRing;
 
-    static_assert(2 * N == Zq::primitive_root_of_unity_degree());
+    static_assert(N == Zq::zetas());
 
     using Rq = CyclotomicRing<
         Zq,

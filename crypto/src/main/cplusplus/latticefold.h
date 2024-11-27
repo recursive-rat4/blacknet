@@ -44,7 +44,7 @@ struct LatticeFold {
     static const std::size_t D = 64;
     static const std::size_t K = 16;
 
-    static_assert(2 * t == Zq::primitive_root_of_unity_degree());
+    static_assert(t == Zq::zetas());
 
     using Rq = CyclotomicRing<
         Zq,

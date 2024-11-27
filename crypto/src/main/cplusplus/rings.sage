@@ -31,7 +31,7 @@ class RingParams(NamedTuple):
     word_bits: int
     square_montgomery_modulus: int
     montgomery_modulus: int
-    primitive_root_of_unity: int
+    zetas: list[int]
 
 def compute_word_bits(number):
     bits = ceil(log(float(ring.modulus), 2.0))
@@ -52,6 +52,13 @@ def compute_montgomery_modulus(prime, word_bits):
     word = 2**word_bits
     return pow(prime, -1, word)
 
+def compute_montgomery_reduce(number, modulus, montgomery_modulus, word_bits):
+    t = number * montgomery_modulus % 2**word_bits
+    return (number - t * modulus) >> word_bits
+
+def compute_montgomery_form(number, modulus, montgomery_modulus, square_montgomery_modulus, word_bits):
+    return compute_montgomery_reduce(number * square_montgomery_modulus, modulus, montgomery_modulus, word_bits)
+
 def compute_primitive_root_of_unity(prime, degree):
     roots = nthroot_mod(1, degree, prime, True)
     for root in roots:
@@ -64,12 +71,22 @@ def compute_primitive_root_of_unity(prime, degree):
             return root
     raise ValueError(f"Found {len(roots)} roots, but none are primitive")
 
+def compute_bitreversal(number, bits):
+    reversed = 0
+    for i in range(0, bits):
+        reversed <<= 1
+        reversed |= number & 1
+        number >>= 1
+    return reversed
+
 def write_ring_cplusplus(spec, params):
     with open(spec.file_name, 'w', encoding="utf-8") as file:
         file.write("// Auto-generated with rings.sage\n")
         file.write('\n')
         file.write(f"#ifndef BLACKNET_CRYPTO_{spec.file_name.upper().replace('.', '_')}\n")
         file.write(f"#define BLACKNET_CRYPTO_{spec.file_name.upper().replace('.', '_')}\n")
+        file.write('\n')
+        file.write('#include <array>\n')
         file.write('\n')
         file.write('#include "integerring.h"\n')
         file.write('\n')
@@ -89,8 +106,8 @@ def write_ring_cplusplus(spec, params):
         file.write(f"    constexpr static const I M = {spec.modulus};\n")
         file.write(f"    constexpr static const I R2 = {params.square_montgomery_modulus};\n")
         file.write(f"    constexpr static const I RN = {params.montgomery_modulus};\n")
-        file.write(f"    constexpr static const I PROU = {params.primitive_root_of_unity};\n")
-        file.write(f"    constexpr static const std::size_t PROUD = {spec.cyclotomic_degree};\n")
+        zetas = str(params.zetas).replace('[', '{').replace(']', '}')
+        file.write(f"    constexpr static const std::array<I, {len(params.zetas)}> ZETAS = {zetas};\n")
         file.write(spec.reduce.replace("_Q_", str(spec.modulus)))
         file.write("};\n")
         file.write('\n')
@@ -99,8 +116,8 @@ def write_ring_cplusplus(spec, params):
         file.write('\n')
         file.write("#endif\n")
 
-rings = [
-    RingSpec("dilithiumring.h", "2²³ - 2¹³ + 1", "DilithiumRing", 8380417, 512,
+rings: list[RingSpec] = [
+    RingSpec("dilithiumring.h", "2²³ - 2¹³ + 1", "DilithiumRing", 8380417, 256,
 """
     constexpr static I reduce(I x) {
         int32_t t((x + (1 << 22)) >> 23);
@@ -110,7 +127,7 @@ rings = [
         return x + ((x >> 31) & _Q_);
     }
 """),
-    RingSpec("fermat.h", "2¹⁶ + 1", "FermatRing", 65537, 1024,
+    RingSpec("fermat.h", "2¹⁶ + 1", "FermatRing", 65537, 512,
 """
     constexpr static I reduce(I x) {
         return (x & 0xFFFF) - (x >> 16);
@@ -119,7 +136,7 @@ rings = [
         return x;
     }
 """),
-    RingSpec("pervushin.h", "2⁶¹ - 1", "PervushinRing", 2305843009213693951, 2,
+    RingSpec("pervushin.h", "2⁶¹ - 1", "PervushinRing", 2305843009213693951, 1,
 """
     constexpr static I reduce(I x) {
         return (x & _Q_) + (x >> 61);
@@ -128,7 +145,7 @@ rings = [
         return x + ((x >> 63) & _Q_);
     }
 """),
-    RingSpec("solinas62.h", "2⁶² - 2⁸ - 2⁵ + 1", "Solinas62Ring", 0x3ffffffffffffee1, 32,
+    RingSpec("solinas62.h", "2⁶² - 2⁸ - 2⁵ + 1", "Solinas62Ring", 0x3ffffffffffffee1, 16,
 """
     constexpr static I reduce(I x) {
         int32_t t((x + (1l << 61)) >> 62);
@@ -145,6 +162,10 @@ for ring in rings:
     square_montgomery_modulus = compute_square_montgomery_modulus(ring.modulus, word_bits)
     montgomery_modulus = compute_montgomery_modulus(ring.modulus, word_bits)
     montgomery_modulus = compute_centered_representation(montgomery_modulus, 2**word_bits)
-    primitive_root_of_unity = compute_primitive_root_of_unity(ring.modulus, ring.cyclotomic_degree)
-    params = RingParams(word_bits, square_montgomery_modulus, montgomery_modulus, primitive_root_of_unity)
+    primitive_root_of_unity = compute_primitive_root_of_unity(ring.modulus, ring.cyclotomic_degree * 2)
+    brv = [compute_bitreversal(i, log(ring.cyclotomic_degree, 2)) for i in range(0, ring.cyclotomic_degree)]
+    zetas = [pow(primitive_root_of_unity, i, ring.modulus) for i in brv]
+    zetas = [compute_montgomery_form(i, ring.modulus, montgomery_modulus, square_montgomery_modulus, word_bits) for i in zetas]
+    zetas = [compute_centered_representation(i, ring.modulus) for i in zetas]
+    params = RingParams(word_bits, square_montgomery_modulus, montgomery_modulus, zetas)
     write_ring_cplusplus(ring, params)

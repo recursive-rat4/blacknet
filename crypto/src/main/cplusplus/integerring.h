@@ -188,13 +188,12 @@ public:
         return Params::M;
     }
 
-    consteval static IntegerRing primitive_root_of_unity() {
-        // Undefined behaviour is prohibited in consteval
-        return IntegerRing(I(toForm<UI, UL>(Params::PROU)), 0);
+    constexpr static IntegerRing zeta(std::size_t index) {
+        return IntegerRing(Params::ZETAS[index], 0);
     }
 
-    consteval static std::size_t primitive_root_of_unity_degree() {
-        return Params::PROUD;
+    consteval static std::size_t zetas() {
+        return Params::ZETAS.size();
     }
 
     template<typename DRG>
