@@ -5,23 +5,27 @@
 
 #include "integerring.h"
 
-// 2⁶¹ - 1
-typedef IntegerRing<
-    int64_t,
-    __int128_t,
-    uint64_t,
-    __uint128_t,
-    2305843009213693951,
-    64,
-    -2305843009213693953,
-    2305843009213693950,
-    2,
-    [] (int64_t x) -> int64_t {
+struct PervushinRingParams {
+    using I = int64_t;
+    using L = __int128_t;
+    using UI = uint64_t;
+    using UL = __uint128_t;
+
+    constexpr static const I M = 2305843009213693951;
+    constexpr static const I R2 = 64;
+    constexpr static const I RN = -2305843009213693953;
+    constexpr static const I PROU = 2305843009213693950;
+    constexpr static const std::size_t PROUD = 2;
+
+    constexpr static I reduce(I x) {
         return (x & 2305843009213693951) + (x >> 61);
-    },
-    [] (int64_t x) -> int64_t {
+    }
+    constexpr static I freeze(I x) {
         return x + ((x >> 63) & 2305843009213693951);
     }
-> PervushinRing;
+};
+
+// 2⁶¹ - 1
+typedef IntegerRing<PervushinRingParams> PervushinRing;
 
 #endif

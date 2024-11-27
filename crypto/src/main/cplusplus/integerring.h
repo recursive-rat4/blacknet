@@ -26,20 +26,13 @@
 
 #include "semigroup.h"
 
-template<
-    typename I,
-    typename L,
-    typename UI,
-    typename UL,
-    I M,
-    I R2,
-    I RN,
-    I PROU,
-    std::size_t PROUD,
-    I(*REDUCE)(I),
-    I(*FREEZE)(I)
->
+template<typename Params>
 class IntegerRing {
+    using I = Params::I;
+    using L = Params::L;
+    using UI = Params::UI;
+    using UL = Params::UL;
+
     constexpr IntegerRing(I n, int) : n(n) {}
 public:
     typedef IntegerRing Scalar;
@@ -60,18 +53,18 @@ public:
     constexpr IntegerRing(I n) : n(toForm(n)) {}
 
     constexpr bool operator == (const IntegerRing& other) const {
-        return FREEZE(REDUCE(n)) == FREEZE(REDUCE(other.n));
+        return Params::freeze(Params::reduce(n)) == Params::freeze(Params::reduce(other.n));
     }
 
     constexpr IntegerRing& operator += (const IntegerRing& other) {
         n += other.n;
-        n = REDUCE(n);
+        n = Params::reduce(n);
         return *this;
     }
 
     constexpr IntegerRing operator + (const IntegerRing& other) const {
         I t(n + other.n);
-        t = REDUCE(t);
+        t = Params::reduce(t);
         return IntegerRing(t, 0);
     }
 
@@ -89,19 +82,19 @@ public:
 
     constexpr IntegerRing& operator -= (const IntegerRing& other) {
         n -= other.n;
-        n = REDUCE(n);
+        n = Params::reduce(n);
         return *this;
     }
 
     constexpr IntegerRing operator - (const IntegerRing& other) const {
         I t(n - other.n);
-        t = REDUCE(t);
+        t = Params::reduce(t);
         return IntegerRing(t, 0);
     }
 
     constexpr IntegerRing operator - () const {
         if (*this != IntegerRing(0)) {
-            I t(M - n);
+            I t(Params::M - n);
             return IntegerRing(t, 0);
         } else {
             return IntegerRing(0);
@@ -110,7 +103,7 @@ public:
 
     constexpr IntegerRing douple() const {
         I t(n << 1);
-        t = REDUCE(t);
+        t = Params::reduce(t);
         return IntegerRing(t, 0);
     }
 
@@ -146,7 +139,7 @@ public:
         friend IntegerRing;
         I data;
         std::size_t index;
-        constexpr BitIterator(const IntegerRing& e) : data(FREEZE(fromForm(e.n))), index(0) {}
+        constexpr BitIterator(const IntegerRing& e) : data(Params::freeze(fromForm(e.n))), index(0) {}
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = bool;
@@ -192,16 +185,16 @@ public:
     }
 
     consteval static I modulus() {
-        return M;
+        return Params::M;
     }
 
     consteval static IntegerRing primitive_root_of_unity() {
         // Undefined behaviour is prohibited in consteval
-        return IntegerRing(I(toForm<UI, UL>(PROU)), 0);
+        return IntegerRing(I(toForm<UI, UL>(Params::PROU)), 0);
     }
 
     consteval static std::size_t primitive_root_of_unity_degree() {
-        return PROUD;
+        return Params::PROUD;
     }
 
     template<typename DRG>
@@ -211,7 +204,7 @@ public:
 
     template<typename RNG>
     static IntegerRing random(RNG& rng) {
-        boost::random::uniform_int_distribution<I> ud(-(M - 1) / 2, (M - 1) / 2);
+        boost::random::uniform_int_distribution<I> ud(-(Params::M - 1) / 2, (Params::M - 1) / 2);
         return random(rng, ud);
     }
 
@@ -223,20 +216,20 @@ private:
     template<typename MRI = I, typename MRL = L>
     constexpr static MRI reduce(MRL x) {
         // Partial Montgomery reduction
-        MRI t(x * MRI(RN));
-        return (x - MRL(t) * MRL(M)) >> sizeof(MRI) * 8;
+        MRI t(x * MRI(Params::RN));
+        return (x - MRL(t) * MRL(Params::M)) >> sizeof(MRI) * 8;
     }
     template<typename MRI = I, typename MRL = L>
     constexpr static MRI toForm(MRI n) {
-        return reduce<MRI, MRL>(MRL(n) * MRL(R2));
+        return reduce<MRI, MRL>(MRL(n) * MRL(Params::R2));
     }
     template<typename MRI = I, typename MRL = L>
     constexpr static MRI fromForm(MRI n) {
         return reduce<MRI, MRL>(MRL(n));
     }
 
-    constexpr static const std::size_t BITS = std::log2(M);
-    constexpr static const I PHI_MINUS_1 = M - I(2);
+    constexpr static const std::size_t BITS = std::log2(Params::M);
+    constexpr static const I PHI_MINUS_1 = Params::M - I(2);
 };
 
 #endif

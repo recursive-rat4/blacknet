@@ -73,65 +73,68 @@ def write_ring_cplusplus(spec, params):
         file.write('\n')
         file.write('#include "integerring.h"\n')
         file.write('\n')
-        file.write(f"// {spec.comment}\n")
-        file.write("typedef IntegerRing<\n")
-        file.write(f"    int{params.word_bits}_t,\n")
+        file.write(f"struct {spec.type_name}Params" + " {\n")
+        file.write(f"    using I = int{params.word_bits}_t;\n")
         dword_bits = params.word_bits * 2
         if dword_bits <= 64:
-            file.write(f"    int{dword_bits}_t,\n")
+            file.write(f"    using L = int{dword_bits}_t;\n")
         else:
-            file.write(f"    __int{dword_bits}_t,\n")
-        file.write(f"    uint{params.word_bits}_t,\n")
+            file.write(f"    using L = __int{dword_bits}_t;\n")
+        file.write(f"    using UI = uint{params.word_bits}_t;\n")
         if dword_bits <= 64:
-            file.write(f"    uint{dword_bits}_t,\n")
+            file.write(f"    using UL = uint{dword_bits}_t;\n")
         else:
-            file.write(f"    __uint{dword_bits}_t,\n")
-        file.write(f"    {spec.modulus},\n")
-        file.write(f"    {params.square_montgomery_modulus},\n")
-        file.write(f"    {params.montgomery_modulus},\n")
-        file.write(f"    {params.primitive_root_of_unity},\n")
-        file.write(f"    {spec.cyclotomic_degree},")
+            file.write(f"    using UL = __uint{dword_bits}_t;\n")
+        file.write('\n')
+        file.write(f"    constexpr static const I M = {spec.modulus};\n")
+        file.write(f"    constexpr static const I R2 = {params.square_montgomery_modulus};\n")
+        file.write(f"    constexpr static const I RN = {params.montgomery_modulus};\n")
+        file.write(f"    constexpr static const I PROU = {params.primitive_root_of_unity};\n")
+        file.write(f"    constexpr static const std::size_t PROUD = {spec.cyclotomic_degree};\n")
         file.write(spec.reduce.replace("_Q_", str(spec.modulus)))
-        file.write(f"> {spec.type_name};\n")
+        file.write("};\n")
+        file.write('\n')
+        file.write(f"// {spec.comment}\n")
+        file.write(f"typedef IntegerRing<{spec.type_name}Params> {spec.type_name};\n")
         file.write('\n')
         file.write("#endif\n")
 
 rings = [
     RingSpec("dilithiumring.h", "2²³ - 2¹³ + 1", "DilithiumRing", 8380417, 512,
 """
-    [] (int32_t x) -> int32_t {
+    constexpr static I reduce(I x) {
         int32_t t((x + (1 << 22)) >> 23);
         return x - t * _Q_;
-    },
-    [] (int32_t x) -> int32_t {
+    }
+    constexpr static I freeze(I x) {
         return x + ((x >> 31) & _Q_);
     }
 """),
     RingSpec("fermat.h", "2¹⁶ + 1", "FermatRing", 65537, 1024,
 """
-    [] (int32_t x) -> int32_t {
+    constexpr static I reduce(I x) {
         return (x & 0xFFFF) - (x >> 16);
-    },
-    [] (int32_t x) -> int32_t {
+    }
+    constexpr static I freeze(I x) {
         return x;
     }
 """),
     RingSpec("pervushin.h", "2⁶¹ - 1", "PervushinRing", 2305843009213693951, 2,
 """
-    [] (int64_t x) -> int64_t {
+    constexpr static I reduce(I x) {
         return (x & _Q_) + (x >> 61);
-    },
-    [] (int64_t x) -> int64_t {
+    }
+    constexpr static I freeze(I x) {
         return x + ((x >> 63) & _Q_);
     }
 """),
     RingSpec("solinas62.h", "2⁶² - 2⁸ - 2⁵ + 1", "Solinas62Ring", 0x3ffffffffffffee1, 32,
 """
-    [] (int64_t x) -> int64_t {
+    constexpr static I reduce(I x) {
         int32_t t((x + (1l << 61)) >> 62);
         return x - t * _Q_;
-    },
-    [] (int64_t x) -> int64_t {
+    }
+    constexpr static I freeze(I x) {
         return x + ((x >> 63) & _Q_);
     }
 """)

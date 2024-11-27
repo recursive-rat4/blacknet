@@ -5,23 +5,27 @@
 
 #include "integerring.h"
 
-// 2¹⁶ + 1
-typedef IntegerRing<
-    int32_t,
-    int64_t,
-    uint32_t,
-    uint64_t,
-    65537,
-    1,
-    -65535,
-    431,
-    1024,
-    [] (int32_t x) -> int32_t {
+struct FermatRingParams {
+    using I = int32_t;
+    using L = int64_t;
+    using UI = uint32_t;
+    using UL = uint64_t;
+
+    constexpr static const I M = 65537;
+    constexpr static const I R2 = 1;
+    constexpr static const I RN = -65535;
+    constexpr static const I PROU = 431;
+    constexpr static const std::size_t PROUD = 1024;
+
+    constexpr static I reduce(I x) {
         return (x & 0xFFFF) - (x >> 16);
-    },
-    [] (int32_t x) -> int32_t {
+    }
+    constexpr static I freeze(I x) {
         return x;
     }
-> FermatRing;
+};
+
+// 2¹⁶ + 1
+typedef IntegerRing<FermatRingParams> FermatRing;
 
 #endif
