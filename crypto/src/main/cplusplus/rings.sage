@@ -133,7 +133,7 @@ rings: list[RingSpec] = [
         return (x & 0xFFFF) - (x >> 16);
     }
     constexpr static I freeze(I x) {
-        return x;
+        return x + ((x >> 31) & _Q_);
     }
 """),
     RingSpec("pervushin.h", "2⁶¹ - 1", "PervushinRing", 2305843009213693951, 1,

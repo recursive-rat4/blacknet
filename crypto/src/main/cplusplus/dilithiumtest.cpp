@@ -57,6 +57,18 @@ BOOST_AUTO_TEST_CASE(ZqSub) {
     BOOST_TEST(Zq(0) == Zq(1) - Zq(1));
 }
 
+BOOST_AUTO_TEST_CASE(ZqInv) {
+    Zq a(24);
+    Zq b(-349184);
+    Zq c(-25);
+    Zq d(1005650);
+    BOOST_TEST(a == b.invert().value());
+    BOOST_TEST(b == a.invert().value());
+    BOOST_TEST(c == d.invert().value());
+    BOOST_TEST(d == c.invert().value());
+    BOOST_TEST(!Zq(0).invert());
+}
+
 BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
     Zq a(42);
     Zq b(44);
@@ -305,7 +317,7 @@ BOOST_AUTO_TEST_CASE(RqMul) {
     });
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
-    BOOST_TEST(c == c * Rq::LEFT_MULTIPLICATIVE_IDENTITY());
+    BOOST_TEST(c == Rq::LEFT_MULTIPLICATIVE_IDENTITY() * c);
     BOOST_TEST(Rq::LEFT_ADDITIVE_IDENTITY() == c * Zq(0));
 }
 

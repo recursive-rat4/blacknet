@@ -227,7 +227,7 @@ private:
         return reduce<MRI, MRL>(MRL(n));
     }
 
-    constexpr static const std::size_t BITS = std::log2(Params::M);
+    constexpr static const std::size_t BITS = std::ceil(std::log2(Params::M));
     constexpr static const I PHI_MINUS_1 = Params::M - I(2);
 };
 

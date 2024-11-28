@@ -19,7 +19,6 @@
 #define BLACKNET_CRYPTO_DILITHIUM_H
 
 #include "dilithiumring.h"
-#include "integerring.h"
 #include "polynomialring.h"
 
 /*
@@ -31,7 +30,6 @@
  */
 
 namespace dilithium {
-    const int32_t Q = 8380417;
     const std::size_t N = 256;
 
     // Dilithium3
