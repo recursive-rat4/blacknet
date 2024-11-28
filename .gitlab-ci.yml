@@ -8,22 +8,22 @@
 # See the LICENSE.txt file at the top-level directory of this distribution.
 #
 
-image: maven:3.9.9-eclipse-temurin-21@sha256:5a44dff9390bff393693518d70233977ff245c2876320655a47be5622719becf
-
-variables:
-  MAVEN: "mvn --batch-mode --no-transfer-progress" #TODO 4
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-
-cache:
-  paths:
-    - .m2/repository
+.openjdk:
+  image: maven:3.9.9-eclipse-temurin-21@sha256:5a44dff9390bff393693518d70233977ff245c2876320655a47be5622719becf
+  variables:
+    MAVEN: "mvn --batch-mode --no-transfer-progress" #TODO 4
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  cache:
+    paths:
+      - .m2/repository
 
 stages:
   - scan
   - test
   - build
 
-scan:
+openjdk-scan:
+  extends: .openjdk
   stage: scan
   script:
     - $MAVEN artifact:check-buildplan cyclonedx:makeAggregateBom
@@ -37,16 +37,26 @@ scan:
     reports:
       cyclonedx: target/bom.json
 
-test:
+openjdk-test:
+  extends: .openjdk
   stage: test
   script:
     - $MAVEN test
+  rules:
+    - changes:
+      - pom.xml
+      - "**/pom.xml"
+      - "**/*.java"
+      - "**/*.kt"
+      when: on_success
+    - when: never
   artifacts:
     reports:
       junit:
         - "**/target/surefire-reports/TEST-*.xml"
 
-build:
+openjdk-build:
+  extends: .openjdk
   stage: build
   variables:
     DESTDIR: "blacknet-$CI_COMMIT_TAG"
