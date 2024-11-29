@@ -77,7 +77,7 @@
         <coroutines.version>1.9.0</coroutines.version>
         <serialization.version>1.7.3</serialization.version>
         <ktor.version>3.0.1</ktor.version>
-        <atomicfu.version>0.25.0</atomicfu.version>
+        <atomicfu.version>0.26.1</atomicfu.version>
         <eddsa.version>0.3.0</eddsa.version>
         <blake2b.version>2.0.0</blake2b.version>
         <bouncycastle.version>1.79</bouncycastle.version>
