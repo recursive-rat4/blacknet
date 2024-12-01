@@ -19,15 +19,43 @@
 #include <boost/random/mersenne_twister.hpp>
 
 #include "bfv.h"
+#include "convolution.h"
 #include "fermat.h"
+#include "polynomialring.h"
 #include "solinas62.h"
 
 static boost::random::mt19937 rng;
 
 BOOST_AUTO_TEST_SUITE(BFVs)
 
+struct RtParams {
+    using Z = FermatRing;
+
+    constexpr static const std::size_t N = 4;
+
+    constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+        convolution::negacyclic<Z, N>(r, a, b);
+    }
+    constexpr static void toForm(std::array<Z, N>&) {}
+    constexpr static void fromForm(std::array<Z, N>&) {}
+};
+using Rt = PolynomialRing<RtParams>;
+
+struct RqParams {
+    using Z = Solinas62Ring;
+
+    constexpr static const std::size_t N = 4;
+
+    constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+        convolution::negacyclic<Z, N>(r, a, b);
+    }
+    constexpr static void toForm(std::array<Z, N>&) {}
+    constexpr static void fromForm(std::array<Z, N>&) {}
+};
+using Rq = PolynomialRing<RqParams>;
+
 BOOST_AUTO_TEST_CASE(Tests) {
-    using BFV = BFV<FermatRing, Solinas62Ring, 4>;
+    using BFV = BFV<Rt, Rq>;
     BFV bfv;
     auto sk = bfv.generateSecretKey(rng);
     auto pk = bfv.generatePublicKey(rng, sk);

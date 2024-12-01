@@ -204,7 +204,7 @@ public:
     template<typename RNG>
     static IntegerRing random(RNG& rng) {
         boost::random::uniform_int_distribution<I> ud(-(Params::M - 1) / 2, (Params::M - 1) / 2);
-        return random(rng, ud);
+        return IntegerRing(ud(rng), 0);
     }
 
     template<typename RNG, typename DST>

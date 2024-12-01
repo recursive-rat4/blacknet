@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
 
 #include <cmath>
+#include <concepts>
 #include <initializer_list>
 #include <iostream>
 #include <vector>
@@ -38,14 +39,16 @@ public:
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
     constexpr MultilinearExtension(std::vector<E>&& coefficients) : coefficients(std::move(coefficients)) {}
     constexpr MultilinearExtension(const Matrix<E>& matrix) : coefficients(matrix.elements) {}
-    template<auto... A>
-    constexpr MultilinearExtension(const PolynomialRing<E, A...>& polynomial) {
+    template<typename Params>
+    requires(std::same_as<E, typename Params::Z>)
+    constexpr MultilinearExtension(const PolynomialRing<Params>& polynomial) {
         coefficients.assign(polynomial.coefficients.cbegin(), polynomial.coefficients.cend());
     }
     constexpr MultilinearExtension(const Vector<E>& vector) : coefficients(vector.elements) {}
-    template<std::size_t N, auto... A>
-    constexpr MultilinearExtension(const Vector<PolynomialRing<E, N, A...>>& vector) {
-        coefficients.reserve(vector.elements.size() * N);
+    template<typename Params>
+    requires(std::same_as<E, typename Params::Z>)
+    constexpr MultilinearExtension(const Vector<PolynomialRing<Params>>& vector) {
+        coefficients.reserve(vector.elements.size() * Params::N);
         for (std::size_t i = 0; i < vector.elements.size(); ++i)
             std::copy(
                 vector.elements[i].coefficients.begin(),

@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_DILITHIUM_H
 
 #include "dilithiumring.h"
+#include "numbertheoretictransform.h"
 #include "polynomialring.h"
 
 /*
@@ -30,20 +31,31 @@
  */
 
 namespace dilithium {
-    const std::size_t N = 256;
-
     // Dilithium3
     const std::size_t K = 6;
     const std::size_t L = 5;
 
     using Zq = DilithiumRing;
 
-    static_assert(N == Zq::zetas());
+    struct CyclotomicRingParams {
+        using Z = DilithiumRing;
 
-    using Rq = CyclotomicRing<
-        Zq,
-        N
-    >;
+        constexpr static const std::size_t N = 256;
+
+        constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+            ntt::convolute<Z, N>(r, a, b);
+        }
+        constexpr static void toForm(std::array<Z, N>& a) {
+            ntt::cooley_tukey<Z, N>(a);
+        }
+        constexpr static void fromForm(std::array<Z, N>& a) {
+            ntt::gentleman_sande<Z, N>(a);
+        }
+
+        static_assert(N == Z::zetas());
+    };
+
+    using Rq = PolynomialRing<CyclotomicRingParams>;
 }
 
 #endif

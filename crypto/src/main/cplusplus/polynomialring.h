@@ -23,20 +23,18 @@
 #include <iostream>
 #include <boost/io/ostream_joiner.hpp>
 
-#include "convolution.h"
-
-template<
-    typename Z,
-    std::size_t N,
-    void(*CONVOLUTE)(std::array<Z,N>&, const std::array<Z,N>&, const std::array<Z,N>&)
->
+template<typename Params>
 class PolynomialRing {
 public:
+    using Z = Params::Z;
+    constexpr static const std::size_t N = Params::N;
+
     typedef Z Scalar;
     consteval static PolynomialRing LEFT_ADDITIVE_IDENTITY() {
         PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = Z::LEFT_ADDITIVE_IDENTITY();
+        Params::toForm(t.coefficients);
         return t;
     }
     consteval static PolynomialRing LEFT_MULTIPLICATIVE_IDENTITY() {
@@ -44,6 +42,7 @@ public:
         t.coefficients[0] = Z::LEFT_MULTIPLICATIVE_IDENTITY();
         for (std::size_t i = 1; i < N; ++i)
             t.coefficients[i] = Z(0);
+        Params::toForm(t.coefficients);
         return t;
     }
 
@@ -55,10 +54,12 @@ public:
     constexpr PolynomialRing(const Z& e) {
         coefficients[0] = e;
         std::fill_n(coefficients.begin() + 1, N - 1, Z(0));
+        Params::toForm(coefficients);
     }
     constexpr PolynomialRing(std::initializer_list<Z> init) {
         std::copy(init.begin(), init.end(), coefficients.begin());
         std::fill_n(coefficients.begin() + init.size(), N - init.size(), Z(0));
+        Params::toForm(coefficients);
     }
 
     constexpr bool operator == (const PolynomialRing&) const = default;
@@ -82,7 +83,7 @@ public:
 
     constexpr PolynomialRing operator * (const PolynomialRing& other) const {
         PolynomialRing t(PolynomialRing::LEFT_ADDITIVE_IDENTITY());
-        CONVOLUTE(t.coefficients, this->coefficients, other.coefficients);
+        Params::convolute(t.coefficients, this->coefficients, other.coefficients);
         return t;
     }
 
@@ -127,8 +128,10 @@ public:
     }
 
     constexpr bool checkInfiniteNorm(const NumericType& bound) const {
+        std::array<Z, N> t(coefficients);
+        Params::fromForm(t);
         for (std::size_t i = 0; i < N; ++i) {
-            if (coefficients[i].checkInfiniteNorm(bound))
+            if (t[i].checkInfiniteNorm(bound))
                 continue;
             else
                 return false;
@@ -149,8 +152,10 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const PolynomialRing& val)
     {
+        std::array<Z, N> coefficients(val.coefficients);
+        Params::fromForm(coefficients);
         out << '[';
-        std::copy(std::begin(val.coefficients), std::end(val.coefficients), boost::io::make_ostream_joiner(out, ", "));
+        std::copy(std::begin(coefficients), std::end(coefficients), boost::io::make_ostream_joiner(out, ", "));
         return out << ']';
     }
 
@@ -179,29 +184,9 @@ public:
     static PolynomialRing random(RNG& rng, const DST& dst) {
         PolynomialRing t;
         std::ranges::generate(t.coefficients, [&] { return Z::random(rng, dst); });
+        Params::toForm(t.coefficients);
         return t;
     }
 };
-
-template<
-    typename Z,
-    std::size_t N
->
-using CyclotomicRing = PolynomialRing<
-    Z,
-    N,
-    convolution::negacyclic<Z, N>
->;
-
-template<
-    typename Z,
-    std::size_t N,
-    std::array<Z, N + 1> M
->
-using ExtensionRing = PolynomialRing<
-    Z,
-    N,
-    convolution::quotient<Z, N, M>
->;
 
 #endif

@@ -21,14 +21,12 @@
 #include "latticefold.h"
 #include "matrix.h"
 #include "solinas62.h"
-#include "solinas62field.h"
 #include "vector.h"
 
 BOOST_AUTO_TEST_SUITE(LatticeFolds)
 
 using Z = Solinas62Ring;
-using F = Solinas62RingDegree4;
-using LatticeFold = LatticeFold<Z, F>;
+using LatticeFold = LatticeFold<Z>;
 using R = LatticeFold::Rq;
 
 BOOST_AUTO_TEST_CASE(Gadget) {
@@ -104,6 +102,14 @@ BOOST_AUTO_TEST_CASE(GFolds) {
     BOOST_TEST(6 == gfold.variables());
     BOOST_TEST(4 == gfold.degree());
     BOOST_TEST(Z(32) == Hypercube<Z>::sum(gfold));
+}
+
+BOOST_AUTO_TEST_CASE(RingIsomorphisms) {
+    R a({4, 0, 0, 1, 5,});
+    R b(a);
+    auto c = LatticeFold::isomorph(std::move(b));
+    auto d = LatticeFold::isomorph(std::move(c));
+    BOOST_TEST(a == d);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

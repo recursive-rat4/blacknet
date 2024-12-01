@@ -222,7 +222,7 @@ public:
         UInt256 t(UInt256::random(rng));
         while (t >= M)
             t = UInt256::random(rng);
-        return PrimeField(toForm(t));
+        return PrimeField(t);
     }
 private:
     constexpr static UInt256 reduce(const UInt512& x) {

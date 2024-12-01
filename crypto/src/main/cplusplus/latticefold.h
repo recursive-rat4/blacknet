@@ -18,15 +18,17 @@
 #ifndef BLACKNET_CRYPTO_LATTICEFOLD_H
 #define BLACKNET_CRYPTO_LATTICEFOLD_H
 
+#include <boost/random/uniform_int_distribution.hpp>
+
+#include "convolution.h"
 #include "eqextension.h"
 #include "matrix.h"
 #include "multilinearextension.h"
+#include "numbertheoretictransform.h"
 #include "polynomial.h"
 #include "polynomialring.h"
-#include "ringproduct.h"
 #include "vector.h"
 #include "util.h"
-#include <boost/random/uniform_int_distribution.hpp>
 
 /*
  * LatticeFold: A Lattice-based Folding Scheme and its Applications to Succinct Proof Systems
@@ -35,7 +37,7 @@
  * https://eprint.iacr.org/2024/257
  */
 
-template<typename Zq, typename F>
+template<typename Zq>
 struct LatticeFold {
     constexpr static ssize_t b = 2;
     static const std::size_t k = 16;
@@ -45,14 +47,47 @@ struct LatticeFold {
     static const std::size_t K = 16;
 
     static_assert(t == Zq::zetas());
+    static_assert(std::is_signed_v<typename Zq::NumericType>);
 
-    using Rq = CyclotomicRing<
-        Zq,
-        D
-    >;
-    using RqIso = RingProduct<
-        F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F // t = 16
-    >;
+    struct CanonicalRingParams {
+        using Z = Zq;
+
+        constexpr static const std::size_t N = D;
+
+        constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+            convolution::negacyclic<Z, N>(r, a, b);
+        }
+        constexpr static void toForm(std::array<Z, N>&) {}
+        constexpr static void fromForm(std::array<Z, N>&) {}
+    };
+
+    struct NTTRingParams {
+        using Z = Zq;
+
+        constexpr static const std::size_t N = D;
+
+        constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+            ntt::convolute<Z, N>(r, a, b);
+        }
+        constexpr static void toForm(std::array<Z, N>& a) {
+            ntt::cooley_tukey<Z, N>(a);
+        }
+        constexpr static void fromForm(std::array<Z, N>& a) {
+            ntt::gentleman_sande<Z, N>(a);
+        }
+    };
+
+    using Rq = PolynomialRing<CanonicalRingParams>;
+    using RqIso = PolynomialRing<NTTRingParams>;
+
+    constexpr static RqIso& isomorph(Rq&& f) {
+        NTTRingParams::toForm(f.coefficients);
+        return reinterpret_cast<RqIso&>(f);
+    }
+    constexpr static Rq& isomorph(RqIso&& f) {
+        NTTRingParams::fromForm(f.coefficients);
+        return reinterpret_cast<Rq&>(f);
+    }
 
     boost::random::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
 

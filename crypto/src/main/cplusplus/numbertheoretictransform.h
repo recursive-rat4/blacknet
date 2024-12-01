@@ -1,0 +1,100 @@
+/*
+ * Copyright (c) 2024 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#ifndef BLACKNET_CRYPTO_NUMBERTHEORETICTRANSFORM_H
+#define BLACKNET_CRYPTO_NUMBERTHEORETICTRANSFORM_H
+
+#include <array>
+
+// https://arxiv.org/abs/2211.13546
+
+namespace ntt {
+    template<typename Z, std::size_t N>
+    constexpr void cooley_tukey(std::array<Z, N>& a) {
+        constexpr std::size_t inertia = N / Z::zetas();
+        std::size_t i = 0, j = 0;
+        for (std::size_t k = N / 2; k >= inertia; k >>= 1) {
+            for (std::size_t l = 0; l < N; l = i + k) {
+                const Z zeta(Z::zeta(++j));
+                for (i = l; i < l + k; ++i) {
+                    Z t(a[i + k] * zeta);
+                    a[i + k] = a[i] - t;
+                    a[i] += t;
+                }
+            }
+        }
+    }
+
+    template<typename Z, std::size_t N>
+    constexpr void gentleman_sande(std::array<Z, N>& a) {
+        constexpr std::size_t inertia = N / Z::zetas();
+        // Undefined behaviour is prohibited in consteval
+        static const Z scale = Z(Z::zetas()).invert().value();
+
+        std::size_t i = 0, j = Z::zetas();
+        for (std::size_t k = inertia; k <= N / 2; k <<= 1) {
+            for (std::size_t l = 0; l < N; l = i + k) {
+                const Z zeta(-Z::zeta(--j));
+                for (i = l; i < l + k; ++i) {
+                    Z t(a[i]);
+                    a[i] += a[i + k];
+                    a[i + k] = t - a[i + k];
+                    a[i + k] *= zeta;
+                }
+            }
+        }
+
+        for (i = 0; i < N; ++i) {
+            a[i] *= scale;
+        }
+    }
+
+namespace {
+    template<typename Z, std::size_t N>
+    constexpr static void base4(
+        std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b,
+        std::size_t i, Z zeta
+    ) {
+        r[0 + i] = a[0 + i] * b[0 + i] + zeta * (a[1 + i] * b[3 + i] + a[2 + i] * b[2 + i] + a[3 + i] * b[1 + i]);
+        r[1 + i] = a[0 + i] * b[1 + i] + a[1 + i] * b[0 + i] + zeta * (a[2 + i] * b[3 + i] + a[3 + i] * b[2 + i]);
+        r[2 + i] = a[0 + i] * b[2 + i] + a[1 + i] * b[1 + i] + a[2 + i] * b[0 + i] + zeta * (a[3 + i] * b[3 + i]);
+        r[3 + i] = a[0 + i] * b[3 + i] + a[1 + i] * b[2 + i] + a[2 + i] * b[1 + i] + a[3 + i] * b[0 + i];
+    }
+}
+
+    template<typename Z, std::size_t N>
+    constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+        constexpr std::size_t inertia = N / Z::zetas();
+
+        if constexpr (inertia == 1) {
+            for (std::size_t i = 0; i < N; ++i) {
+                r[i] = a[i] * b[i];
+            }
+        } else if constexpr (inertia == 4) {
+            constexpr std::size_t k = inertia * 2;
+            constexpr std::size_t l = N / k;
+            for (std::size_t i = 0; i < l; ++i) {
+                base4(r, a, b, i * k, Z::zeta(l + i));
+                base4(r, a, b, i * k + inertia, -Z::zeta(l + i));
+            }
+        } else {
+            static_assert(false, "Not implemented");
+        }
+    }
+}
+
+#endif

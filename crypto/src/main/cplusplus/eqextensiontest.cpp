@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <ranges>
 #include <boost/test/unit_test.hpp>
+#include <ranges>
 
 #include "eqextension.h"
 #include "hypercube.h"

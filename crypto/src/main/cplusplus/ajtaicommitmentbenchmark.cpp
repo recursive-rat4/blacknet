@@ -22,14 +22,13 @@
 #include "latticefold.h"
 #include "matrix.h"
 #include "solinas62.h"
-#include "solinas62field.h"
 #include "vector.h"
 
 static boost::random::mt19937 rng;
 
 static void BM_AjtaiCommitment(benchmark::State& state) {
-    using LatticeFold = LatticeFold<Solinas62Ring, Solinas62RingDegree4>;
-    using R = LatticeFold::Rq;
+    using LatticeFold = LatticeFold<Solinas62Ring>;
+    using R = LatticeFold::RqIso;
     std::size_t M = 1;
 
     AjtaiCommitment<R> cs(

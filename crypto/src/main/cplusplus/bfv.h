@@ -27,16 +27,21 @@
 
 // https://eprint.iacr.org/2012/144
 
-template<typename Zt, typename Zq, std::size_t D>
+template<typename Rt, typename Rq>
 struct BFV {
+    using Zt = Rt::Z;
+    using Zq = Rq::Z;
+    constexpr static const std::size_t D = Rq::N;
+
+    static_assert(Rt::N == Rq::N);
+    static_assert(std::is_signed_v<typename Zt::NumericType>);
+    static_assert(std::is_signed_v<typename Zq::NumericType>);
+
     // https://eprint.iacr.org/2019/939
     constexpr static const double SIGMA = 8.0 / std::sqrt(2.0 * std::numbers::pi);
     static_assert(SIGMA >= 3.19 && SIGMA <= 3.2);
 
-    using Rt = CyclotomicRing<Zt, D>;
-    using Rq = CyclotomicRing<Zq, D>;
     constexpr static const auto DELTA = Zq::modulus() / Zt::modulus();
-    static_assert(std::is_signed_v<typename Zq::NumericType>);
 
     using SecretKey = Rq;
 

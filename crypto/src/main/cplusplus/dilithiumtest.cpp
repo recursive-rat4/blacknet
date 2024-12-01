@@ -441,4 +441,16 @@ BOOST_AUTO_TEST_CASE(RqSub) {
     BOOST_TEST(Rq::LEFT_ADDITIVE_IDENTITY() == Rq::LEFT_ADDITIVE_IDENTITY() - Rq::LEFT_ADDITIVE_IDENTITY());
 }
 
+BOOST_AUTO_TEST_CASE(RqInfiniteNorm) {
+    Rq a({ 42, 6, 5, 4, 3, 2, 1, });
+    Rq b({ 44, 6, 5, 4, 3, 2, 1, });
+    Rq c({ -42, 6, 5, 4, 3, 2, 1, });
+    Rq d({ -44, 6, 5, 4, 3, 2, 1, });
+    int32_t bound = 44;
+    BOOST_TEST(a.checkInfiniteNorm(bound));
+    BOOST_TEST(!b.checkInfiniteNorm(bound));
+    BOOST_TEST(c.checkInfiniteNorm(bound));
+    BOOST_TEST(!d.checkInfiniteNorm(bound));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
