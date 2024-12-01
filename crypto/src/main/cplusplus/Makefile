@@ -24,3 +24,7 @@ test: $(wildcard *test.cpp *.h)
 benchmark: $(wildcard *benchmark.cpp *.h)
 	$(CXX) -std=c++26 -O3 -fwrapv $(filter %.cpp,$^) -lbenchmark -pipe -o benchmark
 	./benchmark
+
+ci-test:
+	$(CXX) -std=c++26 -fwrapv *test.cpp -lboost_unit_test_framework -pipe -o ci-test
+	./ci-test --log_format=JUNIT --log_sink=TEST.xml

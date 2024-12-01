@@ -2,11 +2,22 @@
 #
 # Copyright (c) 2020-2024 Pavel Vasin
 #
-# Licensed under the Jelurida Public License version 1.1
-# for the Blacknet Public Blockchain Platform (the "License");
-# you may not use this file except in compliance with the License.
-# See the LICENSE.txt file at the top-level directory of this distribution.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+
+.gcc:
+  image: gcc:14.2.0@sha256:561e2a4b76c441215d26625fbf2d5e345da60ef22b7d46e6ab45d1d53d95c43e
 
 .openjdk:
   image: maven:3.9.9-eclipse-temurin-21@sha256:5a44dff9390bff393693518d70233977ff245c2876320655a47be5622719becf
@@ -21,6 +32,26 @@ stages:
   - scan
   - test
   - build
+
+gcc-test:
+  extends: .gcc
+  stage: test
+  before_script:
+    - apt-get update && apt-get -y install libboost-dev libboost-random-dev libboost-test-dev
+  script:
+    - cd crypto/src/main/cplusplus
+    - make ci-test
+  rules:
+    - changes:
+      - "**/Makefile"
+      - "**/*.h"
+      - "**/*.cpp"
+      when: on_success
+    - when: never
+  artifacts:
+    reports:
+      junit:
+        - "crypto/src/main/cplusplus/TEST.xml"
 
 openjdk-scan:
   extends: .openjdk
