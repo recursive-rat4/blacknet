@@ -41,7 +41,8 @@ struct BFV {
     constexpr static const double SIGMA = 8.0 / std::sqrt(2.0 * std::numbers::pi);
     static_assert(SIGMA >= 3.19 && SIGMA <= 3.2);
 
-    constexpr static const auto DELTA = Zq::modulus() / Zt::modulus();
+    constexpr static const double DELTA = double(Zq::modulus()) / double(Zt::modulus());
+    constexpr static const double INV_DELTA = double(Zt::modulus()) / double(Zq::modulus());
 
     using SecretKey = Rq;
 
@@ -60,6 +61,11 @@ struct BFV {
     struct Evaluator {
         CipherText ct;
 
+        constexpr Evaluator& operator += (const PlainText& other) {
+            ct.a += lift(other);
+            return *this;
+        }
+
         constexpr Evaluator& operator += (const CipherText& other) {
             ct.a += other.a;
             ct.b += other.b;
@@ -70,10 +76,10 @@ struct BFV {
     boost::random::uniform_int_distribution<typename Zq::NumericType> bud{0, 1};
     DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
 
-    constexpr Rq lift(const Rt& rt) const {
+    constexpr static Rq lift(const Rt& rt) {
         Rq rq;
         for (std::size_t i = 0; i < D; ++i)
-            rq.coefficients[i] = Zq(rt.coefficients[i].number());
+            rq.coefficients[i] = Zq(std::round(DELTA * rt.coefficients[i].number()));
         return rq;
     }
 
@@ -94,7 +100,7 @@ struct BFV {
         auto u = Rq::random(rng, bud);
         auto e1 = Rq::random(rng, dgd);
         auto e2 = Rq::random(rng, dgd);
-        return { pk.a * u + e1 + Zq(DELTA) * lift(pt), pk.b * u + e2 };
+        return { pk.a * u + e1 + lift(pt), pk.b * u + e2 };
     }
 
     constexpr PlainText decrypt(const SecretKey& sk, const CipherText& ct) const {

@@ -67,9 +67,14 @@ BOOST_AUTO_TEST_CASE(Tests) {
     BFV::PlainText pt2{ 4, };
     auto ct1 = bfv.encrypt(rng, pk, pt1);
     auto ct2 = bfv.encrypt(rng, pk, pt1);
-    BFV::Evaluator eval{ ct1 };
-    eval += ct2;
-    BOOST_TEST(pt2 == bfv.decrypt(sk, eval.ct), "Addition");
+
+    BFV::Evaluator eval_add_pt{ ct1 };
+    eval_add_pt += pt1;
+    BOOST_TEST(pt2 == bfv.decrypt(sk, eval_add_pt.ct), "PlainText Addition");
+
+    BFV::Evaluator eval_add_ct{ ct1 };
+    eval_add_ct += ct2;
+    BOOST_TEST(pt2 == bfv.decrypt(sk, eval_add_ct.ct), "CipherText Addition");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
