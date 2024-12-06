@@ -26,6 +26,7 @@
 #include "polynomialring.h"
 
 // https://eprint.iacr.org/2012/144
+// https://eprint.iacr.org/2024/1587
 
 template<typename Rt, typename Rq>
 struct BFV {
@@ -62,7 +63,7 @@ struct BFV {
         CipherText ct;
 
         constexpr Evaluator& operator += (const PlainText& other) {
-            ct.a += lift(other);
+            ct.a += upscale(other);
             return *this;
         }
 
@@ -71,12 +72,26 @@ struct BFV {
             ct.b += other.b;
             return *this;
         }
+
+        constexpr Evaluator& operator *= (const PlainText& other) {
+            Rq m(lift(other));
+            ct.a *= m;
+            ct.b *= m;
+            return *this;
+        }
     };
 
     boost::random::uniform_int_distribution<typename Zq::NumericType> bud{0, 1};
     DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
 
     constexpr static Rq lift(const Rt& rt) {
+        Rq rq;
+        for (std::size_t i = 0; i < D; ++i)
+            rq.coefficients[i] = Zq(rt.coefficients[i].number());
+        return rq;
+    }
+
+    constexpr static Rq upscale(const Rt& rt) {
         Rq rq;
         for (std::size_t i = 0; i < D; ++i)
             rq.coefficients[i] = Zq(std::round(DELTA * rt.coefficients[i].number()));
@@ -100,7 +115,7 @@ struct BFV {
         auto u = Rq::random(rng, bud);
         auto e1 = Rq::random(rng, dgd);
         auto e2 = Rq::random(rng, dgd);
-        return { pk.a * u + e1 + lift(pt), pk.b * u + e2 };
+        return { pk.a * u + e1 + upscale(pt), pk.b * u + e2 };
     }
 
     constexpr PlainText decrypt(const SecretKey& sk, const CipherText& ct) const {

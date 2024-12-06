@@ -75,6 +75,10 @@ BOOST_AUTO_TEST_CASE(Tests) {
     BFV::Evaluator eval_add_ct{ ct1 };
     eval_add_ct += ct2;
     BOOST_TEST(pt2 == bfv.decrypt(sk, eval_add_ct.ct), "CipherText Addition");
+
+    BFV::Evaluator eval_mul_pt{ ct1 };
+    eval_mul_pt *= pt1;
+    BOOST_TEST(pt2 == bfv.decrypt(sk, eval_mul_pt.ct), "PlainText Multiplication");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
