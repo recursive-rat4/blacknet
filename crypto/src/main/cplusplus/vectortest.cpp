@@ -102,6 +102,21 @@ BOOST_AUTO_TEST_CASE(HadamardSubtraction) {
     BOOST_TEST(c == a - b);
 }
 
+BOOST_AUTO_TEST_CASE(Negation) {
+    Vector<R> a{
+        R(7),
+        R(0),
+        R(-1),
+    };
+    Vector<R> b{
+        R(-7),
+        R(0),
+        R(1),
+    };
+    BOOST_TEST(b == -a);
+    BOOST_TEST(a == -(-a));
+}
+
 BOOST_AUTO_TEST_CASE(Concatectation) {
     Vector<R> a{
         R(0), R(1),

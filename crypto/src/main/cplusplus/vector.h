@@ -124,6 +124,14 @@ public:
         return r;
     }
 
+    constexpr Vector operator - () const {
+        std::size_t size = elements.size();
+        Vector r(size);
+        for (std::size_t i = 0; i < size; ++i)
+            r.elements[i] = - elements[i];
+        return r;
+    }
+
     constexpr Vector operator || (const Vector& other) const {
         Vector r(size() + other.size());
         for (std::size_t i = 0; i < size(); ++i)
