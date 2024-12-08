@@ -20,6 +20,7 @@
 
 #include <boost/random/uniform_int_distribution.hpp>
 
+#include "ajtaicommitment.h"
 #include "convolution.h"
 #include "eqextension.h"
 #include "matrix.h"
@@ -89,6 +90,8 @@ struct LatticeFold {
         return reinterpret_cast<Rq&>(f);
     }
 
+    using BindingCommitment = AjtaiCommitment<RqIso>;
+
     boost::random::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
 
     template<typename R>
@@ -143,36 +146,34 @@ struct LatticeFold {
 
     template<typename Z = Zq>
     class G2 {
-        // β 何处
-        Polynomial<Z, MultilinearExtension> mles;
+        static_assert(b == 2, "Not implemented");
+        // G2(x) = μ （ mle³[f](x) - mle[f](x) ）
+        Z mu;
+        MultilinearExtension<Z> mle;
     public:
-        constexpr G2(const Vector<Rq>& f) : mles(b + b - 1) {
-            for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
-                mles(MultilinearExtension<Z>(f) - Z(j));
-            }
-        }
-        constexpr G2(const Z& mu, const Vector<Rq>& f) : mles(b + b - 1) {
-            for (ssize_t j = - (b - 1); j <= b - 1; ++j) {
-                mles((MultilinearExtension<Z>(f) - Z(j)) * mu);
-            }
-        }
-        constexpr G2(Polynomial<Z, MultilinearExtension>&& mles) : mles(std::move(mles)) {}
+        constexpr G2(const Vector<Rq>& f) : mu(Z::LEFT_MULTIPLICATIVE_IDENTITY()), mle(f) {}
+        constexpr G2(const Z& mu, const Vector<Rq>& f) : mu(mu), mle(f) {}
+        constexpr G2(Z&& mu, MultilinearExtension<Z>&& mle) : mu(std::move(mu)), mle(std::move(mle)) {}
 
         constexpr Z operator () (const std::vector<Z>& point) const {
-            Z r;
-            mles.template apply<util::Mul<Z>, util::Assign<Z>>(r, point);
-            return r;
+            Z t(mle(point));
+            return mu * (t * t * t - t);
         }
 
         template<Z e, typename Fuse>
         constexpr void bind(std::vector<Z>& hypercube) const {
             std::vector<Z> t(hypercube.size());
-            mles.template bind<e, util::Mul<Z>, util::Assign<Z>>(t);
-            Fuse::call(hypercube, std::move(t));
+            mle.template bind<e, util::Assign<Z>>(t);
+            std::vector<Z> r(t);
+            util::Mul<Z>::call(r, t);
+            util::Mul<Z>::call(r, t);
+            util::Sub<Z>::call(r, t);
+            util::Mul<Z>::call(r, mu);
+            Fuse::call(hypercube, std::move(r));
         }
 
         constexpr void bind(const Z& e) {
-            mles.bind(e);
+            mle.bind(e);
         }
 
         consteval std::size_t degree() const {
@@ -180,12 +181,12 @@ struct LatticeFold {
         }
 
         constexpr std::size_t variables() const {
-            return mles.variables();
+            return mle.variables();
         }
 
         template<typename S>
         constexpr G2<S> homomorph() const {
-            return G2<S>(mles.template homomorph<S>());
+            return G2<S>(S(mu), mle.template homomorph<S>());
         }
     };
 

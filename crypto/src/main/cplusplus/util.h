@@ -62,6 +62,27 @@ namespace util {
     };
 
     template<typename T>
+    struct Sub {
+        constexpr static void call(T& l, T&& r) {
+            l -= std::move(r);
+        }
+
+        constexpr static void call(T& l, const T& r) {
+            l -= r;
+        }
+
+        constexpr static void call(std::vector<T>& l, std::vector<T>&& r) {
+            for (std::size_t i = 0; i < r.size(); ++i)
+                l[i] -= std::move(r[i]);
+        }
+
+        constexpr static void call(std::vector<T>& l, const std::vector<T>& r) {
+            for (std::size_t i = 0; i < r.size(); ++i)
+                l[i] -= r[i];
+        }
+    };
+
+    template<typename T>
     struct Mul {
         constexpr static void call(T& l, T&& r) {
             l *= std::move(r);
@@ -69,6 +90,11 @@ namespace util {
 
         constexpr static void call(T& l, const T& r) {
             l *= r;
+        }
+
+        constexpr static void call(std::vector<T>& l, const T& r) {
+            for (std::size_t i = 0; i < l.size(); ++i)
+                l[i] *= r;
         }
 
         constexpr static void call(std::vector<T>& l, std::vector<T>&& r) {
