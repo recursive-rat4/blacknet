@@ -28,6 +28,7 @@
 #include "numbertheoretictransform.h"
 #include "polynomial.h"
 #include "polynomialring.h"
+#include "powextension.h"
 #include "vector.h"
 #include "util.h"
 
@@ -238,51 +239,51 @@ struct LatticeFold {
 
     template<typename Z = Zq>
     class GNorm {
-        // GNorm(x) = eq(β, x) Σ G2(μ, f, x)
-        EqExtension<Z> eq;
+        // GNorm(x) = pow(β, x) Σ G2(μ, f, x)
+        PowExtension<Z> pow;
         Polynomial<Z, G2> g2s;
     public:
         constexpr GNorm(
-            const std::vector<Z>& beta,
+            const Z& beta,
             const std::vector<Z>& mu,
             const std::vector<Vector<Rq>>& f
-        ) : eq(beta), g2s(k + k) {
+        ) : pow(beta, std::log2(f[0].size() * D)), g2s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
                 g2s(G2<Z>(mu[i], f[i]));
             }
         }
-        constexpr GNorm(EqExtension<Z>&& eq, Polynomial<Z, G2>&& g2s) : eq(std::move(eq)), g2s(std::move(g2s)) {}
+        constexpr GNorm(PowExtension<Z>&& pow, Polynomial<Z, G2>&& g2s) : pow(std::move(pow)), g2s(std::move(g2s)) {}
 
         constexpr Z operator () (const std::vector<Z>& point) const {
             Z r;
             g2s.template apply<util::Add<Z>, util::Assign<Z>>(r, point);
-            return r * eq(point);
+            return r * pow(point);
         }
 
         template<Z e, typename Fuse>
         constexpr void bind(std::vector<Z>& hypercube) const {
             std::vector<Z> t(hypercube.size());
             g2s.template bind<e, util::Add<Z>, util::Assign<Z>>(t);
-            eq.template bind<e, util::Mul<Z>>(t);
+            pow.template bind<e, util::Mul<Z>>(t);
             Fuse::call(hypercube, std::move(t));
         }
 
         constexpr void bind(const Z& e) {
-            eq.bind(e);
+            pow.bind(e);
             g2s.bind(e);
         }
 
         consteval std::size_t degree() const {
-            return eq.degree() + (b + b - 1);
+            return pow.degree() + (b + b - 1);
         }
 
         constexpr std::size_t variables() const {
-            return eq.variables();
+            return pow.variables();
         }
 
         template<typename S>
         constexpr GNorm<S> homomorph() const {
-            return GNorm<S>(eq.template homomorph<S>(), g2s.template homomorph<S>());
+            return GNorm<S>(pow.template homomorph<S>(), g2s.template homomorph<S>());
         }
     };
 
@@ -294,7 +295,7 @@ struct LatticeFold {
     public:
         constexpr GFold(
             const std::vector<Z>& alpha,
-            const std::vector<Z>& beta,
+            const Z& beta,
             const std::vector<Z>& mu,
             const std::vector<std::vector<Z>>& r,
             const std::vector<Vector<Rq>>& f
