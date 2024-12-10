@@ -17,6 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "multilinearextension.h"
 #include "poseidon2solinas62.h"
@@ -80,6 +81,16 @@ BOOST_AUTO_TEST_CASE(eq) {
     auto proof2 = SumCheck::prove(p1, s2);
     BOOST_TEST(!SumCheck::verify(p1, s1, proof2));
     BOOST_TEST(!SumCheck::verify(p1, s2, proof2));
+}
+
+BOOST_AUTO_TEST_CASE(ccs) {
+    using CCS = CustomizableConstraintSystem<Z>;
+    using SumCheck = SumCheck<Z, F, CCS::Polynomial, RO>;
+    CCS::Polynomial<Z> ccs(1, 2, {{Z(7), Z(7), Z(7), Z(0)}}, {{0}}, {Z(1)});
+    Z s(21);
+
+    auto proof = SumCheck::prove(ccs, s);
+    BOOST_TEST(SumCheck::verify(ccs, s, proof));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

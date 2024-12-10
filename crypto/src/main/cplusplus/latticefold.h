@@ -22,6 +22,7 @@
 
 #include "ajtaicommitment.h"
 #include "convolution.h"
+#include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "matrix.h"
 #include "multilinearextension.h"
@@ -190,6 +191,10 @@ struct LatticeFold {
             return G2<S>(S(mu), mle.template homomorph<S>());
         }
     };
+
+    // r 何处
+    template<typename Z = Zq>
+    using G3 = CustomizableConstraintSystem<Z>::template Polynomial<Z>;
 
     template<typename Z = Zq>
     class GEval {

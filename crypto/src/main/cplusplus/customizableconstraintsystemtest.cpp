@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "customizableconstraintsystem.h"
+#include "hypercube.h"
 #include "matrix.h"
 #include "solinas62.h"
 
@@ -45,6 +46,17 @@ BOOST_AUTO_TEST_CASE(ccs) {
     for (std::size_t i = 1; i < z.size(); ++i) {
         z[i] += E(1);
         BOOST_TEST(!ccs.isSatisfied(z));
+        z[i] -= E(1);
+    }
+
+    CustomizableConstraintSystem<E>::Polynomial poly(ccs.polynomial(z));
+    BOOST_TEST(4 == poly.degree());
+    BOOST_TEST(0 == poly.variables());
+    BOOST_TEST(E(0) == Hypercube<E>::sum(poly));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        poly = ccs.polynomial(z);
+        BOOST_TEST(E(0) != Hypercube<E>::sum(poly));
         z[i] -= E(1);
     }
 }

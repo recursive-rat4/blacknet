@@ -21,7 +21,9 @@
 #include <vector>
 
 #include "matrixsparse.h"
+#include "multilinearextension.h"
 #include "vector.h"
+#include "util.h"
 
 /*
  * Customizable constraint systems for succinct arguments
@@ -51,13 +53,102 @@ public:
     constexpr bool isSatisfied(const Vector<E>& z) const {
         Vector<E> sigma(rows, E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < c.size(); ++i) {
-            Vector<E> circle(rows, E::LEFT_MULTIPLICATIVE_IDENTITY());
+            Vector<E> circle(rows, c[i]);
             for (std::size_t j : s[i]) {
                 circle *= m[j] * z;
             }
-            sigma += circle * c[i];
+            sigma += circle;
         }
         return sigma == Vector<E>(rows, E(0));
+    }
+
+    template<typename Z = E>
+    class Polynomial {
+        std::size_t deg;
+        std::size_t var;
+        std::vector<MultilinearExtension<Z>> mz;
+        std::vector<std::vector<std::size_t>> s;
+        std::vector<Z> c;
+    public:
+        constexpr Polynomial(
+            std::size_t deg,
+            std::size_t var,
+            const std::vector<MultilinearExtension<Z>>& mz,
+            const std::vector<std::vector<std::size_t>>& s,
+            const std::vector<Z>& c
+        ) : deg(deg), var(var), mz(mz), s(s), c(c) {}
+        constexpr Polynomial(
+            std::size_t deg,
+            std::size_t var,
+            std::vector<MultilinearExtension<Z>>&& mz,
+            std::vector<std::vector<std::size_t>>&& s,
+            std::vector<Z>&& c
+        ) : deg(deg), var(var), mz(std::move(mz)), s(std::move(s)), c(std::move(c)) {}
+
+        constexpr Z operator () (const std::vector<Z>& point) const {
+            Z sigma(Z::LEFT_ADDITIVE_IDENTITY());
+            for (std::size_t i = 0; i < c.size(); ++i) {
+                Z circle(c[i]);
+                for (std::size_t j : s[i]) {
+                    circle *= mz[j](point);
+                }
+                sigma += circle;
+            }
+            return sigma;
+        }
+
+        template<Z e, typename Fuse>
+        constexpr void bind(std::vector<Z>& hypercube) const {
+            std::vector<Z> sigma(hypercube.size(), Z::LEFT_ADDITIVE_IDENTITY());
+            for (std::size_t i = 0; i < c.size(); ++i) {
+                std::vector<Z> circle(hypercube.size(), c[i]);
+                for (std::size_t j : s[i]) {
+                    mz[j].template bind<e, util::Mul<Z>>(circle);
+                }
+                util::Add<Z>::call(sigma, circle);
+            }
+            Fuse::call(hypercube, std::move(sigma));
+        }
+
+        constexpr void bind(const Z& e) {
+            --var;
+            for (std::size_t i = 0; i < mz.size(); ++i)
+                mz[i].bind(e);
+        }
+
+        constexpr std::size_t degree() const {
+            return deg;
+        }
+
+        constexpr std::size_t variables() const {
+            return var;
+        }
+
+        template<typename S>
+        constexpr Polynomial<S> homomorph() const {
+            std::vector<MultilinearExtension<S>> hmz;
+            hmz.reserve(mz.size());
+            for (std::size_t i = 0; i < mz.size(); ++i)
+                hmz.emplace_back(mz[i].template homomorph<S>());
+            std::vector<std::vector<std::size_t>> hs(s);
+            std::vector<S> hc;
+            hc.reserve(c.size());
+            for (std::size_t i = 0; i < c.size(); ++i)
+                hc.emplace_back(S(c[i]));
+            return Polynomial<S>(deg, var, std::move(hmz), std::move(hs), std::move(hc));
+        }
+    };
+
+    constexpr Polynomial<E> polynomial(const Vector<E>& z) const {
+        std::vector<MultilinearExtension<E>> mz;
+        mz.reserve(m.size());
+        for (std::size_t i = 0; i < m.size(); ++i)
+            mz.emplace_back(m[i] * z);
+        std::vector<std::vector<std::size_t>> ps(s);
+        std::vector<E> pc(c);
+        std::size_t deg = std::ranges::max(s, {}, &std::vector<std::size_t>::size).size();
+        std::size_t var = mz[0].variables();
+        return { deg, var, std::move(mz), std::move(ps), std::move(pc) };
     }
 };
 

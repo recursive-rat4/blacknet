@@ -140,7 +140,7 @@ private:
     constexpr static UnivariatePolynomial<S> proveRound(const P<S>& state, const S& hint) {
         std::vector<S> evaluations(1 << (state.variables() - 1));
         // Lagrange basis aboard, take the hint for zero
-        if constexpr (state.degree() == 4) {
+        if (state.degree() == 4) {
             state.template bind<S(-2), util::Assign<S>>(evaluations);
             S n2(util::Sum<S>::call(evaluations));
             state.template bind<S(-1), util::Assign<S>>(evaluations);
@@ -150,18 +150,18 @@ private:
             state.template bind<S(2), util::Assign<S>>(evaluations);
             S p2(util::Sum<S>::call(evaluations));
             return interpolate<S>(n2, n1, hint - p1, p1, p2);
-        } else if constexpr (state.degree() == 2) {
+        } else if (state.degree() == 2) {
             state.template bind<S(-1), util::Assign<S>>(evaluations);
             S n1(util::Sum<S>::call(evaluations));
             state.template bind<S(1), util::Assign<S>>(evaluations);
             S p1(util::Sum<S>::call(evaluations));
             return interpolate<S>(n1, hint - p1, p1);
-        } else if constexpr (state.degree() == 1) {
+        } else if (state.degree() == 1) {
             state.template bind<S(1), util::Assign<S>>(evaluations);
             S p1(util::Sum<S>::call(evaluations));
             return interpolate<S>(hint - p1, p1);
         } else {
-            static_assert(false, "Not implemented");
+            throw std::string("Sum-check prover not implemented for degree ") + std::to_string(state.degree());
         }
     }
 };
