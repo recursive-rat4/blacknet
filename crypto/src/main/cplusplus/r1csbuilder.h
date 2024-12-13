@@ -59,6 +59,11 @@ struct R1CSBuilder {
             return *this;
         }
 
+        constexpr LinearCombination& operator += (const Variable& variable) {
+            const E coefficient(1);
+            return (*this) += std::make_pair(variable, coefficient);
+        }
+
         constexpr LinearCombination& operator += (const LinearCombination& lc) {
             for (const auto& term : lc)
                 (*this) += term;
@@ -173,14 +178,14 @@ struct R1CSBuilder {
             if constexpr (std::is_same_v<L, Constant>) {
                 lc += std::make_pair(Variable::constant(), l.value);
             } else if constexpr (std::is_same_v<L, Variable>) {
-                lc += std::make_pair(l, E(1));
+                lc += l;
             } else {
                 l(lc);
             }
             if constexpr (std::is_same_v<R, Constant>) {
                 lc += std::make_pair(Variable::constant(), r.value);
             } else if constexpr (std::is_same_v<R, Variable>) {
-                lc += std::make_pair(r, E(1));
+                lc += r;
             } else {
                 r(lc);
             }
