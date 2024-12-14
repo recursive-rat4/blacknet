@@ -29,57 +29,9 @@
 template<typename E>
 struct R1CSBuilder {
     struct Variable;
-
-    struct LinearCombination {
-        std::map<Variable, E> terms;
-
-        decltype(auto) begin() const {
-            return terms.begin();
-        }
-
-        decltype(auto) end() const {
-            return terms.end();
-        }
-
-        template<class... Args>
-        decltype(auto) emplace(Args&&... args) {
-            return terms.emplace(std::forward<Args>(args)...);
-        }
-
-        constexpr LinearCombination& operator *= (const E& e) {
-            for (auto& [_, coefficient] : terms)
-                coefficient *= e;
-            return *this;
-        }
-
-        constexpr LinearCombination& operator += (const std::pair<Variable, E>& term) {
-            const auto& [variable, coefficient] = term;
-            if (auto [iterator, inserted] = terms.emplace(variable, coefficient); !inserted)
-                iterator->second += coefficient;
-            return *this;
-        }
-
-        constexpr LinearCombination& operator += (const Variable& variable) {
-            const E coefficient(1);
-            return (*this) += std::make_pair(variable, coefficient);
-        }
-
-        constexpr LinearCombination& operator += (const LinearCombination& lc) {
-            for (const auto& term : lc)
-                (*this) += term;
-            return *this;
-        }
-    };
-
-    struct QuadraticCombination {
-        LinearCombination a;
-        LinearCombination b;
-    };
-
-    struct Constraint {
-        QuadraticCombination qc;
-        LinearCombination lc;
-    };
+    struct LinearCombination;
+    struct QuadraticCombination;
+    struct Constraint;
 
     template<typename T>
     struct ConstraintExpression {
@@ -98,6 +50,97 @@ struct R1CSBuilder {
         consteval static std::size_t degree() {
             return T::degree();
         }
+    };
+
+    struct LinearCombination : ConstraintExpression<LinearCombination> {
+        std::map<Variable, E> terms;
+
+        decltype(auto) begin() const {
+            return terms.begin();
+        }
+
+        decltype(auto) end() const {
+            return terms.end();
+        }
+
+        template<class... Args>
+        decltype(auto) emplace(Args&&... args) {
+            return terms.emplace(std::forward<Args>(args)...);
+        }
+
+        constexpr LinearCombination& operator = (const Variable& variable) {
+            const E coefficient(1);
+            terms = { std::make_pair(variable, coefficient) };
+            return *this;
+        }
+
+        constexpr LinearCombination& operator *= (const E& e) {
+            for (auto& [_, coefficient] : terms)
+                coefficient *= e;
+            return *this;
+        }
+
+        constexpr LinearCombination operator * (const E& e) const {
+            LinearCombination t;
+            for (const auto& [variable, coefficient] : terms)
+                t.emplace(variable, coefficient * e);
+            return t;
+        }
+
+        constexpr LinearCombination& operator += (const std::pair<Variable, E>& term) {
+            const auto& [variable, coefficient] = term;
+            if (auto [iterator, inserted] = terms.emplace(variable, coefficient); !inserted)
+                iterator->second += coefficient;
+            return *this;
+        }
+
+        constexpr LinearCombination& operator += (const E& coefficient) {
+            const Variable variable(Variable::constant());
+            return (*this) += std::make_pair(variable, coefficient);
+        }
+
+        constexpr LinearCombination& operator += (const Variable& variable) {
+            const E coefficient(1);
+            return (*this) += std::make_pair(variable, coefficient);
+        }
+
+        constexpr LinearCombination& operator += (const LinearCombination& lc) {
+            for (const auto& term : lc)
+                (*this) += term;
+            return *this;
+        }
+
+        constexpr LinearCombination operator + (const LinearCombination& lc) const {
+            LinearCombination t(*this);
+            t += lc;
+            return t;
+        }
+
+        constexpr Constraint operator () () const {
+            static_assert(false, "Linear combination is not a constraint");
+        }
+
+        constexpr void operator () (QuadraticCombination&) const {
+            static_assert(false, "Linear combination is not a quadratic combination");
+        }
+
+        constexpr void operator () (LinearCombination& lc) const {
+            lc += *this;
+        }
+
+        consteval static std::size_t degree() {
+            return 1;
+        }
+    };
+
+    struct QuadraticCombination {
+        LinearCombination a;
+        LinearCombination b;
+    };
+
+    struct Constraint {
+        QuadraticCombination qc;
+        LinearCombination lc;
     };
 
     struct Constant : ConstraintExpression<Constant> {
@@ -176,14 +219,14 @@ struct R1CSBuilder {
         constexpr void operator () (LinearCombination& lc) const {
             static_assert(L::degree() <= 1 && R::degree() <= 1, "Can't add non-linear expressions");
             if constexpr (std::is_same_v<L, Constant>) {
-                lc += std::make_pair(Variable::constant(), l.value);
+                lc += l.value;
             } else if constexpr (std::is_same_v<L, Variable>) {
                 lc += l;
             } else {
                 l(lc);
             }
             if constexpr (std::is_same_v<R, Constant>) {
-                lc += std::make_pair(Variable::constant(), r.value);
+                lc += r.value;
             } else if constexpr (std::is_same_v<R, Variable>) {
                 lc += r;
             } else {
