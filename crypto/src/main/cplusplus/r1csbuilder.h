@@ -120,8 +120,9 @@ struct R1CSBuilder {
             static_assert(false, "Linear combination is not a constraint");
         }
 
-        constexpr void operator () (QuadraticCombination&) const {
-            static_assert(false, "Linear combination is not a quadratic combination");
+        constexpr void operator () (QuadraticCombination& qc) const {
+            (*this)(qc.a);
+            qc.b.emplace(Variable::constant(), E(1));
         }
 
         constexpr void operator () (LinearCombination& lc) const {

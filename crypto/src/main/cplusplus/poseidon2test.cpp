@@ -20,6 +20,7 @@
 #include "poseidon2pasta.h"
 #include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
+#include "r1csbuilder.h"
 
 BOOST_AUTO_TEST_SUITE(Poseidons)
 
@@ -31,13 +32,32 @@ BOOST_AUTO_TEST_CASE(Pallas) {
         1,
         2,
     };
-    std::array<E, 3> b{
+    std::array<E, 3> b(a);
+    std::array<E, 3> c{
         E("1a9b54c7512a914dd778282c44b3513fea7251420b9d95750baae059b2268d7a"),
         E("1c48ea0994a7d7984ea338a54dbf0c8681f5af883fe988d59ba3380c9f7901fc"),
         E("079ddd0a80a3e9414489b526a2770448964766685f4c4842c838f8a23120b401"),
     };
     poseidon2::permute<Params>(a);
-    BOOST_TEST(b == a);
+    BOOST_TEST(c == a);
+
+    R1CSBuilder<E> circuit;
+    std::array<R1CSBuilder<typename Params::F>::Variable, Params::t> x;
+    std::ranges::generate(x, [&]{ return circuit.input(); });
+    poseidon2::gadget::permute<Params>(circuit, x);
+    R1CS<E> r1cs(circuit.r1cs());
+    Vector<E> z;
+    z.elements.reserve(r1cs.variables());
+    z.elements.emplace_back(E(1));
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    poseidon2::trace::permute<Params>(b, z.elements);
+    BOOST_TEST(r1cs.variables() == z.size());
+    BOOST_TEST(r1cs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!r1cs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(Solinas62) {
@@ -57,7 +77,8 @@ BOOST_AUTO_TEST_CASE(Solinas62) {
         0x000000000000000a,
         0x000000000000000b,
     };
-    std::array<E, 12> b{
+    std::array<E, 12> b(a);
+    std::array<E, 12> c{
         0x367dbec705769f69,
         0x12b6981be17dd745,
         0x1452150cc1c0ac4e,
@@ -72,7 +93,25 @@ BOOST_AUTO_TEST_CASE(Solinas62) {
         0x0bce9d1ef0e19aeb,
     };
     poseidon2::permute<Params>(a);
-    BOOST_TEST(b == a);
+    BOOST_TEST(c == a);
+
+    R1CSBuilder<E> circuit;
+    std::array<R1CSBuilder<typename Params::F>::Variable, Params::t> x;
+    std::ranges::generate(x, [&]{ return circuit.input(); });
+    poseidon2::gadget::permute<Params>(circuit, x);
+    R1CS<E> r1cs(circuit.r1cs());
+    Vector<E> z;
+    z.elements.reserve(r1cs.variables());
+    z.elements.emplace_back(E(1));
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    poseidon2::trace::permute<Params>(b, z.elements);
+    BOOST_TEST(r1cs.variables() == z.size());
+    BOOST_TEST(r1cs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!r1cs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(Pervushin) {
@@ -92,7 +131,8 @@ BOOST_AUTO_TEST_CASE(Pervushin) {
         0x000000000000000a,
         0x000000000000000b,
     };
-    std::array<E, 12> b{
+    std::array<E, 12> b(a);
+    std::array<E, 12> c{
         0x14ad43d6b732aa1f,
         0x02fbf1c807dd0281,
         0x13e01fc66d9b3d03,
@@ -107,7 +147,25 @@ BOOST_AUTO_TEST_CASE(Pervushin) {
         0x03f39f82fb43ef6c,
     };
     poseidon2::permute<Params>(a);
-    BOOST_TEST(b == a);
+    BOOST_TEST(c == a);
+
+    R1CSBuilder<E> circuit;
+    std::array<R1CSBuilder<typename Params::F>::Variable, Params::t> x;
+    std::ranges::generate(x, [&]{ return circuit.input(); });
+    poseidon2::gadget::permute<Params>(circuit, x);
+    R1CS<E> r1cs(circuit.r1cs());
+    Vector<E> z;
+    z.elements.reserve(r1cs.variables());
+    z.elements.emplace_back(E(1));
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    poseidon2::trace::permute<Params>(b, z.elements);
+    BOOST_TEST(r1cs.variables() == z.size());
+    BOOST_TEST(r1cs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!r1cs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
