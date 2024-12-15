@@ -36,11 +36,10 @@ template<
 >
 class SumCheck {
 public:
-    class Proof {
-    public:
+    struct Proof {
         std::vector<UnivariatePolynomial<F>> claims;
 
-        consteval Proof() : claims() {}
+        constexpr Proof() {}
         constexpr Proof(std::size_t capacity) {
             claims.reserve(capacity);
         }
@@ -61,7 +60,6 @@ public:
         P<F> state(polynomial.template homomorph<F>());
         F hint;
         {
-            // Perform the zeroth round over the base structure abaft the strong sampling set
             UnivariatePolynomial<F> claim(proveRound<Z>(polynomial, sum).template homomorph<F>());
             claim.absorb(ro);
             RO fork(ro);
@@ -105,6 +103,48 @@ public:
         return true;
     }
 
+    struct ProofEarlyStopped {
+        UnivariatePolynomial<Z> claim;
+        F challenge;
+
+        constexpr ProofEarlyStopped() {}
+
+        constexpr bool operator == (const ProofEarlyStopped&) const = default;
+
+        friend std::ostream& operator << (std::ostream& out, const ProofEarlyStopped& val)
+        {
+            return out << '('  << val.claim << ", " << val.challenge << ')';
+        }
+    };
+
+    constexpr static ProofEarlyStopped proveEarlyStopping(const P<Z>& polynomial, const Z& sum) {
+        ProofEarlyStopped proof;
+        RO ro;
+
+        UnivariatePolynomial<Z> claim(proveRound<Z>(polynomial, sum));
+        claim.absorb(ro);
+        F challenge(F::squeeze(ro));
+        proof.claim = std::move(claim);
+        proof.challenge = challenge;
+
+        return proof;
+    }
+
+    constexpr static bool verifyEarlyStopping(const P<Z>& polynomial, const Z& sum, const ProofEarlyStopped& proof) {
+        RO ro;
+
+        if (proof.claim.degree() != polynomial.degree())
+            return false;
+        if (sum != proof.claim(Z(0)) + proof.claim(Z(1)))
+            return false;
+        proof.claim.absorb(ro);
+        F challenge(F::squeeze(ro));
+        if (proof.challenge != challenge)
+            return false;
+
+        return true;
+    }
+
     template<typename S>
     constexpr static UnivariatePolynomial<S> interpolate(const S& z0, const S& p1) {
         return UnivariatePolynomial<S>{z0, p1 - z0};
@@ -139,7 +179,6 @@ private:
     template<typename S>
     constexpr static UnivariatePolynomial<S> proveRound(const P<S>& state, const S& hint) {
         std::vector<S> evaluations(1 << (state.variables() - 1));
-        // Lagrange basis aboard, take the hint for zero
         if (state.degree() == 4) {
             state.template bind<S(-2), util::Assign<S>>(evaluations);
             S n2(util::Sum<S>::call(evaluations));

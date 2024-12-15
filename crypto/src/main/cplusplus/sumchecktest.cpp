@@ -21,6 +21,7 @@
 #include "eqextension.h"
 #include "multilinearextension.h"
 #include "poseidon2solinas62.h"
+#include "powextension.h"
 #include "solinas62.h"
 #include "solinas62field.h"
 #include "sumcheck.h"
@@ -55,7 +56,7 @@ BOOST_AUTO_TEST_CASE(mle) {
     BOOST_TEST(!SumCheck::verify(p2, s1, proof));
     BOOST_TEST(!SumCheck::verify(p2, s2, proof));
     BOOST_TEST(!SumCheck::verify(p3, s1, proof));
-    proof.claims[1].coefficients[1].coefficients[1] += 1;
+    proof.claims[1].coefficients[1].coefficients[1] += Z(1);
     BOOST_TEST(!SumCheck::verify(p1, s1, proof));
 
     auto proof2 = SumCheck::prove(p1, s2);
@@ -75,7 +76,7 @@ BOOST_AUTO_TEST_CASE(eq) {
     BOOST_TEST(!SumCheck::verify(p1, s2, proof));
     BOOST_TEST(!SumCheck::verify(p2, s1, proof));
     BOOST_TEST(!SumCheck::verify(p2, s2, proof));
-    proof.claims[3].coefficients[1].coefficients[1] += 1;
+    proof.claims[3].coefficients[1].coefficients[1] += Z(1);
     BOOST_TEST(!SumCheck::verify(p1, s1, proof));
 
     auto proof2 = SumCheck::prove(p1, s2);
@@ -91,6 +92,30 @@ BOOST_AUTO_TEST_CASE(ccs) {
 
     auto proof = SumCheck::prove(ccs, s);
     BOOST_TEST(SumCheck::verify(ccs, s, proof));
+}
+
+BOOST_AUTO_TEST_CASE(pow_early_stop) {
+    using SumCheck = SumCheck<Z, F, PowExtension, RO>;
+    PowExtension<Z> p1(Z(2), 4);
+    PowExtension<Z> p2(Z(4), 4);
+    Z s1(1);
+    Z s2(2);
+
+    auto proof = SumCheck::proveEarlyStopping(p1, s1);
+    BOOST_TEST(SumCheck::verifyEarlyStopping(p1, s1, proof));
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s2, proof));
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p2, s2, proof));
+
+    proof.claim.coefficients[1] += Z(1);
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof));
+    proof.claim.coefficients[1] -= Z(1);
+
+    proof.challenge += Z(1);
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof));
+    proof.challenge -= Z(1);
+
+    auto proof2 = SumCheck::proveEarlyStopping(p1, s2);
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof2));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

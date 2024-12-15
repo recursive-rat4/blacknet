@@ -162,7 +162,7 @@ public:
     template<typename DRG>
     constexpr void absorb(DRG& drg) const {
         for (std::size_t i = 0; i < N; ++i)
-            drg.absorb(coefficients[i]);
+            coefficients[i].absorb(drg);
     }
 
     template<typename DRG>
