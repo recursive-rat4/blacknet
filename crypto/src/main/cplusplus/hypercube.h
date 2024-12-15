@@ -62,10 +62,10 @@ public:
         }
     };
     static_assert(std::input_iterator<ComposedIterator>);
-    constexpr ComposedIterator composedBegin() const {
+    constexpr ComposedIterator composedBegin() const noexcept {
         return ComposedIterator(*this);
     }
-    consteval std::default_sentinel_t composedEnd() const {
+    consteval std::default_sentinel_t composedEnd() const noexcept {
         return std::default_sentinel;
     }
 
@@ -109,10 +109,10 @@ public:
         }
     };
     static_assert(std::input_iterator<DecomposedIterator>);
-    constexpr DecomposedIterator decomposedBegin() const {
+    constexpr DecomposedIterator decomposedBegin() const noexcept {
         return DecomposedIterator(*this);
     }
-    consteval std::default_sentinel_t decomposedEnd() const {
+    consteval std::default_sentinel_t decomposedEnd() const noexcept {
         return std::default_sentinel;
     }
 
@@ -153,10 +153,10 @@ public:
         }
     };
     static_assert(std::input_iterator<SplittedIterator>);
-    constexpr SplittedIterator splittedBegin(std::size_t rows, std::size_t columns) const {
+    constexpr SplittedIterator splittedBegin(std::size_t rows, std::size_t columns) const noexcept {
         return SplittedIterator(*this, rows, columns);
     }
-    consteval std::default_sentinel_t splittedEnd() const {
+    consteval std::default_sentinel_t splittedEnd() const noexcept {
         return std::default_sentinel;
     }
 

@@ -55,11 +55,11 @@ struct R1CSBuilder {
     struct LinearCombination : ConstraintExpression<LinearCombination> {
         std::map<Variable, E> terms;
 
-        decltype(auto) begin() const {
+        decltype(auto) begin() const noexcept {
             return terms.begin();
         }
 
-        decltype(auto) end() const {
+        decltype(auto) end() const noexcept {
             return terms.end();
         }
 

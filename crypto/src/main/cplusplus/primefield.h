@@ -185,10 +185,10 @@ public:
         }
     };
     static_assert(std::input_iterator<BitIterator>);
-    constexpr BitIterator bitsBegin() const {
+    constexpr BitIterator bitsBegin() const noexcept {
         return BitIterator(*this);
     }
-    consteval std::default_sentinel_t bitsEnd() const {
+    consteval std::default_sentinel_t bitsEnd() const noexcept {
         return std::default_sentinel;
     }
 

@@ -64,7 +64,7 @@ public:
         coefficients = other.coefficients;
         return *this;
     }
-    constexpr MultilinearExtension& operator = (MultilinearExtension&& other) {
+    constexpr MultilinearExtension& operator = (MultilinearExtension&& other) noexcept {
         coefficients = std::move(other.coefficients);
         return *this;
     }

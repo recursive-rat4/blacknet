@@ -34,7 +34,7 @@ public:
     constexpr Polynomial(Polynomial&& other) noexcept
         : polynomials(std::move(other.polynomials)) {}
 
-    constexpr Polynomial& operator = (Polynomial&& other) {
+    constexpr Polynomial& operator = (Polynomial&& other) noexcept {
         polynomials = std::move(other.polynomials);
         return *this;
     }

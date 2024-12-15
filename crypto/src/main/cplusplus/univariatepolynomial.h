@@ -35,7 +35,7 @@ public:
     constexpr UnivariatePolynomial(UnivariatePolynomial&& other) noexcept
         : coefficients(std::move(other.coefficients)) {}
 
-    constexpr UnivariatePolynomial& operator = (UnivariatePolynomial&& other) {
+    constexpr UnivariatePolynomial& operator = (UnivariatePolynomial&& other) noexcept {
         coefficients = std::move(other.coefficients);
         return *this;
     }

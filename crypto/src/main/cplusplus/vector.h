@@ -44,14 +44,14 @@ public:
     constexpr Vector(std::vector<E>&& elements) : elements(std::move(elements)) {}
     constexpr Vector(Vector&& other) noexcept : elements(std::move(other.elements)) {}
 
-    constexpr Vector& operator = (Vector&& other) {
+    constexpr Vector& operator = (Vector&& other) noexcept {
         elements = std::move(other.elements);
         return *this;
     }
 
     constexpr bool operator == (const Vector&) const = default;
 
-    constexpr std::size_t size() const {
+    constexpr std::size_t size() const noexcept {
         return elements.size();
     }
 
