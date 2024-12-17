@@ -28,6 +28,12 @@
 
 template<typename E>
 struct R1CSBuilder {
+    using R = E;
+
+    consteval static std::size_t degree() {
+        return 2;
+    }
+
     struct Variable;
     struct LinearCombination;
     struct QuadraticCombination;
@@ -319,7 +325,7 @@ struct R1CSBuilder {
         constexpr EqExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {
-            static_assert(degree() <= 2, "High-degree constraints are not supported");
+            static_assert(degree() <= R1CSBuilder::degree(), "High-degree constraints are not supported");
             Constraint constraint;
             if constexpr (std::is_same_v<L, Constant>) {
                 if constexpr (std::is_same_v<R, Constant>) {
@@ -432,6 +438,7 @@ struct R1CSBuilder {
     }
 
     constexpr R1CS<E> r1cs() const {
+        static_assert(degree() <= 2, "High-degree circuits are not supported");
         std::size_t variables = 1 + inputs + auxiliaries;
         Matrix<E> a(constraints.size(), variables, E(0));
         Matrix<E> b(constraints.size(), variables, E(0));

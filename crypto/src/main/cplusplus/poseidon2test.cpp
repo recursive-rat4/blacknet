@@ -41,16 +41,17 @@ BOOST_AUTO_TEST_CASE(Pallas) {
     poseidon2::permute<Params>(a);
     BOOST_TEST(c == a);
 
-    R1CSBuilder<E> circuit;
-    std::array<R1CSBuilder<typename Params::F>::Variable, Params::t> x;
+    using Circuit = R1CSBuilder<E>;
+    Circuit circuit;
+    std::array<typename Circuit::Variable, Params::t> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    poseidon2::gadget::permute<Params>(circuit, x);
+    poseidon2::circuit::permute<Params, Circuit>(circuit, x);
     R1CS<E> r1cs(circuit.r1cs());
     Vector<E> z;
     z.elements.reserve(r1cs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(b, std::back_inserter(z.elements));
-    poseidon2::trace::permute<Params>(b, z.elements);
+    poseidon2::trace::permute<Params, Circuit::degree()>(b, z.elements);
     BOOST_TEST(r1cs.variables() == z.size());
     BOOST_TEST(r1cs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {
@@ -95,16 +96,17 @@ BOOST_AUTO_TEST_CASE(Solinas62) {
     poseidon2::permute<Params>(a);
     BOOST_TEST(c == a);
 
-    R1CSBuilder<E> circuit;
-    std::array<R1CSBuilder<typename Params::F>::Variable, Params::t> x;
+    using Circuit = R1CSBuilder<E>;
+    Circuit circuit;
+    std::array<typename Circuit::Variable, Params::t> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    poseidon2::gadget::permute<Params>(circuit, x);
+    poseidon2::circuit::permute<Params, Circuit>(circuit, x);
     R1CS<E> r1cs(circuit.r1cs());
     Vector<E> z;
     z.elements.reserve(r1cs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(b, std::back_inserter(z.elements));
-    poseidon2::trace::permute<Params>(b, z.elements);
+    poseidon2::trace::permute<Params, Circuit::degree()>(b, z.elements);
     BOOST_TEST(r1cs.variables() == z.size());
     BOOST_TEST(r1cs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {
@@ -149,16 +151,17 @@ BOOST_AUTO_TEST_CASE(Pervushin) {
     poseidon2::permute<Params>(a);
     BOOST_TEST(c == a);
 
-    R1CSBuilder<E> circuit;
-    std::array<R1CSBuilder<typename Params::F>::Variable, Params::t> x;
+    using Circuit = R1CSBuilder<E>;
+    Circuit circuit;
+    std::array<typename Circuit::Variable, Params::t> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    poseidon2::gadget::permute<Params>(circuit, x);
+    poseidon2::circuit::permute<Params, Circuit>(circuit, x);
     R1CS<E> r1cs(circuit.r1cs());
     Vector<E> z;
     z.elements.reserve(r1cs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(b, std::back_inserter(z.elements));
-    poseidon2::trace::permute<Params>(b, z.elements);
+    poseidon2::trace::permute<Params, Circuit::degree()>(b, z.elements);
     BOOST_TEST(r1cs.variables() == z.size());
     BOOST_TEST(r1cs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {

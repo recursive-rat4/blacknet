@@ -19,10 +19,9 @@
 #define BLACKNET_CRYPTO_POSEIDON2_H
 
 #include <array>
+#include <concepts>
 #include <ranges>
 #include <vector>
-
-#include "r1csbuilder.h"
 
 /*
  * Poseidon2: A Faster Version of the Poseidon Hash Function
@@ -183,28 +182,30 @@ constexpr void permute(std::array<typename Params::F, Params::t>& x) {
     }
 }
 
-namespace gadget {
-template<typename Params>
-constexpr decltype(auto) sum(
-    const std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t>& y
+namespace circuit {
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
+constexpr typename Circuit::LinearCombination sum(
+    const std::array<typename Circuit::LinearCombination, Params::t>& y
 ) {
-    typename R1CSBuilder<typename Params::F>::LinearCombination lc;
+    typename Circuit::LinearCombination lc;
     for (std::size_t i = 0; i < Params::t; ++i) {
         lc += y[i];
     }
     return lc;
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void m4(
-    std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t>& y
+    std::array<typename Circuit::LinearCombination, Params::t>& y
 ) {
     using F = Params::F;
     constexpr std::size_t T = Params::t;
 
     for (std::size_t i = 0; i < T >> 2; ++i) {
         std::size_t j = i << 2;
-        std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, 8> t;
+        std::array<typename Circuit::LinearCombination, 8> t;
         t[0] = y[j] + y[j + 1];
         t[1] = y[j + 2] + y[j + 3];
         t[2] = y[j + 1] * F(2) + t[1];
@@ -220,26 +221,27 @@ constexpr void m4(
     }
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void external(
-    std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t>& y
+    std::array<typename Circuit::LinearCombination, Params::t>& y
 ) {
     constexpr std::size_t T = Params::t;
 
     if constexpr (T == 2) {
-        auto s = sum<Params>(y);
+        auto s = sum<Params, Circuit>(y);
         y[0] += s;
         y[1] += s;
     } else if constexpr (T == 3) {
-        auto s = sum<Params>(y);
+        auto s = sum<Params, Circuit>(y);
         y[0] += s;
         y[1] += s;
         y[2] += s;
     } else if constexpr (T == 4) {
-        m4<Params>(y);
+        m4<Params, Circuit>(y);
     } else if constexpr (T == 8 || T == 12 || T == 16 || T == 20 || T == 24) {
-        m4<Params>(y);
-        std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, 4> s;
+        m4<Params, Circuit>(y);
+        std::array<typename Circuit::LinearCombination, 4> s;
         for (std::size_t i = 0; i < 4; ++i) {
             s[i] = y[i];
             for (std::size_t j = 1; j < T >> 2; ++j)
@@ -252,21 +254,23 @@ constexpr void external(
     }
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void internal(
-    std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t>& y
+    std::array<typename Circuit::LinearCombination, Params::t>& y
 ) {
-    auto s = sum<Params>(y);
+    auto s = sum<Params, Circuit>(y);
     for (std::size_t i = 0; i < Params::t; ++i) {
         y[i] *= Params::m[i];
         y[i] += s;
     }
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void rcb(
     std::size_t round,
-    std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t>& y
+    std::array<typename Circuit::LinearCombination, Params::t>& y
 ) {
     constexpr std::size_t T = Params::t;
 
@@ -275,18 +279,20 @@ constexpr void rcb(
     }
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void rcp(
     std::size_t round,
-    std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t>& y
+    std::array<typename Circuit::LinearCombination, Params::t>& y
 ) {
     y[0] += Params::rcp[round];
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void rce(
     std::size_t round,
-    std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t>& y
+    std::array<typename Circuit::LinearCombination, Params::t>& y
 ) {
     constexpr std::size_t T = Params::t;
 
@@ -295,20 +301,29 @@ constexpr void rce(
     }
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void sboxp(
-    R1CSBuilder<typename Params::F>& circuit,
-    typename R1CSBuilder<typename Params::F>::Variable& x,
-    typename R1CSBuilder<typename Params::F>::LinearCombination& y
+    Circuit& circuit,
+    typename Circuit::Variable& x,
+    typename Circuit::LinearCombination& y
 ) {
     if constexpr (Params::a == 3) {
-        auto x2 = circuit.auxiliary();
-        auto x3 = circuit.auxiliary();
-        circuit(x2 == y * y);
-        circuit(x3 == y * x2);
-        x = x3;
-        y = x;
+        if constexpr (circuit.degree() >= 3) {
+            auto x3 = circuit.auxiliary();
+            circuit(x3 == y * y * y);
+            x = x3;
+            y = x;
+        } else {
+            auto x2 = circuit.auxiliary();
+            auto x3 = circuit.auxiliary();
+            circuit(x2 == y * y);
+            circuit(x3 == y * x2);
+            x = x3;
+            y = x;
+        }
     } else if constexpr (Params::a == 5) {
+        // Lessen constraints if degree >= 4
         auto x2 = circuit.auxiliary();
         auto x4 = circuit.auxiliary();
         auto x5 = circuit.auxiliary();
@@ -318,6 +333,7 @@ constexpr void sboxp(
         x = x5;
         y = x;
     } else if constexpr (Params::a == 17) {
+        // Lessen constraints if degree >= 4
         auto x2 = circuit.auxiliary();
         auto x4 = circuit.auxiliary();
         auto x8 = circuit.auxiliary();
@@ -331,47 +347,49 @@ constexpr void sboxp(
         x = x17;
         y = x;
     } else {
-        static_assert(false);
+        static_assert(false, "Not implemented");
     }
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void sbox(
-    R1CSBuilder<typename Params::F>& circuit,
-    std::array<typename R1CSBuilder<typename Params::F>::Variable, Params::t>& x,
-    std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t>& y
+    Circuit& circuit,
+    std::array<typename Circuit::Variable, Params::t>& x,
+    std::array<typename Circuit::LinearCombination, Params::t>& y
 ) {
     for (std::size_t i = 0; i < Params::t; ++i)
-        sboxp<Params>(circuit, x[i], y[i]);
+        sboxp<Params, Circuit>(circuit, x[i], y[i]);
 }
 
-template<typename Params>
+template<typename Params, typename Circuit>
+requires(std::same_as<typename Params::F, typename Circuit::R>)
 constexpr void permute(
-    R1CSBuilder<typename Params::F>& circuit,
-    std::array<typename R1CSBuilder<typename Params::F>::Variable, Params::t>& x
+    Circuit& circuit,
+    std::array<typename Circuit::Variable, Params::t>& x
 ) {
-    std::array<typename R1CSBuilder<typename Params::F>::LinearCombination, Params::t> y;
+    std::array<typename Circuit::LinearCombination, Params::t> y;
     for (std::size_t i = 0; i < Params::t; ++i)
         y[i] = x[i];
 
-    gadget::external<Params>(y);
+    circuit::external<Params, Circuit>(y);
 
     for (std::size_t round = 0; round < Params::rb; ++round) {
-        gadget::rcb<Params>(round, y);
-        gadget::sbox<Params>(circuit, x, y);
-        gadget::external<Params>(y);
+        circuit::rcb<Params, Circuit>(round, y);
+        circuit::sbox<Params, Circuit>(circuit, x, y);
+        circuit::external<Params, Circuit>(y);
     }
 
     for (std::size_t round = 0; round < Params::rp; ++round) {
-        gadget::rcp<Params>(round, y);
-        gadget::sboxp<Params>(circuit, x[0], y[0]);
-        gadget::internal<Params>(y);
+        circuit::rcp<Params, Circuit>(round, y);
+        circuit::sboxp<Params, Circuit>(circuit, x[0], y[0]);
+        circuit::internal<Params, Circuit>(y);
     }
 
     for (std::size_t round = 0; round < Params::re; ++round) {
-        gadget::rce<Params>(round, y);
-        gadget::sbox<Params>(circuit, x, y);
-        gadget::external<Params>(y);
+        circuit::rce<Params, Circuit>(round, y);
+        circuit::sbox<Params, Circuit>(circuit, x, y);
+        circuit::external<Params, Circuit>(y);
     }
 
     for (std::size_t i = 0; i < Params::t; ++i) {
@@ -383,15 +401,21 @@ constexpr void permute(
 }
 
 namespace trace {
-template<typename Params>
+template<typename Params, std::size_t circuit>
 constexpr void sboxp(typename Params::F& x, std::vector<typename Params::F>& trace) {
     constexpr std::size_t A = Params::a;
 
     if constexpr (A == 3) {
-        trace.push_back(
-            x *= trace.emplace_back(
-                x.square())
-        );
+        if constexpr (circuit >= 3) {
+            trace.push_back(
+                x *= x.square()
+            );
+        } else {
+            trace.push_back(
+                x *= trace.emplace_back(
+                    x.square())
+            );
+        }
     } else if constexpr (A == 5) {
         trace.push_back(
             x *= trace.emplace_back(trace.emplace_back(
@@ -403,37 +427,37 @@ constexpr void sboxp(typename Params::F& x, std::vector<typename Params::F>& tra
                 x.square()).square()).square()).square())
         );
     } else {
-        static_assert(false);
+        static_assert(false, "Not implemented");
     }
 }
 
-template<typename Params>
+template<typename Params, std::size_t circuit>
 constexpr void sbox(std::array<typename Params::F, Params::t>& x, std::vector<typename Params::F>& trace) {
     constexpr std::size_t T = Params::t;
 
     for (std::size_t i = 0; i < T; ++i)
-        sboxp<Params>(x[i], trace);
+        sboxp<Params, circuit>(x[i], trace);
 }
 
-template<typename Params>
+template<typename Params, std::size_t circuit>
 constexpr void permute(std::array<typename Params::F, Params::t>& x, std::vector<typename Params::F>& trace) {
     external<Params>(x);
 
     for (std::size_t round = 0; round < Params::rb; ++round) {
         rcb<Params>(round, x);
-        sbox<Params>(x, trace);
+        sbox<Params, circuit>(x, trace);
         external<Params>(x);
     }
 
     for (std::size_t round = 0; round < Params::rp; ++round) {
         rcp<Params>(round, x);
-        sboxp<Params>(x[0], trace);
+        sboxp<Params, circuit>(x[0], trace);
         internal<Params>(x);
     }
 
     for (std::size_t round = 0; round < Params::re; ++round) {
         rce<Params>(round, x);
-        sbox<Params>(x, trace);
+        sbox<Params, circuit>(x, trace);
         external<Params>(x);
     }
 
