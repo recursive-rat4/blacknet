@@ -21,7 +21,8 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
-#include <boost/io/ostream_joiner.hpp>
+
+#include "util.h"
 
 template<typename Params>
 class PolynomialRing {
@@ -154,9 +155,7 @@ public:
     {
         std::array<Z, N> coefficients(val.coefficients);
         Params::fromForm(coefficients);
-        out << '[';
-        std::copy(std::begin(coefficients), std::end(coefficients), boost::io::make_ostream_joiner(out, ", "));
-        return out << ']';
+        return out << coefficients;
     }
 
     template<typename DRG>

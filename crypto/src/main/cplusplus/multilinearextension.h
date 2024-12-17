@@ -23,11 +23,11 @@
 #include <initializer_list>
 #include <iostream>
 #include <vector>
-#include <boost/io/ostream_joiner.hpp>
 
 #include "eqextension.h"
 #include "matrix.h"
 #include "polynomialring.h"
+#include "util.h"
 #include "vector.h"
 
 template<typename E>
@@ -177,9 +177,7 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const MultilinearExtension& val)
     {
-        out << '[';
-        std::copy(val.coefficients.begin(), val.coefficients.end(), boost::io::make_ostream_joiner(out, ", "));
-        return out << ']';
+        return out << val.coefficients;
     }
 };
 

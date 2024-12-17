@@ -48,9 +48,7 @@ public:
 
         friend std::ostream& operator << (std::ostream& out, const Proof& val)
         {
-            out << '[';
-            std::copy(val.claims.begin(), val.claims.end(), boost::io::make_ostream_joiner(out, ", "));
-            return out << ']';
+            return out << val.claims;
         }
     };
 

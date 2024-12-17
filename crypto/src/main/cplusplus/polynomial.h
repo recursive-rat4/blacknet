@@ -21,7 +21,8 @@
 #include <iostream>
 #include <type_traits>
 #include <vector>
-#include <boost/io/ostream_joiner.hpp>
+
+#include "util.h"
 
 template<typename R, template<typename> typename P>
 class Polynomial {
@@ -88,9 +89,7 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const Polynomial& val)
     {
-        out << '[';
-        std::copy(val.polynomials.begin(), val.polynomials.end(), boost::io::make_ostream_joiner(out, ", "));
-        return out << ']';
+        return out << val.polynomials;
     }
 };
 

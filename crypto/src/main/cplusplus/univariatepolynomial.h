@@ -21,7 +21,8 @@
 #include <initializer_list>
 #include <iostream>
 #include <vector>
-#include <boost/io/ostream_joiner.hpp>
+
+#include "util.h"
 
 template<typename E>
 class UnivariatePolynomial {
@@ -71,9 +72,7 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const UnivariatePolynomial& val)
     {
-        out << '[';
-        std::copy(val.coefficients.begin(), val.coefficients.end(), boost::io::make_ostream_joiner(out, ", "));
-        return out << ']';
+        return out << val.coefficients;
     }
 
     template<typename DRG>

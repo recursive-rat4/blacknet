@@ -22,7 +22,8 @@
 #include <initializer_list>
 #include <iostream>
 #include <vector>
-#include <boost/io/ostream_joiner.hpp>
+
+#include "util.h"
 
 template<typename E>class Vector;
 
@@ -121,9 +122,7 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const Matrix& val)
     {
-        out << '[';
-        std::copy(val.elements.begin(), val.elements.end(), boost::io::make_ostream_joiner(out, ", "));
-        return out << ']';
+        return out << val.elements;
     }
 
     template<typename RNG>
