@@ -17,10 +17,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "ccsbuilder.h"
 #include "poseidon2pasta.h"
 #include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
-#include "r1csbuilder.h"
 
 BOOST_AUTO_TEST_SUITE(Poseidons)
 
@@ -96,22 +96,22 @@ BOOST_AUTO_TEST_CASE(Solinas62) {
     poseidon2::permute<Params>(a);
     BOOST_TEST(c == a);
 
-    using Circuit = R1CSBuilder<E>;
+    using Circuit = CCSBuilder<E, 3>;
     Circuit circuit;
     std::array<typename Circuit::Variable, Params::t> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
     poseidon2::circuit::permute<Params, Circuit>(circuit, x);
-    R1CS<E> r1cs(circuit.r1cs());
+    CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z;
-    z.elements.reserve(r1cs.variables());
+    z.elements.reserve(ccs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(b, std::back_inserter(z.elements));
     poseidon2::trace::permute<Params, Circuit::degree()>(b, z.elements);
-    BOOST_TEST(r1cs.variables() == z.size());
-    BOOST_TEST(r1cs.isSatisfied(z));
+    BOOST_TEST(ccs.variables() == z.size());
+    BOOST_TEST(ccs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {
         z[i] += E(1);
-        BOOST_TEST(!r1cs.isSatisfied(z));
+        BOOST_TEST(!ccs.isSatisfied(z));
         z[i] -= E(1);
     }
 }

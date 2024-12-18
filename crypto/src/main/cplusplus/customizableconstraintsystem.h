@@ -62,6 +62,21 @@ public:
         return sigma == Vector<E>(rows, E(0));
     }
 
+    constexpr bool operator == (const CustomizableConstraintSystem&) const = default;
+
+    constexpr std::size_t constraints() const {
+        return rows;
+    }
+
+    constexpr std::size_t variables() const {
+        return columns;
+    }
+
+    friend std::ostream& operator << (std::ostream& out, const CustomizableConstraintSystem& val)
+    {
+        return out << '(' << val.rows << ", " << val.columns << ", " << val.m << ", " << val.s << ", " << val.c << ')';
+    }
+
     template<typename Z = E>
     class Polynomial {
         std::size_t deg;

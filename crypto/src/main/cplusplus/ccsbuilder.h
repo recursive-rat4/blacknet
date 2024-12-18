@@ -15,28 +15,32 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_R1CSBUILDER_H
-#define BLACKNET_CRYPTO_R1CSBUILDER_H
+#ifndef BLACKNET_CRYPTO_CCSBUILDER_H
+#define BLACKNET_CRYPTO_CCSBUILDER_H
 
+#include <algorithm>
+#include <array>
 #include <map>
+#include <span>
 #include <type_traits>
 #include <vector>
 
+#include "customizableconstraintsystem.h"
 #include "matrix.h"
 #include "matrixsparse.h"
 #include "r1cs.h"
 
-template<typename E>
-struct R1CSBuilder {
+template<typename E, std::size_t D>
+struct CCSBuilder {
     using R = E;
 
     consteval static std::size_t degree() {
-        return 2;
+        return D;
     }
 
     struct Variable;
     struct LinearCombination;
-    struct QuadraticCombination;
+    struct Combination;
     struct Constraint;
 
     template<typename T>
@@ -45,8 +49,8 @@ struct R1CSBuilder {
             return static_cast<const T&>(*this)();
         }
 
-        constexpr void operator () (QuadraticCombination& qc) const {
-            return static_cast<const T&>(*this)(qc);
+        constexpr void operator () (std::span<LinearCombination> combinations) const {
+            return static_cast<const T&>(*this)(combinations);
         }
 
         constexpr void operator () (LinearCombination& lc) const {
@@ -126,9 +130,10 @@ struct R1CSBuilder {
             static_assert(false, "Linear combination is not a constraint");
         }
 
-        constexpr void operator () (QuadraticCombination& qc) const {
-            (*this)(qc.a);
-            qc.b.emplace(Variable::constant(), E(1));
+        constexpr void operator () (std::span<LinearCombination> combinations) const {
+            (*this)(combinations[0]);
+            for (std::size_t i = 1; i < combinations.size(); ++i)
+                combinations[i].emplace(Variable::constant(), E(1));
         }
 
         constexpr void operator () (LinearCombination& lc) const {
@@ -140,14 +145,29 @@ struct R1CSBuilder {
         }
     };
 
-    struct QuadraticCombination {
-        LinearCombination a;
-        LinearCombination b;
+    struct Combination {
+        std::array<LinearCombination, D> lcs;
+
+        constexpr std::size_t size() const noexcept {
+            return lcs.size();
+        }
+
+        constexpr LinearCombination& operator [] (std::size_t i) {
+            return lcs[i];
+        }
+
+        constexpr const LinearCombination& operator [] (std::size_t i) const {
+            return lcs[i];
+        }
+
+        constexpr std::span<LinearCombination, D> span() {
+            return { lcs };
+        }
     };
 
     struct Constraint {
-        QuadraticCombination qc;
-        LinearCombination lc;
+        Combination r;
+        LinearCombination l;
     };
 
     struct Constant : ConstraintExpression<Constant> {
@@ -160,8 +180,8 @@ struct R1CSBuilder {
             static_assert(false, "Constant is not a constraint");
         }
 
-        constexpr void operator () (QuadraticCombination&) const {
-            static_assert(false, "Constant is not a quadratic combination");
+        constexpr void operator () (std::span<LinearCombination>) const {
+            static_assert(false, "Constant is not a combination");
         }
 
         constexpr void operator () (LinearCombination&) const {
@@ -186,8 +206,8 @@ struct R1CSBuilder {
             static_assert(false, "Variable is not a constraint");
         }
 
-        constexpr void operator () (QuadraticCombination&) const {
-            static_assert(false, "Variable is not a quadratic combination");
+        constexpr void operator () (std::span<LinearCombination>) const {
+            static_assert(false, "Variable is not a combination");
         }
 
         constexpr void operator () (LinearCombination&) const {
@@ -217,10 +237,11 @@ struct R1CSBuilder {
             static_assert(false, "Addition is not a constraint");
         }
 
-        constexpr void operator () (QuadraticCombination& qc) const {
+        constexpr void operator () (std::span<LinearCombination> combinations) const {
             static_assert(L::degree() <= 1 && R::degree() <= 1, "Can't add non-linear expressions");
-            (*this)(qc.a);
-            qc.b.emplace(Variable::constant(), E(1));
+            (*this)(combinations[0]);
+            for (std::size_t i = 1; i < combinations.size(); ++i)
+                combinations[i].emplace(Variable::constant(), E(1));
         }
 
         constexpr void operator () (LinearCombination& lc) const {
@@ -258,24 +279,34 @@ struct R1CSBuilder {
             static_assert(false, "Multiplication is not a constraint");
         }
 
-        constexpr void operator () (QuadraticCombination& qc) const {
+        template<std::size_t N>
+        requires(N != std::dynamic_extent)
+        constexpr void operator () (std::span<LinearCombination, N> combinations) const {
+            static_assert(degree() <= combinations.size(), "Can't mul high-degree expressions");
             if constexpr (std::is_same_v<L, Constant> || std::is_same_v<R, Constant>) {
-                (*this)(qc.a);
-                qc.b.emplace(Variable::constant(), E(1));
+                (*this)(combinations[0]);
+                for (std::size_t i = 1; i < combinations.size(); ++i)
+                    combinations[i].emplace(Variable::constant(), E(1));
             } else if constexpr (std::is_same_v<L, Variable> && std::is_same_v<R, Variable>) {
-                qc.a.emplace(l, E(1));
-                qc.b.emplace(r, E(1));
-            } else if constexpr (std::is_same_v<L, Variable> && R::degree() == 1) {
-                qc.a.emplace(l, E(1));
-                r(qc.b);
-            } else if constexpr (std::is_same_v<R, Variable> && L::degree() == 1) {
-                l(qc.a);
-                qc.b.emplace(r, E(1));
-            } else if constexpr (L::degree() == 1 && R::degree() == 1) {
-                l(qc.a);
-                r(qc.b);
+                combinations[0].emplace(l, E(1));
+                combinations[1].emplace(r, E(1));
+                for (std::size_t i = 2; i < combinations.size(); ++i)
+                    combinations[i].emplace(Variable::constant(), E(1));
+            } else if constexpr (std::is_same_v<L, Variable>) {
+                combinations[0].emplace(l, E(1));
+                r(combinations.template subspan<1, R::degree()>());
+                for (std::size_t i = degree(); i < combinations.size(); ++i)
+                    combinations[i].emplace(Variable::constant(), E(1));
+            } else if constexpr (std::is_same_v<R, Variable>) {
+                l(combinations.template subspan<0, L::degree()>());
+                combinations[L::degree()].emplace(r, E(1));
+                for (std::size_t i = degree(); i < combinations.size(); ++i)
+                    combinations[i].emplace(Variable::constant(), E(1));
             } else {
-                static_assert(false, "Can't mul non-linear expressions");
+                l(combinations.template subspan<0, L::degree()>());
+                r(combinations.template subspan<L::degree(), R::degree()>());
+                for (std::size_t i = degree(); i < combinations.size(); ++i)
+                    combinations[i].emplace(Variable::constant(), E(1));
             }
         }
 
@@ -325,43 +356,46 @@ struct R1CSBuilder {
         constexpr EqExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {
-            static_assert(degree() <= R1CSBuilder::degree(), "High-degree constraints are not supported");
+            static_assert(degree() <= CCSBuilder::degree(), "High-degree constraints are not supported");
             Constraint constraint;
             if constexpr (std::is_same_v<L, Constant>) {
                 if constexpr (std::is_same_v<R, Constant>) {
                     static_assert(false, "Not implemented");
                 } else if constexpr (std::is_same_v<R, Variable>) {
-                    constraint.qc.a.emplace(Variable::constant(), l.value);
-                    constraint.qc.a.emplace(r, E(-1));
-                    constraint.qc.b.emplace(Variable::constant(), E(1));
+                    constraint.r[0].emplace(Variable::constant(), l.value);
+                    constraint.r[0].emplace(r, E(-1));
+                    for (std::size_t i = 1; i < constraint.r.size(); ++i)
+                        constraint.r[i].emplace(Variable::constant(), E(1));
                 } else {
-                    constraint.lc.emplace(Variable::constant(), l.value);
-                    r(constraint.qc);
+                    constraint.l.emplace(Variable::constant(), l.value);
+                    r(constraint.r.span());
                 }
             } else if constexpr (std::is_same_v<L, Variable>) {
                 if constexpr (std::is_same_v<R, Constant>) {
-                    constraint.qc.a.emplace(l, E(-1));
-                    constraint.qc.a.emplace(Variable::constant(), r.value);
-                    constraint.qc.b.emplace(Variable::constant(), E(1));
+                    constraint.r[0].emplace(l, E(-1));
+                    constraint.r[0].emplace(Variable::constant(), r.value);
+                    for (std::size_t i = 1; i < constraint.r.size(); ++i)
+                        constraint.r[i].emplace(Variable::constant(), E(1));
                 } else if constexpr (std::is_same_v<R, Variable>) {
-                    constraint.qc.a.emplace(l, E(1));
-                    constraint.qc.a.emplace(r, E(-1));
-                    constraint.qc.b.emplace(Variable::constant(), E(1));
+                    constraint.r[0].emplace(l, E(1));
+                    constraint.r[0].emplace(r, E(-1));
+                    for (std::size_t i = 1; i < constraint.r.size(); ++i)
+                        constraint.r[i].emplace(Variable::constant(), E(1));
                 } else {
-                    constraint.lc.emplace(l, E(1));
-                    r(constraint.qc);
+                    constraint.l.emplace(l, E(1));
+                    r(constraint.r.span());
                 }
             } else if constexpr (L::degree() == 1) {
-                l(constraint.lc);
-                r(constraint.qc);
+                l(constraint.l);
+                r(constraint.r.span());
             } else {
                 static_assert(false, "Not implemented");
             }
             return constraint;
         }
 
-        constexpr void operator () (QuadraticCombination&) const {
-            static_assert(false, "Equality is not a quadratic combination");
+        constexpr void operator () (Combination&) const {
+            static_assert(false, "Equality is not a combination");
         }
 
         constexpr void operator () (LinearCombination&) const {
@@ -422,7 +456,7 @@ struct R1CSBuilder {
     std::size_t auxiliaries;
     std::vector<Constraint> constraints;
 
-    consteval R1CSBuilder() : inputs(0), auxiliaries(0), constraints() {}
+    consteval CCSBuilder() : inputs(0), auxiliaries(0), constraints() {}
 
     constexpr Variable input() {
         return { Variable::Type::Input, ++inputs };
@@ -444,33 +478,54 @@ struct R1CSBuilder {
         Matrix<E> b(constraints.size(), variables, E(0));
         Matrix<E> c(constraints.size(), variables, E(0));
         for (std::size_t i = 0; i < constraints.size(); ++i) {
-            for (const auto& [variable, coefficient] : constraints[i].qc.a) {
-                if (variable.type == Variable::Type::Constant)
-                    a[i, 0] = coefficient;
-                else if (variable.type == Variable::Type::Input)
-                    a[i, variable.number] = coefficient;
-                else if (variable.type == Variable::Type::Auxiliary)
-                    a[i, inputs + variable.number] = coefficient;
-            }
-            for (const auto& [variable, coefficient] : constraints[i].qc.b) {
-                if (variable.type == Variable::Type::Constant)
-                    b[i, 0] = coefficient;
-                else if (variable.type == Variable::Type::Input)
-                    b[i, variable.number] = coefficient;
-                else if (variable.type == Variable::Type::Auxiliary)
-                    b[i, inputs + variable.number] = coefficient;
-            }
-            for (const auto& [variable, coefficient] : constraints[i].lc) {
-                if (variable.type == Variable::Type::Constant)
-                    c[i, 0] = coefficient;
-                else if (variable.type == Variable::Type::Input)
-                    c[i, variable.number] = coefficient;
-                else if (variable.type == Variable::Type::Auxiliary)
-                    c[i, inputs + variable.number] = coefficient;
-            }
+            put(a, i, constraints[i].r[0]);
+            put(b, i, constraints[i].r[1]);
+            put(c, i, constraints[i].l);
         }
         return { MatrixSparse(a), MatrixSparse(b), MatrixSparse(c) };
     }
+
+    constexpr CustomizableConstraintSystem<E> ccs() const {
+        std::size_t variables = 1 + inputs + auxiliaries;
+        std::vector<Matrix<E>> md;
+        md.reserve(degree() + 1);
+        std::ranges::generate_n(std::back_inserter(md), degree() + 1, [&]{ return Matrix<E>(constraints.size(), variables, E(0)); });
+        for (std::size_t i = 0; i < constraints.size(); ++i) {
+            for (std::size_t j = 0; j < constraints[i].r.size(); ++j) {
+                put(md[j], i, constraints[i].r[j]);
+            }
+            put(md.back(), i, constraints[i].l);
+        }
+        std::vector<MatrixSparse<E>> ms;
+        ms.reserve(degree() + 1);
+        std::ranges::transform(md, std::back_inserter(ms), [](auto&& ix) { return MatrixSparse<E>(ix); });
+        std::vector<std::vector<std::size_t>> s(2);
+        s[0].reserve(degree());
+        for (std::size_t i = 0; i < degree(); ++i)
+            s[0].push_back(i);
+        s[1].reserve(1);
+        s[1].push_back(degree());
+        return {
+            constraints.size(), variables,
+            std::move(ms),
+            std::move(s),
+            { E(1), E(-1) }
+        };
+    }
+
+    constexpr void put(Matrix<E>& m, std::size_t row, const LinearCombination& lc) const {
+        for (const auto& [variable, coefficient] : lc) {
+            if (variable.type == Variable::Type::Constant)
+                m[row, 0] = coefficient;
+            else if (variable.type == Variable::Type::Input)
+                m[row, variable.number] = coefficient;
+            else if (variable.type == Variable::Type::Auxiliary)
+                m[row, inputs + variable.number] = coefficient;
+        }
+    }
 };
+
+template<typename E>
+using R1CSBuilder = CCSBuilder<E, 2>;
 
 #endif

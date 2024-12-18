@@ -17,11 +17,12 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "ccsbuilder.h"
+#include "customizableconstraintsystem.h"
 #include "pervushin.h"
 #include "r1cs.h"
-#include "r1csbuilder.h"
 
-BOOST_AUTO_TEST_SUITE(R1CSBuilders)
+BOOST_AUTO_TEST_SUITE(CCSBuilders)
 
 using E = PervushinRing;
 
@@ -237,6 +238,51 @@ BOOST_AUTO_TEST_CASE(Boards) {
     for (std::size_t i = 1; i < zv.size(); ++i) {
         zv[i] += E(1);
         BOOST_TEST(!r1cs.isSatisfied(zv));
+        zv[i] -= E(1);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(Cubism) {
+    Matrix<E> am(2, 5, {
+        E(0), E(1), E(0), E(0), E(0),
+        E(0), E(1), E(1), E(0), E(0),
+    });
+    Matrix<E> bm(2, 5, {
+        E(0), E(1), E(0), E(0), E(0),
+        E(0), E(1), E(0), E(1), E(0),
+    });
+    Matrix<E> cm(2, 5, {
+        E(0), E(1), E(0), E(0), E(0),
+        E(0), E(1), E(0), E(0), E(1),
+    });
+    Matrix<E> dm(2, 5, {
+        E(0), E(0), E(0), E(0), E(1),
+        E(350), E(0), E(0), E(0), E(0),
+    });
+    CustomizableConstraintSystem<E> ccs{
+        2, 5,
+        {am, bm, cm, dm},
+        {{0, 1, 2}, {3}},
+        {E(1), E(-1)}
+    };
+
+    CCSBuilder<E, 3> circuit;
+    auto c = E(350);
+    auto x = circuit.input();
+    auto y = circuit.input();
+    auto z = circuit.input();
+    auto w = circuit.auxiliary();
+
+    circuit(w == x * x * x);
+    circuit(c == (x + y) * (x + z) * (x + w));
+
+    BOOST_TEST(ccs == circuit.ccs());
+
+    Vector<E> zv{ E(1), E(2), E(3), E(5), E(8) };
+    BOOST_TEST(ccs.isSatisfied(zv));
+    for (std::size_t i = 1; i < zv.size(); ++i) {
+        zv[i] += E(1);
+        BOOST_TEST(!ccs.isSatisfied(zv));
         zv[i] -= E(1);
     }
 }
