@@ -37,7 +37,7 @@ static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
 
     Z beta = Z::random(rng);
-    std::vector<Z> mu(6);
+    std::vector<Z> mu(LatticeFold::k * 2);
     std::ranges::generate(mu, [] { return Z::random(rng); });
     std::vector<Vector<R>> f(LatticeFold::k * 2);
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
@@ -65,7 +65,7 @@ static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
 
     Z beta = Z::random(rng);
-    std::vector<Z> mu(6);
+    std::vector<Z> mu(LatticeFold::k * 2);
     std::ranges::generate(mu, [] { return Z::random(rng); });
     std::vector<Vector<R>> f(LatticeFold::k * 2);
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });

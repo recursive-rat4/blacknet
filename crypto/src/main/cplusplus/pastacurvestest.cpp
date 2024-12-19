@@ -101,6 +101,7 @@ BOOST_AUTO_TEST_CASE(fieldNeg) {
     BOOST_TEST(VestaField(0) == -VestaField(0));
     BOOST_TEST(PallasField(1) == -(-PallasField(1)));
     BOOST_TEST(VestaField(1) == -(-VestaField(1)));
+    BOOST_TEST(PallasField(1) == -PallasField(-1));
 }
 
 BOOST_AUTO_TEST_CASE(fieldSquare) {

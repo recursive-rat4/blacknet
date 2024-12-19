@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(GEvals) {
 
 BOOST_AUTO_TEST_CASE(GNorms) {
     Z beta(2);
-    std::vector<Z> mu{1, 1, 1, 1, 1, 1};
+    std::vector<Z> mu(LatticeFold::k * 2, Z(1));
     std::vector<Vector<R>> f1(LatticeFold::k * 2, Vector<R>{R{1, 1, 0, -1}});
     std::vector<Vector<R>> f2(LatticeFold::k * 2, Vector<R>{R{2, 0, 0, -2}});
     auto gnorm_1 = LatticeFold::GNorm<Z>(beta, mu, f1);
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(GNorms) {
 BOOST_AUTO_TEST_CASE(GFolds) {
     std::vector<Z> alpha(LatticeFold::k * 2, Z(1));
     Z beta(3);
-    std::vector<Z> mu{1, 1, 1, 1, 1, 1};
+    std::vector<Z> mu(LatticeFold::k * 2, Z(1));
     std::vector<std::vector<Z>> r(LatticeFold::k * 2, {0, 0, 0, 0, 1, 1});
     std::vector<Vector<R>> f(LatticeFold::k * 2, Vector<R>{R{-1, 0, 1, 1, 0, -1}});
     auto gfold = LatticeFold::GFold<Z>(alpha, beta, mu, r, f);

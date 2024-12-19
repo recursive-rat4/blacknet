@@ -37,7 +37,12 @@ public:
 
     consteval PrimeField() : n() {}
     consteval PrimeField(const std::string& hex) : n(Params::toForm(hex)) {}
-    constexpr PrimeField(uint8_t n) : n(Params::toForm(n)) {}
+    constexpr PrimeField(int8_t n) {
+        if (n >= 0)
+            this->n = Params::toForm(n);
+        else
+            this->n = Params::toForm(Params::M - UInt256(-n));
+    }
 
     constexpr bool operator == (const PrimeField&) const = default;
 

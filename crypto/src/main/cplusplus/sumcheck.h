@@ -198,7 +198,8 @@ private:
             S p1(util::Sum<S>::call(evaluations));
             return interpolate<S>(hint - p1, p1);
         } else {
-            throw std::string("Sum-check prover not implemented for degree ") + std::to_string(state.degree());
+            throw std::runtime_error(
+                std::string("Sum-check prover not implemented for degree ") + std::to_string(state.degree()));
         }
     }
 };
