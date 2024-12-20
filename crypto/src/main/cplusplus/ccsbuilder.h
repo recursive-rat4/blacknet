@@ -184,8 +184,8 @@ struct CCSBuilder {
             static_assert(false, "Constant is not a combination");
         }
 
-        constexpr void operator () (LinearCombination&) const {
-            static_assert(false, "Constant is not a linear combination");
+        constexpr void operator () (LinearCombination& lc) const {
+            lc += value;
         }
 
         consteval static std::size_t degree() {
@@ -210,8 +210,8 @@ struct CCSBuilder {
             static_assert(false, "Variable is not a combination");
         }
 
-        constexpr void operator () (LinearCombination&) const {
-            static_assert(false, "Variable is not a linear combination");
+        constexpr void operator () (LinearCombination& lc) const {
+            lc += *this;
         }
 
         consteval static std::size_t degree() {
@@ -246,20 +246,8 @@ struct CCSBuilder {
 
         constexpr void operator () (LinearCombination& lc) const {
             static_assert(L::degree() <= 1 && R::degree() <= 1, "Can't add non-linear expressions");
-            if constexpr (std::is_same_v<L, Constant>) {
-                lc += l.value;
-            } else if constexpr (std::is_same_v<L, Variable>) {
-                lc += l;
-            } else {
-                l(lc);
-            }
-            if constexpr (std::is_same_v<R, Constant>) {
-                lc += r.value;
-            } else if constexpr (std::is_same_v<R, Variable>) {
-                lc += r;
-            } else {
-                r(lc);
-            }
+            l(lc);
+            r(lc);
         }
 
         consteval static std::size_t degree() {
