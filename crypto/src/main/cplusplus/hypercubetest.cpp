@@ -21,14 +21,7 @@
 #include "hypercube.h"
 #include "multilinearextension.h"
 #include "solinas62.h"
-
-namespace std {
-template<typename A, typename B>
-std::ostream& boost_test_print_type(std::ostream& out, const std::pair<A, B>& val)
-{
-    return out << '(' << std::get<0>(val) << ", " << std::get<1>(val) << ')';
-}
-}
+#include "util.h"
 
 BOOST_AUTO_TEST_SUITE(Hypercubes)
 

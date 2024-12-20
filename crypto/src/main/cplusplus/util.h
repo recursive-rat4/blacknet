@@ -145,6 +145,12 @@ namespace std {
         std::copy(val.cbegin(), val.cend(), boost::io::make_ostream_joiner(out, ", "));
         return out << ']';
     }
+
+    template<typename A, typename B>
+    std::ostream& operator << (std::ostream& out, const std::pair<A, B>& val)
+    {
+        return out << '(' << std::get<0>(val) << ", " << std::get<1>(val) << ')';
+    }
 }
 
 #endif
