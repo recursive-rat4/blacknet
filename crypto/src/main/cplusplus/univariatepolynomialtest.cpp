@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
+#include "ccsbuilder.h"
 #include "solinas62.h"
 #include "solinas62field.h"
 #include "univariatepolynomial.h"
@@ -48,6 +49,32 @@ BOOST_AUTO_TEST_CASE(homomorphism) {
     UnivariatePolynomial<E> p1({E(20), E(21), E(22), E(23)});
     UnivariatePolynomial<EE> p2 = p1.homomorph<EE>();
     BOOST_TEST(EE(p1(E(24))) == p2(EE(24)));
+}
+
+BOOST_AUTO_TEST_CASE(circuit) {
+    UnivariatePolynomial<E> p{E(2), E(3), E(4), E(5), E(6)};
+    E x(7);
+
+    using Circuit = CCSBuilder<E, 2>;
+    Circuit circuit;
+    std::array<typename Circuit::Variable, 5> c_vars;
+    std::ranges::generate(c_vars, [&]{ return circuit.input(); });
+    typename Circuit::Variable x_var = circuit.input();
+    UnivariatePolynomial<E>::circuit<Circuit>::evaluate(circuit, c_vars, x_var);
+    CustomizableConstraintSystem<E> ccs(circuit.ccs());
+    Vector<E> z;
+    z.elements.reserve(ccs.variables());
+    z.elements.emplace_back(E(1));
+    std::ranges::copy(p.coefficients, std::back_inserter(z.elements));
+    z.elements.push_back(x);
+    UnivariatePolynomial<E>::trace::evaluate(p, x, z.elements);
+    BOOST_TEST(ccs.variables() == z.size());
+    BOOST_TEST(ccs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!ccs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
