@@ -440,31 +440,80 @@ struct CCSBuilder {
         return { Constant(l), static_cast<const R&>(r) };
     }
 
+    struct ScopeInfo {
+        ScopeInfo* const up;
+        std::vector<ScopeInfo> down;
+        const char* name;
+        std::size_t constraints;
+        std::size_t variables;
+
+        void print(std::ostream& out, std::size_t level) const {
+            for (std::size_t i = 0; i < level; ++i)
+                out << ' ';
+            out << "- " << name << ' ' << constraints << 'x' << variables << std::endl;
+            for (const auto& scope : down)
+                scope.print(out, level + 1);
+        }
+    };
+
+    class Scope {
+        friend CCSBuilder;
+        CCSBuilder* builder;
+
+        constexpr Scope(CCSBuilder* builder) : builder(builder) {}
+        constexpr Scope(const Scope&) = delete;
+        constexpr Scope(Scope&&) = delete;
+        constexpr Scope& operator = (const Scope&) = delete;
+        constexpr Scope& operator = (Scope&&) = delete;
+        public:
+        constexpr ~Scope() {
+            builder->currentScope = builder->currentScope->up;
+        }
+    };
+
+    constexpr Scope scope(const char* name) {
+        ScopeInfo info{ currentScope, {}, name, 0, 0 };
+        if (currentScope) {
+            currentScope = &currentScope->down.emplace_back(std::move(info));
+        } else {
+            currentScope = &scopes.emplace_back(std::move(info));
+        }
+        return Scope(this);
+    }
+
     std::size_t inputs;
     std::size_t auxiliaries;
     std::vector<Constraint> constraints;
+    std::vector<ScopeInfo> scopes;
+    ScopeInfo* currentScope;
 
-    consteval CCSBuilder() : inputs(0), auxiliaries(0), constraints() {}
+    consteval CCSBuilder() : inputs(0), auxiliaries(0), constraints(), scopes(), currentScope(nullptr) {}
 
     constexpr Variable input() {
+        if (currentScope) currentScope->variables += 1;
         return { Variable::Type::Input, ++inputs };
     }
 
     constexpr Variable auxiliary() {
+        if (currentScope) currentScope->variables += 1;
         return { Variable::Type::Auxiliary, ++auxiliaries };
     }
 
     template<typename T>
     constexpr void operator () (const ConstraintExpression<T>& expression) {
+        if (currentScope) currentScope->constraints += 1;
         constraints.emplace_back(expression());
+    }
+
+    constexpr std::size_t variables() const {
+        return 1 + inputs + auxiliaries;
     }
 
     constexpr R1CS<E> r1cs() const {
         static_assert(degree() <= 2, "High-degree circuits are not supported");
-        std::size_t variables = 1 + inputs + auxiliaries;
-        Matrix<E> a(constraints.size(), variables, E(0));
-        Matrix<E> b(constraints.size(), variables, E(0));
-        Matrix<E> c(constraints.size(), variables, E(0));
+        Matrix<E> a(constraints.size(), variables(), E(0));
+        Matrix<E> b(constraints.size(), variables(), E(0));
+        Matrix<E> c(constraints.size(), variables(), E(0));
         for (std::size_t i = 0; i < constraints.size(); ++i) {
             put(a, i, constraints[i].r[0]);
             put(b, i, constraints[i].r[1]);
@@ -474,10 +523,9 @@ struct CCSBuilder {
     }
 
     constexpr CustomizableConstraintSystem<E> ccs() const {
-        std::size_t variables = 1 + inputs + auxiliaries;
         std::vector<Matrix<E>> md;
         md.reserve(degree() + 1);
-        std::ranges::generate_n(std::back_inserter(md), degree() + 1, [&]{ return Matrix<E>(constraints.size(), variables, E(0)); });
+        std::ranges::generate_n(std::back_inserter(md), degree() + 1, [&]{ return Matrix<E>(constraints.size(), variables(), E(0)); });
         for (std::size_t i = 0; i < constraints.size(); ++i) {
             for (std::size_t j = 0; j < constraints[i].r.size(); ++j) {
                 put(md[j], i, constraints[i].r[j]);
@@ -494,7 +542,7 @@ struct CCSBuilder {
         s[1].reserve(1);
         s[1].push_back(degree());
         return {
-            constraints.size(), variables,
+            constraints.size(), variables(),
             std::move(ms),
             std::move(s),
             { E(1), E(-1) }
@@ -517,6 +565,12 @@ struct CCSBuilder {
                     throw std::runtime_error("Uninitialized variable in circuit");
             }
         }
+    }
+
+    void print(std::ostream& out) const {
+        out << "Circuit " << constraints.size() << 'x' << variables() << std::endl;
+        for (const auto& scope : scopes)
+            scope.print(out, 0);
     }
 };
 

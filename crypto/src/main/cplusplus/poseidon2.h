@@ -368,6 +368,8 @@ constexpr void permute(
     Circuit& circuit,
     std::array<typename Circuit::Variable, Params::t>& x
 ) {
+    auto scope = circuit.scope("Poseidon2::permute");
+
     std::array<typename Circuit::LinearCombination, Params::t> y;
     for (std::size_t i = 0; i < Params::t; ++i)
         y[i] = x[i];

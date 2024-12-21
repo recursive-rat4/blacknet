@@ -99,6 +99,7 @@ struct circuit {
         const std::array<Variable, N>& coefficients,
         Variable& x
     ) {
+        auto scope = circuit.scope("UnivariatePolynomial::evaluate");
         Variable pi(x);
         std::array<Variable, coefficients.size() - 1> cxpm;
         for (std::size_t i = 1; i < coefficients.size() - 1; ++i) {
