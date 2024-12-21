@@ -503,12 +503,19 @@ struct CCSBuilder {
 
     constexpr void put(Matrix<E>& m, std::size_t row, const LinearCombination& lc) const {
         for (const auto& [variable, coefficient] : lc) {
-            if (variable.type == Variable::Type::Constant)
-                m[row, 0] = coefficient;
-            else if (variable.type == Variable::Type::Input)
-                m[row, variable.number] = coefficient;
-            else if (variable.type == Variable::Type::Auxiliary)
-                m[row, inputs + variable.number] = coefficient;
+            switch (variable.type) {
+                case Variable::Type::Constant:
+                    m[row, 0] = coefficient;
+                    break;
+                case Variable::Type::Input:
+                    m[row, variable.number] = coefficient;
+                    break;
+                case Variable::Type::Auxiliary:
+                    m[row, inputs + variable.number] = coefficient;
+                    break;
+                case Variable::Type::Uninitialized:
+                    throw std::runtime_error("Uninitialized variable in circuit");
+            }
         }
     }
 };
