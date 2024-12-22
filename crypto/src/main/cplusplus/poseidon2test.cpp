@@ -43,15 +43,20 @@ BOOST_AUTO_TEST_CASE(Pallas) {
 
     using Circuit = R1CSBuilder<E>;
     Circuit circuit;
-    std::array<typename Circuit::Variable, Poseidon2::T> x;
+    std::array<typename Circuit::LinearCombination, Poseidon2::T> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
     Poseidon2::circuit<Circuit>::permute(circuit, x);
+    for (std::size_t i = 0; i < Poseidon2::T; ++i) {
+        auto v = circuit.auxiliary();
+        circuit(v == x[i]);
+    }
     R1CS<E> r1cs(circuit.r1cs());
     Vector<E> z;
     z.elements.reserve(r1cs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
+    std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(r1cs.variables() == z.size());
     BOOST_TEST(r1cs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {
@@ -98,15 +103,20 @@ BOOST_AUTO_TEST_CASE(Solinas62) {
 
     using Circuit = CCSBuilder<E, 3>;
     Circuit circuit;
-    std::array<typename Circuit::Variable, Poseidon2::T> x;
+    std::array<typename Circuit::LinearCombination, Poseidon2::T> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
     Poseidon2::circuit<Circuit>::permute(circuit, x);
+    for (std::size_t i = 0; i < Poseidon2::T; ++i) {
+        auto v = circuit.auxiliary();
+        circuit(v == x[i]);
+    }
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z;
     z.elements.reserve(ccs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
+    std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.variables() == z.size());
     BOOST_TEST(ccs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {
@@ -153,15 +163,20 @@ BOOST_AUTO_TEST_CASE(Pervushin) {
 
     using Circuit = R1CSBuilder<E>;
     Circuit circuit;
-    std::array<typename Circuit::Variable, Poseidon2::T> x;
+    std::array<typename Circuit::LinearCombination, Poseidon2::T> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
     Poseidon2::circuit<Circuit>::permute(circuit, x);
+    for (std::size_t i = 0; i < Poseidon2::T; ++i) {
+        auto v = circuit.auxiliary();
+        circuit(v == x[i]);
+    }
     R1CS<E> r1cs(circuit.r1cs());
     Vector<E> z;
     z.elements.reserve(r1cs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
+    std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(r1cs.variables() == z.size());
     BOOST_TEST(r1cs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {

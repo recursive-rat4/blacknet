@@ -20,7 +20,6 @@
 
 #include <array>
 #include <concepts>
-#include <ranges>
 #include <vector>
 
 /*
@@ -161,109 +160,106 @@ struct circuit {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
 private:
-    constexpr static LinearCombination sum(const std::array<LinearCombination, T>& y) {
+    constexpr static LinearCombination sum(const std::array<LinearCombination, T>& x) {
         LinearCombination lc;
         for (std::size_t i = 0; i < T; ++i) {
-            lc += y[i];
+            lc += x[i];
         }
         return lc;
     }
 
-    constexpr static void m4(std::array<LinearCombination, T>& y) {
+    constexpr static void m4(std::array<LinearCombination, T>& x) {
         for (std::size_t i = 0; i < T >> 2; ++i) {
             std::size_t j = i << 2;
             std::array<LinearCombination, 8> t;
-            t[0] = y[j] + y[j + 1];
-            t[1] = y[j + 2] + y[j + 3];
-            t[2] = y[j + 1] * F(2) + t[1];
-            t[3] = y[j + 3] * F(2) + t[0];
+            t[0] = x[j] + x[j + 1];
+            t[1] = x[j + 2] + x[j + 3];
+            t[2] = x[j + 1] * F(2) + t[1];
+            t[3] = x[j + 3] * F(2) + t[0];
             t[4] = t[1] * F(4) + t[3];
             t[5] = t[0] * F(4) + t[2];
             t[6] = t[3] + t[5];
             t[7] = t[2] + t[4];
-            y[j] = std::move(t[6]);
-            y[j + 1] = std::move(t[5]);
-            y[j + 2] = std::move(t[7]);
-            y[j + 3] = std::move(t[4]);
+            x[j] = std::move(t[6]);
+            x[j + 1] = std::move(t[5]);
+            x[j + 2] = std::move(t[7]);
+            x[j + 3] = std::move(t[4]);
         }
     }
 
-    constexpr static void external(std::array<LinearCombination, T>& y) {
+    constexpr static void external(std::array<LinearCombination, T>& x) {
         if constexpr (T == 2) {
-            auto s = sum(y);
-            y[0] += s;
-            y[1] += s;
+            auto s = sum(x);
+            x[0] += s;
+            x[1] += s;
         } else if constexpr (T == 3) {
-            auto s = sum(y);
-            y[0] += s;
-            y[1] += s;
-            y[2] += s;
+            auto s = sum(x);
+            x[0] += s;
+            x[1] += s;
+            x[2] += s;
         } else if constexpr (T == 4) {
-            m4(y);
+            m4(x);
         } else if constexpr (T == 8 || T == 12 || T == 16 || T == 20 || T == 24) {
-            m4(y);
+            m4(x);
             std::array<LinearCombination, 4> s;
             for (std::size_t i = 0; i < 4; ++i) {
-                s[i] = y[i];
+                s[i] = x[i];
                 for (std::size_t j = 1; j < T >> 2; ++j)
-                    s[i] += y[(j << 2) + i];
+                    s[i] += x[(j << 2) + i];
             }
             for (std::size_t i = 0; i < T; ++i)
-                y[i] += s[i & 3];
+                x[i] += s[i & 3];
         } else {
             static_assert(false);
         }
     }
 
-    constexpr static void internal(std::array<LinearCombination, T>& y) {
-        auto s = sum(y);
+    constexpr static void internal(std::array<LinearCombination, T>& x) {
+        auto s = sum(x);
         for (std::size_t i = 0; i < T; ++i) {
-            y[i] *= Params::m[i];
-            y[i] += s;
+            x[i] *= Params::m[i];
+            x[i] += s;
         }
     }
 
-    constexpr static void rcb(std::size_t round, std::array<LinearCombination, T>& y) {
+    constexpr static void rcb(std::size_t round, std::array<LinearCombination, T>& x) {
         for (std::size_t i = 0; i < T; ++i) {
-            y[i] += Params::rcb[round * T + i];
+            x[i] += Params::rcb[round * T + i];
         }
     }
 
-    constexpr static void rcp(std::size_t round, std::array<LinearCombination, T>& y) {
-        y[0] += Params::rcp[round];
+    constexpr static void rcp(std::size_t round, std::array<LinearCombination, T>& x) {
+        x[0] += Params::rcp[round];
     }
 
-    constexpr static void rce(std::size_t round, std::array<LinearCombination, T>& y) {
+    constexpr static void rce(std::size_t round, std::array<LinearCombination, T>& x) {
         for (std::size_t i = 0; i < T; ++i) {
-            y[i] += Params::rce[round * T + i];
+            x[i] += Params::rce[round * T + i];
         }
     }
 
-    constexpr static void sboxp(Circuit& circuit, Variable& x, LinearCombination& y) {
+    constexpr static void sboxp(Circuit& circuit, LinearCombination& x) {
         if constexpr (Params::a == 3) {
             if constexpr (circuit.degree() >= 3) {
                 auto x3 = circuit.auxiliary();
-                circuit(x3 == y * y * y);
+                circuit(x3 == x * x * x);
                 x = x3;
-                y = x;
             } else {
                 auto x2 = circuit.auxiliary();
                 auto x3 = circuit.auxiliary();
-                circuit(x2 == y * y);
-                circuit(x3 == y * x2);
+                circuit(x2 == x * x);
+                circuit(x3 == x * x2);
                 x = x3;
-                y = x;
             }
         } else if constexpr (Params::a == 5) {
             // Lessen constraints if degree >= 4
             auto x2 = circuit.auxiliary();
             auto x4 = circuit.auxiliary();
             auto x5 = circuit.auxiliary();
-            circuit(x2 == y * y);
+            circuit(x2 == x * x);
             circuit(x4 == x2 * x2);
-            circuit(x5 == y * x4);
+            circuit(x5 == x * x4);
             x = x5;
-            y = x;
         } else if constexpr (Params::a == 17) {
             // Lessen constraints if degree >= 4
             auto x2 = circuit.auxiliary();
@@ -271,54 +267,43 @@ private:
             auto x8 = circuit.auxiliary();
             auto x16 = circuit.auxiliary();
             auto x17 = circuit.auxiliary();
-            circuit(x2 == y * y);
+            circuit(x2 == x * x);
             circuit(x4 == x2 * x2);
             circuit(x8 == x4 * x4);
             circuit(x16 == x8 * x8);
-            circuit(x17 == y * x16);
+            circuit(x17 == x * x16);
             x = x17;
-            y = x;
         } else {
             static_assert(false, "Not implemented");
         }
     }
 
-    constexpr static void sbox(Circuit& circuit, std::array<Variable, T>& x, std::array<LinearCombination, T>& y) {
+    constexpr static void sbox(Circuit& circuit, std::array<LinearCombination, T>& x) {
         for (std::size_t i = 0; i < T; ++i)
-            sboxp(circuit, x[i], y[i]);
+            sboxp(circuit, x[i]);
     }
 public:
-    constexpr static void permute(Circuit& circuit, std::array<Variable, T>& x) {
+    constexpr static void permute(Circuit& circuit, std::array<LinearCombination, T>& x) {
         auto scope = circuit.scope("Poseidon2::permute");
 
-        std::array<LinearCombination, T> y;
-        for (std::size_t i = 0; i < T; ++i)
-            y[i] = x[i];
-
-        circuit::external(y);
+        circuit::external(x);
 
         for (std::size_t round = 0; round < Params::rb; ++round) {
-            circuit::rcb(round, y);
-            circuit::sbox(circuit, x, y);
-            circuit::external(y);
+            circuit::rcb(round, x);
+            circuit::sbox(circuit, x);
+            circuit::external(x);
         }
 
         for (std::size_t round = 0; round < Params::rp; ++round) {
-            circuit::rcp(round, y);
-            circuit::sboxp(circuit, x[0], y[0]);
-            circuit::internal(y);
+            circuit::rcp(round, x);
+            circuit::sboxp(circuit, x[0]);
+            circuit::internal(x);
         }
 
         for (std::size_t round = 0; round < Params::re; ++round) {
-            circuit::rce(round, y);
-            circuit::sbox(circuit, x, y);
-            circuit::external(y);
-        }
-
-        for (std::size_t i = 0; i < T; ++i) {
-            auto v = circuit.auxiliary();
-            circuit(v == y[i]);
-            x[i] = v;
+            circuit::rce(round, x);
+            circuit::sbox(circuit, x);
+            circuit::external(x);
         }
     }
 };
@@ -378,8 +363,6 @@ public:
             sbox(x, trace);
             external(x);
         }
-
-        std::ranges::copy(x, std::back_inserter(trace));
     }
 };
 };

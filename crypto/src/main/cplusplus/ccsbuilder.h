@@ -78,6 +78,21 @@ struct CCSBuilder {
             return terms.emplace(std::forward<Args>(args)...);
         }
 
+        constexpr LinearCombination() : terms() {}
+        constexpr LinearCombination(const Variable& variable) : terms({std::make_pair(variable, E(1))}) {}
+        constexpr LinearCombination(const LinearCombination& other) : terms(other.terms) {}
+        constexpr LinearCombination(LinearCombination&& other) noexcept
+            : terms(std::move(other.terms)) {}
+
+        constexpr LinearCombination& operator = (const LinearCombination& other) {
+            terms = other.terms;
+            return *this;
+        }
+        constexpr LinearCombination& operator = (LinearCombination&& other) noexcept {
+            terms = std::move(other.terms);
+            return *this;
+        }
+
         constexpr LinearCombination& operator = (const Variable& variable) {
             const E coefficient(1);
             terms = { std::make_pair(variable, coefficient) };

@@ -96,11 +96,11 @@ struct circuit {
     template<std::size_t N>
     constexpr static void evaluate(
         Circuit& circuit,
-        const std::array<Variable, N>& coefficients,
-        Variable& x
+        const std::array<LinearCombination, N>& coefficients,
+        LinearCombination& x
     ) {
         auto scope = circuit.scope("UnivariatePolynomial::evaluate");
-        Variable pi(x);
+        LinearCombination pi(x);
         std::array<Variable, coefficients.size() - 1> cxpm;
         for (std::size_t i = 1; i < coefficients.size() - 1; ++i) {
             cxpm[i - 1] = circuit.auxiliary();
@@ -113,18 +113,15 @@ struct circuit {
             cxpm.back() = circuit.auxiliary();
             circuit(cxpm.back() == pi * coefficients.back());
         }
-        LinearCombination lc;
-        lc += coefficients[0];
+        LinearCombination lc(coefficients[0]);
         for (std::size_t i = 0; i < cxpm.size(); ++i)
             lc += cxpm[i];
-        Variable y(circuit.auxiliary());
-        circuit(y == lc);
-        x = y;
+        x = std::move(lc);
     }
 };
 
 struct trace {
-    constexpr static void evaluate(const UnivariatePolynomial& p, const E& x, std::vector<E>& trace) {
+    constexpr static E evaluate(const UnivariatePolynomial& p, const E& x, std::vector<E>& trace) {
         E sigma(p.coefficients[0]);
         E pi(x);
         for (std::size_t i = 1; i < p.coefficients.size() - 1; ++i) {
@@ -140,7 +137,7 @@ struct trace {
                 pi * p.coefficients.back()
             );
         }
-        trace.emplace_back(std::move(sigma));
+        return sigma;
     }
 };
 

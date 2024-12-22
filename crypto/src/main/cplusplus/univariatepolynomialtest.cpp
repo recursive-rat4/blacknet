@@ -57,17 +57,21 @@ BOOST_AUTO_TEST_CASE(circuit) {
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::array<typename Circuit::Variable, 5> c_vars;
+    std::array<typename Circuit::LinearCombination, 5> c_vars;
     std::ranges::generate(c_vars, [&]{ return circuit.input(); });
-    typename Circuit::Variable x_var = circuit.input();
+    typename Circuit::LinearCombination x_var(circuit.input());
     UnivariatePolynomial<E>::circuit<Circuit>::evaluate(circuit, c_vars, x_var);
+    typename Circuit::Variable y_var(circuit.auxiliary());
+    circuit(y_var == x_var);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z;
     z.elements.reserve(ccs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(p.coefficients, std::back_inserter(z.elements));
     z.elements.push_back(x);
-    UnivariatePolynomial<E>::trace::evaluate(p, x, z.elements);
+    z.elements.emplace_back(
+        UnivariatePolynomial<E>::trace::evaluate(p, x, z.elements)
+    );
     BOOST_TEST(ccs.variables() == z.size());
     BOOST_TEST(ccs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {
