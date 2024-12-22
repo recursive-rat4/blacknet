@@ -38,10 +38,7 @@ public:
     constexpr Vector(std::size_t size) : elements(size) {}
     constexpr Vector(std::size_t size, const E& fill) : elements(size, fill) {}
     constexpr Vector(std::initializer_list<E> init) : elements(init) {}
-    constexpr Vector(const Vector& other) {
-        elements.reserve(other.elements.size());
-        std::copy(other.elements.begin(), other.elements.end(), std::back_inserter(elements));
-    }
+    constexpr Vector(const Vector& other) : elements(other.elements) {}
     constexpr Vector(std::vector<E>&& elements) : elements(std::move(elements)) {}
     constexpr Vector(Vector&& other) noexcept : elements(std::move(other.elements)) {}
 
