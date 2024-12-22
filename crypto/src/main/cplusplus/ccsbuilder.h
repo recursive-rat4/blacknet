@@ -93,6 +93,12 @@ struct CCSBuilder {
             return *this;
         }
 
+        constexpr LinearCombination& operator = (const E& coefficient) {
+            const Variable variable(Variable::constant());
+            terms = { std::make_pair(variable, coefficient) };
+            return *this;
+        }
+
         constexpr LinearCombination& operator = (const Variable& variable) {
             const E coefficient(1);
             terms = { std::make_pair(variable, coefficient) };

@@ -129,7 +129,7 @@ using Poseidon2Pallas = Sponge<
     PallasField,
     2,
     1,
-    Poseidon2<Poseidon2PallasParams>::permute
+    Poseidon2<Poseidon2PallasParams>
 >;
 
 #endif
