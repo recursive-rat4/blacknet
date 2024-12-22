@@ -166,7 +166,7 @@ using Poseidon2Pervushin = Sponge<
     PervushinRing,
     8,
     4,
-    poseidon2::permute<Poseidon2PervushinParams>
+    Poseidon2<Poseidon2PervushinParams>::permute
 >;
 
 #endif

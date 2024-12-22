@@ -195,7 +195,7 @@ using Poseidon2Solinas62 = Sponge<
     Solinas62Ring,
     8,
     4,
-    poseidon2::permute<Poseidon2Solinas62Params>
+    Poseidon2<Poseidon2Solinas62Params>::permute
 >;
 
 #endif
