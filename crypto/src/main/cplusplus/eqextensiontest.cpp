@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
+#include "ccsbuilder.h"
 #include "eqextension.h"
 #include "hypercube.h"
 #include "solinas62.h"
@@ -128,6 +129,33 @@ BOOST_AUTO_TEST_CASE(hypercube) {
         else
             BOOST_TEST(E(0) == pis[i]);
     });
+}
+
+BOOST_AUTO_TEST_CASE(circuit) {
+    EqExtension<E> eq({E(2), E(3), E(5)});
+    std::vector<E> x{E(7), E(11), E(13)};
+
+    using Circuit = CCSBuilder<E, 2>;
+    Circuit circuit;
+    std::array<typename Circuit::LinearCombination, 3> c_vars;
+    std::ranges::generate(c_vars, [&]{ return circuit.input(); });
+    std::array<typename Circuit::LinearCombination, 3> x_vars;
+    std::ranges::generate(x_vars, [&]{ return circuit.input(); });
+    EqExtension<E>::circuit<Circuit>::evaluate(circuit, c_vars, x_vars);
+    CustomizableConstraintSystem<E> ccs(circuit.ccs());
+    Vector<E> z;
+    z.elements.reserve(ccs.variables());
+    z.elements.emplace_back(E(1));
+    std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
+    std::ranges::copy(x, std::back_inserter(z.elements));
+    BOOST_TEST(eq(x) == EqExtension<E>::trace::evaluate(eq, x, z.elements));
+    BOOST_TEST(ccs.variables() == z.size());
+    BOOST_TEST(ccs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!ccs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

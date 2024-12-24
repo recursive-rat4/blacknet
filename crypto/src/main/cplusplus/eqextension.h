@@ -23,10 +23,10 @@
 #include "util.h"
 
 template<typename E>
-class EqExtension {
+struct EqExtension {
     std::vector<E> coefficients;
     E z;
-public:
+
     constexpr EqExtension(const std::vector<E>& coefficients)
         : coefficients(coefficients), z(E::LEFT_MULTIPLICATIVE_IDENTITY()) {}
     constexpr EqExtension(const std::vector<E>& coefficients, const E& z)
@@ -121,6 +121,45 @@ public:
     {
         return out << '(' << val.coefficients << ", " << val.z << ')';
     }
+
+template<typename Circuit>
+requires(std::same_as<E, typename Circuit::R>)
+struct circuit {
+    using Variable = Circuit::Variable;
+    using LinearCombination = Circuit::LinearCombination;
+
+    template<std::size_t N>
+    constexpr static LinearCombination evaluate(
+        Circuit& circuit,
+        const std::array<LinearCombination, N>& coefficients,
+        const std::array<LinearCombination, N>& x
+    ) {
+        auto scope = circuit.scope("EqExtension::evaluate");
+        LinearCombination pi(E(1));
+        for (std::size_t i = 0; i < coefficients.size(); ++i) {
+            LinearCombination cx(circuit.auxiliary());
+            circuit(cx == coefficients[i] * x[i]);
+            auto t = circuit.auxiliary();
+            circuit(t == pi * (cx * E(2) - coefficients[i] - x[i] + E(1)));
+            pi = t;
+        }
+        return pi;
+    }
+};
+
+struct trace {
+    constexpr static E evaluate(const EqExtension& eq, const std::vector<E>& x, std::vector<E>& trace) {
+        E pi(1);
+        for (std::size_t i = 0; i < eq.coefficients.size(); ++i)
+            trace.push_back(
+                pi *= trace.emplace_back(
+                    eq.coefficients[i] * x[i]
+                ).douple() - eq.coefficients[i] - x[i] + E(1)
+            );
+        return pi;
+    }
+};
+
 };
 
 #endif
