@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <array>
+#include <concepts>
 #include <map>
 #include <span>
 #include <type_traits>
@@ -79,6 +80,7 @@ struct CCSBuilder {
         }
 
         constexpr LinearCombination() : terms() {}
+        constexpr LinearCombination(const E& coefficient) : terms({std::make_pair(Variable::constant(), coefficient)}) {}
         constexpr LinearCombination(const Variable& variable) : terms({std::make_pair(variable, E(1))}) {}
         constexpr LinearCombination(const LinearCombination& other) : terms(other.terms) {}
         constexpr LinearCombination(LinearCombination&& other) noexcept
@@ -118,6 +120,13 @@ struct CCSBuilder {
             return t;
         }
 
+        friend constexpr LinearCombination operator * (const E& l, const LinearCombination& r) {
+            LinearCombination t;
+            for (const auto& [variable, coefficient] : r.terms)
+                t.emplace(variable, l * coefficient);
+            return t;
+        }
+
         constexpr LinearCombination& operator += (const std::pair<Variable, E>& term) {
             const auto& [variable, coefficient] = term;
             if (auto [iterator, inserted] = terms.emplace(variable, coefficient); !inserted)
@@ -128,6 +137,13 @@ struct CCSBuilder {
         constexpr LinearCombination& operator += (const E& coefficient) {
             const Variable variable(Variable::constant());
             return (*this) += std::make_pair(variable, coefficient);
+        }
+
+        friend constexpr LinearCombination operator + (const E& l, const LinearCombination& r) {
+            LinearCombination t;
+            for (const auto& [variable, coefficient] : r.terms)
+                t.emplace(variable, l + coefficient);
+            return t;
         }
 
         constexpr LinearCombination& operator += (const Variable& variable) {
@@ -144,6 +160,32 @@ struct CCSBuilder {
         constexpr LinearCombination operator + (const LinearCombination& lc) const {
             LinearCombination t(*this);
             t += lc;
+            return t;
+        }
+
+        constexpr LinearCombination& operator -= (const std::pair<Variable, E>& term) {
+            const auto& [variable, coefficient] = term;
+            if (auto [iterator, inserted] = terms.emplace(variable, -coefficient); !inserted)
+                iterator->second -= coefficient;
+            return *this;
+        }
+
+        constexpr LinearCombination& operator -= (const LinearCombination& lc) {
+            for (const auto& term : lc)
+                (*this) -= term;
+            return *this;
+        }
+
+        constexpr LinearCombination operator - (const LinearCombination& lc) const {
+            LinearCombination t(*this);
+            t -= lc;
+            return t;
+        }
+
+        constexpr LinearCombination operator - () const {
+            LinearCombination t;
+            for (const auto& [variable, coefficient] : terms)
+                t.emplace(variable, -coefficient);
             return t;
         }
 
@@ -242,7 +284,10 @@ struct CCSBuilder {
         constexpr bool operator < (const Variable& other) const {
             if (type < other.type)
                 return true;
-            return number < other.number;
+            else if (other.type < type)
+                return false;
+            else
+                return number < other.number;
         }
     };
 
@@ -417,16 +462,19 @@ struct CCSBuilder {
     };
 
     template<typename L, typename R>
+    requires(!(std::same_as<L, LinearCombination> && std::same_as<R, LinearCombination>))
     friend constexpr AddExpression<L, R> operator + (const ConstraintExpression<L>& l, const ConstraintExpression<R>& r) {
         return { static_cast<const L&>(l), static_cast<const R&>(r) };
     }
 
     template<typename L>
+    requires(!std::same_as<L, LinearCombination>)
     friend constexpr AddExpression<L, Constant> operator + (const ConstraintExpression<L>& l, const E& r) {
         return { static_cast<const L&>(l), Constant(r) };
     }
 
     template<typename R>
+    requires(!std::same_as<R, LinearCombination>)
     friend constexpr AddExpression<Constant, R> operator + (const E& l, const ConstraintExpression<R>& r) {
         return { Constant(l), static_cast<const R&>(r) };
     }
@@ -437,11 +485,13 @@ struct CCSBuilder {
     }
 
     template<typename L>
+    requires(!std::same_as<L, LinearCombination>)
     friend constexpr MulExpression<L, Constant> operator * (const ConstraintExpression<L>& l, const E& r) {
         return { static_cast<const L&>(l), Constant(r) };
     }
 
     template<typename R>
+    requires(!std::same_as<R, LinearCombination>)
     friend constexpr MulExpression<Constant, R> operator * (const E& l, const ConstraintExpression<R>& r) {
         return { Constant(l), static_cast<const R&>(r) };
     }
