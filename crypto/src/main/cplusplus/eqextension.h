@@ -145,6 +145,25 @@ struct circuit {
         }
         return pi;
     }
+
+    template<std::size_t N>
+    constexpr static std::array<LinearCombination, 1 << N> hypercube(
+        Circuit& circuit,
+        const std::array<LinearCombination, N>& coefficients
+    ) {
+        auto scope = circuit.scope("EqExtension::hypercube");
+        std::array<LinearCombination, 1 << N> r;
+        r[0] = E(1);
+        for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
+            for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
+                auto t = circuit.auxiliary();
+                circuit(t == r[k] * coefficients[i]);
+                r[l] = t;
+                r[k] -= r[l];
+            }
+        }
+        return r;
+    }
 };
 
 struct trace {
@@ -157,6 +176,20 @@ struct trace {
                 ).douple() - eq.coefficients[i] - point[i] + E(1)
             );
         return pi;
+    }
+
+    constexpr static std::vector<E> hypercube(const std::vector<E>& coefficients, std::vector<E>& trace) {
+        std::vector<E> r(1 << coefficients.size(), E::LEFT_ADDITIVE_IDENTITY());
+        r[0] = E(1);
+        for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
+            for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
+                r[l] = trace.emplace_back(
+                    r[k] * coefficients[i]
+                );
+                r[k] -= r[l];
+            }
+        }
+        return r;
     }
 };
 
