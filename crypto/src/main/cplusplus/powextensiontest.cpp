@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
+#include "ccsbuilder.h"
 #include "hypercube.h"
 #include "powextension.h"
 #include "solinas62.h"
@@ -104,6 +105,29 @@ BOOST_AUTO_TEST_CASE(homomorphism) {
     PowExtension<EE> pow2 = pow1.homomorph<EE>();
     std::vector<EE> r2{EE(11), EE(12), EE(13)};
     BOOST_TEST(EE(pow1(r1)) == pow2(r2));
+}
+
+BOOST_AUTO_TEST_CASE(circuit) {
+    E tau(4);
+    constexpr std::size_t ell(3);
+
+    using Circuit = CCSBuilder<E, 2>;
+    Circuit circuit;
+    auto tau_var = circuit.input();
+    PowExtension<E>::circuit<Circuit>::powers<ell>(circuit, tau_var);
+    CustomizableConstraintSystem<E> ccs(circuit.ccs());
+    Vector<E> z;
+    z.elements.reserve(ccs.variables());
+    z.elements.emplace_back(E(1));
+    z.elements.push_back(tau);
+    BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::trace::powers(tau, ell, z.elements));
+    BOOST_TEST(ccs.variables() == z.size());
+    BOOST_TEST(ccs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!ccs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

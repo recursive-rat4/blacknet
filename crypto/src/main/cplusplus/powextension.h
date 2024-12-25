@@ -81,6 +81,42 @@ public:
     {
         return out << '(' << val.eq << ')';
     }
+
+template<typename Circuit>
+requires(std::same_as<E, typename Circuit::R>)
+struct circuit {
+    using Variable = Circuit::Variable;
+    using LinearCombination = Circuit::LinearCombination;
+
+    template<std::size_t ell>
+    constexpr static std::array<LinearCombination, ell> powers(
+        Circuit& circuit,
+        const LinearCombination& tau
+    ) {
+        auto scope = circuit.scope("PowExtension::powers");
+        std::array<LinearCombination, ell> coefficients;
+        coefficients[0] = tau;
+        for (std::size_t i = 1; i < ell; ++i) {
+            auto cs = circuit.auxiliary();
+            circuit(cs == coefficients[i - 1] * coefficients[i - 1]);
+            coefficients[i] = cs;
+        }
+        return coefficients;
+    }
+};
+
+struct trace {
+    constexpr static std::vector<E> powers(const E& tau, std::size_t ell, std::vector<E>& trace) {
+        std::vector<E> coefficients(ell);
+        coefficients[0] = tau;
+        for (std::size_t i = 1; i < ell; ++i)
+            coefficients[i] = trace.emplace_back(
+                coefficients[i - 1].square()
+            );
+        return coefficients;
+    }
+};
+
 };
 
 #endif
