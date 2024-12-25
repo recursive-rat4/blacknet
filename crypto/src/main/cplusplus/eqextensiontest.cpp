@@ -141,14 +141,14 @@ BOOST_AUTO_TEST_CASE(circuit) {
     std::ranges::generate(c_vars, [&]{ return circuit.input(); });
     std::array<typename Circuit::LinearCombination, 3> x_vars;
     std::ranges::generate(x_vars, [&]{ return circuit.input(); });
-    EqExtension<E>::circuit<Circuit>::evaluate(circuit, c_vars, x_vars);
+    EqExtension<E>::circuit<Circuit>::point(circuit, c_vars, x_vars);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z;
     z.elements.reserve(ccs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
-    BOOST_TEST(eq(x) == EqExtension<E>::trace::evaluate(eq, x, z.elements));
+    BOOST_TEST(eq(x) == EqExtension<E>::trace::point(eq, x, z.elements));
     BOOST_TEST(ccs.variables() == z.size());
     BOOST_TEST(ccs.isSatisfied(z));
     for (std::size_t i = 1; i < z.size(); ++i) {

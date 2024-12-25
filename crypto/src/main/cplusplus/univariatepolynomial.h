@@ -94,42 +94,42 @@ struct circuit {
     using LinearCombination = Circuit::LinearCombination;
 
     template<std::size_t N>
-    constexpr static void evaluate(
+    constexpr static LinearCombination point(
         Circuit& circuit,
         const std::array<LinearCombination, N>& coefficients,
-        LinearCombination& x
+        const LinearCombination& point
     ) {
-        auto scope = circuit.scope("UnivariatePolynomial::evaluate");
-        LinearCombination pi(x);
-        std::array<Variable, coefficients.size() - 1> cxpm;
+        auto scope = circuit.scope("UnivariatePolynomial::point");
+        LinearCombination pi(point);
+        std::array<Variable, coefficients.size() - 1> cppm;
         for (std::size_t i = 1; i < coefficients.size() - 1; ++i) {
-            cxpm[i - 1] = circuit.auxiliary();
-            circuit(cxpm[i - 1] == pi * coefficients[i]);
+            cppm[i - 1] = circuit.auxiliary();
+            circuit(cppm[i - 1] == pi * coefficients[i]);
             Variable t(circuit.auxiliary());
-            circuit(t == pi * x);
+            circuit(t == pi * point);
             pi = t;
         }
         if (coefficients.size() > 1) {
-            cxpm.back() = circuit.auxiliary();
-            circuit(cxpm.back() == pi * coefficients.back());
+            cppm.back() = circuit.auxiliary();
+            circuit(cppm.back() == pi * coefficients.back());
         }
         LinearCombination lc(coefficients[0]);
-        for (std::size_t i = 0; i < cxpm.size(); ++i)
-            lc += cxpm[i];
-        x = std::move(lc);
+        for (std::size_t i = 0; i < cppm.size(); ++i)
+            lc += cppm[i];
+        return lc;
     }
 };
 
 struct trace {
-    constexpr static E evaluate(const UnivariatePolynomial& p, const E& x, std::vector<E>& trace) {
+    constexpr static E point(const UnivariatePolynomial& p, const E& point, std::vector<E>& trace) {
         E sigma(p.coefficients[0]);
-        E pi(x);
+        E pi(point);
         for (std::size_t i = 1; i < p.coefficients.size() - 1; ++i) {
             sigma += trace.emplace_back(
                 pi * p.coefficients[i]
             );
             trace.push_back(
-                pi *= x
+                pi *= point
             );
         }
         if (p.coefficients.size() > 1) {

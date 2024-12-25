@@ -129,18 +129,18 @@ struct circuit {
     using LinearCombination = Circuit::LinearCombination;
 
     template<std::size_t N>
-    constexpr static LinearCombination evaluate(
+    constexpr static LinearCombination point(
         Circuit& circuit,
         const std::array<LinearCombination, N>& coefficients,
-        const std::array<LinearCombination, N>& x
+        const std::array<LinearCombination, N>& point
     ) {
-        auto scope = circuit.scope("EqExtension::evaluate");
+        auto scope = circuit.scope("EqExtension::point");
         LinearCombination pi(E(1));
         for (std::size_t i = 0; i < coefficients.size(); ++i) {
-            LinearCombination cx(circuit.auxiliary());
-            circuit(cx == coefficients[i] * x[i]);
+            LinearCombination cp(circuit.auxiliary());
+            circuit(cp == coefficients[i] * point[i]);
             auto t = circuit.auxiliary();
-            circuit(t == pi * (cx * E(2) - coefficients[i] - x[i] + E(1)));
+            circuit(t == pi * (cp * E(2) - coefficients[i] - point[i] + E(1)));
             pi = t;
         }
         return pi;
@@ -148,13 +148,13 @@ struct circuit {
 };
 
 struct trace {
-    constexpr static E evaluate(const EqExtension& eq, const std::vector<E>& x, std::vector<E>& trace) {
+    constexpr static E point(const EqExtension& eq, const std::vector<E>& point, std::vector<E>& trace) {
         E pi(1);
         for (std::size_t i = 0; i < eq.coefficients.size(); ++i)
             trace.push_back(
                 pi *= trace.emplace_back(
-                    eq.coefficients[i] * x[i]
-                ).douple() - eq.coefficients[i] - x[i] + E(1)
+                    eq.coefficients[i] * point[i]
+                ).douple() - eq.coefficients[i] - point[i] + E(1)
             );
         return pi;
     }
