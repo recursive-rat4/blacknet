@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
+#include "ccsbuilder.h"
 #include "hypercube.h"
 #include "matrix.h"
 #include "multilinearextension.h"
@@ -177,6 +178,33 @@ BOOST_AUTO_TEST_CASE(ringvector) {
         const std::vector<E>& b = std::get<1>(i);
         BOOST_TEST(a.elements[row].coefficients[column] == mle(b));
     };
+}
+
+BOOST_AUTO_TEST_CASE(circuit) {
+    MultilinearExtension<E> mle({E(2), E(3), E(5), E(7)});
+    std::vector<E> x{E(11), E(13)};
+
+    using Circuit = CCSBuilder<E, 2>;
+    Circuit circuit;
+    std::array<typename Circuit::LinearCombination, 4> c_vars;
+    std::ranges::generate(c_vars, [&]{ return circuit.input(); });
+    std::array<typename Circuit::LinearCombination, 2> x_vars;
+    std::ranges::generate(x_vars, [&]{ return circuit.input(); });
+    MultilinearExtension<E>::circuit<Circuit>::point(circuit, c_vars, x_vars);
+    CustomizableConstraintSystem<E> ccs(circuit.ccs());
+    Vector<E> z;
+    z.elements.reserve(ccs.variables());
+    z.elements.emplace_back(E(1));
+    std::ranges::copy(mle.coefficients, std::back_inserter(z.elements));
+    std::ranges::copy(x, std::back_inserter(z.elements));
+    BOOST_TEST(mle(x) == MultilinearExtension<E>::trace::point(mle, x, z.elements));
+    BOOST_TEST(ccs.variables() == z.size());
+    BOOST_TEST(ccs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!ccs.isSatisfied(z));
+        z[i] -= E(1);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

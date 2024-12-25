@@ -31,9 +31,9 @@
 #include "vector.h"
 
 template<typename E>
-class MultilinearExtension {
+struct MultilinearExtension {
     std::vector<E> coefficients;
-public:
+
     consteval MultilinearExtension() : coefficients() {}
     constexpr MultilinearExtension(std::size_t size) : coefficients(size) {}
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
@@ -179,6 +179,43 @@ public:
     {
         return out << val.coefficients;
     }
+
+template<typename Circuit>
+requires(std::same_as<E, typename Circuit::R>)
+struct circuit {
+    using Variable = Circuit::Variable;
+    using LinearCombination = Circuit::LinearCombination;
+
+    template<std::size_t ell>
+    constexpr static LinearCombination point(
+        Circuit& circuit,
+        const std::array<LinearCombination, 1 << ell>& coefficients,
+        const std::array<LinearCombination, ell>& point
+    ) {
+        auto scope = circuit.scope("MultilinearExtension::point");
+        auto pis = EqExtension<E>::template circuit<Circuit>::hypercube(circuit, point);
+        LinearCombination sigma;
+        for (std::size_t i = 0; i < coefficients.size(); ++i) {
+            auto pc = circuit.auxiliary();
+            circuit(pc == pis[i] * coefficients[i]);
+            sigma += pc;
+        }
+        return sigma;
+    }
+};
+
+struct trace {
+    constexpr static E point(const MultilinearExtension& mle, const std::vector<E>& point, std::vector<E>& trace) {
+        const std::vector<E>& pis = EqExtension<E>::trace::hypercube(point, trace);
+        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        for (std::size_t i = 0; i < mle.coefficients.size(); ++i)
+            sigma += trace.emplace_back(
+                pis[i] * mle.coefficients[i]
+            );
+        return sigma;
+    }
+};
+
 };
 
 #endif
