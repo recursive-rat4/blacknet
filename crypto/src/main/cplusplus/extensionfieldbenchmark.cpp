@@ -76,3 +76,19 @@ BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree4>);
 BENCHMARK(BM_ExtFieldMul<PervushinRingDegree2>);
 BENCHMARK(BM_ExtFieldMul<PervushinRingDegree3>);
 BENCHMARK(BM_ExtFieldMul<PervushinRingDegree4>);
+
+template<typename F>
+static void BM_ExtFieldInv(benchmark::State& state) {
+    auto a = F::random(rng);
+
+    for (auto _ : state)
+        a = a.invert().value();
+
+    benchmark::DoNotOptimize(a);
+}
+BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree2>);
+BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree3>);
+BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree4>);
+BENCHMARK(BM_ExtFieldInv<PervushinRingDegree2>);
+BENCHMARK(BM_ExtFieldInv<PervushinRingDegree3>);
+BENCHMARK(BM_ExtFieldInv<PervushinRingDegree4>);

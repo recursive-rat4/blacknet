@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_PERVUSHINFIELD_H
 #define BLACKNET_CRYPTO_PERVUSHINFIELD_H
 
+#include "bitint.h"
 #include "convolution.h"
 #include "pervushin.h"
 #include "polynomialring.h"
@@ -31,6 +32,7 @@ struct PervushinRingDegree2Params {
         PervushinRing(0),
         PervushinRing(1),
     };
+    constexpr static const BitInt<122> PSY_MINUS_1{"03ffffffffffffffbfffffffffffffff"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         convolution::negacyclic<Z, N>(r, a, b);
@@ -51,6 +53,7 @@ struct PervushinRingDegree3Params {
         PervushinRing(1),
         PervushinRing(1),
     };
+    constexpr static const BitInt<183> PSY_MINUS_1{"007ffffffffffffff4000000000000005ffffffffffffffd"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         convolution::quotient<Z, N, M>(r, a, b);
@@ -72,6 +75,7 @@ struct PervushinRingDegree4Params {
         PervushinRing(1),
         PervushinRing(1),
     };
+    constexpr static const BitInt<244> PSY_MINUS_1{"000ffffffffffffffe0000000000000017ffffffffffffff7fffffffffffffff"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         convolution::quotient<Z, N, M>(r, a, b);

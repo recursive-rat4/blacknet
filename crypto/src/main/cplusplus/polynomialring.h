@@ -22,6 +22,7 @@
 #include <array>
 #include <iostream>
 
+#include "semigroup.h"
 #include "util.h"
 
 template<typename Params>
@@ -127,6 +128,25 @@ public:
         return t;
     }
 
+    constexpr PolynomialRing douple() const {
+        PolynomialRing t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.coefficients[i] = coefficients[i].douple();
+        return t;
+    }
+
+    constexpr PolynomialRing square() const {
+        return *this * *this;
+    }
+
+    constexpr std::optional<PolynomialRing> invert() const {
+        if (*this != PolynomialRing(0)) {
+            return semigroup::power(*this, Params::PSY_MINUS_1);
+        } else {
+            return std::nullopt;
+        }
+    }
+
     constexpr bool checkInfiniteNorm(const NumericType& bound) const {
         std::array<Z, N> t(coefficients);
         Params::fromForm(t);
@@ -137,17 +157,6 @@ public:
                 return false;
         }
         return true;
-    }
-
-    constexpr PolynomialRing douple() const {
-        PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = coefficients[i].douple();
-        return t;
-    }
-
-    constexpr PolynomialRing square() const {
-        return *this * *this;
     }
 
     friend std::ostream& operator << (std::ostream& out, const PolynomialRing& val)
