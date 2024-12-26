@@ -30,7 +30,6 @@ public:
     using Z = Params::Z;
     constexpr static const std::size_t N = Params::N;
 
-    typedef Z Scalar;
     consteval static PolynomialRing LEFT_ADDITIVE_IDENTITY() {
         PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
@@ -88,20 +87,20 @@ public:
         return t;
     }
 
-    constexpr PolynomialRing& operator *= (const Scalar& other) {
+    constexpr PolynomialRing& operator *= (const Z& other) {
         for (std::size_t i = 0; i < N; ++i)
             coefficients[i] *= other;
         return *this;
     }
 
-    constexpr PolynomialRing operator * (const Scalar& other) const {
+    constexpr PolynomialRing operator * (const Z& other) const {
         PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = coefficients[i] * other;
         return t;
     }
 
-    friend constexpr PolynomialRing operator * (const Scalar& lps, const PolynomialRing& rps) {
+    friend constexpr PolynomialRing operator * (const Z& lps, const PolynomialRing& rps) {
         PolynomialRing t;
         for (std::size_t i = 0; i < N; ++i)
             t.coefficients[i] = lps * rps.coefficients[i];

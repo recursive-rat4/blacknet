@@ -13,6 +13,7 @@ struct PervushinRingParams {
     using UI = uint64_t;
     using UL = __uint128_t;
 
+    constexpr static const std::size_t BITS = 61;
     constexpr static const I M = 2305843009213693951;
     constexpr static const I R2 = 64;
     constexpr static const I RN = -2305843009213693953;

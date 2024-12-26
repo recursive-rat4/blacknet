@@ -28,13 +28,17 @@ class RingSpec(NamedTuple):
     reduce: str
 
 class RingParams(NamedTuple):
+    bits: int
     word_bits: int
     square_montgomery_modulus: int
     montgomery_modulus: int
     zetas: list[int]
 
+def compute_bits(number):
+    return ceil(log(number, 2.0))
+
 def compute_word_bits(number):
-    bits = ceil(log(float(ring.modulus), 2.0))
+    bits = compute_bits(ring.modulus)
     return 2**(ceil(log(float(bits), 2.0)))
 
 def compute_centered_representation(number, modulus):
@@ -103,6 +107,7 @@ def write_ring_cplusplus(spec, params):
         else:
             file.write(f"    using UL = __uint{dword_bits}_t;\n")
         file.write('\n')
+        file.write(f"    constexpr static const std::size_t BITS = {params.bits};\n")
         file.write(f"    constexpr static const I M = {spec.modulus};\n")
         file.write(f"    constexpr static const I R2 = {params.square_montgomery_modulus};\n")
         file.write(f"    constexpr static const I RN = {params.montgomery_modulus};\n")
@@ -158,6 +163,7 @@ rings: list[RingSpec] = [
 ]
 
 for ring in rings:
+    bits = compute_bits(ring.modulus)
     word_bits = compute_word_bits(ring.modulus)
     square_montgomery_modulus = compute_square_montgomery_modulus(ring.modulus, word_bits)
     montgomery_modulus = compute_montgomery_modulus(ring.modulus, word_bits)
@@ -167,5 +173,5 @@ for ring in rings:
     zetas = [pow(primitive_root_of_unity, i, ring.modulus) for i in brv]
     zetas = [compute_montgomery_form(i, ring.modulus, montgomery_modulus, square_montgomery_modulus, word_bits) for i in zetas]
     zetas = [compute_centered_representation(i, ring.modulus) for i in zetas]
-    params = RingParams(word_bits, square_montgomery_modulus, montgomery_modulus, zetas)
+    params = RingParams(bits, word_bits, square_montgomery_modulus, montgomery_modulus, zetas)
     write_ring_cplusplus(ring, params)

@@ -22,6 +22,7 @@
 #include <iterator>
 #include <optional>
 
+#include "bitint.h"
 #include "bigint.h"
 #include "semigroup.h"
 
@@ -29,7 +30,6 @@ template<typename Params>
 class PrimeField {
     constexpr PrimeField(const UInt256& n, int) : n(n) {}
 public:
-    typedef PrimeField Scalar;
     consteval static PrimeField LEFT_ADDITIVE_IDENTITY() { return PrimeField(0); }
     consteval static PrimeField LEFT_MULTIPLICATIVE_IDENTITY() { return PrimeField(1); }
 
@@ -134,9 +134,9 @@ public:
             while (z.isQuadraticResidue() == PrimeField(1))
                 z += PrimeField(1);
             PrimeField m(S);
-            PrimeField c(power(z, Q));
-            PrimeField t(power(*this, Q));
-            PrimeField r(power(*this, Q_PLUS_1_HALVED));
+            PrimeField c(power(z, Params::Q));
+            PrimeField t(power(*this, Params::Q));
+            PrimeField r(power(*this, Params::Q_PLUS_1_HALVED));
             while (true) {
                 if (t == PrimeField(0)) {
                     return PrimeField(0);
@@ -160,6 +160,10 @@ public:
         }
     }
 
+    constexpr UInt256 number() const {
+        return Params::fromForm(n);
+    }
+
     class BitIterator {
         friend PrimeField;
         UInt256 data;
@@ -174,7 +178,7 @@ public:
             return *this;
         }
         constexpr bool operator == (std::default_sentinel_t) const {
-            return index == Params::B;
+            return index == Params::BITS;
         }
         constexpr bool operator * () const {
             return data[index];
@@ -222,14 +226,11 @@ public:
 public:
     constexpr PrimeField isQuadraticResidue() const {
         // Legendre symbol
-        return semigroup::power(*this, P_MINUS_1_HALVED);
+        return semigroup::power(*this, Params::P_MINUS_1_HALVED);
     }
 private:
-    constexpr static const PrimeField PHI_MINUS_1 = PrimeField(Params::toForm(Params::M - UInt256(2)), 0);
-    constexpr static const PrimeField P_MINUS_1_HALVED = PrimeField(Params::toForm(Params::P_MINUS_1_HALVED), 0);
-    constexpr static const PrimeField Q = PrimeField(Params::toForm(Params::Q), 0);
+    constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - UInt256(2);
     constexpr static const PrimeField S = PrimeField(Params::toForm(Params::S), 0);
-    constexpr static const PrimeField Q_PLUS_1_HALVED = PrimeField(Params::toForm(Params::Q_PLUS_1_HALVED), 0);
 };
 
 #endif

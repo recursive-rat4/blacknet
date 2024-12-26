@@ -22,8 +22,8 @@
 
 namespace semigroup {
 
-template<typename SG>
-constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
+template<typename SG, typename Scalar>
+constexpr SG multiply(const SG& e, const Scalar& s) {
     // Double-and-add method
     SG r(SG::LEFT_ADDITIVE_IDENTITY());
     SG t(e);
@@ -35,8 +35,8 @@ constexpr SG multiply(const SG& e, const typename SG::Scalar& s) {
     return r;
 }
 
-template<typename SG>
-constexpr SG power(const SG& e, const typename SG::Scalar& s) {
+template<typename SG, typename Scalar>
+constexpr SG power(const SG& e, const Scalar& s) {
     // Square-and-multiply method
     SG r(SG::LEFT_MULTIPLICATIVE_IDENTITY());
     SG t(e);

@@ -24,7 +24,6 @@
 
 template<typename... Rs>
 struct RingProduct {
-    typedef RingProduct Scalar;
     consteval static RingProduct LEFT_ADDITIVE_IDENTITY() {
         RingProduct t;
         for_each(t.ideals, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::LEFT_ADDITIVE_IDENTITY(); });

@@ -13,6 +13,7 @@ struct FermatRingParams {
     using UI = uint32_t;
     using UL = uint64_t;
 
+    constexpr static const std::size_t BITS = 17;
     constexpr static const I M = 65537;
     constexpr static const I R2 = 1;
     constexpr static const I RN = -65535;

@@ -13,6 +13,7 @@ struct DilithiumRingParams {
     using UI = uint32_t;
     using UL = uint64_t;
 
+    constexpr static const std::size_t BITS = 23;
     constexpr static const I M = 8380417;
     constexpr static const I R2 = 2365951;
     constexpr static const I RN = 58728449;

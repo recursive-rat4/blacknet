@@ -26,8 +26,8 @@
 
 namespace abeliangroup {
 
-template<typename AG>
-constexpr AG multiply(const AG& e, const typename AG::Scalar& s) {
+template<typename AG, typename Scalar>
+constexpr AG multiply(const AG& e, const Scalar& s) {
     AG P(AG::LEFT_ADDITIVE_IDENTITY());
     AG Q(e);
 

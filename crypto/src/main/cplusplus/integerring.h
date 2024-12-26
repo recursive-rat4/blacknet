@@ -24,6 +24,7 @@
 #include <optional>
 #include <boost/random/uniform_int_distribution.hpp>
 
+#include "bitint.h"
 #include "semigroup.h"
 
 template<typename Params>
@@ -35,7 +36,6 @@ class IntegerRing {
 
     constexpr IntegerRing(I n, int) : n(n) {}
 public:
-    typedef IntegerRing Scalar;
     consteval static IntegerRing LEFT_ADDITIVE_IDENTITY() { return IntegerRing(0); }
     consteval static IntegerRing LEFT_MULTIPLICATIVE_IDENTITY() { return IntegerRing(1); }
 
@@ -135,43 +135,6 @@ public:
         return fromForm(n);
     }
 
-    class BitIterator {
-        friend IntegerRing;
-        I data;
-        std::size_t index;
-        constexpr BitIterator(const IntegerRing& e) : data(Params::freeze(fromForm(e.n))), index(0) {}
-    public:
-        using difference_type = std::ptrdiff_t;
-        using value_type = bool;
-        constexpr BitIterator& operator = (const BitIterator& other) {
-            data = other.data;
-            index = other.index;
-            return *this;
-        }
-        constexpr bool operator == (std::default_sentinel_t) const {
-            return index == BITS;
-        }
-        constexpr bool operator * () const {
-            return (data >> index) & 1;
-        }
-        constexpr BitIterator& operator ++ () {
-            ++index;
-            return *this;
-        }
-        constexpr BitIterator operator ++ (int) {
-            BitIterator old(*this);
-            ++*this;
-            return old;
-        }
-    };
-    static_assert(std::input_iterator<BitIterator>);
-    constexpr BitIterator bitsBegin() const noexcept {
-        return BitIterator(*this);
-    }
-    consteval std::default_sentinel_t bitsEnd() const noexcept {
-        return std::default_sentinel;
-    }
-
     friend std::ostream& operator << (std::ostream& out, const IntegerRing& val)
     {
         return out << fromForm(val.n);
@@ -232,8 +195,7 @@ private:
         return reduce<MRI, MRL>(MRL(n));
     }
 
-    constexpr static const std::size_t BITS = std::ceil(std::log2(Params::M));
-    constexpr static const I PHI_MINUS_1 = Params::M - I(2);
+    constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - I(2);
 };
 
 #endif
