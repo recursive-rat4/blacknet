@@ -102,7 +102,8 @@ public:
     }
 
     struct ProofEarlyStopped {
-        UnivariatePolynomial<Z> claim;
+        F state;
+        UnivariatePolynomial<F> claim;
         F challenge;
 
         constexpr ProofEarlyStopped() {}
@@ -111,33 +112,36 @@ public:
 
         friend std::ostream& operator << (std::ostream& out, const ProofEarlyStopped& val)
         {
-            return out << '('  << val.claim << ", " << val.challenge << ')';
+            return out << '('  << val.state << ", " << val.claim << ", " << val.challenge << ')';
         }
     };
 
-    constexpr static ProofEarlyStopped proveEarlyStopping(const P<Z>& polynomial, const Z& sum) {
+    constexpr static ProofEarlyStopped proveEarlyStopping(const P<F>& polynomial, const F& sum) {
         ProofEarlyStopped proof;
         RO ro;
 
-        UnivariatePolynomial<Z> claim(proveRound<Z>(polynomial, sum));
+        UnivariatePolynomial<F> claim(proveRound<F>(polynomial, sum));
         claim.absorb(ro);
         F challenge(F::squeeze(ro));
+        proof.state = claim(challenge);
         proof.claim = std::move(claim);
-        proof.challenge = challenge;
+        proof.challenge = std::move(challenge);
 
         return proof;
     }
 
-    constexpr static bool verifyEarlyStopping(const P<Z>& polynomial, const Z& sum, const ProofEarlyStopped& proof) {
+    constexpr static bool verifyEarlyStopping(const P<F>& polynomial, const F& sum, const ProofEarlyStopped& proof) {
         RO ro;
 
         if (proof.claim.degree() != polynomial.degree())
             return false;
-        if (sum != proof.claim(Z(0)) + proof.claim(Z(1)))
+        if (sum != proof.claim(F(0)) + proof.claim(F(1)))
             return false;
         proof.claim.absorb(ro);
         F challenge(F::squeeze(ro));
         if (proof.challenge != challenge)
+            return false;
+        if (proof.state != proof.claim(proof.challenge))
             return false;
 
         return true;
@@ -204,35 +208,35 @@ private:
     constexpr static UnivariatePolynomial<S> proveRound(const P<S>& state, const S& hint) {
         std::vector<S> evaluations(1 << (state.variables() - 1));
         if (state.degree() == 5) {
-            state.template bind<S(-2), util::Assign<S>>(evaluations);
+            state.template bind<Z(-2), util::Assign<S>>(evaluations);
             S n2(util::Sum<S>::call(evaluations));
-            state.template bind<S(-1), util::Assign<S>>(evaluations);
+            state.template bind<Z(-1), util::Assign<S>>(evaluations);
             S n1(util::Sum<S>::call(evaluations));
-            state.template bind<S(1), util::Assign<S>>(evaluations);
+            state.template bind<Z(1), util::Assign<S>>(evaluations);
             S p1(util::Sum<S>::call(evaluations));
-            state.template bind<S(2), util::Assign<S>>(evaluations);
+            state.template bind<Z(2), util::Assign<S>>(evaluations);
             S p2(util::Sum<S>::call(evaluations));
-            state.template bind<S(3), util::Assign<S>>(evaluations);
+            state.template bind<Z(3), util::Assign<S>>(evaluations);
             S p3(util::Sum<S>::call(evaluations));
             return interpolate<S>(n2, n1, hint - p1, p1, p2, p3);
         } else if (state.degree() == 4) {
-            state.template bind<S(-2), util::Assign<S>>(evaluations);
+            state.template bind<Z(-2), util::Assign<S>>(evaluations);
             S n2(util::Sum<S>::call(evaluations));
-            state.template bind<S(-1), util::Assign<S>>(evaluations);
+            state.template bind<Z(-1), util::Assign<S>>(evaluations);
             S n1(util::Sum<S>::call(evaluations));
-            state.template bind<S(1), util::Assign<S>>(evaluations);
+            state.template bind<Z(1), util::Assign<S>>(evaluations);
             S p1(util::Sum<S>::call(evaluations));
-            state.template bind<S(2), util::Assign<S>>(evaluations);
+            state.template bind<Z(2), util::Assign<S>>(evaluations);
             S p2(util::Sum<S>::call(evaluations));
             return interpolate<S>(n2, n1, hint - p1, p1, p2);
         } else if (state.degree() == 2) {
-            state.template bind<S(-1), util::Assign<S>>(evaluations);
+            state.template bind<Z(-1), util::Assign<S>>(evaluations);
             S n1(util::Sum<S>::call(evaluations));
-            state.template bind<S(1), util::Assign<S>>(evaluations);
+            state.template bind<Z(1), util::Assign<S>>(evaluations);
             S p1(util::Sum<S>::call(evaluations));
             return interpolate<S>(n1, hint - p1, p1);
         } else if (state.degree() == 1) {
-            state.template bind<S(1), util::Assign<S>>(evaluations);
+            state.template bind<Z(1), util::Assign<S>>(evaluations);
             S p1(util::Sum<S>::call(evaluations));
             return interpolate<S>(hint - p1, p1);
         } else {

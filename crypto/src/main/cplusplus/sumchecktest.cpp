@@ -98,15 +98,19 @@ BOOST_AUTO_TEST_CASE(ccs) {
 
 BOOST_AUTO_TEST_CASE(pow_early_stop) {
     using SumCheck = SumCheck<Z, F, PowExtension, RO>;
-    PowExtension<Z> p1(Z(2), 4);
-    PowExtension<Z> p2(Z(4), 4);
-    Z s1(1);
-    Z s2(2);
+    PowExtension<F> p1(F(2), 4);
+    PowExtension<F> p2(F(4), 4);
+    F s1(1);
+    F s2(2);
 
     auto proof = SumCheck::proveEarlyStopping(p1, s1);
     BOOST_TEST(SumCheck::verifyEarlyStopping(p1, s1, proof));
     BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s2, proof));
     BOOST_TEST(!SumCheck::verifyEarlyStopping(p2, s2, proof));
+
+    proof.state += Z(1);
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof));
+    proof.state -= Z(1);
 
     proof.claim.coefficients[1] += Z(1);
     BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof));

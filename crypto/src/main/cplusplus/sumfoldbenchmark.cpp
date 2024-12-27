@@ -43,15 +43,16 @@ static void BM_LatticeFold_GNorm_SumCheck_ProveEarlyStopping(benchmark::State& s
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
     LatticeFold::GNorm<Z> g(beta, mu, f);
 
-    Z sum = Hypercube<Z>::sum(g);
+    F sum_morphed = Hypercube<Z>::sum(g);
+    LatticeFold::GNorm<F> g_morphed = g.template homomorph<F>();
     SumCheck::ProofEarlyStopped proof;
 
     for (auto _ : state) {
-        proof = SumCheck::proveEarlyStopping(g, sum);
+        proof = SumCheck::proveEarlyStopping(g_morphed, sum_morphed);
 
-        benchmark::DoNotOptimize(g);
+        benchmark::DoNotOptimize(g_morphed);
         benchmark::DoNotOptimize(proof);
-        benchmark::DoNotOptimize(sum);
+        benchmark::DoNotOptimize(sum_morphed);
     }
 }
 BENCHMARK(BM_LatticeFold_GNorm_SumCheck_ProveEarlyStopping);
@@ -71,16 +72,17 @@ static void BM_LatticeFold_GNorm_SumCheck_VerifyEarlyStopping(benchmark::State& 
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
     LatticeFold::GNorm<Z> g(beta, mu, f);
 
-    Z sum = Hypercube<Z>::sum(g);
-    SumCheck::ProofEarlyStopped proof = SumCheck::proveEarlyStopping(g, sum);
+    F sum_morphed = Hypercube<Z>::sum(g);
+    LatticeFold::GNorm<F> g_morphed = g.template homomorph<F>();
+    SumCheck::ProofEarlyStopped proof = SumCheck::proveEarlyStopping(g_morphed, sum_morphed);
     bool result;
 
     for (auto _ : state) {
-        result = SumCheck::verifyEarlyStopping(g, sum, proof);
+        result = SumCheck::verifyEarlyStopping(g_morphed, sum_morphed, proof);
 
-        benchmark::DoNotOptimize(g);
+        benchmark::DoNotOptimize(g_morphed);
         benchmark::DoNotOptimize(proof);
-        benchmark::DoNotOptimize(sum);
+        benchmark::DoNotOptimize(sum_morphed);
         benchmark::DoNotOptimize(result);
     }
 }
