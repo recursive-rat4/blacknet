@@ -150,6 +150,7 @@
                                 <arg>-opt-in=kotlin.ExperimentalUnsignedTypes</arg>
                                 <arg>-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi</arg>
                                 <arg>-opt-in=kotlinx.serialization.ExperimentalSerializationApi</arg>
+                                <arg>-opt-in=kotlinx.serialization.SealedSerializationApi</arg>
                                 <arg>-XXLanguage:+BreakContinueInInlineLambdas</arg>
                             </args>
                             <output>${project.build.directory}/classes-pre-atomicfu</output>
