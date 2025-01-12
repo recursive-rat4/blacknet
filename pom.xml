@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <!--
-  ~ Copyright (c) 2020-2024 Pavel Vasin
+  ~ Copyright (c) 2020-2025 Pavel Vasin
   ~
   ~ Licensed under the Jelurida Public License version 1.1
   ~ for the Blacknet Public Blockchain Platform (the "License");
@@ -69,7 +69,7 @@
         <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>
         <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
         <appassembler-maven-plugin.version>2.1.0</appassembler-maven-plugin.version>
-        <maven-artifact-plugin.version>3.5.3</maven-artifact-plugin.version>
+        <maven-artifact-plugin.version>3.6.0</maven-artifact-plugin.version>
         <versions-maven-plugin.version>2.18.0</versions-maven-plugin.version>
         <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
 
