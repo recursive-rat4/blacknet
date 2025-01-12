@@ -1,6 +1,6 @@
 #!/bin/false
 #
-# Copyright (c) 2020-2024 Pavel Vasin
+# Copyright (c) 2020-2025 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -17,10 +17,10 @@
 #
 
 .gcc:
-  image: gcc:14.2.0@sha256:561e2a4b76c441215d26625fbf2d5e345da60ef22b7d46e6ab45d1d53d95c43e
+  image: gcc:14.2.0@sha256:329554b28adb201ffb3ecec415cf184958effa7c7e57d5272f60366f36a3f23c
 
 .openjdk:
-  image: maven:3.9.9-eclipse-temurin-21@sha256:5a44dff9390bff393693518d70233977ff245c2876320655a47be5622719becf
+  image: maven:3.9.9-eclipse-temurin-21@sha256:b89ede2635fb8ebd9ba7a3f7d56140f2bd31337b8b0e9fa586b657ee003307a7
   variables:
     MAVEN: "mvn --batch-mode --no-transfer-progress" #TODO 4
     MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
