@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
+#include <boost/random/uniform_int_distribution.hpp>
 
 #include "semigroup.h"
 #include "util.h"
@@ -33,16 +34,14 @@ public:
 
     consteval static PolynomialRing LEFT_ADDITIVE_IDENTITY() {
         PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = Z::LEFT_ADDITIVE_IDENTITY();
+        std::ranges::fill(t.coefficients, Z::LEFT_ADDITIVE_IDENTITY());
         Params::toForm(t.coefficients);
         return t;
     }
     consteval static PolynomialRing LEFT_MULTIPLICATIVE_IDENTITY() {
         PolynomialRing t;
         t.coefficients[0] = Z::LEFT_MULTIPLICATIVE_IDENTITY();
-        for (std::size_t i = 1; i < N; ++i)
-            t.coefficients[i] = Z(0);
+        std::fill_n(t.coefficients.begin() + 1, N - 1, Z(0));
         Params::toForm(t.coefficients);
         return t;
     }
@@ -191,6 +190,22 @@ public:
     static PolynomialRing random(RNG& rng, const DST& dst) {
         PolynomialRing t;
         std::ranges::generate(t.coefficients, [&] { return Z::random(rng, dst); });
+        Params::toForm(t.coefficients);
+        return t;
+    }
+
+    template<typename RNG, typename DST>
+    static PolynomialRing random(RNG& rng, const DST& dst, std::size_t hamming) {
+        boost::random::uniform_int_distribution<std::size_t> uid(0, N - 1);
+        PolynomialRing t;
+        std::ranges::fill(t.coefficients, Z(0));
+        while (hamming) {
+            std::size_t i = uid(rng);
+            if (t.coefficients[i] == Z(0)) {
+                if ((t.coefficients[i] = dst(rng)) != Z(0))
+                    --hamming;
+            }
+        }
         Params::toForm(t.coefficients);
         return t;
     }

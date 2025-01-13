@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_BFV_H
 #define BLACKNET_CRYPTO_BFV_H
 
+#include <algorithm>
 #include <numbers>
 #include <type_traits>
 #include <boost/random/uniform_int_distribution.hpp>
@@ -38,6 +39,8 @@ struct BFV {
     static_assert(Rt::N == Rq::N);
     static_assert(std::is_signed_v<typename Zt::NumericType>);
     static_assert(std::is_signed_v<typename Zq::NumericType>);
+
+    constexpr static const std::size_t H = std::min<std::size_t>(256, D);
 
     // https://eprint.iacr.org/2019/939
     constexpr static const double SIGMA = 8.0 / std::sqrt(2.0 * std::numbers::pi);
@@ -87,7 +90,7 @@ struct BFV {
         }
     };
 
-    boost::random::uniform_int_distribution<typename Zq::NumericType> bud{0, 1};
+    boost::random::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
     DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
 
     constexpr static Rq lift(const Rt& rt) {
@@ -106,7 +109,7 @@ struct BFV {
 
     template<typename RNG>
     SecretKey generateSecretKey(RNG& rng) {
-        return Rq::random(rng, bud);
+        return Rq::random(rng, tud, H);
     }
 
     template<typename RNG>
@@ -118,7 +121,7 @@ struct BFV {
 
     template<typename RNG>
     CipherText encrypt(RNG& rng, const PublicKey& pk, const PlainText& pt) {
-        auto u = Rq::random(rng, bud);
+        auto u = generateSecretKey(rng);
         auto e1 = Rq::random(rng, dgd);
         auto e2 = Rq::random(rng, dgd);
         return { pk.a * u + e1 + upscale(pt), pk.b * u + e2 };
