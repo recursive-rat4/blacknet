@@ -132,7 +132,7 @@ rings: list[RingSpec] = [
         return x + ((x >> 31) & _Q_);
     }
 """),
-    RingSpec("fermat.h", "2¹⁶ + 1", "FermatRing", 65537, 512,
+    RingSpec("fermat.h", "2¹⁶ + 1", "FermatRing", 65537, 1024,
 """
     constexpr static I reduce(I x) {
         return (x & 0xFFFF) - (x >> 16);
