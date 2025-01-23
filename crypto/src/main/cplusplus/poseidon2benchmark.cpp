@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,7 +32,7 @@ static void BM_Poseidon2(benchmark::State& state) {
     for (std::size_t i = 0; i < Params::t; ++i) m[i] = F::random(rng);
 
     for (auto _ : state)
-        poseidon2::permute<Params>(m);
+        Poseidon2<Params>::permute(m);
 
     benchmark::DoNotOptimize(m);
 }
