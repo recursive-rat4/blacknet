@@ -37,13 +37,18 @@ gcc-test:
   extends: .gcc
   stage: test
   before_script:
-    - apt-get update && apt-get -y install libboost-dev libboost-random-dev libboost-test-dev
+    - echo "deb http://deb.debian.org/debian bookworm-backports main" >> /etc/apt/sources.list
+    - apt-get update
+    - apt-get -t bookworm-backports -y install meson
+    - apt-get -y install libboost-dev libboost-random-dev libboost-test-dev
   script:
     - cd crypto/src/main/cplusplus
-    - make ci-test
+    - meson setup -Dbuildtype=plain -Dwarning_level=0 build
+    - meson compile -C build
+    - ./build/crypto_test --log_format=JUNIT --log_sink=TEST.xml
   rules:
     - changes:
-      - "**/Makefile"
+      - "**/meson*"
       - "**/*.h"
       - "**/*.cpp"
       when: on_success

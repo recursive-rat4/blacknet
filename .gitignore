@@ -4,6 +4,9 @@
 # Maven
 target/
 
+# Meson
+build/
+
 # IDEA
 .idea
 *.iml
