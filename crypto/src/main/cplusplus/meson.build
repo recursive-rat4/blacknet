@@ -25,8 +25,11 @@ project('blacknet crypto', 'cpp',
     ],
 )
 
-assert(meson.get_compiler('cpp').has_argument('-fwrapv'), 'Unsupported C++ compiler')
+compiler = meson.get_compiler('cpp')
+compiler.has_argument('-fwrapv', required : true)
 add_project_arguments('-fwrapv', language : 'cpp')
+compiler.has_type('__int128_t', required : true)
+compiler.has_type('__uint128_t', required : true)
 
 if get_option('optimization') == '3' or get_option('optimization') == 's'
     add_project_arguments('-DBLACKNET_CRYPTO_OMG_OPTIMIZE', language : 'cpp')
