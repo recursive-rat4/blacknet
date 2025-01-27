@@ -82,6 +82,13 @@ struct BFV {
             return *this;
         }
 
+        constexpr Evaluator& operator *= (const Zt& other) {
+            Zq m(lift(other));
+            ct.a *= m;
+            ct.b *= m;
+            return *this;
+        }
+
         constexpr Evaluator& operator *= (const PlainText& other) {
             Rq m(lift(other));
             ct.a *= m;
@@ -93,10 +100,14 @@ struct BFV {
     boost::random::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
     DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
 
+    constexpr static Zq lift(const Zt& zt) {
+        return Zq(zt.number());
+    }
+
     constexpr static Rq lift(const Rt& rt) {
         Rq rq;
         for (std::size_t i = 0; i < D; ++i)
-            rq.coefficients[i] = Zq(rt.coefficients[i].number());
+            rq.coefficients[i] = lift(rt.coefficients[i]);
         return rq;
     }
 

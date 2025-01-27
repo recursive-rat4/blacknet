@@ -65,6 +65,7 @@ BOOST_AUTO_TEST_CASE(Tests) {
     auto ct_pk = bfv.encrypt(rng, pk, pt);
     BOOST_TEST(pt == bfv.decrypt(sk, ct_pk), "Public-key mode Decryption");
 
+    BFV::Zt scalar{ 2 };
     BFV::PlainText pt1{ 2, };
     BFV::PlainText pt2{ 4, };
     auto ct1 = bfv.encrypt(rng, pk, pt1);
@@ -77,6 +78,10 @@ BOOST_AUTO_TEST_CASE(Tests) {
     BFV::Evaluator eval_add_ct{ ct1 };
     eval_add_ct += ct2;
     BOOST_TEST(pt2 == bfv.decrypt(sk, eval_add_ct.ct), "CipherText Addition");
+
+    BFV::Evaluator eval_mul_scalar{ ct1 };
+    eval_mul_scalar *= scalar;
+    BOOST_TEST(pt2 == bfv.decrypt(sk, eval_mul_scalar.ct), "Scalar Multiplication");
 
     BFV::Evaluator eval_mul_pt{ ct1 };
     eval_mul_pt *= pt1;
