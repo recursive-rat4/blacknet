@@ -61,9 +61,9 @@ BOOST_AUTO_TEST_CASE(Tests) {
     auto pk = bfv.generatePublicKey(rng, sk);
     BFV::PlainText pt{ 1, 2, 3, 4 };
     auto ct_sk = bfv.encrypt(rng, sk, pt);
-    BOOST_TEST(pt == bfv.decrypt(sk, ct_sk), "Public-key mode Decryption");
+    BOOST_TEST(pt == bfv.decrypt(sk, ct_sk), "Secret-key mode Decryption");
     auto ct_pk = bfv.encrypt(rng, pk, pt);
-    BOOST_TEST(pt == bfv.decrypt(sk, ct_pk), "Secret-key mode Decryption");
+    BOOST_TEST(pt == bfv.decrypt(sk, ct_pk), "Public-key mode Decryption");
 
     BFV::PlainText pt1{ 2, };
     BFV::PlainText pt2{ 4, };
