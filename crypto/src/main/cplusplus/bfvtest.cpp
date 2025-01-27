@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -60,8 +60,10 @@ BOOST_AUTO_TEST_CASE(Tests) {
     auto sk = bfv.generateSecretKey(rng);
     auto pk = bfv.generatePublicKey(rng, sk);
     BFV::PlainText pt{ 1, 2, 3, 4 };
-    auto ct = bfv.encrypt(rng, pk, pt);
-    BOOST_TEST(pt == bfv.decrypt(sk, ct), "Decryption");
+    auto ct_sk = bfv.encrypt(rng, sk, pt);
+    BOOST_TEST(pt == bfv.decrypt(sk, ct_sk), "Public-key mode Decryption");
+    auto ct_pk = bfv.encrypt(rng, pk, pt);
+    BOOST_TEST(pt == bfv.decrypt(sk, ct_pk), "Secret-key mode Decryption");
 
     BFV::PlainText pt1{ 2, };
     BFV::PlainText pt2{ 4, };

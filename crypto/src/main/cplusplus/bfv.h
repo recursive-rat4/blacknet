@@ -120,6 +120,13 @@ struct BFV {
     }
 
     template<typename RNG>
+    CipherText encrypt(RNG& rng, const SecretKey& sk, const PlainText& pt) {
+        auto a = Rq::random(rng);
+        auto e = Rq::random(rng, dgd);
+        return { a * sk + e + upscale(pt), -a };
+    }
+
+    template<typename RNG>
     CipherText encrypt(RNG& rng, const PublicKey& pk, const PlainText& pt) {
         auto u = generateSecretKey(rng);
         auto e1 = Rq::random(rng, dgd);
