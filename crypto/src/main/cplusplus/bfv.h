@@ -125,8 +125,8 @@ struct BFV {
 
     template<typename RNG>
     PublicKey generatePublicKey(RNG& rng, const SecretKey& sk) {
-        auto e = Rq::random(rng, dgd);
         auto a = Rq::random(rng);
+        auto e = Rq::random(rng, dgd);
         return { -(a * sk + e), a };
     }
 
@@ -149,7 +149,7 @@ struct BFV {
         PlainText pt;
         auto d = ct.a + ct.b * sk;
         for (std::size_t i = 0; i < D; ++i) {
-            pt.coefficients[i] = Zt(std::round(double(Zt::modulus()) * double(d.coefficients[i].number()) / double(Zq::modulus())));
+            pt.coefficients[i] = Zt(std::round(INV_DELTA * d.coefficients[i].number()));
         }
         return pt;
     }
