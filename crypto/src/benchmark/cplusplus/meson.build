@@ -15,16 +15,25 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-compiler = meson.get_compiler('cpp')
-compiler.has_argument('-fwrapv', required : true)
-add_project_arguments('-fwrapv', language : 'cpp')
-compiler.has_type('__int128_t', required : true)
-compiler.has_type('__uint128_t', required : true)
-
-if get_option('optimization') == '3' or get_option('optimization') == 's'
-    add_project_arguments('-DBLACKNET_CRYPTO_OMG_OPTIMIZE', language : 'cpp')
-endif
-
-add_project_dependencies(dependency('boost', modules: ['random']), language : 'cpp')
-
-main_includes = include_directories('.')
+benchmark_sources = [
+    'ajtaicommitment.cpp',
+    'benchmark.cpp',
+    'cyclotomicring.cpp',
+    'extensionfield.cpp',
+    'integerring.cpp',
+    'latticefold.cpp',
+    'pastacurves.cpp',
+    'pedersencommitment.cpp',
+    'poseidon2.cpp',
+    'primefield.cpp',
+    'sumfold.cpp',
+]
+benchmark_dependencies = dependency('benchmark')
+benchmark_bin = executable(
+    'crypto_benchmark',
+    benchmark_sources,
+    implicit_include_directories : false,
+    include_directories : main_includes,
+    dependencies : benchmark_dependencies
+)
+benchmark('crypto benchmark', benchmark_bin)

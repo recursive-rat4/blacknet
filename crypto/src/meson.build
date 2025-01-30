@@ -15,16 +15,22 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-compiler = meson.get_compiler('cpp')
-compiler.has_argument('-fwrapv', required : true)
-add_project_arguments('-fwrapv', language : 'cpp')
-compiler.has_type('__int128_t', required : true)
-compiler.has_type('__uint128_t', required : true)
+project('blacknet crypto', 'cpp',
+    meson_version : '>=1.3.0',
+    version : '0.3.0.SNAPSHOT',
+    license : 'LGPL-3.0-or-later',
+    default_options : [
+        'cpp_std=c++26',
+        'b_ndebug=if-release',
+    ],
+)
 
-if get_option('optimization') == '3' or get_option('optimization') == 's'
-    add_project_arguments('-DBLACKNET_CRYPTO_OMG_OPTIMIZE', language : 'cpp')
+subdir('main/cplusplus')
+
+if get_option('tests')
+    subdir('test/cplusplus')
 endif
 
-add_project_dependencies(dependency('boost', modules: ['random']), language : 'cpp')
-
-main_includes = include_directories('.')
+if get_option('benchmarks')
+    subdir('benchmark/cplusplus')
+endif
