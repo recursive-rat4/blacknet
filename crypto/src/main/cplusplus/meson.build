@@ -25,6 +25,9 @@ if get_option('optimization') == '3' or get_option('optimization') == 's'
     add_project_arguments('-DBLACKNET_CRYPTO_OMG_OPTIMIZE', language : 'cpp')
 endif
 
-add_project_dependencies(dependency('boost', modules: ['random']), language : 'cpp')
+add_project_dependencies(
+    dependency('boost', modules : ['random'], version : '>=1.47.0'),
+    language : 'cpp'
+)
 
 main_includes = include_directories('.')
