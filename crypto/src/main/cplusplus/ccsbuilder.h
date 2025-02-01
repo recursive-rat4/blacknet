@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -560,11 +560,13 @@ struct CCSBuilder {
 
     consteval CCSBuilder() : inputs(0), auxiliaries(0), constraints(), scopes(), currentScope(nullptr) {}
 
+    [[nodiscard]]
     constexpr Variable input() {
         if (currentScope) currentScope->variables += 1;
         return { Variable::Type::Input, ++inputs };
     }
 
+    [[nodiscard]]
     constexpr Variable auxiliary() {
         if (currentScope) currentScope->variables += 1;
         return { Variable::Type::Auxiliary, ++auxiliaries };
