@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -61,11 +61,15 @@ BOOST_AUTO_TEST_CASE(fieldSub) {
     constexpr PallasField a1(a);
     constexpr PallasField b1(b);
     constexpr PallasField c1("2590456408ee5d79d223e3b2c1512289a720e055d628c8c4d0ad4720dc8735a3");
+    constexpr PallasField d1("1a6fba9bf711a2862ddc1c4d3eaedd767b25b8a633243056c87fe9cc2378ca5e");
     constexpr VestaField  a2(a);
     constexpr VestaField  b2(b);
     constexpr VestaField  c2("2590456408ee5d79d223e3b2c1512289a720e055d6707886c3c70154dc8735a3");
+    constexpr VestaField  d2("1a6fba9bf711a2862ddc1c4d3eaedd767b25b8a633243056c87fe9cc2378ca5e");
     BOOST_TEST(c1 == a1 - b1);
+    BOOST_TEST(d1 == b1 - a1);
     BOOST_TEST(c2 == a2 - b2);
+    BOOST_TEST(d2 == b2 - a2);
     BOOST_TEST(c1 == c1 - PallasField(0));
     BOOST_TEST(c2 == c2 - VestaField(0));
     BOOST_TEST(PallasField(0) == PallasField(1) - PallasField(1));
@@ -115,9 +119,9 @@ BOOST_AUTO_TEST_CASE(fieldSquare) {
 BOOST_AUTO_TEST_CASE(fieldInv) {
     constexpr PallasField a("0f34fe2fd15703dc7eba4a68d48fa9ee0e9ab8746f759eb8fc23828a4aa48900");
     constexpr PallasField b("087f2909b3c53a656a9f0f126b8458afa89ececeb5676d93c9d4594c4aacc34d");
-    BOOST_TEST(a == b.invert());
-    BOOST_TEST(b == a.invert());
-    BOOST_CHECK_THROW(VestaField(0).invert(), ArithmeticException);
+    BOOST_TEST(a == b.invert().value());
+    BOOST_TEST(b == a.invert().value());
+    BOOST_TEST(!VestaField(0).invert());
 }
 
 BOOST_AUTO_TEST_CASE(fieldSqrt) {

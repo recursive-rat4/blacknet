@@ -159,8 +159,8 @@ public:
     }
 
     constexpr WeierstrassGroupProjective scale() const {
-        if (*this != WeierstrassGroupProjective()) {
-            BF a(z.invert());
+        if (auto maybeInv = z.invert()) {
+            BF& a = *maybeInv;
             return WeierstrassGroupProjective(x * a, y * a, BF(1));
         } else {
             return WeierstrassGroupProjective();

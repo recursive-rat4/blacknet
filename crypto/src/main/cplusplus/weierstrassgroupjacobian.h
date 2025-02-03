@@ -163,8 +163,8 @@ public:
     }
 
     constexpr WeierstrassGroupJacobian scale() const {
-        if (*this != WeierstrassGroupJacobian()) {
-            BF a(z.invert());
+        if (auto maybeInv = z.invert()) {
+            BF& a = *maybeInv;
             BF aa(a.square());
             BF aaa(a * aa);
             return WeierstrassGroupJacobian(x * aa, y * aaa, BF(1));

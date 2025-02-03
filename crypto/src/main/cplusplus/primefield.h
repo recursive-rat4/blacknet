@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -87,11 +87,19 @@ public:
     }
 
     constexpr PrimeField& operator /= (const PrimeField& other) noexcept(false) {
-        return *this *= other.invert();
+        if (auto maybeInv = other.invert()) {
+            return *this *= *maybeInv;
+        } else {
+            throw ArithmeticException("Noninvertible field element");
+        }
     }
 
     constexpr PrimeField operator / (const PrimeField& other) const noexcept(false) {
-        return *this * other.invert();
+        if (auto maybeInv = other.invert()) {
+            return *this * *maybeInv;
+        } else {
+            throw ArithmeticException("Noninvertible field element");
+        }
     }
 
     constexpr PrimeField operator - () const {
@@ -116,12 +124,12 @@ public:
         return PrimeField(t, 0);
     }
 
-    constexpr PrimeField invert() const noexcept(false) {
+    constexpr std::optional<PrimeField> invert() const {
         if (*this != PrimeField(0)) {
             // Euler's theorem
             return semigroup::power(*this, PHI_MINUS_1);
         } else {
-            throw ArithmeticException("Noninvertible field element");
+            return std::nullopt;
         }
     }
 
