@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -49,6 +49,27 @@ public:
     template<typename S = E>
     constexpr bool isSatisfied(const Vector<S>& z) const {
         return (a * z) * (b * z) == c * z;
+    }
+
+    template<typename S = E>
+    constexpr bool isSatisfied(const Vector<S>& z, const Vector<S>& e) const {
+        const S& u = z[0];
+        return (a * z) * (b * z) == u * (c * z) + e;
+    }
+
+    template<typename S = E>
+    constexpr void fold(
+        const S& r,
+        Vector<S>& z, Vector<S>& e,
+        const Vector<S>& z1, const Vector<S>& e1,
+        const Vector<S>& z2, const Vector<S>& e2
+    ) const {
+        const S& u1 = z1[0];
+        const S& u2 = z2[0];
+        Vector<S> z12{ z1 + z2 };
+        Vector<S> t{ (a * z12) * (b * z12) - (u1 + u2) * (c * z12) - e1 - e2 };
+        z = z1 + r * z2;
+        e = e1 + r * t + r.square() * e2;
     }
 
     friend std::ostream& operator << (std::ostream& out, const R1CS& val)

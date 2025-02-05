@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -28,7 +28,7 @@ using E = PervushinRing;
 using EE = PervushinRingDegree2;
 
 BOOST_AUTO_TEST_CASE(Satisfaction) {
-    // Sixte
+    // Sixte with riposte
     Matrix<E> a(3, 5, {
         E(0), E(0), E(1), E(0), E(0),
         E(0), E(0), E(0), E(1), E(0),
@@ -40,11 +40,11 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
         E(0), E(0), E(0), E(0), E(1),
     });
     Matrix<E> c(3, 5, {
-        E(0), E(1), E(0), E(0), E(0),
+        E(4), E(1), E(0), E(0), E(0),
         E(0), E(0), E(1), E(0), E(0),
         E(0), E(0), E(0), E(1), E(0),
     });
-    Vector<E> z{ E(1), E(64), E(16), E(4), E(2) };
+    Vector<E> z{ E(1), E(60), E(16), E(4), E(2) };
 
     R1CS<E> r1cs{
         MatrixSparse<E>(a),
@@ -65,6 +65,28 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
         BOOST_TEST(!r1cs.isSatisfied(z_morphed));
         z_morphed[i] -= EE(1);
     }
+
+    const Vector<EE> e_init(r1cs.constraints(), EE(0));
+    Vector<EE> e_folded(e_init);
+    Vector<EE> z_folded(z_morphed);
+    BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
+
+    EE r1{E(11), E(31)};
+    r1cs.fold(r1, z_folded, e_folded, z_folded, e_folded, z_morphed, e_init);
+    BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
+
+    Vector<EE> z_other{ EE(1), EE(725), EE(81), EE(9), EE(3) };
+    BOOST_TEST(r1cs.isSatisfied(z_other));
+    r1cs.fold(r1, z_folded, e_folded, z_folded, e_folded, z_other, e_init);
+    BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
+    BOOST_TEST(e_init != e_folded);
+
+    EE r2{E(-13), E(-3)};
+    r1cs.fold(r2, z_folded, e_folded, z_folded, e_folded, z_other, e_init);
+    BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
+
+    r1cs.fold(r2, z_folded, e_folded, z_folded, e_folded, z_folded, e_folded);
+    BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
