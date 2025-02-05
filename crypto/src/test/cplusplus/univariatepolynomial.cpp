@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,6 +19,7 @@
 #include <ranges>
 
 #include "ccsbuilder.h"
+#include "customizableconstraintsystem.h"
 #include "solinas62.h"
 #include "solinas62field.h"
 #include "univariatepolynomial.h"

@@ -26,10 +26,11 @@
 #include <type_traits>
 #include <vector>
 
-#include "customizableconstraintsystem.h"
 #include "matrix.h"
 #include "matrixsparse.h"
-#include "r1cs.h"
+
+template<typename E>class CustomizableConstraintSystem;
+template<typename E>class R1CS;
 
 template<typename E, std::size_t D>
 struct CCSBuilder {

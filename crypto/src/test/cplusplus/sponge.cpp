@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "ccsbuilder.h"
+#include "customizableconstraintsystem.h"
 #include "poseidon2solinas62.h"
 #include "sponge.h"
 
