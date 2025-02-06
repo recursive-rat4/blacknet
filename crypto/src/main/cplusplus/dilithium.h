@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -52,7 +52,7 @@ namespace dilithium {
             ntt::gentleman_sande<Z, N>(a);
         }
 
-        static_assert(N == Z::zetas());
+        static_assert(N == Z::twiddles());
     };
 
     using Rq = PolynomialRing<CyclotomicRingParams>;

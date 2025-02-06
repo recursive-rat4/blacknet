@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -151,12 +151,12 @@ public:
         return Params::M;
     }
 
-    constexpr static IntegerRing zeta(std::size_t index) {
-        return IntegerRing(Params::ZETAS[index], 0);
+    constexpr static IntegerRing twiddle(std::size_t index) {
+        return IntegerRing(Params::TWIDDLES[index], 0);
     }
 
-    consteval static std::size_t zetas() {
-        return Params::ZETAS.size();
+    consteval static std::size_t twiddles() {
+        return Params::TWIDDLES.size();
     }
 
     template<typename DRG>

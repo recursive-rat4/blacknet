@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -49,7 +49,7 @@ struct LatticeFold {
     static const std::size_t D = 64;
     static const std::size_t K = 16;
 
-    static_assert(t == Zq::zetas());
+    static_assert(t == Zq::twiddles());
     static_assert(std::is_signed_v<typename Zq::NumericType>);
 
     struct CanonicalRingParams {

@@ -17,7 +17,6 @@ struct PervushinRingParams {
     constexpr static const I M = 2305843009213693951;
     constexpr static const I R2 = 64;
     constexpr static const I RN = -2305843009213693953;
-    constexpr static const std::array<I, 1> ZETAS = {8};
 
     constexpr static I reduce(I x) {
         return (x & 2305843009213693951) + (x >> 61);

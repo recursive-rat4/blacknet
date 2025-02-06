@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -25,11 +25,11 @@
 namespace ntt {
     template<typename Z, std::size_t N>
     constexpr void cooley_tukey(std::array<Z, N>& a) {
-        constexpr std::size_t inertia = N / Z::zetas();
+        constexpr std::size_t inertia = N / Z::twiddles();
         std::size_t i = 0, j = 0;
         for (std::size_t k = N / 2; k >= inertia; k >>= 1) {
             for (std::size_t l = 0; l < N; l = i + k) {
-                const Z zeta(Z::zeta(++j));
+                const Z zeta(Z::twiddle(++j));
                 for (i = l; i < l + k; ++i) {
                     Z t(a[i + k] * zeta);
                     a[i + k] = a[i] - t;
@@ -41,14 +41,14 @@ namespace ntt {
 
     template<typename Z, std::size_t N>
     constexpr void gentleman_sande(std::array<Z, N>& a) {
-        constexpr std::size_t inertia = N / Z::zetas();
+        constexpr std::size_t inertia = N / Z::twiddles();
         // Undefined behaviour is prohibited in consteval
-        static const Z scale = Z(Z::zetas()).invert().value();
+        static const Z scale = Z(Z::twiddles()).invert().value();
 
-        std::size_t i = 0, j = Z::zetas();
+        std::size_t i = 0, j = Z::twiddles();
         for (std::size_t k = inertia; k <= N / 2; k <<= 1) {
             for (std::size_t l = 0; l < N; l = i + k) {
-                const Z zeta(-Z::zeta(--j));
+                const Z zeta(-Z::twiddle(--j));
                 for (i = l; i < l + k; ++i) {
                     Z t(a[i]);
                     a[i] += a[i + k];
@@ -78,7 +78,7 @@ namespace {
 
     template<typename Z, std::size_t N>
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        constexpr std::size_t inertia = N / Z::zetas();
+        constexpr std::size_t inertia = N / Z::twiddles();
 
         if constexpr (inertia == 1) {
             for (std::size_t i = 0; i < N; ++i) {
@@ -88,8 +88,8 @@ namespace {
             constexpr std::size_t k = inertia * 2;
             constexpr std::size_t l = N / k;
             for (std::size_t i = 0; i < l; ++i) {
-                base4(r, a, b, i * k, Z::zeta(l + i));
-                base4(r, a, b, i * k + inertia, -Z::zeta(l + i));
+                base4(r, a, b, i * k, Z::twiddle(l + i));
+                base4(r, a, b, i * k + inertia, -Z::twiddle(l + i));
             }
         } else {
             static_assert(false, "Not implemented");
