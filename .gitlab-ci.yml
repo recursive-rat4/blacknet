@@ -42,10 +42,9 @@ gcc-test:
     - apt-get -t bookworm-backports -y install meson
     - apt-get -y install libboost-dev libboost-random-dev libboost-test-dev
   script:
-    - cd crypto/src
     - meson setup -Dbuildtype=plain -Dwarning_level=0 build
     - meson compile -C build
-    - ./build/test/cplusplus/crypto_test --log_format=JUNIT --log_sink=TEST.xml
+    - ./build/crypto/src/test/cplusplus/crypto_test --log_format=JUNIT --log_sink=TEST.xml
   rules:
     - changes:
       - "**/meson*"
@@ -56,7 +55,7 @@ gcc-test:
   artifacts:
     reports:
       junit:
-        - "crypto/src/TEST.xml"
+        - "TEST.xml"
 
 openjdk-scan:
   extends: .openjdk

@@ -15,5 +15,4 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-option('tests', type: 'boolean', value: true)
-option('benchmarks', type: 'boolean', value: false)
+subdir('src')

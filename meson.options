@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024-2025 Pavel Vasin
+# Copyright (c) 2025 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -15,12 +15,5 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-subdir('main/cplusplus')
-
-if get_option('tests')
-    subdir('test/cplusplus')
-endif
-
-if get_option('benchmarks')
-    subdir('benchmark/cplusplus')
-endif
+option('tests', type: 'boolean', value: true, description: 'Unit testing')
+option('benchmarks', type: 'boolean', value: false, description: 'Microbenchmarking')

@@ -15,12 +15,14 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-subdir('main/cplusplus')
+project('blacknet', 'cpp',
+    meson_version : '>=1.3.0',
+    version : '0.3.0.SNAPSHOT',
+    license : 'LGPL-3.0-or-later',
+    default_options : [
+        'cpp_std=c++26',
+        'b_ndebug=if-release',
+    ],
+)
 
-if get_option('tests')
-    subdir('test/cplusplus')
-endif
-
-if get_option('benchmarks')
-    subdir('benchmark/cplusplus')
-endif
+subdir('crypto')
