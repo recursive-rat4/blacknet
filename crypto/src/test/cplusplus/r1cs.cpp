@@ -16,11 +16,14 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <boost/random/mersenne_twister.hpp>
 
 #include "matrix.h"
 #include "pervushin.h"
 #include "pervushinfield.h"
 #include "r1cs.h"
+
+static boost::random::mt19937 rng;
 
 BOOST_AUTO_TEST_SUITE(R1CSs)
 
@@ -86,6 +89,12 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
     BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
 
     r1cs.fold(r2, z_folded, e_folded, z_folded, e_folded, z_folded, e_folded);
+    BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
+
+    auto rr = EE::random(rng);
+    auto [zr, er] = r1cs.random<EE>(rng);
+    BOOST_TEST(r1cs.isSatisfied(zr, er));
+    r1cs.fold(rr, z_folded, e_folded, z_folded, e_folded, zr, er);
     BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
 }
 

@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_R1CS_H
 
 #include <iostream>
+#include <utility>
 
 #include "matrixsparse.h"
 #include "vector.h"
@@ -53,8 +54,7 @@ public:
 
     template<typename S = E>
     constexpr bool isSatisfied(const Vector<S>& z, const Vector<S>& e) const {
-        const S& u = z[0];
-        return (a * z) * (b * z) == u * (c * z) + e;
+        return error(z) == e;
     }
 
     template<typename S = E>
@@ -75,6 +75,24 @@ public:
     friend std::ostream& operator << (std::ostream& out, const R1CS& val)
     {
         return out << '[' << val.a << ", " << val.b << ", " << val.c << ']';
+    }
+
+    template<typename S = E, typename DRG>
+    constexpr std::pair<Vector<S>, Vector<S>> squeeze(DRG& drg) const {
+        auto z = Vector<S>::squeeze(drg, variables());
+        return { z, error(z) };
+    }
+
+    template<typename S = E, typename RNG>
+    std::pair<Vector<S>, Vector<S>> random(RNG& rng) const {
+        auto z = Vector<S>::random(rng, variables());
+        return { z, error(z) };
+    }
+private:
+    template<typename S = E>
+    constexpr Vector<S> error(const Vector<S>& z) const {
+        const S& u = z[0];
+        return (a * z) * (b * z) - u * (c * z);
     }
 };
 

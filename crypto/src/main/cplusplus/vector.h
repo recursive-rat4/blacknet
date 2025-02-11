@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -168,6 +168,13 @@ public:
     friend std::ostream& operator << (std::ostream& out, const Vector& val)
     {
         return out << val.elements;
+    }
+
+    template<typename DRG>
+    constexpr static Vector squeeze(DRG& drg, std::size_t size) {
+        Vector t(size);
+        std::ranges::generate(t.elements, [&] { return E::squeeze(drg); });
+        return t;
     }
 
     template<typename RNG>
