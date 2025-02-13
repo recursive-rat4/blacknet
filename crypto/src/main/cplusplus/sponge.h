@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,9 +18,9 @@
 #ifndef BLACKNET_CRYPTO_SPONGE_H
 #define BLACKNET_CRYPTO_SPONGE_H
 
+#include <algorithm>
 #include <array>
 #include <concepts>
-#include <ranges>
 
 // Sponge construction, https://keccak.team/files/CSF-0.1.pdf
 
@@ -37,6 +37,7 @@ template<
     typename E,
     std::size_t R,
     std::size_t C,
+    std::array<E, C> IV,
     typename F
 >
 class Sponge {
@@ -48,7 +49,8 @@ public:
     std::array<E, R+C> state;
 
     constexpr Sponge() : phase(ABSORB), position(0) {
-        state.fill(E(0));
+        std::ranges::fill_n(state.begin(), R, E(0));
+        std::ranges::copy_n(IV.begin(), IV.size(), state.begin() + R);
     }
 
     constexpr void absorb(const E& e) {
@@ -93,6 +95,13 @@ requires(std::same_as<E, typename Circuit::R>)
 struct circuit {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
+
+    constexpr static void init(
+        std::array<LinearCombination, R+C>& state
+    ) {
+        std::ranges::fill_n(state.begin(), R, E(0));
+        std::ranges::copy_n(IV.begin(), IV.size(), state.begin() + R);
+    }
 
     template<std::size_t N, std::size_t M>
     constexpr static void fixed(

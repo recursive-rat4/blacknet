@@ -32,47 +32,47 @@ BOOST_AUTO_TEST_CASE(test) {
             for (auto& e : b) e += 1;
         }
     };
-    using S = Sponge<Z, 2, 2, F>;
+    using S = Sponge<Z, 2, 2, {10, 0}, F>;
 
     S sponge1;
-    BOOST_TEST((B{0, 0, 0, 0} == sponge1.state));
+    BOOST_TEST((B{0, 0, 10, 0} == sponge1.state));
     sponge1.absorb(2);
-    BOOST_TEST((B{2, 0, 0, 0} == sponge1.state));
+    BOOST_TEST((B{2, 0, 10, 0} == sponge1.state));
     sponge1.absorb(4);
-    BOOST_TEST((B{2, 4, 0, 0} == sponge1.state));
+    BOOST_TEST((B{2, 4, 10, 0} == sponge1.state));
     sponge1.absorb(6);
-    BOOST_TEST((B{6, 5, 1, 1} == sponge1.state));
+    BOOST_TEST((B{6, 5, 11, 1} == sponge1.state));
 
     S sponge2(sponge1);
     sponge2.absorb(8);
-    BOOST_TEST((B{6, 8, 1, 1} == sponge2.state));
+    BOOST_TEST((B{6, 8, 11, 1} == sponge2.state));
 
     BOOST_TEST((Z{7} == sponge1.squeeze()));
-    BOOST_TEST((B{7, 2, 2, 4} == sponge1.state));
+    BOOST_TEST((B{7, 2, 12, 4} == sponge1.state));
     BOOST_TEST((Z{2} == sponge1.squeeze()));
-    BOOST_TEST((B{7, 2, 2, 4} == sponge1.state));
+    BOOST_TEST((B{7, 2, 12, 4} == sponge1.state));
     BOOST_TEST((Z{8} == sponge1.squeeze()));
-    BOOST_TEST((B{8, 3, 3, 5} == sponge1.state));
+    BOOST_TEST((B{8, 3, 13, 5} == sponge1.state));
     BOOST_CHECK_THROW(sponge1.absorb(0), SpongeException);
 
     sponge2.absorb(10);
-    BOOST_TEST((B{10, 9, 2, 2} == sponge2.state));
+    BOOST_TEST((B{10, 9, 12, 2} == sponge2.state));
     sponge2.absorb(12);
-    BOOST_TEST((B{10, 12, 2, 2} == sponge2.state));
+    BOOST_TEST((B{10, 12, 12, 2} == sponge2.state));
     BOOST_TEST((Z{11} == sponge2.squeeze()));
-    BOOST_TEST((B{11, 13, 3, 4} == sponge2.state));
+    BOOST_TEST((B{11, 13, 13, 4} == sponge2.state));
 
     S sponge3;
     BOOST_TEST((Z{2} == sponge3.squeeze()));
-    BOOST_TEST((B{2, 1, 1, 3} == sponge3.state));
+    BOOST_TEST((B{2, 1, 11, 3} == sponge3.state));
 }
 
 BOOST_AUTO_TEST_CASE(circuit) {
-    using Sponge = Poseidon2Solinas62;
+    using Sponge = Poseidon2Solinas62<{33, 34, 35, 36}>;
     using E = Solinas62Ring;
     const std::size_t T = 12;
-    std::array<E, T> a;
-    a.fill(E(0));
+    Sponge sponge;
+    std::array<E, T>& a = sponge.state;
     const std::array<E, T> b{
         0x0000000000000000,
         0x0000000000000001,
@@ -92,6 +92,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Circuit = CCSBuilder<E, 3>;
     Circuit circuit;
     std::array<typename Circuit::LinearCombination, T> state;
+    Sponge::circuit<Circuit>::init(state);
     std::array<typename Circuit::LinearCombination, T> absorb;
     std::ranges::generate(absorb, [&]{ return circuit.input(); });
     std::array<typename Circuit::LinearCombination, T> squeeze;
@@ -116,9 +117,9 @@ BOOST_AUTO_TEST_CASE(circuit) {
         z[i] -= E(1);
     }
 
-    Sponge sponge;
-    for (const auto& i : b) sponge.absorb(i);
-    for (const auto& i : c) BOOST_TEST(i == sponge.squeeze());
+    Sponge spng;
+    for (const auto& i : b) spng.absorb(i);
+    for (const auto& i : c) BOOST_TEST(i == spng.squeeze());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

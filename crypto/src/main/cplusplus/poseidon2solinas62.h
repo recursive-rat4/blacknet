@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -191,10 +191,12 @@ struct Poseidon2Solinas62Params {
     };
 };
 
+template<std::array<Solinas62Ring, 4> IV>
 using Poseidon2Solinas62 = Sponge<
     Solinas62Ring,
     8,
     4,
+    IV,
     Poseidon2<Poseidon2Solinas62Params>
 >;
 

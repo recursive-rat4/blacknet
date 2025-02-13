@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(SumChecks)
 
 using Z = Solinas62Ring;
 using F = Solinas62RingDegree2;
-using RO = Poseidon2Solinas62;
+using RO = Poseidon2Solinas62<{10, 11, 12, 13}>;
 
 BOOST_AUTO_TEST_CASE(interpolation) {
     using SumCheck = SumCheck<Z, F, UnivariatePolynomial, RO>;

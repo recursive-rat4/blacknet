@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -162,10 +162,12 @@ struct Poseidon2PervushinParams {
     };
 };
 
+template<std::array<PervushinRing, 4> IV>
 using Poseidon2Pervushin = Sponge<
     PervushinRing,
     8,
     4,
+    IV,
     Poseidon2<Poseidon2PervushinParams>
 >;
 

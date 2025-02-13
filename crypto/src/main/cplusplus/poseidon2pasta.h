@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -125,10 +125,12 @@ struct Poseidon2PallasParams {
     };
 };
 
+template<std::array<PallasField, 1> IV>
 using Poseidon2Pallas = Sponge<
     PallasField,
     2,
     1,
+    IV,
     Poseidon2<Poseidon2PallasParams>
 >;
 

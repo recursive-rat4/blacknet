@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -29,7 +29,7 @@ using R = LatticeFold<Solinas62Ring>::RqIso;
 
 BOOST_AUTO_TEST_CASE(Zq) {
     using CS = AjtaiCommitment<Z>;
-    auto drg = Poseidon2Solinas62();
+    auto drg = Poseidon2Solinas62<{1, 2, 3, 4}>();
     CS cs(CS::setup(drg, 2, 2));
     Z z1(1);
     Z z2(2);
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(Zq) {
 
 BOOST_AUTO_TEST_CASE(Rq) {
     using CS = AjtaiCommitment<R>;
-    auto drg = Poseidon2Solinas62();
+    auto drg = Poseidon2Solinas62<{5, 6, 7, 8}>();
     CS cs(CS::setup(drg, 2, 2));
     R r1({1, 2});
     R r2({3, 4});

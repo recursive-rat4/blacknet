@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_SUITE(PedersenCommitments)
 
 BOOST_AUTO_TEST_CASE(setup) {
     using CS = PedersenCommitment<PallasGroupAffine>;
-    auto drg = Poseidon2Pallas();
+    auto drg = Poseidon2Pallas<{0}>();
     CS::setup(drg, 2);
 }
 
