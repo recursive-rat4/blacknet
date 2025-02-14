@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,14 +30,16 @@ template<typename E>class Vector;
 // CSR format
 
 template<typename E>
-class MatrixSparse {
-public:
+struct MatrixSparse {
     std::size_t columns;
-private:
     std::vector<std::size_t> rIndex;
     std::vector<std::size_t> cIndex;
     std::vector<E> elements;
-public:
+
+    constexpr MatrixSparse(std::size_t rows, std::size_t columns) : columns(columns) {
+        rIndex.reserve(rows + 1);
+        rIndex.push_back(0);
+    }
     constexpr MatrixSparse(const Matrix<E>& dense) : columns(dense.columns) {
         rIndex.reserve(dense.rows + 1);
         for (std::size_t i = 0; i < dense.rows; ++i) {

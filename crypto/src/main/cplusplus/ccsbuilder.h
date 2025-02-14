@@ -26,7 +26,6 @@
 #include <type_traits>
 #include <vector>
 
-#include "matrix.h"
 #include "matrixsparse.h"
 
 template<typename E>class CustomizableConstraintSystem;
@@ -585,30 +584,27 @@ struct CCSBuilder {
 
     constexpr R1CS<E> r1cs() const {
         static_assert(degree() <= 2, "High-degree circuits are not supported");
-        Matrix<E> a(constraints.size(), variables(), E(0));
-        Matrix<E> b(constraints.size(), variables(), E(0));
-        Matrix<E> c(constraints.size(), variables(), E(0));
+        MatrixSparse<E> a(constraints.size(), variables());
+        MatrixSparse<E> b(constraints.size(), variables());
+        MatrixSparse<E> c(constraints.size(), variables());
         for (std::size_t i = 0; i < constraints.size(); ++i) {
-            put(a, i, constraints[i].r[0]);
-            put(b, i, constraints[i].r[1]);
-            put(c, i, constraints[i].l);
+            put(a, constraints[i].r[0]);
+            put(b, constraints[i].r[1]);
+            put(c, constraints[i].l);
         }
-        return { MatrixSparse(a), MatrixSparse(b), MatrixSparse(c) };
+        return { std::move(a), std::move(b), std::move(c) };
     }
 
     constexpr CustomizableConstraintSystem<E> ccs() const {
-        std::vector<Matrix<E>> md;
-        md.reserve(degree() + 1);
-        std::ranges::generate_n(std::back_inserter(md), degree() + 1, [&]{ return Matrix<E>(constraints.size(), variables(), E(0)); });
-        for (std::size_t i = 0; i < constraints.size(); ++i) {
-            for (std::size_t j = 0; j < constraints[i].r.size(); ++j) {
-                put(md[j], i, constraints[i].r[j]);
-            }
-            put(md.back(), i, constraints[i].l);
-        }
         std::vector<MatrixSparse<E>> ms;
         ms.reserve(degree() + 1);
-        std::ranges::transform(md, std::back_inserter(ms), [](auto&& ix) { return MatrixSparse<E>(ix); });
+        std::ranges::generate_n(std::back_inserter(ms), degree() + 1, [&]{ return MatrixSparse<E>(constraints.size(), variables()); });
+        for (std::size_t i = 0; i < constraints.size(); ++i) {
+            for (std::size_t j = 0; j < constraints[i].r.size(); ++j) {
+                put(ms[j], constraints[i].r[j]);
+            }
+            put(ms.back(), constraints[i].l);
+        }
         std::vector<std::vector<std::size_t>> s(2);
         s[0].reserve(degree());
         for (std::size_t i = 0; i < degree(); ++i)
@@ -623,22 +619,26 @@ struct CCSBuilder {
         };
     }
 
-    constexpr void put(Matrix<E>& m, std::size_t row, const LinearCombination& lc) const {
+    constexpr void put(MatrixSparse<E>& m, const LinearCombination& lc) const {
         for (const auto& [variable, coefficient] : lc) {
+            std::size_t column;
             switch (variable.type) {
                 case Variable::Type::Constant:
-                    m[row, 0] = coefficient;
+                    column = 0;
                     break;
                 case Variable::Type::Input:
-                    m[row, variable.number] = coefficient;
+                    column = variable.number;
                     break;
                 case Variable::Type::Auxiliary:
-                    m[row, inputs + variable.number] = coefficient;
+                    column = inputs + variable.number;
                     break;
                 case Variable::Type::Uninitialized:
                     throw std::runtime_error("Uninitialized variable in circuit");
             }
+            m.cIndex.push_back(column);
+            m.elements.push_back(coefficient);
         }
+        m.rIndex.push_back(m.elements.size());
     }
 
     void print(std::ostream& out) const {
