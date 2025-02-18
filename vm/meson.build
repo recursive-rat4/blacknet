@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024-2025 Pavel Vasin
+# Copyright (c) 2025 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -15,15 +15,4 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-project('blacknet', 'cpp',
-    meson_version : '>=1.3.0',
-    version : '0.3.0.SNAPSHOT',
-    license : 'LGPL-3.0-or-later',
-    default_options : [
-        'cpp_std=c++26',
-        'b_ndebug=if-release',
-    ],
-)
-
-subdir('crypto')
-subdir('vm')
+subdir('src')

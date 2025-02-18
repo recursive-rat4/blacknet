@@ -15,15 +15,15 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-project('blacknet', 'cpp',
-    meson_version : '>=1.3.0',
-    version : '0.3.0.SNAPSHOT',
-    license : 'LGPL-3.0-or-later',
-    default_options : [
-        'cpp_std=c++26',
-        'b_ndebug=if-release',
-    ],
+vm_test_sources = [
+    'test.cpp',
+]
+vm_test_dependencies = dependency('boost', modules: ['unit_test_framework'], version : '>=1.67.0')
+vm_test_bin = executable(
+    'vm_test',
+    vm_test_sources,
+    implicit_include_directories : false,
+    include_directories : vm_main_includes,
+    dependencies : vm_test_dependencies
 )
-
-subdir('crypto')
-subdir('vm')
+test('vm test', vm_test_bin)

@@ -30,4 +30,4 @@ add_project_dependencies(
     language : 'cpp'
 )
 
-main_includes = include_directories('.')
+crypto_main_includes = include_directories('.')

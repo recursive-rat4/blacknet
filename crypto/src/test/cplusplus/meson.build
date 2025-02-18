@@ -15,7 +15,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-test_sources = [
+crypto_test_sources = [
     'ajtaicommitment.cpp',
     'bfv.cpp',
     'bigint.cpp',
@@ -45,12 +45,12 @@ test_sources = [
     'univariatepolynomial.cpp',
     'vector.cpp',
 ]
-test_dependencies = dependency('boost', modules: ['unit_test_framework'], version : '>=1.67.0')
-test_bin = executable(
+crypto_test_dependencies = dependency('boost', modules: ['unit_test_framework'], version : '>=1.67.0')
+crypto_test_bin = executable(
     'crypto_test',
-    test_sources,
+    crypto_test_sources,
     implicit_include_directories : false,
-    include_directories : main_includes,
-    dependencies : test_dependencies
+    include_directories : crypto_main_includes,
+    dependencies : crypto_test_dependencies
 )
-test('crypto test', test_bin)
+test('crypto test', crypto_test_bin)

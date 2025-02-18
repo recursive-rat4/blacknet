@@ -15,7 +15,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-benchmark_sources = [
+crypto_benchmark_sources = [
     'ajtaicommitment.cpp',
     'benchmark.cpp',
     'cyclotomicring.cpp',
@@ -28,12 +28,12 @@ benchmark_sources = [
     'primefield.cpp',
     'sumfold.cpp',
 ]
-benchmark_dependencies = dependency('benchmark', version : '>=1.0.0')
-benchmark_bin = executable(
+crypto_benchmark_dependencies = dependency('benchmark', version : '>=1.0.0')
+crypto_benchmark_bin = executable(
     'crypto_benchmark',
-    benchmark_sources,
+    crypto_benchmark_sources,
     implicit_include_directories : false,
-    include_directories : main_includes,
-    dependencies : benchmark_dependencies
+    include_directories : crypto_main_includes,
+    dependencies : crypto_benchmark_dependencies
 )
-benchmark('crypto benchmark', benchmark_bin)
+benchmark('crypto benchmark', crypto_benchmark_bin)

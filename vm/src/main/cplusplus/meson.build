@@ -15,15 +15,14 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-project('blacknet', 'cpp',
-    meson_version : '>=1.3.0',
-    version : '0.3.0.SNAPSHOT',
-    license : 'LGPL-3.0-or-later',
-    default_options : [
-        'cpp_std=c++26',
-        'b_ndebug=if-release',
-    ],
+vm_main_includes = include_directories('.')
+vm_main_sources = [
+    'vm.cpp',
+]
+vm_main_bin = executable(
+    'blacknet-vm',
+    vm_main_sources,
+    implicit_include_directories : false,
+    include_directories : [crypto_main_includes, vm_main_includes],
+    install : true,
 )
-
-subdir('crypto')
-subdir('vm')
