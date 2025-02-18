@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2024 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * Licensed under the Jelurida Public License version 1.1
  * for the Blacknet Public Blockchain Platform (the "License");
@@ -10,6 +10,7 @@
 package ninja.blacknet.network
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.Closeable
 import java.io.IOException
 import java.lang.Thread.sleep
 import java.math.BigInteger
@@ -217,9 +218,9 @@ class Connection(
 
     fun close() {
         if (closed.compareAndSet(false, true)) {
-            socket.close()
-            inputStream.close()
-            outputStream.close()
+            inputStream.closeIO()
+            outputStream.closeIO()
+            socket.closeIO()
 
             synchronized(Node.connections) {
                 Node.connections.remove(this@Connection)
@@ -354,4 +355,10 @@ class Connection(
         val type: PacketType,
         val size: Int,
     )
+
+    private fun Closeable.closeIO(): Unit = try {
+        close()
+    } catch (e: IOException) {
+        logger.debug(e) { "Exception on close ${debugName()}" }
+    }
 }
