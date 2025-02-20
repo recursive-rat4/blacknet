@@ -50,7 +50,7 @@ public:
 
     constexpr Sponge() : phase(ABSORB), position(0) {
         std::ranges::fill_n(state.begin(), R, E(0));
-        std::ranges::copy_n(IV.begin(), IV.size(), state.begin() + R);
+        std::ranges::copy(IV, state.begin() + R);
     }
 
     constexpr void absorb(const E& e) {

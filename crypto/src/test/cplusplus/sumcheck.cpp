@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(SumChecks)
 
 using Z = Solinas62Ring;
 using F = Solinas62RingDegree2;
-using RO = Poseidon2Solinas62<{10, 11, 12, 13}>;
+using RO = Poseidon2Solinas62Sponge<{10, 11, 12, 13}>;
 
 BOOST_AUTO_TEST_CASE(interpolation) {
     using SumCheck = SumCheck<Z, F, UnivariatePolynomial, RO>;

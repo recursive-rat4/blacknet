@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(test) {
 }
 
 BOOST_AUTO_TEST_CASE(circuit) {
-    using Sponge = Poseidon2Solinas62<{33, 34, 35, 36}>;
+    using Sponge = Poseidon2Solinas62Sponge<{33, 34, 35, 36}>;
     using E = Solinas62Ring;
     const std::size_t T = 12;
     Sponge sponge;

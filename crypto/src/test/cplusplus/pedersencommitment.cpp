@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_SUITE(PedersenCommitments)
 
 BOOST_AUTO_TEST_CASE(setup) {
     using CS = PedersenCommitment<PallasGroupAffine>;
-    auto drg = Poseidon2Pallas<{0}>();
+    auto drg = Poseidon2PallasSponge<{0}>();
     CS::setup(drg, 2);
 }
 

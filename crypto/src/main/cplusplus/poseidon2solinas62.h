@@ -22,7 +22,7 @@
 #include "solinas62.h"
 #include "sponge.h"
 
-struct Poseidon2Solinas62Params {
+struct Poseidon2Solinas62SpongeParams {
     using F = Solinas62Ring;
 
     constexpr static const std::size_t a = 3;
@@ -192,12 +192,12 @@ struct Poseidon2Solinas62Params {
 };
 
 template<std::array<Solinas62Ring, 4> IV>
-using Poseidon2Solinas62 = Sponge<
+using Poseidon2Solinas62Sponge = Sponge<
     Solinas62Ring,
     8,
     4,
     IV,
-    Poseidon2<Poseidon2Solinas62Params>
+    Poseidon2<Poseidon2Solinas62SpongeParams>
 >;
 
 #endif

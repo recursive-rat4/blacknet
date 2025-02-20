@@ -36,6 +36,6 @@ static void BM_Poseidon2(benchmark::State& state) {
 
     benchmark::DoNotOptimize(m);
 }
-BENCHMARK(BM_Poseidon2<Poseidon2PallasParams>);
-BENCHMARK(BM_Poseidon2<Poseidon2Solinas62Params>);
-BENCHMARK(BM_Poseidon2<Poseidon2PervushinParams>);
+BENCHMARK(BM_Poseidon2<Poseidon2PallasSpongeParams>);
+BENCHMARK(BM_Poseidon2<Poseidon2Solinas62SpongeParams>);
+BENCHMARK(BM_Poseidon2<Poseidon2PervushinSpongeParams>);

@@ -22,7 +22,7 @@
 #include "poseidon2.h"
 #include "sponge.h"
 
-struct Poseidon2PallasParams {
+struct Poseidon2PallasSpongeParams {
     using F = PallasField;
 
     constexpr static const std::size_t a = 5;
@@ -126,12 +126,12 @@ struct Poseidon2PallasParams {
 };
 
 template<std::array<PallasField, 1> IV>
-using Poseidon2Pallas = Sponge<
+using Poseidon2PallasSponge = Sponge<
     PallasField,
     2,
     1,
     IV,
-    Poseidon2<Poseidon2PallasParams>
+    Poseidon2<Poseidon2PallasSpongeParams>
 >;
 
 #endif

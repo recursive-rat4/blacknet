@@ -33,7 +33,7 @@ static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     using F = Solinas62RingDegree3;
     using LatticeFold = LatticeFold<Z>;
     using R = LatticeFold::Rq;
-    using S = Poseidon2Solinas62<{123, 234, 345, 456}>;
+    using S = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
     using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
 
     Z beta = Z::random(rng);
@@ -61,7 +61,7 @@ static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     using F = Solinas62RingDegree3;
     using LatticeFold = LatticeFold<Z>;
     using R = LatticeFold::Rq;
-    using S = Poseidon2Solinas62<{123, 234, 345, 456}>;
+    using S = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
     using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
 
     Z beta = Z::random(rng);

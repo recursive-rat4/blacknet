@@ -18,11 +18,12 @@
 #ifndef BLACKNET_CRYPTO_POSEIDON2PERVUSHIN_H
 #define BLACKNET_CRYPTO_POSEIDON2PERVUSHIN_H
 
+#include "jive.h"
 #include "pervushin.h"
 #include "poseidon2.h"
 #include "sponge.h"
 
-struct Poseidon2PervushinParams {
+struct Poseidon2PervushinSpongeParams {
     using F = PervushinRing;
 
     constexpr static const std::size_t a = 17;
@@ -162,13 +163,123 @@ struct Poseidon2PervushinParams {
     };
 };
 
+struct Poseidon2PervushinJiveParams {
+    using F = PervushinRing;
+
+    constexpr static const std::size_t a = 17;
+    constexpr static const std::size_t t = 8;
+
+    constexpr static const std::size_t rb = 4;
+    constexpr static const std::size_t rp = 12;
+    constexpr static const std::size_t re = 4;
+
+    constexpr static const std::array<F, t*rb> rcb = std::array<PervushinRing, 32>{
+        PervushinRing("0cb45a089048f620"),
+        PervushinRing("0c10af255db88f5c"),
+        PervushinRing("06493f1d491f60d4"),
+        PervushinRing("173eae52b9d380d3"),
+        PervushinRing("11a5a838544a3c1a"),
+        PervushinRing("07404edcd7e89e92"),
+        PervushinRing("1d40479608c9b9d6"),
+        PervushinRing("06b611851d10b789"),
+        PervushinRing("00354a30fedeb9e1"),
+        PervushinRing("1967922b30e35d36"),
+        PervushinRing("150bb950bbecb278"),
+        PervushinRing("1c04cfadc662c4ee"),
+        PervushinRing("0ad1ed8e7469efb1"),
+        PervushinRing("0c44b22126dd10c5"),
+        PervushinRing("187512642b323393"),
+        PervushinRing("10360a33d92e36e6"),
+        PervushinRing("0172841b8ad2dd36"),
+        PervushinRing("07a5d90f058ec967"),
+        PervushinRing("01b44df13e151be8"),
+        PervushinRing("1ed26d3ae133ed27"),
+        PervushinRing("07e05246dfcca449"),
+        PervushinRing("074b563fe8279746"),
+        PervushinRing("11fbf6fca24fe825"),
+        PervushinRing("1c69601b617b69f8"),
+        PervushinRing("0b17dc8fd2b1f8da"),
+        PervushinRing("002a1e612377e372"),
+        PervushinRing("1723f59722bbb64f"),
+        PervushinRing("07efa3ecf0233197"),
+        PervushinRing("00b311bca34874ce"),
+        PervushinRing("176e2ca7054e8e74"),
+        PervushinRing("0aa822f86df62c82"),
+        PervushinRing("13d1caf98f57d3a6"),
+    };
+    constexpr static const std::array<F, rp> rcp = std::array<PervushinRing, 12>{
+        PervushinRing("155c592e291d9e97"),
+        PervushinRing("01750c34cc46a1f0"),
+        PervushinRing("0fb211f991a780d5"),
+        PervushinRing("06495472df01645d"),
+        PervushinRing("1219cfb743292363"),
+        PervushinRing("04bb9d7be5e4c0f7"),
+        PervushinRing("09f5cf65399c4301"),
+        PervushinRing("0b5e39ff47dff9b3"),
+        PervushinRing("0d9ee0f26e988c0d"),
+        PervushinRing("0f5e7ae6fae36530"),
+        PervushinRing("11f72bc1bc54b874"),
+        PervushinRing("1613f2be80e12d5f"),
+    };
+    constexpr static const std::array<F, t*re> rce = std::array<PervushinRing, 32>{
+        PervushinRing("0fd0f9f6fcdc7f49"),
+        PervushinRing("03149cc9f68b55ad"),
+        PervushinRing("0d8aac8351b29ead"),
+        PervushinRing("190f94b6dc9e3d6f"),
+        PervushinRing("1568b50bc4bdbf23"),
+        PervushinRing("16893566cdfd0171"),
+        PervushinRing("14155d8230c76e6f"),
+        PervushinRing("02846b79954cbc77"),
+        PervushinRing("01d7f2dc47d2af30"),
+        PervushinRing("0e2b9ddb4881e796"),
+        PervushinRing("12ace083096ee2d8"),
+        PervushinRing("0c7b101a1a2e52ea"),
+        PervushinRing("07712b54233e515b"),
+        PervushinRing("1511f62ae46e2dc2"),
+        PervushinRing("0c0bb4da075a298f"),
+        PervushinRing("002757a9fdbb4c9e"),
+        PervushinRing("0f5cc55693d423ab"),
+        PervushinRing("15f37ab84b697cbc"),
+        PervushinRing("19c283ac67c1499c"),
+        PervushinRing("0b25c59f02da3791"),
+        PervushinRing("14298fa04d4fe8ed"),
+        PervushinRing("1c3b94b708a44cf1"),
+        PervushinRing("05fc7b2996e4929e"),
+        PervushinRing("1e41e46e28d89b65"),
+        PervushinRing("0d46c336718dde36"),
+        PervushinRing("13eaed2096d0d455"),
+        PervushinRing("01b56caab2dd914e"),
+        PervushinRing("0209f5c5b43d31a6"),
+        PervushinRing("19bfd8a77cbbaa77"),
+        PervushinRing("18563ad7c351001c"),
+        PervushinRing("1c7418fc20672a26"),
+        PervushinRing("1fadbde450f44a00"),
+    };
+    constexpr static const std::array<F, t> m = std::array<PervushinRing, 8>{
+        PervushinRing("1e1a6271f0929a74"),
+        PervushinRing("0da614dc89563cbc"),
+        PervushinRing("16d156c6747508bf"),
+        PervushinRing("0a00ce5c502d92e5"),
+        PervushinRing("16919b4feb3a6563"),
+        PervushinRing("1ced093471943ce6"),
+        PervushinRing("15d6ce01acb63062"),
+        PervushinRing("17355fc9a26a7fed"),
+    };
+};
+
 template<std::array<PervushinRing, 4> IV>
-using Poseidon2Pervushin = Sponge<
+using Poseidon2PervushinSponge = Sponge<
     PervushinRing,
     8,
     4,
     IV,
-    Poseidon2<Poseidon2PervushinParams>
+    Poseidon2<Poseidon2PervushinSpongeParams>
+>;
+
+using Poseidon2PervushinJive = Jive<
+    PervushinRing,
+    4,
+    Poseidon2<Poseidon2PervushinJiveParams>
 >;
 
 #endif

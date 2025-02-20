@@ -26,9 +26,9 @@
 
 BOOST_AUTO_TEST_SUITE(Poseidons)
 
-BOOST_AUTO_TEST_CASE(Pallas) {
+BOOST_AUTO_TEST_CASE(Pallas_3) {
     using E = PallasField;
-    using Poseidon2 = Poseidon2<Poseidon2PallasParams>;
+    using Poseidon2 = Poseidon2<Poseidon2PallasSpongeParams>;
     std::array<E, 3> a{
         0,
         1,
@@ -68,9 +68,9 @@ BOOST_AUTO_TEST_CASE(Pallas) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(Solinas62) {
+BOOST_AUTO_TEST_CASE(Solinas62_12) {
     using E = Solinas62Ring;
-    using Poseidon2 = Poseidon2<Poseidon2Solinas62Params>;
+    using Poseidon2 = Poseidon2<Poseidon2Solinas62SpongeParams>;
     std::array<E, 12> a{
         0x0000000000000000,
         0x0000000000000001,
@@ -128,9 +128,9 @@ BOOST_AUTO_TEST_CASE(Solinas62) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(Pervushin) {
+BOOST_AUTO_TEST_CASE(Pervushin_12) {
     using E = PervushinRing;
-    using Poseidon2 = Poseidon2<Poseidon2PervushinParams>;
+    using Poseidon2 = Poseidon2<Poseidon2PervushinSpongeParams>;
     std::array<E, 12> a{
         0x0000000000000000,
         0x0000000000000001,
@@ -159,6 +159,58 @@ BOOST_AUTO_TEST_CASE(Pervushin) {
         0x09312dc75ae6f2b3,
         0x1d00514d0694390a,
         0x03f39f82fb43ef6c,
+    };
+    Poseidon2::permute(a);
+    BOOST_TEST(c == a);
+
+    using Circuit = R1CSBuilder<E>;
+    Circuit circuit;
+    std::array<typename Circuit::LinearCombination, Poseidon2::T> x;
+    std::ranges::generate(x, [&]{ return circuit.input(); });
+    Poseidon2::circuit<Circuit>::permute(circuit, x);
+    for (std::size_t i = 0; i < Poseidon2::T; ++i) {
+        auto v = circuit.auxiliary();
+        circuit(v == x[i]);
+    }
+    R1CS<E> r1cs(circuit.r1cs());
+    Vector<E> z;
+    z.elements.reserve(r1cs.variables());
+    z.elements.emplace_back(E(1));
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    BOOST_TEST(r1cs.variables() == z.size());
+    BOOST_TEST(r1cs.isSatisfied(z));
+    for (std::size_t i = 1; i < z.size(); ++i) {
+        z[i] += E(1);
+        BOOST_TEST(!r1cs.isSatisfied(z));
+        z[i] -= E(1);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(Pervushin_8) {
+    using E = PervushinRing;
+    using Poseidon2 = Poseidon2<Poseidon2PervushinJiveParams>;
+    std::array<E, 8> a{
+        0x0000000000000000,
+        0x0000000000000001,
+        0x0000000000000002,
+        0x0000000000000003,
+        0x0000000000000004,
+        0x0000000000000005,
+        0x0000000000000006,
+        0x0000000000000007,
+    };
+    std::array<E, 8> b(a);
+    std::array<E, 8> c{
+        0x1a8775be9bdb5c86,
+        0x084e734b4eba7e69,
+        0x0bcf6bc15f7f1390,
+        0x165e2e00b93ba0e8,
+        0x03bc7c10d705afaa,
+        0x05a6da6c5b1c7a16,
+        0x0aab068f99aec08b,
+        0x1d231eb4c9e7dcdd,
     };
     Poseidon2::permute(a);
     BOOST_TEST(c == a);
