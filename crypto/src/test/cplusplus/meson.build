@@ -45,7 +45,7 @@ crypto_test_sources = [
     'univariatepolynomial.cpp',
     'vector.cpp',
 ]
-crypto_test_dependencies = dependency('boost', modules: ['unit_test_framework'], version : '>=1.67.0')
+crypto_test_dependencies = boost_test_dependency
 crypto_test_bin = executable(
     'crypto_test',
     crypto_test_sources,

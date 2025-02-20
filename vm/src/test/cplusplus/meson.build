@@ -18,7 +18,7 @@
 vm_test_sources = [
     'test.cpp',
 ]
-vm_test_dependencies = dependency('boost', modules: ['unit_test_framework'], version : '>=1.67.0')
+vm_test_dependencies = boost_test_dependency
 vm_test_bin = executable(
     'vm_test',
     vm_test_sources,

@@ -25,5 +25,15 @@ project('blacknet', 'cpp',
     ],
 )
 
+boost_random_dependency = dependency('boost', modules : ['random'], version : '>=1.47.0')
+
+if get_option('tests')
+    boost_test_dependency = dependency('boost', modules: ['unit_test_framework'], version : '>=1.67.0')
+endif
+
+if get_option('benchmarks')
+    google_benchmark_dependency = dependency('benchmark', version : '>=1.0.0')
+endif
+
 subdir('crypto')
 subdir('vm')

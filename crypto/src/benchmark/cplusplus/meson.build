@@ -28,7 +28,7 @@ crypto_benchmark_sources = [
     'primefield.cpp',
     'sumfold.cpp',
 ]
-crypto_benchmark_dependencies = dependency('benchmark', version : '>=1.0.0')
+crypto_benchmark_dependencies = google_benchmark_dependency
 crypto_benchmark_bin = executable(
     'crypto_benchmark',
     crypto_benchmark_sources,
