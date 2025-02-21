@@ -23,9 +23,6 @@ struct Solinas62RingParams {
         int32_t t((x + (1l << 61)) >> 62);
         return x - t * 4611686018427387617;
     }
-    constexpr static I freeze(I x) {
-        return x + ((x >> 63) & 4611686018427387617);
-    }
 };
 
 // 2⁶² - 2⁸ - 2⁵ + 1

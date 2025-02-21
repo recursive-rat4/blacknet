@@ -22,9 +22,6 @@ struct FermatRingParams {
     constexpr static I reduce(I x) {
         return (x & 0xFFFF) - (x >> 16);
     }
-    constexpr static I freeze(I x) {
-        return x + ((x >> 31) & 65537);
-    }
 };
 
 // 2¹⁶ + 1

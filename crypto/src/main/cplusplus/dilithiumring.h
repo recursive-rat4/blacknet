@@ -23,9 +23,6 @@ struct DilithiumRingParams {
         int32_t t((x + (1 << 22)) >> 23);
         return x - t * 8380417;
     }
-    constexpr static I freeze(I x) {
-        return x + ((x >> 31) & 8380417);
-    }
 };
 
 // 2²³ - 2¹³ + 1

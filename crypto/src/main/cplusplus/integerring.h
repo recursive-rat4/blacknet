@@ -53,7 +53,7 @@ public:
     constexpr IntegerRing(I n) : n(toForm(n)) {}
 
     constexpr bool operator == (const IntegerRing& other) const {
-        return Params::freeze(Params::reduce(n)) == Params::freeze(Params::reduce(other.n));
+        return freeze(n) == freeze(other.n);
     }
 
     constexpr IntegerRing& operator += (const IntegerRing& other) {
@@ -193,6 +193,15 @@ private:
     template<typename MRI = I, typename MRL = L>
     constexpr static MRI fromForm(MRI n) {
         return reduce<MRI, MRL>(MRL(n));
+    }
+
+    constexpr static I freeze(I x) {
+        if (x >= Params::M)
+            return x - Params::M;
+        else if (x < 0)
+            return x + Params::M;
+        else
+            return x;
     }
 
     constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - I(2);

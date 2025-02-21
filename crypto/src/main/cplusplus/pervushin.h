@@ -21,9 +21,6 @@ struct PervushinRingParams {
     constexpr static I reduce(I x) {
         return (x & 2305843009213693951) + (x >> 61);
     }
-    constexpr static I freeze(I x) {
-        return x + ((x >> 63) & 2305843009213693951);
-    }
 };
 
 // 2⁶¹ - 1
