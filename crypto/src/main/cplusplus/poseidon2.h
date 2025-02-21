@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -252,7 +252,7 @@ private:
                 x = x3;
             }
         } else if constexpr (Params::a == 5) {
-            // Lessen constraints if degree >= 4
+            // Lessen constraints if degree >= 3
             auto x2 = circuit.auxiliary();
             auto x4 = circuit.auxiliary();
             auto x5 = circuit.auxiliary();
@@ -261,18 +261,34 @@ private:
             circuit(x5 == x * x4);
             x = x5;
         } else if constexpr (Params::a == 17) {
-            // Lessen constraints if degree >= 4
-            auto x2 = circuit.auxiliary();
-            auto x4 = circuit.auxiliary();
-            auto x8 = circuit.auxiliary();
-            auto x16 = circuit.auxiliary();
-            auto x17 = circuit.auxiliary();
-            circuit(x2 == x * x);
-            circuit(x4 == x2 * x2);
-            circuit(x8 == x4 * x4);
-            circuit(x16 == x8 * x8);
-            circuit(x17 == x * x16);
-            x = x17;
+            // Lessen constraints if 16 >= degree >= 4
+            if constexpr (circuit.degree() >= 17) {
+                auto x17 = circuit.auxiliary();
+                circuit(x17 == x * x * x * x * x * x * x * x * x * x * x * x * x * x * x * x * x);
+                x = x17;
+            } else if constexpr (circuit.degree() >= 3) {
+                auto x3 = circuit.auxiliary();
+                auto x9 = circuit.auxiliary();
+                auto x15 = circuit.auxiliary();
+                auto x17 = circuit.auxiliary();
+                circuit(x3 == x * x * x);
+                circuit(x9 == x3 * x3 * x3);
+                circuit(x15 == x3 * x3 * x9);
+                circuit(x17 == x * x * x15);
+                x = x17;
+            } else {
+                auto x2 = circuit.auxiliary();
+                auto x4 = circuit.auxiliary();
+                auto x8 = circuit.auxiliary();
+                auto x16 = circuit.auxiliary();
+                auto x17 = circuit.auxiliary();
+                circuit(x2 == x * x);
+                circuit(x4 == x2 * x2);
+                circuit(x8 == x4 * x4);
+                circuit(x16 == x8 * x8);
+                circuit(x17 == x * x16);
+                x = x17;
+            }
         } else {
             static_assert(false, "Not implemented");
         }
@@ -329,10 +345,28 @@ private:
                     x.square()).square())
             );
         } else if constexpr (Params::a == 17) {
-            trace.push_back(
-                x *= trace.emplace_back(trace.emplace_back(trace.emplace_back(trace.emplace_back(
-                    x.square()).square()).square()).square())
-            );
+            if constexpr (circuit >= 17) {
+                trace.push_back(
+                    x *= x.square().square().square().square()
+                );
+            } else if constexpr (circuit >= 3) {
+                F x2{ x.square() };
+                F x3{ x * x2 };
+                F x6{ x3.square() };
+                F x9{ x3 * x6 };
+                F x15{ x6 * x9 };
+                F x17{ x2 * x15 };
+                x = x17;
+                trace.emplace_back(std::move(x3));
+                trace.emplace_back(std::move(x9));
+                trace.emplace_back(std::move(x15));
+                trace.emplace_back(std::move(x17));
+            } else {
+                trace.push_back(
+                    x *= trace.emplace_back(trace.emplace_back(trace.emplace_back(trace.emplace_back(
+                        x.square()).square()).square()).square())
+                );
+            }
         } else {
             static_assert(false, "Not implemented");
         }
