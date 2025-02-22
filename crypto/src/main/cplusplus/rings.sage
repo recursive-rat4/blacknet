@@ -19,15 +19,19 @@
 from typing import NamedTuple, Optional
 from sympy.ntheory.residue_ntheory import nthroot_mod
 
-class RingSpec(NamedTuple):
+class CyclotomicRingSpec(NamedTuple):
+    cyclotomic_index: int
+    inertia_degree: Optional[int]
+
+class IntegerRingSpec(NamedTuple):
     file_name: str
     comment: str
     type_name: str
     modulus: int
-    cyclotomic_index: Optional[int]
+    extension: Optional[CyclotomicRingSpec]
     reduce: str
 
-class RingParams(NamedTuple):
+class IntegerRingParams(NamedTuple):
     bits: int
     word_bits: int
     square_montgomery_modulus: int
@@ -122,27 +126,31 @@ def write_ring_cplusplus(spec, params):
         file.write('\n')
         file.write("#endif\n")
 
-rings: list[RingSpec] = [
-    RingSpec("dilithiumring.h", "2²³ - 2¹³ + 1", "DilithiumRing", 8380417, 512,
+rings: list[IntegerRingSpec] = [
+    IntegerRingSpec("dilithiumring.h", "2²³ - 2¹³ + 1", "DilithiumRing", 8380417,
+    CyclotomicRingSpec(512, None),
 """
     constexpr static I reduce(I x) {
         int32_t t((x + (1 << 22)) >> 23);
         return x - t * _Q_;
     }
 """),
-    RingSpec("fermat.h", "2¹⁶ + 1", "FermatRing", 65537, 2048,
+    IntegerRingSpec("fermat.h", "2¹⁶ + 1", "FermatRing", 65537,
+    CyclotomicRingSpec(2048, None),
 """
     constexpr static I reduce(I x) {
         return (x & 0xFFFF) - (x >> 16);
     }
 """),
-    RingSpec("pervushin.h", "2⁶¹ - 1", "PervushinRing", 2305843009213693951, None,
+    IntegerRingSpec("pervushin.h", "2⁶¹ - 1", "PervushinRing", 2305843009213693951,
+    None,
 """
     constexpr static I reduce(I x) {
         return (x & _Q_) + (x >> 61);
     }
 """),
-    RingSpec("solinas62.h", "2⁶² - 2⁸ - 2⁵ + 1", "Solinas62Ring", 0x3ffffffffffffee1, 32,
+    IntegerRingSpec("solinas62.h", "2⁶² - 2⁸ - 2⁵ + 1", "Solinas62Ring", 0x3ffffffffffffee1,
+    CyclotomicRingSpec(128, 4),
 """
     constexpr static I reduce(I x) {
         int32_t t((x + (1l << 61)) >> 62);
@@ -157,15 +165,22 @@ for ring in rings:
     square_montgomery_modulus = compute_square_montgomery_modulus(ring.modulus, word_bits)
     montgomery_modulus = compute_montgomery_modulus(ring.modulus, word_bits)
     montgomery_modulus = compute_centered_representation(montgomery_modulus, 2**word_bits)
-    if ring.cyclotomic_index != None:
-        assert is_power_of_two(ring.cyclotomic_index), "Non-power-of-two cyclotomic rings are not supported"
-        cyclotomic_polynomial_degree = ring.cyclotomic_index / 2
-        primitive_root_of_unity = compute_primitive_root_of_unity(ring.modulus, ring.cyclotomic_index)
-        brv = [compute_bitreversal(i, log(cyclotomic_polynomial_degree, 2)) for i in range(0, cyclotomic_polynomial_degree)]
+    if ring.extension != None:
+        extension = ring.extension
+        assert is_power_of_two(extension.cyclotomic_index), "Non-power-of-two cyclotomic rings are not supported"
+        cyclotomic_polynomial_degree = euler_phi(extension.cyclotomic_index)
+        if extension.inertia_degree != None:
+            assert cyclotomic_polynomial_degree % extension.inertia_degree == 0, "Non-integer split"
+            split = cyclotomic_polynomial_degree / extension.inertia_degree
+            assert ring.modulus % (4 * split) == 1 + 2 * split, "Ideal is insufficiently inert"
+        else:
+            split = cyclotomic_polynomial_degree
+        primitive_root_of_unity = compute_primitive_root_of_unity(ring.modulus, 2 * split)
+        brv = [compute_bitreversal(i, log(split, 2)) for i in range(0, split)]
         twiddles = [pow(primitive_root_of_unity, i, ring.modulus) for i in brv]
         twiddles = [compute_montgomery_form(i, ring.modulus, montgomery_modulus, square_montgomery_modulus, word_bits) for i in twiddles]
         twiddles = [compute_centered_representation(i, ring.modulus) for i in twiddles]
     else:
         twiddles = None
-    params = RingParams(bits, word_bits, square_montgomery_modulus, montgomery_modulus, twiddles)
+    params = IntegerRingParams(bits, word_bits, square_montgomery_modulus, montgomery_modulus, twiddles)
     write_ring_cplusplus(ring, params)
