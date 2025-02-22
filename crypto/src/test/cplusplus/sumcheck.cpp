@@ -32,18 +32,6 @@ using Z = Solinas62Ring;
 using F = Solinas62RingDegree2;
 using RO = Poseidon2Solinas62Sponge<{10, 11, 12, 13}>;
 
-BOOST_AUTO_TEST_CASE(interpolation) {
-    using SumCheck = SumCheck<Z, F, UnivariatePolynomial, RO>;
-    UnivariatePolynomial<F> p1{F(2), F(3)};
-    UnivariatePolynomial<F> p2{F(2), F(3), F(5)};
-    UnivariatePolynomial<F> p4{F(2), F(3), F(5), F(7), F(11)};
-    UnivariatePolynomial<F> p5{F(2), F(3), F(5), F(7), F(11), F(13)};
-    BOOST_TEST(p1 == SumCheck::interpolate(F(2), F(5)));
-    BOOST_TEST(p2 == SumCheck::interpolate(F(4), F(2), F(10)));
-    BOOST_TEST(p4 == SumCheck::interpolate(F(136), F(8), F(2), F(28), F(260)));
-    BOOST_TEST(p5 == SumCheck::interpolate(F(-280), F(-5), F(2), F(41), F(676), F(4295)));
-}
-
 BOOST_AUTO_TEST_CASE(mle) {
     using SumCheck = SumCheck<Z, F, MultilinearExtension, RO>;
     MultilinearExtension p1{Z(7), Z(7), Z(7), Z(0)};

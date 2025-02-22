@@ -26,6 +26,7 @@ crypto_test_sources = [
     'eqextension.cpp',
     'fermat.cpp',
     'hypercube.cpp',
+    'interpolation.cpp',
     'jive.cpp',
     'latticefold.cpp',
     'matrixsparse.cpp',
