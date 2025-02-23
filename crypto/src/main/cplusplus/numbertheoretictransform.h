@@ -20,6 +20,8 @@
 
 #include <array>
 
+#include "convolution.h"
+
 // https://arxiv.org/abs/2211.13546
 
 namespace ntt {
@@ -63,19 +65,6 @@ namespace ntt {
         }
     }
 
-namespace {
-    template<typename Z, std::size_t N>
-    constexpr static void base4(
-        std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b,
-        std::size_t i, Z zeta
-    ) {
-        r[0 + i] = a[0 + i] * b[0 + i] + zeta * (a[1 + i] * b[3 + i] + a[2 + i] * b[2 + i] + a[3 + i] * b[1 + i]);
-        r[1 + i] = a[0 + i] * b[1 + i] + a[1 + i] * b[0 + i] + zeta * (a[2 + i] * b[3 + i] + a[3 + i] * b[2 + i]);
-        r[2 + i] = a[0 + i] * b[2 + i] + a[1 + i] * b[1 + i] + a[2 + i] * b[0 + i] + zeta * (a[3 + i] * b[3 + i]);
-        r[3 + i] = a[0 + i] * b[3 + i] + a[1 + i] * b[2 + i] + a[2 + i] * b[1 + i] + a[3 + i] * b[0 + i];
-    }
-}
-
     template<typename Z, std::size_t N>
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         constexpr std::size_t inertia = N / Z::twiddles();
@@ -88,8 +77,18 @@ namespace {
             constexpr std::size_t k = inertia * 2;
             constexpr std::size_t l = N / k;
             for (std::size_t i = 0; i < l; ++i) {
-                base4(r, a, b, i * k, Z::twiddle(l + i));
-                base4(r, a, b, i * k + inertia, -Z::twiddle(l + i));
+                convolution::binomial<Z, inertia>(
+                    r.data() + i * k,
+                    a.data() + i * k,
+                    b.data() + i * k,
+                    Z::twiddle(l + i)
+                );
+                convolution::binomial<Z, inertia>(
+                    r.data() + i * k + inertia,
+                    a.data() + i * k + inertia,
+                    b.data() + i * k + inertia,
+                    -Z::twiddle(l + i)
+                );
             }
         } else {
             static_assert(false, "Not implemented");
