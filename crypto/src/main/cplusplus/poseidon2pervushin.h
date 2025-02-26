@@ -279,7 +279,8 @@ using Poseidon2PervushinSponge = Sponge<
 using Poseidon2PervushinJive = Jive<
     PervushinRing,
     4,
-    Poseidon2<Poseidon2PervushinJiveParams>
+    Poseidon2<Poseidon2PervushinJiveParams>,
+    2
 >;
 
 #endif

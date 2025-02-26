@@ -40,6 +40,7 @@ template<
     std::array<E, C> IV,
     typename F
 >
+requires(R + C == F::width())
 class Sponge {
 public:
     enum Phase { ABSORB, SQUEEZE };

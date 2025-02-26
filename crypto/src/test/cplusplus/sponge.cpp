@@ -28,6 +28,9 @@ BOOST_AUTO_TEST_CASE(test) {
     using Z = uint8_t;
     using B = std::array<Z, 4>;
     struct F {
+        consteval static std::size_t width() {
+            return 4;
+        }
         constexpr static void permute(B& b) {
             for (auto& e : b) e += 1;
         }

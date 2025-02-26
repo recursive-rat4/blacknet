@@ -44,10 +44,10 @@ BOOST_AUTO_TEST_CASE(Pallas_3) {
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, Poseidon2::T> x;
+    std::array<typename Circuit::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
     Poseidon2::circuit<Circuit>::permute(circuit, x);
-    for (std::size_t i = 0; i < Poseidon2::T; ++i) {
+    for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
     }
@@ -104,10 +104,10 @@ BOOST_AUTO_TEST_CASE(Solinas62_12) {
 
     using Circuit = CCSBuilder<E, 3>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, Poseidon2::T> x;
+    std::array<typename Circuit::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
     Poseidon2::circuit<Circuit>::permute(circuit, x);
-    for (std::size_t i = 0; i < Poseidon2::T; ++i) {
+    for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
     }
@@ -164,10 +164,10 @@ BOOST_AUTO_TEST_CASE(Pervushin_12) {
 
     using Circuit = CCSBuilder<E, 3>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, Poseidon2::T> x;
+    std::array<typename Circuit::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
     Poseidon2::circuit<Circuit>::permute(circuit, x);
-    for (std::size_t i = 0; i < Poseidon2::T; ++i) {
+    for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
     }
@@ -216,10 +216,10 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
 
     using Circuit = CCSBuilder<E, 17>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, Poseidon2::T> x;
+    std::array<typename Circuit::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
     Poseidon2::circuit<Circuit>::permute(circuit, x);
-    for (std::size_t i = 0; i < Poseidon2::T; ++i) {
+    for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
     }

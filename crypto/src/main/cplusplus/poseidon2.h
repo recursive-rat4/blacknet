@@ -32,8 +32,10 @@
 template<typename Params>
 struct Poseidon2 {
     using F = Params::F;
-    constexpr static std::size_t T = Params::t;
+    consteval static std::size_t width() { return Params::t; }
 private:
+    constexpr static std::size_t T = Params::t;
+
     constexpr static void m4(std::array<F, T>& x) {
         for (std::size_t i = 0; i < T >> 2; ++i) {
             std::size_t j = i << 2;

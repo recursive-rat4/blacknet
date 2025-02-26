@@ -24,17 +24,20 @@
 
 // Jive Compression Mode, https://eprint.iacr.org/2022/840
 
-// B = 2
 template<
     typename F,
     std::size_t M,
-    typename P
+    typename P,
+    std::size_t B
 >
+requires(M * B == P::width())
 struct Jive {
+    static_assert(B == 2, "Not implemented");
+
     using Hash = std::array<F, M>;
 
     constexpr static Hash compress(const Hash& x0, const Hash& x1) {
-        std::array<F, M * 2> state;
+        std::array<F, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());
         P::permute(state);
@@ -55,7 +58,7 @@ struct circuit {
         const std::array<LinearCombination, M>& x1,
         std::array<LinearCombination, M>& hash
     ) {
-        std::array<LinearCombination, M * 2> state;
+        std::array<LinearCombination, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());
         P::template circuit<Circuit>::permute(circuit, state);
@@ -72,7 +75,7 @@ struct trace {
         Hash& hash,
         std::vector<F>& trace
     ) {
-        std::array<F, M * 2> state;
+        std::array<F, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());
         P::template trace<circuit>::permute(state, trace);

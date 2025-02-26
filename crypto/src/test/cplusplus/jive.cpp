@@ -28,11 +28,14 @@ BOOST_AUTO_TEST_CASE(test) {
     using Z = uint8_t;
     using B = std::array<Z, 4>;
     struct F {
+        consteval static std::size_t width() {
+            return 4;
+        }
         constexpr static void permute(B& b) {
             for (std::size_t i = 0; i < b.size(); ++i) b[i] += i + 1;
         }
     };
-    using J = Jive<Z, 2, F>;
+    using J = Jive<Z, 2, F, 2>;
     using H = J::Hash;
 
     BOOST_TEST((H{52, 58} == J::compress(H{11, 12}, H{13, 14})));
