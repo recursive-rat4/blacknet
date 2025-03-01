@@ -31,6 +31,7 @@ crypto_test_sources = [
     'latticefold.cpp',
     'matrixsparse.cpp',
     'matrix.cpp',
+    'module.cpp',
     'multilinearextension.cpp',
     'pastacurves.cpp',
     'pedersencommitment.cpp',
