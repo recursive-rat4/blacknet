@@ -22,6 +22,8 @@
 #include <array>
 #include <concepts>
 
+#include "util.h"
+
 // Jive Compression Mode, https://eprint.iacr.org/2022/840
 
 template<
