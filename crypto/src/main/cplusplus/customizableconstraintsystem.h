@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -149,7 +149,7 @@ public:
             std::vector<S> hc;
             hc.reserve(c.size());
             for (std::size_t i = 0; i < c.size(); ++i)
-                hc.emplace_back(S(c[i]));
+                hc.emplace_back(c[i]);
             return Polynomial<S>(deg, var, std::move(hmz), std::move(hs), std::move(hc));
         }
     };

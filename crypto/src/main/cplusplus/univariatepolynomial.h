@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -72,7 +72,7 @@ public:
         std::vector<S> t;
         t.reserve(coefficients.size());
         for (const auto& i : coefficients)
-            t.emplace_back(S(i));
+            t.emplace_back(i);
         return UnivariatePolynomial<S>(std::move(t));
     }
 

@@ -161,7 +161,7 @@ public:
         std::vector<S> t;
         t.reserve(elements.size());
         for (const auto& i : elements)
-            t.emplace_back(S(i));
+            t.emplace_back(i);
         return Vector<S>(std::move(t));
     }
 

@@ -92,7 +92,7 @@ struct MatrixSparse {
         std::vector<S> t;
         t.reserve(elements.size());
         for (const auto& i : elements)
-            t.emplace_back(S(i));
+            t.emplace_back(i);
         return MatrixSparse<S>(columns, rIndex, cIndex, std::move(t));
     }
 

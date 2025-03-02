@@ -518,6 +518,9 @@ struct CCSBuilder {
         std::size_t constraints;
         std::size_t variables;
 
+        constexpr ScopeInfo(ScopeInfo* const up, const char* name)
+            : up(up), down(), name(name), constraints(0), variables(0) {}
+
         void print(std::ostream& out, std::size_t level) const {
             for (std::size_t i = 0; i < level; ++i)
                 out << ' ';
@@ -543,12 +546,13 @@ struct CCSBuilder {
     };
 
     constexpr Scope scope(const char* name) {
-        ScopeInfo info{ currentScope, {}, name, 0, 0 };
+        std::vector<ScopeInfo>* level;
         if (currentScope) {
-            currentScope = &currentScope->down.emplace_back(std::move(info));
+            level = &currentScope->down;
         } else {
-            currentScope = &scopes.emplace_back(std::move(info));
+            level = &scopes;
         }
+        currentScope = &level->emplace_back(currentScope, name);
         return Scope(this);
     }
 
