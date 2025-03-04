@@ -75,7 +75,6 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using E = Solinas62Ring;
     const std::size_t T = 12;
     Sponge sponge;
-    std::array<E, T>& a = sponge.state;
     const std::array<E, T> b{
         0x0000000000000000,
         0x0000000000000001,
@@ -94,15 +93,16 @@ BOOST_AUTO_TEST_CASE(circuit) {
 
     using Circuit = CCSBuilder<E, 3>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, T> state;
-    Sponge::circuit<Circuit>::init(state);
-    std::array<typename Circuit::LinearCombination, T> absorb;
-    std::ranges::generate(absorb, [&]{ return circuit.input(); });
-    std::array<typename Circuit::LinearCombination, T> squeeze;
-    Sponge::circuit<Circuit>::fixed(circuit, 0, state, absorb, squeeze);
+    using Gadget = Sponge::Gadget<Circuit>;
+    Gadget gadget(circuit);
+    std::array<typename Circuit::LinearCombination, T> inputs;
+    std::ranges::generate(inputs, [&]{ return circuit.input(); });
+    std::array<typename Circuit::LinearCombination, T> outputs;
+    gadget.absorb(inputs);
+    gadget.squeeze(outputs);
     for (std::size_t i = 0; i < T; ++i) {
         auto v = circuit.auxiliary();
-        circuit(v == squeeze[i]);
+        circuit(v == outputs[i]);
     }
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
@@ -110,7 +110,10 @@ BOOST_AUTO_TEST_CASE(circuit) {
     z.elements.reserve(ccs.variables());
     z.elements.emplace_back(E(1));
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Sponge::trace<Circuit::degree()>::fixed(0, a, b, c, z.elements);
+    using Tracer = Sponge::Tracer<Circuit::degree()>;
+    Tracer tracer(sponge, z.elements);
+    tracer.absorb(b);
+    tracer.squeeze(c);
     std::ranges::copy(c, std::back_inserter(z.elements));
     BOOST_TEST(ccs.variables() == z.size());
     BOOST_TEST(ccs.isSatisfied(z));

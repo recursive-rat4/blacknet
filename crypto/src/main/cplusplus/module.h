@@ -100,9 +100,14 @@ struct Module {
     }
 
     template<typename DRG>
+    constexpr void absorb(DRG& drg) const {
+        drg.absorb(components);
+    }
+
+    template<typename DRG>
     constexpr static Module squeeze(DRG& drg) {
         Module t;
-        std::ranges::generate(t.components, [&] { return R::squeeze(drg); });
+        drg.squeeze(t.components);
         return t;
     }
 

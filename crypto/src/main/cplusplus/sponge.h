@@ -65,7 +65,13 @@ public:
         state[position++] = e;
     }
 
-    constexpr E squeeze() {
+    template<std::size_t N>
+    constexpr void absorb(const std::array<E, N>& array) {
+        for (const E& i : array)
+            absorb(i);
+    }
+
+    constexpr const E& squeeze() {
         if (phase == ABSORB) {
             phase = SQUEEZE;
             pad(position, state);
@@ -76,6 +82,12 @@ public:
             position = 0;
         }
         return state[position++];
+    }
+
+    template<std::size_t N>
+    constexpr void squeeze(std::array<E, N>& array) {
+        for (E& i : array)
+            i = squeeze();
     }
 private:
     template<typename EE>
@@ -93,76 +105,95 @@ private:
 public:
 template<typename Circuit>
 requires(std::same_as<E, typename Circuit::R>)
-struct circuit {
-    using Variable = Circuit::Variable;
+struct Gadget {
     using LinearCombination = Circuit::LinearCombination;
 
-    constexpr static void init(
-        std::array<LinearCombination, R+C>& state
-    ) {
+    Circuit& circuit;
+    Phase phase;
+    std::size_t position;
+    std::array<LinearCombination, R+C> state;
+
+    constexpr Gadget(Circuit& circuit) : circuit(circuit), phase(ABSORB), position(0) {
         std::ranges::fill_n(state.begin(), R, E(0));
-        std::ranges::copy_n(IV.begin(), IV.size(), state.begin() + R);
+        std::ranges::copy(IV, state.begin() + R);
     }
 
-    template<std::size_t N, std::size_t M>
-    constexpr static void fixed(
-        Circuit& circuit,
-        std::size_t position,
-        std::array<LinearCombination, R+C>& state,
-        const std::array<LinearCombination, N>& absorb,
-        std::array<LinearCombination, M>& squeeze
-    ) {
-        for (const auto& e : absorb) {
-            if (position == R) {
-                F::template circuit<Circuit>::permute(circuit, state);
-                position = 0;
-            }
-            state[position++] = e;
+    constexpr void absorb(const LinearCombination& e) {
+        if (phase == SQUEEZE) {
+            throw SpongeException("Cannot absorb during squeeze");
+        } else if (position == R) {
+            F::template circuit<Circuit>::permute(circuit, state);
+            position = 0;
         }
+        state[position++] = e;
+    }
 
-        pad(position, state);
-        F::template circuit<Circuit>::permute(circuit, state);
-        position = 0;
+    template<std::size_t N>
+    constexpr void absorb(const std::array<LinearCombination, N>& array) {
+        for (const LinearCombination& i : array)
+            absorb(i);
+    }
 
-        for (auto& e : squeeze) {
-            if (position == R) {
-                F::template circuit<Circuit>::permute(circuit, state);
-                position = 0;
-            }
-            e = state[position++];
+    constexpr void squeeze(LinearCombination& e) {
+        if (phase == ABSORB) {
+            phase = SQUEEZE;
+            pad(position, state);
+            F::template circuit<Circuit>::permute(circuit, state);
+            position = 0;
+        } else if (position == R) {
+            F::template circuit<Circuit>::permute(circuit, state);
+            position = 0;
         }
+        e = state[position++];
+    }
+
+    template<std::size_t N>
+    constexpr void squeeze(std::array<LinearCombination, N>& array) {
+        for (LinearCombination& i : array)
+            squeeze(i);
     }
 };
 
 template<std::size_t circuit>
-struct trace {
-    template<std::size_t N, std::size_t M>
-    constexpr static void fixed(
-        std::size_t position,
-        std::array<E, R+C>& state,
-        const std::array<E, N>& absorb,
-        std::array<E, M>& squeeze,
-        std::vector<E>& trace
-    ) {
-        for (const auto& e : absorb) {
-            if (position == R) {
-                F::template trace<circuit>::permute(state, trace);
-                position = 0;
-            }
-            state[position++] = e;
-        }
+struct Tracer {
+    Sponge& sponge;
+    std::vector<E>& trace;
 
-        pad(position, state);
-        F::template trace<circuit>::permute(state, trace);
-        position = 0;
+    constexpr Tracer(Sponge& sponge, std::vector<E>& trace) : sponge(sponge), trace(trace) {}
 
-        for (auto& e : squeeze) {
-            if (position == R) {
-                F::template trace<circuit>::permute(state, trace);
-                position = 0;
-            }
-            e = state[position++];
+    constexpr void absorb(const E& e) {
+        if (sponge.phase == SQUEEZE) {
+            throw SpongeException("Cannot absorb during squeeze");
+        } else if (sponge.position == R) {
+            F::template trace<circuit>::permute(sponge.state, trace);
+            sponge.position = 0;
         }
+        sponge.state[sponge.position++] = e;
+    }
+
+    template<std::size_t N>
+    constexpr void absorb(const std::array<E, N>& array) {
+        for (const E& i : array)
+            absorb(i);
+    }
+
+    constexpr void squeeze(E& e) {
+        if (sponge.phase == ABSORB) {
+            sponge.phase = SQUEEZE;
+            pad(sponge.position, sponge.state);
+            F::template trace<circuit>::permute(sponge.state, trace);
+            sponge.position = 0;
+        } else if (sponge.position == R) {
+            F::template trace<circuit>::permute(sponge.state, trace);
+            sponge.position = 0;
+        }
+        e = sponge.state[sponge.position++];
+    }
+
+    template<std::size_t N>
+    constexpr void squeeze(std::array<E, N>& array) {
+        for (E& i : array)
+            squeeze(i);
     }
 };
 };

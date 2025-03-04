@@ -167,15 +167,13 @@ public:
 
     template<typename DRG>
     constexpr void absorb(DRG& drg) const {
-        for (std::size_t i = 0; i < N; ++i)
-            coefficients[i].absorb(drg);
+        drg.absorb(coefficients);
     }
 
     template<typename DRG>
     constexpr static PolynomialRing squeeze(DRG& drg) {
         PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = Z::squeeze(drg);
+        drg.squeeze(t.coefficients);
         return t;
     }
 
