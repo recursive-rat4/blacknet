@@ -49,6 +49,9 @@ struct Jive {
         return hash;
     }
 
+    template<typename Circuit>
+    using HashGadget = std::array<typename Circuit::LinearCombination, M>;
+
 template<typename Circuit>
 requires(std::same_as<F, typename Circuit::R>)
 struct circuit {
@@ -56,9 +59,9 @@ struct circuit {
 
     constexpr static void compress(
         Circuit& circuit,
-        const std::array<LinearCombination, M>& x0,
-        const std::array<LinearCombination, M>& x1,
-        std::array<LinearCombination, M>& hash
+        const HashGadget<Circuit>& x0,
+        const HashGadget<Circuit>& x1,
+        HashGadget<Circuit>& hash
     ) {
         std::array<LinearCombination, M * B> state;
         std::ranges::copy(x0, state.begin());

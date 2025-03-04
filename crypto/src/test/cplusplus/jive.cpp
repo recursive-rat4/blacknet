@@ -43,31 +43,32 @@ BOOST_AUTO_TEST_CASE(test) {
 
 BOOST_AUTO_TEST_CASE(circuit) {
     using Jive = Poseidon2PervushinJive;
+    using Hash = Jive::Hash;
     using E = PervushinRing;
-    const std::size_t T = 4;
-    const std::array<E, T> a{
+    const Hash a{
         0x0000000000000000,
         0x0000000000000001,
         0x0000000000000002,
         0x0000000000000003,
     };
-    const std::array<E, T> b{
+    const Hash b{
         0x0000000000000010,
         0x0000000000000011,
         0x0000000000000012,
         0x0000000000000013,
     };
-    std::array<E, T> c;
+    Hash c;
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, T> x0;
+    using Gadget = Jive::HashGadget<Circuit>;
+    Gadget x0;
     std::ranges::generate(x0, [&]{ return circuit.input(); });
-    std::array<typename Circuit::LinearCombination, T> x1;
+    Gadget x1;
     std::ranges::generate(x1, [&]{ return circuit.input(); });
-    std::array<typename Circuit::LinearCombination, T> hash;
+    Gadget hash;
     Jive::circuit<Circuit>::compress(circuit, x0, x1, hash);
-    for (std::size_t i = 0; i < T; ++i) {
+    for (std::size_t i = 0; i < hash.size(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == hash[i]);
     }
