@@ -21,7 +21,6 @@
     <modules>
         <module>benchmarks</module>
         <module>cli</module>
-        <module>crypto</module>
         <module>io</module>
         <module>daemon</module>
         <module>desktop</module>

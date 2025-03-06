@@ -23,11 +23,6 @@
     <dependencies>
         <dependency>
             <groupId>ninja.blacknet</groupId>
-            <artifactId>blacknet-crypto</artifactId>
-            <version>0.3-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>ninja.blacknet</groupId>
             <artifactId>blacknet-kernel</artifactId>
             <version>0.3-SNAPSHOT</version>
         </dependency>
