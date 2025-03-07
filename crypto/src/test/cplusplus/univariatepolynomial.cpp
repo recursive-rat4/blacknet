@@ -58,10 +58,12 @@ BOOST_AUTO_TEST_CASE(circuit) {
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, 5> c_vars;
+    std::vector<typename Circuit::LinearCombination> c_vars(5);
     std::ranges::generate(c_vars, [&]{ return circuit.input(); });
+    using Gadget = UnivariatePolynomial<E>::Gadget<Circuit>;
+    Gadget gadget(circuit, std::move(c_vars));
     typename Circuit::LinearCombination x_var(circuit.input());
-    auto y_lc = UnivariatePolynomial<E>::circuit<Circuit>::point(circuit, c_vars, x_var);
+    auto y_lc = gadget(x_var);
     typename Circuit::Variable y_var(circuit.auxiliary());
     circuit(y_var == y_lc);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
@@ -70,8 +72,10 @@ BOOST_AUTO_TEST_CASE(circuit) {
     z.elements.emplace_back(E(1));
     std::ranges::copy(p.coefficients, std::back_inserter(z.elements));
     z.elements.push_back(x);
+    using Tracer = UnivariatePolynomial<E>::Tracer;
+    Tracer tracer(p, z.elements);
     z.elements.emplace_back(
-        UnivariatePolynomial<E>::trace::point(p, x, z.elements)
+        tracer(x)
     );
     BOOST_TEST(p(x) == z.elements.back());
     BOOST_TEST(ccs.variables() == z.size());

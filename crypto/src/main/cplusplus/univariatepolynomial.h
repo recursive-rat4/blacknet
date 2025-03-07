@@ -15,14 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_UNIVARIATEPOLYNOMIAL_H
-#define BLACKNET_CRYPTO_UNIVARIATEPOLYNOMIAL_H
+#ifndef BLACKNET_CRYPTO_UNIVARIATE_POLYNOMIAL_H
+#define BLACKNET_CRYPTO_UNIVARIATE_POLYNOMIAL_H
 
-#include <array>
 #include <concepts>
 #include <initializer_list>
 #include <iostream>
-#include <ranges>
 #include <vector>
 
 #include "util.h"
@@ -89,19 +87,22 @@ public:
 
 template<typename Circuit>
 requires(std::same_as<E, typename Circuit::R>)
-struct circuit {
+struct Gadget {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
 
-    template<std::size_t N>
-    constexpr static LinearCombination point(
-        Circuit& circuit,
-        const std::array<LinearCombination, N>& coefficients,
-        const LinearCombination& point
-    ) {
+    Circuit& circuit;
+    std::vector<LinearCombination> coefficients;
+
+    constexpr Gadget(Circuit& circuit, const std::vector<LinearCombination>& coefficients)
+        : circuit(circuit), coefficients(coefficients) {}
+    constexpr Gadget(Circuit& circuit, std::vector<LinearCombination>&& coefficients)
+        : circuit(circuit), coefficients(std::move(coefficients)) {}
+
+    constexpr LinearCombination operator () (const LinearCombination& point) const {
         auto scope = circuit.scope("UnivariatePolynomial::point");
         LinearCombination pi(point);
-        std::array<Variable, coefficients.size() - 1> cppm;
+        std::vector<Variable> cppm(coefficients.size() - 1);
         for (std::size_t i = 1; i < coefficients.size() - 1; ++i) {
             cppm[i - 1] = circuit.auxiliary();
             circuit(cppm[i - 1] == pi * coefficients[i]);
@@ -120,21 +121,27 @@ struct circuit {
     }
 };
 
-struct trace {
-    constexpr static E point(const UnivariatePolynomial& p, const E& point, std::vector<E>& trace) {
-        E sigma(p.coefficients[0]);
+struct Tracer {
+    UnivariatePolynomial& polynomial;
+    std::vector<E>& trace;
+
+    constexpr Tracer(UnivariatePolynomial& polynomial, std::vector<E>& trace)
+        : polynomial(polynomial), trace(trace) {}
+
+    constexpr E operator () (const E& point) const {
+        E sigma(polynomial.coefficients[0]);
         E pi(point);
-        for (std::size_t i = 1; i < p.coefficients.size() - 1; ++i) {
+        for (std::size_t i = 1; i < polynomial.coefficients.size() - 1; ++i) {
             sigma += trace.emplace_back(
-                pi * p.coefficients[i]
+                pi * polynomial.coefficients[i]
             );
             trace.push_back(
                 pi *= point
             );
         }
-        if (p.coefficients.size() > 1) {
+        if (polynomial.coefficients.size() > 1) {
             sigma += trace.emplace_back(
-                pi * p.coefficients.back()
+                pi * polynomial.coefficients.back()
             );
         }
         return sigma;
