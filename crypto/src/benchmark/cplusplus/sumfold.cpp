@@ -53,6 +53,7 @@ static void BM_LatticeFold_GNorm_SumCheck_ProveEarlyStopping(benchmark::State& s
         benchmark::DoNotOptimize(g_morphed);
         benchmark::DoNotOptimize(proof);
         benchmark::DoNotOptimize(sum_morphed);
+        benchmark::ClobberMemory();
     }
 }
 BENCHMARK(BM_LatticeFold_GNorm_SumCheck_ProveEarlyStopping);
@@ -84,6 +85,7 @@ static void BM_LatticeFold_GNorm_SumCheck_VerifyEarlyStopping(benchmark::State& 
         benchmark::DoNotOptimize(proof);
         benchmark::DoNotOptimize(sum_morphed);
         benchmark::DoNotOptimize(result);
+        benchmark::ClobberMemory();
     }
 }
 BENCHMARK(BM_LatticeFold_GNorm_SumCheck_VerifyEarlyStopping);

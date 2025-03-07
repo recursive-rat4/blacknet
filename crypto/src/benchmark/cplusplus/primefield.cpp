@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,11 +26,13 @@ static void BM_FieldAdd(benchmark::State& state) {
     auto a = PallasField::random(rng);
     auto b = PallasField::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a += b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_FieldAdd);
 
@@ -38,11 +40,13 @@ static void BM_FieldSub(benchmark::State& state) {
     auto a = PallasField::random(rng);
     auto b = PallasField::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a -= b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_FieldSub);
 
@@ -50,11 +54,13 @@ static void BM_FieldMul(benchmark::State& state) {
     auto a = PallasField::random(rng);
     auto b = PallasField::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a *= b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_FieldMul);
 
@@ -62,10 +68,12 @@ static void BM_FieldDiv(benchmark::State& state) {
     auto a = PallasField::random(rng);
     auto b = PallasField::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a /= b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_FieldDiv);

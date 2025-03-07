@@ -32,7 +32,7 @@ if get_option('tests')
 endif
 
 if get_option('benchmarks')
-    google_benchmark_dependency = dependency('benchmark', version : '>=1.0.0')
+    google_benchmark_dependency = dependency('benchmark', version : '>=1.1.0')
 endif
 
 subdir('crypto')

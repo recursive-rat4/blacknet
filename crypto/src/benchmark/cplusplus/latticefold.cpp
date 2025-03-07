@@ -52,6 +52,7 @@ static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
         benchmark::DoNotOptimize(g);
         benchmark::DoNotOptimize(proof);
         benchmark::DoNotOptimize(sum);
+        benchmark::ClobberMemory();
     }
 }
 BENCHMARK(BM_LatticeFold_GNorm_SumCheck_Prove);
@@ -82,6 +83,7 @@ static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
         benchmark::DoNotOptimize(proof);
         benchmark::DoNotOptimize(sum);
         benchmark::DoNotOptimize(result);
+        benchmark::ClobberMemory();
     }
 }
 BENCHMARK(BM_LatticeFold_GNorm_SumCheck_Verify);

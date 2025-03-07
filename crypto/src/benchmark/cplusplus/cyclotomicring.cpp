@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,11 +30,13 @@ static void BM_CyclotomicMul_Dilithium(benchmark::State& state) {
     auto a = R::random(rng);
     auto b = R::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a = a * b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_CyclotomicMul_Dilithium);
 
@@ -44,10 +46,12 @@ static void BM_CyclotomicMul_LatticeFold(benchmark::State& state) {
     auto a = R::random(rng);
     auto b = R::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a = a * b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_CyclotomicMul_LatticeFold);

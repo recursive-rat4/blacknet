@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -35,10 +35,15 @@ static void BM_AjtaiCommitment(benchmark::State& state) {
         Matrix<R>::random(rng, LatticeFold::K, M)
     );
     Vector<R> m = Vector<R>::random(rng, M);
+    Vector<R> c;
 
-    for (auto _ : state)
-        benchmark::DoNotOptimize(
-            cs.commit(m)
-        );
+    for (auto _ : state) {
+        c = cs.commit(m);
+
+        benchmark::DoNotOptimize(cs);
+        benchmark::DoNotOptimize(m);
+        benchmark::DoNotOptimize(c);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_AjtaiCommitment);

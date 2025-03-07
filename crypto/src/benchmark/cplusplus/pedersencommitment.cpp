@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -37,11 +37,16 @@ static void BM_PedersenCommitmentAffine(benchmark::State& state) {
         PallasField::random(rng),
         PallasField::random(rng),
     };
+    VestaGroupAffine c;
 
-    for (auto _ : state)
-        benchmark::DoNotOptimize(
-            cs.commit(v)
-        );
+    for (auto _ : state) {
+        c = cs.commit(v);
+
+        benchmark::DoNotOptimize(cs);
+        benchmark::DoNotOptimize(v);
+        benchmark::DoNotOptimize(c);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_PedersenCommitmentAffine);
 
@@ -58,11 +63,16 @@ static void BM_PedersenCommitmentJacobian(benchmark::State& state) {
         PallasField::random(rng),
         PallasField::random(rng),
     };
+    VestaGroupJacobian c;
 
-    for (auto _ : state)
-        benchmark::DoNotOptimize(
-            cs.commit(v)
-        );
+    for (auto _ : state) {
+        c = cs.commit(v);
+
+        benchmark::DoNotOptimize(cs);
+        benchmark::DoNotOptimize(v);
+        benchmark::DoNotOptimize(c);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_PedersenCommitmentJacobian);
 
@@ -79,10 +89,15 @@ static void BM_PedersenCommitmentProjective(benchmark::State& state) {
         PallasField::random(rng),
         PallasField::random(rng),
     };
+    VestaGroupProjective c;
 
-    for (auto _ : state)
-        benchmark::DoNotOptimize(
-            cs.commit(v)
-        );
+    for (auto _ : state) {
+        c = cs.commit(v);
+
+        benchmark::DoNotOptimize(cs);
+        benchmark::DoNotOptimize(v);
+        benchmark::DoNotOptimize(c);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_PedersenCommitmentProjective);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -28,11 +28,13 @@ static void BM_IntegerRingAdd(benchmark::State& state) {
     auto a = Z::random(rng);
     auto b = Z::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a += b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_IntegerRingAdd<Solinas62Ring>);
 BENCHMARK(BM_IntegerRingAdd<PervushinRing>);
@@ -42,11 +44,13 @@ static void BM_IntegerRingSub(benchmark::State& state) {
     auto a = Z::random(rng);
     auto b = Z::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a -= b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_IntegerRingSub<Solinas62Ring>);
 BENCHMARK(BM_IntegerRingSub<PervushinRing>);
@@ -56,11 +60,13 @@ static void BM_IntegerRingMul(benchmark::State& state) {
     auto a = Z::random(rng);
     auto b = Z::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a *= b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_IntegerRingMul<Solinas62Ring>);
 BENCHMARK(BM_IntegerRingMul<PervushinRing>);
@@ -69,10 +75,12 @@ template<typename Z>
 static void BM_IntegerRingInv(benchmark::State& state) {
     auto a = Z::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a = a.invert().value();
 
-    benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(a);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_IntegerRingInv<Solinas62Ring>);
 BENCHMARK(BM_IntegerRingInv<PervushinRing>);

@@ -31,10 +31,12 @@ static void BM_Poseidon2(benchmark::State& state) {
     std::array<F, Params::t> m;
     for (std::size_t i = 0; i < Params::t; ++i) m[i] = F::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         Poseidon2<Params>::permute(m);
 
-    benchmark::DoNotOptimize(m);
+        benchmark::DoNotOptimize(m);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_Poseidon2<Poseidon2PallasSpongeParams>);
 BENCHMARK(BM_Poseidon2<Poseidon2Solinas62SpongeParams>);

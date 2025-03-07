@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -28,11 +28,13 @@ static void BM_ExtFieldAdd(benchmark::State& state) {
     auto a = F::random(rng);
     auto b = F::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a += b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree2>);
 BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree3>);
@@ -46,11 +48,13 @@ static void BM_ExtFieldSub(benchmark::State& state) {
     auto a = F::random(rng);
     auto b = F::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a -= b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree2>);
 BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree3>);
@@ -64,11 +68,13 @@ static void BM_ExtFieldMul(benchmark::State& state) {
     auto a = F::random(rng);
     auto b = F::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a *= b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree2>);
 BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree3>);
@@ -81,10 +87,12 @@ template<typename F>
 static void BM_ExtFieldInv(benchmark::State& state) {
     auto a = F::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a = a.invert().value();
 
-    benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(a);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree2>);
 BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree3>);

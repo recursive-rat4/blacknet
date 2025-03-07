@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,21 +26,25 @@ static void BM_CurveAdd(benchmark::State& state) {
     auto a = PallasGroupJacobian::random(rng);
     auto b = PallasGroupJacobian::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a = a + b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_CurveAdd);
 
 static void BM_CurveDbl(benchmark::State& state) {
     auto a = PallasGroupJacobian::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a = a.douple();
 
-    benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(a);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_CurveDbl);
 
@@ -48,11 +52,13 @@ static void BM_CurveSub(benchmark::State& state) {
     auto a = PallasGroupJacobian::random(rng);
     auto b = PallasGroupJacobian::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a = a - b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_CurveSub);
 
@@ -60,10 +66,12 @@ static void BM_CurveMul(benchmark::State& state) {
     auto a = PallasGroupJacobian::random(rng);
     auto b = VestaField::random(rng);
 
-    for (auto _ : state)
+    for (auto _ : state) {
         a = a * b;
 
-    benchmark::DoNotOptimize(a);
-    benchmark::DoNotOptimize(b);
+        benchmark::DoNotOptimize(a);
+        benchmark::DoNotOptimize(b);
+        benchmark::ClobberMemory();
+    }
 }
 BENCHMARK(BM_CurveMul);
