@@ -73,15 +73,14 @@ struct MatrixSparse {
 
     template<typename S = E>
     constexpr Vector<S> operator * (const Vector<S>& other) const {
-        std::size_t offset = 0;
         std::size_t rows = rIndex.size() - 1;
         Vector<S> r(rows, S::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < rows; ++i) {
-            std::size_t columns = rIndex[i + 1] - rIndex[i];
-            for (std::size_t j = 0; j < columns; ++j) {
-                std::size_t column = cIndex[offset];
-                r[i] += elements[offset] * other[column];
-                offset += 1;
+            std::size_t row_start = rIndex[i];
+            std::size_t row_end = rIndex[i + 1];
+            for (std::size_t j = row_start; j < row_end; ++j) {
+                std::size_t column = cIndex[j];
+                r[i] += elements[j] * other[column];
             }
         }
         return r;
@@ -97,15 +96,14 @@ struct MatrixSparse {
     }
 
     constexpr Matrix<E> dense() const {
-        std::size_t offset = 0;
         std::size_t rows = rIndex.size() - 1;
         Matrix<E> r(rows, columns, E(0));
         for (std::size_t i = 0; i < rows; ++i) {
-            std::size_t columns = rIndex[i + 1] - rIndex[i];
-            for (std::size_t j = 0; j < columns; ++j) {
-                std::size_t column = cIndex[offset];
-                r[i, column] = elements[offset];
-                offset += 1;
+            std::size_t row_start = rIndex[i];
+            std::size_t row_end = rIndex[i + 1];
+            for (std::size_t j = row_start; j < row_end; ++j) {
+                std::size_t column = cIndex[j];
+                r[i, column] = elements[j];
             }
         }
         return r;
