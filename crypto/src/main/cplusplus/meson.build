@@ -26,4 +26,4 @@ if get_option('optimization') == '3' or get_option('optimization') == 's'
 endif
 
 crypto_main_includes = include_directories('.')
-crypto_main_dependencies = boost_random_dependency
+crypto_main_dependencies = [boost_random_dependency, oneapi_tbb_dependency]

@@ -15,7 +15,8 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-vm_main_includes = include_directories('.')
+vm_main_includes = [crypto_main_includes, include_directories('.')]
+vm_main_dependencies = crypto_main_dependencies
 vm_main_sources = [
     'vm.cpp',
 ]
@@ -23,6 +24,7 @@ vm_main_bin = executable(
     'blacknet-vm',
     vm_main_sources,
     implicit_include_directories : false,
-    include_directories : [crypto_main_includes, vm_main_includes],
+    include_directories : vm_main_includes,
     install : true,
+    dependencies : vm_main_dependencies,
 )

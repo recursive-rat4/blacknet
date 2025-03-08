@@ -26,6 +26,7 @@ project('blacknet', 'cpp',
 )
 
 boost_random_dependency = dependency('boost', modules : ['random'], version : '>=1.47.0')
+oneapi_tbb_dependency = dependency('tbb', required : false)
 
 if get_option('tests')
     boost_test_dependency = dependency('boost', modules: ['unit_test_framework'], version : '>=1.67.0')

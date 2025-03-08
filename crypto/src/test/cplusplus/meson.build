@@ -49,7 +49,7 @@ crypto_test_sources = [
     'univariatepolynomial.cpp',
     'vector.cpp',
 ]
-crypto_test_dependencies = boost_test_dependency
+crypto_test_dependencies = [crypto_main_dependencies, boost_test_dependency]
 crypto_test_bin = executable(
     'crypto_test',
     crypto_test_sources,
