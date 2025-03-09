@@ -56,36 +56,39 @@ template<typename Circuit>
 requires(std::same_as<F, typename Circuit::R>)
 struct circuit {
     using LinearCombination = Circuit::LinearCombination;
+    using Hash = HashGadget<Circuit>;
 
-    constexpr static void compress(
+    constexpr static Hash compress(
         Circuit& circuit,
-        const HashGadget<Circuit>& x0,
-        const HashGadget<Circuit>& x1,
-        HashGadget<Circuit>& hash
+        const Hash& x0,
+        const Hash& x1
     ) {
         std::array<LinearCombination, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());
         P::template circuit<Circuit>::permute(circuit, state);
+        Hash hash;
         for (std::size_t i = 0; i < hash.size(); ++i)
             hash[i] = x0[i] + x1[i] + state[i] + state[i + hash.size()];
+        return hash;
     }
 };
 
 template<std::size_t circuit>
 struct trace {
-    constexpr static void compress(
+    constexpr static Hash compress(
         const Hash& x0,
         const Hash& x1,
-        Hash& hash,
         std::vector<F>& trace
     ) {
         std::array<F, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());
         P::template trace<circuit>::permute(state, trace);
+        Hash hash;
         for (std::size_t i = 0; i < hash.size(); ++i)
             hash[i] = x0[i] + x1[i] + state[i] + state[i + hash.size()];
+        return hash;
     }
 };
 };

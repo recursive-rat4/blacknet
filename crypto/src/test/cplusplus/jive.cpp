@@ -66,8 +66,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     std::ranges::generate(x0, [&]{ return circuit.input(); });
     Gadget x1;
     std::ranges::generate(x1, [&]{ return circuit.input(); });
-    Gadget hash;
-    Jive::circuit<Circuit>::compress(circuit, x0, x1, hash);
+    Gadget hash = Jive::circuit<Circuit>::compress(circuit, x0, x1);
     for (std::size_t i = 0; i < hash.size(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == hash[i]);
@@ -79,7 +78,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     z.elements.emplace_back(E(1));
     std::ranges::copy(a, std::back_inserter(z.elements));
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Jive::trace<Circuit::degree()>::compress(a, b, c, z.elements);
+    c = Jive::trace<Circuit::degree()>::compress(a, b, z.elements);
     std::ranges::copy(c, std::back_inserter(z.elements));
     BOOST_TEST(r1cs.variables() == z.size());
     BOOST_TEST(r1cs.isSatisfied(z));
