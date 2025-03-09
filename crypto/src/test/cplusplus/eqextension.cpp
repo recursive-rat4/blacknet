@@ -19,6 +19,7 @@
 #include <ranges>
 
 #include "ccsbuilder.h"
+#include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "hypercube.h"
@@ -150,13 +151,7 @@ BOOST_AUTO_TEST_CASE(circuit_point) {
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
     BOOST_TEST(eq(x) == EqExtension<E>::trace::point(eq, x, z.elements));
-    BOOST_TEST(ccs.variables() == z.size());
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_CASE(circuit_hypercube) {
@@ -173,13 +168,7 @@ BOOST_AUTO_TEST_CASE(circuit_hypercube) {
     z.elements.emplace_back(E(1));
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     BOOST_TEST(eq() == EqExtension<E>::trace::hypercube(eq.coefficients, z.elements));
-    BOOST_TEST(ccs.variables() == z.size());
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

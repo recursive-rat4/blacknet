@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "ccsbuilder.h"
+#include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "poseidon2pasta.h"
 #include "poseidon2pervushin.h"
@@ -58,13 +59,7 @@ BOOST_AUTO_TEST_CASE(Pallas_3) {
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
-    BOOST_TEST(ccs.variables() == z.size());
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_CASE(Solinas62_12) {
@@ -118,13 +113,7 @@ BOOST_AUTO_TEST_CASE(Solinas62_12) {
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
-    BOOST_TEST(ccs.variables() == z.size());
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_CASE(Pervushin_12) {
@@ -178,13 +167,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_12) {
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
-    BOOST_TEST(ccs.variables() == z.size());
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_CASE(Pervushin_8) {
@@ -230,13 +213,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
-    BOOST_TEST(ccs.variables() == z.size());
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

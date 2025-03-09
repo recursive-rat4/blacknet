@@ -30,6 +30,8 @@ class R1CS {
     MatrixSparse<E> b;
     MatrixSparse<E> c;
 public:
+    using ElementType = E;
+
     constexpr R1CS(const MatrixSparse<E>& a, const MatrixSparse<E>& b, const MatrixSparse<E>& c)
         : a(a), b(b), c(c) {}
     constexpr R1CS(MatrixSparse<E>&& a, MatrixSparse<E>&& b, MatrixSparse<E>&& c)

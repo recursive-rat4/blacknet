@@ -30,6 +30,8 @@ template<typename E>class Vector;
 template<typename E>
 class Matrix {
 public:
+    using ElementType = E;
+
     std::size_t rows;
     std::size_t columns;
     std::vector<E> elements;

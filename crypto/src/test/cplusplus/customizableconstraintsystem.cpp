@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,6 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
 #include "matrix.h"
@@ -42,12 +43,7 @@ BOOST_AUTO_TEST_CASE(ccs) {
         {{0, 0, 0, 0}, {1}},
         {E(1), E(-1)}
     );
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 
     CustomizableConstraintSystem<E>::Polynomial poly(ccs.polynomial(z));
     BOOST_TEST(4 == poly.degree());

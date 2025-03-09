@@ -31,6 +31,8 @@ template<typename E>class Vector;
 
 template<typename E>
 struct MatrixSparse {
+    using ElementType = E;
+
     std::size_t columns;
     std::vector<std::size_t> rIndex;
     std::vector<std::size_t> cIndex;

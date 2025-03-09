@@ -18,12 +18,13 @@
 vm_test_sources = [
     'test.cpp',
 ]
+vm_test_includes = [crypto_test_includes, vm_main_includes]
 vm_test_dependencies = [vm_main_dependencies, boost_test_dependency]
 vm_test_bin = executable(
     'vm_test',
     vm_test_sources,
     implicit_include_directories : false,
-    include_directories : vm_main_includes,
+    include_directories : vm_test_includes,
     dependencies : vm_test_dependencies
 )
 test('vm test', vm_test_bin)

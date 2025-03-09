@@ -18,13 +18,14 @@
 #include <boost/test/unit_test.hpp>
 
 #include "ccsbuilder.h"
+#include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "poseidon2solinas62.h"
 #include "sponge.h"
 
 BOOST_AUTO_TEST_SUITE(Sponges)
 
-BOOST_AUTO_TEST_CASE(test) {
+BOOST_AUTO_TEST_CASE(plain) {
     using Z = uint8_t;
     using B = std::array<Z, 4>;
     struct F {
@@ -115,13 +116,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     tracer.absorb(b);
     tracer.squeeze(c);
     std::ranges::copy(c, std::back_inserter(z.elements));
-    BOOST_TEST(ccs.variables() == z.size());
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 
     Sponge spng;
     for (const auto& i : b) spng.absorb(i);

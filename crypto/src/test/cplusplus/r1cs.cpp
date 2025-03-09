@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/random/mersenne_twister.hpp>
 
+#include "circuitry.h"
 #include "matrix.h"
 #include "pervushin.h"
 #include "pervushinfield.h"
@@ -54,20 +55,10 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
         MatrixSparse<E>(b),
         MatrixSparse<E>(c),
     };
-    BOOST_TEST(r1cs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!r1cs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(r1cs, z);
 
     Vector<EE> z_morphed(z.homomorph<EE>());
-    BOOST_TEST(r1cs.isSatisfied(z_morphed));
-    for (std::size_t i = 1; i < z_morphed.size(); ++i) {
-        z_morphed[i] += EE(1);
-        BOOST_TEST(!r1cs.isSatisfied(z_morphed));
-        z_morphed[i] -= EE(1);
-    }
+    test::circuitry(r1cs, z_morphed);
 
     const Vector<EE> e_init(r1cs.constraints(), EE(0));
     Vector<EE> e_folded(e_init);

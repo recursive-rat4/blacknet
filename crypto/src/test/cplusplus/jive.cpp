@@ -18,13 +18,14 @@
 #include <boost/test/unit_test.hpp>
 
 #include "ccsbuilder.h"
+#include "circuitry.h"
 #include "jive.h"
 #include "poseidon2pervushin.h"
 #include "r1cs.h"
 
 BOOST_AUTO_TEST_SUITE(Jives)
 
-BOOST_AUTO_TEST_CASE(test) {
+BOOST_AUTO_TEST_CASE(plain) {
     using Z = uint8_t;
     using B = std::array<Z, 4>;
     struct F {
@@ -80,13 +81,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     std::ranges::copy(b, std::back_inserter(z.elements));
     c = Jive::trace<Circuit::degree()>::compress(a, b, z.elements);
     std::ranges::copy(c, std::back_inserter(z.elements));
-    BOOST_TEST(r1cs.variables() == z.size());
-    BOOST_TEST(r1cs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!r1cs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(r1cs, z);
 
     BOOST_TEST(c == Jive::compress(a, b));
 }

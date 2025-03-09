@@ -40,6 +40,8 @@ class CustomizableConstraintSystem {
     std::vector<std::vector<std::size_t>> s;
     std::vector<E> c;
 public:
+    using ElementType = E;
+
     constexpr CustomizableConstraintSystem(
         std::size_t rows,
         std::size_t columns,

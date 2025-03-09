@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "ccsbuilder.h"
+#include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "pervushin.h"
 #include "r1cs.h"
@@ -65,12 +66,7 @@ BOOST_AUTO_TEST_CASE(Eqs) {
     BOOST_TEST(r1cs == circuit.r1cs());
 
     Vector<E> z{ E(1), E(4), E(4), E(4) };
-    BOOST_TEST(r1cs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!r1cs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(r1cs, z);
 }
 
 BOOST_AUTO_TEST_CASE(Adds) {
@@ -116,12 +112,7 @@ BOOST_AUTO_TEST_CASE(Adds) {
     BOOST_TEST(r1cs == circuit.r1cs());
 
     Vector<E> z{ E(1), E(8), E(2), E(4) };
-    BOOST_TEST(r1cs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!r1cs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(r1cs, z);
 }
 
 BOOST_AUTO_TEST_CASE(Muls) {
@@ -167,12 +158,7 @@ BOOST_AUTO_TEST_CASE(Muls) {
     BOOST_TEST(r1cs == circuit.r1cs());
 
     Vector<E> z{ E(1), E(16), E(2), E(4) };
-    BOOST_TEST(r1cs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!r1cs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(r1cs, z);
 }
 
 BOOST_AUTO_TEST_CASE(Boards) {
@@ -234,12 +220,7 @@ BOOST_AUTO_TEST_CASE(Boards) {
     BOOST_TEST(r1cs == circuit.r1cs());
 
     Vector<E> zv{ E(1), E(4), E(4), E(4), E(16) };
-    BOOST_TEST(r1cs.isSatisfied(zv));
-    for (std::size_t i = 1; i < zv.size(); ++i) {
-        zv[i] += E(1);
-        BOOST_TEST(!r1cs.isSatisfied(zv));
-        zv[i] -= E(1);
-    }
+    test::circuitry(r1cs, zv);
 }
 
 BOOST_AUTO_TEST_CASE(Cubism) {
@@ -279,12 +260,7 @@ BOOST_AUTO_TEST_CASE(Cubism) {
     BOOST_TEST(ccs == circuit.ccs());
 
     Vector<E> zv{ E(1), E(2), E(3), E(5), E(8) };
-    BOOST_TEST(ccs.isSatisfied(zv));
-    for (std::size_t i = 1; i < zv.size(); ++i) {
-        zv[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(zv));
-        zv[i] -= E(1);
-    }
+    test::circuitry(ccs, zv);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

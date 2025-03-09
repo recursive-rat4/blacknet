@@ -19,6 +19,7 @@
 #include <ranges>
 
 #include "ccsbuilder.h"
+#include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
 #include "matrix.h"
@@ -199,13 +200,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     std::ranges::copy(mle.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
     BOOST_TEST(mle(x) == MultilinearExtension<E>::trace::point(mle, x, z.elements));
-    BOOST_TEST(ccs.variables() == z.size());
-    BOOST_TEST(ccs.isSatisfied(z));
-    for (std::size_t i = 1; i < z.size(); ++i) {
-        z[i] += E(1);
-        BOOST_TEST(!ccs.isSatisfied(z));
-        z[i] -= E(1);
-    }
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

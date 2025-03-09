@@ -30,6 +30,8 @@ template<typename E>class Matrix;
 template<typename E>
 class Vector {
 public:
+    using ElementType = E;
+
     constexpr static Vector identity(std::size_t size) { return Vector(size, E(1)); }
 
     std::vector<E> elements;
