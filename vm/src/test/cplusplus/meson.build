@@ -15,6 +15,12 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
+if get_option('tests_report_junit')
+    vm_test_arguments = ['--log_format=JUNIT', '--log_sink=TEST-vm.xml']
+else
+    vm_test_arguments = []
+endif
+
 vm_test_sources = [
     'cell.cpp',
     'test.cpp',
@@ -28,4 +34,8 @@ vm_test_bin = executable(
     include_directories : vm_test_includes,
     dependencies : vm_test_dependencies
 )
-test('vm test', vm_test_bin)
+test(
+    'vm test',
+    vm_test_bin,
+    args : vm_test_arguments,
+)

@@ -15,6 +15,12 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
+if get_option('tests_report_junit')
+    crypto_test_arguments = ['--log_format=JUNIT', '--log_sink=TEST-crypto.xml']
+else
+    crypto_test_arguments = []
+endif
+
 crypto_test_sources = [
     'ajtaicommitment.cpp',
     'bfv.cpp',
@@ -58,4 +64,8 @@ crypto_test_bin = executable(
     include_directories : crypto_test_includes,
     dependencies : crypto_test_dependencies
 )
-test('crypto test', crypto_test_bin)
+test(
+    'crypto test',
+    crypto_test_bin,
+    args : crypto_test_arguments,
+)
