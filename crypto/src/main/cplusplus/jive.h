@@ -63,6 +63,7 @@ struct circuit {
         const Hash& x0,
         const Hash& x1
     ) {
+        auto scope = circuit.scope("Jive::compress");
         std::array<LinearCombination, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());

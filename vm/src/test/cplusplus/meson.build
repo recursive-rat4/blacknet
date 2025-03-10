@@ -16,6 +16,7 @@
 #
 
 vm_test_sources = [
+    'cell.cpp',
     'test.cpp',
 ]
 vm_test_includes = [crypto_test_includes, vm_main_includes]
