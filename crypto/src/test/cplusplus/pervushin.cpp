@@ -89,10 +89,10 @@ BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
     int64_t ag = 677133638855483917;
     int64_t bb = 1140329745848183219;
     int64_t bg = 1140329745848183220;
-    BOOST_TEST(!a.checkInfiniteNorm(ab));
-    BOOST_TEST(a.checkInfiniteNorm(ag));
-    BOOST_TEST(!b.checkInfiniteNorm(bb));
-    BOOST_TEST(b.checkInfiniteNorm(bg));
+    BOOST_TEST(!a.checkInfinityNorm(ab));
+    BOOST_TEST(a.checkInfinityNorm(ag));
+    BOOST_TEST(!b.checkInfinityNorm(bb));
+    BOOST_TEST(b.checkInfinityNorm(bg));
 }
 
 BOOST_AUTO_TEST_CASE(Fe2Mul) {

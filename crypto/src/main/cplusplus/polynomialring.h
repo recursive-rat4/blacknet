@@ -146,11 +146,11 @@ public:
         }
     }
 
-    constexpr bool checkInfiniteNorm(const NumericType& bound) const {
+    constexpr bool checkInfinityNorm(const NumericType& bound) const {
         std::array<Z, N> t(coefficients);
         Params::fromForm(t);
         for (std::size_t i = 0; i < N; ++i) {
-            if (t[i].checkInfiniteNorm(bound))
+            if (t[i].checkInfinityNorm(bound))
                 continue;
             else
                 return false;

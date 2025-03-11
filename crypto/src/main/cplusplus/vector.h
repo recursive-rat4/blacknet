@@ -158,6 +158,16 @@ public:
         return r;
     }
 
+    constexpr bool checkInfinityNorm(const E::NumericType& bound) const {
+         for (const E& e : elements) {
+            if (e.checkInfinityNorm(bound))
+                continue;
+            else
+                return false;
+        }
+        return true;
+    }
+
     template<typename S>
     constexpr Vector<S> homomorph() const {
         std::vector<S> t;

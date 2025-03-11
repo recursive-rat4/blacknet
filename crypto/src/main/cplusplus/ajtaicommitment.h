@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,10 +30,14 @@
 
 template<typename R>
 class AjtaiCommitment {
+    using NumericType = R::NumericType;
     Matrix<R> a;
+    NumericType bound;
 public:
-    constexpr AjtaiCommitment(const Matrix<R>& a) : a(a) {}
-    constexpr AjtaiCommitment(Matrix<R>&& a) : a(std::move(a)) {}
+    constexpr AjtaiCommitment(const Matrix<R>& a, const NumericType& bound)
+        : a(a), bound(bound) {}
+    constexpr AjtaiCommitment(Matrix<R>&& a, NumericType&& bound)
+        : a(std::move(a)), bound(std::move(bound)) {}
 
     template<typename DRG>
     constexpr static Matrix<R> setup(DRG& drg, std::size_t rows, std::size_t columns) {
@@ -49,7 +53,7 @@ public:
     }
 
     constexpr bool open(const Vector<R>& c, const Vector<R>& m) const {
-        return c == commit(m);
+        return m.checkInfinityNorm(bound) && c == commit(m);
     }
 };
 

@@ -30,7 +30,7 @@ using R = LatticeFold<Solinas62Ring>::RqIso;
 BOOST_AUTO_TEST_CASE(Zq) {
     using CS = AjtaiCommitment<Z>;
     auto drg = Poseidon2Solinas62Sponge<{1, 2, 3, 4}>();
-    CS cs(CS::setup(drg, 2, 2));
+    CS cs(CS::setup(drg, 2, 2), 8);
     Z z1(1);
     Z z2(2);
     Z z3(3);
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(Zq) {
 BOOST_AUTO_TEST_CASE(Rq) {
     using CS = AjtaiCommitment<R>;
     auto drg = Poseidon2Solinas62Sponge<{5, 6, 7, 8}>();
-    CS cs(CS::setup(drg, 2, 2));
+    CS cs(CS::setup(drg, 2, 2), 16);
     R r1({1, 2});
     R r2({3, 4});
     R r3({5, 6});

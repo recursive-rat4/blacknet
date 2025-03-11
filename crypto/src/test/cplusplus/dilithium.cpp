@@ -75,10 +75,10 @@ BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
     Zq c(-42);
     Zq d(-44);
     int32_t bound = 44;
-    BOOST_TEST(a.checkInfiniteNorm(bound));
-    BOOST_TEST(!b.checkInfiniteNorm(bound));
-    BOOST_TEST(c.checkInfiniteNorm(bound));
-    BOOST_TEST(!d.checkInfiniteNorm(bound));
+    BOOST_TEST(a.checkInfinityNorm(bound));
+    BOOST_TEST(!b.checkInfinityNorm(bound));
+    BOOST_TEST(c.checkInfinityNorm(bound));
+    BOOST_TEST(!d.checkInfinityNorm(bound));
 }
 
 BOOST_AUTO_TEST_CASE(RqAdd) {
@@ -447,10 +447,10 @@ BOOST_AUTO_TEST_CASE(RqInfiniteNorm) {
     Rq c({ -42, 6, 5, 4, 3, 2, 1, });
     Rq d({ -44, 6, 5, 4, 3, 2, 1, });
     int32_t bound = 44;
-    BOOST_TEST(a.checkInfiniteNorm(bound));
-    BOOST_TEST(!b.checkInfiniteNorm(bound));
-    BOOST_TEST(c.checkInfiniteNorm(bound));
-    BOOST_TEST(!d.checkInfiniteNorm(bound));
+    BOOST_TEST(a.checkInfinityNorm(bound));
+    BOOST_TEST(!b.checkInfinityNorm(bound));
+    BOOST_TEST(c.checkInfinityNorm(bound));
+    BOOST_TEST(!d.checkInfinityNorm(bound));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

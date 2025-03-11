@@ -83,10 +83,10 @@ BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
     Zq b(30000);
     int64_t nb = 30000;
     int64_t ng = 30001;
-    BOOST_TEST(!a.checkInfiniteNorm(nb));
-    BOOST_TEST(a.checkInfiniteNorm(ng));
-    BOOST_TEST(!b.checkInfiniteNorm(nb));
-    BOOST_TEST(b.checkInfiniteNorm(ng));
+    BOOST_TEST(!a.checkInfinityNorm(nb));
+    BOOST_TEST(a.checkInfinityNorm(ng));
+    BOOST_TEST(!b.checkInfinityNorm(nb));
+    BOOST_TEST(b.checkInfinityNorm(ng));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

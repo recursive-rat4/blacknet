@@ -122,7 +122,7 @@ public:
         }
     }
 
-    constexpr bool checkInfiniteNorm(const NumericType& bound) const {
+    constexpr bool checkInfinityNorm(const NumericType& bound) const {
         I nn(fromForm(n));
         I t(nn >> (sizeof(I) * 8 - 1));
         t = nn - (t & nn << 1);
