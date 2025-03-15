@@ -149,13 +149,9 @@ public:
     constexpr bool checkInfinityNorm(const NumericType& bound) const {
         std::array<Z, N> t(coefficients);
         Params::fromForm(t);
-        for (std::size_t i = 0; i < N; ++i) {
-            if (t[i].checkInfinityNorm(bound))
-                continue;
-            else
-                return false;
-        }
-        return true;
+        return std::ranges::all_of(t, [&bound](const Z& i) {
+            return i.checkInfinityNorm(bound);
+        });
     }
 
     friend std::ostream& operator << (std::ostream& out, const PolynomialRing& val)

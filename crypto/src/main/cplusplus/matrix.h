@@ -114,13 +114,9 @@ public:
     }
 
     constexpr bool checkInfinityNorm(const E::NumericType& bound) const {
-         for (const E& e : elements) {
-            if (e.checkInfinityNorm(bound))
-                continue;
-            else
-                return false;
-        }
-        return true;
+        return std::ranges::all_of(elements, [&bound](const E& e) {
+            return e.checkInfinityNorm(bound);
+        });
     }
 
     template<typename S>
