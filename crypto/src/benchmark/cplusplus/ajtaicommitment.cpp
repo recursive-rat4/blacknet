@@ -32,7 +32,8 @@ static void BM_AjtaiCommitment(benchmark::State& state) {
     std::size_t M = 1;
 
     AjtaiCommitment<R> cs(
-        Matrix<R>::random(rng, LatticeFold::K, M)
+        Matrix<R>::random(rng, LatticeFold::K, M),
+        LatticeFold::B
     );
     Vector<R> m = Vector<R>::random(rng, M);
     Vector<R> c;
