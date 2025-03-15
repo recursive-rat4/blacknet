@@ -122,13 +122,11 @@ BOOST_AUTO_TEST_CASE(matrix) {
         E(43), E(44), E(45), E(46),
     });
     MultilinearExtension mle(a);
-    for (std::tuple<const std::pair<std::size_t, std::size_t>&, const std::vector<E>&> i : std::views::zip(
+    for (const auto& [pair, b] : std::views::zip(
             std::ranges::subrange(hc.splittedBegin(2, 4), hc.splittedEnd()),
             std::ranges::subrange(hc.decomposedBegin(), hc.decomposedEnd())
         )) {
-        const std::size_t& row = std::get<0>(i).first;
-        const std::size_t& column = std::get<0>(i).second;
-        const std::vector<E>& b = std::get<1>(i);
+        const auto& [row, column] = pair;
         BOOST_TEST((a[row, column] == mle(b)));
     };
 }
@@ -138,12 +136,10 @@ BOOST_AUTO_TEST_CASE(polynomial) {
     Hypercube<E> hc(2);
     P a{E(71), E(72), E(73), E(74)};
     MultilinearExtension<E> mle(a);
-    for (std::tuple<const std::size_t&, const std::vector<E>&> i : std::views::zip(
+    for (const auto& [index, b] : std::views::zip(
             std::ranges::subrange(hc.composedBegin(), hc.composedEnd()),
             std::ranges::subrange(hc.decomposedBegin(), hc.decomposedEnd())
         )) {
-        const std::size_t& index = std::get<0>(i);
-        const std::vector<E>& b = std::get<1>(i);
         BOOST_TEST(a.coefficients[index] == mle(b));
     };
 }
@@ -152,12 +148,10 @@ BOOST_AUTO_TEST_CASE(vector) {
     Hypercube<E> hc(3);
     Vector<E> a{E(63), E(64), E(65), E(66), E(67), E(68), E(69), E(70)};
     MultilinearExtension mle(a);
-    for (std::tuple<const std::size_t&, const std::vector<E>&> i : std::views::zip(
+    for (const auto& [index, b] : std::views::zip(
             std::ranges::subrange(hc.composedBegin(), hc.composedEnd()),
             std::ranges::subrange(hc.decomposedBegin(), hc.decomposedEnd())
         )) {
-        const std::size_t& index = std::get<0>(i);
-        const std::vector<E>& b = std::get<1>(i);
         BOOST_TEST(a[index] == mle(b));
     };
 }
@@ -171,13 +165,11 @@ BOOST_AUTO_TEST_CASE(ringvector) {
         EE{79, 80},
     };
     MultilinearExtension<E> mle(a);
-    for (std::tuple<const std::pair<std::size_t, std::size_t>&, const std::vector<E>&> i : std::views::zip(
+    for (const auto& [pair, b] : std::views::zip(
             std::ranges::subrange(hc.splittedBegin(4, 2), hc.splittedEnd()),
             std::ranges::subrange(hc.decomposedBegin(), hc.decomposedEnd())
         )) {
-        const std::size_t& row = std::get<0>(i).first;
-        const std::size_t& column = std::get<0>(i).second;
-        const std::vector<E>& b = std::get<1>(i);
+        const auto& [row, column] = pair;
         BOOST_TEST(a.elements[row].coefficients[column] == mle(b));
     };
 }

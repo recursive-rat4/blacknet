@@ -90,12 +90,10 @@ BOOST_AUTO_TEST_CASE(bind) {
 
     std::vector<E> pis(eq2());
     Hypercube<E> hc(eq2.variables());
-    for (std::tuple<const std::size_t&, const std::vector<E>&> i : std::views::zip(
+    for (const auto& [index, b] : std::views::zip(
             std::ranges::subrange(hc.composedBegin(), hc.composedEnd()),
             std::ranges::subrange(hc.decomposedBegin(), hc.decomposedEnd())
         )) {
-        const std::size_t& index = std::get<0>(i);
-        const std::vector<E>& b = std::get<1>(i);
         BOOST_TEST(eq2(b) == pis[index]);
     };
 }

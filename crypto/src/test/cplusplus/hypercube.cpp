@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,11 +30,11 @@ BOOST_AUTO_TEST_CASE(composed) {
     Hypercube<bool> hypercube(4);
     V vertices[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     BOOST_TEST(std::ranges::distance(vertices) == std::ranges::distance(hypercube.composedBegin(), hypercube.composedEnd()));
-    for (std::tuple<const V&, const V&> i : std::views::zip(
+    for (const auto& [a, b] : std::views::zip(
             std::ranges::subrange{std::ranges::begin(vertices), std::ranges::end(vertices)},
             std::ranges::subrange(hypercube.composedBegin(), hypercube.composedEnd())
         )) {
-        BOOST_TEST(std::get<0>(i) == std::get<1>(i));
+        BOOST_TEST(a == b);
     };
 }
 
@@ -52,11 +52,11 @@ BOOST_AUTO_TEST_CASE(decomposed) {
         {1, 1, 1},
     };
     BOOST_TEST(std::ranges::distance(vertices) == std::ranges::distance(hypercube.decomposedBegin(), hypercube.decomposedEnd()));
-    for (std::tuple<const V&, const V&> i : std::views::zip(
+    for (const auto& [a, b] : std::views::zip(
             std::ranges::subrange{std::ranges::begin(vertices), std::ranges::end(vertices)},
             std::ranges::subrange(hypercube.decomposedBegin(), hypercube.decomposedEnd())
         )) {
-        BOOST_TEST(std::get<0>(i) == std::get<1>(i));
+        BOOST_TEST(a == b);
     };
 }
 
@@ -70,11 +70,11 @@ BOOST_AUTO_TEST_CASE(splitted) {
         {3, 0}, {3, 1},
     };
     BOOST_TEST(std::ranges::distance(vertices) == std::ranges::distance(hypercube.splittedBegin(4, 2), hypercube.splittedEnd()));
-    for (std::tuple<const V&, const V&> i : std::views::zip(
+    for (const auto& [a, b] : std::views::zip(
             std::ranges::subrange{std::ranges::begin(vertices), std::ranges::end(vertices)},
             std::ranges::subrange(hypercube.splittedBegin(4, 2), hypercube.splittedEnd())
         )) {
-        BOOST_TEST(std::get<0>(i) == std::get<1>(i));
+        BOOST_TEST(a == b);
     };
 }
 
