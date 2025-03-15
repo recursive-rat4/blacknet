@@ -34,6 +34,8 @@ public:
     constexpr UnivariatePolynomial(std::size_t size) : coefficients(size) {}
     constexpr UnivariatePolynomial(std::initializer_list<E> init) : coefficients(init) {}
     constexpr UnivariatePolynomial(std::vector<E>&& coefficients) : coefficients(std::move(coefficients)) {}
+    constexpr UnivariatePolynomial(const UnivariatePolynomial& other)
+        : coefficients(other.coefficients) {}
     constexpr UnivariatePolynomial(UnivariatePolynomial&& other) noexcept
         : coefficients(std::move(other.coefficients)) {}
 

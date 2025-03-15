@@ -182,6 +182,8 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = bool;
+        constexpr BitIterator(const BitIterator& other)
+            : data(other.data), index(other.index) {}
         constexpr BitIterator& operator = (const BitIterator& other) {
             data = other.data;
             index = other.index;

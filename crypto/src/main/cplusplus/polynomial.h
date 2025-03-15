@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,6 +32,7 @@ public:
         polynomials.reserve(capacity);
     }
     constexpr Polynomial(std::vector<P<R>>&& polynomials) : polynomials(std::move(polynomials)) {}
+    constexpr Polynomial(const Polynomial& other) = delete;
     constexpr Polynomial(Polynomial&& other) noexcept
         : polynomials(std::move(other.polynomials)) {}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -40,6 +40,8 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::size_t;
+        constexpr ComposedIterator(const ComposedIterator& other)
+            : last(other.last), index(other.index) {}
         constexpr ComposedIterator& operator = (const ComposedIterator& other) {
             last = other.last;
             index = other.index;
@@ -78,8 +80,18 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::vector<E>;
+        constexpr DecomposedIterator(const DecomposedIterator& other)
+            : data(other.data), last(other.last), index(other.index) {}
+        constexpr DecomposedIterator(DecomposedIterator&& other) noexcept
+            : data(std::move(other.data)), last(other.last), index(other.index) {}
         constexpr DecomposedIterator& operator = (const DecomposedIterator& other) {
             data = other.data;
+            last = other.last;
+            index = other.index;
+            return *this;
+        }
+        constexpr DecomposedIterator& operator = (DecomposedIterator&& other) noexcept {
+            data = std::move(other.data);
             last = other.last;
             index = other.index;
             return *this;
@@ -128,7 +140,10 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::pair<std::size_t, std::size_t>;
+        constexpr SplittedIterator(const SplittedIterator& other)
+            : data(other.data), last(other.last), rows(other.rows), columns(other.columns), index(other.index) {}
         constexpr SplittedIterator& operator = (const SplittedIterator& other) {
+            data = other.data;
             last = other.last;
             rows = other.rows;
             columns = other.columns;

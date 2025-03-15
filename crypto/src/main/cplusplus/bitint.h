@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -63,6 +63,8 @@ struct BitInt {
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = bool;
+        constexpr BitIterator(const BitIterator& other)
+            : data(other.data), index(other.index) {}
         constexpr BitIterator& operator = (const BitIterator& other) {
             data = other.data;
             index = other.index;
