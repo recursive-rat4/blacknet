@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(ZqInv) {
     BOOST_TEST(!Zq(0).invert());
 }
 
-BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
+BOOST_AUTO_TEST_CASE(ZqInfinityNorm) {
     Zq a(42);
     Zq b(44);
     Zq c(-42);
@@ -441,7 +441,7 @@ BOOST_AUTO_TEST_CASE(RqSub) {
     BOOST_TEST(Rq::LEFT_ADDITIVE_IDENTITY() == Rq::LEFT_ADDITIVE_IDENTITY() - Rq::LEFT_ADDITIVE_IDENTITY());
 }
 
-BOOST_AUTO_TEST_CASE(RqInfiniteNorm) {
+BOOST_AUTO_TEST_CASE(RqInfinityNorm) {
     Rq a({ 42, 6, 5, 4, 3, 2, 1, });
     Rq b({ 44, 6, 5, 4, 3, 2, 1, });
     Rq c({ -42, 6, 5, 4, 3, 2, 1, });

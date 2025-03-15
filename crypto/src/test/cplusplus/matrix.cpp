@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -124,6 +124,17 @@ BOOST_AUTO_TEST_CASE(Transposition) {
     }};
     BOOST_TEST(b == a.transpose());
     BOOST_TEST(a == a.transpose().transpose());
+}
+
+BOOST_AUTO_TEST_CASE(InfinityNorm) {
+    Matrix<R> a(2, 2, {
+        R(0), R(1),
+        R(2), R(3),
+    });
+    int64_t nb = 3;
+    int64_t ng = 4;
+    BOOST_TEST(!a.checkInfinityNorm(nb));
+    BOOST_TEST(a.checkInfinityNorm(ng));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

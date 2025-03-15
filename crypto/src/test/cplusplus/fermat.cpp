@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(ZqInv) {
     BOOST_TEST(!Zq(0).invert());
 }
 
-BOOST_AUTO_TEST_CASE(ZqInfiniteNorm) {
+BOOST_AUTO_TEST_CASE(ZqInfinityNorm) {
     Zq a(-30000);
     Zq b(30000);
     int64_t nb = 30000;
