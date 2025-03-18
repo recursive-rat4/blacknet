@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -35,7 +35,7 @@ struct Solinas62RingDegree2Params {
     constexpr static const BitInt<124> PSY_MINUS_1{"0fffffffffffff7080000000000141bf"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        convolution::quotient<Z, N, M>(r, a, b);
+        convolution::binomial<Z, N>(r.data(), a.data(), b.data(), -M.front());
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
