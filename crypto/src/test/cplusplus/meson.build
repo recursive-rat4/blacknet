@@ -31,6 +31,7 @@ crypto_test_sources = [
     'dilithium.cpp',
     'eqextension.cpp',
     'fermat.cpp',
+    'fs.cpp',
     'hypercube.cpp',
     'interpolation.cpp',
     'jive.cpp',

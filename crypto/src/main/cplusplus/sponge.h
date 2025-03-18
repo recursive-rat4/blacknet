@@ -41,8 +41,9 @@ template<
     typename F
 >
 requires(R + C == F::width())
-class Sponge {
-public:
+struct Sponge {
+    using Z = E;
+
     enum Phase { ABSORB, SQUEEZE };
 
     Phase phase;
