@@ -24,20 +24,49 @@
 
 static boost::random::mt19937 rng;
 
-static void BM_PedersenCommitmentAffine(benchmark::State& state) {
-    PedersenCommitment<VestaGroupAffine> cs({
-        VestaGroupAffine::random(rng),
-        VestaGroupAffine::random(rng),
-        VestaGroupAffine::random(rng),
-        VestaGroupAffine::random(rng),
+template<typename G>
+static void BM_PedersenCommitmentSingle(benchmark::State& state) {
+    using Scalar = G::Scalar;
+
+    PedersenCommitment<G> cs({
+        G::random(rng),
+        G::random(rng),
     });
-    std::vector<PallasField> v{
-        PallasField::random(rng),
-        PallasField::random(rng),
-        PallasField::random(rng),
-        PallasField::random(rng),
+    Scalar s{ Scalar::random(rng) };
+    Scalar t{ Scalar::random(rng) };
+    G c;
+
+    for (auto _ : state) {
+        c = cs.commit(s, t);
+
+        benchmark::DoNotOptimize(cs);
+        benchmark::DoNotOptimize(s);
+        benchmark::DoNotOptimize(t);
+        benchmark::DoNotOptimize(c);
+        benchmark::ClobberMemory();
+    }
+}
+BENCHMARK(BM_PedersenCommitmentSingle<VestaGroupAffine>);
+BENCHMARK(BM_PedersenCommitmentSingle<VestaGroupJacobian>);
+BENCHMARK(BM_PedersenCommitmentSingle<VestaGroupProjective>);
+
+template<typename G>
+static void BM_PedersenCommitmentVector(benchmark::State& state) {
+    using Scalar = G::Scalar;
+
+    PedersenCommitment<G> cs({
+        G::random(rng),
+        G::random(rng),
+        G::random(rng),
+        G::random(rng),
+    });
+    std::vector<Scalar> v{
+        Scalar::random(rng),
+        Scalar::random(rng),
+        Scalar::random(rng),
+        Scalar::random(rng),
     };
-    VestaGroupAffine c;
+    G c;
 
     for (auto _ : state) {
         c = cs.commit(v);
@@ -48,56 +77,6 @@ static void BM_PedersenCommitmentAffine(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_PedersenCommitmentAffine);
-
-static void BM_PedersenCommitmentJacobian(benchmark::State& state) {
-    PedersenCommitment<VestaGroupJacobian> cs({
-        VestaGroupJacobian::random(rng),
-        VestaGroupJacobian::random(rng),
-        VestaGroupJacobian::random(rng),
-        VestaGroupJacobian::random(rng),
-    });
-    std::vector<PallasField> v{
-        PallasField::random(rng),
-        PallasField::random(rng),
-        PallasField::random(rng),
-        PallasField::random(rng),
-    };
-    VestaGroupJacobian c;
-
-    for (auto _ : state) {
-        c = cs.commit(v);
-
-        benchmark::DoNotOptimize(cs);
-        benchmark::DoNotOptimize(v);
-        benchmark::DoNotOptimize(c);
-        benchmark::ClobberMemory();
-    }
-}
-BENCHMARK(BM_PedersenCommitmentJacobian);
-
-static void BM_PedersenCommitmentProjective(benchmark::State& state) {
-    PedersenCommitment<VestaGroupProjective> cs({
-        VestaGroupProjective::random(rng),
-        VestaGroupProjective::random(rng),
-        VestaGroupProjective::random(rng),
-        VestaGroupProjective::random(rng),
-    });
-    std::vector<PallasField> v{
-        PallasField::random(rng),
-        PallasField::random(rng),
-        PallasField::random(rng),
-        PallasField::random(rng),
-    };
-    VestaGroupProjective c;
-
-    for (auto _ : state) {
-        c = cs.commit(v);
-
-        benchmark::DoNotOptimize(cs);
-        benchmark::DoNotOptimize(v);
-        benchmark::DoNotOptimize(c);
-        benchmark::ClobberMemory();
-    }
-}
-BENCHMARK(BM_PedersenCommitmentProjective);
+BENCHMARK(BM_PedersenCommitmentVector<VestaGroupAffine>);
+BENCHMARK(BM_PedersenCommitmentVector<VestaGroupJacobian>);
+BENCHMARK(BM_PedersenCommitmentVector<VestaGroupProjective>);

@@ -26,7 +26,7 @@ project('blacknet', 'cpp',
 )
 
 boost_random_dependency = dependency('boost', modules : ['random'], version : '>=1.47.0')
-oneapi_tbb_dependency = dependency('tbb', version : '>=2018.0.0', required : false)
+oneapi_tbb_dependency = dependency('tbb', version : '>=2020.0.0')
 sqlite_dependency = dependency('sqlite3', version : '>=3.0.0')
 
 if get_option('tests')

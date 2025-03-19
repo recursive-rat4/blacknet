@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,6 +19,8 @@
 #define BLACKNET_CRYPTO_PEDERSENCOMMITMENT_H
 
 #include <vector>
+#include <oneapi/tbb/blocked_range.h>
+#include <oneapi/tbb/parallel_reduce.h>
 
 /*
  * Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing
@@ -51,10 +53,19 @@ public:
     }
 
     constexpr G commit(const std::vector<typename G::Scalar>& v) const {
-        G sigma(G::LEFT_ADDITIVE_IDENTITY());
-        for (std::size_t i = 0; i < v.size(); ++i)
-            sigma += pp[i] * v[i];
-        return sigma;
+        using namespace oneapi::tbb;
+        return parallel_reduce(
+            blocked_range<std::size_t>(0, v.size()),
+            G::LEFT_ADDITIVE_IDENTITY(),
+            [&](const blocked_range<std::size_t>& range, G acc) -> G {
+                for (std::size_t i = range.begin(); i != range.end(); ++i)
+                    acc += pp[i] * v[i];
+                return acc;
+            },
+            [](const G& a, const G& b) -> G {
+                return a + b;
+            }
+        );
     }
 
     constexpr bool open(const G& e, const std::vector<typename G::Scalar>& v) const {
