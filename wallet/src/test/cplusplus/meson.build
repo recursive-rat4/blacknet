@@ -15,8 +15,27 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-subdir('main/cplusplus')
-
-if get_option('tests')
-    subdir('test/cplusplus')
+if get_option('tests_report_junit')
+    wallet_test_arguments = ['--log_format=JUNIT', '--log_sink=TEST-wallet.xml']
+else
+    wallet_test_arguments = []
 endif
+
+wallet_test_sources = [
+    'sqlite.cpp',
+    'test.cpp',
+]
+wallet_test_includes = wallet_main_includes
+wallet_test_dependencies = [wallet_main_dependencies, boost_test_dependency]
+wallet_test_bin = executable(
+    'wallet_test',
+    wallet_test_sources,
+    implicit_include_directories : false,
+    include_directories : wallet_test_includes,
+    dependencies : wallet_test_dependencies
+)
+test(
+    'wallet test',
+    wallet_test_bin,
+    args : wallet_test_arguments,
+)
