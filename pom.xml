@@ -336,6 +336,7 @@
                     <artifactId>appassembler-maven-plugin</artifactId>
                     <version>${appassembler-maven-plugin.version}</version>
                     <configuration>
+                        <extraJvmArguments>--enable-native-access=ALL-UNNAMED</extraJvmArguments>
                         <repositoryLayout>flat</repositoryLayout>
                         <repositoryName>lib</repositoryName>
                     </configuration>
