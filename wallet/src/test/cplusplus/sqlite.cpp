@@ -22,8 +22,10 @@
 BOOST_AUTO_TEST_SUITE(SQLites)
 
 BOOST_AUTO_TEST_CASE(test) {
-    auto sqlite = SQLite::memory();
-    BOOST_TEST_REQUIRE(sqlite.isConnected());
+    auto connection = sqlite::Connection::memory();
+    BOOST_TEST_REQUIRE(connection.isConnected());
+    auto statement = connection.prepare("PRAGMA locking_mode;");
+    BOOST_TEST_REQUIRE(statement.isPrepared());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

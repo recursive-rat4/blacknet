@@ -21,23 +21,73 @@
 #include <utility>
 #include <sqlite3.h>
 
-class SQLite {
+namespace sqlite {
+class Statement {
+    friend class Connection;
+    sqlite3_stmt* statement;
+public:
+    consteval Statement() : statement(nullptr) {}
+    constexpr Statement(const Statement&) = delete;
+    constexpr Statement(Statement&& other) noexcept : statement(other.statement) {
+        other.statement = nullptr;
+    }
+    ~Statement() {
+        int rc = sqlite3_finalize(statement);
+        if (rc == SQLITE_OK)
+            return;
+        std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+    }
+
+    constexpr Statement& operator = (const Statement&) = delete;
+    constexpr Statement& operator = (Statement&& other) noexcept {
+        std::swap(statement, other.statement);
+        return *this;
+    }
+
+    constexpr bool isPrepared() const {
+        return statement != nullptr;
+    }
+
+    void clear() {
+        if (statement) {
+            int rc = sqlite3_clear_bindings(statement);
+            if (rc == SQLITE_OK)
+                return;
+            std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+        } else {
+            std::cerr << "SQLite is not prepared" << std::endl;
+        }
+    }
+
+    void reset() {
+        if (statement) {
+            int rc = sqlite3_reset(statement);
+            if (rc == SQLITE_OK)
+                return;
+            std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+        } else {
+            std::cerr << "SQLite is not prepared" << std::endl;
+        }
+    }
+};
+
+class Connection {
     sqlite3* connection;
 public:
-    consteval SQLite() : connection(nullptr) {}
-    constexpr SQLite(const SQLite&) = delete;
-    constexpr SQLite(SQLite&& other) noexcept : connection(other.connection) {
+    consteval Connection() : connection(nullptr) {}
+    constexpr Connection(const Connection&) = delete;
+    constexpr Connection(Connection&& other) noexcept : connection(other.connection) {
         other.connection = nullptr;
     }
-    ~SQLite() {
+    ~Connection() {
         int rc = sqlite3_close(connection);
         if (rc == SQLITE_OK)
             return;
         std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
     }
 
-    constexpr SQLite& operator = (const SQLite&) = delete;
-    constexpr SQLite& operator = (SQLite&& other) noexcept {
+    constexpr Connection& operator = (const Connection&) = delete;
+    constexpr Connection& operator = (Connection&& other) noexcept {
         std::swap(connection, other.connection);
         return *this;
     }
@@ -57,8 +107,22 @@ public:
         }
     }
 
-    static SQLite create(const char* filename) {
-        SQLite sqlite(open(filename, SQLITE_OPEN_CREATE));
+    Statement prepare(const char* query, int flags = 0) {
+        if (connection) {
+            Statement sqlite;
+            int rc = sqlite3_prepare_v3(connection, query, -1, flags, &sqlite.statement, nullptr);
+            if (rc == SQLITE_OK)
+                return sqlite;
+            std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+            return {};
+        } else {
+            std::cerr << "SQLite is not connected" << std::endl;
+            return {};
+        }
+    }
+
+    static Connection create(const char* filename) {
+        Connection sqlite(open(filename, SQLITE_OPEN_CREATE));
         if (sqlite.connection) {
             sqlite.exec("PRAGMA application_id = 0x17895E7D;");
             sqlite.exec("PRAGMA user_version = 1;");
@@ -66,9 +130,9 @@ public:
         return sqlite;
     }
 
-    static SQLite open(const char* filename, int flags = 0) {
+    static Connection open(const char* filename, int flags = 0) {
         flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_EXRESCODE;
-        SQLite sqlite;
+        Connection sqlite;
         int rc = sqlite3_open_v2(filename, &sqlite.connection, flags, nullptr);
         if (rc == SQLITE_OK) {
             sqlite.exec("PRAGMA locking_mode = EXCLUSIVE;");
@@ -82,9 +146,10 @@ public:
         }
     }
 
-    static SQLite memory() {
+    static Connection memory() {
         return create(":memory:");
     }
 };
+}
 
 #endif
