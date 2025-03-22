@@ -18,10 +18,60 @@
 #ifndef BLACKNET_WALLET_SQLITE_H
 #define BLACKNET_WALLET_SQLITE_H
 
+#include <cstddef>
+#include <functional>
+#include <span>
+#include <string_view>
 #include <utility>
 #include <sqlite3.h>
 
 namespace sqlite {
+class Evaluator {
+    friend class Statement;
+    sqlite3_stmt* const statement;
+
+    constexpr Evaluator(sqlite3_stmt* const statement) : statement(statement) {}
+
+    void reset() {
+        int rc = sqlite3_reset(statement);
+        if (rc == SQLITE_OK)
+            return;
+        std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+    }
+public:
+    constexpr Evaluator() = delete;
+    constexpr Evaluator(const Evaluator&) = delete;
+    constexpr Evaluator(Evaluator&&) = delete;
+    ~Evaluator() {
+        reset();
+    }
+
+    constexpr Evaluator& operator = (const Evaluator&) = delete;
+    constexpr Evaluator& operator = (Evaluator&&) = delete;
+
+    int columns() {
+        return sqlite3_column_count(statement);
+    }
+
+    std::span<const std::byte> blob(int column) {
+        return {
+            reinterpret_cast<const std::byte*>(sqlite3_column_blob(statement, column)),
+            static_cast<std::size_t>(sqlite3_column_bytes(statement, column))
+        };
+    }
+
+    int64_t integer(int column) {
+        return sqlite3_column_int64(statement, column);
+    }
+
+    std::string_view text(int column) {
+        return {
+            reinterpret_cast<const char*>(sqlite3_column_text(statement, column)),
+            static_cast<std::size_t>(sqlite3_column_bytes(statement, column))
+        };
+    }
+};
+
 class Statement {
     friend class Connection;
     sqlite3_stmt* statement;
@@ -48,20 +98,28 @@ public:
         return statement != nullptr;
     }
 
-    void clear() {
+    void evaluate(const std::function<void(Evaluator&)>& fun) {
         if (statement) {
-            int rc = sqlite3_clear_bindings(statement);
-            if (rc == SQLITE_OK)
-                return;
-            std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+            Evaluator evaluator(statement);
+            while (true) {
+                int rc = sqlite3_step(statement);
+                if (rc == SQLITE_ROW) {
+                    fun(evaluator);
+                } else if (rc == SQLITE_DONE) {
+                    break;
+                } else {
+                    std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+                    break;
+                }
+            }
         } else {
             std::cerr << "SQLite is not prepared" << std::endl;
         }
     }
 
-    void reset() {
+    void clear() {
         if (statement) {
-            int rc = sqlite3_reset(statement);
+            int rc = sqlite3_clear_bindings(statement);
             if (rc == SQLITE_OK)
                 return;
             std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;

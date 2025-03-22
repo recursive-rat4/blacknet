@@ -26,6 +26,10 @@ BOOST_AUTO_TEST_CASE(test) {
     BOOST_TEST_REQUIRE(connection.isConnected());
     auto statement = connection.prepare("PRAGMA locking_mode;");
     BOOST_TEST_REQUIRE(statement.isPrepared());
+    statement.evaluate([](auto& evaluator) {
+        BOOST_TEST_REQUIRE(evaluator.columns() == 1);
+        BOOST_TEST(evaluator.text(0) == "exclusive");
+    });
 }
 
 BOOST_AUTO_TEST_SUITE_END()
