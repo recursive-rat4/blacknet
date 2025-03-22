@@ -19,31 +19,85 @@
 #define BLACKNET_WALLET_SQLITE_H
 
 #include <cstddef>
+#include <exception>
 #include <functional>
 #include <span>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <sqlite3.h>
 
 namespace sqlite {
+class Exception : public std::exception {
+    std::string message;
+public:
+    Exception(int rc) : message(sqlite3_errstr(rc)) {}
+    Exception(const std::string& message) : message(message) {}
+    virtual const char* what() const noexcept override {
+        return message.c_str();
+    }
+};
+
+template<typename Fun, typename... Args>
+void ok(const Fun& fun, Args&&... args) {
+    int rc = fun(std::forward<Args>(args)...);
+    if (rc == SQLITE_OK)
+        return;
+    throw Exception(rc);
+}
+
+template<typename Fun, typename... Args>
+void pass(const Fun& fun, Args&&... args) {
+    int rc = fun(std::forward<Args>(args)...);
+    if (rc == SQLITE_OK)
+        return;
+    std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+}
+
+class Binder {
+    friend class Statement;
+    sqlite3_stmt* const statement;
+
+    constexpr Binder(sqlite3_stmt* const statement) : statement(statement) {}
+public:
+    constexpr Binder() = delete;
+    constexpr Binder(const Binder&) = delete;
+    constexpr Binder(Binder&&) = delete;
+    ~Binder() {
+        pass(sqlite3_clear_bindings, statement);
+    }
+
+    constexpr Binder& operator = (const Binder&) = delete;
+    constexpr Binder& operator = (Binder&&) = delete;
+
+    void blob(int column, const std::span<const std::byte>& value) {
+        ok(sqlite3_bind_blob, statement, column, value.data(), value.size(), SQLITE_TRANSIENT);
+    }
+
+    void integer(int column, int64_t value) {
+        ok(sqlite3_bind_int64, statement, column, value);
+    }
+
+    void null(int column) {
+        ok(sqlite3_bind_null, statement, column);
+    }
+
+    void text(int column, const std::string_view& value) {
+        ok(sqlite3_bind_text, statement, column, value.data(), value.size(), SQLITE_TRANSIENT);
+    }
+};
+
 class Evaluator {
     friend class Statement;
     sqlite3_stmt* const statement;
 
     constexpr Evaluator(sqlite3_stmt* const statement) : statement(statement) {}
-
-    void reset() {
-        int rc = sqlite3_reset(statement);
-        if (rc == SQLITE_OK)
-            return;
-        std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
-    }
 public:
     constexpr Evaluator() = delete;
     constexpr Evaluator(const Evaluator&) = delete;
     constexpr Evaluator(Evaluator&&) = delete;
     ~Evaluator() {
-        reset();
+        pass(sqlite3_reset, statement);
     }
 
     constexpr Evaluator& operator = (const Evaluator&) = delete;
@@ -82,10 +136,7 @@ public:
         other.statement = nullptr;
     }
     ~Statement() {
-        int rc = sqlite3_finalize(statement);
-        if (rc == SQLITE_OK)
-            return;
-        std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+        pass(sqlite3_finalize, statement);
     }
 
     constexpr Statement& operator = (const Statement&) = delete;
@@ -98,6 +149,13 @@ public:
         return statement != nullptr;
     }
 
+    Binder binder() {
+        if (statement)
+            return { statement };
+        else
+            throw Exception("SQLite statement is not prepared");
+    }
+
     void evaluate(const std::function<void(Evaluator&)>& fun) {
         if (statement) {
             Evaluator evaluator(statement);
@@ -108,23 +166,11 @@ public:
                 } else if (rc == SQLITE_DONE) {
                     break;
                 } else {
-                    std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
-                    break;
+                    throw Exception(rc);
                 }
             }
         } else {
-            std::cerr << "SQLite is not prepared" << std::endl;
-        }
-    }
-
-    void clear() {
-        if (statement) {
-            int rc = sqlite3_clear_bindings(statement);
-            if (rc == SQLITE_OK)
-                return;
-            std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
-        } else {
-            std::cerr << "SQLite is not prepared" << std::endl;
+            throw Exception("SQLite statement is not prepared");
         }
     }
 };
@@ -138,10 +184,7 @@ public:
         other.connection = nullptr;
     }
     ~Connection() {
-        int rc = sqlite3_close(connection);
-        if (rc == SQLITE_OK)
-            return;
-        std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+        pass(sqlite3_close, connection);
     }
 
     constexpr Connection& operator = (const Connection&) = delete;
@@ -156,52 +199,38 @@ public:
 
     void exec(const char* query) {
         if (connection) {
-            int rc = sqlite3_exec(connection, query, nullptr, nullptr, nullptr);
-            if (rc == SQLITE_OK)
-                return;
-            std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+            ok(sqlite3_exec, connection, query, nullptr, nullptr, nullptr);
         } else {
-            std::cerr << "SQLite is not connected" << std::endl;
+            throw Exception("SQLite is not connected");
         }
     }
 
     Statement prepare(const char* query, int flags = 0) {
         if (connection) {
             Statement sqlite;
-            int rc = sqlite3_prepare_v3(connection, query, -1, flags, &sqlite.statement, nullptr);
-            if (rc == SQLITE_OK)
-                return sqlite;
-            std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
-            return {};
+            ok(sqlite3_prepare_v3, connection, query, -1, flags, &sqlite.statement, nullptr);
+            return sqlite;
         } else {
-            std::cerr << "SQLite is not connected" << std::endl;
-            return {};
+            throw Exception("SQLite is not connected");
         }
     }
 
     static Connection create(const char* filename) {
         Connection sqlite(open(filename, SQLITE_OPEN_CREATE));
-        if (sqlite.connection) {
-            sqlite.exec("PRAGMA application_id = 0x17895E7D;");
-            sqlite.exec("PRAGMA user_version = 1;");
-        }
+        sqlite.exec("PRAGMA application_id = 0x17895E7D;");
+        sqlite.exec("PRAGMA user_version = 1;");
         return sqlite;
     }
 
     static Connection open(const char* filename, int flags = 0) {
         flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_EXRESCODE;
         Connection sqlite;
-        int rc = sqlite3_open_v2(filename, &sqlite.connection, flags, nullptr);
-        if (rc == SQLITE_OK) {
-            sqlite.exec("PRAGMA locking_mode = EXCLUSIVE;");
-            sqlite.exec("PRAGMA fullfsync = TRUE;");
-            sqlite.exec("PRAGMA synchronous = FULL;");
-            sqlite.exec("PRAGMA journal_mode = DELETE;");
-            return sqlite;
-        } else {
-            std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
-            return {};
-        }
+        ok(sqlite3_open_v2, filename, &sqlite.connection, flags, nullptr);
+        sqlite.exec("PRAGMA locking_mode = EXCLUSIVE;");
+        sqlite.exec("PRAGMA fullfsync = TRUE;");
+        sqlite.exec("PRAGMA synchronous = FULL;");
+        sqlite.exec("PRAGMA journal_mode = DELETE;");
+        return sqlite;
     }
 
     static Connection memory() {
