@@ -216,20 +216,13 @@ public:
     }
 
     static Connection create(const char* filename) {
-        Connection sqlite(open(filename, SQLITE_OPEN_CREATE));
-        sqlite.exec("PRAGMA application_id = 0x17895E7D;");
-        sqlite.exec("PRAGMA user_version = 1;");
-        return sqlite;
+        return open(filename, SQLITE_OPEN_CREATE);
     }
 
     static Connection open(const char* filename, int flags = 0) {
         flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_EXRESCODE;
         Connection sqlite;
         ok(sqlite3_open_v2, filename, &sqlite.connection, flags, nullptr);
-        sqlite.exec("PRAGMA locking_mode = EXCLUSIVE;");
-        sqlite.exec("PRAGMA fullfsync = TRUE;");
-        sqlite.exec("PRAGMA synchronous = FULL;");
-        sqlite.exec("PRAGMA journal_mode = DELETE;");
         return sqlite;
     }
 

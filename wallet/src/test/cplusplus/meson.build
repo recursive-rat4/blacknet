@@ -24,6 +24,7 @@ endif
 wallet_test_sources = [
     'sqlite.cpp',
     'test.cpp',
+    'wallet.cpp',
 ]
 wallet_test_includes = wallet_main_includes
 wallet_test_dependencies = [wallet_main_dependencies, boost_test_dependency]
