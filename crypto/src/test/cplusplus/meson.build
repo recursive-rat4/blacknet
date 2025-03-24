@@ -28,6 +28,7 @@ crypto_test_sources = [
     'blacklemon.cpp',
     'byte.cpp',
     'ccsbuilder.cpp',
+    'chacha20.cpp',
     'customizableconstraintsystem.cpp',
     'dilithium.cpp',
     'eqextension.cpp',

@@ -53,7 +53,7 @@ void write(std::byte* memory, Integer integer) {
         std::endian::native == std::endian::little,
         "Mixed endian is not implemented"
     );
-    std::byte* const pointer = reinterpret_cast<std::byte*>(&integer);
+    const std::byte* const pointer = reinterpret_cast<const std::byte*>(&integer);
     if constexpr (endian == std::endian::native)
         std::ranges::copy(pointer, pointer + sizeof(Integer), memory);
     else
