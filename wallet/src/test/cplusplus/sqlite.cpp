@@ -24,36 +24,36 @@ BOOST_AUTO_TEST_SUITE(SQLites)
 BOOST_AUTO_TEST_CASE(test) {
     auto connection = sqlite::Connection::memory();
     BOOST_TEST_REQUIRE(connection.isConnected());
-    connection.exec("CREATE TABLE kv(key INTEGER PRIMARY KEY, value TEXT);");
-    connection.exec("INSERT INTO kv VALUES(0, 'zero');");
-    connection.exec("INSERT INTO kv VALUES(4, 'four');");
+    connection.execute("CREATE TABLE kv(key INTEGER PRIMARY KEY, value TEXT);");
+    connection.execute("INSERT INTO kv VALUES(0, 'zero');");
+    connection.execute("INSERT INTO kv VALUES(4, 'four');");
     std::size_t count = 0;
     auto statement = connection.prepare("SELECT value FROM kv WHERE key = ?;");
     BOOST_TEST_REQUIRE(statement.isPrepared());
     {
         auto binder = statement.binder();
         binder.integer(1, 0);
-        statement.evaluate([&count](auto& evaluator) {
-            BOOST_TEST_REQUIRE(evaluator.columns() == 1);
-            BOOST_TEST(evaluator.text(0) == "zero");
+        for (auto&& row : statement.evaluate()) {
+            BOOST_TEST_REQUIRE(row.columns() == 1);
+            BOOST_TEST(row.text(0) == "zero");
             ++count;
-        });
+        }
     } {
         auto binder = statement.binder();
         binder.integer(1, 2);
-        statement.evaluate([&count](auto& evaluator) {
-            BOOST_TEST_REQUIRE(evaluator.columns() == 1);
-            BOOST_TEST(evaluator.text(0) == "two");
+        for (auto&& row : statement.evaluate()) {
+            BOOST_TEST_REQUIRE(row.columns() == 1);
+            BOOST_TEST(row.text(0) == "two");
             ++count;
-        });
+        }
     } {
         auto binder = statement.binder();
         binder.integer(1, 4);
-        statement.evaluate([&count](auto& evaluator) {
-            BOOST_TEST_REQUIRE(evaluator.columns() == 1);
-            BOOST_TEST(evaluator.text(0) == "four");
+        for (auto&& row : statement.evaluate()) {
+            BOOST_TEST_REQUIRE(row.columns() == 1);
+            BOOST_TEST(row.text(0) == "four");
             ++count;
-        });
+        }
     }
     BOOST_TEST(count == 2);
 }

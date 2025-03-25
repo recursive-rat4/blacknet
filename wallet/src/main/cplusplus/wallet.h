@@ -18,8 +18,11 @@
 #ifndef BLACKNET_WALLET_WALLET_H
 #define BLACKNET_WALLET_WALLET_H
 
+#include <cstddef>
 #include <exception>
+#include <span>
 #include <string>
+#include <vector>
 
 #include "sqlite.h"
 
@@ -34,18 +37,45 @@ public:
 
 class Wallet {
     sqlite::Connection connection;
+    sqlite::Statement select_transaction;
+    sqlite::Statement insert_transaction;
 
-    constexpr Wallet(sqlite::Connection&& connection) : connection(std::move(connection)) {}
+    Wallet(sqlite::Connection&& connection) :
+        connection(std::move(connection)),
+        select_transaction(this->
+            connection.prepare("SELECT bytes FROM transactions WHERE id = ?;")
+        ),
+        insert_transaction(this->
+            connection.prepare("INSERT INTO transactions VALUES(?, ?);")
+        ) {}
 public:
     constexpr Wallet() = delete;
     constexpr Wallet(const Wallet&) = delete;
-    constexpr Wallet(Wallet&& other) noexcept
-        : connection(std::move(other.connection)) {}
+    constexpr Wallet(Wallet&&) noexcept = default;
 
     constexpr Wallet& operator = (const Wallet&) = delete;
-    constexpr Wallet& operator = (Wallet&& other) noexcept {
-        connection = std::move(other.connection);
-        return *this;
+    constexpr Wallet& operator = (Wallet&&) noexcept = default;
+
+    std::vector<std::byte> transaction(
+        const std::span<const std::byte>& id
+    ) {
+        auto binder = select_transaction.binder();
+        binder.blob(1, id);
+        for (auto&& row : select_transaction.evaluate()) {
+            auto&& bytes = row.blob(0);
+            return { bytes.cbegin(), bytes.cend() };
+        }
+        throw WalletException("Transaction not found");
+    }
+
+    void transaction(
+        const std::span<const std::byte>& id,
+        const std::span<const std::byte>& bytes
+    ) {
+        auto binder = insert_transaction.binder();
+        binder.blob(1, id);
+        binder.blob(2, bytes);
+        insert_transaction.execute();
     }
 
     static Wallet create(const char* filename) {
@@ -67,31 +97,38 @@ public:
     }
 private:
     static void configure(sqlite::Connection& connection) {
-        connection.exec("PRAGMA locking_mode = EXCLUSIVE;");
-        connection.exec("PRAGMA fullfsync = TRUE;");
-        connection.exec("PRAGMA synchronous = FULL;");
-        connection.exec("PRAGMA journal_mode = DELETE;");
+        connection.execute("PRAGMA locking_mode = EXCLUSIVE;");
+        connection.execute("PRAGMA fullfsync = TRUE;");
+        connection.execute("PRAGMA synchronous = FULL;");
+        connection.execute("PRAGMA journal_mode = DELETE;");
     }
 
     static void checkMagic(sqlite::Connection& connection) {
         int64_t magic = 0;
         auto statement = connection.prepare("PRAGMA application_id;");
-        statement.evaluate([&magic](auto& evaluator) {
-            magic = evaluator.integer(0);
-        });
+        for (auto&& row : statement.evaluate()) {
+            magic = row.integer(0);
+        }
         if (magic == 0x17895E7D)
             return;
         throw WalletException("This SQLite database doesn't look like Blacknet wallet");
     }
 
     static void setMagic(sqlite::Connection& connection) {
-        connection.exec("PRAGMA application_id = 0x17895E7D;");
-        connection.exec("PRAGMA user_version = 1;");
+        connection.execute("PRAGMA application_id = 0x17895E7D;");
+        connection.execute("PRAGMA user_version = 1;");
+    }
+
+    static void createSchema(sqlite::Connection& connection) {
+        connection.execute(
+            "CREATE TABLE transactions(id BLOB PRIMARY KEY, bytes BLOB NOT NULL) STRICT;"
+        );
     }
 
     static Wallet initialize(sqlite::Connection&& connection) {
         configure(connection);
         setMagic(connection);
+        createSchema(connection);
         return connection;
     }
 };

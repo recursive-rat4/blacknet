@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,10 @@
 #define BLACKNET_CRYPTO_UTIL_H
 
 #include <array>
+#include <iomanip>
 #include <utility>
 #include <vector>
+#include <boost/io/ios_state.hpp>
 #include <boost/io/ostream_joiner.hpp>
 
 namespace util {
@@ -150,6 +152,14 @@ namespace std {
     std::ostream& operator << (std::ostream& out, const std::pair<A, B>& val)
     {
         return out << '(' << std::get<0>(val) << ", " << std::get<1>(val) << ')';
+    }
+
+    std::ostream& operator << (std::ostream& out, const std::byte val)
+    {
+        boost::io::ios_all_saver ias(out);
+        return out << "0x"
+            << std::hex << std::setfill('0') << std::setw(sizeof(std::byte) * 2)
+            << static_cast<unsigned>(val);
     }
 }
 

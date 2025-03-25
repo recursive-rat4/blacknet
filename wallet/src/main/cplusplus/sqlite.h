@@ -20,7 +20,7 @@
 
 #include <cstddef>
 #include <exception>
-#include <functional>
+#include <generator>
 #include <span>
 #include <string>
 #include <string_view>
@@ -74,6 +74,10 @@ public:
         ok(sqlite3_bind_blob, statement, column, value.data(), value.size(), SQLITE_TRANSIENT);
     }
 
+    void real(int column, double value) {
+        ok(sqlite3_bind_double, statement, column, value);
+    }
+
     void integer(int column, int64_t value) {
         ok(sqlite3_bind_int64, statement, column, value);
     }
@@ -84,6 +88,46 @@ public:
 
     void text(int column, const std::string_view& value) {
         ok(sqlite3_bind_text, statement, column, value.data(), value.size(), SQLITE_TRANSIENT);
+    }
+};
+
+class Row {
+    friend class Evaluator;
+    sqlite3_stmt* const statement;
+
+    constexpr Row(sqlite3_stmt* const statement) : statement(statement) {}
+public:
+    constexpr Row() = delete;
+    constexpr Row(const Row&) = delete;
+    constexpr Row(Row&&) = delete;
+
+    constexpr Row& operator = (const Row&) = delete;
+    constexpr Row& operator = (Row&&) = delete;
+
+    int columns() {
+        return sqlite3_column_count(statement);
+    }
+
+    std::span<const std::byte> blob(int column) {
+        return {
+            reinterpret_cast<const std::byte*>(sqlite3_column_blob(statement, column)),
+            static_cast<std::size_t>(sqlite3_column_bytes(statement, column))
+        };
+    }
+
+    double real(int column) {
+        return sqlite3_column_double(statement, column);
+    }
+
+    int64_t integer(int column) {
+        return sqlite3_column_int64(statement, column);
+    }
+
+    std::string_view text(int column) {
+        return {
+            reinterpret_cast<const char*>(sqlite3_column_text(statement, column)),
+            static_cast<std::size_t>(sqlite3_column_bytes(statement, column))
+        };
     }
 };
 
@@ -103,26 +147,8 @@ public:
     constexpr Evaluator& operator = (const Evaluator&) = delete;
     constexpr Evaluator& operator = (Evaluator&&) = delete;
 
-    int columns() {
-        return sqlite3_column_count(statement);
-    }
-
-    std::span<const std::byte> blob(int column) {
-        return {
-            reinterpret_cast<const std::byte*>(sqlite3_column_blob(statement, column)),
-            static_cast<std::size_t>(sqlite3_column_bytes(statement, column))
-        };
-    }
-
-    int64_t integer(int column) {
-        return sqlite3_column_int64(statement, column);
-    }
-
-    std::string_view text(int column) {
-        return {
-            reinterpret_cast<const char*>(sqlite3_column_text(statement, column)),
-            static_cast<std::size_t>(sqlite3_column_bytes(statement, column))
-        };
+    Row row() {
+        return statement;
     }
 };
 
@@ -151,18 +177,36 @@ public:
 
     Binder binder() {
         if (statement)
-            return { statement };
+            return statement;
         else
             throw Exception("SQLite statement is not prepared");
     }
 
-    void evaluate(const std::function<void(Evaluator&)>& fun) {
+    std::generator<Row> evaluate() {
         if (statement) {
             Evaluator evaluator(statement);
             while (true) {
                 int rc = sqlite3_step(statement);
                 if (rc == SQLITE_ROW) {
-                    fun(evaluator);
+                    co_yield evaluator.row();
+                } else if (rc == SQLITE_DONE) {
+                    co_return;
+                } else {
+                    throw Exception(rc);
+                }
+            }
+        } else {
+            throw Exception("SQLite statement is not prepared");
+        }
+    }
+
+    void execute() {
+        if (statement) {
+            Evaluator evaluator(statement);
+            while (true) {
+                int rc = sqlite3_step(statement);
+                if (rc == SQLITE_ROW) {
+                    continue;
                 } else if (rc == SQLITE_DONE) {
                     break;
                 } else {
@@ -197,7 +241,7 @@ public:
         return connection != nullptr;
     }
 
-    void exec(const char* query) {
+    void execute(const char* query) {
         if (connection) {
             ok(sqlite3_exec, connection, query, nullptr, nullptr, nullptr);
         } else {

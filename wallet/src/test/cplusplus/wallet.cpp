@@ -17,13 +17,21 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "byte.h"
 #include "sqlite.h"
+#include "util.h"
 #include "wallet.h"
 
 BOOST_AUTO_TEST_SUITE(Wallets)
 
 BOOST_AUTO_TEST_CASE(ephemeral) {
     auto wallet = Wallet::ephemeral();
+
+    auto txId = byte::arrayS<2>({ 1, 1 });
+    auto txBytes = byte::arrayS<4>({ 10, 11, 12, 13 });
+    wallet.transaction(txId, txBytes);
+    auto bytes = wallet.transaction(txId);
+    BOOST_CHECK_EQUAL_COLLECTIONS(txBytes.begin(), txBytes.end(), bytes.begin(), bytes.end());
 }
 
 BOOST_AUTO_TEST_CASE(magic) {
