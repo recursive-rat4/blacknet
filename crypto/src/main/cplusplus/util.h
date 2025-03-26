@@ -154,7 +154,7 @@ namespace std {
         return out << '(' << std::get<0>(val) << ", " << std::get<1>(val) << ')';
     }
 
-    std::ostream& operator << (std::ostream& out, const std::byte val)
+    inline std::ostream& operator << (std::ostream& out, const std::byte val)
     {
         boost::io::ios_all_saver ias(out);
         return out << "0x"
