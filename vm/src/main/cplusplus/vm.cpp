@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "blacknet-config.h"
+
 int main(int argc, char* argv[]) {
     return 0;
 }

@@ -37,6 +37,13 @@ if get_option('benchmarks')
     google_benchmark_dependency = dependency('benchmark', version : '>=1.1.0')
 endif
 
+configure_file(output : 'blacknet-config.h',
+    configuration : {
+        'BLACKNET_VERSION_STRING' : '"' + meson.project_version() + '"',
+    }
+)
+config_includes = include_directories('.')
+
 subdir('crypto')
 subdir('vm')
 subdir('wallet')

@@ -15,7 +15,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-vm_main_includes = [crypto_main_includes, include_directories('.')]
+vm_main_includes = [crypto_main_includes, config_includes, include_directories('.')]
 vm_main_dependencies = crypto_main_dependencies
 vm_main_sources = [
     'vm.cpp',
