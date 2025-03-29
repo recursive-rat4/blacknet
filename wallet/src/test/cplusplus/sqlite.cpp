@@ -21,12 +21,44 @@
 
 BOOST_AUTO_TEST_SUITE(SQLites)
 
-BOOST_AUTO_TEST_CASE(test) {
+BOOST_AUTO_TEST_CASE(Connection) {
     auto connection = sqlite::Connection::memory();
     BOOST_TEST_REQUIRE(connection.isConnected());
     connection.execute("CREATE TABLE kv(key INTEGER PRIMARY KEY, value TEXT);");
     connection.execute("INSERT INTO kv VALUES(0, 'zero');");
     connection.execute("INSERT INTO kv VALUES(4, 'four');");
+    std::size_t count = 0;
+    {
+        auto rows = connection.evaluate("SELECT value FROM kv WHERE key = 0;");
+        for (auto&& row : rows) {
+            BOOST_TEST_REQUIRE(row.columns() == 1);
+            BOOST_TEST(row.text(0) == "zero");
+            ++count;
+        }
+    } {
+        auto rows = connection.evaluate("SELECT value FROM kv WHERE key = 2;");
+        for (auto&& row : rows) {
+            BOOST_TEST_REQUIRE(row.columns() == 1);
+            BOOST_TEST(row.text(0) == "two");
+            ++count;
+        }
+    } {
+        auto rows = connection.evaluate("SELECT value FROM kv WHERE key = 4;");
+        for (auto&& row : rows) {
+            BOOST_TEST_REQUIRE(row.columns() == 1);
+            BOOST_TEST(row.text(0) == "four");
+            ++count;
+        }
+    }
+    BOOST_TEST(count == 2);
+}
+
+BOOST_AUTO_TEST_CASE(Statement) {
+    auto connection = sqlite::Connection::memory();
+    BOOST_TEST_REQUIRE(connection.isConnected());
+    connection.prepare("CREATE TABLE kv(key INTEGER PRIMARY KEY, value TEXT);").execute();
+    connection.prepare("INSERT INTO kv VALUES(0, 'zero');").execute();
+    connection.prepare("INSERT INTO kv VALUES(4, 'four');").execute();
     std::size_t count = 0;
     auto statement = connection.prepare("SELECT value FROM kv WHERE key = ?;");
     BOOST_TEST_REQUIRE(statement.isPrepared());

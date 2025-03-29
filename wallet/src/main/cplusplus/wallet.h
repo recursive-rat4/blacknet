@@ -105,8 +105,8 @@ private:
 
     static void checkMagic(sqlite::Connection& connection) {
         int64_t magic = 0;
-        auto statement = connection.prepare("PRAGMA application_id;");
-        for (auto&& row : statement.evaluate()) {
+        auto rows = connection.evaluate("PRAGMA application_id;");
+        for (auto&& row : rows) {
             magic = row.integer(0);
         }
         if (magic == 0x17895E7D)

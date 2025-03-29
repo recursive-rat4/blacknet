@@ -133,6 +133,7 @@ public:
 
 class Evaluator {
     friend class Statement;
+    friend class Connection;
     sqlite3_stmt* const statement;
 
     constexpr Evaluator(sqlite3_stmt* const statement) : statement(statement) {}
@@ -241,6 +242,21 @@ public:
         return connection != nullptr;
     }
 
+    std::generator<Row> evaluate(const char* query) {
+        Statement sqlite(prepareImpl(query));
+        Evaluator evaluator(sqlite.statement);
+        while (true) {
+            int rc = sqlite3_step(sqlite.statement);
+            if (rc == SQLITE_ROW) {
+                co_yield evaluator.row();
+            } else if (rc == SQLITE_DONE) {
+                co_return;
+            } else {
+                throw Exception(rc);
+            }
+        }
+    }
+
     void execute(const char* query) {
         if (connection) {
             ok(sqlite3_exec, connection, query, nullptr, nullptr, nullptr);
@@ -249,7 +265,30 @@ public:
         }
     }
 
-    Statement prepare(const char* query, int flags = 0) {
+    Statement prepare(const char* query) {
+        return prepareImpl(query, SQLITE_PREPARE_PERSISTENT);
+    }
+
+    static Connection create(const char* filename) {
+        return openImpl(filename, SQLITE_OPEN_CREATE);
+    }
+
+    static Connection open(const char* filename) {
+        return openImpl(filename);
+    }
+
+    static Connection memory() {
+        return create(":memory:");
+    }
+private:
+    static Connection openImpl(const char* filename, int flags = 0) {
+        flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_EXRESCODE;
+        Connection sqlite;
+        ok(sqlite3_open_v2, filename, &sqlite.connection, flags, nullptr);
+        return sqlite;
+    }
+
+    Statement prepareImpl(const char* query, int flags = 0) {
         if (connection) {
             Statement sqlite;
             ok(sqlite3_prepare_v3, connection, query, -1, flags, &sqlite.statement, nullptr);
@@ -257,21 +296,6 @@ public:
         } else {
             throw Exception("SQLite is not connected");
         }
-    }
-
-    static Connection create(const char* filename) {
-        return open(filename, SQLITE_OPEN_CREATE);
-    }
-
-    static Connection open(const char* filename, int flags = 0) {
-        flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_EXRESCODE;
-        Connection sqlite;
-        ok(sqlite3_open_v2, filename, &sqlite.connection, flags, nullptr);
-        return sqlite;
-    }
-
-    static Connection memory() {
-        return create(":memory:");
     }
 };
 }
