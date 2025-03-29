@@ -15,6 +15,6 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-option('tests', type: 'boolean', value: true, description: 'Unit testing')
+option('tests', type: 'boolean', value: false, description: 'Unit testing')
 option('tests_report_junit', type: 'boolean', value: false, description: 'Write results of unit testing in JUnit format')
 option('benchmarks', type: 'boolean', value: false, description: 'Microbenchmarking')
