@@ -25,12 +25,13 @@ project('blacknet', 'cpp',
     ],
 )
 
-boost_random_dependency = dependency('boost', modules : ['random'], version : '>=1.47.0')
+boost_random_dependency = dependency('boost', modules : 'random', version : '>=1.47.0')
 oneapi_tbb_dependency = dependency('tbb', version : '>=2020.0.0')
 sqlite_dependency = dependency('sqlite3', version : '>=3.37.2')
+qt_dependency = dependency('qt6', modules : 'Widgets', version : '>=6.2.5', required : get_option('desktop'))
 
 if get_option('tests')
-    boost_test_dependency = dependency('boost', modules: ['unit_test_framework'], version : '>=1.67.0')
+    boost_test_dependency = dependency('boost', modules : 'unit_test_framework', version : '>=1.67.0')
 endif
 
 if get_option('benchmarks')
@@ -47,3 +48,7 @@ config_includes = include_directories('.')
 subdir('crypto')
 subdir('vm')
 subdir('wallet')
+
+if qt_dependency.found()
+    subdir('desktop')
+endif

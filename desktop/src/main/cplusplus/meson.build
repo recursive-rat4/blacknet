@@ -15,7 +15,16 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-option('tests', type: 'boolean', value: false, description: 'Unit testing')
-option('tests_report_junit', type: 'boolean', value: false, description: 'Write results of unit testing in JUnit format')
-option('benchmarks', type: 'boolean', value: false, description: 'Microbenchmarking')
-option('desktop', type: 'feature', value: 'auto', description: 'Desktop GUI')
+desktop_main_includes = [wallet_main_includes, config_includes, include_directories('.')]
+desktop_main_dependencies = [wallet_main_dependencies, qt_dependency]
+desktop_main_sources = [
+    'desktop.cpp',
+]
+desktop_main_bin = executable(
+    'blacknet-desktop',
+    [desktop_main_sources, desktop_main_resources],
+    implicit_include_directories : false,
+    include_directories : desktop_main_includes,
+    install : true,
+    dependencies : desktop_main_dependencies,
+)

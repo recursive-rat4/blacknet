@@ -15,7 +15,11 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-option('tests', type: 'boolean', value: false, description: 'Unit testing')
-option('tests_report_junit', type: 'boolean', value: false, description: 'Write results of unit testing in JUnit format')
-option('benchmarks', type: 'boolean', value: false, description: 'Microbenchmarking')
-option('desktop', type: 'feature', value: 'auto', description: 'Desktop GUI')
+qt = import('qt6')
+
+desktop_main_resources = qt.compile_resources(
+    sources : 'resources.qrc',
+    extra_args : '-no-compress',
+)
+
+subdir('cplusplus')
