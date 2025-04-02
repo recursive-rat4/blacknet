@@ -197,7 +197,8 @@ using Poseidon2Solinas62Sponge = Sponge<
     8,
     4,
     IV,
-    Poseidon2<Poseidon2Solinas62SpongeParams>
+    Poseidon2<Poseidon2Solinas62SpongeParams>,
+    SpongeMode::Overwrite
 >;
 
 #endif

@@ -33,37 +33,54 @@ public:
     }
 };
 
+enum SpongeMode {
+    // Original
+    Xor,
+    // Generalized
+    Add,
+    // https://eprint.iacr.org/2008/263
+    Overwrite,
+};
+
 template<
     typename E,
     std::size_t R,
     std::size_t C,
     std::array<E, C> IV,
-    typename F
+    typename F,
+    SpongeMode mode
 >
 requires(R + C == F::width())
 struct Sponge {
     using Z = E;
 
-    enum Phase { ABSORB, SQUEEZE };
+    enum Phase { Absorb, Squeeze };
 
     Phase phase;
     std::size_t position;
     std::array<E, R+C> state;
 
-    constexpr Sponge() : phase(ABSORB), position(0) {
+    constexpr Sponge() : phase(Absorb), position(0) {
         std::ranges::fill_n(state.begin(), R, E(0));
         std::ranges::copy(IV, state.begin() + R);
     }
 
     constexpr void absorb(const E& e) {
-        if (phase == SQUEEZE) {
+        if (phase == Squeeze) {
             throw SpongeException("Cannot absorb during squeeze");
         } else if (position == R) {
             F::permute(state);
             position = 0;
         }
-        // Overwrite mode, https://eprint.iacr.org/2008/263
-        state[position++] = e;
+        if constexpr (mode == SpongeMode::Xor) {
+            state[position++] ^= e;
+        } else if constexpr (mode == SpongeMode::Add) {
+            state[position++] += e;
+        } else if constexpr (mode == SpongeMode::Overwrite) {
+            state[position++] = e;
+        } else {
+            static_assert(false, "Not implemented");
+        }
     }
 
     template<std::size_t N>
@@ -73,8 +90,8 @@ struct Sponge {
     }
 
     constexpr const E& squeeze() {
-        if (phase == ABSORB) {
-            phase = SQUEEZE;
+        if (phase == Absorb) {
+            phase = Squeeze;
             pad(position, state);
             F::permute(state);
             position = 0;
@@ -114,19 +131,25 @@ struct Gadget {
     std::size_t position;
     std::array<LinearCombination, R+C> state;
 
-    constexpr Gadget(Circuit& circuit) : circuit(circuit), phase(ABSORB), position(0) {
+    constexpr Gadget(Circuit& circuit) : circuit(circuit), phase(Absorb), position(0) {
         std::ranges::fill_n(state.begin(), R, E(0));
         std::ranges::copy(IV, state.begin() + R);
     }
 
     constexpr void absorb(const LinearCombination& e) {
-        if (phase == SQUEEZE) {
+        if (phase == Squeeze) {
             throw SpongeException("Cannot absorb during squeeze");
         } else if (position == R) {
             F::template circuit<Circuit>::permute(circuit, state);
             position = 0;
         }
-        state[position++] = e;
+        if constexpr (mode == SpongeMode::Add) {
+            state[position++] += e;
+        } else if constexpr (mode == SpongeMode::Overwrite) {
+            state[position++] = e;
+        } else {
+            static_assert(false, "Not implemented");
+        }
     }
 
     template<std::size_t N>
@@ -136,8 +159,8 @@ struct Gadget {
     }
 
     constexpr void squeeze(LinearCombination& e) {
-        if (phase == ABSORB) {
-            phase = SQUEEZE;
+        if (phase == Absorb) {
+            phase = Squeeze;
             pad(position, state);
             F::template circuit<Circuit>::permute(circuit, state);
             position = 0;
@@ -163,13 +186,19 @@ struct Tracer {
     constexpr Tracer(Sponge& sponge, std::vector<E>& trace) : sponge(sponge), trace(trace) {}
 
     constexpr void absorb(const E& e) {
-        if (sponge.phase == SQUEEZE) {
+        if (sponge.phase == Squeeze) {
             throw SpongeException("Cannot absorb during squeeze");
         } else if (sponge.position == R) {
             F::template trace<circuit>::permute(sponge.state, trace);
             sponge.position = 0;
         }
-        sponge.state[sponge.position++] = e;
+        if constexpr (mode == SpongeMode::Add) {
+            sponge.state[sponge.position++] += e;
+        } else if constexpr (mode == SpongeMode::Overwrite) {
+            sponge.state[sponge.position++] = e;
+        } else {
+            static_assert(false, "Not implemented");
+        }
     }
 
     template<std::size_t N>
@@ -179,8 +208,8 @@ struct Tracer {
     }
 
     constexpr void squeeze(E& e) {
-        if (sponge.phase == ABSORB) {
-            sponge.phase = SQUEEZE;
+        if (sponge.phase == Absorb) {
+            sponge.phase = Squeeze;
             pad(sponge.position, sponge.state);
             F::template trace<circuit>::permute(sponge.state, trace);
             sponge.position = 0;

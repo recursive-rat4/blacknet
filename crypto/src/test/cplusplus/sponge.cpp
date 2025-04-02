@@ -25,7 +25,7 @@
 
 BOOST_AUTO_TEST_SUITE(Sponges)
 
-BOOST_AUTO_TEST_CASE(plain) {
+BOOST_AUTO_TEST_CASE(BlacknetPlain) {
     using Z = uint8_t;
     using B = std::array<Z, 4>;
     struct F {
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(plain) {
             for (auto& e : b) e += 1;
         }
     };
-    using S = Sponge<Z, 2, 2, {10, 0}, F>;
+    using S = Sponge<Z, 2, 2, {10, 0}, F, SpongeMode::Overwrite>;
 
     S sponge1;
     BOOST_TEST((B{0, 0, 10, 0} == sponge1.state));
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(plain) {
     BOOST_TEST((B{2, 1, 11, 3} == sponge3.state));
 }
 
-BOOST_AUTO_TEST_CASE(circuit) {
+BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     using Sponge = Poseidon2Solinas62Sponge<{33, 34, 35, 36}>;
     using E = Solinas62Ring;
     const std::size_t T = 12;

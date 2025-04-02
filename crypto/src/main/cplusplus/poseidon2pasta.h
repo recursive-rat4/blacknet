@@ -131,7 +131,8 @@ using Poseidon2PallasSponge = Sponge<
     2,
     1,
     IV,
-    Poseidon2<Poseidon2PallasSpongeParams>
+    Poseidon2<Poseidon2PallasSpongeParams>,
+    SpongeMode::Overwrite
 >;
 
 #endif

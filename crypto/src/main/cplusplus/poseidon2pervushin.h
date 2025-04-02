@@ -273,7 +273,8 @@ using Poseidon2PervushinSponge = Sponge<
     8,
     4,
     IV,
-    Poseidon2<Poseidon2PervushinSpongeParams>
+    Poseidon2<Poseidon2PervushinSpongeParams>,
+    SpongeMode::Overwrite
 >;
 
 using Poseidon2PervushinJive = Jive<
