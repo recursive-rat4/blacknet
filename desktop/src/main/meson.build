@@ -22,4 +22,19 @@ desktop_main_resources = qt.compile_resources(
     extra_args : '-no-compress',
 )
 
+desktop_main_ui = qt.compile_ui(
+    sources : [
+        'resources/addressbookpage.ui',
+        'resources/atomicswappage.ui',
+        'resources/dashboardpage.ui',
+        'resources/historypage.ui',
+        'resources/leasingpage.ui',
+        'resources/mainwindow.ui',
+        'resources/preferencesdialog.ui',
+        'resources/stakingpage.ui',
+        'resources/transferpage.ui',
+        'resources/traymenu.ui',
+    ],
+)
+
 subdir('cplusplus')

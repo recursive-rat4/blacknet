@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>HistoryPage</class>
+ <widget class="QTableView" name="HistoryPage">
+  <property name="selectionMode">
+   <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+  </property>
+  <property name="selectionBehavior">
+   <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+  </property>
+  <attribute name="horizontalHeaderStretchLastSection">
+   <bool>true</bool>
+  </attribute>
+  <attribute name="verticalHeaderVisible">
+   <bool>false</bool>
+  </attribute>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

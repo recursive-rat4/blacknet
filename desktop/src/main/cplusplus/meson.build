@@ -22,7 +22,7 @@ desktop_main_sources = [
 ]
 desktop_main_bin = executable(
     'blacknet-desktop',
-    [desktop_main_sources, desktop_main_resources],
+    [desktop_main_sources, desktop_main_resources, desktop_main_ui],
     implicit_include_directories : false,
     include_directories : desktop_main_includes,
     install : true,

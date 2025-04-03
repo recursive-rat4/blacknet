@@ -23,7 +23,6 @@
         <module>cli</module>
         <module>io</module>
         <module>daemon</module>
-        <module>desktop</module>
         <module>json-rpc</module>
         <module>kernel</module>
         <module>runtime</module>

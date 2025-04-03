@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <width>950</width>
+    <height>550</height>
+   </rect>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QListWidget" name="listWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding"/>
+      </property>
+      <property name="sizeAdjustPolicy">
+       <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
+      </property>
+      <item>
+       <property name="text">
+        <string>Dashboard</string>
+       </property>
+       <property name="toolTip">
+        <string>Overview wallet</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Transfer</string>
+       </property>
+       <property name="toolTip">
+        <string>Send transaction</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Atomic swap</string>
+       </property>
+       <property name="toolTip">
+        <string>Swap tokens</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>History</string>
+       </property>
+       <property name="toolTip">
+        <string>Review transaction history</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Leasing</string>
+       </property>
+       <property name="toolTip">
+        <string>Lease to pool</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Staking</string>
+       </property>
+       <property name="toolTip">
+        <string>Start staking</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Address book</string>
+       </property>
+       <property name="toolTip">
+        <string>Label address</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <widget class="QWidget" name="pageDashboard"/>
+      <widget class="QWidget" name="pageTransfer"/>
+      <widget class="QTabWidget" name="pageAtomicSwap"/>
+      <widget class="QTableView" name="pageHistory"/>
+      <widget class="QTabWidget" name="pageLeasing"/>
+      <widget class="QWidget" name="pageStaking"/>
+      <widget class="QWidget" name="pageAddressBook"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <addaction name="actionPreferences"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="statusTip">
+    <string>Exit program</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::QuitRole</enum>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+   <property name="statusTip">
+    <string>Change preferred settings</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::PreferencesRole</enum>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>listWidget</sender>
+   <signal>currentRowChanged(int)</signal>
+   <receiver>stackedWidget</receiver>
+   <slot>setCurrentIndex(int)</slot>
+  </connection>
+ </connections>
+</ui>

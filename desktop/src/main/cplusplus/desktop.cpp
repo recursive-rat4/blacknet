@@ -20,6 +20,10 @@
 #include <QApplication>
 #include <QIcon>
 
+#include "settings.h"
+#include "trayicon.h"
+#include "mainwindow.h"
+
 class Desktop : public QApplication {
 public:
     Desktop(int& argc, char* argv[]) : QApplication(argc, argv) {
@@ -36,5 +40,8 @@ public:
 
 int main(int argc, char* argv[]) {
     Desktop desktop(argc, argv);
+    Settings settings;
+    MainWindow mainWindow(&desktop, &settings);
+    TrayIcon trayIcon(&desktop, &mainWindow);
     return desktop.exec();
 }
