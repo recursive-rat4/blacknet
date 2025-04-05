@@ -40,7 +40,7 @@ gcc-test:
     - echo "deb http://deb.debian.org/debian bookworm-backports main" >> /etc/apt/sources.list
     - apt-get update
     - apt-get -t bookworm-backports -y install meson
-    - apt-get -y install libbenchmark-dev libboost-dev libboost-random-dev libboost-test-dev libtbb-dev libsqlite3-dev qt6-base-dev
+    - apt-get -y install libbenchmark-dev libboost-dev libboost-random-dev libboost-test-dev libtbb-dev libfmt-dev libspdlog-dev libsqlite3-dev qt6-base-dev
   script:
     - meson setup -Dbuildtype=plain -Dwarning_level=0 -Dtests=true -Dtests_report_junit=true -Dbenchmarks=true build
     - meson compile -C build

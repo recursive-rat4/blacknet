@@ -21,7 +21,10 @@
 #include <array>
 #include <QAbstractTableModel>
 
+#include "logger.h"
+
 class HistoryModel : public QAbstractTableModel {
+    mutable Logger logger{"HistoryModel"};
     constexpr static const std::array header{
         "#", "Date", "Type", "Amount", "Fingerprint"
     };
@@ -61,7 +64,8 @@ public:
 
         //TODO
 
-        throw std::runtime_error("QModelIndex " + std::to_string(index.row()) + ", " + std::to_string(index.column()) + " not in table");
+        logger->error("QModelIndex({}, {}) not in table", index.row(), index.column());
+        return {};
     }
 };
 

@@ -17,9 +17,15 @@
 
 #include "blacknet-config.h"
 
+#include <exception>
+#include <memory>
+#include <fmt/format.h>
+#include <fmt/std.h>
 #include <QApplication>
 #include <QIcon>
+#include <QMessageBox>
 
+#include "logmanager.h"
 #include "settings.h"
 #include "trayicon.h"
 #include "mainwindow.h"
@@ -40,8 +46,24 @@ public:
 
 int main(int argc, char* argv[]) {
     Desktop desktop(argc, argv);
+
+    std::unique_ptr<LogManager> logging;
+    try {
+        logging = std::make_unique<LogManager>(LogManager::Regime::Desktop);
+    } catch (const std::exception& e) {
+#if FMT_VERSION >= 100000
+        auto message = fmt::format("{:t}", e);
+        QMessageBox::critical(nullptr, "Error", QString::fromStdString(message));
+#else
+        QMessageBox::critical(nullptr, "Error", e.what());
+#endif
+        return 1;
+    }
+    Logger logger("main");
+
     Settings settings;
     MainWindow mainWindow(&desktop, &settings);
     TrayIcon trayIcon(&desktop, &mainWindow);
+    logger->info("Welcome to Blacknet Desktop!");
     return desktop.exec();
 }

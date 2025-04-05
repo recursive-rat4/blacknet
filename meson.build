@@ -27,6 +27,8 @@ project('blacknet', 'cpp',
 
 boost_random_dependency = dependency('boost', modules : 'random', version : '>=1.47.0')
 oneapi_tbb_dependency = dependency('tbb', version : '>=2020.0.0')
+fmt_dependency = dependency('fmt', version : '>=9.1.0')
+spdlog_dependency = dependency('spdlog', version : '>=1.5.0')
 sqlite_dependency = dependency('sqlite3', version : '>=3.37.2')
 qt_dependency = dependency('qt6', modules : 'Widgets', version : '>=6.2.5', required : get_option('desktop'))
 
@@ -45,6 +47,7 @@ configure_file(output : 'blacknet-config.h',
 )
 config_includes = include_directories('.')
 
+subdir('logging')
 subdir('crypto')
 subdir('vm')
 subdir('wallet')

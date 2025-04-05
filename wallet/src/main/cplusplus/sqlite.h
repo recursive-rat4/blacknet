@@ -27,7 +27,14 @@
 #include <utility>
 #include <sqlite3.h>
 
+#include "logger.h"
+
 namespace sqlite {
+constexpr Logger& logger() {
+    static Logger instance;
+    return instance;
+}
+
 class Exception : public std::exception {
     std::string message;
 public:
@@ -51,7 +58,7 @@ void pass(const Fun& fun, Args&&... args) {
     int rc = fun(std::forward<Args>(args)...);
     if (rc == SQLITE_OK)
         return;
-    std::cerr << "SQLite: " << sqlite3_errstr(rc) << std::endl;
+    logger()->error("{}", sqlite3_errstr(rc));
 }
 
 class Binder {
@@ -297,6 +304,25 @@ private:
             throw Exception("SQLite is not connected");
         }
     }
+};
+
+class SQLite {
+public:
+    SQLite() {
+        ok(sqlite3_initialize);
+        logger() = Logger("SQLite");
+        logger()->info("Driving SQLite {}", sqlite3_libversion());
+    }
+    ~SQLite() {
+        logger()->info("Braking SQLite");
+        pass(sqlite3_shutdown);
+        logger().reset();
+    }
+
+    constexpr SQLite(const SQLite&) = delete;
+    constexpr SQLite(SQLite&&) = delete;
+    constexpr SQLite& operator = (const SQLite&) = delete;
+    constexpr SQLite& operator = (SQLite&&) = delete;
 };
 }
 

@@ -15,5 +15,15 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-wallet_main_includes = [vm_main_includes, crypto_main_includes, include_directories('.')]
-wallet_main_dependencies = [crypto_main_dependencies, vm_main_dependencies, sqlite_dependency]
+wallet_main_includes = [
+    vm_main_includes,
+    crypto_main_includes,
+    logging_main_includes,
+    include_directories('.')
+]
+wallet_main_dependencies = [
+    logging_main_dependencies,
+    crypto_main_dependencies,
+    vm_main_dependencies,
+    sqlite_dependency,
+]

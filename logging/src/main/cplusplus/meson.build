@@ -15,26 +15,5 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-desktop_main_includes = [
-    wallet_main_includes,
-    logging_main_includes,
-    config_includes,
-    include_directories('.')
-]
-desktop_main_dependencies = [
-    wallet_main_dependencies,
-    logging_main_dependencies,
-    qt_dependency,
-    fmt_dependency,
-]
-desktop_main_sources = [
-    'desktop.cpp',
-]
-desktop_main_bin = executable(
-    'blacknet-desktop',
-    [desktop_main_sources, desktop_main_resources, desktop_main_ui],
-    implicit_include_directories : false,
-    include_directories : desktop_main_includes,
-    install : true,
-    dependencies : desktop_main_dependencies,
-)
+logging_main_includes = include_directories('.')
+logging_main_dependencies = spdlog_dependency

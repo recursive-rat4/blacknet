@@ -17,3 +17,13 @@
 
 #define BOOST_TEST_MODULE wallet
 #include <boost/test/unit_test.hpp>
+
+#include "logmanager.h"
+#include "sqlite.h"
+
+struct WalletGlobalFixture {
+    LogManager _{LogManager::Regime::UnitTest};
+    sqlite::SQLite _;
+};
+
+BOOST_TEST_GLOBAL_FIXTURE(WalletGlobalFixture);
