@@ -20,8 +20,8 @@
 
 #include <cmath>
 #include <charconv>
-#include <iostream>
 #include <optional>
+#include <ostream>
 #include <boost/random/uniform_int_distribution.hpp>
 
 #include "bitint.h"
@@ -138,13 +138,6 @@ public:
     friend std::ostream& operator << (std::ostream& out, const IntegerRing& val)
     {
         return out << fromForm(val.n);
-    }
-
-    friend std::istream& operator >> (std::istream& in, IntegerRing& val)
-    {
-        in >> val.n;
-        val.n = toForm(val.n);
-        return in;
     }
 
     consteval static I modulus() {

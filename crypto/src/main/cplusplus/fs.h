@@ -19,7 +19,7 @@
 #define BLACKNET_CRYPTO_FS_H
 
 #include <concepts>
-#include <iostream>
+#include <ostream>
 
 #include "vector.h"
 

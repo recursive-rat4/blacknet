@@ -19,7 +19,7 @@
 #define BLACKNET_CRYPTO_MERKLE_TREE_H
 
 #include <bit>
-#include <iostream>
+#include <ostream>
 #include <vector>
 
 template<

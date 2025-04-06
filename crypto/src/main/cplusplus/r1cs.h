@@ -18,7 +18,7 @@
 #ifndef BLACKNET_CRYPTO_R1CS_H
 #define BLACKNET_CRYPTO_R1CS_H
 
-#include <iostream>
+#include <ostream>
 #include <utility>
 
 #include "matrixsparse.h"

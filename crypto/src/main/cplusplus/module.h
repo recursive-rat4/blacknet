@@ -20,7 +20,7 @@
 
 #include <algorithm>
 #include <array>
-#include <iostream>
+#include <ostream>
 
 #include "util.h"
 

@@ -18,9 +18,9 @@
 #ifndef BLACKNET_CRYPTO_PRIMEFIELD_H
 #define BLACKNET_CRYPTO_PRIMEFIELD_H
 
-#include <iostream>
 #include <iterator>
 #include <optional>
+#include <ostream>
 
 #include "bitint.h"
 #include "bigint.h"

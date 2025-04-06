@@ -18,7 +18,7 @@
 #ifndef BLACKNET_CRYPTO_POLYNOMIAL_H
 #define BLACKNET_CRYPTO_POLYNOMIAL_H
 
-#include <iostream>
+#include <ostream>
 #include <type_traits>
 #include <vector>
 

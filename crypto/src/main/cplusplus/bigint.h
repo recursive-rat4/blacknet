@@ -22,8 +22,8 @@
 #include <charconv>
 #include <cmath>
 #include <exception>
-#include <iostream>
 #include <iomanip>
+#include <ostream>
 #include <boost/io/ios_state.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 

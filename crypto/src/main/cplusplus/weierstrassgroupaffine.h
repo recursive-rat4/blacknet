@@ -18,7 +18,7 @@
 #ifndef BLACKNET_CRYPTO_WEIERSTRASSGROUPAFFINE_H
 #define BLACKNET_CRYPTO_WEIERSTRASSGROUPAFFINE_H
 
-#include <iostream>
+#include <ostream>
 #include <boost/random/uniform_int_distribution.hpp>
 
 #include "abeliangroup.h"

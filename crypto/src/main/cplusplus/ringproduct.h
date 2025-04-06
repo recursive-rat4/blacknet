@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,7 +18,7 @@
 #ifndef BLACKNET_CRYPTO_RINGPRODUCT_H
 #define BLACKNET_CRYPTO_RINGPRODUCT_H
 
-#include <iostream>
+#include <ostream>
 #include <tuple>
 #include <type_traits>
 

@@ -20,7 +20,7 @@
 
 #include <algorithm>
 #include <array>
-#include <iostream>
+#include <ostream>
 #include <boost/random/uniform_int_distribution.hpp>
 
 #include "semigroup.h"

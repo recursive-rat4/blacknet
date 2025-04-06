@@ -18,7 +18,7 @@
 #ifndef BLACKNET_CRYPTO_MATRIXSPARSE_H
 #define BLACKNET_CRYPTO_MATRIXSPARSE_H
 
-#include <iostream>
+#include <ostream>
 #include <vector>
 
 #include "util.h"

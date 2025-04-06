@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_UNIVARIATE_POLYNOMIAL_H
-#define BLACKNET_CRYPTO_UNIVARIATE_POLYNOMIAL_H
+#ifndef BLACKNET_CRYPTO_UNIVARIATEPOLYNOMIAL_H
+#define BLACKNET_CRYPTO_UNIVARIATEPOLYNOMIAL_H
 
 #include <concepts>
 #include <initializer_list>
-#include <iostream>
+#include <ostream>
 #include <vector>
 
 #include "util.h"
