@@ -35,13 +35,11 @@ public:
     }
     constexpr Polynomial(std::vector<P<R>>&& polynomials) : polynomials(std::move(polynomials)) {}
     constexpr Polynomial(const Polynomial& other) = delete;
-    constexpr Polynomial(Polynomial&& other) noexcept
-        : polynomials(std::move(other.polynomials)) {}
+    constexpr Polynomial(Polynomial&&) noexcept = default;
+    constexpr ~Polynomial() noexcept = default;
 
-    constexpr Polynomial& operator = (Polynomial&& other) noexcept {
-        polynomials = std::move(other.polynomials);
-        return *this;
-    }
+    constexpr Polynomial& operator = (const Polynomial&) = delete;
+    constexpr Polynomial& operator = (Polynomial&&) noexcept = default;
 
     template<typename Fuse1, typename Fuse0 = Fuse1>
     constexpr void apply(R& r, const std::vector<R>& point) const {

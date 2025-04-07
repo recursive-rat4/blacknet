@@ -58,18 +58,12 @@ struct MultilinearExtension {
                 std::back_inserter(coefficients)
             );
     }
-    constexpr MultilinearExtension(const MultilinearExtension& other) : coefficients(other.coefficients) {}
-    constexpr MultilinearExtension(MultilinearExtension&& other) noexcept
-        : coefficients(std::move(other.coefficients)) {}
+    constexpr MultilinearExtension(const MultilinearExtension&) = default;
+    constexpr MultilinearExtension(MultilinearExtension&&) noexcept = default;
+    constexpr ~MultilinearExtension() noexcept = default;
 
-    constexpr MultilinearExtension& operator = (const MultilinearExtension& other) {
-        coefficients = other.coefficients;
-        return *this;
-    }
-    constexpr MultilinearExtension& operator = (MultilinearExtension&& other) noexcept {
-        coefficients = std::move(other.coefficients);
-        return *this;
-    }
+    constexpr MultilinearExtension& operator = (const MultilinearExtension&) = default;
+    constexpr MultilinearExtension& operator = (MultilinearExtension&&) noexcept = default;
 
     constexpr bool operator == (const MultilinearExtension&) const = default;
 

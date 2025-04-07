@@ -38,8 +38,10 @@ public:
         : a(a), b(b), c(c) {}
     constexpr R1CS(MatrixSparse<E>&& a, MatrixSparse<E>&& b, MatrixSparse<E>&& c)
         : a(std::move(a)), b(std::move(b)), c(std::move(c)) {}
-    constexpr R1CS(R1CS&& other) noexcept
-        : a(std::move(other.a)), b(std::move(other.b)), c(std::move(other.c)) {}
+    constexpr R1CS(R1CS&&) noexcept = default;
+    constexpr ~R1CS() noexcept = default;
+
+    constexpr R1CS& operator = (R1CS&&) noexcept = default;
 
     constexpr bool operator == (const R1CS&) const = default;
 

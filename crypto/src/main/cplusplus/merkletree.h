@@ -60,14 +60,10 @@ struct MerkleTree {
         : size(leaves.size()), nodes(leaves) { compute(size, nodes); }
     constexpr MerkleTree(std::vector<Hash>&& leaves)
         : size(leaves.size()), nodes(std::move(leaves)) { compute(size, nodes); }
-    constexpr MerkleTree(MerkleTree&& other) noexcept
-        : size(other.size), nodes(std::move(other.nodes)) {}
+    constexpr MerkleTree(MerkleTree&&) noexcept = default;
+    constexpr ~MerkleTree() noexcept = default;
 
-    constexpr MerkleTree& operator = (MerkleTree&& other) noexcept {
-        size = other.size;
-        nodes = std::move(other.nodes);
-        return *this;
-    }
+    constexpr MerkleTree& operator = (MerkleTree&&) noexcept = default;
 
     constexpr bool operator == (const MerkleTree& other) const {
         return root() == other.root();

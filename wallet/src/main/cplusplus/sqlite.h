@@ -72,7 +72,7 @@ public:
     constexpr Binder() = delete;
     constexpr Binder(const Binder&) = delete;
     constexpr Binder(Binder&&) = delete;
-    ~Binder() {
+    ~Binder() noexcept {
         pass(sqlite3_clear_bindings, statement);
     }
 
@@ -150,7 +150,7 @@ public:
     constexpr Evaluator() = delete;
     constexpr Evaluator(const Evaluator&) = delete;
     constexpr Evaluator(Evaluator&&) = delete;
-    ~Evaluator() {
+    ~Evaluator() noexcept {
         pass(sqlite3_reset, statement);
     }
 
@@ -171,7 +171,7 @@ public:
     constexpr Statement(Statement&& other) noexcept : statement(other.statement) {
         other.statement = nullptr;
     }
-    ~Statement() {
+    ~Statement() noexcept {
         pass(sqlite3_finalize, statement);
     }
 
@@ -237,7 +237,7 @@ public:
     constexpr Connection(Connection&& other) noexcept : connection(other.connection) {
         other.connection = nullptr;
     }
-    ~Connection() {
+    ~Connection() noexcept {
         pass(sqlite3_close, connection);
     }
 
@@ -315,7 +315,7 @@ public:
         logger() = log::Logger("SQLite");
         logger()->info("Driving SQLite {}", sqlite3_libversion());
     }
-    ~SQLite() {
+    ~SQLite() noexcept {
         logger()->info("Braking SQLite");
         pass(sqlite3_shutdown);
         logger().reset();

@@ -46,10 +46,12 @@ public:
         : rows(rows), columns(columns), elements(init) {}
     constexpr Matrix(std::size_t rows, std::size_t columns, std::vector<E>&& elements)
         : rows(rows), columns(columns), elements(std::move(elements)) {}
-    constexpr Matrix(const Matrix& other)
-        : rows(other.rows), columns(other.columns), elements(other.elements) {}
-    constexpr Matrix(Matrix&& other) noexcept
-        : rows(other.rows), columns(other.columns), elements(std::move(other.elements)) {}
+    constexpr Matrix(const Matrix&) = default;
+    constexpr Matrix(Matrix&&) noexcept = default;
+    constexpr ~Matrix() noexcept = default;
+
+    constexpr Matrix& operator = (const Matrix&) = default;
+    constexpr Matrix& operator = (Matrix&&) noexcept = default;
 
     constexpr bool operator == (const Matrix&) const = default;
 

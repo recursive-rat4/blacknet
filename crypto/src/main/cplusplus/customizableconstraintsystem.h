@@ -51,8 +51,10 @@ public:
         std::vector<std::vector<std::size_t>>&& s,
         std::vector<E>&& c
     ) : rows(rows), columns(columns), m(std::move(m)), s(std::move(s)), c(std::move(c)) {}
-    constexpr CustomizableConstraintSystem(CustomizableConstraintSystem&& other) noexcept
-        : rows(other.rows), columns(other.columns), m(std::move(other.m)), s(std::move(other.s)), c(std::move(other.c)) {}
+    constexpr CustomizableConstraintSystem(CustomizableConstraintSystem&&) noexcept = default;
+    constexpr ~CustomizableConstraintSystem() noexcept = default;
+
+    constexpr CustomizableConstraintSystem& operator = (CustomizableConstraintSystem&&) noexcept = default;
 
     constexpr bool isSatisfied(const Vector<E>& z) const {
         Vector<E> sigma(rows, E::LEFT_ADDITIVE_IDENTITY());

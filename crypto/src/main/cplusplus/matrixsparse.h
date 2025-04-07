@@ -62,12 +62,12 @@ struct MatrixSparse {
         const std::vector<std::size_t>& rIndex, const std::vector<std::size_t>& cIndex,
         std::vector<E>&& elements
     ) : columns(columns), rIndex(rIndex), cIndex(cIndex), elements(std::move(elements)) {}
-    constexpr MatrixSparse(const MatrixSparse& other)
-        : columns(other.columns), rIndex(other.rIndex), cIndex(other.cIndex), elements(other.elements) {}
-    constexpr MatrixSparse(MatrixSparse&& other) noexcept
-        : columns(other.columns),
-          rIndex(std::move(other.rIndex)), cIndex(std::move(other.cIndex)),
-          elements(std::move(other.elements)) {}
+    constexpr MatrixSparse(const MatrixSparse&) = default;
+    constexpr MatrixSparse(MatrixSparse&&) noexcept = default;
+    constexpr ~MatrixSparse() noexcept = default;
+
+    constexpr MatrixSparse& operator = (const MatrixSparse&) = default;
+    constexpr MatrixSparse& operator = (MatrixSparse&&) noexcept = default;
 
     constexpr bool operator == (const MatrixSparse&) const = default;
 

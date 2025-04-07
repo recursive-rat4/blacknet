@@ -82,22 +82,11 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::vector<E>;
-        constexpr DecomposedIterator(const DecomposedIterator& other)
-            : data(other.data), last(other.last), index(other.index) {}
-        constexpr DecomposedIterator(DecomposedIterator&& other) noexcept
-            : data(std::move(other.data)), last(other.last), index(other.index) {}
-        constexpr DecomposedIterator& operator = (const DecomposedIterator& other) {
-            data = other.data;
-            last = other.last;
-            index = other.index;
-            return *this;
-        }
-        constexpr DecomposedIterator& operator = (DecomposedIterator&& other) noexcept {
-            data = std::move(other.data);
-            last = other.last;
-            index = other.index;
-            return *this;
-        }
+        constexpr DecomposedIterator(const DecomposedIterator&) = default;
+        constexpr DecomposedIterator(DecomposedIterator&&) noexcept = default;
+        constexpr ~DecomposedIterator() noexcept = default;
+        constexpr DecomposedIterator& operator = (const DecomposedIterator&) = default;
+        constexpr DecomposedIterator& operator = (DecomposedIterator&&) noexcept = default;
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == last;
         }

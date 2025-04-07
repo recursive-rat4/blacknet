@@ -42,14 +42,13 @@ public:
     constexpr Vector(std::size_t size) : elements(size) {}
     constexpr Vector(std::size_t size, const E& fill) : elements(size, fill) {}
     constexpr Vector(std::initializer_list<E> init) : elements(init) {}
-    constexpr Vector(const Vector& other) : elements(other.elements) {}
     constexpr Vector(std::vector<E>&& elements) : elements(std::move(elements)) {}
-    constexpr Vector(Vector&& other) noexcept : elements(std::move(other.elements)) {}
+    constexpr Vector(const Vector&) = default;
+    constexpr Vector(Vector&&) noexcept = default;
+    constexpr ~Vector() noexcept = default;
 
-    constexpr Vector& operator = (Vector&& other) noexcept {
-        elements = std::move(other.elements);
-        return *this;
-    }
+    constexpr Vector& operator = (const Vector&) = default;
+    constexpr Vector& operator = (Vector&&) noexcept = default;
 
     constexpr bool operator == (const Vector&) const = default;
 

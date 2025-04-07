@@ -84,18 +84,12 @@ struct CCSBuilder {
         constexpr LinearCombination() : terms() {}
         constexpr LinearCombination(const E& coefficient) : terms({std::make_pair(Variable::constant(), coefficient)}) {}
         constexpr LinearCombination(const Variable& variable) : terms({std::make_pair(variable, E(1))}) {}
-        constexpr LinearCombination(const LinearCombination& other) : terms(other.terms) {}
-        constexpr LinearCombination(LinearCombination&& other) noexcept
-            : terms(std::move(other.terms)) {}
+        constexpr LinearCombination(const LinearCombination&) = default;
+        constexpr LinearCombination(LinearCombination&&) noexcept = default;
+        constexpr ~LinearCombination() noexcept = default;
 
-        constexpr LinearCombination& operator = (const LinearCombination& other) {
-            terms = other.terms;
-            return *this;
-        }
-        constexpr LinearCombination& operator = (LinearCombination&& other) noexcept {
-            terms = std::move(other.terms);
-            return *this;
-        }
+        constexpr LinearCombination& operator = (const LinearCombination&) = default;
+        constexpr LinearCombination& operator = (LinearCombination&&) noexcept = default;
 
         constexpr LinearCombination& operator = (const E& coefficient) {
             const Variable variable(Variable::constant());
