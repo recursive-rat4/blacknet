@@ -23,6 +23,8 @@
 #include "poseidon2solinas62.h"
 #include "sponge.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Sponges)
 
 BOOST_AUTO_TEST_CASE(BlacknetPlain) {

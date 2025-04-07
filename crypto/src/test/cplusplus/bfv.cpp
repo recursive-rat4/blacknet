@@ -24,6 +24,8 @@
 #include "polynomialring.h"
 #include "solinas62.h"
 
+using namespace blacknet::crypto;
+
 static boost::random::mt19937 rng;
 
 BOOST_AUTO_TEST_SUITE(BFVs)

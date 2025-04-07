@@ -26,6 +26,8 @@
 
 #include "byte.h"
 
+namespace blacknet::crypto {
+
 /*
  * ChaCha, a variant of Salsa20
  * Daniel J. Bernstein
@@ -122,5 +124,7 @@ private:
         }
     }
 };
+
+}
 
 #endif

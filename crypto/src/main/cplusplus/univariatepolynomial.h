@@ -25,6 +25,8 @@
 
 #include "util.h"
 
+namespace blacknet::crypto {
+
 template<typename E>
 class UnivariatePolynomial {
 public:
@@ -151,5 +153,7 @@ struct Tracer {
 };
 
 };
+
+}
 
 #endif

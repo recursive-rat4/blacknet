@@ -25,6 +25,8 @@
 #include "solinas62field.h"
 #include "univariatepolynomial.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(UnivariatePolynomials)
 
 using E = Solinas62Ring;

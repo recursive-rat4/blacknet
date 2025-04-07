@@ -23,6 +23,8 @@
 #include "matrix.h"
 #include "solinas62.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(CustomizableConstraintSystems)
 
 using E = Solinas62Ring;

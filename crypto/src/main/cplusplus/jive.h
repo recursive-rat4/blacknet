@@ -24,6 +24,8 @@
 
 #include "util.h"
 
+namespace blacknet::crypto {
+
 // Jive Compression Mode, https://eprint.iacr.org/2022/840
 
 template<
@@ -93,5 +95,7 @@ struct trace {
     }
 };
 };
+
+}
 
 #endif

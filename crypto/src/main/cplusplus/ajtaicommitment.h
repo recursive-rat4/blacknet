@@ -21,6 +21,8 @@
 #include "matrix.h"
 #include "vector.h"
 
+namespace blacknet::crypto {
+
 /*
  * Generating Hard Instances of Lattice Problems (Extended abstract)
  * Miklós Ajtai
@@ -56,5 +58,7 @@ public:
         return m.checkInfinityNorm(bound) && c == commit(m);
     }
 };
+
+}
 
 #endif

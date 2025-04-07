@@ -20,6 +20,8 @@
 #include "module.h"
 #include "pervushin.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Modules)
 
 using R = PervushinRing;

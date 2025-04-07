@@ -21,6 +21,8 @@
 #include "merkletree.h"
 #include "poseidon2pervushin.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(MerkleTrees)
 
 using Jive = Poseidon2PervushinJive;

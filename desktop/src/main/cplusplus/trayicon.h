@@ -24,6 +24,8 @@
 
 #include "ui_traymenu.h"
 
+namespace blacknet::desktop {
+
 class TrayIcon : public QSystemTrayIcon {
 public:
     QWidget* mainWindow;
@@ -56,5 +58,7 @@ private:
         }
     }
 };
+
+}
 
 #endif

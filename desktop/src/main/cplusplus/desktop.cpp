@@ -30,6 +30,10 @@
 #include "trayicon.h"
 #include "mainwindow.h"
 
+using namespace blacknet::desktop;
+using blacknet::log::Logger;
+using blacknet::log::LogManager;
+
 class Desktop : public QApplication {
 public:
     Desktop(int& argc, char* argv[]) : QApplication(argc, argv) {

@@ -23,8 +23,10 @@
 
 #include "logger.h"
 
+namespace blacknet::desktop {
+
 class HistoryModel : public QAbstractTableModel {
-    mutable Logger logger{"HistoryModel"};
+    mutable log::Logger logger{"HistoryModel"};
     constexpr static const std::array header{
         "#", "Date", "Type", "Amount", "Fingerprint"
     };
@@ -68,5 +70,7 @@ public:
         return {};
     }
 };
+
+}
 
 #endif

@@ -20,6 +20,8 @@
 
 #include <array>
 
+namespace blacknet::crypto {
+
 namespace convolution {
     template<typename Z, std::size_t N>
     constexpr void negacyclic(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
@@ -123,6 +125,8 @@ namespace {
             static_assert(false, "Not implemented");
         }
     }
+}
+
 }
 
 #endif

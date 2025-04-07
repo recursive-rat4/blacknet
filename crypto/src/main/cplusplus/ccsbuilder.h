@@ -28,6 +28,8 @@
 
 #include "matrixsparse.h"
 
+namespace blacknet::crypto {
+
 template<typename E>class CustomizableConstraintSystem;
 template<typename E>class R1CS;
 
@@ -654,5 +656,7 @@ struct CCSBuilder {
 
 template<typename E>
 using R1CSBuilder = CCSBuilder<E, 2>;
+
+}
 
 #endif

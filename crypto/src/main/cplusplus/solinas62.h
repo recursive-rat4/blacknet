@@ -7,6 +7,8 @@
 
 #include "integerring.h"
 
+namespace blacknet::crypto {
+
 struct Solinas62RingParams {
     using I = int64_t;
     using L = __int128_t;
@@ -27,5 +29,7 @@ struct Solinas62RingParams {
 
 // 2⁶² - 2⁸ - 2⁵ + 1
 typedef IntegerRing<Solinas62RingParams> Solinas62Ring;
+
+}
 
 #endif

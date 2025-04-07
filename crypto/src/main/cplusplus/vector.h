@@ -25,6 +25,8 @@
 
 #include "util.h"
 
+namespace blacknet::crypto {
+
 template<typename E>class Matrix;
 
 template<typename E>
@@ -199,5 +201,7 @@ public:
         return t;
     }
 };
+
+}
 
 #endif

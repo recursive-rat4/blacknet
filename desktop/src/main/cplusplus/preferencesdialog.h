@@ -25,6 +25,8 @@
 
 #include "ui_preferencesdialog.h"
 
+namespace blacknet::desktop {
+
 class PreferencesDialog : public QDialog {
 public:
     Settings* settings;
@@ -51,5 +53,7 @@ private:
         settings->hideOnMinimize = ui.checkBoxHideOnMinimize->checkState() == Qt::Checked;
     }
 };
+
+}
 
 #endif

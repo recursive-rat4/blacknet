@@ -27,6 +27,8 @@
 #include <boost/io/ios_state.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
+namespace blacknet::crypto {
+
 class ArithmeticException : public std::exception {
     std::string message;
 public:
@@ -231,5 +233,7 @@ public:
 typedef BigInt<4> UInt256;
 typedef BigInt<8> UInt512;
 typedef BigInt<16> UInt1024;
+
+}
 
 #endif

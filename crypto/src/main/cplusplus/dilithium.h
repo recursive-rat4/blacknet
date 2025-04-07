@@ -22,6 +22,8 @@
 #include "numbertheoretictransform.h"
 #include "polynomialring.h"
 
+namespace blacknet::crypto {
+
 /*
  * CRYSTALS-Dilithium (Version 3.1)
  * Shi Bai, Léo Ducas, Eike Kiltz, Tancrède Lepoint, Vadim Lyubashevsky,
@@ -56,6 +58,8 @@ namespace dilithium {
     };
 
     using Rq = PolynomialRing<CyclotomicRingParams>;
+}
+
 }
 
 #endif

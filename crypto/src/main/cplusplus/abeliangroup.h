@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+namespace blacknet::crypto {
+
 // Speeding up the computations on an elliptic curve using addition-subtraction chains
 // ADDSUBCHAIN-D
 // http://www.numdam.org/item/ITA_1990__24_6_531_0/
@@ -80,6 +82,8 @@ constexpr AG multiply(const AG& e, const Scalar& s) {
     }
 
     return P;
+}
+
 }
 
 }

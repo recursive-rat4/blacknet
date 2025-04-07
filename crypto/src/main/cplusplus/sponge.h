@@ -22,6 +22,8 @@
 #include <array>
 #include <concepts>
 
+namespace blacknet::crypto {
+
 // Sponge construction, https://keccak.team/files/CSF-0.1.pdf
 
 class SpongeException : public std::exception {
@@ -227,5 +229,7 @@ struct Tracer {
     }
 };
 };
+
+}
 
 #endif

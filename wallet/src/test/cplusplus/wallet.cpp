@@ -22,6 +22,11 @@
 #include "util.h"
 #include "wallet.h"
 
+namespace byte = blacknet::crypto::byte;
+namespace sqlite = blacknet::wallet::sqlite;
+using blacknet::wallet::Exception;
+using blacknet::wallet::Wallet;
+
 BOOST_AUTO_TEST_SUITE(Wallets)
 
 BOOST_AUTO_TEST_CASE(ephemeral) {
@@ -35,7 +40,7 @@ BOOST_AUTO_TEST_CASE(ephemeral) {
 }
 
 BOOST_AUTO_TEST_CASE(magic) {
-    BOOST_CHECK_THROW(Wallet::attach(sqlite::Connection::memory()), WalletException);
+    BOOST_CHECK_THROW(Wallet::attach(sqlite::Connection::memory()), Exception);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

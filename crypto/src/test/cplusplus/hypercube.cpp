@@ -23,6 +23,8 @@
 #include "solinas62.h"
 #include "util.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Hypercubes)
 
 BOOST_AUTO_TEST_CASE(composed) {

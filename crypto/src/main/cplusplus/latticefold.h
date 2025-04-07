@@ -33,6 +33,8 @@
 #include "vector.h"
 #include "util.h"
 
+namespace blacknet::crypto {
+
 /*
  * LatticeFold: A Lattice-based Folding Scheme and its Applications to Succinct Proof Systems
  * Dan Boneh, Binyi Chen
@@ -338,5 +340,7 @@ struct LatticeFold {
         }
     };
 };
+
+}
 
 #endif

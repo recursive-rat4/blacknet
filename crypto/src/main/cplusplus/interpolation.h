@@ -20,6 +20,8 @@
 
 #include "univariatepolynomial.h"
 
+namespace blacknet::crypto {
+
 template<
     typename Z,
     typename S
@@ -78,5 +80,7 @@ struct Interpolation {
         return UnivariatePolynomial<S>{f, e, d, c, b, a};
     }
 };
+
+}
 
 #endif

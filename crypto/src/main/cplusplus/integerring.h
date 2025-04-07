@@ -27,6 +27,8 @@
 #include "bitint.h"
 #include "semigroup.h"
 
+namespace blacknet::crypto {
+
 template<typename Params>
 class IntegerRing {
     using I = Params::I;
@@ -199,5 +201,7 @@ private:
 
     constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - I(2);
 };
+
+}
 
 #endif

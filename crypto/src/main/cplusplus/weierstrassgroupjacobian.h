@@ -23,6 +23,8 @@
 
 #include "abeliangroup.h"
 
+namespace blacknet::crypto {
+
 template<typename BF, typename SF, BF A, BF B>
 class WeierstrassGroupJacobian {
     BF x;
@@ -202,5 +204,7 @@ public:
         }
     }
 };
+
+}
 
 #endif

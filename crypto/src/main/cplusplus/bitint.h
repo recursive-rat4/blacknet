@@ -24,6 +24,8 @@
 #include <concepts>
 #include <iterator>
 
+namespace blacknet::crypto {
+
 template<std::size_t N>requires(N > 0)class BigInt;
 
 template<std::size_t BITS>
@@ -94,5 +96,7 @@ struct BitInt {
         return std::default_sentinel;
     }
 };
+
+}
 
 #endif

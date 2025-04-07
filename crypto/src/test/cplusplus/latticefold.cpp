@@ -23,6 +23,8 @@
 #include "solinas62.h"
 #include "vector.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(LatticeFolds)
 
 using Z = Solinas62Ring;

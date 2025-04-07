@@ -24,6 +24,8 @@
 #include "byte.h"
 #include "util.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Bytes)
 
 BOOST_AUTO_TEST_CASE(array) {

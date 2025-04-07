@@ -22,6 +22,8 @@
 #include <vector>
 #include <utility>
 
+namespace blacknet::crypto {
+
 template<
     typename E
 >
@@ -185,5 +187,7 @@ public:
         return sigma;
     }
 };
+
+}
 
 #endif

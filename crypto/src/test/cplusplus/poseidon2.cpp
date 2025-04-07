@@ -24,6 +24,8 @@
 #include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Poseidons)
 
 BOOST_AUTO_TEST_CASE(Pallas_3) {

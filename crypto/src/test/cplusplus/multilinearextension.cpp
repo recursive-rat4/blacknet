@@ -29,6 +29,8 @@
 #include "vector.h"
 #include "util.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(MultilinearExtensions)
 
 using E = Solinas62Ring;

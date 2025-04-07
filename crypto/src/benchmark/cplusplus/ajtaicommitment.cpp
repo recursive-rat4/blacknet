@@ -24,6 +24,8 @@
 #include "solinas62.h"
 #include "vector.h"
 
+using namespace blacknet::crypto;
+
 static boost::random::mt19937 rng;
 
 static void BM_AjtaiCommitment(benchmark::State& state) {

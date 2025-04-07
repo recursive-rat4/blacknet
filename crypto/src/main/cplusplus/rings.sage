@@ -98,6 +98,8 @@ def write_ring_cplusplus(spec, params):
         file.write('\n')
         file.write('#include "integerring.h"\n')
         file.write('\n')
+        file.write('namespace blacknet::crypto {\n')
+        file.write('\n')
         file.write(f"struct {spec.type_name}Params" + " {\n")
         file.write(f"    using I = int{params.word_bits}_t;\n")
         dword_bits = params.word_bits * 2
@@ -123,6 +125,8 @@ def write_ring_cplusplus(spec, params):
         file.write('\n')
         file.write(f"// {spec.comment}\n")
         file.write(f"typedef IntegerRing<{spec.type_name}Params> {spec.type_name};\n")
+        file.write('\n')
+        file.write("}\n")
         file.write('\n')
         file.write("#endif\n")
 

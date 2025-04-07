@@ -27,6 +27,8 @@
 #include "numbertheoretictransform.h"
 #include "polynomialring.h"
 
+namespace blacknet::crypto {
+
 // https://eprint.iacr.org/2013/293
 
 struct LPR {
@@ -141,5 +143,7 @@ struct LPR {
         return pt;
     }
 };
+
+}
 
 #endif

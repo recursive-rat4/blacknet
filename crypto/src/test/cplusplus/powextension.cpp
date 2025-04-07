@@ -27,6 +27,8 @@
 #include "solinas62field.h"
 #include "util.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(PowExtensions)
 
 using E = Solinas62Ring;

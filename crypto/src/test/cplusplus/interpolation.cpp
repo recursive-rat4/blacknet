@@ -21,6 +21,8 @@
 #include "pervushin.h"
 #include "pervushinfield.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Interpolations)
 
 using Z = PervushinRing;

@@ -34,6 +34,8 @@
 #include "ui_stakingpage.h"
 #include "ui_addressbookpage.h"
 
+namespace blacknet::desktop {
+
 class MainWindow : public QMainWindow {
 public:
     QCoreApplication* application;
@@ -94,5 +96,7 @@ private:
         PreferencesDialog(settings).exec();
     }
 };
+
+}
 
 #endif

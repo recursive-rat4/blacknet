@@ -24,6 +24,8 @@
 
 #include "util.h"
 
+namespace blacknet::crypto {
+
 template<typename R, template<typename> typename P>
 class Polynomial {
     std::vector<P<R>> polynomials;
@@ -93,5 +95,7 @@ public:
         return out << val.polynomials;
     }
 };
+
+}
 
 #endif

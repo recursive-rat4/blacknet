@@ -18,10 +18,14 @@
 #ifndef BLACKNET_DESKTOP_SETTINGS_H
 #define BLACKNET_DESKTOP_SETTINGS_H
 
+namespace blacknet::desktop {
+
 class Settings {
 public:
     bool hideOnClose{true};
     bool hideOnMinimize{false};
 };
+
+}
 
 #endif

@@ -25,6 +25,8 @@
 #include <boost/io/ios_state.hpp>
 #include <boost/io/ostream_joiner.hpp>
 
+namespace blacknet::crypto {
+
 namespace util {
     template<typename T>
     struct Add {
@@ -129,6 +131,8 @@ namespace util {
             return sum;
         }
     };
+}
+
 }
 
 namespace std {

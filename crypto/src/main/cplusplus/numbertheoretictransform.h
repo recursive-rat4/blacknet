@@ -22,6 +22,8 @@
 
 #include "convolution.h"
 
+namespace blacknet::crypto {
+
 // https://arxiv.org/abs/2211.13546
 
 namespace ntt {
@@ -94,6 +96,8 @@ namespace ntt {
             static_assert(false, "Not implemented");
         }
     }
+}
+
 }
 
 #endif

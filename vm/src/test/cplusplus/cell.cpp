@@ -23,6 +23,9 @@
 #include "poseidon2pervushin.h"
 #include "r1cs.h"
 
+using namespace blacknet::crypto;
+using blacknet::vm::Cell;
+
 BOOST_AUTO_TEST_SUITE(Cells)
 
 BOOST_AUTO_TEST_CASE(plain) {

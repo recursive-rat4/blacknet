@@ -22,6 +22,8 @@
 #include <ostream>
 #include <vector>
 
+namespace blacknet::crypto {
+
 template<
     typename Function,
     Function::Hash null
@@ -109,5 +111,7 @@ struct MerkleTree {
         return out << '(' << val.size << ", " << val.root() << ')';
     }
 };
+
+}
 
 #endif

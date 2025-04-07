@@ -25,6 +25,8 @@
 #include "poseidon2pervushin.h"
 #include "r1cs.h"
 
+using namespace blacknet::crypto;
+
 static boost::random::mt19937 rng;
 
 BOOST_AUTO_TEST_SUITE(FSs)

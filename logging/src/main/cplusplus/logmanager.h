@@ -26,6 +26,8 @@
 
 #include "logger.h"
 
+namespace blacknet::log {
+
 class LogManager {
     constexpr static Logger& logger() {
         static Logger instance;
@@ -92,5 +94,7 @@ public:
     constexpr LogManager& operator = (const LogManager&) = delete;
     constexpr LogManager& operator = (LogManager&&) = delete;
 };
+
+}
 
 #endif

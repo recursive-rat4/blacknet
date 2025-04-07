@@ -21,6 +21,8 @@
 #include "pervushin.h"
 #include "solinas62.h"
 
+using namespace blacknet::crypto;
+
 static boost::random::mt19937 rng;
 
 template<typename Z>

@@ -20,6 +20,8 @@
 #include "pastacurves.h"
 #include "semigroup.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Semigroups)
 
 using namespace semigroup;

@@ -22,6 +22,8 @@
 #include "pedersencommitment.h"
 #include "poseidon2pasta.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(PedersenCommitments)
 
 BOOST_AUTO_TEST_CASE(setup) {

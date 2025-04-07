@@ -26,6 +26,8 @@
 #include "sumcheck.h"
 #include "vector.h"
 
+using namespace blacknet::crypto;
+
 static boost::random::mt19937 rng;
 
 static void BM_LatticeFold_GNorm_SumCheck_ProveEarlyStopping(benchmark::State& state) {

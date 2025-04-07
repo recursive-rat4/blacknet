@@ -23,6 +23,8 @@
 
 #include "util.h"
 
+namespace blacknet::crypto {
+
 template<typename E>class Matrix;
 template<typename E>class Vector;
 
@@ -116,5 +118,7 @@ struct MatrixSparse {
         return out << '(' << val.rIndex << ", " << val.cIndex << ", " << val.elements << ')';
     }
 };
+
+}
 
 #endif

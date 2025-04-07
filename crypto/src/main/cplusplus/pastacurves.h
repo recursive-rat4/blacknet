@@ -25,6 +25,8 @@
 #include "weierstrassgroupjacobian.h"
 #include "weierstrassgroupprojective.h"
 
+namespace blacknet::crypto {
+
 /*
  * The Pasta Curves for Halo 2 and Beyond
  * Daira Hopwood
@@ -159,5 +161,7 @@ typedef WeierstrassGroupJacobian<
     VestaField(0),
     VestaField(5)
 > VestaGroupJacobian;
+
+}
 
 #endif

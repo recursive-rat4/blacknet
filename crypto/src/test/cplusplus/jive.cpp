@@ -23,6 +23,8 @@
 #include "poseidon2pervushin.h"
 #include "r1cs.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Jives)
 
 BOOST_AUTO_TEST_CASE(plain) {

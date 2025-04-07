@@ -20,6 +20,8 @@
 #include "pervushin.h"
 #include "pervushinfield.h"
 
+using namespace blacknet::crypto;
+
 using Zq = PervushinRing;
 using Fe2 = PervushinRingDegree2;
 using Fe3 = PervushinRingDegree3;

@@ -22,6 +22,8 @@
 #include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_reduce.h>
 
+namespace blacknet::crypto {
+
 /*
  * Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing
  * Torben Pryds Pedersen
@@ -72,5 +74,7 @@ public:
         return e == commit(v);
     }
 };
+
+}
 
 #endif

@@ -22,6 +22,8 @@
 #include "pastacurves.h"
 #include "pedersencommitment.h"
 
+using namespace blacknet::crypto;
+
 static boost::random::mt19937 rng;
 
 template<typename G>

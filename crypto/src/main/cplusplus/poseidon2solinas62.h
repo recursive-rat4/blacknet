@@ -22,6 +22,8 @@
 #include "solinas62.h"
 #include "sponge.h"
 
+namespace blacknet::crypto {
+
 struct Poseidon2Solinas62SpongeParams {
     using F = Solinas62Ring;
 
@@ -200,5 +202,7 @@ using Poseidon2Solinas62Sponge = Sponge<
     Poseidon2<Poseidon2Solinas62SpongeParams>,
     SpongeMode::Overwrite
 >;
+
+}
 
 #endif

@@ -22,6 +22,8 @@
 
 #include "eqextension.h"
 
+namespace blacknet::crypto {
+
 template<typename E>
 class PowExtension {
     EqExtension<E> eq;
@@ -118,5 +120,7 @@ struct trace {
 };
 
 };
+
+}
 
 #endif

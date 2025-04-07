@@ -7,6 +7,8 @@
 
 #include "integerring.h"
 
+namespace blacknet::crypto {
+
 struct FermatRingParams {
     using I = int32_t;
     using L = int64_t;
@@ -26,5 +28,7 @@ struct FermatRingParams {
 
 // 2¹⁶ + 1
 typedef IntegerRing<FermatRingParams> FermatRing;
+
+}
 
 #endif

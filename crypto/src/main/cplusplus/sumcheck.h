@@ -22,6 +22,8 @@
 #include "univariatepolynomial.h"
 #include "util.h"
 
+namespace blacknet::crypto {
+
 /*
  * Algebraic Methods for Interactive Proof Systems
  * Carsten Lund, Lance Fortnow, Howard Karloff, Noam Nisan
@@ -189,5 +191,7 @@ private:
         }
     }
 };
+
+}
 
 #endif

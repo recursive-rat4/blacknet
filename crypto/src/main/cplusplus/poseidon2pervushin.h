@@ -23,6 +23,8 @@
 #include "poseidon2.h"
 #include "sponge.h"
 
+namespace blacknet::crypto {
+
 struct Poseidon2PervushinSpongeParams {
     using F = PervushinRing;
 
@@ -283,5 +285,7 @@ using Poseidon2PervushinJive = Jive<
     Poseidon2<Poseidon2PervushinJiveParams>,
     2
 >;
+
+}
 
 #endif

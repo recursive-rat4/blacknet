@@ -23,6 +23,8 @@
 #include <array>
 #include <bit>
 
+namespace blacknet::crypto {
+
 namespace byte {
 /**
  * Reads an `Integer` value from the byte representation in the `endian` order.
@@ -81,6 +83,8 @@ consteval std::array<std::byte, N> arrayU(const std::array<uint8_t, N>& ints) {
     std::ranges::transform(ints, result.begin(), [](uint8_t i) { return std::byte(i); });
     return result;
 }
+}
+
 }
 
 #endif

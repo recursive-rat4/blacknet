@@ -25,6 +25,8 @@
 #include "vector.h"
 #include "util.h"
 
+namespace blacknet::crypto {
+
 /*
  * Customizable constraint systems for succinct arguments
  * Srinath Setty, Justin Thaler, Riad Wahby
@@ -168,5 +170,7 @@ public:
         return { deg, var, std::move(mz), std::move(ps), std::move(pc) };
     }
 };
+
+}
 
 #endif

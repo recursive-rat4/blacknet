@@ -19,6 +19,8 @@
 
 #include "pastacurves.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(PastaCurves)
 
 BOOST_AUTO_TEST_CASE(fieldAdd) {

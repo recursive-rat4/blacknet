@@ -26,10 +26,12 @@
 
 #include "sqlite.h"
 
-class WalletException : public std::exception {
+namespace blacknet::wallet {
+
+class Exception : public std::exception {
     std::string message;
 public:
-    WalletException(const std::string& message) : message(message) {}
+    Exception(const std::string& message) : message(message) {}
     virtual const char* what() const noexcept override {
         return message.c_str();
     }
@@ -65,7 +67,7 @@ public:
             auto&& bytes = row.blob(0);
             return { bytes.cbegin(), bytes.cend() };
         }
-        throw WalletException("Transaction not found");
+        throw Exception("Transaction not found");
     }
 
     void transaction(
@@ -111,7 +113,7 @@ private:
         }
         if (magic == 0x17895E7D)
             return;
-        throw WalletException("This SQLite database doesn't look like Blacknet wallet");
+        throw Exception("This SQLite database doesn't look like Blacknet wallet");
     }
 
     static void setMagic(sqlite::Connection& connection) {
@@ -132,5 +134,7 @@ private:
         return connection;
     }
 };
+
+}
 
 #endif

@@ -24,6 +24,8 @@
 
 #include "util.h"
 
+namespace blacknet::crypto {
+
 template<
     typename R,
     std::size_t N
@@ -125,5 +127,7 @@ struct Module {
         return t;
     }
 };
+
+}
 
 #endif

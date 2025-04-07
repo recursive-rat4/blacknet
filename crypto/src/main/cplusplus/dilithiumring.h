@@ -7,6 +7,8 @@
 
 #include "integerring.h"
 
+namespace blacknet::crypto {
+
 struct DilithiumRingParams {
     using I = int32_t;
     using L = int64_t;
@@ -27,5 +29,7 @@ struct DilithiumRingParams {
 
 // 2²³ - 2¹³ + 1
 typedef IntegerRing<DilithiumRingParams> DilithiumRing;
+
+}
 
 #endif

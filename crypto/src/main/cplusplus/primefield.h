@@ -26,6 +26,8 @@
 #include "bigint.h"
 #include "semigroup.h"
 
+namespace blacknet::crypto {
+
 template<typename Params>
 class PrimeField {
     constexpr PrimeField(const UInt256& n, int) : n(n) {}
@@ -244,5 +246,7 @@ private:
     constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - UInt256(2);
     constexpr static const PrimeField S = PrimeField(Params::toForm(Params::S), 0);
 };
+
+}
 
 #endif

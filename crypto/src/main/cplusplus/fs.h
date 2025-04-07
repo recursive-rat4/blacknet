@@ -23,6 +23,8 @@
 
 #include "vector.h"
 
+namespace blacknet::crypto {
+
 template<typename CS, typename RO>
 requires(std::same_as<typename CS::ElementType, typename RO::Z>)
 struct FS {
@@ -64,5 +66,7 @@ struct FS {
         return out << '(' << val.cs << ')';
     }
 };
+
+}
 
 #endif

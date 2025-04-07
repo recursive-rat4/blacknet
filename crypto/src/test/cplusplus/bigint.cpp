@@ -19,6 +19,8 @@
 
 #include "bigint.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(BigInts)
 
 BOOST_AUTO_TEST_CASE(even) {

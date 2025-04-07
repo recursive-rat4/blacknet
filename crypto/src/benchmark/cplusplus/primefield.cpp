@@ -20,6 +20,8 @@
 
 #include "pastacurves.h"
 
+using namespace blacknet::crypto;
+
 static boost::random::mt19937 rng;
 
 static void BM_FieldAdd(benchmark::State& state) {

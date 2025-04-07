@@ -23,6 +23,8 @@
 #include "pervushin.h"
 #include "polynomialring.h"
 
+namespace blacknet::crypto {
+
 struct PervushinRingDegree2Params {
     using Z = PervushinRing;
 
@@ -85,5 +87,7 @@ struct PervushinRingDegree4Params {
 };
 
 typedef PolynomialRing<PervushinRingDegree4Params> PervushinRingDegree4;
+
+}
 
 #endif

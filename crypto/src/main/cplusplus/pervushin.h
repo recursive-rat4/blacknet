@@ -7,6 +7,8 @@
 
 #include "integerring.h"
 
+namespace blacknet::crypto {
+
 struct PervushinRingParams {
     using I = int64_t;
     using L = __int128_t;
@@ -25,5 +27,7 @@ struct PervushinRingParams {
 
 // 2⁶¹ - 1
 typedef IntegerRing<PervushinRingParams> PervushinRing;
+
+}
 
 #endif

@@ -22,6 +22,8 @@
 
 #include "lpr.h"
 
+namespace blacknet::crypto {
+
 struct BlackLemon {
     using PKE = LPR;
     constexpr static const std::size_t ELL = 2;
@@ -89,5 +91,7 @@ struct BlackLemon {
         return pt;
     }
 };
+
+}
 
 #endif

@@ -22,6 +22,8 @@
 #include <vector>
 #include <spdlog/spdlog.h>
 
+namespace blacknet::log {
+
 class Logger {
     friend class LogManager;
 
@@ -63,5 +65,7 @@ public:
         logger.reset();
     }
 };
+
+}
 
 #endif

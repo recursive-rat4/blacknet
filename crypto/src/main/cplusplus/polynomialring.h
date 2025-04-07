@@ -26,6 +26,8 @@
 #include "semigroup.h"
 #include "util.h"
 
+namespace blacknet::crypto {
+
 template<typename Params>
 class PolynomialRing {
 public:
@@ -204,5 +206,7 @@ public:
         return t;
     }
 };
+
+}
 
 #endif

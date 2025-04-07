@@ -23,6 +23,8 @@
 #include "chacha20.h"
 #include "util.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(ChaCha20s)
 
 BOOST_AUTO_TEST_CASE(RFC8439) {

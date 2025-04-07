@@ -30,6 +30,8 @@
 #include "util.h"
 #include "vector.h"
 
+namespace blacknet::crypto {
+
 template<typename E>
 struct MultilinearExtension {
     std::vector<E> coefficients;
@@ -217,5 +219,7 @@ struct trace {
 };
 
 };
+
+}
 
 #endif

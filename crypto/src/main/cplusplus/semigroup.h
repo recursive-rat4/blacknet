@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+namespace blacknet::crypto {
+
 namespace semigroup {
 
 template<typename SG, typename Scalar>
@@ -46,6 +48,8 @@ constexpr SG power(const SG& e, const Scalar& s) {
         t = t.square();
     });
     return r;
+}
+
 }
 
 }

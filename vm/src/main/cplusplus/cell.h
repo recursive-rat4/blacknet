@@ -22,6 +22,8 @@
 #include <ranges>
 #include <vector>
 
+namespace blacknet::vm {
+
 template<typename Jive>
 struct Cell {
     using E = Jive::Hash::value_type;
@@ -125,5 +127,7 @@ struct Tracer {
     }
 };
 };
+
+}
 
 #endif

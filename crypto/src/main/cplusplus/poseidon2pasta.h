@@ -22,6 +22,8 @@
 #include "poseidon2.h"
 #include "sponge.h"
 
+namespace blacknet::crypto {
+
 struct Poseidon2PallasSpongeParams {
     using F = PallasField;
 
@@ -134,5 +136,7 @@ using Poseidon2PallasSponge = Sponge<
     Poseidon2<Poseidon2PallasSpongeParams>,
     SpongeMode::Overwrite
 >;
+
+}
 
 #endif

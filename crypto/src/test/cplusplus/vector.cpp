@@ -22,6 +22,8 @@
 #include "pervushinfield.h"
 #include "vector.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Vectors)
 
 using R = PervushinRing;

@@ -24,6 +24,8 @@
 #include "matrixsparse.h"
 #include "vector.h"
 
+namespace blacknet::crypto {
+
 template<typename E>
 class R1CS {
     MatrixSparse<E> a;
@@ -97,5 +99,7 @@ private:
         return (a * z) * (b * z) - u * (c * z);
     }
 };
+
+}
 
 #endif

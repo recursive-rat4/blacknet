@@ -23,6 +23,8 @@
 #include "pervushin.h"
 #include "r1cs.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(CCSBuilders)
 
 using E = PervushinRing;

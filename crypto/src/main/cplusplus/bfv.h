@@ -27,6 +27,8 @@
 #include "polynomialring.h"
 #include "vector.h"
 
+namespace blacknet::crypto {
+
 // https://eprint.iacr.org/2012/144
 // https://eprint.iacr.org/2024/1587
 
@@ -154,5 +156,7 @@ struct BFV {
         return pt;
     }
 };
+
+}
 
 #endif

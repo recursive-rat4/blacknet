@@ -22,6 +22,8 @@
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(AjtaiCommitments)
 
 using Z = Solinas62Ring;

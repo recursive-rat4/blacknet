@@ -22,6 +22,8 @@
 #include <tuple>
 #include <type_traits>
 
+namespace blacknet::crypto {
+
 template<typename... Rs>
 struct RingProduct {
     consteval static RingProduct LEFT_ADDITIVE_IDENTITY() {
@@ -133,5 +135,7 @@ private:
         }(std::make_index_sequence<sizeof...(Rs)>{});
     }
 };
+
+}
 
 #endif

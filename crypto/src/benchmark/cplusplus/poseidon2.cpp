@@ -22,6 +22,8 @@
 #include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
 
+using namespace blacknet::crypto;
+
 static boost::random::mt19937 rng;
 
 template<typename Params>

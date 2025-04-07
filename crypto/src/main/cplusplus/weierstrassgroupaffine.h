@@ -23,6 +23,8 @@
 
 #include "abeliangroup.h"
 
+namespace blacknet::crypto {
+
 template<typename BF, typename SF, BF A, BF B>
 class WeierstrassGroupAffine {
     BF x;
@@ -167,5 +169,7 @@ public:
         }
     }
 };
+
+}
 
 #endif

@@ -23,6 +23,8 @@
 #include "polynomialring.h"
 #include "solinas62.h"
 
+namespace blacknet::crypto {
+
 struct Solinas62RingDegree2Params {
     using Z = Solinas62Ring;
 
@@ -85,5 +87,7 @@ struct Solinas62RingDegree4Params {
 };
 
 typedef PolynomialRing<Solinas62RingDegree4Params> Solinas62RingDegree4;
+
+}
 
 #endif

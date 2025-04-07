@@ -19,6 +19,8 @@
 
 #include "sqlite.h"
 
+namespace sqlite = blacknet::wallet::sqlite;
+
 BOOST_AUTO_TEST_SUITE(SQLites)
 
 BOOST_AUTO_TEST_CASE(Connection) {

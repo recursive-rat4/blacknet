@@ -26,6 +26,8 @@
 #include "solinas62field.h"
 #include "sumcheck.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(SumChecks)
 
 using Z = Solinas62Ring;

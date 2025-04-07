@@ -21,9 +21,12 @@
 #include "logmanager.h"
 #include "sqlite.h"
 
+using blacknet::log::LogManager;
+using blacknet::wallet::sqlite::SQLite;
+
 struct WalletGlobalFixture {
     LogManager _{LogManager::Regime::UnitTest};
-    sqlite::SQLite _;
+    SQLite _;
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(WalletGlobalFixture);

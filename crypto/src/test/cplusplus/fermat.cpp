@@ -19,6 +19,8 @@
 
 #include "fermat.h"
 
+using namespace blacknet::crypto;
+
 using Zq = FermatRing;
 
 BOOST_AUTO_TEST_SUITE(Fermats)

@@ -29,9 +29,11 @@
 
 #include "logger.h"
 
+namespace blacknet::wallet {
+
 namespace sqlite {
-constexpr Logger& logger() {
-    static Logger instance;
+constexpr log::Logger& logger() {
+    static log::Logger instance;
     return instance;
 }
 
@@ -310,7 +312,7 @@ class SQLite {
 public:
     SQLite() {
         ok(sqlite3_initialize);
-        logger() = Logger("SQLite");
+        logger() = log::Logger("SQLite");
         logger()->info("Driving SQLite {}", sqlite3_libversion());
     }
     ~SQLite() {
@@ -324,6 +326,8 @@ public:
     constexpr SQLite& operator = (const SQLite&) = delete;
     constexpr SQLite& operator = (SQLite&&) = delete;
 };
+}
+
 }
 
 #endif

@@ -23,6 +23,8 @@
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 
+namespace blacknet::crypto {
+
 // https://eprint.iacr.org/2007/432
 // SampleZ
 
@@ -61,5 +63,7 @@ struct DiscreteGaussianDistribution {
         return std::ceil(mu + sigma * t);
     }
 };
+
+}
 
 #endif

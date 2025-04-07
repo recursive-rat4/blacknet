@@ -22,6 +22,8 @@
 #include <concepts>
 #include <vector>
 
+namespace blacknet::crypto {
+
 /*
  * Poseidon2: A Faster Version of the Poseidon Hash Function
  * Lorenzo Grassi, Dmitry Khovratovich, Markus Schofnegger
@@ -402,5 +404,7 @@ public:
     }
 };
 };
+
+}
 
 #endif

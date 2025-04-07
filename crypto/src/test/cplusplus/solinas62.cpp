@@ -22,6 +22,8 @@
 #include "solinas62.h"
 #include "solinas62field.h"
 
+using namespace blacknet::crypto;
+
 BOOST_AUTO_TEST_SUITE(Solinas62)
 
 using Zq = Solinas62Ring;
