@@ -25,6 +25,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "logger.h"
+#include "xdgdirectories.h"
 
 namespace blacknet::log {
 
@@ -42,7 +43,7 @@ class LogManager {
 
     static void sinkFile() {
         Logger::sinks().push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-            "debug.log", //TODO dir
+            compat::stateDir() / "debug.log",
             5000000,
             2,
             false

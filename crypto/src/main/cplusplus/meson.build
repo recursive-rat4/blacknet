@@ -15,7 +15,6 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-compiler = meson.get_compiler('cpp')
 compiler.has_argument('-fwrapv', required : true)
 add_project_arguments('-fwrapv', language : 'cpp')
 compiler.has_type('__int128_t', required : true)

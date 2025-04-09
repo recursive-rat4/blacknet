@@ -15,21 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE wallet
-#include <boost/test/unit_test.hpp>
+#ifndef BLACKNET_COMPAT_UNAME_H
+#define BLACKNET_COMPAT_UNAME_H
 
-#include "logmanager.h"
-#include "mode.h"
-#include "sqlite.h"
+#include "blacknet-config.h"
 
-using blacknet::compat::ModeManager;
-using blacknet::log::LogManager;
-using blacknet::wallet::sqlite::SQLite;
+#ifdef BLACKNET_HAVE_SYS_UTSNAME
+#include <sys/utsname.h>
+#endif
 
-struct WalletGlobalFixture {
-    ModeManager _;
-    LogManager _{LogManager::Regime::UnitTest};
-    SQLite _;
-};
+#include <string>
+#include <tuple>
 
-BOOST_TEST_GLOBAL_FIXTURE(WalletGlobalFixture);
+namespace blacknet::compat {
+
+inline std::tuple<std::string, std::string, std::string> uname() noexcept {
+#ifdef BLACKNET_HAVE_SYS_UTSNAME
+    struct utsname name = {};
+    int rc = uname(&name);
+    if (rc == 0)
+        return { name.sysname, name.release, name.machine };
+    else
+#endif
+        return { BLACKNET_HOST_SYSTEM, "unknown", BLACKNET_HOST_ARCH };
+}
+
+}
+
+#endif

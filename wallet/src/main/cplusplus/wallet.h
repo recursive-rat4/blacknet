@@ -23,7 +23,9 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <fmt/format.h>
 
+#include "mode.h"
 #include "sqlite.h"
 
 namespace blacknet::wallet {
@@ -111,9 +113,14 @@ private:
         for (auto&& row : rows) {
             magic = row.integer(0);
         }
-        if (magic == 0x17895E7D)
+        if (magic == compat::mode()->network_magic())
             return;
-        throw Exception("This SQLite database doesn't look like Blacknet wallet");
+        throw Exception(
+            fmt::format(
+                "This SQLite database doesn't look like {} wallet",
+                compat::mode()->agent_name()
+            )
+        );
     }
 
     static void setMagic(sqlite::Connection& connection) {

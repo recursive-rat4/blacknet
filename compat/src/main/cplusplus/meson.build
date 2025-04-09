@@ -15,5 +15,10 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-logging_main_includes = include_directories('.')
-logging_main_dependencies = spdlog_dependency
+compat_main_includes = [
+    config_includes,
+    include_directories('.')
+]
+compat_main_dependencies = [
+    fmt_dependency,
+]

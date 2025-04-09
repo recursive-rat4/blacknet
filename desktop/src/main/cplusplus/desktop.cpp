@@ -18,19 +18,27 @@
 #include "blacknet-config.h"
 
 #include <exception>
-#include <memory>
+#include <filesystem>
+#include <thread>
 #include <fmt/format.h>
 #include <fmt/std.h>
 #include <QApplication>
 #include <QIcon>
 #include <QMessageBox>
 
+#include "getuid.h"
 #include "logmanager.h"
 #include "settings.h"
 #include "trayicon.h"
 #include "mainwindow.h"
+#include "mode.h"
+#include "uname.h"
+#include "xdgdirectories.h"
 
+using namespace blacknet;
 using namespace blacknet::desktop;
+using blacknet::compat::DirManager;
+using blacknet::compat::ModeManager;
 using blacknet::log::Logger;
 using blacknet::log::LogManager;
 
@@ -50,10 +58,32 @@ public:
 
 int main(int argc, char* argv[]) {
     Desktop desktop(argc, argv);
-
-    std::unique_ptr<LogManager> logging;
     try {
-        logging = std::make_unique<LogManager>(LogManager::Regime::Desktop);
+        ModeManager modeManager;
+        DirManager dirManager;
+        LogManager logManager(LogManager::Regime::Desktop);
+
+        auto [os_name, os_version, os_machine] = compat::uname();
+
+        Logger logger("main");
+        logger->info("Starting up {} node {}", compat::mode()->agent_name(), BLACKNET_VERSION_STRING);
+        logger->info("CPU: {} cores {}", std::thread::hardware_concurrency(), os_machine);
+        logger->info("OS: {} version {}", os_name, os_version);
+        logger->info("Using config directory {}", std::filesystem::absolute(compat::configDir()));
+        logger->info("Using data directory {}", std::filesystem::absolute(compat::dataDir()));
+        logger->info("Using state directory {}", std::filesystem::absolute(compat::stateDir()));
+
+        if (compat::getuid() == 0)
+            logger->warn("Running as root");
+#if 0
+        if (compat::getsid() == "S-1-5-18")
+            logger->warn("Running as SYSTEM");
+#endif
+
+        Settings settings;
+        MainWindow mainWindow(&desktop, &settings);
+        TrayIcon trayIcon(&desktop, &mainWindow);
+        return desktop.exec();
     } catch (const std::exception& e) {
 #if FMT_VERSION >= 100000
         auto message = fmt::format("{:t}", e);
@@ -63,11 +93,4 @@ int main(int argc, char* argv[]) {
 #endif
         return 1;
     }
-    Logger logger("main");
-
-    Settings settings;
-    MainWindow mainWindow(&desktop, &settings);
-    TrayIcon trayIcon(&desktop, &mainWindow);
-    logger->info("Welcome to Blacknet Desktop!");
-    return desktop.exec();
 }

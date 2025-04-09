@@ -15,21 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE wallet
-#include <boost/test/unit_test.hpp>
+#ifndef BLACKNET_COMPAT_GETUID_H
+#define BLACKNET_COMPAT_GETUID_H
 
-#include "logmanager.h"
-#include "mode.h"
-#include "sqlite.h"
+#include "blacknet-config.h"
 
-using blacknet::compat::ModeManager;
-using blacknet::log::LogManager;
-using blacknet::wallet::sqlite::SQLite;
+#ifdef BLACKNET_HAVE_UNISTD
+#include <unistd.h>
+#else
+typedef int uid_t;
+#endif
 
-struct WalletGlobalFixture {
-    ModeManager _;
-    LogManager _{LogManager::Regime::UnitTest};
-    SQLite _;
-};
+namespace blacknet::compat {
 
-BOOST_TEST_GLOBAL_FIXTURE(WalletGlobalFixture);
+inline uid_t getuid() noexcept {
+#ifdef BLACKNET_HAVE_UNISTD
+    return ::getuid();
+#else
+    return -1;
+#endif
+}
+
+}
+
+#endif

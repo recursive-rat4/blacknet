@@ -40,14 +40,22 @@ if get_option('benchmarks')
     google_benchmark_dependency = dependency('benchmark', version : '>=1.1.0')
 endif
 
+compiler = meson.get_compiler('cpp')
+
 configure_file(output : 'blacknet-config.h',
     configuration : {
         'BLACKNET_VERSION_STRING' : '"' + meson.project_version() + '"',
+        'BLACKNET_HOST_SYSTEM' : '"' + host_machine.system() + '"',
+        'BLACKNET_HOST_ARCH' : '"' + host_machine.cpu_family() + '"',
+        'BLACKNET_HAVE_SYS_STAT' : compiler.has_header('sys/stat.h'),
+        'BLACKNET_HAVE_SYS_UTSNAME' : compiler.has_header('sys/utsname.h'),
+        'BLACKNET_HAVE_UNISTD' : compiler.has_header('unistd.h'),
     }
 )
 config_includes = include_directories('.')
 
-subdir('logging')
+subdir('compat')
+subdir('log')
 subdir('crypto')
 subdir('vm')
 subdir('wallet')
