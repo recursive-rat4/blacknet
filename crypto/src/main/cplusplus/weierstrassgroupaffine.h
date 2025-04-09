@@ -85,7 +85,7 @@ public:
     }
 
     constexpr WeierstrassGroupAffine operator - (const WeierstrassGroupAffine& other) const {
-#ifdef BLACKNET_CRYPTO_OMG_OPTIMIZE
+#ifdef BLACKNET_OPTIMIZE
         return *this + -other;
 #else
         if (*this == WeierstrassGroupAffine())

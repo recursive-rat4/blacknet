@@ -34,7 +34,7 @@ public:
         polynomials.reserve(capacity);
     }
     constexpr Polynomial(std::vector<P<R>>&& polynomials) : polynomials(std::move(polynomials)) {}
-    constexpr Polynomial(const Polynomial& other) = delete;
+    constexpr Polynomial(const Polynomial&) = delete;
     constexpr Polynomial(Polynomial&&) noexcept = default;
     constexpr ~Polynomial() noexcept = default;
 

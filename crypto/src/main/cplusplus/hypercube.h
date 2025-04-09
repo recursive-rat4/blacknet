@@ -42,13 +42,8 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::size_t;
-        constexpr ComposedIterator(const ComposedIterator& other)
-            : last(other.last), index(other.index) {}
-        constexpr ComposedIterator& operator = (const ComposedIterator& other) {
-            last = other.last;
-            index = other.index;
-            return *this;
-        }
+        constexpr ComposedIterator(const ComposedIterator&) = default;
+        constexpr ComposedIterator& operator = (const ComposedIterator&) = default;
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == last;
         }
@@ -131,16 +126,8 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::pair<std::size_t, std::size_t>;
-        constexpr SplittedIterator(const SplittedIterator& other)
-            : data(other.data), last(other.last), rows(other.rows), columns(other.columns), index(other.index) {}
-        constexpr SplittedIterator& operator = (const SplittedIterator& other) {
-            data = other.data;
-            last = other.last;
-            rows = other.rows;
-            columns = other.columns;
-            index = other.index;
-            return *this;
-        }
+        constexpr SplittedIterator(const SplittedIterator&) = default;
+        constexpr SplittedIterator& operator = (const SplittedIterator&) = default;
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == last;
         }

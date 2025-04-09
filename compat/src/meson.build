@@ -16,3 +16,7 @@
 #
 
 subdir('main/cplusplus')
+
+if get_option('tests')
+    subdir('test/cplusplus')
+endif

@@ -18,14 +18,16 @@
 #ifndef BLACKNET_CRYPTO_BIGINT_H
 #define BLACKNET_CRYPTO_BIGINT_H
 
+#include "blacknet-config.h"
+
 #include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <exception>
-#include <iomanip>
 #include <ostream>
-#include <boost/io/ios_state.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
 namespace blacknet::crypto {
 
@@ -40,8 +42,7 @@ public:
 
 template<std::size_t N>
 requires(N > 0)
-class BigInt {
-public:
+struct BigInt {
     typedef __uint64_t L;
     typedef __uint128_t LL;
     typedef __int128_t SLL;
@@ -136,7 +137,7 @@ public:
     }
 
     constexpr BigInt<N*2> square() const {
-#ifdef BLACKNET_CRYPTO_OMG_OPTIMIZE
+#ifdef BLACKNET_OPTIMIZE
         return *this * *this;
 #else
         L c = 0;
@@ -222,11 +223,22 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const BigInt& val)
     {
-        boost::io::ios_all_saver ias(out);
-        out << std::hex << std::setfill('0');
         for (std::size_t i = N; i --> 0;)
-            out << std::setw(sizeof(L) * 2) << val.limbs[i];
+            fmt::print(out, limb_format(), val.limbs[i]);
         return out;
+    }
+private:
+    consteval static const char* limb_format() noexcept {
+        if constexpr (sizeof(L) == 8)
+            return "{:016X}";
+        else if constexpr (sizeof(L) == 4)
+            return "{:08X}";
+        else if constexpr (sizeof(L) == 2)
+            return "{:04X}";
+        else if constexpr (sizeof(L) == 1)
+            return "{:02X}";
+        else
+            static_assert(false, "Not implemented");
     }
 };
 

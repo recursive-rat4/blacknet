@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Pavel Vasin
+# Copyright (c) 2024-2025 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -15,18 +15,33 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-compiler.compiles('''
-        #include <climits>
-        int main() { static_assert(CHAR_BIT == 8); }
-    ''',
-    name : 'byte is 8 bits',
-    required : true
-)
+if get_option('tests_report_junit')
+    compat_test_arguments = ['--log_format=JUNIT', '--log_sink=TEST-compat.xml']
+else
+    compat_test_arguments = []
+endif
 
-compat_main_includes = [
-    config_includes,
+compat_test_sources = [
+    'byte.cpp',
+    'test.cpp',
+]
+compat_test_includes = [
+    compat_main_includes,
     include_directories('.')
 ]
-compat_main_dependencies = [
-    fmt_dependency,
+compat_test_dependencies = [
+    compat_main_dependencies,
+    boost_test_dependency
 ]
+compat_test_bin = executable(
+    'compat_test',
+    compat_test_sources,
+    implicit_include_directories : false,
+    include_directories : compat_test_includes,
+    dependencies : compat_test_dependencies
+)
+test(
+    'compat test',
+    compat_test_bin,
+    args : compat_test_arguments,
+)

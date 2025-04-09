@@ -105,7 +105,7 @@ private:
     }
 
     static W read(const std::byte* memory) {
-        return byte::read<W, std::endian::little>(memory);
+        return compat::byte::read<W, std::endian::little>(memory);
     }
 
     void crypt(const std::span<std::byte>& y, const std::span<const std::byte>& x) {

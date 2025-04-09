@@ -15,14 +15,17 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-compiler.has_argument('-fwrapv', required : true)
-add_project_arguments('-fwrapv', language : 'cpp')
 compiler.has_type('__int128_t', required : true)
 compiler.has_type('__uint128_t', required : true)
 
-if get_option('optimization') == '3' or get_option('optimization') == 's'
-    add_project_arguments('-DBLACKNET_CRYPTO_OMG_OPTIMIZE', language : 'cpp')
-endif
-
-crypto_main_includes = include_directories('.')
-crypto_main_dependencies = [boost_random_dependency, oneapi_tbb_dependency]
+crypto_main_includes = [
+    compat_main_includes,
+    config_includes,
+    include_directories('.')
+]
+crypto_main_dependencies = [
+    compat_main_dependencies,
+    boost_random_dependency,
+    oneapi_tbb_dependency,
+    fmt_dependency,
+]

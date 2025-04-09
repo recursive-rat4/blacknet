@@ -16,7 +16,7 @@
 #
 
 project('blacknet', 'cpp',
-    meson_version : '>=1.3.0',
+    meson_version : '>=1.5.0',
     version : '0.3.0.SNAPSHOT',
     license : 'LGPL-3.0-or-later',
     default_options : [
@@ -42,8 +42,14 @@ endif
 
 compiler = meson.get_compiler('cpp')
 
+# Current implementation of lattice cryptography largely relies on
+# the signed integer overflow, which is undefined behaviour in stantard C++23
+compiler.has_argument('-fwrapv', required : true)
+add_project_arguments('-fwrapv', language : 'cpp')
+
 configure_file(output : 'blacknet-config.h',
     configuration : {
+        'BLACKNET_OPTIMIZE' : get_option('optimization') in ['3', 's'],
         'BLACKNET_VERSION_STRING' : '"' + meson.project_version() + '"',
         'BLACKNET_HOST_SYSTEM' : '"' + host_machine.system() + '"',
         'BLACKNET_HOST_ARCH' : '"' + host_machine.cpu_family() + '"',

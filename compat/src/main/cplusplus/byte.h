@@ -15,51 +15,57 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_BYTE_H
-#define BLACKNET_CRYPTO_BYTE_H
+#ifndef BLACKNET_COMPAT_BYTE_H
+#define BLACKNET_COMPAT_BYTE_H
 
 #include <cstddef>
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <ostream>
+#include <type_traits>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
-namespace blacknet::crypto {
+namespace blacknet::compat {
 
 namespace byte {
 /**
- * Reads an `Integer` value from the byte representation in the `endian` order.
+ * Reads a `T` object from the byte representation in the `endian` order.
  */
-template<typename Integer, std::endian endian>
-Integer read(const std::byte* memory) {
+template<typename T, std::endian endian>
+requires(std::is_trivially_copyable_v<T>)
+T read(const std::byte* memory) {
     static_assert(
         std::endian::native == std::endian::big ||
         std::endian::native == std::endian::little,
         "Mixed endian is not implemented"
     );
-    Integer integer;
-    std::byte* const pointer = reinterpret_cast<std::byte*>(&integer);
+    T object;
+    std::byte* const pointer = reinterpret_cast<std::byte*>(&object);
     if constexpr (endian == std::endian::native)
-        std::ranges::copy(memory, memory + sizeof(Integer), pointer);
+        std::ranges::copy(memory, memory + sizeof(T), pointer);
     else
-        std::ranges::reverse_copy(memory, memory + sizeof(Integer), pointer);
-    return integer;
+        std::ranges::reverse_copy(memory, memory + sizeof(T), pointer);
+    return object;
 }
 
 /**
- * Writes an `Integer` value into the byte representation in the `endian` order.
+ * Writes a `T` object into the byte representation in the `endian` order.
  */
-template<typename Integer, std::endian endian>
-void write(std::byte* memory, Integer integer) {
+template<typename T, std::endian endian>
+requires(std::is_trivially_copyable_v<T>)
+void write(std::byte* memory, T object) {
     static_assert(
         std::endian::native == std::endian::big ||
         std::endian::native == std::endian::little,
         "Mixed endian is not implemented"
     );
-    const std::byte* const pointer = reinterpret_cast<const std::byte*>(&integer);
+    const std::byte* const pointer = reinterpret_cast<const std::byte*>(&object);
     if constexpr (endian == std::endian::native)
-        std::ranges::copy(pointer, pointer + sizeof(Integer), memory);
+        std::ranges::copy(pointer, pointer + sizeof(T), memory);
     else
-        std::ranges::reverse_copy(pointer, pointer + sizeof(Integer), memory);
+        std::ranges::reverse_copy(pointer, pointer + sizeof(T), memory);
 }
 
 /**
@@ -85,6 +91,14 @@ consteval std::array<std::byte, N> arrayU(const std::array<uint8_t, N>& ints) {
 }
 }
 
+}
+
+namespace std {
+    inline std::ostream& operator << (std::ostream& out, const std::byte val)
+    {
+        fmt::print(out, "0x{:02X}", val);
+        return out;
+    }
 }
 
 #endif

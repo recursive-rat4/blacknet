@@ -117,7 +117,7 @@ public:
     }
 
     constexpr WeierstrassGroupJacobian operator - (const WeierstrassGroupJacobian& other) const {
-#ifdef BLACKNET_CRYPTO_OMG_OPTIMIZE
+#ifdef BLACKNET_OPTIMIZE
         return *this + -other;
 #else
         if (*this == WeierstrassGroupJacobian())

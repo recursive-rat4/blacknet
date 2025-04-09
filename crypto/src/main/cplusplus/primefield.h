@@ -184,13 +184,8 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = bool;
-        constexpr BitIterator(const BitIterator& other)
-            : data(other.data), index(other.index) {}
-        constexpr BitIterator& operator = (const BitIterator& other) {
-            data = other.data;
-            index = other.index;
-            return *this;
-        }
+        constexpr BitIterator(const BitIterator&) = default;
+        constexpr BitIterator& operator = (const BitIterator&) = default;
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == Params::BITS;
         }

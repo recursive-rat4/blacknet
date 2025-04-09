@@ -26,7 +26,6 @@ crypto_test_sources = [
     'bfv.cpp',
     'bigint.cpp',
     'blacklemon.cpp',
-    'byte.cpp',
     'ccsbuilder.cpp',
     'chacha20.cpp',
     'customizableconstraintsystem.cpp',

@@ -40,8 +40,10 @@ struct Module {
     std::array<R, N> components;
 
     consteval Module() : components() {}
-    constexpr Module(const Module& other) : components(other.components) {}
     constexpr Module(const std::array<R, N>& components) : components(components) {}
+    constexpr Module(const Module&) = default;
+
+    constexpr Module& operator = (const Module&) = default;
 
     constexpr bool operator == (const Module&) const = default;
 

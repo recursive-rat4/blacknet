@@ -22,7 +22,7 @@
 #include "util.h"
 #include "wallet.h"
 
-namespace byte = blacknet::crypto::byte;
+namespace byte = blacknet::compat::byte;
 namespace sqlite = blacknet::wallet::sqlite;
 using blacknet::wallet::Exception;
 using blacknet::wallet::Wallet;

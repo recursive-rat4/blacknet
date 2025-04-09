@@ -23,6 +23,7 @@
 #include "chacha20.h"
 #include "util.h"
 
+namespace byte = blacknet::compat::byte;
 using namespace blacknet::crypto;
 
 BOOST_AUTO_TEST_SUITE(ChaCha20s)

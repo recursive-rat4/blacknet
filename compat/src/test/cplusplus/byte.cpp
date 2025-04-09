@@ -22,9 +22,8 @@
 #include <bit>
 
 #include "byte.h"
-#include "util.h"
 
-using namespace blacknet::crypto;
+using namespace blacknet::compat;
 
 BOOST_AUTO_TEST_SUITE(Bytes)
 
