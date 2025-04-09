@@ -72,7 +72,7 @@
         <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
 
         <kotlin.version>2.1.20</kotlin.version>
-        <coroutines.version>1.10.1</coroutines.version>
+        <coroutines.version>1.10.2</coroutines.version>
         <serialization.version>1.8.1</serialization.version>
         <ktor.version>3.1.2</ktor.version>
         <atomicfu.version>0.27.0</atomicfu.version>
