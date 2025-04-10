@@ -22,7 +22,9 @@
 #include <ostream>
 #include <utility>
 #include <vector>
-#include <boost/io/ostream_joiner.hpp>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 namespace blacknet::crypto {
 
@@ -138,17 +140,15 @@ namespace std {
     template<typename T, std::size_t N>
     std::ostream& operator << (std::ostream& out, const std::array<T, N>& val)
     {
-        out << '[';
-        std::copy(val.cbegin(), val.cend(), boost::io::make_ostream_joiner(out, ", "));
-        return out << ']';
+        fmt::print(out, "{}", val);
+        return out;
     }
 
     template<typename T, typename A>
     std::ostream& operator << (std::ostream& out, const std::vector<T, A>& val)
     {
-        out << '[';
-        std::copy(val.cbegin(), val.cend(), boost::io::make_ostream_joiner(out, ", "));
-        return out << ']';
+        fmt::print(out, "{}", val);
+        return out;
     }
 
     template<typename A, typename B>

@@ -23,6 +23,8 @@
 #include <optional>
 #include <ostream>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #include "bitint.h"
 #include "semigroup.h"
@@ -203,5 +205,9 @@ private:
 };
 
 }
+
+template<>
+template<typename Params>
+struct fmt::formatter<blacknet::crypto::IntegerRing<Params>> : ostream_formatter {};
 
 #endif

@@ -20,6 +20,8 @@
 
 #include <ostream>
 #include <vector>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #include "util.h"
 
@@ -120,5 +122,9 @@ struct MatrixSparse {
 };
 
 }
+
+template<>
+template<typename E>
+struct fmt::formatter<blacknet::crypto::MatrixSparse<E>> : ostream_formatter {};
 
 #endif

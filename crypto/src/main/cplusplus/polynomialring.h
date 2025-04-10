@@ -22,6 +22,8 @@
 #include <array>
 #include <ostream>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #include "semigroup.h"
 #include "util.h"
@@ -208,5 +210,9 @@ public:
 };
 
 }
+
+template<>
+template<typename Params>
+struct fmt::formatter<blacknet::crypto::PolynomialRing<Params>> : ostream_formatter {};
 
 #endif

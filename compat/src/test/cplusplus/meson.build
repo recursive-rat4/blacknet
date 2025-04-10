@@ -23,6 +23,7 @@ endif
 
 compat_test_sources = [
     'byte.cpp',
+    'getuid.cpp',
     'test.cpp',
 ]
 compat_test_includes = [
