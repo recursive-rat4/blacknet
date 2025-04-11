@@ -21,6 +21,9 @@
 #include <bit>
 #include <ostream>
 #include <vector>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 namespace blacknet::crypto {
 
@@ -104,7 +107,8 @@ struct MerkleTree {
 
     friend std::ostream& operator << (std::ostream& out, const MerkleTree& val)
     {
-        return out << '(' << val.size << ", " << val.root() << ')';
+        fmt::print(out, "({}, {})", val.size, val.root());
+        return out;
     }
 };
 

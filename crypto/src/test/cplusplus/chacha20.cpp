@@ -21,7 +21,6 @@
 
 #include "byte.h"
 #include "chacha20.h"
-#include "util.h"
 
 namespace byte = blacknet::compat::byte;
 using namespace blacknet::crypto;

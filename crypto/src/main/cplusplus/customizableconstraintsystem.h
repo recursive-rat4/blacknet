@@ -24,6 +24,9 @@
 #include "multilinearextension.h"
 #include "vector.h"
 #include "util.h"
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 namespace blacknet::crypto {
 
@@ -80,7 +83,8 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const CustomizableConstraintSystem& val)
     {
-        return out << '(' << val.rows << ", " << val.columns << ", " << val.m << ", " << val.s << ", " << val.c << ')';
+        fmt::print(out, "({}, {}, {}, {}, {})", val.rows, val.columns, val.m, val.s, val.c);
+        return out;
     }
 
     template<typename Z = E>

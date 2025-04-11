@@ -24,9 +24,9 @@
 #include <random>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 #include "semigroup.h"
-#include "util.h"
 
 namespace blacknet::crypto {
 
@@ -162,7 +162,8 @@ public:
     {
         std::array<Z, N> coefficients(val.coefficients);
         Params::fromForm(coefficients);
-        return out << coefficients;
+        fmt::print(out, "{}", coefficients);
+        return out;
     }
 
     template<typename DRG>

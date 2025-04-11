@@ -21,6 +21,9 @@
 #include <concepts>
 #include <ranges>
 #include <vector>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 namespace blacknet::vm {
 
@@ -61,7 +64,8 @@ struct Cell {
 
     friend std::ostream& operator << (std::ostream& out, const Cell& val)
     {
-        return out << val.value;
+        fmt::print(out, "{}", val.value);
+        return out;
     }
 
 template<typename Circuit>

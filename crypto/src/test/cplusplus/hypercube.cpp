@@ -18,10 +18,10 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
+#include "boost-print.h"
 #include "hypercube.h"
 #include "multilinearextension.h"
 #include "solinas62.h"
-#include "util.h"
 
 using namespace blacknet::crypto;
 

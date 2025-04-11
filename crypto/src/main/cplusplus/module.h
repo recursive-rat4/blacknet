@@ -21,8 +21,9 @@
 #include <algorithm>
 #include <array>
 #include <ostream>
-
-#include "util.h"
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 namespace blacknet::crypto {
 
@@ -100,7 +101,8 @@ struct Module {
 
     friend std::ostream& operator << (std::ostream& out, const Module& val)
     {
-        return out << val.components;
+        fmt::print(out, "{}", val.components);
+        return out;
     }
 
     template<typename DRG>

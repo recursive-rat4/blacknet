@@ -17,9 +17,9 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "boost-print.h"
 #include "byte.h"
 #include "sqlite.h"
-#include "util.h"
 #include "wallet.h"
 
 namespace byte = blacknet::compat::byte;

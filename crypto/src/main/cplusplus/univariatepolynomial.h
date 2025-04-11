@@ -22,8 +22,9 @@
 #include <initializer_list>
 #include <ostream>
 #include <vector>
-
-#include "util.h"
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 namespace blacknet::crypto {
 
@@ -77,7 +78,8 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const UnivariatePolynomial& val)
     {
-        return out << val.coefficients;
+        fmt::print(out, "{}", val.coefficients);
+        return out;
     }
 
     template<typename DRG>

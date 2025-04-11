@@ -22,8 +22,7 @@
 #include <vector>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-
-#include "util.h"
+#include <fmt/ranges.h>
 
 namespace blacknet::crypto {
 
@@ -117,7 +116,8 @@ struct MatrixSparse {
 
     friend std::ostream& operator << (std::ostream& out, const MatrixSparse& val)
     {
-        return out << '(' << val.rIndex << ", " << val.cIndex << ", " << val.elements << ')';
+        fmt::print(out, "({}, {}, {})", val.rIndex, val.cIndex, val.elements);
+        return out;
     }
 };
 

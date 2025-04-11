@@ -22,8 +22,6 @@
 #include <array>
 #include <concepts>
 
-#include "util.h"
-
 namespace blacknet::crypto {
 
 // Jive Compression Mode, https://eprint.iacr.org/2022/840

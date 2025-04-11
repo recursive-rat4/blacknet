@@ -22,8 +22,9 @@
 #include <initializer_list>
 #include <ostream>
 #include <vector>
-
-#include "util.h"
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 namespace blacknet::crypto {
 
@@ -134,7 +135,8 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const Matrix& val)
     {
-        return out << val.elements;
+        fmt::print(out, "{}", val.elements);
+        return out;
     }
 
     template<typename RNG>

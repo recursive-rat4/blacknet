@@ -22,10 +22,7 @@
 #include <algorithm>
 #include <array>
 #include <bit>
-#include <ostream>
 #include <type_traits>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
 
 namespace blacknet::compat {
 
@@ -91,14 +88,6 @@ consteval std::array<std::byte, N> arrayU(const std::array<uint8_t, N>& ints) {
 }
 }
 
-}
-
-namespace std {
-    inline std::ostream& operator << (std::ostream& out, const std::byte val)
-    {
-        fmt::print(out, "0x{:02X}", val);
-        return out;
-    }
 }
 
 #endif

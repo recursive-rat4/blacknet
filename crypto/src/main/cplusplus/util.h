@@ -18,13 +18,8 @@
 #ifndef BLACKNET_CRYPTO_UTIL_H
 #define BLACKNET_CRYPTO_UTIL_H
 
-#include <array>
-#include <ostream>
 #include <utility>
 #include <vector>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
-#include <fmt/ranges.h>
 
 namespace blacknet::crypto {
 
@@ -134,28 +129,6 @@ namespace util {
     };
 }
 
-}
-
-namespace std {
-    template<typename T, std::size_t N>
-    std::ostream& operator << (std::ostream& out, const std::array<T, N>& val)
-    {
-        fmt::print(out, "{}", val);
-        return out;
-    }
-
-    template<typename T, typename A>
-    std::ostream& operator << (std::ostream& out, const std::vector<T, A>& val)
-    {
-        fmt::print(out, "{}", val);
-        return out;
-    }
-
-    template<typename A, typename B>
-    std::ostream& operator << (std::ostream& out, const std::pair<A, B>& val)
-    {
-        return out << '(' << std::get<0>(val) << ", " << std::get<1>(val) << ')';
-    }
 }
 
 #endif

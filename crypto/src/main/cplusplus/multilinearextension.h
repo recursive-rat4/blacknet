@@ -23,11 +23,13 @@
 #include <initializer_list>
 #include <ostream>
 #include <vector>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 #include "eqextension.h"
 #include "matrix.h"
 #include "polynomialring.h"
-#include "util.h"
 #include "vector.h"
 
 namespace blacknet::crypto {
@@ -173,7 +175,8 @@ struct MultilinearExtension {
 
     friend std::ostream& operator << (std::ostream& out, const MultilinearExtension& val)
     {
-        return out << val.coefficients;
+        fmt::print(out, "{}", val.coefficients);
+        return out;
     }
 
 template<typename Circuit>
