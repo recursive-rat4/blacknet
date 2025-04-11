@@ -22,7 +22,7 @@
 #include <charconv>
 #include <optional>
 #include <ostream>
-#include <boost/random/uniform_int_distribution.hpp>
+#include <random>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -168,12 +168,12 @@ public:
 
     template<typename RNG>
     static IntegerRing random(RNG& rng) {
-        boost::random::uniform_int_distribution<I> ud(-(Params::M - 1) / 2, (Params::M - 1) / 2);
+        std::uniform_int_distribution<I> ud(-(Params::M - 1) / 2, (Params::M - 1) / 2);
         return IntegerRing(ud(rng), 0);
     }
 
     template<typename RNG, typename DST>
-    static IntegerRing random(RNG& rng, const DST& dst) {
+    static IntegerRing random(RNG& rng, DST& dst) {
         return IntegerRing(dst(rng));
     }
 private:

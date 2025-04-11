@@ -19,7 +19,7 @@
 #define BLACKNET_CRYPTO_WEIERSTRASSGROUPPROJECTIVE_H
 
 #include <ostream>
-#include <boost/random/uniform_int_distribution.hpp>
+#include <random>
 
 #include "abeliangroup.h"
 
@@ -180,7 +180,7 @@ public:
 
     template<typename RNG>
     static WeierstrassGroupProjective random(RNG& rng) {
-        boost::random::uniform_int_distribution<uint8_t> ud(0, 1);
+        std::uniform_int_distribution<uint8_t> ud(0, 1);
         bool ySign = ud(rng);
         while (true) {
             BF x(BF::random(rng));

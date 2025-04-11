@@ -145,7 +145,7 @@ public:
     }
 
     template<typename RNG, typename DST>
-    static Matrix random(RNG& rng, const DST& dst, std::size_t rows, std::size_t columns) {
+    static Matrix random(RNG& rng, DST& dst, std::size_t rows, std::size_t columns) {
         Matrix t(rows, columns);
         std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });
         return t;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,9 +19,8 @@
 #define BLACKNET_CRYPTO_DISCRETEGAUSSIANDISTRIBUTION_H
 
 #include <cmath>
+#include <random>
 #include <type_traits>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/uniform_real_distribution.hpp>
 
 namespace blacknet::crypto {
 
@@ -43,8 +42,8 @@ struct DiscreteGaussianDistribution {
     template<typename G>
     constexpr result_type operator () (G& g) const {
         // https://eprint.iacr.org/2015/953
-        boost::random::uniform_int_distribution<T> uid(min(), max());
-        boost::random::uniform_real_distribution urd;
+        std::uniform_int_distribution<T> uid(min(), max());
+        std::uniform_real_distribution<double> urd;
         while (true) {
             result_type x(uid(g));
             double ps = std::exp(- (x - mu) * (x - mu) / (2.0 * sigma * sigma));

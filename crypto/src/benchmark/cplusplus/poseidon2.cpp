@@ -16,7 +16,7 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 
 #include "poseidon2pasta.h"
 #include "poseidon2pervushin.h"
@@ -24,7 +24,7 @@
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 template<typename Params>
 static void BM_Poseidon2(benchmark::State& state) {

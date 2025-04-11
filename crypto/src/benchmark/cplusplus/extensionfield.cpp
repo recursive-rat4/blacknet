@@ -16,14 +16,14 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 
 #include "pervushinfield.h"
 #include "solinas62field.h"
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 template<typename F>
 static void BM_ExtFieldAdd(benchmark::State& state) {

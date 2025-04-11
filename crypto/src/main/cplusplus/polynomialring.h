@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <array>
 #include <ostream>
-#include <boost/random/uniform_int_distribution.hpp>
+#include <random>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -185,7 +185,7 @@ public:
     }
 
     template<typename RNG, typename DST>
-    static PolynomialRing random(RNG& rng, const DST& dst) {
+    static PolynomialRing random(RNG& rng, DST& dst) {
         PolynomialRing t;
         std::ranges::generate(t.coefficients, [&] { return Z::random(rng, dst); });
         Params::toForm(t.coefficients);
@@ -193,8 +193,8 @@ public:
     }
 
     template<typename RNG, typename DST>
-    static PolynomialRing random(RNG& rng, const DST& dst, std::size_t hamming) {
-        boost::random::uniform_int_distribution<std::size_t> uid(0, N - 1);
+    static PolynomialRing random(RNG& rng, DST& dst, std::size_t hamming) {
+        std::uniform_int_distribution<std::size_t> uid(0, N - 1);
         PolynomialRing t;
         std::ranges::fill(t.coefficients, Z(0));
         while (hamming) {

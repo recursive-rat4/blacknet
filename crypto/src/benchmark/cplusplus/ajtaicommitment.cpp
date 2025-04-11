@@ -16,7 +16,7 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 
 #include "ajtaicommitment.h"
 #include "latticefold.h"
@@ -26,7 +26,7 @@
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 static void BM_AjtaiCommitment(benchmark::State& state) {
     using LatticeFold = LatticeFold<Solinas62Ring>;

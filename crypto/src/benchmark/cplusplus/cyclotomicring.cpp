@@ -16,7 +16,7 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 
 #include "dilithium.h"
 #include "latticefold.h"
@@ -24,7 +24,7 @@
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 static void BM_CyclotomicMul_Dilithium(benchmark::State& state) {
     using R = dilithium::Rq;

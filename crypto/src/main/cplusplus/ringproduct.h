@@ -113,7 +113,7 @@ struct RingProduct {
     }
 
     template<typename RNG, typename DST>
-    static RingProduct random(RNG& rng, const DST& dst) {
+    static RingProduct random(RNG& rng, DST& dst) {
         RingProduct t;
         for_each(t.ideals, [&](auto&& r) { r = std::remove_reference_t<decltype(r)>::random(rng, dst); });
         return t;

@@ -16,7 +16,7 @@
  */
 
 #include <boost/test/unit_test.hpp>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 
 #include "ccsbuilder.h"
 #include "fs.h"
@@ -27,7 +27,7 @@
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 BOOST_AUTO_TEST_SUITE(FSs)
 

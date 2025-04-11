@@ -18,7 +18,7 @@
 #ifndef BLACKNET_CRYPTO_LATTICEFOLD_H
 #define BLACKNET_CRYPTO_LATTICEFOLD_H
 
-#include <boost/random/uniform_int_distribution.hpp>
+#include <random>
 
 #include "ajtaicommitment.h"
 #include "convolution.h"
@@ -96,7 +96,7 @@ struct LatticeFold {
 
     using BindingCommitment = AjtaiCommitment<RqIso>;
 
-    boost::random::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
+    std::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
 
     template<typename R>
     constexpr static Matrix<R> gadget(std::size_t m, std::size_t n) {

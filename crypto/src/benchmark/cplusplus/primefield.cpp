@@ -16,13 +16,13 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 
 #include "pastacurves.h"
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 static void BM_FieldAdd(benchmark::State& state) {
     auto a = PallasField::random(rng);

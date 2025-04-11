@@ -194,7 +194,7 @@ public:
     }
 
     template<typename RNG, typename DST>
-    static Vector random(RNG& rng, const DST& dst, std::size_t size) {
+    static Vector random(RNG& rng, DST& dst, std::size_t size) {
         Vector t(size);
         std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });
         return t;

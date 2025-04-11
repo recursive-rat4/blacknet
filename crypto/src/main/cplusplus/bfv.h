@@ -20,8 +20,8 @@
 
 #include <algorithm>
 #include <numbers>
+#include <random>
 #include <type_traits>
-#include <boost/random/uniform_int_distribution.hpp>
 
 #include "discretegaussiandistribution.h"
 #include "polynomialring.h"
@@ -99,7 +99,7 @@ struct BFV {
         }
     };
 
-    boost::random::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
+    std::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
     DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
 
     constexpr static Zq lift(const Zt& zt) {

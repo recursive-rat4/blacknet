@@ -25,7 +25,6 @@ project('blacknet', 'cpp',
     ],
 )
 
-boost_random_dependency = dependency('boost', modules : 'random', version : '>=1.47.0')
 oneapi_tbb_dependency = dependency('tbb', version : '>=2020.0.0')
 fmt_dependency = dependency('fmt', version : '>=9.1.0')
 spdlog_dependency = dependency('spdlog', version : '>=1.5.0')
@@ -47,16 +46,22 @@ compiler = meson.get_compiler('cpp')
 compiler.has_argument('-fwrapv', required : true)
 add_project_arguments('-fwrapv', language : 'cpp')
 
-configure_file(output : 'blacknet-config.h',
-    configuration : {
-        'BLACKNET_OPTIMIZE' : get_option('optimization') in ['3', 's'],
-        'BLACKNET_VERSION_STRING' : '"' + meson.project_version() + '"',
-        'BLACKNET_HOST_SYSTEM' : '"' + host_machine.system() + '"',
-        'BLACKNET_HOST_ARCH' : '"' + host_machine.cpu_family() + '"',
-        'BLACKNET_HAVE_SYS_STAT' : compiler.has_header('sys/stat.h'),
-        'BLACKNET_HAVE_SYS_UTSNAME' : compiler.has_header('sys/utsname.h'),
-        'BLACKNET_HAVE_UNISTD' : compiler.has_header('unistd.h'),
-    }
+config_data = configuration_data({
+    'BLACKNET_OPTIMIZE' : get_option('optimization') in ['3', 's'],
+    'BLACKNET_VERSION_STRING' : '"' + meson.project_version() + '"',
+    'BLACKNET_HOST_SYSTEM' : '"' + host_machine.system() + '"',
+    'BLACKNET_HOST_ARCH' : '"' + host_machine.cpu_family() + '"',
+})
+if host_machine.system() != 'windows'
+    config_data.set('BLACKNET_HAVE_SYS_STAT', compiler.has_header('sys/stat.h'))
+    config_data.set('BLACKNET_HAVE_SYS_UTSNAME', compiler.has_header('sys/utsname.h'))
+    config_data.set('BLACKNET_HAVE_UNISTD', compiler.has_header('unistd.h'))
+elif host_machine.system() == 'windows'
+    config_data.set('BLACKNET_HAVE_NTSECAPI', compiler.has_header('ntsecapi.h'))
+endif
+configure_file(
+    output : 'blacknet-config.h',
+    configuration : config_data,
 )
 config_includes = include_directories('.')
 

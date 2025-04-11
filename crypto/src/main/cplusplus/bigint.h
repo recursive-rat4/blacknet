@@ -25,7 +25,7 @@
 #include <cmath>
 #include <exception>
 #include <ostream>
-#include <boost/random/uniform_int_distribution.hpp>
+#include <random>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -215,7 +215,7 @@ struct BigInt {
 
     template<typename RNG>
     static BigInt random(RNG& rng) {
-        boost::random::uniform_int_distribution<L> ud;
+        std::uniform_int_distribution<L> ud;
         BigInt r;
         std::ranges::generate(r.limbs, [&] { return ud(rng); });
         return r;

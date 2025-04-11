@@ -18,8 +18,8 @@
 #ifndef BLACKNET_CRYPTO_LPR_H
 #define BLACKNET_CRYPTO_LPR_H
 
+#include <random>
 #include <type_traits>
-#include <boost/random/uniform_int_distribution.hpp>
 
 #include "convolution.h"
 #include "discretegaussiandistribution.h"
@@ -97,7 +97,7 @@ struct LPR {
 
     using PlainText = Rq;
 
-    boost::random::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
+    std::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
     DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
 
     constexpr static Rq upscale(const Rq& rt) {

@@ -16,7 +16,7 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 #include <vector>
 
 #include "pastacurves.h"
@@ -24,7 +24,7 @@
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 template<typename G>
 static void BM_PedersenCommitmentSingle(benchmark::State& state) {

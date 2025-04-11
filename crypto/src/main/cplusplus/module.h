@@ -123,7 +123,7 @@ struct Module {
     }
 
     template<typename RNG, typename DST>
-    static Module random(RNG& rng, const DST& dst) {
+    static Module random(RNG& rng, DST& dst) {
         Module t;
         std::ranges::generate(t.components, [&] { return R::random(rng, dst); });
         return t;

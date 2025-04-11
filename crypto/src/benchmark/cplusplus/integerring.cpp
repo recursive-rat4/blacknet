@@ -16,14 +16,14 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 
 #include "pervushin.h"
 #include "solinas62.h"
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 template<typename Z>
 static void BM_IntegerRingAdd(benchmark::State& state) {

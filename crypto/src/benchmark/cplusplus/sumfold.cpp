@@ -16,7 +16,7 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 
 #include "hypercube.h"
 #include "latticefold.h"
@@ -28,7 +28,7 @@
 
 using namespace blacknet::crypto;
 
-static boost::random::mt19937 rng;
+static std::mt19937 rng;
 
 static void BM_LatticeFold_GNorm_SumCheck_ProveEarlyStopping(benchmark::State& state) {
     using Z = Solinas62Ring;
