@@ -124,7 +124,14 @@ private:
     }
 
     static void setMagic(sqlite::Connection& connection) {
-        connection.execute("PRAGMA application_id = 0x17895E7D;");
+        // Pragmas may be executed during statement preparation,
+        // thus have to resort to string formatting
+        {
+            std::string query{
+                fmt::format("PRAGMA application_id = {};", compat::mode()->network_magic())
+            };
+            connection.execute(query.c_str());
+        }
         connection.execute("PRAGMA user_version = 1;");
     }
 
