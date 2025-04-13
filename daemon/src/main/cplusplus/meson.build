@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Pavel Vasin
+# Copyright (c) 2024-2025 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -15,29 +15,23 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-desktop_main_includes = [
-    wallet_main_includes,
+daemon_main_includes = [
     network_main_includes,
-    logging_main_includes,
     config_includes,
     include_directories('.')
 ]
-desktop_main_dependencies = [
-    wallet_main_dependencies,
+daemon_main_dependencies = [
     network_main_dependencies,
-    logging_main_dependencies,
-    qt_dependency,
-    boost_asio_dependency,
     fmt_dependency,
 ]
-desktop_main_sources = [
-    'desktop.cpp',
+daemon_main_sources = [
+    'daemon.cpp',
 ]
-desktop_main_bin = executable(
-    'blacknet-desktop',
-    [desktop_main_sources, desktop_main_resources, desktop_main_ui],
+daemon_main_bin = executable(
+    'blacknet-daemon',
+    daemon_main_sources,
     implicit_include_directories : false,
-    include_directories : desktop_main_includes,
+    include_directories : daemon_main_includes,
     install : true,
-    dependencies : desktop_main_dependencies,
+    dependencies : daemon_main_dependencies,
 )

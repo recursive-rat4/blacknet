@@ -18,29 +18,21 @@
 #include "blacknet-config.h"
 
 #include <exception>
-#include <filesystem>
-#include <thread>
+#include <boost/asio/io_context.hpp>
 #include <fmt/format.h>
 #include <fmt/std.h>
 #include <QApplication>
 #include <QIcon>
 #include <QMessageBox>
 
-#include "getuid.h"
-#include "logmanager.h"
+#include "mainwindow.h"
+#include "node.h"
 #include "settings.h"
 #include "trayicon.h"
-#include "mainwindow.h"
-#include "mode.h"
-#include "uname.h"
-#include "xdgdirectories.h"
 
-using namespace blacknet;
 using namespace blacknet::desktop;
-using blacknet::compat::DirManager;
-using blacknet::compat::ModeManager;
-using blacknet::log::Logger;
 using blacknet::log::LogManager;
+using blacknet::network::Node;
 
 class Desktop : public QApplication {
 public:
@@ -59,26 +51,8 @@ public:
 int main(int argc, char* argv[]) {
     Desktop desktop(argc, argv);
     try {
-        ModeManager modeManager;
-        DirManager dirManager;
-        LogManager logManager(LogManager::Regime::Desktop);
-
-        auto [os_name, os_version, os_machine] = compat::uname();
-
-        Logger logger("main");
-        logger->info("Starting up {} node {}", compat::mode()->agent_name(), BLACKNET_VERSION_STRING);
-        logger->info("CPU: {} cores {}", std::thread::hardware_concurrency(), os_machine);
-        logger->info("OS: {} version {}", os_name, os_version);
-        logger->info("Using config directory {}", std::filesystem::absolute(compat::configDir()));
-        logger->info("Using data directory {}", std::filesystem::absolute(compat::dataDir()));
-        logger->info("Using state directory {}", std::filesystem::absolute(compat::stateDir()));
-
-        if (compat::getuid() == 0)
-            logger->warn("Running as root");
-#if 0
-        if (compat::getsid() == "S-1-5-18")
-            logger->warn("Running as SYSTEM");
-#endif
+        boost::asio::io_context io_context;
+        Node node(LogManager::Regime::Desktop, io_context);
 
         Settings settings;
         MainWindow mainWindow(&desktop, &settings);
