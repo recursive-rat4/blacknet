@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,31 +16,31 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <algorithm>
+#include <array>
 
-#include "blacklemon.h"
 #include "fastrng.h"
 
 using namespace blacknet::crypto;
 
-static FastDRG rng;
+BOOST_AUTO_TEST_SUITE(FastRNGs)
 
-BOOST_AUTO_TEST_SUITE(BlackLemons)
+BOOST_AUTO_TEST_CASE(discards) {
+    constexpr std::size_t size = FastDRG::word_count * 2 + 1;
+    using Buf = std::array<FastDRG::result_type, size>;
+    FastDRG drg;
 
-BOOST_AUTO_TEST_CASE(Tests) {
-    using Zq = BlackLemon::Zq;
-    using Rq = BlackLemon::Rq;
-    BlackLemon bl;
-    auto sk = bl.generateSecretKey(rng);
-    auto pk = bl.generatePublicKey(rng, sk);
-    BlackLemon::PlainText pt{Zq(0), Zq(0), Zq(1), Zq(1)};
-    auto ct = bl.encrypt(rng, pk, pt);
-    BOOST_TEST(pt == bl.decrypt(sk, ct), "Decryption");
+    Buf buf1;
+    std::ranges::generate(buf1, [&drg] { return drg(); });
+    Buf buf2;
+    std::ranges::generate(buf2, [&drg] { return drg(); });
 
-    auto snakeEye = BlackLemon::CipherText{ Rq(1), Rq(0) };
-    BOOST_TEST(!bl.detect(sk, snakeEye).has_value(), "Snake-eye resistance");
+    drg.seed(FastDRG::default_seed);
+    drg.discard(size);
+    Buf buf3;
+    std::ranges::generate(buf3, [&drg] { return drg(); });
 
-    auto sk2 = bl.generateSecretKey(rng);
-    BOOST_TEST(!bl.detect(sk2, ct).has_value(), "δ-snake-eye resistance");
+    BOOST_TEST(buf2 == buf3);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

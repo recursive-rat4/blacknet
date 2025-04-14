@@ -31,6 +31,7 @@ crypto_test_sources = [
     'customizableconstraintsystem.cpp',
     'dilithium.cpp',
     'eqextension.cpp',
+    'fastrng.cpp',
     'fermat.cpp',
     'fs.cpp',
     'hypercube.cpp',

@@ -16,8 +16,8 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <random>
 
+#include "fastrng.h"
 #include "hypercube.h"
 #include "latticefold.h"
 #include "poseidon2solinas62.h"
@@ -28,7 +28,7 @@
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     using Z = Solinas62Ring;

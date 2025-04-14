@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_CHACHA20_H
-#define BLACKNET_CRYPTO_CHACHA20_H
+#ifndef BLACKNET_CRYPTO_CHACHA_H
+#define BLACKNET_CRYPTO_CHACHA_H
 
 #include <cstddef>
 #include <algorithm>
@@ -34,27 +34,36 @@ namespace blacknet::crypto {
  * https://cr.yp.to/chacha/chacha-20080128.pdf
  */
 
-class ChaCha20 {
+template<std::size_t ROUNDS>
+requires(ROUNDS % 2 == 0)
+class ChaCha {
+protected:
     using W = uint32_t;
     constexpr static const std::size_t KEY_SIZE = 32;
     constexpr static const std::size_t IV_SIZE = 12;
     constexpr static const std::size_t BLOCK_SIZE = 64;
     constexpr static const std::size_t L = 16;
-    constexpr static const std::size_t ROUNDS = 20;
     constexpr static const std::array<W, 4> sigma {
         0x61707865, 0x3320646E, 0x79622D32, 0x6B206574
     };
-
+private:
     std::array<W, L> input;
 public:
-    constexpr ChaCha20() = delete;
-    constexpr ChaCha20(const ChaCha20&) = delete;
-    constexpr ChaCha20(ChaCha20&&) = delete;
+    constexpr ChaCha() = delete;
+    constexpr ChaCha(const ChaCha&) = delete;
+    constexpr ChaCha(ChaCha&&) = delete;
 
-    constexpr ChaCha20& operator = (const ChaCha20&) = delete;
-    constexpr ChaCha20& operator = (ChaCha20&&) = delete;
+    constexpr ChaCha& operator = (const ChaCha&) = delete;
+    constexpr ChaCha& operator = (ChaCha&&) = delete;
 
-    ChaCha20(
+    ChaCha(
+        const std::span<const std::byte, KEY_SIZE>& key,
+        const std::span<const std::byte, IV_SIZE>& iv
+    ) {
+        reset(key, iv);
+    }
+
+    void reset(
         const std::span<const std::byte, KEY_SIZE>& key,
         const std::span<const std::byte, IV_SIZE>& iv
     ) {
@@ -66,7 +75,11 @@ public:
             input[i + 13] = read(iv.data() + i * sizeof(W));
     }
 
-    constexpr void seek(W counter) {
+    constexpr W counter() const {
+        return input[12];
+    }
+
+    constexpr void counter(W counter) {
         input[12] = counter;
     }
 
@@ -77,7 +90,7 @@ public:
     void decrypt(const std::span<std::byte>& pt, const std::span<const std::byte>& ct) {
         crypt(pt, ct);
     }
-private:
+protected:
     constexpr static void quarter(W& a, W& b, W& c, W& d) {
         a += b; d ^= a; d = std::rotl(d, 16);
         c += d; b ^= c; b = std::rotl(b, 12);
@@ -85,7 +98,7 @@ private:
         c += d; b ^= c; b = std::rotl(b,  7);
     }
 
-    constexpr static void block(std::array<W, L>& output, const std::array<W, L>& input) {
+    constexpr void keystream(std::array<W, L>& output) {
         std::array<W, L> state;
         std::ranges::copy(input, state.begin());
         for (std::size_t i = 0; i < ROUNDS; i += 2) {
@@ -102,6 +115,7 @@ private:
         for (std::size_t i = 0; i < L; ++i) {
             output[i] = state[i] + input[i];
         }
+        ++input[12];
     }
 
     static W read(const std::byte* memory) {
@@ -113,8 +127,7 @@ private:
         std::size_t remain = x.size();
         std::array<W, L> state;
         while (remain) {
-            block(state, input);
-            ++input[12];
+            keystream(state);
             std::size_t process = std::min(remain, BLOCK_SIZE);
             const std::byte* bytes = reinterpret_cast<const std::byte*>(state.data());
             for (std::size_t i = 0; i < process; ++i)
@@ -124,6 +137,8 @@ private:
         }
     }
 };
+
+using ChaCha20 = ChaCha<20>;
 
 }
 

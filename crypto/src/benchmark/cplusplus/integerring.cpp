@@ -16,14 +16,14 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <random>
 
+#include "fastrng.h"
 #include "pervushin.h"
 #include "solinas62.h"
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 template<typename Z>
 static void BM_IntegerRingAdd(benchmark::State& state) {

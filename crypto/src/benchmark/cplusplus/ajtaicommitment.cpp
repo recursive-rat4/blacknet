@@ -16,9 +16,9 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <random>
 
 #include "ajtaicommitment.h"
+#include "fastrng.h"
 #include "latticefold.h"
 #include "matrix.h"
 #include "solinas62.h"
@@ -26,7 +26,7 @@
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 static void BM_AjtaiCommitment(benchmark::State& state) {
     using LatticeFold = LatticeFold<Solinas62Ring>;

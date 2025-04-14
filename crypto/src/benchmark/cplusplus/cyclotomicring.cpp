@@ -16,15 +16,15 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <random>
 
 #include "dilithium.h"
+#include "fastrng.h"
 #include "latticefold.h"
 #include "solinas62.h"
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 static void BM_CyclotomicMul_Dilithium(benchmark::State& state) {
     using R = dilithium::Rq;

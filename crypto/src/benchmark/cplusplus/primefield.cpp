@@ -16,13 +16,13 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <random>
 
+#include "fastrng.h"
 #include "pastacurves.h"
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 static void BM_FieldAdd(benchmark::State& state) {
     auto a = PallasField::random(rng);

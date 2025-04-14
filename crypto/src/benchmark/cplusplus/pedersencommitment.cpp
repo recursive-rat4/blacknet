@@ -16,15 +16,15 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <random>
 #include <vector>
 
+#include "fastrng.h"
 #include "pastacurves.h"
 #include "pedersencommitment.h"
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 template<typename G>
 static void BM_PedersenCommitmentSingle(benchmark::State& state) {

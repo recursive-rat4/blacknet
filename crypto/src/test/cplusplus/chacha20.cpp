@@ -20,7 +20,7 @@
 #include <array>
 
 #include "byte.h"
-#include "chacha20.h"
+#include "chacha.h"
 
 namespace byte = blacknet::compat::byte;
 using namespace blacknet::crypto;
@@ -75,11 +75,11 @@ BOOST_AUTO_TEST_CASE(RFC8439) {
     std::array<std::byte, 114> scratch;
 
     ChaCha20 cipher(key, iv);
-    cipher.seek(1);
+    cipher.counter(1);
     cipher.decrypt(scratch, encrypted);
     BOOST_TEST(decrypted == scratch);
 
-    cipher.seek(1);
+    cipher.counter(1);
     cipher.encrypt(scratch, decrypted);
     BOOST_TEST(encrypted == scratch);
 }
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(Blacknet) {
     cipher.decrypt(scratch, encrypted);
     BOOST_TEST(decrypted == scratch);
 
-    cipher.seek(0);
+    cipher.counter(0);
     cipher.encrypt(scratch, decrypted);
     BOOST_TEST(encrypted == scratch);
 }

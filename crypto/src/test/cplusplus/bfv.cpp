@@ -16,17 +16,17 @@
  */
 
 #include <boost/test/unit_test.hpp>
-#include <random>
 
 #include "bfv.h"
 #include "convolution.h"
+#include "fastrng.h"
 #include "fermat.h"
 #include "polynomialring.h"
 #include "solinas62.h"
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 BOOST_AUTO_TEST_SUITE(BFVs)
 

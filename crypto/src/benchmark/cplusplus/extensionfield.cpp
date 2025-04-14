@@ -16,14 +16,14 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <random>
 
+#include "fastrng.h"
 #include "pervushinfield.h"
 #include "solinas62field.h"
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 template<typename F>
 static void BM_ExtFieldAdd(benchmark::State& state) {

@@ -27,6 +27,7 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <fmt/format.h>
 
+#include "fastrng.h"
 #include "logger.h"
 
 namespace blacknet::network {
@@ -43,12 +44,26 @@ public:
 // https://geti2p.net/en/docs/api/samv3
 class I2PSAM {
     boost::asio::io_context& io_context;
+    std::string sessionId;
 
     //TODO settings
     std::string i2psamhost{"127.0.0.1"};
     uint16_t i2psamport{7656};
+
+    static std::string generateId() {
+        constexpr std::size_t size = 8;
+        constexpr std::string_view alphabet{"ABCDEFGHIJKLMNOPQRSTUVWXYZ"};
+        std::uniform_int_distribution<std::size_t> ud(0, alphabet.length() - 1);
+        crypto::FastRNG rng;
+        std::string id(size, '\0');
+        for (auto& c : id)
+            c = alphabet[ud(rng)];
+        return id;
+    }
 public:
-    I2PSAM(boost::asio::io_context& io_context) : io_context(io_context) {}
+    I2PSAM(boost::asio::io_context& io_context) :
+        io_context(io_context),
+        sessionId(generateId()) {}
 
     class Connection {
         log::Logger logger{"I2PSAM"};

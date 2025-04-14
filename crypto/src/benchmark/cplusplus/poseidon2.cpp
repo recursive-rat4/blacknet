@@ -16,15 +16,15 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <random>
 
+#include "fastrng.h"
 #include "poseidon2pasta.h"
 #include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 template<typename Params>
 static void BM_Poseidon2(benchmark::State& state) {

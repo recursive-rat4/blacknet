@@ -16,9 +16,9 @@
  */
 
 #include <boost/test/unit_test.hpp>
-#include <random>
 
 #include "ccsbuilder.h"
+#include "fastrng.h"
 #include "fs.h"
 #include "pervushin.h"
 #include "pervushinfield.h"
@@ -27,7 +27,7 @@
 
 using namespace blacknet::crypto;
 
-static std::mt19937 rng;
+static FastDRG rng;
 
 BOOST_AUTO_TEST_SUITE(FSs)
 
