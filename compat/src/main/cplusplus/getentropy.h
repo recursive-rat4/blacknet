@@ -20,8 +20,8 @@
 
 #include "blacknet-config.h"
 
-#include <exception>
 #include <span>
+#include <stdexcept>
 #include <fmt/format.h>
 
 #ifdef BLACKNET_HAVE_UNISTD

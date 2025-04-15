@@ -18,6 +18,8 @@
 #ifndef BLACKNET_CRYPTO_SUMCHECK_H
 #define BLACKNET_CRYPTO_SUMCHECK_H
 
+#include <stdexcept>
+
 #include "interpolation.h"
 #include "univariatepolynomial.h"
 #include "util.h"

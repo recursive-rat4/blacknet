@@ -20,6 +20,7 @@
 
 #include <concepts>
 #include <ranges>
+#include <stdexcept>
 #include <vector>
 #include <fmt/format.h>
 #include <fmt/ostream.h>

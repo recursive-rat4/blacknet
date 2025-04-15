@@ -19,10 +19,10 @@
 #define BLACKNET_COMPAT_MODE_H
 
 #include <cstdlib>
-#include <exception>
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <fmt/format.h>

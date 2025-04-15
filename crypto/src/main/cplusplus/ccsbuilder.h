@@ -23,6 +23,7 @@
 #include <concepts>
 #include <map>
 #include <span>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 

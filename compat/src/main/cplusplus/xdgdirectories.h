@@ -21,10 +21,10 @@
 #include "blacknet-config.h"
 
 #include <cstdlib>
-#include <exception>
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string_view>
 
 #include "magic.h"

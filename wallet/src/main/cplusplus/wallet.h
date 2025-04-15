@@ -18,6 +18,8 @@
 #ifndef BLACKNET_WALLET_WALLET_H
 #define BLACKNET_WALLET_WALLET_H
 
+#include "blacknet-config.h"
+
 #include <cstddef>
 #include <exception>
 #include <span>
@@ -102,7 +104,9 @@ public:
 private:
     static void configure(sqlite::Connection& connection) {
         connection.execute("PRAGMA locking_mode = EXCLUSIVE;");
+#ifdef BLACKNET_HAVE_FULLFSYNC
         connection.execute("PRAGMA fullfsync = TRUE;");
+#endif
         connection.execute("PRAGMA synchronous = FULL;");
         connection.execute("PRAGMA journal_mode = DELETE;");
     }
