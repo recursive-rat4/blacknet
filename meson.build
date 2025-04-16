@@ -84,8 +84,9 @@ configure_file(
 config_includes = include_directories('.')
 
 subdir('compat')
-subdir('log')
 subdir('crypto')
+subdir('io')
+subdir('log')
 if network_feature.allowed()
     subdir('network')
 endif

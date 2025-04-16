@@ -18,6 +18,12 @@
 #ifndef BLACKNET_NETWORK_I2PSAM_H
 #define BLACKNET_NETWORK_I2PSAM_H
 
+#include "blacknet-config.h"
+
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#include <memory>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
@@ -26,31 +32,135 @@
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <fmt/format.h>
+#include <fmt/std.h>
 
 #include "fastrng.h"
+#include "file.h"
 #include "logger.h"
+#include "xdgdirectories.h"
 
 namespace blacknet::network {
-
-class I2PSAMException : public std::exception {
+// https://geti2p.net/en/docs/api/samv3
+namespace i2p {
+class Exception : public std::exception {
     std::string message;
 public:
-    I2PSAMException(const std::string_view& message) : message(message) {}
+    Exception(const std::string_view& message) : message(message) {}
     virtual const char* what() const noexcept override {
         return message.c_str();
     }
 };
 
-// https://geti2p.net/en/docs/api/samv3
-class I2PSAM {
+class Answer {
+    const std::string raw;
+public:
+    constexpr Answer(std::string&& raw) : raw(std::move(raw)) {}
+
+    constexpr bool operator == (const Answer&) const = default;
+
+    constexpr std::optional<std::string_view> get(
+        const std::string_view& key
+    ) const {
+        auto key_pattern = fmt::format(" {}=", key);
+        std::size_t i = raw.find(key_pattern);
+        if (i == std::string_view::npos)
+            return std::nullopt;
+        std::size_t value_start = i + key_pattern.length();
+        if (value_start == raw.length())
+            return std::string_view();
+        if (raw[value_start] == '"') {
+            std::size_t value_end = raw.find('"', value_start + 1);
+            if (value_end == std::string_view::npos)
+                return std::nullopt;
+            return std::string_view(raw.data() + value_start + 1, raw.data() + value_end);
+        }
+        std::size_t value_end = raw.find(' ', value_start);
+        if (value_end == std::string_view::npos)
+            return std::string_view(raw.data() + value_start, raw.data() + raw.length() - 1);
+        return std::string_view(raw.data() + value_start, raw.data() + value_end);
+    }
+
+    constexpr void ok() const {
+        if (auto maybeResult = get("RESULT")) {
+            const auto& result = *maybeResult;
+            if (result.empty()) {
+                throw Exception("Empty RESULT");
+            } else if (result != "OK") {
+                if (auto maybeMessage = get("MESSAGE")) {
+                    const auto& message = *maybeMessage;
+                    if (message.empty())
+                        throw Exception(result);
+                    else
+                        throw Exception(fmt::format("{} {}", result, message));
+                } else {
+                    throw Exception(result);
+                }
+            }
+        } else {
+            throw Exception("No RESULT");
+        }
+    }
+};
+
+class Connection {
+    log::Logger& logger;
+    boost::asio::ip::tcp::socket socket;
+    boost::asio::streambuf read_buf;
+    constexpr static const std::size_t max_line{32768};
+public:
+    Connection(log::Logger& logger, boost::asio::io_context& io_context)
+        : logger(logger), socket(io_context), read_buf(max_line) {}
+
+    boost::asio::awaitable<Answer> request(const std::string_view& request) {
+        logger->trace("-> {:?}", request);
+        co_await socket.async_send(boost::asio::buffer(request), boost::asio::use_awaitable);
+
+        std::size_t n = co_await boost::asio::async_read_until(socket, read_buf, '\n', boost::asio::use_awaitable);
+        auto begin = boost::asio::buffers_begin(read_buf.data());
+        std::string raw(begin, begin + n);
+        read_buf.consume(n);
+        logger->trace("<- {:?}", raw);
+
+        Answer answer(std::move(raw));
+        answer.ok();
+        co_return answer;
+    }
+
+    boost::asio::awaitable<void> connect(const boost::asio::ip::tcp::endpoint& endpoint) {
+        co_await socket.async_connect(endpoint, boost::asio::use_awaitable);
+        co_await request("HELLO VERSION MIN=3.2 MAX=3.3\n");
+    }
+
+    boost::asio::awaitable<std::string> lookup(const std::string_view& name) {
+        auto request = fmt::format("NAMING LOOKUP NAME={}\n", name);
+        auto answer = co_await this->request(request);
+        co_return answer.get("VALUE").value();
+    }
+};
+using connection_ptr = std::unique_ptr<Connection>;
+
+class Session {
+    const std::string id;
+    connection_ptr connection;
+public:
+    Session(std::string&& id, connection_ptr&& connection) :
+        id(std::move(id)),
+        connection(std::move(connection)) {}
+};
+using session_ptr = std::shared_ptr<Session>;
+
+class SAM {
+    constexpr static std::string_view file_name{"privateKey.i2p"};
+    constexpr static std::string_view transient_key{"TRANSIENT"};
+
+    log::Logger logger{"I2PSAM"};
     boost::asio::io_context& io_context;
-    std::string sessionId;
 
-    //TODO settings
-    std::string i2psamhost{"127.0.0.1"};
-    uint16_t i2psamport{7656};
+    std::string private_key{transient_key};
+    boost::asio::ip::tcp::endpoint sam_endpoint;
+    std::atomic<session_ptr> session;
 
-    static std::string generateId() {
+    static std::string generate_id() {
         constexpr std::size_t size = 8;
         constexpr std::string_view alphabet{"ABCDEFGHIJKLMNOPQRSTUVWXYZ"};
         std::uniform_int_distribution<std::size_t> ud(0, alphabet.length() - 1);
@@ -60,92 +170,71 @@ class I2PSAM {
             c = alphabet[ud(rng)];
         return id;
     }
+
+    void save_private_key(const std::string_view& destination) {
+        private_key = destination;
+        logger->info("Saving I2P private key");
+        io::file::replace(compat::dataDir(), file_name, [&](auto& os) {
+            os.write(destination.data(), destination.size());
+        });
+    }
 public:
-    I2PSAM(boost::asio::io_context& io_context) :
-        io_context(io_context),
-        sessionId(generateId()) {}
+    SAM(boost::asio::io_context& io_context) :
+        io_context(io_context)
+    {
+        //TODO settings
+        std::string i2psamhost{"127.0.0.1"};
+        uint16_t i2psamport{7656};
 
-    class Connection {
-        log::Logger logger{"I2PSAM"};
-        boost::asio::ip::tcp::socket socket;
-        boost::asio::streambuf read_buf;
-        constexpr static const std::size_t max_line{32768};
+        sam_endpoint = boost::asio::ip::tcp::endpoint(
+            boost::asio::ip::make_address(i2psamhost), i2psamport
+        );
 
-        static std::optional<std::string_view> value(
-            const std::string_view& answer,
-            const std::string_view& key
-        ) {
-            auto key_pattern = fmt::format(" {}=", key);
-            std::size_t i = answer.find(key_pattern);
-            if (i == std::string_view::npos)
-                return std::nullopt;
-            std::size_t value_start = i + key_pattern.length();
-            if (value_start == answer.length())
-                return std::string_view();
-            if (answer[value_start] == '"') {
-                std::size_t value_end = answer.find('"', value_start + 1);
-                if (value_end == std::string_view::npos)
-                    return std::nullopt;
-                return std::string_view(answer.data() + value_start + 1, answer.data() + value_end);
-            }
-            std::size_t value_end = answer.find(' ', value_start);
-            if (value_end == std::string_view::npos)
-                return answer.substr(value_start);
-            return std::string_view(answer.data() + value_start, answer.data() + value_end);
-        }
-
-        static void ok(const std::string_view& answer) {
-            if (auto maybeResult = value(answer, "RESULT")) {
-                const auto& result = *maybeResult;
-                if (result.empty()) {
-                    throw I2PSAMException("Empty RESULT");
-                } else if (result != "OK") {
-                    if (auto maybeMessage = value(answer, "MESSAGE")) {
-                        const auto& message = *maybeMessage;
-                        if (message.empty())
-                            throw I2PSAMException(result);
-                        else
-                            throw I2PSAMException(fmt::format("{} {}", result, message));
-                    } else {
-                        throw I2PSAMException(result);
-                    }
-                }
+        try {
+            auto path = compat::dataDir() / file_name;
+            auto timestamp = io::file::last_write_time(path);
+            if (timestamp != 0 && timestamp < 1550000000000) {
+                auto new_name = fmt::format("privateKey.{}.i2p", timestamp);
+                std::filesystem::rename(path, compat::dataDir() / new_name);
+                logger->info("Renamed private key file to {}", new_name);
             } else {
-                throw I2PSAMException("No RESULT");
+                std::size_t size = std::filesystem::file_size(path);
+                std::ifstream ifs(path);
+                std::string buf(size, '\0');
+                ifs.read(buf.data(), size);
+                private_key = std::move(buf);
             }
+        } catch (const std::exception& e) {
+#if FMT_VERSION >= 100000
+            logger->debug("{:t}", e);
+#else
+            logger->debug("{}", e.what());
+#endif
         }
+    }
 
-        boost::asio::awaitable<std::string> request(const std::string& request) {
-            logger->debug("-> {:?}", request);
-            co_await socket.async_send(boost::asio::buffer(request), boost::asio::use_awaitable);
-
-            std::size_t n = co_await boost::asio::async_read_until(socket, read_buf, '\n', boost::asio::use_awaitable);
-            auto begin = boost::asio::buffers_begin(read_buf.data());
-            std::string answer(begin, begin + n);
-            logger->debug("<- {:?}", answer);
-
-            ok(answer);
-            co_return answer;
-        }
-    public:
-        Connection(boost::asio::io_context& io_context)
-            : socket(io_context), read_buf(max_line) {}
-
-        boost::asio::awaitable<void> connect(const std::string& host, uint16_t port) {
-            boost::asio::ip::tcp::endpoint endpoint(
-                boost::asio::ip::make_address(host), port
-            );
-            co_await socket.async_connect(endpoint, boost::asio::use_awaitable);
-            co_await request("HELLO VERSION MIN=3.2 MAX=3.3\n");
-        }
-    };
-
-    boost::asio::awaitable<std::unique_ptr<Connection>> connectToSAM() {
-        std::unique_ptr<Connection> connection = std::make_unique<Connection>(io_context);
-        co_await connection->connect(i2psamhost, i2psamport);
+    boost::asio::awaitable<connection_ptr> connectToSAM() {
+        connection_ptr connection = std::make_unique<Connection>(logger, io_context);
+        co_await connection->connect(sam_endpoint);
         co_return connection;
     }
+
+    boost::asio::awaitable<session_ptr> createSession() {
+        connection_ptr connection = co_await connectToSAM();
+        auto session_id = generate_id();
+        // i2cp.leaseSetEncType 0 for connectivity with `Node::PROTOCOL_VERSION` <= 15
+        auto request = fmt::format("SESSION CREATE STYLE=STREAM ID={} DESTINATION={} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 i2cp.leaseSetEncType=4,0\n", session_id, private_key);
+        auto answer = co_await connection->request(request);
+        auto destination = co_await connection->lookup("ME");
+        //TODO localAddress
+        if (private_key == transient_key)
+            save_private_key(answer.get("DESTINATION").value());
+        session = std::make_shared<Session>(std::move(session_id), std::move(connection));
+        //TODO loop
+        co_return session;
+    }
 };
+}
 
 }
 

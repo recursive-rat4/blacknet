@@ -15,8 +15,4 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-subdir('main/cplusplus')
-
-if get_option('tests')
-    subdir('test/cplusplus')
-endif
+subdir('src')

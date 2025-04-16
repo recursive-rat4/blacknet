@@ -15,24 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_NETWORK_ROUTER_H
-#define BLACKNET_NETWORK_ROUTER_H
-
-#include <boost/asio/io_context.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "i2psam.h"
 
-namespace blacknet::network {
+using namespace blacknet::network::i2p;
 
-class Router {
-    i2p::SAM i2p_sam;
-public:
-    Router(boost::asio::io_context& io_context)
-        : i2p_sam(io_context)
-    {
-    }
-};
+BOOST_AUTO_TEST_SUITE(I2PSAMs)
 
+BOOST_AUTO_TEST_CASE(values) {
+    const Answer newlined{"HELLO REPLY RESULT=OK VERSION=3.3\n"};
+    BOOST_TEST(newlined.get("VERSION").value() == "3.3");
+
+    const Answer quoted{"HELLO REPLY RESULT=I2P_ERROR MESSAGE=\"Must start with HELLO VERSION\"\n"};
+    BOOST_TEST(quoted.get("MESSAGE").value() == "Must start with HELLO VERSION");
 }
 
-#endif
+BOOST_AUTO_TEST_CASE(oks) {
+    const Answer yay{"HELLO REPLY RESULT=OK VERSION=3.3\n"};
+    yay.ok();
+
+    const Answer nay{"HELLO REPLY RESULT=I2P_ERROR MESSAGE=\"Must start with HELLO VERSION\"\n"};
+    BOOST_CHECK_THROW(nay.ok(), Exception);
+}
+
+BOOST_AUTO_TEST_SUITE_END()

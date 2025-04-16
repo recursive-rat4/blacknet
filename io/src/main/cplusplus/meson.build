@@ -15,8 +15,10 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-subdir('main/cplusplus')
-
-if get_option('tests')
-    subdir('test/cplusplus')
-endif
+io_main_includes = [
+    compat_main_includes,
+    include_directories('.')
+]
+io_main_dependencies = [
+    compat_main_dependencies,
+]

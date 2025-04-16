@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,24 +15,5 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_NETWORK_ROUTER_H
-#define BLACKNET_NETWORK_ROUTER_H
-
-#include <boost/asio/io_context.hpp>
-
-#include "i2psam.h"
-
-namespace blacknet::network {
-
-class Router {
-    i2p::SAM i2p_sam;
-public:
-    Router(boost::asio::io_context& io_context)
-        : i2p_sam(io_context)
-    {
-    }
-};
-
-}
-
-#endif
+#define BOOST_TEST_MODULE network
+#include <boost/test/unit_test.hpp>
