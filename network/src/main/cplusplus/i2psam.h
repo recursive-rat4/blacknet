@@ -261,7 +261,7 @@ class SAM {
     void save_private_key(const std::string_view& destination) {
         private_key = destination;
         logger->info("Saving I2P private key");
-        io::file::replace(compat::dataDir(), file_name, [&](auto& os) {
+        io::file::replace(rng, compat::dataDir(), file_name, [&](auto& os) {
             os.write(destination.data(), destination.size());
         });
     }
