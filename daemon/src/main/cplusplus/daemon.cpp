@@ -19,7 +19,7 @@
 
 #include <cstring>
 #include <exception>
-#include <boost/asio/io_context.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <fmt/format.h>
 #include <fmt/std.h>
 
@@ -34,9 +34,10 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     try {
-        boost::asio::io_context io_context;
-        Node node(LogManager::Regime::Daemon, io_context);
-        io_context.run();
+        Node node(LogManager::Regime::Daemon);
+        boost::asio::thread_pool thread_pool;
+        node.co_spawn(thread_pool);
+        thread_pool.wait();
     } catch (const std::exception& e) {
 #if FMT_VERSION >= 100000
         fmt::println(stderr, "{:t}", e);

@@ -23,7 +23,7 @@
 #include <filesystem>
 #include <memory>
 #include <thread>
-#include <boost/asio/io_context.hpp>
+#include <boost/asio/thread_pool.hpp>
 
 #include "getuid.h"
 #include "logmanager.h"
@@ -40,7 +40,7 @@ class Node {
     log::LogManager logManager;
     std::unique_ptr<Router> router;
 public:
-    Node(log::LogManager::Regime regime, boost::asio::io_context& io_context)
+    Node(log::LogManager::Regime regime)
         : modeManager(), dirManager(), logManager(regime)
     {
         auto [os_name, os_version, os_machine] = compat::uname();
@@ -60,7 +60,11 @@ public:
             logger->warn("Running as SYSTEM");
 #endif
 
-        router = std::make_unique<Router>(io_context);
+        router = std::make_unique<Router>();
+    }
+
+    void co_spawn(boost::asio::thread_pool& thread_pool) {
+        router->co_spawn(thread_pool);
     }
 };
 

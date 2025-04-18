@@ -18,6 +18,8 @@
 #ifndef BLACKNET_IO_FILE_H
 #define BLACKNET_IO_FILE_H
 
+#include "blacknet-config.h"
+
 #include <chrono>
 #include <exception>
 #include <filesystem>
@@ -58,7 +60,7 @@ inline std::pair<
         path = dir / fmt::format("{}-{}", prefix, rng());
         ofs.open(path, std::ios::out | std::ios::noreplace);
     } while (!ofs.is_open());
-    return std::make_pair(std::move(path), std::move(ofs));
+    return { std::move(path), std::move(ofs) };
 }
 
 // Atomically replace file
@@ -72,10 +74,19 @@ inline void replace(
         writer(ofs);
         ofs.flush();
         compat::fdatasync(ofs.native_handle());
+#ifdef BLACKNET_HAVE_FILEAPI
         ofs.close();
+#endif
         std::filesystem::rename(path, dir / name);
     } catch (...) {
         std::exception_ptr eptr = std::current_exception();
+#ifdef BLACKNET_HAVE_FILEAPI
+        try {
+            ofs.close();
+        } catch (...) {
+            // Ignore failed cleanup
+        }
+#endif
         try {
             std::filesystem::remove(path);
         } catch (...) {

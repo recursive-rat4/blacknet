@@ -26,7 +26,9 @@
 #include <memory>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/buffer.hpp>
-#include <boost/asio/io_context.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/detached.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/streambuf.hpp>
@@ -103,24 +105,31 @@ public:
 };
 
 class Connection {
-    log::Logger& logger;
+    log::Logger logger{"i2p::Connection"};
     boost::asio::ip::tcp::socket socket;
     boost::asio::streambuf read_buf;
     constexpr static const std::size_t max_line{32768};
 public:
-    Connection(log::Logger& logger, boost::asio::io_context& io_context)
-        : logger(logger), socket(io_context), read_buf(max_line) {}
+    Connection(boost::asio::ip::tcp::socket&& socket)
+        : socket(std::move(socket)), read_buf(max_line) {}
 
-    boost::asio::awaitable<Answer> request(const std::string_view& request) {
-        logger->trace("-> {:?}", request);
-        co_await socket.async_send(boost::asio::buffer(request), boost::asio::use_awaitable);
-
+    boost::asio::awaitable<std::string> read() {
         std::size_t n = co_await boost::asio::async_read_until(socket, read_buf, '\n', boost::asio::use_awaitable);
         auto begin = boost::asio::buffers_begin(read_buf.data());
         std::string raw(begin, begin + n);
         read_buf.consume(n);
         logger->trace("<- {:?}", raw);
+        co_return raw;
+    }
 
+    boost::asio::awaitable<void> write(const std::string_view& message) {
+        logger->trace("-> {:?}", message);
+        co_await socket.async_send(boost::asio::buffer(message), boost::asio::use_awaitable);
+    }
+
+    boost::asio::awaitable<Answer> request(const std::string_view& request) {
+        co_await write(request);
+        std::string raw = co_await read();
         Answer answer(std::move(raw));
         answer.ok();
         co_return answer;
@@ -140,31 +149,109 @@ public:
 using connection_ptr = std::unique_ptr<Connection>;
 
 class Session {
-    const std::string id;
-    connection_ptr connection;
+    log::Logger logger{"i2p::Session"};
 public:
-    Session(std::string&& id, connection_ptr&& connection) :
+    const std::string id;
+private:
+    connection_ptr connection;
+    boost::asio::ip::tcp::endpoint sam_endpoint;
+
+    boost::asio::awaitable<connection_ptr> connect_to_sam(boost::asio::thread_pool& thread_pool) {
+        boost::asio::ip::tcp::socket socket(thread_pool);
+        connection_ptr connection = std::make_unique<Connection>(std::move(socket));
+        co_await connection->connect(sam_endpoint);
+        co_return connection;
+    }
+
+    boost::asio::awaitable<void> loop() {
+        try {
+            while (true) {
+                std::string message = co_await connection->read();
+
+                if (message.starts_with("PING")) {
+                    message[1] = 'O';
+                    co_await connection->write(message);
+                } else if (message.starts_with("PONG")) {
+                    logger->warn("Unexpected PONG message");
+                } else {
+                    Answer answer(std::move(message));
+                    answer.ok();
+                }
+            }
+        } catch (const Exception& e) {
+            logger->warn("{}", e.what());
+        } catch (const boost::system::system_error&) {
+            // Socket closed
+        } catch (const std::exception& e) {
+#if FMT_VERSION >= 100000
+            logger->error("{:t}", e);
+#else
+            logger->error("{}", e.what());
+#endif
+        }
+    }
+public:
+    Session(
+        std::string&& id,
+        const boost::asio::ip::tcp::endpoint& sam_endpoint
+    ) :
         id(std::move(id)),
-        connection(std::move(connection)) {}
+        sam_endpoint(sam_endpoint) {}
+
+    boost::asio::awaitable<Answer> create(
+        const std::string_view& private_key,
+        boost::asio::thread_pool& thread_pool
+    ) {
+        connection = co_await connect_to_sam(thread_pool);
+        // i2cp.leaseSetEncType 0 for connectivity with `Node::PROTOCOL_VERSION` <= 15
+        auto request = fmt::format("SESSION CREATE STYLE=STREAM ID={} DESTINATION={} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 i2cp.leaseSetEncType=4,0\n", id, private_key);
+        auto answer = co_await connection->request(request);
+        co_return answer;
+    }
+
+    boost::asio::awaitable<void> accept(boost::asio::thread_pool& thread_pool) {
+        connection_ptr connection = co_await connect_to_sam(thread_pool);
+        auto request = fmt::format("STREAM ACCEPT ID={}\n", id);
+        co_await connection->request(request);
+        std::string message = co_await connection->read();
+        if (message.starts_with("STREAM STATUS")) {
+            Answer answer(std::move(message));
+            answer.ok();
+            co_return;
+        }
+        //TODO accept
+    }
+
+    boost::asio::awaitable<Answer> request(const std::string_view& request) {
+        auto answer = co_await connection->request(request);
+        co_return answer;
+    }
+
+    boost::asio::awaitable<std::string> lookup(const std::string_view& name) {
+        auto value = co_await connection->lookup(name);
+        co_return value;
+    }
+
+    void co_spawn(boost::asio::thread_pool& thread_pool) {
+        boost::asio::co_spawn(thread_pool, loop(), boost::asio::detached);
+    }
 };
-using session_ptr = std::shared_ptr<Session>;
+using session_ptr = std::unique_ptr<Session>;
 
 class SAM {
     constexpr static std::string_view file_name{"privateKey.i2p"};
     constexpr static std::string_view transient_key{"TRANSIENT"};
 
-    log::Logger logger{"I2PSAM"};
-    boost::asio::io_context& io_context;
+    log::Logger logger{"i2p::SAM"};
+    crypto::FastRNG rng;
 
     std::string private_key{transient_key};
     boost::asio::ip::tcp::endpoint sam_endpoint;
-    std::atomic<session_ptr> session;
 
-    static std::string generate_id() {
+    std::string generate_id() {
         constexpr std::size_t size = 8;
         constexpr std::string_view alphabet{"ABCDEFGHIJKLMNOPQRSTUVWXYZ"};
         std::uniform_int_distribution<std::size_t> ud(0, alphabet.length() - 1);
-        crypto::FastRNG rng;
         std::string id(size, '\0');
         for (auto& c : id)
             c = alphabet[ud(rng)];
@@ -179,8 +266,7 @@ class SAM {
         });
     }
 public:
-    SAM(boost::asio::io_context& io_context) :
-        io_context(io_context)
+    SAM()
     {
         //TODO settings
         std::string i2psamhost{"127.0.0.1"};
@@ -213,24 +299,14 @@ public:
         }
     }
 
-    boost::asio::awaitable<connection_ptr> connectToSAM() {
-        connection_ptr connection = std::make_unique<Connection>(logger, io_context);
-        co_await connection->connect(sam_endpoint);
-        co_return connection;
-    }
-
-    boost::asio::awaitable<session_ptr> createSession() {
-        connection_ptr connection = co_await connectToSAM();
-        auto session_id = generate_id();
-        // i2cp.leaseSetEncType 0 for connectivity with `Node::PROTOCOL_VERSION` <= 15
-        auto request = fmt::format("SESSION CREATE STYLE=STREAM ID={} DESTINATION={} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 i2cp.leaseSetEncType=4,0\n", session_id, private_key);
-        auto answer = co_await connection->request(request);
-        auto destination = co_await connection->lookup("ME");
+    boost::asio::awaitable<session_ptr> create_session(boost::asio::thread_pool& thread_pool) {
+        session_ptr session = std::make_unique<Session>(generate_id(), sam_endpoint);
+        auto answer = co_await session->create(private_key, thread_pool);
+        auto destination = co_await session->lookup("ME");
         //TODO localAddress
         if (private_key == transient_key)
             save_private_key(answer.get("DESTINATION").value());
-        session = std::make_shared<Session>(std::move(session_id), std::move(connection));
-        //TODO loop
+        session->co_spawn(thread_pool);
         co_return session;
     }
 };

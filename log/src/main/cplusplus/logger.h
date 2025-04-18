@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_LOGGING_LOGGER_H
-#define BLACKNET_LOGGING_LOGGER_H
+#ifndef BLACKNET_LOG_LOGGER_H
+#define BLACKNET_LOG_LOGGER_H
 
 #include <memory>
 #include <vector>

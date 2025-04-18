@@ -15,9 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_LOGGING_LOGMANAGER_H
-#define BLACKNET_LOGGING_LOGMANAGER_H
+#ifndef BLACKNET_LOG_LOGMANAGER_H
+#define BLACKNET_LOG_LOGMANAGER_H
 
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -83,6 +84,12 @@ public:
                 sinkConsole();
                 break;
         }
+
+        const char* env_level_ptr = std::getenv("BLACKNET_LOGLEVEL");
+        if (env_level_ptr != nullptr) {
+            Logger::filter_level() = spdlog::level::from_str(env_level_ptr);
+        }
+
         logger() = Logger("LogManager");
         logger()->info("Initialized logging");
     }

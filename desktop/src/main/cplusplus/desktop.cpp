@@ -18,7 +18,7 @@
 #include "blacknet-config.h"
 
 #include <exception>
-#include <boost/asio/io_context.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <fmt/format.h>
 #include <fmt/std.h>
 #include <QApplication>
@@ -51,8 +51,9 @@ public:
 int main(int argc, char* argv[]) {
     Desktop desktop(argc, argv);
     try {
-        boost::asio::io_context io_context;
-        Node node(LogManager::Regime::Desktop, io_context);
+        Node node(LogManager::Regime::Desktop);
+        boost::asio::thread_pool thread_pool;
+        node.co_spawn(thread_pool);
 
         Settings settings;
         MainWindow mainWindow(&desktop, &settings);
