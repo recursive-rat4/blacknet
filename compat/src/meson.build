@@ -18,6 +18,9 @@
 compiler.compiles('''
     #include <version>
     int main() {
+        #if not __GNUG__
+        static_assert(__cpp_constexpr_exceptions >= 202411L);
+        #endif
         static_assert(__cpp_static_assert >= 202306L);
         static_assert(__cpp_implicit_move >= 202207L);
         static_assert(__cpp_multidimensional_subscript >= 202110L);
@@ -40,6 +43,11 @@ compiler.compiles('''
         static_assert(__cpp_alias_templates >= 200704L);
         static_assert(__cpp_variadic_templates >= 200704L);
         static_assert(__cpp_rvalue_references >= 200610L);
+
+        static_assert(__has_cpp_attribute(assume) >= 202207L);
+        static_assert(__has_cpp_attribute(nodiscard) >= 201907L);
+        static_assert(__has_cpp_attribute(noreturn) >= 200809L);
+
         #if not __GNUG__
         static_assert(__cpp_lib_constexpr_cmath >= 202306L);
         #endif
@@ -51,6 +59,7 @@ compiler.compiles('''
         static_assert(__cpp_lib_span >= 202002L);
         static_assert(__cpp_lib_ranges >= 201911L);
         static_assert(__cpp_lib_bitops >= 201907L);
+        static_assert(__cpp_lib_chrono >= 201907L);
         static_assert(__cpp_lib_constexpr_string >= 201907L);
         static_assert(__cpp_lib_constexpr_vector >= 201907L);
         static_assert(__cpp_lib_endian >= 201907L);
@@ -59,7 +68,6 @@ compiler.compiles('''
         static_assert(__cpp_lib_atomic_shared_ptr >= 201711L);
         static_assert(__cpp_lib_starts_ends_with >= 201711L);
         static_assert(__cpp_lib_filesystem >= 201703L);
-        static_assert(__cpp_lib_chrono >= 201611L);
         static_assert(__cpp_lib_optional >= 201606L);
         static_assert(__cpp_lib_string_view >= 201606L);
         static_assert(__cpp_lib_byte >= 201603L);

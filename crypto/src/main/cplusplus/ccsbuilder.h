@@ -561,13 +561,13 @@ struct CCSBuilder {
 
     consteval CCSBuilder() : inputs(0), auxiliaries(0), constraints(), scopes(), currentScope(nullptr) {}
 
-    [[nodiscard]]
+    [[nodiscard("Circuit variable should be constrained")]]
     constexpr Variable input() {
         if (currentScope) currentScope->variables += 1;
         return { Variable::Type::Input, ++inputs };
     }
 
-    [[nodiscard]]
+    [[nodiscard("Circuit variable should be constrained")]]
     constexpr Variable auxiliary() {
         if (currentScope) currentScope->variables += 1;
         return { Variable::Type::Auxiliary, ++auxiliaries };

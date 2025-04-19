@@ -36,6 +36,7 @@
 #include <fmt/format.h>
 #include <fmt/std.h>
 
+#include "base64.h"
 #include "fastrng.h"
 #include "file.h"
 #include "logger.h"
