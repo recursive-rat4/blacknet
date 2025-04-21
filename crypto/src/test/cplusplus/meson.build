@@ -51,6 +51,7 @@ crypto_test_sources = [
     'r1cs.cpp',
     'ringproduct.cpp',
     'semigroup.cpp',
+    'sha2.cpp',
     'solinas62.cpp',
     'sponge.cpp',
     'sumcheck.cpp',

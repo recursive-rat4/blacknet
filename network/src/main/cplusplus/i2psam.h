@@ -37,9 +37,11 @@
 #include <fmt/std.h>
 
 #include "base64.h"
+#include "endpoint.h"
 #include "fastrng.h"
 #include "file.h"
 #include "logger.h"
+#include "sha2.h"
 #include "xdgdirectories.h"
 
 namespace blacknet::network {
@@ -53,6 +55,8 @@ public:
         return message.c_str();
     }
 };
+
+using base64 = codec::base64::codec<codec::base64::i2p>;
 
 class Answer {
     const std::string raw;
@@ -103,8 +107,17 @@ public:
             throw Exception("No RESULT");
         }
     }
+
+    constexpr static std::array<std::byte, 32> hash(const std::string_view& destination) {
+        auto decoded = base64::decode(destination);
+        crypto::sha2_256 hasher;
+        hasher.update(decoded.data(), decoded.size());
+        return hasher.result();
+    }
 };
 
+class Connection;
+using connection_ptr = std::unique_ptr<Connection>;
 class Connection {
     log::Logger logger{"i2p::Connection"};
     boost::asio::ip::tcp::socket socket;
@@ -136,9 +149,25 @@ public:
         co_return answer;
     }
 
-    boost::asio::awaitable<void> connect(const boost::asio::ip::tcp::endpoint& endpoint) {
-        co_await socket.async_connect(endpoint, boost::asio::use_awaitable);
-        co_await request("HELLO VERSION MIN=3.2 MAX=3.3\n");
+    static boost::asio::awaitable<connection_ptr> connect(
+        const boost::asio::ip::tcp::endpoint& sam_endpoint,
+        boost::asio::thread_pool& thread_pool
+    ) {
+        boost::asio::ip::tcp::socket socket(thread_pool);
+        co_await socket.async_connect(sam_endpoint, boost::asio::use_awaitable);
+        auto connection = std::make_unique<Connection>(std::move(socket));
+        co_await connection->request("HELLO VERSION MIN=3.2 MAX=3.3\n");
+        co_return connection;
+    }
+
+    boost::asio::awaitable<Answer> create_session(
+        const std::string_view& session_id,
+        const std::string_view& private_key
+    ) {
+        // i2cp.leaseSetEncType 0 for connectivity with `Node::PROTOCOL_VERSION` <= 15
+        auto request = fmt::format("SESSION CREATE STYLE=STREAM ID={} DESTINATION={} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 i2cp.leaseSetEncType=4,0\n", session_id, private_key);
+        auto answer = co_await this->request(request);
+        co_return answer;
     }
 
     boost::asio::awaitable<std::string> lookup(const std::string_view& name) {
@@ -147,22 +176,15 @@ public:
         co_return answer.get("VALUE").value();
     }
 };
-using connection_ptr = std::unique_ptr<Connection>;
 
 class Session {
     log::Logger logger{"i2p::Session"};
 public:
     const std::string id;
+    const endpoint::I2P local_endpoint;
 private:
     connection_ptr connection;
     boost::asio::ip::tcp::endpoint sam_endpoint;
-
-    boost::asio::awaitable<connection_ptr> connect_to_sam(boost::asio::thread_pool& thread_pool) {
-        boost::asio::ip::tcp::socket socket(thread_pool);
-        connection_ptr connection = std::make_unique<Connection>(std::move(socket));
-        co_await connection->connect(sam_endpoint);
-        co_return connection;
-    }
 
     boost::asio::awaitable<void> loop() {
         try {
@@ -194,24 +216,15 @@ private:
 public:
     Session(
         std::string&& id,
+        endpoint::I2P&& local_endpoint,
         const boost::asio::ip::tcp::endpoint& sam_endpoint
     ) :
         id(std::move(id)),
+        local_endpoint(std::move(local_endpoint)),
         sam_endpoint(sam_endpoint) {}
 
-    boost::asio::awaitable<Answer> create(
-        const std::string_view& private_key,
-        boost::asio::thread_pool& thread_pool
-    ) {
-        connection = co_await connect_to_sam(thread_pool);
-        // i2cp.leaseSetEncType 0 for connectivity with `Node::PROTOCOL_VERSION` <= 15
-        auto request = fmt::format("SESSION CREATE STYLE=STREAM ID={} DESTINATION={} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 i2cp.leaseSetEncType=4,0\n", id, private_key);
-        auto answer = co_await connection->request(request);
-        co_return answer;
-    }
-
     boost::asio::awaitable<void> accept(boost::asio::thread_pool& thread_pool) {
-        connection_ptr connection = co_await connect_to_sam(thread_pool);
+        auto connection = co_await Connection::connect(sam_endpoint, thread_pool);
         auto request = fmt::format("STREAM ACCEPT ID={}\n", id);
         co_await connection->request(request);
         std::string message = co_await connection->read();
@@ -301,12 +314,19 @@ public:
     }
 
     boost::asio::awaitable<session_ptr> create_session(boost::asio::thread_pool& thread_pool) {
-        session_ptr session = std::make_unique<Session>(generate_id(), sam_endpoint);
-        auto answer = co_await session->create(private_key, thread_pool);
-        auto destination = co_await session->lookup("ME");
-        //TODO localAddress
+        auto session_id = generate_id();
+        auto connection = co_await Connection::connect(sam_endpoint, thread_pool);
+        auto answer = co_await connection->create_session(session_id, private_key);
+        auto destination = co_await connection->lookup("ME");
+        //TODO settings
+        auto local_endpoint = endpoint::I2P(28453, Answer::hash(destination));
         if (private_key == transient_key)
             save_private_key(answer.get("DESTINATION").value());
+        session_ptr session = std::make_unique<Session>(
+            std::move(session_id),
+            std::move(local_endpoint),
+            sam_endpoint
+        );
         session->co_spawn(thread_pool);
         co_return session;
     }

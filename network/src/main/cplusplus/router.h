@@ -43,7 +43,8 @@ class Router {
         while (true) {
             try {
                 i2p::session_ptr i2p_session = co_await i2p_sam.create_session(thread_pool);
-                logger->info("Created I2P session {} listening on {}", i2p_session->id, "TODO");
+                //TODO settings
+                logger->info("Created I2P session {} listening on {}", i2p_session->id, i2p_session->local_endpoint.to_log(true));
                 //TODO localAddress
                 //TODO loop
                 co_await i2p_session->accept(thread_pool);

@@ -22,6 +22,7 @@ else
 endif
 
 codec_test_sources = [
+    'base32.cpp',
     'base64.cpp',
     'test.cpp',
 ]

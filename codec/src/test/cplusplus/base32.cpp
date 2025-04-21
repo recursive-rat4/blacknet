@@ -19,35 +19,35 @@
 
 #include <cstddef>
 #include <array>
-#include <span>
 #include <string_view>
+#include <utility>
 
-#include "base64.h"
+#include "base32.h"
 #include "boost-print.h"
 
 using namespace blacknet::codec;
 using namespace blacknet::compat;
 
-BOOST_AUTO_TEST_SUITE(Base64s)
+BOOST_AUTO_TEST_SUITE(Base32s)
 
 BOOST_AUTO_TEST_CASE(RFC4648s) {
-    using base64 = base64::codec<base64::rfc4648>;
+    using base32 = base32::codec<base32::rfc4648>;
 
     const std::array<std::pair<std::string_view, std::string_view>, 7> vectors{
         std::pair{ "", "" },
-        std::pair{ "f", "Zg==" },
-        std::pair{ "fo", "Zm8=" },
-        std::pair{ "foo", "Zm9v" },
-        std::pair{ "foob", "Zm9vYg==" },
-        std::pair{ "fooba", "Zm9vYmE=" },
-        std::pair{ "foobar", "Zm9vYmFy" },
+        std::pair{ "f", "MY======" },
+        std::pair{ "fo", "MZXQ====" },
+        std::pair{ "foo", "MZXW6===" },
+        std::pair{ "foob", "MZXW6YQ=" },
+        std::pair{ "fooba", "MZXW6YTB" },
+        std::pair{ "foobar", "MZXW6YTBOI======" },
     };
 
     for (auto [bytestring, string] : vectors) {
         auto bytes = std::span<const std::byte>(reinterpret_cast<const std::byte*>(bytestring.data()), bytestring.size());
 
-        auto encoded = base64::encode(bytes);
-        auto decoded = base64::decode(string);
+        auto encoded = base32::encode(bytes);
+        auto decoded = base32::decode(string);
 
         BOOST_TEST(string == encoded);
         BOOST_CHECK_EQUAL_COLLECTIONS(bytes.begin(), bytes.end(), decoded.begin(), decoded.end());

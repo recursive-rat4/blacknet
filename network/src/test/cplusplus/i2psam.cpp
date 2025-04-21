@@ -17,8 +17,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "byte.h"
 #include "i2psam.h"
 
+using namespace blacknet;
 using namespace blacknet::network::i2p;
 
 BOOST_AUTO_TEST_SUITE(I2PSAMs)
@@ -37,6 +39,14 @@ BOOST_AUTO_TEST_CASE(oks) {
 
     const Answer nay{"HELLO REPLY RESULT=I2P_ERROR MESSAGE=\"Must start with HELLO VERSION\"\n"};
     BOOST_CHECK_THROW(nay.ok(), Exception);
+}
+
+BOOST_AUTO_TEST_CASE(destinations) {
+    BOOST_TEST(
+        compat::byte::arrayU<32>({ 81, 169, 239, 153, 149, 11, 34, 49, 163, 77, 41, 180, 244, 162, 252, 194, 49, 92, 204, 43, 2, 56, 105, 63, 140, 102, 235, 132, 22, 244, 63, 19 })
+        ==
+        Answer::hash("EpnubNeLyuhb86IFUJkUUClggJOhQyV59n5kzG2bbXcSme5s14vK6FvzogVQmRRQKWCAk6FDJXn2fmTMbZttdxKZ7mzXi8roW~OiBVCZFFApYICToUMlefZ-ZMxtm213EpnubNeLyuhb86IFUJkUUClggJOhQyV59n5kzG2bbXcSme5s14vK6FvzogVQmRRQKWCAk6FDJXn2fmTMbZttdxKZ7mzXi8roW~OiBVCZFFApYICToUMlefZ-ZMxtm213EpnubNeLyuhb86IFUJkUUClggJOhQyV59n5kzG2bbXcSme5s14vK6FvzogVQmRRQKWCAk6FDJXn2fmTMbZttdxKZ7mzXi8roW~OiBVCZFFApYICToUMlefZ-ZMxtm213EpnubNeLyuhb86IFUJkUUClggJOhQyV59n5kzG2bbXcSme5s14vK6FvzogVQmRRQKWCAk6FDJXn2fmTMbZttd3bv4RZ3HHk0U1v2T5r8N6TFmPNsTli1XzmB20yGQHW4BQAEAAcAAA==")
+    );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
