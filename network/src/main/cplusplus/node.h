@@ -20,11 +20,14 @@
 
 #include "blacknet-config.h"
 
+#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <thread>
 #include <boost/asio/thread_pool.hpp>
 
+#include "concurrent_vector.h"
+#include "connection.h"
 #include "getuid.h"
 #include "logmanager.h"
 #include "mode.h"
@@ -35,6 +38,9 @@
 namespace blacknet::network {
 
 class Node {
+    std::atomic<connection_id> next_peer_id{1};
+    concurrent_vector<connection_ptr> connections;
+
     compat::ModeManager modeManager;
     compat::DirManager dirManager;
     log::LogManager logManager;

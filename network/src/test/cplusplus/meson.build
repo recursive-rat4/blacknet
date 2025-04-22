@@ -22,6 +22,7 @@ else
 endif
 
 network_test_sources = [
+    'concurrent_vector.cpp',
     'endpoint.cpp',
     'i2psam.cpp',
     'test.cpp',

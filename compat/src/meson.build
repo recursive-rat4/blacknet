@@ -18,9 +18,6 @@
 compiler.compiles('''
     #include <version>
     int main() {
-        #if not __GNUG__
-        static_assert(__cpp_constexpr_exceptions >= 202411L);
-        #endif
         static_assert(__cpp_static_assert >= 202306L);
         static_assert(__cpp_implicit_move >= 202207L);
         static_assert(__cpp_multidimensional_subscript >= 202110L);
