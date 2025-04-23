@@ -45,6 +45,8 @@ protected:
      */
     virtual std::string_view agent_suffix() const noexcept = 0;
 public:
+    virtual ~Mode() noexcept = default;
+
     /**
      * A subdirectory to separate data.
      */
@@ -74,7 +76,7 @@ public:
 /**
  * The main network. It's the production mode.
  */
-class MainNet : public Mode {
+class MainNet final : public Mode {
 protected:
     virtual int ordinal() const noexcept override {
         return 0;
@@ -94,7 +96,7 @@ public:
     }
 };
 
-class TestNet : public Mode {
+class TestNet final : public Mode {
 protected:
     virtual int ordinal() const noexcept override {
         return 1;
@@ -118,7 +120,7 @@ public:
  * A regression testing mode. Usually it's a sole offline node,
  * or else it can be a tiny private network.
  */
-class RegTest : public Mode {
+class RegTest final : public Mode {
 protected:
     virtual int ordinal() const noexcept override {
         return 3;

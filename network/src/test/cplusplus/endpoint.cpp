@@ -16,6 +16,9 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <initializer_list>
+#include <string_view>
+#include <tuple>
 
 #include "byte.h"
 #include "endpoint.h"
@@ -25,22 +28,55 @@ using namespace blacknet::network::endpoint;
 
 BOOST_AUTO_TEST_SUITE(Endpoints)
 
+BOOST_AUTO_TEST_CASE(IPv4s) {
+    const std::initializer_list<std::tuple<std::string_view, bool, bool>> data = {
+        std::make_tuple("0.0.0.0", true, false),
+        std::make_tuple("100.64.0.0", false, true),
+        std::make_tuple("100.128.0.0", false, false),
+        std::make_tuple("127.0.1.4", true, false),
+        std::make_tuple("255.255.255.255", false, false),
+    };
+    for (auto [string, is_local, is_private] : data) {
+        auto endpoint = parse(string, 28453);
+        BOOST_TEST_REQUIRE(endpoint);
+        BOOST_TEST(!endpoint->is_permissionless());
+        BOOST_TEST(is_local == endpoint->is_local());
+        BOOST_TEST(is_private == endpoint->is_private());
+        endpoint->to_boost();
+        BOOST_TEST(endpoint->to_host() == string);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(IPv6s) {
+    const std::initializer_list<std::tuple<std::string_view, bool, bool>> data = {
+        std::make_tuple("1001:1001:1001:1001:1001:1001:1001:1001", false, false),
+        std::make_tuple("2001:8db8:8558:8888:1331:8aa8:3789:7337", false, false),
+        std::make_tuple("f00f:f00f:f00f:f00f:f00f:f00f:f00f:f00f", false, false),
+    };
+    for (auto [string, is_local, is_private] : data) {
+        auto endpoint = parse(string, 28453);
+        BOOST_TEST_REQUIRE(endpoint);
+        BOOST_TEST(!endpoint->is_permissionless());
+        BOOST_TEST(is_local == endpoint->is_local());
+        BOOST_TEST(is_private == endpoint->is_private());
+        endpoint->to_boost();
+        BOOST_TEST(endpoint->to_host() == string);
+    }
+}
+
 BOOST_AUTO_TEST_CASE(I2Ps) {
-    const std::string_view string
-    {"y45f23mb2apgywmftrjmfg35oynzfwjed7rxs2mh76pbdeh4fatq.b32.i2p:28453"};
-    const I2P endpoint{28453, compat::byte::arrayU<32>({
-        0xC7, 0x3A, 0x5D, 0x6D, 0x81, 0xD0, 0x1E, 0x6C,
-        0x59, 0x85, 0x9C, 0x52, 0xC2, 0x9B, 0x7D, 0x76,
-        0x1B, 0x92, 0xD9, 0x24, 0x1F, 0xE3, 0x79, 0x69,
-        0x87, 0xFF, 0x9E, 0x11, 0x90, 0xFC, 0x28, 0x27
-    })};
-
-    BOOST_TEST(!endpoint.is_local());
-    BOOST_TEST(!endpoint.is_private());
-    BOOST_CHECK_THROW(endpoint.to_boost(), Exception);
-    BOOST_TEST(endpoint.to_log(true) == string);
-
-    //TODO parse
+    const std::initializer_list<std::string_view> data = {
+        "y45f23mb2apgywmftrjmfg35oynzfwjed7rxs2mh76pbdeh4fatq.b32.i2p",
+    };
+    for (auto string : data) {
+        auto endpoint = parse(string, 28453);
+        BOOST_TEST_REQUIRE(endpoint);
+        BOOST_TEST(endpoint->is_permissionless());
+        BOOST_TEST(!endpoint->is_local());
+        BOOST_TEST(!endpoint->is_private());
+        BOOST_CHECK_THROW(endpoint->to_boost(), Exception);
+        BOOST_TEST(endpoint->to_host() == string);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

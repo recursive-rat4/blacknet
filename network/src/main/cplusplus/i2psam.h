@@ -217,10 +217,12 @@ public:
     Session(
         std::string&& id,
         endpoint::I2P&& local_endpoint,
+        connection_ptr&& connection,
         const boost::asio::ip::tcp::endpoint& sam_endpoint
     ) :
         id(std::move(id)),
         local_endpoint(std::move(local_endpoint)),
+        connection(std::move(connection)),
         sam_endpoint(sam_endpoint) {}
 
     boost::asio::awaitable<void> accept(boost::asio::thread_pool& thread_pool) {
@@ -325,6 +327,7 @@ public:
         session_ptr session = std::make_unique<Session>(
             std::move(session_id),
             std::move(local_endpoint),
+            std::move(connection),
             sam_endpoint
         );
         session->co_spawn(thread_pool);

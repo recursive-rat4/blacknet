@@ -22,10 +22,13 @@
 #include <memory>
 #include <boost/asio/thread_pool.hpp>
 
+#include "endpoint.h"
+
 namespace blacknet::network {
 
 using connection_id = uint64_t;
 class Connection {
+    using endpoint_ptr = endpoint::endpoint_ptr;
 public:
     enum State {
         Spawning,
@@ -35,6 +38,8 @@ public:
     };
 
     const connection_id id;
+    const endpoint_ptr remote_endpoint;
+    const endpoint_ptr local_endpoint;
 private:
     std::atomic<State> state{Spawning};
 public:
