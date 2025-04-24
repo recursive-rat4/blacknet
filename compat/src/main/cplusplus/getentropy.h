@@ -22,7 +22,7 @@
 
 #include <span>
 #include <stdexcept>
-#include <fmt/format.h>
+#include <system_error>
 
 #ifdef BLACKNET_HAVE_UNISTD
 #include <limits.h>
@@ -54,7 +54,7 @@ inline void getentropy(const std::span<std::byte>& memory) {
             offset += process;
             continue;
         }
-        throw std::runtime_error(fmt::format("getentropy {}", strerror(errno)));
+        throw std::system_error(errno, std::system_category(), "getentropy");
 #elifdef BLACKNET_HAVE_NTSECAPI
         BOOLEAN rc = ::RtlGenRandom(memory.data() + offset, static_cast<ULONG>(process));
         if (rc != FALSE) {

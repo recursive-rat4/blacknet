@@ -25,19 +25,22 @@
 #endif
 
 #include <string>
+#include <system_error>
 #include <tuple>
 
 namespace blacknet::compat {
 
-inline std::tuple<std::string, std::string, std::string> uname() noexcept {
+inline std::tuple<std::string, std::string, std::string> uname() {
 #ifdef BLACKNET_HAVE_SYS_UTSNAME
     struct utsname name = {};
     int rc = uname(&name);
     if (rc == 0)
         return { name.sysname, name.release, name.machine };
-    else
+    throw std::system_error(errno, std::system_category(), "uname");
+#else
+    #warning "OS version is not implemented for this OS"
+    return { BLACKNET_HOST_SYSTEM, "unknown", BLACKNET_HOST_ARCH };
 #endif
-        return { BLACKNET_HOST_SYSTEM, "unknown", BLACKNET_HOST_ARCH };
 }
 
 }

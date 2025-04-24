@@ -21,7 +21,7 @@
 #include "blacknet-config.h"
 
 #include <stdexcept>
-#include <fmt/format.h>
+#include <system_error>
 
 #ifdef BLACKNET_HAVE_FDATASYNC
 #include <unistd.h>
@@ -42,12 +42,12 @@ inline void fdatasync(auto fd) {
     } while (rc != 0 && errno == EINTR);
     if (rc == 0)
         return;
-    throw std::runtime_error(fmt::format("fdatasync {}", strerror(errno)));
+    throw std::system_error(errno, std::system_category(), "fdatasync");
 #elifdef BLACKNET_HAVE_FILEAPI
     BOOL rc = ::FlushFileBuffers(fd);
     if (rc != 0)
         return;
-    throw std::runtime_error(fmt::format("FlushFileBuffers error 0x{:08X}", GetLastError()));
+    throw std::system_error(GetLastError(), std::system_category(), "FlushFileBuffers");
 #elifdef BLACKNET_HAVE_FULLFSYNC
     int rc;
     do {
@@ -55,7 +55,7 @@ inline void fdatasync(auto fd) {
     } while (rc != 0 && errno == EINTR);
     if (rc == 0)
         return;
-    throw std::runtime_error(fmt::format("fcntl {}", strerror(errno)));
+    throw std::system_error(errno, std::system_category(), "fcntl");
 #else
     #warning "Durable disk operations are not implemented for this OS"
     throw std::runtime_error("Durable disk operations are not implemented for this OS");

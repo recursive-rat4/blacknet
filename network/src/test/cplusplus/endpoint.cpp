@@ -20,7 +20,6 @@
 #include <string_view>
 #include <tuple>
 
-#include "byte.h"
 #include "endpoint.h"
 
 using namespace blacknet;

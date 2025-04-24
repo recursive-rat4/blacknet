@@ -279,7 +279,7 @@ public:
             try {
                 auto bytes = base32::decode({string.begin(), string.length() - suffix.length()});
                 if (bytes.size() == 32) {
-                    auto address = std::array<std::byte, 32>();
+                    std::array<std::byte, 32> address;
                     std::ranges::copy(bytes, address.data());
                     return std::make_unique<I2P>(port, address);
                 }
