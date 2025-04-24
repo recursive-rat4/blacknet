@@ -31,6 +31,7 @@
 #include "getuid.h"
 #include "logmanager.h"
 #include "mode.h"
+#include "networksettings.h"
 #include "router.h"
 #include "uname.h"
 #include "xdgdirectories.h"
@@ -44,6 +45,7 @@ class Node {
     compat::ModeManager modeManager;
     compat::DirManager dirManager;
     log::LogManager logManager;
+    NetworkSettings settings;
     std::unique_ptr<Router> router;
 public:
     Node(log::LogManager::Regime regime)
@@ -66,7 +68,7 @@ public:
             logger->warn("Running as SYSTEM");
 #endif
 
-        router = std::make_unique<Router>();
+        router = std::make_unique<Router>(settings);
     }
 
     void co_spawn(boost::asio::thread_pool& thread_pool) {

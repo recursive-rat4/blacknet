@@ -15,38 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_NETWORK_CONNECTION_H
-#define BLACKNET_NETWORK_CONNECTION_H
-
-#include <atomic>
-#include <memory>
-#include <boost/asio/thread_pool.hpp>
-
-#include "endpoint.h"
+#ifndef BLACKNET_NETWORK_NETWORKSETTINGS_H
+#define BLACKNET_NETWORK_NETWORKSETTINGS_H
 
 namespace blacknet::network {
 
-using connection_id = uint64_t;
-class Connection {
-public:
-    enum State {
-        Spawning,
-        Helloing,
-        Communicating,
-        Closing,
-    };
-
-    const connection_id id;
-    const endpoint_ptr remote_endpoint;
-    const endpoint_ptr local_endpoint;
-private:
-    std::atomic<State> state{Spawning};
-public:
-
-    void co_spawn(boost::asio::thread_pool& thread_pool) {
-    }
+//TODO load
+struct NetworkSettings {
+    bool ipv6{true};
+    bool ipv4{true};
+    uint16_t port{28453};
+    int max_incoming_connections{128};
+    bool logips{false};
+    std::string i2psamhost{"127.0.0.1"};
+    uint16_t i2psamport{7656};
+    bool i2p{true};
+    bool tor{true};
 };
-using connection_ptr = std::shared_ptr<Connection>;
 
 }
 

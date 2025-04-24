@@ -304,6 +304,8 @@ inline endpoint_ptr parse(const std::string_view& string, uint16_t port) {
 
 }
 
+using endpoint_ptr = endpoint::endpoint_ptr;
+
 }
 
 #endif

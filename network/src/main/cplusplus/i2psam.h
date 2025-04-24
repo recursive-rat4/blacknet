@@ -41,6 +41,7 @@
 #include "fastrng.h"
 #include "file.h"
 #include "logger.h"
+#include "networksettings.h"
 #include "sha2.h"
 #include "xdgdirectories.h"
 
@@ -259,6 +260,7 @@ class SAM {
     constexpr static std::string_view transient_key{"TRANSIENT"};
 
     log::Logger logger{"i2p::SAM"};
+    const NetworkSettings& settings;
     crypto::FastRNG rng;
 
     std::string private_key{transient_key};
@@ -282,14 +284,12 @@ class SAM {
         });
     }
 public:
-    SAM()
+    SAM(const NetworkSettings& settings)
+        : settings(settings)
     {
-        //TODO settings
-        std::string i2psamhost{"127.0.0.1"};
-        uint16_t i2psamport{7656};
-
         sam_endpoint = boost::asio::ip::tcp::endpoint(
-            boost::asio::ip::make_address(i2psamhost), i2psamport
+            boost::asio::ip::make_address(settings.i2psamhost),
+            settings.i2psamport
         );
 
         try {
@@ -320,8 +320,7 @@ public:
         auto connection = co_await Connection::connect(sam_endpoint, thread_pool);
         auto answer = co_await connection->create_session(session_id, private_key);
         auto destination = co_await connection->lookup("ME");
-        //TODO settings
-        auto local_endpoint = endpoint::I2P(28453, Answer::hash(destination));
+        auto local_endpoint = endpoint::I2P(settings.port, Answer::hash(destination));
         if (private_key == transient_key)
             save_private_key(answer.get("DESTINATION").value());
         session_ptr session = std::make_unique<Session>(
