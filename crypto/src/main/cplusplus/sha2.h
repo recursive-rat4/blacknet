@@ -24,12 +24,12 @@ namespace crypto
 namespace wtf
 {
 
-template<std::size_t N>
-using digest = std::array<std::byte, N>;
-
 template<class Word, class Algo, int M>
 struct sha2_base
 {
+    template<std::size_t N>
+    using digest = std::array<std::byte, N>;
+
     Word state_[ 8 ] = {};
 
     static constexpr int N = M;
@@ -504,7 +504,7 @@ private:
 
 public:
 
-    using result_type = wtf::digest<32>;
+    using result_type = digest<32>;
 
     static constexpr std::size_t block_size = 64;
 
@@ -584,7 +584,7 @@ private:
 
 public:
 
-    using result_type = wtf::digest<28>;
+    using result_type = digest<28>;
 
     static constexpr std::size_t block_size = 64;
 
@@ -664,7 +664,7 @@ private:
 
 public:
 
-    using result_type = wtf::digest<64>;
+    using result_type = digest<64>;
 
     using wtf::sha2_512_base::update;
 
@@ -744,7 +744,7 @@ private:
 
 public:
 
-    using result_type = wtf::digest<48>;
+    using result_type = digest<48>;
 
     static constexpr std::size_t block_size = 128;
 
@@ -824,7 +824,7 @@ private:
 
 public:
 
-    using result_type = wtf::digest<28>;
+    using result_type = digest<28>;
 
     static constexpr std::size_t block_size = 128;
 
@@ -906,7 +906,7 @@ private:
 
 public:
 
-    using result_type = wtf::digest<32>;
+    using result_type = digest<32>;
 
     static constexpr std::size_t block_size = 128;
 

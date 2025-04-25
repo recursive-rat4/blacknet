@@ -63,6 +63,23 @@ BOOST_AUTO_TEST_CASE(IPv6s) {
     }
 }
 
+BOOST_AUTO_TEST_CASE(TORv3s) {
+    const std::initializer_list<std::string_view> data = {
+        "pg6mmjiyjmcrsslvykfwnntlaru7p5svn6y2ymmju6nubxndf4pscryd.onion",
+        "sp3k262uwy4r2k3ycr5awluarykdpag6a7y33jxop4cs2lu5uz5sseqd.onion",
+        "xa4r2iadxm55fbnqgwwi5mymqdcofiu3w6rpbtqn7b2dyn7mgwj64jyd.onion",
+    };
+    for (auto string : data) {
+        auto endpoint = parse(string, 28453);
+        BOOST_TEST_REQUIRE(endpoint);
+        BOOST_TEST(endpoint->is_permissionless());
+        BOOST_TEST(!endpoint->is_local());
+        BOOST_TEST(!endpoint->is_private());
+        BOOST_CHECK_THROW(endpoint->to_boost(), Exception);
+        BOOST_TEST(endpoint->to_host() == string);
+    }
+}
+
 BOOST_AUTO_TEST_CASE(I2Ps) {
     const std::initializer_list<std::string_view> data = {
         "y45f23mb2apgywmftrjmfg35oynzfwjed7rxs2mh76pbdeh4fatq.b32.i2p",

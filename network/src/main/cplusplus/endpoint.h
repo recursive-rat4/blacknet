@@ -30,6 +30,7 @@
 
 #include "base32.h"
 #include "byte.h"
+#include "sha3.h"
 
 namespace blacknet::network {
 
@@ -55,7 +56,7 @@ public:
     virtual std::string to_host() const = 0;
     virtual std::string to_log(bool detail) const = 0;
 };
-using endpoint_ptr = std::unique_ptr<Endpoint>;
+using endpoint_ptr = std::shared_ptr<Endpoint>;
 
 class IPv4 final : public Endpoint {
     constexpr static const std::array<std::byte, 4> any_address =
@@ -128,7 +129,7 @@ public:
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
         try {
             auto chars = boost::asio::ip::make_address_v4(string).to_bytes();
-            return std::make_unique<IPv4>(
+            return std::make_shared<IPv4>(
                 port,
                 reinterpret_cast<const std::array<std::byte, 4>&>(chars)
             );
@@ -138,11 +139,11 @@ public:
     }
 
     static endpoint_ptr any(uint16_t port) {
-        return std::make_unique<IPv4>(port, any_address);
+        return std::make_shared<IPv4>(port, any_address);
     }
 
     static endpoint_ptr loopback(uint16_t port) {
-        return std::make_unique<IPv4>(port, loopback_address);
+        return std::make_shared<IPv4>(port, loopback_address);
     }
 };
 
@@ -217,7 +218,7 @@ public:
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
         try {
             auto chars = boost::asio::ip::make_address_v6(string).to_bytes();
-            return std::make_unique<IPv6>(
+            return std::make_shared<IPv6>(
                 port,
                 reinterpret_cast<const std::array<std::byte, 16>&>(chars)
             );
@@ -227,11 +228,90 @@ public:
     }
 
     static endpoint_ptr any(uint16_t port) {
-        return std::make_unique<IPv6>(port, any_address);
+        return std::make_shared<IPv6>(port, any_address);
     }
 
     static endpoint_ptr loopback(uint16_t port) {
-        return std::make_unique<IPv6>(port, loopback_address);
+        return std::make_shared<IPv6>(port, loopback_address);
+    }
+};
+
+// https://gitlab.torproject.org/tpo/core/torspec/-/blob/main/spec/rend-spec/encoding-onion-addresses.md
+class TORv3 final : public Endpoint {
+    using base32 = codec::base32::codec<codec::base32::tor>;
+    constexpr static const std::string_view suffix{".onion"};
+    constexpr static const std::byte version{3};
+
+    const uint16_t port;
+    const std::array<std::byte, 32> address;
+
+    constexpr static std::array<std::byte, 2> checksum(const std::span<const std::byte>& bytes) {
+        constexpr std::string_view constant{".onion checksum"};
+        crypto::sha3_256 hasher;
+        hasher.update(constant.data(), constant.size());
+        hasher.update(bytes.data(), bytes.size());
+        hasher.update(&version, sizeof(version));
+        std::array<std::byte, 32> hash = hasher.result();
+        std::array<std::byte, 2> checksum;
+        std::ranges::copy(hash.begin(), hash.begin() + checksum.size(), checksum.begin());
+        return checksum;
+    }
+public:
+    constexpr TORv3(uint16_t port, const std::array<std::byte, 32>& address)
+        : port(port), address(address) {}
+
+    constexpr bool operator == (const TORv3&) const = default;
+
+    bool is_permissionless() const override {
+        return true;
+    }
+
+    bool is_local() const override {
+        return false;
+    }
+
+    bool is_private() const override {
+        return false;
+    }
+
+    boost::asio::ip::tcp::endpoint to_boost() const override {
+        throw Exception("Can't convert TORv3 endpoint to TCP/IP");
+    }
+
+    std::string to_host() const override {
+        auto chksum = checksum(address);
+        std::array<std::byte, 35> bytes;
+        std::ranges::copy(address, bytes.begin());
+        std::ranges::copy(chksum, bytes.begin() + 32);
+        bytes.back() = version;
+        return fmt::format("{}{}", base32::encode(bytes), suffix);
+    }
+
+    std::string to_log(bool detail) const override {
+        if (detail)
+            return fmt::format("{}:{}", to_host(), port);
+        else
+            return "TORv3 endpoint";
+    }
+
+    static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
+        if (string.ends_with(suffix)) {
+            try {
+                auto bytes = base32::decode({string.begin(), string.length() - suffix.length()});
+                if (bytes.size() == 35) {
+                    if (bytes.back() != version) return nullptr;
+                    auto pubkey = std::span<std::byte>(bytes.data(), 32);
+                    auto chksum = std::span<std::byte>(bytes.data() + 32, 2);
+                    if (!std::ranges::equal(chksum, checksum(pubkey))) return nullptr;
+                    std::array<std::byte, 32> address;
+                    std::ranges::copy(pubkey, address.data());
+                    return std::make_shared<TORv3>(port, address);
+                }
+            } catch (const codec::base32::Exception&) {
+                return nullptr;
+            }
+        }
+        return nullptr;
     }
 };
 
@@ -281,7 +361,7 @@ public:
                 if (bytes.size() == 32) {
                     std::array<std::byte, 32> address;
                     std::ranges::copy(bytes, address.data());
-                    return std::make_unique<I2P>(port, address);
+                    return std::make_shared<I2P>(port, address);
                 }
             } catch (const codec::base32::Exception&) {
                 return nullptr;
@@ -293,6 +373,8 @@ public:
 
 inline endpoint_ptr parse(const std::string_view& string, uint16_t port) {
     if (auto endpoint = I2P::parse(string, port))
+        return endpoint;
+    else if (auto endpoint = TORv3::parse(string, port))
         return endpoint;
     else if (auto endpoint = IPv6::parse(string, port))
         return endpoint;

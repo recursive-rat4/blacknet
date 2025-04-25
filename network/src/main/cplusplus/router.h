@@ -44,6 +44,15 @@ class Router {
     const NetworkSettings& settings;
     i2p::SAM i2p_sam;
 
+    void add_listener(endpoint_ptr endpoint) {
+        logger->info("Listening on {}", endpoint->to_log(settings.logips));
+        //TODO set
+    }
+    void remove_listener(endpoint_ptr endpoint) {
+        logger->info("Lost binding to {}", endpoint->to_log(settings.logips));
+        //TODO set
+    }
+
     boost::asio::awaitable<void> listen_ip(boost::asio::thread_pool& thread_pool) {
         endpoint_ptr endpoint;
         if (settings.ipv6) {
@@ -56,6 +65,7 @@ class Router {
         }
         auto timeout = init_timeout;
         while (true) {
+            bool added = false;
             try {
                 auto boost_endpoint = endpoint->to_boost();
                 boost::asio::ip::tcp::acceptor acceptor(thread_pool);
@@ -65,6 +75,8 @@ class Router {
                 acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
                 acceptor.bind(boost_endpoint);
                 acceptor.listen(settings.max_incoming_connections);
+                add_listener(endpoint);
+                added = true;
                 //TODO localAddress
                 //TODO loop
                 co_await acceptor.async_accept(thread_pool, boost::asio::use_awaitable);
@@ -72,6 +84,10 @@ class Router {
             } catch (const boost::system::system_error& e) {
                 logger->warn("{}", e.what());
             }
+            if (added) {
+                remove_listener(endpoint);
+            }
+
             auto now = std::chrono::steady_clock::now();
             boost::asio::steady_timer timer(thread_pool, now + timeout);
             co_await timer.async_wait(boost::asio::use_awaitable);
@@ -80,14 +96,13 @@ class Router {
     }
 
     boost::asio::awaitable<void> listen_i2p(boost::asio::thread_pool& thread_pool) {
+        endpoint_ptr endpoint;
         auto timeout = init_timeout;
         while (true) {
             try {
                 i2p::session_ptr i2p_session = co_await i2p_sam.create_session(thread_pool);
-                logger->info("Created I2P session {} listening on {}",
-                    i2p_session->id,
-                    i2p_session->local_endpoint.to_log(settings.logips)
-                );
+                endpoint = i2p_session->local_endpoint;
+                add_listener(endpoint);
                 //TODO localAddress
                 //TODO loop
                 co_await i2p_session->accept(thread_pool);
@@ -99,6 +114,11 @@ class Router {
             } catch (const boost::system::system_error& e) {
                 logger->debug("Can't connect to I2P SAM: {}", e.what());
             }
+            if (endpoint) {
+                remove_listener(endpoint);
+                endpoint.reset();
+            }
+
             auto now = std::chrono::steady_clock::now();
             boost::asio::steady_timer timer(thread_pool, now + timeout);
             co_await timer.async_wait(boost::asio::use_awaitable);

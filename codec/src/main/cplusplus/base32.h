@@ -80,6 +80,8 @@ struct i2p {
     constexpr static const bool pad{false};
 };
 
+using tor = i2p;
+
 template<typename Params>
 struct codec {
 constexpr static std::string encode(const std::span<const std::byte>& bytes) {

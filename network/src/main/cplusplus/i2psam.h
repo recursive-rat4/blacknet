@@ -182,7 +182,7 @@ class Session {
     log::Logger logger{"i2p::Session"};
 public:
     const std::string id;
-    const endpoint::I2P local_endpoint;
+    const endpoint_ptr local_endpoint;
 private:
     connection_ptr connection;
     boost::asio::ip::tcp::endpoint sam_endpoint;
@@ -217,7 +217,7 @@ private:
 public:
     Session(
         std::string&& id,
-        endpoint::I2P&& local_endpoint,
+        endpoint_ptr&& local_endpoint,
         connection_ptr&& connection,
         const boost::asio::ip::tcp::endpoint& sam_endpoint
     ) :
@@ -320,7 +320,7 @@ public:
         auto connection = co_await Connection::connect(sam_endpoint, thread_pool);
         auto answer = co_await connection->create_session(session_id, private_key);
         auto destination = co_await connection->lookup("ME");
-        auto local_endpoint = endpoint::I2P(settings.port, Answer::hash(destination));
+        auto local_endpoint = std::make_shared<endpoint::I2P>(settings.port, Answer::hash(destination));
         if (private_key == transient_key)
             save_private_key(answer.get("DESTINATION").value());
         session_ptr session = std::make_unique<Session>(
@@ -330,6 +330,7 @@ public:
             sam_endpoint
         );
         session->co_spawn(thread_pool);
+        logger->info("Created session {}", session->id);
         co_return session;
     }
 };
