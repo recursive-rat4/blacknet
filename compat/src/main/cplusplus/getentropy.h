@@ -24,9 +24,14 @@
 #include <stdexcept>
 #include <system_error>
 
+#ifdef BLACKNET_HAVE_GETENTROPY
 #ifdef BLACKNET_HAVE_UNISTD
-#include <limits.h>
 #include <unistd.h>
+#endif
+#ifdef BLACKNET_HAVE_SYS_RANDOM
+#include <sys/random.h>
+#endif
+#include <limits.h>
 #ifdef GETENTROPY_MAX
 #define BLACKNET_GETENTROPY_CHUNK GETENTROPY_MAX
 #else
@@ -47,7 +52,7 @@ inline void getentropy(const std::span<std::byte>& memory) {
     std::size_t remain = memory.size();
     while (remain) {
         std::size_t process = std::min<std::size_t>(remain, BLACKNET_GETENTROPY_CHUNK);
-#ifdef BLACKNET_HAVE_UNISTD
+#ifdef BLACKNET_HAVE_GETENTROPY
         int rc = ::getentropy(memory.data() + offset, process);
         if (rc == 0) {
             remain -= process;

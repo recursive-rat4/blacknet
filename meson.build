@@ -69,13 +69,16 @@ if host_machine.system() != 'windows'
 endif
 if host_machine.system() not in ['windows', 'darwin']
     config_data.set('BLACKNET_HAVE_FDATASYNC', compiler.has_header_symbol('unistd.h', 'fdatasync'))
+    config_data.set('BLACKNET_HAVE_GETENTROPY', compiler.has_header_symbol('unistd.h', 'getentropy'))
 endif
 if host_machine.system() == 'windows'
     config_data.set('BLACKNET_HAVE_FILEAPI', compiler.has_header('fileapi.h'))
     config_data.set('BLACKNET_HAVE_NTSECAPI', compiler.has_header('ntsecapi.h'))
 endif
 if host_machine.system() == 'darwin'
+    config_data.set('BLACKNET_HAVE_SYS_RANDOM', compiler.has_header('sys/random.h'))
     config_data.set('BLACKNET_HAVE_FULLFSYNC', compiler.has_header_symbol('fcntl.h', 'F_FULLFSYNC'))
+    config_data.set('BLACKNET_HAVE_GETENTROPY', compiler.has_header_symbol('sys/random.h', 'getentropy'))
 endif
 configure_file(
     output : 'blacknet-config.h',
