@@ -21,9 +21,11 @@ on:
 jobs:
   test-on-mac:
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
-      - run: brew install meson tbb fmt spdlog sqlite boost qt
-      - run: CXX="gcc-14" meson setup -Dbuildtype=plain -Dwarning_level=0 -Dtests=true build
+      - run: brew install meson google-benchmark tbb fmt spdlog boost qt
+      - run: CC="gcc-14" CXX="g++-14" meson setup -Dbuildtype=plain -Dwarning_level=0 -Dtests=true -Dtests_report_junit=true -Dbenchmarks=true build
       - run: meson compile -C build
       - run: meson test --no-stdsplit --print-errorlogs -C build
