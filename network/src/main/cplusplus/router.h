@@ -21,7 +21,6 @@
 #include <chrono>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -29,6 +28,7 @@
 #include <boost/asio/ip/v6_only.hpp>
 #include <stdexcept>
 
+#include "background.h"
 #include "endpoint.h"
 #include "i2psam.h"
 #include "logger.h"
@@ -60,7 +60,6 @@ class Router {
         } else if (settings.ipv4) {
             endpoint = endpoint::IPv4::any(settings.port);
         } else {
-            //FIXME exception
             throw std::logic_error("Both IPv4 and IPv6 are disabled");
         }
         auto timeout = init_timeout;
@@ -133,9 +132,9 @@ public:
 
     void co_spawn(boost::asio::thread_pool& thread_pool) {
         if (settings.ipv6 || settings.ipv4)
-            boost::asio::co_spawn(thread_pool, listen_ip(thread_pool), boost::asio::detached);
+            boost::asio::co_spawn(thread_pool, listen_ip(thread_pool), background);
         if (settings.i2p)
-            boost::asio::co_spawn(thread_pool, listen_i2p(thread_pool), boost::asio::detached);
+            boost::asio::co_spawn(thread_pool, listen_i2p(thread_pool), background);
     }
 };
 

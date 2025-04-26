@@ -27,15 +27,15 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/thread_pool.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <fmt/format.h>
 #include <fmt/std.h>
 
+#include "background.h"
 #include "base64.h"
 #include "endpoint.h"
 #include "fastrng.h"
@@ -250,7 +250,7 @@ public:
     }
 
     void co_spawn(boost::asio::thread_pool& thread_pool) {
-        boost::asio::co_spawn(thread_pool, loop(), boost::asio::detached);
+        boost::asio::co_spawn(thread_pool, loop(), background);
     }
 };
 using session_ptr = std::unique_ptr<Session>;
