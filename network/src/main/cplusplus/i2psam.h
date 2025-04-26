@@ -261,7 +261,6 @@ class SAM {
 
     log::Logger logger{"i2p::SAM"};
     const NetworkSettings& settings;
-    crypto::FastRNG rng;
 
     std::string private_key{transient_key};
     boost::asio::ip::tcp::endpoint sam_endpoint;
@@ -269,6 +268,7 @@ class SAM {
     std::string generate_id() {
         constexpr std::size_t size = 8;
         constexpr std::string_view alphabet{"ABCDEFGHIJKLMNOPQRSTUVWXYZ"};
+        auto& rng = crypto::tls_fast_rng;
         std::uniform_int_distribution<std::size_t> ud(0, alphabet.length() - 1);
         std::string id(size, '\0');
         for (auto& c : id)
@@ -279,7 +279,7 @@ class SAM {
     void save_private_key(const std::string_view& destination) {
         private_key = destination;
         logger->info("Saving I2P private key");
-        io::file::replace(rng, compat::dataDir(), file_name, [&](auto& os) {
+        io::file::replace(compat::dataDir(), file_name, [&](auto& os) {
             os.write(destination.data(), destination.size());
         });
     }

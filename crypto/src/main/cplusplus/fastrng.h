@@ -18,14 +18,16 @@
 #ifndef BLACKNET_CRYPTO_FASTRNG_H
 #define BLACKNET_CRYPTO_FASTRNG_H
 
+#include <algorithm>
 #include <limits>
+#include <mutex>
+#include <random>
 
 #include "chacha.h"
 #include "getentropy.h"
 
 namespace blacknet::crypto {
 
-// Implements std::uniform_random_bit_generator
 class FastDRG : private ChaCha<8> {
 public:
     using seed_type = std::array<std::byte, ChaCha::KEY_SIZE>;
@@ -78,15 +80,36 @@ public:
         return std::numeric_limits<result_type>::max();
     }
 };
+static_assert(std::uniform_random_bit_generator<FastDRG>);
+
+class FastSeeder {
+    std::mutex mutex;
+    FastDRG drg;
+
+    FastSeeder() {
+        FastDRG::seed_type seed;
+        compat::getentropy(seed);
+        drg.seed(seed);
+    }
+public:
+    static void generate(const std::span<std::byte>& bytes) {
+        static FastSeeder seeder;
+        auto scope = std::lock_guard(seeder.mutex);
+        std::uniform_int_distribution<unsigned char> ud;
+        std::ranges::generate(bytes, [&] { return std::byte{ ud(seeder.drg) }; });
+    }
+};
 
 class FastRNG : public FastDRG {
 public:
     FastRNG() : FastDRG() {
         seed_type seed;
-        compat::getentropy(seed);
+        FastSeeder::generate(seed);
         FastDRG::seed(seed);
     }
 };
+
+inline thread_local FastRNG tls_fast_rng;
 
 }
 

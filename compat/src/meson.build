@@ -35,6 +35,7 @@ compiler.compiles('''
         static_assert(__cpp_lambdas >= 200907L);
         static_assert(__cpp_attributes >= 200809L);
         static_assert(__cpp_initializer_lists >= 200806L);
+        static_assert(__cpp_threadsafe_static_init >= 200806L);
         static_assert(__cpp_ref_qualifiers >= 200710L);
         static_assert(__cpp_decltype >= 200707L);
         static_assert(__cpp_alias_templates >= 200704L);

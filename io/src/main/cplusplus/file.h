@@ -50,10 +50,10 @@ inline std::pair<
     std::filesystem::path,
     std::ofstream
 > create_temp_file(
-    crypto::FastRNG& rng,
     const std::filesystem::path& dir,
     const std::string_view& prefix
 ) {
+    auto& rng = crypto::tls_fast_rng;
     std::filesystem::path path;
     std::ofstream ofs;
     do {
@@ -65,12 +65,11 @@ inline std::pair<
 
 // Atomically replace file
 inline void replace(
-    crypto::FastRNG& rng,
     const std::filesystem::path& dir,
     const std::string_view& name,
     const std::function<void(std::ostream&)>& writer
 ) {
-    auto [path, ofs] = create_temp_file(rng, dir, name);
+    auto [path, ofs] = create_temp_file(dir, name);
     try {
         writer(ofs);
         ofs.flush();
