@@ -34,7 +34,16 @@ requires(BITS > 0)
 struct BitInt {
     typedef uint64_t L;
 
-    constexpr static const std::size_t N = std::ceil(double(BITS)/double(sizeof(L)*8));
+    consteval static std::size_t compute_n(std::size_t need_bits) {
+        std::size_t need_limbs = 0;
+        std::size_t have_bits = 0;
+        while (need_bits > have_bits) {
+            need_limbs += 1;
+            have_bits += sizeof(L) * 8;
+        }
+        return need_limbs;
+    }
+    constexpr static const std::size_t N = compute_n(BITS);
 
     L limbs[N];
 

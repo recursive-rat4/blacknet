@@ -48,14 +48,13 @@ struct BFV {
     constexpr static const std::size_t H = std::min<std::size_t>(256, D);
 
     // https://eprint.iacr.org/2019/939
-    constexpr static const double SIGMA = 8.0 / std::sqrt(2.0 * std::numbers::pi);
-    static_assert(SIGMA >= 3.19 && SIGMA <= 3.2);
+    constexpr static const double SIGMA = 3.191538243211461;
 
     constexpr static const double DELTA = double(Zq::modulus()) / double(Zt::modulus());
     constexpr static const double INV_DELTA = double(Zt::modulus()) / double(Zq::modulus());
 
     constexpr static const uint64_t ELL = 5;
-    constexpr static const uint64_t OMEGA = std::bit_ceil(uint64_t(std::pow(Zq::modulus(), 1.0 / ELL)));
+    constexpr static const uint64_t OMEGA = 8192; //FIXME std::bit_ceil(uint64_t(std::pow(Zq::modulus(), 1.0 / ELL)));
 
     using SecretKey = Rq;
 

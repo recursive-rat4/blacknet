@@ -64,7 +64,7 @@ public:
         requires(std::same_as<R, typename Circuit::R>)
         struct Gadget {
             using Variable = Circuit::Variable;
-            using UnivariatePolynomial = typename UnivariatePolynomial<R>::Gadget<Circuit>;
+            using UnivariatePolynomial = UnivariatePolynomial<R>::template Gadget<Circuit>;
 
             std::vector<UnivariatePolynomial> claims;
 
@@ -206,10 +206,10 @@ requires(std::same_as<R, typename Circuit::R>)
 struct Gadget {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
-    using Polynomial = typename P::Gadget<Circuit>;
-    using ProofGadget = typename Proof::Gadget<Circuit>;
-    using DuplexGadget = typename Duplex::Gadget<Circuit>;
-    using Point = typename Point<R>::Gadget<Circuit>;
+    using Polynomial = P::template Gadget<Circuit>;
+    using ProofGadget = Proof::template Gadget<Circuit>;
+    using DuplexGadget = Duplex::template Gadget<Circuit>;
+    using Point = Point<R>::template Gadget<Circuit>;
 
     Circuit& circuit;
 
@@ -260,8 +260,8 @@ struct Gadget {
 template<std::size_t circuit>
 struct Tracer {
     using PTracer = typename P::Tracer;
-    using DuplexTracer = typename Duplex::Tracer<circuit>;
-    using UnivariatePolynomial = typename UnivariatePolynomial<R>::Tracer;
+    using DuplexTracer = Duplex::template Tracer<circuit>;
+    using UnivariatePolynomial = UnivariatePolynomial<R>::Tracer;
 
     std::vector<R>& trace;
 

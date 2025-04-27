@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_DISCRETEGAUSSIANDISTRIBUTION_H
 #define BLACKNET_CRYPTO_DISCRETEGAUSSIANDISTRIBUTION_H
 
+#include <bit>
 #include <cmath>
 #include <random>
 #include <type_traits>
@@ -36,6 +37,7 @@ struct DiscreteGaussianDistribution {
     double mu;
     double sigma;
     constexpr static const std::size_t n = 128;
+    static_assert(std::has_single_bit(n), "Not implemented");
 
     constexpr DiscreteGaussianDistribution(double mu, double sigma) : mu(mu), sigma(sigma) {}
 
@@ -54,11 +56,11 @@ struct DiscreteGaussianDistribution {
     }
 
     constexpr T min() const {
-        constexpr double t = std::log2(n);
+        constexpr double t = std::countr_zero(n);
         return std::floor(mu - sigma * t);
     }
     constexpr T max() const {
-        constexpr double t = std::log2(n);
+        constexpr double t = std::countr_zero(n);
         return std::ceil(mu + sigma * t);
     }
 };

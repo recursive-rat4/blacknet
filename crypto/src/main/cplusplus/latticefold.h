@@ -175,8 +175,8 @@ struct LatticeFold {
     struct Gadget {
         using Variable = Circuit::Variable;
         using LinearCombination = Circuit::LinearCombination;
-        using MultilinearExtension = typename MultilinearExtension<Fq>::Gadget<Circuit>;
-        using Point = typename Point<Fq>::Gadget<Circuit>;
+        using MultilinearExtension = MultilinearExtension<Fq>::template Gadget<Circuit>;
+        using Point = Point<Fq>::template Gadget<Circuit>;
 
         Circuit& circuit;
         LinearCombination mu;

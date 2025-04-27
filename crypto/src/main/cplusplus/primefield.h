@@ -142,6 +142,7 @@ public:
     constexpr std::optional<PrimeField> sqrt() const {
         // Tonelli–Shanks algorithm
         using namespace semigroup;
+        constexpr PrimeField S = PrimeField(Params::toForm(Params::S), 0);
         auto iqr = isQuadraticResidue();
         if (iqr == PrimeField(1)) {
             PrimeField z(2);
@@ -245,7 +246,6 @@ public:
     }
 private:
     constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - UInt256(2);
-    constexpr static const PrimeField S = PrimeField(Params::toForm(Params::S), 0);
 };
 
 }

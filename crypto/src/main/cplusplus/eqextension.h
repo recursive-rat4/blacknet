@@ -120,7 +120,7 @@ requires(std::same_as<E, typename Circuit::R>)
 struct Gadget {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
-    using Point = typename Point<E>::Gadget<Circuit>;
+    using Point = Point<E>::template Gadget<Circuit>;
 
     Circuit& circuit;
     std::vector<LinearCombination> coefficients;

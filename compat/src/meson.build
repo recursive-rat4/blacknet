@@ -49,9 +49,6 @@ compiler.compiles('''
         static_assert(__has_cpp_attribute(maybe_unused) >= 201603L);
         static_assert(__has_cpp_attribute(noreturn) >= 200809L);
 
-        #if not __GNUG__
-        static_assert(__cpp_lib_constexpr_cmath >= 202306L);
-        #endif
         static_assert(__cpp_lib_fstream_native_handle >= 202306L);
         static_assert(__cpp_lib_constexpr_charconv >= 202207L);
         static_assert(__cpp_lib_generator >= 202207L);
@@ -76,7 +73,7 @@ compiler.compiles('''
         static_assert(__cpp_lib_string_view >= 201606L);
         static_assert(__cpp_lib_byte >= 201603L);
         static_assert(__cpp_lib_make_unique >= 201304L);
-    }'''.replace('__GNUG__', compiler.get_id() == 'gcc' ? '1' : '0'), # Thou shalt not pass
+    }''',
     name : 'C++',
     required : true
 )
