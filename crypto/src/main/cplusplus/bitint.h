@@ -26,7 +26,7 @@
 
 namespace blacknet::crypto {
 
-template<std::size_t N>requires(N > 0)class BigInt;
+template<std::size_t N>requires(N > 0)struct BigInt;
 
 template<std::size_t BITS>
 requires(BITS > 0)
