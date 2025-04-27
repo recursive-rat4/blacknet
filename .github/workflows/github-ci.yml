@@ -25,7 +25,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - run: brew install meson google-benchmark tbb fmt spdlog boost qt
-      - run: CC="gcc-14" CXX="g++-14" meson setup -Dbuildtype=plain -Dwarning_level=0 -Dtests=true -Dtests_report_junit=true -Dbenchmarks=true build
+      - run: HOMEBREW_CC="gcc-14" HOMEBREW_CXX="g++-14 -std=c++26" brew install --build-from-source fmt spdlog
+      - run: brew install meson tbb sqlite boost
+      - run: CC="gcc-14" CXX="g++-14" meson setup -Dbuildtype=plain -Dwarning_level=0 build
       - run: meson compile -C build
       - run: meson test --no-stdsplit --print-errorlogs -C build
