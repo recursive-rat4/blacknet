@@ -156,6 +156,10 @@ public:
         return Params::TWIDDLES.size();
     }
 
+    consteval static IntegerRing inverse_twiddles() {
+        return IntegerRing(Params::INVERSE_TWIDDLES, 0);
+    }
+
     template<typename DRG>
     constexpr void absorb(DRG& drg) const {
         drg.absorb(*this);

@@ -46,8 +46,6 @@ namespace ntt {
     template<typename Z, std::size_t N>
     constexpr void gentleman_sande(std::array<Z, N>& a) {
         constexpr std::size_t inertia = N / Z::twiddles();
-        // Undefined behaviour is prohibited in consteval
-        static const Z scale = Z(Z::twiddles()).invert().value();
 
         std::size_t i = 0, j = Z::twiddles();
         for (std::size_t k = inertia; k <= N / 2; k <<= 1) {
@@ -63,7 +61,7 @@ namespace ntt {
         }
 
         for (i = 0; i < N; ++i) {
-            a[i] *= scale;
+            a[i] *= Z::inverse_twiddles();
         }
     }
 

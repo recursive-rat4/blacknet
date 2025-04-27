@@ -17,6 +17,7 @@
 #
 
 from typing import NamedTuple, Optional
+from sage.rings.integer import Integer
 from sympy.ntheory.residue_ntheory import nthroot_mod
 
 class CyclotomicRingSpec(NamedTuple):
@@ -37,6 +38,7 @@ class IntegerRingParams(NamedTuple):
     square_montgomery_modulus: int
     montgomery_modulus: int
     twiddles: Optional[list[int]]
+    inv_ntt_scale: Optional[int]
 
 def compute_bits(number):
     return ceil(log(number, 2))
@@ -120,6 +122,8 @@ def write_ring_cplusplus(spec, params):
         if params.twiddles != None:
             twiddles = str(params.twiddles).replace('[', '{').replace(']', '}')
             file.write(f"    constexpr static const std::array<I, {len(params.twiddles)}> TWIDDLES = {twiddles};\n")
+        if params.inv_ntt_scale != None:
+            file.write(f"    constexpr static const I INVERSE_TWIDDLES = {params.inv_ntt_scale};\n")
         file.write(spec.reduce.replace("_Q_", str(spec.modulus)))
         file.write("};\n")
         file.write('\n')
@@ -177,6 +181,7 @@ for ring in rings:
             assert cyclotomic_polynomial_degree % extension.inertia_degree == 0, "Non-integer split"
             split = cyclotomic_polynomial_degree / extension.inertia_degree
             assert ring.modulus % (4 * split) == 1 + 2 * split, "Ideal is insufficiently inert"
+            split = Integer(split)
         else:
             split = cyclotomic_polynomial_degree
         primitive_root_of_unity = compute_primitive_root_of_unity(ring.modulus, 2 * split)
@@ -184,7 +189,11 @@ for ring in rings:
         twiddles = [pow(primitive_root_of_unity, i, ring.modulus) for i in brv]
         twiddles = [compute_montgomery_form(i, ring.modulus, montgomery_modulus, square_montgomery_modulus, word_bits) for i in twiddles]
         twiddles = [compute_centered_representation(i, ring.modulus) for i in twiddles]
+        inv_ntt_scale = pow(split, -1, ring.modulus)
+        inv_ntt_scale = compute_montgomery_form(inv_ntt_scale, ring.modulus, montgomery_modulus, square_montgomery_modulus, word_bits)
+        inv_ntt_scale = compute_centered_representation(inv_ntt_scale, ring.modulus)
     else:
         twiddles = None
-    params = IntegerRingParams(bits, word_bits, square_montgomery_modulus, montgomery_modulus, twiddles)
+        inv_ntt_scale = None
+    params = IntegerRingParams(bits, word_bits, square_montgomery_modulus, montgomery_modulus, twiddles, inv_ntt_scale)
     write_ring_cplusplus(ring, params)
