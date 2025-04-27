@@ -212,7 +212,6 @@ public:
 
 }
 
-template<>
 template<typename Params>
 struct fmt::formatter<blacknet::crypto::PolynomialRing<Params>> : ostream_formatter {};
 

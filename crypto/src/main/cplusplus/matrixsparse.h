@@ -123,7 +123,6 @@ struct MatrixSparse {
 
 }
 
-template<>
 template<typename E>
 struct fmt::formatter<blacknet::crypto::MatrixSparse<E>> : ostream_formatter {};
 

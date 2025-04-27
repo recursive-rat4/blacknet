@@ -206,7 +206,6 @@ private:
 
 }
 
-template<>
 template<typename Params>
 struct fmt::formatter<blacknet::crypto::IntegerRing<Params>> : ostream_formatter {};
 
