@@ -42,8 +42,12 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::size_t;
+        consteval ComposedIterator() noexcept = default;
         constexpr ComposedIterator(const ComposedIterator&) = default;
         constexpr ComposedIterator& operator = (const ComposedIterator&) = default;
+        constexpr bool operator == (const ComposedIterator& other) const {
+            return index == other.index;
+        }
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == last;
         }
@@ -60,7 +64,7 @@ public:
             return old;
         }
     };
-    static_assert(std::input_iterator<ComposedIterator>);
+    static_assert(std::forward_iterator<ComposedIterator>);
     constexpr ComposedIterator composedBegin() const noexcept {
         return ComposedIterator(*this);
     }
@@ -77,11 +81,15 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::vector<E>;
+        consteval DecomposedIterator() noexcept = default;
         constexpr DecomposedIterator(const DecomposedIterator&) = default;
         constexpr DecomposedIterator(DecomposedIterator&&) noexcept = default;
         constexpr ~DecomposedIterator() noexcept = default;
         constexpr DecomposedIterator& operator = (const DecomposedIterator&) = default;
         constexpr DecomposedIterator& operator = (DecomposedIterator&&) noexcept = default;
+        constexpr bool operator == (const DecomposedIterator& other) const {
+            return index == other.index;
+        }
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == last;
         }
@@ -106,7 +114,7 @@ public:
             return old;
         }
     };
-    static_assert(std::input_iterator<DecomposedIterator>);
+    static_assert(std::forward_iterator<DecomposedIterator>);
     constexpr DecomposedIterator decomposedBegin() const noexcept {
         return DecomposedIterator(*this);
     }
@@ -126,8 +134,12 @@ public:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = std::pair<std::size_t, std::size_t>;
+        consteval SplittedIterator() noexcept = default;
         constexpr SplittedIterator(const SplittedIterator&) = default;
         constexpr SplittedIterator& operator = (const SplittedIterator&) = default;
+        constexpr bool operator == (const SplittedIterator& other) const {
+            return index == other.index;
+        }
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == last;
         }
@@ -145,7 +157,7 @@ public:
             return old;
         }
     };
-    static_assert(std::input_iterator<SplittedIterator>);
+    static_assert(std::forward_iterator<SplittedIterator>);
     constexpr SplittedIterator splittedBegin(std::size_t rows, std::size_t columns) const noexcept {
         return SplittedIterator(*this, rows, columns);
     }

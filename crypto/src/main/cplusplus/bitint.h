@@ -67,8 +67,12 @@ struct BitInt {
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = bool;
+        consteval BitIterator() noexcept = default;
         constexpr BitIterator(const BitIterator&) = default;
         constexpr BitIterator& operator = (const BitIterator&) = default;
+        constexpr bool operator == (const BitIterator& other) const {
+            return index == other.index;
+        }
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == BITS;
         }
@@ -85,7 +89,7 @@ struct BitInt {
             return old;
         }
     };
-    static_assert(std::input_iterator<BitIterator>);
+    static_assert(std::forward_iterator<BitIterator>);
     constexpr BitIterator bitsBegin() const noexcept {
         return BitIterator(*this);
     }
