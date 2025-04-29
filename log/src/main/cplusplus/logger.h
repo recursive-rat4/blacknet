@@ -39,7 +39,7 @@ class Logger {
 
     std::unique_ptr<spdlog::logger> logger;
 public:
-    consteval Logger() : logger() {}
+    consteval Logger() noexcept = default;
 
     Logger(const char* name) : logger(
         std::make_unique<spdlog::logger>(

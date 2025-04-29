@@ -38,7 +38,7 @@ template<typename E>
 struct MultilinearExtension {
     std::vector<E> coefficients;
 
-    consteval MultilinearExtension() : coefficients() {}
+    consteval MultilinearExtension() = default;
     constexpr MultilinearExtension(std::size_t size) : coefficients(size) {}
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
     constexpr MultilinearExtension(std::vector<E>&& coefficients) : coefficients(std::move(coefficients)) {}

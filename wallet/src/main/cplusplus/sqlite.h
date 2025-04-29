@@ -166,7 +166,7 @@ class Statement {
     friend class Connection;
     sqlite3_stmt* statement;
 public:
-    consteval Statement() : statement(nullptr) {}
+    consteval Statement() noexcept = default;
     constexpr Statement(const Statement&) = delete;
     constexpr Statement(Statement&& other) noexcept : statement(other.statement) {
         other.statement = nullptr;
@@ -232,7 +232,7 @@ public:
 class Connection {
     sqlite3* connection;
 public:
-    consteval Connection() : connection(nullptr) {}
+    consteval Connection() noexcept = default;
     constexpr Connection(const Connection&) = delete;
     constexpr Connection(Connection&& other) noexcept : connection(other.connection) {
         other.connection = nullptr;

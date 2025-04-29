@@ -82,7 +82,7 @@ struct CCSBuilder {
             return terms.emplace(std::forward<Args>(args)...);
         }
 
-        constexpr LinearCombination() : terms() {}
+        constexpr LinearCombination() = default;
         constexpr LinearCombination(const E& coefficient) : terms({std::make_pair(Variable::constant(), coefficient)}) {}
         constexpr LinearCombination(const Variable& variable) : terms({std::make_pair(variable, E(1))}) {}
         constexpr LinearCombination(const LinearCombination&) = default;
@@ -233,7 +233,7 @@ struct CCSBuilder {
     struct Constant : ConstraintExpression<Constant> {
         E value;
 
-        constexpr Constant() {}
+        constexpr Constant() = default;
         constexpr Constant(const E& value) : value(value) {}
 
         constexpr Constraint operator () () const {
@@ -258,7 +258,7 @@ struct CCSBuilder {
         Type type;
         std::size_t number;
 
-        consteval Variable() : type(Uninitialized), number(-1) {}
+        consteval Variable() noexcept : type(Uninitialized), number(-1) {}
         constexpr Variable(Type type, std::size_t number) : type(type), number(number) {}
         consteval static Variable constant() { return Variable(Constant, 0); }
 
@@ -293,7 +293,7 @@ struct CCSBuilder {
         L l;
         R r;
 
-        constexpr AddExpression() {}
+        constexpr AddExpression() = default;
         constexpr AddExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {
@@ -323,7 +323,7 @@ struct CCSBuilder {
         L l;
         R r;
 
-        constexpr MulExpression() {}
+        constexpr MulExpression() = default;
         constexpr MulExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {
@@ -403,7 +403,7 @@ struct CCSBuilder {
         L l;
         R r;
 
-        constexpr EqExpression() {}
+        constexpr EqExpression() = default;
         constexpr EqExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {

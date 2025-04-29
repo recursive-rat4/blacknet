@@ -39,7 +39,7 @@ public:
 
     std::vector<E> elements;
 
-    consteval Vector() : elements() {}
+    consteval Vector() = default;
     constexpr Vector(std::size_t size) : elements(size) {}
     constexpr Vector(std::size_t size, const E& fill) : elements(size, fill) {}
     constexpr Vector(std::initializer_list<E> init) : elements(init) {}

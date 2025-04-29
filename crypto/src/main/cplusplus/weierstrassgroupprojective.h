@@ -35,7 +35,7 @@ public:
     typedef SF Scalar;
     consteval static WeierstrassGroupProjective LEFT_ADDITIVE_IDENTITY() { return WeierstrassGroupProjective(); }
 
-    consteval WeierstrassGroupProjective() : x(0), y(0), z(0) {}
+    consteval WeierstrassGroupProjective() = default;
     constexpr WeierstrassGroupProjective(const BF& x, const BF& y, const BF& z) : x{x}, y(y), z(z) {}
 
     constexpr bool operator == (const WeierstrassGroupProjective& other) const {

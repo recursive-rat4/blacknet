@@ -134,7 +134,7 @@ public:
         using difference_type = std::ptrdiff_t;
         using value_type = T;
         using iterator_category = std::contiguous_iterator_tag;
-        consteval const_iterator() = default;
+        consteval const_iterator() noexcept = default;
         const_iterator(const const_iterator&) = default;
         const_iterator(const_iterator&&) noexcept = default;
         const_iterator& operator = (const const_iterator&) = default;

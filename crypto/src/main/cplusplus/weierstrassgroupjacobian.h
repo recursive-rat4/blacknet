@@ -35,7 +35,7 @@ public:
     typedef SF Scalar;
     consteval static WeierstrassGroupJacobian LEFT_ADDITIVE_IDENTITY() { return WeierstrassGroupJacobian(); }
 
-    consteval WeierstrassGroupJacobian() : x(0), y(0), z(0) {}
+    consteval WeierstrassGroupJacobian() = default;
     constexpr WeierstrassGroupJacobian(const BF& x, const BF& y, const BF& z) : x{x}, y(y), z(z) {}
 
     constexpr bool operator == (const WeierstrassGroupJacobian& other) const {

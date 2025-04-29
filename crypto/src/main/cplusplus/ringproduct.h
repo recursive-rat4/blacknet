@@ -39,7 +39,7 @@ struct RingProduct {
 
     std::tuple<Rs...> ideals;
 
-    constexpr RingProduct() {}
+    constexpr RingProduct() = default;
     constexpr RingProduct(Rs&&... rs) : ideals(std::forward<Rs>(rs)...) {}
 
     constexpr bool operator == (const RingProduct&) const = default;

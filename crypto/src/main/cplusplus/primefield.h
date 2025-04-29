@@ -39,7 +39,7 @@ public:
 
     UInt256 n;
 
-    consteval PrimeField() : n() {}
+    consteval PrimeField() = default;
     consteval PrimeField(const std::string& hex) : n(Params::toForm(hex)) {}
     constexpr PrimeField(int8_t n) {
         if (n >= 0)

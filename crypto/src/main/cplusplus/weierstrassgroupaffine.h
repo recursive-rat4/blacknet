@@ -34,7 +34,7 @@ public:
     typedef SF Scalar;
     consteval static WeierstrassGroupAffine LEFT_ADDITIVE_IDENTITY() { return WeierstrassGroupAffine(); }
 
-    consteval WeierstrassGroupAffine() : x(0), y(0) {}
+    consteval WeierstrassGroupAffine() = default;
     constexpr WeierstrassGroupAffine(const BF& x, const BF& y) : x{x}, y(y) {}
 
     constexpr bool operator == (const WeierstrassGroupAffine& other) const {

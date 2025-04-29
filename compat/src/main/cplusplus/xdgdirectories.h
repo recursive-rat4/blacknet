@@ -77,7 +77,7 @@ class DirManager {
             return get_or_throw("USERPROFILE");
         }
     public:
-        WindowsStrategy() : Strategy() {}
+        WindowsStrategy() noexcept = default;
         virtual std::filesystem::path configDir() override {
             return userprofile() / "AppData" / "Local" / xdg_subdirectory();
         }
@@ -94,7 +94,7 @@ class DirManager {
             return get_or_throw("HOME");
         }
     public:
-        DarwinStrategy() : Strategy() {}
+        DarwinStrategy() noexcept = default;
         virtual std::filesystem::path configDir() override {
             return home() / "Library" / "Application Support" / xdg_subdirectory();
         }
@@ -112,7 +112,7 @@ class DirManager {
             return get_or_throw("HOME");
         }
     public:
-        XDGStrategy() : Strategy() {}
+        XDGStrategy() noexcept = default;
         virtual std::filesystem::path configDir() override {
             auto base = get_optional("XDG_CONFIG_HOME");
             if (base && base->is_absolute())

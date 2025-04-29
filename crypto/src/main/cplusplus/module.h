@@ -40,7 +40,7 @@ struct Module {
 
     std::array<R, N> components;
 
-    consteval Module() : components() {}
+    consteval Module() = default;
     constexpr Module(const std::array<R, N>& components) : components(components) {}
     constexpr Module(const Module&) = default;
 

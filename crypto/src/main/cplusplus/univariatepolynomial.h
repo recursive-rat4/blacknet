@@ -33,7 +33,7 @@ class UnivariatePolynomial {
 public:
     std::vector<E> coefficients;
 
-    consteval UnivariatePolynomial() : coefficients() {}
+    consteval UnivariatePolynomial() = default;
     constexpr UnivariatePolynomial(std::size_t size) : coefficients(size) {}
     constexpr UnivariatePolynomial(std::initializer_list<E> init) : coefficients(init) {}
     constexpr UnivariatePolynomial(std::vector<E>&& coefficients) : coefficients(std::move(coefficients)) {}

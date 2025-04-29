@@ -44,7 +44,7 @@ public:
     struct Proof {
         std::vector<UnivariatePolynomial<F>> claims;
 
-        constexpr Proof() {}
+        constexpr Proof() = default;
         constexpr Proof(std::size_t capacity) {
             claims.reserve(capacity);
         }
@@ -111,7 +111,7 @@ public:
         UnivariatePolynomial<F> claim;
         F challenge;
 
-        constexpr ProofEarlyStopped() {}
+        constexpr ProofEarlyStopped() = default;
 
         constexpr bool operator == (const ProofEarlyStopped&) const = default;
 

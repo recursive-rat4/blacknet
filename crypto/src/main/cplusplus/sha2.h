@@ -39,7 +39,7 @@ struct sha2_base
 
     std::uint64_t n_ = 0;
 
-    constexpr sha2_base() = default;
+    constexpr sha2_base() noexcept = default;
 
     void update( void const* pv, std::size_t n )
     {
@@ -508,7 +508,7 @@ public:
 
     static constexpr std::size_t block_size = 64;
 
-    constexpr sha2_256()
+    constexpr sha2_256() noexcept
     {
         init();
     }
@@ -559,7 +559,7 @@ public:
 
     static constexpr std::size_t block_size = 64;
 
-    constexpr sha2_224()
+    constexpr sha2_224() noexcept
     {
         init();
     }
@@ -611,7 +611,7 @@ public:
 
     static constexpr std::size_t block_size = 128;
 
-    constexpr sha2_512()
+    constexpr sha2_512() noexcept
     {
         init();
     }
@@ -662,7 +662,7 @@ public:
 
     using wtf::sha2_512_base::update;
 
-    constexpr sha2_384()
+    constexpr sha2_384() noexcept
     {
         init();
     }
@@ -713,7 +713,7 @@ public:
 
     using wtf::sha2_512_base::update;
 
-    constexpr sha2_512_224()
+    constexpr sha2_512_224() noexcept
     {
         init();
     }
@@ -765,7 +765,7 @@ public:
 
     using wtf::sha2_512_base::update;
 
-    constexpr sha2_512_256()
+    constexpr sha2_512_256() noexcept
     {
         init();
     }

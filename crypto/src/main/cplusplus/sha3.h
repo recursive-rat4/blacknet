@@ -137,54 +137,42 @@ class sha3_224: public wtf::keccak_base<0x06, 2 * 224, 224>
 {
 public:
 
-    constexpr sha3_224()
-    {
-    }
+    constexpr sha3_224() noexcept = default;
 };
 
 class sha3_256: public wtf::keccak_base<0x06, 2 * 256, 256>
 {
 public:
 
-    constexpr sha3_256()
-    {
-    }
+    constexpr sha3_256() noexcept = default;
 };
 
 class sha3_384: public wtf::keccak_base<0x06, 2 * 384, 384>
 {
 public:
 
-    constexpr sha3_384()
-    {
-    }
+    constexpr sha3_384() noexcept = default;
 };
 
 class sha3_512: public wtf::keccak_base<0x06, 2 * 512, 512>
 {
 public:
 
-    constexpr sha3_512()
-    {
-    }
+    constexpr sha3_512() noexcept = default;
 };
 
 class shake_128: public wtf::keccak_base<0x1f, 256, 1600 - 256>
 {
 public:
 
-    constexpr shake_128()
-    {
-    }
+    constexpr shake_128() noexcept = default;
 };
 
 class shake_256: public wtf::keccak_base<0x1f, 512, 1600 - 512>
 {
 public:
 
-    constexpr shake_256()
-    {
-    }
+    constexpr shake_256() noexcept = default;
 };
 
 } // namespace hash2

@@ -50,7 +50,7 @@ struct BigInt {
 
     L limbs[N];
 
-    consteval BigInt() : limbs{} {}
+    consteval BigInt() noexcept : limbs{} {}
     consteval BigInt(const std::string& hex) {
         for (std::size_t i = 0; i < N; ++i)
             std::from_chars(hex.data() + i * sizeof(L) * 2, hex.data() + (i + 1) * sizeof(L) * 2, limbs[N - i - 1], 16);

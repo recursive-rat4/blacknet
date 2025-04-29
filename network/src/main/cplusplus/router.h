@@ -94,6 +94,11 @@ class Router {
         }
     }
 
+    boost::asio::awaitable<void> listen_tor(boost::asio::io_context& io_context) {
+        //TODO
+        co_return;
+    }
+
     boost::asio::awaitable<void> listen_i2p(boost::asio::io_context& io_context) {
         endpoint_ptr endpoint;
         auto timeout = init_timeout;
@@ -132,6 +137,8 @@ public:
     void co_spawn(boost::asio::io_context& io_context) {
         if (settings.ipv6 || settings.ipv4)
             boost::asio::co_spawn(io_context, listen_ip(io_context), background);
+        if (settings.tor)
+            boost::asio::co_spawn(io_context, listen_tor(io_context), background);
         if (settings.i2p)
             boost::asio::co_spawn(io_context, listen_i2p(io_context), background);
     }
