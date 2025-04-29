@@ -15,38 +15,40 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_NETWORK_CONNECTION_H
-#define BLACKNET_NETWORK_CONNECTION_H
+#ifndef BLACKNET_NETWORK_PEERTABLE_H
+#define BLACKNET_NETWORK_PEERTABLE_H
 
 #include <atomic>
 #include <memory>
 #include <boost/asio/io_context.hpp>
+#include <boost/unordered/concurrent_flat_map.hpp>
 
 #include "endpoint.h"
+#include "logger.h"
 
 namespace blacknet::network {
 
-using connection_id = uint64_t;
-class Connection {
-public:
-    enum State {
-        Spawning,
-        Helloing,
-        Communicating,
-        Closing,
-    };
+class PeerTable {
+    constexpr static const std::size_t max_size{8192};
 
-    const connection_id id;
-    const endpoint_ptr remote_endpoint;
-    const endpoint_ptr local_endpoint;
-private:
-    std::atomic<State> state{Spawning};
+    class Entry {
+        std::atomic<bool> in_contact{false};
+    };
+    using entry_ptr = std::unique_ptr<Entry>;
+
+    log::Logger logger{"PeerTable"};
+    boost::concurrent_flat_map<
+        endpoint_ptr, entry_ptr,
+        endpoint::hasher, endpoint::comparator
+    > peers;
 public:
+    PeerTable() {
+        peers.reserve(max_size);
+    }
 
     void co_spawn(boost::asio::io_context& io_context) {
     }
 };
-using connection_ptr = std::shared_ptr<Connection>;
 
 }
 

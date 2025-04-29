@@ -15,39 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_NETWORK_CONNECTION_H
-#define BLACKNET_NETWORK_CONNECTION_H
+#include <boost/test/unit_test.hpp>
 
-#include <atomic>
-#include <memory>
-#include <boost/asio/io_context.hpp>
+#include "byte.h"
+#include "siphash.h"
 
-#include "endpoint.h"
+namespace byte = blacknet::compat::byte;
+using namespace blacknet::crypto;
 
-namespace blacknet::network {
+BOOST_AUTO_TEST_SUITE(SipHashs)
 
-using connection_id = uint64_t;
-class Connection {
-public:
-    enum State {
-        Spawning,
-        Helloing,
-        Communicating,
-        Closing,
-    };
-
-    const connection_id id;
-    const endpoint_ptr remote_endpoint;
-    const endpoint_ptr local_endpoint;
-private:
-    std::atomic<State> state{Spawning};
-public:
-
-    void co_spawn(boost::asio::io_context& io_context) {
-    }
-};
-using connection_ptr = std::shared_ptr<Connection>;
-
+BOOST_AUTO_TEST_CASE(Paper) {
+    const auto data = byte::arrayU<15>({
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+    });
+    const auto key = byte::arrayU<16>({
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    });
+    const uint64_t hash = 0xA129CA6149BE45E5;
+    siphash_64 hasher(key);
+    hasher.update(data.data(), data.size());
+    BOOST_TEST(hash == hasher.result());
 }
 
-#endif
+BOOST_AUTO_TEST_SUITE_END()

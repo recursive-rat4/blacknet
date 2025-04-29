@@ -22,9 +22,8 @@
 
 #include <atomic>
 #include <filesystem>
-#include <memory>
 #include <thread>
-#include <boost/asio/thread_pool.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include "concurrent_vector.h"
 #include "connection.h"
@@ -32,6 +31,7 @@
 #include "logmanager.h"
 #include "mode.h"
 #include "networksettings.h"
+#include "peertable.h"
 #include "router.h"
 #include "uname.h"
 #include "xdgdirectories.h"
@@ -46,11 +46,18 @@ class Node {
     compat::DirManager dirManager;
     log::LogManager logManager;
     NetworkSettings settings;
-    std::unique_ptr<Router> router;
+    PeerTable peerTable;
+    Router router;
 public:
-    Node(log::LogManager::Regime regime)
-        : modeManager(), dirManager(), logManager(regime)
-    {
+    Node(log::LogManager::Regime regime) :
+        modeManager(),
+        dirManager(),
+        logManager(regime),
+        settings(),
+        peerTable(),
+        router(settings) {}
+
+    void co_spawn(boost::asio::io_context& io_context) {
         auto [os_name, os_version, os_machine] = compat::uname();
 
         log::Logger logger("Node");
@@ -68,11 +75,8 @@ public:
             logger->warn("Running as SYSTEM");
 #endif
 
-        router = std::make_unique<Router>(settings);
-    }
-
-    void co_spawn(boost::asio::thread_pool& thread_pool) {
-        router->co_spawn(thread_pool);
+        peerTable.co_spawn(io_context);
+        router.co_spawn(io_context);
     }
 };
 

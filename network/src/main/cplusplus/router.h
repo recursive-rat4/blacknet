@@ -21,8 +21,8 @@
 #include <chrono>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/asio/thread_pool.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ip/v6_only.hpp>
@@ -53,7 +53,7 @@ class Router {
         //TODO set
     }
 
-    boost::asio::awaitable<void> listen_ip(boost::asio::thread_pool& thread_pool) {
+    boost::asio::awaitable<void> listen_ip(boost::asio::io_context& io_context) {
         endpoint_ptr endpoint;
         if (settings.ipv6) {
             endpoint = endpoint::IPv6::any(settings.port);
@@ -67,7 +67,7 @@ class Router {
             bool added = false;
             try {
                 auto boost_endpoint = endpoint->to_boost();
-                boost::asio::ip::tcp::acceptor acceptor(thread_pool);
+                boost::asio::ip::tcp::acceptor acceptor(io_context);
                 acceptor.open(boost_endpoint.protocol());
                 if (settings.ipv6)
                     acceptor.set_option(boost::asio::ip::v6_only(!settings.ipv4));
@@ -78,7 +78,7 @@ class Router {
                 added = true;
                 //TODO localAddress
                 //TODO loop
-                co_await acceptor.async_accept(thread_pool, boost::asio::use_awaitable);
+                co_await acceptor.async_accept(io_context, boost::asio::use_awaitable);
                 //TODO remoteAddress
             } catch (const boost::system::system_error& e) {
                 logger->warn("{}", e.what());
@@ -88,23 +88,23 @@ class Router {
             }
 
             auto now = std::chrono::steady_clock::now();
-            boost::asio::steady_timer timer(thread_pool, now + timeout);
+            boost::asio::steady_timer timer(io_context, now + timeout);
             co_await timer.async_wait(boost::asio::use_awaitable);
             timeout = std::min(timeout * 2, max_timeout);
         }
     }
 
-    boost::asio::awaitable<void> listen_i2p(boost::asio::thread_pool& thread_pool) {
+    boost::asio::awaitable<void> listen_i2p(boost::asio::io_context& io_context) {
         endpoint_ptr endpoint;
         auto timeout = init_timeout;
         while (true) {
             try {
-                i2p::session_ptr i2p_session = co_await i2p_sam.create_session(thread_pool);
+                i2p::session_ptr i2p_session = co_await i2p_sam.create_session(io_context);
                 endpoint = i2p_session->local_endpoint;
                 add_listener(endpoint);
                 //TODO localAddress
                 //TODO loop
-                co_await i2p_session->accept(thread_pool);
+                co_await i2p_session->accept(io_context);
                 //TODO remoteAddress
                 logger->info("Closing I2P session {}", i2p_session->id);
                 timeout = init_timeout;
@@ -119,22 +119,21 @@ class Router {
             }
 
             auto now = std::chrono::steady_clock::now();
-            boost::asio::steady_timer timer(thread_pool, now + timeout);
+            boost::asio::steady_timer timer(io_context, now + timeout);
             co_await timer.async_wait(boost::asio::use_awaitable);
             timeout = std::min(timeout * 2, max_timeout);
         }
     }
 public:
-    Router(const NetworkSettings& settings)
-        : settings(settings), i2p_sam(settings)
-    {
-    }
+    Router(const NetworkSettings& settings) :
+        settings(settings),
+        i2p_sam(settings) {}
 
-    void co_spawn(boost::asio::thread_pool& thread_pool) {
+    void co_spawn(boost::asio::io_context& io_context) {
         if (settings.ipv6 || settings.ipv4)
-            boost::asio::co_spawn(thread_pool, listen_ip(thread_pool), background);
+            boost::asio::co_spawn(io_context, listen_ip(io_context), background);
         if (settings.i2p)
-            boost::asio::co_spawn(thread_pool, listen_i2p(thread_pool), background);
+            boost::asio::co_spawn(io_context, listen_i2p(io_context), background);
     }
 };
 

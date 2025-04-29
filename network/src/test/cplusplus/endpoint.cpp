@@ -38,6 +38,7 @@ BOOST_AUTO_TEST_CASE(IPv4s) {
     for (auto [string, is_local, is_private] : data) {
         auto endpoint = parse(string, 28453);
         BOOST_TEST_REQUIRE(endpoint);
+        BOOST_TEST((Enum::IPv4 == endpoint->ordinal()));
         BOOST_TEST(!endpoint->is_permissionless());
         BOOST_TEST(is_local == endpoint->is_local());
         BOOST_TEST(is_private == endpoint->is_private());
@@ -55,6 +56,7 @@ BOOST_AUTO_TEST_CASE(IPv6s) {
     for (auto [string, is_local, is_private] : data) {
         auto endpoint = parse(string, 28453);
         BOOST_TEST_REQUIRE(endpoint);
+        BOOST_TEST((Enum::IPv6 == endpoint->ordinal()));
         BOOST_TEST(!endpoint->is_permissionless());
         BOOST_TEST(is_local == endpoint->is_local());
         BOOST_TEST(is_private == endpoint->is_private());
@@ -72,6 +74,7 @@ BOOST_AUTO_TEST_CASE(TORv3s) {
     for (auto string : data) {
         auto endpoint = parse(string, 28453);
         BOOST_TEST_REQUIRE(endpoint);
+        BOOST_TEST((Enum::TORv3 == endpoint->ordinal()));
         BOOST_TEST(endpoint->is_permissionless());
         BOOST_TEST(!endpoint->is_local());
         BOOST_TEST(!endpoint->is_private());
@@ -87,12 +90,30 @@ BOOST_AUTO_TEST_CASE(I2Ps) {
     for (auto string : data) {
         auto endpoint = parse(string, 28453);
         BOOST_TEST_REQUIRE(endpoint);
+        BOOST_TEST((Enum::I2P == endpoint->ordinal()));
         BOOST_TEST(endpoint->is_permissionless());
         BOOST_TEST(!endpoint->is_local());
         BOOST_TEST(!endpoint->is_private());
         BOOST_CHECK_THROW(endpoint->to_boost(), Exception);
         BOOST_TEST(endpoint->to_host() == string);
     }
+}
+
+BOOST_AUTO_TEST_CASE(Compares) {
+    auto a = parse("127.0.0.1", 12345);
+    auto b = parse("127.0.0.2", 12345);
+    auto c = parse("mzgt4svgc72euhvkpfdow7aiiivziqwhsl2fdzgiwkqeronnjjtq.b32.i2p", 0);
+    auto d = parse("mzgt4svgc72euhvkpfdow7aiiivziqwhsl2fdzgiwkqeronnjjtq.b32.i2p", 0);
+
+    BOOST_TEST_REQUIRE(a);
+    BOOST_TEST_REQUIRE(b);
+    BOOST_TEST_REQUIRE(c);
+    BOOST_TEST_REQUIRE(d);
+
+    BOOST_TEST((*a != *b));
+    BOOST_TEST((*b != *c));
+    BOOST_TEST((*c == *d));
+    BOOST_TEST((*d != *a));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

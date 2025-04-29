@@ -53,6 +53,7 @@ crypto_test_sources = [
     'semigroup.cpp',
     'sha2.cpp',
     'sha3.cpp',
+    'siphash.cpp',
     'solinas62.cpp',
     'sponge.cpp',
     'sumcheck.cpp',

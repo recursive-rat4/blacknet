@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/address_v6.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -30,7 +31,9 @@
 
 #include "base32.h"
 #include "byte.h"
+#include "fastrng.h"
 #include "sha3.h"
+#include "siphash.h"
 
 namespace blacknet::network {
 
@@ -45,16 +48,29 @@ public:
     }
 };
 
+enum class Enum : uint8_t {
+    IPv4 = 128,
+    IPv6 = 129,
+    TORv2 = 130,
+    TORv3 = 131,
+    I2P = 132,
+};
+
 class Endpoint {
 public:
     virtual ~Endpoint() noexcept = default;
 
+    virtual bool operator == (const Endpoint& other) const = 0;
+
+    virtual Enum ordinal() const = 0;
     virtual bool is_permissionless() const = 0;
     virtual bool is_local() const = 0;
     virtual bool is_private() const = 0;
     virtual boost::asio::ip::tcp::endpoint to_boost() const = 0;
     virtual std::string to_host() const = 0;
     virtual std::string to_log(bool detail) const = 0;
+
+    virtual void serialize(crypto::siphash_64& hasher) const = 0;
 };
 using endpoint_ptr = std::shared_ptr<Endpoint>;
 
@@ -75,7 +91,23 @@ public:
     constexpr IPv4(uint16_t port, const std::array<std::byte, 4>& address)
         : port(port), address(address) {}
 
-    constexpr bool operator == (const IPv4&) const = default;
+    constexpr bool operator == (const IPv4& other) const {
+        if (port != other.port)
+            return false;
+        if (address != other.address)
+            return false;
+        return true;
+    }
+
+    bool operator == (const Endpoint& other) const override {
+        if (other.ordinal() != Enum::IPv4)
+            return false;
+        return (*this) == static_cast<const IPv4&>(other);
+    }
+
+    Enum ordinal() const override {
+        return Enum::IPv4;
+    }
 
     bool is_permissionless() const override {
         return false;
@@ -126,6 +158,12 @@ public:
             return "IPv4 endpoint";
     }
 
+    void serialize(crypto::siphash_64& hasher) const override {
+        hasher.update(static_cast<std::byte>(Enum::IPv4));
+        hasher.update(&port, sizeof(port));
+        hasher.update(address.data(), address.size());
+    }
+
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
         try {
             auto chars = boost::asio::ip::make_address_v4(string).to_bytes();
@@ -164,7 +202,23 @@ public:
     constexpr IPv6(uint16_t port, const std::array<std::byte, 16>& address)
         : port(port), address(address) {}
 
-    constexpr bool operator == (const IPv6&) const = default;
+    constexpr bool operator == (const IPv6& other) const {
+        if (port != other.port)
+            return false;
+        if (address != other.address)
+            return false;
+        return true;
+    }
+
+    bool operator == (const Endpoint& other) const override {
+        if (other.ordinal() != Enum::IPv6)
+            return false;
+        return (*this) == static_cast<const IPv6&>(other);
+    }
+
+    Enum ordinal() const override {
+        return Enum::IPv6;
+    }
 
     bool is_permissionless() const override {
         return false;
@@ -215,6 +269,12 @@ public:
             return "IPv6 endpoint";
     }
 
+    void serialize(crypto::siphash_64& hasher) const override {
+        hasher.update(static_cast<std::byte>(Enum::IPv6));
+        hasher.update(&port, sizeof(port));
+        hasher.update(address.data(), address.size());
+    }
+
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
         try {
             auto chars = boost::asio::ip::make_address_v6(string).to_bytes();
@@ -260,7 +320,23 @@ public:
     constexpr TORv3(uint16_t port, const std::array<std::byte, 32>& address)
         : port(port), address(address) {}
 
-    constexpr bool operator == (const TORv3&) const = default;
+    constexpr bool operator == (const TORv3& other) const {
+        if (port != other.port)
+            return false;
+        if (address != other.address)
+            return false;
+        return true;
+    }
+
+    bool operator == (const Endpoint& other) const override {
+        if (other.ordinal() != Enum::TORv3)
+            return false;
+        return (*this) == static_cast<const TORv3&>(other);
+    }
+
+    Enum ordinal() const override {
+        return Enum::TORv3;
+    }
 
     bool is_permissionless() const override {
         return true;
@@ -294,6 +370,12 @@ public:
             return "TORv3 endpoint";
     }
 
+    void serialize(crypto::siphash_64& hasher) const override {
+        hasher.update(static_cast<std::byte>(Enum::TORv3));
+        hasher.update(&port, sizeof(port));
+        hasher.update(address.data(), address.size());
+    }
+
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
         if (string.ends_with(suffix)) {
             try {
@@ -325,7 +407,23 @@ public:
     constexpr I2P(uint16_t port, const std::array<std::byte, 32>& address)
         : port(port), address(address) {}
 
-    constexpr bool operator == (const I2P&) const = default;
+    constexpr bool operator == (const I2P& other) const {
+        if (port != other.port)
+            return false;
+        if (address != other.address)
+            return false;
+        return true;
+    }
+
+    bool operator == (const Endpoint& other) const override {
+        if (other.ordinal() != Enum::I2P)
+            return false;
+        return (*this) == static_cast<const I2P&>(other);
+    }
+
+    Enum ordinal() const override {
+        return Enum::I2P;
+    }
 
     bool is_permissionless() const override {
         return true;
@@ -352,6 +450,12 @@ public:
             return fmt::format("{}:{}", to_host(), port);
         else
             return "I2P endpoint";
+    }
+
+    void serialize(crypto::siphash_64& hasher) const override {
+        hasher.update(static_cast<std::byte>(Enum::I2P));
+        hasher.update(&port, sizeof(port));
+        hasher.update(address.data(), address.size());
     }
 
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
@@ -383,6 +487,35 @@ inline endpoint_ptr parse(const std::string_view& string, uint16_t port) {
     else
         return nullptr;
 }
+
+class comparator {
+public:
+    constexpr bool operator()(const endpoint_ptr& lps, const endpoint_ptr& rps) const {
+        return (*lps) == (*rps);
+    }
+};
+
+class hasher {
+    static std::array<std::byte, 16> generate_key() {
+        auto& rng = crypto::tls_fast_rng;
+        std::array<std::byte, 16> key;
+        std::uniform_int_distribution<unsigned char> ud;
+        std::ranges::generate(key, [&] { return std::byte{ ud(rng) }; });
+        return key;
+    }
+    static const std::array<std::byte, 16>& key() {
+        static std::array<std::byte, 16> key = generate_key();
+        return key;
+    }
+public:
+    using is_avalanching = std::true_type;
+
+    std::size_t operator () (const endpoint_ptr& endpoint) const {
+        crypto::siphash_64 hasher(key());
+        endpoint->serialize(hasher);
+        return hasher.result();
+    }
+};
 
 }
 

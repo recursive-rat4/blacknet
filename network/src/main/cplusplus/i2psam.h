@@ -27,7 +27,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/thread_pool.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -152,9 +152,9 @@ public:
 
     static boost::asio::awaitable<connection_ptr> connect(
         const boost::asio::ip::tcp::endpoint& sam_endpoint,
-        boost::asio::thread_pool& thread_pool
+        boost::asio::io_context& io_context
     ) {
-        boost::asio::ip::tcp::socket socket(thread_pool);
+        boost::asio::ip::tcp::socket socket(io_context);
         co_await socket.async_connect(sam_endpoint, boost::asio::use_awaitable);
         auto connection = std::make_unique<Connection>(std::move(socket));
         co_await connection->request("HELLO VERSION MIN=3.2 MAX=3.3\n");
@@ -226,8 +226,8 @@ public:
         connection(std::move(connection)),
         sam_endpoint(sam_endpoint) {}
 
-    boost::asio::awaitable<void> accept(boost::asio::thread_pool& thread_pool) {
-        auto connection = co_await Connection::connect(sam_endpoint, thread_pool);
+    boost::asio::awaitable<void> accept(boost::asio::io_context& io_context) {
+        auto connection = co_await Connection::connect(sam_endpoint, io_context);
         auto request = fmt::format("STREAM ACCEPT ID={}\n", id);
         co_await connection->request(request);
         std::string message = co_await connection->read();
@@ -249,8 +249,8 @@ public:
         co_return value;
     }
 
-    void co_spawn(boost::asio::thread_pool& thread_pool) {
-        boost::asio::co_spawn(thread_pool, loop(), background);
+    void co_spawn(boost::asio::io_context& io_context) {
+        boost::asio::co_spawn(io_context, loop(), background);
     }
 };
 using session_ptr = std::unique_ptr<Session>;
@@ -315,9 +315,9 @@ public:
         }
     }
 
-    boost::asio::awaitable<session_ptr> create_session(boost::asio::thread_pool& thread_pool) {
+    boost::asio::awaitable<session_ptr> create_session(boost::asio::io_context& io_context) {
         auto session_id = generate_id();
-        auto connection = co_await Connection::connect(sam_endpoint, thread_pool);
+        auto connection = co_await Connection::connect(sam_endpoint, io_context);
         auto answer = co_await connection->create_session(session_id, private_key);
         auto destination = co_await connection->lookup("ME");
         auto local_endpoint = std::make_shared<endpoint::I2P>(settings.port, Answer::hash(destination));
@@ -329,7 +329,7 @@ public:
             std::move(connection),
             sam_endpoint
         );
-        session->co_spawn(thread_pool);
+        session->co_spawn(io_context);
         logger->info("Created session {}", session->id);
         co_return session;
     }

@@ -513,35 +513,6 @@ public:
         init();
     }
 
-    constexpr explicit sha2_256( std::uint64_t seed )
-    {
-        init();
-
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-
-            update( tmp, 8 );
-            result();
-        }
-    }
-
-    constexpr sha2_256( std::byte const * p, std::size_t n )
-    {
-        init();
-
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-        }
-    }
-
-    sha2_256( void const * p, std::size_t n ): sha2_256( static_cast<std::byte const*>( p ), n )
-    {
-    }
-
     using wtf::sha2_256_base::update;
 
     constexpr result_type result()
@@ -591,36 +562,6 @@ public:
     constexpr sha2_224()
     {
         init();
-    }
-
-    constexpr explicit sha2_224( std::uint64_t seed )
-    {
-        init();
-
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-
-            update( tmp, 8 );
-            result();
-        }
-    }
-
-    constexpr sha2_224( std::byte const * p, std::size_t n )
-    {
-        init();
-
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-        }
-    }
-
-
-    sha2_224( void const * p, std::size_t n ): sha2_224( static_cast<std::byte const*>( p ), n )
-    {
     }
 
     using wtf::sha2_256_base::update;
@@ -675,35 +616,6 @@ public:
         init();
     }
 
-    constexpr explicit sha2_512( std::uint64_t seed )
-    {
-        init();
-
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-
-            update( tmp, 8 );
-            result();
-        }
-    }
-
-    constexpr sha2_512( std::byte const * p, std::size_t n )
-    {
-        init();
-
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-        }
-    }
-
-    sha2_512( void const * p, std::size_t n ): sha2_512( static_cast<std::byte const*>( p ), n )
-    {
-    }
-
     constexpr result_type result()
     {
         std::byte bits[ 16 ] = {};
@@ -753,35 +665,6 @@ public:
     constexpr sha2_384()
     {
         init();
-    }
-
-    constexpr explicit sha2_384( std::uint64_t seed )
-    {
-        init();
-
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-
-            update( tmp, 8 );
-            result();
-        }
-    }
-
-    constexpr sha2_384( std::byte const * p, std::size_t n )
-    {
-        init();
-
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-        }
-    }
-
-    sha2_384( void const * p, std::size_t n ): sha2_384( static_cast<std::byte const*>( p ), n )
-    {
     }
 
     constexpr result_type result()
@@ -835,36 +718,6 @@ public:
         init();
     }
 
-    constexpr explicit sha2_512_224( std::uint64_t seed )
-    {
-        init();
-
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-
-            update( tmp, 8 );
-            result();
-        }
-    }
-
-    constexpr sha2_512_224( std::byte const * p, std::size_t n )
-    {
-        init();
-
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-        }
-    }
-
-
-    sha2_512_224( void const * p, std::size_t n ): sha2_512_224( static_cast<std::byte const*>( p ), n )
-    {
-    }
-
     constexpr result_type result()
     {
         std::byte bits[ 16 ] = {};
@@ -915,35 +768,6 @@ public:
     constexpr sha2_512_256()
     {
         init();
-    }
-
-    constexpr explicit sha2_512_256( std::uint64_t seed )
-    {
-        init();
-
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-
-            update( tmp, 8 );
-            result();
-        }
-    }
-
-    constexpr sha2_512_256( std::byte const * p, std::size_t n )
-    {
-        init();
-
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-        }
-    }
-
-    sha2_512_256( void const * p, std::size_t n ): sha2_512_256( static_cast<std::byte const*>( p ), n )
-    {
     }
 
     constexpr result_type result()

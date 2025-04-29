@@ -19,14 +19,15 @@
 
 #include <cstring>
 #include <exception>
-#include <boost/asio/thread_pool.hpp>
 #include <fmt/format.h>
 #include <fmt/std.h>
 
 #include "node.h"
+#include "threadpool.h"
 
 using blacknet::log::LogManager;
 using blacknet::network::Node;
+using blacknet::network::ThreadPool;
 
 int main(int argc, char* argv[]) {
     if (argc == 2 && std::strcmp(argv[1], "--version") == 0) {
@@ -35,9 +36,10 @@ int main(int argc, char* argv[]) {
     }
     try {
         Node node(LogManager::Regime::Daemon);
-        boost::asio::thread_pool thread_pool;
+        ThreadPool thread_pool;
         node.co_spawn(thread_pool);
-        thread_pool.wait();
+        thread_pool.spawn();
+        thread_pool.join();
     } catch (const std::exception& e) {
 #if FMT_VERSION >= 100000
         fmt::println(stderr, "{:t}", e);

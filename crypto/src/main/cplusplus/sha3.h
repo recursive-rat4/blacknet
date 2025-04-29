@@ -140,34 +140,6 @@ public:
     constexpr sha3_224()
     {
     }
-
-    constexpr explicit sha3_224( std::uint64_t seed )
-    {
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-            update( tmp, 8 );
-
-            result();
-            update( tmp, 0 ); // sets finalized_ to false
-        }
-    }
-
-    constexpr sha3_224( std::byte const * p, std::size_t n )
-    {
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-            update( p, 0 ); // sets finalized_ to false
-        }
-    }
-
-    sha3_224( void const * p, std::size_t n ): sha3_224( static_cast<std::byte const*>( p ), n )
-    {
-    }
 };
 
 class sha3_256: public wtf::keccak_base<0x06, 2 * 256, 256>
@@ -175,34 +147,6 @@ class sha3_256: public wtf::keccak_base<0x06, 2 * 256, 256>
 public:
 
     constexpr sha3_256()
-    {
-    }
-
-    constexpr explicit sha3_256( std::uint64_t seed )
-    {
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-            update( tmp, 8 );
-
-            result();
-            update( tmp, 0 ); // sets finalized_ to false
-        }
-    }
-
-    constexpr sha3_256( std::byte const * p, std::size_t n )
-    {
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-            update( p, 0 ); // sets finalized_ to false
-        }
-    }
-
-    sha3_256( void const * p, std::size_t n ): sha3_256( static_cast<std::byte const*>( p ), n )
     {
     }
 };
@@ -214,34 +158,6 @@ public:
     constexpr sha3_384()
     {
     }
-
-    constexpr explicit sha3_384( std::uint64_t seed )
-    {
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-            update( tmp, 8 );
-
-            result();
-            update( tmp, 0 ); // sets finalized_ to false
-        }
-    }
-
-    constexpr sha3_384( std::byte const * p, std::size_t n )
-    {
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-            update( p, 0 ); // sets finalized_ to false
-        }
-    }
-
-    sha3_384( void const * p, std::size_t n ): sha3_384( static_cast<std::byte const*>( p ), n )
-    {
-    }
 };
 
 class sha3_512: public wtf::keccak_base<0x06, 2 * 512, 512>
@@ -249,34 +165,6 @@ class sha3_512: public wtf::keccak_base<0x06, 2 * 512, 512>
 public:
 
     constexpr sha3_512()
-    {
-    }
-
-    constexpr explicit sha3_512( std::uint64_t seed )
-    {
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-            update( tmp, 8 );
-
-            result();
-            update( tmp, 0 ); // sets finalized_ to false
-        }
-    }
-
-    constexpr sha3_512( std::byte const * p, std::size_t n )
-    {
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-            update( p, 0 ); // sets finalized_ to false
-        }
-    }
-
-    sha3_512( void const * p, std::size_t n ): sha3_512( static_cast<std::byte const*>( p ), n )
     {
     }
 };
@@ -288,34 +176,6 @@ public:
     constexpr shake_128()
     {
     }
-
-    constexpr explicit shake_128( std::uint64_t seed )
-    {
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-            update( tmp, 8 );
-
-            result();
-            update( tmp, 0 ); // sets finalized_ to false
-        }
-    }
-
-    constexpr shake_128( std::byte const * p, std::size_t n )
-    {
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-            update( p, 0 ); // sets finalized_ to false
-        }
-    }
-
-    shake_128( void const * p, std::size_t n ): shake_128( static_cast<std::byte const*>( p ), n )
-    {
-    }
 };
 
 class shake_256: public wtf::keccak_base<0x1f, 512, 1600 - 512>
@@ -323,34 +183,6 @@ class shake_256: public wtf::keccak_base<0x1f, 512, 1600 - 512>
 public:
 
     constexpr shake_256()
-    {
-    }
-
-    constexpr explicit shake_256( std::uint64_t seed )
-    {
-        if( seed != 0 )
-        {
-            std::byte tmp[ 8 ] = {};
-
-            compat::byte::write<std::uint64_t,std::endian::little>( tmp, seed );
-            update( tmp, 8 );
-
-            result();
-            update( tmp, 0 ); // sets finalized_ to false
-        }
-    }
-
-    constexpr shake_256( std::byte const * p, std::size_t n )
-    {
-        if( n != 0 )
-        {
-            update( p, n );
-            result();
-            update( p, 0 ); // sets finalized_ to false
-        }
-    }
-
-    shake_256( void const * p, std::size_t n ): shake_256( static_cast<std::byte const*>( p ), n )
     {
     }
 };

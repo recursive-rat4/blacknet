@@ -29,6 +29,6 @@ network_main_dependencies = [
     crypto_main_dependencies,
     codec_main_dependencies,
     compat_main_dependencies,
-    boost_asio_dependency,
+    boost_dependency,
     fmt_dependency,
 ]

@@ -27,7 +27,7 @@ desktop_main_dependencies = [
     network_main_dependencies,
     logging_main_dependencies,
     qt_dependency,
-    boost_asio_dependency,
+    boost_dependency,
     fmt_dependency,
 ]
 desktop_main_sources = [
@@ -40,4 +40,6 @@ desktop_main_bin = executable(
     include_directories : desktop_main_includes,
     install : true,
     dependencies : desktop_main_dependencies,
+    cpp_args : '-DQT_NO_KEYWORDS',
+    win_subsystem : 'windows',
 )
