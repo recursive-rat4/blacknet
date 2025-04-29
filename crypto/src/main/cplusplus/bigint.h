@@ -21,8 +21,8 @@
 #include "blacknet-config.h"
 
 #include <algorithm>
+#include <bit>
 #include <charconv>
-#include <cmath>
 #include <exception>
 #include <ostream>
 #include <random>
@@ -204,8 +204,9 @@ struct BigInt {
     }
 
     constexpr bool operator [] (std::size_t index) const {
-        std::size_t w = std::log2(sizeof(L) * 8);
-        std::size_t b = sizeof(L) * 8 - 1;
+        static_assert(std::has_single_bit(sizeof(L)), "Not implemented");
+        constexpr std::size_t w = std::countr_zero(sizeof(L) * 8);
+        constexpr std::size_t b = sizeof(L) * 8 - 1;
         return (limbs[index >> w] >> (index & b)) & 1;
     }
 

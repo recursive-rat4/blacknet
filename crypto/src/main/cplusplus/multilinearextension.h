@@ -18,7 +18,7 @@
 #ifndef BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
 #define BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
 
-#include <cmath>
+#include <bit>
 #include <concepts>
 #include <initializer_list>
 #include <ostream>
@@ -161,7 +161,8 @@ struct MultilinearExtension {
     }
 
     constexpr std::size_t variables() const {
-        return std::log2(coefficients.size());
+        [[assume(std::has_single_bit(coefficients.size()))]];
+        return std::countr_zero(coefficients.size());
     }
 
     template<typename S>

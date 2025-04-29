@@ -254,7 +254,7 @@ struct LatticeFold {
             const Z& beta,
             const std::vector<Z>& mu,
             const std::vector<Vector<Rq>>& f
-        ) : pow(beta, std::log2(f[0].size() * D)), g2s(k + k) {
+        ) : pow(beta, std::countr_zero(f[0].size() * D)), g2s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
                 g2s(G2<Z>(mu[i], f[i]));
             }
