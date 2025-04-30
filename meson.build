@@ -33,7 +33,7 @@ oneapi_tbb_dependency = dependency('tbb', version : '>=2020.0.0')
 fmt_dependency = dependency('fmt', version : '>=9.1.0')
 spdlog_dependency = dependency('spdlog', version : '>=1.5.0')
 sqlite_dependency = dependency('sqlite3', version : '>=3.37.2')
-boost_dependency = dependency('boost', version : '>=1.83.0', required : network_feature)
+boost_dependency = dependency('boost', version : '>=1.87.0', required : network_feature)
 qt_dependency = dependency('qt6', modules : 'Widgets', version : '>=6.2.5', required : desktop_feature)
 
 network_feature = network_feature.require(boost_dependency.found(), error_message : 'requires Boost Libraries')

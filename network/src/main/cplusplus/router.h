@@ -33,6 +33,7 @@
 #include "i2psam.h"
 #include "logger.h"
 #include "networksettings.h"
+#include "peertable.h"
 
 namespace blacknet::network {
 
@@ -42,15 +43,16 @@ class Router {
 
     log::Logger logger{"Router"};
     const NetworkSettings& settings;
+    PeerTable& peer_table;
     i2p::SAM i2p_sam;
 
     void add_listener(endpoint_ptr endpoint) {
         logger->info("Listening on {}", endpoint->to_log(settings.logips));
-        //TODO set
+        //TODO set & co
     }
     void remove_listener(endpoint_ptr endpoint) {
         logger->info("Lost binding to {}", endpoint->to_log(settings.logips));
-        //TODO set
+        //TODO set & disco
     }
 
     boost::asio::awaitable<void> listen_ip(boost::asio::io_context& io_context) {
@@ -130,8 +132,12 @@ class Router {
         }
     }
 public:
-    Router(const NetworkSettings& settings) :
+    Router(
+        const NetworkSettings& settings,
+        PeerTable& peer_table
+    ) :
         settings(settings),
+        peer_table(peer_table),
         i2p_sam(settings) {}
 
     void co_spawn(boost::asio::io_context& io_context) {

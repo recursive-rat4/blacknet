@@ -20,8 +20,10 @@
 
 #include <atomic>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <boost/asio/io_context.hpp>
-#include <boost/unordered/concurrent_flat_map.hpp>
+#include <boost/unordered/concurrent_node_map.hpp>
 
 #include "endpoint.h"
 #include "logger.h"
@@ -29,21 +31,92 @@
 namespace blacknet::network {
 
 class PeerTable {
+public:
     constexpr static const std::size_t max_size{8192};
+private:
+    constexpr static const std::string_view file_name{"peers.dat"};
 
-    class Entry {
-        std::atomic<bool> in_contact{false};
+    struct localhost_t {
+        bool in_contact;
     };
-    using entry_ptr = std::unique_ptr<Entry>;
+
+    struct entry_t {
+        std::atomic<bool> in_contact{false};
+
+        std::size_t attempts{0};
+        //TODO last_try{0};
+        //TODO last_connected{0};
+        std::string user_agent{};
+        //TODO subnetworks{};
+        //TODO added{0};
+
+        constexpr entry_t(const localhost_t& localhost)
+            : in_contact(localhost.in_contact) {}
+    };
 
     log::Logger logger{"PeerTable"};
-    boost::concurrent_flat_map<
-        endpoint_ptr, entry_ptr,
+    const NetworkSettings& settings;
+    boost::concurrent_node_map<
+        endpoint_ptr, entry_t,
         endpoint::hasher, endpoint::comparator
     > peers;
 public:
-    PeerTable() {
+    PeerTable(const NetworkSettings& settings) : settings(settings) {
         peers.reserve(max_size);
+    }
+
+    bool empty() const noexcept {
+        return peers.empty();
+    }
+
+    std::size_t size() const noexcept {
+        return peers.size();
+    }
+
+    bool contains(const endpoint_ptr& endpoint) const {
+        return peers.contains(endpoint);
+    }
+
+    bool try_contact(const endpoint_ptr& endpoint) {
+        if (endpoint->is_local() || endpoint->is_private()) return false;
+        bool contacted = false;
+        // ignore max size
+        bool inserted = peers.try_emplace_or_visit(endpoint, localhost_t{true}, [&contacted](auto& x) {
+            auto& [_, entry] = x;
+            bool expected = false;
+            contacted = entry.in_contact.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
+        });
+        return contacted || inserted;
+    }
+
+    void contacted(const endpoint_ptr& endpoint) {
+        if (endpoint->is_local() || endpoint->is_private()) return;
+        bool contacted = false;
+        // ignore max size
+        bool inserted = peers.try_emplace_or_visit(endpoint, localhost_t{true}, [&contacted](auto& x) {
+            auto& [_, entry] = x;
+            bool expected = false;
+            contacted = entry.in_contact.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
+        });
+        if (contacted || inserted)
+            return;
+        logger->error("Inconsistent contact to {}", endpoint->to_log(settings.logips));
+    }
+
+    void discontacted(const endpoint_ptr& endpoint) {
+        if (endpoint->is_local() || endpoint->is_private()) return;
+        bool discontacted = false;
+        bool visited = peers.visit(endpoint, [&discontacted](auto& x) {
+            auto& [_, entry] = x;
+            bool expected = true;
+            discontacted = entry.in_contact.compare_exchange_strong(expected, false, std::memory_order_acq_rel);
+        });
+        if (discontacted)
+            return;
+        else if (!visited)
+            logger->error("Not found entry of {}", endpoint->to_log(settings.logips));
+        else
+            logger->error("Inconsistent discontact from {}", endpoint->to_log(settings.logips));
     }
 
     void co_spawn(boost::asio::io_context& io_context) {

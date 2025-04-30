@@ -42,20 +42,20 @@ class Node {
     std::atomic<connection_id> next_peer_id{1};
     concurrent_vector<connection_ptr> connections;
 
-    compat::ModeManager modeManager;
-    compat::DirManager dirManager;
-    log::LogManager logManager;
+    compat::ModeManager mode_manager;
+    compat::DirManager dir_manager;
+    log::LogManager log_manager;
     NetworkSettings settings;
-    PeerTable peerTable;
+    PeerTable peer_table;
     Router router;
 public:
     Node(log::LogManager::Regime regime) :
-        modeManager(),
-        dirManager(),
-        logManager(regime),
+        mode_manager(),
+        dir_manager(),
+        log_manager(regime),
         settings(),
-        peerTable(),
-        router(settings) {}
+        peer_table(settings),
+        router(settings, peer_table) {}
 
     void co_spawn(boost::asio::io_context& io_context) {
         auto [os_name, os_version, os_machine] = compat::uname();
@@ -75,7 +75,7 @@ public:
             logger->warn("Running as SYSTEM");
 #endif
 
-        peerTable.co_spawn(io_context);
+        peer_table.co_spawn(io_context);
         router.co_spawn(io_context);
     }
 };
