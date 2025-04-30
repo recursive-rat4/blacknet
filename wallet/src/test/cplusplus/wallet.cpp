@@ -16,8 +16,8 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <algorithm>
 
-#include "boost-print.h"
 #include "byte.h"
 #include "sqlite.h"
 #include "wallet.h"
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(ephemeral) {
     auto txBytes = byte::arrayS<4>({ 10, 11, 12, 13 });
     wallet.transaction(txId, txBytes);
     auto bytes = wallet.transaction(txId);
-    BOOST_CHECK_EQUAL_COLLECTIONS(txBytes.begin(), txBytes.end(), bytes.begin(), bytes.end());
+    BOOST_TEST(std::ranges::equal(txBytes, bytes));
 }
 
 BOOST_AUTO_TEST_CASE(magic) {

@@ -18,12 +18,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include <cstddef>
+#include <algorithm>
 #include <array>
 #include <string_view>
 #include <utility>
 
 #include "base32.h"
-#include "boost-print.h"
 
 using namespace blacknet::codec;
 using namespace blacknet::compat;
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(RFC4648s) {
         auto decoded = base32::decode(string);
 
         BOOST_TEST(string == encoded);
-        BOOST_CHECK_EQUAL_COLLECTIONS(bytes.begin(), bytes.end(), decoded.begin(), decoded.end());
+        BOOST_TEST(std::ranges::equal(bytes, decoded));
     }
 }
 

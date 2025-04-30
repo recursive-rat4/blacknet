@@ -18,7 +18,6 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
-#include "boost-print.h"
 #include "hypercube.h"
 #include "multilinearextension.h"
 #include "solinas62.h"
@@ -76,7 +75,7 @@ BOOST_AUTO_TEST_CASE(splitted) {
             std::ranges::subrange{std::ranges::begin(vertices), std::ranges::end(vertices)},
             std::ranges::subrange(hypercube.splittedBegin(4, 2), hypercube.splittedEnd())
         )) {
-        BOOST_TEST(a == b);
+        BOOST_TEST((a == b));
     };
 }
 
