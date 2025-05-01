@@ -214,7 +214,7 @@ struct BigInt {
 
     consteval static std::size_t LIMBS() { return N; }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static BigInt random(RNG& rng) {
         std::uniform_int_distribution<L> ud;
         BigInt r;

@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_BLACKLEMON_H
 
 #include <optional>
+#include <random>
 
 #include "lpr.h"
 
@@ -48,21 +49,21 @@ struct BlackLemon {
 
     PKE pke;
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     SecretKey generateSecretKey(RNG& rng) {
         auto a = pke.generateSecretKey(rng);
         auto b = Rq::random(rng);
         return { a, b };
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     PublicKey generatePublicKey(RNG& rng, const SecretKey& sk) {
         auto a = pke.generatePublicKey(rng, sk.a);
         auto b = -sk.b;
         return { a, b };
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     CipherText encrypt(RNG& rng, const PublicKey& pk, const PlainText& pt) {
         auto ct = pke.encrypt(rng, pk.a, pt);
         ct.a += pk.b;

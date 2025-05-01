@@ -128,13 +128,13 @@ public:
         return out;
     }
 
-    template<typename DRG>
-    constexpr static WeierstrassGroupAffine squeeze(DRG& drg) {
+    template<typename Sponge>
+    constexpr static WeierstrassGroupAffine squeeze(Sponge& sponge) {
         BF ySign;
-        while ((ySign = BF::squeeze(drg).isQuadraticResidue()) == BF(0))
+        while ((ySign = BF::squeeze(sponge).isQuadraticResidue()) == BF(0))
             continue; // Euler's criterion
         while (true) {
-            BF x(BF::squeeze(drg));
+            BF x(BF::squeeze(sponge));
             BF yy(x * x.square());
             if constexpr (A != BF(0))
                 yy += A * x;
@@ -149,7 +149,7 @@ public:
         }
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static WeierstrassGroupAffine random(RNG& rng) {
         std::uniform_int_distribution<uint8_t> ud(0, 1);
         bool ySign = ud(rng);

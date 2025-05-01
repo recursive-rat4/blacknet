@@ -129,13 +129,13 @@ public:
         return out << val.n;
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static Milliseconds random(RNG& rng) {
         std::uniform_int_distribution<NumericType> ud;
-        return ud(rng);
+        return random(rng, ud);
     }
 
-    template<typename RNG, typename DST>
+    template<std::uniform_random_bit_generator RNG, typename DST>
     static Milliseconds random(RNG& rng, DST& dst) {
         return dst(rng);
     }

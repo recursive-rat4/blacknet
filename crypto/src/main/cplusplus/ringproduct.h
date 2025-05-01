@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_RINGPRODUCT_H
 
 #include <ostream>
+#include <random>
 #include <tuple>
 #include <type_traits>
 
@@ -105,14 +106,14 @@ struct RingProduct {
         return out << ']';
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static RingProduct random(RNG& rng) {
         RingProduct t;
         for_each(t.ideals, [&](auto&& r) { r = std::remove_reference_t<decltype(r)>::random(rng); });
         return t;
     }
 
-    template<typename RNG, typename DST>
+    template<std::uniform_random_bit_generator RNG, typename DST>
     static RingProduct random(RNG& rng, DST& dst) {
         RingProduct t;
         for_each(t.ideals, [&](auto&& r) { r = std::remove_reference_t<decltype(r)>::random(rng, dst); });

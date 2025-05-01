@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <initializer_list>
 #include <ostream>
+#include <random>
 #include <vector>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -181,21 +182,21 @@ public:
         return out;
     }
 
-    template<typename DRG>
-    constexpr static Vector squeeze(DRG& drg, std::size_t size) {
+    template<typename Sponge>
+    constexpr static Vector squeeze(Sponge& sponge, std::size_t size) {
         Vector t(size);
-        std::ranges::generate(t.elements, [&] { return E::squeeze(drg); });
+        std::ranges::generate(t.elements, [&] { return E::squeeze(sponge); });
         return t;
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static Vector random(RNG& rng, std::size_t size) {
         Vector t(size);
         std::ranges::generate(t.elements, [&] { return E::random(rng); });
         return t;
     }
 
-    template<typename RNG, typename DST>
+    template<std::uniform_random_bit_generator RNG, typename DST>
     static Vector random(RNG& rng, DST& dst, std::size_t size) {
         Vector t(size);
         std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });

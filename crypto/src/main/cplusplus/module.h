@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <array>
 #include <ostream>
+#include <random>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
@@ -105,26 +106,26 @@ struct Module {
         return out;
     }
 
-    template<typename DRG>
-    constexpr void absorb(DRG& drg) const {
-        drg.absorb(components);
+    template<typename Sponge>
+    constexpr void absorb(Sponge& sponge) const {
+        sponge.absorb(components);
     }
 
-    template<typename DRG>
-    constexpr static Module squeeze(DRG& drg) {
+    template<typename Sponge>
+    constexpr static Module squeeze(Sponge& sponge) {
         Module t;
-        drg.squeeze(t.components);
+        sponge.squeeze(t.components);
         return t;
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static Module random(RNG& rng) {
         Module t;
         std::ranges::generate(t.components, [&] { return R::random(rng); });
         return t;
     }
 
-    template<typename RNG, typename DST>
+    template<std::uniform_random_bit_generator RNG, typename DST>
     static Module random(RNG& rng, DST& dst) {
         Module t;
         std::ranges::generate(t.components, [&] { return R::random(rng, dst); });

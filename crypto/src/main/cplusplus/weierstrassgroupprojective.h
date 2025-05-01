@@ -178,7 +178,7 @@ public:
         return out;
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static WeierstrassGroupProjective random(RNG& rng) {
         std::uniform_int_distribution<uint8_t> ud(0, 1);
         bool ySign = ud(rng);

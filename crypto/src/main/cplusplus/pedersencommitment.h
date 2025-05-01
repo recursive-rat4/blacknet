@@ -38,11 +38,11 @@ public:
     constexpr PedersenCommitment(const std::vector<G>& pp) : pp(pp) {}
     constexpr PedersenCommitment(std::vector<G>&& pp) : pp(std::move(pp)) {}
 
-    template<typename DRG>
-    constexpr static std::vector<G> setup(DRG& drg, std::size_t size) {
+    template<typename Sponge>
+    constexpr static std::vector<G> setup(Sponge& sponge, std::size_t size) {
         std::vector<G> t(size);
         for (std::size_t i = 0; i < size; ++i)
-            t[i] = G::squeeze(drg);
+            t[i] = G::squeeze(sponge);
         return t;
     }
 

@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_R1CS_H
 
 #include <ostream>
+#include <random>
 #include <utility>
 
 #include "matrixsparse.h"
@@ -83,13 +84,13 @@ public:
         return out << '[' << val.a << ", " << val.b << ", " << val.c << ']';
     }
 
-    template<typename S = E, typename DRG>
-    constexpr std::pair<Vector<S>, Vector<S>> squeeze(DRG& drg) const {
-        auto z = Vector<S>::squeeze(drg, variables());
+    template<typename S = E, typename Sponge>
+    constexpr std::pair<Vector<S>, Vector<S>> squeeze(Sponge& sponge) const {
+        auto z = Vector<S>::squeeze(sponge, variables());
         return { z, error(z) };
     }
 
-    template<typename S = E, typename RNG>
+    template<typename S = E, std::uniform_random_bit_generator RNG>
     std::pair<Vector<S>, Vector<S>> random(RNG& rng) const {
         auto z = Vector<S>::random(rng, variables());
         return { z, error(z) };

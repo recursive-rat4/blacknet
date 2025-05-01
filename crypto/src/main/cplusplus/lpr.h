@@ -111,19 +111,19 @@ struct LPR {
         return rq;
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     SecretKey generateSecretKey(RNG& rng) {
         return Rq::random(rng, tud, H);
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     PublicKey generatePublicKey(RNG& rng, const SecretKey& sk) {
         auto e = Rq::random(rng, dgd);
         auto a = Rq::random(rng);
         return { -(a * sk + e), a };
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     CipherText encrypt(RNG& rng, const PublicKey& pk, const PlainText& pt) {
         auto u = generateSecretKey(rng);
         auto e1 = Rq::random(rng, dgd);

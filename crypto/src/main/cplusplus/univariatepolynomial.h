@@ -82,10 +82,10 @@ public:
         return out;
     }
 
-    template<typename DRG>
-    constexpr void absorb(DRG& drg) const {
+    template<typename Sponge>
+    constexpr void absorb(Sponge& sponge) const {
         for (std::size_t i = 0; i < coefficients.size(); ++i)
-            coefficients[i].absorb(drg);
+            coefficients[i].absorb(sponge);
     }
 
 template<typename Circuit>

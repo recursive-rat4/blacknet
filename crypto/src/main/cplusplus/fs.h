@@ -20,6 +20,7 @@
 
 #include <concepts>
 #include <ostream>
+#include <random>
 
 #include "vector.h"
 
@@ -51,7 +52,7 @@ struct FS {
         cs.fold(r, z, e, z1, e1, z2, e2);
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     void randomize(
         RNG& rng,
         Vector<F>& z, Vector<F>& e,

@@ -160,23 +160,23 @@ public:
         return IntegerRing(Params::INVERSE_TWIDDLES, 0);
     }
 
-    template<typename DRG>
-    constexpr void absorb(DRG& drg) const {
-        drg.absorb(*this);
+    template<typename Sponge>
+    constexpr void absorb(Sponge& sponge) const {
+        sponge.absorb(*this);
     }
 
-    template<typename DRG>
-    constexpr static IntegerRing squeeze(DRG& drg) {
-        return drg.squeeze();
+    template<typename Sponge>
+    constexpr static IntegerRing squeeze(Sponge& sponge) {
+        return sponge.squeeze();
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static IntegerRing random(RNG& rng) {
         std::uniform_int_distribution<I> ud(-(Params::M - 1) / 2, (Params::M - 1) / 2);
-        return IntegerRing(ud(rng), 0);
+        return random(rng, ud);
     }
 
-    template<typename RNG, typename DST>
+    template<std::uniform_random_bit_generator RNG, typename DST>
     static IntegerRing random(RNG& rng, DST& dst) {
         return IntegerRing(dst(rng));
     }

@@ -21,6 +21,7 @@
 #include <iterator>
 #include <optional>
 #include <ostream>
+#include <random>
 
 #include "bitint.h"
 #include "bigint.h"
@@ -219,17 +220,17 @@ public:
         return out << Params::fromForm(val.n);
     }
 
-    template<typename DRG>
-    constexpr void absorb(DRG& drg) const {
-        drg.absorb(*this);
+    template<typename Sponge>
+    constexpr void absorb(Sponge& sponge) const {
+        sponge.absorb(*this);
     }
 
-    template<typename DRG>
-    constexpr static PrimeField squeeze(DRG& drg) {
-        return drg.squeeze();
+    template<typename Sponge>
+    constexpr static PrimeField squeeze(Sponge& sponge) {
+        return sponge.squeeze();
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static PrimeField random(RNG& rng) {
         UInt256 t(UInt256::random(rng));
         while (t >= Params::M)

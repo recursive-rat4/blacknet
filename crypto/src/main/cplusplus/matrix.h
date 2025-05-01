@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <initializer_list>
 #include <ostream>
+#include <random>
 #include <vector>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -139,14 +140,14 @@ public:
         return out;
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static Matrix random(RNG& rng, std::size_t rows, std::size_t columns) {
         Matrix t(rows, columns);
         std::ranges::generate(t.elements, [&] { return E::random(rng); });
         return t;
     }
 
-    template<typename RNG, typename DST>
+    template<std::uniform_random_bit_generator RNG, typename DST>
     static Matrix random(RNG& rng, DST& dst, std::size_t rows, std::size_t columns) {
         Matrix t(rows, columns);
         std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });

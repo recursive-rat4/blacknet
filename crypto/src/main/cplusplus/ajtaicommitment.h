@@ -41,12 +41,12 @@ public:
     constexpr AjtaiCommitment(Matrix<R>&& a, NumericType&& bound)
         : a(std::move(a)), bound(std::move(bound)) {}
 
-    template<typename DRG>
-    constexpr static Matrix<R> setup(DRG& drg, std::size_t rows, std::size_t columns) {
+    template<typename Sponge>
+    constexpr static Matrix<R> setup(Sponge& sponge, std::size_t rows, std::size_t columns) {
         Matrix<R> t(rows, columns);
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < columns; ++j)
-                t[i, j] = R::squeeze(drg);
+                t[i, j] = R::squeeze(sponge);
         return t;
     }
 

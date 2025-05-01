@@ -82,6 +82,8 @@ public:
 };
 static_assert(std::uniform_random_bit_generator<FastDRG>);
 
+// Thread-safe seeder
+// Gets initial entropy from OS.
 class FastSeeder {
     std::mutex mutex;
     FastDRG drg;

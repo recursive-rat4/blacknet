@@ -166,26 +166,26 @@ public:
         return out;
     }
 
-    template<typename DRG>
-    constexpr void absorb(DRG& drg) const {
-        drg.absorb(coefficients);
+    template<typename Sponge>
+    constexpr void absorb(Sponge& sponge) const {
+        sponge.absorb(coefficients);
     }
 
-    template<typename DRG>
-    constexpr static PolynomialRing squeeze(DRG& drg) {
+    template<typename Sponge>
+    constexpr static PolynomialRing squeeze(Sponge& sponge) {
         PolynomialRing t;
-        drg.squeeze(t.coefficients);
+        sponge.squeeze(t.coefficients);
         return t;
     }
 
-    template<typename RNG>
+    template<std::uniform_random_bit_generator RNG>
     static PolynomialRing random(RNG& rng) {
         PolynomialRing t;
         std::ranges::generate(t.coefficients, [&] { return Z::random(rng); });
         return t;
     }
 
-    template<typename RNG, typename DST>
+    template<std::uniform_random_bit_generator RNG, typename DST>
     static PolynomialRing random(RNG& rng, DST& dst) {
         PolynomialRing t;
         std::ranges::generate(t.coefficients, [&] { return Z::random(rng, dst); });
@@ -193,7 +193,7 @@ public:
         return t;
     }
 
-    template<typename RNG, typename DST>
+    template<std::uniform_random_bit_generator RNG, typename DST>
     static PolynomialRing random(RNG& rng, DST& dst, std::size_t hamming) {
         std::uniform_int_distribution<std::size_t> uid(0, N - 1);
         PolynomialRing t;
