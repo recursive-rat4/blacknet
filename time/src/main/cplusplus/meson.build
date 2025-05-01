@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Pavel Vasin
+# Copyright (c) 2024-2025 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -15,12 +15,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-io_main_includes = [
-    time_main_includes,
-    compat_main_includes,
-    include_directories('.')
-]
-io_main_dependencies = [
-    time_main_dependencies,
-    compat_main_dependencies,
+time_main_includes = include_directories('.')
+time_main_dependencies = [
+    fmt_dependency,
 ]

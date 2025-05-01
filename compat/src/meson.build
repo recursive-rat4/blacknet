@@ -34,11 +34,13 @@ compiler.compiles('''
         static_assert(__cpp_decltype_auto >= 201304L);
         static_assert(__cpp_lambdas >= 200907L);
         static_assert(__cpp_attributes >= 200809L);
+        static_assert(__cpp_user_defined_literals >= 200809L);
         static_assert(__cpp_initializer_lists >= 200806L);
         static_assert(__cpp_threadsafe_static_init >= 200806L);
         static_assert(__cpp_ref_qualifiers >= 200710L);
         static_assert(__cpp_decltype >= 200707L);
         static_assert(__cpp_alias_templates >= 200704L);
+        static_assert(__cpp_unicode_characters >= 200704L);
         static_assert(__cpp_variadic_templates >= 200704L);
         static_assert(__cpp_rvalue_references >= 200610L);
 
@@ -50,6 +52,7 @@ compiler.compiles('''
         static_assert(__cpp_lib_constexpr_cmath >= 202306L);
         #endif
         static_assert(__cpp_lib_fstream_native_handle >= 202306L);
+        static_assert(__cpp_lib_constexpr_charconv >= 202207L);
         static_assert(__cpp_lib_generator >= 202207L);
         static_assert(__cpp_lib_ios_noreplace >= 202207L);
         static_assert(__cpp_lib_concepts >= 202002L);

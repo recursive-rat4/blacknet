@@ -88,6 +88,7 @@ config_includes = include_directories('.')
 
 subdir('compat')
 subdir('codec')
+subdir('time')
 subdir('crypto')
 subdir('io')
 subdir('log')

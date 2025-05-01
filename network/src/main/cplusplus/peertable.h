@@ -27,6 +27,7 @@
 
 #include "endpoint.h"
 #include "logger.h"
+#include "milliseconds.h"
 
 namespace blacknet::network {
 
@@ -44,11 +45,11 @@ private:
         std::atomic<bool> in_contact{false};
 
         std::size_t attempts{0};
-        //TODO last_try{0};
-        //TODO last_connected{0};
+        time::Milliseconds last_try{0};
+        time::Milliseconds last_connected{0};
         std::string user_agent{};
         //TODO subnetworks{};
-        //TODO added{0};
+        time::Milliseconds added{0};
 
         constexpr entry_t(const localhost_t& localhost)
             : in_contact(localhost.in_contact) {}

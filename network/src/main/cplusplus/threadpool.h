@@ -29,6 +29,7 @@
 
 namespace blacknet::network {
 
+// Thread pool for i/o coroutines.
 class ThreadPool : public boost::asio::io_context {
     std::vector<std::thread> threads;
 

@@ -20,7 +20,6 @@
 
 #include "blacknet-config.h"
 
-#include <chrono>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -31,19 +30,18 @@
 
 #include "fastrng.h"
 #include "fdatasync.h"
+#include "milliseconds.h"
+#include "systemclock.h"
 
 namespace blacknet::io {
 
 namespace file {
 
-// In milliseconds since UNIX epoch not counting leap seconds
-inline int64_t last_write_time(
+inline time::Milliseconds last_write_time(
     const std::filesystem::path& path
 ) {
-    auto fs_time = std::filesystem::last_write_time(path);
-    auto unix_time = std::chrono::clock_cast<std::chrono::system_clock>(fs_time);
-    auto milli_time = std::chrono::time_point_cast<std::chrono::milliseconds>(unix_time);
-    return milli_time.time_since_epoch().count();
+    auto fs_chrono = std::filesystem::last_write_time(path);
+    return time::SystemClock::cast(fs_chrono);
 }
 
 inline std::pair<
