@@ -287,6 +287,31 @@ public:
     SAM(const NetworkSettings& settings)
         : settings(settings)
     {
+    }
+
+    boost::asio::awaitable<session_ptr> create_session(boost::asio::io_context& io_context) {
+        auto session_id = generate_id();
+        auto connection = co_await Connection::connect(sam_endpoint, io_context);
+        auto answer = co_await connection->create_session(session_id, private_key);
+        auto destination = co_await connection->lookup("ME");
+        auto local_endpoint = std::make_shared<endpoint::I2P>(settings.port, Answer::hash(destination));
+        if (private_key == transient_key)
+            save_private_key(answer.get("DESTINATION").value());
+        session_ptr session = std::make_unique<Session>(
+            std::move(session_id),
+            std::move(local_endpoint),
+            std::move(connection),
+            sam_endpoint
+        );
+        session->co_spawn(io_context);
+        logger->info("Created session {}", session->id);
+        co_return session;
+    }
+
+    void co_spawn(
+        [[maybe_unused]]
+        boost::asio::io_context& io_context
+    ) {
         sam_endpoint = boost::asio::ip::tcp::endpoint(
             boost::asio::ip::make_address(settings.i2psamhost),
             settings.i2psamport
@@ -313,25 +338,6 @@ public:
             logger->debug("{}", e.what());
 #endif
         }
-    }
-
-    boost::asio::awaitable<session_ptr> create_session(boost::asio::io_context& io_context) {
-        auto session_id = generate_id();
-        auto connection = co_await Connection::connect(sam_endpoint, io_context);
-        auto answer = co_await connection->create_session(session_id, private_key);
-        auto destination = co_await connection->lookup("ME");
-        auto local_endpoint = std::make_shared<endpoint::I2P>(settings.port, Answer::hash(destination));
-        if (private_key == transient_key)
-            save_private_key(answer.get("DESTINATION").value());
-        session_ptr session = std::make_unique<Session>(
-            std::move(session_id),
-            std::move(local_endpoint),
-            std::move(connection),
-            sam_endpoint
-        );
-        session->co_spawn(io_context);
-        logger->info("Created session {}", session->id);
-        co_return session;
     }
 };
 }

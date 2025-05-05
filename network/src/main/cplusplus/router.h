@@ -26,6 +26,7 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ip/v6_only.hpp>
+#include <boost/unordered/concurrent_flat_set.hpp>
 #include <stdexcept>
 
 #include "background.h"
@@ -34,6 +35,7 @@
 #include "logger.h"
 #include "networksettings.h"
 #include "peertable.h"
+#include "torcontroller.h"
 
 namespace blacknet::network {
 
@@ -44,15 +46,19 @@ class Router {
     log::Logger logger{"Router"};
     const NetworkSettings& settings;
     PeerTable& peer_table;
+    boost::concurrent_flat_set<endpoint_ptr, endpoint::hasher, endpoint::comparator> listens;
+    tor::Controller tor_controller;
     i2p::SAM i2p_sam;
 
-    void add_listener(endpoint_ptr endpoint) {
+    void add_listener(const endpoint_ptr& endpoint) {
         logger->info("Listening on {}", endpoint->to_log(settings.logips));
-        //TODO set & co
+        if (listens.insert(endpoint))
+            peer_table.contacted(endpoint);
     }
-    void remove_listener(endpoint_ptr endpoint) {
+    void remove_listener(const endpoint_ptr& endpoint) {
         logger->info("Lost binding to {}", endpoint->to_log(settings.logips));
-        //TODO set & disco
+        if (listens.erase(endpoint))
+            peer_table.discontacted(endpoint);
     }
 
     boost::asio::awaitable<void> listen_ip(boost::asio::io_context& io_context) {
@@ -97,8 +103,31 @@ class Router {
     }
 
     boost::asio::awaitable<void> listen_tor(boost::asio::io_context& io_context) {
-        //TODO
-        co_return;
+        endpoint_ptr endpoint;
+        auto timeout = init_timeout;
+        while (true) {
+            try {
+                tor::session_ptr tor_session = co_await tor_controller.create_session(io_context);
+                endpoint = tor_session->local_endpoint;
+                add_listener(endpoint);
+                co_await tor_session->loop();
+                logger->info("Closing TOR session");
+                timeout = init_timeout;
+            } catch (const tor::Exception& e) {
+                logger->info("TOR: {}", e.what());
+            } catch (const boost::system::system_error& e) {
+                logger->debug("Can't connect to Tor Control: {}", e.what());
+            }
+            if (endpoint) {
+                remove_listener(endpoint);
+                endpoint.reset();
+            }
+
+            auto now = std::chrono::steady_clock::now();
+            boost::asio::steady_timer timer(io_context, now + timeout);
+            co_await timer.async_wait(boost::asio::use_awaitable);
+            timeout = std::min(timeout * 2, max_timeout);
+        }
     }
 
     boost::asio::awaitable<void> listen_i2p(boost::asio::io_context& io_context) {
@@ -138,15 +167,21 @@ public:
     ) :
         settings(settings),
         peer_table(peer_table),
+        tor_controller(settings),
         i2p_sam(settings) {}
 
     void co_spawn(boost::asio::io_context& io_context) {
-        if (settings.ipv6 || settings.ipv4)
+        if (settings.ipv6 || settings.ipv4) {
             boost::asio::co_spawn(io_context, listen_ip(io_context), background);
-        if (settings.tor)
+        }
+        if (settings.tor) {
+            tor_controller.co_spawn(io_context);
             boost::asio::co_spawn(io_context, listen_tor(io_context), background);
-        if (settings.i2p)
+        }
+        if (settings.i2p) {
+            i2p_sam.co_spawn(io_context);
             boost::asio::co_spawn(io_context, listen_i2p(io_context), background);
+        }
     }
 };
 

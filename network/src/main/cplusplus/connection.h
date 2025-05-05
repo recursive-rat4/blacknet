@@ -23,6 +23,7 @@
 #include <boost/asio/io_context.hpp>
 
 #include "endpoint.h"
+#include "milliseconds.h"
 
 namespace blacknet::network {
 
@@ -41,9 +42,23 @@ public:
     const endpoint_ptr local_endpoint;
 private:
     std::atomic<State> state{Spawning};
+    std::atomic<time::Milliseconds> last_packet_time{0};
+    std::atomic<time::Milliseconds> last_block_time{0};
+    std::atomic<time::Milliseconds> last_tx_time{0};
+    std::atomic<time::Milliseconds> last_ping_time{0};
 public:
+    void close() {
+        state.wait(State::Spawning, std::memory_order_acquire);
+        if (state.exchange(State::Closing,  std::memory_order_acq_rel) != State::Closing) {
+            state.notify_all();
+
+        }
+    }
 
     void co_spawn(boost::asio::io_context& io_context) {
+
+        state.store(State::Helloing, std::memory_order_release);
+        state.notify_all();
     }
 };
 using connection_ptr = std::shared_ptr<Connection>;

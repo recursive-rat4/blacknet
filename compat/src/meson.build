@@ -46,6 +46,7 @@ compiler.compiles('''
 
         static_assert(__has_cpp_attribute(assume) >= 202207L);
         static_assert(__has_cpp_attribute(nodiscard) >= 201907L);
+        static_assert(__has_cpp_attribute(maybe_unused) >= 201603L);
         static_assert(__has_cpp_attribute(noreturn) >= 200809L);
 
         #if not __GNUG__

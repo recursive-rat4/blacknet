@@ -19,6 +19,7 @@ network_main_includes = [
     logging_main_includes,
     io_main_includes,
     crypto_main_includes,
+    time_main_includes,
     codec_main_includes,
     compat_main_includes,
     include_directories('.')
@@ -27,6 +28,7 @@ network_main_dependencies = [
     logging_main_dependencies,
     io_main_dependencies,
     crypto_main_dependencies,
+    time_main_dependencies,
     codec_main_dependencies,
     compat_main_dependencies,
     boost_dependency,

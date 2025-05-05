@@ -29,6 +29,8 @@ struct NetworkSettings {
     bool logips{false};
     std::string i2psamhost{"127.0.0.1"};
     uint16_t i2psamport{7656};
+    std::string torcontrolhost{"127.0.0.1"};
+    uint16_t torcontrolport{9051};
     bool i2p{true};
     bool tor{true};
 };
