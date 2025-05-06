@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) 2025 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include <boost/test/unit_test.hpp>
+
+#include "blake2.h"
+#include "byte.h"
+
+namespace byte = blacknet::compat::byte;
+using namespace blacknet::crypto;
+
+BOOST_AUTO_TEST_SUITE(Blake2bs)
+
+BOOST_AUTO_TEST_CASE(empty) {
+    const auto hash256 = byte::arrayU<32>({
+        0x0E, 0x57, 0x51, 0xC0, 0x26, 0xE5, 0x43, 0xB2,
+        0xE8, 0xAB, 0x2E, 0xB0, 0x60, 0x99, 0xDA, 0xA1,
+        0xD1, 0xE5, 0xDF, 0x47, 0x77, 0x8F, 0x77, 0x87,
+        0xFA, 0xAB, 0x45, 0xCD, 0xF1, 0x2F, 0xE3, 0xA8
+    });
+    blake2b_256 hasher256;
+    BOOST_TEST(hash256 == hasher256.result());
+
+    const auto hash512 = byte::arrayU<64>({
+        0x78, 0x6A, 0x02, 0xF7, 0x42, 0x01, 0x59, 0x03,
+        0xC6, 0xC6, 0xFD, 0x85, 0x25, 0x52, 0xD2, 0x72,
+        0x91, 0x2F, 0x47, 0x40, 0xE1, 0x58, 0x47, 0x61,
+        0x8A, 0x86, 0xE2, 0x17, 0xF7, 0x1F, 0x54, 0x19,
+        0xD2, 0x5E, 0x10, 0x31, 0xAF, 0xEE, 0x58, 0x53,
+        0x13, 0x89, 0x64, 0x44, 0x93, 0x4E, 0xB0, 0x4B,
+        0x90, 0x3A, 0x68, 0x5B, 0x14, 0x48, 0xB7, 0x55,
+        0xD5, 0x6F, 0x70, 0x1A, 0xFE, 0x9B, 0xE2, 0xCE
+    });
+    blake2b_512 hasher512;
+    BOOST_TEST(hash512 == hasher512.result());
+}
+
+BOOST_AUTO_TEST_SUITE_END()
