@@ -15,8 +15,34 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-subdir('main/cplusplus')
-
-if get_option('tests')
-    subdir('test/cplusplus')
+if get_option('tests_report_junit')
+    io_test_arguments = ['--log_format=JUNIT', '--log_sink=TEST-io.xml']
+else
+    io_test_arguments = []
 endif
+
+io_test_sources = [
+    'hash_output_stream.cpp',
+    'test.cpp',
+]
+io_test_includes = [
+    io_main_includes,
+    crypto_main_includes,
+]
+io_test_dependencies = [
+    io_main_dependencies,
+    crypto_main_dependencies,
+    boost_test_dependency
+]
+io_test_bin = executable(
+    'io_test',
+    io_test_sources,
+    implicit_include_directories : false,
+    include_directories : io_test_includes,
+    dependencies : io_test_dependencies
+)
+test(
+    'io test',
+    io_test_bin,
+    args : io_test_arguments,
+)

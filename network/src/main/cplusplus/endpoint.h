@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -32,6 +33,8 @@
 #include "base32.h"
 #include "byte.h"
 #include "fastrng.h"
+#include "hash_output_stream.h"
+#include "output_stream.h"
 #include "sha3.h"
 #include "siphash.h"
 
@@ -56,8 +59,7 @@ enum class Enum : uint8_t {
     I2P = 132,
 };
 
-class Endpoint {
-public:
+struct Endpoint {
     virtual ~Endpoint() noexcept = default;
 
     virtual bool operator == (const Endpoint& other) const = 0;
@@ -70,7 +72,7 @@ public:
     virtual std::string to_host() const = 0;
     virtual std::string to_log(bool detail) const = 0;
 
-    virtual void serialize(crypto::siphash_64& hasher) const = 0;
+    virtual void serialize(io::output_stream& os) const = 0;
 };
 using endpoint_ptr = std::shared_ptr<Endpoint>;
 
@@ -158,10 +160,10 @@ public:
             return "IPv4 endpoint";
     }
 
-    void serialize(crypto::siphash_64& hasher) const override {
-        hasher.update(static_cast<std::byte>(Enum::IPv4));
-        hasher.update(&port, sizeof(port));
-        hasher.update(address.data(), address.size());
+    void serialize(io::output_stream& os) const override {
+        os.write(static_cast<std::byte>(Enum::IPv4));
+        os.write_u16(port);
+        os.write(address);
     }
 
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
@@ -269,10 +271,10 @@ public:
             return "IPv6 endpoint";
     }
 
-    void serialize(crypto::siphash_64& hasher) const override {
-        hasher.update(static_cast<std::byte>(Enum::IPv6));
-        hasher.update(&port, sizeof(port));
-        hasher.update(address.data(), address.size());
+    void serialize(io::output_stream& os) const override {
+        os.write(static_cast<std::byte>(Enum::IPv6));
+        os.write_u16(port);
+        os.write(address);
     }
 
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
@@ -370,10 +372,10 @@ public:
             return "TORv3 endpoint";
     }
 
-    void serialize(crypto::siphash_64& hasher) const override {
-        hasher.update(static_cast<std::byte>(Enum::TORv3));
-        hasher.update(&port, sizeof(port));
-        hasher.update(address.data(), address.size());
+    void serialize(io::output_stream& os) const override {
+        os.write(static_cast<std::byte>(Enum::TORv3));
+        os.write_u16(port);
+        os.write(address);
     }
 
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
@@ -452,10 +454,10 @@ public:
             return "I2P endpoint";
     }
 
-    void serialize(crypto::siphash_64& hasher) const override {
-        hasher.update(static_cast<std::byte>(Enum::I2P));
-        hasher.update(&port, sizeof(port));
-        hasher.update(address.data(), address.size());
+    void serialize(io::output_stream& os) const override {
+        os.write(static_cast<std::byte>(Enum::I2P));
+        os.write_u16(port);
+        os.write(address);
     }
 
     static endpoint_ptr parse(const std::string_view& string, uint16_t port) {
@@ -511,9 +513,9 @@ public:
     using is_avalanching = std::true_type;
 
     std::size_t operator () (const endpoint_ptr& endpoint) const {
-        crypto::siphash_64 hasher(key());
-        endpoint->serialize(hasher);
-        return hasher.result();
+        io::hash_output_stream<crypto::siphash_64, std::endian::native> os(key());
+        endpoint->serialize(os);
+        return os.digest();
     }
 };
 
