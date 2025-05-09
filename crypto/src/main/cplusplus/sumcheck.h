@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_SUMCHECK_H
 
 #include <stdexcept>
+#include <fmt/format.h>
 
 #include "interpolation.h"
 #include "univariatepolynomial.h"
@@ -177,6 +178,14 @@ private:
             state.template bind<Z(2), util::Assign<S>>(evaluations);
             S p2(util::Sum<S>::call(evaluations));
             return Interpolation<Z, S>::balanced(n2, n1, hint - p1, p1, p2);
+        } else if (state.degree() == 3) {
+            state.template bind<Z(-1), util::Assign<S>>(evaluations);
+            S n1(util::Sum<S>::call(evaluations));
+            state.template bind<Z(1), util::Assign<S>>(evaluations);
+            S p1(util::Sum<S>::call(evaluations));
+            state.template bind<Z(2), util::Assign<S>>(evaluations);
+            S p2(util::Sum<S>::call(evaluations));
+            return Interpolation<Z, S>::balanced(n1, hint - p1, p1, p2);
         } else if (state.degree() == 2) {
             state.template bind<Z(-1), util::Assign<S>>(evaluations);
             S n1(util::Sum<S>::call(evaluations));
@@ -188,8 +197,9 @@ private:
             S p1(util::Sum<S>::call(evaluations));
             return Interpolation<Z, S>::balanced(hint - p1, p1);
         } else {
-            throw std::runtime_error(
-                std::string("Sum-check prover not implemented for degree ") + std::to_string(state.degree()));
+            throw std::runtime_error(fmt::format(
+                "Sum-check prover not implemented for degree {}", state.degree()
+            ));
         }
     }
 };

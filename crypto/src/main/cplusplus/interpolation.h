@@ -39,6 +39,18 @@ struct Interpolation {
         S c(z0);
         return UnivariatePolynomial<S>{c, b, a};
     }
+    constexpr static UnivariatePolynomial<S> balanced(const S& n1, const S& z0, const S& p1, const S& p2) {
+        // Undefined behaviour is prohibited in consteval
+        static const Z inv2 = Z(2).invert().value();
+        static const Z inv3 = Z(3).invert().value();
+        static const Z inv6 = Z(6).invert().value();
+
+        S a(z0 * inv2 - p1 * inv2 + p2 * inv6 - n1 * inv6);
+        S b(- z0 + p1 * inv2 + n1 * inv2);
+        S c(- z0 * inv2 + p1 - p2 * inv6 - n1 * inv3);
+        S d(z0);
+        return UnivariatePolynomial<S>{d, c, b, a};
+    }
     constexpr static UnivariatePolynomial<S> balanced(const S& n2, const S& n1, const S& z0, const S& p1, const S& p2) {
         // Undefined behaviour is prohibited in consteval
         static const Z mul_2_div_3 = Z(2) * Z(3).invert().value();

@@ -32,10 +32,12 @@ BOOST_AUTO_TEST_CASE(balance) {
     using Interpolation = Interpolation<Z, F>;
     UnivariatePolynomial<F> p1{F(2), F(3)};
     UnivariatePolynomial<F> p2{F(2), F(3), F(5)};
+    UnivariatePolynomial<F> p3{F(2), F(3), F(5), F(7)};
     UnivariatePolynomial<F> p4{F(2), F(3), F(5), F(7), F(11)};
     UnivariatePolynomial<F> p5{F(2), F(3), F(5), F(7), F(11), F(13)};
     BOOST_TEST(p1 == Interpolation::balanced(F(2), F(5)));
     BOOST_TEST(p2 == Interpolation::balanced(F(4), F(2), F(10)));
+    BOOST_TEST(p3 == Interpolation::balanced(F(-3), F(2), F(17), F(84)));
     BOOST_TEST(p4 == Interpolation::balanced(F(136), F(8), F(2), F(28), F(260)));
     BOOST_TEST(p5 == Interpolation::balanced(F(-280), F(-5), F(2), F(41), F(676), F(4295)));
 }
