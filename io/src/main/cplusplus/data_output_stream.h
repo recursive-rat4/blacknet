@@ -49,6 +49,9 @@ struct data_output_stream : public output_stream {
         compat::byte::write<std::uint64_t, endian>(scratch.data(), u);
         write(scratch);
     }
+    void write_str(const std::string_view& s) override {
+        write({reinterpret_cast<const std::byte*>(s.data()), s.size()});
+    }
 };
 
 }

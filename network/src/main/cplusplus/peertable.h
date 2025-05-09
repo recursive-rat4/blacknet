@@ -18,8 +18,12 @@
 #ifndef BLACKNET_NETWORK_PEERTABLE_H
 #define BLACKNET_NETWORK_PEERTABLE_H
 
+#include <cstdint>
+#include <array>
 #include <atomic>
+#include <bit>
 #include <memory>
+#include <set>
 #include <string>
 #include <string_view>
 #include <boost/asio/io_context.hpp>
@@ -28,6 +32,7 @@
 #include "endpoint.h"
 #include "logger.h"
 #include "milliseconds.h"
+#include "output_stream.h"
 
 namespace blacknet::network {
 
@@ -35,6 +40,7 @@ class PeerTable {
 public:
     constexpr static const std::size_t max_size{8192};
 private:
+    constexpr static const std::uint32_t file_version{5};
     constexpr static const std::string_view file_name{"peers.dat"};
 
     struct localhost_t {
@@ -44,15 +50,27 @@ private:
     struct entry_t {
         std::atomic<bool> in_contact{false};
 
-        std::size_t attempts{0};
+        std::uint64_t attempts{0};
         time::Milliseconds last_try{0};
         time::Milliseconds last_connected{0};
         std::string user_agent{};
-        //TODO subnetworks{};
+        std::set<std::array<std::byte, 32>> subnetworks{};
         time::Milliseconds added{0};
 
         constexpr entry_t(const localhost_t& localhost)
             : in_contact(localhost.in_contact) {}
+
+        void serialize(io::output_stream& os) const {
+            os.write_u64(attempts);
+            os.write_u64(last_try.number());
+            os.write_u64(last_connected.number());
+            os.write_u32(user_agent.size());
+            os.write_str(user_agent);
+            os.write_u32(subnetworks.size());
+            for (const auto& i : subnetworks)
+                os.write(i);
+            os.write_u64(added.number());
+        }
     };
 
     log::Logger logger{"PeerTable"};
@@ -121,6 +139,15 @@ public:
     }
 
     void co_spawn(boost::asio::io_context& io_context) {
+    }
+
+    void serialize(io::output_stream& os) const {
+        os.write_u32(peers.size()); //FIXME race condition
+        peers.visit_all([&os](auto& x) {
+            const auto& [endpoint_ptr, entry] = x;
+            endpoint_ptr->serialize(os);
+            entry.serialize(os);
+        });
     }
 };
 

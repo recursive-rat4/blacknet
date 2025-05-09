@@ -15,29 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_IO_OUTPUT_STREAM_H
-#define BLACKNET_IO_OUTPUT_STREAM_H
+#include <boost/test/unit_test.hpp>
 
-#include <cstddef>
-#include <cstdint>
-#include <span>
-#include <string_view>
+#include "byte.h"
+#include "size_output_stream.h"
 
-namespace blacknet::io {
+using namespace blacknet;
 
-struct output_stream {
-    virtual ~output_stream() noexcept = default;
+BOOST_AUTO_TEST_SUITE(SizeOutputStreams)
 
-    virtual void write(std::byte b) = 0;
-    virtual void write(const std::span<const std::byte>& b) = 0;
+BOOST_AUTO_TEST_CASE(tests) {
+    const auto bytes = compat::byte::arrayU<3>({
+        0, 1, 2
+    });
+    const std::string_view string{"444"};
 
-    virtual void write_u8(std::uint8_t u) = 0;
-    virtual void write_u16(std::uint16_t u) = 0;
-    virtual void write_u32(std::uint32_t u) = 0;
-    virtual void write_u64(std::uint64_t u) = 0;
-    virtual void write_str(const std::string_view& s) = 0;
-};
+    io::size_output_stream sos;
+    sos.write(std::byte{});
+    sos.write(bytes);
+    sos.write_u8(0x00);
+    sos.write_u16(0x0102);
+    sos.write_u32(0x03040506);
+    sos.write_u64(0x0708090A0B0C0D0E);
+    sos.write_str(string);
 
+    BOOST_TEST(22 == sos.size);
 }
 
-#endif
+BOOST_AUTO_TEST_SUITE_END()

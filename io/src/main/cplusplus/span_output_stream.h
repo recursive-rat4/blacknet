@@ -15,27 +15,34 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_IO_OUTPUT_STREAM_H
-#define BLACKNET_IO_OUTPUT_STREAM_H
+#ifndef BLACKNET_IO_SPAN_OUTPUT_STREAM_H
+#define BLACKNET_IO_SPAN_OUTPUT_STREAM_H
 
 #include <cstddef>
-#include <cstdint>
+#include <algorithm>
 #include <span>
-#include <string_view>
+
+#include "data_output_stream.h"
 
 namespace blacknet::io {
 
-struct output_stream {
-    virtual ~output_stream() noexcept = default;
+template<std::endian endian, std::size_t extent = std::dynamic_extent>
+class span_output_stream final : public data_output_stream<endian> {
+    std::span<std::byte, extent> span;
+    std::size_t pos{0};
+public:
+    span_output_stream(const std::span<std::byte, extent>& span) :
+        data_output_stream<endian>(),
+        span(span) {}
 
-    virtual void write(std::byte b) = 0;
-    virtual void write(const std::span<const std::byte>& b) = 0;
-
-    virtual void write_u8(std::uint8_t u) = 0;
-    virtual void write_u16(std::uint16_t u) = 0;
-    virtual void write_u32(std::uint32_t u) = 0;
-    virtual void write_u64(std::uint64_t u) = 0;
-    virtual void write_str(const std::string_view& s) = 0;
+    void write(std::byte b) override {
+        span[pos] = b;
+        pos += 1;
+    }
+    void write(const std::span<const std::byte>& b) override {
+        std::ranges::copy(b, span.data() + pos);
+        pos += b.size();
+    }
 };
 
 }

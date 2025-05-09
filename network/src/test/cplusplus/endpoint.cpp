@@ -16,11 +16,15 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <array>
 #include <initializer_list>
 #include <string_view>
 #include <tuple>
 
+#include "byte.h"
 #include "endpoint.h"
+#include "size_output_stream.h"
+#include "span_output_stream.h"
 
 using namespace blacknet;
 using namespace blacknet::network::endpoint;
@@ -114,6 +118,25 @@ BOOST_AUTO_TEST_CASE(Compares) {
     BOOST_TEST((*b != *c));
     BOOST_TEST((*c == *d));
     BOOST_TEST((*d != *a));
+}
+
+BOOST_AUTO_TEST_CASE(Serializes) {
+    const auto endpoint = parse("127.0.0.4", 258);
+    const auto bytes = compat::byte::arrayU<7>({
+        0x80,
+        0x01, 0x02,
+        0x7F, 0x00, 0x00, 0x04
+    });
+    {
+        io::size_output_stream sos;
+        endpoint->serialize(sos);
+        BOOST_TEST_REQUIRE(bytes.size() == sos.size);
+    } {
+        std::array<std::byte, bytes.size()> serialized;
+        io::span_output_stream<std::endian::big> sos(serialized);
+        endpoint->serialize(sos);
+        BOOST_TEST(bytes == serialized);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

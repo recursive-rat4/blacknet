@@ -23,6 +23,8 @@ endif
 
 io_test_sources = [
     'hash_output_stream.cpp',
+    'size_output_stream.cpp',
+    'span_output_stream.cpp',
     'test.cpp',
 ]
 io_test_includes = [
