@@ -34,6 +34,7 @@
 #include "byte.h"
 #include "fastrng.h"
 #include "hash_output_stream.h"
+#include "input_stream.h"
 #include "output_stream.h"
 #include "sha3.h"
 #include "siphash.h"
@@ -82,14 +83,15 @@ class IPv4 final : public Endpoint {
     constexpr static const std::array<std::byte, 4> loopback_address =
         compat::byte::arrayU<4>({ 127, 0, 0, 1 });
 
-    const uint16_t port;
-    const std::array<std::byte, 4> address;
+    uint16_t port;
+    std::array<std::byte, 4> address;
 
     boost::asio::ip::address_v4 to_addr() const {
         const std::array<unsigned char, 4>& chars = reinterpret_cast<const std::array<unsigned char, 4>&>(address);
         return boost::asio::ip::address_v4(chars);
     }
 public:
+    constexpr IPv4() noexcept = default;
     constexpr IPv4(uint16_t port, const std::array<std::byte, 4>& address)
         : port(port), address(address) {}
 
@@ -178,6 +180,13 @@ public:
         }
     }
 
+    static endpoint_ptr deserialize(io::input_stream& is) {
+        auto endpoint = std::make_shared<IPv4>();
+        endpoint->port = is.read_u16();
+        is.read(endpoint->address);
+        return endpoint;
+    }
+
     static endpoint_ptr any(uint16_t port) {
         return std::make_shared<IPv4>(port, any_address);
     }
@@ -193,14 +202,15 @@ class IPv6 final : public Endpoint {
     constexpr static const std::array<std::byte, 16> loopback_address =
         compat::byte::arrayU<16>({ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 });
 
-    const uint16_t port;
-    const std::array<std::byte, 16> address;
+    uint16_t port;
+    std::array<std::byte, 16> address;
 
     boost::asio::ip::address_v6 to_addr() const {
         const std::array<unsigned char, 16>& chars = reinterpret_cast<const std::array<unsigned char, 16>&>(address);
         return boost::asio::ip::address_v6(chars);
     }
 public:
+    constexpr IPv6() noexcept = default;
     constexpr IPv6(uint16_t port, const std::array<std::byte, 16>& address)
         : port(port), address(address) {}
 
@@ -289,6 +299,13 @@ public:
         }
     }
 
+    static endpoint_ptr deserialize(io::input_stream& is) {
+        auto endpoint = std::make_shared<IPv6>();
+        endpoint->port = is.read_u16();
+        is.read(endpoint->address);
+        return endpoint;
+    }
+
     static endpoint_ptr any(uint16_t port) {
         return std::make_shared<IPv6>(port, any_address);
     }
@@ -304,8 +321,8 @@ class TORv3 final : public Endpoint {
     constexpr static const std::string_view suffix{".onion"};
     constexpr static const std::byte version{3};
 
-    const uint16_t port;
-    const std::array<std::byte, 32> address;
+    uint16_t port;
+    std::array<std::byte, 32> address;
 
     constexpr static std::array<std::byte, 2> checksum(const std::span<const std::byte>& bytes) {
         constexpr std::string_view constant{".onion checksum"};
@@ -319,6 +336,7 @@ class TORv3 final : public Endpoint {
         return checksum;
     }
 public:
+    constexpr TORv3() noexcept = default;
     constexpr TORv3(uint16_t port, const std::array<std::byte, 32>& address)
         : port(port), address(address) {}
 
@@ -397,15 +415,23 @@ public:
         }
         return nullptr;
     }
+
+    static endpoint_ptr deserialize(io::input_stream& is) {
+        auto endpoint = std::make_shared<TORv3>();
+        endpoint->port = is.read_u16();
+        is.read(endpoint->address);
+        return endpoint;
+    }
 };
 
 class I2P final : public Endpoint {
     using base32 = codec::base32::codec<codec::base32::i2p>;
     constexpr static const std::string_view suffix{".b32.i2p"};
 
-    const uint16_t port;
-    const std::array<std::byte, 32> address;
+    uint16_t port;
+    std::array<std::byte, 32> address;
 public:
+    constexpr I2P() noexcept = default;
     constexpr I2P(uint16_t port, const std::array<std::byte, 32>& address)
         : port(port), address(address) {}
 
@@ -475,6 +501,13 @@ public:
         }
         return nullptr;
     }
+
+    static endpoint_ptr deserialize(io::input_stream& is) {
+        auto endpoint = std::make_shared<I2P>();
+        endpoint->port = is.read_u16();
+        is.read(endpoint->address);
+        return endpoint;
+    }
 };
 
 inline endpoint_ptr parse(const std::string_view& string, uint16_t port) {
@@ -486,6 +519,20 @@ inline endpoint_ptr parse(const std::string_view& string, uint16_t port) {
         return endpoint;
     else if (auto endpoint = IPv4::parse(string, port))
         return endpoint;
+    else
+        return nullptr;
+}
+
+inline endpoint_ptr deserialize(io::input_stream& is) {
+    Enum ordinal = static_cast<Enum>(is.read());
+    if (ordinal == Enum::I2P)
+        return I2P::deserialize(is);
+    else if (ordinal == Enum::TORv3)
+        return TORv3::deserialize(is);
+    else if (ordinal == Enum::IPv6)
+        return IPv6::deserialize(is);
+    else if (ordinal == Enum::IPv4)
+        return IPv4::deserialize(is);
     else
         return nullptr;
 }

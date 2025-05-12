@@ -24,6 +24,7 @@
 #include "byte.h"
 #include "endpoint.h"
 #include "size_output_stream.h"
+#include "span_input_stream.h"
 #include "span_output_stream.h"
 
 using namespace blacknet;
@@ -128,6 +129,11 @@ BOOST_AUTO_TEST_CASE(Serializes) {
         0x7F, 0x00, 0x00, 0x04
     });
     {
+        io::span_input_stream<std::endian::big> sis(bytes);
+        endpoint_ptr deserialized = deserialize(sis);
+        BOOST_TEST_REQUIRE(deserialized);
+        BOOST_TEST((*endpoint == *deserialized));
+    } {
         io::size_output_stream sos;
         endpoint->serialize(sos);
         BOOST_TEST_REQUIRE(bytes.size() == sos.size);
