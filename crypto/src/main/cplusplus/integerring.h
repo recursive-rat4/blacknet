@@ -97,12 +97,7 @@ public:
     }
 
     constexpr IntegerRing operator - () const {
-        if (*this != IntegerRing(0)) {
-            I t(Params::M - n);
-            return IntegerRing(t, 0);
-        } else {
-            return IntegerRing(0);
-        }
+        return IntegerRing::LEFT_ADDITIVE_IDENTITY() - *this;
     }
 
     constexpr IntegerRing douple() const {
@@ -195,7 +190,7 @@ private:
     constexpr static MRI fromForm(MRI n) {
         return reduce<MRI, MRL>(MRL(n));
     }
-
+public:
     constexpr static I freeze(I x) {
         if (x >= Params::M)
             return x - Params::M;
@@ -204,7 +199,7 @@ private:
         else
             return x;
     }
-
+private:
     constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - I(2);
 };
 

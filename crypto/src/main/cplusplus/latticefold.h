@@ -98,13 +98,25 @@ struct LatticeFold {
 
     std::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
 
-    template<typename R>
+    template<std::size_t radix, typename R>
     constexpr static Matrix<R> gadget(std::size_t m, std::size_t n) {
-        Vector<R> bpm(n);
-        bpm[0] = R(1);
+        Vector<R> pm(n);
+        pm[0] = R::LEFT_MULTIPLICATIVE_IDENTITY();
         for (std::size_t i = 1; i < n; ++i)
-            bpm[i] = bpm[i - 1] * B;
-        return Vector<R>::identity(m).tensor(bpm);
+            pm[i] = pm[i - 1] * radix;
+        return Vector<R>::identity(m).tensor(pm);
+    }
+    template<std::size_t radix, std::size_t digits>
+    constexpr static Vector<Zq> shatter(const Vector<Zq>& f) {
+        Vector<Zq> pieces(f.size() * digits);
+        for (std::size_t i = 0; i < f.size(); ++i) {
+            auto frozen = Zq::freeze(f[i].number());
+            for (std::size_t j = 0; j < digits; ++j) {
+                pieces[i * digits + j] = frozen % radix;
+                frozen /= radix;
+            }
+        }
+        return pieces;
     }
 
     template<typename Z = Zq>
@@ -151,7 +163,7 @@ struct LatticeFold {
     template<typename Z = Zq>
     class G2 {
         static_assert(b == 2, "Not implemented");
-        // G2(x) = μ （ mle³[f](x) - mle[f](x) ）
+        // G2(x) = μ （ mle²[f](x) - mle[f](x) ）
         Z mu;
         MultilinearExtension<Z> mle;
     public:
@@ -161,7 +173,7 @@ struct LatticeFold {
 
         constexpr Z operator () (const std::vector<Z>& point) const {
             Z t(mle(point));
-            return mu * (t * t * t - t);
+            return mu * (t.square() - t);
         }
 
         template<Z e, typename Fuse>
@@ -169,7 +181,6 @@ struct LatticeFold {
             std::vector<Z> t(hypercube.size());
             mle.template bind<e, util::Assign<Z>>(t);
             std::vector<Z> r(t);
-            util::Mul<Z>::call(r, t);
             util::Mul<Z>::call(r, t);
             util::Sub<Z>::call(r, t);
             util::Mul<Z>::call(r, mu);
@@ -181,7 +192,7 @@ struct LatticeFold {
         }
 
         consteval std::size_t degree() const {
-            return b + b - 1;
+            return b;
         }
 
         constexpr std::size_t variables() const {
@@ -281,7 +292,7 @@ struct LatticeFold {
         }
 
         consteval std::size_t degree() const {
-            return pow.degree() + (b + b - 1);
+            return pow.degree() + b;
         }
 
         constexpr std::size_t variables() const {

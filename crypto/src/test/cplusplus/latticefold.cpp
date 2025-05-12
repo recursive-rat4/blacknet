@@ -32,10 +32,12 @@ using LatticeFold = LatticeFold<Z>;
 using R = LatticeFold::Rq;
 
 BOOST_AUTO_TEST_CASE(Gadget) {
-    auto g = LatticeFold::gadget<Z>(1, 4);
-    auto a = Vector<Z>{ 3, 2, 1, 0 };
-    auto b = Vector<Z>{ 4295098371 };
+    const auto a = Vector<Z>{ 3, 2, 1, 0 };
+    const auto b = Vector<Z>{ 4295098371 };
+    auto g = LatticeFold::gadget<LatticeFold::B, Z>(1, 4);
     BOOST_TEST(b == g * a);
+    auto c = LatticeFold::shatter<LatticeFold::B, 4>(b);
+    BOOST_TEST(a == c);
 }
 
 BOOST_AUTO_TEST_CASE(G1s) {
@@ -55,12 +57,15 @@ BOOST_AUTO_TEST_CASE(G1s) {
 BOOST_AUTO_TEST_CASE(G2s) {
     Vector<R> f1{R{1, -1}};
     Vector<R> f2{R{2, -2}};
+    Vector<R> f3{R{1, 1, 0, 1}};
     auto g2_1 = LatticeFold::G2<Z>(f1);
     auto g2_2 = LatticeFold::G2<Z>(f2);
+    auto g2_3 = LatticeFold::G2<Z>(f3);
     BOOST_TEST(6 == g2_1.variables());
-    BOOST_TEST(3 == g2_1.degree());
-    BOOST_TEST(Z(0) == Hypercube<Z>::sum(g2_1));
-    BOOST_TEST(Z(0) == Hypercube<Z>::sum(g2_2)); // not zero in GNorm
+    BOOST_TEST(2 == g2_1.degree());
+    BOOST_TEST(Z(0) != Hypercube<Z>::sum(g2_1));
+    BOOST_TEST(Z(0) != Hypercube<Z>::sum(g2_2));
+    BOOST_TEST(Z(0) == Hypercube<Z>::sum(g2_3));
 }
 
 BOOST_AUTO_TEST_CASE(GEvals) {
@@ -84,12 +89,15 @@ BOOST_AUTO_TEST_CASE(GNorms) {
     std::vector<Z> mu(LatticeFold::k * 2, Z(1));
     std::vector<Vector<R>> f1(LatticeFold::k * 2, Vector<R>{R{1, 1, 0, -1}});
     std::vector<Vector<R>> f2(LatticeFold::k * 2, Vector<R>{R{2, 0, 0, -2}});
+    std::vector<Vector<R>> f3(LatticeFold::k * 2, Vector<R>{R{1, 0, 1, 1}});
     auto gnorm_1 = LatticeFold::GNorm<Z>(beta, mu, f1);
     auto gnorm_2 = LatticeFold::GNorm<Z>(beta, mu, f2);
+    auto gnorm_3 = LatticeFold::GNorm<Z>(beta, mu, f3);
     BOOST_TEST(6 == gnorm_1.variables());
-    BOOST_TEST(4 == gnorm_2.degree());
-    BOOST_TEST(Z(0) == Hypercube<Z>::sum(gnorm_1));
+    BOOST_TEST(3 == gnorm_2.degree());
+    BOOST_TEST(Z(0) != Hypercube<Z>::sum(gnorm_1));
     BOOST_TEST(Z(0) != Hypercube<Z>::sum(gnorm_2));
+    BOOST_TEST(Z(0) == Hypercube<Z>::sum(gnorm_3));
 }
 
 BOOST_AUTO_TEST_CASE(GFolds) {
@@ -97,10 +105,10 @@ BOOST_AUTO_TEST_CASE(GFolds) {
     Z beta(3);
     std::vector<Z> mu(LatticeFold::k * 2, Z(1));
     std::vector<std::vector<Z>> r(LatticeFold::k * 2, {0, 0, 0, 0, 1, 1});
-    std::vector<Vector<R>> f(LatticeFold::k * 2, Vector<R>{R{-1, 0, 1, 1, 0, -1}});
+    std::vector<Vector<R>> f(LatticeFold::k * 2, Vector<R>{R{1, 0, 1, 1, 0, 1}});
     auto gfold = LatticeFold::GFold<Z>(alpha, beta, mu, r, f);
     BOOST_TEST(6 == gfold.variables());
-    BOOST_TEST(4 == gfold.degree());
+    BOOST_TEST(3 == gfold.degree());
     BOOST_TEST(Z(32) == Hypercube<Z>::sum(gfold));
 }
 
