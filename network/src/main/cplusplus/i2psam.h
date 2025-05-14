@@ -41,6 +41,7 @@
 #include "fastrng.h"
 #include "file.h"
 #include "logger.h"
+#include "mode.h"
 #include "networksettings.h"
 #include "sha2.h"
 #include "xdgdirectories.h"
@@ -166,7 +167,7 @@ public:
         const std::string_view& private_key
     ) {
         // i2cp.leaseSetEncType 0 for connectivity with `Node::PROTOCOL_VERSION` <= 15
-        auto request = fmt::format("SESSION CREATE STYLE=STREAM ID={} DESTINATION={} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 i2cp.leaseSetEncType=4,0\n", session_id, private_key);
+        auto request = fmt::format("SESSION CREATE STYLE=STREAM ID={0} DESTINATION={1} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 inbound.nickname={2} outbound.nickname={2} i2cp.leaseSetEncType=4,0\n", session_id, private_key, compat::mode()->agent_name());
         auto answer = co_await this->request(request);
         co_return answer;
     }

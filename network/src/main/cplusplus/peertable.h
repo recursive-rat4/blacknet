@@ -27,9 +27,10 @@
 #include <string>
 #include <string_view>
 #include <boost/asio/io_context.hpp>
-#include <boost/unordered/concurrent_node_map.hpp>
+#include <boost/unordered/concurrent_flat_map.hpp>
 
 #include "endpoint.h"
+#include "input_stream.h"
 #include "logger.h"
 #include "milliseconds.h"
 #include "output_stream.h"
@@ -72,11 +73,43 @@ private:
             os.write_u64(added.number());
         }
     };
+    class entry_ptr {
+        std::shared_ptr<entry_t> ptr;
+    public:
+        entry_ptr(const localhost_t& localhost) :
+            ptr(std::make_shared<entry_t>(localhost)) {}
+
+        constexpr entry_t* operator -> () noexcept {
+            return ptr.operator -> ();
+        }
+
+        constexpr const entry_t* operator -> () const noexcept {
+            return ptr.operator -> ();
+        }
+
+        static entry_ptr deserialize(io::input_stream& is) {
+            entry_ptr entry(localhost_t{});
+            entry->attempts = is.read_u64();
+            entry->last_try = is.read_u64();
+            entry->last_connected = is.read_u64();
+            std::size_t user_agent_size = is.read_u32();
+            entry->user_agent.resize(user_agent_size);
+            is.read_str(entry->user_agent);
+            std::size_t subnetworks_size = is.read_u32();
+            for (std::size_t i = 0; i < subnetworks_size; ++i) {
+                std::array<std::byte, 32> id;
+                is.read(id);
+                entry->subnetworks.emplace(id);
+            }
+            entry->added = is.read_u64();
+            return entry;
+        }
+    };
 
     log::Logger logger{"PeerTable"};
     const NetworkSettings& settings;
-    boost::concurrent_node_map<
-        endpoint_ptr, entry_t,
+    boost::concurrent_flat_map<
+        endpoint_ptr, entry_ptr,
         endpoint::hasher, endpoint::comparator
     > peers;
 public:
@@ -103,7 +136,7 @@ public:
         bool inserted = peers.try_emplace_or_visit(endpoint, localhost_t{true}, [&contacted](auto& x) {
             auto& [_, entry] = x;
             bool expected = false;
-            contacted = entry.in_contact.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
+            contacted = entry->in_contact.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
         });
         return contacted || inserted;
     }
@@ -115,7 +148,7 @@ public:
         bool inserted = peers.try_emplace_or_visit(endpoint, localhost_t{true}, [&contacted](auto& x) {
             auto& [_, entry] = x;
             bool expected = false;
-            contacted = entry.in_contact.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
+            contacted = entry->in_contact.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
         });
         if (contacted || inserted)
             return;
@@ -128,7 +161,7 @@ public:
         bool visited = peers.visit(endpoint, [&discontacted](auto& x) {
             auto& [_, entry] = x;
             bool expected = true;
-            discontacted = entry.in_contact.compare_exchange_strong(expected, false, std::memory_order_acq_rel);
+            discontacted = entry->in_contact.compare_exchange_strong(expected, false, std::memory_order_acq_rel);
         });
         if (discontacted)
             return;
@@ -142,12 +175,22 @@ public:
     }
 
     void serialize(io::output_stream& os) const {
-        os.write_u32(peers.size()); //FIXME race condition
-        peers.visit_all([&os](auto& x) {
-            const auto& [endpoint_ptr, entry] = x;
-            endpoint_ptr->serialize(os);
-            entry.serialize(os);
+        auto copy = peers;
+        os.write_u32(copy.size());
+        copy.visit_all([&os](auto& x) {
+            const auto& [endpoint, entry] = x;
+            endpoint->serialize(os);
+            entry->serialize(os);
         });
+    }
+
+    void deserialize(io::input_stream& is) {
+        std::size_t size = is.read_u32();
+        for (std::size_t i = 0; i < size; ++i) {
+            auto endpoint = endpoint::deserialize(is);
+            auto entry = entry_ptr::deserialize(is);
+            peers.emplace(std::move(endpoint), std::move(entry));
+        }
     }
 };
 
