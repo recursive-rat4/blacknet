@@ -31,10 +31,11 @@
 namespace blacknet::crypto {
 
 template<typename Params>
-class PolynomialRing {
+struct PolynomialRing {
+private:
+    constexpr static const std::size_t N = Params::N;
 public:
     using Z = Params::Z;
-    constexpr static const std::size_t N = Params::N;
 
     consteval static PolynomialRing LEFT_ADDITIVE_IDENTITY() {
         PolynomialRing t;
@@ -54,7 +55,7 @@ public:
 
     std::array<Z, N> coefficients;
 
-    consteval PolynomialRing() = default;
+    consteval PolynomialRing() noexcept = default;
     constexpr PolynomialRing(const Z& e) {
         coefficients[0] = e;
         std::fill_n(coefficients.begin() + 1, N - 1, Z(0));
@@ -67,6 +68,10 @@ public:
     }
 
     constexpr bool operator == (const PolynomialRing&) const = default;
+
+    consteval static std::size_t dimension() {
+        return Params::N;
+    }
 
     constexpr PolynomialRing& operator += (const PolynomialRing& other) {
         for (std::size_t i = 0; i < N; ++i)

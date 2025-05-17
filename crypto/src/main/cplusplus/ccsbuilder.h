@@ -69,11 +69,11 @@ struct CCSBuilder {
     struct LinearCombination : ConstraintExpression<LinearCombination> {
         std::map<Variable, E> terms;
 
-        decltype(auto) begin() const noexcept {
+        constexpr decltype(auto) begin() const noexcept {
             return terms.begin();
         }
 
-        decltype(auto) end() const noexcept {
+        constexpr decltype(auto) end() const noexcept {
             return terms.end();
         }
 

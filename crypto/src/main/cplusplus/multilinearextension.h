@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
 #define BLACKNET_CRYPTO_MULTILINEAREXTENSION_H
 
+#include <algorithm>
 #include <bit>
 #include <concepts>
 #include <initializer_list>
@@ -46,6 +47,7 @@ struct MultilinearExtension {
     template<typename Params>
     requires(std::same_as<E, typename Params::Z>)
     constexpr MultilinearExtension(const PolynomialRing<Params>& polynomial) {
+        //TODO __cpp_lib_containers_ranges >= 202202L
         coefficients.assign(polynomial.coefficients.cbegin(), polynomial.coefficients.cend());
     }
     constexpr MultilinearExtension(const Vector<E>& vector) : coefficients(vector.elements) {}
@@ -53,11 +55,11 @@ struct MultilinearExtension {
     requires(std::same_as<E, typename Params::Z>)
     constexpr MultilinearExtension(const Vector<PolynomialRing<Params>>& vector) {
         coefficients.reserve(vector.elements.size() * Params::N);
+        auto inserter = std::back_inserter(coefficients);
         for (std::size_t i = 0; i < vector.elements.size(); ++i)
-            std::copy(
-                vector.elements[i].coefficients.begin(),
-                vector.elements[i].coefficients.end(),
-                std::back_inserter(coefficients)
+            std::ranges::copy(
+                vector.elements[i].coefficients,
+                inserter
             );
     }
     constexpr MultilinearExtension(const MultilinearExtension&) = default;

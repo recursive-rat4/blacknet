@@ -36,9 +36,9 @@ template<typename Rt, typename Rq>
 struct BFV {
     using Zt = Rt::Z;
     using Zq = Rq::Z;
-    constexpr static const std::size_t D = Rq::N;
+    constexpr static const std::size_t D = Rq::dimension();
 
-    static_assert(Rt::N == Rq::N);
+    static_assert(Rt::dimension() == Rq::dimension());
     static_assert(std::is_signed_v<typename Zt::NumericType>);
     static_assert(std::is_signed_v<typename Zq::NumericType>);
 

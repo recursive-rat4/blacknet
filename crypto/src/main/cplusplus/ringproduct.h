@@ -29,70 +29,70 @@ template<typename... Rs>
 struct RingProduct {
     consteval static RingProduct LEFT_ADDITIVE_IDENTITY() {
         RingProduct t;
-        for_each(t.ideals, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::LEFT_ADDITIVE_IDENTITY(); });
+        for_each(t.factors, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::LEFT_ADDITIVE_IDENTITY(); });
         return t;
     }
     consteval static RingProduct LEFT_MULTIPLICATIVE_IDENTITY() {
         RingProduct t;
-        for_each(t.ideals, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::LEFT_MULTIPLICATIVE_IDENTITY(); });
+        for_each(t.factors, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::LEFT_MULTIPLICATIVE_IDENTITY(); });
         return t;
     }
 
-    std::tuple<Rs...> ideals;
+    std::tuple<Rs...> factors;
 
     constexpr RingProduct() = default;
-    constexpr RingProduct(Rs&&... rs) : ideals(std::forward<Rs>(rs)...) {}
+    constexpr RingProduct(Rs&&... rs) : factors(std::forward<Rs>(rs)...) {}
 
     constexpr bool operator == (const RingProduct&) const = default;
 
     constexpr RingProduct& operator += (const RingProduct& other) {
-        for_each(this->ideals, other.ideals, [](auto&& r, auto&& a) { r += a; });
+        for_each(this->factors, other.factors, [](auto&& r, auto&& a) { r += a; });
         return *this;
     }
 
     constexpr RingProduct operator + (const RingProduct& other) const {
         RingProduct t;
-        for_each(t.ideals, this->ideals, other.ideals, [](auto&& r, auto&& a, auto&& b) { r = a + b; });
+        for_each(t.factors, this->factors, other.factors, [](auto&& r, auto&& a, auto&& b) { r = a + b; });
         return t;
     }
 
     constexpr RingProduct& operator *= (const RingProduct& other) {
-        for_each(this->ideals, other.ideals, [](auto&& r, auto&& a) { r *= a; });
+        for_each(this->factors, other.factors, [](auto&& r, auto&& a) { r *= a; });
         return *this;
     }
 
     constexpr RingProduct operator * (const RingProduct& other) const {
         RingProduct t;
-        for_each(t.ideals, this->ideals, other.ideals, [](auto&& r, auto&& a, auto&& b) { r = a * b; });
+        for_each(t.factors, this->factors, other.factors, [](auto&& r, auto&& a, auto&& b) { r = a * b; });
         return t;
     }
 
     constexpr RingProduct& operator -= (const RingProduct& other) {
-        for_each(this->ideals, other.ideals, [](auto&& r, auto&& a) { r -= a; });
+        for_each(this->factors, other.factors, [](auto&& r, auto&& a) { r -= a; });
         return *this;
     }
 
     constexpr RingProduct operator - (const RingProduct& other) const {
         RingProduct t;
-        for_each(t.ideals, this->ideals, other.ideals, [](auto&& r, auto&& a, auto&& b) { r = a - b; });
+        for_each(t.factors, this->factors, other.factors, [](auto&& r, auto&& a, auto&& b) { r = a - b; });
         return t;
     }
 
     constexpr RingProduct operator - () const {
         RingProduct t;
-        for_each(t.ideals, ideals, [](auto&& r, auto&& a) { r = - a; });
+        for_each(t.factors, factors, [](auto&& r, auto&& a) { r = - a; });
         return t;
     }
 
     constexpr RingProduct douple() const {
         RingProduct t;
-        for_each(t.ideals, ideals, [](auto&& r, auto&& a) { r = a.douple(); });
+        for_each(t.factors, factors, [](auto&& r, auto&& a) { r = a.douple(); });
         return t;
     }
 
     constexpr RingProduct square() const {
         RingProduct t;
-        for_each(t.ideals, ideals, [](auto&& r, auto&& a) { r = a.square(); });
+        for_each(t.factors, factors, [](auto&& r, auto&& a) { r = a.square(); });
         return t;
     }
 
@@ -102,21 +102,21 @@ struct RingProduct {
         out << '[';
         std::apply([&](auto&&... i) {
             ((out << i << (++joiner != sizeof...(i) ? ", " : "")), ...);
-        }, val.ideals);
+        }, val.factors);
         return out << ']';
     }
 
     template<std::uniform_random_bit_generator RNG>
     static RingProduct random(RNG& rng) {
         RingProduct t;
-        for_each(t.ideals, [&](auto&& r) { r = std::remove_reference_t<decltype(r)>::random(rng); });
+        for_each(t.factors, [&](auto&& r) { r = std::remove_reference_t<decltype(r)>::random(rng); });
         return t;
     }
 
     template<std::uniform_random_bit_generator RNG, typename DST>
     static RingProduct random(RNG& rng, DST& dst) {
         RingProduct t;
-        for_each(t.ideals, [&](auto&& r) { r = std::remove_reference_t<decltype(r)>::random(rng, dst); });
+        for_each(t.factors, [&](auto&& r) { r = std::remove_reference_t<decltype(r)>::random(rng, dst); });
         return t;
     }
 private:

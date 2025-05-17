@@ -77,7 +77,7 @@ struct BlackLemon {
     constexpr std::optional<PlainText> detect(const SecretKey& sk, const CipherText& ct) {
         PlainText pt;
         auto d = ct.a + ct.b * sk.a + sk.b;
-        for (std::size_t i = 0; i < Rq::N; ++i) {
+        for (std::size_t i = 0; i < Rq::dimension(); ++i) {
             if (std::abs(d.coefficients[i].number()) <= R)
                 pt.coefficients[i] = Zq(0);
             else if (PKE::DELTA - std::abs(d.coefficients[i].number()) <= R)
