@@ -19,11 +19,14 @@
 #define BLACKNET_CRYPTO_BFV_H
 
 #include <algorithm>
+#include <bit>
+#include <cmath>
 #include <numbers>
 #include <random>
 #include <type_traits>
 
 #include "discretegaussiandistribution.h"
+#include "latticegadget.h"
 #include "polynomialring.h"
 #include "vector.h"
 
@@ -50,6 +53,9 @@ struct BFV {
 
     constexpr static const double DELTA = double(Zq::modulus()) / double(Zt::modulus());
     constexpr static const double INV_DELTA = double(Zt::modulus()) / double(Zq::modulus());
+
+    constexpr static const uint64_t ELL = 5;
+    constexpr static const uint64_t OMEGA = std::bit_ceil(uint64_t(std::pow(Zq::modulus(), 1.0 / ELL)));
 
     using SecretKey = Rq;
 
@@ -118,6 +124,14 @@ struct BFV {
         for (std::size_t i = 0; i < D; ++i)
             rq.coefficients[i] = Zq(std::round(DELTA * rt.coefficients[i].number()));
         return rq;
+    }
+
+    constexpr static Vector<Rq> gadget_d(const Rq& rq) {
+        return lattice_gadget::decompose<Rq, OMEGA, ELL>(rq);
+    }
+
+    constexpr static Vector<Rq> gadget_p(const Rq& rq) {
+        return lattice_gadget::vector<Rq, OMEGA, ELL>(rq);
     }
 
     template<std::uniform_random_bit_generator RNG>

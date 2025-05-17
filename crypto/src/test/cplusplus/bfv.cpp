@@ -56,6 +56,15 @@ struct RqParams {
 };
 using Rq = PolynomialRing<RqParams>;
 
+BOOST_AUTO_TEST_CASE(Gadgets) {
+    using BFV = BFV<Rt, Rq>;
+    Rq a = Rq::random(rng);
+    Rq b = Rq::random(rng);
+    auto d = BFV::gadget_d(a);
+    auto p = BFV::gadget_p(b);
+    BOOST_TEST(a * b == d.dot(p), "Gadget Decomposition");
+}
+
 BOOST_AUTO_TEST_CASE(Tests) {
     using BFV = BFV<Rt, Rq>;
     BFV bfv;

@@ -32,11 +32,11 @@ using LatticeFold = LatticeFold<Z>;
 using R = LatticeFold::Rq;
 
 BOOST_AUTO_TEST_CASE(Gadget) {
-    const auto a = Vector<Z>{ 3, 2, 1, 0 };
-    const auto b = Vector<Z>{ 4295098371 };
-    auto g = LatticeFold::gadget<LatticeFold::B, Z>(1, 4);
+    const auto a = Vector<R>{ R(3), R(2), R(1), R(0) };
+    const auto b = Vector<R>{ R(4295098371) };
+    auto g = LatticeFold::gadget_medium(1, 4);
     BOOST_TEST(b == g * a);
-    auto c = LatticeFold::shatter<LatticeFold::B, 4>(b);
+    auto c = LatticeFold::decompose_medium(b);
     BOOST_TEST(a == c);
 }
 

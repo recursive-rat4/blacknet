@@ -24,6 +24,7 @@
 #include "convolution.h"
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
+#include "latticegadget.h"
 #include "matrix.h"
 #include "multilinearextension.h"
 #include "numbertheoretictransform.h"
@@ -45,9 +46,11 @@ namespace blacknet::crypto {
 template<typename Zq>
 struct LatticeFold {
     constexpr static ssize_t b = 2;
+    static const std::size_t b_digits = 64;
     static const std::size_t k = 16;
     static const std::size_t t = 16;
     static const std::size_t B = 65536;
+    static const std::size_t B_digits = 4;
     static const std::size_t D = 64;
     static const std::size_t K = 16;
 
@@ -98,25 +101,17 @@ struct LatticeFold {
 
     std::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
 
-    template<std::size_t radix, typename R>
-    constexpr static Matrix<R> gadget(std::size_t m, std::size_t n) {
-        Vector<R> pm(n);
-        pm[0] = R::LEFT_MULTIPLICATIVE_IDENTITY();
-        for (std::size_t i = 1; i < n; ++i)
-            pm[i] = pm[i - 1] * radix;
-        return Vector<R>::identity(m).tensor(pm);
+    constexpr static Matrix<Rq> gadget_medium(std::size_t m, std::size_t n) {
+        return lattice_gadget::matrix<Rq, B>(m, n);
     }
-    template<std::size_t radix, std::size_t digits>
-    constexpr static Vector<Zq> shatter(const Vector<Zq>& f) {
-        Vector<Zq> pieces(f.size() * digits);
-        for (std::size_t i = 0; i < f.size(); ++i) {
-            auto frozen = Zq::freeze(f[i].number());
-            for (std::size_t j = 0; j < digits; ++j) {
-                pieces[i * digits + j] = frozen % radix;
-                frozen /= radix;
-            }
-        }
-        return pieces;
+    constexpr static Matrix<Rq> gadget_small(std::size_t m, std::size_t n) {
+        return lattice_gadget::matrix<Rq, b>(m, n);
+    }
+    constexpr static Vector<Rq> decompose_medium(const Vector<Rq>& f) {
+        return lattice_gadget::decompose<Rq, B, B_digits>(f);
+    }
+    constexpr static Vector<Rq> decompose_small(const Vector<Rq>& f) {
+        return lattice_gadget::decompose<Rq, b, b_digits>(f);
     }
 
     template<typename Z = Zq>
