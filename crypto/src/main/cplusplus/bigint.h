@@ -136,6 +136,46 @@ struct BigInt {
         return r;
     }
 
+    constexpr BigInt& operator <<= (unsigned other) {
+        L c = 0;
+        for (std::size_t i = 0; i < N; ++i) {
+            L d = limbs[i];
+            (limbs[i] <<= other) |= c;
+            c = d >> (sizeof(L) * 8 - other);
+        }
+        return *this;
+    }
+
+    constexpr BigInt operator << (unsigned other) const {
+        L c = 0;
+        BigInt r;
+        for (std::size_t i = 0; i < N; ++i) {
+            r.limbs[i] = (limbs[i] << other) | c;
+            c = limbs[i] >> (sizeof(L) * 8 - other);
+        }
+        return r;
+    }
+
+    constexpr BigInt& operator >>= (unsigned other) {
+        L c = 0;
+        for (std::size_t i = N; i --> 0;) {
+            L d = limbs[i];
+            (limbs[i] >>= other) |= (c << (sizeof(L) * 8 - other));
+            c = d & ((1 << other) - 1);
+        }
+        return *this;
+    }
+
+    constexpr BigInt operator >> (unsigned other) const {
+        L c = 0;
+        BigInt r;
+        for (std::size_t i = N; i --> 0;) {
+            r.limbs[i] = (limbs[i] >> other) | (c << (sizeof(L) * 8 - other));
+            c = limbs[i] & ((1 << other) - 1);
+        }
+        return r;
+    }
+
     constexpr BigInt<N*2> square() const {
 #ifdef BLACKNET_OPTIMIZE
         return *this * *this;
@@ -180,6 +220,9 @@ struct BigInt {
     }
 
     constexpr BigInt douple() const {
+#ifdef BLACKNET_OPTIMIZE
+        return (*this) << 1;
+#else
         L c = 0;
         BigInt r;
         for (std::size_t i = 0; i < N; ++i) {
@@ -187,9 +230,13 @@ struct BigInt {
             c = limbs[i] >> (sizeof(L) * 8 - 1);
         }
         return r;
+#endif
     }
 
     constexpr BigInt halve() const {
+#ifdef BLACKNET_OPTIMIZE
+        return (*this) >> 1;
+#else
         L c = 0;
         BigInt r;
         for (std::size_t i = N; i --> 0;) {
@@ -197,6 +244,7 @@ struct BigInt {
             c = limbs[i] & 1;
         }
         return r;
+#endif
     }
 
     constexpr bool isEven() const {
@@ -243,6 +291,7 @@ private:
     }
 };
 
+typedef BigInt<2> UInt128;
 typedef BigInt<4> UInt256;
 typedef BigInt<8> UInt512;
 typedef BigInt<16> UInt1024;
