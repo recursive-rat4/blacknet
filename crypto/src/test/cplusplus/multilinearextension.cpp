@@ -109,14 +109,6 @@ BOOST_AUTO_TEST_CASE(bind) {
     BOOST_TEST(mle() == evaluations);
 }
 
-BOOST_AUTO_TEST_CASE(homomorphism) {
-    MultilinearExtension<E> mle1({E(14), E(15), E(16), E(17)});
-    std::vector<E> r1{E(18), E(19)};
-    MultilinearExtension<EE> mle2 = mle1.homomorph<EE>();
-    std::vector<EE> r2{EE(18), EE(19)};
-    BOOST_TEST(EE(mle1(r1)) == mle2(r2));
-}
-
 BOOST_AUTO_TEST_CASE(matrix) {
     Hypercube<E> hc(3);
     Matrix<E> a(2, 4, {

@@ -36,6 +36,7 @@ public:
     consteval static PrimeField LEFT_ADDITIVE_IDENTITY() { return PrimeField(0); }
     consteval static PrimeField LEFT_MULTIPLICATIVE_IDENTITY() { return PrimeField(1); }
 
+    using BaseRing = PrimeField;
     using NumericType = UInt256;
 
     UInt256 n;

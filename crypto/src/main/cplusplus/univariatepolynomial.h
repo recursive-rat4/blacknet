@@ -67,15 +67,6 @@ public:
         return 1;
     }
 
-    template<typename S>
-    constexpr UnivariatePolynomial<S> homomorph() const {
-        std::vector<S> t;
-        t.reserve(coefficients.size());
-        for (const auto& i : coefficients)
-            t.emplace_back(i);
-        return UnivariatePolynomial<S>(std::move(t));
-    }
-
     friend std::ostream& operator << (std::ostream& out, const UnivariatePolynomial& val)
     {
         fmt::print(out, "{}", val.coefficients);

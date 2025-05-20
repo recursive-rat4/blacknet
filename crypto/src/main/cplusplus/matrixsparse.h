@@ -76,10 +76,9 @@ struct MatrixSparse {
         return rIndex.size() - 1;
     }
 
-    template<typename S = E>
-    constexpr Vector<S> operator * (const Vector<S>& other) const {
+    constexpr Vector<E> operator * (const Vector<E>& other) const {
         std::size_t rows = rIndex.size() - 1;
-        Vector<S> r(rows, S::LEFT_ADDITIVE_IDENTITY());
+        Vector<E> r(rows, E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < rows; ++i) {
             std::size_t row_start = rIndex[i];
             std::size_t row_end = rIndex[i + 1];
@@ -89,15 +88,6 @@ struct MatrixSparse {
             }
         }
         return r;
-    }
-
-    template<typename S>
-    constexpr MatrixSparse<S> homomorph() const {
-        std::vector<S> t;
-        t.reserve(elements.size());
-        for (const auto& i : elements)
-            t.emplace_back(i);
-        return MatrixSparse<S>(columns, rIndex, cIndex, std::move(t));
     }
 
     constexpr Matrix<E> dense() const {

@@ -30,7 +30,6 @@
 
 #include "eqextension.h"
 #include "matrix.h"
-#include "polynomialring.h"
 #include "vector.h"
 
 namespace blacknet::crypto {
@@ -44,21 +43,27 @@ struct MultilinearExtension {
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
     constexpr MultilinearExtension(std::vector<E>&& coefficients) : coefficients(std::move(coefficients)) {}
     constexpr MultilinearExtension(const Matrix<E>& matrix) : coefficients(matrix.elements) {}
-    template<typename Params>
-    requires(std::same_as<E, typename Params::Z>)
-    constexpr MultilinearExtension(const PolynomialRing<Params>& polynomial) {
+    template<typename S>
+    requires(
+        std::same_as<E, typename S::BaseRing> ||
+        std::same_as<typename E::BaseRing, typename S::BaseRing>
+    )
+    constexpr MultilinearExtension(const S& structure) {
         //TODO __cpp_lib_containers_ranges >= 202202L
-        coefficients.assign(polynomial.coefficients.cbegin(), polynomial.coefficients.cend());
+        coefficients.assign(structure.begin(), structure.end());
     }
     constexpr MultilinearExtension(const Vector<E>& vector) : coefficients(vector.elements) {}
-    template<typename Params>
-    requires(std::same_as<E, typename Params::Z>)
-    constexpr MultilinearExtension(const Vector<PolynomialRing<Params>>& vector) {
-        coefficients.reserve(vector.elements.size() * Params::N);
+    template<typename S>
+    requires(
+        std::same_as<E, typename S::BaseRing> ||
+        std::same_as<typename E::BaseRing, typename S::BaseRing>
+    )
+    constexpr MultilinearExtension(const Vector<S>& vector) {
+        coefficients.reserve(vector.elements.size() * S::size());
         auto inserter = std::back_inserter(coefficients);
         for (std::size_t i = 0; i < vector.elements.size(); ++i)
             std::ranges::copy(
-                vector.elements[i].coefficients,
+                vector.elements[i],
                 inserter
             );
     }
@@ -165,15 +170,6 @@ struct MultilinearExtension {
     constexpr std::size_t variables() const {
         [[assume(std::has_single_bit(coefficients.size()))]];
         return std::countr_zero(coefficients.size());
-    }
-
-    template<typename S>
-    constexpr MultilinearExtension<S> homomorph() const {
-        std::vector<S> t;
-        t.reserve(coefficients.size());
-        for (const auto& i : coefficients)
-            t.emplace_back(i);
-        return MultilinearExtension<S>(std::move(t));
     }
 
     friend std::ostream& operator << (std::ostream& out, const MultilinearExtension& val)

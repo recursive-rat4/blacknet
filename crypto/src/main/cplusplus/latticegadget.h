@@ -30,7 +30,7 @@ namespace {
     template<typename R, std::size_t radix, std::size_t digits>
     constexpr void decompose(R* pieces, const R& f) {
         for (std::size_t i = 0; i < R::dimension(); ++i) {
-            auto frozen = R::Z::freeze(f.coefficients[i].number());
+            auto frozen = R::BaseRing::freeze(f.coefficients[i].number());
             for (std::size_t j = 0; j < digits; ++j) {
                 pieces[j].coefficients[i] = frozen % radix;
                 frozen /= radix;
@@ -57,7 +57,7 @@ namespace {
     constexpr Vector<R> vector(const R& r) {
         Vector<R> p(digits);
         p[0] = r;
-        typename R::Z t{radix};
+        typename R::BaseRing t{radix};
         for (std::size_t i = 1; i < digits; ++i) {
             p[i] = r * t;
             t *= radix;

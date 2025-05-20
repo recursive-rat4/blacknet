@@ -30,8 +30,8 @@ using Zq = Solinas62Ring;
 using Fe2 = Solinas62RingDegree2;
 using Fe3 = Solinas62RingDegree3;
 using Fe4 = Solinas62RingDegree4;
-using Rq = LatticeFold<Solinas62Ring>::Rq;
-using RqIso = LatticeFold<Solinas62Ring>::RqIso;
+using Rq = LatticeFold<Zq, Fe2>::Rq;
+using RqIso = LatticeFold<Zq, Fe2>::RqIso;
 using Rs = std::tuple<Rq, RqIso>;
 
 BOOST_AUTO_TEST_CASE(ZqHex) {

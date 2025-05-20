@@ -83,9 +83,8 @@ public:
         return r;
     }
 
-    template<typename S = E>
-    constexpr Vector<S> operator * (const Vector<S>& other) const {
-        Vector<S> r(rows, S::LEFT_ADDITIVE_IDENTITY());
+    constexpr Vector<E> operator * (const Vector<E>& other) const {
+        Vector<E> r(rows, E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < columns; ++j)
                 r[i] += (*this)[i, j] * other[j];
@@ -123,15 +122,6 @@ public:
         return std::ranges::all_of(elements, [&bound](const E& e) {
             return e.checkInfinityNorm(bound);
         });
-    }
-
-    template<typename S>
-    constexpr Matrix<S> homomorph() const {
-        std::vector<S> t;
-        t.reserve(elements.size());
-        for (const auto& i : elements)
-            t.emplace_back(i);
-        return Matrix<S>(rows, columns, std::move(t));
     }
 
     friend std::ostream& operator << (std::ostream& out, const Matrix& val)

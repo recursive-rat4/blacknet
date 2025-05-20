@@ -35,15 +35,15 @@ namespace blacknet::crypto {
  */
 
 template<
-    typename Z,
-    typename F,
-    template<typename> typename P,
-    typename RO
+    typename R,
+    typename P,
+    typename RO,
+    typename E = R
 >
 class SumCheck {
 public:
     struct Proof {
-        std::vector<UnivariatePolynomial<F>> claims;
+        std::vector<UnivariatePolynomial<R>> claims;
 
         constexpr Proof() = default;
         constexpr Proof(std::size_t capacity) {
@@ -58,25 +58,16 @@ public:
         }
     };
 
-    constexpr static Proof prove(const P<Z>& polynomial, const Z& sum) {
+    constexpr static Proof prove(const P& polynomial, const R& sum) {
         Proof proof(polynomial.variables());
         RO ro;
-        P<F> state(polynomial.template homomorph<F>());
-        F hint;
-        {
-            UnivariatePolynomial<F> claim(proveRound<Z>(polynomial, sum).template homomorph<F>());
+        P state(polynomial);
+        R hint(sum);
+        for (std::size_t round = 0; round < polynomial.variables(); ++round) {
+            UnivariatePolynomial<R> claim(proveRound(state, hint));
             claim.absorb(ro);
             RO fork(ro);
-            F challenge(F::squeeze(fork));
-            state.bind(challenge);
-            hint = claim(challenge);
-            proof.claims.emplace_back(std::move(claim));
-        }
-        for (std::size_t round = 1; round < polynomial.variables(); ++round) {
-            UnivariatePolynomial<F> claim(proveRound<F>(state, hint));
-            claim.absorb(ro);
-            RO fork(ro);
-            F challenge(F::squeeze(fork));
+            E challenge(E::squeeze(fork));
             state.bind(challenge);
             hint = claim(challenge);
             proof.claims.emplace_back(std::move(claim));
@@ -84,33 +75,33 @@ public:
         return proof;
     }
 
-    constexpr static bool verify(const P<Z>& polynomial, const Z& sum, const Proof& proof) {
+    constexpr static bool verify(const P& polynomial, const R& sum, const Proof& proof) {
         if (proof.claims.size() != polynomial.variables())
             return false;
         RO ro;
-        std::vector<F> r(polynomial.variables());
-        F state(sum);
+        std::vector<R> r(polynomial.variables());
+        R state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
             const auto& claim = proof.claims[round];
             if (claim.degree() != polynomial.degree())
                 return false;
-            if (state != claim(F(0)) + claim(F(1)))
+            if (state != claim(R(0)) + claim(R(1)))
                 return false;
             claim.absorb(ro);
             RO fork(ro);
-            F challenge(F::squeeze(fork));
+            E challenge(E::squeeze(fork));
             r[round] = challenge;
             state = claim(challenge);
         }
-        if (state != polynomial.template homomorph<F>()(r))
+        if (state != polynomial(r))
             return false;
         return true;
     }
 
     struct ProofEarlyStopped {
-        F state;
-        UnivariatePolynomial<F> claim;
-        F challenge;
+        R state;
+        UnivariatePolynomial<R> claim;
+        E challenge;
 
         constexpr ProofEarlyStopped() = default;
 
@@ -122,13 +113,13 @@ public:
         }
     };
 
-    constexpr static ProofEarlyStopped proveEarlyStopping(const P<F>& polynomial, const F& sum) {
+    constexpr static ProofEarlyStopped proveEarlyStopping(const P& polynomial, const R& sum) {
         ProofEarlyStopped proof;
         RO ro;
 
-        UnivariatePolynomial<F> claim(proveRound<F>(polynomial, sum));
+        UnivariatePolynomial<R> claim(proveRound(polynomial, sum));
         claim.absorb(ro);
-        F challenge(F::squeeze(ro));
+        E challenge(E::squeeze(ro));
         proof.state = claim(challenge);
         proof.claim = std::move(claim);
         proof.challenge = std::move(challenge);
@@ -136,15 +127,15 @@ public:
         return proof;
     }
 
-    constexpr static bool verifyEarlyStopping(const P<F>& polynomial, const F& sum, const ProofEarlyStopped& proof) {
+    constexpr static bool verifyEarlyStopping(const P& polynomial, const R& sum, const ProofEarlyStopped& proof) {
         RO ro;
 
         if (proof.claim.degree() != polynomial.degree())
             return false;
-        if (sum != proof.claim(F(0)) + proof.claim(F(1)))
+        if (sum != proof.claim(R(0)) + proof.claim(R(1)))
             return false;
         proof.claim.absorb(ro);
-        F challenge(F::squeeze(ro));
+        E challenge(E::squeeze(ro));
         if (proof.challenge != challenge)
             return false;
         if (proof.state != proof.claim(proof.challenge))
@@ -153,49 +144,48 @@ public:
         return true;
     }
 private:
-    template<typename S>
-    constexpr static UnivariatePolynomial<S> proveRound(const P<S>& state, const S& hint) {
-        std::vector<S> evaluations(1 << (state.variables() - 1));
+    constexpr static UnivariatePolynomial<R> proveRound(const P& state, const R& hint) {
+        std::vector<R> evaluations(1 << (state.variables() - 1));
         if (state.degree() == 5) {
-            state.template bind<Z(-2), util::Assign<S>>(evaluations);
-            S n2(util::Sum<S>::call(evaluations));
-            state.template bind<Z(-1), util::Assign<S>>(evaluations);
-            S n1(util::Sum<S>::call(evaluations));
-            state.template bind<Z(1), util::Assign<S>>(evaluations);
-            S p1(util::Sum<S>::call(evaluations));
-            state.template bind<Z(2), util::Assign<S>>(evaluations);
-            S p2(util::Sum<S>::call(evaluations));
-            state.template bind<Z(3), util::Assign<S>>(evaluations);
-            S p3(util::Sum<S>::call(evaluations));
-            return Interpolation<Z, S>::balanced(n2, n1, hint - p1, p1, p2, p3);
+            state.template bind<R(-2), util::Assign<R>>(evaluations);
+            R n2(util::Sum<R>::call(evaluations));
+            state.template bind<R(-1), util::Assign<R>>(evaluations);
+            R n1(util::Sum<R>::call(evaluations));
+            state.template bind<R(1), util::Assign<R>>(evaluations);
+            R p1(util::Sum<R>::call(evaluations));
+            state.template bind<R(2), util::Assign<R>>(evaluations);
+            R p2(util::Sum<R>::call(evaluations));
+            state.template bind<R(3), util::Assign<R>>(evaluations);
+            R p3(util::Sum<R>::call(evaluations));
+            return Interpolation<R>::balanced(n2, n1, hint - p1, p1, p2, p3);
         } else if (state.degree() == 4) {
-            state.template bind<Z(-2), util::Assign<S>>(evaluations);
-            S n2(util::Sum<S>::call(evaluations));
-            state.template bind<Z(-1), util::Assign<S>>(evaluations);
-            S n1(util::Sum<S>::call(evaluations));
-            state.template bind<Z(1), util::Assign<S>>(evaluations);
-            S p1(util::Sum<S>::call(evaluations));
-            state.template bind<Z(2), util::Assign<S>>(evaluations);
-            S p2(util::Sum<S>::call(evaluations));
-            return Interpolation<Z, S>::balanced(n2, n1, hint - p1, p1, p2);
+            state.template bind<R(-2), util::Assign<R>>(evaluations);
+            R n2(util::Sum<R>::call(evaluations));
+            state.template bind<R(-1), util::Assign<R>>(evaluations);
+            R n1(util::Sum<R>::call(evaluations));
+            state.template bind<R(1), util::Assign<R>>(evaluations);
+            R p1(util::Sum<R>::call(evaluations));
+            state.template bind<R(2), util::Assign<R>>(evaluations);
+            R p2(util::Sum<R>::call(evaluations));
+            return Interpolation<R>::balanced(n2, n1, hint - p1, p1, p2);
         } else if (state.degree() == 3) {
-            state.template bind<Z(-1), util::Assign<S>>(evaluations);
-            S n1(util::Sum<S>::call(evaluations));
-            state.template bind<Z(1), util::Assign<S>>(evaluations);
-            S p1(util::Sum<S>::call(evaluations));
-            state.template bind<Z(2), util::Assign<S>>(evaluations);
-            S p2(util::Sum<S>::call(evaluations));
-            return Interpolation<Z, S>::balanced(n1, hint - p1, p1, p2);
+            state.template bind<R(-1), util::Assign<R>>(evaluations);
+            R n1(util::Sum<R>::call(evaluations));
+            state.template bind<R(1), util::Assign<R>>(evaluations);
+            R p1(util::Sum<R>::call(evaluations));
+            state.template bind<R(2), util::Assign<R>>(evaluations);
+            R p2(util::Sum<R>::call(evaluations));
+            return Interpolation<R>::balanced(n1, hint - p1, p1, p2);
         } else if (state.degree() == 2) {
-            state.template bind<Z(-1), util::Assign<S>>(evaluations);
-            S n1(util::Sum<S>::call(evaluations));
-            state.template bind<Z(1), util::Assign<S>>(evaluations);
-            S p1(util::Sum<S>::call(evaluations));
-            return Interpolation<Z, S>::balanced(n1, hint - p1, p1);
+            state.template bind<R(-1), util::Assign<R>>(evaluations);
+            R n1(util::Sum<R>::call(evaluations));
+            state.template bind<R(1), util::Assign<R>>(evaluations);
+            R p1(util::Sum<R>::call(evaluations));
+            return Interpolation<R>::balanced(n1, hint - p1, p1);
         } else if (state.degree() == 1) {
-            state.template bind<Z(1), util::Assign<S>>(evaluations);
-            S p1(util::Sum<S>::call(evaluations));
-            return Interpolation<Z, S>::balanced(hint - p1, p1);
+            state.template bind<R(1), util::Assign<R>>(evaluations);
+            R p1(util::Sum<R>::call(evaluations));
+            return Interpolation<R>::balanced(hint - p1, p1);
         } else {
             throw std::runtime_error(fmt::format(
                 "Sum-check prover not implemented for degree {}", state.degree()

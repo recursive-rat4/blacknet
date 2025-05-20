@@ -87,33 +87,32 @@ public:
         return out;
     }
 
-    template<typename Z = E>
     class Polynomial {
         std::size_t deg;
         std::size_t var;
-        std::vector<MultilinearExtension<Z>> mz;
+        std::vector<MultilinearExtension<E>> mz;
         std::vector<std::vector<std::size_t>> s;
-        std::vector<Z> c;
+        std::vector<E> c;
     public:
         constexpr Polynomial(
             std::size_t deg,
             std::size_t var,
-            const std::vector<MultilinearExtension<Z>>& mz,
+            const std::vector<MultilinearExtension<E>>& mz,
             const std::vector<std::vector<std::size_t>>& s,
-            const std::vector<Z>& c
+            const std::vector<E>& c
         ) : deg(deg), var(var), mz(mz), s(s), c(c) {}
         constexpr Polynomial(
             std::size_t deg,
             std::size_t var,
-            std::vector<MultilinearExtension<Z>>&& mz,
+            std::vector<MultilinearExtension<E>>&& mz,
             std::vector<std::vector<std::size_t>>&& s,
-            std::vector<Z>&& c
+            std::vector<E>&& c
         ) : deg(deg), var(var), mz(std::move(mz)), s(std::move(s)), c(std::move(c)) {}
 
-        constexpr Z operator () (const std::vector<Z>& point) const {
-            Z sigma(Z::LEFT_ADDITIVE_IDENTITY());
+        constexpr E operator () (const std::vector<E>& point) const {
+            E sigma(E::LEFT_ADDITIVE_IDENTITY());
             for (std::size_t i = 0; i < c.size(); ++i) {
-                Z circle(c[i]);
+                E circle(c[i]);
                 for (std::size_t j : s[i]) {
                     circle *= mz[j](point);
                 }
@@ -122,20 +121,20 @@ public:
             return sigma;
         }
 
-        template<Z e, typename Fuse>
-        constexpr void bind(std::vector<Z>& hypercube) const {
-            std::vector<Z> sigma(hypercube.size(), Z::LEFT_ADDITIVE_IDENTITY());
+        template<E e, typename Fuse>
+        constexpr void bind(std::vector<E>& hypercube) const {
+            std::vector<E> sigma(hypercube.size(), E::LEFT_ADDITIVE_IDENTITY());
             for (std::size_t i = 0; i < c.size(); ++i) {
-                std::vector<Z> circle(hypercube.size(), c[i]);
+                std::vector<E> circle(hypercube.size(), c[i]);
                 for (std::size_t j : s[i]) {
-                    mz[j].template bind<e, util::Mul<Z>>(circle);
+                    mz[j].template bind<e, util::Mul<E>>(circle);
                 }
-                util::Add<Z>::call(sigma, circle);
+                util::Add<E>::call(sigma, circle);
             }
             Fuse::call(hypercube, std::move(sigma));
         }
 
-        constexpr void bind(const Z& e) {
+        constexpr void bind(const E& e) {
             --var;
             for (std::size_t i = 0; i < mz.size(); ++i)
                 mz[i].bind(e);
@@ -148,23 +147,9 @@ public:
         constexpr std::size_t variables() const {
             return var;
         }
-
-        template<typename S>
-        constexpr Polynomial<S> homomorph() const {
-            std::vector<MultilinearExtension<S>> hmz;
-            hmz.reserve(mz.size());
-            for (std::size_t i = 0; i < mz.size(); ++i)
-                hmz.emplace_back(mz[i].template homomorph<S>());
-            std::vector<std::vector<std::size_t>> hs(s);
-            std::vector<S> hc;
-            hc.reserve(c.size());
-            for (std::size_t i = 0; i < c.size(); ++i)
-                hc.emplace_back(c[i]);
-            return Polynomial<S>(deg, var, std::move(hmz), std::move(hs), std::move(hc));
-        }
     };
 
-    constexpr Polynomial<E> polynomial(const Vector<E>& z) const {
+    constexpr Polynomial polynomial(const Vector<E>& z) const {
         std::vector<MultilinearExtension<E>> mz;
         mz.reserve(m.size());
         for (std::size_t i = 0; i < m.size(); ++i)

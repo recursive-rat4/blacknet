@@ -43,6 +43,7 @@ public:
     consteval static IntegerRing LEFT_ADDITIVE_IDENTITY() { return IntegerRing(0); }
     consteval static IntegerRing LEFT_MULTIPLICATIVE_IDENTITY() { return IntegerRing(1); }
 
+    using BaseRing = IntegerRing;
     using NumericType = I;
 
     I n;

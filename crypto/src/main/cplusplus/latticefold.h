@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_LATTICEFOLD_H
 #define BLACKNET_CRYPTO_LATTICEFOLD_H
 
+#include <concepts>
 #include <random>
 
 #include "ajtaicommitment.h"
@@ -43,7 +44,11 @@ namespace blacknet::crypto {
  * https://eprint.iacr.org/2024/257
  */
 
-template<typename Zq>
+template<
+    typename Zq,
+    typename Fq
+>
+requires(std::same_as<Zq, typename Fq::BaseRing>)
 struct LatticeFold {
     constexpr static ssize_t b = 2;
     static const std::size_t b_digits = 64;
@@ -114,29 +119,28 @@ struct LatticeFold {
         return lattice_gadget::decompose<Rq, b, b_digits>(f);
     }
 
-    template<typename Z = Zq>
     class G1 {
         // r 何处
-        EqExtension<Z> eq;
-        MultilinearExtension<Z> mle;
+        EqExtension<Fq> eq;
+        MultilinearExtension<Fq> mle;
     public:
-        constexpr G1(const std::vector<Z>& r, const Vector<Rq>& f) : eq(r), mle(f) {}
-        constexpr G1(const Z& alpha, const std::vector<Z>& r, const Vector<Rq>& f) : eq(r, alpha), mle(f) {}
-        constexpr G1(EqExtension<Z>&& eq, MultilinearExtension<Z>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
+        constexpr G1(const std::vector<Fq>& r, const Vector<Rq>& f) : eq(r), mle(f) {}
+        constexpr G1(const Fq& alpha, const std::vector<Fq>& r, const Vector<Rq>& f) : eq(r, alpha), mle(f) {}
+        constexpr G1(EqExtension<Fq>&& eq, MultilinearExtension<Fq>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
-        constexpr Z operator () (const std::vector<Z>& point) const {
+        constexpr Fq operator () (const std::vector<Fq>& point) const {
             return eq(point) * mle(point);
         }
 
-        template<Z e, typename Fuse>
-        constexpr void bind(std::vector<Z>& hypercube) const {
-            std::vector<Z> t(hypercube.size());
-            mle.template bind<e, util::Assign<Z>>(t);
-            eq.template bind<e, util::Mul<Z>>(t);
+        template<Fq e, typename Fuse>
+        constexpr void bind(std::vector<Fq>& hypercube) const {
+            std::vector<Fq> t(hypercube.size());
+            mle.template bind<e, util::Assign<Fq>>(t);
+            eq.template bind<e, util::Mul<Fq>>(t);
             Fuse::call(hypercube, std::move(t));
         }
 
-        constexpr void bind(const Z& e) {
+        constexpr void bind(const Fq& e) {
             eq.bind(e);
             mle.bind(e);
         }
@@ -148,41 +152,35 @@ struct LatticeFold {
         constexpr std::size_t variables() const {
             return eq.variables();
         }
-
-        template<typename S>
-        constexpr G1<S> homomorph() const {
-            return G1<S>(eq.template homomorph<S>(), mle.template homomorph<S>());
-        }
     };
 
-    template<typename Z = Zq>
     class G2 {
         static_assert(b == 2, "Not implemented");
         // G2(x) = μ （ mle²[f](x) - mle[f](x) ）
-        Z mu;
-        MultilinearExtension<Z> mle;
+        Fq mu;
+        MultilinearExtension<Fq> mle;
     public:
-        constexpr G2(const Vector<Rq>& f) : mu(Z::LEFT_MULTIPLICATIVE_IDENTITY()), mle(f) {}
-        constexpr G2(const Z& mu, const Vector<Rq>& f) : mu(mu), mle(f) {}
-        constexpr G2(Z&& mu, MultilinearExtension<Z>&& mle) : mu(std::move(mu)), mle(std::move(mle)) {}
+        constexpr G2(const Vector<Rq>& f) : mu(Fq::LEFT_MULTIPLICATIVE_IDENTITY()), mle(f) {}
+        constexpr G2(const Fq& mu, const Vector<Rq>& f) : mu(mu), mle(f) {}
+        constexpr G2(Fq&& mu, MultilinearExtension<Fq>&& mle) : mu(std::move(mu)), mle(std::move(mle)) {}
 
-        constexpr Z operator () (const std::vector<Z>& point) const {
-            Z t(mle(point));
+        constexpr Fq operator () (const std::vector<Fq>& point) const {
+            Fq t(mle(point));
             return mu * (t.square() - t);
         }
 
-        template<Z e, typename Fuse>
-        constexpr void bind(std::vector<Z>& hypercube) const {
-            std::vector<Z> t(hypercube.size());
-            mle.template bind<e, util::Assign<Z>>(t);
-            std::vector<Z> r(t);
-            util::Mul<Z>::call(r, t);
-            util::Sub<Z>::call(r, t);
-            util::Mul<Z>::call(r, mu);
+        template<Fq e, typename Fuse>
+        constexpr void bind(std::vector<Fq>& hypercube) const {
+            std::vector<Fq> t(hypercube.size());
+            mle.template bind<e, util::Assign<Fq>>(t);
+            std::vector<Fq> r(t);
+            util::Mul<Fq>::call(r, t);
+            util::Sub<Fq>::call(r, t);
+            util::Mul<Fq>::call(r, mu);
             Fuse::call(hypercube, std::move(r));
         }
 
-        constexpr void bind(const Z& e) {
+        constexpr void bind(const Fq& e) {
             mle.bind(e);
         }
 
@@ -193,46 +191,39 @@ struct LatticeFold {
         constexpr std::size_t variables() const {
             return mle.variables();
         }
-
-        template<typename S>
-        constexpr G2<S> homomorph() const {
-            return G2<S>(S(mu), mle.template homomorph<S>());
-        }
     };
 
     // r 何处
-    template<typename Z = Zq>
-    using G3 = CustomizableConstraintSystem<Z>::template Polynomial<Z>;
+    using G3 = CustomizableConstraintSystem<Fq>::Polynomial;
 
-    template<typename Z = Zq>
     class GEval {
-        Polynomial<Z, G1> g1s;
+        Polynomial<Fq, G1> g1s;
     public:
         constexpr GEval(
-            const std::vector<Z>& alpha,
-            const std::vector<std::vector<Z>>& r,
+            const std::vector<Fq>& alpha,
+            const std::vector<std::vector<Fq>>& r,
             const std::vector<Vector<Rq>>& f
         ) : g1s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
-                g1s(G1<Z>(alpha[i], r[i], f[i]));
+                g1s(G1(alpha[i], r[i], f[i]));
             }
         }
-        constexpr GEval(Polynomial<Z, G1>&& g1s) : g1s(std::move(g1s)) {}
+        constexpr GEval(Polynomial<Fq, G1>&& g1s) : g1s(std::move(g1s)) {}
 
-        constexpr Z operator () (const std::vector<Z>& point) const {
-            Z r;
-            g1s.template apply<util::Add<Z>, util::Assign<Z>>(r, point);
+        constexpr Fq operator () (const std::vector<Fq>& point) const {
+            Fq r;
+            g1s.template apply<util::Add<Fq>, util::Assign<Fq>>(r, point);
             return r;
         }
 
-        template<Z e, typename Fuse>
-        constexpr void bind(std::vector<Z>& hypercube) const {
-            std::vector<Z> t(hypercube.size());
-            g1s.template bind<e, util::Add<Z>, util::Assign<Z>>(t);
+        template<Fq e, typename Fuse>
+        constexpr void bind(std::vector<Fq>& hypercube) const {
+            std::vector<Fq> t(hypercube.size());
+            g1s.template bind<e, util::Add<Fq>, util::Assign<Fq>>(t);
             Fuse::call(hypercube, std::move(t));
         }
 
-        constexpr void bind(const Z& e) {
+        constexpr void bind(const Fq& e) {
             g1s.bind(e);
         }
 
@@ -243,45 +234,39 @@ struct LatticeFold {
         constexpr std::size_t variables() const {
             return g1s.variables();
         }
-
-        template<typename S>
-        constexpr GEval<S> homomorph() const {
-            return GEval<S>(g1s.template homomorph<S>());
-        }
     };
 
-    template<typename Z = Zq>
     class GNorm {
         // GNorm(x) = pow(β, x) Σ G2(μ, f, x)
-        PowExtension<Z> pow;
-        Polynomial<Z, G2> g2s;
+        PowExtension<Fq> pow;
+        Polynomial<Fq, G2> g2s;
     public:
         constexpr GNorm(
-            const Z& beta,
-            const std::vector<Z>& mu,
+            const Fq& beta,
+            const std::vector<Fq>& mu,
             const std::vector<Vector<Rq>>& f
         ) : pow(beta, std::countr_zero(f[0].size() * D)), g2s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
-                g2s(G2<Z>(mu[i], f[i]));
+                g2s(G2(mu[i], f[i]));
             }
         }
-        constexpr GNorm(PowExtension<Z>&& pow, Polynomial<Z, G2>&& g2s) : pow(std::move(pow)), g2s(std::move(g2s)) {}
+        constexpr GNorm(PowExtension<Fq>&& pow, Polynomial<Fq, G2>&& g2s) : pow(std::move(pow)), g2s(std::move(g2s)) {}
 
-        constexpr Z operator () (const std::vector<Z>& point) const {
-            Z r;
-            g2s.template apply<util::Add<Z>, util::Assign<Z>>(r, point);
+        constexpr Fq operator () (const std::vector<Fq>& point) const {
+            Fq r;
+            g2s.template apply<util::Add<Fq>, util::Assign<Fq>>(r, point);
             return r * pow(point);
         }
 
-        template<Z e, typename Fuse>
-        constexpr void bind(std::vector<Z>& hypercube) const {
-            std::vector<Z> t(hypercube.size());
-            g2s.template bind<e, util::Add<Z>, util::Assign<Z>>(t);
-            pow.template bind<e, util::Mul<Z>>(t);
+        template<Fq e, typename Fuse>
+        constexpr void bind(std::vector<Fq>& hypercube) const {
+            std::vector<Fq> t(hypercube.size());
+            g2s.template bind<e, util::Add<Fq>, util::Assign<Fq>>(t);
+            pow.template bind<e, util::Mul<Fq>>(t);
             Fuse::call(hypercube, std::move(t));
         }
 
-        constexpr void bind(const Z& e) {
+        constexpr void bind(const Fq& e) {
             pow.bind(e);
             g2s.bind(e);
         }
@@ -293,41 +278,35 @@ struct LatticeFold {
         constexpr std::size_t variables() const {
             return pow.variables();
         }
-
-        template<typename S>
-        constexpr GNorm<S> homomorph() const {
-            return GNorm<S>(pow.template homomorph<S>(), g2s.template homomorph<S>());
-        }
     };
 
     // 从 Πꟳᴼᴸᴰ
-    template<typename Z = Zq>
     class GFold {
-        GEval<Z> geval;
-        GNorm<Z> gnorm;
+        GEval geval;
+        GNorm gnorm;
     public:
         constexpr GFold(
-            const std::vector<Z>& alpha,
-            const Z& beta,
-            const std::vector<Z>& mu,
-            const std::vector<std::vector<Z>>& r,
+            const std::vector<Fq>& alpha,
+            const Fq& beta,
+            const std::vector<Fq>& mu,
+            const std::vector<std::vector<Fq>>& r,
             const std::vector<Vector<Rq>>& f
         ) : geval(alpha, r, f), gnorm(beta, mu, f) {}
-        constexpr GFold(GEval<Z>&& geval, GNorm<Z>&& gnorm) : geval(std::move(geval)), gnorm(std::move(gnorm)) {}
+        constexpr GFold(GEval&& geval, GNorm&& gnorm) : geval(std::move(geval)), gnorm(std::move(gnorm)) {}
 
-        constexpr Z operator () (const std::vector<Z>& point) const {
+        constexpr Fq operator () (const std::vector<Fq>& point) const {
             return geval(point) + gnorm(point);
         }
 
-        template<Z e, typename Fuse>
-        constexpr void bind(std::vector<Z>& hypercube) const {
-            std::vector<Z> t(hypercube.size());
-            geval.template bind<e, util::Assign<Z>>(t);
-            gnorm.template bind<e, util::Add<Z>>(t);
+        template<Fq e, typename Fuse>
+        constexpr void bind(std::vector<Fq>& hypercube) const {
+            std::vector<Fq> t(hypercube.size());
+            geval.template bind<e, util::Assign<Fq>>(t);
+            gnorm.template bind<e, util::Add<Fq>>(t);
             Fuse::call(hypercube, std::move(t));
         }
 
-        constexpr void bind(const Z& e) {
+        constexpr void bind(const Fq& e) {
             geval.bind(e);
             gnorm.bind(e);
         }
@@ -338,11 +317,6 @@ struct LatticeFold {
 
         constexpr std::size_t variables() const {
             return gnorm.variables();
-        }
-
-        template<typename S>
-        constexpr GFold<S> homomorph() const {
-            return GFold<S>(geval.template homomorph<S>(), gnorm.template homomorph<S>());
         }
     };
 };

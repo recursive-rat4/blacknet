@@ -33,9 +33,9 @@ namespace blacknet::crypto {
 template<typename Params>
 struct PolynomialRing {
 private:
+    using Z = Params::Z;
     constexpr static const std::size_t N = Params::N;
 public:
-    using Z = Params::Z;
 
     consteval static PolynomialRing LEFT_ADDITIVE_IDENTITY() {
         PolynomialRing t;
@@ -51,6 +51,7 @@ public:
         return t;
     }
 
+    using BaseRing = Z;
     using NumericType = Z::NumericType;
 
     std::array<Z, N> coefficients;
@@ -69,7 +70,11 @@ public:
 
     constexpr bool operator == (const PolynomialRing&) const = default;
 
-    consteval static std::size_t dimension() {
+    consteval static std::size_t size() noexcept {
+        return dimension();
+    }
+
+    consteval static std::size_t dimension() noexcept {
         return Params::N;
     }
 
@@ -163,6 +168,22 @@ public:
         });
     }
 
+    constexpr decltype(auto) begin() noexcept {
+        return coefficients.begin();
+    }
+
+    constexpr decltype(auto) begin() const noexcept {
+        return coefficients.begin();
+    }
+
+    constexpr decltype(auto) end() noexcept {
+        return coefficients.end();
+    }
+
+    constexpr decltype(auto) end() const noexcept {
+        return coefficients.end();
+    }
+
     friend std::ostream& operator << (std::ostream& out, const PolynomialRing& val)
     {
         std::array<Z, N> coefficients(val.coefficients);
@@ -216,8 +237,5 @@ public:
 };
 
 }
-
-template<typename Params>
-struct fmt::formatter<blacknet::crypto::PolynomialRing<Params>> : ostream_formatter {};
 
 #endif

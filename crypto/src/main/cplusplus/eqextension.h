@@ -108,15 +108,6 @@ struct EqExtension {
         return coefficients.size();
     }
 
-    template<typename S>
-    constexpr EqExtension<S> homomorph() const {
-        std::vector<S> t;
-        t.reserve(coefficients.size());
-        for (const auto& i : coefficients)
-            t.emplace_back(i);
-        return EqExtension<S>(std::move(t), S(z));
-    }
-
     friend std::ostream& operator << (std::ostream& out, const EqExtension& val)
     {
         return out << '(' << val.coefficients << ", " << val.z << ')';

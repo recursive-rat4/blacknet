@@ -57,7 +57,11 @@ struct Module {
 
     constexpr bool operator == (const Module&) const = default;
 
-    consteval static std::size_t rank() {
+    consteval static std::size_t size() noexcept {
+        return rank();
+    }
+
+    consteval static std::size_t rank() noexcept {
         return N;
     }
 
@@ -119,6 +123,22 @@ struct Module {
         for (std::size_t i = 0; i < N; ++i)
             r.components[i] = components[i].douple();
         return r;
+    }
+
+    constexpr decltype(auto) begin() noexcept {
+        return components.begin();
+    }
+
+    constexpr decltype(auto) begin() const noexcept {
+        return components.begin();
+    }
+
+    constexpr decltype(auto) end() noexcept {
+        return components.end();
+    }
+
+    constexpr decltype(auto) end() const noexcept {
+        return components.end();
     }
 
     friend std::ostream& operator << (std::ostream& out, const Module& val)

@@ -22,36 +22,35 @@
 
 namespace blacknet::crypto {
 
-template<
-    typename Z,
-    typename S
->
+template<typename R>
 struct Interpolation {
-    constexpr static UnivariatePolynomial<S> balanced(const S& z0, const S& p1) {
-        return UnivariatePolynomial<S>{z0, p1 - z0};
+    using Z = R::BaseRing;
+
+    constexpr static UnivariatePolynomial<R> balanced(const R& z0, const R& p1) {
+        return UnivariatePolynomial<R>{z0, p1 - z0};
     }
-    constexpr static UnivariatePolynomial<S> balanced(const S& n1, const S& z0, const S& p1) {
+    constexpr static UnivariatePolynomial<R> balanced(const R& n1, const R& z0, const R& p1) {
         // Undefined behaviour is prohibited in consteval
         static const Z inv2 = Z(2).invert().value();
 
-        S a(p1 * inv2 + n1 * inv2 - z0);
-        S b(p1 * inv2 - n1 * inv2);
-        S c(z0);
-        return UnivariatePolynomial<S>{c, b, a};
+        R a(p1 * inv2 + n1 * inv2 - z0);
+        R b(p1 * inv2 - n1 * inv2);
+        R c(z0);
+        return UnivariatePolynomial<R>{c, b, a};
     }
-    constexpr static UnivariatePolynomial<S> balanced(const S& n1, const S& z0, const S& p1, const S& p2) {
+    constexpr static UnivariatePolynomial<R> balanced(const R& n1, const R& z0, const R& p1, const R& p2) {
         // Undefined behaviour is prohibited in consteval
         static const Z inv2 = Z(2).invert().value();
         static const Z inv3 = Z(3).invert().value();
         static const Z inv6 = Z(6).invert().value();
 
-        S a(z0 * inv2 - p1 * inv2 + p2 * inv6 - n1 * inv6);
-        S b(- z0 + p1 * inv2 + n1 * inv2);
-        S c(- z0 * inv2 + p1 - p2 * inv6 - n1 * inv3);
-        S d(z0);
-        return UnivariatePolynomial<S>{d, c, b, a};
+        R a(z0 * inv2 - p1 * inv2 + p2 * inv6 - n1 * inv6);
+        R b(- z0 + p1 * inv2 + n1 * inv2);
+        R c(- z0 * inv2 + p1 - p2 * inv6 - n1 * inv3);
+        R d(z0);
+        return UnivariatePolynomial<R>{d, c, b, a};
     }
-    constexpr static UnivariatePolynomial<S> balanced(const S& n2, const S& n1, const S& z0, const S& p1, const S& p2) {
+    constexpr static UnivariatePolynomial<R> balanced(const R& n2, const R& n1, const R& z0, const R& p1, const R& p2) {
         // Undefined behaviour is prohibited in consteval
         static const Z mul_2_div_3 = Z(2) * Z(3).invert().value();
         static const Z inv4 = Z(4).invert().value();
@@ -59,14 +58,14 @@ struct Interpolation {
         static const Z inv12 = Z(12).invert().value();
         static const Z inv24 = Z(24).invert().value();
 
-        S a(z0 * inv4 - p1 * inv6 + p2 * inv24 - n1 * inv6 + n2 * inv24);
-        S b(- p1 * inv6 + p2 * inv12 + n1 * inv6 - n2 * inv12);
-        S c(- z0 * Z(5) * inv4 + p1 * mul_2_div_3 - p2 * inv24 + n1 * mul_2_div_3 - n2 * inv24);
-        S d(p1 * mul_2_div_3 - p2 * inv12 - n1 * mul_2_div_3 + n2 * inv12);
-        S e(z0);
-        return UnivariatePolynomial<S>{e, d, c, b, a};
+        R a(z0 * inv4 - p1 * inv6 + p2 * inv24 - n1 * inv6 + n2 * inv24);
+        R b(- p1 * inv6 + p2 * inv12 + n1 * inv6 - n2 * inv12);
+        R c(- z0 * Z(5) * inv4 + p1 * mul_2_div_3 - p2 * inv24 + n1 * mul_2_div_3 - n2 * inv24);
+        R d(p1 * mul_2_div_3 - p2 * inv12 - n1 * mul_2_div_3 + n2 * inv12);
+        R e(z0);
+        return UnivariatePolynomial<R>{e, d, c, b, a};
     }
-    constexpr static UnivariatePolynomial<S> balanced(const S& n2, const S& n1, const S& z0, const S& p1, const S& p2, const S& p3) {
+    constexpr static UnivariatePolynomial<R> balanced(const R& n2, const R& n1, const R& z0, const R& p1, const R& p2, const R& p3) {
         // Undefined behaviour is prohibited in consteval
         static const Z mul_2_div_3 = Z(2) * Z(3).invert().value();
         static const Z mul_5_div_4 = Z(5) * Z(4).invert().value();
@@ -83,13 +82,13 @@ struct Interpolation {
         static const Z inv30 = Z(30).invert().value();
         static const Z inv120 = Z(120).invert().value();
 
-        S a(- z0 * inv12 + p1 * inv12 - p2 * inv24 + p3 * inv120 + n1 * inv24 - n2 * inv120);
-        S b(z0 * inv4 - p1 * inv6 + p2 * inv24 - n1 * inv6 + n2 * inv24);
-        S c(z0 * mul_5_div_12 - p1 * mul_7_div_12 + p2 * mul_7_div_24 - p3 * inv24 - n1 * inv24 - n2 * inv24);
-        S d(- z0 * mul_5_div_4 + p1 * mul_2_div_3 - p2 * inv24 + n1 * mul_2_div_3 - n2 * inv24);
-        S e(- z0 * inv3 + p1 - p2 * inv4 + p3 * inv30 - n1 * inv2 + n2 * inv20);
-        S f(z0);
-        return UnivariatePolynomial<S>{f, e, d, c, b, a};
+        R a(- z0 * inv12 + p1 * inv12 - p2 * inv24 + p3 * inv120 + n1 * inv24 - n2 * inv120);
+        R b(z0 * inv4 - p1 * inv6 + p2 * inv24 - n1 * inv6 + n2 * inv24);
+        R c(z0 * mul_5_div_12 - p1 * mul_7_div_12 + p2 * mul_7_div_24 - p3 * inv24 - n1 * inv24 - n2 * inv24);
+        R d(- z0 * mul_5_div_4 + p1 * mul_2_div_3 - p2 * inv24 + n1 * mul_2_div_3 - n2 * inv24);
+        R e(- z0 * inv3 + p1 - p2 * inv4 + p3 * inv30 - n1 * inv2 + n2 * inv20);
+        R f(z0);
+        return UnivariatePolynomial<R>{f, e, d, c, b, a};
     }
 };
 

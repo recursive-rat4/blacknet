@@ -20,7 +20,6 @@
 #include "matrix.h"
 #include "matrixsparse.h"
 #include "pervushin.h"
-#include "pervushinfield.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
@@ -28,7 +27,6 @@ using namespace blacknet::crypto;
 BOOST_AUTO_TEST_SUITE(MatriceSparses)
 
 using R = PervushinRing;
-using RE = PervushinRingDegree2;
 
 BOOST_AUTO_TEST_CASE(Conversion) {
     MatrixSparse<R> ms(
@@ -68,8 +66,6 @@ BOOST_AUTO_TEST_CASE(Product) {
         R(7426),
     };
     BOOST_TEST(c == a * b);
-    BOOST_TEST(c.template homomorph<RE>() == a * b.template homomorph<RE>());
-    BOOST_TEST(c.template homomorph<RE>() == a.template homomorph<RE>() * b.template homomorph<RE>());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

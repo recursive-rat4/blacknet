@@ -26,19 +26,19 @@
 
 namespace blacknet::crypto {
 
-template<typename R, template<typename> typename P>
+template<typename R, typename P>
 class Polynomial {
-    std::vector<P<R>> polynomials;
+    std::vector<P> polynomials;
 public:
     constexpr Polynomial(std::size_t capacity) {
         polynomials.reserve(capacity);
     }
-    constexpr Polynomial(std::vector<P<R>>&& polynomials) : polynomials(std::move(polynomials)) {}
-    constexpr Polynomial(const Polynomial&) = delete;
+    constexpr Polynomial(std::vector<P>&& polynomials) : polynomials(std::move(polynomials)) {}
+    constexpr Polynomial(const Polynomial&) = default;
     constexpr Polynomial(Polynomial&&) noexcept = default;
     constexpr ~Polynomial() noexcept = default;
 
-    constexpr Polynomial& operator = (const Polynomial&) = delete;
+    constexpr Polynomial& operator = (const Polynomial&) = default;
     constexpr Polynomial& operator = (Polynomial&&) noexcept = default;
 
     template<typename Fuse1, typename Fuse0 = Fuse1>
@@ -53,7 +53,7 @@ public:
         }
     }
 
-    constexpr Polynomial& operator () (P<R>&& other) {
+    constexpr Polynomial& operator () (P&& other) {
         polynomials.emplace_back(std::move(other));
         return *this;
     }
@@ -77,15 +77,6 @@ public:
 
     constexpr std::size_t variables() const {
         return polynomials[0].variables();
-    }
-
-    template<typename S>
-    constexpr Polynomial<S, P> homomorph() const {
-        std::vector<P<S>> t;
-        t.reserve(polynomials.size());
-        for (const auto& i : polynomials)
-            t.emplace_back(i.template homomorph<S>());
-        return Polynomial<S, P>(std::move(t));
     }
 
     friend std::ostream& operator << (std::ostream& out, const Polynomial& val)

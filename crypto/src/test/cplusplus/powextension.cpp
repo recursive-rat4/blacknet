@@ -24,7 +24,6 @@
 #include "hypercube.h"
 #include "powextension.h"
 #include "solinas62.h"
-#include "solinas62field.h"
 #include "util.h"
 
 using namespace blacknet::crypto;
@@ -32,7 +31,6 @@ using namespace blacknet::crypto;
 BOOST_AUTO_TEST_SUITE(PowExtensions)
 
 using E = Solinas62Ring;
-using EE = Solinas62RingDegree2;
 
 BOOST_AUTO_TEST_CASE(meta) {
     E tau(7);
@@ -99,14 +97,6 @@ BOOST_AUTO_TEST_CASE(bind) {
         )) {
         BOOST_TEST(pow2(b) == evaluations[index]);
     };
-}
-
-BOOST_AUTO_TEST_CASE(homomorphism) {
-    PowExtension<E> pow1(E(5), 3);
-    std::vector<E> r1{E(11), E(12), E(13)};
-    PowExtension<EE> pow2 = pow1.homomorph<EE>();
-    std::vector<EE> r2{EE(11), EE(12), EE(13)};
-    BOOST_TEST(EE(pow1(r1)) == pow2(r2));
 }
 
 BOOST_AUTO_TEST_CASE(circuit) {

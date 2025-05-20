@@ -31,16 +31,16 @@ using namespace blacknet::crypto;
 BOOST_AUTO_TEST_SUITE(SumChecks)
 
 using Z = Solinas62Ring;
-using F = Solinas62RingDegree2;
+using R = Solinas62RingDegree2;
 using RO = Poseidon2Solinas62Sponge<{10, 11, 12, 13}>;
 
 BOOST_AUTO_TEST_CASE(mle) {
-    using SumCheck = SumCheck<Z, F, MultilinearExtension, RO>;
-    MultilinearExtension p1{Z(7), Z(7), Z(7), Z(0)};
-    MultilinearExtension p2{Z(7), Z(7), Z(7), Z(7)};
-    MultilinearExtension p3{Z(7), Z(7), Z(0), Z(7)};
-    Z s1(21);
-    Z s2(28);
+    using SumCheck = SumCheck<R, MultilinearExtension<R>, RO>;
+    MultilinearExtension<R> p1{Z(7), Z(7), Z(7), Z(0)};
+    MultilinearExtension<R> p2{Z(7), Z(7), Z(7), Z(7)};
+    MultilinearExtension<R> p3{Z(7), Z(7), Z(0), Z(7)};
+    R s1(21);
+    R s2(28);
 
     auto proof = SumCheck::prove(p1, s1);
     BOOST_TEST(SumCheck::verify(p1, s1, proof));
@@ -57,11 +57,11 @@ BOOST_AUTO_TEST_CASE(mle) {
 }
 
 BOOST_AUTO_TEST_CASE(eq) {
-    using SumCheck = SumCheck<Z, F, EqExtension, RO>;
-    EqExtension<Z> p1({Z(45), Z(46), Z(47), Z(48)});
-    EqExtension<Z> p2({Z(45), Z(46), Z(48), Z(48)});
-    Z s1(1);
-    Z s2(2);
+    using SumCheck = SumCheck<R, EqExtension<R>, RO>;
+    EqExtension<R> p1({Z(45), Z(46), Z(47), Z(48)});
+    EqExtension<R> p2({Z(45), Z(46), Z(48), Z(48)});
+    R s1(1);
+    R s2(2);
 
     auto proof = SumCheck::prove(p1, s1);
     BOOST_TEST(SumCheck::verify(p1, s1, proof));
@@ -77,21 +77,21 @@ BOOST_AUTO_TEST_CASE(eq) {
 }
 
 BOOST_AUTO_TEST_CASE(ccs) {
-    using CCS = CustomizableConstraintSystem<Z>;
-    using SumCheck = SumCheck<Z, F, CCS::Polynomial, RO>;
-    CCS::Polynomial<Z> ccs(1, 2, {{Z(7), Z(7), Z(7), Z(0)}}, {{0}}, {Z(1)});
-    Z s(21);
+    using CCS = CustomizableConstraintSystem<R>;
+    using SumCheck = SumCheck<R, CCS::Polynomial, RO>;
+    CCS::Polynomial ccs(1, 2, {{Z(7), Z(7), Z(7), Z(0)}}, {{0}}, {Z(1)});
+    R s(21);
 
     auto proof = SumCheck::prove(ccs, s);
     BOOST_TEST(SumCheck::verify(ccs, s, proof));
 }
 
 BOOST_AUTO_TEST_CASE(pow_early_stop) {
-    using SumCheck = SumCheck<Z, F, PowExtension, RO>;
-    PowExtension<F> p1(F(2), 4);
-    PowExtension<F> p2(F(4), 4);
-    F s1(1);
-    F s2(2);
+    using SumCheck = SumCheck<R, PowExtension<R>, RO>;
+    PowExtension<R> p1(R(2), 4);
+    PowExtension<R> p2(R(4), 4);
+    R s1(1);
+    R s2(2);
 
     auto proof = SumCheck::proveEarlyStopping(p1, s1);
     BOOST_TEST(SumCheck::verifyEarlyStopping(p1, s1, proof));

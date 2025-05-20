@@ -32,20 +32,20 @@ static FastDRG rng;
 
 static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     using Z = Solinas62Ring;
-    using F = Solinas62RingDegree3;
-    using LatticeFold = LatticeFold<Z>;
+    using F = Solinas62RingDegree2;
+    using LatticeFold = LatticeFold<Z, F>;
     using R = LatticeFold::Rq;
     using S = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
-    using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
+    using SumCheck = SumCheck<F, LatticeFold::GNorm, S>;
 
-    Z beta = Z::random(rng);
-    std::vector<Z> mu(LatticeFold::k * 2);
-    std::ranges::generate(mu, [] { return Z::random(rng); });
+    F beta = F::random(rng);
+    std::vector<F> mu(LatticeFold::k * 2);
+    std::ranges::generate(mu, [] { return F::random(rng); });
     std::vector<Vector<R>> f(LatticeFold::k * 2);
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
-    LatticeFold::GNorm<Z> g(beta, mu, f);
+    LatticeFold::GNorm g(beta, mu, f);
 
-    Z sum = Hypercube<Z>::sum(g);
+    F sum = Hypercube<F>::sum(g);
     SumCheck::Proof proof;
 
     for (auto _ : state) {
@@ -61,20 +61,20 @@ BENCHMARK(BM_LatticeFold_GNorm_SumCheck_Prove);
 
 static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     using Z = Solinas62Ring;
-    using F = Solinas62RingDegree3;
-    using LatticeFold = LatticeFold<Z>;
+    using F = Solinas62RingDegree2;
+    using LatticeFold = LatticeFold<Z, F>;
     using R = LatticeFold::Rq;
     using S = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
-    using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
+    using SumCheck = SumCheck<F, LatticeFold::GNorm, S>;
 
-    Z beta = Z::random(rng);
-    std::vector<Z> mu(LatticeFold::k * 2);
-    std::ranges::generate(mu, [] { return Z::random(rng); });
+    F beta = F::random(rng);
+    std::vector<F> mu(LatticeFold::k * 2);
+    std::ranges::generate(mu, [] { return F::random(rng); });
     std::vector<Vector<R>> f(LatticeFold::k * 2);
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
-    LatticeFold::GNorm<Z> g(beta, mu, f);
+    LatticeFold::GNorm g(beta, mu, f);
 
-    Z sum = Hypercube<Z>::sum(g);
+    F sum = Hypercube<F>::sum(g);
     SumCheck::Proof proof = SumCheck::prove(g, sum);
     bool result;
 

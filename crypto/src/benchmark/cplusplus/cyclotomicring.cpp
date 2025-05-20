@@ -21,6 +21,7 @@
 #include "fastrng.h"
 #include "latticefold.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 
 using namespace blacknet::crypto;
 
@@ -43,7 +44,7 @@ static void BM_CyclotomicMul_Dilithium(benchmark::State& state) {
 BENCHMARK(BM_CyclotomicMul_Dilithium);
 
 static void BM_CyclotomicMul_LatticeFold(benchmark::State& state) {
-    using R = LatticeFold<Solinas62Ring>::RqIso;
+    using R = LatticeFold<Solinas62Ring, Solinas62RingDegree2>::RqIso;
 
     auto a = R::random(rng);
     auto b = R::random(rng);

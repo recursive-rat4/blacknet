@@ -22,7 +22,6 @@
 #include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "solinas62.h"
-#include "solinas62field.h"
 #include "univariatepolynomial.h"
 
 using namespace blacknet::crypto;
@@ -30,7 +29,6 @@ using namespace blacknet::crypto;
 BOOST_AUTO_TEST_SUITE(UnivariatePolynomials)
 
 using E = Solinas62Ring;
-using EE = Solinas62RingDegree2;
 
 BOOST_AUTO_TEST_CASE(meta) {
     UnivariatePolynomial up{E(2), E(3), E(4), E(5)};
@@ -47,12 +45,6 @@ BOOST_AUTO_TEST_CASE(point) {
     BOOST_TEST(E(78) == b(E(4)));
     BOOST_TEST(E(14) == c(E(4)));
     BOOST_TEST(E(2) == d(E(4)));
-}
-
-BOOST_AUTO_TEST_CASE(homomorphism) {
-    UnivariatePolynomial<E> p1({E(20), E(21), E(22), E(23)});
-    UnivariatePolynomial<EE> p2 = p1.homomorph<EE>();
-    BOOST_TEST(EE(p1(E(24))) == p2(EE(24)));
 }
 
 BOOST_AUTO_TEST_CASE(circuit) {

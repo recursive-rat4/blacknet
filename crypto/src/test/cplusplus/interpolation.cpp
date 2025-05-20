@@ -18,18 +18,16 @@
 #include <boost/test/unit_test.hpp>
 
 #include "interpolation.h"
-#include "pervushin.h"
 #include "pervushinfield.h"
 
 using namespace blacknet::crypto;
 
 BOOST_AUTO_TEST_SUITE(Interpolations)
 
-using Z = PervushinRing;
 using F = PervushinRingDegree2;
 
 BOOST_AUTO_TEST_CASE(balance) {
-    using Interpolation = Interpolation<Z, F>;
+    using Interpolation = Interpolation<F>;
     UnivariatePolynomial<F> p1{F(2), F(3)};
     UnivariatePolynomial<F> p2{F(2), F(3), F(5)};
     UnivariatePolynomial<F> p3{F(2), F(3), F(5), F(7)};

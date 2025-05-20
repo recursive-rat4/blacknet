@@ -32,29 +32,28 @@ static FastDRG rng;
 
 static void BM_LatticeFold_GNorm_SumCheck_ProveEarlyStopping(benchmark::State& state) {
     using Z = Solinas62Ring;
-    using F = Solinas62RingDegree3;
-    using LatticeFold = LatticeFold<Z>;
+    using F = Solinas62RingDegree2;
+    using LatticeFold = LatticeFold<Z, F>;
     using R = LatticeFold::Rq;
     using S = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
-    using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
+    using SumCheck = SumCheck<F, LatticeFold::GNorm, S>;
 
-    Z beta = Z::random(rng);
-    std::vector<Z> mu(LatticeFold::k * 2);
-    std::ranges::generate(mu, [] { return Z::random(rng); });
+    F beta = F::random(rng);
+    std::vector<F> mu(LatticeFold::k * 2);
+    std::ranges::generate(mu, [] { return F::random(rng); });
     std::vector<Vector<R>> f(LatticeFold::k * 2);
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
-    LatticeFold::GNorm<Z> g(beta, mu, f);
+    LatticeFold::GNorm g(beta, mu, f);
 
-    F sum_morphed = Hypercube<Z>::sum(g);
-    LatticeFold::GNorm<F> g_morphed = g.template homomorph<F>();
+    F sum = Hypercube<F>::sum(g);
     SumCheck::ProofEarlyStopped proof;
 
     for (auto _ : state) {
-        proof = SumCheck::proveEarlyStopping(g_morphed, sum_morphed);
+        proof = SumCheck::proveEarlyStopping(g, sum);
 
-        benchmark::DoNotOptimize(g_morphed);
+        benchmark::DoNotOptimize(g);
         benchmark::DoNotOptimize(proof);
-        benchmark::DoNotOptimize(sum_morphed);
+        benchmark::DoNotOptimize(sum);
         benchmark::ClobberMemory();
     }
 }
@@ -62,30 +61,29 @@ BENCHMARK(BM_LatticeFold_GNorm_SumCheck_ProveEarlyStopping);
 
 static void BM_LatticeFold_GNorm_SumCheck_VerifyEarlyStopping(benchmark::State& state) {
     using Z = Solinas62Ring;
-    using F = Solinas62RingDegree3;
-    using LatticeFold = LatticeFold<Z>;
+    using F = Solinas62RingDegree2;
+    using LatticeFold = LatticeFold<Z, F>;
     using R = LatticeFold::Rq;
     using S = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
-    using SumCheck = SumCheck<Z, F, LatticeFold::GNorm, S>;
+    using SumCheck = SumCheck<F, LatticeFold::GNorm, S>;
 
-    Z beta = Z::random(rng);
-    std::vector<Z> mu(LatticeFold::k * 2);
-    std::ranges::generate(mu, [] { return Z::random(rng); });
+    F beta = F::random(rng);
+    std::vector<F> mu(LatticeFold::k * 2);
+    std::ranges::generate(mu, [] { return F::random(rng); });
     std::vector<Vector<R>> f(LatticeFold::k * 2);
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
-    LatticeFold::GNorm<Z> g(beta, mu, f);
+    LatticeFold::GNorm g(beta, mu, f);
 
-    F sum_morphed = Hypercube<Z>::sum(g);
-    LatticeFold::GNorm<F> g_morphed = g.template homomorph<F>();
-    SumCheck::ProofEarlyStopped proof = SumCheck::proveEarlyStopping(g_morphed, sum_morphed);
+    F sum = Hypercube<F>::sum(g);
+    SumCheck::ProofEarlyStopped proof = SumCheck::proveEarlyStopping(g, sum);
     bool result;
 
     for (auto _ : state) {
-        result = SumCheck::verifyEarlyStopping(g_morphed, sum_morphed, proof);
+        result = SumCheck::verifyEarlyStopping(g, sum, proof);
 
-        benchmark::DoNotOptimize(g_morphed);
+        benchmark::DoNotOptimize(g);
         benchmark::DoNotOptimize(proof);
-        benchmark::DoNotOptimize(sum_morphed);
+        benchmark::DoNotOptimize(sum);
         benchmark::DoNotOptimize(result);
         benchmark::ClobberMemory();
     }

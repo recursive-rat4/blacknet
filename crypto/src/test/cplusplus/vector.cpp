@@ -19,7 +19,6 @@
 
 #include "matrix.h"
 #include "pervushin.h"
-#include "pervushinfield.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
@@ -27,7 +26,6 @@ using namespace blacknet::crypto;
 BOOST_AUTO_TEST_SUITE(Vectors)
 
 using R = PervushinRing;
-using RE = PervushinRingDegree2;
 
 BOOST_AUTO_TEST_CASE(HadamardSummation) {
     Vector<R> a{
@@ -193,8 +191,6 @@ BOOST_AUTO_TEST_CASE(Homomorphism) {
         R(77),
         R(77),
     };
-    BOOST_TEST(c.template homomorph<RE>() == a.template homomorph<RE>() + b.template homomorph<RE>());
-    BOOST_TEST(c.template homomorph<RE>() == b.template homomorph<RE>() + a.template homomorph<RE>());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

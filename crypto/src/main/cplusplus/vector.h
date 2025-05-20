@@ -167,15 +167,6 @@ public:
         });
     }
 
-    template<typename S>
-    constexpr Vector<S> homomorph() const {
-        std::vector<S> t;
-        t.reserve(elements.size());
-        for (const auto& i : elements)
-            t.emplace_back(i);
-        return Vector<S>(std::move(t));
-    }
-
     friend std::ostream& operator << (std::ostream& out, const Vector& val)
     {
         fmt::print(out, "{}", val.elements);

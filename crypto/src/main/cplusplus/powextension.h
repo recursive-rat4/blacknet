@@ -74,11 +74,6 @@ public:
         return eq.variables();
     }
 
-    template<typename S>
-    constexpr PowExtension<S> homomorph() const {
-        return PowExtension<S>(eq.template homomorph<S>());
-    }
-
     friend std::ostream& operator << (std::ostream& out, const PowExtension& val)
     {
         return out << '(' << val.eq << ')';

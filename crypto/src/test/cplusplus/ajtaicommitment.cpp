@@ -21,13 +21,14 @@
 #include "latticefold.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
+#include "solinas62field.h"
 
 using namespace blacknet::crypto;
 
 BOOST_AUTO_TEST_SUITE(AjtaiCommitments)
 
 using Z = Solinas62Ring;
-using R = LatticeFold<Solinas62Ring>::RqIso;
+using R = LatticeFold<Solinas62Ring, Solinas62RingDegree2>::RqIso;
 
 BOOST_AUTO_TEST_CASE(Zq) {
     using CS = AjtaiCommitment<Z>;
