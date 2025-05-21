@@ -40,8 +40,8 @@ BOOST_AUTO_TEST_CASE(composed) {
 }
 
 BOOST_AUTO_TEST_CASE(decomposed) {
-    using V = std::vector<bool>;
-    Hypercube<bool> hypercube(3);
+    using V = Point<uint8_t>;
+    Hypercube<uint8_t> hypercube(3);
     std::vector<V> vertices{
         {0, 0, 0},
         {0, 0, 1},

@@ -22,6 +22,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "point.h"
 #include "util.h"
 
 namespace blacknet::crypto {
@@ -42,7 +43,7 @@ public:
     constexpr Polynomial& operator = (Polynomial&&) noexcept = default;
 
     template<typename Fuse1, typename Fuse0 = Fuse1>
-    constexpr void apply(R& r, const std::vector<R>& point) const {
+    constexpr void apply(R& r, const Point<R>& point) const {
         if constexpr (std::is_same_v<Fuse1, Fuse0>) {
             for (std::size_t i = 0; i < polynomials.size(); ++i)
                 Fuse1::call(r, polynomials[i](point));

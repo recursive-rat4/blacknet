@@ -22,6 +22,7 @@
 #include <fmt/format.h>
 
 #include "interpolation.h"
+#include "point.h"
 #include "univariatepolynomial.h"
 #include "util.h"
 
@@ -79,7 +80,7 @@ public:
         if (proof.claims.size() != polynomial.variables())
             return false;
         RO ro;
-        std::vector<R> r(polynomial.variables());
+        Point<R> r(polynomial.variables());
         R state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
             const auto& claim = proof.claims[round];

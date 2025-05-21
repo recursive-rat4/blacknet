@@ -29,6 +29,7 @@
 #include "matrix.h"
 #include "multilinearextension.h"
 #include "numbertheoretictransform.h"
+#include "point.h"
 #include "polynomial.h"
 #include "polynomialring.h"
 #include "powextension.h"
@@ -128,7 +129,7 @@ struct LatticeFold {
         constexpr G1(const Fq& alpha, const std::vector<Fq>& r, const Vector<Rq>& f) : eq(r, alpha), mle(f) {}
         constexpr G1(EqExtension<Fq>&& eq, MultilinearExtension<Fq>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
-        constexpr Fq operator () (const std::vector<Fq>& point) const {
+        constexpr Fq operator () (const Point<Fq>& point) const {
             return eq(point) * mle(point);
         }
 
@@ -164,7 +165,7 @@ struct LatticeFold {
         constexpr G2(const Fq& mu, const Vector<Rq>& f) : mu(mu), mle(f) {}
         constexpr G2(Fq&& mu, MultilinearExtension<Fq>&& mle) : mu(std::move(mu)), mle(std::move(mle)) {}
 
-        constexpr Fq operator () (const std::vector<Fq>& point) const {
+        constexpr Fq operator () (const Point<Fq>& point) const {
             Fq t(mle(point));
             return mu * (t.square() - t);
         }
@@ -210,7 +211,7 @@ struct LatticeFold {
         }
         constexpr GEval(Polynomial<Fq, G1>&& g1s) : g1s(std::move(g1s)) {}
 
-        constexpr Fq operator () (const std::vector<Fq>& point) const {
+        constexpr Fq operator () (const Point<Fq>& point) const {
             Fq r;
             g1s.template apply<util::Add<Fq>, util::Assign<Fq>>(r, point);
             return r;
@@ -252,7 +253,7 @@ struct LatticeFold {
         }
         constexpr GNorm(PowExtension<Fq>&& pow, Polynomial<Fq, G2>&& g2s) : pow(std::move(pow)), g2s(std::move(g2s)) {}
 
-        constexpr Fq operator () (const std::vector<Fq>& point) const {
+        constexpr Fq operator () (const Point<Fq>& point) const {
             Fq r;
             g2s.template apply<util::Add<Fq>, util::Assign<Fq>>(r, point);
             return r * pow(point);
@@ -294,7 +295,7 @@ struct LatticeFold {
         ) : geval(alpha, r, f), gnorm(beta, mu, f) {}
         constexpr GFold(GEval&& geval, GNorm&& gnorm) : geval(std::move(geval)), gnorm(std::move(gnorm)) {}
 
-        constexpr Fq operator () (const std::vector<Fq>& point) const {
+        constexpr Fq operator () (const Point<Fq>& point) const {
             return geval(point) + gnorm(point);
         }
 

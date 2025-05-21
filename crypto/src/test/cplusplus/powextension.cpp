@@ -22,6 +22,7 @@
 #include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
+#include "point.h"
 #include "powextension.h"
 #include "solinas62.h"
 #include "util.h"
@@ -43,19 +44,19 @@ BOOST_AUTO_TEST_CASE(meta) {
 BOOST_AUTO_TEST_CASE(mul) {
     PowExtension<E> a(E(7), 4);
     E b(11);
-    std::vector<E> r{E(13), E(17), E(23), E(27)};
+    Point<E> r{E(13), E(17), E(23), E(27)};
     BOOST_TEST(a(r) * b == (a * b)(r));
 }
 
 BOOST_AUTO_TEST_CASE(bind) {
     PowExtension<E> pow1(E(4), 3);
-    std::vector<E> r1{E(5), E(6), E(7)};
+    Point<E> r1{E(5), E(6), E(7)};
     PowExtension<E> pow2(pow1);
     pow2.bind(E(5));
-    std::vector<E> r2{E(6), E(7)};
+    Point<E> r2{E(6), E(7)};
     PowExtension<E> pow3(pow2);
     pow3.bind(E(6));
-    std::vector<E> r3{E(7)};
+    Point<E> r3{E(7)};
     BOOST_TEST(pow1(r1) == pow2(r2));
     BOOST_TEST(pow1(r1) == pow3(r3));
 

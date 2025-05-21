@@ -25,6 +25,7 @@
 #include <span>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "matrixsparse.h"
@@ -571,6 +572,21 @@ struct CCSBuilder {
     constexpr Variable auxiliary() {
         if (currentScope) currentScope->variables += 1;
         return { Variable::Type::Auxiliary, ++auxiliaries };
+    }
+
+    [[nodiscard("Circuit variable should be constrained")]]
+    constexpr Variable variable(Variable::Type type) {
+        switch (type) {
+            case Variable::Type::Constant:
+                throw std::runtime_error("New constant variable requested");
+            case Variable::Type::Input:
+                return input();
+            case Variable::Type::Auxiliary:
+                return auxiliary();
+            case Variable::Type::Uninitialized:
+                throw std::runtime_error("New uninitialized variable requested");
+        }
+        std::unreachable();
     }
 
     template<typename T>

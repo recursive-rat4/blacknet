@@ -21,6 +21,7 @@
 #include <ostream>
 
 #include "eqextension.h"
+#include "point.h"
 
 namespace blacknet::crypto {
 
@@ -44,7 +45,7 @@ public:
         return eq();
     }
 
-    constexpr E operator () (const std::vector<E>& point) const {
+    constexpr E operator () (const Point<E>& point) const {
         return eq(point);
     }
 

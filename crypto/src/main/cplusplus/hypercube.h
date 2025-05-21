@@ -22,6 +22,8 @@
 #include <vector>
 #include <utility>
 
+#include "point.h"
+
 namespace blacknet::crypto {
 
 template<
@@ -74,13 +76,13 @@ public:
 
     class DecomposedIterator {
         friend Hypercube;
-        std::vector<E> data;
+        Point<E> point;
         std::size_t last;
         std::size_t index;
-        constexpr DecomposedIterator(const Hypercube& e) : data(e.n), last(e.v), index(0) {}
+        constexpr DecomposedIterator(const Hypercube& e) : point(e.n), last(e.v), index(0) {}
     public:
         using difference_type = std::ptrdiff_t;
-        using value_type = std::vector<E>;
+        using value_type = Point<E>;
         consteval DecomposedIterator() noexcept = default;
         constexpr DecomposedIterator(const DecomposedIterator&) = default;
         constexpr DecomposedIterator(DecomposedIterator&&) noexcept = default;
@@ -93,18 +95,18 @@ public:
         constexpr bool operator == (std::default_sentinel_t) const {
             return index == last;
         }
-        constexpr const std::vector<E>& operator * () const {
-            return data;
+        constexpr const Point<E>& operator * () const {
+            return point;
         }
         constexpr DecomposedIterator& operator ++ () {
             ++index;
             std::size_t s = last;
-            for (std::size_t i = 0; i < data.size(); ++i) {
+            for (std::size_t i = 0; i < point.size(); ++i) {
                 s >>= 1;
                 if ((index & s) == s)
-                    data[i] = E(1);
+                    point[i] = E(1);
                 else
-                    data[i] = E(0);
+                    point[i] = E(0);
             }
             return *this;
         }

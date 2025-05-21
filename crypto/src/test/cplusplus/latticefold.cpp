@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,6 +20,7 @@
 #include "hypercube.h"
 #include "latticefold.h"
 #include "matrix.h"
+#include "point.h"
 #include "solinas62.h"
 #include "solinas62field.h"
 #include "vector.h"
@@ -43,11 +44,11 @@ BOOST_AUTO_TEST_CASE(Gadget) {
 }
 
 BOOST_AUTO_TEST_CASE(G1s) {
-    std::vector<F> r1{Z(0), Z(0), Z(0), Z(0), Z(0), Z(0)};
-    std::vector<F> r2{Z(0), Z(0), Z(0), Z(0), Z(0), Z(1)};
+    Point<F> r1{Z(0), Z(0), Z(0), Z(0), Z(0), Z(0)};
+    Point<F> r2{Z(0), Z(0), Z(0), Z(0), Z(0), Z(1)};
     Vector<R> f{R{3, 4}};
-    auto g1_1 = LatticeFold::G1(r1, f);
-    auto g1_2 = LatticeFold::G1(r2, f);
+    auto g1_1 = LatticeFold::G1(r1.coordinates, f);
+    auto g1_2 = LatticeFold::G1(r2.coordinates, f);
     BOOST_TEST(6 == g1_1.variables());
     BOOST_TEST(2 == g1_1.degree());
     BOOST_TEST(F(3) == g1_1(r1));

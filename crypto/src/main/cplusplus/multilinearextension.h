@@ -30,6 +30,7 @@
 
 #include "eqextension.h"
 #include "matrix.h"
+#include "point.h"
 #include "vector.h"
 
 namespace blacknet::crypto {
@@ -80,8 +81,8 @@ struct MultilinearExtension {
         return coefficients;
     }
 
-    constexpr E operator () (const std::vector<E>& point) const {
-        const std::vector<E>& pis = EqExtension<E>::evaluate(point);
+    constexpr E operator () (const Point<E>& point) const {
+        const std::vector<E>& pis = EqExtension<E>::evaluate(point.coordinates);
         E sigma(E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < coefficients.size(); ++i)
             sigma += pis[i] * coefficients[i];
@@ -183,15 +184,15 @@ requires(std::same_as<E, typename Circuit::R>)
 struct circuit {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
+    using Point = typename Point<E>::Gadget<Circuit>;
 
-    template<std::size_t ell>
     constexpr static LinearCombination point(
         Circuit& circuit,
-        const std::array<LinearCombination, 1 << ell>& coefficients,
-        const std::array<LinearCombination, ell>& point
+        const std::vector<LinearCombination>& coefficients,
+        const Point& point
     ) {
         auto scope = circuit.scope("MultilinearExtension::point");
-        auto pis = EqExtension<E>::template circuit<Circuit>::hypercube(circuit, point);
+        auto pis = EqExtension<E>::template circuit<Circuit>::hypercube(circuit, point.coordinates);
         LinearCombination sigma;
         for (std::size_t i = 0; i < coefficients.size(); ++i) {
             auto pc = circuit.auxiliary();
@@ -203,8 +204,8 @@ struct circuit {
 };
 
 struct trace {
-    constexpr static E point(const MultilinearExtension& mle, const std::vector<E>& point, std::vector<E>& trace) {
-        const std::vector<E>& pis = EqExtension<E>::trace::hypercube(point, trace);
+    constexpr static E point(const MultilinearExtension& mle, const Point<E>& point, std::vector<E>& trace) {
+        const std::vector<E>& pis = EqExtension<E>::trace::hypercube(point.coordinates, trace);
         E sigma(E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < mle.coefficients.size(); ++i)
             sigma += trace.emplace_back(

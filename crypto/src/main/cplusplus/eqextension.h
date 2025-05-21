@@ -20,6 +20,8 @@
 
 #include <vector>
 
+#include "point.h"
+
 namespace blacknet::crypto {
 
 template<typename E>
@@ -56,7 +58,7 @@ struct EqExtension {
         return evaluate(coefficients, z);
     }
 
-    constexpr E operator () (const std::vector<E>& point) const {
+    constexpr E operator () (const Point<E>& point) const {
         E pi(z);
         for (std::size_t i = 0; i < coefficients.size(); ++i)
             pi *= (coefficients[i] * point[i]).douple() - coefficients[i] - point[i] + E(1);
@@ -118,12 +120,13 @@ requires(std::same_as<E, typename Circuit::R>)
 struct circuit {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
+    using Point = typename Point<E>::Gadget<Circuit>;
 
     template<std::size_t N>
     constexpr static LinearCombination point(
         Circuit& circuit,
         const std::array<LinearCombination, N>& coefficients,
-        const std::array<LinearCombination, N>& point
+        const Point& point
     ) {
         auto scope = circuit.scope("EqExtension::point");
         LinearCombination pi(E(1));
@@ -137,13 +140,13 @@ struct circuit {
         return pi;
     }
 
-    template<std::size_t N>
-    constexpr static std::array<LinearCombination, 1 << N> hypercube(
+    constexpr static std::vector<LinearCombination> hypercube(
         Circuit& circuit,
-        const std::array<LinearCombination, N>& coefficients
+        const std::vector<LinearCombination>& coefficients
     ) {
         auto scope = circuit.scope("EqExtension::hypercube");
-        std::array<LinearCombination, 1 << N> r;
+        std::vector<LinearCombination> r;
+        r.resize(1 << coefficients.size());
         r[0] = E(1);
         for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
             for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
@@ -158,7 +161,7 @@ struct circuit {
 };
 
 struct trace {
-    constexpr static E point(const EqExtension& eq, const std::vector<E>& point, std::vector<E>& trace) {
+    constexpr static E point(const EqExtension& eq, const Point<E>& point, std::vector<E>& trace) {
         E pi(1);
         for (std::size_t i = 0; i < eq.coefficients.size(); ++i)
             trace.push_back(

@@ -23,6 +23,7 @@
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "hypercube.h"
+#include "point.h"
 #include "solinas62.h"
 #include "util.h"
 
@@ -42,19 +43,19 @@ BOOST_AUTO_TEST_CASE(meta) {
 BOOST_AUTO_TEST_CASE(mul) {
     EqExtension<E> a({E(2), E(3), E(5), E(7)});
     E b(11);
-    std::vector<E> r{E(13), E(17), E(23), E(27)};
+    Point<E> r{E(13), E(17), E(23), E(27)};
     BOOST_TEST(a(r) * b == (a * b)(r));
 }
 
 BOOST_AUTO_TEST_CASE(bind) {
     EqExtension<E> eq1({E(2), E(3), E(4)});
-    std::vector<E> r1{E(5), E(6), E(7)};
+    Point<E> r1{E(5), E(6), E(7)};
     EqExtension<E> eq2(eq1);
     eq2.bind(E(5));
-    std::vector<E> r2{E(6), E(7)};
+    Point<E> r2{E(6), E(7)};
     EqExtension<E> eq3(eq2);
     eq3.bind(E(6));
-    std::vector<E> r3{E(7)};
+    Point<E> r3{E(7)};
     BOOST_TEST(eq1(r1) == eq2(r2));
     BOOST_TEST(eq1(r1) == eq3(r3));
 
@@ -100,9 +101,9 @@ BOOST_AUTO_TEST_CASE(bind) {
 
 BOOST_AUTO_TEST_CASE(point) {
     Hypercube<E> hc(3);
-    std::vector<E> a{E(1), E(0), E(0)};
-    EqExtension eq(a);
-    std::ranges::for_each(hc.decomposedBegin(), hc.decomposedEnd(), [&](const std::vector<E>& b) {
+    Point<E> a{E(1), E(0), E(0)};
+    EqExtension eq(a.coordinates);
+    std::ranges::for_each(hc.decomposedBegin(), hc.decomposedEnd(), [&](const Point<E>& b) {
         if (a == b)
             BOOST_TEST(E(1) == eq(b));
         else
@@ -125,15 +126,15 @@ BOOST_AUTO_TEST_CASE(hypercube) {
 
 BOOST_AUTO_TEST_CASE(circuit_point) {
     EqExtension<E> eq({E(2), E(3), E(5)});
-    std::vector<E> x{E(7), E(11), E(13)};
+    Point<E> x{E(7), E(11), E(13)};
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
     std::array<typename Circuit::LinearCombination, 3> c_vars;
     std::ranges::generate(c_vars, [&]{ return circuit.input(); });
-    std::array<typename Circuit::LinearCombination, 3> x_vars;
-    std::ranges::generate(x_vars, [&]{ return circuit.input(); });
-    EqExtension<E>::circuit<Circuit>::point(circuit, c_vars, x_vars);
+    using PointGadget = Point<E>::Gadget<Circuit>;
+    PointGadget x_gadget(circuit, Circuit::Variable::Type::Input, 3);
+    EqExtension<E>::circuit<Circuit>::point(circuit, c_vars, x_gadget);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z;
     z.elements.reserve(ccs.variables());
@@ -149,7 +150,8 @@ BOOST_AUTO_TEST_CASE(circuit_hypercube) {
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, 3> c_vars;
+    std::vector<typename Circuit::LinearCombination> c_vars;
+    c_vars.resize(3);
     std::ranges::generate(c_vars, [&]{ return circuit.input(); });
     EqExtension<E>::circuit<Circuit>::hypercube(circuit, c_vars);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());

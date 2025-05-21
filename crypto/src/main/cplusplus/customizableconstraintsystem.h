@@ -19,14 +19,15 @@
 #define BLACKNET_CRYPTO_CUSTOMIZABLECONSTRAINTSYSTEM_H
 
 #include <vector>
-
-#include "matrixsparse.h"
-#include "multilinearextension.h"
-#include "vector.h"
-#include "util.h"
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
+
+#include "matrixsparse.h"
+#include "multilinearextension.h"
+#include "point.h"
+#include "vector.h"
+#include "util.h"
 
 namespace blacknet::crypto {
 
@@ -109,7 +110,7 @@ public:
             std::vector<E>&& c
         ) : deg(deg), var(var), mz(std::move(mz)), s(std::move(s)), c(std::move(c)) {}
 
-        constexpr E operator () (const std::vector<E>& point) const {
+        constexpr E operator () (const Point<E>& point) const {
             E sigma(E::LEFT_ADDITIVE_IDENTITY());
             for (std::size_t i = 0; i < c.size(); ++i) {
                 E circle(c[i]);

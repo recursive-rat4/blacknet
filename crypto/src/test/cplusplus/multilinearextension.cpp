@@ -24,6 +24,7 @@
 #include "hypercube.h"
 #include "matrix.h"
 #include "multilinearextension.h"
+#include "point.h"
 #include "solinas62.h"
 #include "solinas62field.h"
 #include "vector.h"
@@ -170,15 +171,16 @@ BOOST_AUTO_TEST_CASE(ringvector) {
 
 BOOST_AUTO_TEST_CASE(circuit) {
     MultilinearExtension<E> mle({E(2), E(3), E(5), E(7)});
-    std::vector<E> x{E(11), E(13)};
+    Point<E> x{E(11), E(13)};
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, 4> c_vars;
+    std::vector<typename Circuit::LinearCombination> c_vars;
+    c_vars.resize(4);
     std::ranges::generate(c_vars, [&]{ return circuit.input(); });
-    std::array<typename Circuit::LinearCombination, 2> x_vars;
-    std::ranges::generate(x_vars, [&]{ return circuit.input(); });
-    MultilinearExtension<E>::circuit<Circuit>::point(circuit, c_vars, x_vars);
+    using PointGadget = Point<E>::Gadget<Circuit>;
+    PointGadget x_gadget(circuit, Circuit::Variable::Type::Input, 2);
+    MultilinearExtension<E>::circuit<Circuit>::point(circuit, c_vars, x_gadget);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z;
     z.elements.reserve(ccs.variables());
