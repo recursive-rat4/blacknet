@@ -107,11 +107,10 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
     auto tau_var = circuit.input();
-    PowExtension<E>::circuit<Circuit>::powers<ell>(circuit, tau_var);
+    using Gadget = PowExtension<E>::Gadget<Circuit>;
+    Gadget::powers(circuit, tau_var, ell);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     z.elements.push_back(tau);
     BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::trace::powers(tau, ell, z.elements));
     test::circuitry(ccs, z);

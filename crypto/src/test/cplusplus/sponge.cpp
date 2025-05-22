@@ -109,9 +109,7 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     }
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
     using Tracer = Sponge::Tracer<Circuit::degree()>;
     Tracer tracer(sponge, z.elements);

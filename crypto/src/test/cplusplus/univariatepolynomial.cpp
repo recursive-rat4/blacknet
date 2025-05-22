@@ -62,9 +62,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     typename Circuit::Variable y_var(circuit.auxiliary());
     circuit(y_var == y_lc);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(p.coefficients, std::back_inserter(z.elements));
     z.elements.push_back(x);
     using Tracer = UnivariatePolynomial<E>::Tracer;

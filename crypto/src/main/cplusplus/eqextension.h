@@ -117,17 +117,22 @@ struct EqExtension {
 
 template<typename Circuit>
 requires(std::same_as<E, typename Circuit::R>)
-struct circuit {
+struct Gadget {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
     using Point = typename Point<E>::Gadget<Circuit>;
 
-    template<std::size_t N>
-    constexpr static LinearCombination point(
-        Circuit& circuit,
-        const std::array<LinearCombination, N>& coefficients,
-        const Point& point
-    ) {
+    Circuit& circuit;
+    std::vector<LinearCombination> coefficients;
+
+    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t ell)
+        : circuit(circuit), coefficients(ell)
+    {
+        auto scope = circuit.scope("EqExtension::allocate");
+        std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
+    }
+
+    constexpr LinearCombination operator () (const Point& point) const {
         auto scope = circuit.scope("EqExtension::point");
         LinearCombination pi(E(1));
         for (std::size_t i = 0; i < coefficients.size(); ++i) {

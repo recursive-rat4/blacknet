@@ -79,6 +79,13 @@ public:
         e = e1 + r * t + r.square() * e2;
     }
 
+    constexpr Vector<E> assigment(E&& constant = E(1)) const {
+        Vector<E> z;
+        z.elements.reserve(variables());
+        z.elements.emplace_back(constant);
+        return z;
+    }
+
     friend std::ostream& operator << (std::ostream& out, const R1CS& val)
     {
         return out << '[' << val.a << ", " << val.b << ", " << val.c << ']';

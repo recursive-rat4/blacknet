@@ -82,17 +82,17 @@ public:
 
 template<typename Circuit>
 requires(std::same_as<E, typename Circuit::R>)
-struct circuit {
+struct Gadget {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
 
-    template<std::size_t ell>
-    constexpr static std::array<LinearCombination, ell> powers(
+    constexpr static std::vector<LinearCombination> powers(
         Circuit& circuit,
-        const LinearCombination& tau
+        const LinearCombination& tau,
+        std::size_t ell
     ) {
         auto scope = circuit.scope("PowExtension::powers");
-        std::array<LinearCombination, ell> coefficients;
+        std::vector<LinearCombination> coefficients(ell);
         coefficients[0] = tau;
         for (std::size_t i = 1; i < ell; ++i) {
             auto cs = circuit.auxiliary();

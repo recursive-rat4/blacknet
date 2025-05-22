@@ -62,9 +62,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     auto cdr_gadget = cons_gadget.cdr(null_gadget, null_gadget);
     R1CS<E> r1cs(circuit.r1cs());
 
-    Vector<E> z;
-    z.elements.reserve(r1cs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = r1cs.assigment();
     using Tracer = Cell::Tracer<Circuit::degree()>;
     auto null = Cell::null();
     auto cons = Tracer::cons(null, null, z.elements);

@@ -82,6 +82,13 @@ public:
         return columns;
     }
 
+    constexpr Vector<E> assigment(E&& constant = E(1)) const {
+        Vector<E> z;
+        z.elements.reserve(variables());
+        z.elements.emplace_back(constant);
+        return z;
+    }
+
     friend std::ostream& operator << (std::ostream& out, const CustomizableConstraintSystem& val)
     {
         fmt::print(out, "({}, {}, {}, {}, {})", val.rows, val.columns, val.m, val.s, val.c);

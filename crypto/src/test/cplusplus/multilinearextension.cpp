@@ -175,16 +175,13 @@ BOOST_AUTO_TEST_CASE(circuit) {
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::vector<typename Circuit::LinearCombination> c_vars;
-    c_vars.resize(4);
-    std::ranges::generate(c_vars, [&]{ return circuit.input(); });
+    using Gadget = MultilinearExtension<E>::Gadget<Circuit>;
+    Gadget mle_gadget(circuit, Circuit::Variable::Type::Input, 2);
     using PointGadget = Point<E>::Gadget<Circuit>;
     PointGadget x_gadget(circuit, Circuit::Variable::Type::Input, 2);
-    MultilinearExtension<E>::circuit<Circuit>::point(circuit, c_vars, x_gadget);
+    mle_gadget(x_gadget);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(mle.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
     BOOST_TEST(mle(x) == MultilinearExtension<E>::trace::point(mle, x, z.elements));

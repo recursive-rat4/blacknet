@@ -55,9 +55,7 @@ BOOST_AUTO_TEST_CASE(Pallas_3) {
         circuit(v == x[i]);
     }
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
@@ -109,9 +107,7 @@ BOOST_AUTO_TEST_CASE(Solinas62_12) {
         circuit(v == x[i]);
     }
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
@@ -163,9 +159,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_12) {
         circuit(v == x[i]);
     }
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
@@ -209,9 +203,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
         circuit(v == x[i]);
     }
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
     Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));

@@ -181,18 +181,25 @@ struct MultilinearExtension {
 
 template<typename Circuit>
 requires(std::same_as<E, typename Circuit::R>)
-struct circuit {
+struct Gadget {
     using Variable = Circuit::Variable;
     using LinearCombination = Circuit::LinearCombination;
+    using EqExtension = typename EqExtension<E>::Gadget<Circuit>;
     using Point = typename Point<E>::Gadget<Circuit>;
 
-    constexpr static LinearCombination point(
-        Circuit& circuit,
-        const std::vector<LinearCombination>& coefficients,
-        const Point& point
-    ) {
+    Circuit& circuit;
+    std::vector<LinearCombination> coefficients;
+
+    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t ell)
+        : circuit(circuit), coefficients(1 << ell)
+    {
+        auto scope = circuit.scope("MultilinearExtension::allocate");
+        std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
+    }
+
+    constexpr LinearCombination operator () (const Point& point) const {
         auto scope = circuit.scope("MultilinearExtension::point");
-        auto pis = EqExtension<E>::template circuit<Circuit>::hypercube(circuit, point.coordinates);
+        auto pis = EqExtension::hypercube(circuit, point.coordinates);
         LinearCombination sigma;
         for (std::size_t i = 0; i < coefficients.size(); ++i) {
             auto pc = circuit.auxiliary();

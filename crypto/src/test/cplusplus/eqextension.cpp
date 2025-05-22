@@ -130,15 +130,13 @@ BOOST_AUTO_TEST_CASE(circuit_point) {
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::array<typename Circuit::LinearCombination, 3> c_vars;
-    std::ranges::generate(c_vars, [&]{ return circuit.input(); });
+    using Gadget = EqExtension<E>::Gadget<Circuit>;
+    Gadget eq_gadget(circuit, Circuit::Variable::Type::Input, 3);
     using PointGadget = Point<E>::Gadget<Circuit>;
     PointGadget x_gadget(circuit, Circuit::Variable::Type::Input, 3);
-    EqExtension<E>::circuit<Circuit>::point(circuit, c_vars, x_gadget);
+    eq_gadget(x_gadget);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
     BOOST_TEST(eq(x) == EqExtension<E>::trace::point(eq, x, z.elements));
@@ -150,14 +148,11 @@ BOOST_AUTO_TEST_CASE(circuit_hypercube) {
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::vector<typename Circuit::LinearCombination> c_vars;
-    c_vars.resize(3);
-    std::ranges::generate(c_vars, [&]{ return circuit.input(); });
-    EqExtension<E>::circuit<Circuit>::hypercube(circuit, c_vars);
+    using Gadget = EqExtension<E>::Gadget<Circuit>;
+    Gadget gadget(circuit, Circuit::Variable::Type::Input, 3);
+    Gadget::hypercube(circuit, gadget.coefficients);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z;
-    z.elements.reserve(ccs.variables());
-    z.elements.emplace_back(E(1));
+    Vector<E> z = ccs.assigment();
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     BOOST_TEST(eq() == EqExtension<E>::trace::hypercube(eq.coefficients, z.elements));
     test::circuitry(ccs, z);
