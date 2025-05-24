@@ -93,8 +93,9 @@ struct Gadget {
 
     std::vector<LinearCombination> coordinates;
 
+    constexpr Gadget(std::size_t size) : coordinates(size) {}
+
     constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t size) : coordinates(size) {
-        auto scope = circuit.scope("Point::allocate");
         std::ranges::generate(coordinates, [&]{ return circuit.variable(type); });
     }
 

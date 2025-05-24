@@ -57,6 +57,27 @@ public:
         {
             return out << val.claims;
         }
+
+        template<typename Circuit>
+        requires(std::same_as<R, typename Circuit::R>)
+        struct Gadget {
+            using Variable = Circuit::Variable;
+            using UnivariatePolynomial = typename UnivariatePolynomial<R>::Gadget<Circuit>;
+
+            std::vector<UnivariatePolynomial> claims;
+
+            constexpr Gadget(
+                Circuit& circuit,
+                Variable::Type type,
+                std::size_t variables,
+                std::size_t degree
+            ) : claims() {
+                claims.reserve(variables);
+                std::ranges::generate_n(std::back_inserter(claims), variables, [&]{
+                    return UnivariatePolynomial(circuit, type, degree);
+                });
+            }
+        };
     };
 
     constexpr static Proof prove(const P& polynomial, const R& sum) {
@@ -86,7 +107,7 @@ public:
             const auto& claim = proof.claims[round];
             if (claim.degree() != polynomial.degree())
                 return false;
-            if (state != claim(R(0)) + claim(R(1)))
+            if (state != claim.at_0_plus_1())
                 return false;
             claim.absorb(ro);
             RO fork(ro);
@@ -133,7 +154,7 @@ public:
 
         if (proof.claim.degree() != polynomial.degree())
             return false;
-        if (sum != proof.claim(R(0)) + proof.claim(R(1)))
+        if (sum != proof.claim.at_0_plus_1())
             return false;
         proof.claim.absorb(ro);
         E challenge(E::squeeze(ro));
@@ -193,6 +214,77 @@ private:
             ));
         }
     }
+public:
+template<typename Circuit>
+requires(std::same_as<R, typename Circuit::R>)
+struct Gadget {
+    using Variable = Circuit::Variable;
+    using LinearCombination = Circuit::LinearCombination;
+    using Polynomial = typename P::Gadget<Circuit>;
+    using ProofGadget = typename Proof::Gadget<Circuit>;
+    using ROGadget = typename RO::Gadget<Circuit>;
+    using Point = typename Point<R>::Gadget<Circuit>;
+
+    Circuit& circuit;
+
+    constexpr Gadget(Circuit& circuit) : circuit(circuit) {}
+
+    constexpr void verify(
+        const Polynomial& polynomial,
+        const LinearCombination& sum,
+        const ProofGadget& proof
+    ) {
+        auto scope = circuit.scope("SumCheck::verify");
+        ROGadget ro(circuit);
+        Point r(polynomial.variables());
+        LinearCombination state(sum);
+        for (std::size_t round = 0; round < polynomial.variables(); ++round) {
+            const auto& claim = proof.claims[round];
+            circuit(state == claim.at_0_plus_1());
+            claim.absorb(ro);
+            ROGadget fork(ro);
+            LinearCombination challenge(fork.squeeze());
+            r[round] = challenge;
+            state = claim(challenge);
+        }
+        circuit(state == polynomial(r));
+    }
+};
+
+template<std::size_t circuit>
+struct Tracer {
+    using PTracer = typename P::Tracer;
+    using ROTracer = typename RO::Tracer<circuit>;
+    using UnivariatePolynomial = typename UnivariatePolynomial<R>::Tracer;
+
+    std::vector<R>& trace;
+
+    constexpr Tracer(std::vector<R>& trace) : trace(trace) {}
+
+    constexpr bool verify(const P& p, const R& sum, const Proof& proof) {
+        PTracer polynomial(p, trace);
+        if (proof.claims.size() != polynomial.variables())
+            return false;
+        ROTracer ro(trace);
+        Point<R> r(polynomial.variables());
+        R state(sum);
+        for (std::size_t round = 0; round < polynomial.variables(); ++round) {
+            auto claim = UnivariatePolynomial(proof.claims[round], trace);
+            if (claim.degree() != polynomial.degree())
+                return false;
+            if (state != claim.at_0_plus_1())
+                return false;
+            claim.absorb(ro);
+            ROTracer fork(ro);
+            E challenge(fork.squeeze());
+            r[round] = challenge;
+            state = claim(challenge);
+        }
+        if (state != polynomial(r))
+            return false;
+        return true;
+    }
+};
 };
 
 }

@@ -125,10 +125,9 @@ struct Gadget {
     Circuit& circuit;
     std::vector<LinearCombination> coefficients;
 
-    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t ell)
-        : circuit(circuit), coefficients(ell)
+    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t variables)
+        : circuit(circuit), coefficients(variables)
     {
-        auto scope = circuit.scope("EqExtension::allocate");
         std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
     }
 
@@ -162,6 +161,14 @@ struct Gadget {
             }
         }
         return r;
+    }
+
+    consteval std::size_t degree() const {
+        return 1;
+    }
+
+    constexpr std::size_t variables() const {
+        return coefficients.size();
     }
 };
 

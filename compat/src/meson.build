@@ -56,6 +56,7 @@ compiler.compiles('''
         static_assert(__cpp_lib_constexpr_charconv >= 202207L);
         static_assert(__cpp_lib_generator >= 202207L);
         static_assert(__cpp_lib_ios_noreplace >= 202207L);
+        static_assert(__cpp_lib_ranges_fold >= 202207L);
         static_assert(__cpp_lib_unreachable >= 202202L);
         static_assert(__cpp_lib_concepts >= 202002L);
         static_assert(__cpp_lib_int_pow2 >= 202002L);

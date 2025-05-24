@@ -29,14 +29,14 @@ template<typename E>
 class PowExtension {
     EqExtension<E> eq;
 public:
-    constexpr PowExtension(const E& tau, std::size_t ell) : eq(powers(tau, ell)) {}
+    constexpr PowExtension(const E& tau, std::size_t variables) : eq(powers(tau, variables)) {}
     constexpr PowExtension(const EqExtension<E>& eq) : eq(eq) {}
     constexpr PowExtension(EqExtension<E>&& eq) : eq(std::move(eq)) {}
 
-    constexpr static std::vector<E> powers(const E& tau, std::size_t ell) {
-        std::vector<E> coefficients(ell);
+    constexpr static std::vector<E> powers(const E& tau, std::size_t variables) {
+        std::vector<E> coefficients(variables);
         coefficients[0] = tau;
-        for (std::size_t i = 1; i < ell; ++i)
+        for (std::size_t i = 1; i < variables; ++i)
             coefficients[i] = coefficients[i - 1].square();
         return coefficients;
     }
@@ -89,12 +89,12 @@ struct Gadget {
     constexpr static std::vector<LinearCombination> powers(
         Circuit& circuit,
         const LinearCombination& tau,
-        std::size_t ell
+        std::size_t variables
     ) {
         auto scope = circuit.scope("PowExtension::powers");
-        std::vector<LinearCombination> coefficients(ell);
+        std::vector<LinearCombination> coefficients(variables);
         coefficients[0] = tau;
-        for (std::size_t i = 1; i < ell; ++i) {
+        for (std::size_t i = 1; i < variables; ++i) {
             auto cs = circuit.auxiliary();
             circuit(cs == coefficients[i - 1] * coefficients[i - 1]);
             coefficients[i] = cs;
@@ -104,10 +104,10 @@ struct Gadget {
 };
 
 struct trace {
-    constexpr static std::vector<E> powers(const E& tau, std::size_t ell, std::vector<E>& trace) {
-        std::vector<E> coefficients(ell);
+    constexpr static std::vector<E> powers(const E& tau, std::size_t variables, std::vector<E>& trace) {
+        std::vector<E> coefficients(variables);
         coefficients[0] = tau;
-        for (std::size_t i = 1; i < ell; ++i)
+        for (std::size_t i = 1; i < variables; ++i)
             coefficients[i] = trace.emplace_back(
                 coefficients[i - 1].square()
             );

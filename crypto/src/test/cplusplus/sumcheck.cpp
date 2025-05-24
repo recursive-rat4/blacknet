@@ -17,6 +17,8 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "ccsbuilder.h"
+#include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "multilinearextension.h"
@@ -112,6 +114,35 @@ BOOST_AUTO_TEST_CASE(pow_early_stop) {
 
     auto proof2 = SumCheck::proveEarlyStopping(p1, s2);
     BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof2));
+}
+
+BOOST_AUTO_TEST_CASE(circuit) {
+    using SumCheck = SumCheck<Z, MultilinearExtension<Z>, RO>;
+    MultilinearExtension<Z> poly{Z(7), Z(7), Z(7), Z(0)};
+    Z sum(21);
+
+    auto proof = SumCheck::prove(poly, sum);
+
+    using Circuit = CCSBuilder<Z, 2>;
+    Circuit circuit;
+    using PolyGadget = MultilinearExtension<Z>::Gadget<Circuit>;
+    PolyGadget poly_gadget(circuit, Circuit::Variable::Type::Input, poly.variables());
+    auto sum_var = circuit.input();
+    using ProofGadget = SumCheck::Proof::Gadget<Circuit>;
+    ProofGadget proof_gadget(circuit, Circuit::Variable::Type::Input, poly.variables(), poly.degree());
+    using SumCheckGadget = SumCheck::Gadget<Circuit>;
+    SumCheckGadget sumcheck_gadget(circuit);
+    sumcheck_gadget.verify(poly_gadget, sum_var, proof_gadget);
+
+    CustomizableConstraintSystem<Z> ccs(circuit.ccs());
+    Vector<Z> z = ccs.assigment();
+    std::ranges::copy(poly.coefficients, std::back_inserter(z.elements));
+    z.elements.push_back(sum);
+    for (const auto& claim : proof.claims)
+        std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
+    SumCheck::Tracer<Circuit::degree()> tracer(z.elements);
+    BOOST_TEST_REQUIRE(tracer.verify(poly, sum, proof));
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

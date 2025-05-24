@@ -190,10 +190,9 @@ struct Gadget {
     Circuit& circuit;
     std::vector<LinearCombination> coefficients;
 
-    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t ell)
-        : circuit(circuit), coefficients(1 << ell)
+    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t variables)
+        : circuit(circuit), coefficients(1 << variables)
     {
-        auto scope = circuit.scope("MultilinearExtension::allocate");
         std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
     }
 
@@ -208,10 +207,25 @@ struct Gadget {
         }
         return sigma;
     }
+
+    consteval std::size_t degree() const {
+        return 1;
+    }
+
+    constexpr std::size_t variables() const {
+        [[assume(std::has_single_bit(coefficients.size()))]];
+        return std::countr_zero(coefficients.size());
+    }
 };
 
-struct trace {
-    constexpr static E point(const MultilinearExtension& mle, const Point<E>& point, std::vector<E>& trace) {
+struct Tracer {
+    MultilinearExtension mle;
+    std::vector<E>& trace;
+
+    constexpr Tracer(const MultilinearExtension mle, std::vector<E>& trace)
+        : mle(mle), trace(trace) {}
+
+    constexpr E operator () (const Point<E>& point) const {
         const std::vector<E>& pis = EqExtension<E>::trace::hypercube(point.coordinates, trace);
         E sigma(E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < mle.coefficients.size(); ++i)
@@ -219,6 +233,14 @@ struct trace {
                 pis[i] * mle.coefficients[i]
             );
         return sigma;
+    }
+
+    consteval std::size_t degree() const {
+        return mle.degree();
+    }
+
+    constexpr std::size_t variables() const {
+        return mle.variables();
     }
 };
 

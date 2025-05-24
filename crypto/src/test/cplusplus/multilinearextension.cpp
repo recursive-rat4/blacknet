@@ -184,7 +184,9 @@ BOOST_AUTO_TEST_CASE(circuit) {
     Vector<E> z = ccs.assigment();
     std::ranges::copy(mle.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
-    BOOST_TEST(mle(x) == MultilinearExtension<E>::trace::point(mle, x, z.elements));
+    using Tracer = MultilinearExtension<E>::Tracer;
+    Tracer mle_tracer(mle, z.elements);
+    BOOST_TEST(mle(x) == mle_tracer(x));
     test::circuitry(ccs, z);
 }
 

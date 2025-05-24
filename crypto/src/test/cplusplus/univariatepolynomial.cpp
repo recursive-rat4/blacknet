@@ -41,10 +41,16 @@ BOOST_AUTO_TEST_CASE(point) {
     UnivariatePolynomial b{E(2), E(3), E(4)};
     UnivariatePolynomial c{E(2), E(3)};
     UnivariatePolynomial d{E(2)};
+
     BOOST_TEST(E(398) == a(E(4)));
     BOOST_TEST(E(78) == b(E(4)));
     BOOST_TEST(E(14) == c(E(4)));
     BOOST_TEST(E(2) == d(E(4)));
+
+    BOOST_TEST(E(16) == a.at_0_plus_1());
+    BOOST_TEST(E(11) == b.at_0_plus_1());
+    BOOST_TEST(E(7) == c.at_0_plus_1());
+    BOOST_TEST(E(4) == d.at_0_plus_1());
 }
 
 BOOST_AUTO_TEST_CASE(circuit) {

@@ -187,6 +187,11 @@ struct CCSBuilder {
             return t;
         }
 
+        template<typename Sponge>
+        constexpr void absorb(Sponge& sponge) const {
+            sponge.absorb(*this);
+        }
+
         constexpr Constraint operator () () const {
             static_assert(false, "Linear combination is not a constraint");
         }

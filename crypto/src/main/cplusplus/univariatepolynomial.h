@@ -18,7 +18,9 @@
 #ifndef BLACKNET_CRYPTO_UNIVARIATEPOLYNOMIAL_H
 #define BLACKNET_CRYPTO_UNIVARIATEPOLYNOMIAL_H
 
+#include <algorithm>
 #include <concepts>
+#include <functional>
 #include <initializer_list>
 #include <ostream>
 #include <vector>
@@ -59,6 +61,10 @@ public:
         return sigma;
     }
 
+    constexpr E at_0_plus_1() const {
+        return std::ranges::fold_left(coefficients, coefficients[0], std::plus<E>{});
+    }
+
     constexpr std::size_t degree() const {
         return coefficients.size() - 1;
     }
@@ -88,6 +94,11 @@ struct Gadget {
     Circuit& circuit;
     std::vector<LinearCombination> coefficients;
 
+    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t degree)
+        : circuit(circuit), coefficients(degree + 1)
+    {
+        std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
+    }
     constexpr Gadget(Circuit& circuit, const std::vector<LinearCombination>& coefficients)
         : circuit(circuit), coefficients(coefficients) {}
     constexpr Gadget(Circuit& circuit, std::vector<LinearCombination>&& coefficients)
@@ -113,13 +124,23 @@ struct Gadget {
             lc += cppm[i];
         return lc;
     }
+
+    constexpr LinearCombination at_0_plus_1() const {
+        return std::ranges::fold_left(coefficients, coefficients[0], std::plus<LinearCombination>{});
+    }
+
+    template<typename Sponge>
+    constexpr void absorb(Sponge& sponge) const {
+        for (std::size_t i = 0; i < coefficients.size(); ++i)
+            coefficients[i].absorb(sponge);
+    }
 };
 
 struct Tracer {
-    UnivariatePolynomial& polynomial;
+    UnivariatePolynomial polynomial;
     std::vector<E>& trace;
 
-    constexpr Tracer(UnivariatePolynomial& polynomial, std::vector<E>& trace)
+    constexpr Tracer(const UnivariatePolynomial& polynomial, std::vector<E>& trace)
         : polynomial(polynomial), trace(trace) {}
 
     constexpr E operator () (const E& point) const {
@@ -139,6 +160,23 @@ struct Tracer {
             );
         }
         return sigma;
+    }
+
+    constexpr E at_0_plus_1() const {
+        return polynomial.at_0_plus_1();
+    }
+
+    constexpr std::size_t degree() const {
+        return polynomial.degree();
+    }
+
+    consteval std::size_t variables() const {
+        return polynomial.variables();
+    }
+
+    template<typename Sponge>
+    constexpr void absorb(Sponge& sponge) const {
+        polynomial.absorb(sponge);
     }
 };
 

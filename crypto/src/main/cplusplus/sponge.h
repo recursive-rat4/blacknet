@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <array>
 #include <concepts>
+#include <span>
 
 namespace blacknet::crypto {
 
@@ -154,13 +155,12 @@ struct Gadget {
         }
     }
 
-    template<std::size_t N>
-    constexpr void absorb(const std::array<LinearCombination, N>& array) {
-        for (const LinearCombination& i : array)
+    constexpr void absorb(const std::span<const LinearCombination>& span) {
+        for (const LinearCombination& i : span)
             absorb(i);
     }
 
-    constexpr void squeeze(LinearCombination& e) {
+    constexpr LinearCombination squeeze() {
         if (phase == Absorb) {
             phase = Squeeze;
             pad(position, state);
@@ -170,22 +170,21 @@ struct Gadget {
             F::template circuit<Circuit>::permute(circuit, state);
             position = 0;
         }
-        e = state[position++];
+        return state[position++];
     }
 
-    template<std::size_t N>
-    constexpr void squeeze(std::array<LinearCombination, N>& array) {
-        for (LinearCombination& i : array)
-            squeeze(i);
+    constexpr void squeeze(const std::span<LinearCombination>& span) {
+        for (LinearCombination& i : span)
+            i = squeeze();
     }
 };
 
 template<std::size_t circuit>
 struct Tracer {
-    Sponge& sponge;
+    Sponge sponge;
     std::vector<E>& trace;
 
-    constexpr Tracer(Sponge& sponge, std::vector<E>& trace) : sponge(sponge), trace(trace) {}
+    constexpr Tracer(std::vector<E>& trace) : sponge(), trace(trace) {}
 
     constexpr void absorb(const E& e) {
         if (sponge.phase == Squeeze) {
@@ -209,7 +208,7 @@ struct Tracer {
             absorb(i);
     }
 
-    constexpr void squeeze(E& e) {
+    constexpr E squeeze() {
         if (sponge.phase == Absorb) {
             sponge.phase = Squeeze;
             pad(sponge.position, sponge.state);
@@ -219,13 +218,13 @@ struct Tracer {
             F::template trace<circuit>::permute(sponge.state, trace);
             sponge.position = 0;
         }
-        e = sponge.state[sponge.position++];
+        return sponge.state[sponge.position++];
     }
 
     template<std::size_t N>
     constexpr void squeeze(std::array<E, N>& array) {
         for (E& i : array)
-            squeeze(i);
+            i = squeeze();
     }
 };
 };

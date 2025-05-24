@@ -77,7 +77,6 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     using Sponge = Poseidon2Solinas62Sponge<{33, 34, 35, 36}>;
     using E = Solinas62Ring;
     const std::size_t T = 12;
-    Sponge sponge;
     const std::array<E, T> b{
         0x0000000000000000,
         0x0000000000000001,
@@ -112,7 +111,7 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
     using Tracer = Sponge::Tracer<Circuit::degree()>;
-    Tracer tracer(sponge, z.elements);
+    Tracer tracer(z.elements);
     tracer.absorb(b);
     tracer.squeeze(c);
     std::ranges::copy(c, std::back_inserter(z.elements));
