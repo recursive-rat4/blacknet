@@ -222,7 +222,7 @@ struct Tracer {
     MultilinearExtension mle;
     std::vector<E>& trace;
 
-    constexpr Tracer(const MultilinearExtension mle, std::vector<E>& trace)
+    constexpr Tracer(const MultilinearExtension& mle, std::vector<E>& trace)
         : mle(mle), trace(trace) {}
 
     constexpr E operator () (const Point<E>& point) const {

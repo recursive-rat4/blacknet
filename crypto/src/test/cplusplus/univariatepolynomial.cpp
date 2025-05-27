@@ -59,10 +59,8 @@ BOOST_AUTO_TEST_CASE(circuit) {
 
     using Circuit = CCSBuilder<E, 2>;
     Circuit circuit;
-    std::vector<typename Circuit::LinearCombination> c_vars(5);
-    std::ranges::generate(c_vars, [&]{ return circuit.input(); });
     using Gadget = UnivariatePolynomial<E>::Gadget<Circuit>;
-    Gadget gadget(circuit, std::move(c_vars));
+    Gadget gadget(circuit, Circuit::Variable::Type::Input, p.degree());
     typename Circuit::LinearCombination x_var(circuit.input());
     auto y_lc = gadget(x_var);
     typename Circuit::Variable y_var(circuit.auxiliary());

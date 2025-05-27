@@ -155,18 +155,18 @@ struct LatticeFold {
         }
     };
 
-    class G2 {
+    struct G2 {
         static_assert(b == 2, "Not implemented");
         // G2(x) = μ （ mle²[f](x) - mle[f](x) ）
         Fq mu;
         MultilinearExtension<Fq> mle;
-    public:
+
         constexpr G2(const Vector<Rq>& f) : mu(Fq::LEFT_MULTIPLICATIVE_IDENTITY()), mle(f) {}
         constexpr G2(const Fq& mu, const Vector<Rq>& f) : mu(mu), mle(f) {}
         constexpr G2(Fq&& mu, MultilinearExtension<Fq>&& mle) : mu(std::move(mu)), mle(std::move(mle)) {}
 
         constexpr Fq operator () (const Point<Fq>& point) const {
-            Fq t(mle(point));
+            Fq t = mle(point);
             return mu * (t.square() - t);
         }
 
@@ -192,6 +192,71 @@ struct LatticeFold {
         constexpr std::size_t variables() const {
             return mle.variables();
         }
+
+    template<typename Circuit>
+    requires(std::same_as<Fq, typename Circuit::R>)
+    struct Gadget {
+        using Variable = Circuit::Variable;
+        using LinearCombination = Circuit::LinearCombination;
+        using MultilinearExtension = typename MultilinearExtension<Fq>::Gadget<Circuit>;
+        using Point = typename Point<Fq>::Gadget<Circuit>;
+
+        Circuit& circuit;
+        LinearCombination mu;
+        MultilinearExtension mle;
+
+        constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t variables)
+            : circuit(circuit),
+            mu(circuit.variable(type)),
+            mle(circuit, type, variables) {}
+
+        constexpr LinearCombination operator () (const Point& point) const {
+            auto scope = circuit.scope("LatticeFold::G2::point");
+            LinearCombination t = mle(point);
+            // circuit degree 2
+            auto tt = circuit.auxiliary();
+            circuit(tt == t * t);
+            auto r = circuit.auxiliary();
+            circuit(r == mu * (tt + -t));
+            return r;
+        }
+
+        consteval std::size_t degree() const {
+            return b;
+        }
+
+        constexpr std::size_t variables() const {
+            return mle.variables();
+        }
+    };
+
+    struct Tracer {
+        using MultilinearExtension = MultilinearExtension<Fq>::Tracer;
+
+        Fq mu;
+        MultilinearExtension mle;
+        std::vector<Fq>& trace;
+
+        constexpr Tracer(const G2& g2, std::vector<Fq>& trace)
+            : mu(g2.mu), mle(g2.mle, trace), trace(trace) {}
+
+        constexpr Fq operator () (const Point<Fq>& point) const {
+            Fq t = mle(point);
+            return trace.emplace_back(
+                mu * (trace.emplace_back(
+                    t.square()
+                ) - t)
+            );
+        }
+
+        consteval std::size_t degree() const {
+            return b;
+        }
+
+        constexpr std::size_t variables() const {
+            return mle.variables();
+        }
+    };
     };
 
     // r 何处

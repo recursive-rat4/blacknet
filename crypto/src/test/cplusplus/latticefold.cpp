@@ -17,17 +17,22 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "ccsbuilder.h"
+#include "circuitry.h"
+#include "customizableconstraintsystem.h"
 #include "hypercube.h"
 #include "latticefold.h"
 #include "matrix.h"
 #include "point.h"
+#include "poseidon2solinas62.h"
 #include "solinas62.h"
 #include "solinas62field.h"
+#include "sumcheck.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
 
-BOOST_AUTO_TEST_SUITE(LatticeFolds)
+BOOST_AUTO_TEST_SUITE(LatticeFold_Plain)
 
 using Z = Solinas62Ring;
 using F = Solinas62RingDegree2;
@@ -121,6 +126,76 @@ BOOST_AUTO_TEST_CASE(RingIsomorphisms) {
     auto c = LatticeFold::isomorph(std::move(b));
     auto d = LatticeFold::isomorph(std::move(c));
     BOOST_TEST(a == d);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(LatticeFold_Circuit)
+
+using Z = Solinas62Ring;
+using F = Solinas62Ring; //XXX
+using LatticeFold = LatticeFold<Z, F>;
+using R = LatticeFold::Rq;
+using RO = Poseidon2Solinas62Sponge<{64, 65, 66, 67}>;
+
+BOOST_AUTO_TEST_CASE(G2s) {
+    constexpr std::size_t ell = std::countr_zero(LatticeFold::D);
+    Vector<R> f{R{1, 1, 0, 1}};
+    auto g2 = LatticeFold::G2(f);
+    Point<F> x(ell);
+    std::ranges::fill(x.coordinates, F(42));
+
+    using Circuit = CCSBuilder<F, 2>;
+    Circuit circuit;
+    using Gadget = LatticeFold::G2::Gadget<Circuit>;
+    Gadget g2_gadget(circuit, Circuit::Variable::Type::Input, ell);
+    using PointGadget = Point<F>::Gadget<Circuit>;
+    PointGadget x_gadget(circuit, Circuit::Variable::Type::Input, ell);
+    g2_gadget(x_gadget);
+
+    CustomizableConstraintSystem<F> ccs(circuit.ccs());
+    Vector<F> z = ccs.assigment();
+    z.elements.push_back(g2.mu);
+    std::ranges::copy(g2.mle.coefficients, std::back_inserter(z.elements));
+    std::ranges::copy(x.coordinates, std::back_inserter(z.elements));
+    using Tracer = LatticeFold::G2::Tracer;
+    Tracer g2_tracer(g2, z.elements);
+    BOOST_TEST(g2(x) == g2_tracer(x));
+    test::circuitry(ccs, z);
+}
+
+BOOST_AUTO_TEST_CASE(Verifys) {
+    // Far from being complete...
+    using SumCheck = SumCheck<F, LatticeFold::G2, RO>;
+
+    constexpr std::size_t ell = std::countr_zero(LatticeFold::D);
+    Vector<R> f{R{1, 1, 0, 1}};
+    auto g2 = LatticeFold::G2(f);
+    F sum = Hypercube<F>::sum(g2);
+
+    auto proof = SumCheck::prove(g2, sum);
+
+    using Circuit = CCSBuilder<F, 2>;
+    Circuit circuit;
+    using Gadget = LatticeFold::G2::Gadget<Circuit>;
+    Gadget g2_gadget(circuit, Circuit::Variable::Type::Input, ell);
+    auto sum_var = circuit.input();
+    using ProofGadget = SumCheck::Proof::Gadget<Circuit>;
+    ProofGadget proof_gadget(circuit, Circuit::Variable::Type::Input, g2.variables(), g2.degree());
+    using SumCheckGadget = SumCheck::Gadget<Circuit>;
+    SumCheckGadget sumcheck_gadget(circuit);
+    sumcheck_gadget.verify(g2_gadget, sum_var, proof_gadget);
+
+    CustomizableConstraintSystem<F> ccs(circuit.ccs());
+    Vector<F> z = ccs.assigment();
+    z.elements.push_back(g2.mu);
+    std::ranges::copy(g2.mle.coefficients, std::back_inserter(z.elements));
+    z.elements.push_back(sum);
+    for (const auto& claim : proof.claims)
+        std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
+    SumCheck::Tracer<Circuit::degree()> tracer(z.elements);
+    BOOST_TEST_REQUIRE(tracer.verify(g2, sum, proof));
+    test::circuitry(ccs, z);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
