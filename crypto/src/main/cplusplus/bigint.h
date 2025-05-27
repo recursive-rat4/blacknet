@@ -136,6 +136,19 @@ struct BigInt {
         return r;
     }
 
+    constexpr BigInt& operator &= (const BigInt& other) {
+        for (std::size_t i = 0; i < N; ++i)
+            limbs[i] &= other.limbs[i];
+        return *this;
+    }
+
+    constexpr BigInt operator & (const BigInt& other) const {
+        BigInt r;
+        for (std::size_t i = 0; i < N; ++i)
+            r.limbs[i] = limbs[i] & other.limbs[i];
+        return r;
+    }
+
     constexpr BigInt& operator <<= (unsigned other) {
         L c = 0;
         for (std::size_t i = 0; i < N; ++i) {
