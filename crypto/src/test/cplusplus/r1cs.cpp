@@ -17,7 +17,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "circuitry.h"
 #include "fastrng.h"
 #include "matrix.h"
 #include "pervushin.h"
@@ -57,7 +56,7 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
         MatrixSparse<R>(b),
         MatrixSparse<R>(c),
     };
-    test::circuitry(r1cs, z);
+    BOOST_TEST(r1cs.isSatisfied(z));
 
     const Vector<R> e_init(r1cs.constraints(), R(0));
     Vector<R> e_folded(e_init);
@@ -82,7 +81,7 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
     BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
 
     auto rr = R::random(rng);
-    auto [zr, er] = r1cs.random<R>(rng);
+    auto [zr, er] = r1cs.random(rng);
     BOOST_TEST(r1cs.isSatisfied(zr, er));
     r1cs.fold(rr, z_folded, e_folded, z_folded, e_folded, zr, er);
     BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));

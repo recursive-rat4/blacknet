@@ -17,8 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "ccsbuilder.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "poseidon2solinas62.h"
 #include "sponge.h"
@@ -93,7 +92,7 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     };
     std::array<E, T> c;
 
-    using Circuit = CCSBuilder<E, 3>;
+    using Circuit = CircuitBuilder<E, 3>;
     Circuit circuit;
     using Gadget = Sponge::Gadget<Circuit>;
     Gadget gadget(circuit);
@@ -115,7 +114,7 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     tracer.absorb(b);
     tracer.squeeze(c);
     std::ranges::copy(c, std::back_inserter(z.elements));
-    test::circuitry(ccs, z);
+    BOOST_TEST(ccs.isSatisfied(z));
 
     Sponge spng;
     for (const auto& i : b) spng.absorb(i);

@@ -17,9 +17,8 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "ccsbuilder.h"
 #include "cell.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "poseidon2pervushin.h"
 #include "r1cs.h"
 
@@ -53,7 +52,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Jive = Poseidon2PervushinJive;
     using Cell = Cell<Jive>;
 
-    using Circuit = CCSBuilder<E, 2>;
+    using Circuit = CircuitBuilder<E, 2>;
     Circuit circuit;
     using Gadget = Cell::Gadget<Circuit>;
     auto null_gadget = Gadget::null(circuit);
@@ -69,7 +68,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     Tracer cons_tracer(cons, z.elements);
     auto car = cons_tracer.car(null, null);
     auto cdr = cons_tracer.cdr(null, null);
-    test::circuitry(r1cs, z);
+    BOOST_TEST(r1cs.isSatisfied(z));
 
     BOOST_TEST(null == car);
     BOOST_TEST(null == cdr);

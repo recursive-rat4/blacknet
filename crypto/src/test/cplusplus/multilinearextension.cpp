@@ -18,8 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
-#include "ccsbuilder.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
 #include "matrix.h"
@@ -173,7 +172,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     MultilinearExtension<E> mle({E(2), E(3), E(5), E(7)});
     Point<E> x{E(11), E(13)};
 
-    using Circuit = CCSBuilder<E, 2>;
+    using Circuit = CircuitBuilder<E, 2>;
     Circuit circuit;
     using Gadget = MultilinearExtension<E>::Gadget<Circuit>;
     Gadget mle_gadget(circuit, Circuit::Variable::Type::Input, 2);
@@ -187,7 +186,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Tracer = MultilinearExtension<E>::Tracer;
     Tracer mle_tracer(mle, z.elements);
     BOOST_TEST(mle(x) == mle_tracer(x));
-    test::circuitry(ccs, z);
+    BOOST_TEST(ccs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

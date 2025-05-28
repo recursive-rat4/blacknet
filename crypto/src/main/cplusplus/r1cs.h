@@ -20,7 +20,9 @@
 
 #include <ostream>
 #include <random>
+#include <stdexcept>
 #include <utility>
+#include <fmt/format.h>
 
 #include "matrixsparse.h"
 #include "vector.h"
@@ -54,27 +56,32 @@ public:
         return a.columns;
     }
 
-    template<typename S = E>
-    constexpr bool isSatisfied(const Vector<S>& z) const {
-        return (a * z) * (b * z) == c * z;
+    constexpr bool isSatisfied(const Vector<E>& z) const {
+        if (variables() == z.size()) {
+            return (a * z) * (b * z) == c * z;
+        } else {
+            throw std::runtime_error(fmt::format("Assigned only {} variables of {} required", variables(), z.size()));
+        }
     }
 
-    template<typename S = E>
-    constexpr bool isSatisfied(const Vector<S>& z, const Vector<S>& e) const {
-        return error(z) == e;
+    constexpr bool isSatisfied(const Vector<E>& z, const Vector<E>& e) const {
+        if (variables() == z.size()) {
+            return error(z) == e;
+        } else {
+            throw std::runtime_error(fmt::format("Assigned only {} variables of {} required", variables(), z.size()));
+        }
     }
 
-    template<typename S = E>
     constexpr void fold(
-        const S& r,
-        Vector<S>& z, Vector<S>& e,
-        const Vector<S>& z1, const Vector<S>& e1,
-        const Vector<S>& z2, const Vector<S>& e2
+        const E& r,
+        Vector<E>& z, Vector<E>& e,
+        const Vector<E>& z1, const Vector<E>& e1,
+        const Vector<E>& z2, const Vector<E>& e2
     ) const {
-        const S& u1 = z1[0];
-        const S& u2 = z2[0];
-        Vector<S> z12{ z1 + z2 };
-        Vector<S> t{ (a * z12) * (b * z12) - (u1 + u2) * (c * z12) - e1 - e2 };
+        const E& u1 = z1[0];
+        const E& u2 = z2[0];
+        Vector<E> z12{ z1 + z2 };
+        Vector<E> t{ (a * z12) * (b * z12) - (u1 + u2) * (c * z12) - e1 - e2 };
         z = z1 + r * z2;
         e = e1 + r * t + r.square() * e2;
     }
@@ -91,21 +98,20 @@ public:
         return out << '[' << val.a << ", " << val.b << ", " << val.c << ']';
     }
 
-    template<typename S = E, typename Sponge>
-    constexpr std::pair<Vector<S>, Vector<S>> squeeze(Sponge& sponge) const {
-        auto z = Vector<S>::squeeze(sponge, variables());
+    template<typename Sponge>
+    constexpr std::pair<Vector<E>, Vector<E>> squeeze(Sponge& sponge) const {
+        auto z = Vector<E>::squeeze(sponge, variables());
         return { z, error(z) };
     }
 
-    template<typename S = E, std::uniform_random_bit_generator RNG>
-    std::pair<Vector<S>, Vector<S>> random(RNG& rng) const {
-        auto z = Vector<S>::random(rng, variables());
+    template<std::uniform_random_bit_generator RNG>
+    std::pair<Vector<E>, Vector<E>> random(RNG& rng) const {
+        auto z = Vector<E>::random(rng, variables());
         return { z, error(z) };
     }
 private:
-    template<typename S = E>
-    constexpr Vector<S> error(const Vector<S>& z) const {
-        const S& u = z[0];
+    constexpr Vector<E> error(const Vector<E>& z) const {
+        const E& u = z[0];
         return (a * z) * (b * z) - u * (c * z);
     }
 };

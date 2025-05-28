@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_CUSTOMIZABLECONSTRAINTSYSTEM_H
 #define BLACKNET_CRYPTO_CUSTOMIZABLECONSTRAINTSYSTEM_H
 
+#include <stdexcept>
 #include <vector>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -61,6 +62,10 @@ public:
     constexpr CustomizableConstraintSystem& operator = (CustomizableConstraintSystem&&) noexcept = default;
 
     constexpr bool isSatisfied(const Vector<E>& z) const {
+        if (variables() != z.size()) {
+            throw std::runtime_error(fmt::format("Assigned only {} variables of {} required", variables(), z.size()));
+        }
+
         Vector<E> sigma(rows, E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < c.size(); ++i) {
             Vector<E> circle(rows, c[i]);

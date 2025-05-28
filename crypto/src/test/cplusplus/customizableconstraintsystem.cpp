@@ -17,7 +17,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "circuitry.h"
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
 #include "matrix.h"
@@ -45,7 +44,7 @@ BOOST_AUTO_TEST_CASE(ccs) {
         {{0, 0, 0, 0}, {1}},
         {E(1), E(-1)}
     );
-    test::circuitry(ccs, z);
+    BOOST_TEST(ccs.isSatisfied(z));
 
     CustomizableConstraintSystem<E>::Polynomial poly(ccs.polynomial(z));
     BOOST_TEST(4 == poly.degree());

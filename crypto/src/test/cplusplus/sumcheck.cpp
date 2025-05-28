@@ -17,8 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "ccsbuilder.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "multilinearextension.h"
@@ -123,7 +122,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
 
     auto proof = SumCheck::prove(poly, sum);
 
-    using Circuit = CCSBuilder<Z, 2>;
+    using Circuit = CircuitBuilder<Z, 2>;
     Circuit circuit;
     using PolyGadget = MultilinearExtension<Z>::Gadget<Circuit>;
     PolyGadget poly_gadget(circuit, Circuit::Variable::Type::Input, poly.variables());
@@ -142,7 +141,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
     SumCheck::Tracer<Circuit::degree()> tracer(z.elements);
     BOOST_TEST_REQUIRE(tracer.verify(poly, sum, proof));
-    test::circuitry(ccs, z);
+    BOOST_TEST(ccs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

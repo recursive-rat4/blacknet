@@ -18,8 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
-#include "ccsbuilder.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "hypercube.h"
@@ -128,7 +127,7 @@ BOOST_AUTO_TEST_CASE(circuit_point) {
     EqExtension<E> eq({E(2), E(3), E(5)});
     Point<E> x{E(7), E(11), E(13)};
 
-    using Circuit = CCSBuilder<E, 2>;
+    using Circuit = CircuitBuilder<E, 2>;
     Circuit circuit;
     using Gadget = EqExtension<E>::Gadget<Circuit>;
     Gadget eq_gadget(circuit, Circuit::Variable::Type::Input, 3);
@@ -140,13 +139,13 @@ BOOST_AUTO_TEST_CASE(circuit_point) {
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
     BOOST_TEST(eq(x) == EqExtension<E>::trace::point(eq, x, z.elements));
-    test::circuitry(ccs, z);
+    BOOST_TEST(ccs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_CASE(circuit_hypercube) {
     EqExtension<E> eq({E(29), E(31), E(37)});
 
-    using Circuit = CCSBuilder<E, 2>;
+    using Circuit = CircuitBuilder<E, 2>;
     Circuit circuit;
     using Gadget = EqExtension<E>::Gadget<Circuit>;
     Gadget gadget(circuit, Circuit::Variable::Type::Input, 3);
@@ -155,7 +154,7 @@ BOOST_AUTO_TEST_CASE(circuit_hypercube) {
     Vector<E> z = ccs.assigment();
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     BOOST_TEST(eq() == EqExtension<E>::trace::hypercube(eq.coefficients, z.elements));
-    test::circuitry(ccs, z);
+    BOOST_TEST(ccs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

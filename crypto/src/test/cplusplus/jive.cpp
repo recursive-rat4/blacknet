@@ -17,8 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "ccsbuilder.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "jive.h"
 #include "poseidon2pervushin.h"
 #include "r1cs.h"
@@ -62,7 +61,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     };
     Hash c;
 
-    using Circuit = CCSBuilder<E, 2>;
+    using Circuit = CircuitBuilder<E, 2>;
     Circuit circuit;
     using Gadget = Jive::HashGadget<Circuit>;
     Gadget x0;
@@ -81,7 +80,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     std::ranges::copy(b, std::back_inserter(z.elements));
     c = Jive::trace<Circuit::degree()>::compress(a, b, z.elements);
     std::ranges::copy(c, std::back_inserter(z.elements));
-    test::circuitry(r1cs, z);
+    BOOST_TEST(r1cs.isSatisfied(z));
 
     BOOST_TEST(c == Jive::compress(a, b));
 }

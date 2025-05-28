@@ -18,8 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
-#include "ccsbuilder.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "solinas62.h"
 #include "univariatepolynomial.h"
@@ -57,7 +56,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     UnivariatePolynomial<E> p{E(2), E(3), E(4), E(5), E(6)};
     E x(7);
 
-    using Circuit = CCSBuilder<E, 2>;
+    using Circuit = CircuitBuilder<E, 2>;
     Circuit circuit;
     using Gadget = UnivariatePolynomial<E>::Gadget<Circuit>;
     Gadget gadget(circuit, Circuit::Variable::Type::Input, p.degree());
@@ -75,7 +74,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
         tracer(x)
     );
     BOOST_TEST(p(x) == z.elements.back());
-    test::circuitry(ccs, z);
+    BOOST_TEST(ccs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

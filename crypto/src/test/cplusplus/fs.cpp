@@ -17,7 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "ccsbuilder.h"
+#include "circuitbuilder.h"
 #include "fastrng.h"
 #include "fs.h"
 #include "pervushin.h"
@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_SUITE(FSs)
 using F = PervushinRing;
 
 BOOST_AUTO_TEST_CASE(test) {
-    using Circuit = CCSBuilder<F, 2>;
+    using Circuit = CircuitBuilder<F, 2>;
     using CS = R1CS<F>;
     using RO = Poseidon2PervushinSponge<{67,68,69,70}>;
     using FS = FS<CS, RO>;

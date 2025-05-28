@@ -27,7 +27,7 @@ crypto_test_sources = [
     'bigint.cpp',
     'blacklemon.cpp',
     'blake2b.cpp',
-    'ccsbuilder.cpp',
+    'circuitbuilder.cpp',
     'chacha20.cpp',
     'customizableconstraintsystem.cpp',
     'dilithium.cpp',

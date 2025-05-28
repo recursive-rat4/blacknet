@@ -17,15 +17,14 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "ccsbuilder.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "pervushin.h"
 #include "r1cs.h"
 
 using namespace blacknet::crypto;
 
-BOOST_AUTO_TEST_SUITE(CCSBuilders)
+BOOST_AUTO_TEST_SUITE(CircuitBuilders)
 
 using E = PervushinRing;
 
@@ -54,7 +53,7 @@ BOOST_AUTO_TEST_CASE(Eqs) {
         MatrixSparse<E>(cm),
     };
 
-    R1CSBuilder<E> circuit;
+    CircuitBuilder<E, 2> circuit;
     auto c = E(4);
     auto x = circuit.input();
     auto y = circuit.input();
@@ -68,7 +67,7 @@ BOOST_AUTO_TEST_CASE(Eqs) {
     BOOST_TEST(r1cs == circuit.r1cs());
 
     Vector<E> z{ E(1), E(4), E(4), E(4) };
-    test::circuitry(r1cs, z);
+    BOOST_TEST(r1cs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_CASE(Adds) {
@@ -99,7 +98,7 @@ BOOST_AUTO_TEST_CASE(Adds) {
         MatrixSparse<E>(cm),
     };
 
-    R1CSBuilder<E> circuit;
+    CircuitBuilder<E, 2> circuit;
     auto c = E(4);
     auto x = circuit.input();
     auto y = circuit.input();
@@ -114,7 +113,7 @@ BOOST_AUTO_TEST_CASE(Adds) {
     BOOST_TEST(r1cs == circuit.r1cs());
 
     Vector<E> z{ E(1), E(8), E(2), E(4) };
-    test::circuitry(r1cs, z);
+    BOOST_TEST(r1cs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_CASE(Muls) {
@@ -145,7 +144,7 @@ BOOST_AUTO_TEST_CASE(Muls) {
         MatrixSparse<E>(cm),
     };
 
-    R1CSBuilder<E> circuit;
+    CircuitBuilder<E, 2> circuit;
     auto c = E(4);
     auto x = circuit.input();
     auto y = circuit.input();
@@ -160,7 +159,7 @@ BOOST_AUTO_TEST_CASE(Muls) {
     BOOST_TEST(r1cs == circuit.r1cs());
 
     Vector<E> z{ E(1), E(16), E(2), E(4) };
-    test::circuitry(r1cs, z);
+    BOOST_TEST(r1cs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_CASE(Boards) {
@@ -200,7 +199,7 @@ BOOST_AUTO_TEST_CASE(Boards) {
         MatrixSparse<E>(cm),
     };
 
-    R1CSBuilder<E> circuit;
+    CircuitBuilder<E, 2> circuit;
     auto a = E(160);
     auto b = E(2);
     auto c = E(4);
@@ -222,7 +221,7 @@ BOOST_AUTO_TEST_CASE(Boards) {
     BOOST_TEST(r1cs == circuit.r1cs());
 
     Vector<E> zv{ E(1), E(4), E(4), E(4), E(16) };
-    test::circuitry(r1cs, zv);
+    BOOST_TEST(r1cs.isSatisfied(zv));
 }
 
 BOOST_AUTO_TEST_CASE(Cubism) {
@@ -249,7 +248,7 @@ BOOST_AUTO_TEST_CASE(Cubism) {
         {E(1), E(-1)}
     };
 
-    CCSBuilder<E, 3> circuit;
+    CircuitBuilder<E, 3> circuit;
     auto c = E(350);
     auto x = circuit.input();
     auto y = circuit.input();
@@ -262,7 +261,7 @@ BOOST_AUTO_TEST_CASE(Cubism) {
     BOOST_TEST(ccs == circuit.ccs());
 
     Vector<E> zv{ E(1), E(2), E(3), E(5), E(8) };
-    test::circuitry(ccs, zv);
+    BOOST_TEST(ccs.isSatisfied(zv));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

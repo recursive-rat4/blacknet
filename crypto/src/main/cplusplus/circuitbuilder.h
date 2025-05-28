@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_CCSBUILDER_H
-#define BLACKNET_CRYPTO_CCSBUILDER_H
+#ifndef BLACKNET_CRYPTO_CIRCUITBUILDER_H
+#define BLACKNET_CRYPTO_CIRCUITBUILDER_H
 
 #include <algorithm>
 #include <array>
@@ -36,7 +36,7 @@ template<typename E>class CustomizableConstraintSystem;
 template<typename E>class R1CS;
 
 template<typename E, std::size_t D>
-struct CCSBuilder {
+struct CircuitBuilder {
     using R = E;
 
     consteval static std::size_t degree() {
@@ -158,6 +158,12 @@ struct CCSBuilder {
         constexpr LinearCombination operator + (const LinearCombination& lc) const {
             LinearCombination t(*this);
             t += lc;
+            return t;
+        }
+
+        friend constexpr LinearCombination operator - (const Variable& l, const LinearCombination& r) {
+            LinearCombination t = l;
+            t -= r;
             return t;
         }
 
@@ -413,7 +419,7 @@ struct CCSBuilder {
         constexpr EqExpression(const L& l, const R& r) : l(l), r(r) {}
 
         constexpr Constraint operator () () const {
-            static_assert(degree() <= CCSBuilder::degree(), "High-degree constraints are not supported");
+            static_assert(degree() <= CircuitBuilder::degree(), "High-degree constraints are not supported");
             Constraint constraint;
             if constexpr (std::is_same_v<L, Constant>) {
                 if constexpr (std::is_same_v<R, Constant>) {
@@ -534,10 +540,10 @@ struct CCSBuilder {
     };
 
     class Scope {
-        friend CCSBuilder;
-        CCSBuilder* builder;
+        friend CircuitBuilder;
+        CircuitBuilder* builder;
 
-        constexpr Scope(CCSBuilder* builder) : builder(builder) {}
+        constexpr Scope(CircuitBuilder* builder) : builder(builder) {}
         constexpr Scope(const Scope&) = delete;
         constexpr Scope(Scope&&) = delete;
         constexpr Scope& operator = (const Scope&) = delete;
@@ -565,7 +571,7 @@ struct CCSBuilder {
     std::vector<ScopeInfo> scopes;
     ScopeInfo* currentScope;
 
-    consteval CCSBuilder() : inputs(0), auxiliaries(0), constraints(), scopes(), currentScope(nullptr) {}
+    consteval CircuitBuilder() : inputs(0), auxiliaries(0), constraints(), scopes(), currentScope(nullptr) {}
 
     [[nodiscard("Circuit variable should be constrained")]]
     constexpr Variable input() {
@@ -669,9 +675,6 @@ struct CCSBuilder {
             scope.print(out, 0);
     }
 };
-
-template<typename E>
-using R1CSBuilder = CCSBuilder<E, 2>;
 
 }
 

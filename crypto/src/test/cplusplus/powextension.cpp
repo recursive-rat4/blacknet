@@ -18,8 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ranges>
 
-#include "ccsbuilder.h"
-#include "circuitry.h"
+#include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
 #include "point.h"
@@ -104,7 +103,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     E tau(4);
     constexpr std::size_t ell(3);
 
-    using Circuit = CCSBuilder<E, 2>;
+    using Circuit = CircuitBuilder<E, 2>;
     Circuit circuit;
     auto tau_var = circuit.input();
     using Gadget = PowExtension<E>::Gadget<Circuit>;
@@ -113,7 +112,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     Vector<E> z = ccs.assigment();
     z.elements.push_back(tau);
     BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::trace::powers(tau, ell, z.elements));
-    test::circuitry(ccs, z);
+    BOOST_TEST(ccs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

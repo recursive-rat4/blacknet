@@ -217,7 +217,7 @@ struct LatticeFold {
             auto tt = circuit.auxiliary();
             circuit(tt == t * t);
             auto r = circuit.auxiliary();
-            circuit(r == mu * (tt + -t));
+            circuit(r == mu * (tt - t));
             return r;
         }
 
