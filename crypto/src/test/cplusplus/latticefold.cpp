@@ -135,7 +135,7 @@ using Z = Solinas62Ring;
 using F = Solinas62Ring; //XXX
 using LatticeFold = LatticeFold<Z, F>;
 using R = LatticeFold::Rq;
-using RO = Poseidon2Solinas62Sponge<{64, 65, 66, 67}>;
+using Duplex = Poseidon2Solinas62Sponge<{64, 65, 66, 67}>;
 
 BOOST_AUTO_TEST_CASE(G2s) {
     constexpr std::size_t ell = std::countr_zero(LatticeFold::D);
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(G2s) {
 
 BOOST_AUTO_TEST_CASE(Verifys) {
     // Far from being complete...
-    using SumCheck = SumCheck<F, LatticeFold::G2, RO>;
+    using SumCheck = SumCheck<F, LatticeFold::G2, Duplex>;
 
     constexpr std::size_t ell = std::countr_zero(LatticeFold::D);
     Vector<R> f{R{1, 1, 0, 1}};

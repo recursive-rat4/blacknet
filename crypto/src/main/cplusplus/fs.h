@@ -26,10 +26,10 @@
 
 namespace blacknet::crypto {
 
-template<typename CS, typename RO>
-requires(std::same_as<typename CS::ElementType, typename RO::Z>)
+template<typename CS, typename Duplex>
+requires(std::same_as<typename CS::ElementType, typename Duplex::Z>)
 struct FS {
-    using F = RO::Z;
+    using F = Duplex::Z;
 
     CS& cs;
 
@@ -40,15 +40,15 @@ struct FS {
         const Vector<F>& z1, const Vector<F>& e1,
         const Vector<F>& z2, const Vector<F>& e2
     ) const {
-        RO ro; //XXX iv
+        Duplex duplex; //XXX iv
 
         // Size of vectors is implied by constraint system
-        for (const F& e : z1.elements) ro.absorb(e);
-        for (const F& e : e1.elements) ro.absorb(e);
-        for (const F& e : z2.elements) ro.absorb(e);
-        for (const F& e : e2.elements) ro.absorb(e);
+        for (const F& e : z1.elements) duplex.absorb(e);
+        for (const F& e : e1.elements) duplex.absorb(e);
+        for (const F& e : z2.elements) duplex.absorb(e);
+        for (const F& e : e2.elements) duplex.absorb(e);
 
-        F r(F::squeeze(ro));
+        F r(F::squeeze(duplex));
         cs.fold(r, z, e, z1, e1, z2, e2);
     }
 

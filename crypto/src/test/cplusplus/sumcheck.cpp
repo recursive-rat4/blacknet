@@ -33,10 +33,10 @@ BOOST_AUTO_TEST_SUITE(SumChecks)
 
 using Z = Solinas62Ring;
 using R = Solinas62RingDegree2;
-using RO = Poseidon2Solinas62Sponge<{10, 11, 12, 13}>;
+using Duplex = Poseidon2Solinas62Sponge<{10, 11, 12, 13}>;
 
 BOOST_AUTO_TEST_CASE(mle) {
-    using SumCheck = SumCheck<R, MultilinearExtension<R>, RO>;
+    using SumCheck = SumCheck<R, MultilinearExtension<R>, Duplex>;
     MultilinearExtension<R> p1{Z(7), Z(7), Z(7), Z(0)};
     MultilinearExtension<R> p2{Z(7), Z(7), Z(7), Z(7)};
     MultilinearExtension<R> p3{Z(7), Z(7), Z(0), Z(7)};
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(mle) {
 }
 
 BOOST_AUTO_TEST_CASE(eq) {
-    using SumCheck = SumCheck<R, EqExtension<R>, RO>;
+    using SumCheck = SumCheck<R, EqExtension<R>, Duplex>;
     EqExtension<R> p1({Z(45), Z(46), Z(47), Z(48)});
     EqExtension<R> p2({Z(45), Z(46), Z(48), Z(48)});
     R s1(1);
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(eq) {
 
 BOOST_AUTO_TEST_CASE(ccs) {
     using CCS = CustomizableConstraintSystem<R>;
-    using SumCheck = SumCheck<R, CCS::Polynomial, RO>;
+    using SumCheck = SumCheck<R, CCS::Polynomial, Duplex>;
     CCS::Polynomial ccs(1, 2, {{Z(7), Z(7), Z(7), Z(0)}}, {{0}}, {Z(1)});
     R s(21);
 
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(ccs) {
 }
 
 BOOST_AUTO_TEST_CASE(pow_early_stop) {
-    using SumCheck = SumCheck<R, PowExtension<R>, RO>;
+    using SumCheck = SumCheck<R, PowExtension<R>, Duplex>;
     PowExtension<R> p1(R(2), 4);
     PowExtension<R> p2(R(4), 4);
     R s1(1);
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(pow_early_stop) {
 }
 
 BOOST_AUTO_TEST_CASE(circuit) {
-    using SumCheck = SumCheck<Z, MultilinearExtension<Z>, RO>;
+    using SumCheck = SumCheck<Z, MultilinearExtension<Z>, Duplex>;
     MultilinearExtension<Z> poly{Z(7), Z(7), Z(7), Z(0)};
     Z sum(21);
 

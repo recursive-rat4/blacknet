@@ -25,16 +25,7 @@
 
 namespace blacknet::crypto {
 
-// Sponge construction, https://keccak.team/files/CSF-0.1.pdf
-
-class SpongeException : public std::exception {
-    std::string message;
-public:
-    SpongeException(const std::string& message) : message(message) {}
-    virtual const char* what() const noexcept override {
-        return message.c_str();
-    }
-};
+// Duplex construction, https://keccak.team/files/CSF-0.1.pdf
 
 enum SpongeMode {
     // Original
@@ -70,7 +61,8 @@ struct Sponge {
 
     constexpr void absorb(const E& e) {
         if (phase == Squeeze) {
-            throw SpongeException("Cannot absorb during squeeze");
+            phase = Absorb;
+            position = 0;
         } else if (position == R) {
             F::permute(state);
             position = 0;
@@ -141,7 +133,8 @@ struct Gadget {
 
     constexpr void absorb(const LinearCombination& e) {
         if (phase == Squeeze) {
-            throw SpongeException("Cannot absorb during squeeze");
+            phase = Absorb;
+            position = 0;
         } else if (position == R) {
             F::template circuit<Circuit>::permute(circuit, state);
             position = 0;
@@ -188,7 +181,8 @@ struct Tracer {
 
     constexpr void absorb(const E& e) {
         if (sponge.phase == Squeeze) {
-            throw SpongeException("Cannot absorb during squeeze");
+            sponge.phase = Absorb;
+            sponge.position = 0;
         } else if (sponge.position == R) {
             F::template trace<circuit>::permute(sponge.state, trace);
             sponge.position = 0;

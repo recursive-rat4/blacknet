@@ -58,7 +58,8 @@ BOOST_AUTO_TEST_CASE(BlacknetPlain) {
     BOOST_TEST((B{7, 2, 12, 4} == sponge1.state));
     BOOST_TEST((Z{8} == sponge1.squeeze()));
     BOOST_TEST((B{8, 3, 13, 5} == sponge1.state));
-    BOOST_CHECK_THROW(sponge1.absorb(0), SpongeException);
+    sponge1.absorb(9);
+    BOOST_TEST((B{9, 3, 13, 5} == sponge1.state));
 
     sponge2.absorb(10);
     BOOST_TEST((B{10, 9, 12, 2} == sponge2.state));

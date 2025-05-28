@@ -38,7 +38,7 @@ namespace blacknet::crypto {
 template<
     typename R,
     typename P,
-    typename RO,
+    typename Duplex,
     typename E = R
 >
 class SumCheck {
@@ -82,14 +82,13 @@ public:
 
     constexpr static Proof prove(const P& polynomial, const R& sum) {
         Proof proof(polynomial.variables());
-        RO ro;
+        Duplex duplex;
         P state(polynomial);
         R hint(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
             UnivariatePolynomial<R> claim(proveRound(state, hint));
-            claim.absorb(ro);
-            RO fork(ro);
-            E challenge(E::squeeze(fork));
+            claim.absorb(duplex);
+            E challenge(E::squeeze(duplex));
             state.bind(challenge);
             hint = claim(challenge);
             proof.claims.emplace_back(std::move(claim));
@@ -100,7 +99,7 @@ public:
     constexpr static bool verify(const P& polynomial, const R& sum, const Proof& proof) {
         if (proof.claims.size() != polynomial.variables())
             return false;
-        RO ro;
+        Duplex duplex;
         Point<R> r(polynomial.variables());
         R state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
@@ -109,9 +108,8 @@ public:
                 return false;
             if (state != claim.at_0_plus_1())
                 return false;
-            claim.absorb(ro);
-            RO fork(ro);
-            E challenge(E::squeeze(fork));
+            claim.absorb(duplex);
+            E challenge(E::squeeze(duplex));
             r[round] = challenge;
             state = claim(challenge);
         }
@@ -137,11 +135,11 @@ public:
 
     constexpr static ProofEarlyStopped proveEarlyStopping(const P& polynomial, const R& sum) {
         ProofEarlyStopped proof;
-        RO ro;
+        Duplex duplex;
 
         UnivariatePolynomial<R> claim(proveRound(polynomial, sum));
-        claim.absorb(ro);
-        E challenge(E::squeeze(ro));
+        claim.absorb(duplex);
+        E challenge(E::squeeze(duplex));
         proof.state = claim(challenge);
         proof.claim = std::move(claim);
         proof.challenge = std::move(challenge);
@@ -150,14 +148,14 @@ public:
     }
 
     constexpr static bool verifyEarlyStopping(const P& polynomial, const R& sum, const ProofEarlyStopped& proof) {
-        RO ro;
+        Duplex duplex;
 
         if (proof.claim.degree() != polynomial.degree())
             return false;
         if (sum != proof.claim.at_0_plus_1())
             return false;
-        proof.claim.absorb(ro);
-        E challenge(E::squeeze(ro));
+        proof.claim.absorb(duplex);
+        E challenge(E::squeeze(duplex));
         if (proof.challenge != challenge)
             return false;
         if (proof.state != proof.claim(proof.challenge))
@@ -222,7 +220,7 @@ struct Gadget {
     using LinearCombination = Circuit::LinearCombination;
     using Polynomial = typename P::Gadget<Circuit>;
     using ProofGadget = typename Proof::Gadget<Circuit>;
-    using ROGadget = typename RO::Gadget<Circuit>;
+    using DuplexGadget = typename Duplex::Gadget<Circuit>;
     using Point = typename Point<R>::Gadget<Circuit>;
 
     Circuit& circuit;
@@ -235,15 +233,14 @@ struct Gadget {
         const ProofGadget& proof
     ) {
         auto scope = circuit.scope("SumCheck::verify");
-        ROGadget ro(circuit);
+        DuplexGadget duplex(circuit);
         Point r(polynomial.variables());
         LinearCombination state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
             const auto& claim = proof.claims[round];
             circuit(state == claim.at_0_plus_1());
-            claim.absorb(ro);
-            ROGadget fork(ro);
-            LinearCombination challenge(fork.squeeze());
+            claim.absorb(duplex);
+            LinearCombination challenge(duplex.squeeze());
             r[round] = challenge;
             state = claim(challenge);
         }
@@ -254,7 +251,7 @@ struct Gadget {
 template<std::size_t circuit>
 struct Tracer {
     using PTracer = typename P::Tracer;
-    using ROTracer = typename RO::Tracer<circuit>;
+    using DuplexTracer = typename Duplex::Tracer<circuit>;
     using UnivariatePolynomial = typename UnivariatePolynomial<R>::Tracer;
 
     std::vector<R>& trace;
@@ -265,7 +262,7 @@ struct Tracer {
         PTracer polynomial(p, trace);
         if (proof.claims.size() != polynomial.variables())
             return false;
-        ROTracer ro(trace);
+        DuplexTracer duplex(trace);
         Point<R> r(polynomial.variables());
         R state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
@@ -274,9 +271,8 @@ struct Tracer {
                 return false;
             if (state != claim.at_0_plus_1())
                 return false;
-            claim.absorb(ro);
-            ROTracer fork(ro);
-            E challenge(fork.squeeze());
+            claim.absorb(duplex);
+            E challenge(duplex.squeeze());
             r[round] = challenge;
             state = claim(challenge);
         }
