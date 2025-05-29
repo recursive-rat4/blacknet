@@ -166,13 +166,13 @@ BOOST_AUTO_TEST_CASE(G2s) {
 BOOST_AUTO_TEST_CASE(Verifys) {
     // Far from being complete...
     using SumCheck = SumCheck<F, LatticeFold::G2, Duplex>;
-
+    Duplex duplex;
     constexpr std::size_t ell = std::countr_zero(LatticeFold::D);
     Vector<R> f{R{1, 1, 0, 1}};
     auto g2 = LatticeFold::G2(f);
     F sum = Hypercube<F>::sum(g2);
 
-    auto proof = SumCheck::prove(g2, sum);
+    auto proof = SumCheck::prove(g2, sum, duplex);
 
     using Circuit = CircuitBuilder<F, 2>;
     Circuit circuit;
@@ -183,7 +183,9 @@ BOOST_AUTO_TEST_CASE(Verifys) {
     ProofGadget proof_gadget(circuit, Circuit::Variable::Type::Input, g2.variables(), g2.degree());
     using SumCheckGadget = SumCheck::Gadget<Circuit>;
     SumCheckGadget sumcheck_gadget(circuit);
-    sumcheck_gadget.verify(g2_gadget, sum_var, proof_gadget);
+    using DuplexGadget = Duplex::Gadget<Circuit>;
+    DuplexGadget duplex_gadget(circuit);
+    sumcheck_gadget.verifyEarlyStopping(g2_gadget, sum_var, proof_gadget, duplex_gadget);
 
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
     Vector<F> z = ccs.assigment();
@@ -193,7 +195,9 @@ BOOST_AUTO_TEST_CASE(Verifys) {
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
     SumCheck::Tracer<Circuit::degree()> tracer(z.elements);
-    BOOST_TEST_REQUIRE(tracer.verify(g2, sum, proof));
+    using DuplexTracer = Duplex::Tracer<Circuit::degree()>;
+    DuplexTracer duplex_tracer(z.elements);
+    BOOST_TEST_REQUIRE(tracer.verifyEarlyStopping(g2, sum, proof, duplex_tracer).has_value());
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

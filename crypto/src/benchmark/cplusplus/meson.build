@@ -26,7 +26,6 @@ crypto_benchmark_sources = [
     'pedersencommitment.cpp',
     'poseidon2.cpp',
     'primefield.cpp',
-    'sumfold.cpp',
 ]
 crypto_benchmark_includes = crypto_main_includes
 crypto_benchmark_dependencies = [crypto_main_dependencies, google_benchmark_dependency]

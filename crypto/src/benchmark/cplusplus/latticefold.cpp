@@ -35,8 +35,8 @@ static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     using F = Solinas62RingDegree2;
     using LatticeFold = LatticeFold<Z, F>;
     using R = LatticeFold::Rq;
-    using S = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
-    using SumCheck = SumCheck<F, LatticeFold::GNorm, S>;
+    using Duplex = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
+    using SumCheck = SumCheck<F, LatticeFold::GNorm, Duplex>;
 
     F beta = F::random(rng);
     std::vector<F> mu(LatticeFold::k * 2);
@@ -49,7 +49,8 @@ static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     SumCheck::Proof proof;
 
     for (auto _ : state) {
-        proof = SumCheck::prove(g, sum);
+        Duplex duplex;
+        proof = SumCheck::prove(g, sum, duplex);
 
         benchmark::DoNotOptimize(g);
         benchmark::DoNotOptimize(proof);
@@ -64,8 +65,8 @@ static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     using F = Solinas62RingDegree2;
     using LatticeFold = LatticeFold<Z, F>;
     using R = LatticeFold::Rq;
-    using S = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
-    using SumCheck = SumCheck<F, LatticeFold::GNorm, S>;
+    using Duplex = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
+    using SumCheck = SumCheck<F, LatticeFold::GNorm, Duplex>;
 
     F beta = F::random(rng);
     std::vector<F> mu(LatticeFold::k * 2);
@@ -74,12 +75,14 @@ static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
     LatticeFold::GNorm g(beta, mu, f);
 
+    Duplex duplex;
     F sum = Hypercube<F>::sum(g);
-    SumCheck::Proof proof = SumCheck::prove(g, sum);
+    SumCheck::Proof proof = SumCheck::prove(g, sum, duplex);
     bool result;
 
     for (auto _ : state) {
-        result = SumCheck::verify(g, sum, proof);
+        Duplex duplex;
+        result = SumCheck::verify(g, sum, proof, duplex);
 
         benchmark::DoNotOptimize(g);
         benchmark::DoNotOptimize(proof);

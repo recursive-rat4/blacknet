@@ -54,9 +54,15 @@ struct Sponge {
     std::size_t position;
     std::array<E, R+C> state;
 
-    constexpr Sponge() : phase(Absorb), position(0) {
+    constexpr void reset() {
+        phase = Absorb;
+        position = 0;
         std::ranges::fill_n(state.begin(), R, E(0));
         std::ranges::copy(IV, state.begin() + R);
+    }
+
+    constexpr Sponge() {
+        reset();
     }
 
     constexpr void absorb(const E& e) {

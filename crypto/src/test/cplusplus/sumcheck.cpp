@@ -37,90 +37,138 @@ using Duplex = Poseidon2Solinas62Sponge<{10, 11, 12, 13}>;
 
 BOOST_AUTO_TEST_CASE(mle) {
     using SumCheck = SumCheck<R, MultilinearExtension<R>, Duplex>;
+    Duplex duplex;
     MultilinearExtension<R> p1{Z(7), Z(7), Z(7), Z(0)};
     MultilinearExtension<R> p2{Z(7), Z(7), Z(7), Z(7)};
     MultilinearExtension<R> p3{Z(7), Z(7), Z(0), Z(7)};
     R s1(21);
     R s2(28);
 
-    auto proof = SumCheck::prove(p1, s1);
-    BOOST_TEST(SumCheck::verify(p1, s1, proof));
-    BOOST_TEST(!SumCheck::verify(p1, s2, proof));
-    BOOST_TEST(!SumCheck::verify(p2, s1, proof));
-    BOOST_TEST(!SumCheck::verify(p2, s2, proof));
-    BOOST_TEST(!SumCheck::verify(p3, s1, proof));
-    proof.claims[1].coefficients[1].coefficients[1] += Z(1);
-    BOOST_TEST(!SumCheck::verify(p1, s1, proof));
+    auto proof = SumCheck::prove(p1, s1, duplex);
+    duplex.reset();
 
-    auto proof2 = SumCheck::prove(p1, s2);
-    BOOST_TEST(!SumCheck::verify(p1, s1, proof2));
-    BOOST_TEST(!SumCheck::verify(p1, s2, proof2));
+    BOOST_TEST(SumCheck::verify(p1, s1, proof, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p1, s2, proof, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p2, s1, proof, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p2, s2, proof, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p3, s1, proof, duplex));
+    duplex.reset();
+
+    proof.claims[1].coefficients[1].coefficients[1] += Z(1);
+    BOOST_TEST(!SumCheck::verify(p1, s1, proof, duplex));
+    duplex.reset();
+
+    auto proof2 = SumCheck::prove(p1, s2, duplex);
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p1, s1, proof2, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p1, s2, proof2, duplex));
+    duplex.reset();
 }
 
 BOOST_AUTO_TEST_CASE(eq) {
     using SumCheck = SumCheck<R, EqExtension<R>, Duplex>;
+    Duplex duplex;
     EqExtension<R> p1({Z(45), Z(46), Z(47), Z(48)});
     EqExtension<R> p2({Z(45), Z(46), Z(48), Z(48)});
     R s1(1);
     R s2(2);
 
-    auto proof = SumCheck::prove(p1, s1);
-    BOOST_TEST(SumCheck::verify(p1, s1, proof));
-    BOOST_TEST(!SumCheck::verify(p1, s2, proof));
-    BOOST_TEST(!SumCheck::verify(p2, s1, proof));
-    BOOST_TEST(!SumCheck::verify(p2, s2, proof));
-    proof.claims[3].coefficients[1].coefficients[1] += Z(1);
-    BOOST_TEST(!SumCheck::verify(p1, s1, proof));
+    auto proof = SumCheck::prove(p1, s1, duplex);
+    duplex.reset();
 
-    auto proof2 = SumCheck::prove(p1, s2);
-    BOOST_TEST(!SumCheck::verify(p1, s1, proof2));
-    BOOST_TEST(!SumCheck::verify(p1, s2, proof2));
+    BOOST_TEST(SumCheck::verify(p1, s1, proof, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p1, s2, proof, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p2, s1, proof, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p2, s2, proof, duplex));
+    duplex.reset();
+
+    proof.claims[3].coefficients[1].coefficients[1] += Z(1);
+    BOOST_TEST(!SumCheck::verify(p1, s1, proof, duplex));
+    duplex.reset();
+
+    auto proof2 = SumCheck::prove(p1, s2, duplex);
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p1, s1, proof2, duplex));
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verify(p1, s2, proof2, duplex));
+    duplex.reset();
 }
 
 BOOST_AUTO_TEST_CASE(ccs) {
     using CCS = CustomizableConstraintSystem<R>;
     using SumCheck = SumCheck<R, CCS::Polynomial, Duplex>;
+    Duplex duplex;
     CCS::Polynomial ccs(1, 2, {{Z(7), Z(7), Z(7), Z(0)}}, {{0}}, {Z(1)});
     R s(21);
 
-    auto proof = SumCheck::prove(ccs, s);
-    BOOST_TEST(SumCheck::verify(ccs, s, proof));
+    auto proof = SumCheck::prove(ccs, s, duplex);
+    duplex.reset();
+
+    BOOST_TEST(SumCheck::verify(ccs, s, proof, duplex));
+    duplex.reset();
 }
 
 BOOST_AUTO_TEST_CASE(pow_early_stop) {
     using SumCheck = SumCheck<R, PowExtension<R>, Duplex>;
+    Duplex duplex;
     PowExtension<R> p1(R(2), 4);
     PowExtension<R> p2(R(4), 4);
     R s1(1);
     R s2(2);
 
-    auto proof = SumCheck::proveEarlyStopping(p1, s1);
-    BOOST_TEST(SumCheck::verifyEarlyStopping(p1, s1, proof));
-    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s2, proof));
-    BOOST_TEST(!SumCheck::verifyEarlyStopping(p2, s2, proof));
+    auto proof = SumCheck::prove(p1, s1, duplex);
+    duplex.reset();
 
-    proof.state += Z(1);
-    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof));
-    proof.state -= Z(1);
+    auto maybe = SumCheck::verifyEarlyStopping(p1, s1, proof, duplex);
+    BOOST_TEST_REQUIRE(maybe.has_value());
+    auto&& [point, state] = *maybe;
+    BOOST_TEST(state == p1(point));
+    duplex.reset();
 
-    proof.claim.coefficients[1] += Z(1);
-    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof));
-    proof.claim.coefficients[1] -= Z(1);
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s2, proof, duplex).has_value());
+    duplex.reset();
 
-    proof.challenge += Z(1);
-    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof));
-    proof.challenge -= Z(1);
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p2, s2, proof, duplex).has_value());
+    duplex.reset();
 
-    auto proof2 = SumCheck::proveEarlyStopping(p1, s2);
-    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof2));
+    proof.claims[3].coefficients[1] += Z(1);
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof, duplex).has_value());
+    duplex.reset();
+    proof.claims[3].coefficients[1] -= Z(1);
+
+    auto proof2 = SumCheck::prove(p1, s2, duplex);
+    duplex.reset();
+
+    BOOST_TEST(!SumCheck::verifyEarlyStopping(p1, s1, proof2, duplex).has_value());
+    duplex.reset();
 }
 
 BOOST_AUTO_TEST_CASE(circuit) {
     using SumCheck = SumCheck<Z, MultilinearExtension<Z>, Duplex>;
+    Duplex duplex;
     MultilinearExtension<Z> poly{Z(7), Z(7), Z(7), Z(0)};
     Z sum(21);
 
-    auto proof = SumCheck::prove(poly, sum);
+    auto proof = SumCheck::prove(poly, sum, duplex);
 
     using Circuit = CircuitBuilder<Z, 2>;
     Circuit circuit;
@@ -131,7 +179,9 @@ BOOST_AUTO_TEST_CASE(circuit) {
     ProofGadget proof_gadget(circuit, Circuit::Variable::Type::Input, poly.variables(), poly.degree());
     using SumCheckGadget = SumCheck::Gadget<Circuit>;
     SumCheckGadget sumcheck_gadget(circuit);
-    sumcheck_gadget.verify(poly_gadget, sum_var, proof_gadget);
+    using DuplexGadget = Duplex::Gadget<Circuit>;
+    DuplexGadget duplex_gadget(circuit);
+    sumcheck_gadget.verify(poly_gadget, sum_var, proof_gadget, duplex_gadget);
 
     CustomizableConstraintSystem<Z> ccs(circuit.ccs());
     Vector<Z> z = ccs.assigment();
@@ -140,7 +190,9 @@ BOOST_AUTO_TEST_CASE(circuit) {
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
     SumCheck::Tracer<Circuit::degree()> tracer(z.elements);
-    BOOST_TEST_REQUIRE(tracer.verify(poly, sum, proof));
+    using DuplexTracer = Duplex::Tracer<Circuit::degree()>;
+    DuplexTracer duplex_tracer(z.elements);
+    BOOST_TEST_REQUIRE(tracer.verify(poly, sum, proof, duplex_tracer));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 
