@@ -30,10 +30,13 @@
 #include <boost/unordered/concurrent_flat_map.hpp>
 
 #include "endpoint.h"
+#include "file.h"
+#include "file_input_stream.h"
 #include "input_stream.h"
 #include "logger.h"
 #include "milliseconds.h"
 #include "output_stream.h"
+#include "xdgdirectories.h"
 
 namespace blacknet::network {
 
@@ -106,7 +109,7 @@ private:
         }
     };
 
-    log::Logger logger{"PeerTable"};
+    mutable log::Logger logger{"PeerTable"};
     const NetworkSettings& settings;
     boost::concurrent_flat_map<
         endpoint_ptr, entry_ptr,
@@ -172,6 +175,7 @@ public:
     }
 
     void co_spawn(boost::asio::io_context& io_context) {
+        load();
     }
 
     void serialize(io::output_stream& os) const {
@@ -190,6 +194,34 @@ public:
             auto endpoint = endpoint::deserialize(is);
             auto entry = entry_ptr::deserialize(is);
             peers.emplace(std::move(endpoint), std::move(entry));
+        }
+    }
+
+    void load() {
+        try {
+            io::file_input_stream<std::endian::big> fis(compat::dataDir() / file_name);
+            std::uint32_t version = fis.read_u32();
+            if (file_version != version) {
+                logger->warn("Unknown {} version {}", file_name, version);
+                return;
+            }
+            deserialize(fis);
+            logger->info("Loaded {} peer addresses", size());
+        } catch (const std::ios_base::failure& e) {
+            //TODO use errno because exception message is not useful
+            logger->trace("Load failed: {}", e.what());
+        }
+    }
+
+    void save() const {
+        try {
+            io::file::replace<std::endian::big>(compat::dataDir(), file_name, [&](auto& os) {
+                os.write_u32(file_version);
+                serialize(os);
+            });
+        } catch (const std::ios_base::failure& e) {
+            //XXX don't use errno because it is overwritten
+            logger->error("Store failed: {}", e.what());
         }
     }
 };

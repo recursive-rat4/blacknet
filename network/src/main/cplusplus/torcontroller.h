@@ -186,8 +186,8 @@ class Controller {
     void save_private_key(const std::string_view& new_key) {
         private_key = new_key;
         logger->info("Saving Tor private key");
-        io::file::replace(compat::dataDir(), file_name, [&](auto& os) {
-            os.write(new_key.data(), new_key.size());
+        io::file::replace<std::endian::big>(compat::dataDir(), file_name, [&](auto& os) {
+            os.write_str(new_key);
         });
     }
 public:

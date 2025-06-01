@@ -29,8 +29,9 @@
 #include <fmt/format.h>
 
 #include "fastrng.h"
-#include "fdatasync.h"
+#include "file_output_stream.h"
 #include "milliseconds.h"
+#include "output_stream.h"
 #include "systemclock.h"
 
 namespace blacknet::io {
@@ -62,25 +63,27 @@ inline std::pair<
 }
 
 // Atomically replace file
+template<std::endian endian>
 inline void replace(
     const std::filesystem::path& dir,
     const std::string_view& name,
-    const std::function<void(std::ostream&)>& writer
+    const std::function<void(io::output_stream&)>& writer
 ) {
     auto [path, ofs] = create_temp_file(dir, name);
+    auto fos = io::file_output_stream<endian>(std::move(ofs));
     try {
-        writer(ofs);
-        ofs.flush();
-        compat::fdatasync(ofs.native_handle());
+        writer(fos);
+        fos.flush();
+        fos.datasync();
 #ifdef BLACKNET_HAVE_FILEAPI
-        ofs.close();
+        fos.close();
 #endif
         std::filesystem::rename(path, dir / name);
     } catch (...) {
         std::exception_ptr eptr = std::current_exception();
 #ifdef BLACKNET_HAVE_FILEAPI
         try {
-            ofs.close();
+            fos.close();
         } catch (...) {
             // Ignore failed cleanup
         }
