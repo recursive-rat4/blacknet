@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -34,7 +34,7 @@ struct PervushinRingDegree2Params {
         PervushinRing(0),
         PervushinRing(1),
     };
-    constexpr static const BitInt<122> PSY_MINUS_1{"03ffffffffffffffbfffffffffffffff"};
+    constexpr static const BitInt<61> INVERSION_R1{"1fffffffffffffff"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         convolution::negacyclic<Z, N>(r, a, b);
@@ -55,7 +55,7 @@ struct PervushinRingDegree3Params {
         PervushinRing(1),
         PervushinRing(1),
     };
-    constexpr static const BitInt<183> PSY_MINUS_1{"007ffffffffffffff4000000000000005ffffffffffffffd"};
+    constexpr static const BitInt<122> INVERSION_R1{"03ffffffffffffffe000000000000000"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         convolution::quotient<Z, N, M>(r, a, b);
@@ -77,7 +77,7 @@ struct PervushinRingDegree4Params {
         PervushinRing(1),
         PervushinRing(1),
     };
-    constexpr static const BitInt<244> PSY_MINUS_1{"000ffffffffffffffe0000000000000017ffffffffffffff7fffffffffffffff"};
+    constexpr static const BitInt<183> INVERSION_R1{"007ffffffffffffff8000000000000003fffffffffffffff"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         convolution::quotient<Z, N, M>(r, a, b);

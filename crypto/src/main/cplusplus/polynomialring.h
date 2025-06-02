@@ -154,7 +154,11 @@ public:
 
     constexpr std::optional<PolynomialRing> invert() const {
         if (*this != PolynomialRing(0)) {
-            return semigroup::power(*this, Params::PSY_MINUS_1);
+            // Feng and Itoh-Tsujii algorithm
+            PolynomialRing r1 = semigroup::power(*this, Params::INVERSION_R1);
+            Z r0 = (r1 * (*this)).coefficients[0];
+            Z z1 = *r0.invert();
+            return z1 * r1;
         } else {
             return std::nullopt;
         }
