@@ -21,6 +21,7 @@ crypto_benchmark_sources = [
     'cyclotomicring.cpp',
     'extensionfield.cpp',
     'integerring.cpp',
+    'johnsonlindenstrauss.cpp',
     'latticefold.cpp',
     'pastacurves.cpp',
     'pedersencommitment.cpp',

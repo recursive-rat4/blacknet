@@ -38,6 +38,7 @@ crypto_test_sources = [
     'hypercube.cpp',
     'interpolation.cpp',
     'jive.cpp',
+    'johnsonlindenstrauss.cpp',
     'latticefold.cpp',
     'matrixsparse.cpp',
     'matrix.cpp',

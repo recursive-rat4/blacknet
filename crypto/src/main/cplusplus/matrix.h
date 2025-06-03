@@ -40,6 +40,7 @@ public:
     std::size_t columns;
     std::vector<E> elements;
 
+    constexpr Matrix() noexcept = default;
     constexpr Matrix(std::size_t rows, std::size_t columns)
         : rows(rows), columns(columns), elements(rows * columns) {}
     constexpr Matrix(std::size_t rows, std::size_t columns, const E& fill)
