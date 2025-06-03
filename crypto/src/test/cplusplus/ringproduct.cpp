@@ -18,10 +18,10 @@
 #include <boost/test/unit_test.hpp>
 
 #include "fermat.h"
-#include "pervushinfield.h"
+#include "pervushinextension.h"
 #include "ringproduct.h"
 #include "solinas62.h"
-#include "solinas62field.h"
+#include "solinas62extension.h"
 
 using namespace blacknet::crypto;
 

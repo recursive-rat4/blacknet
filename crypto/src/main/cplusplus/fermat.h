@@ -15,6 +15,8 @@ struct FermatRingParams {
     using UI = uint32_t;
     using UL = uint64_t;
 
+    constexpr static const bool is_division_ring = true;
+
     constexpr static const std::size_t BITS = 17;
     constexpr static const I M = 65537;
     constexpr static const I R2 = 1;

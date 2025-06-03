@@ -35,6 +35,7 @@ class IntegerRingSpec(NamedTuple):
 class IntegerRingParams(NamedTuple):
     bits: int
     word_bits: int
+    division_ring: bool
     square_montgomery_modulus: int
     montgomery_modulus: int
     twiddles: Optional[list[int]]
@@ -44,8 +45,11 @@ def compute_bits(number):
     return ceil(log(number, 2))
 
 def compute_word_bits(number):
-    bits = compute_bits(ring.modulus)
+    bits = compute_bits(number)
     return 2**(ceil(log(bits, 2)))
+
+def compute_division_ring(number):
+    return is_prime(number)
 
 def compute_centered_representation(number, modulus):
     if number > modulus / 2:
@@ -115,6 +119,11 @@ def write_ring_cplusplus(spec, params):
         else:
             file.write(f"    using UL = __uint{dword_bits}_t;\n")
         file.write('\n')
+        if params.division_ring:
+            file.write("    constexpr static const bool is_division_ring = true;\n")
+        else:
+            file.write("    constexpr static const bool is_division_ring = false;\n")
+        file.write('\n')
         file.write(f"    constexpr static const std::size_t BITS = {params.bits};\n")
         file.write(f"    constexpr static const I M = {spec.modulus};\n")
         file.write(f"    constexpr static const I R2 = {params.square_montgomery_modulus};\n")
@@ -170,6 +179,7 @@ rings: list[IntegerRingSpec] = [
 for ring in rings:
     bits = compute_bits(ring.modulus)
     word_bits = compute_word_bits(ring.modulus)
+    division_ring = compute_division_ring(ring.modulus)
     square_montgomery_modulus = compute_square_montgomery_modulus(ring.modulus, word_bits)
     montgomery_modulus = compute_montgomery_modulus(ring.modulus, word_bits)
     montgomery_modulus = compute_centered_representation(montgomery_modulus, 2**word_bits)
@@ -195,5 +205,5 @@ for ring in rings:
     else:
         twiddles = None
         inv_ntt_scale = None
-    params = IntegerRingParams(bits, word_bits, square_montgomery_modulus, montgomery_modulus, twiddles, inv_ntt_scale)
+    params = IntegerRingParams(bits, word_bits, division_ring, square_montgomery_modulus, montgomery_modulus, twiddles, inv_ntt_scale)
     write_ring_cplusplus(ring, params)

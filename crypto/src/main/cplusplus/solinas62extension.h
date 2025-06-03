@@ -15,11 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_SOLINAS62FIELD_H
-#define BLACKNET_CRYPTO_SOLINAS62FIELD_H
+#ifndef BLACKNET_CRYPTO_SOLINAS62EXTENSION_H
+#define BLACKNET_CRYPTO_SOLINAS62EXTENSION_H
 
 #include "bitint.h"
 #include "convolution.h"
+#include "numbertheoretictransform.h"
 #include "polynomialring.h"
 #include "solinas62.h"
 
@@ -27,6 +28,8 @@ namespace blacknet::crypto {
 
 struct Solinas62RingDegree2Params {
     using Z = Solinas62Ring;
+
+    constexpr static const bool is_division_ring = true;
 
     constexpr static const std::size_t N = 2;
     constexpr static const std::array<Z, N + 1> M {
@@ -47,6 +50,8 @@ typedef PolynomialRing<Solinas62RingDegree2Params> Solinas62RingDegree2;
 
 struct Solinas62RingDegree3Params {
     using Z = Solinas62Ring;
+
+    constexpr static const bool is_division_ring = true;
 
     constexpr static const std::size_t N = 3;
     constexpr static const std::array<Z, N + 1> M {
@@ -69,6 +74,8 @@ typedef PolynomialRing<Solinas62RingDegree3Params> Solinas62RingDegree3;
 struct Solinas62RingDegree4Params {
     using Z = Solinas62Ring;
 
+    constexpr static const bool is_division_ring = true;
+
     constexpr static const std::size_t N = 4;
     constexpr static const std::array<Z, N + 1> M {
         Solinas62Ring("3f017d539af5221c"),
@@ -87,6 +94,42 @@ struct Solinas62RingDegree4Params {
 };
 
 typedef PolynomialRing<Solinas62RingDegree4Params> Solinas62RingDegree4;
+
+struct Solinas62RingDegree64Params {
+    using Z = Solinas62Ring;
+
+    constexpr static const bool is_cyclotomic_ring = true;
+
+    constexpr static const std::size_t N = 64;
+
+    constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+        convolution::negacyclic<Z, N>(r, a, b);
+    }
+    constexpr static void toForm(std::array<Z, N>&) {}
+    constexpr static void fromForm(std::array<Z, N>&) {}
+};
+
+typedef PolynomialRing<Solinas62RingDegree64Params> Solinas62RingDegree64;
+
+struct Solinas62RingDegree64NTTParams {
+    using Z = Solinas62Ring;
+
+    constexpr static const bool is_cyclotomic_ring = true;
+
+    constexpr static const std::size_t N = 64;
+
+    constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+        ntt::convolute<Z, N>(r, a, b);
+    }
+    constexpr static void toForm(std::array<Z, N>& a) {
+        ntt::cooley_tukey<Z, N>(a);
+    }
+    constexpr static void fromForm(std::array<Z, N>& a) {
+        ntt::gentleman_sande<Z, N>(a);
+    }
+};
+
+typedef PolynomialRing<Solinas62RingDegree64NTTParams> Solinas62RingDegree64NTT;
 
 }
 

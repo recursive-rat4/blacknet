@@ -21,7 +21,7 @@
 #include "fastrng.h"
 #include "fs.h"
 #include "pervushin.h"
-#include "pervushinfield.h"
+#include "pervushinextension.h"
 #include "poseidon2pervushin.h"
 #include "r1cs.h"
 

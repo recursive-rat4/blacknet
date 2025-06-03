@@ -25,7 +25,7 @@
 #include "point.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
-#include "solinas62field.h"
+#include "solinas62extension.h"
 #include "sumcheck.h"
 #include "vector.h"
 
@@ -35,8 +35,8 @@ BOOST_AUTO_TEST_SUITE(LatticeFold_Plain)
 
 using Z = Solinas62Ring;
 using F = Solinas62RingDegree2;
-using LatticeFold = LatticeFold<Z, F>;
-using R = LatticeFold::Rq;
+using R = Solinas62RingDegree64;
+using LatticeFold = LatticeFold<Z, F, R, Solinas62RingDegree64NTT>;
 
 BOOST_AUTO_TEST_CASE(Gadget) {
     const auto a = Vector<R>{ R(3), R(2), R(1), R(0) };
@@ -133,8 +133,8 @@ BOOST_AUTO_TEST_SUITE(LatticeFold_Circuit)
 
 using Z = Solinas62Ring;
 using F = Solinas62Ring; //XXX
-using LatticeFold = LatticeFold<Z, F>;
-using R = LatticeFold::Rq;
+using R = Solinas62RingDegree64;
+using LatticeFold = LatticeFold<Z, F, R, Solinas62RingDegree64NTT>;
 using Duplex = Poseidon2Solinas62Sponge<{64, 65, 66, 67}>;
 
 BOOST_AUTO_TEST_CASE(G2s) {

@@ -20,7 +20,7 @@
 #include "fastrng.h"
 #include "matrix.h"
 #include "pervushin.h"
-#include "pervushinfield.h"
+#include "pervushinextension.h"
 #include "r1cs.h"
 
 using namespace blacknet::crypto;

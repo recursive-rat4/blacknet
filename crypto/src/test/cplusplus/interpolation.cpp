@@ -18,7 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "interpolation.h"
-#include "pervushinfield.h"
+#include "pervushinextension.h"
 
 using namespace blacknet::crypto;
 

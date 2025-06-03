@@ -114,6 +114,8 @@ public:
     }
 
     constexpr std::optional<IntegerRing> invert() const {
+        static_assert(Params::is_division_ring, "Not implemented");
+        constexpr BitInt<Params::BITS> PHI_MINUS_1 = Params::M - I(2);
         if (*this != IntegerRing(0)) {
             // Euler's theorem
             return semigroup::power(*this, PHI_MINUS_1);
@@ -200,8 +202,6 @@ public:
         else
             return x;
     }
-private:
-    constexpr static const BitInt<Params::BITS> PHI_MINUS_1 = Params::M - I(2);
 };
 
 }

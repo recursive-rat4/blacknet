@@ -22,7 +22,7 @@
 #include "latticefold.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
-#include "solinas62field.h"
+#include "solinas62extension.h"
 #include "sumcheck.h"
 #include "vector.h"
 
@@ -32,8 +32,8 @@ static FastDRG rng;
 
 using Z = Solinas62Ring;
 using F = Solinas62RingDegree2;
-using LF = LatticeFold<Z, F>;
-using R = LF::Rq;
+using R = Solinas62RingDegree64;
+using LF = LatticeFold<Z, F, R, Solinas62RingDegree64NTT>;
 using Duplex = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
 
 static void BM_LatticeFold_GEval_SumCheck_Prove(benchmark::State& state) {

@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_PERVUSHINFIELD_H
-#define BLACKNET_CRYPTO_PERVUSHINFIELD_H
+#ifndef BLACKNET_CRYPTO_PERVUSHINEXTENSION_H
+#define BLACKNET_CRYPTO_PERVUSHINEXTENSION_H
 
 #include "bitint.h"
 #include "convolution.h"
@@ -27,6 +27,8 @@ namespace blacknet::crypto {
 
 struct PervushinRingDegree2Params {
     using Z = PervushinRing;
+
+    constexpr static const bool is_division_ring = true;
 
     constexpr static const std::size_t N = 2;
     constexpr static const std::array<Z, N + 1> M {
@@ -48,6 +50,8 @@ typedef PolynomialRing<PervushinRingDegree2Params> PervushinRingDegree2;
 struct PervushinRingDegree3Params {
     using Z = PervushinRing;
 
+    constexpr static const bool is_division_ring = true;
+
     constexpr static const std::size_t N = 3;
     constexpr static const std::array<Z, N + 1> M {
         PervushinRing(2),
@@ -68,6 +72,8 @@ typedef PolynomialRing<PervushinRingDegree3Params> PervushinRingDegree3;
 
 struct PervushinRingDegree4Params {
     using Z = PervushinRing;
+
+    constexpr static const bool is_division_ring = true;
 
     constexpr static const std::size_t N = 4;
     constexpr static const std::array<Z, N + 1> M {

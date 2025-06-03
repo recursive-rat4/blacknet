@@ -18,9 +18,8 @@
 #include <boost/test/unit_test.hpp>
 #include <tuple>
 
-#include "latticefold.h"
 #include "solinas62.h"
-#include "solinas62field.h"
+#include "solinas62extension.h"
 
 using namespace blacknet::crypto;
 
@@ -30,8 +29,8 @@ using Zq = Solinas62Ring;
 using Fe2 = Solinas62RingDegree2;
 using Fe3 = Solinas62RingDegree3;
 using Fe4 = Solinas62RingDegree4;
-using Rq = LatticeFold<Zq, Fe2>::Rq;
-using RqIso = LatticeFold<Zq, Fe2>::RqIso;
+using Rq = Solinas62RingDegree64;
+using RqIso = Solinas62RingDegree64NTT;
 using Rs = std::tuple<Rq, RqIso>;
 
 BOOST_AUTO_TEST_CASE(ZqHex) {

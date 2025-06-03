@@ -22,7 +22,7 @@
 #include "latticefold.h"
 #include "matrix.h"
 #include "solinas62.h"
-#include "solinas62field.h"
+#include "solinas62extension.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
@@ -30,8 +30,13 @@ using namespace blacknet::crypto;
 static FastDRG rng;
 
 static void BM_AjtaiCommitment(benchmark::State& state) {
-    using LatticeFold = LatticeFold<Solinas62Ring, Solinas62RingDegree2>;
-    using R = LatticeFold::RqIso;
+    using LatticeFold = LatticeFold<
+        Solinas62Ring,
+        Solinas62RingDegree2,
+        Solinas62RingDegree64,
+        Solinas62RingDegree64NTT
+    >;
+    using R = Solinas62RingDegree64NTT;
     std::size_t M = 1;
 
     AjtaiCommitment<R> cs(

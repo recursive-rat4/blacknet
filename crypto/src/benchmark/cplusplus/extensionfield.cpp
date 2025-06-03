@@ -18,8 +18,8 @@
 #include <benchmark/benchmark.h>
 
 #include "fastrng.h"
-#include "pervushinfield.h"
-#include "solinas62field.h"
+#include "pervushinextension.h"
+#include "solinas62extension.h"
 
 using namespace blacknet::crypto;
 

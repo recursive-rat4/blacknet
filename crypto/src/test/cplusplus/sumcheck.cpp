@@ -24,7 +24,7 @@
 #include "poseidon2solinas62.h"
 #include "powextension.h"
 #include "solinas62.h"
-#include "solinas62field.h"
+#include "solinas62extension.h"
 #include "sumcheck.h"
 
 using namespace blacknet::crypto;

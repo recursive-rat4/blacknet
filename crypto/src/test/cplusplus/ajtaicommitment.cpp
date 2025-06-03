@@ -18,17 +18,16 @@
 #include <boost/test/unit_test.hpp>
 
 #include "ajtaicommitment.h"
-#include "latticefold.h"
 #include "poseidon2solinas62.h"
 #include "solinas62.h"
-#include "solinas62field.h"
+#include "solinas62extension.h"
 
 using namespace blacknet::crypto;
 
 BOOST_AUTO_TEST_SUITE(AjtaiCommitments)
 
 using Z = Solinas62Ring;
-using R = LatticeFold<Solinas62Ring, Solinas62RingDegree2>::RqIso;
+using R = Solinas62RingDegree64NTT;
 
 BOOST_AUTO_TEST_CASE(Zq) {
     using CS = AjtaiCommitment<Z>;

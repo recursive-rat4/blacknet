@@ -47,9 +47,15 @@ namespace blacknet::crypto {
 
 template<
     typename Zq,
-    typename Fq
+    typename Fq,
+    typename Rq,
+    typename RqIso
 >
-requires(std::same_as<Zq, typename Fq::BaseRing>)
+requires(
+    std::same_as<Zq, typename Fq::BaseRing> &&
+    std::same_as<Zq, typename Rq::BaseRing> &&
+    std::same_as<Zq, typename RqIso::BaseRing>
+)
 struct LatticeFold {
     constexpr static ssize_t b = 2;
     static const std::size_t b_digits = 64;
@@ -60,46 +66,17 @@ struct LatticeFold {
     static const std::size_t D = 64;
     static const std::size_t K = 16;
 
+    static_assert(Rq::dimension() == RqIso::dimension());
+    static_assert(Rq::dimension() == D);
     static_assert(t == Zq::twiddles());
     static_assert(std::is_signed_v<typename Zq::NumericType>);
 
-    struct CanonicalRingParams {
-        using Z = Zq;
-
-        constexpr static const std::size_t N = D;
-
-        constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-            convolution::negacyclic<Z, N>(r, a, b);
-        }
-        constexpr static void toForm(std::array<Z, N>&) {}
-        constexpr static void fromForm(std::array<Z, N>&) {}
-    };
-
-    struct NTTRingParams {
-        using Z = Zq;
-
-        constexpr static const std::size_t N = D;
-
-        constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-            ntt::convolute<Z, N>(r, a, b);
-        }
-        constexpr static void toForm(std::array<Z, N>& a) {
-            ntt::cooley_tukey<Z, N>(a);
-        }
-        constexpr static void fromForm(std::array<Z, N>& a) {
-            ntt::gentleman_sande<Z, N>(a);
-        }
-    };
-
-    using Rq = PolynomialRing<CanonicalRingParams>;
-    using RqIso = PolynomialRing<NTTRingParams>;
-
     constexpr static RqIso& isomorph(Rq&& f) {
-        NTTRingParams::toForm(f.coefficients);
+        ntt::cooley_tukey<Zq, D>(f.coefficients);
         return reinterpret_cast<RqIso&>(f);
     }
     constexpr static Rq& isomorph(RqIso&& f) {
-        NTTRingParams::fromForm(f.coefficients);
+        ntt::gentleman_sande<Zq, D>(f.coefficients);
         return reinterpret_cast<Rq&>(f);
     }
 

@@ -15,6 +15,8 @@ struct Solinas62RingParams {
     using UI = uint64_t;
     using UL = __uint128_t;
 
+    constexpr static const bool is_division_ring = true;
+
     constexpr static const std::size_t BITS = 62;
     constexpr static const I M = 4611686018427387617;
     constexpr static const I R2 = 1317904;

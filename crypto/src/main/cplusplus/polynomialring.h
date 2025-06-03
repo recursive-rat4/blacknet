@@ -153,6 +153,7 @@ public:
     }
 
     constexpr std::optional<PolynomialRing> invert() const {
+        static_assert(Params::is_division_ring, "Not implemented");
         if (*this != PolynomialRing(0)) {
             // Feng and Itoh-Tsujii algorithm
             PolynomialRing r1 = semigroup::power(*this, Params::INVERSION_R1);
