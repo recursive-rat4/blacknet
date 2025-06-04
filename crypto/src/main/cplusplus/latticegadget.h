@@ -30,10 +30,10 @@ namespace {
     template<typename R, std::size_t radix, std::size_t digits>
     constexpr void decompose(R* pieces, const R& f) {
         for (std::size_t i = 0; i < R::dimension(); ++i) {
-            auto frozen = R::BaseRing::freeze(f.coefficients[i].number());
+            auto representative = f.coefficients[i].canonical();
             for (std::size_t j = 0; j < digits; ++j) {
-                pieces[j].coefficients[i] = frozen % radix;
-                frozen /= radix;
+                pieces[j].coefficients[i] = representative % radix;
+                representative /= radix;
             }
         }
     }

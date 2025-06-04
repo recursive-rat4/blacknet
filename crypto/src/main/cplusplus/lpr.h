@@ -135,7 +135,7 @@ struct LPR {
         PlainText pt;
         auto d = ct.a + ct.b * sk;
         for (std::size_t i = 0; i < D; ++i) {
-            if (std::abs(d.coefficients[i].number()) <= HALF_DELTA)
+            if (d.coefficients[i].absolute() <= HALF_DELTA)
                 pt.coefficients[i] = Zq(0);
             else
                 pt.coefficients[i] = Zq(1);

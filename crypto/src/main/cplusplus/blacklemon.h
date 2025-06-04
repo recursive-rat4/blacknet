@@ -78,9 +78,9 @@ struct BlackLemon {
         PlainText pt;
         auto d = ct.a + ct.b * sk.a + sk.b;
         for (std::size_t i = 0; i < Rq::dimension(); ++i) {
-            if (std::abs(d.coefficients[i].number()) <= R)
+            if (d.coefficients[i].absolute() <= R)
                 pt.coefficients[i] = Zq(0);
-            else if (PKE::DELTA - std::abs(d.coefficients[i].number()) <= R)
+            else if (PKE::DELTA - d.coefficients[i].absolute() <= R)
                 pt.coefficients[i] = Zq(1);
             else
                 return std::nullopt;

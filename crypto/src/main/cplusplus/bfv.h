@@ -109,7 +109,7 @@ struct BFV {
     DiscreteGaussianDistribution<typename Zq::NumericType> dgd{0.0, SIGMA};
 
     constexpr static Zq lift(const Zt& zt) {
-        return Zq(zt.number());
+        return Zq(zt.balanced());
     }
 
     constexpr static Rq lift(const Rt& rt) {
@@ -122,7 +122,7 @@ struct BFV {
     constexpr static Rq upscale(const Rt& rt) {
         Rq rq;
         for (std::size_t i = 0; i < D; ++i)
-            rq.coefficients[i] = Zq(std::round(DELTA * rt.coefficients[i].number()));
+            rq.coefficients[i] = Zq(std::round(DELTA * rt.coefficients[i].balanced()));
         return rq;
     }
 
@@ -165,7 +165,7 @@ struct BFV {
         PlainText pt;
         auto d = ct.a + ct.b * sk;
         for (std::size_t i = 0; i < D; ++i) {
-            pt.coefficients[i] = Zt(std::round(INV_DELTA * d.coefficients[i].number()));
+            pt.coefficients[i] = Zt(std::round(INV_DELTA * d.coefficients[i].balanced()));
         }
         return pt;
     }

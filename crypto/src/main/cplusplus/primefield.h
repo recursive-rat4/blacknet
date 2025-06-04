@@ -174,7 +174,7 @@ public:
         }
     }
 
-    constexpr UInt256 number() const {
+    constexpr UInt256 canonical() const {
         return Params::fromForm(n);
     }
 

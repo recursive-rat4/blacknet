@@ -125,16 +125,24 @@ public:
     }
 
     constexpr bool checkInfinityNorm(const NumericType& bound) const {
-        I nn(fromForm(n));
-        I t(nn >> (sizeof(I) * 8 - 1));
-        t = nn - (t & nn << 1);
-        if (t < bound)
+        if (absolute() < bound)
             return true;
         return false;
     }
 
-    constexpr I number() const {
+    constexpr I canonical() const {
+        return freeze(balanced());
+    }
+
+    constexpr I balanced() const {
         return fromForm(n);
+    }
+
+    constexpr I absolute() const {
+        I nn = balanced();
+        I t = nn >> (sizeof(I) * 8 - 1);
+        t = nn - (t & nn << 1);
+        return t;
     }
 
     friend std::ostream& operator << (std::ostream& out, const IntegerRing& val)
@@ -193,7 +201,7 @@ private:
     constexpr static MRI fromForm(MRI n) {
         return reduce<MRI, MRL>(MRL(n));
     }
-public:
+
     constexpr static I freeze(I x) {
         if (x >= Params::M)
             return x - Params::M;

@@ -29,6 +29,13 @@ using Fe4 = PervushinRingDegree4;
 
 BOOST_AUTO_TEST_SUITE(Pervushins)
 
+BOOST_AUTO_TEST_CASE(Representative) {
+    Zq a(-1);
+    BOOST_TEST(2305843009213693950 == a.canonical());
+    BOOST_TEST(-1 == a.balanced());
+    BOOST_TEST(1 == a.absolute());
+}
+
 BOOST_AUTO_TEST_CASE(ZqAdd) {
     Zq a(1152921504606846974);
     Zq b(1152921504606846970);
