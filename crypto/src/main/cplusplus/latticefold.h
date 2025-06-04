@@ -80,7 +80,7 @@ struct LatticeFold {
         return reinterpret_cast<Rq&>(f);
     }
 
-    using BindingCommitment = AjtaiCommitment<RqIso>;
+    using BindingCommitment = AjtaiCommitment<RqIso, NormP::Infinity>;
 
     std::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
 

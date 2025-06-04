@@ -167,6 +167,15 @@ public:
         });
     }
 
+    constexpr double euclideanNorm() const {
+        double t = 0;
+        for (std::size_t i = 0; i < elements.size(); ++i) {
+            double e = elements[i].euclideanNorm();
+            t += e * e;
+        }
+        return std::sqrt(t);
+    }
+
     friend std::ostream& operator << (std::ostream& out, const Vector& val)
     {
         fmt::print(out, "{}", val.elements);

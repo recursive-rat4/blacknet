@@ -125,9 +125,11 @@ public:
     }
 
     constexpr bool checkInfinityNorm(const NumericType& bound) const {
-        if (absolute() < bound)
-            return true;
-        return false;
+        return absolute() < bound;
+    }
+
+    constexpr double euclideanNorm() const {
+        return absolute();
     }
 
     constexpr I canonical() const {

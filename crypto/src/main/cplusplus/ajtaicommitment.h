@@ -18,6 +18,8 @@
 #ifndef BLACKNET_CRYPTO_AJTAICOMMITMENT_H
 #define BLACKNET_CRYPTO_AJTAICOMMITMENT_H
 
+#include <type_traits>
+
 #include "matrix.h"
 #include "vector.h"
 
@@ -30,9 +32,21 @@ namespace blacknet::crypto {
  * https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
  */
 
-template<typename R>
+enum class NormP {
+    Euclidean = 2,
+    Infinity = -1,
+};
+
+template<
+    typename R,
+    NormP norm_p
+>
 class AjtaiCommitment {
-    using NumericType = R::NumericType;
+    using NumericType = std::conditional<
+        norm_p == NormP::Infinity,
+        typename R::NumericType,
+        double
+    >::type;
     Matrix<R> a;
     NumericType bound;
 public:
@@ -55,7 +69,13 @@ public:
     }
 
     constexpr bool open(const Vector<R>& c, const Vector<R>& m) const {
-        return m.checkInfinityNorm(bound) && c == commit(m);
+        if constexpr (norm_p == NormP::Infinity) {
+            return m.checkInfinityNorm(bound) && c == commit(m);
+        } else if constexpr (norm_p == NormP::Euclidean) {
+            return m.euclideanNorm() < bound && c == commit(m);
+        } else {
+            static_assert(false, "Not implemented");
+        }
     }
 };
 

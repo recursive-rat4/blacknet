@@ -173,6 +173,15 @@ public:
         });
     }
 
+    constexpr double euclideanNorm() const {
+        double t = 0;
+        for (std::size_t i = 0; i < N; ++i) {
+            double e = coefficients[i].euclideanNorm();
+            t += e * e;
+        }
+        return std::sqrt(t);
+    }
+
     constexpr decltype(auto) begin() noexcept {
         return coefficients.begin();
     }

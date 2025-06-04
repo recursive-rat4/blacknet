@@ -38,6 +38,7 @@ BOOST_AUTO_TEST_CASE(test) {
     std::size_t n = 16;
     std::size_t k = 32;
     int slack_inf = 6;
+    int slack_ecd = 3;
 
     std::uniform_int_distribution<int> dst{-b+1, +b-1};
     Matrix<Z> map = JohnsonLindenstrauss::random(rng, n, k);
@@ -46,6 +47,7 @@ BOOST_AUTO_TEST_CASE(test) {
 
     BOOST_TEST(map * high == low);
     BOOST_TEST(low.checkInfinityNorm(b * slack_inf));
+    BOOST_TEST(low.euclideanNorm() < high.euclideanNorm() * slack_ecd);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
