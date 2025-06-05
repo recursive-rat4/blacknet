@@ -39,7 +39,7 @@ static void BM_AjtaiCommitment(benchmark::State& state) {
     using R = Solinas62RingDegree64NTT;
     std::size_t M = 1;
 
-    AjtaiCommitment<R> cs(
+    AjtaiCommitment<R, NormP::Infinity> cs(
         Matrix<R>::random(rng, LatticeFold::K, M),
         LatticeFold::B
     );

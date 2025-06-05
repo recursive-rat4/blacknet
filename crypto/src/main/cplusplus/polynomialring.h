@@ -174,12 +174,14 @@ public:
     }
 
     constexpr double euclideanNorm() const {
-        double t = 0;
+        std::array<Z, N> t(coefficients);
+        Params::fromForm(t);
+        double r = 0;
         for (std::size_t i = 0; i < N; ++i) {
-            double e = coefficients[i].euclideanNorm();
-            t += e * e;
+            double e = t[i].euclideanNorm();
+            r += e * e;
         }
-        return std::sqrt(t);
+        return std::sqrt(r);
     }
 
     constexpr decltype(auto) begin() noexcept {
