@@ -34,6 +34,7 @@ crypto_test_sources = [
     'eqextension.cpp',
     'fastrng.cpp',
     'fermat.cpp',
+    'field25519.cpp',
     'fs.cpp',
     'hypercube.cpp',
     'interpolation.cpp',

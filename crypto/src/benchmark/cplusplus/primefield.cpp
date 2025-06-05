@@ -18,15 +18,17 @@
 #include <benchmark/benchmark.h>
 
 #include "fastrng.h"
+#include "field25519.h"
 #include "pastacurves.h"
 
 using namespace blacknet::crypto;
 
 static FastDRG rng;
 
-static void BM_FieldAdd(benchmark::State& state) {
-    auto a = PallasField::random(rng);
-    auto b = PallasField::random(rng);
+template<typename F>
+static void BM_PrimeFieldAdd(benchmark::State& state) {
+    auto a = F::random(rng);
+    auto b = F::random(rng);
 
     for (auto _ : state) {
         a += b;
@@ -36,11 +38,13 @@ static void BM_FieldAdd(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_FieldAdd);
+BENCHMARK(BM_PrimeFieldAdd<PallasField>);
+BENCHMARK(BM_PrimeFieldAdd<Field25519>);
 
-static void BM_FieldSub(benchmark::State& state) {
-    auto a = PallasField::random(rng);
-    auto b = PallasField::random(rng);
+template<typename F>
+static void BM_PrimeFieldSub(benchmark::State& state) {
+    auto a = F::random(rng);
+    auto b = F::random(rng);
 
     for (auto _ : state) {
         a -= b;
@@ -50,11 +54,13 @@ static void BM_FieldSub(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_FieldSub);
+BENCHMARK(BM_PrimeFieldSub<PallasField>);
+BENCHMARK(BM_PrimeFieldSub<Field25519>);
 
-static void BM_FieldMul(benchmark::State& state) {
-    auto a = PallasField::random(rng);
-    auto b = PallasField::random(rng);
+template<typename F>
+static void BM_PrimeFieldMul(benchmark::State& state) {
+    auto a = F::random(rng);
+    auto b = F::random(rng);
 
     for (auto _ : state) {
         a *= b;
@@ -64,11 +70,13 @@ static void BM_FieldMul(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_FieldMul);
+BENCHMARK(BM_PrimeFieldMul<PallasField>);
+BENCHMARK(BM_PrimeFieldMul<Field25519>);
 
-static void BM_FieldDiv(benchmark::State& state) {
-    auto a = PallasField::random(rng);
-    auto b = PallasField::random(rng);
+template<typename F>
+static void BM_PrimeFieldDiv(benchmark::State& state) {
+    auto a = F::random(rng);
+    auto b = F::random(rng);
 
     for (auto _ : state) {
         a /= b;
@@ -78,4 +86,5 @@ static void BM_FieldDiv(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_FieldDiv);
+BENCHMARK(BM_PrimeFieldDiv<PallasField>);
+BENCHMARK(BM_PrimeFieldDiv<Field25519>);
