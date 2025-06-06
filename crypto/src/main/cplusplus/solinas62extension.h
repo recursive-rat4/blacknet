@@ -98,7 +98,7 @@ typedef PolynomialRing<Solinas62RingDegree4Params> Solinas62RingDegree4;
 struct Solinas62RingDegree64Params {
     using Z = Solinas62Ring;
 
-    constexpr static const bool is_cyclotomic_ring = true;
+    constexpr static const std::size_t cyclotomic_index = 128;
 
     constexpr static const std::size_t N = 64;
 
@@ -114,7 +114,7 @@ typedef PolynomialRing<Solinas62RingDegree64Params> Solinas62RingDegree64;
 struct Solinas62RingDegree64NTTParams {
     using Z = Solinas62Ring;
 
-    constexpr static const bool is_cyclotomic_ring = true;
+    constexpr static const std::size_t cyclotomic_index = 128;
 
     constexpr static const std::size_t N = 64;
 

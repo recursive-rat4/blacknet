@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <ostream>
 #include <random>
 #include <fmt/format.h>
@@ -182,6 +183,21 @@ public:
             r += e * e;
         }
         return std::sqrt(r);
+    }
+
+    constexpr PolynomialRing conjugate() const {
+        static_assert(std::has_single_bit(Params::cyclotomic_index));
+        PolynomialRing t(*this);
+        Params::fromForm(t.coefficients);
+        for (std::size_t i = 1; i < N / 2; ++i) {
+            Z a = -t.coefficients[i];
+            Z b = -t.coefficients[N - i];
+            t.coefficients[N - i] = a;
+            t.coefficients[i] = b;
+        }
+        t.coefficients[N / 2] = -t.coefficients[N / 2];
+        Params::toForm(t.coefficients);
+        return t;
     }
 
     constexpr decltype(auto) begin() noexcept {

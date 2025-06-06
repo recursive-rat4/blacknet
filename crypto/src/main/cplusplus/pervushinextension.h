@@ -28,6 +28,7 @@ namespace blacknet::crypto {
 struct PervushinRingDegree2Params {
     using Z = PervushinRing;
 
+    constexpr static const std::size_t cyclotomic_index = 4;
     constexpr static const bool is_division_ring = true;
 
     constexpr static const std::size_t N = 2;

@@ -143,4 +143,12 @@ BOOST_AUTO_TEST_CASE(Fe4Inv) {
     BOOST_TEST(!Fe4(0).invert());
 }
 
+BOOST_AUTO_TEST_CASE(Conjugation) {
+    Fe2 a({4, 0});
+    Fe2 b({654336260586812980, -209289517407125934});
+    Fe2 c({654336260586812980, 209289517407125934});
+    BOOST_TEST(a == a.conjugate());
+    BOOST_TEST(c == b.conjugate());
+}
+
 BOOST_AUTO_TEST_SUITE_END()

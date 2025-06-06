@@ -25,9 +25,8 @@ using namespace blacknet::crypto;
 
 static FastDRG rng;
 
-static void BM_CyclotomicMul_Dilithium(benchmark::State& state) {
-    using R = dilithium::Rq;
-
+template<typename R>
+static void BM_CyclotomicMul(benchmark::State& state) {
     auto a = R::random(rng);
     auto b = R::random(rng);
 
@@ -39,20 +38,19 @@ static void BM_CyclotomicMul_Dilithium(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_CyclotomicMul_Dilithium);
+BENCHMARK(BM_CyclotomicMul<dilithium::Rq>);
+BENCHMARK(BM_CyclotomicMul<Solinas62RingDegree64NTT>);
 
-static void BM_CyclotomicMul_LatticeFold(benchmark::State& state) {
-    using R = Solinas62RingDegree64NTT;
-
+template<typename R>
+static void BM_CyclotomicCnj(benchmark::State& state) {
     auto a = R::random(rng);
-    auto b = R::random(rng);
 
     for (auto _ : state) {
-        a = a * b;
+        a = a.conjugate();
 
         benchmark::DoNotOptimize(a);
-        benchmark::DoNotOptimize(b);
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_CyclotomicMul_LatticeFold);
+BENCHMARK(BM_CyclotomicCnj<dilithium::Rq>);
+BENCHMARK(BM_CyclotomicCnj<Solinas62RingDegree64NTT>);

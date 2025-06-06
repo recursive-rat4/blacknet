@@ -42,6 +42,8 @@ namespace dilithium {
     struct CyclotomicRingParams {
         using Z = DilithiumRing;
 
+        constexpr static const std::size_t cyclotomic_index = 512;
+
         constexpr static const std::size_t N = 256;
 
         constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
