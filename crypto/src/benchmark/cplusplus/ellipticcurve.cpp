@@ -17,6 +17,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include "edwards25519.h"
 #include "fastrng.h"
 #include "pastacurves.h"
 
@@ -24,9 +25,10 @@ using namespace blacknet::crypto;
 
 static FastDRG rng;
 
-static void BM_CurveAdd(benchmark::State& state) {
-    auto a = PallasGroupJacobian::random(rng);
-    auto b = PallasGroupJacobian::random(rng);
+template<typename ECG>
+static void BM_EllipticCurveAdd(benchmark::State& state) {
+    auto a = ECG::random(rng);
+    auto b = ECG::random(rng);
 
     for (auto _ : state) {
         a = a + b;
@@ -36,10 +38,12 @@ static void BM_CurveAdd(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_CurveAdd);
+BENCHMARK(BM_EllipticCurveAdd<PallasGroupJacobian>);
+BENCHMARK(BM_EllipticCurveAdd<Edwards25519GroupAffine>);
 
-static void BM_CurveDbl(benchmark::State& state) {
-    auto a = PallasGroupJacobian::random(rng);
+template<typename ECG>
+static void BM_EllipticCurveDbl(benchmark::State& state) {
+    auto a = ECG::random(rng);
 
     for (auto _ : state) {
         a = a.douple();
@@ -48,11 +52,13 @@ static void BM_CurveDbl(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_CurveDbl);
+BENCHMARK(BM_EllipticCurveDbl<PallasGroupJacobian>);
+BENCHMARK(BM_EllipticCurveDbl<Edwards25519GroupAffine>);
 
-static void BM_CurveSub(benchmark::State& state) {
-    auto a = PallasGroupJacobian::random(rng);
-    auto b = PallasGroupJacobian::random(rng);
+template<typename ECG>
+static void BM_EllipticCurveSub(benchmark::State& state) {
+    auto a = ECG::random(rng);
+    auto b = ECG::random(rng);
 
     for (auto _ : state) {
         a = a - b;
@@ -62,11 +68,13 @@ static void BM_CurveSub(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_CurveSub);
+BENCHMARK(BM_EllipticCurveSub<PallasGroupJacobian>);
+BENCHMARK(BM_EllipticCurveSub<Edwards25519GroupAffine>);
 
-static void BM_CurveMul(benchmark::State& state) {
-    auto a = PallasGroupJacobian::random(rng);
-    auto b = VestaField::random(rng);
+template<typename ECG>
+static void BM_EllipticCurveMul(benchmark::State& state) {
+    auto a = ECG::random(rng);
+    auto b = ECG::Scalar::random(rng);
 
     for (auto _ : state) {
         a = a * b;
@@ -76,4 +84,5 @@ static void BM_CurveMul(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_CurveMul);
+BENCHMARK(BM_EllipticCurveMul<PallasGroupJacobian>);
+BENCHMARK(BM_EllipticCurveMul<Edwards25519GroupAffine>);

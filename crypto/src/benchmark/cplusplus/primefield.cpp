@@ -17,8 +17,8 @@
 
 #include <benchmark/benchmark.h>
 
+#include "edwards25519.h"
 #include "fastrng.h"
-#include "field25519.h"
 #include "pastacurves.h"
 
 using namespace blacknet::crypto;

@@ -24,6 +24,7 @@
 #include <cmath>
 #include <concepts>
 #include <iterator>
+#include <random>
 
 namespace blacknet::crypto {
 
@@ -67,6 +68,14 @@ struct BitInt {
     }
 
     consteval static std::size_t bits() { return BITS; }
+
+    template<std::uniform_random_bit_generator RNG>
+    static BitInt random(RNG& rng) {
+        std::uniform_int_distribution<L> ud;
+        BitInt r;
+        std::ranges::generate(r.limbs, [&] { return ud(rng); });
+        return r;
+    }
 
     class BitIterator {
         friend BitInt;

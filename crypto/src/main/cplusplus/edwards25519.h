@@ -15,12 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_FIELD25519_H
-#define BLACKNET_CRYPTO_FIELD25519_H
+#ifndef BLACKNET_CRYPTO_EDWARDS25519_H
+#define BLACKNET_CRYPTO_EDWARDS25519_H
 
 #include "bigint.h"
 #include "bitint.h"
 #include "primefield.h"
+#include "twistededwardsgroupaffine.h"
 
 namespace blacknet::crypto {
 
@@ -66,6 +67,13 @@ struct Field25519Params {
 };
 
 typedef PrimeField<Field25519Params> Field25519;
+
+typedef TwistedEdwardsGroupAffine<
+    Field25519,
+    BitInt<255>,
+    Field25519("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC"),
+    Field25519("52036CEE2B6FFE738CC740797779E89800700A4D4141D8AB75EB4DCA135978A3")
+> Edwards25519GroupAffine;
 
 }
 
