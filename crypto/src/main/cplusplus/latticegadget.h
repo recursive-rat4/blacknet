@@ -27,6 +27,16 @@ namespace blacknet::crypto {
 
 namespace lattice_gadget {
 namespace {
+    template<typename Z, std::size_t radix, std::size_t digits>
+    requires(Z::is_integer_ring)
+    constexpr void decompose(Z* pieces, const Z& f) {
+        auto representative = f.canonical();
+        for (std::size_t j = 0; j < digits; ++j) {
+            pieces[j] = representative % radix;
+            representative /= radix;
+        }
+    }
+
     template<typename R, std::size_t radix, std::size_t digits>
     constexpr void decompose(R* pieces, const R& f) {
         for (std::size_t i = 0; i < R::dimension(); ++i) {

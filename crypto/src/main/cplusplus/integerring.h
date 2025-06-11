@@ -40,6 +40,7 @@ class IntegerRing {
 
     constexpr IntegerRing(I n, int) : n(n) {}
 public:
+    constexpr static const bool is_integer_ring = true;
     consteval static IntegerRing LEFT_ADDITIVE_IDENTITY() { return IntegerRing(0); }
     consteval static IntegerRing LEFT_MULTIPLICATIVE_IDENTITY() { return IntegerRing(1); }
 

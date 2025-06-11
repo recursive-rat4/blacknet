@@ -33,6 +33,7 @@ template<typename Params>
 class PrimeField {
     constexpr PrimeField(const UInt256& n, int) : n(n) {}
 public:
+    constexpr static const bool is_integer_ring = true;
     consteval static PrimeField LEFT_ADDITIVE_IDENTITY() { return PrimeField(0); }
     consteval static PrimeField LEFT_MULTIPLICATIVE_IDENTITY() { return PrimeField(1); }
 

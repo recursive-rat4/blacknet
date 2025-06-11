@@ -30,6 +30,7 @@ namespace blacknet::crypto {
 // A Modular Johnson–Lindenstrauss Variant
 
 template<typename Z>
+requires(Z::is_integer_ring)
 struct JohnsonLindenstrauss {
     static_assert(std::is_signed_v<typename Z::NumericType>);
 
