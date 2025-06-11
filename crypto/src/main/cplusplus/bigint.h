@@ -271,10 +271,6 @@ struct BigInt {
         return (limbs[index >> w] >> (index & b)) & 1;
     }
 
-    consteval static std::size_t BITS() { return N * sizeof(L) * 8; }
-
-    consteval static std::size_t LIMBS() { return N; }
-
     template<std::uniform_random_bit_generator RNG>
     static BigInt random(RNG& rng) {
         std::uniform_int_distribution<L> ud;
@@ -289,6 +285,12 @@ struct BigInt {
             fmt::print(out, limb_format(), val.limbs[i]);
         return out;
     }
+
+    consteval static std::size_t bits() {
+        return N * sizeof(L) * 8;
+    }
+
+    consteval static std::size_t LIMBS() { return N; }
 private:
     consteval static const char* limb_format() noexcept {
         if constexpr (sizeof(L) == 8)

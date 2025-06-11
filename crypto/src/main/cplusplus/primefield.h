@@ -222,6 +222,10 @@ public:
         return out << Params::fromForm(val.n);
     }
 
+    consteval static std::size_t bits() {
+        return Params::BITS;
+    }
+
     template<typename Sponge>
     constexpr void absorb(Sponge& sponge) const {
         sponge.absorb(*this);

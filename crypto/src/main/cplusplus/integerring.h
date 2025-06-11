@@ -152,6 +152,10 @@ public:
         return out << fromForm(val.n);
     }
 
+    consteval static std::size_t bits() {
+        return Params::BITS;
+    }
+
     consteval static I modulus() {
         return Params::M;
     }
