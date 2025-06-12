@@ -122,17 +122,17 @@ private:
         }
     }
 public:
-template<typename Circuit>
-requires(std::same_as<E, typename Circuit::R>)
-struct Gadget {
-    using LinearCombination = Circuit::LinearCombination;
+template<typename Builder>
+requires(std::same_as<E, typename Builder::R>)
+struct Circuit {
+    using LinearCombination = Builder::LinearCombination;
 
-    Circuit& circuit;
+    Builder& circuit;
     Phase phase;
     std::size_t position;
     std::array<LinearCombination, R+C> state;
 
-    constexpr Gadget(Circuit& circuit) : circuit(circuit), phase(Absorb), position(0) {
+    constexpr Circuit(Builder& circuit) : circuit(circuit), phase(Absorb), position(0) {
         std::ranges::fill_n(state.begin(), R, E(0));
         std::ranges::copy(IV, state.begin() + R);
     }
@@ -142,7 +142,7 @@ struct Gadget {
             phase = Absorb;
             position = 0;
         } else if (position == R) {
-            F::template circuit<Circuit>::permute(circuit, state);
+            F::template Circuit<Builder>::permute(circuit, state);
             position = 0;
         }
         if constexpr (mode == SpongeMode::Add) {
@@ -163,10 +163,10 @@ struct Gadget {
         if (phase == Absorb) {
             phase = Squeeze;
             pad(position, state);
-            F::template circuit<Circuit>::permute(circuit, state);
+            F::template Circuit<Builder>::permute(circuit, state);
             position = 0;
         } else if (position == R) {
-            F::template circuit<Circuit>::permute(circuit, state);
+            F::template Circuit<Builder>::permute(circuit, state);
             position = 0;
         }
         return state[position++];
@@ -190,7 +190,7 @@ struct Tracer {
             sponge.phase = Absorb;
             sponge.position = 0;
         } else if (sponge.position == R) {
-            F::template trace<circuit>::permute(sponge.state, trace);
+            F::template Tracer<circuit>::permute(sponge.state, trace);
             sponge.position = 0;
         }
         if constexpr (mode == SpongeMode::Add) {
@@ -212,10 +212,10 @@ struct Tracer {
         if (sponge.phase == Absorb) {
             sponge.phase = Squeeze;
             pad(sponge.position, sponge.state);
-            F::template trace<circuit>::permute(sponge.state, trace);
+            F::template Tracer<circuit>::permute(sponge.state, trace);
             sponge.position = 0;
         } else if (sponge.position == R) {
-            F::template trace<circuit>::permute(sponge.state, trace);
+            F::template Tracer<circuit>::permute(sponge.state, trace);
             sponge.position = 0;
         }
         return sponge.state[sponge.position++];

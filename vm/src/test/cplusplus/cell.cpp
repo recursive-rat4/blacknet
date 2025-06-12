@@ -52,17 +52,17 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Jive = Poseidon2PervushinJive;
     using Cell = Cell<Jive>;
 
-    using Circuit = CircuitBuilder<E, 2>;
-    Circuit circuit;
-    using Gadget = Cell::Gadget<Circuit>;
-    auto null_gadget = Gadget::null(circuit);
-    auto cons_gadget = Gadget::cons(circuit, null_gadget, null_gadget);
-    auto car_gadget = cons_gadget.car(null_gadget, null_gadget);
-    auto cdr_gadget = cons_gadget.cdr(null_gadget, null_gadget);
+    using Builder = CircuitBuilder<E, 2>;
+    Builder circuit;
+    using Circuit = Cell::Circuit<Builder>;
+    auto null_circuit = Circuit::null(circuit);
+    auto cons_circuit = Circuit::cons(circuit, null_circuit, null_circuit);
+    auto car_circuit = cons_circuit.car(null_circuit, null_circuit);
+    auto cdr_circuit = cons_circuit.cdr(null_circuit, null_circuit);
     R1CS<E> r1cs(circuit.r1cs());
 
     Vector<E> z = r1cs.assigment();
-    using Tracer = Cell::Tracer<Circuit::degree()>;
+    using Tracer = Cell::Tracer<Builder::degree()>;
     auto null = Cell::null();
     auto cons = Tracer::cons(null, null, z.elements);
     Tracer cons_tracer(cons, z.elements);

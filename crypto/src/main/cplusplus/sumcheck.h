@@ -60,16 +60,16 @@ public:
             return out << val.claims;
         }
 
-        template<typename Circuit>
-        requires(std::same_as<R, typename Circuit::R>)
-        struct Gadget {
-            using Variable = Circuit::Variable;
-            using UnivariatePolynomial = UnivariatePolynomial<R>::template Gadget<Circuit>;
+        template<typename Builder>
+        requires(std::same_as<R, typename Builder::R>)
+        struct Circuit {
+            using Variable = Builder::Variable;
+            using UnivariatePolynomial = UnivariatePolynomial<R>::template Circuit<Builder>;
 
             std::vector<UnivariatePolynomial> claims;
 
-            constexpr Gadget(
-                Circuit& circuit,
+            constexpr Circuit(
+                Builder& circuit,
                 Variable::Type type,
                 std::size_t variables,
                 std::size_t degree
@@ -201,25 +201,25 @@ private:
         }
     }
 public:
-template<typename Circuit>
-requires(std::same_as<R, typename Circuit::R>)
-struct Gadget {
-    using Variable = Circuit::Variable;
-    using LinearCombination = Circuit::LinearCombination;
-    using Polynomial = P::template Gadget<Circuit>;
-    using ProofGadget = Proof::template Gadget<Circuit>;
-    using DuplexGadget = Duplex::template Gadget<Circuit>;
-    using Point = Point<R>::template Gadget<Circuit>;
+template<typename Builder>
+requires(std::same_as<R, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+    using Polynomial = P::template Circuit<Builder>;
+    using ProofCircuit = Proof::template Circuit<Builder>;
+    using DuplexCircuit = Duplex::template Circuit<Builder>;
+    using Point = Point<R>::template Circuit<Builder>;
 
-    Circuit& circuit;
+    Builder& circuit;
 
-    constexpr Gadget(Circuit& circuit) : circuit(circuit) {}
+    constexpr Circuit(Builder& circuit) : circuit(circuit) {}
 
     constexpr void verify(
         const Polynomial& polynomial,
         const LinearCombination& sum,
-        const ProofGadget& proof,
-        DuplexGadget& duplex
+        const ProofCircuit& proof,
+        DuplexCircuit& duplex
     ) {
         auto scope = circuit.scope("SumCheck::verify");
         Point r(polynomial.variables());
@@ -238,8 +238,8 @@ struct Gadget {
     constexpr std::pair<Point, LinearCombination> verifyEarlyStopping(
         const Polynomial& polynomial,
         const LinearCombination& sum,
-        const ProofGadget& proof,
-        DuplexGadget& duplex
+        const ProofCircuit& proof,
+        DuplexCircuit& duplex
     ) {
         auto scope = circuit.scope("SumCheck::verifyEarlyStopping");
         Point r(polynomial.variables());

@@ -49,17 +49,17 @@ struct Jive {
         return hash;
     }
 
-    template<typename Circuit>
-    using HashGadget = std::array<typename Circuit::LinearCombination, M>;
+    template<typename Builder>
+    using HashCircuit = std::array<typename Builder::LinearCombination, M>;
 
-template<typename Circuit>
-requires(std::same_as<F, typename Circuit::R>)
-struct circuit {
-    using LinearCombination = Circuit::LinearCombination;
-    using Hash = HashGadget<Circuit>;
+template<typename Builder>
+requires(std::same_as<F, typename Builder::R>)
+struct Circuit {
+    using LinearCombination = Builder::LinearCombination;
+    using Hash = HashCircuit<Builder>;
 
     constexpr static Hash compress(
-        Circuit& circuit,
+        Builder& circuit,
         const Hash& x0,
         const Hash& x1
     ) {
@@ -67,7 +67,7 @@ struct circuit {
         std::array<LinearCombination, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());
-        P::template circuit<Circuit>::permute(circuit, state);
+        P::template Circuit<Builder>::permute(circuit, state);
         Hash hash;
         for (std::size_t i = 0; i < hash.size(); ++i)
             hash[i] = x0[i] + x1[i] + state[i] + state[i + hash.size()];
@@ -76,7 +76,7 @@ struct circuit {
 };
 
 template<std::size_t circuit>
-struct trace {
+struct Tracer {
     constexpr static Hash compress(
         const Hash& x0,
         const Hash& x1,
@@ -85,7 +85,7 @@ struct trace {
         std::array<F, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());
-        P::template trace<circuit>::permute(state, trace);
+        P::template Tracer<circuit>::permute(state, trace);
         Hash hash;
         for (std::size_t i = 0; i < hash.size(); ++i)
             hash[i] = x0[i] + x1[i] + state[i] + state[i + hash.size()];

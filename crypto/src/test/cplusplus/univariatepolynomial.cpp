@@ -56,13 +56,13 @@ BOOST_AUTO_TEST_CASE(circuit) {
     UnivariatePolynomial<E> p{E(2), E(3), E(4), E(5), E(6)};
     E x(7);
 
-    using Circuit = CircuitBuilder<E, 2>;
-    Circuit circuit;
-    using Gadget = UnivariatePolynomial<E>::Gadget<Circuit>;
-    Gadget gadget(circuit, Circuit::Variable::Type::Input, p.degree());
-    typename Circuit::LinearCombination x_var(circuit.input());
-    auto y_lc = gadget(x_var);
-    typename Circuit::Variable y_var(circuit.auxiliary());
+    using Builder = CircuitBuilder<E, 2>;
+    Builder circuit;
+    using Circuit = UnivariatePolynomial<E>::Circuit<Builder>;
+    Circuit uni_circuit(circuit, Builder::Variable::Type::Input, p.degree());
+    typename Builder::LinearCombination x_var(circuit.input());
+    auto y_lc = uni_circuit(x_var);
+    typename Builder::Variable y_var(circuit.auxiliary());
     circuit(y_var == y_lc);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();

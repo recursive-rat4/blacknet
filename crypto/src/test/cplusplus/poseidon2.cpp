@@ -44,11 +44,11 @@ BOOST_AUTO_TEST_CASE(Pallas_3) {
     Poseidon2::permute(a);
     BOOST_TEST(c == a);
 
-    using Circuit = CircuitBuilder<E, 2>;
-    Circuit circuit;
-    std::array<typename Circuit::LinearCombination, Poseidon2::width()> x;
+    using Builder = CircuitBuilder<E, 2>;
+    Builder circuit;
+    std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::circuit<Circuit>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(Pallas_3) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
+    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -96,11 +96,11 @@ BOOST_AUTO_TEST_CASE(Solinas62_12) {
     Poseidon2::permute(a);
     BOOST_TEST(c == a);
 
-    using Circuit = CircuitBuilder<E, 3>;
-    Circuit circuit;
-    std::array<typename Circuit::LinearCombination, Poseidon2::width()> x;
+    using Builder = CircuitBuilder<E, 3>;
+    Builder circuit;
+    std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::circuit<Circuit>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(Solinas62_12) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
+    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -148,11 +148,11 @@ BOOST_AUTO_TEST_CASE(Pervushin_12) {
     Poseidon2::permute(a);
     BOOST_TEST(c == a);
 
-    using Circuit = CircuitBuilder<E, 3>;
-    Circuit circuit;
-    std::array<typename Circuit::LinearCombination, Poseidon2::width()> x;
+    using Builder = CircuitBuilder<E, 3>;
+    Builder circuit;
+    std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::circuit<Circuit>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_12) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
+    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -192,11 +192,11 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
     Poseidon2::permute(a);
     BOOST_TEST(c == a);
 
-    using Circuit = CircuitBuilder<E, 17>;
-    Circuit circuit;
-    std::array<typename Circuit::LinearCombination, Poseidon2::width()> x;
+    using Builder = CircuitBuilder<E, 17>;
+    Builder circuit;
+    std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::circuit<Circuit>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::trace<Circuit::degree()>::permute(b, z.elements);
+    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }

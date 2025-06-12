@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -80,14 +80,14 @@ public:
         return out << '(' << val.eq << ')';
     }
 
-template<typename Circuit>
-requires(std::same_as<E, typename Circuit::R>)
-struct Gadget {
-    using Variable = Circuit::Variable;
-    using LinearCombination = Circuit::LinearCombination;
+template<typename Builder>
+requires(std::same_as<E, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
 
     constexpr static std::vector<LinearCombination> powers(
-        Circuit& circuit,
+        Builder& circuit,
         const LinearCombination& tau,
         std::size_t variables
     ) {
@@ -103,7 +103,7 @@ struct Gadget {
     }
 };
 
-struct trace {
+struct Tracer {
     constexpr static std::vector<E> powers(const E& tau, std::size_t variables, std::vector<E>& trace) {
         std::vector<E> coefficients(variables);
         coefficients[0] = tau;

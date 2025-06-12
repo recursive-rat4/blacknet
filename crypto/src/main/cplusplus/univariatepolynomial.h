@@ -85,23 +85,23 @@ public:
             coefficients[i].absorb(sponge);
     }
 
-template<typename Circuit>
-requires(std::same_as<E, typename Circuit::R>)
-struct Gadget {
-    using Variable = Circuit::Variable;
-    using LinearCombination = Circuit::LinearCombination;
+template<typename Builder>
+requires(std::same_as<E, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
 
-    Circuit& circuit;
+    Builder& circuit;
     std::vector<LinearCombination> coefficients;
 
-    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t degree)
+    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t degree)
         : circuit(circuit), coefficients(degree + 1)
     {
         std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
     }
-    constexpr Gadget(Circuit& circuit, const std::vector<LinearCombination>& coefficients)
+    constexpr Circuit(Builder& circuit, const std::vector<LinearCombination>& coefficients)
         : circuit(circuit), coefficients(coefficients) {}
-    constexpr Gadget(Circuit& circuit, std::vector<LinearCombination>&& coefficients)
+    constexpr Circuit(Builder& circuit, std::vector<LinearCombination>&& coefficients)
         : circuit(circuit), coefficients(std::move(coefficients)) {}
 
     constexpr LinearCombination operator () (const LinearCombination& point) const {

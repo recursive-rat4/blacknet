@@ -93,15 +93,15 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     };
     std::array<E, T> c;
 
-    using Circuit = CircuitBuilder<E, 3>;
-    Circuit circuit;
-    using Gadget = Sponge::Gadget<Circuit>;
-    Gadget gadget(circuit);
-    std::array<typename Circuit::LinearCombination, T> inputs;
+    using Builder = CircuitBuilder<E, 3>;
+    Builder circuit;
+    using Circuit = Sponge::Circuit<Builder>;
+    Circuit sponge_circuit(circuit);
+    std::array<typename Builder::LinearCombination, T> inputs;
     std::ranges::generate(inputs, [&]{ return circuit.input(); });
-    std::array<typename Circuit::LinearCombination, T> outputs;
-    gadget.absorb(inputs);
-    gadget.squeeze(outputs);
+    std::array<typename Builder::LinearCombination, T> outputs;
+    sponge_circuit.absorb(inputs);
+    sponge_circuit.squeeze(outputs);
     for (std::size_t i = 0; i < T; ++i) {
         auto v = circuit.auxiliary();
         circuit(v == outputs[i]);
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    using Tracer = Sponge::Tracer<Circuit::degree()>;
+    using Tracer = Sponge::Tracer<Builder::degree()>;
     Tracer tracer(z.elements);
     tracer.absorb(b);
     tracer.squeeze(c);

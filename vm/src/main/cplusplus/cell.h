@@ -69,39 +69,39 @@ struct Cell {
         return out;
     }
 
-template<typename Circuit>
-requires(std::same_as<E, typename Circuit::R>)
-struct Gadget {
-    using LinearCombination = Circuit::LinearCombination;
-    using Hash = typename Jive::HashGadget<Circuit>;
+template<typename Builder>
+requires(std::same_as<E, typename Builder::R>)
+struct Circuit {
+    using LinearCombination = Builder::LinearCombination;
+    using Hash = typename Jive::HashCircuit<Builder>;
 
-    Circuit& circuit;
+    Builder& circuit;
     Hash value;
 
-    constexpr Gadget(Circuit& circuit, const Hash& value)
+    constexpr Circuit(Builder& circuit, const Hash& value)
         : circuit(circuit), value(value) {}
 
-    constexpr static Gadget null(Circuit& circuit) {
+    constexpr static Circuit null(Builder& circuit) {
         return { circuit, {} };
     }
 
-    constexpr static Gadget cons(Circuit& circuit, const Gadget& left, const Gadget& right) {
+    constexpr static Circuit cons(Builder& circuit, const Circuit& left, const Circuit& right) {
         auto scope = circuit.scope("Cell::cons");
-        auto hash = Jive::template circuit<Circuit>::compress(circuit, left.value, right.value);
+        auto hash = Jive::template Circuit<Builder>::compress(circuit, left.value, right.value);
         return { circuit, hash };
     }
 
-    constexpr Gadget car(const Gadget& left, const Gadget& right) const {
+    constexpr Circuit car(const Circuit& left, const Circuit& right) const {
         auto scope = circuit.scope("Cell::car");
-        auto hash = Jive::template circuit<Circuit>::compress(circuit, left.value, right.value);
+        auto hash = Jive::template Circuit<Builder>::compress(circuit, left.value, right.value);
         for (const auto& [x, y] : std::views::zip(hash, value))
             circuit(x == y);
         return left;
     }
 
-    constexpr Gadget cdr(const Gadget& left, const Gadget& right) const {
+    constexpr Circuit cdr(const Circuit& left, const Circuit& right) const {
         auto scope = circuit.scope("Cell::cdr");
-        auto hash = Jive::template circuit<Circuit>::compress(circuit, left.value, right.value);
+        auto hash = Jive::template Circuit<Builder>::compress(circuit, left.value, right.value);
         for (const auto& [x, y] : std::views::zip(hash, value))
             circuit(x == y);
         return right;
@@ -110,22 +110,22 @@ struct Gadget {
 
 template<std::size_t circuit>
 struct Tracer {
-    Cell& cell;
+    Cell cell;
     std::vector<E>& trace;
 
     constexpr static Cell cons(const Cell& left, const Cell& right, std::vector<E>& trace) {
-        return { Jive::template trace<circuit>::compress(left.value, right.value, trace) };
+        return { Jive::template Tracer<circuit>::compress(left.value, right.value, trace) };
     }
 
     constexpr Cell car(const Cell& left, const Cell& right) const {
-        if (Jive::template trace<circuit>::compress(left.value, right.value, trace) == cell.value)
+        if (Jive::template Tracer<circuit>::compress(left.value, right.value, trace) == cell.value)
             return left;
         else
             throw std::runtime_error("Invalid KAR");
     }
 
     constexpr Cell cdr(const Cell& left, const Cell& right) const {
-        if (Jive::template trace<circuit>::compress(left.value, right.value, trace) == cell.value)
+        if (Jive::template Tracer<circuit>::compress(left.value, right.value, trace) == cell.value)
             return right;
         else
             throw std::runtime_error("Invalid KUDER");

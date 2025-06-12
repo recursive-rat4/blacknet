@@ -170,18 +170,18 @@ BOOST_AUTO_TEST_CASE(circuit) {
 
     auto proof = SumCheck::prove(poly, sum, duplex);
 
-    using Circuit = CircuitBuilder<Z, 2>;
-    Circuit circuit;
-    using PolyGadget = MultilinearExtension<Z>::Gadget<Circuit>;
-    PolyGadget poly_gadget(circuit, Circuit::Variable::Type::Input, poly.variables());
+    using Builder = CircuitBuilder<Z, 2>;
+    Builder circuit;
+    using PolyCircuit = MultilinearExtension<Z>::Circuit<Builder>;
+    PolyCircuit poly_circuit(circuit, Builder::Variable::Type::Input, poly.variables());
     auto sum_var = circuit.input();
-    using ProofGadget = SumCheck::Proof::Gadget<Circuit>;
-    ProofGadget proof_gadget(circuit, Circuit::Variable::Type::Input, poly.variables(), poly.degree());
-    using SumCheckGadget = SumCheck::Gadget<Circuit>;
-    SumCheckGadget sumcheck_gadget(circuit);
-    using DuplexGadget = Duplex::Gadget<Circuit>;
-    DuplexGadget duplex_gadget(circuit);
-    sumcheck_gadget.verify(poly_gadget, sum_var, proof_gadget, duplex_gadget);
+    using ProofCircuit = SumCheck::Proof::Circuit<Builder>;
+    ProofCircuit proof_circuit(circuit, Builder::Variable::Type::Input, poly.variables(), poly.degree());
+    using SumCheckCircuit = SumCheck::Circuit<Builder>;
+    SumCheckCircuit sumcheck_circuit(circuit);
+    using DuplexCircuit = Duplex::Circuit<Builder>;
+    DuplexCircuit duplex_circuit(circuit);
+    sumcheck_circuit.verify(poly_circuit, sum_var, proof_circuit, duplex_circuit);
 
     CustomizableConstraintSystem<Z> ccs(circuit.ccs());
     Vector<Z> z = ccs.assigment();
@@ -189,8 +189,8 @@ BOOST_AUTO_TEST_CASE(circuit) {
     z.elements.push_back(sum);
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
-    SumCheck::Tracer<Circuit::degree()> tracer(z.elements);
-    using DuplexTracer = Duplex::Tracer<Circuit::degree()>;
+    SumCheck::Tracer<Builder::degree()> tracer(z.elements);
+    using DuplexTracer = Duplex::Tracer<Builder::degree()>;
     DuplexTracer duplex_tracer(z.elements);
     BOOST_TEST_REQUIRE(tracer.verify(poly, sum, proof, duplex_tracer));
     BOOST_TEST(ccs.isSatisfied(z));

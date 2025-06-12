@@ -115,17 +115,17 @@ struct EqExtension {
         return out << '(' << val.coefficients << ", " << val.z << ')';
     }
 
-template<typename Circuit>
-requires(std::same_as<E, typename Circuit::R>)
-struct Gadget {
-    using Variable = Circuit::Variable;
-    using LinearCombination = Circuit::LinearCombination;
-    using Point = Point<E>::template Gadget<Circuit>;
+template<typename Builder>
+requires(std::same_as<E, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+    using Point = Point<E>::template Circuit<Builder>;
 
-    Circuit& circuit;
+    Builder& circuit;
     std::vector<LinearCombination> coefficients;
 
-    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t variables)
+    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t variables)
         : circuit(circuit), coefficients(variables)
     {
         std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
@@ -145,7 +145,7 @@ struct Gadget {
     }
 
     constexpr static std::vector<LinearCombination> hypercube(
-        Circuit& circuit,
+        Builder& circuit,
         const std::vector<LinearCombination>& coefficients
     ) {
         auto scope = circuit.scope("EqExtension::hypercube");
@@ -172,7 +172,7 @@ struct Gadget {
     }
 };
 
-struct trace {
+struct Tracer {
     constexpr static E point(const EqExtension& eq, const Point<E>& point, std::vector<E>& trace) {
         E pi(1);
         for (std::size_t i = 0; i < eq.coefficients.size(); ++i)

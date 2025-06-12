@@ -103,15 +103,15 @@ BOOST_AUTO_TEST_CASE(circuit) {
     E tau(4);
     constexpr std::size_t ell(3);
 
-    using Circuit = CircuitBuilder<E, 2>;
-    Circuit circuit;
+    using Builder = CircuitBuilder<E, 2>;
+    Builder circuit;
     auto tau_var = circuit.input();
-    using Gadget = PowExtension<E>::Gadget<Circuit>;
-    Gadget::powers(circuit, tau_var, ell);
+    using PowCircuit = PowExtension<E>::Circuit<Builder>;
+    PowCircuit::powers(circuit, tau_var, ell);
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     z.elements.push_back(tau);
-    BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::trace::powers(tau, ell, z.elements));
+    BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::Tracer::powers(tau, ell, z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

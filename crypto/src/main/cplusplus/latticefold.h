@@ -170,19 +170,19 @@ struct LatticeFold {
             return mle.variables();
         }
 
-    template<typename Circuit>
-    requires(std::same_as<Fq, typename Circuit::R>)
-    struct Gadget {
-        using Variable = Circuit::Variable;
-        using LinearCombination = Circuit::LinearCombination;
-        using MultilinearExtension = MultilinearExtension<Fq>::template Gadget<Circuit>;
-        using Point = Point<Fq>::template Gadget<Circuit>;
+    template<typename Builder>
+    requires(std::same_as<Fq, typename Builder::R>)
+    struct Circuit {
+        using Variable = Builder::Variable;
+        using LinearCombination = Builder::LinearCombination;
+        using MultilinearExtension = MultilinearExtension<Fq>::template Circuit<Builder>;
+        using Point = Point<Fq>::template Circuit<Builder>;
 
-        Circuit& circuit;
+        Builder& circuit;
         LinearCombination mu;
         MultilinearExtension mle;
 
-        constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t variables)
+        constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t variables)
             : circuit(circuit),
             mu(circuit.variable(type)),
             mle(circuit, type, variables) {}

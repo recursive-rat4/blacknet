@@ -85,17 +85,17 @@ struct Point {
             coordinates[i].absorb(sponge);
     }
 
-template<typename Circuit>
-requires(std::same_as<S, typename Circuit::R>)
-struct Gadget {
-    using Variable = Circuit::Variable;
-    using LinearCombination = Circuit::LinearCombination;
+template<typename Builder>
+requires(std::same_as<S, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
 
     std::vector<LinearCombination> coordinates;
 
-    constexpr Gadget(std::size_t size) : coordinates(size) {}
+    constexpr Circuit(std::size_t size) : coordinates(size) {}
 
-    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t size) : coordinates(size) {
+    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t size) : coordinates(size) {
         std::ranges::generate(coordinates, [&]{ return circuit.variable(type); });
     }
 

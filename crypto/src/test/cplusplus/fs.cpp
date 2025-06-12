@@ -34,12 +34,12 @@ BOOST_AUTO_TEST_SUITE(FSs)
 using F = PervushinRing;
 
 BOOST_AUTO_TEST_CASE(test) {
-    using Circuit = CircuitBuilder<F, 2>;
+    using Builder = CircuitBuilder<F, 2>;
     using CS = R1CS<F>;
     using Duplex = Poseidon2PervushinSponge<{67,68,69,70}>;
     using FS = FS<CS, Duplex>;
 
-    Circuit circuit;
+    Builder circuit;
     {
         auto a = circuit.input();
         auto b = circuit.auxiliary();

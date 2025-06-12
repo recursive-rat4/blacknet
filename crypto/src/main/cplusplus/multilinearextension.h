@@ -179,18 +179,18 @@ struct MultilinearExtension {
         return out;
     }
 
-template<typename Circuit>
-requires(std::same_as<E, typename Circuit::R>)
-struct Gadget {
-    using Variable = Circuit::Variable;
-    using LinearCombination = Circuit::LinearCombination;
-    using EqExtension = EqExtension<E>::template Gadget<Circuit>;
-    using Point = Point<E>::template Gadget<Circuit>;
+template<typename Builder>
+requires(std::same_as<E, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+    using EqExtension = EqExtension<E>::template Circuit<Builder>;
+    using Point = Point<E>::template Circuit<Builder>;
 
-    Circuit& circuit;
+    Builder& circuit;
     std::vector<LinearCombination> coefficients;
 
-    constexpr Gadget(Circuit& circuit, Variable::Type type, std::size_t variables)
+    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t variables)
         : circuit(circuit), coefficients(1 << variables)
     {
         std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
@@ -226,7 +226,7 @@ struct Tracer {
         : mle(mle), trace(trace) {}
 
     constexpr E operator () (const Point<E>& point) const {
-        const std::vector<E>& pis = EqExtension<E>::trace::hypercube(point.coordinates, trace);
+        const std::vector<E>& pis = EqExtension<E>::Tracer::hypercube(point.coordinates, trace);
         E sigma(E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < mle.coefficients.size(); ++i)
             sigma += trace.emplace_back(

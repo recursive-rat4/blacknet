@@ -158,11 +158,11 @@ public:
         }
     }
 
-template<typename Circuit>
-requires(std::same_as<typename Params::F, typename Circuit::R>)
-struct circuit {
-    using Variable = Circuit::Variable;
-    using LinearCombination = Circuit::LinearCombination;
+template<typename Builder>
+requires(std::same_as<typename Params::F, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
 private:
     constexpr static LinearCombination sum(const std::array<LinearCombination, T>& x) {
         LinearCombination lc;
@@ -242,7 +242,7 @@ private:
         }
     }
 
-    constexpr static void sboxp(Circuit& circuit, LinearCombination& x) {
+    constexpr static void sboxp(Builder& circuit, LinearCombination& x) {
         if constexpr (Params::a == 3) {
             if constexpr (circuit.degree() >= 3) {
                 auto x3 = circuit.auxiliary();
@@ -298,38 +298,38 @@ private:
         }
     }
 
-    constexpr static void sbox(Circuit& circuit, std::array<LinearCombination, T>& x) {
+    constexpr static void sbox(Builder& circuit, std::array<LinearCombination, T>& x) {
         for (std::size_t i = 0; i < T; ++i)
             sboxp(circuit, x[i]);
     }
 public:
-    constexpr static void permute(Circuit& circuit, std::array<LinearCombination, T>& x) {
+    constexpr static void permute(Builder& circuit, std::array<LinearCombination, T>& x) {
         auto scope = circuit.scope("Poseidon2::permute");
 
-        circuit::external(x);
+        Circuit::external(x);
 
         for (std::size_t round = 0; round < Params::rb; ++round) {
-            circuit::rcb(round, x);
-            circuit::sbox(circuit, x);
-            circuit::external(x);
+            Circuit::rcb(round, x);
+            Circuit::sbox(circuit, x);
+            Circuit::external(x);
         }
 
         for (std::size_t round = 0; round < Params::rp; ++round) {
-            circuit::rcp(round, x);
-            circuit::sboxp(circuit, x[0]);
-            circuit::internal(x);
+            Circuit::rcp(round, x);
+            Circuit::sboxp(circuit, x[0]);
+            Circuit::internal(x);
         }
 
         for (std::size_t round = 0; round < Params::re; ++round) {
-            circuit::rce(round, x);
-            circuit::sbox(circuit, x);
-            circuit::external(x);
+            Circuit::rce(round, x);
+            Circuit::sbox(circuit, x);
+            Circuit::external(x);
         }
     }
 };
 
 template<std::size_t circuit>
-struct trace {
+struct Tracer {
 private:
     constexpr static void sboxp(F& x, std::vector<F>& trace) {
         if constexpr (Params::a == 3) {
