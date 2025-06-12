@@ -25,11 +25,16 @@ namespace blacknet::crypto {
 
 // https://eprint.iacr.org/2018/946
 
-namespace lattice_gadget {
-namespace {
-    template<typename Z, std::size_t radix, std::size_t digits>
-    requires(Z::is_integer_ring)
-    constexpr void decompose(Z* pieces, const Z& f) {
+template<typename R>
+struct LatticeGadget {
+    using NumericType = R::NumericType;
+private:
+    template<typename T = R>
+    requires(T::is_integer_ring)
+    constexpr static void decompose(
+        NumericType radix, std::size_t digits,
+        T* pieces, const T& f
+    ) {
         auto representative = f.canonical();
         for (std::size_t j = 0; j < digits; ++j) {
             pieces[j] = representative % radix;
@@ -37,8 +42,11 @@ namespace {
         }
     }
 
-    template<typename R, std::size_t radix, std::size_t digits>
-    constexpr void decompose(R* pieces, const R& f) {
+    template<typename T = R>
+    constexpr static void decompose(
+        NumericType radix, std::size_t digits,
+        T* pieces, const T& f
+    ) {
         for (std::size_t i = 0; i < R::dimension(); ++i) {
             auto representative = f.coefficients[i].canonical();
             for (std::size_t j = 0; j < digits; ++j) {
@@ -47,24 +55,30 @@ namespace {
             }
         }
     }
-}
-    template<typename R, std::size_t radix, std::size_t digits>
-    constexpr Vector<R> decompose(const R& f) {
+public:
+    constexpr static Vector<R> decompose(
+        NumericType radix, std::size_t digits,
+        const R& f
+    ) {
         Vector<R> pieces(digits);
-        decompose<R, radix, digits>(pieces.elements.data(), f);
+        decompose(radix, digits, pieces.elements.data(), f);
         return pieces;
     }
 
-    template<typename R, std::size_t radix, std::size_t digits>
-    constexpr Vector<R> decompose(const Vector<R>& f) {
+    constexpr static Vector<R> decompose(
+        NumericType radix, std::size_t digits,
+        const Vector<R>& f
+    ) {
         Vector<R> pieces(f.size() * digits);
         for (std::size_t i = 0; i < f.size(); ++i)
-            decompose<R, radix, digits>(pieces.elements.data() + i * digits, f[i]);
+            decompose(radix, digits, pieces.elements.data() + i * digits, f[i]);
         return pieces;
     }
 
-    template<typename R, std::size_t radix, std::size_t digits>
-    constexpr Vector<R> vector(const R& r) {
+    constexpr static Vector<R> vector(
+        NumericType radix, std::size_t digits,
+        const R& r
+    ) {
         Vector<R> p(digits);
         p[0] = r;
         typename R::BaseRing t{radix};
@@ -75,8 +89,10 @@ namespace {
         return p;
     }
 
-    template<typename R, std::size_t radix>
-    constexpr Matrix<R> matrix(std::size_t m, std::size_t n) {
+    constexpr static Matrix<R> matrix(
+        NumericType radix,
+        std::size_t m, std::size_t n
+    ) {
         Vector<R> pm(n);
         pm[0] = R::LEFT_MULTIPLICATIVE_IDENTITY();
         for (std::size_t i = 1; i < n; ++i)

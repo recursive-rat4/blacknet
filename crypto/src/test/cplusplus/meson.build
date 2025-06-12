@@ -41,6 +41,7 @@ crypto_test_sources = [
     'jive.cpp',
     'johnsonlindenstrauss.cpp',
     'latticefold.cpp',
+    'latticegadget.cpp',
     'matrixsparse.cpp',
     'matrix.cpp',
     'merkletree.cpp',

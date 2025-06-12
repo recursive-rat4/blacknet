@@ -85,16 +85,16 @@ struct LatticeFold {
     std::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
 
     constexpr static Matrix<Rq> gadget_medium(std::size_t m, std::size_t n) {
-        return lattice_gadget::matrix<Rq, B>(m, n);
+        return LatticeGadget<Rq>::matrix(B, m, n);
     }
     constexpr static Matrix<Rq> gadget_small(std::size_t m, std::size_t n) {
-        return lattice_gadget::matrix<Rq, b>(m, n);
+        return LatticeGadget<Rq>::matrix(b, m, n);
     }
     constexpr static Vector<Rq> decompose_medium(const Vector<Rq>& f) {
-        return lattice_gadget::decompose<Rq, B, B_digits>(f);
+        return LatticeGadget<Rq>::decompose(B, B_digits, f);
     }
     constexpr static Vector<Rq> decompose_small(const Vector<Rq>& f) {
-        return lattice_gadget::decompose<Rq, b, b_digits>(f);
+        return LatticeGadget<Rq>::decompose(b, b_digits, f);
     }
 
     class G1 {

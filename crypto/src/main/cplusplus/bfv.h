@@ -53,8 +53,8 @@ struct BFV {
     constexpr static const double DELTA = double(Zq::modulus()) / double(Zt::modulus());
     constexpr static const double INV_DELTA = double(Zt::modulus()) / double(Zq::modulus());
 
-    constexpr static const uint64_t ELL = 5;
-    constexpr static const uint64_t OMEGA = 8192; //FIXME std::bit_ceil(uint64_t(std::pow(Zq::modulus(), 1.0 / ELL)));
+    const uint64_t ELL = 5;
+    const uint64_t OMEGA = std::bit_ceil(uint64_t(std::pow(Zq::modulus(), 1.0 / ELL)));
 
     using SecretKey = Rq;
 
@@ -125,12 +125,12 @@ struct BFV {
         return rq;
     }
 
-    constexpr static Vector<Rq> gadget_d(const Rq& rq) {
-        return lattice_gadget::decompose<Rq, OMEGA, ELL>(rq);
+    constexpr Vector<Rq> gadget_d(const Rq& rq) const {
+        return LatticeGadget<Rq>::decompose(OMEGA, ELL, rq);
     }
 
-    constexpr static Vector<Rq> gadget_p(const Rq& rq) {
-        return lattice_gadget::vector<Rq, OMEGA, ELL>(rq);
+    constexpr Vector<Rq> gadget_p(const Rq& rq) const {
+        return LatticeGadget<Rq>::vector(OMEGA, ELL, rq);
     }
 
     template<std::uniform_random_bit_generator RNG>
