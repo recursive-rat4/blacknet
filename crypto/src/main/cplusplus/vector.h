@@ -176,6 +176,22 @@ public:
         return std::sqrt(t);
     }
 
+    constexpr decltype(auto) begin() noexcept {
+        return elements.begin();
+    }
+
+    constexpr decltype(auto) begin() const noexcept {
+        return elements.begin();
+    }
+
+    constexpr decltype(auto) end() noexcept {
+        return elements.end();
+    }
+
+    constexpr decltype(auto) end() const noexcept {
+        return elements.end();
+    }
+
     friend std::ostream& operator << (std::ostream& out, const Vector& val)
     {
         fmt::print(out, "{}", val.elements);
@@ -202,6 +218,104 @@ public:
         std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });
         return t;
     }
+
+template<typename Builder>
+requires(std::same_as<E, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+
+    Builder& circuit;
+    std::vector<LinearCombination> elements;
+
+    constexpr Circuit(Builder& circuit, std::size_t size)
+        : circuit(circuit), elements(size) {}
+    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t size)
+        : circuit(circuit), elements(size)
+    {
+        std::ranges::generate(elements, [&]{ return circuit.variable(type); });
+    }
+
+    constexpr std::size_t size() const noexcept {
+        return elements.size();
+    }
+
+    constexpr LinearCombination& operator [] (std::size_t i) {
+        return elements[i];
+    }
+
+    constexpr const LinearCombination& operator [] (std::size_t i) const {
+        return elements[i];
+    }
+
+    constexpr LinearCombination dot(const Circuit& other) const {
+        LinearCombination sigma;
+        for (std::size_t i = 0; i < elements.size(); ++i) {
+            auto t = circuit.auxiliary();
+            circuit(t == elements[i] * other.elements[i]);
+            sigma += t;
+        }
+        return sigma;
+    }
+
+    constexpr decltype(auto) begin() noexcept {
+        return elements.begin();
+    }
+
+    constexpr decltype(auto) begin() const noexcept {
+        return elements.begin();
+    }
+
+    constexpr decltype(auto) end() noexcept {
+        return elements.end();
+    }
+
+    constexpr decltype(auto) end() const noexcept {
+        return elements.end();
+    }
+};
+
+struct Tracer {
+    Vector vector;
+    std::vector<E>& trace;
+
+    constexpr std::size_t size() const noexcept {
+        return vector.size();
+    }
+
+    constexpr E& operator [] (std::size_t i) {
+        return vector[i];
+    }
+
+    constexpr const E& operator [] (std::size_t i) const {
+        return vector[i];
+    }
+
+    constexpr E dot(const Tracer& other) const {
+        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        for (std::size_t i = 0; i < vector.size(); ++i)
+            sigma += trace.emplace_back(
+                vector[i] * other[i]
+            );
+        return sigma;
+    }
+
+    constexpr decltype(auto) begin() noexcept {
+        return vector.begin();
+    }
+
+    constexpr decltype(auto) begin() const noexcept {
+        return vector.begin();
+    }
+
+    constexpr decltype(auto) end() noexcept {
+        return vector.end();
+    }
+
+    constexpr decltype(auto) end() const noexcept {
+        return vector.end();
+    }
+};
 };
 
 }

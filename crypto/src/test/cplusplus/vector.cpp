@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,15 +17,17 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "circuitbuilder.h"
 #include "matrix.h"
 #include "pervushin.h"
+#include "r1cs.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
 
-BOOST_AUTO_TEST_SUITE(Vectors)
-
 using R = PervushinRing;
+
+BOOST_AUTO_TEST_SUITE(Vector_Plain)
 
 BOOST_AUTO_TEST_CASE(HadamardSummation) {
     Vector<R> a{
@@ -175,22 +177,42 @@ BOOST_AUTO_TEST_CASE(TensorProduct) {
     BOOST_TEST(d == b.tensor(a));
 }
 
-BOOST_AUTO_TEST_CASE(Homomorphism) {
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(Vector_Circuit)
+
+BOOST_AUTO_TEST_CASE(DotProduct) {
     Vector<R> a{
-        R(11),
-        R(12),
-        R(13),
+        R(1),
+        R(3),
+        R(-5),
     };
     Vector<R> b{
-        R(66),
-        R(65),
-        R(64),
+        R(4),
+        R(-2),
+        R(-1),
     };
-    Vector<R> c{
-        R(77),
-        R(77),
-        R(77),
-    };
+    R c(3);
+
+    using Builder = CircuitBuilder<R, 2>;
+    Builder circuit;
+    using VectorCircuit = Vector<R>::Circuit<Builder>;
+    VectorCircuit a_circuit(circuit, Builder::Variable::Type::Input, 3);
+    VectorCircuit b_circuit(circuit, Builder::Variable::Type::Input, 3);
+    auto c_var = circuit.input();
+    circuit(c_var == a_circuit.dot(b_circuit));
+
+    R1CS<R> r1cs(circuit.r1cs());
+    Vector<R> z = r1cs.assigment();
+    std::ranges::copy(a.elements, std::back_inserter(z.elements));
+    std::ranges::copy(b.elements, std::back_inserter(z.elements));
+    z.elements.push_back(c);
+
+    using Tracer = Vector<R>::Tracer;
+    Tracer a_tracer(a, z.elements);
+    Tracer b_tracer(b, z.elements);
+    BOOST_TEST(c == a_tracer.dot(b_tracer));
+    BOOST_TEST(r1cs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
