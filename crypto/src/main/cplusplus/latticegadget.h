@@ -18,6 +18,9 @@
 #ifndef BLACKNET_CRYPTO_LATTICEGADGET_H
 #define BLACKNET_CRYPTO_LATTICEGADGET_H
 
+#include <concepts>
+#include <stdexcept>
+
 #include "matrix.h"
 #include "vector.h"
 
@@ -99,6 +102,73 @@ public:
             pm[i] = pm[i - 1] * radix;
         return Vector<R>::identity(m).tensor(pm);
     }
+
+template<typename Builder>
+requires(std::same_as<R, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+    using Vector = Vector<R>::template Circuit<Builder>;
+
+    Builder& circuit;
+
+    constexpr Circuit(Builder& circuit) : circuit(circuit) {}
+
+    constexpr Vector decompose(
+        NumericType radix, std::size_t digits,
+        const LinearCombination& f
+    ) {
+        if (radix != 2) throw std::runtime_error("Not implemented");
+        auto scope = circuit.scope("LatticeGadget::decompose");
+        R p = R::LEFT_MULTIPLICATIVE_IDENTITY();
+        LinearCombination composed;
+        Vector pieces(circuit, digits);
+        for (auto& piece : pieces) {
+            LinearCombination digit = circuit.auxiliary();
+            LinearCombination dd = circuit.auxiliary();
+            circuit(dd == digit * digit);
+            circuit(R(0) == dd - digit);
+            piece = digit;
+            composed += digit * p;
+            p *= radix;
+        }
+        circuit(f == composed);
+        return pieces;
+    }
+};
+
+struct Tracer {
+    std::vector<R>& trace;
+
+    constexpr Tracer(std::vector<R>& trace)
+        : trace(trace) {}
+
+    constexpr Vector<R> decompose(
+        NumericType radix, std::size_t digits,
+        const R& f
+    ) {
+        Vector<R> pieces(digits);
+        decompose(radix, digits, pieces.elements.data(), f);
+        return pieces;
+    }
+private:
+    template<typename T = R>
+    requires(T::is_integer_ring)
+    constexpr void decompose(
+        NumericType radix, std::size_t digits,
+        T* pieces, const T& f
+    ) {
+        auto representative = f.canonical();
+        for (std::size_t j = 0; j < digits; ++j) {
+            pieces[j] = trace.emplace_back(
+                representative % radix
+            );
+            trace.emplace_back(pieces[j].square());
+            representative /= radix;
+        }
+    }
+};
+
 };
 
 }
