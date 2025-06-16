@@ -181,7 +181,7 @@ public:
 
     template<std::uniform_random_bit_generator RNG>
     static WeierstrassGroupProjective random(RNG& rng) {
-        BinaryUniformDistribution<uint8_t, RNG> bud;
+        BinaryUniformDistributionRNG<uint8_t, RNG> bud;
         bool ySign = bud(rng);
         while (true) {
             BF x(BF::random(rng));

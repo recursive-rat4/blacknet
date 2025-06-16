@@ -44,7 +44,7 @@ struct FixedGenerator {
 
 BOOST_AUTO_TEST_CASE(Reproducible) {
     FixedGenerator g;
-    BinaryUniformDistribution<uint8_t, FixedGenerator> bud;
+    BinaryUniformDistributionRNG<uint8_t, FixedGenerator> bud;
     const std::array<uint8_t, 16> a{0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0};
     std::array<uint8_t, 16> b;
     std::ranges::generate(b, [&]() { return bud(g); });

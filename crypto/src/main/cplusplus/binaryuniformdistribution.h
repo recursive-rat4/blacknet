@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_BINARYUNIFORMDISTRIBUTION_H
 #define BLACKNET_CRYPTO_BINARYUNIFORMDISTRIBUTION_H
 
+#include <bit>
 #include <cstddef>
 #include <limits>
 #include <random>
@@ -28,7 +29,7 @@ template<
     typename T,
     std::uniform_random_bit_generator RNG
 >
-class BinaryUniformDistribution {
+class BinaryUniformDistributionRNG {
     using number_type = RNG::result_type;
 
     consteval static std::size_t useful_bits() {
@@ -40,7 +41,7 @@ class BinaryUniformDistribution {
 public:
     using result_type = T;
 
-    constexpr BinaryUniformDistribution() noexcept {
+    constexpr BinaryUniformDistributionRNG() noexcept {
         reset();
     }
 
@@ -51,6 +52,53 @@ public:
     constexpr result_type operator () (RNG& rng) {
         if (have_bits == 0) {
             cache = rng();
+            have_bits = useful_bits();
+        }
+        result_type result = cache & 1;
+        cache >>= 1;
+        --have_bits;
+        return result;
+    }
+
+    constexpr result_type min() const {
+        return 0;
+    }
+    constexpr result_type max() const {
+        return 1;
+    }
+};
+
+template<
+    typename Sponge
+>
+class BinaryUniformDistributionSponge {
+    static_assert(Sponge::Z::is_integer_ring, "Not implemented");
+
+    using number_type = Sponge::Z::NumericType;
+
+    consteval static std::size_t useful_bits() {
+        if constexpr (std::has_single_bit(Sponge::Z::modulus()))
+            return Sponge::Z::bits();
+        else
+            return Sponge::Z::bits() - 1;
+    }
+
+    number_type cache;
+    std::size_t have_bits;
+public:
+    using result_type = number_type;
+
+    constexpr BinaryUniformDistributionSponge() noexcept {
+        reset();
+    }
+
+    constexpr void reset() noexcept {
+        have_bits = 0;
+    }
+
+    constexpr result_type operator () (Sponge& sponge) {
+        if (have_bits == 0) {
+            cache = sponge.squeeze().canonical();
             have_bits = useful_bits();
         }
         result_type result = cache & 1;

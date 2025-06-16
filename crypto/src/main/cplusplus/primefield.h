@@ -227,6 +227,10 @@ public:
         return Params::BITS;
     }
 
+    consteval static UInt256 modulus() {
+        return Params::M;
+    }
+
     template<typename Sponge>
     constexpr void absorb(Sponge& sponge) const {
         sponge.absorb(*this);

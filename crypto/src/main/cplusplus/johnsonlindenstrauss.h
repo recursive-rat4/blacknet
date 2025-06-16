@@ -39,7 +39,7 @@ struct JohnsonLindenstrauss {
     struct Distribution {
         using result_type = Z::NumericType;
 
-        BinaryUniformDistribution<result_type, RNG> bud;
+        BinaryUniformDistributionRNG<result_type, RNG> bud;
 
         constexpr result_type operator () (RNG& rng) {
             if (bud(rng))

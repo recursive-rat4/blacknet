@@ -313,4 +313,12 @@ typedef BigInt<16> UInt1024;
 
 }
 
+template<std::size_t N>
+constexpr bool std::has_single_bit(const blacknet::crypto::BigInt<N>& x) noexcept {
+    int count = 0;
+    for (std::size_t i = 0; i < N; ++i)
+        count += std::popcount(x.limbs[i]);
+    return count == 1;
+}
+
 #endif

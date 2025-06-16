@@ -107,9 +107,8 @@ public:
 
     template<typename Sponge>
     constexpr static TwistedEdwardsGroupAffine squeeze(Sponge& sponge) {
-        BF ySign;
-        while ((ySign = BF::squeeze(sponge).isQuadraticResidue()) == BF(0))
-            continue; // Euler's criterion
+        BinaryUniformDistributionSponge<Sponge> bud;
+        bool ySign = bud(sponge) != 0;
         while (true) {
             BF x = BF::squeeze(sponge);
             BF xx = x.square();
@@ -122,7 +121,7 @@ public:
             BF yy = n / d;
             if (auto maybeY = yy.sqrt()) {
                 BF& y = *maybeY;
-                if (ySign != BF(1))
+                if (ySign)
                     y = -y;
                 return TwistedEdwardsGroupAffine(x, y);
             }
@@ -131,7 +130,7 @@ public:
 
     template<std::uniform_random_bit_generator RNG>
     static TwistedEdwardsGroupAffine random(RNG& rng) {
-        BinaryUniformDistribution<uint8_t, RNG> bud;
+        BinaryUniformDistributionRNG<uint8_t, RNG> bud;
         bool ySign = bud(rng);
         while (true) {
             BF x = BF::random(rng);

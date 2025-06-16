@@ -16,12 +16,24 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <bit>
 
 #include "bigint.h"
 
 using namespace blacknet::crypto;
 
 BOOST_AUTO_TEST_SUITE(BigInts)
+
+BOOST_AUTO_TEST_CASE(ispow2) {
+    constexpr UInt128 a("00000000000000000000000000000000");
+    constexpr UInt128 b("00000000000000000000000000000001");
+    constexpr UInt128 c("80000000000000000000000000000000");
+    constexpr UInt128 d("80000000000000000000000000000001");
+    BOOST_TEST(!std::has_single_bit(a));
+    BOOST_TEST(std::has_single_bit(b));
+    BOOST_TEST(std::has_single_bit(c));
+    BOOST_TEST(!std::has_single_bit(d));
+}
 
 BOOST_AUTO_TEST_CASE(even) {
     constexpr UInt256 a("0000000000000000000000000000000000000000000000000000000000000000");
