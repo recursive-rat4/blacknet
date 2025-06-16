@@ -22,6 +22,7 @@
 #include <random>
 
 #include "abeliangroup.h"
+#include "binaryuniformdistribution.h"
 
 namespace blacknet::crypto {
 
@@ -130,8 +131,8 @@ public:
 
     template<std::uniform_random_bit_generator RNG>
     static TwistedEdwardsGroupAffine random(RNG& rng) {
-        std::uniform_int_distribution<uint8_t> ud(0, 1);
-        bool ySign = ud(rng);
+        BinaryUniformDistribution<uint8_t, RNG> bud;
+        bool ySign = bud(rng);
         while (true) {
             BF x = BF::random(rng);
             BF xx = x.square();

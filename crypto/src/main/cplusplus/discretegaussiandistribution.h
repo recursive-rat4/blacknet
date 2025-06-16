@@ -41,25 +41,27 @@ struct DiscreteGaussianDistribution {
 
     constexpr DiscreteGaussianDistribution(double mu, double sigma) : mu(mu), sigma(sigma) {}
 
-    template<typename G>
-    constexpr result_type operator () (G& g) const {
+    constexpr void reset() noexcept {}
+
+    template<std::uniform_random_bit_generator RNG>
+    constexpr result_type operator () (RNG& rng) const {
         // https://eprint.iacr.org/2015/953
         std::uniform_int_distribution<T> uid(min(), max());
         std::uniform_real_distribution<double> urd;
         while (true) {
-            result_type x(uid(g));
+            result_type x(uid(rng));
             double ps = std::exp(- (x - mu) * (x - mu) / (2.0 * sigma * sigma));
-            if (urd(g) > ps)
+            if (urd(rng) > ps)
                 continue;
             return x;
         }
     }
 
-    constexpr T min() const {
+    constexpr result_type min() const {
         constexpr double t = std::countr_zero(n);
         return std::floor(mu - sigma * t);
     }
-    constexpr T max() const {
+    constexpr result_type max() const {
         constexpr double t = std::countr_zero(n);
         return std::ceil(mu + sigma * t);
     }

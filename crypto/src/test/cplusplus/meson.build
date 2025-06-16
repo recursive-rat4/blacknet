@@ -25,6 +25,7 @@ crypto_test_sources = [
     'ajtaicommitment.cpp',
     'bfv.cpp',
     'bigint.cpp',
+    'binaryuniformdistribution.cpp',
     'blacklemon.cpp',
     'blake2b.cpp',
     'circuitbuilder.cpp',

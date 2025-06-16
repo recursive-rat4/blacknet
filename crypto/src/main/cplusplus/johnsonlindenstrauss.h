@@ -21,6 +21,7 @@
 #include <random>
 #include <type_traits>
 
+#include "binaryuniformdistribution.h"
 #include "matrix.h"
 #include "vector.h"
 
@@ -34,16 +35,16 @@ requires(Z::is_integer_ring)
 struct JohnsonLindenstrauss {
     static_assert(std::is_signed_v<typename Z::NumericType>);
 
+    template<std::uniform_random_bit_generator RNG>
     struct Distribution {
-        using result_type = int;
+        using result_type = Z::NumericType;
 
-        std::uniform_int_distribution<int> bud{0, 1};
+        BinaryUniformDistribution<result_type, RNG> bud;
 
-        template<typename G>
-        constexpr result_type operator () (G& g) {
-            if (bud(g))
+        constexpr result_type operator () (RNG& rng) {
+            if (bud(rng))
                 return 0;
-            else if (bud(g))
+            else if (bud(rng))
                 return 1;
             else
                 return -1;
@@ -63,7 +64,7 @@ struct JohnsonLindenstrauss {
 
     template<std::uniform_random_bit_generator RNG>
     constexpr static Matrix<Z> random(RNG& rng, std::size_t n, std::size_t k) {
-        Distribution dst;
+        Distribution<RNG> dst;
         return Matrix<Z>::random(rng, dst, n, k);
     }
 };
