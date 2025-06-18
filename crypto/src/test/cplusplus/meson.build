@@ -43,6 +43,7 @@ crypto_test_sources = [
     'johnsonlindenstrauss.cpp',
     'latticefold.cpp',
     'latticegadget.cpp',
+    'logicgate.cpp',
     'matrixsparse.cpp',
     'matrix.cpp',
     'merkletree.cpp',

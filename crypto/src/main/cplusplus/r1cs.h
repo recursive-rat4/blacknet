@@ -60,7 +60,7 @@ public:
         if (variables() == z.size()) {
             return (a * z) * (b * z) == c * z;
         } else {
-            throw std::runtime_error(fmt::format("Assigned only {} variables of {} required", variables(), z.size()));
+            throw std::runtime_error(fmt::format("Assigned {} variables instead of {} required", z.size(), variables()));
         }
     }
 
@@ -68,7 +68,7 @@ public:
         if (variables() == z.size()) {
             return error(z) == e;
         } else {
-            throw std::runtime_error(fmt::format("Assigned only {} variables of {} required", variables(), z.size()));
+            throw std::runtime_error(fmt::format("Assigned {} variables instead of {} required", z.size(), variables()));
         }
     }
 

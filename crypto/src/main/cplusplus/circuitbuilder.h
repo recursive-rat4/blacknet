@@ -78,7 +78,7 @@ struct CircuitBuilder {
             return terms.end();
         }
 
-        template<class... Args>
+        template<typename... Args>
         decltype(auto) emplace(Args&&... args) {
             return terms.emplace(std::forward<Args>(args)...);
         }
@@ -161,17 +161,28 @@ struct CircuitBuilder {
             return t;
         }
 
-        friend constexpr LinearCombination operator - (const Variable& l, const LinearCombination& r) {
-            LinearCombination t = l;
-            t -= r;
-            return t;
-        }
-
         constexpr LinearCombination& operator -= (const std::pair<Variable, E>& term) {
             const auto& [variable, coefficient] = term;
             if (auto [iterator, inserted] = terms.emplace(variable, -coefficient); !inserted)
                 iterator->second -= coefficient;
             return *this;
+        }
+
+        constexpr LinearCombination& operator -= (const E& coefficient) {
+            const Variable variable(Variable::constant());
+            return (*this) -= std::make_pair(variable, coefficient);
+        }
+
+        friend constexpr LinearCombination operator - (const E& l, const LinearCombination& r) {
+            LinearCombination t;
+            for (const auto& [variable, coefficient] : r.terms)
+                t.emplace(variable, l - coefficient);
+            return t;
+        }
+
+        constexpr LinearCombination& operator -= (const Variable& variable) {
+            const E coefficient(1);
+            return (*this) -= std::make_pair(variable, coefficient);
         }
 
         constexpr LinearCombination& operator -= (const LinearCombination& lc) {

@@ -21,6 +21,7 @@
 #include <concepts>
 #include <stdexcept>
 
+#include "logicgate.h"
 #include "matrix.h"
 #include "vector.h"
 
@@ -108,6 +109,7 @@ requires(std::same_as<R, typename Builder::R>)
 struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
+    using LogicGate = LogicGate<R>::template Circuit<Builder>;
     using Vector = Vector<R>::template Circuit<Builder>;
 
     Builder& circuit;
@@ -125,13 +127,11 @@ struct Circuit {
         Vector pieces(circuit, digits);
         for (auto& piece : pieces) {
             LinearCombination digit = circuit.auxiliary();
-            LinearCombination dd = circuit.auxiliary();
-            circuit(dd == digit * digit);
-            circuit(R(0) == dd - digit);
             piece = digit;
             composed += digit * p;
             p *= radix;
         }
+        LogicGate(circuit).RangeCheck(pieces);
         circuit(f == composed);
         return pieces;
     }
@@ -163,7 +163,6 @@ private:
             pieces[j] = trace.emplace_back(
                 representative % radix
             );
-            trace.emplace_back(pieces[j].square());
             representative /= radix;
         }
     }

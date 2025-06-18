@@ -63,7 +63,7 @@ public:
 
     constexpr bool isSatisfied(const Vector<E>& z) const {
         if (variables() != z.size()) {
-            throw std::runtime_error(fmt::format("Assigned only {} variables of {} required", variables(), z.size()));
+            throw std::runtime_error(fmt::format("Assigned {} variables instead of {} required", z.size(), variables()));
         }
 
         Vector<E> sigma(rows, E::LEFT_ADDITIVE_IDENTITY());
