@@ -18,6 +18,7 @@
 #include <benchmark/benchmark.h>
 
 #include "fastrng.h"
+#include "lm62extension.h"
 #include "pervushinextension.h"
 #include "solinas62extension.h"
 
@@ -44,6 +45,9 @@ BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree4>);
 BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree2>);
 BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree3>);
 BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree4>);
+BENCHMARK(BM_ExtFieldAdd<LM62RingDegree2>);
+BENCHMARK(BM_ExtFieldAdd<LM62RingDegree3>);
+BENCHMARK(BM_ExtFieldAdd<LM62RingDegree4>);
 
 template<typename F>
 static void BM_ExtFieldSub(benchmark::State& state) {
@@ -64,6 +68,9 @@ BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree4>);
 BENCHMARK(BM_ExtFieldSub<PervushinRingDegree2>);
 BENCHMARK(BM_ExtFieldSub<PervushinRingDegree3>);
 BENCHMARK(BM_ExtFieldSub<PervushinRingDegree4>);
+BENCHMARK(BM_ExtFieldSub<LM62RingDegree2>);
+BENCHMARK(BM_ExtFieldSub<LM62RingDegree3>);
+BENCHMARK(BM_ExtFieldSub<LM62RingDegree4>);
 
 template<typename F>
 static void BM_ExtFieldMul(benchmark::State& state) {
@@ -84,6 +91,9 @@ BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree4>);
 BENCHMARK(BM_ExtFieldMul<PervushinRingDegree2>);
 BENCHMARK(BM_ExtFieldMul<PervushinRingDegree3>);
 BENCHMARK(BM_ExtFieldMul<PervushinRingDegree4>);
+BENCHMARK(BM_ExtFieldMul<LM62RingDegree2>);
+BENCHMARK(BM_ExtFieldMul<LM62RingDegree3>);
+BENCHMARK(BM_ExtFieldMul<LM62RingDegree4>);
 
 template<typename F>
 static void BM_ExtFieldInv(benchmark::State& state) {
@@ -102,3 +112,6 @@ BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree4>);
 BENCHMARK(BM_ExtFieldInv<PervushinRingDegree2>);
 BENCHMARK(BM_ExtFieldInv<PervushinRingDegree3>);
 BENCHMARK(BM_ExtFieldInv<PervushinRingDegree4>);
+BENCHMARK(BM_ExtFieldInv<LM62RingDegree2>);
+BENCHMARK(BM_ExtFieldInv<LM62RingDegree3>);
+BENCHMARK(BM_ExtFieldInv<LM62RingDegree4>);

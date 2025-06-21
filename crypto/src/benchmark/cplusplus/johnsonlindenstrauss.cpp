@@ -19,13 +19,13 @@
 
 #include "fastrng.h"
 #include "johnsonlindenstrauss.h"
+#include "lm62.h"
 #include "matrix.h"
-#include "solinas62.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
 
-using Z = Solinas62Ring;
+using Z = LM62Ring;
 using JL = JohnsonLindenstrauss<Z>;
 
 static std::size_t M = 256;

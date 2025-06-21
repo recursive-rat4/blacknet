@@ -173,7 +173,15 @@ rings: list[IntegerRingSpec] = [
         int32_t t((x + (1l << 61)) >> 62);
         return x - t * _Q_;
     }
-""")
+"""),
+    IntegerRingSpec("lm62.h", "2⁶¹ + 2⁵⁹ + 2⁵⁴ + 2⁵ + 1", "LM62Ring", 0x2840000000000021,
+    CyclotomicRingSpec(128, 4),
+"""
+    constexpr static I reduce(I x) {
+        int32_t t((x + (1l << 61)) >> 62);
+        return x - t * _Q_;
+    }
+"""),
 ]
 
 for ring in rings:

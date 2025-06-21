@@ -18,6 +18,7 @@
 #include <benchmark/benchmark.h>
 
 #include "fastrng.h"
+#include "poseidon2lm62.h"
 #include "poseidon2pasta.h"
 #include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
@@ -43,3 +44,4 @@ static void BM_Poseidon2(benchmark::State& state) {
 BENCHMARK(BM_Poseidon2<Poseidon2PallasSpongeParams>);
 BENCHMARK(BM_Poseidon2<Poseidon2Solinas62SpongeParams>);
 BENCHMARK(BM_Poseidon2<Poseidon2PervushinSpongeParams>);
+BENCHMARK(BM_Poseidon2<Poseidon2LM62SpongeParams>);

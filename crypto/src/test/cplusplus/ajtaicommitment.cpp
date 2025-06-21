@@ -18,20 +18,20 @@
 #include <boost/test/unit_test.hpp>
 
 #include "ajtaicommitment.h"
-#include "poseidon2solinas62.h"
-#include "solinas62.h"
-#include "solinas62extension.h"
+#include "lm62.h"
+#include "lm62extension.h"
+#include "poseidon2lm62.h"
 
 using namespace blacknet::crypto;
 
 BOOST_AUTO_TEST_SUITE(AjtaiCommitments)
 
-using Z = Solinas62Ring;
-using R = Solinas62RingDegree64NTT;
+using Z = LM62Ring;
+using R = LM62RingDegree64NTT;
 
 BOOST_AUTO_TEST_CASE(Zq) {
     using CS = AjtaiCommitment<Z, NormP::Infinity>;
-    auto drg = Poseidon2Solinas62Sponge<{1, 2, 3, 4}>();
+    auto drg = Poseidon2LM62Sponge<{1, 2, 3, 4}>();
     CS cs(CS::setup(drg, 2, 2), 8);
     Z z1(1);
     Z z2(2);
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(Zq) {
 
 BOOST_AUTO_TEST_CASE(Rq) {
     using CS = AjtaiCommitment<R, NormP::Infinity>;
-    auto drg = Poseidon2Solinas62Sponge<{5, 6, 7, 8}>();
+    auto drg = Poseidon2LM62Sponge<{5, 6, 7, 8}>();
     CS cs(CS::setup(drg, 2, 2), 16);
     R r1({1, 2});
     R r2({3, 4});

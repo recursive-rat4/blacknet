@@ -18,6 +18,7 @@
 #include <benchmark/benchmark.h>
 
 #include "fastrng.h"
+#include "lm62.h"
 #include "pervushin.h"
 #include "solinas62.h"
 
@@ -40,6 +41,7 @@ static void BM_IntegerRingAdd(benchmark::State& state) {
 }
 BENCHMARK(BM_IntegerRingAdd<Solinas62Ring>);
 BENCHMARK(BM_IntegerRingAdd<PervushinRing>);
+BENCHMARK(BM_IntegerRingAdd<LM62Ring>);
 
 template<typename Z>
 static void BM_IntegerRingSub(benchmark::State& state) {
@@ -56,6 +58,7 @@ static void BM_IntegerRingSub(benchmark::State& state) {
 }
 BENCHMARK(BM_IntegerRingSub<Solinas62Ring>);
 BENCHMARK(BM_IntegerRingSub<PervushinRing>);
+BENCHMARK(BM_IntegerRingSub<LM62Ring>);
 
 template<typename Z>
 static void BM_IntegerRingMul(benchmark::State& state) {
@@ -72,6 +75,7 @@ static void BM_IntegerRingMul(benchmark::State& state) {
 }
 BENCHMARK(BM_IntegerRingMul<Solinas62Ring>);
 BENCHMARK(BM_IntegerRingMul<PervushinRing>);
+BENCHMARK(BM_IntegerRingMul<LM62Ring>);
 
 template<typename Z>
 static void BM_IntegerRingInv(benchmark::State& state) {
@@ -86,3 +90,4 @@ static void BM_IntegerRingInv(benchmark::State& state) {
 }
 BENCHMARK(BM_IntegerRingInv<Solinas62Ring>);
 BENCHMARK(BM_IntegerRingInv<PervushinRing>);
+BENCHMARK(BM_IntegerRingInv<LM62Ring>);

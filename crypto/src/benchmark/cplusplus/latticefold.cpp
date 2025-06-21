@@ -20,9 +20,9 @@
 #include "fastrng.h"
 #include "hypercube.h"
 #include "latticefold.h"
-#include "poseidon2solinas62.h"
-#include "solinas62.h"
-#include "solinas62extension.h"
+#include "lm62.h"
+#include "lm62extension.h"
+#include "poseidon2lm62.h"
 #include "sumcheck.h"
 #include "vector.h"
 
@@ -30,11 +30,11 @@ using namespace blacknet::crypto;
 
 static FastDRG rng;
 
-using Z = Solinas62Ring;
-using F = Solinas62RingDegree2;
-using R = Solinas62RingDegree64;
-using LF = LatticeFold<Z, F, R, Solinas62RingDegree64NTT>;
-using Duplex = Poseidon2Solinas62Sponge<{123, 234, 345, 456}>;
+using Z = LM62Ring;
+using F = LM62RingDegree2;
+using R = LM62RingDegree64;
+using LF = LatticeFold<Z, F, R, LM62RingDegree64NTT>;
+using Duplex = Poseidon2LM62Sponge<{12, 23, 34, 45}>;
 
 static void BM_LatticeFold_GEval_SumCheck_Prove(benchmark::State& state) {
     using SumCheck = SumCheck<F, LF::GEval, Duplex>;

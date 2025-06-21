@@ -21,11 +21,11 @@
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
 #include "latticefold.h"
+#include "lm62.h"
+#include "lm62extension.h"
 #include "matrix.h"
 #include "point.h"
-#include "poseidon2solinas62.h"
-#include "solinas62.h"
-#include "solinas62extension.h"
+#include "poseidon2lm62.h"
 #include "sumcheck.h"
 #include "vector.h"
 
@@ -33,10 +33,10 @@ using namespace blacknet::crypto;
 
 BOOST_AUTO_TEST_SUITE(LatticeFold_Plain)
 
-using Z = Solinas62Ring;
-using F = Solinas62RingDegree2;
-using R = Solinas62RingDegree64;
-using LatticeFold = LatticeFold<Z, F, R, Solinas62RingDegree64NTT>;
+using Z = LM62Ring;
+using F = LM62RingDegree2;
+using R = LM62RingDegree64;
+using LatticeFold = LatticeFold<Z, F, R, LM62RingDegree64NTT>;
 
 BOOST_AUTO_TEST_CASE(Gadget) {
     const auto a = Vector<R>{ R(3), R(2), R(1), R(0) };
@@ -131,11 +131,11 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(LatticeFold_Circuit)
 
-using Z = Solinas62Ring;
-using F = Solinas62Ring; //XXX
-using R = Solinas62RingDegree64;
-using LatticeFold = LatticeFold<Z, F, R, Solinas62RingDegree64NTT>;
-using Duplex = Poseidon2Solinas62Sponge<{64, 65, 66, 67}>;
+using Z = LM62Ring;
+using F = LM62Ring; //XXX
+using R = LM62RingDegree64;
+using LatticeFold = LatticeFold<Z, F, R, LM62RingDegree64NTT>;
+using Duplex = Poseidon2LM62Sponge<{64, 65, 66, 67}>;
 
 BOOST_AUTO_TEST_CASE(G2s) {
     constexpr std::size_t ell = std::countr_zero(LatticeFold::D);

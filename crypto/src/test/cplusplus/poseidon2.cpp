@@ -19,6 +19,7 @@
 
 #include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
+#include "poseidon2lm62.h"
 #include "poseidon2pasta.h"
 #include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
@@ -193,6 +194,102 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
     BOOST_TEST(c == a);
 
     using Builder = CircuitBuilder<E, 17>;
+    Builder circuit;
+    std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
+    std::ranges::generate(x, [&]{ return circuit.input(); });
+    Poseidon2::Circuit<Builder>::permute(circuit, x);
+    for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
+        auto v = circuit.auxiliary();
+        circuit(v == x[i]);
+    }
+    CustomizableConstraintSystem<E> ccs(circuit.ccs());
+    Vector<E> z = ccs.assigment();
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    BOOST_TEST(ccs.isSatisfied(z));
+}
+
+BOOST_AUTO_TEST_CASE(LM62_12) {
+    using E = LM62Ring;
+    using Poseidon2 = Poseidon2<Poseidon2LM62SpongeParams>;
+    std::array<E, 12> a{
+        0x0000000000000000,
+        0x0000000000000001,
+        0x0000000000000002,
+        0x0000000000000003,
+        0x0000000000000004,
+        0x0000000000000005,
+        0x0000000000000006,
+        0x0000000000000007,
+        0x0000000000000008,
+        0x0000000000000009,
+        0x000000000000000a,
+        0x000000000000000b,
+    };
+    std::array<E, 12> b(a);
+    std::array<E, 12> c{
+        0x1e579782b480f300,
+        0x1a9c54ec71b6d22c,
+        0x1802ab1232ff1575,
+        0x1b32d4b7bf3a14ff,
+        0x0317612d81c3ebdd,
+        0x25a4a86020895493,
+        0x0c60db52b0367dd3,
+        0x11bd8ef8519c5e43,
+        0x18d65f6aa07a8421,
+        0x1bf0a06fea49a2ef,
+        0x01a2a3f7ae42036b,
+        0x01c0693258f141c7,
+    };
+    Poseidon2::permute(a);
+    BOOST_TEST(c == a);
+
+    using Builder = CircuitBuilder<E, 3>;
+    Builder circuit;
+    std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
+    std::ranges::generate(x, [&]{ return circuit.input(); });
+    Poseidon2::Circuit<Builder>::permute(circuit, x);
+    for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
+        auto v = circuit.auxiliary();
+        circuit(v == x[i]);
+    }
+    CustomizableConstraintSystem<E> ccs(circuit.ccs());
+    Vector<E> z = ccs.assigment();
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    BOOST_TEST(ccs.isSatisfied(z));
+}
+
+BOOST_AUTO_TEST_CASE(LM62_8) {
+    using E = LM62Ring;
+    using Poseidon2 = Poseidon2<Poseidon2LM62JiveParams>;
+    std::array<E, 8> a{
+        0x0000000000000000,
+        0x0000000000000001,
+        0x0000000000000002,
+        0x0000000000000003,
+        0x0000000000000004,
+        0x0000000000000005,
+        0x0000000000000006,
+        0x0000000000000007,
+    };
+    std::array<E, 8> b(a);
+    std::array<E, 8> c{
+        0x14cb404ab36b8a85,
+        0x0a7850e39ca55475,
+        0x1e3c06dd7b33c7be,
+        0x1fdecbc1077bce9c,
+        0x096043ac97bdb167,
+        0x0f8700d5c0f443d0,
+        0x1c175762aaea4839,
+        0x2269d4cce9947ff6,
+    };
+    Poseidon2::permute(a);
+    BOOST_TEST(c == a);
+
+    using Builder = CircuitBuilder<E, 3>;
     Builder circuit;
     std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });

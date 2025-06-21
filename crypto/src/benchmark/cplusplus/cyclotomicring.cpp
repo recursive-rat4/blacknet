@@ -19,6 +19,7 @@
 
 #include "dilithium.h"
 #include "fastrng.h"
+#include "lm62extension.h"
 #include "solinas62extension.h"
 
 using namespace blacknet::crypto;
@@ -40,6 +41,7 @@ static void BM_CyclotomicMul(benchmark::State& state) {
 }
 BENCHMARK(BM_CyclotomicMul<dilithium::Rq>);
 BENCHMARK(BM_CyclotomicMul<Solinas62RingDegree64NTT>);
+BENCHMARK(BM_CyclotomicMul<LM62RingDegree64NTT>);
 
 template<typename R>
 static void BM_CyclotomicCnj(benchmark::State& state) {
@@ -54,3 +56,4 @@ static void BM_CyclotomicCnj(benchmark::State& state) {
 }
 BENCHMARK(BM_CyclotomicCnj<dilithium::Rq>);
 BENCHMARK(BM_CyclotomicCnj<Solinas62RingDegree64NTT>);
+BENCHMARK(BM_CyclotomicCnj<LM62RingDegree64NTT>);
