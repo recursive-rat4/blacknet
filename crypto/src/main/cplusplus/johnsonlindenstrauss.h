@@ -19,7 +19,6 @@
 #define BLACKNET_CRYPTO_JOHNSONLINDENSTRAUSS_H
 
 #include <random>
-#include <type_traits>
 
 #include "binaryuniformdistribution.h"
 #include "matrix.h"
@@ -33,28 +32,14 @@ namespace blacknet::crypto {
 template<typename Z>
 requires(Z::is_integer_ring)
 struct JohnsonLindenstrauss {
-    static_assert(std::is_signed_v<typename Z::NumericType>);
-
     template<std::uniform_random_bit_generator RNG>
     struct Distribution {
-        using result_type = Z::NumericType;
+        using result_type = Z;
 
         BinaryUniformDistributionRNG<result_type, RNG> bud;
 
         constexpr result_type operator () (RNG& rng) {
-            if (bud(rng))
-                return 0;
-            else if (bud(rng))
-                return 1;
-            else
-                return -1;
-        }
-
-        constexpr result_type min() const {
-            return -1;
-        }
-        constexpr result_type max() const {
-            return 1;
+            return bud(rng) + bud(rng) - Z(1);
         }
     };
 

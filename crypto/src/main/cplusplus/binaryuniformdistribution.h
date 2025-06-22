@@ -30,13 +30,13 @@ template<
     std::uniform_random_bit_generator RNG
 >
 class BinaryUniformDistributionRNG {
-    using number_type = RNG::result_type;
+    using NumericType = RNG::result_type;
 
     consteval static std::size_t useful_bits() {
-        return sizeof(number_type) * 8;
+        return sizeof(NumericType) * 8;
     }
 
-    number_type cache;
+    NumericType cache;
     std::size_t have_bits;
 public:
     using result_type = T;
@@ -59,34 +59,28 @@ public:
         --have_bits;
         return result;
     }
-
-    constexpr result_type min() const {
-        return 0;
-    }
-    constexpr result_type max() const {
-        return 1;
-    }
 };
 
 template<
     typename Sponge
 >
 class BinaryUniformDistributionSponge {
-    static_assert(Sponge::Z::is_integer_ring, "Not implemented");
+    using Z = Sponge::Z;
+    static_assert(Z::is_integer_ring, "Not implemented");
 
-    using number_type = Sponge::Z::NumericType;
+    using NumericType = Z::NumericType;
 
     consteval static std::size_t useful_bits() {
-        if constexpr (std::has_single_bit(Sponge::Z::modulus()))
-            return Sponge::Z::bits();
+        if constexpr (std::has_single_bit(Z::modulus()))
+            return Z::bits();
         else
-            return Sponge::Z::bits() - 1;
+            return Z::bits() - 1;
     }
 
-    number_type cache;
+    NumericType cache;
     std::size_t have_bits;
 public:
-    using result_type = number_type;
+    using result_type = Z;
 
     constexpr BinaryUniformDistributionSponge() noexcept {
         reset();
@@ -105,13 +99,6 @@ public:
         cache >>= 1;
         --have_bits;
         return result;
-    }
-
-    constexpr result_type min() const {
-        return 0;
-    }
-    constexpr result_type max() const {
-        return 1;
     }
 };
 

@@ -157,7 +157,7 @@ public:
         return Params::BITS;
     }
 
-    consteval static I modulus() {
+    consteval static UI modulus() {
         return Params::M;
     }
 

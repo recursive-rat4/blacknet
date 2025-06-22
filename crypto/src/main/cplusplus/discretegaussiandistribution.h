@@ -30,7 +30,10 @@ namespace blacknet::crypto {
 
 template<typename T>
 struct DiscreteGaussianDistribution {
-    static_assert(std::is_signed_v<T>);
+    static_assert(T::is_integer_ring, "Not implemented");
+
+    using NumericType = T::NumericType;
+    static_assert(std::is_signed_v<NumericType>);
 
     using result_type = T;
 
@@ -46,22 +49,22 @@ struct DiscreteGaussianDistribution {
     template<std::uniform_random_bit_generator RNG>
     constexpr result_type operator () (RNG& rng) const {
         // https://eprint.iacr.org/2015/953
-        std::uniform_int_distribution<T> uid(min(), max());
+        std::uniform_int_distribution<NumericType> uid(min(), max());
         std::uniform_real_distribution<double> urd;
         while (true) {
-            result_type x(uid(rng));
+            NumericType x = uid(rng);
             double ps = std::exp(- (x - mu) * (x - mu) / (2.0 * sigma * sigma));
             if (urd(rng) > ps)
                 continue;
             return x;
         }
     }
-
-    constexpr result_type min() const {
+private:
+    constexpr NumericType min() const {
         constexpr double t = std::countr_zero(n);
         return std::floor(mu - sigma * t);
     }
-    constexpr result_type max() const {
+    constexpr NumericType max() const {
         constexpr double t = std::countr_zero(n);
         return std::ceil(mu + sigma * t);
     }
