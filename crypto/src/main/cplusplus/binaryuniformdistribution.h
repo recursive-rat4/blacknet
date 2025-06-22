@@ -23,6 +23,10 @@
 #include <limits>
 #include <random>
 
+#include "latticegadget.h"
+#include "logicgate.h"
+#include "vector.h"
+
 namespace blacknet::crypto {
 
 template<
@@ -100,6 +104,91 @@ public:
         --have_bits;
         return result;
     }
+
+template<typename Builder>
+requires(std::same_as<Z, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+    using LogicGate = LogicGate<Z>::template Circuit<Builder>;
+    using SpongeCircuit = Sponge::template Circuit<Builder>;
+    using Vector = Vector<Z>::template Circuit<Builder>;
+
+    Builder& circuit;
+    Vector cache;
+    std::size_t have_bits;
+
+    constexpr Circuit(Builder& circuit)
+        : circuit(circuit), cache(circuit, Z::bits())
+    {
+        reset();
+    }
+
+    constexpr void reset() noexcept {
+        have_bits = 0;
+    }
+
+    constexpr LinearCombination operator () (SpongeCircuit& sponge) {
+        if (have_bits == 0) {
+            auto scope = circuit.scope("BinaryUniformDistribution::sample");
+            auto squeezed = sponge.squeeze();
+            Z p = Z::LEFT_MULTIPLICATIVE_IDENTITY();
+            LinearCombination composed;
+            for (std::size_t i = 0; i < Z::bits(); ++i) {
+                LinearCombination digit = circuit.auxiliary();
+                cache[i] = digit;
+                composed += digit * p;
+                p = p.douple();
+            }
+            auto m1_gadget = LatticeGadget<Z>::decompose(2, Z::bits(), Z(-1)); //XXX make static?
+            LogicGate(circuit).LessOrEqualCheck(cache, m1_gadget);
+            circuit(squeezed == composed);
+            have_bits = useful_bits();
+        }
+        LinearCombination result = cache[useful_bits() - have_bits];
+        --have_bits;
+        return result;
+    }
+};
+
+template<std::size_t circuit>
+struct Tracer {
+    using LogicGate = LogicGate<Z>::Tracer;
+    using SpongeTracer = Sponge::template Tracer<circuit>;
+
+    std::vector<Z>& trace;
+    Vector<Z> cache;
+    std::size_t have_bits;
+
+    constexpr Tracer(std::vector<Z>& trace)
+        : trace(trace), cache(Z::bits())
+    {
+        reset();
+    }
+
+    constexpr void reset() noexcept {
+        have_bits = 0;
+    }
+
+    constexpr result_type operator () (SpongeTracer& sponge) {
+        if (have_bits == 0) {
+            auto representative = sponge.squeeze().canonical();
+            for (std::size_t j = 0; j < Z::bits(); ++j) {
+                trace.push_back(
+                    cache[j] = representative & 1
+                );
+                representative >>= 1;
+            }
+            auto m1_gadget = LatticeGadget<Z>::decompose(2, Z::bits(), Z(-1)); //XXX make static?
+            LogicGate(trace).LessOrEqualCheck(cache, m1_gadget);
+            have_bits = useful_bits();
+        }
+        result_type result = cache[useful_bits() - have_bits];
+        --have_bits;
+        return result;
+    }
+};
+
 };
 
 }

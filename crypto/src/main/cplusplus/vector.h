@@ -228,6 +228,8 @@ struct Circuit {
     Builder& circuit;
     std::vector<LinearCombination> elements;
 
+    constexpr Circuit(Builder& circuit)
+        : circuit(circuit), elements() {}
     constexpr Circuit(Builder& circuit, std::size_t size)
         : circuit(circuit), elements(size) {}
     constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t size)

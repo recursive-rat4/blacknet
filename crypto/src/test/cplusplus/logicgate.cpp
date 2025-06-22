@@ -16,6 +16,7 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include <algorithm>
 #include <array>
 #include <tuple>
 
@@ -23,6 +24,7 @@
 #include "logicgate.h"
 #include "pervushinextension.h"
 #include "r1cs.h"
+#include "vector.h"
 
 using namespace blacknet::crypto;
 
@@ -87,6 +89,28 @@ BOOST_AUTO_TEST_SUITE(LogicGate_Circuit)
 
 using R = PervushinRing;
 using LogicGate = LogicGate<R>;
+
+BOOST_AUTO_TEST_CASE(less_or_equal_checks) {
+    const Vector<R> a{0,1,0,0};
+    const Vector<R> b{0,0,1,0};
+
+    using Builder = CircuitBuilder<R, 2>;
+    Builder circuit;
+    using VectorCircuit = Vector<R>::Circuit<Builder>;
+    VectorCircuit a_circuit(circuit, Builder::Variable::Type::Input, a.size());
+    using Circuit = LogicGate::Circuit<Builder>;
+    Circuit logic_gate_circuit(circuit);
+    logic_gate_circuit.LessOrEqualCheck(a_circuit, b);
+
+    R1CS<R> r1cs(circuit.r1cs());
+    Vector<R> z = r1cs.assigment();
+    std::ranges::copy(a, std::back_inserter(z.elements));
+
+    using Tracer = LogicGate::Tracer;
+    Tracer logic_gate_tracer(z.elements);
+    logic_gate_tracer.LessOrEqualCheck(a, b);
+    BOOST_TEST(r1cs.isSatisfied(z));
+}
 
 BOOST_AUTO_TEST_CASE(xors) {
     const R a(1), b(1), c(0);

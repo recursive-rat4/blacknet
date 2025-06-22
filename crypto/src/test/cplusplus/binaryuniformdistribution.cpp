@@ -17,13 +17,17 @@
 
 #include <boost/test/unit_test.hpp>
 #include <algorithm>
+#include <array>
 #include <cstdint>
 
 #include "binaryuniformdistribution.h"
+#include "circuitbuilder.h"
+#include "poseidon2lm62.h"
+#include "r1cs.h"
 
 using namespace blacknet::crypto;
 
-BOOST_AUTO_TEST_SUITE(BinaryUniformDistributions)
+BOOST_AUTO_TEST_SUITE(BinaryUniformDistribution_Plain)
 
 struct FixedGenerator {
     using result_type = std::uint16_t;
@@ -49,6 +53,41 @@ BOOST_AUTO_TEST_CASE(Reproducible) {
     std::array<uint8_t, 16> b;
     std::ranges::generate(b, [&]() { return bud(g); });
     BOOST_TEST(a == b);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(BinaryUniformDistribution_Circuit)
+
+using Z = LM62Ring;
+using Sponge = Poseidon2LM62Sponge<{32, 33, 34, 35}>;
+
+BOOST_AUTO_TEST_CASE(test) {
+    Sponge sponge;
+    BinaryUniformDistributionSponge<Sponge> bud;
+    std::array<Z, Z::bits() - 1> a;
+    std::ranges::generate(a, [&] { return bud(sponge); });
+
+    using Builder = CircuitBuilder<Z, 2>;
+    Builder circuit;
+    using SpongeCircuit = Sponge::Circuit<Builder>;
+    SpongeCircuit sponge_circuit(circuit);
+    using Circuit = BinaryUniformDistributionSponge<Sponge>::Circuit<Builder>;
+    Circuit bud_circuit(circuit);
+    for (std::size_t i = 0; i < a.size(); ++i)
+        bud_circuit(sponge_circuit);
+
+    R1CS<Z> r1cs(circuit.r1cs());
+    Vector<Z> z = r1cs.assigment();
+
+    using SpongeTracer = Sponge::Tracer<Builder::degree()>;
+    SpongeTracer sponge_tracer(z.elements);
+    using Tracer = BinaryUniformDistributionSponge<Sponge>::Tracer<Builder::degree()>;
+    Tracer bud_tracer(z.elements);
+    std::array<Z, a.size()> a_traced;
+    std::ranges::generate(a_traced, [&] { return bud_tracer(sponge_tracer); });
+    BOOST_TEST(a == a_traced);
+    BOOST_TEST(r1cs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

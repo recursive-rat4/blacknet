@@ -18,6 +18,8 @@
 #ifndef BLACKNET_CRYPTO_LOGICGATE_H
 #define BLACKNET_CRYPTO_LOGICGATE_H
 
+#include <optional>
+
 #include "vector.h"
 
 namespace blacknet::crypto {
@@ -42,7 +44,7 @@ requires(std::same_as<R, typename Builder::R>)
 struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
-    using Vector = Vector<R>::template Circuit<Builder>;
+    using VectorCircuit = Vector<R>::template Circuit<Builder>;
 
     Builder& circuit;
 
@@ -52,10 +54,36 @@ struct Circuit {
         auto scope = circuit.scope("LogicGate::RangeCheck");
         circuit(R(0) == a * (a - R(1)));
     }
-    constexpr void RangeCheck(const Vector& a) {
+    constexpr void RangeCheck(const VectorCircuit& a) {
         auto scope = circuit.scope("LogicGate::RangeCheck");
         for (const auto& i : a) {
             circuit(R(0) == i * (i - R(1)));
+        }
+    }
+
+    constexpr void LessOrEqualCheck(const VectorCircuit& a, const Vector<R>& b) {
+        auto scope = circuit.scope("LogicGate::LessOrEqualCheck");
+        VectorCircuit current_run(circuit);
+        std::optional<LinearCombination> last_run;
+        for (std::size_t i = b.size(); i --> 0;) {
+            const auto& digit = a[i];
+            if (b[i] == R(1)) {
+                circuit(R(0) == digit * (digit - R(1)));
+                current_run.elements.push_back(digit);
+            } else {
+                if (!current_run.elements.empty()) {
+                    if (last_run.has_value()) {
+                        current_run.elements.push_back(std::move(*last_run));
+                    }
+                    last_run = And(current_run);
+                    current_run.elements.clear();
+                }
+                if (last_run.has_value()) {
+                    circuit(R(0) == digit * (digit - R(1) + *last_run));
+                } else {
+                    circuit(R(0) == digit);
+                }
+            }
         }
     }
 
@@ -71,6 +99,17 @@ struct Circuit {
         LinearCombination ab = circuit.auxiliary();
         circuit(ab == a * b);
         return ab;
+    }
+    constexpr LinearCombination And(const VectorCircuit& a) {
+        if (a.size() == 1) return a[0];
+        auto scope = circuit.scope("LogicGate::And");
+        LinearCombination pi = R::LEFT_MULTIPLICATIVE_IDENTITY();
+        for (const auto& i : a) {
+            LinearCombination p = circuit.auxiliary();
+            circuit(p == pi * i);
+            pi = p;
+        }
+        return pi;
     }
 
     constexpr LinearCombination Or(const LinearCombination& a, const LinearCombination& b) {
@@ -91,21 +130,51 @@ struct Tracer {
     constexpr Tracer(std::vector<R>& trace)
         : trace(trace) {}
 
+    constexpr void LessOrEqualCheck(const Vector<R>& a, const Vector<R>& b) {
+        Vector<R> current_run;
+        std::optional<R> last_run;
+        for (std::size_t i = b.size(); i --> 0;) {
+            const auto& digit = a[i];
+            if (b[i] == R(1)) {
+                current_run.elements.push_back(digit);
+            } else {
+                if (!current_run.elements.empty()) {
+                    if (last_run.has_value()) {
+                        current_run.elements.push_back(std::move(*last_run));
+                    }
+                    last_run = And(current_run);
+                    current_run.elements.clear();
+                }
+            }
+        }
+    }
+
     constexpr R Xor(const R& a, const R& b) {
         return a + b - trace.emplace_back(
             a * b
         ).douple();
     }
+
     constexpr R And(const R& a, const R& b) {
         return trace.emplace_back(
             a * b
         );
     }
+    constexpr R And(const Vector<R>& a) {
+        if (a.size() == 1) return a[0];
+        R pi = R::LEFT_MULTIPLICATIVE_IDENTITY();
+        for (const auto& i : a) {
+            pi = And(pi, i);
+        }
+        return pi;
+    }
+
     constexpr R Or(const R& a, const R& b) {
         return a + b - trace.emplace_back(
             a * b
         );
     }
+
     constexpr R Not(const R& a) {
         return R(1) - a;
     }
