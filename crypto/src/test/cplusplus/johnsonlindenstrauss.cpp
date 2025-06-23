@@ -31,16 +31,17 @@ static FastDRG rng;
 BOOST_AUTO_TEST_SUITE(Johnson_Lindenstrauss)
 
 using Z = PervushinRing;
+using NumericType = Z::NumericType;
 using JohnsonLindenstrauss = JohnsonLindenstrauss<Z>;
 
 BOOST_AUTO_TEST_CASE(test) {
-    int b = 128;
+    NumericType b = 128;
     std::size_t n = 16;
     std::size_t k = 32;
-    int slack_inf = 6;
-    int slack_ecd = 3;
+    NumericType slack_inf = 6;
+    NumericType slack_ecd = 3;
 
-    std::uniform_int_distribution<int> dst{-b+1, +b-1};
+    std::uniform_int_distribution<NumericType> dst{-b+1, +b-1};
     Matrix<Z> map = JohnsonLindenstrauss::random(rng, n, k);
     Vector<Z> high = Vector<Z>::random(rng, dst, k);
     Vector<Z> low = JohnsonLindenstrauss::project(map, high);

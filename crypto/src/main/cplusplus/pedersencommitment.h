@@ -18,9 +18,10 @@
 #ifndef BLACKNET_CRYPTO_PEDERSENCOMMITMENT_H
 #define BLACKNET_CRYPTO_PEDERSENCOMMITMENT_H
 
-#include <vector>
 #include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_reduce.h>
+
+#include "vector.h"
 
 namespace blacknet::crypto {
 
@@ -33,17 +34,14 @@ namespace blacknet::crypto {
 
 template<typename G>
 class PedersenCommitment {
-    std::vector<G> pp;
+    Vector<G> pp;
 public:
-    constexpr PedersenCommitment(const std::vector<G>& pp) : pp(pp) {}
-    constexpr PedersenCommitment(std::vector<G>&& pp) : pp(std::move(pp)) {}
+    constexpr PedersenCommitment(const Vector<G>& pp) : pp(pp) {}
+    constexpr PedersenCommitment(Vector<G>&& pp) : pp(std::move(pp)) {}
 
     template<typename Sponge>
-    constexpr static std::vector<G> setup(Sponge& sponge, std::size_t size) {
-        std::vector<G> t(size);
-        for (std::size_t i = 0; i < size; ++i)
-            t[i] = G::squeeze(sponge);
-        return t;
+    constexpr static Vector<G> setup(Sponge& sponge, std::size_t size) {
+        return Vector<G>::squeeze(sponge, size);
     }
 
     constexpr G commit(const G::Scalar& s, const G::Scalar& t) const {
@@ -54,7 +52,7 @@ public:
         return e == commit(s, t);
     }
 
-    constexpr G commit(const std::vector<typename G::Scalar>& v) const {
+    constexpr G commit(const Vector<typename G::Scalar>& v) const {
         using namespace oneapi::tbb;
         return parallel_reduce(
             blocked_range<std::size_t>(0, v.size()),
@@ -70,7 +68,7 @@ public:
         );
     }
 
-    constexpr bool open(const G& e, const std::vector<typename G::Scalar>& v) const {
+    constexpr bool open(const G& e, const Vector<typename G::Scalar>& v) const {
         return e == commit(v);
     }
 };

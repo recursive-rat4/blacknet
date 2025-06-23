@@ -16,11 +16,11 @@
  */
 
 #include <boost/test/unit_test.hpp>
-#include <vector>
 
 #include "pastacurves.h"
 #include "pedersencommitment.h"
 #include "poseidon2pasta.h"
+#include "vector.h"
 
 using namespace blacknet::crypto;
 
@@ -74,9 +74,9 @@ BOOST_AUTO_TEST_CASE(vector) {
     constexpr PallasField m3("1ab0bd7178dbc83ec8ec11aa0bf46e5cae406812d865fa9a96beccac98aa0f5d");
     constexpr PallasField m4("10af23b9642c311b7b270d22fd0cb8efbcdee017d8d25246dedeb7bf06064906");
     constexpr PallasField m5("24e02c656c29446963355b2375536270b270d8d7bd72ca3b4784eba7b8e46ce1");
-    std::vector v1{m1, m2, m3, m4};
-    std::vector v2{m1, m2, m3, m5};
-    std::vector v3{m1, m3, m2, m4};
+    Vector v1{m1, m2, m3, m4};
+    Vector v2{m1, m2, m3, m5};
+    Vector v3{m1, m3, m2, m4};
     VestaGroupJacobian p1(p1x, p1y, VestaField(1));
     VestaGroupJacobian p2(p2x, p2y, VestaField(1));
     VestaGroupJacobian p3(p3x, p3y, VestaField(1));

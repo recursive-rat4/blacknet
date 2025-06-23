@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_VECTOR_H
 
 #include <algorithm>
+#include <concepts>
 #include <initializer_list>
 #include <ostream>
 #include <random>
@@ -161,7 +162,9 @@ public:
         return r;
     }
 
-    constexpr bool checkInfinityNorm(const E::NumericType& bound) const {
+    template<typename NormType>
+    requires(std::same_as<NormType, typename E::NumericType>)
+    constexpr bool checkInfinityNorm(const NormType& bound) const {
         return std::ranges::all_of(elements, [&bound](const E& e) {
             return e.checkInfinityNorm(bound);
         });
@@ -202,6 +205,13 @@ public:
     constexpr static Vector squeeze(Sponge& sponge, std::size_t size) {
         Vector t(size);
         std::ranges::generate(t.elements, [&] { return E::squeeze(sponge); });
+        return t;
+    }
+
+    template<typename Sponge, typename DST>
+    constexpr static Vector squeeze(Sponge& sponge, DST& dst, std::size_t size) {
+        Vector t(size);
+        std::ranges::generate(t.elements, [&] { return E::squeeze(sponge, dst); });
         return t;
     }
 

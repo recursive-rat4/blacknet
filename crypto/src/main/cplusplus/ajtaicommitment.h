@@ -57,11 +57,7 @@ public:
 
     template<typename Sponge>
     constexpr static Matrix<R> setup(Sponge& sponge, std::size_t rows, std::size_t columns) {
-        Matrix<R> t(rows, columns);
-        for (std::size_t i = 0; i < rows; ++i)
-            for (std::size_t j = 0; j < columns; ++j)
-                t[i, j] = R::squeeze(sponge);
-        return t;
+        return Matrix<R>::squeeze(sponge, rows, columns);
     }
 
     constexpr Vector<R> commit(const Vector<R>& m) const {

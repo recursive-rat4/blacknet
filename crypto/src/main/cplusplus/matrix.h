@@ -19,6 +19,7 @@
 #define BLACKNET_CRYPTO_MATRIX_H
 
 #include <algorithm>
+#include <concepts>
 #include <initializer_list>
 #include <ostream>
 #include <random>
@@ -119,7 +120,9 @@ public:
         return r;
     }
 
-    constexpr bool checkInfinityNorm(const E::NumericType& bound) const {
+    template<typename NormType>
+    requires(std::same_as<NormType, typename E::NumericType>)
+    constexpr bool checkInfinityNorm(const NormType& bound) const {
         return std::ranges::all_of(elements, [&bound](const E& e) {
             return e.checkInfinityNorm(bound);
         });
@@ -129,6 +132,20 @@ public:
     {
         fmt::print(out, "{}", val.elements);
         return out;
+    }
+
+    template<typename Sponge>
+    constexpr static Matrix squeeze(Sponge& sponge, std::size_t rows, std::size_t columns) {
+        Matrix t(rows, columns);
+        std::ranges::generate(t.elements, [&] { return E::squeeze(sponge); });
+        return t;
+    }
+
+    template<typename Sponge, typename DST>
+    constexpr static Matrix squeeze(Sponge& sponge, DST& dst, std::size_t rows, std::size_t columns) {
+        Matrix t(rows, columns);
+        std::ranges::generate(t.elements, [&] { return E::squeeze(sponge, dst); });
+        return t;
     }
 
     template<std::uniform_random_bit_generator RNG>
