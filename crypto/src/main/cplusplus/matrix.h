@@ -161,6 +161,74 @@ public:
         std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });
         return t;
     }
+
+template<typename Builder>
+requires(std::same_as<E, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+    using Vector = Vector<E>::template Circuit<Builder>;
+
+    Builder& circuit;
+    std::size_t rows;
+    std::size_t columns;
+    std::vector<LinearCombination> elements;
+
+    constexpr Circuit(Builder& circuit, std::size_t rows, std::size_t columns)
+        : circuit(circuit), rows(rows), columns(columns), elements(rows * columns) {}
+    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t rows, std::size_t columns)
+        : circuit(circuit), rows(rows), columns(columns), elements(rows * columns)
+    {
+        std::ranges::generate(elements, [&]{ return circuit.variable(type); });
+    }
+
+    constexpr LinearCombination& operator [] (std::size_t i, std::size_t j) {
+        return elements[i * columns + j];
+    }
+
+    constexpr const LinearCombination& operator [] (std::size_t i, std::size_t j) const {
+        return elements[i * columns + j];
+    }
+
+    constexpr Vector operator * (const Vector& other) const {
+        auto scope = circuit.scope("Matrix::vector");
+        Vector r(circuit, rows);
+        for (std::size_t i = 0; i < rows; ++i) {
+            for (std::size_t j = 0; j < columns; ++j) {
+                auto t = circuit.auxiliary();
+                circuit(t == (*this)[i, j] * other[j]);
+                r[i] += t;
+            }
+        }
+        return r;
+    }
+};
+
+struct Tracer {
+    using Vector = Vector<E>::Tracer;
+
+    Matrix matrix;
+    std::vector<E>& trace;
+
+    constexpr E& operator [] (std::size_t i, std::size_t j) {
+        return matrix[i * columns + j];
+    }
+
+    constexpr const E& operator [] (std::size_t i, std::size_t j) const {
+        return matrix[i * columns + j];
+    }
+
+    constexpr Vector operator * (const Vector& other) const {
+        Vector r(matrix.rows, E::LEFT_ADDITIVE_IDENTITY(), trace);
+        for (std::size_t i = 0; i < matrix.rows; ++i)
+            for (std::size_t j = 0; j < matrix.columns; ++j)
+                r[i] += trace.emplace_back(
+                    matrix[i, j] * other[j]
+                );
+        return r;
+    }
+};
+
 };
 
 }

@@ -261,6 +261,7 @@ struct Circuit {
     }
 
     constexpr LinearCombination dot(const Circuit& other) const {
+        auto scope = circuit.scope("Vector::dot");
         LinearCombination sigma;
         for (std::size_t i = 0; i < elements.size(); ++i) {
             auto t = circuit.auxiliary();
@@ -290,6 +291,13 @@ struct Circuit {
 struct Tracer {
     Vector vector;
     std::vector<E>& trace;
+
+    constexpr Tracer(std::size_t size, const E& fill, std::vector<E>& trace)
+        : vector(size, fill), trace(trace) {}
+    constexpr Tracer(const Vector& vector, std::vector<E>& trace)
+        : vector(vector), trace(trace) {}
+    constexpr Tracer(Vector&& vector, std::vector<E>& trace)
+        : vector(std::move(vector)), trace(trace) {}
 
     constexpr std::size_t size() const noexcept {
         return vector.size();

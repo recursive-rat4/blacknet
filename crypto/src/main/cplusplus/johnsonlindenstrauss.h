@@ -33,10 +33,14 @@ template<typename Z>
 requires(Z::is_integer_ring)
 struct JohnsonLindenstrauss {
     template<std::uniform_random_bit_generator RNG>
-    struct Distribution {
+    struct DistributionRNG {
         using result_type = Z;
 
         BinaryUniformDistributionRNG<result_type, RNG> bud;
+
+        constexpr void reset() noexcept {
+            bud.reset();
+        }
 
         constexpr result_type operator () (RNG& rng) {
             return bud(rng) + bud(rng) - Z(1);
@@ -49,7 +53,7 @@ struct JohnsonLindenstrauss {
 
     template<std::uniform_random_bit_generator RNG>
     constexpr static Matrix<Z> random(RNG& rng, std::size_t n, std::size_t k) {
-        Distribution<RNG> dst;
+        DistributionRNG<RNG> dst;
         return Matrix<Z>::random(rng, dst, n, k);
     }
 };

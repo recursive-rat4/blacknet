@@ -17,15 +17,17 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "circuitbuilder.h"
 #include "matrix.h"
 #include "pervushin.h"
+#include "r1cs.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
 
-BOOST_AUTO_TEST_SUITE(Matrices)
-
 using R = PervushinRing;
+
+BOOST_AUTO_TEST_SUITE(Matrix_Plain)
 
 BOOST_AUTO_TEST_CASE(Add) {
     Matrix<R> a(3, 2, {
@@ -133,6 +135,48 @@ BOOST_AUTO_TEST_CASE(InfinityNorm) {
     int64_t ng = 4;
     BOOST_TEST(!a.checkInfinityNorm(nb));
     BOOST_TEST(a.checkInfinityNorm(ng));
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(Matrix_Circuit)
+
+BOOST_AUTO_TEST_CASE(VectorProduct) {
+    const Matrix<R> a(3, 2, {
+        R(17), R(18),
+        R(33), R(34),
+        R(49), R(50),
+    });
+    const Vector<R> b{
+        R(2),
+        R(3),
+    };
+    const Vector<R> c{
+        R(88),
+        R(168),
+        R(248),
+    };
+
+    using Builder = CircuitBuilder<R, 2>;
+    Builder circuit;
+    using MatrixCircuit = Matrix<R>::Circuit<Builder>;
+    MatrixCircuit a_circuit(circuit, Builder::Variable::Type::Input, a.rows, a.columns);
+    using VectorCircuit = Vector<R>::Circuit<Builder>;
+    VectorCircuit b_circuit(circuit, Builder::Variable::Type::Input, b.size());
+    auto c_circuit = a_circuit * b_circuit;
+
+    R1CS<R> r1cs(circuit.r1cs());
+    Vector<R> z = r1cs.assigment();
+    std::ranges::copy(a.elements, std::back_inserter(z.elements));
+    std::ranges::copy(b.elements, std::back_inserter(z.elements));
+
+    using MatrixTracer = Matrix<R>::Tracer;
+    MatrixTracer a_tracer(a, z.elements);
+    using VectorTracer = Vector<R>::Tracer;
+    VectorTracer b_tracer(b, z.elements);
+    auto c_traced = a_tracer * b_tracer;
+    BOOST_TEST(c == c_traced.vector);
+    BOOST_TEST(r1cs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

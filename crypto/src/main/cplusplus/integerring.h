@@ -183,6 +183,11 @@ public:
         return sponge.squeeze();
     }
 
+    template<typename Sponge, typename DST>
+    constexpr static IntegerRing squeeze(Sponge& sponge, DST& dst) {
+        return IntegerRing(dst(sponge));
+    }
+
     template<std::uniform_random_bit_generator RNG>
     static IntegerRing random(RNG& rng) {
         std::uniform_int_distribution<I> ud(-(Params::M - 1) / 2, (Params::M - 1) / 2);
