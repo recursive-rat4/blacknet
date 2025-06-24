@@ -16,11 +16,11 @@
  */
 
 #include <benchmark/benchmark.h>
-#include <vector>
 
 #include "fastrng.h"
 #include "pastacurves.h"
 #include "pedersencommitment.h"
+#include "vector.h"
 
 using namespace blacknet::crypto;
 
@@ -62,7 +62,7 @@ static void BM_PedersenCommitmentVector(benchmark::State& state) {
         G::random(rng),
         G::random(rng),
     });
-    std::vector<Scalar> v{
+    Vector<Scalar> v{
         Scalar::random(rng),
         Scalar::random(rng),
         Scalar::random(rng),
