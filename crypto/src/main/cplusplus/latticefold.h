@@ -19,9 +19,9 @@
 #define BLACKNET_CRYPTO_LATTICEFOLD_H
 
 #include <concepts>
-#include <random>
 
 #include "ajtaicommitment.h"
+#include "binaryuniformdistribution.h"
 #include "convolution.h"
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
@@ -69,7 +69,6 @@ struct LatticeFold {
     static_assert(Rq::dimension() == RqIso::dimension());
     static_assert(Rq::dimension() == D);
     static_assert(t == Zq::twiddles());
-    static_assert(std::is_signed_v<typename Zq::NumericType>);
 
     constexpr static RqIso& isomorph(Rq&& f) {
         ntt::cooley_tukey<Zq, D>(f.coefficients);
@@ -82,7 +81,64 @@ struct LatticeFold {
 
     using BindingCommitment = AjtaiCommitment<RqIso, NormP::Infinity>;
 
-    std::uniform_int_distribution<typename Zq::NumericType> small_distribution{-1, 2};
+    template<typename Sponge>
+    struct Distribution {
+        using result_type = Fq;
+
+        BinaryUniformDistributionSponge<Sponge> bud;
+
+        constexpr Distribution() noexcept = default;
+
+        constexpr void reset() noexcept {
+            bud.reset();
+        }
+
+        constexpr result_type operator () (Sponge& sponge) {
+            return bud(sponge).douple() - bud(sponge);
+        }
+
+    template<typename Builder>
+    requires(std::same_as<Fq, typename Builder::R>)
+    struct Circuit {
+        using Variable = Builder::Variable;
+        using LinearCombination = Builder::LinearCombination;
+        using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Circuit<Builder>;
+        using SpongeCircuit = Sponge::template Circuit<Builder>;
+
+        Builder& circuit;
+        BinaryUniformDistribution bud;
+
+        constexpr Circuit(Builder& circuit) : circuit(circuit), bud(circuit) {}
+
+        constexpr void reset() noexcept {
+            bud.reset();
+        }
+
+        constexpr LinearCombination operator () (SpongeCircuit& sponge) {
+            return bud(sponge) * Fq(2) - bud(sponge);
+        }
+    };
+
+    template<std::size_t circuit>
+    struct Tracer {
+        using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Tracer<circuit>;
+        using SpongeTracer = Sponge::template Tracer<circuit>;
+
+        std::vector<Fq>& trace;
+        BinaryUniformDistribution bud;
+
+        constexpr Tracer(std::vector<Fq>& trace) : trace(trace), bud(trace) {}
+
+        constexpr void reset() noexcept {
+            bud.reset();
+        }
+
+        constexpr result_type operator () (SpongeTracer& sponge) {
+            return bud(sponge).douple() - bud(sponge);
+        }
+    };
+
+    };
 
     constexpr static Matrix<Rq> gadget_medium(std::size_t m, std::size_t n) {
         return LatticeGadget<Rq>::matrix(B, m, n);

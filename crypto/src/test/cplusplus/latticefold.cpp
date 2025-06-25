@@ -137,6 +137,29 @@ using R = LM62RingDegree64;
 using LatticeFold = LatticeFold<Z, F, R, LM62RingDegree64NTT>;
 using Duplex = Poseidon2LM62Sponge<{64, 65, 66, 67}>;
 
+BOOST_AUTO_TEST_CASE(Distributions) {
+    using Builder = CircuitBuilder<F, 2>;
+    Builder circuit;
+    using DuplexCircuit = Duplex::Circuit<Builder>;
+    DuplexCircuit duplex_circuit(circuit);
+    using DistributionCircuit = LatticeFold::Distribution<Duplex>::Circuit<Builder>;
+    DistributionCircuit distribution_circuit(circuit);
+    using VectorCircuit = Vector<F>::Circuit<Builder>;
+    VectorCircuit a_circuit(circuit, LatticeFold::D);
+    std::ranges::generate(a_circuit, [&] { return distribution_circuit(duplex_circuit); });
+
+    CustomizableConstraintSystem<F> ccs(circuit.ccs());
+    Vector<F> z = ccs.assigment();
+
+    using DuplexTracer = Duplex::Tracer<Builder::degree()>;
+    DuplexTracer duplex_tracer(z.elements);
+    using DistributionTracer = LatticeFold::Distribution<Duplex>::Tracer<Builder::degree()>;
+    DistributionTracer distribution_tracer(z.elements);
+    std::array<F, LatticeFold::D> a_traced;
+    std::ranges::generate(a_traced, [&] { return distribution_tracer(duplex_tracer); });
+    BOOST_TEST(ccs.isSatisfied(z));
+}
+
 BOOST_AUTO_TEST_CASE(G2s) {
     constexpr std::size_t ell = std::countr_zero(LatticeFold::D);
     Vector<R> f{R{1, 1, 0, 1}};
@@ -157,6 +180,7 @@ BOOST_AUTO_TEST_CASE(G2s) {
     z.elements.push_back(g2.mu);
     std::ranges::copy(g2.mle.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x.coordinates, std::back_inserter(z.elements));
+
     using Tracer = LatticeFold::G2::Tracer;
     Tracer g2_tracer(g2, z.elements);
     BOOST_TEST(g2(x) == g2_tracer(x));
@@ -194,6 +218,7 @@ BOOST_AUTO_TEST_CASE(Verifys) {
     z.elements.push_back(sum);
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
+
     SumCheck::Tracer<Builder::degree()> tracer(z.elements);
     using DuplexTracer = Duplex::Tracer<Builder::degree()>;
     DuplexTracer duplex_tracer(z.elements);
