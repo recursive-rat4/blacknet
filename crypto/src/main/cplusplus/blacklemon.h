@@ -25,6 +25,8 @@
 
 namespace blacknet::crypto {
 
+// https://blacknet.ninja/blacklemon.pdf
+
 struct BlackLemon {
     using PKE = LPR;
     constexpr static const std::size_t ELL = 2;
