@@ -119,10 +119,14 @@ struct Module {
     }
 
     constexpr Module douple() const {
-        Module r;
-        for (std::size_t i = 0; i < N; ++i)
-            r.components[i] = components[i].douple();
-        return r;
+        if constexpr (R::characteristic() != 2) {
+            Module r;
+            for (std::size_t i = 0; i < N; ++i)
+                r.components[i] = components[i].douple();
+            return r;
+        } else {
+            return identity();
+        }
     }
 
     constexpr decltype(auto) begin() noexcept {

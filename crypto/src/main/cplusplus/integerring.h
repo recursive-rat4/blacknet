@@ -157,6 +157,10 @@ public:
         return Params::BITS;
     }
 
+    consteval static UI characteristic() {
+        return Params::M;
+    }
+
     consteval static UI modulus() {
         return Params::M;
     }

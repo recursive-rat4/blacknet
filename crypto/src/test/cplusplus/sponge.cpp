@@ -19,6 +19,7 @@
 
 #include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
+#include "fermat.h"
 #include "poseidon2solinas62.h"
 #include "sponge.h"
 
@@ -27,7 +28,7 @@ using namespace blacknet::crypto;
 BOOST_AUTO_TEST_SUITE(Sponges)
 
 BOOST_AUTO_TEST_CASE(BlacknetPlain) {
-    using Z = uint8_t;
+    using Z = FermatRing;
     using B = std::array<Z, 4>;
     struct F {
         consteval static std::size_t width() {

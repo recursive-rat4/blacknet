@@ -143,10 +143,14 @@ public:
     }
 
     constexpr PolynomialRing douple() const {
-        PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = coefficients[i].douple();
-        return t;
+        if constexpr (Z::characteristic() != 2) {
+            PolynomialRing t;
+            for (std::size_t i = 0; i < N; ++i)
+                t.coefficients[i] = coefficients[i].douple();
+            return t;
+        } else {
+            return LEFT_ADDITIVE_IDENTITY();
+        }
     }
 
     constexpr PolynomialRing square() const {
@@ -222,6 +226,10 @@ public:
         Params::fromForm(coefficients);
         fmt::print(out, "{}", coefficients);
         return out;
+    }
+
+    consteval static auto characteristic() {
+        return Z::characteristic();
     }
 
     template<typename Sponge>

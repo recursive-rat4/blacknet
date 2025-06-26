@@ -228,6 +228,10 @@ public:
         return Params::BITS;
     }
 
+    consteval static UInt256 characteristic() {
+        return Params::M;
+    }
+
     consteval static UInt256 modulus() {
         return Params::M;
     }

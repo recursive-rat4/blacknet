@@ -111,6 +111,7 @@ struct Sponge {
 private:
     template<typename EE>
     constexpr static void pad(std::size_t position, std::array<EE, R+C>& state) {
+        static_assert(Z::characteristic() > 2, "Not implemented");
         // Minimum and non-injective padding, Hirose 2016
         if (position != R) {
             state[position++] = E(1);
