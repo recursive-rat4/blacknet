@@ -18,6 +18,8 @@
 #ifndef BLACKNET_CRYPTO_WEIERSTRASSGROUPJACOBIAN_H
 #define BLACKNET_CRYPTO_WEIERSTRASSGROUPJACOBIAN_H
 
+#include "blacknet-config.h"
+
 #include <ostream>
 #include <random>
 

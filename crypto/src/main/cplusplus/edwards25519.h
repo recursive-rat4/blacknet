@@ -22,6 +22,7 @@
 #include "bitint.h"
 #include "primefield.h"
 #include "twistededwardsgroupaffine.h"
+#include "twistededwardsgroupextended.h"
 
 namespace blacknet::crypto {
 
@@ -74,6 +75,13 @@ typedef TwistedEdwardsGroupAffine<
     Field25519("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC"),
     Field25519("52036CEE2B6FFE738CC740797779E89800700A4D4141D8AB75EB4DCA135978A3")
 > Edwards25519GroupAffine;
+
+typedef TwistedEdwardsGroupExtended<
+    Field25519,
+    BitInt<255>,
+    Field25519("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC"),
+    Field25519("52036CEE2B6FFE738CC740797779E89800700A4D4141D8AB75EB4DCA135978A3")
+> Edwards25519GroupExtended;
 
 }
 
