@@ -19,20 +19,21 @@
 #define BLACKNET_CRYPTO_LPR_H
 
 #include <random>
-#include <type_traits>
 
 #include "convolution.h"
 #include "discretegaussiandistribution.h"
 #include "fermat.h"
 #include "numbertheoretictransform.h"
 #include "polynomialring.h"
+#include "ternaryuniformdistribution.h"
+#include "z2.h"
 
 namespace blacknet::crypto {
 
 // https://eprint.iacr.org/2013/293
 
 struct LPR {
-    using Zt = FermatRing; // It would be logical to use `Z2` here, if optimizer were able to deal with it
+    using Zt = Z2;
     using Zq = FermatRing;
 
     constexpr static const std::size_t D = 1024;
@@ -110,8 +111,6 @@ struct LPR {
 
     using PlainText = Rt;
 
-    static_assert(std::is_signed_v<typename Zq::NumericType>);
-    std::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
     DiscreteGaussianDistribution<Zq> dgd{0.0, SIGMA};
 
     constexpr static Rq upscale(const Rt& rt) {
@@ -127,6 +126,7 @@ struct LPR {
 
     template<std::uniform_random_bit_generator RNG>
     SecretKey generateSecretKey(RNG& rng) {
+        TernaryUniformDistribution<Zq, RNG> tud;
         return Rq::random(rng, tud, H);
     }
 

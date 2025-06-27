@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <limits>
 
 #include "binaryuniformdistribution.h"
 #include "circuitbuilder.h"

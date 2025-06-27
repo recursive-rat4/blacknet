@@ -65,6 +65,7 @@ crypto_test_sources = [
     'solinas62.cpp',
     'sponge.cpp',
     'sumcheck.cpp',
+    'ternaryuniformdistribution.cpp',
     'test.cpp',
     'univariatepolynomial.cpp',
     'vector.cpp',

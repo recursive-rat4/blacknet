@@ -23,11 +23,11 @@
 #include <cmath>
 #include <numbers>
 #include <random>
-#include <type_traits>
 
 #include "discretegaussiandistribution.h"
 #include "latticegadget.h"
 #include "polynomialring.h"
+#include "ternaryuniformdistribution.h"
 #include "vector.h"
 
 namespace blacknet::crypto {
@@ -42,8 +42,6 @@ struct BFV {
     constexpr static const std::size_t D = Rq::dimension();
 
     static_assert(Rt::dimension() == Rq::dimension());
-    static_assert(std::is_signed_v<typename Zt::NumericType>);
-    static_assert(std::is_signed_v<typename Zq::NumericType>);
 
     constexpr static const std::size_t H = std::min<std::size_t>(256, D);
 
@@ -104,7 +102,6 @@ struct BFV {
         }
     };
 
-    std::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
     DiscreteGaussianDistribution<Zq> dgd{0.0, SIGMA};
 
     constexpr static Zq lift(const Zt& zt) {
@@ -135,6 +132,7 @@ struct BFV {
 
     template<std::uniform_random_bit_generator RNG>
     SecretKey generateSecretKey(RNG& rng) {
+        TernaryUniformDistribution<Zq, RNG> tud;
         return Rq::random(rng, tud, H);
     }
 

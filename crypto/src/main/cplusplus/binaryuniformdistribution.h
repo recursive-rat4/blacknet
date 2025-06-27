@@ -20,7 +20,6 @@
 
 #include <bit>
 #include <cstddef>
-#include <limits>
 #include <random>
 
 #include "latticegadget.h"
