@@ -32,8 +32,8 @@ namespace blacknet::crypto {
 // https://eprint.iacr.org/2013/293
 
 struct LPR {
+    using Zt = FermatRing; // It would be logical to use `Z2` here, if optimizer were able to deal with it
     using Zq = FermatRing;
-    static_assert(std::is_signed_v<typename Zq::NumericType>);
 
     constexpr static const std::size_t D = 1024;
 
@@ -43,7 +43,19 @@ struct LPR {
     constexpr static const int DELTA = Zq::modulus() / 2;
     constexpr static const int HALF_DELTA = Zq::modulus() / 4;
 
-    struct CanonicalRingParams {
+    struct PlainTextRingParams {
+        using Z = Zt;
+
+        constexpr static const std::size_t N = D;
+
+        constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+            convolution::negacyclic<Z, N>(r, a, b);
+        }
+        constexpr static void toForm(std::array<Z, N>&) {}
+        constexpr static void fromForm(std::array<Z, N>&) {}
+    };
+
+    struct CipherTextRingParams {
         using Z = Zq;
 
         constexpr static const std::size_t N = D;
@@ -55,7 +67,7 @@ struct LPR {
         constexpr static void fromForm(std::array<Z, N>&) {}
     };
 
-    struct NTTRingParams {
+    struct CipherTextNTTRingParams {
         using Z = Zq;
 
         constexpr static const std::size_t N = D;
@@ -71,15 +83,16 @@ struct LPR {
         }
     };
 
-    using Rq = PolynomialRing<CanonicalRingParams>;
-    using RqIso = PolynomialRing<NTTRingParams>;
+    using Rt = PolynomialRing<PlainTextRingParams>;
+    using Rq = PolynomialRing<CipherTextRingParams>;
+    using RqIso = PolynomialRing<CipherTextNTTRingParams>;
 
     constexpr static RqIso& isomorph(Rq&& f) {
-        NTTRingParams::toForm(f.coefficients);
+        CipherTextNTTRingParams::toForm(f.coefficients);
         return reinterpret_cast<RqIso&>(f);
     }
     constexpr static Rq& isomorph(RqIso&& f) {
-        NTTRingParams::fromForm(f.coefficients);
+        CipherTextNTTRingParams::fromForm(f.coefficients);
         return reinterpret_cast<Rq&>(f);
     }
 
@@ -95,15 +108,16 @@ struct LPR {
         Rq b;
     };
 
-    using PlainText = Rq;
+    using PlainText = Rt;
 
+    static_assert(std::is_signed_v<typename Zq::NumericType>);
     std::uniform_int_distribution<typename Zq::NumericType> tud{-1, 1};
     DiscreteGaussianDistribution<Zq> dgd{0.0, SIGMA};
 
-    constexpr static Rq upscale(const Rq& rt) {
+    constexpr static Rq upscale(const Rt& rt) {
         Rq rq;
         for (std::size_t i = 0; i < D; ++i) {
-            if (rt.coefficients[i] == Zq(0))
+            if (rt.coefficients[i] == Zt(0))
                 rq.coefficients[i] = Zq(0);
             else
                 rq.coefficients[i] = Zq(DELTA);
@@ -136,9 +150,9 @@ struct LPR {
         auto d = ct.a + ct.b * sk;
         for (std::size_t i = 0; i < D; ++i) {
             if (d.coefficients[i].absolute() <= HALF_DELTA)
-                pt.coefficients[i] = Zq(0);
+                pt.coefficients[i] = Zt(0);
             else
-                pt.coefficients[i] = Zq(1);
+                pt.coefficients[i] = Zt(1);
         }
         return pt;
     }

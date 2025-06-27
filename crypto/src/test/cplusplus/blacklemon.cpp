@@ -27,12 +27,12 @@ static FastDRG rng;
 BOOST_AUTO_TEST_SUITE(BlackLemons)
 
 BOOST_AUTO_TEST_CASE(Tests) {
-    using Zq = BlackLemon::Zq;
+    using Zt = BlackLemon::Zt;
     using Rq = BlackLemon::Rq;
     BlackLemon bl;
     auto sk = bl.generateSecretKey(rng);
     auto pk = bl.generatePublicKey(rng, sk);
-    BlackLemon::PlainText pt{Zq(0), Zq(0), Zq(1), Zq(1)};
+    BlackLemon::PlainText pt{Zt(0), Zt(0), Zt(1), Zt(1)};
     auto ct = bl.encrypt(rng, pk, pt);
     BOOST_TEST(pt == bl.decrypt(sk, ct), "Decryption");
 

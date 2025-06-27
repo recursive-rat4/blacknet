@@ -68,6 +68,7 @@ crypto_test_sources = [
     'test.cpp',
     'univariatepolynomial.cpp',
     'vector.cpp',
+    'z2.cpp',
 ]
 crypto_test_includes = [crypto_main_includes, include_directories('.')]
 crypto_test_dependencies = [crypto_main_dependencies, boost_test_dependency]

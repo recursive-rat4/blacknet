@@ -58,7 +58,7 @@ static void BM_BlackLemon_Encrypt(benchmark::State& state) {
     BlackLemon bl;
     BlackLemon::SecretKey sk = bl.generateSecretKey(rng);
     BlackLemon::PublicKey pk = bl.generatePublicKey(rng, sk);
-    BlackLemon::PlainText pt = BlackLemon::Rq::random(rng);
+    BlackLemon::PlainText pt = BlackLemon::Rt::random(rng);
     BlackLemon::CipherText ct;
 
     for (auto _ : state) {

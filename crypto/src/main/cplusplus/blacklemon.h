@@ -29,11 +29,14 @@ namespace blacknet::crypto {
 
 struct BlackLemon {
     using PKE = LPR;
-    constexpr static const std::size_t ELL = 2;
-    constexpr static const int R = 40;
-
+    using Zt = PKE::Zt;
+    using Rt = PKE::Rt;
     using Zq = PKE::Zq;
     using Rq = PKE::Rq;
+
+    constexpr static const std::size_t KAPPA = 2;
+    constexpr static const std::size_t ELL = Rq::dimension();
+    constexpr static const int R = 40;
 
     struct SecretKey {
         PKE::SecretKey a;
@@ -81,14 +84,14 @@ struct BlackLemon {
         auto d = ct.a + ct.b * sk.a + sk.b;
         for (std::size_t i = 0; i < Rq::dimension(); ++i) {
             if (d.coefficients[i].absolute() <= R)
-                pt.coefficients[i] = Zq(0);
+                pt.coefficients[i] = Zt(0);
             else if (PKE::DELTA - d.coefficients[i].absolute() <= R)
-                pt.coefficients[i] = Zq(1);
+                pt.coefficients[i] = Zt(1);
             else
                 return std::nullopt;
         }
-        for (std::size_t i = 0; i < ELL; ++i) {
-            if (pt.coefficients[i] != Zq(0))
+        for (std::size_t i = 0; i < KAPPA; ++i) {
+            if (pt.coefficients[i] != Zt(0))
                 return std::nullopt;
         }
         return pt;
