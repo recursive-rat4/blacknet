@@ -61,6 +61,14 @@ struct Module {
         return rank();
     }
 
+    constexpr R& operator [] (std::size_t i) {
+        return components[i];
+    }
+
+    constexpr const R& operator [] (std::size_t i) const {
+        return components[i];
+    }
+
     consteval static std::size_t rank() noexcept {
         return N;
     }

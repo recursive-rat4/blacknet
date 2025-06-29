@@ -23,7 +23,7 @@
 #include "latticefold.h"
 #include "lm62.h"
 #include "lm62extension.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "point.h"
 #include "poseidon2lm62.h"
 #include "sumcheck.h"

@@ -29,19 +29,19 @@ BOOST_AUTO_TEST_SUITE(CircuitBuilders)
 using E = PervushinRing;
 
 BOOST_AUTO_TEST_CASE(Eqs) {
-    Matrix<E> am(4, 4, {
+    MatrixDense<E> am(4, 4, {
         E(0), E(1), E(0), E(-1),
         E(0), E(0), E(-1), E(1),
         E(4), E(0), E(0), E(-1),
         E(4), E(0), E(0), E(-1),
     });
-    Matrix<E> bm(4, 4, {
+    MatrixDense<E> bm(4, 4, {
         E(1), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0),
     });
-    Matrix<E> cm(4, 4, {
+    MatrixDense<E> cm(4, 4, {
         E(0), E(0), E(0), E(0),
         E(0), E(0), E(0), E(0),
         E(0), E(0), E(0), E(0),
@@ -71,21 +71,21 @@ BOOST_AUTO_TEST_CASE(Eqs) {
 }
 
 BOOST_AUTO_TEST_CASE(Adds) {
-    Matrix<E> am(5, 4, {
+    MatrixDense<E> am(5, 4, {
         E(0), E(0), E(0), E(2),
         E(0), E(0), E(2), E(0),
         E(0), E(0), E(2), E(0),
         E(4), E(0), E(0), E(1),
         E(4), E(0), E(0), E(1),
     });
-    Matrix<E> bm(5, 4, {
+    MatrixDense<E> bm(5, 4, {
         E(1), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0),
     });
-    Matrix<E> cm(5, 4, {
+    MatrixDense<E> cm(5, 4, {
         E(0), E(1), E(0), E(0),
         E(0), E(0), E(0), E(1),
         E(4), E(0), E(0), E(0),
@@ -117,21 +117,21 @@ BOOST_AUTO_TEST_CASE(Adds) {
 }
 
 BOOST_AUTO_TEST_CASE(Muls) {
-    Matrix<E> am(5, 4, {
+    MatrixDense<E> am(5, 4, {
         E(0), E(0), E(0), E(1),
         E(0), E(0), E(1), E(0),
         E(0), E(0), E(1), E(0),
         E(0), E(0), E(0), E(4),
         E(0), E(0), E(0), E(4),
     });
-    Matrix<E> bm(5, 4, {
+    MatrixDense<E> bm(5, 4, {
         E(0), E(0), E(0), E(1),
         E(0), E(0), E(1), E(0),
         E(0), E(0), E(1), E(0),
         E(1), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0),
     });
-    Matrix<E> cm(5, 4, {
+    MatrixDense<E> cm(5, 4, {
         E(0), E(1), E(0), E(0),
         E(0), E(0), E(0), E(1),
         E(4), E(0), E(0), E(0),
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(Muls) {
 }
 
 BOOST_AUTO_TEST_CASE(Boards) {
-    Matrix<E> am(8, 5, {
+    MatrixDense<E> am(8, 5, {
         E(0), E(1), E(1), E(0), E(0),
         E(0), E(0), E(0), E(1), E(0),
         E(4), E(1), E(1), E(1), E(0),
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(Boards) {
         E(8), E(2), E(0), E(0), E(0),
         E(8), E(2), E(0), E(0), E(0),
     });
-    Matrix<E> bm(8, 5, {
+    MatrixDense<E> bm(8, 5, {
         E(0), E(0), E(0), E(1), E(1),
         E(0), E(0), E(0), E(1), E(0),
         E(1), E(0), E(0), E(0), E(0),
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(Boards) {
         E(1), E(0), E(0), E(0), E(0),
         E(1), E(0), E(0), E(0), E(0),
     });
-    Matrix<E> cm(8, 5, {
+    MatrixDense<E> cm(8, 5, {
         E(160), E(0), E(0), E(0), E(0),
         E(0), E(4), E(0), E(0), E(0),
         E(0), E(0), E(0), E(0), E(1),
@@ -225,19 +225,19 @@ BOOST_AUTO_TEST_CASE(Boards) {
 }
 
 BOOST_AUTO_TEST_CASE(Cubism) {
-    Matrix<E> am(2, 5, {
+    MatrixDense<E> am(2, 5, {
         E(0), E(1), E(0), E(0), E(0),
         E(0), E(1), E(1), E(0), E(0),
     });
-    Matrix<E> bm(2, 5, {
+    MatrixDense<E> bm(2, 5, {
         E(0), E(1), E(0), E(0), E(0),
         E(0), E(1), E(0), E(1), E(0),
     });
-    Matrix<E> cm(2, 5, {
+    MatrixDense<E> cm(2, 5, {
         E(0), E(1), E(0), E(0), E(0),
         E(0), E(1), E(0), E(0), E(1),
     });
-    Matrix<E> dm(2, 5, {
+    MatrixDense<E> dm(2, 5, {
         E(0), E(0), E(0), E(0), E(1),
         E(350), E(0), E(0), E(0), E(0),
     });

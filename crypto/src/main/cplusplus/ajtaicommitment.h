@@ -20,7 +20,7 @@
 
 #include <type_traits>
 
-#include "matrix.h"
+#include "matrixdense.h"
 #include "vector.h"
 
 namespace blacknet::crypto {
@@ -47,17 +47,17 @@ class AjtaiCommitment {
         typename R::NumericType,
         double
     >::type;
-    Matrix<R> a;
+    MatrixDense<R> a;
     NumericType bound;
 public:
-    constexpr AjtaiCommitment(const Matrix<R>& a, const NumericType& bound)
+    constexpr AjtaiCommitment(const MatrixDense<R>& a, const NumericType& bound)
         : a(a), bound(bound) {}
-    constexpr AjtaiCommitment(Matrix<R>&& a, NumericType&& bound)
+    constexpr AjtaiCommitment(MatrixDense<R>&& a, NumericType&& bound)
         : a(std::move(a)), bound(std::move(bound)) {}
 
     template<typename Sponge>
-    constexpr static Matrix<R> setup(Sponge& sponge, std::size_t rows, std::size_t columns) {
-        return Matrix<R>::squeeze(sponge, rows, columns);
+    constexpr static MatrixDense<R> setup(Sponge& sponge, std::size_t rows, std::size_t columns) {
+        return MatrixDense<R>::squeeze(sponge, rows, columns);
     }
 
     constexpr Vector<R> commit(const Vector<R>& m) const {

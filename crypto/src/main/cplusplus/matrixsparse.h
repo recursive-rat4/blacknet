@@ -26,7 +26,7 @@
 
 namespace blacknet::crypto {
 
-template<typename E>class Matrix;
+template<typename E>class MatrixDense;
 template<typename E>class Vector;
 
 // https://arxiv.org/abs/2404.06047
@@ -45,7 +45,7 @@ struct MatrixSparse {
         rIndex.reserve(rows + 1);
         rIndex.push_back(0);
     }
-    constexpr MatrixSparse(const Matrix<E>& dense) : columns(dense.columns) {
+    constexpr MatrixSparse(const MatrixDense<E>& dense) : columns(dense.columns) {
         rIndex.reserve(dense.rows + 1);
         for (std::size_t i = 0; i < dense.rows; ++i) {
             rIndex.push_back(elements.size());
@@ -90,9 +90,9 @@ struct MatrixSparse {
         return r;
     }
 
-    constexpr Matrix<E> dense() const {
+    constexpr MatrixDense<E> dense() const {
         std::size_t rows = rIndex.size() - 1;
-        Matrix<E> r(rows, columns, E(0));
+        MatrixDense<E> r(rows, columns, E(0));
         for (std::size_t i = 0; i < rows; ++i) {
             std::size_t row_start = rIndex[i];
             std::size_t row_end = rIndex[i + 1];

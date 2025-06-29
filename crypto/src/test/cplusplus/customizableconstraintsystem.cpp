@@ -19,7 +19,7 @@
 
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "solinas62.h"
 
 using namespace blacknet::crypto;
@@ -30,8 +30,8 @@ using E = Solinas62Ring;
 
 BOOST_AUTO_TEST_CASE(ccs) {
     // Quarte
-    Matrix<E> m1(1, 3, { E(0), E(0), E(1) });
-    Matrix<E> m2(1, 3, { E(0), E(1), E(0) });
+    MatrixDense<E> m1(1, 3, { E(0), E(0), E(1) });
+    MatrixDense<E> m2(1, 3, { E(0), E(1), E(0) });
     Vector<E> z{ E(1), E(16), E(2) };
 
     std::vector<MatrixSparse<E>> ms;

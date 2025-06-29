@@ -18,7 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "circuitbuilder.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "pervushin.h"
 #include "r1cs.h"
 #include "vector.h"
@@ -30,17 +30,17 @@ using R = PervushinRing;
 BOOST_AUTO_TEST_SUITE(Matrix_Plain)
 
 BOOST_AUTO_TEST_CASE(Add) {
-    Matrix<R> a(3, 2, {
+    MatrixDense<R> a(3, 2, {
         R(1), R(3),
         R(1), R(0),
         R(1), R(2),
     });
-    Matrix<R> b{3, 2, {
+    MatrixDense<R> b{3, 2, {
         R(0), R(0),
         R(7), R(5),
         R(2), R(1),
     }};
-    Matrix<R> c{3, 2, {
+    MatrixDense<R> c{3, 2, {
         R(1), R(3),
         R(8), R(5),
         R(3), R(3),
@@ -50,18 +50,18 @@ BOOST_AUTO_TEST_CASE(Add) {
 }
 
 BOOST_AUTO_TEST_CASE(Mul) {
-    Matrix<R> a(4, 3, {
+    MatrixDense<R> a(4, 3, {
         R(1), R(0), R(1),
         R(2), R(1), R(1),
         R(0), R(1), R(1),
         R(1), R(1), R(2),
     });
-    Matrix<R> b{3, 3, {
+    MatrixDense<R> b{3, 3, {
         R(1), R(2), R(1),
         R(2), R(3), R(1),
         R(4), R(2), R(2),
     }};
-    Matrix<R> c{4, 3, {
+    MatrixDense<R> c{4, 3, {
         R(5), R(4), R(3),
         R(8), R(9), R(5),
         R(6), R(5), R(3),
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(Mul) {
 }
 
 BOOST_AUTO_TEST_CASE(VectorProduct) {
-    Matrix<R> a(3, 2, {
+    MatrixDense<R> a(3, 2, {
         R(17), R(18),
         R(33), R(34),
         R(49), R(50),
@@ -94,17 +94,17 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
 }
 
 BOOST_AUTO_TEST_CASE(Concatectation) {
-    Matrix<R> a(3, 2, {
+    MatrixDense<R> a(3, 2, {
         R(1), R(3),
         R(1), R(0),
         R(1), R(2),
     });
-    Matrix<R> b{3, 2, {
+    MatrixDense<R> b{3, 2, {
         R(0), R(0),
         R(7), R(5),
         R(2), R(1),
     }};
-    Matrix<R> c{3, 4, {
+    MatrixDense<R> c{3, 4, {
         R(1), R(3), R(0), R(0),
         R(1), R(0), R(7), R(5),
         R(1), R(2), R(2), R(1),
@@ -113,12 +113,12 @@ BOOST_AUTO_TEST_CASE(Concatectation) {
 }
 
 BOOST_AUTO_TEST_CASE(Transposition) {
-    Matrix<R> a(3, 2, {
+    MatrixDense<R> a(3, 2, {
         R(1), R(2),
         R(3), R(4),
         R(5), R(6),
     });
-    Matrix<R> b{2, 3, {
+    MatrixDense<R> b{2, 3, {
         R(1), R(3), R(5),
         R(2), R(4), R(6),
     }};
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(Transposition) {
 }
 
 BOOST_AUTO_TEST_CASE(InfinityNorm) {
-    Matrix<R> a(2, 2, {
+    MatrixDense<R> a(2, 2, {
         R(0), R(1),
         R(2), R(3),
     });
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(Matrix_Circuit)
 
 BOOST_AUTO_TEST_CASE(VectorProduct) {
-    const Matrix<R> a(3, 2, {
+    const MatrixDense<R> a(3, 2, {
         R(17), R(18),
         R(33), R(34),
         R(49), R(50),
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
 
     using Builder = CircuitBuilder<R, 2>;
     Builder circuit;
-    using MatrixCircuit = Matrix<R>::Circuit<Builder>;
+    using MatrixCircuit = MatrixDense<R>::Circuit<Builder>;
     MatrixCircuit a_circuit(circuit, Builder::Variable::Type::Input, a.rows, a.columns);
     using VectorCircuit = Vector<R>::Circuit<Builder>;
     VectorCircuit b_circuit(circuit, Builder::Variable::Type::Input, b.size());
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
     std::ranges::copy(a.elements, std::back_inserter(z.elements));
     std::ranges::copy(b.elements, std::back_inserter(z.elements));
 
-    using MatrixTracer = Matrix<R>::Tracer;
+    using MatrixTracer = MatrixDense<R>::Tracer;
     MatrixTracer a_tracer(a, z.elements);
     using VectorTracer = Vector<R>::Tracer;
     VectorTracer b_tracer(b, z.elements);

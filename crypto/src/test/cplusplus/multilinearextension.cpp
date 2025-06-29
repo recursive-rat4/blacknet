@@ -21,7 +21,7 @@
 #include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "hypercube.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "multilinearextension.h"
 #include "point.h"
 #include "solinas62.h"
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(bind) {
 
 BOOST_AUTO_TEST_CASE(matrix) {
     Hypercube<E> hc(3);
-    Matrix<E> a(2, 4, {
+    MatrixDense<E> a(2, 4, {
         E(30), E(31), E(32), E(33),
         E(43), E(44), E(45), E(46),
     });

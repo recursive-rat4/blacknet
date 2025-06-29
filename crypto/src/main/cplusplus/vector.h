@@ -30,7 +30,7 @@
 
 namespace blacknet::crypto {
 
-template<typename E>class Matrix;
+template<typename E>class MatrixDense;
 
 template<typename E>
 class Vector {
@@ -152,10 +152,10 @@ public:
         return sigma;
     }
 
-    constexpr Matrix<E> tensor(const Vector& other) const {
+    constexpr MatrixDense<E> tensor(const Vector& other) const {
         std::size_t m = elements.size();
         std::size_t n = other.elements.size();
-        Matrix<E> r(m, n);
+        MatrixDense<E> r(m, n);
         for (std::size_t i = 0; i < m; ++i)
             for (std::size_t j = 0; j < n; ++j)
                 r[i, j] = elements[i] * other.elements[j];

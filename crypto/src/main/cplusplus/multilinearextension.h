@@ -29,7 +29,7 @@
 #include <fmt/ranges.h>
 
 #include "eqextension.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "point.h"
 #include "vector.h"
 
@@ -43,7 +43,7 @@ struct MultilinearExtension {
     constexpr MultilinearExtension(std::size_t size) : coefficients(size) {}
     constexpr MultilinearExtension(std::initializer_list<E> init) : coefficients(init) {}
     constexpr MultilinearExtension(std::vector<E>&& coefficients) : coefficients(std::move(coefficients)) {}
-    constexpr MultilinearExtension(const Matrix<E>& matrix) : coefficients(matrix.elements) {}
+    constexpr MultilinearExtension(const MatrixDense<E>& matrix) : coefficients(matrix.elements) {}
     template<typename S>
     requires(
         std::same_as<E, typename S::BaseRing> ||

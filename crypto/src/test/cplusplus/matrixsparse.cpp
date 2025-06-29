@@ -17,7 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "matrix.h"
+#include "matrixdense.h"
 #include "matrixsparse.h"
 #include "pervushin.h"
 #include "vector.h"
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(Conversion) {
         { 0, 1, 1, 2, 3, 0, 3, 1, 3 },
         { R(1), R(2), R(3), R(4), R(5), R(6), R(7), R(8), R(9) }
     );
-    Matrix<R> md(4, 4, {
+    MatrixDense<R> md(4, 4, {
         R(1), R(2), R(0), R(0),
         R(0), R(3), R(4), R(5),
         R(6), R(0), R(0), R(7),

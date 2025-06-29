@@ -22,7 +22,7 @@
 #include <stdexcept>
 
 #include "logicgate.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "vector.h"
 
 namespace blacknet::crypto {
@@ -93,7 +93,7 @@ public:
         return p;
     }
 
-    constexpr static Matrix<R> matrix(
+    constexpr static MatrixDense<R> matrix(
         NumericType radix,
         std::size_t m, std::size_t n
     ) {

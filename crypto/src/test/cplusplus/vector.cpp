@@ -18,7 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "circuitbuilder.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "pervushin.h"
 #include "r1cs.h"
 #include "vector.h"
@@ -164,12 +164,12 @@ BOOST_AUTO_TEST_CASE(TensorProduct) {
         R(3),
         R(4),
     };
-    Matrix<R> c{3, 2, {
+    MatrixDense<R> c{3, 2, {
         R(0), R(0),
         R(3), R(4),
         R(6), R(8),
     }};
-    Matrix<R> d{2, 3, {
+    MatrixDense<R> d{2, 3, {
         R(0), R(3), R(6),
         R(0), R(4), R(8),
     }};

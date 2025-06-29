@@ -21,7 +21,7 @@
 #include <random>
 
 #include "binaryuniformdistribution.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "vector.h"
 
 namespace blacknet::crypto {
@@ -47,14 +47,14 @@ struct JohnsonLindenstrauss {
         }
     };
 
-    constexpr static Vector<Z> project(const Matrix<Z>& map, const Vector<Z> point) {
+    constexpr static Vector<Z> project(const MatrixDense<Z>& map, const Vector<Z> point) {
         return map * point;
     }
 
     template<std::uniform_random_bit_generator RNG>
-    constexpr static Matrix<Z> random(RNG& rng, std::size_t n, std::size_t k) {
+    constexpr static MatrixDense<Z> random(RNG& rng, std::size_t n, std::size_t k) {
         DistributionRNG<RNG> dst;
-        return Matrix<Z>::random(rng, dst, n, k);
+        return MatrixDense<Z>::random(rng, dst, n, k);
     }
 };
 

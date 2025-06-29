@@ -20,7 +20,7 @@
 
 #include "fastrng.h"
 #include "johnsonlindenstrauss.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "pervushin.h"
 #include "vector.h"
 
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(test) {
     NumericType slack_ecd = 3;
 
     std::uniform_int_distribution<NumericType> dst{-b+1, +b-1};
-    Matrix<Z> map = JohnsonLindenstrauss::random(rng, n, k);
+    MatrixDense<Z> map = JohnsonLindenstrauss::random(rng, n, k);
     Vector<Z> high = Vector<Z>::random(rng, dst, k);
     Vector<Z> low = JohnsonLindenstrauss::project(map, high);
 

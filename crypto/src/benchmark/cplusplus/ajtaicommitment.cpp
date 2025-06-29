@@ -22,7 +22,7 @@
 #include "latticefold.h"
 #include "lm62.h"
 #include "lm62extension.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
@@ -40,7 +40,7 @@ static void BM_AjtaiCommitment(benchmark::State& state) {
     std::size_t M = 1;
 
     AjtaiCommitment<R, NormP::Infinity> cs(
-        Matrix<R>::random(rng, LatticeFold::K, M),
+        MatrixDense<R>::random(rng, LatticeFold::K, M),
         LatticeFold::B
     );
     Vector<R> m = Vector<R>::random(rng, M);

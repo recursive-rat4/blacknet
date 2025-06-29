@@ -20,7 +20,7 @@
 #include "fastrng.h"
 #include "johnsonlindenstrauss.h"
 #include "lm62.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
@@ -34,7 +34,7 @@ static std::size_t N = 1024;
 static FastDRG rng;
 
 static void BM_JohnsonLindenstrauss_Sample(benchmark::State& state) {
-    Matrix<Z> map;
+    MatrixDense<Z> map;
 
     for (auto _ : state) {
         map = JL::random(rng, M, N);
@@ -47,7 +47,7 @@ static void BM_JohnsonLindenstrauss_Sample(benchmark::State& state) {
 BENCHMARK(BM_JohnsonLindenstrauss_Sample);
 
 static void BM_JohnsonLindenstrauss_Project(benchmark::State& state) {
-    Matrix<Z> map = JL::random(rng, M, N);
+    MatrixDense<Z> map = JL::random(rng, M, N);
     Vector<Z> high = Vector<Z>::random(rng, N);
     Vector<Z> low;
 

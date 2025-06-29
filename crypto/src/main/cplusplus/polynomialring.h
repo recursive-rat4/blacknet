@@ -37,7 +37,6 @@ private:
     using Z = Params::Z;
     constexpr static const std::size_t N = Params::N;
 public:
-
     consteval static PolynomialRing LEFT_ADDITIVE_IDENTITY() {
         PolynomialRing t;
         std::ranges::fill(t.coefficients, Z::LEFT_ADDITIVE_IDENTITY());
@@ -45,11 +44,7 @@ public:
         return t;
     }
     consteval static PolynomialRing LEFT_MULTIPLICATIVE_IDENTITY() {
-        PolynomialRing t;
-        t.coefficients[0] = Z::LEFT_MULTIPLICATIVE_IDENTITY();
-        std::fill_n(t.coefficients.begin() + 1, N - 1, Z(0));
-        Params::toForm(t.coefficients);
-        return t;
+        return Z::LEFT_MULTIPLICATIVE_IDENTITY();
     }
 
     using BaseRing = Z;
@@ -64,7 +59,7 @@ public:
         Params::toForm(coefficients);
     }
     constexpr PolynomialRing(std::initializer_list<Z> init) {
-        std::copy(init.begin(), init.end(), coefficients.begin());
+        std::ranges::copy(init, coefficients.begin());
         std::fill_n(coefficients.begin() + init.size(), N - init.size(), Z(0));
         Params::toForm(coefficients);
     }

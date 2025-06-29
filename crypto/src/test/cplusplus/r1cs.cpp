@@ -18,7 +18,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "fastrng.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "pervushin.h"
 #include "pervushinextension.h"
 #include "r1cs.h"
@@ -34,17 +34,17 @@ using R = PervushinRingDegree2;
 
 BOOST_AUTO_TEST_CASE(Satisfaction) {
     // Sixte with riposte
-    Matrix<R> a(3, 5, {
+    MatrixDense<R> a(3, 5, {
         R(0), R(0), R(1), R(0), R(0),
         R(0), R(0), R(0), R(1), R(0),
         R(0), R(0), R(0), R(0), R(1),
     });
-    Matrix<R> b(3, 5, {
+    MatrixDense<R> b(3, 5, {
         R(0), R(0), R(0), R(1), R(0),
         R(0), R(0), R(0), R(1), R(0),
         R(0), R(0), R(0), R(0), R(1),
     });
-    Matrix<R> c(3, 5, {
+    MatrixDense<R> c(3, 5, {
         R(4), R(1), R(0), R(0), R(0),
         R(0), R(0), R(1), R(0), R(0),
         R(0), R(0), R(0), R(1), R(0),

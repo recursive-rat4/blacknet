@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_MATRIX_H
-#define BLACKNET_CRYPTO_MATRIX_H
+#ifndef BLACKNET_CRYPTO_MATRIXDENSE_H
+#define BLACKNET_CRYPTO_MATRIXDENSE_H
 
 #include <algorithm>
 #include <concepts>
@@ -33,7 +33,7 @@ namespace blacknet::crypto {
 template<typename E>class Vector;
 
 template<typename E>
-class Matrix {
+class MatrixDense {
 public:
     using ElementType = E;
 
@@ -41,23 +41,23 @@ public:
     std::size_t columns;
     std::vector<E> elements;
 
-    constexpr Matrix() noexcept = default;
-    constexpr Matrix(std::size_t rows, std::size_t columns)
+    constexpr MatrixDense() noexcept = default;
+    constexpr MatrixDense(std::size_t rows, std::size_t columns)
         : rows(rows), columns(columns), elements(rows * columns) {}
-    constexpr Matrix(std::size_t rows, std::size_t columns, const E& fill)
+    constexpr MatrixDense(std::size_t rows, std::size_t columns, const E& fill)
         : rows(rows), columns(columns), elements(rows * columns, fill) {}
-    constexpr Matrix(std::size_t rows, std::size_t columns, std::initializer_list<E> init)
+    constexpr MatrixDense(std::size_t rows, std::size_t columns, std::initializer_list<E> init)
         : rows(rows), columns(columns), elements(init) {}
-    constexpr Matrix(std::size_t rows, std::size_t columns, std::vector<E>&& elements)
+    constexpr MatrixDense(std::size_t rows, std::size_t columns, std::vector<E>&& elements)
         : rows(rows), columns(columns), elements(std::move(elements)) {}
-    constexpr Matrix(const Matrix&) = default;
-    constexpr Matrix(Matrix&&) noexcept = default;
-    constexpr ~Matrix() noexcept = default;
+    constexpr MatrixDense(const MatrixDense&) = default;
+    constexpr MatrixDense(MatrixDense&&) noexcept = default;
+    constexpr ~MatrixDense() noexcept = default;
 
-    constexpr Matrix& operator = (const Matrix&) = default;
-    constexpr Matrix& operator = (Matrix&&) noexcept = default;
+    constexpr MatrixDense& operator = (const MatrixDense&) = default;
+    constexpr MatrixDense& operator = (MatrixDense&&) noexcept = default;
 
-    constexpr bool operator == (const Matrix&) const = default;
+    constexpr bool operator == (const MatrixDense&) const = default;
 
     constexpr E& operator [] (std::size_t i, std::size_t j) {
         return elements[i * columns + j];
@@ -67,17 +67,17 @@ public:
         return elements[i * columns + j];
     }
 
-    constexpr Matrix operator + (const Matrix& other) const {
-        Matrix r(rows, columns);
+    constexpr MatrixDense operator + (const MatrixDense& other) const {
+        MatrixDense r(rows, columns);
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < columns; ++j)
                 r[i, j] = (*this)[i, j] + other[i, j];
         return r;
     }
 
-    constexpr Matrix operator * (const Matrix& other) const {
+    constexpr MatrixDense operator * (const MatrixDense& other) const {
         // Iterative algorithm
-        Matrix r(rows, other.columns, E::LEFT_ADDITIVE_IDENTITY());
+        MatrixDense r(rows, other.columns, E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < other.columns; ++j)
                 for (std::size_t k = 0; k < columns; ++k)
@@ -93,7 +93,7 @@ public:
         return r;
     }
 
-    friend constexpr Vector<E> operator * (const Vector<E>& lps, const Matrix& rps) {
+    friend constexpr Vector<E> operator * (const Vector<E>& lps, const MatrixDense& rps) {
         Vector<E> r(rps.columns, E::LEFT_ADDITIVE_IDENTITY());
         for (std::size_t i = 0; i < rps.rows; ++i)
             for (std::size_t j = 0; j < rps.columns; ++j)
@@ -101,8 +101,8 @@ public:
         return r;
     }
 
-    constexpr Matrix operator || (const Matrix& other) const {
-        Matrix r(rows, columns + other.columns);
+    constexpr MatrixDense operator || (const MatrixDense& other) const {
+        MatrixDense r(rows, columns + other.columns);
         for (std::size_t i = 0; i < rows; ++i) {
             for (std::size_t j = 0; j < columns; ++j)
                 r[i, j] = (*this)[i, j];
@@ -112,8 +112,8 @@ public:
         return r;
     }
 
-    constexpr Matrix transpose() const {
-        Matrix r(columns, rows);
+    constexpr MatrixDense transpose() const {
+        MatrixDense r(columns, rows);
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < columns; ++j)
                 r[j, i] = (*this)[i, j];
@@ -128,36 +128,36 @@ public:
         });
     }
 
-    friend std::ostream& operator << (std::ostream& out, const Matrix& val)
+    friend std::ostream& operator << (std::ostream& out, const MatrixDense& val)
     {
         fmt::print(out, "{}", val.elements);
         return out;
     }
 
     template<typename Sponge>
-    constexpr static Matrix squeeze(Sponge& sponge, std::size_t rows, std::size_t columns) {
-        Matrix t(rows, columns);
+    constexpr static MatrixDense squeeze(Sponge& sponge, std::size_t rows, std::size_t columns) {
+        MatrixDense t(rows, columns);
         std::ranges::generate(t.elements, [&] { return E::squeeze(sponge); });
         return t;
     }
 
     template<typename Sponge, typename DST>
-    constexpr static Matrix squeeze(Sponge& sponge, DST& dst, std::size_t rows, std::size_t columns) {
-        Matrix t(rows, columns);
+    constexpr static MatrixDense squeeze(Sponge& sponge, DST& dst, std::size_t rows, std::size_t columns) {
+        MatrixDense t(rows, columns);
         std::ranges::generate(t.elements, [&] { return E::squeeze(sponge, dst); });
         return t;
     }
 
     template<std::uniform_random_bit_generator RNG>
-    static Matrix random(RNG& rng, std::size_t rows, std::size_t columns) {
-        Matrix t(rows, columns);
+    static MatrixDense random(RNG& rng, std::size_t rows, std::size_t columns) {
+        MatrixDense t(rows, columns);
         std::ranges::generate(t.elements, [&] { return E::random(rng); });
         return t;
     }
 
     template<std::uniform_random_bit_generator RNG, typename DST>
-    static Matrix random(RNG& rng, DST& dst, std::size_t rows, std::size_t columns) {
-        Matrix t(rows, columns);
+    static MatrixDense random(RNG& rng, DST& dst, std::size_t rows, std::size_t columns) {
+        MatrixDense t(rows, columns);
         std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });
         return t;
     }
@@ -207,7 +207,7 @@ struct Circuit {
 struct Tracer {
     using Vector = Vector<E>::Tracer;
 
-    Matrix matrix;
+    MatrixDense matrix;
     std::vector<E>& trace;
 
     constexpr E& operator [] (std::size_t i, std::size_t j) {

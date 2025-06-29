@@ -26,7 +26,7 @@
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "latticegadget.h"
-#include "matrix.h"
+#include "matrixdense.h"
 #include "multilinearextension.h"
 #include "numbertheoretictransform.h"
 #include "point.h"
@@ -140,10 +140,10 @@ struct LatticeFold {
 
     };
 
-    constexpr static Matrix<Rq> gadget_medium(std::size_t m, std::size_t n) {
+    constexpr static MatrixDense<Rq> gadget_medium(std::size_t m, std::size_t n) {
         return LatticeGadget<Rq>::matrix(B, m, n);
     }
-    constexpr static Matrix<Rq> gadget_small(std::size_t m, std::size_t n) {
+    constexpr static MatrixDense<Rq> gadget_small(std::size_t m, std::size_t n) {
         return LatticeGadget<Rq>::matrix(b, m, n);
     }
     constexpr static Vector<Rq> decompose_medium(const Vector<Rq>& f) {
