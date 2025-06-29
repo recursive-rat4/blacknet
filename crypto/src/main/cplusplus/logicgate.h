@@ -103,7 +103,7 @@ struct Circuit {
     constexpr LinearCombination And(const VectorCircuit& a) {
         if (a.size() == 1) return a[0];
         auto scope = circuit.scope("LogicGate::And");
-        LinearCombination pi = R::LEFT_MULTIPLICATIVE_IDENTITY();
+        LinearCombination pi = R::multiplicative_identity();
         for (const auto& i : a) {
             LinearCombination p = circuit.auxiliary();
             circuit(p == pi * i);
@@ -162,7 +162,7 @@ struct Tracer {
     }
     constexpr R And(const Vector<R>& a) {
         if (a.size() == 1) return a[0];
-        R pi = R::LEFT_MULTIPLICATIVE_IDENTITY();
+        R pi = R::multiplicative_identity();
         for (const auto& i : a) {
             pi = And(pi, i);
         }

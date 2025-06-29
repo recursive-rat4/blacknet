@@ -131,7 +131,7 @@ struct Circuit {
         if (have_bits == 0) {
             auto scope = circuit.scope("BinaryUniformDistribution::sample");
             auto squeezed = sponge.squeeze();
-            Z p = Z::LEFT_MULTIPLICATIVE_IDENTITY();
+            Z p = Z::multiplicative_identity();
             LinearCombination composed;
             for (std::size_t i = 0; i < Z::bits(); ++i) {
                 LinearCombination digit = circuit.auxiliary();

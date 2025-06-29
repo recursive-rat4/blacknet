@@ -78,7 +78,7 @@ struct MatrixSparse {
 
     constexpr Vector<E> operator * (const Vector<E>& other) const {
         std::size_t rows = rIndex.size() - 1;
-        Vector<E> r(rows, E::LEFT_ADDITIVE_IDENTITY());
+        Vector<E> r(rows, E::additive_identity());
         for (std::size_t i = 0; i < rows; ++i) {
             std::size_t row_start = rIndex[i];
             std::size_t row_end = rIndex[i + 1];

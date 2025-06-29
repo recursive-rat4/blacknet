@@ -37,8 +37,8 @@ private:
     constexpr Z2(I n, int) : n(n) {}
 public:
     constexpr static const bool is_integer_ring = true;
-    consteval static Z2 LEFT_ADDITIVE_IDENTITY() { return Z2(0); }
-    consteval static Z2 LEFT_MULTIPLICATIVE_IDENTITY() { return Z2(1); }
+    consteval static Z2 additive_identity() { return Z2(0); }
+    consteval static Z2 multiplicative_identity() { return Z2(1); }
 
     using BaseRing = Z2;
     using NumericType = I;
@@ -85,7 +85,7 @@ public:
     }
 
     constexpr Z2 douple() const {
-        return LEFT_ADDITIVE_IDENTITY();
+        return additive_identity();
     }
 
     constexpr Z2 square() const {
@@ -94,7 +94,7 @@ public:
 
     constexpr std::optional<Z2> invert() const {
         if (*this != Z2(0)) {
-            return LEFT_MULTIPLICATIVE_IDENTITY();
+            return multiplicative_identity();
         } else {
             return std::nullopt;
         }

@@ -35,7 +35,7 @@ class WeierstrassGroupAffine {
 public:
     typedef BF Base;
     typedef SF Scalar;
-    consteval static WeierstrassGroupAffine LEFT_ADDITIVE_IDENTITY() { return WeierstrassGroupAffine(); }
+    consteval static WeierstrassGroupAffine additive_identity() { return WeierstrassGroupAffine(); }
 
     consteval WeierstrassGroupAffine() = default;
     constexpr WeierstrassGroupAffine(const BF& x, const BF& y) : x{x}, y(y) {}

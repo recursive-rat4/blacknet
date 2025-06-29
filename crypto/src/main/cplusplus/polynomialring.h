@@ -37,14 +37,14 @@ private:
     using Z = Params::Z;
     constexpr static const std::size_t N = Params::N;
 public:
-    consteval static PolynomialRing LEFT_ADDITIVE_IDENTITY() {
+    consteval static PolynomialRing additive_identity() {
         PolynomialRing t;
-        std::ranges::fill(t.coefficients, Z::LEFT_ADDITIVE_IDENTITY());
+        std::ranges::fill(t.coefficients, Z::additive_identity());
         Params::toForm(t.coefficients);
         return t;
     }
-    consteval static PolynomialRing LEFT_MULTIPLICATIVE_IDENTITY() {
-        return Z::LEFT_MULTIPLICATIVE_IDENTITY();
+    consteval static PolynomialRing multiplicative_identity() {
+        return Z::multiplicative_identity();
     }
 
     using BaseRing = Z;
@@ -92,7 +92,7 @@ public:
     }
 
     constexpr PolynomialRing operator * (const PolynomialRing& other) const {
-        PolynomialRing t(PolynomialRing::LEFT_ADDITIVE_IDENTITY());
+        PolynomialRing t(PolynomialRing::additive_identity());
         Params::convolute(t.coefficients, this->coefficients, other.coefficients);
         return t;
     }
@@ -144,7 +144,7 @@ public:
                 t.coefficients[i] = coefficients[i].douple();
             return t;
         } else {
-            return LEFT_ADDITIVE_IDENTITY();
+            return additive_identity();
         }
     }
 

@@ -66,7 +66,7 @@ public:
             throw std::runtime_error(fmt::format("Assigned {} variables instead of {} required", z.size(), variables()));
         }
 
-        Vector<E> sigma(rows, E::LEFT_ADDITIVE_IDENTITY());
+        Vector<E> sigma(rows, E::additive_identity());
         for (std::size_t i = 0; i < c.size(); ++i) {
             Vector<E> circle(rows, c[i]);
             for (std::size_t j : s[i]) {
@@ -74,7 +74,7 @@ public:
             }
             sigma += circle;
         }
-        return sigma == Vector<E>(rows, E(0));
+        return sigma == Vector<E>(rows, E::additive_identity());
     }
 
     constexpr bool operator == (const CustomizableConstraintSystem&) const = default;
@@ -87,7 +87,7 @@ public:
         return columns;
     }
 
-    constexpr Vector<E> assigment(E&& constant = E(1)) const {
+    constexpr Vector<E> assigment(E&& constant = E::multiplicative_identity()) const {
         Vector<E> z;
         z.elements.reserve(variables());
         z.elements.emplace_back(constant);
@@ -123,7 +123,7 @@ public:
         ) : deg(deg), var(var), mz(std::move(mz)), s(std::move(s)), c(std::move(c)) {}
 
         constexpr E operator () (const Point<E>& point) const {
-            E sigma(E::LEFT_ADDITIVE_IDENTITY());
+            E sigma(E::additive_identity());
             for (std::size_t i = 0; i < c.size(); ++i) {
                 E circle(c[i]);
                 for (std::size_t j : s[i]) {
@@ -136,7 +136,7 @@ public:
 
         template<E e, typename Fuse>
         constexpr void bind(std::vector<E>& hypercube) const {
-            std::vector<E> sigma(hypercube.size(), E::LEFT_ADDITIVE_IDENTITY());
+            std::vector<E> sigma(hypercube.size(), E::additive_identity());
             for (std::size_t i = 0; i < c.size(); ++i) {
                 std::vector<E> circle(hypercube.size(), c[i]);
                 for (std::size_t j : s[i]) {

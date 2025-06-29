@@ -194,7 +194,7 @@ struct LatticeFold {
         Fq mu;
         MultilinearExtension<Fq> mle;
 
-        constexpr G2(const Vector<Rq>& f) : mu(Fq::LEFT_MULTIPLICATIVE_IDENTITY()), mle(f) {}
+        constexpr G2(const Vector<Rq>& f) : mu(Fq::multiplicative_identity()), mle(f) {}
         constexpr G2(const Fq& mu, const Vector<Rq>& f) : mu(mu), mle(f) {}
         constexpr G2(Fq&& mu, MultilinearExtension<Fq>&& mle) : mu(std::move(mu)), mle(std::move(mle)) {}
 

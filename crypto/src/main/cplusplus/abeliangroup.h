@@ -30,7 +30,7 @@ namespace abeliangroup {
 
 template<typename AG, typename Scalar>
 constexpr AG multiply(const AG& e, const Scalar& s) {
-    AG P(AG::LEFT_ADDITIVE_IDENTITY());
+    AG P(AG::additive_identity());
     AG Q(e);
 
     int QisQdouple = 0;

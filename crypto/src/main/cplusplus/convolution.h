@@ -74,7 +74,7 @@ namespace {
     constexpr void quotient(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         static_assert(M.back() == Z(1));
         std::array<Z, N + N - 1> t;
-        t.fill(Z::LEFT_ADDITIVE_IDENTITY());
+        t.fill(Z::additive_identity());
         lonk(t, a, b);
         if constexpr (N == 2) {
             fuse<Z, M[0]>(r[0], t[0], t[2]);

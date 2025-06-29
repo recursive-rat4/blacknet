@@ -37,7 +37,7 @@ class TwistedEdwardsGroupExtended {
 public:
     typedef BF Base;
     typedef SR Scalar;
-    consteval static TwistedEdwardsGroupExtended LEFT_ADDITIVE_IDENTITY() { return TwistedEdwardsGroupExtended(); }
+    consteval static TwistedEdwardsGroupExtended additive_identity() { return TwistedEdwardsGroupExtended(); }
 
     consteval TwistedEdwardsGroupExtended() : x(0), y(1), z(1), t(0) {}
     constexpr TwistedEdwardsGroupExtended(const BF& x, const BF& y) : x{x}, y(y), z(BF(1)), t(x * y) {}

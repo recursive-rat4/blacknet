@@ -56,7 +56,7 @@ public:
         using namespace oneapi::tbb;
         return parallel_reduce(
             blocked_range<std::size_t>(0, v.size()),
-            G::LEFT_ADDITIVE_IDENTITY(),
+            G::additive_identity(),
             [&](const blocked_range<std::size_t>& range, G acc) -> G {
                 for (std::size_t i = range.begin(); i != range.end(); ++i)
                     acc += pp[i] * v[i];

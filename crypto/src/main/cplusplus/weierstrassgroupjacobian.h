@@ -36,7 +36,7 @@ class WeierstrassGroupJacobian {
 public:
     typedef BF Base;
     typedef SF Scalar;
-    consteval static WeierstrassGroupJacobian LEFT_ADDITIVE_IDENTITY() { return WeierstrassGroupJacobian(); }
+    consteval static WeierstrassGroupJacobian additive_identity() { return WeierstrassGroupJacobian(); }
 
     consteval WeierstrassGroupJacobian() = default;
     constexpr WeierstrassGroupJacobian(const BF& x, const BF& y, const BF& z) : x{x}, y(y), z(z) {}

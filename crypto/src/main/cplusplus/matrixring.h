@@ -34,13 +34,13 @@ template<typename R,std::size_t N>struct Module;
 
 template<typename R, std::size_t N>
 struct MatrixRing {
-    consteval static MatrixRing LEFT_ADDITIVE_IDENTITY() {
+    consteval static MatrixRing additive_identity() {
         MatrixRing t;
-        t.elements.fill(R::LEFT_ADDITIVE_IDENTITY());
+        t.elements.fill(R::additive_identity());
         return t;
     }
-    consteval static MatrixRing LEFT_MULTIPLICATIVE_IDENTITY() {
-        return R::LEFT_MULTIPLICATIVE_IDENTITY();
+    consteval static MatrixRing multiplicative_identity() {
+        return R::multiplicative_identity();
     }
 
     using BaseRing = R;
@@ -53,7 +53,7 @@ struct MatrixRing {
         for (std::size_t i = 0; i < rows(); ++i)
             for (std::size_t j = 0; j < columns(); ++j)
                 if (i != j)
-                    (*this)[i, j] = R::LEFT_ADDITIVE_IDENTITY();
+                    (*this)[i, j] = R::additive_identity();
                 else
                     (*this)[i, j] = e;
     }
@@ -100,7 +100,7 @@ struct MatrixRing {
     constexpr MatrixRing operator * (const MatrixRing& other) const {
         // Iterative algorithm
         MatrixRing r;
-        r.elements.fill(R::LEFT_ADDITIVE_IDENTITY());
+        r.elements.fill(R::additive_identity());
         for (std::size_t i = 0; i < rows(); ++i)
             for (std::size_t j = 0; j < other.columns(); ++j)
                 for (std::size_t k = 0; k < columns(); ++k)
@@ -109,7 +109,7 @@ struct MatrixRing {
     }
 
     constexpr Module<R, N> operator * (const Module<R, N>& other) const {
-        auto r = Module<R, N>::identity();
+        auto r = Module<R, N>::additive_identity();
         for (std::size_t i = 0; i < rows(); ++i)
             for (std::size_t j = 0; j < columns(); ++j)
                 r[i] += (*this)[i, j] * other[j];
@@ -117,7 +117,7 @@ struct MatrixRing {
     }
 
     friend constexpr Module<R, N> operator * (const Module<R, N>& lps, const MatrixRing& rps) {
-        auto r = Module<R, N>::identity();
+        auto r = Module<R, N>::additive_identity();
         for (std::size_t i = 0; i < rps.rows(); ++i)
             for (std::size_t j = 0; j < rps.columns(); ++j)
                 r[j] += lps[i] * rps[i, j];
@@ -178,7 +178,7 @@ struct MatrixRing {
                     t[i, j] = (*this)[i, j].douple();
             return t;
         } else {
-            return LEFT_ADDITIVE_IDENTITY();
+            return additive_identity();
         }
     }
 

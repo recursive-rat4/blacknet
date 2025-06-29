@@ -83,7 +83,7 @@ struct MultilinearExtension {
 
     constexpr E operator () (const Point<E>& point) const {
         const std::vector<E>& pis = EqExtension<E>::evaluate(point.coordinates);
-        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        E sigma(E::additive_identity());
         for (std::size_t i = 0; i < coefficients.size(); ++i)
             sigma += pis[i] * coefficients[i];
         return sigma;
@@ -227,7 +227,7 @@ struct Tracer {
 
     constexpr E operator () (const Point<E>& point) const {
         const std::vector<E>& pis = EqExtension<E>::Tracer::hypercube(point.coordinates, trace);
-        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        E sigma(E::additive_identity());
         for (std::size_t i = 0; i < mle.coefficients.size(); ++i)
             sigma += trace.emplace_back(
                 pis[i] * mle.coefficients[i]

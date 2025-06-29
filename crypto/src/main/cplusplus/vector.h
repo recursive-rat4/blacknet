@@ -146,7 +146,7 @@ public:
     }
 
     constexpr E dot(const Vector& other) const {
-        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        E sigma(E::additive_identity());
         for (std::size_t i = 0; i < elements.size(); ++i)
             sigma += elements[i] * other.elements[i];
         return sigma;
@@ -312,7 +312,7 @@ struct Tracer {
     }
 
     constexpr E dot(const Tracer& other) const {
-        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        E sigma(E::additive_identity());
         for (std::size_t i = 0; i < vector.size(); ++i)
             sigma += trace.emplace_back(
                 vector[i] * other[i]

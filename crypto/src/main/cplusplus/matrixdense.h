@@ -77,7 +77,7 @@ public:
 
     constexpr MatrixDense operator * (const MatrixDense& other) const {
         // Iterative algorithm
-        MatrixDense r(rows, other.columns, E::LEFT_ADDITIVE_IDENTITY());
+        MatrixDense r(rows, other.columns, E::additive_identity());
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < other.columns; ++j)
                 for (std::size_t k = 0; k < columns; ++k)
@@ -86,7 +86,7 @@ public:
     }
 
     constexpr Vector<E> operator * (const Vector<E>& other) const {
-        Vector<E> r(rows, E::LEFT_ADDITIVE_IDENTITY());
+        Vector<E> r(rows, E::additive_identity());
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < columns; ++j)
                 r[i] += (*this)[i, j] * other[j];
@@ -94,7 +94,7 @@ public:
     }
 
     friend constexpr Vector<E> operator * (const Vector<E>& lps, const MatrixDense& rps) {
-        Vector<E> r(rps.columns, E::LEFT_ADDITIVE_IDENTITY());
+        Vector<E> r(rps.columns, E::additive_identity());
         for (std::size_t i = 0; i < rps.rows; ++i)
             for (std::size_t j = 0; j < rps.columns; ++j)
                 r[j] += lps[i] * rps[i, j];
@@ -219,7 +219,7 @@ struct Tracer {
     }
 
     constexpr Vector operator * (const Vector& other) const {
-        Vector r(matrix.rows, E::LEFT_ADDITIVE_IDENTITY(), trace);
+        Vector r(matrix.rows, E::additive_identity(), trace);
         for (std::size_t i = 0; i < matrix.rows; ++i)
             for (std::size_t j = 0; j < matrix.columns; ++j)
                 r[i] += trace.emplace_back(

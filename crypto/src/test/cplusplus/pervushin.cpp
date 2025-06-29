@@ -113,10 +113,10 @@ BOOST_AUTO_TEST_CASE(Fe2Mul) {
     BOOST_TEST(c == b * a);
     BOOST_TEST(d == a * c);
     BOOST_TEST(d == c * a);
-    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == Fe2::LEFT_ADDITIVE_IDENTITY() * c);
-    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == c * Fe2::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(c == c * Fe2::LEFT_MULTIPLICATIVE_IDENTITY());
-    BOOST_TEST(c == Fe2::LEFT_MULTIPLICATIVE_IDENTITY() * c);
+    BOOST_TEST(Fe2::additive_identity() == Fe2::additive_identity() * c);
+    BOOST_TEST(Fe2::additive_identity() == c * Fe2::additive_identity());
+    BOOST_TEST(c == c * Fe2::multiplicative_identity());
+    BOOST_TEST(c == Fe2::multiplicative_identity() * c);
 }
 
 BOOST_AUTO_TEST_CASE(Fe2Inv) {

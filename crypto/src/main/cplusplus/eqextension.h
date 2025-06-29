@@ -30,20 +30,20 @@ struct EqExtension {
     E z;
 
     constexpr EqExtension(const std::vector<E>& coefficients)
-        : coefficients(coefficients), z(E::LEFT_MULTIPLICATIVE_IDENTITY()) {}
+        : coefficients(coefficients), z(E::multiplicative_identity()) {}
     constexpr EqExtension(const std::vector<E>& coefficients, const E& z)
         : coefficients(coefficients), z(z) {}
     constexpr EqExtension(std::vector<E>&& coefficients)
-        : coefficients(std::move(coefficients)), z(E::LEFT_MULTIPLICATIVE_IDENTITY()) {}
+        : coefficients(std::move(coefficients)), z(E::multiplicative_identity()) {}
     constexpr EqExtension(std::vector<E>&& coefficients, E&& z)
         : coefficients(std::move(coefficients)), z(std::move(z)) {}
 
     constexpr static std::vector<E> evaluate(
         const std::vector<E>& coefficients,
-        const E& z = E::LEFT_MULTIPLICATIVE_IDENTITY(),
+        const E& z = E::multiplicative_identity(),
         const std::size_t offset = 0
     ) {
-        std::vector<E> r(1 << (coefficients.size() - offset), E::LEFT_ADDITIVE_IDENTITY());
+        std::vector<E> r(1 << (coefficients.size() - offset), E::additive_identity());
         r[0] = z;
         for (std::size_t i = coefficients.size() - offset, j = 1; i --> 0; j <<= 1) {
             for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
@@ -133,7 +133,7 @@ struct Circuit {
 
     constexpr LinearCombination operator () (const Point& point) const {
         auto scope = circuit.scope("EqExtension::point");
-        LinearCombination pi(E(1));
+        LinearCombination pi = E::multiplicative_identity();
         for (std::size_t i = 0; i < coefficients.size(); ++i) {
             LinearCombination cp(circuit.auxiliary());
             circuit(cp == coefficients[i] * point[i]);
@@ -151,7 +151,7 @@ struct Circuit {
         auto scope = circuit.scope("EqExtension::hypercube");
         std::vector<LinearCombination> r;
         r.resize(1 << coefficients.size());
-        r[0] = E(1);
+        r[0] = E::multiplicative_identity();
         for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
             for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
                 auto t = circuit.auxiliary();
@@ -174,7 +174,7 @@ struct Circuit {
 
 struct Tracer {
     constexpr static E point(const EqExtension& eq, const Point<E>& point, std::vector<E>& trace) {
-        E pi(1);
+        E pi = E::multiplicative_identity();
         for (std::size_t i = 0; i < eq.coefficients.size(); ++i)
             trace.push_back(
                 pi *= trace.emplace_back(
@@ -185,8 +185,8 @@ struct Tracer {
     }
 
     constexpr static std::vector<E> hypercube(const std::vector<E>& coefficients, std::vector<E>& trace) {
-        std::vector<E> r(1 << coefficients.size(), E::LEFT_ADDITIVE_IDENTITY());
-        r[0] = E(1);
+        std::vector<E> r(1 << coefficients.size(), E::additive_identity());
+        r[0] = E::multiplicative_identity();
         for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
             for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
                 r[l] = trace.emplace_back(

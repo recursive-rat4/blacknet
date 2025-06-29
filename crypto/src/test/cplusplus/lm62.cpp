@@ -123,17 +123,17 @@ BOOST_AUTO_TEST_CASE(Fe2Add) {
     Fe2 c({390281487828652454, 446465224482581069});
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
-    BOOST_TEST(c == Fe2::LEFT_ADDITIVE_IDENTITY() + c);
-    BOOST_TEST(c == c + Fe2::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(Fe2::LEFT_MULTIPLICATIVE_IDENTITY() == Fe2::LEFT_MULTIPLICATIVE_IDENTITY() + Fe2::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(Fe2::LEFT_MULTIPLICATIVE_IDENTITY() == Fe2::LEFT_ADDITIVE_IDENTITY() + Fe2::LEFT_MULTIPLICATIVE_IDENTITY());
+    BOOST_TEST(c == Fe2::additive_identity() + c);
+    BOOST_TEST(c == c + Fe2::additive_identity());
+    BOOST_TEST(Fe2::multiplicative_identity() == Fe2::multiplicative_identity() + Fe2::additive_identity());
+    BOOST_TEST(Fe2::multiplicative_identity() == Fe2::additive_identity() + Fe2::multiplicative_identity());
 }
 
 BOOST_AUTO_TEST_CASE(Fe2Dbl) {
     Fe2 a({820418911954903445, -717081021288996571});
     Fe2 b({-1259480336116792567, -1434162042577993142});
     BOOST_TEST(b == a.douple());
-    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == Fe2::LEFT_ADDITIVE_IDENTITY().douple());
+    BOOST_TEST(Fe2::additive_identity() == Fe2::additive_identity().douple());
 }
 
 BOOST_AUTO_TEST_CASE(Fe2Mul) {
@@ -144,10 +144,10 @@ BOOST_AUTO_TEST_CASE(Fe2Mul) {
     BOOST_TEST(c == a * b);
     BOOST_TEST(d == a * c);
     BOOST_TEST(d == c * a);
-    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == Fe2::LEFT_ADDITIVE_IDENTITY() * c);
-    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == c * Fe2::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(c == c * Fe2::LEFT_MULTIPLICATIVE_IDENTITY());
-    BOOST_TEST(c == Fe2::LEFT_MULTIPLICATIVE_IDENTITY() * c);
+    BOOST_TEST(Fe2::additive_identity() == Fe2::additive_identity() * c);
+    BOOST_TEST(Fe2::additive_identity() == c * Fe2::additive_identity());
+    BOOST_TEST(c == c * Fe2::multiplicative_identity());
+    BOOST_TEST(c == Fe2::multiplicative_identity() * c);
 }
 
 BOOST_AUTO_TEST_CASE(Fe2Sub) {
@@ -155,9 +155,9 @@ BOOST_AUTO_TEST_CASE(Fe2Sub) {
     Fe2 b({1398375590836368725, 1069059511697430437});
     Fe2 c({-465562584898128328, 1414024306675478976});
     BOOST_TEST(c == a - b);
-    BOOST_TEST(c == c - Fe2::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == Fe2::LEFT_ADDITIVE_IDENTITY() - Fe2::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(Fe2::LEFT_ADDITIVE_IDENTITY() == Fe2::LEFT_MULTIPLICATIVE_IDENTITY() - Fe2::LEFT_MULTIPLICATIVE_IDENTITY());
+    BOOST_TEST(c == c - Fe2::additive_identity());
+    BOOST_TEST(Fe2::additive_identity() == Fe2::additive_identity() - Fe2::additive_identity());
+    BOOST_TEST(Fe2::additive_identity() == Fe2::multiplicative_identity() - Fe2::multiplicative_identity());
 }
 
 BOOST_AUTO_TEST_CASE(Fe2Neg) {
@@ -185,10 +185,10 @@ BOOST_AUTO_TEST_CASE(Fe3Mul) {
     Fe3 c({-965761769836649546, -1132998668749348595, 470547261007950790});
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
-    BOOST_TEST(Fe3::LEFT_ADDITIVE_IDENTITY() == Fe3::LEFT_ADDITIVE_IDENTITY() * c);
-    BOOST_TEST(Fe3::LEFT_ADDITIVE_IDENTITY() == c * Fe3::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(c == c * Fe3::LEFT_MULTIPLICATIVE_IDENTITY());
-    BOOST_TEST(c == Fe3::LEFT_MULTIPLICATIVE_IDENTITY() * c);
+    BOOST_TEST(Fe3::additive_identity() == Fe3::additive_identity() * c);
+    BOOST_TEST(Fe3::additive_identity() == c * Fe3::additive_identity());
+    BOOST_TEST(c == c * Fe3::multiplicative_identity());
+    BOOST_TEST(c == Fe3::multiplicative_identity() * c);
 }
 
 BOOST_AUTO_TEST_CASE(Fe3Inv) {
@@ -205,10 +205,10 @@ BOOST_AUTO_TEST_CASE(Fe4Mul) {
     Fe4 c({221440832807792239, 626824033577399788, -1242804179249225940, 389306472400849868});
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
-    BOOST_TEST(Fe4::LEFT_ADDITIVE_IDENTITY() == Fe4::LEFT_ADDITIVE_IDENTITY() * c);
-    BOOST_TEST(Fe4::LEFT_ADDITIVE_IDENTITY() == c * Fe4::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(c == c * Fe4::LEFT_MULTIPLICATIVE_IDENTITY());
-    BOOST_TEST(c == Fe4::LEFT_MULTIPLICATIVE_IDENTITY() * c);
+    BOOST_TEST(Fe4::additive_identity() == Fe4::additive_identity() * c);
+    BOOST_TEST(Fe4::additive_identity() == c * Fe4::additive_identity());
+    BOOST_TEST(c == c * Fe4::multiplicative_identity());
+    BOOST_TEST(c == Fe4::multiplicative_identity() * c);
 }
 
 BOOST_AUTO_TEST_CASE(Fe4Inv) {
@@ -276,8 +276,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(RqMul, R, Rs) {
     });
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
-    BOOST_TEST(c == R::LEFT_MULTIPLICATIVE_IDENTITY() * c);
-    BOOST_TEST(R::LEFT_ADDITIVE_IDENTITY() == c * Zq(0));
+    BOOST_TEST(c == R::multiplicative_identity() * c);
+    BOOST_TEST(R::additive_identity() == c * Zq(0));
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(RqInfinityNorm, R, Rs) {

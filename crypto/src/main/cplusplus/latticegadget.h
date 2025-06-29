@@ -98,7 +98,7 @@ public:
         std::size_t m, std::size_t n
     ) {
         Vector<R> pm(n);
-        pm[0] = R::LEFT_MULTIPLICATIVE_IDENTITY();
+        pm[0] = R::multiplicative_identity();
         for (std::size_t i = 1; i < n; ++i)
             pm[i] = pm[i - 1] * radix;
         return Vector<R>::identity(m).tensor(pm);
@@ -122,7 +122,7 @@ struct Circuit {
     ) {
         if (radix != 2) throw std::runtime_error("Not implemented");
         auto scope = circuit.scope("LatticeGadget::decompose");
-        R p = R::LEFT_MULTIPLICATIVE_IDENTITY();
+        R p = R::multiplicative_identity();
         LinearCombination composed;
         Vector pieces(circuit, digits);
         for (auto& piece : pieces) {

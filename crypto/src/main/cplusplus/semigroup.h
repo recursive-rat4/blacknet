@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -24,10 +24,30 @@ namespace blacknet::crypto {
 
 namespace semigroup {
 
+template<typename Monoid>
+consteval Monoid left_additive_identity() {
+    return Monoid::additive_identity();
+}
+
+template<typename Monoid>
+consteval Monoid right_additive_identity() {
+    return Monoid::additive_identity();
+}
+
+template<typename Monoid>
+consteval Monoid left_multiplicative_identity() {
+    return Monoid::multiplicative_identity();
+}
+
+template<typename Monoid>
+consteval Monoid right_multiplicative_identity() {
+    return Monoid::multiplicative_identity();
+}
+
 template<typename SG, typename Scalar>
 constexpr SG multiply(const SG& e, const Scalar& s) {
     // Double-and-add method
-    SG r(SG::LEFT_ADDITIVE_IDENTITY());
+    SG r(left_additive_identity<SG>());
     SG t(e);
     std::ranges::for_each(s.bitsBegin(), s.bitsEnd(), [&](bool bit) {
         if (bit)
@@ -40,7 +60,7 @@ constexpr SG multiply(const SG& e, const Scalar& s) {
 template<typename SG, typename Scalar>
 constexpr SG power(const SG& e, const Scalar& s) {
     // Square-and-multiply method
-    SG r(SG::LEFT_MULTIPLICATIVE_IDENTITY());
+    SG r(left_multiplicative_identity<SG>());
     SG t(e);
     std::ranges::for_each(s.bitsBegin(), s.bitsEnd(), [&](bool bit) {
         if (bit)

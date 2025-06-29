@@ -41,8 +41,8 @@ class IntegerRing {
     constexpr IntegerRing(I n, int) : n(n) {}
 public:
     constexpr static const bool is_integer_ring = true;
-    consteval static IntegerRing LEFT_ADDITIVE_IDENTITY() { return IntegerRing(0); }
-    consteval static IntegerRing LEFT_MULTIPLICATIVE_IDENTITY() { return IntegerRing(1); }
+    consteval static IntegerRing additive_identity() { return IntegerRing(0); }
+    consteval static IntegerRing multiplicative_identity() { return IntegerRing(1); }
 
     using BaseRing = IntegerRing;
     using NumericType = I;
@@ -99,7 +99,7 @@ public:
     }
 
     constexpr IntegerRing operator - () const {
-        return IntegerRing::LEFT_ADDITIVE_IDENTITY() - *this;
+        return IntegerRing::additive_identity() - *this;
     }
 
     constexpr IntegerRing douple() const {

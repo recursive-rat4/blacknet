@@ -169,7 +169,7 @@ public:
 
     template<typename P>
     constexpr static E sum(const P& p) {
-        E sigma(E::LEFT_ADDITIVE_IDENTITY());
+        E sigma(E::additive_identity());
         Hypercube hc(p.variables());
         for (auto i = hc.decomposedBegin(); i != hc.decomposedEnd(); ++i) {
             sigma += p(*i);

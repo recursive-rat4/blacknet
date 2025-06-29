@@ -199,8 +199,8 @@ BOOST_AUTO_TEST_CASE(RqAdd) {
     });
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
-    BOOST_TEST(c == Rq::LEFT_ADDITIVE_IDENTITY() + c);
-    BOOST_TEST(c == c + Rq::LEFT_ADDITIVE_IDENTITY());
+    BOOST_TEST(c == Rq::additive_identity() + c);
+    BOOST_TEST(c == c + Rq::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(RqMul) {
@@ -319,8 +319,8 @@ BOOST_AUTO_TEST_CASE(RqMul) {
     });
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
-    BOOST_TEST(c == Rq::LEFT_MULTIPLICATIVE_IDENTITY() * c);
-    BOOST_TEST(Rq::LEFT_ADDITIVE_IDENTITY() == c * Zq(0));
+    BOOST_TEST(c == Rq::multiplicative_identity() * c);
+    BOOST_TEST(Rq::additive_identity() == c * Zq(0));
 }
 
 BOOST_AUTO_TEST_CASE(RqSub) {
@@ -439,8 +439,8 @@ BOOST_AUTO_TEST_CASE(RqSub) {
         2119941, 3107564
     });
     BOOST_TEST(c == a - b);
-    BOOST_TEST(c == c - Rq::LEFT_ADDITIVE_IDENTITY());
-    BOOST_TEST(Rq::LEFT_ADDITIVE_IDENTITY() == Rq::LEFT_ADDITIVE_IDENTITY() - Rq::LEFT_ADDITIVE_IDENTITY());
+    BOOST_TEST(c == c - Rq::additive_identity());
+    BOOST_TEST(Rq::additive_identity() == Rq::additive_identity() - Rq::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(RqInfinityNorm) {

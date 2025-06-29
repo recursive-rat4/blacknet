@@ -34,7 +34,7 @@ template<
     std::size_t N
 >
 struct Module {
-    consteval static Module identity() {
+    consteval static Module additive_identity() {
         Module t;
         t.components.fill(R(0));
         return t;
@@ -133,7 +133,7 @@ struct Module {
                 r.components[i] = components[i].douple();
             return r;
         } else {
-            return identity();
+            return additive_identity();
         }
     }
 
@@ -188,7 +188,7 @@ struct Module {
     template<std::uniform_random_bit_generator RNG, typename DST>
     static Module random(RNG& rng, DST& dst, std::size_t hamming) {
         std::uniform_int_distribution<std::size_t> uid(0, N - 1);
-        auto t = Module::identity();
+        auto t = Module::additive_identity();
         while (hamming) {
             std::size_t i = uid(rng);
             if (t[i] == R(0)) {

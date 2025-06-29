@@ -86,7 +86,7 @@ public:
         e = e1 + r * t + r.square() * e2;
     }
 
-    constexpr Vector<E> assigment(E&& constant = E(1)) const {
+    constexpr Vector<E> assigment(E&& constant = E::multiplicative_identity()) const {
         Vector<E> z;
         z.elements.reserve(variables());
         z.elements.emplace_back(constant);

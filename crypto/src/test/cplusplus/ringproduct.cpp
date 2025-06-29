@@ -37,14 +37,15 @@ BOOST_AUTO_TEST_CASE(Adds) {
     Z c(Z1(6), Z2(8));
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
-    BOOST_TEST(a == Z::LEFT_ADDITIVE_IDENTITY() + a);
+    BOOST_TEST(a == Z::additive_identity() + a);
+    BOOST_TEST(a == a + Z::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(Dbls) {
     Z a(Z1(7), Z2(9));
     Z b(Z1(14), Z2(18));
     BOOST_TEST(b == a.douple());
-    BOOST_TEST(Z::LEFT_ADDITIVE_IDENTITY() == Z::LEFT_ADDITIVE_IDENTITY().douple());
+    BOOST_TEST(Z::additive_identity() == Z::additive_identity().douple());
 }
 
 BOOST_AUTO_TEST_CASE(Muls) {
@@ -53,7 +54,8 @@ BOOST_AUTO_TEST_CASE(Muls) {
     Z c(Z1(22), Z2(51));
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
-    BOOST_TEST(a == Z::LEFT_MULTIPLICATIVE_IDENTITY() * a);
+    BOOST_TEST(a == Z::multiplicative_identity() * a);
+    BOOST_TEST(a == a * Z::multiplicative_identity());
 }
 
 BOOST_AUTO_TEST_CASE(Sqrs) {
@@ -90,14 +92,15 @@ BOOST_AUTO_TEST_CASE(Adds) {
     R c(R1{6, 10}, R2{12, 14});
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
-    BOOST_TEST(a == R::LEFT_ADDITIVE_IDENTITY() + a);
+    BOOST_TEST(a == R::additive_identity() + a);
+    BOOST_TEST(a == a + R::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(Dbls) {
     R a(R1{2, 3}, R2{4, 5});
     R b(R1{4, 6}, R2{8, 10});
     BOOST_TEST(b == a.douple());
-    BOOST_TEST(R::LEFT_ADDITIVE_IDENTITY() == R::LEFT_ADDITIVE_IDENTITY().douple());
+    BOOST_TEST(R::additive_identity() == R::additive_identity().douple());
 }
 
 BOOST_AUTO_TEST_CASE(Muls) {
@@ -106,14 +109,15 @@ BOOST_AUTO_TEST_CASE(Muls) {
     R c(R1{-13, 26}, R2{-1387961572270747680, 76});
     BOOST_TEST(c == a * b);
     BOOST_TEST(c == b * a);
-    BOOST_TEST(a == R::LEFT_MULTIPLICATIVE_IDENTITY() * a);
+    BOOST_TEST(a == R::multiplicative_identity() * a);
+    BOOST_TEST(a == a * R::multiplicative_identity());
 }
 
 BOOST_AUTO_TEST_CASE(Sqrs) {
     R a(R1{2, 3}, R2{4, 5});
     R b(R1{-5, 12}, R2{1790958025642577741, 40});
     BOOST_TEST(b == a.square());
-    BOOST_TEST(R::LEFT_MULTIPLICATIVE_IDENTITY() == R::LEFT_MULTIPLICATIVE_IDENTITY().square());
+    BOOST_TEST(R::multiplicative_identity() == R::multiplicative_identity().square());
 }
 
 BOOST_AUTO_TEST_CASE(Subs) {

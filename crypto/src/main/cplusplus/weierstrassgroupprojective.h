@@ -36,7 +36,7 @@ class WeierstrassGroupProjective {
 public:
     typedef BF Base;
     typedef SF Scalar;
-    consteval static WeierstrassGroupProjective LEFT_ADDITIVE_IDENTITY() { return WeierstrassGroupProjective(); }
+    consteval static WeierstrassGroupProjective additive_identity() { return WeierstrassGroupProjective(); }
 
     consteval WeierstrassGroupProjective() = default;
     constexpr WeierstrassGroupProjective(const BF& x, const BF& y, const BF& z) : x{x}, y(y), z(z) {}

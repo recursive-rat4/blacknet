@@ -34,8 +34,8 @@ class PrimeField {
     constexpr PrimeField(const UInt256& n, int) : n(n) {}
 public:
     constexpr static const bool is_integer_ring = true;
-    consteval static PrimeField LEFT_ADDITIVE_IDENTITY() { return PrimeField(0); }
-    consteval static PrimeField LEFT_MULTIPLICATIVE_IDENTITY() { return PrimeField(1); }
+    consteval static PrimeField additive_identity() { return PrimeField(0); }
+    consteval static PrimeField multiplicative_identity() { return PrimeField(1); }
 
     using BaseRing = PrimeField;
     using NumericType = UInt256;

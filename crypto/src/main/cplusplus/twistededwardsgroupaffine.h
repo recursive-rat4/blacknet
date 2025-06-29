@@ -33,7 +33,7 @@ class TwistedEdwardsGroupAffine {
 public:
     typedef BF Base;
     typedef SR Scalar;
-    consteval static TwistedEdwardsGroupAffine LEFT_ADDITIVE_IDENTITY() { return TwistedEdwardsGroupAffine(); }
+    consteval static TwistedEdwardsGroupAffine additive_identity() { return TwistedEdwardsGroupAffine(); }
 
     consteval TwistedEdwardsGroupAffine() : x(0), y(1) {}
     constexpr TwistedEdwardsGroupAffine(const BF& x, const BF& y) : x{x}, y(y) {}

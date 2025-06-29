@@ -27,14 +27,14 @@ namespace blacknet::crypto {
 
 template<typename... Rs>
 struct RingProduct {
-    consteval static RingProduct LEFT_ADDITIVE_IDENTITY() {
+    consteval static RingProduct additive_identity() {
         RingProduct t;
-        for_each(t.factors, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::LEFT_ADDITIVE_IDENTITY(); });
+        for_each(t.factors, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::additive_identity(); });
         return t;
     }
-    consteval static RingProduct LEFT_MULTIPLICATIVE_IDENTITY() {
+    consteval static RingProduct multiplicative_identity() {
         RingProduct t;
-        for_each(t.factors, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::LEFT_MULTIPLICATIVE_IDENTITY(); });
+        for_each(t.factors, [](auto&& r) { r = std::remove_reference_t<decltype(r)>::multiplicative_identity(); });
         return t;
     }
 
