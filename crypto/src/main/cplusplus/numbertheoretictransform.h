@@ -26,9 +26,9 @@ namespace blacknet::crypto {
 
 // https://arxiv.org/abs/2211.13546
 
-namespace ntt {
-    template<typename Z, std::size_t N>
-    constexpr void cooley_tukey(std::array<Z, N>& a) {
+template<typename Z, std::size_t N>
+struct NTT {
+    constexpr static void cooley_tukey(std::array<Z, N>& a) {
         constexpr std::size_t inertia = N / Z::twiddles();
         std::size_t i = 0, j = 0;
         for (std::size_t k = N / 2; k >= inertia; k >>= 1) {
@@ -43,8 +43,7 @@ namespace ntt {
         }
     }
 
-    template<typename Z, std::size_t N>
-    constexpr void gentleman_sande(std::array<Z, N>& a) {
+    constexpr static void gentleman_sande(std::array<Z, N>& a) {
         constexpr std::size_t inertia = N / Z::twiddles();
 
         std::size_t i = 0, j = Z::twiddles();
@@ -65,7 +64,6 @@ namespace ntt {
         }
     }
 
-    template<typename Z, std::size_t N>
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         constexpr std::size_t inertia = N / Z::twiddles();
 
@@ -94,7 +92,7 @@ namespace ntt {
             static_assert(false, "Not implemented");
         }
     }
-}
+};
 
 }
 

@@ -71,11 +71,11 @@ struct LatticeFold {
     static_assert(t == Zq::twiddles());
 
     constexpr static RqIso& isomorph(Rq&& f) {
-        ntt::cooley_tukey<Zq, D>(f.coefficients);
+        NTT<Zq, D>::cooley_tukey(f.coefficients);
         return reinterpret_cast<RqIso&>(f);
     }
     constexpr static Rq& isomorph(RqIso&& f) {
-        ntt::gentleman_sande<Zq, D>(f.coefficients);
+        NTT<Zq, D>::gentleman_sande(f.coefficients);
         return reinterpret_cast<Rq&>(f);
     }
 

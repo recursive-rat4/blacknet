@@ -47,13 +47,13 @@ namespace dilithium {
         constexpr static const std::size_t N = 256;
 
         constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-            ntt::convolute<Z, N>(r, a, b);
+            NTT<Z, N>::convolute(r, a, b);
         }
         constexpr static void toForm(std::array<Z, N>& a) {
-            ntt::cooley_tukey<Z, N>(a);
+            NTT<Z, N>::cooley_tukey(a);
         }
         constexpr static void fromForm(std::array<Z, N>& a) {
-            ntt::gentleman_sande<Z, N>(a);
+            NTT<Z, N>::gentleman_sande(a);
         }
 
         static_assert(N == Z::twiddles());
