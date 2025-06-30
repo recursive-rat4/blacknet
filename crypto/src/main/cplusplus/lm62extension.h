@@ -40,7 +40,7 @@ struct LM62RingDegree2Params {
     constexpr static const BitInt<62> INVERSION_R1{"2840000000000021"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        convolution::binomial<Z, N>(r.data(), a.data(), b.data(), -M.front());
+        Convolution<Z>::binomial<N>(r.data(), a.data(), b.data(), -M.front());
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -63,7 +63,7 @@ struct LM62RingDegree3Params {
     constexpr static const BitInt<123> INVERSION_R1{"065410000000000A88C0000000000462"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        convolution::quotient<Z, N, M>(r, a, b);
+        Convolution<Z>::quotient<N, M>(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -87,7 +87,7 @@ struct LM62RingDegree4Params {
     constexpr static const BitInt<184> INVERSION_R1{"00FEB7840000000278D640000000020C31800000000090C3"};
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        convolution::quotient<Z, N, M>(r, a, b);
+        Convolution<Z>::quotient<N, M>(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -103,7 +103,7 @@ struct LM62RingDegree64Params {
     constexpr static const std::size_t N = 64;
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        convolution::negacyclic<Z, N>(r, a, b);
+        Convolution<Z>::negacyclic<N>(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}

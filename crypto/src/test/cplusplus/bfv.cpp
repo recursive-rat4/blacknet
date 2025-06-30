@@ -36,7 +36,7 @@ struct RtParams {
     constexpr static const std::size_t N = 4;
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        convolution::negacyclic<Z, N>(r, a, b);
+        Convolution<Z>::negacyclic<N>(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -49,7 +49,7 @@ struct RqParams {
     constexpr static const std::size_t N = 4;
 
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        convolution::negacyclic<Z, N>(r, a, b);
+        Convolution<Z>::negacyclic<N>(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}

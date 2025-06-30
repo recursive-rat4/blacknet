@@ -75,13 +75,13 @@ struct NTT {
             constexpr std::size_t k = inertia * 2;
             constexpr std::size_t l = N / k;
             for (std::size_t i = 0; i < l; ++i) {
-                convolution::binomial<Z, inertia>(
+                Convolution<Z>::template binomial<inertia>(
                     r.data() + i * k,
                     a.data() + i * k,
                     b.data() + i * k,
                     Z::twiddle(l + i)
                 );
-                convolution::binomial<Z, inertia>(
+                Convolution<Z>::template binomial<inertia>(
                     r.data() + i * k + inertia,
                     a.data() + i * k + inertia,
                     b.data() + i * k + inertia,

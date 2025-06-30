@@ -22,9 +22,10 @@
 
 namespace blacknet::crypto {
 
-namespace convolution {
-    template<typename Z, std::size_t N>
-    constexpr void negacyclic(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+template<typename Z>
+struct Convolution {
+    template<std::size_t N>
+    constexpr static void negacyclic(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         for (std::size_t k = 0; k < N; ++k) {
             for (std::size_t i = 0; i <= k; ++i) {
                 r[k] += a[i] * b[k - i];
@@ -35,18 +36,17 @@ namespace convolution {
         }
     }
 
-    template<typename Z, std::size_t N, std::size_t M>
-    constexpr void lonk(std::array<Z, N+M-1>& r, const std::array<Z, N>& a, const std::array<Z, M>& b) {
+    template<std::size_t N, std::size_t M>
+    constexpr static void lonk(std::array<Z, N+M-1>& r, const std::array<Z, N>& a, const std::array<Z, M>& b) {
         for (std::size_t i = 0; i < N; ++i) {
             for (std::size_t j = 0; j < M; ++j) {
                 r[i + j] += a[i] * b[j];
             }
         }
     }
-
-namespace {
-    template<typename Z, Z c>
-    constexpr void fuse(Z& r, const Z& a, const Z& b) {
+private:
+    template<Z c>
+    constexpr static void fuse(Z& r, const Z& a, const Z& b) {
         if constexpr (c == Z(0))
             r = a;
         else if constexpr (c == Z(1))
@@ -57,8 +57,8 @@ namespace {
             r = a - b * c;
     }
 
-    template<typename Z, Z b>
-    constexpr void fuse(Z& r, const Z& a) {
+    template<Z b>
+    constexpr static void fuse(Z& r, const Z& a) {
         if constexpr (b == Z(0))
             return;
         else if constexpr (b == Z(1))
@@ -68,46 +68,45 @@ namespace {
         else
             r -= a * b;
     }
-}
-
-    template<typename Z, std::size_t N, std::array<Z, N+1> M>
-    constexpr void quotient(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+public:
+    template<std::size_t N, std::array<Z, N+1> M>
+    constexpr static void quotient(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         static_assert(M.back() == Z(1));
         std::array<Z, N + N - 1> t;
         t.fill(Z::additive_identity());
         lonk(t, a, b);
         if constexpr (N == 2) {
-            fuse<Z, M[0]>(r[0], t[0], t[2]);
-            fuse<Z, M[1]>(r[1], t[1], t[2]);
+            fuse<M[0]>(r[0], t[0], t[2]);
+            fuse<M[1]>(r[1], t[1], t[2]);
         } else if constexpr (N == 3) {
-            fuse<Z, M[0]>(r[1], t[1], t[4]);
-            fuse<Z, M[1]>(r[2], t[2], t[4]);
-            fuse<Z, M[2]>(t[3], t[4]);
+            fuse<M[0]>(r[1], t[1], t[4]);
+            fuse<M[1]>(r[2], t[2], t[4]);
+            fuse<M[2]>(t[3], t[4]);
 
-            fuse<Z, M[0]>(r[0], t[0], t[3]);
-            fuse<Z, M[1]>(r[1], t[3]);
-            fuse<Z, M[2]>(r[2], t[3]);
+            fuse<M[0]>(r[0], t[0], t[3]);
+            fuse<M[1]>(r[1], t[3]);
+            fuse<M[2]>(r[2], t[3]);
         } else if constexpr (N == 4) {
-            fuse<Z, M[0]>(r[2], t[2], t[6]);
-            fuse<Z, M[1]>(r[3], t[3], t[6]);
-            fuse<Z, M[2]>(t[4], t[6]);
-            fuse<Z, M[3]>(t[5], t[6]);
+            fuse<M[0]>(r[2], t[2], t[6]);
+            fuse<M[1]>(r[3], t[3], t[6]);
+            fuse<M[2]>(t[4], t[6]);
+            fuse<M[3]>(t[5], t[6]);
 
-            fuse<Z, M[0]>(r[1], t[1], t[5]);
-            fuse<Z, M[1]>(r[2], t[5]);
-            fuse<Z, M[2]>(r[3], t[5]);
-            fuse<Z, M[3]>(t[4], t[5]);
+            fuse<M[0]>(r[1], t[1], t[5]);
+            fuse<M[1]>(r[2], t[5]);
+            fuse<M[2]>(r[3], t[5]);
+            fuse<M[3]>(t[4], t[5]);
 
-            fuse<Z, M[0]>(r[0], t[0], t[4]);
-            fuse<Z, M[1]>(r[1], t[4]);
-            fuse<Z, M[2]>(r[2], t[4]);
-            fuse<Z, M[3]>(r[3], t[4]);
+            fuse<M[0]>(r[0], t[0], t[4]);
+            fuse<M[1]>(r[1], t[4]);
+            fuse<M[2]>(r[2], t[4]);
+            fuse<M[3]>(r[3], t[4]);
         } else {
             static_assert(false, "Not implemented");
         }
     }
 
-    template<typename Z, std::size_t N>
+    template<std::size_t N>
     constexpr static void binomial(Z* r, const Z* a, const Z* b, Z zeta) {
         if constexpr (N == 4) {
             r[0] = a[0] * b[0] + zeta * (a[1] * b[3] + a[2] * b[2] + a[3] * b[1]);
@@ -125,7 +124,7 @@ namespace {
             static_assert(false, "Not implemented");
         }
     }
-}
+};
 
 }
 
