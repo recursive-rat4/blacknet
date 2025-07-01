@@ -47,7 +47,66 @@ struct JohnsonLindenstrauss {
         }
     };
 
-    constexpr static Vector<Z> project(const MatrixDense<Z>& map, const Vector<Z> point) {
+    template<typename Sponge>
+    struct DistributionSponge {
+        using result_type = Z;
+
+        BinaryUniformDistributionSponge<Sponge> bud;
+
+        constexpr DistributionSponge() noexcept = default;
+
+        constexpr void reset() noexcept {
+            bud.reset();
+        }
+
+        constexpr result_type operator () (Sponge& sponge) {
+            return bud(sponge) + bud(sponge) - Z(1);
+        }
+
+    template<typename Builder>
+    requires(std::same_as<Z, typename Builder::R>)
+    struct Circuit {
+        using Variable = Builder::Variable;
+        using LinearCombination = Builder::LinearCombination;
+        using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Circuit<Builder>;
+        using SpongeCircuit = Sponge::template Circuit<Builder>;
+
+        Builder& circuit;
+        BinaryUniformDistribution bud;
+
+        constexpr Circuit(Builder& circuit) : circuit(circuit), bud(circuit) {}
+
+        constexpr void reset() noexcept {
+            bud.reset();
+        }
+
+        constexpr LinearCombination operator () (SpongeCircuit& sponge) {
+            return bud(sponge) + bud(sponge) - Z(1);
+        }
+    };
+
+    template<std::size_t circuit>
+    struct Tracer {
+        using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Tracer<circuit>;
+        using SpongeTracer = Sponge::template Tracer<circuit>;
+
+        std::vector<Z>& trace;
+        BinaryUniformDistribution bud;
+
+        constexpr Tracer(std::vector<Z>& trace) : trace(trace), bud(trace) {}
+
+        constexpr void reset() noexcept {
+            bud.reset();
+        }
+
+        constexpr result_type operator () (SpongeTracer& sponge) {
+            return bud(sponge) + bud(sponge) - Z(1);
+        }
+    };
+
+    };
+
+    constexpr static Vector<Z> project(const MatrixDense<Z>& map, const Vector<Z>& point) {
         return map * point;
     }
 

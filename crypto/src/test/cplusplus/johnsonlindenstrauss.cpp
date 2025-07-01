@@ -18,21 +18,25 @@
 #include <boost/test/unit_test.hpp>
 #include <random>
 
+#include "circuitbuilder.h"
 #include "fastrng.h"
 #include "johnsonlindenstrauss.h"
+#include "lm62.h"
 #include "matrixdense.h"
-#include "pervushin.h"
+#include "poseidon2lm62.h"
+#include "r1cs.h"
 #include "vector.h"
 
 using namespace blacknet::crypto;
 
-static FastDRG rng;
+using Z = LM62Ring;
+using JL = JohnsonLindenstrauss<Z>;
 
-BOOST_AUTO_TEST_SUITE(Johnson_Lindenstrauss)
+BOOST_AUTO_TEST_SUITE(JohnsonLindenstrauss_Plain)
 
-using Z = PervushinRing;
 using NumericType = Z::NumericType;
-using JohnsonLindenstrauss = JohnsonLindenstrauss<Z>;
+
+static FastDRG rng;
 
 BOOST_AUTO_TEST_CASE(test) {
     NumericType b = 128;
@@ -42,13 +46,42 @@ BOOST_AUTO_TEST_CASE(test) {
     NumericType slack_ecd = 3;
 
     std::uniform_int_distribution<NumericType> dst{-b+1, +b-1};
-    MatrixDense<Z> map = JohnsonLindenstrauss::random(rng, n, k);
+    MatrixDense<Z> map = JL::random(rng, n, k);
     Vector<Z> high = Vector<Z>::random(rng, dst, k);
-    Vector<Z> low = JohnsonLindenstrauss::project(map, high);
+    Vector<Z> low = JL::project(map, high);
 
     BOOST_TEST(map * high == low);
     BOOST_TEST(low.checkInfinityNorm(b * slack_inf));
     BOOST_TEST(low.euclideanNorm() < high.euclideanNorm() * slack_ecd);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(JohnsonLindenstrauss_Circuit)
+
+using Sponge = Poseidon2LM62Sponge<{0, 1, 1, 0}>;
+
+BOOST_AUTO_TEST_CASE(distribution) {
+    using Builder = CircuitBuilder<Z, 2>;
+    Builder circuit;
+    using SpongeCircuit = Sponge::Circuit<Builder>;
+    SpongeCircuit sponge_circuit(circuit);
+    using DistributionCircuit = JL::DistributionSponge<Sponge>::Circuit<Builder>;
+    DistributionCircuit distribution_circuit(circuit);
+    using VectorCircuit = Vector<Z>::Circuit<Builder>;
+    VectorCircuit v_circuit(circuit, 32);
+    std::ranges::generate(v_circuit, [&] { return distribution_circuit(sponge_circuit); });
+
+    R1CS<Z> r1cs(circuit.r1cs());
+    Vector<Z> z = r1cs.assigment();
+
+    using SpongeTracer = Sponge::Tracer<Builder::degree()>;
+    SpongeTracer sponge_tracer(z.elements);
+    using DistributionTracer = JL::DistributionSponge<Sponge>::Tracer<Builder::degree()>;
+    DistributionTracer distribution_tracer(z.elements);
+    Vector<Z> v_traced(32);
+    std::ranges::generate(v_traced, [&] { return distribution_tracer(sponge_tracer); });
+    BOOST_TEST(r1cs.isSatisfied(z));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
