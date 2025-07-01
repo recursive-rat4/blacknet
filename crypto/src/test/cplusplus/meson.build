@@ -51,6 +51,7 @@ crypto_test_sources = [
     'merkletree.cpp',
     'module.cpp',
     'multilinearextension.cpp',
+    'numbertheoretictransform.cpp',
     'pastacurves.cpp',
     'pedersencommitment.cpp',
     'pervushin.cpp',

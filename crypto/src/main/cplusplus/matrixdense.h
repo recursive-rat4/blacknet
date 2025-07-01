@@ -210,12 +210,19 @@ struct Tracer {
     MatrixDense matrix;
     std::vector<E>& trace;
 
+    constexpr Tracer(const MatrixDense& matrix, std::vector<E>& trace)
+        : matrix(matrix), trace(trace) {}
+    constexpr Tracer(MatrixDense&& matrix, std::vector<E>& trace)
+        : matrix(std::move(matrix)), trace(trace) {}
+    constexpr Tracer(std::size_t rows, std::size_t columns, std::vector<E>& trace)
+        : matrix(rows, columns), trace(trace) {}
+
     constexpr E& operator [] (std::size_t i, std::size_t j) {
-        return matrix[i * columns + j];
+        return matrix[i, j];
     }
 
     constexpr const E& operator [] (std::size_t i, std::size_t j) const {
-        return matrix[i * columns + j];
+        return matrix[i, j];
     }
 
     constexpr Vector operator * (const Vector& other) const {

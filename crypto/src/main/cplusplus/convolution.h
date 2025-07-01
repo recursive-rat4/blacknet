@@ -20,6 +20,8 @@
 
 #include <array>
 
+#include "matrixdense.h"
+
 namespace blacknet::crypto {
 
 template<typename Z>
@@ -124,6 +126,86 @@ public:
             static_assert(false, "Not implemented");
         }
     }
+
+template<typename Builder>
+requires(std::same_as<Z, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+    using MatrixDense = MatrixDense<Z>::template Circuit<Builder>;
+
+    Builder& circuit;
+
+    constexpr Circuit(Builder& circuit) : circuit(circuit) {}
+
+    template<std::size_t N>
+    constexpr void binomial(
+        LinearCombination* r,
+        const LinearCombination* a,
+        const LinearCombination* b,
+        Z zeta
+    ) {
+        auto scope = circuit.scope("Convolution::binomial");
+        //TODO Karatsuba method
+        MatrixDense ab(circuit, N, N);
+        for (std::size_t i = 0; i < N; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                auto t = circuit.auxiliary();
+                circuit(t == a[i] * b[j]);
+                ab[i, j] = t;
+            }
+        }
+        if constexpr (N == 4) {
+            r[0] = ab[0, 0] + zeta * (ab[1, 3] + ab[2, 2] + ab[3, 1]);
+            r[1] = ab[0, 1] + ab[1, 0] + zeta * (ab[2, 3] + ab[3, 2]);
+            r[2] = ab[0, 2] + ab[1, 1] + ab[2, 0] + zeta * (ab[3, 3]);
+            r[3] = ab[0, 3] + ab[1, 2] + ab[2, 1] + ab[3, 0];
+        } else if constexpr (N == 3) {
+            r[0] = ab[0, 0] + zeta * (ab[1, 2] + ab[2, 1]);
+            r[1] = ab[0, 1] + ab[1, 0] + zeta * (ab[2, 2]);
+            r[2] = ab[0, 2] + ab[1, 1] + ab[2, 0];
+        } else if constexpr (N == 2) {
+            r[0] = ab[0, 0] + zeta * (ab[1, 1]);
+            r[1] = ab[0, 1] + ab[1, 0];
+        } else {
+            static_assert(false, "Not implemented");
+        }
+    }
+};
+
+struct Tracer {
+    using MatrixDense = MatrixDense<Z>::Tracer;
+
+    std::vector<Z>& trace;
+
+    template<std::size_t N>
+    constexpr void binomial(Z* r, const Z* a, const Z* b, Z zeta) {
+        MatrixDense ab(N, N, trace);
+        for (std::size_t i = 0; i < N; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                ab[i, j] = trace.emplace_back(
+                    a[i] * b[j]
+                );
+            }
+        }
+        if constexpr (N == 4) {
+            r[0] = ab[0, 0] + zeta * (ab[1, 3] + ab[2, 2] + ab[3, 1]);
+            r[1] = ab[0, 1] + ab[1, 0] + zeta * (ab[2, 3] + ab[3, 2]);
+            r[2] = ab[0, 2] + ab[1, 1] + ab[2, 0] + zeta * (ab[3, 3]);
+            r[3] = ab[0, 3] + ab[1, 2] + ab[2, 1] + ab[3, 0];
+        } else if constexpr (N == 3) {
+            r[0] = ab[0, 0] + zeta * (ab[1, 2] + ab[2, 1]);
+            r[1] = ab[0, 1] + ab[1, 0] + zeta * (ab[2, 2]);
+            r[2] = ab[0, 2] + ab[1, 1] + ab[2, 0];
+        } else if constexpr (N == 2) {
+            r[0] = ab[0, 0] + zeta * (ab[1, 1]);
+            r[1] = ab[0, 1] + ab[1, 0];
+        } else {
+            static_assert(false, "Not implemented");
+        }
+    }
+};
+
 };
 
 }
