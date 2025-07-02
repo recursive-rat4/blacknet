@@ -88,6 +88,15 @@ BOOST_AUTO_TEST_CASE(ModuleProduct) {
     BOOST_TEST(d == b * a);
 }
 
+BOOST_AUTO_TEST_CASE(Tracing) {
+    const R a({
+        Z(1), Z(2),
+        Z(0), Z(3),
+    });
+    const R b(4);
+    BOOST_TEST(b == a.trace());
+}
+
 BOOST_AUTO_TEST_CASE(Transposition) {
     const R a({
         Z(1), Z(2),

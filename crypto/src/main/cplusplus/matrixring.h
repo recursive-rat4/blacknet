@@ -186,6 +186,13 @@ struct MatrixRing {
         return *this * *this;
     }
 
+    constexpr R trace() const {
+        R sigma = R::additive_identity();
+        for (std::size_t i = 0; i < N; ++i)
+            sigma += (*this)[i, i];
+        return sigma;
+    }
+
     constexpr MatrixRing transpose() const {
         MatrixRing r;
         for (std::size_t i = 0; i < rows(); ++i)

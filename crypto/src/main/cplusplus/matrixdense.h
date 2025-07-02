@@ -112,6 +112,13 @@ public:
         return r;
     }
 
+    constexpr E trace() const {
+        E sigma = E::additive_identity();
+        for (std::size_t i = 0; i < rows; ++i)
+            sigma += (*this)[i, i];
+        return sigma;
+    }
+
     constexpr MatrixDense transpose() const {
         MatrixDense r(columns, rows);
         for (std::size_t i = 0; i < rows; ++i)

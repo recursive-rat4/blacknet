@@ -112,6 +112,15 @@ BOOST_AUTO_TEST_CASE(Concatectation) {
     BOOST_TEST(c == (a || b));
 }
 
+BOOST_AUTO_TEST_CASE(Tracing) {
+    MatrixDense<R> a(2, 2, {
+        R(1), R(3),
+        R(7), R(5),
+    });
+    R b(6);
+    BOOST_TEST(b == a.trace());
+}
+
 BOOST_AUTO_TEST_CASE(Transposition) {
     MatrixDense<R> a(3, 2, {
         R(1), R(2),
