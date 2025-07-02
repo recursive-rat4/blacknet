@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     Vector<E> z = r1cs.assigment();
     std::ranges::copy(a, std::back_inserter(z.elements));
     std::ranges::copy(b, std::back_inserter(z.elements));
-    c = Jive::Tracer<Builder::degree()>::compress(a, b, z.elements);
+    c = Jive::Assigner<Builder::degree()>::compress(a, b, z.elements);
     std::ranges::copy(c, std::back_inserter(z.elements));
     BOOST_TEST(r1cs.isSatisfied(z));
 

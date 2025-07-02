@@ -170,14 +170,15 @@ struct Circuit {
     }
 };
 
-struct Tracer {
-    using Convolution = Convolution<Z>::Tracer;
+template<std::size_t Degree>
+struct Assigner {
+    using Convolution = Convolution<Z>::template Assigner<Degree>;
 
     Convolution convolution;
-    std::vector<Z>& trace;
+    std::vector<Z>& assigment;
 
-    constexpr Tracer(std::vector<Z>& trace)
-        : convolution(trace), trace(trace) {}
+    constexpr Assigner(std::vector<Z>& assigment)
+        : convolution(assigment), assigment(assigment) {}
 
     constexpr void cooley_tukey(std::array<Z, N>& a) const {
         return NTT::cooley_tukey(a);
@@ -190,7 +191,7 @@ struct Tracer {
     constexpr void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         if constexpr (inertia == 1) {
             for (std::size_t i = 0; i < N; ++i) {
-                r[i] = trace.emplace_back(
+                r[i] = assigment.emplace_back(
                     a[i] * b[i]
                 );
             }

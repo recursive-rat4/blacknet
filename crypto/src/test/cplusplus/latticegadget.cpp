@@ -51,9 +51,9 @@ BOOST_AUTO_TEST_CASE(Circuits) {
     Vector<Z> z = r1cs.assigment();
     z.elements.push_back(a);
 
-    using Tracer = LatticeGadget<Z>::Tracer;
-    Tracer lg_tracer(z.elements);
-    BOOST_TEST(b == lg_tracer.decompose(2, Z::bits(), a));
+    using Assigner = LatticeGadget<Z>::Assigner<Builder::degree()>;
+    Assigner lg_assigner(z.elements);
+    BOOST_TEST(b == lg_assigner.decompose(2, Z::bits(), a));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 

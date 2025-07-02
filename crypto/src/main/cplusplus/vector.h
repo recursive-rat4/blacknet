@@ -288,16 +288,17 @@ struct Circuit {
     }
 };
 
-struct Tracer {
+template<std::size_t Degree>
+struct Assigner {
     Vector vector;
-    std::vector<E>& trace;
+    std::vector<E>& assigment;
 
-    constexpr Tracer(std::size_t size, const E& fill, std::vector<E>& trace)
-        : vector(size, fill), trace(trace) {}
-    constexpr Tracer(const Vector& vector, std::vector<E>& trace)
-        : vector(vector), trace(trace) {}
-    constexpr Tracer(Vector&& vector, std::vector<E>& trace)
-        : vector(std::move(vector)), trace(trace) {}
+    constexpr Assigner(std::size_t size, const E& fill, std::vector<E>& assigment)
+        : vector(size, fill), assigment(assigment) {}
+    constexpr Assigner(const Vector& vector, std::vector<E>& assigment)
+        : vector(vector), assigment(assigment) {}
+    constexpr Assigner(Vector&& vector, std::vector<E>& assigment)
+        : vector(std::move(vector)), assigment(assigment) {}
 
     constexpr std::size_t size() const noexcept {
         return vector.size();
@@ -311,10 +312,10 @@ struct Tracer {
         return vector[i];
     }
 
-    constexpr E dot(const Tracer& other) const {
+    constexpr E dot(const Assigner& other) const {
         E sigma(E::additive_identity());
         for (std::size_t i = 0; i < vector.size(); ++i)
-            sigma += trace.emplace_back(
+            sigma += assigment.emplace_back(
                 vector[i] * other[i]
             );
         return sigma;

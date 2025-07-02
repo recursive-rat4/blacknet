@@ -81,13 +81,13 @@ BOOST_AUTO_TEST_CASE(test) {
     R1CS<Z> r1cs(circuit.r1cs());
     Vector<Z> z = r1cs.assigment();
 
-    using SpongeTracer = Sponge::Tracer<Builder::degree()>;
-    SpongeTracer sponge_tracer(z.elements);
-    using Tracer = BinaryUniformDistributionSponge<Sponge>::Tracer<Builder::degree()>;
-    Tracer bud_tracer(z.elements);
-    std::array<Z, a.size()> a_traced;
-    std::ranges::generate(a_traced, [&] { return bud_tracer(sponge_tracer); });
-    BOOST_TEST(a == a_traced);
+    using SpongeAssigner = Sponge::Assigner<Builder::degree()>;
+    SpongeAssigner sponge_assigner(z.elements);
+    using Assigner = BinaryUniformDistributionSponge<Sponge>::Assigner<Builder::degree()>;
+    Assigner bud_assigner(z.elements);
+    std::array<Z, a.size()> a_assigned;
+    std::ranges::generate(a_assigned, [&] { return bud_assigner(sponge_assigner); });
+    BOOST_TEST(a == a_assigned);
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 

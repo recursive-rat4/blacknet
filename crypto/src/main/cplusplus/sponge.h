@@ -179,19 +179,19 @@ struct Circuit {
     }
 };
 
-template<std::size_t circuit>
-struct Tracer {
+template<std::size_t Degree>
+struct Assigner {
     Sponge sponge;
-    std::vector<E>& trace;
+    std::vector<E>& assigment;
 
-    constexpr Tracer(std::vector<E>& trace) : sponge(), trace(trace) {}
+    constexpr Assigner(std::vector<E>& assigment) : sponge(), assigment(assigment) {}
 
     constexpr void absorb(const E& e) {
         if (sponge.phase == Squeeze) {
             sponge.phase = Absorb;
             sponge.position = 0;
         } else if (sponge.position == R) {
-            F::template Tracer<circuit>::permute(sponge.state, trace);
+            F::template Assigner<Degree>::permute(sponge.state, assigment);
             sponge.position = 0;
         }
         if constexpr (mode == SpongeMode::Add) {
@@ -213,10 +213,10 @@ struct Tracer {
         if (sponge.phase == Absorb) {
             sponge.phase = Squeeze;
             pad(sponge.position, sponge.state);
-            F::template Tracer<circuit>::permute(sponge.state, trace);
+            F::template Assigner<Degree>::permute(sponge.state, assigment);
             sponge.position = 0;
         } else if (sponge.position == R) {
-            F::template Tracer<circuit>::permute(sponge.state, trace);
+            F::template Assigner<Degree>::permute(sponge.state, assigment);
             sponge.position = 0;
         }
         return sponge.state[sponge.position++];

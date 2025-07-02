@@ -257,29 +257,29 @@ struct Circuit {
     }
 };
 
-template<std::size_t circuit>
-struct Tracer {
-    using PTracer = typename P::Tracer;
-    using DuplexTracer = Duplex::template Tracer<circuit>;
-    using UnivariatePolynomial = UnivariatePolynomial<R>::Tracer;
+template<std::size_t Degree>
+struct Assigner {
+    using PAssigner = P::template Assigner<Degree>;
+    using DuplexAssigner = Duplex::template Assigner<Degree>;
+    using UnivariatePolynomial = UnivariatePolynomial<R>::template Assigner<Degree>;
 
-    std::vector<R>& trace;
+    std::vector<R>& assigment;
 
-    constexpr Tracer(std::vector<R>& trace) : trace(trace) {}
+    constexpr Assigner(std::vector<R>& assigment) : assigment(assigment) {}
 
     constexpr bool verify(
         const P& polynomial_,
         const R& sum,
         const Proof& proof,
-        DuplexTracer& duplex
+        DuplexAssigner& duplex
     ) {
-        PTracer polynomial(polynomial_, trace);
+        PAssigner polynomial(polynomial_, assigment);
         if (proof.claims.size() != polynomial.variables())
             return false;
         Point<R> r(polynomial.variables());
         R state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
-            auto claim = UnivariatePolynomial(proof.claims[round], trace);
+            auto claim = UnivariatePolynomial(proof.claims[round], assigment);
             if (claim.degree() != polynomial.degree())
                 return false;
             if (state != claim.at_0_plus_1())
@@ -298,15 +298,15 @@ struct Tracer {
         const P& polynomial_,
         const R& sum,
         const Proof& proof,
-        DuplexTracer& duplex
+        DuplexAssigner& duplex
     ) {
-        PTracer polynomial(polynomial_, trace);
+        PAssigner polynomial(polynomial_, assigment);
         if (proof.claims.size() != polynomial.variables())
             return std::nullopt;
         Point<R> r(polynomial.variables());
         R state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
-            auto claim = UnivariatePolynomial(proof.claims[round], trace);
+            auto claim = UnivariatePolynomial(proof.claims[round], assigment);
             if (claim.degree() != polynomial.degree())
                 return std::nullopt;
             if (state != claim.at_0_plus_1())

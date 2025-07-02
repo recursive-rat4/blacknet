@@ -151,12 +151,12 @@ BOOST_AUTO_TEST_CASE(Distributions) {
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
     Vector<F> z = ccs.assigment();
 
-    using DuplexTracer = Duplex::Tracer<Builder::degree()>;
-    DuplexTracer duplex_tracer(z.elements);
-    using DistributionTracer = LatticeFold::Distribution<Duplex>::Tracer<Builder::degree()>;
-    DistributionTracer distribution_tracer(z.elements);
-    std::array<F, LatticeFold::D> a_traced;
-    std::ranges::generate(a_traced, [&] { return distribution_tracer(duplex_tracer); });
+    using DuplexAssigner = Duplex::Assigner<Builder::degree()>;
+    DuplexAssigner duplex_assigner(z.elements);
+    using DistributionAssigner = LatticeFold::Distribution<Duplex>::Assigner<Builder::degree()>;
+    DistributionAssigner distribution_assigner(z.elements);
+    std::array<F, LatticeFold::D> a_assigned;
+    std::ranges::generate(a_assigned, [&] { return distribution_assigner(duplex_assigner); });
     BOOST_TEST(ccs.isSatisfied(z));
 }
 
@@ -181,9 +181,9 @@ BOOST_AUTO_TEST_CASE(G2s) {
     std::ranges::copy(g2.mle.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x.coordinates, std::back_inserter(z.elements));
 
-    using Tracer = LatticeFold::G2::Tracer;
-    Tracer g2_tracer(g2, z.elements);
-    BOOST_TEST(g2(x) == g2_tracer(x));
+    using Assigner = LatticeFold::G2::Assigner<Builder::degree()>;
+    Assigner g2_assigner(g2, z.elements);
+    BOOST_TEST(g2(x) == g2_assigner(x));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 
@@ -219,10 +219,10 @@ BOOST_AUTO_TEST_CASE(Verifys) {
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
 
-    SumCheck::Tracer<Builder::degree()> tracer(z.elements);
-    using DuplexTracer = Duplex::Tracer<Builder::degree()>;
-    DuplexTracer duplex_tracer(z.elements);
-    BOOST_TEST_REQUIRE(tracer.verifyEarlyStopping(g2, sum, proof, duplex_tracer).has_value());
+    SumCheck::Assigner<Builder::degree()> assigner(z.elements);
+    using DuplexAssigner = Duplex::Assigner<Builder::degree()>;
+    DuplexAssigner duplex_assigner(z.elements);
+    BOOST_TEST_REQUIRE(assigner.verifyEarlyStopping(g2, sum, proof, duplex_assigner).has_value());
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

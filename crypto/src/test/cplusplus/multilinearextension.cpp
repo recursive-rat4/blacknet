@@ -179,13 +179,15 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using PointCircuit = Point<E>::Circuit<Builder>;
     PointCircuit x_circuit(circuit, Builder::Variable::Type::Input, 2);
     mle_circuit(x_circuit);
+
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(mle.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
-    using Tracer = MultilinearExtension<E>::Tracer;
-    Tracer mle_tracer(mle, z.elements);
-    BOOST_TEST(mle(x) == mle_tracer(x));
+
+    using Assigner = MultilinearExtension<E>::Assigner<Builder::degree()>;
+    Assigner mle_assigner(mle, z.elements);
+    BOOST_TEST(mle(x) == mle_assigner(x));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

@@ -150,17 +150,17 @@ struct Circuit {
     }
 };
 
-template<std::size_t circuit>
-struct Tracer {
-    using LogicGate = LogicGate<Z>::Tracer;
-    using SpongeTracer = Sponge::template Tracer<circuit>;
+template<std::size_t Degree>
+struct Assigner {
+    using LogicGate = LogicGate<Z>::template Assigner<Degree>;
+    using SpongeAssigner = Sponge::template Assigner<Degree>;
 
-    std::vector<Z>& trace;
+    std::vector<Z>& assigment;
     Vector<Z> cache;
     std::size_t have_bits;
 
-    constexpr Tracer(std::vector<Z>& trace)
-        : trace(trace), cache(Z::bits())
+    constexpr Assigner(std::vector<Z>& assigment)
+        : assigment(assigment), cache(Z::bits())
     {
         reset();
     }
@@ -169,17 +169,17 @@ struct Tracer {
         have_bits = 0;
     }
 
-    constexpr result_type operator () (SpongeTracer& sponge) {
+    constexpr result_type operator () (SpongeAssigner& sponge) {
         if (have_bits == 0) {
             auto representative = sponge.squeeze().canonical();
             for (std::size_t j = 0; j < Z::bits(); ++j) {
-                trace.push_back(
+                assigment.push_back(
                     cache[j] = representative & 1
                 );
                 representative >>= 1;
             }
             auto m1_gadget = LatticeGadget<Z>::decompose(2, Z::bits(), Z(-1)); //XXX make static?
-            LogicGate(trace).LessOrEqualCheck(cache, m1_gadget);
+            LogicGate(assigment).LessOrEqualCheck(cache, m1_gadget);
             have_bits = useful_bits();
         }
         result_type result = cache[useful_bits() - have_bits];

@@ -28,9 +28,9 @@
 
 using namespace blacknet::crypto;
 
-BOOST_AUTO_TEST_SUITE(EqExtensions)
-
 using E = Solinas62Ring;
+
+BOOST_AUTO_TEST_SUITE(EqExtension_Plain)
 
 BOOST_AUTO_TEST_CASE(meta) {
     std::vector<E> a{E(1), E(0), E(0)};
@@ -123,7 +123,11 @@ BOOST_AUTO_TEST_CASE(hypercube) {
     });
 }
 
-BOOST_AUTO_TEST_CASE(circuit_point) {
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(EqExtension_Circuit)
+
+BOOST_AUTO_TEST_CASE(points) {
     EqExtension<E> eq({E(2), E(3), E(5)});
     Point<E> x{E(7), E(11), E(13)};
 
@@ -134,15 +138,19 @@ BOOST_AUTO_TEST_CASE(circuit_point) {
     using PointCircuit = Point<E>::Circuit<Builder>;
     PointCircuit x_circuit(circuit, Builder::Variable::Type::Input, 3);
     eq_circuit(x_circuit);
+
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
-    BOOST_TEST(eq(x) == EqExtension<E>::Tracer::point(eq, x, z.elements));
+
+    using EqAssigner = EqExtension<E>::Assigner<Builder::degree()>;
+    EqAssigner eq_assigner(z.elements);
+    BOOST_TEST(eq(x) == eq_assigner.point(eq, x));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 
-BOOST_AUTO_TEST_CASE(circuit_hypercube) {
+BOOST_AUTO_TEST_CASE(hypercubes) {
     EqExtension<E> eq({E(29), E(31), E(37)});
 
     using Builder = CircuitBuilder<E, 2>;
@@ -150,10 +158,14 @@ BOOST_AUTO_TEST_CASE(circuit_hypercube) {
     using EqCircuit = EqExtension<E>::Circuit<Builder>;
     EqCircuit eq_circuit(circuit, Builder::Variable::Type::Input, 3);
     EqCircuit::hypercube(circuit, eq_circuit.coefficients);
+
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
-    BOOST_TEST(eq() == EqExtension<E>::Tracer::hypercube(eq.coefficients, z.elements));
+
+    using EqAssigner = EqExtension<E>::Assigner<Builder::degree()>;
+    EqAssigner eq_assigner(z.elements);
+    BOOST_TEST(eq() == eq_assigner.hypercube(eq.coefficients));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

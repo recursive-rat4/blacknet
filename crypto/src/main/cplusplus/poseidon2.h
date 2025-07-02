@@ -328,32 +328,32 @@ public:
     }
 };
 
-template<std::size_t circuit>
-struct Tracer {
+template<std::size_t Degree>
+struct Assigner {
 private:
-    constexpr static void sboxp(F& x, std::vector<F>& trace) {
+    constexpr static void sboxp(F& x, std::vector<F>& assigment) {
         if constexpr (Params::a == 3) {
-            if constexpr (circuit >= 3) {
-                trace.push_back(
+            if constexpr (Degree >= 3) {
+                assigment.push_back(
                     x *= x.square()
                 );
             } else {
-                trace.push_back(
-                    x *= trace.emplace_back(
+                assigment.push_back(
+                    x *= assigment.emplace_back(
                         x.square())
                 );
             }
         } else if constexpr (Params::a == 5) {
-            trace.push_back(
-                x *= trace.emplace_back(trace.emplace_back(
+            assigment.push_back(
+                x *= assigment.emplace_back(assigment.emplace_back(
                     x.square()).square())
             );
         } else if constexpr (Params::a == 17) {
-            if constexpr (circuit >= 17) {
-                trace.push_back(
+            if constexpr (Degree >= 17) {
+                assigment.push_back(
                     x *= x.square().square().square().square()
                 );
-            } else if constexpr (circuit >= 3) {
+            } else if constexpr (Degree >= 3) {
                 F x2{ x.square() };
                 F x3{ x * x2 };
                 F x6{ x3.square() };
@@ -361,13 +361,13 @@ private:
                 F x15{ x6 * x9 };
                 F x17{ x2 * x15 };
                 x = x17;
-                trace.emplace_back(std::move(x3));
-                trace.emplace_back(std::move(x9));
-                trace.emplace_back(std::move(x15));
-                trace.emplace_back(std::move(x17));
+                assigment.emplace_back(std::move(x3));
+                assigment.emplace_back(std::move(x9));
+                assigment.emplace_back(std::move(x15));
+                assigment.emplace_back(std::move(x17));
             } else {
-                trace.push_back(
-                    x *= trace.emplace_back(trace.emplace_back(trace.emplace_back(trace.emplace_back(
+                assigment.push_back(
+                    x *= assigment.emplace_back(assigment.emplace_back(assigment.emplace_back(assigment.emplace_back(
                         x.square()).square()).square()).square())
                 );
             }
@@ -376,29 +376,29 @@ private:
         }
     }
 
-    constexpr static void sbox(std::array<F, T>& x, std::vector<F>& trace) {
+    constexpr static void sbox(std::array<F, T>& x, std::vector<F>& assigment) {
         for (std::size_t i = 0; i < T; ++i)
-            sboxp(x[i], trace);
+            sboxp(x[i], assigment);
     }
 public:
-    constexpr static void permute(std::array<F, T>& x, std::vector<F>& trace) {
+    constexpr static void permute(std::array<F, T>& x, std::vector<F>& assigment) {
         external(x);
 
         for (std::size_t round = 0; round < Params::rb; ++round) {
             rcb(round, x);
-            sbox(x, trace);
+            sbox(x, assigment);
             external(x);
         }
 
         for (std::size_t round = 0; round < Params::rp; ++round) {
             rcp(round, x);
-            sboxp(x[0], trace);
+            sboxp(x[0], assigment);
             internal(x);
         }
 
         for (std::size_t round = 0; round < Params::re; ++round) {
             rce(round, x);
-            sbox(x, trace);
+            sbox(x, assigment);
             external(x);
         }
     }

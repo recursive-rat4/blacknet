@@ -62,12 +62,12 @@ BOOST_AUTO_TEST_CASE(circuit) {
     R1CS<E> r1cs(circuit.r1cs());
 
     Vector<E> z = r1cs.assigment();
-    using Tracer = Cell::Tracer<Builder::degree()>;
+    using Assigner = Cell::Assigner<Builder::degree()>;
     auto null = Cell::null();
-    auto cons = Tracer::cons(null, null, z.elements);
-    Tracer cons_tracer(cons, z.elements);
-    auto car = cons_tracer.car(null, null);
-    auto cdr = cons_tracer.cdr(null, null);
+    auto cons = Assigner::cons(null, null, z.elements);
+    Assigner cons_assigner(cons, z.elements);
+    auto car = cons_assigner.car(null, null);
+    auto cdr = cons_assigner.cdr(null, null);
     BOOST_TEST(r1cs.isSatisfied(z));
 
     BOOST_TEST(null == car);

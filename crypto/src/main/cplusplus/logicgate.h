@@ -124,11 +124,12 @@ struct Circuit {
     }
 };
 
-struct Tracer {
-    std::vector<R>& trace;
+template<std::size_t Degree>
+struct Assigner {
+    std::vector<R>& assigment;
 
-    constexpr Tracer(std::vector<R>& trace)
-        : trace(trace) {}
+    constexpr Assigner(std::vector<R>& assigment)
+        : assigment(assigment) {}
 
     constexpr void LessOrEqualCheck(const Vector<R>& a, const Vector<R>& b) {
         Vector<R> current_run;
@@ -150,13 +151,13 @@ struct Tracer {
     }
 
     constexpr R Xor(const R& a, const R& b) {
-        return a + b - trace.emplace_back(
+        return a + b - assigment.emplace_back(
             a * b
         ).douple();
     }
 
     constexpr R And(const R& a, const R& b) {
-        return trace.emplace_back(
+        return assigment.emplace_back(
             a * b
         );
     }
@@ -170,7 +171,7 @@ struct Tracer {
     }
 
     constexpr R Or(const R& a, const R& b) {
-        return a + b - trace.emplace_back(
+        return a + b - assigment.emplace_back(
             a * b
         );
     }

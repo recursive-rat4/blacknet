@@ -27,7 +27,7 @@ using namespace blacknet::crypto;
 static FastDRG rng;
 
 template<typename F>
-static void BM_ExtFieldAdd(benchmark::State& state) {
+static void BM_ExtensionFieldAdd(benchmark::State& state) {
     auto a = F::random(rng);
     auto b = F::random(rng);
 
@@ -39,18 +39,18 @@ static void BM_ExtFieldAdd(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree2>);
-BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree3>);
-BENCHMARK(BM_ExtFieldAdd<Solinas62RingDegree4>);
-BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree2>);
-BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree3>);
-BENCHMARK(BM_ExtFieldAdd<PervushinRingDegree4>);
-BENCHMARK(BM_ExtFieldAdd<LM62RingDegree2>);
-BENCHMARK(BM_ExtFieldAdd<LM62RingDegree3>);
-BENCHMARK(BM_ExtFieldAdd<LM62RingDegree4>);
+BENCHMARK(BM_ExtensionFieldAdd<Solinas62RingDegree2>);
+BENCHMARK(BM_ExtensionFieldAdd<Solinas62RingDegree3>);
+BENCHMARK(BM_ExtensionFieldAdd<Solinas62RingDegree4>);
+BENCHMARK(BM_ExtensionFieldAdd<PervushinRingDegree2>);
+BENCHMARK(BM_ExtensionFieldAdd<PervushinRingDegree3>);
+BENCHMARK(BM_ExtensionFieldAdd<PervushinRingDegree4>);
+BENCHMARK(BM_ExtensionFieldAdd<LM62RingDegree2>);
+BENCHMARK(BM_ExtensionFieldAdd<LM62RingDegree3>);
+BENCHMARK(BM_ExtensionFieldAdd<LM62RingDegree4>);
 
 template<typename F>
-static void BM_ExtFieldSub(benchmark::State& state) {
+static void BM_ExtensionFieldSub(benchmark::State& state) {
     auto a = F::random(rng);
     auto b = F::random(rng);
 
@@ -62,18 +62,18 @@ static void BM_ExtFieldSub(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree2>);
-BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree3>);
-BENCHMARK(BM_ExtFieldSub<Solinas62RingDegree4>);
-BENCHMARK(BM_ExtFieldSub<PervushinRingDegree2>);
-BENCHMARK(BM_ExtFieldSub<PervushinRingDegree3>);
-BENCHMARK(BM_ExtFieldSub<PervushinRingDegree4>);
-BENCHMARK(BM_ExtFieldSub<LM62RingDegree2>);
-BENCHMARK(BM_ExtFieldSub<LM62RingDegree3>);
-BENCHMARK(BM_ExtFieldSub<LM62RingDegree4>);
+BENCHMARK(BM_ExtensionFieldSub<Solinas62RingDegree2>);
+BENCHMARK(BM_ExtensionFieldSub<Solinas62RingDegree3>);
+BENCHMARK(BM_ExtensionFieldSub<Solinas62RingDegree4>);
+BENCHMARK(BM_ExtensionFieldSub<PervushinRingDegree2>);
+BENCHMARK(BM_ExtensionFieldSub<PervushinRingDegree3>);
+BENCHMARK(BM_ExtensionFieldSub<PervushinRingDegree4>);
+BENCHMARK(BM_ExtensionFieldSub<LM62RingDegree2>);
+BENCHMARK(BM_ExtensionFieldSub<LM62RingDegree3>);
+BENCHMARK(BM_ExtensionFieldSub<LM62RingDegree4>);
 
 template<typename F>
-static void BM_ExtFieldMul(benchmark::State& state) {
+static void BM_ExtensionFieldMul(benchmark::State& state) {
     auto a = F::random(rng);
     auto b = F::random(rng);
 
@@ -85,18 +85,18 @@ static void BM_ExtFieldMul(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree2>);
-BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree3>);
-BENCHMARK(BM_ExtFieldMul<Solinas62RingDegree4>);
-BENCHMARK(BM_ExtFieldMul<PervushinRingDegree2>);
-BENCHMARK(BM_ExtFieldMul<PervushinRingDegree3>);
-BENCHMARK(BM_ExtFieldMul<PervushinRingDegree4>);
-BENCHMARK(BM_ExtFieldMul<LM62RingDegree2>);
-BENCHMARK(BM_ExtFieldMul<LM62RingDegree3>);
-BENCHMARK(BM_ExtFieldMul<LM62RingDegree4>);
+BENCHMARK(BM_ExtensionFieldMul<Solinas62RingDegree2>);
+BENCHMARK(BM_ExtensionFieldMul<Solinas62RingDegree3>);
+BENCHMARK(BM_ExtensionFieldMul<Solinas62RingDegree4>);
+BENCHMARK(BM_ExtensionFieldMul<PervushinRingDegree2>);
+BENCHMARK(BM_ExtensionFieldMul<PervushinRingDegree3>);
+BENCHMARK(BM_ExtensionFieldMul<PervushinRingDegree4>);
+BENCHMARK(BM_ExtensionFieldMul<LM62RingDegree2>);
+BENCHMARK(BM_ExtensionFieldMul<LM62RingDegree3>);
+BENCHMARK(BM_ExtensionFieldMul<LM62RingDegree4>);
 
 template<typename F>
-static void BM_ExtFieldInv(benchmark::State& state) {
+static void BM_ExtensionFieldInv(benchmark::State& state) {
     auto a = F::random(rng);
 
     for (auto _ : state) {
@@ -106,12 +106,12 @@ static void BM_ExtFieldInv(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree2>);
-BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree3>);
-BENCHMARK(BM_ExtFieldInv<Solinas62RingDegree4>);
-BENCHMARK(BM_ExtFieldInv<PervushinRingDegree2>);
-BENCHMARK(BM_ExtFieldInv<PervushinRingDegree3>);
-BENCHMARK(BM_ExtFieldInv<PervushinRingDegree4>);
-BENCHMARK(BM_ExtFieldInv<LM62RingDegree2>);
-BENCHMARK(BM_ExtFieldInv<LM62RingDegree3>);
-BENCHMARK(BM_ExtFieldInv<LM62RingDegree4>);
+BENCHMARK(BM_ExtensionFieldInv<Solinas62RingDegree2>);
+BENCHMARK(BM_ExtensionFieldInv<Solinas62RingDegree3>);
+BENCHMARK(BM_ExtensionFieldInv<Solinas62RingDegree4>);
+BENCHMARK(BM_ExtensionFieldInv<PervushinRingDegree2>);
+BENCHMARK(BM_ExtensionFieldInv<PervushinRingDegree3>);
+BENCHMARK(BM_ExtensionFieldInv<PervushinRingDegree4>);
+BENCHMARK(BM_ExtensionFieldInv<LM62RingDegree2>);
+BENCHMARK(BM_ExtensionFieldInv<LM62RingDegree3>);
+BENCHMARK(BM_ExtensionFieldInv<LM62RingDegree4>);

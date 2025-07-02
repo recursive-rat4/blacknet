@@ -172,24 +172,27 @@ struct Circuit {
     }
 };
 
-struct Tracer {
-    constexpr static E point(const EqExtension& eq, const Point<E>& point, std::vector<E>& trace) {
+template<std::size_t Degree>
+struct Assigner {
+    std::vector<E>& assigment;
+
+    constexpr E point(const EqExtension& eq, const Point<E>& point) {
         E pi = E::multiplicative_identity();
         for (std::size_t i = 0; i < eq.coefficients.size(); ++i)
-            trace.push_back(
-                pi *= trace.emplace_back(
+            assigment.push_back(
+                pi *= assigment.emplace_back(
                     eq.coefficients[i] * point[i]
                 ).douple() - eq.coefficients[i] - point[i] + E(1)
             );
         return pi;
     }
 
-    constexpr static std::vector<E> hypercube(const std::vector<E>& coefficients, std::vector<E>& trace) {
+    constexpr std::vector<E> hypercube(const std::vector<E>& coefficients) {
         std::vector<E> r(1 << coefficients.size(), E::additive_identity());
         r[0] = E::multiplicative_identity();
         for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
             for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
-                r[l] = trace.emplace_back(
+                r[l] = assigment.emplace_back(
                     r[k] * coefficients[i]
                 );
                 r[k] -= r[l];

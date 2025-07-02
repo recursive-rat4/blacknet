@@ -204,18 +204,19 @@ struct Circuit {
     }
 };
 
-struct Tracer {
-    using Vector = Vector<E>::Tracer;
+template<std::size_t Degree>
+struct Assigner {
+    using Vector = Vector<E>::template Assigner<Degree>;
 
     MatrixDense matrix;
-    std::vector<E>& trace;
+    std::vector<E>& assigment;
 
-    constexpr Tracer(const MatrixDense& matrix, std::vector<E>& trace)
-        : matrix(matrix), trace(trace) {}
-    constexpr Tracer(MatrixDense&& matrix, std::vector<E>& trace)
-        : matrix(std::move(matrix)), trace(trace) {}
-    constexpr Tracer(std::size_t rows, std::size_t columns, std::vector<E>& trace)
-        : matrix(rows, columns), trace(trace) {}
+    constexpr Assigner(const MatrixDense& matrix, std::vector<E>& assigment)
+        : matrix(matrix), assigment(assigment) {}
+    constexpr Assigner(MatrixDense&& matrix, std::vector<E>& assigment)
+        : matrix(std::move(matrix)), assigment(assigment) {}
+    constexpr Assigner(std::size_t rows, std::size_t columns, std::vector<E>& assigment)
+        : matrix(rows, columns), assigment(assigment) {}
 
     constexpr E& operator [] (std::size_t i, std::size_t j) {
         return matrix[i, j];
@@ -226,10 +227,10 @@ struct Tracer {
     }
 
     constexpr Vector operator * (const Vector& other) const {
-        Vector r(matrix.rows, E::additive_identity(), trace);
+        Vector r(matrix.rows, E::additive_identity(), assigment);
         for (std::size_t i = 0; i < matrix.rows; ++i)
             for (std::size_t j = 0; j < matrix.columns; ++j)
-                r[i] += trace.emplace_back(
+                r[i] += assigment.emplace_back(
                     matrix[i, j] * other[j]
                 );
         return r;

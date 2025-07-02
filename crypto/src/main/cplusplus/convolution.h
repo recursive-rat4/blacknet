@@ -173,17 +173,18 @@ struct Circuit {
     }
 };
 
-struct Tracer {
-    using MatrixDense = MatrixDense<Z>::Tracer;
+template<std::size_t Degree>
+struct Assigner {
+    using MatrixDense = MatrixDense<Z>::template Assigner<Degree>;
 
-    std::vector<Z>& trace;
+    std::vector<Z>& assigment;
 
     template<std::size_t N>
     constexpr void binomial(Z* r, const Z* a, const Z* b, Z zeta) {
-        MatrixDense ab(N, N, trace);
+        MatrixDense ab(N, N, assigment);
         for (std::size_t i = 0; i < N; ++i) {
             for (std::size_t j = 0; j < N; ++j) {
-                ab[i, j] = trace.emplace_back(
+                ab[i, j] = assigment.emplace_back(
                     a[i] * b[j]
                 );
             }

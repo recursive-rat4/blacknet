@@ -208,10 +208,10 @@ BOOST_AUTO_TEST_CASE(DotProduct) {
     std::ranges::copy(b.elements, std::back_inserter(z.elements));
     z.elements.push_back(c);
 
-    using Tracer = Vector<R>::Tracer;
-    Tracer a_tracer(a, z.elements);
-    Tracer b_tracer(b, z.elements);
-    BOOST_TEST(c == a_tracer.dot(b_tracer));
+    using Assigner = Vector<R>::Assigner<Builder::degree()>;
+    Assigner a_assigner(a, z.elements);
+    Assigner b_assigner(b, z.elements);
+    BOOST_TEST(c == a_assigner.dot(b_assigner));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 

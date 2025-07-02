@@ -75,17 +75,17 @@ struct Circuit {
     }
 };
 
-template<std::size_t circuit>
-struct Tracer {
+template<std::size_t Degree>
+struct Assigner {
     constexpr static Hash compress(
         const Hash& x0,
         const Hash& x1,
-        std::vector<F>& trace
+        std::vector<F>& assigment
     ) {
         std::array<F, M * B> state;
         std::ranges::copy(x0, state.begin());
         std::ranges::copy(x1, state.begin() + x0.size());
-        P::template Tracer<circuit>::permute(state, trace);
+        P::template Assigner<Degree>::permute(state, assigment);
         Hash hash;
         for (std::size_t i = 0; i < hash.size(); ++i)
             hash[i] = x0[i] + x1[i] + state[i] + state[i + hash.size()];

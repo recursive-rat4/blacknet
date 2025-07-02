@@ -137,11 +137,12 @@ struct Circuit {
     }
 };
 
-struct Tracer {
-    std::vector<R>& trace;
+template<std::size_t Degree>
+struct Assigner {
+    std::vector<R>& assigment;
 
-    constexpr Tracer(std::vector<R>& trace)
-        : trace(trace) {}
+    constexpr Assigner(std::vector<R>& assigment)
+        : assigment(assigment) {}
 
     constexpr Vector<R> decompose(
         NumericType radix, std::size_t digits,
@@ -160,7 +161,7 @@ private:
     ) {
         auto representative = f.canonical();
         for (std::size_t j = 0; j < digits; ++j) {
-            pieces[j] = trace.emplace_back(
+            pieces[j] = assigment.emplace_back(
                 representative % radix
             );
             representative /= radix;

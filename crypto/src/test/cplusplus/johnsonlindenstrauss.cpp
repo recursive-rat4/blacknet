@@ -75,12 +75,12 @@ BOOST_AUTO_TEST_CASE(distribution) {
     R1CS<Z> r1cs(circuit.r1cs());
     Vector<Z> z = r1cs.assigment();
 
-    using SpongeTracer = Sponge::Tracer<Builder::degree()>;
-    SpongeTracer sponge_tracer(z.elements);
-    using DistributionTracer = JL::DistributionSponge<Sponge>::Tracer<Builder::degree()>;
-    DistributionTracer distribution_tracer(z.elements);
-    Vector<Z> v_traced(32);
-    std::ranges::generate(v_traced, [&] { return distribution_tracer(sponge_tracer); });
+    using SpongeAssigner = Sponge::Assigner<Builder::degree()>;
+    SpongeAssigner sponge_assigner(z.elements);
+    using DistributionAssigner = JL::DistributionSponge<Sponge>::Assigner<Builder::degree()>;
+    DistributionAssigner distribution_assigner(z.elements);
+    Vector<Z> v_assigned(32);
+    std::ranges::generate(v_assigned, [&] { return distribution_assigner(sponge_assigner); });
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 

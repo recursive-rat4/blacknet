@@ -170,12 +170,12 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
     std::ranges::copy(a.elements, std::back_inserter(z.elements));
     std::ranges::copy(b.elements, std::back_inserter(z.elements));
 
-    using MatrixTracer = MatrixDense<R>::Tracer;
-    MatrixTracer a_tracer(a, z.elements);
-    using VectorTracer = Vector<R>::Tracer;
-    VectorTracer b_tracer(b, z.elements);
-    auto c_traced = a_tracer * b_tracer;
-    BOOST_TEST(c == c_traced.vector);
+    using MatrixAssigner = MatrixDense<R>::Assigner<Builder::degree()>;
+    MatrixAssigner a_assigner(a, z.elements);
+    using VectorAssigner = Vector<R>::Assigner<Builder::degree()>;
+    VectorAssigner b_assigner(b, z.elements);
+    auto c_assigned = a_assigner * b_assigner;
+    BOOST_TEST(c == c_assigned.vector);
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 

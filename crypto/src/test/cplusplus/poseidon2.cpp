@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(Pallas_3) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(Solinas62_12) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_12) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(LM62_12) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(LM62_8) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
-    Poseidon2::Tracer<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }

@@ -119,21 +119,21 @@ struct LatticeFold {
         }
     };
 
-    template<std::size_t circuit>
-    struct Tracer {
-        using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Tracer<circuit>;
-        using SpongeTracer = Sponge::template Tracer<circuit>;
+    template<std::size_t Degree>
+    struct Assigner {
+        using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Assigner<Degree>;
+        using SpongeAssigner = Sponge::template Assigner<Degree>;
 
-        std::vector<Fq>& trace;
+        std::vector<Fq>& assigment;
         BinaryUniformDistribution bud;
 
-        constexpr Tracer(std::vector<Fq>& trace) : trace(trace), bud(trace) {}
+        constexpr Assigner(std::vector<Fq>& assigment) : assigment(assigment), bud(assigment) {}
 
         constexpr void reset() noexcept {
             bud.reset();
         }
 
-        constexpr result_type operator () (SpongeTracer& sponge) {
+        constexpr result_type operator () (SpongeAssigner& sponge) {
             return bud(sponge).douple() - bud(sponge);
         }
     };
@@ -263,20 +263,21 @@ struct LatticeFold {
         }
     };
 
-    struct Tracer {
-        using MultilinearExtension = MultilinearExtension<Fq>::Tracer;
+    template<std::size_t Degree>
+    struct Assigner {
+        using MultilinearExtension = MultilinearExtension<Fq>::template Assigner<Degree>;
 
         Fq mu;
         MultilinearExtension mle;
-        std::vector<Fq>& trace;
+        std::vector<Fq>& assigment;
 
-        constexpr Tracer(const G2& g2, std::vector<Fq>& trace)
-            : mu(g2.mu), mle(g2.mle, trace), trace(trace) {}
+        constexpr Assigner(const G2& g2, std::vector<Fq>& assigment)
+            : mu(g2.mu), mle(g2.mle, assigment), assigment(assigment) {}
 
         constexpr Fq operator () (const Point<Fq>& point) const {
             Fq t = mle(point);
-            return trace.emplace_back(
-                mu * (trace.emplace_back(
+            return assigment.emplace_back(
+                mu * (assigment.emplace_back(
                     t.square()
                 ) - t)
             );

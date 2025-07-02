@@ -189,10 +189,10 @@ BOOST_AUTO_TEST_CASE(circuit) {
     z.elements.push_back(sum);
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
-    SumCheck::Tracer<Builder::degree()> tracer(z.elements);
-    using DuplexTracer = Duplex::Tracer<Builder::degree()>;
-    DuplexTracer duplex_tracer(z.elements);
-    BOOST_TEST_REQUIRE(tracer.verify(poly, sum, proof, duplex_tracer));
+    SumCheck::Assigner<Builder::degree()> assigner(z.elements);
+    using DuplexAssigner = Duplex::Assigner<Builder::degree()>;
+    DuplexAssigner duplex_assigner(z.elements);
+    BOOST_TEST_REQUIRE(assigner.verify(poly, sum, proof, duplex_assigner));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

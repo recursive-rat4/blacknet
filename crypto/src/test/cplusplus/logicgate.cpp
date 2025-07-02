@@ -106,9 +106,9 @@ BOOST_AUTO_TEST_CASE(less_or_equal_checks) {
     Vector<R> z = r1cs.assigment();
     std::ranges::copy(a, std::back_inserter(z.elements));
 
-    using Tracer = LogicGate::Tracer;
-    Tracer logic_gate_tracer(z.elements);
-    logic_gate_tracer.LessOrEqualCheck(a, b);
+    using Assigner = LogicGate::Assigner<Builder::degree()>;
+    Assigner logic_gate_assigner(z.elements);
+    logic_gate_assigner.LessOrEqualCheck(a, b);
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 
@@ -128,9 +128,9 @@ BOOST_AUTO_TEST_CASE(xors) {
     z.elements.push_back(a);
     z.elements.push_back(b);
 
-    using Tracer = LogicGate::Tracer;
-    Tracer logic_gate_tracer(z.elements);
-    BOOST_TEST(c == logic_gate_tracer.Xor(a, b));
+    using Assigner = LogicGate::Assigner<Builder::degree()>;
+    Assigner logic_gate_assigner(z.elements);
+    BOOST_TEST(c == logic_gate_assigner.Xor(a, b));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 
@@ -150,9 +150,9 @@ BOOST_AUTO_TEST_CASE(ands) {
     z.elements.push_back(a);
     z.elements.push_back(b);
 
-    using Tracer = LogicGate::Tracer;
-    Tracer logic_gate_tracer(z.elements);
-    BOOST_TEST(c == logic_gate_tracer.And(a, b));
+    using Assigner = LogicGate::Assigner<Builder::degree()>;
+    Assigner logic_gate_assigner(z.elements);
+    BOOST_TEST(c == logic_gate_assigner.And(a, b));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 
@@ -172,9 +172,9 @@ BOOST_AUTO_TEST_CASE(ors) {
     z.elements.push_back(a);
     z.elements.push_back(b);
 
-    using Tracer = LogicGate::Tracer;
-    Tracer logic_gate_tracer(z.elements);
-    BOOST_TEST(c == logic_gate_tracer.Or(a, b));
+    using Assigner = LogicGate::Assigner<Builder::degree()>;
+    Assigner logic_gate_assigner(z.elements);
+    BOOST_TEST(c == logic_gate_assigner.Or(a, b));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 
@@ -192,9 +192,9 @@ BOOST_AUTO_TEST_CASE(nots) {
     Vector<R> z = r1cs.assigment();
     z.elements.push_back(a);
 
-    using Tracer = LogicGate::Tracer;
-    Tracer logic_gate_tracer(z.elements);
-    BOOST_TEST(b == logic_gate_tracer.Not(a));
+    using Assigner = LogicGate::Assigner<Builder::degree()>;
+    Assigner logic_gate_assigner(z.elements);
+    BOOST_TEST(b == logic_gate_assigner.Not(a));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 

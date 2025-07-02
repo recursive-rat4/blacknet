@@ -136,26 +136,27 @@ struct Circuit {
     }
 };
 
-struct Tracer {
+template<std::size_t Degree>
+struct Assigner {
     UnivariatePolynomial polynomial;
-    std::vector<E>& trace;
+    std::vector<E>& assigment;
 
-    constexpr Tracer(const UnivariatePolynomial& polynomial, std::vector<E>& trace)
-        : polynomial(polynomial), trace(trace) {}
+    constexpr Assigner(const UnivariatePolynomial& polynomial, std::vector<E>& assigment)
+        : polynomial(polynomial), assigment(assigment) {}
 
     constexpr E operator () (const E& point) const {
         E sigma(polynomial.coefficients[0]);
         E pi(point);
         for (std::size_t i = 1; i < polynomial.coefficients.size() - 1; ++i) {
-            sigma += trace.emplace_back(
+            sigma += assigment.emplace_back(
                 pi * polynomial.coefficients[i]
             );
-            trace.push_back(
+            assigment.push_back(
                 pi *= point
             );
         }
         if (polynomial.coefficients.size() > 1) {
-            sigma += trace.emplace_back(
+            sigma += assigment.emplace_back(
                 pi * polynomial.coefficients.back()
             );
         }

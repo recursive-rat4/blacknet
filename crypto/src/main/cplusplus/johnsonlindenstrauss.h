@@ -85,21 +85,21 @@ struct JohnsonLindenstrauss {
         }
     };
 
-    template<std::size_t circuit>
-    struct Tracer {
-        using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Tracer<circuit>;
-        using SpongeTracer = Sponge::template Tracer<circuit>;
+    template<std::size_t Degree>
+    struct Assigner {
+        using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Assigner<Degree>;
+        using SpongeAssigner = Sponge::template Assigner<Degree>;
 
-        std::vector<Z>& trace;
+        std::vector<Z>& assigment;
         BinaryUniformDistribution bud;
 
-        constexpr Tracer(std::vector<Z>& trace) : trace(trace), bud(trace) {}
+        constexpr Assigner(std::vector<Z>& assigment) : assigment(assigment), bud(assigment) {}
 
         constexpr void reset() noexcept {
             bud.reset();
         }
 
-        constexpr result_type operator () (SpongeTracer& sponge) {
+        constexpr result_type operator () (SpongeAssigner& sponge) {
             return bud(sponge) + bud(sponge) - Z(1);
         }
     };

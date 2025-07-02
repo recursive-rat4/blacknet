@@ -218,18 +218,21 @@ struct Circuit {
     }
 };
 
-struct Tracer {
-    MultilinearExtension mle;
-    std::vector<E>& trace;
+template<std::size_t Degree>
+struct Assigner {
+    using EqExtension = EqExtension<E>::template Assigner<Degree>;
 
-    constexpr Tracer(const MultilinearExtension& mle, std::vector<E>& trace)
-        : mle(mle), trace(trace) {}
+    MultilinearExtension mle;
+    std::vector<E>& assigment;
+
+    constexpr Assigner(const MultilinearExtension& mle, std::vector<E>& assigment)
+        : mle(mle), assigment(assigment) {}
 
     constexpr E operator () (const Point<E>& point) const {
-        const std::vector<E>& pis = EqExtension<E>::Tracer::hypercube(point.coordinates, trace);
+        const std::vector<E>& pis = EqExtension(assigment).hypercube(point.coordinates);
         E sigma(E::additive_identity());
         for (std::size_t i = 0; i < mle.coefficients.size(); ++i)
-            sigma += trace.emplace_back(
+            sigma += assigment.emplace_back(
                 pis[i] * mle.coefficients[i]
             );
         return sigma;

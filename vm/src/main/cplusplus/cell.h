@@ -108,24 +108,24 @@ struct Circuit {
     }
 };
 
-template<std::size_t circuit>
-struct Tracer {
+template<std::size_t Degree>
+struct Assigner {
     Cell cell;
-    std::vector<E>& trace;
+    std::vector<E>& assigment;
 
-    constexpr static Cell cons(const Cell& left, const Cell& right, std::vector<E>& trace) {
-        return { Jive::template Tracer<circuit>::compress(left.value, right.value, trace) };
+    constexpr static Cell cons(const Cell& left, const Cell& right, std::vector<E>& assigment) {
+        return { Jive::template Assigner<Degree>::compress(left.value, right.value, assigment) };
     }
 
     constexpr Cell car(const Cell& left, const Cell& right) const {
-        if (Jive::template Tracer<circuit>::compress(left.value, right.value, trace) == cell.value)
+        if (Jive::template Assigner<Degree>::compress(left.value, right.value, assigment) == cell.value)
             return left;
         else
             throw std::runtime_error("Invalid KAR");
     }
 
     constexpr Cell cdr(const Cell& left, const Cell& right) const {
-        if (Jive::template Tracer<circuit>::compress(left.value, right.value, trace) == cell.value)
+        if (Jive::template Assigner<Degree>::compress(left.value, right.value, assigment) == cell.value)
             return right;
         else
             throw std::runtime_error("Invalid KUDER");

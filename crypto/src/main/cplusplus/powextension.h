@@ -103,12 +103,13 @@ struct Circuit {
     }
 };
 
-struct Tracer {
-    constexpr static std::vector<E> powers(const E& tau, std::size_t variables, std::vector<E>& trace) {
+template<std::size_t Degree>
+struct Assigner {
+    constexpr static std::vector<E> powers(const E& tau, std::size_t variables, std::vector<E>& assigment) {
         std::vector<E> coefficients(variables);
         coefficients[0] = tau;
         for (std::size_t i = 1; i < variables; ++i)
-            coefficients[i] = trace.emplace_back(
+            coefficients[i] = assigment.emplace_back(
                 coefficients[i - 1].square()
             );
         return coefficients;

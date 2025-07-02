@@ -60,14 +60,14 @@ BOOST_AUTO_TEST_CASE(test) {
     std::ranges::copy(b.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(c.coefficients, std::back_inserter(z.elements));
 
-    using NTTTracer = NTT<Z, R::dimension()>::Tracer;
-    NTTTracer ntt_tracer(z.elements);
-    ntt_tracer.cooley_tukey(a.coefficients);
-    ntt_tracer.cooley_tukey(b.coefficients);
-    R c_traced;
-    ntt_tracer.convolute(c_traced.coefficients, a.coefficients, b.coefficients);
-    ntt_tracer.gentleman_sande(c_traced.coefficients);
-    BOOST_TEST(c == c_traced);
+    using NTTAssigner = NTT<Z, R::dimension()>::Assigner<Builder::degree()>;
+    NTTAssigner ntt_assigner(z.elements);
+    ntt_assigner.cooley_tukey(a.coefficients);
+    ntt_assigner.cooley_tukey(b.coefficients);
+    R c_assigned;
+    ntt_assigner.convolute(c_assigned.coefficients, a.coefficients, b.coefficients);
+    ntt_assigner.gentleman_sande(c_assigned.coefficients);
+    BOOST_TEST(c == c_assigned);
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 

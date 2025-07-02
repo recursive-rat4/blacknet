@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     Vector<E> z = ccs.assigment();
     z.elements.push_back(tau);
-    BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::Tracer::powers(tau, ell, z.elements));
+    BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::Assigner<Builder::degree()>::powers(tau, ell, z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

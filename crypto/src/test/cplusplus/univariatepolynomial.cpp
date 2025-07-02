@@ -68,10 +68,10 @@ BOOST_AUTO_TEST_CASE(circuit) {
     Vector<E> z = ccs.assigment();
     std::ranges::copy(p.coefficients, std::back_inserter(z.elements));
     z.elements.push_back(x);
-    using Tracer = UnivariatePolynomial<E>::Tracer;
-    Tracer tracer(p, z.elements);
+    using Assigner = UnivariatePolynomial<E>::Assigner<Builder::degree()>;
+    Assigner assigner(p, z.elements);
     z.elements.emplace_back(
-        tracer(x)
+        assigner(x)
     );
     BOOST_TEST(p(x) == z.elements.back());
     BOOST_TEST(ccs.isSatisfied(z));
