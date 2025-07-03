@@ -17,10 +17,10 @@
 #
 
 .gcc:
-  image: gcc:14.2.0@sha256:95f598eea2b230fae0bca018c9e31ac1f9dc0599e5e06f2c70671f14449fdcb1
+  image: gcc:14.3.0@sha256:bf543463a2a7171654faed7d899d74a286fd3706ffb424f52a2cb4dc3f696039
 
 .openjdk:
-  image: maven:3.9.9-eclipse-temurin-21@sha256:887820a8941cc4e1bf011ec758e50acd8073bfe6046e8d9489e29ed38914e795
+  image: maven:3.9.10-eclipse-temurin-21@sha256:615bd38fa00dd2416d90cbbc99895b9955400fa8110e83646e3e04ebcb7c471e
   variables:
     MAVEN: "mvn --batch-mode --no-transfer-progress" #TODO 4
     MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
