@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(ccs) {
     // Quarte
     MatrixDense<E> m1(1, 3, { E(0), E(0), E(1) });
     MatrixDense<E> m2(1, 3, { E(0), E(1), E(0) });
-    Vector<E> z{ E(1), E(16), E(2) };
+    VectorDense<E> z{ E(1), E(16), E(2) };
 
     std::vector<MatrixSparse<E>> ms;
     ms.emplace_back(MatrixSparse(m1));

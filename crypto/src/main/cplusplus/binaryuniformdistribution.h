@@ -24,7 +24,7 @@
 
 #include "latticegadget.h"
 #include "logicgate.h"
-#include "vector.h"
+#include "vectordense.h"
 
 namespace blacknet::crypto {
 
@@ -111,10 +111,10 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
     using LogicGate = LogicGate<Z>::template Circuit<Builder>;
     using SpongeCircuit = Sponge::template Circuit<Builder>;
-    using Vector = Vector<Z>::template Circuit<Builder>;
+    using VectorDense = VectorDense<Z>::template Circuit<Builder>;
 
     Builder& circuit;
-    Vector cache;
+    VectorDense cache;
     std::size_t have_bits;
 
     constexpr Circuit(Builder& circuit)
@@ -156,7 +156,7 @@ struct Assigner {
     using SpongeAssigner = Sponge::template Assigner<Degree>;
 
     std::vector<Z>& assigment;
-    Vector<Z> cache;
+    VectorDense<Z> cache;
     std::size_t have_bits;
 
     constexpr Assigner(std::vector<Z>& assigment)

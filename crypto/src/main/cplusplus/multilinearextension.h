@@ -31,7 +31,7 @@
 #include "eqextension.h"
 #include "matrixdense.h"
 #include "point.h"
-#include "vector.h"
+#include "vectordense.h"
 
 namespace blacknet::crypto {
 
@@ -53,13 +53,13 @@ struct MultilinearExtension {
         //TODO __cpp_lib_containers_ranges >= 202202L
         coefficients.assign(structure.begin(), structure.end());
     }
-    constexpr MultilinearExtension(const Vector<E>& vector) : coefficients(vector.elements) {}
+    constexpr MultilinearExtension(const VectorDense<E>& vector) : coefficients(vector.elements) {}
     template<typename S>
     requires(
         std::same_as<E, typename S::BaseRing> ||
         std::same_as<typename E::BaseRing, typename S::BaseRing>
     )
-    constexpr MultilinearExtension(const Vector<S>& vector) {
+    constexpr MultilinearExtension(const VectorDense<S>& vector) {
         coefficients.reserve(vector.elements.size() * S::size());
         auto inserter = std::back_inserter(coefficients);
         for (std::size_t i = 0; i < vector.elements.size(); ++i)

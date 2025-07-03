@@ -22,7 +22,7 @@
 #include <ostream>
 #include <random>
 
-#include "vector.h"
+#include "vectordense.h"
 
 namespace blacknet::crypto {
 
@@ -36,9 +36,9 @@ struct FS {
     constexpr bool operator == (const FS&) const = default;
 
     constexpr void fold(
-        Vector<F>& z, Vector<F>& e,
-        const Vector<F>& z1, const Vector<F>& e1,
-        const Vector<F>& z2, const Vector<F>& e2
+        VectorDense<F>& z, VectorDense<F>& e,
+        const VectorDense<F>& z1, const VectorDense<F>& e1,
+        const VectorDense<F>& z2, const VectorDense<F>& e2
     ) const {
         Duplex duplex; //XXX iv
 
@@ -55,8 +55,8 @@ struct FS {
     template<std::uniform_random_bit_generator RNG>
     void randomize(
         RNG& rng,
-        Vector<F>& z, Vector<F>& e,
-        const Vector<F>& z1, const Vector<F>& e1
+        VectorDense<F>& z, VectorDense<F>& e,
+        const VectorDense<F>& z1, const VectorDense<F>& e1
     ) const {
         auto [z2, e2] = cs.random(rng);
         fold(z, e, z1, e1, z2, e2);

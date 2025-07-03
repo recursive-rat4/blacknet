@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(points) {
     eq_circuit(x_circuit);
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z = ccs.assigment();
+    VectorDense<E> z = ccs.assigment();
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
 
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(hypercubes) {
     EqCircuit::hypercube(circuit, eq_circuit.coefficients);
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z = ccs.assigment();
+    VectorDense<E> z = ccs.assigment();
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
 
     using EqAssigner = EqExtension<E>::Assigner<Builder::degree()>;

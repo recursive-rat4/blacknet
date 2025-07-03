@@ -109,8 +109,9 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     }
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z = ccs.assigment();
+    VectorDense<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
+
     using Assigner = Sponge::Assigner<Builder::degree()>;
     Assigner assigner(z.elements);
     assigner.absorb(b);

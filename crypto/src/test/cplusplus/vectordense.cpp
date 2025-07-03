@@ -21,7 +21,7 @@
 #include "matrixdense.h"
 #include "pervushin.h"
 #include "r1cs.h"
-#include "vector.h"
+#include "vectordense.h"
 
 using namespace blacknet::crypto;
 
@@ -30,17 +30,17 @@ using R = PervushinRing;
 BOOST_AUTO_TEST_SUITE(Vector_Plain)
 
 BOOST_AUTO_TEST_CASE(HadamardSummation) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(0),
         R(4),
         R(2),
     };
-    Vector<R> b{
+    VectorDense<R> b{
         R(7),
         R(3),
         R(5),
     };
-    Vector<R> c{
+    VectorDense<R> c{
         R(7),
         R(7),
         R(7),
@@ -50,17 +50,17 @@ BOOST_AUTO_TEST_CASE(HadamardSummation) {
 }
 
 BOOST_AUTO_TEST_CASE(HadamardProduct) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(2),
         R(2),
         R(2),
     };
-    Vector<R> b{
+    VectorDense<R> b{
         R(1),
         R(2),
         R(4),
     };
-    Vector<R> c{
+    VectorDense<R> c{
         R(2),
         R(4),
         R(8),
@@ -70,13 +70,13 @@ BOOST_AUTO_TEST_CASE(HadamardProduct) {
 }
 
 BOOST_AUTO_TEST_CASE(ScalarProduct) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(4),
         R(5),
         R(6),
     };
     R b(2);
-    Vector<R> c{
+    VectorDense<R> c{
         R(8),
         R(10),
         R(12),
@@ -86,17 +86,17 @@ BOOST_AUTO_TEST_CASE(ScalarProduct) {
 }
 
 BOOST_AUTO_TEST_CASE(HadamardSubtraction) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(8),
         R(5),
         R(1),
     };
-    Vector<R> b{
+    VectorDense<R> b{
         R(7),
         R(3),
         R(0),
     };
-    Vector<R> c{
+    VectorDense<R> c{
         R(1),
         R(2),
         R(1),
@@ -105,12 +105,12 @@ BOOST_AUTO_TEST_CASE(HadamardSubtraction) {
 }
 
 BOOST_AUTO_TEST_CASE(Negation) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(7),
         R(0),
         R(-1),
     };
-    Vector<R> b{
+    VectorDense<R> b{
         R(-7),
         R(0),
         R(1),
@@ -120,16 +120,16 @@ BOOST_AUTO_TEST_CASE(Negation) {
 }
 
 BOOST_AUTO_TEST_CASE(Concatectation) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(0), R(1),
     };
-    Vector<R> b{
+    VectorDense<R> b{
         R(2), R(3), R(4),
     };
-    Vector<R> c{
+    VectorDense<R> c{
         R(0), R(1), R(2), R(3), R(4),
     };
-    Vector<R> d{
+    VectorDense<R> d{
         R(2), R(3), R(4), R(0), R(1),
     };
     BOOST_TEST(c == (a || b));
@@ -137,12 +137,12 @@ BOOST_AUTO_TEST_CASE(Concatectation) {
 }
 
 BOOST_AUTO_TEST_CASE(DotProduct) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(1),
         R(3),
         R(-5),
     };
-    Vector<R> b{
+    VectorDense<R> b{
         R(4),
         R(-2),
         R(-1),
@@ -155,12 +155,12 @@ BOOST_AUTO_TEST_CASE(DotProduct) {
 }
 
 BOOST_AUTO_TEST_CASE(TensorProduct) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(0),
         R(1),
         R(2),
     };
-    Vector<R> b{
+    VectorDense<R> b{
         R(3),
         R(4),
     };
@@ -182,12 +182,12 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(Vector_Circuit)
 
 BOOST_AUTO_TEST_CASE(DotProduct) {
-    Vector<R> a{
+    VectorDense<R> a{
         R(1),
         R(3),
         R(-5),
     };
-    Vector<R> b{
+    VectorDense<R> b{
         R(4),
         R(-2),
         R(-1),
@@ -196,19 +196,19 @@ BOOST_AUTO_TEST_CASE(DotProduct) {
 
     using Builder = CircuitBuilder<R, 2>;
     Builder circuit;
-    using VectorCircuit = Vector<R>::Circuit<Builder>;
-    VectorCircuit a_circuit(circuit, Builder::Variable::Type::Input, 3);
-    VectorCircuit b_circuit(circuit, Builder::Variable::Type::Input, 3);
+    using VectorDenseCircuit = VectorDense<R>::Circuit<Builder>;
+    VectorDenseCircuit a_circuit(circuit, Builder::Variable::Type::Input, 3);
+    VectorDenseCircuit b_circuit(circuit, Builder::Variable::Type::Input, 3);
     auto c_var = circuit.input();
     circuit(c_var == a_circuit.dot(b_circuit));
 
     R1CS<R> r1cs(circuit.r1cs());
-    Vector<R> z = r1cs.assigment();
+    VectorDense<R> z = r1cs.assigment();
     std::ranges::copy(a.elements, std::back_inserter(z.elements));
     std::ranges::copy(b.elements, std::back_inserter(z.elements));
     z.elements.push_back(c);
 
-    using Assigner = Vector<R>::Assigner<Builder::degree()>;
+    using Assigner = VectorDense<R>::Assigner<Builder::degree()>;
     Assigner a_assigner(a, z.elements);
     Assigner b_assigner(b, z.elements);
     BOOST_TEST(c == a_assigner.dot(b_assigner));

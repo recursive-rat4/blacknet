@@ -22,7 +22,7 @@
 
 #include "binaryuniformdistribution.h"
 #include "matrixdense.h"
-#include "vector.h"
+#include "vectordense.h"
 
 namespace blacknet::crypto {
 
@@ -106,7 +106,7 @@ struct JohnsonLindenstrauss {
 
     };
 
-    constexpr static Vector<Z> project(const MatrixDense<Z>& map, const Vector<Z>& point) {
+    constexpr static VectorDense<Z> project(const MatrixDense<Z>& map, const VectorDense<Z>& point) {
         return map * point;
     }
 

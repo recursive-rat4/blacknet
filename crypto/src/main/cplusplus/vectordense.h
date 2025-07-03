@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_VECTOR_H
-#define BLACKNET_CRYPTO_VECTOR_H
+#ifndef BLACKNET_CRYPTO_VECTORDENSE_H
+#define BLACKNET_CRYPTO_VECTORDENSE_H
 
 #include <algorithm>
 #include <concepts>
@@ -33,27 +33,27 @@ namespace blacknet::crypto {
 template<typename E>class MatrixDense;
 
 template<typename E>
-class Vector {
+class VectorDense {
 public:
     using ElementType = E;
 
-    constexpr static Vector identity(std::size_t size) { return Vector(size, E(1)); }
+    constexpr static VectorDense identity(std::size_t size) { return VectorDense(size, E(1)); }
 
     std::vector<E> elements;
 
-    consteval Vector() = default;
-    constexpr Vector(std::size_t size) : elements(size) {}
-    constexpr Vector(std::size_t size, const E& fill) : elements(size, fill) {}
-    constexpr Vector(std::initializer_list<E> init) : elements(init) {}
-    constexpr Vector(std::vector<E>&& elements) : elements(std::move(elements)) {}
-    constexpr Vector(const Vector&) = default;
-    constexpr Vector(Vector&&) noexcept = default;
-    constexpr ~Vector() noexcept = default;
+    consteval VectorDense() = default;
+    constexpr VectorDense(std::size_t size) : elements(size) {}
+    constexpr VectorDense(std::size_t size, const E& fill) : elements(size, fill) {}
+    constexpr VectorDense(std::initializer_list<E> init) : elements(init) {}
+    constexpr VectorDense(std::vector<E>&& elements) : elements(std::move(elements)) {}
+    constexpr VectorDense(const VectorDense&) = default;
+    constexpr VectorDense(VectorDense&&) noexcept = default;
+    constexpr ~VectorDense() noexcept = default;
 
-    constexpr Vector& operator = (const Vector&) = default;
-    constexpr Vector& operator = (Vector&&) noexcept = default;
+    constexpr VectorDense& operator = (const VectorDense&) = default;
+    constexpr VectorDense& operator = (VectorDense&&) noexcept = default;
 
-    constexpr bool operator == (const Vector&) const = default;
+    constexpr bool operator == (const VectorDense&) const = default;
 
     constexpr std::size_t size() const noexcept {
         return elements.size();
@@ -67,77 +67,77 @@ public:
         return elements[i];
     }
 
-    constexpr Vector& operator += (const Vector& other) {
+    constexpr VectorDense& operator += (const VectorDense& other) {
         std::size_t size = elements.size();
         for (std::size_t i = 0; i < size; ++i)
             elements[i] += other.elements[i];
         return *this;
     }
 
-    constexpr Vector operator + (const Vector& other) const {
+    constexpr VectorDense operator + (const VectorDense& other) const {
         std::size_t size = elements.size();
-        Vector r(size);
+        VectorDense r(size);
         for (std::size_t i = 0; i < size; ++i)
             r.elements[i] = elements[i] + other.elements[i];
         return r;
     }
 
-    constexpr Vector& operator *= (const Vector& other) {
+    constexpr VectorDense& operator *= (const VectorDense& other) {
         std::size_t size = elements.size();
         for (std::size_t i = 0; i < size; ++i)
             elements[i] *= other.elements[i];
         return *this;
     }
 
-    constexpr Vector operator * (const Vector& other) const {
+    constexpr VectorDense operator * (const VectorDense& other) const {
         std::size_t size = elements.size();
-        Vector r(size);
+        VectorDense r(size);
         for (std::size_t i = 0; i < size; ++i)
             r.elements[i] = elements[i] * other.elements[i];
         return r;
     }
 
-    constexpr Vector operator * (const E& other) const {
+    constexpr VectorDense operator * (const E& other) const {
         std::size_t size = elements.size();
-        Vector r(size);
+        VectorDense r(size);
         for (std::size_t i = 0; i < size; ++i)
             r.elements[i] = elements[i] * other;
         return r;
     }
 
-    friend constexpr Vector operator * (const E& lps, const Vector& rps) {
+    friend constexpr VectorDense operator * (const E& lps, const VectorDense& rps) {
         std::size_t size = rps.elements.size();
-        Vector r(size);
+        VectorDense r(size);
         for (std::size_t i = 0; i < size; ++i)
             r.elements[i] = lps * rps.elements[i];
         return r;
     }
 
-    constexpr Vector& operator -= (const Vector& other) {
+    constexpr VectorDense& operator -= (const VectorDense& other) {
         std::size_t size = elements.size();
         for (std::size_t i = 0; i < size; ++i)
             elements[i] -= other.elements[i];
         return *this;
     }
 
-    constexpr Vector operator - (const Vector& other) const {
+    constexpr VectorDense operator - (const VectorDense& other) const {
         std::size_t size = elements.size();
-        Vector r(size);
+        VectorDense r(size);
         for (std::size_t i = 0; i < size; ++i)
             r.elements[i] = elements[i] - other.elements[i];
         return r;
     }
 
-    constexpr Vector operator - () const {
+    constexpr VectorDense operator - () const {
         std::size_t size = elements.size();
-        Vector r(size);
+        VectorDense r(size);
         for (std::size_t i = 0; i < size; ++i)
             r.elements[i] = - elements[i];
         return r;
     }
 
-    constexpr Vector operator || (const Vector& other) const {
-        Vector r(size() + other.size());
+    constexpr VectorDense operator || (const VectorDense& other) const {
+        VectorDense r(size() + other.size());
         for (std::size_t i = 0; i < size(); ++i)
             r.elements[i] = elements[i];
         for (std::size_t i = 0; i < other.size(); ++i)
@@ -145,14 +145,14 @@ public:
         return r;
     }
 
-    constexpr E dot(const Vector& other) const {
+    constexpr E dot(const VectorDense& other) const {
         E sigma(E::additive_identity());
         for (std::size_t i = 0; i < elements.size(); ++i)
             sigma += elements[i] * other.elements[i];
         return sigma;
     }
 
-    constexpr MatrixDense<E> tensor(const Vector& other) const {
+    constexpr MatrixDense<E> tensor(const VectorDense& other) const {
         std::size_t m = elements.size();
         std::size_t n = other.elements.size();
         MatrixDense<E> r(m, n);
@@ -195,36 +195,36 @@ public:
         return elements.end();
     }
 
-    friend std::ostream& operator << (std::ostream& out, const Vector& val)
+    friend std::ostream& operator << (std::ostream& out, const VectorDense& val)
     {
         fmt::print(out, "{}", val.elements);
         return out;
     }
 
     template<typename Sponge>
-    constexpr static Vector squeeze(Sponge& sponge, std::size_t size) {
-        Vector t(size);
+    constexpr static VectorDense squeeze(Sponge& sponge, std::size_t size) {
+        VectorDense t(size);
         std::ranges::generate(t.elements, [&] { return E::squeeze(sponge); });
         return t;
     }
 
     template<typename Sponge, typename DST>
-    constexpr static Vector squeeze(Sponge& sponge, DST& dst, std::size_t size) {
-        Vector t(size);
+    constexpr static VectorDense squeeze(Sponge& sponge, DST& dst, std::size_t size) {
+        VectorDense t(size);
         std::ranges::generate(t.elements, [&] { return E::squeeze(sponge, dst); });
         return t;
     }
 
     template<std::uniform_random_bit_generator RNG>
-    static Vector random(RNG& rng, std::size_t size) {
-        Vector t(size);
+    static VectorDense random(RNG& rng, std::size_t size) {
+        VectorDense t(size);
         std::ranges::generate(t.elements, [&] { return E::random(rng); });
         return t;
     }
 
     template<std::uniform_random_bit_generator RNG, typename DST>
-    static Vector random(RNG& rng, DST& dst, std::size_t size) {
-        Vector t(size);
+    static VectorDense random(RNG& rng, DST& dst, std::size_t size) {
+        VectorDense t(size);
         std::ranges::generate(t.elements, [&] { return E::random(rng, dst); });
         return t;
     }
@@ -290,14 +290,14 @@ struct Circuit {
 
 template<std::size_t Degree>
 struct Assigner {
-    Vector vector;
+    VectorDense vector;
     std::vector<E>& assigment;
 
     constexpr Assigner(std::size_t size, const E& fill, std::vector<E>& assigment)
         : vector(size, fill), assigment(assigment) {}
-    constexpr Assigner(const Vector& vector, std::vector<E>& assigment)
+    constexpr Assigner(const VectorDense& vector, std::vector<E>& assigment)
         : vector(vector), assigment(assigment) {}
-    constexpr Assigner(Vector&& vector, std::vector<E>& assigment)
+    constexpr Assigner(VectorDense&& vector, std::vector<E>& assigment)
         : vector(std::move(vector)), assigment(assigment) {}
 
     constexpr std::size_t size() const noexcept {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,53 +17,43 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "fermat.h"
 #include "matrixdense.h"
-#include "matrixsparse.h"
-#include "pervushin.h"
 #include "vectordense.h"
+#include "vectorsparse.h"
 
 using namespace blacknet::crypto;
 
-BOOST_AUTO_TEST_SUITE(MatriceSparses)
+BOOST_AUTO_TEST_SUITE(VectorSparses)
 
-using R = PervushinRing;
+using R = FermatRing;
 
 BOOST_AUTO_TEST_CASE(Conversion) {
-    MatrixSparse<R> ms(
-        4,
-        { 0, 2, 5, 7, 9 },
-        { 0, 1, 1, 2, 3, 0, 3, 1, 3 },
-        { R(1), R(2), R(3), R(4), R(5), R(6), R(7), R(8), R(9) }
+    VectorSparse<R> vs(
+        8,
+        { 0, 2, 5, 7 },
+        { R(1), R(2), R(3), R(4) }
     );
-    MatrixDense<R> md(4, 4, {
-        R(1), R(2), R(0), R(0),
-        R(0), R(3), R(4), R(5),
-        R(6), R(0), R(0), R(7),
-        R(0), R(8), R(0), R(9),
+    VectorDense<R> vd({
+        R(1), R(0), R(2), R(0), R(0), R(3), R(0), R(4),
     });
-    BOOST_TEST(ms == MatrixSparse<R>(md));
-    BOOST_TEST(md == ms.dense());
+    BOOST_TEST(vs == VectorSparse<R>(vd));
+    BOOST_TEST(vd == vs.dense());
 }
 
 BOOST_AUTO_TEST_CASE(Product) {
-    MatrixSparse<R> a(
+    MatrixDense<R> a(2, 4, {
+        R(11), R(13), R(17), R(19),
+        R(23), R(29), R(31), R(37),
+    });
+    VectorSparse<R> b(
         4,
-        { 0, 3, 3, 6, 9, 11 },
-        { 0, 1, 3, 0, 1, 3, 0, 1, 3, 1, 3 },
-        { R(11), R(12), R(14), R(31), R(32), R(34), R(41), R(42), R(44), R(52), R(54) }
+        { 1, 2 },
+        { R(3), R(5) }
     );
-    VectorDense<R> b{
-        R(61),
-        R(67),
-        R(71),
-        R(73),
-    };
     VectorDense<R> c{
-        R(2497),
-        R(0),
-        R(6517),
-        R(8527),
-        R(7426),
+        R(124),
+        R(242),
     };
     BOOST_TEST(c == a * b);
 }

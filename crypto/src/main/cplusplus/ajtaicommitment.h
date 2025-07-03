@@ -21,7 +21,8 @@
 #include <type_traits>
 
 #include "matrixdense.h"
-#include "vector.h"
+#include "vectordense.h"
+#include "vectorsparse.h"
 
 namespace blacknet::crypto {
 
@@ -60,11 +61,25 @@ public:
         return MatrixDense<R>::squeeze(sponge, rows, columns);
     }
 
-    constexpr Vector<R> commit(const Vector<R>& m) const {
+    constexpr VectorDense<R> commit(const VectorDense<R>& m) const {
         return a * m;
     }
 
-    constexpr bool open(const Vector<R>& c, const Vector<R>& m) const {
+    constexpr VectorDense<R> commit(const VectorSparse<R>& m) const {
+        return a * m;
+    }
+
+    constexpr bool open(const VectorDense<R>& c, const VectorDense<R>& m) const {
+        if constexpr (norm_p == NormP::Infinity) {
+            return m.checkInfinityNorm(bound) && c == commit(m);
+        } else if constexpr (norm_p == NormP::Euclidean) {
+            return m.euclideanNorm() < bound && c == commit(m);
+        } else {
+            static_assert(false, "Not implemented");
+        }
+    }
+
+    constexpr bool open(const VectorDense<R>& c, const VectorSparse<R>& m) const {
         if constexpr (norm_p == NormP::Infinity) {
             return m.checkInfinityNorm(bound) && c == commit(m);
         } else if constexpr (norm_p == NormP::Euclidean) {

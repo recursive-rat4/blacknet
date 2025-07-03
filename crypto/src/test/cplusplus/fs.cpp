@@ -50,11 +50,11 @@ BOOST_AUTO_TEST_CASE(test) {
     R1CS<F> r1cs = circuit.r1cs();
     FS fs(r1cs);
 
-    Vector<F> z, e;
-    const Vector<F> e_init(r1cs.constraints(), F(0));
-    Vector<F> z1{ F(1), F(6), F(-2), F(2), F(2) };
-    Vector<F> z2{ F(1), F(20), F(-4), F(4), F(4) };
-    Vector<F> z3{ F(1), F(12), F(-4), F(4), F(4) };
+    VectorDense<F> z, e;
+    const VectorDense<F> e_init(r1cs.constraints(), F(0));
+    VectorDense<F> z1{ F(1), F(6), F(-2), F(2), F(2) };
+    VectorDense<F> z2{ F(1), F(20), F(-4), F(4), F(4) };
+    VectorDense<F> z3{ F(1), F(12), F(-4), F(4), F(4) };
     BOOST_TEST(r1cs.isSatisfied(z1));
     BOOST_TEST(r1cs.isSatisfied(z2));
     BOOST_TEST(!r1cs.isSatisfied(z3));

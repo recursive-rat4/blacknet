@@ -59,9 +59,10 @@ BOOST_AUTO_TEST_CASE(circuit) {
     auto cons_circuit = Circuit::cons(circuit, null_circuit, null_circuit);
     auto car_circuit = cons_circuit.car(null_circuit, null_circuit);
     auto cdr_circuit = cons_circuit.cdr(null_circuit, null_circuit);
-    R1CS<E> r1cs(circuit.r1cs());
 
-    Vector<E> z = r1cs.assigment();
+    R1CS<E> r1cs(circuit.r1cs());
+    VectorDense<E> z = r1cs.assigment();
+
     using Assigner = Cell::Assigner<Builder::degree()>;
     auto null = Cell::null();
     auto cons = Assigner::cons(null, null, z.elements);

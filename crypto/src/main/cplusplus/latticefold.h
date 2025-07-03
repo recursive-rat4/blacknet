@@ -33,7 +33,7 @@
 #include "polynomial.h"
 #include "polynomialring.h"
 #include "powextension.h"
-#include "vector.h"
+#include "vectordense.h"
 #include "util.h"
 
 namespace blacknet::crypto {
@@ -146,10 +146,10 @@ struct LatticeFold {
     constexpr static MatrixDense<Rq> gadget_small(std::size_t m, std::size_t n) {
         return LatticeGadget<Rq>::matrix(b, m, n);
     }
-    constexpr static Vector<Rq> decompose_medium(const Vector<Rq>& f) {
+    constexpr static VectorDense<Rq> decompose_medium(const VectorDense<Rq>& f) {
         return LatticeGadget<Rq>::decompose(B, B_digits, f);
     }
-    constexpr static Vector<Rq> decompose_small(const Vector<Rq>& f) {
+    constexpr static VectorDense<Rq> decompose_small(const VectorDense<Rq>& f) {
         return LatticeGadget<Rq>::decompose(b, b_digits, f);
     }
 
@@ -158,8 +158,8 @@ struct LatticeFold {
         EqExtension<Fq> eq;
         MultilinearExtension<Fq> mle;
     public:
-        constexpr G1(const std::vector<Fq>& r, const Vector<Rq>& f) : eq(r), mle(f) {}
-        constexpr G1(const Fq& alpha, const std::vector<Fq>& r, const Vector<Rq>& f) : eq(r, alpha), mle(f) {}
+        constexpr G1(const std::vector<Fq>& r, const VectorDense<Rq>& f) : eq(r), mle(f) {}
+        constexpr G1(const Fq& alpha, const std::vector<Fq>& r, const VectorDense<Rq>& f) : eq(r, alpha), mle(f) {}
         constexpr G1(EqExtension<Fq>&& eq, MultilinearExtension<Fq>&& mle) : eq(std::move(eq)), mle(std::move(mle)) {}
 
         constexpr Fq operator () (const Point<Fq>& point) const {
@@ -194,8 +194,8 @@ struct LatticeFold {
         Fq mu;
         MultilinearExtension<Fq> mle;
 
-        constexpr G2(const Vector<Rq>& f) : mu(Fq::multiplicative_identity()), mle(f) {}
-        constexpr G2(const Fq& mu, const Vector<Rq>& f) : mu(mu), mle(f) {}
+        constexpr G2(const VectorDense<Rq>& f) : mu(Fq::multiplicative_identity()), mle(f) {}
+        constexpr G2(const Fq& mu, const VectorDense<Rq>& f) : mu(mu), mle(f) {}
         constexpr G2(Fq&& mu, MultilinearExtension<Fq>&& mle) : mu(std::move(mu)), mle(std::move(mle)) {}
 
         constexpr Fq operator () (const Point<Fq>& point) const {
@@ -302,7 +302,7 @@ struct LatticeFold {
         constexpr GEval(
             const std::vector<Fq>& alpha,
             const std::vector<std::vector<Fq>>& r,
-            const std::vector<Vector<Rq>>& f
+            const std::vector<VectorDense<Rq>>& f
         ) : g1s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
                 g1s(G1(alpha[i], r[i], f[i]));
@@ -344,7 +344,7 @@ struct LatticeFold {
         constexpr GNorm(
             const Fq& beta,
             const std::vector<Fq>& mu,
-            const std::vector<Vector<Rq>>& f
+            const std::vector<VectorDense<Rq>>& f
         ) : pow(beta, std::countr_zero(f[0].size() * D)), g2s(k + k) {
             for (std::size_t i = 0; i < k + k; ++i) {
                 g2s(G2(mu[i], f[i]));
@@ -390,7 +390,7 @@ struct LatticeFold {
             const Fq& beta,
             const std::vector<Fq>& mu,
             const std::vector<std::vector<Fq>>& r,
-            const std::vector<Vector<Rq>>& f
+            const std::vector<VectorDense<Rq>>& f
         ) : geval(alpha, r, f), gnorm(beta, mu, f) {}
         constexpr GFold(GEval&& geval, GNorm&& gnorm) : geval(std::move(geval)), gnorm(std::move(gnorm)) {}
 

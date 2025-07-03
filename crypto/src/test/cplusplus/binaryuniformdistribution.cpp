@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(test) {
         bud_circuit(sponge_circuit);
 
     R1CS<Z> r1cs(circuit.r1cs());
-    Vector<Z> z = r1cs.assigment();
+    VectorDense<Z> z = r1cs.assigment();
 
     using SpongeAssigner = Sponge::Assigner<Builder::degree()>;
     SpongeAssigner sponge_assigner(z.elements);

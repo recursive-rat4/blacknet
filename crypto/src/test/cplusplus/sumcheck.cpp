@@ -184,11 +184,12 @@ BOOST_AUTO_TEST_CASE(circuit) {
     sumcheck_circuit.verify(poly_circuit, sum_var, proof_circuit, duplex_circuit);
 
     CustomizableConstraintSystem<Z> ccs(circuit.ccs());
-    Vector<Z> z = ccs.assigment();
+    VectorDense<Z> z = ccs.assigment();
     std::ranges::copy(poly.coefficients, std::back_inserter(z.elements));
     z.elements.push_back(sum);
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
+
     SumCheck::Assigner<Builder::degree()> assigner(z.elements);
     using DuplexAssigner = Duplex::Assigner<Builder::degree()>;
     DuplexAssigner duplex_assigner(z.elements);

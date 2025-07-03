@@ -20,7 +20,7 @@
 #include "fastrng.h"
 #include "pastacurves.h"
 #include "pedersencommitment.h"
-#include "vector.h"
+#include "vectordense.h"
 
 using namespace blacknet::crypto;
 
@@ -62,7 +62,7 @@ static void BM_PedersenCommitmentVector(benchmark::State& state) {
         G::random(rng),
         G::random(rng),
     });
-    Vector<Scalar> v{
+    VectorDense<Scalar> v{
         Scalar::random(rng),
         Scalar::random(rng),
         Scalar::random(rng),

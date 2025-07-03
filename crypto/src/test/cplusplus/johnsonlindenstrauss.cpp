@@ -25,7 +25,7 @@
 #include "matrixdense.h"
 #include "poseidon2lm62.h"
 #include "r1cs.h"
-#include "vector.h"
+#include "vectordense.h"
 
 using namespace blacknet::crypto;
 
@@ -47,8 +47,8 @@ BOOST_AUTO_TEST_CASE(test) {
 
     std::uniform_int_distribution<NumericType> dst{-b+1, +b-1};
     MatrixDense<Z> map = JL::random(rng, n, k);
-    Vector<Z> high = Vector<Z>::random(rng, dst, k);
-    Vector<Z> low = JL::project(map, high);
+    VectorDense<Z> high = VectorDense<Z>::random(rng, dst, k);
+    VectorDense<Z> low = JL::project(map, high);
 
     BOOST_TEST(map * high == low);
     BOOST_TEST(low.checkInfinityNorm(b * slack_inf));
@@ -68,18 +68,18 @@ BOOST_AUTO_TEST_CASE(distribution) {
     SpongeCircuit sponge_circuit(circuit);
     using DistributionCircuit = JL::DistributionSponge<Sponge>::Circuit<Builder>;
     DistributionCircuit distribution_circuit(circuit);
-    using VectorCircuit = Vector<Z>::Circuit<Builder>;
-    VectorCircuit v_circuit(circuit, 32);
+    using VectorDenseCircuit = VectorDense<Z>::Circuit<Builder>;
+    VectorDenseCircuit v_circuit(circuit, 32);
     std::ranges::generate(v_circuit, [&] { return distribution_circuit(sponge_circuit); });
 
     R1CS<Z> r1cs(circuit.r1cs());
-    Vector<Z> z = r1cs.assigment();
+    VectorDense<Z> z = r1cs.assigment();
 
     using SpongeAssigner = Sponge::Assigner<Builder::degree()>;
     SpongeAssigner sponge_assigner(z.elements);
     using DistributionAssigner = JL::DistributionSponge<Sponge>::Assigner<Builder::degree()>;
     DistributionAssigner distribution_assigner(z.elements);
-    Vector<Z> v_assigned(32);
+    VectorDense<Z> v_assigned(32);
     std::ranges::generate(v_assigned, [&] { return distribution_assigner(sponge_assigner); });
     BOOST_TEST(r1cs.isSatisfied(z));
 }

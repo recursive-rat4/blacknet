@@ -24,7 +24,7 @@
 #include "lm62extension.h"
 #include "poseidon2lm62.h"
 #include "sumcheck.h"
-#include "vector.h"
+#include "vectordense.h"
 
 using namespace blacknet::crypto;
 
@@ -49,8 +49,8 @@ static void BM_LatticeFold_GEval_SumCheck_Prove(benchmark::State& state) {
         });
         return ri;
     });
-    std::vector<Vector<R>> f(LF::k * 2);
-    std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
+    std::vector<VectorDense<R>> f(LF::k * 2);
+    std::ranges::generate(f, [] { return VectorDense<R>::random(rng, 1); });
     LF::GEval g(alpha, r, f);
 
     F sum = Hypercube<F>::sum(g);
@@ -81,8 +81,8 @@ static void BM_LatticeFold_GEval_SumCheck_Verify(benchmark::State& state) {
         });
         return ri;
     });
-    std::vector<Vector<R>> f(LF::k * 2);
-    std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
+    std::vector<VectorDense<R>> f(LF::k * 2);
+    std::ranges::generate(f, [] { return VectorDense<R>::random(rng, 1); });
     LF::GEval g(alpha, r, f);
 
     Duplex duplex;
@@ -109,8 +109,8 @@ static void BM_LatticeFold_GNorm_SumCheck_Prove(benchmark::State& state) {
     F beta = F::random(rng);
     std::vector<F> mu(LF::k * 2);
     std::ranges::generate(mu, [] { return F::random(rng); });
-    std::vector<Vector<R>> f(LF::k * 2);
-    std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
+    std::vector<VectorDense<R>> f(LF::k * 2);
+    std::ranges::generate(f, [] { return VectorDense<R>::random(rng, 1); });
     LF::GNorm g(beta, mu, f);
 
     F sum = Hypercube<F>::sum(g);
@@ -134,8 +134,8 @@ static void BM_LatticeFold_GNorm_SumCheck_Verify(benchmark::State& state) {
     F beta = F::random(rng);
     std::vector<F> mu(LF::k * 2);
     std::ranges::generate(mu, [] { return F::random(rng); });
-    std::vector<Vector<R>> f(LF::k * 2);
-    std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
+    std::vector<VectorDense<R>> f(LF::k * 2);
+    std::ranges::generate(f, [] { return VectorDense<R>::random(rng, 1); });
     LF::GNorm g(beta, mu, f);
 
     Duplex duplex;
@@ -172,8 +172,8 @@ static void BM_LatticeFold_GFold_SumCheck_Prove(benchmark::State& state) {
         });
         return ri;
     });
-    std::vector<Vector<R>> f(LF::k * 2);
-    std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
+    std::vector<VectorDense<R>> f(LF::k * 2);
+    std::ranges::generate(f, [] { return VectorDense<R>::random(rng, 1); });
     LF::GFold g(alpha, beta, mu, r, f);
 
     F sum = Hypercube<F>::sum(g);
@@ -207,8 +207,8 @@ static void BM_LatticeFold_GFold_SumCheck_Verify(benchmark::State& state) {
         });
         return ri;
     });
-    std::vector<Vector<R>> f(LF::k * 2);
-    std::ranges::generate(f, [] { return Vector<R>::random(rng, 1); });
+    std::vector<VectorDense<R>> f(LF::k * 2);
+    std::ranges::generate(f, [] { return VectorDense<R>::random(rng, 1); });
     LF::GFold g(alpha, beta, mu, r, f);
 
     Duplex duplex;

@@ -30,7 +30,7 @@
 
 namespace blacknet::crypto {
 
-template<typename E>class Vector;
+template<typename E>class VectorDense;
 
 template<typename E>
 class MatrixDense {
@@ -85,16 +85,16 @@ public:
         return r;
     }
 
-    constexpr Vector<E> operator * (const Vector<E>& other) const {
-        Vector<E> r(rows, E::additive_identity());
+    constexpr VectorDense<E> operator * (const VectorDense<E>& other) const {
+        VectorDense<E> r(rows, E::additive_identity());
         for (std::size_t i = 0; i < rows; ++i)
             for (std::size_t j = 0; j < columns; ++j)
                 r[i] += (*this)[i, j] * other[j];
         return r;
     }
 
-    friend constexpr Vector<E> operator * (const Vector<E>& lps, const MatrixDense& rps) {
-        Vector<E> r(rps.columns, E::additive_identity());
+    friend constexpr VectorDense<E> operator * (const VectorDense<E>& lps, const MatrixDense& rps) {
+        VectorDense<E> r(rps.columns, E::additive_identity());
         for (std::size_t i = 0; i < rps.rows; ++i)
             for (std::size_t j = 0; j < rps.columns; ++j)
                 r[j] += lps[i] * rps[i, j];
@@ -174,7 +174,7 @@ requires(std::same_as<E, typename Builder::R>)
 struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
-    using Vector = Vector<E>::template Circuit<Builder>;
+    using VectorDense = VectorDense<E>::template Circuit<Builder>;
 
     Builder& circuit;
     std::size_t rows;
@@ -197,9 +197,9 @@ struct Circuit {
         return elements[i * columns + j];
     }
 
-    constexpr Vector operator * (const Vector& other) const {
+    constexpr VectorDense operator * (const VectorDense& other) const {
         auto scope = circuit.scope("Matrix::vector");
-        Vector r(circuit, rows);
+        VectorDense r(circuit, rows);
         for (std::size_t i = 0; i < rows; ++i) {
             for (std::size_t j = 0; j < columns; ++j) {
                 auto t = circuit.auxiliary();
@@ -213,7 +213,7 @@ struct Circuit {
 
 template<std::size_t Degree>
 struct Assigner {
-    using Vector = Vector<E>::template Assigner<Degree>;
+    using VectorDense = VectorDense<E>::template Assigner<Degree>;
 
     MatrixDense matrix;
     std::vector<E>& assigment;
@@ -233,8 +233,8 @@ struct Assigner {
         return matrix[i, j];
     }
 
-    constexpr Vector operator * (const Vector& other) const {
-        Vector r(matrix.rows, E::additive_identity(), assigment);
+    constexpr VectorDense operator * (const VectorDense& other) const {
+        VectorDense r(matrix.rows, E::additive_identity(), assigment);
         for (std::size_t i = 0; i < matrix.rows; ++i)
             for (std::size_t j = 0; j < matrix.columns; ++j)
                 r[i] += assigment.emplace_back(

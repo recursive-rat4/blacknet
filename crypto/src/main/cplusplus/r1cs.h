@@ -25,7 +25,7 @@
 #include <fmt/format.h>
 
 #include "matrixsparse.h"
-#include "vector.h"
+#include "vectordense.h"
 
 namespace blacknet::crypto {
 
@@ -56,7 +56,7 @@ public:
         return a.columns;
     }
 
-    constexpr bool isSatisfied(const Vector<E>& z) const {
+    constexpr bool isSatisfied(const VectorDense<E>& z) const {
         if (variables() == z.size()) {
             return (a * z) * (b * z) == c * z;
         } else {
@@ -64,7 +64,7 @@ public:
         }
     }
 
-    constexpr bool isSatisfied(const Vector<E>& z, const Vector<E>& e) const {
+    constexpr bool isSatisfied(const VectorDense<E>& z, const VectorDense<E>& e) const {
         if (variables() == z.size()) {
             return error(z) == e;
         } else {
@@ -74,20 +74,20 @@ public:
 
     constexpr void fold(
         const E& r,
-        Vector<E>& z, Vector<E>& e,
-        const Vector<E>& z1, const Vector<E>& e1,
-        const Vector<E>& z2, const Vector<E>& e2
+        VectorDense<E>& z, VectorDense<E>& e,
+        const VectorDense<E>& z1, const VectorDense<E>& e1,
+        const VectorDense<E>& z2, const VectorDense<E>& e2
     ) const {
         const E& u1 = z1[0];
         const E& u2 = z2[0];
-        Vector<E> z12{ z1 + z2 };
-        Vector<E> t{ (a * z12) * (b * z12) - (u1 + u2) * (c * z12) - e1 - e2 };
+        VectorDense<E> z12{ z1 + z2 };
+        VectorDense<E> t{ (a * z12) * (b * z12) - (u1 + u2) * (c * z12) - e1 - e2 };
         z = z1 + r * z2;
         e = e1 + r * t + r.square() * e2;
     }
 
-    constexpr Vector<E> assigment(E&& constant = E::multiplicative_identity()) const {
-        Vector<E> z;
+    constexpr VectorDense<E> assigment(E&& constant = E::multiplicative_identity()) const {
+        VectorDense<E> z;
         z.elements.reserve(variables());
         z.elements.emplace_back(constant);
         return z;
@@ -99,18 +99,18 @@ public:
     }
 
     template<typename Sponge>
-    constexpr std::pair<Vector<E>, Vector<E>> squeeze(Sponge& sponge) const {
-        auto z = Vector<E>::squeeze(sponge, variables());
+    constexpr std::pair<VectorDense<E>, VectorDense<E>> squeeze(Sponge& sponge) const {
+        auto z = VectorDense<E>::squeeze(sponge, variables());
         return { z, error(z) };
     }
 
     template<std::uniform_random_bit_generator RNG>
-    std::pair<Vector<E>, Vector<E>> random(RNG& rng) const {
-        auto z = Vector<E>::random(rng, variables());
+    std::pair<VectorDense<E>, VectorDense<E>> random(RNG& rng) const {
+        auto z = VectorDense<E>::random(rng, variables());
         return { z, error(z) };
     }
 private:
-    constexpr Vector<E> error(const Vector<E>& z) const {
+    constexpr VectorDense<E> error(const VectorDense<E>& z) const {
         const E& u = z[0];
         return (a * z) * (b * z) - u * (c * z);
     }

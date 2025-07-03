@@ -64,10 +64,12 @@ BOOST_AUTO_TEST_CASE(circuit) {
     auto y_lc = uni_circuit(x_var);
     typename Builder::Variable y_var(circuit.auxiliary());
     circuit(y_var == y_lc);
+
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z = ccs.assigment();
+    VectorDense<E> z = ccs.assigment();
     std::ranges::copy(p.coefficients, std::back_inserter(z.elements));
     z.elements.push_back(x);
+
     using Assigner = UnivariatePolynomial<E>::Assigner<Builder::degree()>;
     Assigner assigner(p, z.elements);
     z.elements.emplace_back(

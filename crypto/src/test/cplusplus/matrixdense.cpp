@@ -21,7 +21,7 @@
 #include "matrixdense.h"
 #include "pervushin.h"
 #include "r1cs.h"
-#include "vector.h"
+#include "vectordense.h"
 
 using namespace blacknet::crypto;
 
@@ -76,16 +76,16 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
         R(33), R(34),
         R(49), R(50),
     });
-    Vector<R> b{
+    VectorDense<R> b{
         R(2),
         R(3),
     };
-    Vector<R> c{
+    VectorDense<R> c{
         R(88),
         R(168),
         R(248),
     };
-    Vector<R> d{
+    VectorDense<R> d{
         R(19192),
         R(19696),
     };
@@ -156,11 +156,11 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
         R(33), R(34),
         R(49), R(50),
     });
-    const Vector<R> b{
+    const VectorDense<R> b{
         R(2),
         R(3),
     };
-    const Vector<R> c{
+    const VectorDense<R> c{
         R(88),
         R(168),
         R(248),
@@ -170,19 +170,19 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
     Builder circuit;
     using MatrixCircuit = MatrixDense<R>::Circuit<Builder>;
     MatrixCircuit a_circuit(circuit, Builder::Variable::Type::Input, a.rows, a.columns);
-    using VectorCircuit = Vector<R>::Circuit<Builder>;
-    VectorCircuit b_circuit(circuit, Builder::Variable::Type::Input, b.size());
+    using VectorDenseCircuit = VectorDense<R>::Circuit<Builder>;
+    VectorDenseCircuit b_circuit(circuit, Builder::Variable::Type::Input, b.size());
     auto c_circuit = a_circuit * b_circuit;
 
     R1CS<R> r1cs(circuit.r1cs());
-    Vector<R> z = r1cs.assigment();
+    VectorDense<R> z = r1cs.assigment();
     std::ranges::copy(a.elements, std::back_inserter(z.elements));
     std::ranges::copy(b.elements, std::back_inserter(z.elements));
 
     using MatrixAssigner = MatrixDense<R>::Assigner<Builder::degree()>;
     MatrixAssigner a_assigner(a, z.elements);
-    using VectorAssigner = Vector<R>::Assigner<Builder::degree()>;
-    VectorAssigner b_assigner(b, z.elements);
+    using VectorDenseAssigner = VectorDense<R>::Assigner<Builder::degree()>;
+    VectorDenseAssigner b_assigner(b, z.elements);
     auto c_assigned = a_assigner * b_assigner;
     BOOST_TEST(c == c_assigned.vector);
     BOOST_TEST(r1cs.isSatisfied(z));

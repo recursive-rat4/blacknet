@@ -20,7 +20,7 @@
 
 #include <optional>
 
-#include "vector.h"
+#include "vectordense.h"
 
 namespace blacknet::crypto {
 
@@ -44,7 +44,7 @@ requires(std::same_as<R, typename Builder::R>)
 struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
-    using VectorCircuit = Vector<R>::template Circuit<Builder>;
+    using VectorDenseCircuit = VectorDense<R>::template Circuit<Builder>;
 
     Builder& circuit;
 
@@ -54,16 +54,16 @@ struct Circuit {
         auto scope = circuit.scope("LogicGate::RangeCheck");
         circuit(R(0) == a * (a - R(1)));
     }
-    constexpr void RangeCheck(const VectorCircuit& a) {
+    constexpr void RangeCheck(const VectorDenseCircuit& a) {
         auto scope = circuit.scope("LogicGate::RangeCheck");
         for (const auto& i : a) {
             circuit(R(0) == i * (i - R(1)));
         }
     }
 
-    constexpr void LessOrEqualCheck(const VectorCircuit& a, const Vector<R>& b) {
+    constexpr void LessOrEqualCheck(const VectorDenseCircuit& a, const VectorDense<R>& b) {
         auto scope = circuit.scope("LogicGate::LessOrEqualCheck");
-        VectorCircuit current_run(circuit);
+        VectorDenseCircuit current_run(circuit);
         std::optional<LinearCombination> last_run;
         for (std::size_t i = b.size(); i --> 0;) {
             const auto& digit = a[i];
@@ -100,7 +100,7 @@ struct Circuit {
         circuit(ab == a * b);
         return ab;
     }
-    constexpr LinearCombination And(const VectorCircuit& a) {
+    constexpr LinearCombination And(const VectorDenseCircuit& a) {
         if (a.size() == 1) return a[0];
         auto scope = circuit.scope("LogicGate::And");
         LinearCombination pi = R::multiplicative_identity();
@@ -131,8 +131,8 @@ struct Assigner {
     constexpr Assigner(std::vector<R>& assigment)
         : assigment(assigment) {}
 
-    constexpr void LessOrEqualCheck(const Vector<R>& a, const Vector<R>& b) {
-        Vector<R> current_run;
+    constexpr void LessOrEqualCheck(const VectorDense<R>& a, const VectorDense<R>& b) {
+        VectorDense<R> current_run;
         std::optional<R> last_run;
         for (std::size_t i = b.size(); i --> 0;) {
             const auto& digit = a[i];
@@ -161,7 +161,7 @@ struct Assigner {
             a * b
         );
     }
-    constexpr R And(const Vector<R>& a) {
+    constexpr R And(const VectorDense<R>& a) {
         if (a.size() == 1) return a[0];
         R pi = R::multiplicative_identity();
         for (const auto& i : a) {

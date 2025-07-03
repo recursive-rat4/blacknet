@@ -21,7 +21,7 @@
 #include "johnsonlindenstrauss.h"
 #include "lm62.h"
 #include "matrixdense.h"
-#include "vector.h"
+#include "vectordense.h"
 
 using namespace blacknet::crypto;
 
@@ -48,8 +48,8 @@ BENCHMARK(BM_JohnsonLindenstrauss_Sample);
 
 static void BM_JohnsonLindenstrauss_Project(benchmark::State& state) {
     MatrixDense<Z> map = JL::random(rng, M, N);
-    Vector<Z> high = Vector<Z>::random(rng, N);
-    Vector<Z> low;
+    VectorDense<Z> high = VectorDense<Z>::random(rng, N);
+    VectorDense<Z> low;
 
     for (auto _ : state) {
         low = JL::project(map, high);

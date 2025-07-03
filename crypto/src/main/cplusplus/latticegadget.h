@@ -23,7 +23,7 @@
 
 #include "logicgate.h"
 #include "matrixdense.h"
-#include "vector.h"
+#include "vectordense.h"
 
 namespace blacknet::crypto {
 
@@ -60,30 +60,30 @@ private:
         }
     }
 public:
-    constexpr static Vector<R> decompose(
+    constexpr static VectorDense<R> decompose(
         NumericType radix, std::size_t digits,
         const R& f
     ) {
-        Vector<R> pieces(digits);
+        VectorDense<R> pieces(digits);
         decompose(radix, digits, pieces.elements.data(), f);
         return pieces;
     }
 
-    constexpr static Vector<R> decompose(
+    constexpr static VectorDense<R> decompose(
         NumericType radix, std::size_t digits,
-        const Vector<R>& f
+        const VectorDense<R>& f
     ) {
-        Vector<R> pieces(f.size() * digits);
+        VectorDense<R> pieces(f.size() * digits);
         for (std::size_t i = 0; i < f.size(); ++i)
             decompose(radix, digits, pieces.elements.data() + i * digits, f[i]);
         return pieces;
     }
 
-    constexpr static Vector<R> vector(
+    constexpr static VectorDense<R> vector(
         NumericType radix, std::size_t digits,
         const R& r
     ) {
-        Vector<R> p(digits);
+        VectorDense<R> p(digits);
         p[0] = r;
         typename R::BaseRing t{radix};
         for (std::size_t i = 1; i < digits; ++i) {
@@ -97,11 +97,11 @@ public:
         NumericType radix,
         std::size_t m, std::size_t n
     ) {
-        Vector<R> pm(n);
+        VectorDense<R> pm(n);
         pm[0] = R::multiplicative_identity();
         for (std::size_t i = 1; i < n; ++i)
             pm[i] = pm[i - 1] * radix;
-        return Vector<R>::identity(m).tensor(pm);
+        return VectorDense<R>::identity(m).tensor(pm);
     }
 
 template<typename Builder>
@@ -110,13 +110,13 @@ struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
     using LogicGate = LogicGate<R>::template Circuit<Builder>;
-    using Vector = Vector<R>::template Circuit<Builder>;
+    using VectorDense = VectorDense<R>::template Circuit<Builder>;
 
     Builder& circuit;
 
     constexpr Circuit(Builder& circuit) : circuit(circuit) {}
 
-    constexpr Vector decompose(
+    constexpr VectorDense decompose(
         NumericType radix, std::size_t digits,
         const LinearCombination& f
     ) {
@@ -124,7 +124,7 @@ struct Circuit {
         auto scope = circuit.scope("LatticeGadget::decompose");
         R p = R::multiplicative_identity();
         LinearCombination composed;
-        Vector pieces(circuit, digits);
+        VectorDense pieces(circuit, digits);
         for (auto& piece : pieces) {
             LinearCombination digit = circuit.auxiliary();
             piece = digit;
@@ -144,11 +144,11 @@ struct Assigner {
     constexpr Assigner(std::vector<R>& assigment)
         : assigment(assigment) {}
 
-    constexpr Vector<R> decompose(
+    constexpr VectorDense<R> decompose(
         NumericType radix, std::size_t digits,
         const R& f
     ) {
-        Vector<R> pieces(digits);
+        VectorDense<R> pieces(digits);
         decompose(radix, digits, pieces.elements.data(), f);
         return pieces;
     }

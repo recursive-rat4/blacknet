@@ -26,7 +26,7 @@
 #include "point.h"
 #include "solinas62.h"
 #include "solinas62extension.h"
-#include "vector.h"
+#include "vectordense.h"
 #include "util.h"
 
 using namespace blacknet::crypto;
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(polynomial) {
 
 BOOST_AUTO_TEST_CASE(vector) {
     Hypercube<E> hc(3);
-    Vector<E> a{E(63), E(64), E(65), E(66), E(67), E(68), E(69), E(70)};
+    VectorDense<E> a{E(63), E(64), E(65), E(66), E(67), E(68), E(69), E(70)};
     MultilinearExtension mle(a);
     for (const auto& [index, b] : std::views::zip(
             std::ranges::subrange(hc.composedBegin(), hc.composedEnd()),
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(vector) {
 
 BOOST_AUTO_TEST_CASE(ringvector) {
     Hypercube<E> hc(3);
-    Vector<EE> a{
+    VectorDense<EE> a{
         EE{75, 76},
         EE{77, 78},
         EE{78, 79},
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     mle_circuit(x_circuit);
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    Vector<E> z = ccs.assigment();
+    VectorDense<E> z = ccs.assigment();
     std::ranges::copy(mle.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x, std::back_inserter(z.elements));
 

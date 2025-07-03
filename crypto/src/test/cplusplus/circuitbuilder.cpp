@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(Eqs) {
 
     BOOST_TEST(r1cs == circuit.r1cs());
 
-    Vector<E> z{ E(1), E(4), E(4), E(4) };
+    VectorDense<E> z{ E(1), E(4), E(4), E(4) };
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(Adds) {
 
     BOOST_TEST(r1cs == circuit.r1cs());
 
-    Vector<E> z{ E(1), E(8), E(2), E(4) };
+    VectorDense<E> z{ E(1), E(8), E(2), E(4) };
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(Muls) {
 
     BOOST_TEST(r1cs == circuit.r1cs());
 
-    Vector<E> z{ E(1), E(16), E(2), E(4) };
+    VectorDense<E> z{ E(1), E(16), E(2), E(4) };
     BOOST_TEST(r1cs.isSatisfied(z));
 }
 
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(Boards) {
 
     BOOST_TEST(r1cs == circuit.r1cs());
 
-    Vector<E> zv{ E(1), E(4), E(4), E(4), E(16) };
+    VectorDense<E> zv{ E(1), E(4), E(4), E(4), E(16) };
     BOOST_TEST(r1cs.isSatisfied(zv));
 }
 
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(Cubism) {
 
     BOOST_TEST(ccs == circuit.ccs());
 
-    Vector<E> zv{ E(1), E(2), E(3), E(5), E(8) };
+    VectorDense<E> zv{ E(1), E(2), E(3), E(5), E(8) };
     BOOST_TEST(ccs.isSatisfied(zv));
 }
 

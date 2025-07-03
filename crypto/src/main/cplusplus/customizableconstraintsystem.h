@@ -27,7 +27,7 @@
 #include "matrixsparse.h"
 #include "multilinearextension.h"
 #include "point.h"
-#include "vector.h"
+#include "vectordense.h"
 #include "util.h"
 
 namespace blacknet::crypto {
@@ -61,20 +61,20 @@ public:
 
     constexpr CustomizableConstraintSystem& operator = (CustomizableConstraintSystem&&) noexcept = default;
 
-    constexpr bool isSatisfied(const Vector<E>& z) const {
+    constexpr bool isSatisfied(const VectorDense<E>& z) const {
         if (variables() != z.size()) {
             throw std::runtime_error(fmt::format("Assigned {} variables instead of {} required", z.size(), variables()));
         }
 
-        Vector<E> sigma(rows, E::additive_identity());
+        VectorDense<E> sigma(rows, E::additive_identity());
         for (std::size_t i = 0; i < c.size(); ++i) {
-            Vector<E> circle(rows, c[i]);
+            VectorDense<E> circle(rows, c[i]);
             for (std::size_t j : s[i]) {
                 circle *= m[j] * z;
             }
             sigma += circle;
         }
-        return sigma == Vector<E>(rows, E::additive_identity());
+        return sigma == VectorDense<E>(rows, E::additive_identity());
     }
 
     constexpr bool operator == (const CustomizableConstraintSystem&) const = default;
@@ -87,8 +87,8 @@ public:
         return columns;
     }
 
-    constexpr Vector<E> assigment(E&& constant = E::multiplicative_identity()) const {
-        Vector<E> z;
+    constexpr VectorDense<E> assigment(E&& constant = E::multiplicative_identity()) const {
+        VectorDense<E> z;
         z.elements.reserve(variables());
         z.elements.emplace_back(constant);
         return z;
@@ -162,7 +162,7 @@ public:
         }
     };
 
-    constexpr Polynomial polynomial(const Vector<E>& z) const {
+    constexpr Polynomial polynomial(const VectorDense<E>& z) const {
         std::vector<MultilinearExtension<E>> mz;
         mz.reserve(m.size());
         for (std::size_t i = 0; i < m.size(); ++i)

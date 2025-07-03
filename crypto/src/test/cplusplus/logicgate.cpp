@@ -24,7 +24,7 @@
 #include "logicgate.h"
 #include "pervushinextension.h"
 #include "r1cs.h"
-#include "vector.h"
+#include "vectordense.h"
 
 using namespace blacknet::crypto;
 
@@ -91,19 +91,19 @@ using R = PervushinRing;
 using LogicGate = LogicGate<R>;
 
 BOOST_AUTO_TEST_CASE(less_or_equal_checks) {
-    const Vector<R> a{0,1,0,0};
-    const Vector<R> b{0,0,1,0};
+    const VectorDense<R> a{0,1,0,0};
+    const VectorDense<R> b{0,0,1,0};
 
     using Builder = CircuitBuilder<R, 2>;
     Builder circuit;
-    using VectorCircuit = Vector<R>::Circuit<Builder>;
-    VectorCircuit a_circuit(circuit, Builder::Variable::Type::Input, a.size());
+    using VectorDenseCircuit = VectorDense<R>::Circuit<Builder>;
+    VectorDenseCircuit a_circuit(circuit, Builder::Variable::Type::Input, a.size());
     using Circuit = LogicGate::Circuit<Builder>;
     Circuit logic_gate_circuit(circuit);
     logic_gate_circuit.LessOrEqualCheck(a_circuit, b);
 
     R1CS<R> r1cs(circuit.r1cs());
-    Vector<R> z = r1cs.assigment();
+    VectorDense<R> z = r1cs.assigment();
     std::ranges::copy(a, std::back_inserter(z.elements));
 
     using Assigner = LogicGate::Assigner<Builder::degree()>;
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(xors) {
     auto c_lc = logic_gate_circuit.Xor(a_var, b_var);
 
     R1CS<R> r1cs(circuit.r1cs());
-    Vector<R> z = r1cs.assigment();
+    VectorDense<R> z = r1cs.assigment();
     z.elements.push_back(a);
     z.elements.push_back(b);
 
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(ands) {
     auto c_lc = logic_gate_circuit.And(a_var, b_var);
 
     R1CS<R> r1cs(circuit.r1cs());
-    Vector<R> z = r1cs.assigment();
+    VectorDense<R> z = r1cs.assigment();
     z.elements.push_back(a);
     z.elements.push_back(b);
 
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(ors) {
     auto c_lc = logic_gate_circuit.Or(a_var, b_var);
 
     R1CS<R> r1cs(circuit.r1cs());
-    Vector<R> z = r1cs.assigment();
+    VectorDense<R> z = r1cs.assigment();
     z.elements.push_back(a);
     z.elements.push_back(b);
 
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(nots) {
     auto b_lc = logic_gate_circuit.Not(a_var);
 
     R1CS<R> r1cs(circuit.r1cs());
-    Vector<R> z = r1cs.assigment();
+    VectorDense<R> z = r1cs.assigment();
     z.elements.push_back(a);
 
     using Assigner = LogicGate::Assigner<Builder::degree()>;

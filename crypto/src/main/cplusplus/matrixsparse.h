@@ -27,7 +27,7 @@
 namespace blacknet::crypto {
 
 template<typename E>class MatrixDense;
-template<typename E>class Vector;
+template<typename E>class VectorDense;
 
 // https://arxiv.org/abs/2404.06047
 // CSR format
@@ -76,9 +76,9 @@ struct MatrixSparse {
         return rIndex.size() - 1;
     }
 
-    constexpr Vector<E> operator * (const Vector<E>& other) const {
+    constexpr VectorDense<E> operator * (const VectorDense<E>& other) const {
         std::size_t rows = rIndex.size() - 1;
-        Vector<E> r(rows, E::additive_identity());
+        VectorDense<E> r(rows, E::additive_identity());
         for (std::size_t i = 0; i < rows; ++i) {
             std::size_t row_start = rIndex[i];
             std::size_t row_end = rIndex[i + 1];

@@ -70,7 +70,8 @@ crypto_test_sources = [
     'ternaryuniformdistribution.cpp',
     'test.cpp',
     'univariatepolynomial.cpp',
-    'vector.cpp',
+    'vectordense.cpp',
+    'vectorsparse.cpp',
     'z2.cpp',
 ]
 crypto_test_includes = [crypto_main_includes, include_directories('.')]

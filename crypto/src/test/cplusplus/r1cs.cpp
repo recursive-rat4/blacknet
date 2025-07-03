@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
         R(0), R(0), R(1), R(0), R(0),
         R(0), R(0), R(0), R(1), R(0),
     });
-    Vector<R> z{ R(1), R(60), R(16), R(4), R(2) };
+    VectorDense<R> z{ R(1), R(60), R(16), R(4), R(2) };
 
     R1CS<R> r1cs{
         MatrixSparse<R>(a),
@@ -58,16 +58,16 @@ BOOST_AUTO_TEST_CASE(Satisfaction) {
     };
     BOOST_TEST(r1cs.isSatisfied(z));
 
-    const Vector<R> e_init(r1cs.constraints(), R(0));
-    Vector<R> e_folded(e_init);
-    Vector<R> z_folded(z);
+    const VectorDense<R> e_init(r1cs.constraints(), R(0));
+    VectorDense<R> e_folded(e_init);
+    VectorDense<R> z_folded(z);
     BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
 
     R r1{Z(11), Z(31)};
     r1cs.fold(r1, z_folded, e_folded, z_folded, e_folded, z, e_init);
     BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));
 
-    Vector<R> z_other{ R(1), R(725), R(81), R(9), R(3) };
+    VectorDense<R> z_other{ R(1), R(725), R(81), R(9), R(3) };
     BOOST_TEST(r1cs.isSatisfied(z_other));
     r1cs.fold(r1, z_folded, e_folded, z_folded, e_folded, z_other, e_init);
     BOOST_TEST(r1cs.isSatisfied(z_folded, e_folded));

@@ -28,7 +28,7 @@
 #include "latticegadget.h"
 #include "polynomialring.h"
 #include "ternaryuniformdistribution.h"
-#include "vector.h"
+#include "vectordense.h"
 
 namespace blacknet::crypto {
 
@@ -62,8 +62,8 @@ struct BFV {
     };
 
     struct EvaluationKey {
-        Vector<Rq> square;
-        Vector<Rq> sigma;
+        VectorDense<Rq> square;
+        VectorDense<Rq> sigma;
     };
 
     struct CipherText {
@@ -122,11 +122,11 @@ struct BFV {
         return rq;
     }
 
-    constexpr Vector<Rq> gadget_d(const Rq& rq) const {
+    constexpr VectorDense<Rq> gadget_d(const Rq& rq) const {
         return LatticeGadget<Rq>::decompose(OMEGA, ELL, rq);
     }
 
-    constexpr Vector<Rq> gadget_p(const Rq& rq) const {
+    constexpr VectorDense<Rq> gadget_p(const Rq& rq) const {
         return LatticeGadget<Rq>::vector(OMEGA, ELL, rq);
     }
 

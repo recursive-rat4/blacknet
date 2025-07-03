@@ -27,7 +27,7 @@
 #include "point.h"
 #include "poseidon2lm62.h"
 #include "sumcheck.h"
-#include "vector.h"
+#include "vectordense.h"
 
 using namespace blacknet::crypto;
 
@@ -39,8 +39,8 @@ using R = LM62RingDegree64;
 using LatticeFold = LatticeFold<Z, F, R, LM62RingDegree64NTT>;
 
 BOOST_AUTO_TEST_CASE(Gadget) {
-    const auto a = Vector<R>{ R(3), R(2), R(1), R(0) };
-    const auto b = Vector<R>{ R(4295098371) };
+    const auto a = VectorDense<R>{ R(3), R(2), R(1), R(0) };
+    const auto b = VectorDense<R>{ R(4295098371) };
     auto g = LatticeFold::gadget_medium(1, 4);
     BOOST_TEST(b == g * a);
     auto c = LatticeFold::decompose_medium(b);
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(Gadget) {
 BOOST_AUTO_TEST_CASE(G1s) {
     Point<F> r1{Z(0), Z(0), Z(0), Z(0), Z(0), Z(0)};
     Point<F> r2{Z(0), Z(0), Z(0), Z(0), Z(0), Z(1)};
-    Vector<R> f{R{3, 4}};
+    VectorDense<R> f{R{3, 4}};
     auto g1_1 = LatticeFold::G1(r1.coordinates, f);
     auto g1_2 = LatticeFold::G1(r2.coordinates, f);
     BOOST_TEST(6 == g1_1.variables());
@@ -62,9 +62,9 @@ BOOST_AUTO_TEST_CASE(G1s) {
 }
 
 BOOST_AUTO_TEST_CASE(G2s) {
-    Vector<R> f1{R{1, -1}};
-    Vector<R> f2{R{2, -2}};
-    Vector<R> f3{R{1, 1, 0, 1}};
+    VectorDense<R> f1{R{1, -1}};
+    VectorDense<R> f2{R{2, -2}};
+    VectorDense<R> f3{R{1, 1, 0, 1}};
     auto g2_1 = LatticeFold::G2(f1);
     auto g2_2 = LatticeFold::G2(f2);
     auto g2_3 = LatticeFold::G2(f3);
@@ -78,11 +78,11 @@ BOOST_AUTO_TEST_CASE(G2s) {
 BOOST_AUTO_TEST_CASE(GEvals) {
     std::vector<F> alpha(LatticeFold::k * 2, Z(2));
     std::vector<std::vector<F>> r(LatticeFold::k * 2, {Z(0), Z(0), Z(0), Z(0), Z(1), Z(0)});
-    std::vector<Vector<R>> f;
+    std::vector<VectorDense<R>> f;
     for (std::size_t i = 0; i < LatticeFold::k * 2; ++i) {
         R rq(0);
         rq.coefficients[i] = Z(i);
-        f.emplace_back(Vector<R>{rq});
+        f.emplace_back(VectorDense<R>{rq});
     }
     auto geval = LatticeFold::GEval(alpha, r, f);
     BOOST_TEST(6 == geval.variables());
@@ -94,9 +94,9 @@ BOOST_AUTO_TEST_CASE(GEvals) {
 BOOST_AUTO_TEST_CASE(GNorms) {
     F beta(2);
     std::vector<F> mu(LatticeFold::k * 2, Z(1));
-    std::vector<Vector<R>> f1(LatticeFold::k * 2, Vector<R>{R{1, 1, 0, -1}});
-    std::vector<Vector<R>> f2(LatticeFold::k * 2, Vector<R>{R{2, 0, 0, -2}});
-    std::vector<Vector<R>> f3(LatticeFold::k * 2, Vector<R>{R{1, 0, 1, 1}});
+    std::vector<VectorDense<R>> f1(LatticeFold::k * 2, VectorDense<R>{R{1, 1, 0, -1}});
+    std::vector<VectorDense<R>> f2(LatticeFold::k * 2, VectorDense<R>{R{2, 0, 0, -2}});
+    std::vector<VectorDense<R>> f3(LatticeFold::k * 2, VectorDense<R>{R{1, 0, 1, 1}});
     auto gnorm_1 = LatticeFold::GNorm(beta, mu, f1);
     auto gnorm_2 = LatticeFold::GNorm(beta, mu, f2);
     auto gnorm_3 = LatticeFold::GNorm(beta, mu, f3);
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(GFolds) {
     F beta(3);
     std::vector<F> mu(LatticeFold::k * 2, Z(1));
     std::vector<std::vector<F>> r(LatticeFold::k * 2, {Z(0), Z(0), Z(0), Z(0), Z(1), Z(1)});
-    std::vector<Vector<R>> f(LatticeFold::k * 2, Vector<R>{R{1, 0, 1, 1, 0, 1}});
+    std::vector<VectorDense<R>> f(LatticeFold::k * 2, VectorDense<R>{R{1, 0, 1, 1, 0, 1}});
     auto gfold = LatticeFold::GFold(alpha, beta, mu, r, f);
     BOOST_TEST(6 == gfold.variables());
     BOOST_TEST(3 == gfold.degree());
@@ -144,12 +144,12 @@ BOOST_AUTO_TEST_CASE(Distributions) {
     DuplexCircuit duplex_circuit(circuit);
     using DistributionCircuit = LatticeFold::Distribution<Duplex>::Circuit<Builder>;
     DistributionCircuit distribution_circuit(circuit);
-    using VectorCircuit = Vector<F>::Circuit<Builder>;
-    VectorCircuit a_circuit(circuit, LatticeFold::D);
+    using VectorDenseCircuit = VectorDense<F>::Circuit<Builder>;
+    VectorDenseCircuit a_circuit(circuit, LatticeFold::D);
     std::ranges::generate(a_circuit, [&] { return distribution_circuit(duplex_circuit); });
 
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
-    Vector<F> z = ccs.assigment();
+    VectorDense<F> z = ccs.assigment();
 
     using DuplexAssigner = Duplex::Assigner<Builder::degree()>;
     DuplexAssigner duplex_assigner(z.elements);
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(Distributions) {
 
 BOOST_AUTO_TEST_CASE(G2s) {
     constexpr std::size_t ell = std::countr_zero(LatticeFold::D);
-    Vector<R> f{R{1, 1, 0, 1}};
+    VectorDense<R> f{R{1, 1, 0, 1}};
     auto g2 = LatticeFold::G2(f);
     Point<F> x(ell);
     std::ranges::fill(x.coordinates, F(42));
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(G2s) {
     g2_circuit(x_circuit);
 
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
-    Vector<F> z = ccs.assigment();
+    VectorDense<F> z = ccs.assigment();
     z.elements.push_back(g2.mu);
     std::ranges::copy(g2.mle.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(x.coordinates, std::back_inserter(z.elements));
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(Verifys) {
     using SumCheck = SumCheck<F, LatticeFold::G2, Duplex>;
     Duplex duplex;
     constexpr std::size_t ell = std::countr_zero(LatticeFold::D);
-    Vector<R> f{R{1, 1, 0, 1}};
+    VectorDense<R> f{R{1, 1, 0, 1}};
     auto g2 = LatticeFold::G2(f);
     F sum = Hypercube<F>::sum(g2);
 
@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE(Verifys) {
     sumcheck_circuit.verifyEarlyStopping(g2_circuit, sum_var, proof_circuit, duplex_circuit);
 
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
-    Vector<F> z = ccs.assigment();
+    VectorDense<F> z = ccs.assigment();
     z.elements.push_back(g2.mu);
     std::ranges::copy(g2.mle.coefficients, std::back_inserter(z.elements));
     z.elements.push_back(sum);

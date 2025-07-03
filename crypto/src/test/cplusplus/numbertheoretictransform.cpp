@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(test) {
     }
 
     R1CS<Z> r1cs(circuit.r1cs());
-    Vector<Z> z = r1cs.assigment();
+    VectorDense<Z> z = r1cs.assigment();
     std::ranges::copy(a.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(b.coefficients, std::back_inserter(z.elements));
     std::ranges::copy(c.coefficients, std::back_inserter(z.elements));
