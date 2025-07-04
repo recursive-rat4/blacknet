@@ -269,6 +269,112 @@ public:
         Params::toForm(t.coefficients);
         return t;
     }
+
+template<typename Builder>
+requires(std::same_as<Z, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+    using Convolution = Params::Convolution::template Circuit<Builder>;
+
+    Builder& circuit;
+    Convolution convolution;
+    std::array<LinearCombination, N> coefficients;
+
+    constexpr Circuit(Builder& circuit)
+        : circuit(circuit), convolution(circuit), coefficients() {}
+    constexpr Circuit(Builder& circuit, Variable::Type type)
+        : circuit(circuit), convolution(circuit)
+    {
+        std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
+    }
+
+    constexpr LinearCombination& operator [] (std::size_t i) {
+        return coefficients[i];
+    }
+
+    constexpr const LinearCombination& operator [] (std::size_t i) const {
+        return coefficients[i];
+    }
+
+    constexpr Circuit& operator += (const Circuit& other) {
+        for (std::size_t i = 0; i < N; ++i)
+            coefficients[i] += other.coefficients[i];
+        return *this;
+    }
+
+    constexpr Circuit operator + (const Circuit& other) const {
+        Circuit t(circuit);
+        for (std::size_t i = 0; i < N; ++i)
+            t.coefficients[i] = coefficients[i] + other.coefficients[i];
+        return t;
+    }
+
+    constexpr Circuit& operator *= (const Circuit& other) {
+        return *this = *this * other;
+    }
+
+    constexpr Circuit operator * (const Circuit& other) {
+        Circuit t(circuit);
+        convolution.call(t.coefficients, this->coefficients, other.coefficients);
+        return t;
+    }
+};
+
+template<std::size_t Degree>
+struct Assigner {
+    using Convolution = Params::Convolution:: template Assigner<Degree>;
+
+    PolynomialRing polynomial;
+    std::vector<Z>& assigment;
+
+    constexpr Assigner(const PolynomialRing& polynomial, std::vector<Z>& assigment)
+        : polynomial(polynomial), assigment(assigment) {}
+
+    constexpr Z& operator [] (std::size_t i) {
+        return polynomial[i];
+    }
+
+    constexpr const Z& operator [] (std::size_t i) const {
+        return polynomial[i];
+    }
+
+    constexpr Assigner& operator += (const Assigner& other) {
+        polynomial += other.polynomial;
+        return *this;
+    }
+
+    constexpr Assigner operator + (const Assigner& other) const {
+        return { polynomial + other.polynomial, assigment };
+    }
+
+    constexpr Assigner& operator *= (const Assigner& other) {
+        return *this = *this * other;
+    }
+
+    constexpr Assigner operator * (const Assigner& other) const {
+        Assigner t(PolynomialRing::additive_identity(), assigment);
+        Convolution(assigment).call(t.polynomial.coefficients, polynomial.coefficients, other.polynomial.coefficients);
+        return t;
+    }
+
+    constexpr decltype(auto) begin() noexcept {
+        return polynomial.begin();
+    }
+
+    constexpr decltype(auto) begin() const noexcept {
+        return polynomial.begin();
+    }
+
+    constexpr decltype(auto) end() noexcept {
+        return polynomial.end();
+    }
+
+    constexpr decltype(auto) end() const noexcept {
+        return polynomial.end();
+    }
+};
+
 };
 
 }
