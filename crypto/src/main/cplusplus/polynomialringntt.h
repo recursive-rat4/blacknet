@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_CRYPTO_POLYNOMIALRING_H
-#define BLACKNET_CRYPTO_POLYNOMIALRING_H
+#ifndef BLACKNET_CRYPTO_POLYNOMIALRINGNTT_H
+#define BLACKNET_CRYPTO_POLYNOMIALRINGNTT_H
 
 #include <algorithm>
 #include <array>
@@ -28,40 +28,52 @@
 #include <fmt/ranges.h>
 
 #include "semigroup.h"
+#include "polynomialring.h"
 
 namespace blacknet::crypto {
 
 template<typename Params>
-struct PolynomialRing {
+struct PolynomialRingNTT {
 private:
     using Z = Params::Z;
     constexpr static const std::size_t N = Params::N;
+    constexpr static const std::size_t inertia = N / Z::twiddles();
 public:
-    consteval static PolynomialRing additive_identity() {
-        PolynomialRing t;
-        std::ranges::fill(t.coefficients, Z::additive_identity());
+    using Isomorphism = PolynomialRing<typename Params::Isomorphism>;
+
+    consteval static PolynomialRingNTT additive_identity() {
+        PolynomialRingNTT t;
+        std::ranges::fill(t.spectrum, Z::additive_identity());
         return t;
     }
-    consteval static PolynomialRing multiplicative_identity() {
+    consteval static PolynomialRingNTT multiplicative_identity() {
         return Z::multiplicative_identity();
     }
 
     using BaseRing = Z;
     using NumericType = Z::NumericType;
 
-    std::array<Z, N> coefficients;
+    std::array<Z, N> spectrum;
 
-    consteval PolynomialRing() noexcept = default;
-    constexpr PolynomialRing(const Z& e) {
-        coefficients[0] = e;
-        std::fill_n(coefficients.begin() + 1, N - 1, Z(0));
+    consteval PolynomialRingNTT() noexcept = default;
+    constexpr PolynomialRingNTT(const Isomorphism& e) : spectrum(e.coefficients) {
+        Params::toForm(spectrum);
     }
-    constexpr PolynomialRing(std::initializer_list<Z> init) {
-        std::ranges::copy(init, coefficients.begin());
-        std::fill_n(coefficients.begin() + init.size(), N - init.size(), Z(0));
+    constexpr PolynomialRingNTT(const Z& e) {
+        for (std::size_t i = 0; i < N; ++i) {
+            if (i % inertia == 0)
+                spectrum[i] = e;
+            else
+                spectrum[i] = Z::additive_identity();
+        }
+    }
+    constexpr PolynomialRingNTT(std::initializer_list<Z> init) {
+        std::ranges::copy(init, spectrum.begin());
+        std::fill_n(spectrum.begin() + init.size(), N - init.size(), Z(0));
+        Params::toForm(spectrum);
     }
 
-    constexpr bool operator == (const PolynomialRing&) const = default;
+    constexpr bool operator == (const PolynomialRingNTT&) const = default;
 
     consteval static std::size_t size() noexcept {
         return dimension();
@@ -71,144 +83,144 @@ public:
         return Params::N;
     }
 
-    constexpr PolynomialRing& operator += (const PolynomialRing& other) {
+    constexpr PolynomialRingNTT& operator += (const PolynomialRingNTT& other) {
         for (std::size_t i = 0; i < N; ++i)
-            coefficients[i] += other.coefficients[i];
+            spectrum[i] += other.spectrum[i];
         return *this;
     }
 
-    constexpr PolynomialRing operator + (const PolynomialRing& other) const {
-        PolynomialRing t;
+    constexpr PolynomialRingNTT operator + (const PolynomialRingNTT& other) const {
+        PolynomialRingNTT t;
         for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = coefficients[i] + other.coefficients[i];
+            t.spectrum[i] = spectrum[i] + other.spectrum[i];
         return t;
     }
 
-    constexpr PolynomialRing& operator *= (const PolynomialRing& other) {
-        return *this = *this * other;
-    }
-
-    constexpr PolynomialRing operator * (const PolynomialRing& other) const {
-        PolynomialRing t(PolynomialRing::additive_identity());
-        Params::convolute(t.coefficients, this->coefficients, other.coefficients);
-        return t;
-    }
-
-    constexpr PolynomialRing& operator *= (const Z& other) {
-        for (std::size_t i = 0; i < N; ++i)
-            coefficients[i] *= other;
-        return *this;
-    }
-
-    constexpr PolynomialRing operator * (const Z& other) const {
-        PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = coefficients[i] * other;
-        return t;
-    }
-
-    friend constexpr PolynomialRing operator * (const Z& lps, const PolynomialRing& rps) {
-        PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = lps * rps.coefficients[i];
-        return t;
-    }
-
-    constexpr PolynomialRing& operator -= (const PolynomialRing& other) {
-        for (std::size_t i = 0; i < N; ++i)
-            coefficients[i] -= other.coefficients[i];
-        return *this;
-    }
-
-    constexpr PolynomialRing operator - (const PolynomialRing& other) const {
-        PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = coefficients[i] - other.coefficients[i];
-        return t;
-    }
-
-    constexpr PolynomialRing operator - () const {
-        PolynomialRing t;
-        for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = - coefficients[i];
-        return t;
-    }
-
-    constexpr PolynomialRing douple() const {
-        if constexpr (Z::characteristic() != 2) {
-            PolynomialRing t;
+    constexpr PolynomialRingNTT& operator *= (const PolynomialRingNTT& other) {
+        if constexpr (inertia == 1) {
             for (std::size_t i = 0; i < N; ++i)
-                t.coefficients[i] = coefficients[i].douple();
+                spectrum[i] *= other.spectrum[i];
+            return *this;
+        } else {
+            return *this = *this * other;
+        }
+    }
+
+    constexpr PolynomialRingNTT operator * (const PolynomialRingNTT& other) const {
+        PolynomialRingNTT t(PolynomialRingNTT::additive_identity());
+        Params::convolute(t.spectrum, this->spectrum, other.spectrum);
+        return t;
+    }
+
+    constexpr PolynomialRingNTT& operator *= (const Z& other) {
+        for (std::size_t i = 0; i < N; ++i)
+            spectrum[i] *= other;
+        return *this;
+    }
+
+    constexpr PolynomialRingNTT operator * (const Z& other) const {
+        PolynomialRingNTT t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.spectrum[i] = spectrum[i] * other;
+        return t;
+    }
+
+    friend constexpr PolynomialRingNTT operator * (const Z& lps, const PolynomialRingNTT& rps) {
+        PolynomialRingNTT t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.spectrum[i] = lps * rps.spectrum[i];
+        return t;
+    }
+
+    constexpr PolynomialRingNTT& operator -= (const PolynomialRingNTT& other) {
+        for (std::size_t i = 0; i < N; ++i)
+            spectrum[i] -= other.spectrum[i];
+        return *this;
+    }
+
+    constexpr PolynomialRingNTT operator - (const PolynomialRingNTT& other) const {
+        PolynomialRingNTT t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.spectrum[i] = spectrum[i] - other.spectrum[i];
+        return t;
+    }
+
+    constexpr PolynomialRingNTT operator - () const {
+        PolynomialRingNTT t;
+        for (std::size_t i = 0; i < N; ++i)
+            t.spectrum[i] = - spectrum[i];
+        return t;
+    }
+
+    constexpr PolynomialRingNTT douple() const {
+        if constexpr (Z::characteristic() != 2) {
+            PolynomialRingNTT t;
+            for (std::size_t i = 0; i < N; ++i)
+                t.spectrum[i] = spectrum[i].douple();
             return t;
         } else {
             return additive_identity();
         }
     }
 
-    constexpr PolynomialRing square() const {
-        return *this * *this;
-    }
-
-    constexpr std::optional<PolynomialRing> invert() const {
-        static_assert(Params::is_division_ring, "Not implemented");
-        if (*this != PolynomialRing(0)) {
-            // Feng and Itoh-Tsujii algorithm
-            PolynomialRing r1 = semigroup::power(*this, Params::INVERSION_R1);
-            Z r0 = (r1 * (*this)).coefficients[0];
-            Z z1 = *r0.invert();
-            return z1 * r1;
+    constexpr PolynomialRingNTT square() const {
+        if constexpr (inertia == 1) {
+            PolynomialRingNTT t;
+            for (std::size_t i = 0; i < N; ++i)
+                t.spectrum[i] = spectrum[i].square();
+            return t;
         } else {
-            return std::nullopt;
+            return *this * *this;
         }
     }
 
     constexpr bool checkInfinityNorm(const NumericType& bound) const {
-        return std::ranges::all_of(coefficients, [&bound](const Z& i) {
-            return i.checkInfinityNorm(bound);
-        });
+        return isomorph().checkInfinityNorm(bound);
     }
 
     constexpr double euclideanNorm() const {
-        double r = 0;
-        for (std::size_t i = 0; i < N; ++i) {
-            double e = coefficients[i].euclideanNorm();
-            r += e * e;
-        }
-        return std::sqrt(r);
+        return isomorph().euclideanNorm();
     }
 
-    constexpr PolynomialRing conjugate() const {
+    constexpr PolynomialRingNTT conjugate() const {
         static_assert(std::has_single_bit(Params::cyclotomic_index));
-        PolynomialRing t(*this);
-        for (std::size_t i = 1; i < N / 2; ++i) {
-            Z a = -t.coefficients[i];
-            Z b = -t.coefficients[N - i];
-            t.coefficients[N - i] = a;
-            t.coefficients[i] = b;
+        if constexpr (inertia == 1) {
+            PolynomialRingNTT t(*this);
+            for (std::size_t i = 0; i < N / 2; ++i) {
+                std::swap(t.spectrum[i], t.spectrum[N - 1 - i]);
+            }
+            return t;
+        } else {
+            return isomorph().conjugate();
         }
-        t.coefficients[N / 2] = -t.coefficients[N / 2];
+    }
+
+    constexpr Isomorphism isomorph() const {
+        Isomorphism t;
+        t.coefficients = spectrum;
+        Params::fromForm(t.coefficients);
         return t;
     }
 
     constexpr decltype(auto) begin() noexcept {
-        return coefficients.begin();
+        return spectrum.begin();
     }
 
     constexpr decltype(auto) begin() const noexcept {
-        return coefficients.begin();
+        return spectrum.begin();
     }
 
     constexpr decltype(auto) end() noexcept {
-        return coefficients.end();
+        return spectrum.end();
     }
 
     constexpr decltype(auto) end() const noexcept {
-        return coefficients.end();
+        return spectrum.end();
     }
 
-    friend std::ostream& operator << (std::ostream& out, const PolynomialRing& val)
+    friend std::ostream& operator << (std::ostream& out, const PolynomialRingNTT& val)
     {
-        fmt::print(out, "{}", val.coefficients);
+        fmt::print(out, "{}", val.spectrum);
         return out;
     }
 
@@ -218,34 +230,34 @@ public:
 
     template<typename Sponge>
     constexpr void absorb(Sponge& sponge) const {
-        sponge.absorb(coefficients);
+        sponge.absorb(spectrum);
     }
 
     template<typename Sponge>
-    constexpr static PolynomialRing squeeze(Sponge& sponge) {
-        PolynomialRing t;
-        sponge.squeeze(t.coefficients);
+    constexpr static PolynomialRingNTT squeeze(Sponge& sponge) {
+        PolynomialRingNTT t;
+        sponge.squeeze(t.spectrum);
         return t;
     }
 
     template<std::uniform_random_bit_generator RNG>
-    static PolynomialRing random(RNG& rng) {
-        PolynomialRing t;
-        std::ranges::generate(t.coefficients, [&] { return Z::random(rng); });
+    static PolynomialRingNTT random(RNG& rng) {
+        PolynomialRingNTT t;
+        std::ranges::generate(t.spectrum, [&] { return Z::random(rng); });
         return t;
     }
 
     template<std::uniform_random_bit_generator RNG, typename DST>
-    static PolynomialRing random(RNG& rng, DST& dst) {
-        PolynomialRing t;
+    static PolynomialRingNTT random(RNG& rng, DST& dst) {
+        Isomorphism t;
         std::ranges::generate(t.coefficients, [&] { return Z::random(rng, dst); });
         return t;
     }
 
     template<std::uniform_random_bit_generator RNG, typename DST>
-    static PolynomialRing random(RNG& rng, DST& dst, std::size_t hamming) {
+    static PolynomialRingNTT random(RNG& rng, DST& dst, std::size_t hamming) {
         std::uniform_int_distribution<std::size_t> uid(0, N - 1);
-        PolynomialRing t;
+        Isomorphism t;
         std::ranges::fill(t.coefficients, Z(0));
         while (hamming) {
             std::size_t i = uid(rng);
@@ -266,34 +278,34 @@ struct Circuit {
 
     Builder& circuit;
     Convolution convolution;
-    std::array<LinearCombination, N> coefficients;
+    std::array<LinearCombination, N> spectrum;
 
     constexpr Circuit(Builder& circuit)
-        : circuit(circuit), convolution(circuit), coefficients() {}
+        : circuit(circuit), convolution(circuit), spectrum() {}
     constexpr Circuit(Builder& circuit, Variable::Type type)
         : circuit(circuit), convolution(circuit)
     {
-        std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
+        std::ranges::generate(spectrum, [&]{ return circuit.variable(type); });
     }
 
     constexpr LinearCombination& operator [] (std::size_t i) {
-        return coefficients[i];
+        return spectrum[i];
     }
 
     constexpr const LinearCombination& operator [] (std::size_t i) const {
-        return coefficients[i];
+        return spectrum[i];
     }
 
     constexpr Circuit& operator += (const Circuit& other) {
         for (std::size_t i = 0; i < N; ++i)
-            coefficients[i] += other.coefficients[i];
+            spectrum[i] += other.spectrum[i];
         return *this;
     }
 
     constexpr Circuit operator + (const Circuit& other) const {
         Circuit t(circuit);
         for (std::size_t i = 0; i < N; ++i)
-            t.coefficients[i] = coefficients[i] + other.coefficients[i];
+            t.spectrum[i] = spectrum[i] + other.spectrum[i];
         return t;
     }
 
@@ -303,7 +315,7 @@ struct Circuit {
 
     constexpr Circuit operator * (const Circuit& other) {
         Circuit t(circuit);
-        convolution.call(t.coefficients, this->coefficients, other.coefficients);
+        convolution.call(t.spectrum, this->spectrum, other.spectrum);
         return t;
     }
 };
@@ -312,10 +324,10 @@ template<std::size_t Degree>
 struct Assigner {
     using Convolution = Params::Convolution:: template Assigner<Degree>;
 
-    PolynomialRing polynomial;
+    PolynomialRingNTT polynomial;
     std::vector<Z>& assigment;
 
-    constexpr Assigner(const PolynomialRing& polynomial, std::vector<Z>& assigment)
+    constexpr Assigner(const PolynomialRingNTT& polynomial, std::vector<Z>& assigment)
         : polynomial(polynomial), assigment(assigment) {}
 
     constexpr Z& operator [] (std::size_t i) {
@@ -340,8 +352,8 @@ struct Assigner {
     }
 
     constexpr Assigner operator * (const Assigner& other) const {
-        Assigner t(PolynomialRing::additive_identity(), assigment);
-        Convolution(assigment).call(t.polynomial.coefficients, polynomial.coefficients, other.polynomial.coefficients);
+        Assigner t(PolynomialRingNTT::additive_identity(), assigment);
+        Convolution(assigment).call(t.polynomial.spectrum, polynomial.spectrum, other.polynomial.spectrum);
         return t;
     }
 

@@ -22,16 +22,13 @@
 
 #include "ajtaicommitment.h"
 #include "binaryuniformdistribution.h"
-#include "convolution.h"
 #include "customizableconstraintsystem.h"
 #include "eqextension.h"
 #include "latticegadget.h"
 #include "matrixdense.h"
 #include "multilinearextension.h"
-#include "numbertheoretictransform.h"
 #include "point.h"
 #include "polynomial.h"
-#include "polynomialring.h"
 #include "powextension.h"
 #include "vectordense.h"
 #include "util.h"
@@ -69,15 +66,6 @@ struct LatticeFold {
     static_assert(Rq::dimension() == RqIso::dimension());
     static_assert(Rq::dimension() == D);
     static_assert(t == Zq::twiddles());
-
-    constexpr static RqIso& isomorph(Rq&& f) {
-        NTT<Zq, D>::cooley_tukey(f.coefficients);
-        return reinterpret_cast<RqIso&>(f);
-    }
-    constexpr static Rq& isomorph(RqIso&& f) {
-        NTT<Zq, D>::gentleman_sande(f.coefficients);
-        return reinterpret_cast<Rq&>(f);
-    }
 
     using BindingCommitment = AjtaiCommitment<RqIso, NormP::Infinity>;
 

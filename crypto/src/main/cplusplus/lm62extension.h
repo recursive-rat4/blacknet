@@ -23,6 +23,7 @@
 #include "lm62.h"
 #include "numbertheoretictransform.h"
 #include "polynomialring.h"
+#include "polynomialringntt.h"
 
 namespace blacknet::crypto {
 
@@ -43,8 +44,6 @@ struct LM62RingDegree2Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r.data(), a.data(), b.data(), -M.front());
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<LM62RingDegree2Params> LM62RingDegree2;
@@ -67,8 +66,6 @@ struct LM62RingDegree3Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<LM62RingDegree3Params> LM62RingDegree3;
@@ -92,8 +89,6 @@ struct LM62RingDegree4Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<LM62RingDegree4Params> LM62RingDegree4;
@@ -109,13 +104,12 @@ struct LM62RingDegree64Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<LM62RingDegree64Params> LM62RingDegree64;
 
 struct LM62RingDegree64NTTParams {
+    using Isomorphism = LM62RingDegree64Params;
     using Z = LM62Ring;
 
     constexpr static const std::size_t cyclotomic_index = 128;
@@ -134,7 +128,7 @@ struct LM62RingDegree64NTTParams {
     }
 };
 
-typedef PolynomialRing<LM62RingDegree64NTTParams> LM62RingDegree64NTT;
+typedef PolynomialRingNTT<LM62RingDegree64NTTParams> LM62RingDegree64NTT;
 
 }
 

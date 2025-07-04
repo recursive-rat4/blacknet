@@ -18,9 +18,11 @@
 #ifndef BLACKNET_CRYPTO_DILITHIUM_H
 #define BLACKNET_CRYPTO_DILITHIUM_H
 
+#include "convolution.h"
 #include "dilithiumring.h"
 #include "numbertheoretictransform.h"
 #include "polynomialring.h"
+#include "polynomialringntt.h"
 
 namespace blacknet::crypto {
 
@@ -46,6 +48,20 @@ namespace dilithium {
 
         constexpr static const std::size_t N = 256;
 
+        using Convolution = convolution::Negacyclic<Z, N>;
+        constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+            Convolution::call(r, a, b);
+        }
+    };
+
+    struct NTTRingParams {
+        using Isomorphism = CyclotomicRingParams;
+        using Z = DilithiumRing;
+
+        constexpr static const std::size_t cyclotomic_index = 512;
+
+        constexpr static const std::size_t N = 256;
+
         using Convolution = NTT<Z, N>::Convolution;
         constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
             Convolution::call(r, a, b);
@@ -60,7 +76,8 @@ namespace dilithium {
         static_assert(N == Z::twiddles());
     };
 
-    using Rq = PolynomialRing<CyclotomicRingParams>;
+    using Rq = PolynomialRingNTT<NTTRingParams>;
+    using RqIso = PolynomialRing<CyclotomicRingParams>;
 }
 
 }

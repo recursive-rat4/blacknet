@@ -25,6 +25,7 @@
 #include "fermat.h"
 #include "numbertheoretictransform.h"
 #include "polynomialring.h"
+#include "polynomialringntt.h"
 #include "ternaryuniformdistribution.h"
 #include "z2.h"
 
@@ -53,8 +54,6 @@ struct LPR {
         constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
             Convolution::call(r, a, b);
         }
-        constexpr static void toForm(std::array<Z, N>&) {}
-        constexpr static void fromForm(std::array<Z, N>&) {}
     };
 
     struct CipherTextRingParams {
@@ -66,11 +65,10 @@ struct LPR {
         constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
             Convolution::call(r, a, b);
         }
-        constexpr static void toForm(std::array<Z, N>&) {}
-        constexpr static void fromForm(std::array<Z, N>&) {}
     };
 
     struct CipherTextNTTRingParams {
+        using Isomorphism = CipherTextRingParams;
         using Z = Zq;
 
         constexpr static const std::size_t N = D;
@@ -89,16 +87,7 @@ struct LPR {
 
     using Rt = PolynomialRing<PlainTextRingParams>;
     using Rq = PolynomialRing<CipherTextRingParams>;
-    using RqIso = PolynomialRing<CipherTextNTTRingParams>;
-
-    constexpr static RqIso& isomorph(Rq&& f) {
-        CipherTextNTTRingParams::toForm(f.coefficients);
-        return reinterpret_cast<RqIso&>(f);
-    }
-    constexpr static Rq& isomorph(RqIso&& f) {
-        CipherTextNTTRingParams::fromForm(f.coefficients);
-        return reinterpret_cast<Rq&>(f);
-    }
+    using RqIso = PolynomialRingNTT<CipherTextNTTRingParams>;
 
     using SecretKey = Rq;
 

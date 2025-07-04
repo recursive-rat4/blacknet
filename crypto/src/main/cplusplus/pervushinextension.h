@@ -43,8 +43,6 @@ struct PervushinRingDegree2Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<PervushinRingDegree2Params> PervushinRingDegree2;
@@ -67,8 +65,6 @@ struct PervushinRingDegree3Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<PervushinRingDegree3Params> PervushinRingDegree3;
@@ -92,8 +88,6 @@ struct PervushinRingDegree4Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<PervushinRingDegree4Params> PervushinRingDegree4;

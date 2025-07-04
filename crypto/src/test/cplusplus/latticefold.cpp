@@ -36,7 +36,8 @@ BOOST_AUTO_TEST_SUITE(LatticeFold_Plain)
 using Z = LM62Ring;
 using F = LM62RingDegree2;
 using R = LM62RingDegree64;
-using LatticeFold = LatticeFold<Z, F, R, LM62RingDegree64NTT>;
+using RIso = LM62RingDegree64NTT;
+using LatticeFold = LatticeFold<Z, F, R, RIso>;
 
 BOOST_AUTO_TEST_CASE(Gadget) {
     const auto a = VectorDense<R>{ R(3), R(2), R(1), R(0) };
@@ -120,11 +121,10 @@ BOOST_AUTO_TEST_CASE(GFolds) {
 }
 
 BOOST_AUTO_TEST_CASE(RingIsomorphisms) {
-    R a({4, 0, 0, 1, 5,});
-    R b(a);
-    auto c = LatticeFold::isomorph(std::move(b));
-    auto d = LatticeFold::isomorph(std::move(c));
-    BOOST_TEST(a == d);
+    const R a({4, 0, 0, 1, 5,});
+    RIso b(a);
+    R c = b.isomorph();
+    BOOST_TEST(a == c);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -134,7 +134,8 @@ BOOST_AUTO_TEST_SUITE(LatticeFold_Circuit)
 using Z = LM62Ring;
 using F = LM62Ring; //XXX
 using R = LM62RingDegree64;
-using LatticeFold = LatticeFold<Z, F, R, LM62RingDegree64NTT>;
+using RIso = LM62RingDegree64NTT;
+using LatticeFold = LatticeFold<Z, F, R, RIso>;
 using Duplex = Poseidon2LM62Sponge<{64, 65, 66, 67}>;
 
 BOOST_AUTO_TEST_CASE(Distributions) {

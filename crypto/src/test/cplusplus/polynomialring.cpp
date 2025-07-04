@@ -50,9 +50,9 @@ BOOST_AUTO_TEST_CASE(Add) {
 
     R1CS<Z> r1cs(circuit.r1cs());
     VectorDense<Z> z = r1cs.assigment();
-    std::ranges::copy(a.coefficients, std::back_inserter(z.elements));
-    std::ranges::copy(b.coefficients, std::back_inserter(z.elements));
-    std::ranges::copy(c.coefficients, std::back_inserter(z.elements));
+    std::ranges::copy(a, std::back_inserter(z.elements));
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    std::ranges::copy(c, std::back_inserter(z.elements));
 
     using RAssigner = R::Assigner<Builder::degree()>;
     RAssigner a_assigner(a, z.elements);
@@ -80,9 +80,9 @@ BOOST_AUTO_TEST_CASE(Mul) {
 
     R1CS<Z> r1cs(circuit.r1cs());
     VectorDense<Z> z = r1cs.assigment();
-    std::ranges::copy(a.coefficients, std::back_inserter(z.elements));
-    std::ranges::copy(b.coefficients, std::back_inserter(z.elements));
-    std::ranges::copy(c.coefficients, std::back_inserter(z.elements));
+    std::ranges::copy(a, std::back_inserter(z.elements));
+    std::ranges::copy(b, std::back_inserter(z.elements));
+    std::ranges::copy(c, std::back_inserter(z.elements));
 
     using RAssigner = R::Assigner<Builder::degree()>;
     RAssigner a_assigner(a, z.elements);

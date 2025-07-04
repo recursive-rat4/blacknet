@@ -22,6 +22,7 @@
 #include "convolution.h"
 #include "numbertheoretictransform.h"
 #include "polynomialring.h"
+#include "polynomialringntt.h"
 #include "solinas62.h"
 
 namespace blacknet::crypto {
@@ -43,8 +44,6 @@ struct Solinas62RingDegree2Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r.data(), a.data(), b.data(), -M.front());
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<Solinas62RingDegree2Params> Solinas62RingDegree2;
@@ -67,8 +66,6 @@ struct Solinas62RingDegree3Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<Solinas62RingDegree3Params> Solinas62RingDegree3;
@@ -92,8 +89,6 @@ struct Solinas62RingDegree4Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<Solinas62RingDegree4Params> Solinas62RingDegree4;
@@ -109,13 +104,12 @@ struct Solinas62RingDegree64Params {
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
     }
-    constexpr static void toForm(std::array<Z, N>&) {}
-    constexpr static void fromForm(std::array<Z, N>&) {}
 };
 
 typedef PolynomialRing<Solinas62RingDegree64Params> Solinas62RingDegree64;
 
 struct Solinas62RingDegree64NTTParams {
+    using Isomorphism = Solinas62RingDegree64Params;
     using Z = Solinas62Ring;
 
     constexpr static const std::size_t cyclotomic_index = 128;
@@ -134,7 +128,7 @@ struct Solinas62RingDegree64NTTParams {
     }
 };
 
-typedef PolynomialRing<Solinas62RingDegree64NTTParams> Solinas62RingDegree64NTT;
+typedef PolynomialRingNTT<Solinas62RingDegree64NTTParams> Solinas62RingDegree64NTT;
 
 }
 
