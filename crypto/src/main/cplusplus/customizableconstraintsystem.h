@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_CUSTOMIZABLECONSTRAINTSYSTEM_H
 #define BLACKNET_CRYPTO_CUSTOMIZABLECONSTRAINTSYSTEM_H
 
+#include <algorithm>
 #include <stdexcept>
 #include <vector>
 #include <fmt/format.h>
@@ -74,7 +75,7 @@ public:
             }
             sigma += circle;
         }
-        return sigma == VectorDense<E>(rows, E::additive_identity());
+        return std::ranges::all_of(sigma, [](const E& e) { return e == E::additive_identity(); });
     }
 
     constexpr bool operator == (const CustomizableConstraintSystem&) const = default;
