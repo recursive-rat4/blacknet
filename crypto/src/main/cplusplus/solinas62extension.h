@@ -39,8 +39,9 @@ struct Solinas62RingDegree2Params {
     };
     constexpr static const BitInt<62> INVERSION_R1{"3ffffffffffffee1"};
 
+    using Convolution = convolution::Binomial<Z, N>;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        Convolution<Z>::binomial<N>(r.data(), a.data(), b.data(), -M.front());
+        Convolution::call(r.data(), a.data(), b.data(), -M.front());
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -62,8 +63,9 @@ struct Solinas62RingDegree3Params {
     };
     constexpr static const BitInt<124> INVERSION_R1{"0fffffffffffff70c0000000000140a2"};
 
+    using Convolution = convolution::Quotient<Z, N, M>;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        Convolution<Z>::quotient<N, M>(r, a, b);
+        Convolution::call(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -86,8 +88,9 @@ struct Solinas62RingDegree4Params {
     };
     constexpr static const BitInt<188> INVERSION_R1{"03ffffffffffffca400000000000f0c17ffffffffe988943"};
 
+    using Convolution = convolution::Quotient<Z, N, M>;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        Convolution<Z>::quotient<N, M>(r, a, b);
+        Convolution::call(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -102,8 +105,9 @@ struct Solinas62RingDegree64Params {
 
     constexpr static const std::size_t N = 64;
 
+    using Convolution = convolution::Negacyclic<Z, N>;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        Convolution<Z>::negacyclic<N>(r, a, b);
+        Convolution::call(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -118,8 +122,9 @@ struct Solinas62RingDegree64NTTParams {
 
     constexpr static const std::size_t N = 64;
 
+    using Convolution = NTT<Z, N>::Convolution;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        NTT<Z, N>::convolute(r, a, b);
+        Convolution::call(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>& a) {
         NTT<Z, N>::cooley_tukey(a);

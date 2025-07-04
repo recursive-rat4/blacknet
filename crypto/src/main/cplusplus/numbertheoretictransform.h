@@ -63,39 +63,130 @@ struct NTT {
         }
     }
 
-    constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        if constexpr (inertia == 1) {
-            for (std::size_t i = 0; i < N; ++i) {
-                r[i] = a[i] * b[i];
+    struct Convolution {
+        using IdealConvolution = convolution::Binomial<Z, inertia>;
+
+        constexpr static void call(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+            if constexpr (inertia == 1) {
+                for (std::size_t i = 0; i < N; ++i) {
+                    r[i] = a[i] * b[i];
+                }
+            } else if constexpr (inertia == 4) {
+                constexpr std::size_t k = inertia * 2;
+                constexpr std::size_t l = N / k;
+                for (std::size_t i = 0; i < l; ++i) {
+                    IdealConvolution::call(
+                        r.data() + i * k,
+                        a.data() + i * k,
+                        b.data() + i * k,
+                        Z::twiddle(l + i)
+                    );
+                    IdealConvolution::call(
+                        r.data() + i * k + inertia,
+                        a.data() + i * k + inertia,
+                        b.data() + i * k + inertia,
+                        -Z::twiddle(l + i)
+                    );
+                }
+            } else {
+                static_assert(false, "Not implemented");
             }
-        } else if constexpr (inertia == 4) {
-            constexpr std::size_t k = inertia * 2;
-            constexpr std::size_t l = N / k;
-            for (std::size_t i = 0; i < l; ++i) {
-                Convolution<Z>::template binomial<inertia>(
-                    r.data() + i * k,
-                    a.data() + i * k,
-                    b.data() + i * k,
-                    Z::twiddle(l + i)
-                );
-                Convolution<Z>::template binomial<inertia>(
-                    r.data() + i * k + inertia,
-                    a.data() + i * k + inertia,
-                    b.data() + i * k + inertia,
-                    -Z::twiddle(l + i)
-                );
-            }
-        } else {
-            static_assert(false, "Not implemented");
         }
-    }
+
+    template<typename Builder>
+    requires(std::same_as<Z, typename Builder::R>)
+    struct Circuit {
+        using Variable = Builder::Variable;
+        using LinearCombination = Builder::LinearCombination;
+        using IdealConvolution = convolution::Binomial<Z, inertia>::template Circuit<Builder>;
+
+        Builder& circuit;
+        IdealConvolution ideal_convolution;
+
+        constexpr Circuit(Builder& circuit)
+            : circuit(circuit), ideal_convolution(circuit) {}
+
+        constexpr void call(
+            std::array<LinearCombination, N>& r,
+            const std::array<LinearCombination, N>& a,
+            const std::array<LinearCombination, N>& b
+        ) {
+            if constexpr (inertia == 1) {
+                for (std::size_t i = 0; i < N; ++i) {
+                    auto t = circuit.auxiliary();
+                    circuit(t == a[i] * b[i]);
+                    r[i] = t;
+                }
+            } else if constexpr (inertia == 4) {
+                constexpr std::size_t k = inertia * 2;
+                constexpr std::size_t l = N / k;
+                for (std::size_t i = 0; i < l; ++i) {
+                    ideal_convolution.call(
+                        r.data() + i * k,
+                        a.data() + i * k,
+                        b.data() + i * k,
+                        Z::twiddle(l + i)
+                    );
+                    ideal_convolution.call(
+                        r.data() + i * k + inertia,
+                        a.data() + i * k + inertia,
+                        b.data() + i * k + inertia,
+                        -Z::twiddle(l + i)
+                    );
+                }
+            } else {
+                static_assert(false, "Not implemented");
+            }
+        }
+    };
+
+    template<std::size_t Degree>
+    struct Assigner {
+        using IdealConvolution = convolution::Binomial<Z, inertia>::template Assigner<Degree>;
+
+        IdealConvolution ideal_convolution;
+        std::vector<Z>& assigment;
+
+        constexpr Assigner(std::vector<Z>& assigment)
+            : ideal_convolution(assigment), assigment(assigment) {}
+
+        constexpr void call(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+            if constexpr (inertia == 1) {
+                for (std::size_t i = 0; i < N; ++i) {
+                    r[i] = assigment.emplace_back(
+                        a[i] * b[i]
+                    );
+                }
+            } else if constexpr (inertia == 4) {
+                constexpr std::size_t k = inertia * 2;
+                constexpr std::size_t l = N / k;
+                for (std::size_t i = 0; i < l; ++i) {
+                    ideal_convolution.call(
+                        r.data() + i * k,
+                        a.data() + i * k,
+                        b.data() + i * k,
+                        Z::twiddle(l + i)
+                    );
+                    ideal_convolution.call(
+                        r.data() + i * k + inertia,
+                        a.data() + i * k + inertia,
+                        b.data() + i * k + inertia,
+                        -Z::twiddle(l + i)
+                    );
+                }
+            } else {
+                static_assert(false, "Not implemented");
+            }
+        }
+    };
+    };
 
 template<typename Builder>
 requires(std::same_as<Z, typename Builder::R>)
 struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
-    using Convolution = Convolution<Z>::template Circuit<Builder>;
+    using Convolution = convolution::Binomial<Z, inertia>::template Circuit<Builder>;
 
     Builder& circuit;
     Convolution convolution;
@@ -135,50 +226,14 @@ struct Circuit {
             a[i] *= Z::inverse_twiddles();
         }
     }
-
-    constexpr void convolute(
-        std::array<LinearCombination, N>& r,
-        const std::array<LinearCombination, N>& a,
-        const std::array<LinearCombination, N>& b
-    ) {
-        if constexpr (inertia == 1) {
-            for (std::size_t i = 0; i < N; ++i) {
-                auto t = circuit.auxiliary();
-                circuit(t == a[i] * b[i]);
-                r[i] = t;
-            }
-        } else if constexpr (inertia == 4) {
-            constexpr std::size_t k = inertia * 2;
-            constexpr std::size_t l = N / k;
-            for (std::size_t i = 0; i < l; ++i) {
-                convolution.template binomial<inertia>(
-                    r.data() + i * k,
-                    a.data() + i * k,
-                    b.data() + i * k,
-                    Z::twiddle(l + i)
-                );
-                convolution.template binomial<inertia>(
-                    r.data() + i * k + inertia,
-                    a.data() + i * k + inertia,
-                    b.data() + i * k + inertia,
-                    -Z::twiddle(l + i)
-                );
-            }
-        } else {
-            static_assert(false, "Not implemented");
-        }
-    }
 };
 
 template<std::size_t Degree>
 struct Assigner {
-    using Convolution = Convolution<Z>::template Assigner<Degree>;
-
-    Convolution convolution;
     std::vector<Z>& assigment;
 
     constexpr Assigner(std::vector<Z>& assigment)
-        : convolution(assigment), assigment(assigment) {}
+        : assigment(assigment) {}
 
     constexpr void cooley_tukey(std::array<Z, N>& a) const {
         return NTT::cooley_tukey(a);
@@ -187,36 +242,6 @@ struct Assigner {
     constexpr void gentleman_sande(std::array<Z, N>& a) const {
         return NTT::gentleman_sande(a);
     }
-
-    constexpr void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        if constexpr (inertia == 1) {
-            for (std::size_t i = 0; i < N; ++i) {
-                r[i] = assigment.emplace_back(
-                    a[i] * b[i]
-                );
-            }
-        } else if constexpr (inertia == 4) {
-            constexpr std::size_t k = inertia * 2;
-            constexpr std::size_t l = N / k;
-            for (std::size_t i = 0; i < l; ++i) {
-                convolution.template binomial<inertia>(
-                    r.data() + i * k,
-                    a.data() + i * k,
-                    b.data() + i * k,
-                    Z::twiddle(l + i)
-                );
-                convolution.template binomial<inertia>(
-                    r.data() + i * k + inertia,
-                    a.data() + i * k + inertia,
-                    b.data() + i * k + inertia,
-                    -Z::twiddle(l + i)
-                );
-            }
-        } else {
-            static_assert(false, "Not implemented");
-        }
-    }
-
 };
 
 };

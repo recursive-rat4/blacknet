@@ -24,10 +24,11 @@
 
 namespace blacknet::crypto {
 
-template<typename Z>
-struct Convolution {
-    template<std::size_t N>
-    constexpr static void negacyclic(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+namespace convolution {
+
+template<typename Z, std::size_t N>
+struct Negacyclic {
+    constexpr static void call(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         for (std::size_t k = 0; k < N; ++k) {
             for (std::size_t i = 0; i <= k; ++i) {
                 r[k] += a[i] * b[k - i];
@@ -37,15 +38,21 @@ struct Convolution {
             }
         }
     }
+};
 
-    template<std::size_t N, std::size_t M>
-    constexpr static void lonk(std::array<Z, N+M-1>& r, const std::array<Z, N>& a, const std::array<Z, M>& b) {
+template<typename Z, std::size_t N, std::size_t M>
+struct Long {
+    constexpr static void call(std::array<Z, N+M-1>& r, const std::array<Z, N>& a, const std::array<Z, M>& b) {
         for (std::size_t i = 0; i < N; ++i) {
             for (std::size_t j = 0; j < M; ++j) {
                 r[i + j] += a[i] * b[j];
             }
         }
     }
+};
+
+template<typename Z, std::size_t N, std::array<Z, N+1> M>
+struct Quotient {
 private:
     template<Z c>
     constexpr static void fuse(Z& r, const Z& a, const Z& b) {
@@ -71,12 +78,11 @@ private:
             r -= a * b;
     }
 public:
-    template<std::size_t N, std::array<Z, N+1> M>
-    constexpr static void quotient(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
+    constexpr static void call(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         static_assert(M.back() == Z(1));
         std::array<Z, N + N - 1> t;
         t.fill(Z::additive_identity());
-        lonk(t, a, b);
+        Long<Z, N, N>::call(t, a, b);
         if constexpr (N == 2) {
             fuse<M[0]>(r[0], t[0], t[2]);
             fuse<M[1]>(r[1], t[1], t[2]);
@@ -107,9 +113,11 @@ public:
             static_assert(false, "Not implemented");
         }
     }
+};
 
-    template<std::size_t N>
-    constexpr static void binomial(Z* r, const Z* a, const Z* b, Z zeta) {
+template<typename Z, std::size_t N>
+struct Binomial {
+    constexpr static void call(Z* r, const Z* a, const Z* b, Z zeta) {
         if constexpr (N == 4) {
             r[0] = a[0] * b[0] + zeta * (a[1] * b[3] + a[2] * b[2] + a[3] * b[1]);
             r[1] = a[0] * b[1] + a[1] * b[0] + zeta * (a[2] * b[3] + a[3] * b[2]);
@@ -138,8 +146,7 @@ struct Circuit {
 
     constexpr Circuit(Builder& circuit) : circuit(circuit) {}
 
-    template<std::size_t N>
-    constexpr void binomial(
+    constexpr void call(
         LinearCombination* r,
         const LinearCombination* a,
         const LinearCombination* b,
@@ -179,8 +186,7 @@ struct Assigner {
 
     std::vector<Z>& assigment;
 
-    template<std::size_t N>
-    constexpr void binomial(Z* r, const Z* a, const Z* b, Z zeta) {
+    constexpr void call(Z* r, const Z* a, const Z* b, Z zeta) {
         MatrixDense ab(N, N, assigment);
         for (std::size_t i = 0; i < N; ++i) {
             for (std::size_t j = 0; j < N; ++j) {
@@ -208,6 +214,8 @@ struct Assigner {
 };
 
 };
+
+}
 
 }
 

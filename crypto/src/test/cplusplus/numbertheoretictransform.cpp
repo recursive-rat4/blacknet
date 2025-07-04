@@ -38,6 +38,8 @@ BOOST_AUTO_TEST_CASE(test) {
     Builder circuit;
     using NTTCircuit = NTT<Z, R::dimension()>::Circuit<Builder>;
     NTTCircuit ntt_circuit(circuit);
+    using NTTConvolutionCircuit = NTT<Z, R::dimension()>::Convolution::Circuit<Builder>;
+    NTTConvolutionCircuit ntt_convolution_circuit(circuit);
     using RCircuit = std::array<Builder::LinearCombination, R::dimension()>;
     RCircuit a_input;
     std::ranges::generate(a_input, [&] { return circuit.input(); });
@@ -48,7 +50,7 @@ BOOST_AUTO_TEST_CASE(test) {
     RCircuit c_circuit;
     ntt_circuit.cooley_tukey(a_input);
     ntt_circuit.cooley_tukey(b_input);
-    ntt_circuit.convolute(c_circuit, a_input, b_input);
+    ntt_convolution_circuit.call(c_circuit, a_input, b_input);
     ntt_circuit.gentleman_sande(c_circuit);
     for (std::size_t i = 0; i < R::dimension(); ++i) {
         circuit(c_input[i] == c_circuit[i]);
@@ -62,10 +64,12 @@ BOOST_AUTO_TEST_CASE(test) {
 
     using NTTAssigner = NTT<Z, R::dimension()>::Assigner<Builder::degree()>;
     NTTAssigner ntt_assigner(z.elements);
+    using NTTConvolutionAssigner = NTT<Z, R::dimension()>::Convolution::Assigner<Builder::degree()>;
+    NTTConvolutionAssigner ntt_convolution_assigner(z.elements);
     ntt_assigner.cooley_tukey(a.coefficients);
     ntt_assigner.cooley_tukey(b.coefficients);
     R c_assigned;
-    ntt_assigner.convolute(c_assigned.coefficients, a.coefficients, b.coefficients);
+    ntt_convolution_assigner.call(c_assigned.coefficients, a.coefficients, b.coefficients);
     ntt_assigner.gentleman_sande(c_assigned.coefficients);
     BOOST_TEST(c == c_assigned);
     BOOST_TEST(r1cs.isSatisfied(z));

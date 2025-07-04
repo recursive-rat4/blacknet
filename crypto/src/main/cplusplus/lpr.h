@@ -49,8 +49,9 @@ struct LPR {
 
         constexpr static const std::size_t N = D;
 
+        using Convolution = convolution::Negacyclic<Z, N>;
         constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-            Convolution<Z>::negacyclic<N>(r, a, b);
+            Convolution::call(r, a, b);
         }
         constexpr static void toForm(std::array<Z, N>&) {}
         constexpr static void fromForm(std::array<Z, N>&) {}
@@ -61,8 +62,9 @@ struct LPR {
 
         constexpr static const std::size_t N = D;
 
+        using Convolution = convolution::Negacyclic<Z, N>;
         constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-            Convolution<Z>::negacyclic<N>(r, a, b);
+            Convolution::call(r, a, b);
         }
         constexpr static void toForm(std::array<Z, N>&) {}
         constexpr static void fromForm(std::array<Z, N>&) {}
@@ -73,8 +75,9 @@ struct LPR {
 
         constexpr static const std::size_t N = D;
 
+        using Convolution = NTT<Z, N>::Convolution;
         constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-            NTT<Z, N>::convolute(r, a, b);
+            Convolution::call(r, a, b);
         }
         constexpr static void toForm(std::array<Z, N>& a) {
             NTT<Z, N>::cooley_tukey(a);

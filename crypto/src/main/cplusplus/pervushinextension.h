@@ -39,8 +39,9 @@ struct PervushinRingDegree2Params {
     };
     constexpr static const BitInt<61> INVERSION_R1{"1fffffffffffffff"};
 
+    using Convolution = convolution::Negacyclic<Z, N>;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        Convolution<Z>::negacyclic<N>(r, a, b);
+        Convolution::call(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -62,8 +63,9 @@ struct PervushinRingDegree3Params {
     };
     constexpr static const BitInt<122> INVERSION_R1{"03ffffffffffffffe000000000000000"};
 
+    using Convolution = convolution::Quotient<Z, N, M>;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        Convolution<Z>::quotient<N, M>(r, a, b);
+        Convolution::call(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
@@ -86,8 +88,9 @@ struct PervushinRingDegree4Params {
     };
     constexpr static const BitInt<183> INVERSION_R1{"007ffffffffffffff8000000000000003fffffffffffffff"};
 
+    using Convolution = convolution::Quotient<Z, N, M>;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
-        Convolution<Z>::quotient<N, M>(r, a, b);
+        Convolution::call(r, a, b);
     }
     constexpr static void toForm(std::array<Z, N>&) {}
     constexpr static void fromForm(std::array<Z, N>&) {}
