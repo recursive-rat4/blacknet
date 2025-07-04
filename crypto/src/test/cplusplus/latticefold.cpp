@@ -142,20 +142,20 @@ BOOST_AUTO_TEST_CASE(Distributions) {
     using Builder = CircuitBuilder<F, 2>;
     Builder circuit;
     using DuplexCircuit = Duplex::Circuit<Builder>;
-    DuplexCircuit duplex_circuit(circuit);
+    DuplexCircuit duplex_circuit(&circuit);
     using DistributionCircuit = LatticeFold::Distribution<Duplex>::Circuit<Builder>;
-    DistributionCircuit distribution_circuit(circuit);
+    DistributionCircuit distribution_circuit(&circuit);
     using VectorDenseCircuit = VectorDense<F>::Circuit<Builder>;
-    VectorDenseCircuit a_circuit(circuit, LatticeFold::D);
+    VectorDenseCircuit a_circuit(&circuit, LatticeFold::D);
     std::ranges::generate(a_circuit, [&] { return distribution_circuit(duplex_circuit); });
 
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
     VectorDense<F> z = ccs.assigment();
 
     using DuplexAssigner = Duplex::Assigner<Builder::degree()>;
-    DuplexAssigner duplex_assigner(z.elements);
+    DuplexAssigner duplex_assigner(&z.elements);
     using DistributionAssigner = LatticeFold::Distribution<Duplex>::Assigner<Builder::degree()>;
-    DistributionAssigner distribution_assigner(z.elements);
+    DistributionAssigner distribution_assigner(&z.elements);
     std::array<F, LatticeFold::D> a_assigned;
     std::ranges::generate(a_assigned, [&] { return distribution_assigner(duplex_assigner); });
     BOOST_TEST(ccs.isSatisfied(z));
@@ -171,9 +171,9 @@ BOOST_AUTO_TEST_CASE(G2s) {
     using Builder = CircuitBuilder<F, 2>;
     Builder circuit;
     using G2Circuit = LatticeFold::G2::Circuit<Builder>;
-    G2Circuit g2_circuit(circuit, Builder::Variable::Type::Input, ell);
+    G2Circuit g2_circuit(&circuit, Builder::Variable::Type::Input, ell);
     using PointCircuit = Point<F>::Circuit<Builder>;
-    PointCircuit x_circuit(circuit, Builder::Variable::Type::Input, ell);
+    PointCircuit x_circuit(&circuit, Builder::Variable::Type::Input, ell);
     g2_circuit(x_circuit);
 
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(G2s) {
     std::ranges::copy(x.coordinates, std::back_inserter(z.elements));
 
     using Assigner = LatticeFold::G2::Assigner<Builder::degree()>;
-    Assigner g2_assigner(g2, z.elements);
+    Assigner g2_assigner(g2, &z.elements);
     BOOST_TEST(g2(x) == g2_assigner(x));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -202,14 +202,14 @@ BOOST_AUTO_TEST_CASE(Verifys) {
     using Builder = CircuitBuilder<F, 2>;
     Builder circuit;
     using G2Circuit = LatticeFold::G2::Circuit<Builder>;
-    G2Circuit g2_circuit(circuit, Builder::Variable::Type::Input, ell);
+    G2Circuit g2_circuit(&circuit, Builder::Variable::Type::Input, ell);
     auto sum_var = circuit.input();
     using ProofCircuit = SumCheck::Proof::Circuit<Builder>;
-    ProofCircuit proof_circuit(circuit, Builder::Variable::Type::Input, g2.variables(), g2.degree());
+    ProofCircuit proof_circuit(&circuit, Builder::Variable::Type::Input, g2.variables(), g2.degree());
     using SumCheckCircuit = SumCheck::Circuit<Builder>;
-    SumCheckCircuit sumcheck_circuit(circuit);
+    SumCheckCircuit sumcheck_circuit(&circuit);
     using DuplexCircuit = Duplex::Circuit<Builder>;
-    DuplexCircuit duplex_circuit(circuit);
+    DuplexCircuit duplex_circuit(&circuit);
     sumcheck_circuit.verifyEarlyStopping(g2_circuit, sum_var, proof_circuit, duplex_circuit);
 
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
@@ -220,9 +220,9 @@ BOOST_AUTO_TEST_CASE(Verifys) {
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
 
-    SumCheck::Assigner<Builder::degree()> assigner(z.elements);
+    SumCheck::Assigner<Builder::degree()> assigner(&z.elements);
     using DuplexAssigner = Duplex::Assigner<Builder::degree()>;
-    DuplexAssigner duplex_assigner(z.elements);
+    DuplexAssigner duplex_assigner(&z.elements);
     BOOST_TEST_REQUIRE(assigner.verifyEarlyStopping(g2, sum, proof, duplex_assigner).has_value());
     BOOST_TEST(ccs.isSatisfied(z));
 }

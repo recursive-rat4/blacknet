@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(Circuits) {
     using Builder = CircuitBuilder<Z, 2>;
     Builder circuit;
     using Circuit = LatticeGadget<Z>::Circuit<Builder>;
-    Circuit lg_circuit(circuit);
+    Circuit lg_circuit(&circuit);
     auto a_var = circuit.input();
     lg_circuit.decompose(2, Z::bits(), a_var);
 
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(Circuits) {
     z.elements.push_back(a);
 
     using Assigner = LatticeGadget<Z>::Assigner<Builder::degree()>;
-    Assigner lg_assigner(z.elements);
+    Assigner lg_assigner(&z.elements);
     BOOST_TEST(b == lg_assigner.decompose(2, Z::bits(), a));
     BOOST_TEST(r1cs.isSatisfied(z));
 }

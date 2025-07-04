@@ -122,40 +122,40 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
     using Point = Point<E>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
     std::vector<LinearCombination> coefficients;
 
-    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t variables)
+    constexpr Circuit(Builder* circuit, Variable::Type type, std::size_t variables)
         : circuit(circuit), coefficients(variables)
     {
-        std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
+        std::ranges::generate(coefficients, [&]{ return circuit->variable(type); });
     }
 
     constexpr LinearCombination operator () (const Point& point) const {
-        auto scope = circuit.scope("EqExtension::point");
+        auto scope = circuit->scope("EqExtension::point");
         LinearCombination pi = E::multiplicative_identity();
         for (std::size_t i = 0; i < coefficients.size(); ++i) {
-            LinearCombination cp(circuit.auxiliary());
-            circuit(cp == coefficients[i] * point[i]);
-            auto t = circuit.auxiliary();
-            circuit(t == pi * (cp * E(2) - coefficients[i] - point[i] + E(1)));
+            LinearCombination cp(circuit->auxiliary());
+            scope(cp == coefficients[i] * point[i]);
+            auto t = circuit->auxiliary();
+            scope(t == pi * (cp * E(2) - coefficients[i] - point[i] + E(1)));
             pi = t;
         }
         return pi;
     }
 
     constexpr static std::vector<LinearCombination> hypercube(
-        Builder& circuit,
+        Builder* circuit,
         const std::vector<LinearCombination>& coefficients
     ) {
-        auto scope = circuit.scope("EqExtension::hypercube");
+        auto scope = circuit->scope("EqExtension::hypercube");
         std::vector<LinearCombination> r;
         r.resize(1 << coefficients.size());
         r[0] = E::multiplicative_identity();
         for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
             for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
-                auto t = circuit.auxiliary();
-                circuit(t == r[k] * coefficients[i]);
+                auto t = circuit->auxiliary();
+                scope(t == r[k] * coefficients[i]);
                 r[l] = t;
                 r[k] -= r[l];
             }
@@ -174,13 +174,13 @@ struct Circuit {
 
 template<std::size_t Degree>
 struct Assigner {
-    std::vector<E>& assigment;
+    std::vector<E>* assigment;
 
     constexpr E point(const EqExtension& eq, const Point<E>& point) {
         E pi = E::multiplicative_identity();
         for (std::size_t i = 0; i < eq.coefficients.size(); ++i)
-            assigment.push_back(
-                pi *= assigment.emplace_back(
+            assigment->push_back(
+                pi *= assigment->emplace_back(
                     eq.coefficients[i] * point[i]
                 ).douple() - eq.coefficients[i] - point[i] + E(1)
             );
@@ -192,7 +192,7 @@ struct Assigner {
         r[0] = E::multiplicative_identity();
         for (std::size_t i = coefficients.size(), j = 1; i --> 0; j <<= 1) {
             for (std::size_t k = 0, l = j; k < j && l < j << 1; ++k, ++l) {
-                r[l] = assigment.emplace_back(
+                r[l] = assigment->emplace_back(
                     r[k] * coefficients[i]
                 );
                 r[k] -= r[l];

@@ -97,9 +97,9 @@ BOOST_AUTO_TEST_CASE(less_or_equal_checks) {
     using Builder = CircuitBuilder<R, 2>;
     Builder circuit;
     using VectorDenseCircuit = VectorDense<R>::Circuit<Builder>;
-    VectorDenseCircuit a_circuit(circuit, Builder::Variable::Type::Input, a.size());
+    VectorDenseCircuit a_circuit(&circuit, Builder::Variable::Type::Input, a.size());
     using Circuit = LogicGate::Circuit<Builder>;
-    Circuit logic_gate_circuit(circuit);
+    Circuit logic_gate_circuit(&circuit);
     logic_gate_circuit.LessOrEqualCheck(a_circuit, b);
 
     R1CS<R> r1cs(circuit.r1cs());
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(less_or_equal_checks) {
     std::ranges::copy(a, std::back_inserter(z.elements));
 
     using Assigner = LogicGate::Assigner<Builder::degree()>;
-    Assigner logic_gate_assigner(z.elements);
+    Assigner logic_gate_assigner(&z.elements);
     logic_gate_assigner.LessOrEqualCheck(a, b);
     BOOST_TEST(r1cs.isSatisfied(z));
 }
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(xors) {
     auto a_var = circuit.input();
     auto b_var = circuit.input();
     using Circuit = LogicGate::Circuit<Builder>;
-    Circuit logic_gate_circuit(circuit);
+    Circuit logic_gate_circuit(&circuit);
     auto c_lc = logic_gate_circuit.Xor(a_var, b_var);
 
     R1CS<R> r1cs(circuit.r1cs());
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(xors) {
     z.elements.push_back(b);
 
     using Assigner = LogicGate::Assigner<Builder::degree()>;
-    Assigner logic_gate_assigner(z.elements);
+    Assigner logic_gate_assigner(&z.elements);
     BOOST_TEST(c == logic_gate_assigner.Xor(a, b));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(ands) {
     auto a_var = circuit.input();
     auto b_var = circuit.input();
     using Circuit = LogicGate::Circuit<Builder>;
-    Circuit logic_gate_circuit(circuit);
+    Circuit logic_gate_circuit(&circuit);
     auto c_lc = logic_gate_circuit.And(a_var, b_var);
 
     R1CS<R> r1cs(circuit.r1cs());
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(ands) {
     z.elements.push_back(b);
 
     using Assigner = LogicGate::Assigner<Builder::degree()>;
-    Assigner logic_gate_assigner(z.elements);
+    Assigner logic_gate_assigner(&z.elements);
     BOOST_TEST(c == logic_gate_assigner.And(a, b));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(ors) {
     auto a_var = circuit.input();
     auto b_var = circuit.input();
     using Circuit = LogicGate::Circuit<Builder>;
-    Circuit logic_gate_circuit(circuit);
+    Circuit logic_gate_circuit(&circuit);
     auto c_lc = logic_gate_circuit.Or(a_var, b_var);
 
     R1CS<R> r1cs(circuit.r1cs());
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(ors) {
     z.elements.push_back(b);
 
     using Assigner = LogicGate::Assigner<Builder::degree()>;
-    Assigner logic_gate_assigner(z.elements);
+    Assigner logic_gate_assigner(&z.elements);
     BOOST_TEST(c == logic_gate_assigner.Or(a, b));
     BOOST_TEST(r1cs.isSatisfied(z));
 }
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(nots) {
     Builder circuit;
     auto a_var = circuit.input();
     using Circuit = LogicGate::Circuit<Builder>;
-    Circuit logic_gate_circuit(circuit);
+    Circuit logic_gate_circuit(&circuit);
     auto b_lc = logic_gate_circuit.Not(a_var);
 
     R1CS<R> r1cs(circuit.r1cs());
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE(nots) {
     z.elements.push_back(a);
 
     using Assigner = LogicGate::Assigner<Builder::degree()>;
-    Assigner logic_gate_assigner(z.elements);
+    Assigner logic_gate_assigner(&z.elements);
     BOOST_TEST(b == logic_gate_assigner.Not(a));
     BOOST_TEST(r1cs.isSatisfied(z));
 }

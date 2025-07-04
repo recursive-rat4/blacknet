@@ -142,9 +142,9 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
     using MatrixDense = MatrixDense<Z>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
 
-    constexpr Circuit(Builder& circuit) : circuit(circuit) {}
+    constexpr Circuit(Builder* circuit) : circuit(circuit) {}
 
     constexpr void call(
         LinearCombination* r,
@@ -152,13 +152,13 @@ struct Circuit {
         const LinearCombination* b,
         Z zeta
     ) {
-        auto scope = circuit.scope("Convolution::binomial");
+        auto scope = circuit->scope("Convolution::binomial");
         //TODO Karatsuba method
         MatrixDense ab(circuit, N, N);
         for (std::size_t i = 0; i < N; ++i) {
             for (std::size_t j = 0; j < N; ++j) {
-                auto t = circuit.auxiliary();
-                circuit(t == a[i] * b[j]);
+                auto t = circuit->auxiliary();
+                scope(t == a[i] * b[j]);
                 ab[i, j] = t;
             }
         }
@@ -184,13 +184,13 @@ template<std::size_t Degree>
 struct Assigner {
     using MatrixDense = MatrixDense<Z>::template Assigner<Degree>;
 
-    std::vector<Z>& assigment;
+    std::vector<Z>* assigment;
 
     constexpr void call(Z* r, const Z* a, const Z* b, Z zeta) {
         MatrixDense ab(N, N, assigment);
         for (std::size_t i = 0; i < N; ++i) {
             for (std::size_t j = 0; j < N; ++j) {
-                ab[i, j] = assigment.emplace_back(
+                ab[i, j] = assigment->emplace_back(
                     a[i] * b[j]
                 );
             }

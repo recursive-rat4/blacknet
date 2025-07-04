@@ -113,11 +113,11 @@ struct Circuit {
     using SpongeCircuit = Sponge::template Circuit<Builder>;
     using VectorDense = VectorDense<Z>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
     VectorDense cache;
     std::size_t have_bits;
 
-    constexpr Circuit(Builder& circuit)
+    constexpr Circuit(Builder* circuit)
         : circuit(circuit), cache(circuit, Z::bits())
     {
         reset();
@@ -129,19 +129,19 @@ struct Circuit {
 
     constexpr LinearCombination operator () (SpongeCircuit& sponge) {
         if (have_bits == 0) {
-            auto scope = circuit.scope("BinaryUniformDistribution::sample");
+            auto scope = circuit->scope("BinaryUniformDistribution::sample");
             auto squeezed = sponge.squeeze();
             Z p = Z::multiplicative_identity();
             LinearCombination composed;
             for (std::size_t i = 0; i < Z::bits(); ++i) {
-                LinearCombination digit = circuit.auxiliary();
+                LinearCombination digit = circuit->auxiliary();
                 cache[i] = digit;
                 composed += digit * p;
                 p = p.douple();
             }
             auto m1_gadget = LatticeGadget<Z>::decompose(2, Z::bits(), Z(-1)); //XXX make static?
             LogicGate(circuit).LessOrEqualCheck(cache, m1_gadget);
-            circuit(squeezed == composed);
+            scope(squeezed == composed);
             have_bits = useful_bits();
         }
         LinearCombination result = cache[useful_bits() - have_bits];
@@ -155,12 +155,12 @@ struct Assigner {
     using LogicGate = LogicGate<Z>::template Assigner<Degree>;
     using SpongeAssigner = Sponge::template Assigner<Degree>;
 
-    std::vector<Z>& assigment;
     VectorDense<Z> cache;
     std::size_t have_bits;
+    std::vector<Z>* assigment;
 
-    constexpr Assigner(std::vector<Z>& assigment)
-        : assigment(assigment), cache(Z::bits())
+    constexpr Assigner(std::vector<Z>* assigment)
+        : cache(Z::bits()), assigment(assigment)
     {
         reset();
     }
@@ -173,7 +173,7 @@ struct Assigner {
         if (have_bits == 0) {
             auto representative = sponge.squeeze().canonical();
             for (std::size_t j = 0; j < Z::bits(); ++j) {
-                assigment.push_back(
+                assigment->push_back(
                     cache[j] = representative & 1
                 );
                 representative >>= 1;

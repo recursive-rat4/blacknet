@@ -100,10 +100,10 @@ struct NTT {
         using LinearCombination = Builder::LinearCombination;
         using IdealConvolution = convolution::Binomial<Z, inertia>::template Circuit<Builder>;
 
-        Builder& circuit;
+        Builder* circuit;
         IdealConvolution ideal_convolution;
 
-        constexpr Circuit(Builder& circuit)
+        constexpr Circuit(Builder* circuit)
             : circuit(circuit), ideal_convolution(circuit) {}
 
         constexpr void call(
@@ -113,7 +113,7 @@ struct NTT {
         ) {
             if constexpr (inertia == 1) {
                 for (std::size_t i = 0; i < N; ++i) {
-                    auto t = circuit.auxiliary();
+                    auto t = circuit->auxiliary();
                     circuit(t == a[i] * b[i]);
                     r[i] = t;
                 }
@@ -145,15 +145,15 @@ struct NTT {
         using IdealConvolution = convolution::Binomial<Z, inertia>::template Assigner<Degree>;
 
         IdealConvolution ideal_convolution;
-        std::vector<Z>& assigment;
+        std::vector<Z>* assigment;
 
-        constexpr Assigner(std::vector<Z>& assigment)
+        constexpr Assigner(std::vector<Z>* assigment)
             : ideal_convolution(assigment), assigment(assigment) {}
 
         constexpr void call(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
             if constexpr (inertia == 1) {
                 for (std::size_t i = 0; i < N; ++i) {
-                    r[i] = assigment.emplace_back(
+                    r[i] = assigment->emplace_back(
                         a[i] * b[i]
                     );
                 }
@@ -188,10 +188,10 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
     using Convolution = convolution::Binomial<Z, inertia>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
     Convolution convolution;
 
-    constexpr Circuit(Builder& circuit)
+    constexpr Circuit(Builder* circuit)
         : circuit(circuit), convolution(circuit) {}
 
     constexpr void cooley_tukey(std::array<LinearCombination, N>& a) const {
@@ -230,10 +230,7 @@ struct Circuit {
 
 template<std::size_t Degree>
 struct Assigner {
-    std::vector<Z>& assigment;
-
-    constexpr Assigner(std::vector<Z>& assigment)
-        : assigment(assigment) {}
+    std::vector<Z>* assigment;
 
     constexpr void cooley_tukey(std::array<Z, N>& a) const {
         return NTT::cooley_tukey(a);

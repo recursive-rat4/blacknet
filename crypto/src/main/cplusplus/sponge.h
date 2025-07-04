@@ -128,12 +128,12 @@ requires(std::same_as<E, typename Builder::R>)
 struct Circuit {
     using LinearCombination = Builder::LinearCombination;
 
-    Builder& circuit;
+    Builder* circuit;
     Phase phase;
     std::size_t position;
     std::array<LinearCombination, R+C> state;
 
-    constexpr Circuit(Builder& circuit) : circuit(circuit), phase(Absorb), position(0) {
+    constexpr Circuit(Builder* circuit) : circuit(circuit), phase(Absorb), position(0) {
         std::ranges::fill_n(state.begin(), R, E(0));
         std::ranges::copy(IV, state.begin() + R);
     }
@@ -182,9 +182,9 @@ struct Circuit {
 template<std::size_t Degree>
 struct Assigner {
     Sponge sponge;
-    std::vector<E>& assigment;
+    std::vector<E>* assigment;
 
-    constexpr Assigner(std::vector<E>& assigment) : sponge(), assigment(assigment) {}
+    constexpr Assigner(std::vector<E>* assigment) : sponge(), assigment(assigment) {}
 
     constexpr void absorb(const E& e) {
         if (sponge.phase == Squeeze) {

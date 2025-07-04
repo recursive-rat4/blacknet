@@ -93,10 +93,10 @@ struct LatticeFold {
         using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Circuit<Builder>;
         using SpongeCircuit = Sponge::template Circuit<Builder>;
 
-        Builder& circuit;
+        Builder* circuit;
         BinaryUniformDistribution bud;
 
-        constexpr Circuit(Builder& circuit) : circuit(circuit), bud(circuit) {}
+        constexpr Circuit(Builder* circuit) : circuit(circuit), bud(circuit) {}
 
         constexpr void reset() noexcept {
             bud.reset();
@@ -112,10 +112,10 @@ struct LatticeFold {
         using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Assigner<Degree>;
         using SpongeAssigner = Sponge::template Assigner<Degree>;
 
-        std::vector<Fq>& assigment;
         BinaryUniformDistribution bud;
+        std::vector<Fq>* assigment;
 
-        constexpr Assigner(std::vector<Fq>& assigment) : assigment(assigment), bud(assigment) {}
+        constexpr Assigner(std::vector<Fq>* assigment) : bud(assigment), assigment(assigment) {}
 
         constexpr void reset() noexcept {
             bud.reset();
@@ -222,23 +222,23 @@ struct LatticeFold {
         using MultilinearExtension = MultilinearExtension<Fq>::template Circuit<Builder>;
         using Point = Point<Fq>::template Circuit<Builder>;
 
-        Builder& circuit;
+        Builder* circuit;
         LinearCombination mu;
         MultilinearExtension mle;
 
-        constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t variables)
+        constexpr Circuit(Builder* circuit, Variable::Type type, std::size_t variables)
             : circuit(circuit),
-            mu(circuit.variable(type)),
+            mu(circuit->variable(type)),
             mle(circuit, type, variables) {}
 
         constexpr LinearCombination operator () (const Point& point) const {
-            auto scope = circuit.scope("LatticeFold::G2::point");
+            auto scope = circuit->scope("LatticeFold::G2::point");
             LinearCombination t = mle(point);
             // circuit degree 2
-            LinearCombination tt = circuit.auxiliary();
-            circuit(tt == t * t);
-            auto r = circuit.auxiliary();
-            circuit(r == mu * (tt - t));
+            LinearCombination tt = circuit->auxiliary();
+            scope(tt == t * t);
+            auto r = circuit->auxiliary();
+            scope(r == mu * (tt - t));
             return r;
         }
 
@@ -257,15 +257,15 @@ struct LatticeFold {
 
         Fq mu;
         MultilinearExtension mle;
-        std::vector<Fq>& assigment;
+        std::vector<Fq>* assigment;
 
-        constexpr Assigner(const G2& g2, std::vector<Fq>& assigment)
+        constexpr Assigner(const G2& g2, std::vector<Fq>* assigment)
             : mu(g2.mu), mle(g2.mle, assigment), assigment(assigment) {}
 
         constexpr Fq operator () (const Point<Fq>& point) const {
             Fq t = mle(point);
-            return assigment.emplace_back(
-                mu * (assigment.emplace_back(
+            return assigment->emplace_back(
+                mu * (assigment->emplace_back(
                     t.square()
                 ) - t)
             );

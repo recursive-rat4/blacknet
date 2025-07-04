@@ -72,9 +72,9 @@ BOOST_AUTO_TEST_CASE(test) {
     using Builder = CircuitBuilder<Z, 2>;
     Builder circuit;
     using SpongeCircuit = Sponge::Circuit<Builder>;
-    SpongeCircuit sponge_circuit(circuit);
+    SpongeCircuit sponge_circuit(&circuit);
     using Circuit = BinaryUniformDistributionSponge<Sponge>::Circuit<Builder>;
-    Circuit bud_circuit(circuit);
+    Circuit bud_circuit(&circuit);
     for (std::size_t i = 0; i < a.size(); ++i)
         bud_circuit(sponge_circuit);
 
@@ -82,9 +82,9 @@ BOOST_AUTO_TEST_CASE(test) {
     VectorDense<Z> z = r1cs.assigment();
 
     using SpongeAssigner = Sponge::Assigner<Builder::degree()>;
-    SpongeAssigner sponge_assigner(z.elements);
+    SpongeAssigner sponge_assigner(&z.elements);
     using Assigner = BinaryUniformDistributionSponge<Sponge>::Assigner<Builder::degree()>;
-    Assigner bud_assigner(z.elements);
+    Assigner bud_assigner(&z.elements);
     std::array<Z, a.size()> a_assigned;
     std::ranges::generate(a_assigned, [&] { return bud_assigner(sponge_assigner); });
     BOOST_TEST(a == a_assigned);

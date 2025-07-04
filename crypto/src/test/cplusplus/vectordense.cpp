@@ -197,8 +197,8 @@ BOOST_AUTO_TEST_CASE(DotProduct) {
     using Builder = CircuitBuilder<R, 2>;
     Builder circuit;
     using VectorDenseCircuit = VectorDense<R>::Circuit<Builder>;
-    VectorDenseCircuit a_circuit(circuit, Builder::Variable::Type::Input, 3);
-    VectorDenseCircuit b_circuit(circuit, Builder::Variable::Type::Input, 3);
+    VectorDenseCircuit a_circuit(&circuit, Builder::Variable::Type::Input, 3);
+    VectorDenseCircuit b_circuit(&circuit, Builder::Variable::Type::Input, 3);
     auto c_var = circuit.input();
     circuit(c_var == a_circuit.dot(b_circuit));
 
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(DotProduct) {
     z.elements.push_back(c);
 
     using Assigner = VectorDense<R>::Assigner<Builder::degree()>;
-    Assigner a_assigner(a, z.elements);
-    Assigner b_assigner(b, z.elements);
+    Assigner a_assigner(a, &z.elements);
+    Assigner b_assigner(b, &z.elements);
     BOOST_TEST(c == a_assigner.dot(b_assigner));
     BOOST_TEST(r1cs.isSatisfied(z));
 }

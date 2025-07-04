@@ -176,17 +176,17 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
     using VectorDense = VectorDense<E>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
     std::size_t rows;
     std::size_t columns;
     std::vector<LinearCombination> elements;
 
-    constexpr Circuit(Builder& circuit, std::size_t rows, std::size_t columns)
+    constexpr Circuit(Builder* circuit, std::size_t rows, std::size_t columns)
         : circuit(circuit), rows(rows), columns(columns), elements(rows * columns) {}
-    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t rows, std::size_t columns)
+    constexpr Circuit(Builder* circuit, Variable::Type type, std::size_t rows, std::size_t columns)
         : circuit(circuit), rows(rows), columns(columns), elements(rows * columns)
     {
-        std::ranges::generate(elements, [&]{ return circuit.variable(type); });
+        std::ranges::generate(elements, [&]{ return circuit->variable(type); });
     }
 
     constexpr LinearCombination& operator [] (std::size_t i, std::size_t j) {
@@ -198,12 +198,12 @@ struct Circuit {
     }
 
     constexpr VectorDense operator * (const VectorDense& other) const {
-        auto scope = circuit.scope("Matrix::vector");
+        auto scope = circuit->scope("Matrix::vector");
         VectorDense r(circuit, rows);
         for (std::size_t i = 0; i < rows; ++i) {
             for (std::size_t j = 0; j < columns; ++j) {
-                auto t = circuit.auxiliary();
-                circuit(t == (*this)[i, j] * other[j]);
+                auto t = circuit->auxiliary();
+                scope(t == (*this)[i, j] * other[j]);
                 r[i] += t;
             }
         }
@@ -216,13 +216,13 @@ struct Assigner {
     using VectorDense = VectorDense<E>::template Assigner<Degree>;
 
     MatrixDense matrix;
-    std::vector<E>& assigment;
+    std::vector<E>* assigment;
 
-    constexpr Assigner(const MatrixDense& matrix, std::vector<E>& assigment)
+    constexpr Assigner(const MatrixDense& matrix, std::vector<E>* assigment)
         : matrix(matrix), assigment(assigment) {}
-    constexpr Assigner(MatrixDense&& matrix, std::vector<E>& assigment)
+    constexpr Assigner(MatrixDense&& matrix, std::vector<E>* assigment)
         : matrix(std::move(matrix)), assigment(assigment) {}
-    constexpr Assigner(std::size_t rows, std::size_t columns, std::vector<E>& assigment)
+    constexpr Assigner(std::size_t rows, std::size_t columns, std::vector<E>* assigment)
         : matrix(rows, columns), assigment(assigment) {}
 
     constexpr E& operator [] (std::size_t i, std::size_t j) {
@@ -237,7 +237,7 @@ struct Assigner {
         VectorDense r(matrix.rows, E::additive_identity(), assigment);
         for (std::size_t i = 0; i < matrix.rows; ++i)
             for (std::size_t j = 0; j < matrix.columns; ++j)
-                r[i] += assigment.emplace_back(
+                r[i] += assigment->emplace_back(
                     matrix[i, j] * other[j]
                 );
         return r;

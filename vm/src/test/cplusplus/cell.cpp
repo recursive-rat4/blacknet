@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Builder = CircuitBuilder<E, 2>;
     Builder circuit;
     using Circuit = Cell::Circuit<Builder>;
-    auto null_circuit = Circuit::null(circuit);
-    auto cons_circuit = Circuit::cons(circuit, null_circuit, null_circuit);
+    auto null_circuit = Circuit::null(&circuit);
+    auto cons_circuit = Circuit::cons(&circuit, null_circuit, null_circuit);
     auto car_circuit = cons_circuit.car(null_circuit, null_circuit);
     auto cdr_circuit = cons_circuit.cdr(null_circuit, null_circuit);
 
@@ -65,8 +65,8 @@ BOOST_AUTO_TEST_CASE(circuit) {
 
     using Assigner = Cell::Assigner<Builder::degree()>;
     auto null = Cell::null();
-    auto cons = Assigner::cons(null, null, z.elements);
-    Assigner cons_assigner(cons, z.elements);
+    auto cons = Assigner::cons(null, null, &z.elements);
+    Assigner cons_assigner(cons, &z.elements);
     auto car = cons_assigner.car(null, null);
     auto cdr = cons_assigner.cdr(null, null);
     BOOST_TEST(r1cs.isSatisfied(z));

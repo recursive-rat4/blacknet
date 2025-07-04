@@ -276,16 +276,16 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
     using Convolution = Params::Convolution::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
     Convolution convolution;
     std::array<LinearCombination, N> spectrum;
 
-    constexpr Circuit(Builder& circuit)
+    constexpr Circuit(Builder* circuit)
         : circuit(circuit), convolution(circuit), spectrum() {}
-    constexpr Circuit(Builder& circuit, Variable::Type type)
+    constexpr Circuit(Builder* circuit, Variable::Type type)
         : circuit(circuit), convolution(circuit)
     {
-        std::ranges::generate(spectrum, [&]{ return circuit.variable(type); });
+        std::ranges::generate(spectrum, [&]{ return circuit->variable(type); });
     }
 
     constexpr LinearCombination& operator [] (std::size_t i) {
@@ -325,9 +325,9 @@ struct Assigner {
     using Convolution = Params::Convolution:: template Assigner<Degree>;
 
     PolynomialRingNTT polynomial;
-    std::vector<Z>& assigment;
+    std::vector<Z>* assigment;
 
-    constexpr Assigner(const PolynomialRingNTT& polynomial, std::vector<Z>& assigment)
+    constexpr Assigner(const PolynomialRingNTT& polynomial, std::vector<Z>* assigment)
         : polynomial(polynomial), assigment(assigment) {}
 
     constexpr Z& operator [] (std::size_t i) {

@@ -134,9 +134,9 @@ BOOST_AUTO_TEST_CASE(points) {
     using Builder = CircuitBuilder<E, 2>;
     Builder circuit;
     using EqCircuit = EqExtension<E>::Circuit<Builder>;
-    EqCircuit eq_circuit(circuit, Builder::Variable::Type::Input, 3);
+    EqCircuit eq_circuit(&circuit, Builder::Variable::Type::Input, 3);
     using PointCircuit = Point<E>::Circuit<Builder>;
-    PointCircuit x_circuit(circuit, Builder::Variable::Type::Input, 3);
+    PointCircuit x_circuit(&circuit, Builder::Variable::Type::Input, 3);
     eq_circuit(x_circuit);
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(points) {
     std::ranges::copy(x, std::back_inserter(z.elements));
 
     using EqAssigner = EqExtension<E>::Assigner<Builder::degree()>;
-    EqAssigner eq_assigner(z.elements);
+    EqAssigner eq_assigner(&z.elements);
     BOOST_TEST(eq(x) == eq_assigner.point(eq, x));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -156,15 +156,15 @@ BOOST_AUTO_TEST_CASE(hypercubes) {
     using Builder = CircuitBuilder<E, 2>;
     Builder circuit;
     using EqCircuit = EqExtension<E>::Circuit<Builder>;
-    EqCircuit eq_circuit(circuit, Builder::Variable::Type::Input, 3);
-    EqCircuit::hypercube(circuit, eq_circuit.coefficients);
+    EqCircuit eq_circuit(&circuit, Builder::Variable::Type::Input, 3);
+    EqCircuit::hypercube(&circuit, eq_circuit.coefficients);
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     VectorDense<E> z = ccs.assigment();
     std::ranges::copy(eq.coefficients, std::back_inserter(z.elements));
 
     using EqAssigner = EqExtension<E>::Assigner<Builder::degree()>;
-    EqAssigner eq_assigner(z.elements);
+    EqAssigner eq_assigner(&z.elements);
     BOOST_TEST(eq() == eq_assigner.hypercube(eq.coefficients));
     BOOST_TEST(ccs.isSatisfied(z));
 }

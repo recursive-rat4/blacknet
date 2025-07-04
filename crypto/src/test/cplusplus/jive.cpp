@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     std::ranges::generate(x0, [&]{ return circuit.input(); });
     HashCircuit x1;
     std::ranges::generate(x1, [&]{ return circuit.input(); });
-    HashCircuit hash = Jive::Circuit<Builder>::compress(circuit, x0, x1);
+    HashCircuit hash = Jive::Circuit<Builder>::compress(&circuit, x0, x1);
     for (std::size_t i = 0; i < hash.size(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == hash[i]);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     VectorDense<E> z = r1cs.assigment();
     std::ranges::copy(a, std::back_inserter(z.elements));
     std::ranges::copy(b, std::back_inserter(z.elements));
-    c = Jive::Assigner<Builder::degree()>::compress(a, b, z.elements);
+    c = Jive::Assigner<Builder::degree()>::compress(a, b, &z.elements);
     std::ranges::copy(c, std::back_inserter(z.elements));
     BOOST_TEST(r1cs.isSatisfied(z));
 

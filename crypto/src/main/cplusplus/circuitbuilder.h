@@ -563,6 +563,12 @@ struct CircuitBuilder {
         constexpr ~Scope() {
             builder->currentScope = builder->currentScope->up;
         }
+
+        template<typename T>
+        constexpr void operator () (const ConstraintExpression<T>& expression) {
+            builder->currentScope->constraints += 1;
+            builder->constraints.emplace_back(expression());
+        }
     };
 
     constexpr Scope scope(const char* name) {

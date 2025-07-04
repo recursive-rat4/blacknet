@@ -173,14 +173,14 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Builder = CircuitBuilder<Z, 2>;
     Builder circuit;
     using PolyCircuit = MultilinearExtension<Z>::Circuit<Builder>;
-    PolyCircuit poly_circuit(circuit, Builder::Variable::Type::Input, poly.variables());
+    PolyCircuit poly_circuit(&circuit, Builder::Variable::Type::Input, poly.variables());
     auto sum_var = circuit.input();
     using ProofCircuit = SumCheck::Proof::Circuit<Builder>;
-    ProofCircuit proof_circuit(circuit, Builder::Variable::Type::Input, poly.variables(), poly.degree());
+    ProofCircuit proof_circuit(&circuit, Builder::Variable::Type::Input, poly.variables(), poly.degree());
     using SumCheckCircuit = SumCheck::Circuit<Builder>;
-    SumCheckCircuit sumcheck_circuit(circuit);
+    SumCheckCircuit sumcheck_circuit(&circuit);
     using DuplexCircuit = Duplex::Circuit<Builder>;
-    DuplexCircuit duplex_circuit(circuit);
+    DuplexCircuit duplex_circuit(&circuit);
     sumcheck_circuit.verify(poly_circuit, sum_var, proof_circuit, duplex_circuit);
 
     CustomizableConstraintSystem<Z> ccs(circuit.ccs());
@@ -190,9 +190,9 @@ BOOST_AUTO_TEST_CASE(circuit) {
     for (const auto& claim : proof.claims)
         std::ranges::copy(claim.coefficients, std::back_inserter(z.elements));
 
-    SumCheck::Assigner<Builder::degree()> assigner(z.elements);
+    SumCheck::Assigner<Builder::degree()> assigner(&z.elements);
     using DuplexAssigner = Duplex::Assigner<Builder::degree()>;
-    DuplexAssigner duplex_assigner(z.elements);
+    DuplexAssigner duplex_assigner(&z.elements);
     BOOST_TEST_REQUIRE(assigner.verify(poly, sum, proof, duplex_assigner));
     BOOST_TEST(ccs.isSatisfied(z));
 }

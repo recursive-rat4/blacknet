@@ -91,33 +91,33 @@ struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
 
-    Builder& circuit;
+    Builder* circuit;
     std::vector<LinearCombination> coefficients;
 
-    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t degree)
+    constexpr Circuit(Builder* circuit, Variable::Type type, std::size_t degree)
         : circuit(circuit), coefficients(degree + 1)
     {
-        std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
+        std::ranges::generate(coefficients, [&]{ return circuit->variable(type); });
     }
-    constexpr Circuit(Builder& circuit, const std::vector<LinearCombination>& coefficients)
+    constexpr Circuit(Builder* circuit, const std::vector<LinearCombination>& coefficients)
         : circuit(circuit), coefficients(coefficients) {}
-    constexpr Circuit(Builder& circuit, std::vector<LinearCombination>&& coefficients)
+    constexpr Circuit(Builder* circuit, std::vector<LinearCombination>&& coefficients)
         : circuit(circuit), coefficients(std::move(coefficients)) {}
 
     constexpr LinearCombination operator () (const LinearCombination& point) const {
-        auto scope = circuit.scope("UnivariatePolynomial::point");
+        auto scope = circuit->scope("UnivariatePolynomial::point");
         LinearCombination pi(point);
         std::vector<Variable> cppm(coefficients.size() - 1);
         for (std::size_t i = 1; i < coefficients.size() - 1; ++i) {
-            cppm[i - 1] = circuit.auxiliary();
-            circuit(cppm[i - 1] == pi * coefficients[i]);
-            Variable t(circuit.auxiliary());
-            circuit(t == pi * point);
+            cppm[i - 1] = circuit->auxiliary();
+            scope(cppm[i - 1] == pi * coefficients[i]);
+            Variable t(circuit->auxiliary());
+            scope(t == pi * point);
             pi = t;
         }
         if (coefficients.size() > 1) {
-            cppm.back() = circuit.auxiliary();
-            circuit(cppm.back() == pi * coefficients.back());
+            cppm.back() = circuit->auxiliary();
+            scope(cppm.back() == pi * coefficients.back());
         }
         LinearCombination lc(coefficients[0]);
         for (std::size_t i = 0; i < cppm.size(); ++i)
@@ -139,24 +139,24 @@ struct Circuit {
 template<std::size_t Degree>
 struct Assigner {
     UnivariatePolynomial polynomial;
-    std::vector<E>& assigment;
+    std::vector<E>* assigment;
 
-    constexpr Assigner(const UnivariatePolynomial& polynomial, std::vector<E>& assigment)
+    constexpr Assigner(const UnivariatePolynomial& polynomial, std::vector<E>* assigment)
         : polynomial(polynomial), assigment(assigment) {}
 
     constexpr E operator () (const E& point) const {
         E sigma(polynomial.coefficients[0]);
         E pi(point);
         for (std::size_t i = 1; i < polynomial.coefficients.size() - 1; ++i) {
-            sigma += assigment.emplace_back(
+            sigma += assigment->emplace_back(
                 pi * polynomial.coefficients[i]
             );
-            assigment.push_back(
+            assigment->push_back(
                 pi *= point
             );
         }
         if (polynomial.coefficients.size() > 1) {
-            sigma += assigment.emplace_back(
+            sigma += assigment->emplace_back(
                 pi * polynomial.coefficients.back()
             );
         }

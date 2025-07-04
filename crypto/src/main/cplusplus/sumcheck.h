@@ -69,7 +69,7 @@ public:
             std::vector<UnivariatePolynomial> claims;
 
             constexpr Circuit(
-                Builder& circuit,
+                Builder* circuit,
                 Variable::Type type,
                 std::size_t variables,
                 std::size_t degree
@@ -211,9 +211,9 @@ struct Circuit {
     using DuplexCircuit = Duplex::template Circuit<Builder>;
     using Point = Point<R>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
 
-    constexpr Circuit(Builder& circuit) : circuit(circuit) {}
+    constexpr Circuit(Builder* circuit) : circuit(circuit) {}
 
     constexpr void verify(
         const Polynomial& polynomial,
@@ -221,18 +221,18 @@ struct Circuit {
         const ProofCircuit& proof,
         DuplexCircuit& duplex
     ) {
-        auto scope = circuit.scope("SumCheck::verify");
+        auto scope = circuit->scope("SumCheck::verify");
         Point r(polynomial.variables());
         LinearCombination state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
             const auto& claim = proof.claims[round];
-            circuit(state == claim.at_0_plus_1());
+            scope(state == claim.at_0_plus_1());
             claim.absorb(duplex);
             LinearCombination challenge(duplex.squeeze());
             r[round] = challenge;
             state = claim(challenge);
         }
-        circuit(state == polynomial(r));
+        scope(state == polynomial(r));
     }
 
     constexpr std::pair<Point, LinearCombination> verifyEarlyStopping(
@@ -241,12 +241,12 @@ struct Circuit {
         const ProofCircuit& proof,
         DuplexCircuit& duplex
     ) {
-        auto scope = circuit.scope("SumCheck::verifyEarlyStopping");
+        auto scope = circuit->scope("SumCheck::verifyEarlyStopping");
         Point r(polynomial.variables());
         LinearCombination state(sum);
         for (std::size_t round = 0; round < polynomial.variables(); ++round) {
             const auto& claim = proof.claims[round];
-            circuit(state == claim.at_0_plus_1());
+            scope(state == claim.at_0_plus_1());
             claim.absorb(duplex);
             LinearCombination challenge(duplex.squeeze());
             r[round] = challenge;
@@ -263,9 +263,7 @@ struct Assigner {
     using DuplexAssigner = Duplex::template Assigner<Degree>;
     using UnivariatePolynomial = UnivariatePolynomial<R>::template Assigner<Degree>;
 
-    std::vector<R>& assigment;
-
-    constexpr Assigner(std::vector<R>& assigment) : assigment(assigment) {}
+    std::vector<R>* assigment;
 
     constexpr bool verify(
         const P& polynomial_,

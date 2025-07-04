@@ -235,17 +235,17 @@ struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
 
-    Builder& circuit;
+    Builder* circuit;
     std::vector<LinearCombination> elements;
 
-    constexpr Circuit(Builder& circuit)
+    constexpr Circuit(Builder* circuit)
         : circuit(circuit), elements() {}
-    constexpr Circuit(Builder& circuit, std::size_t size)
+    constexpr Circuit(Builder* circuit, std::size_t size)
         : circuit(circuit), elements(size) {}
-    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t size)
+    constexpr Circuit(Builder* circuit, Variable::Type type, std::size_t size)
         : circuit(circuit), elements(size)
     {
-        std::ranges::generate(elements, [&]{ return circuit.variable(type); });
+        std::ranges::generate(elements, [&]{ return circuit->variable(type); });
     }
 
     constexpr std::size_t size() const noexcept {
@@ -261,11 +261,11 @@ struct Circuit {
     }
 
     constexpr LinearCombination dot(const Circuit& other) const {
-        auto scope = circuit.scope("Vector::dot");
+        auto scope = circuit->scope("Vector::dot");
         LinearCombination sigma;
         for (std::size_t i = 0; i < elements.size(); ++i) {
-            auto t = circuit.auxiliary();
-            circuit(t == elements[i] * other.elements[i]);
+            auto t = circuit->auxiliary();
+            scope(t == elements[i] * other.elements[i]);
             sigma += t;
         }
         return sigma;
@@ -291,13 +291,13 @@ struct Circuit {
 template<std::size_t Degree>
 struct Assigner {
     VectorDense vector;
-    std::vector<E>& assigment;
+    std::vector<E>* assigment;
 
-    constexpr Assigner(std::size_t size, const E& fill, std::vector<E>& assigment)
+    constexpr Assigner(std::size_t size, const E& fill, std::vector<E>* assigment)
         : vector(size, fill), assigment(assigment) {}
-    constexpr Assigner(const VectorDense& vector, std::vector<E>& assigment)
+    constexpr Assigner(const VectorDense& vector, std::vector<E>* assigment)
         : vector(vector), assigment(assigment) {}
-    constexpr Assigner(VectorDense&& vector, std::vector<E>& assigment)
+    constexpr Assigner(VectorDense&& vector, std::vector<E>* assigment)
         : vector(std::move(vector)), assigment(assigment) {}
 
     constexpr std::size_t size() const noexcept {
@@ -315,7 +315,7 @@ struct Assigner {
     constexpr E dot(const Assigner& other) const {
         E sigma(E::additive_identity());
         for (std::size_t i = 0; i < vector.size(); ++i)
-            sigma += assigment.emplace_back(
+            sigma += assigment->emplace_back(
                 vector[i] * other[i]
             );
         return sigma;

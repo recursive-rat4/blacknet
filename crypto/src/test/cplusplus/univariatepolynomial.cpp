@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Builder = CircuitBuilder<E, 2>;
     Builder circuit;
     using Circuit = UnivariatePolynomial<E>::Circuit<Builder>;
-    Circuit uni_circuit(circuit, Builder::Variable::Type::Input, p.degree());
+    Circuit uni_circuit(&circuit, Builder::Variable::Type::Input, p.degree());
     typename Builder::LinearCombination x_var(circuit.input());
     auto y_lc = uni_circuit(x_var);
     typename Builder::Variable y_var(circuit.auxiliary());
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     z.elements.push_back(x);
 
     using Assigner = UnivariatePolynomial<E>::Assigner<Builder::degree()>;
-    Assigner assigner(p, z.elements);
+    Assigner assigner(p, &z.elements);
     z.elements.emplace_back(
         assigner(x)
     );

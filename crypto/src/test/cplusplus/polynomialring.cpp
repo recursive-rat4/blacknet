@@ -40,9 +40,9 @@ BOOST_AUTO_TEST_CASE(Add) {
     using Builder = CircuitBuilder<Z, 2>;
     Builder circuit;
     using RCircuit = R::Circuit<Builder>;
-    RCircuit a_input(circuit, Builder::Variable::Type::Input);
-    RCircuit b_input(circuit, Builder::Variable::Type::Input);
-    RCircuit c_input(circuit, Builder::Variable::Type::Input);
+    RCircuit a_input(&circuit, Builder::Variable::Type::Input);
+    RCircuit b_input(&circuit, Builder::Variable::Type::Input);
+    RCircuit c_input(&circuit, Builder::Variable::Type::Input);
     RCircuit c_circuit = a_input + b_input;
     for (std::size_t i = 0; i < R::dimension(); ++i) {
         circuit(c_input[i] == c_circuit[i]);
@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(Add) {
     std::ranges::copy(c, std::back_inserter(z.elements));
 
     using RAssigner = R::Assigner<Builder::degree()>;
-    RAssigner a_assigner(a, z.elements);
-    RAssigner b_assigner(b, z.elements);
+    RAssigner a_assigner(a, &z.elements);
+    RAssigner b_assigner(b, &z.elements);
     RAssigner c_assigner = a_assigner + b_assigner;
     BOOST_TEST(c == c_assigner.polynomial);
     BOOST_TEST(r1cs.isSatisfied(z));
@@ -70,9 +70,9 @@ BOOST_AUTO_TEST_CASE(Mul) {
     using Builder = CircuitBuilder<Z, 2>;
     Builder circuit;
     using RCircuit = R::Circuit<Builder>;
-    RCircuit a_input(circuit, Builder::Variable::Type::Input);
-    RCircuit b_input(circuit, Builder::Variable::Type::Input);
-    RCircuit c_input(circuit, Builder::Variable::Type::Input);
+    RCircuit a_input(&circuit, Builder::Variable::Type::Input);
+    RCircuit b_input(&circuit, Builder::Variable::Type::Input);
+    RCircuit c_input(&circuit, Builder::Variable::Type::Input);
     RCircuit c_circuit = a_input * b_input;
     for (std::size_t i = 0; i < R::dimension(); ++i) {
         circuit(c_input[i] == c_circuit[i]);
@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE(Mul) {
     std::ranges::copy(c, std::back_inserter(z.elements));
 
     using RAssigner = R::Assigner<Builder::degree()>;
-    RAssigner a_assigner(a, z.elements);
-    RAssigner b_assigner(b, z.elements);
+    RAssigner a_assigner(a, &z.elements);
+    RAssigner b_assigner(b, &z.elements);
     RAssigner c_assigner = a_assigner * b_assigner;
     BOOST_TEST(c == c_assigner.polynomial);
     BOOST_TEST(r1cs.isSatisfied(z));

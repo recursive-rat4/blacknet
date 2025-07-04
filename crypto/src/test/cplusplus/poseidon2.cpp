@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(Pallas_3) {
     Builder circuit;
     std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::Circuit<Builder>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(&circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(Pallas_3) {
     VectorDense<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
 
-    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, &z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(Solinas62_12) {
     Builder circuit;
     std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::Circuit<Builder>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(&circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(Solinas62_12) {
     VectorDense<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
 
-    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, &z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_12) {
     Builder circuit;
     std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::Circuit<Builder>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(&circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_12) {
     VectorDense<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
 
-    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, &z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
     Builder circuit;
     std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::Circuit<Builder>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(&circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(Pervushin_8) {
     VectorDense<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
 
-    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, &z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(LM62_12) {
     Builder circuit;
     std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::Circuit<Builder>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(&circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(LM62_12) {
     VectorDense<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
 
-    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, &z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(LM62_8) {
     Builder circuit;
     std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
     std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::Circuit<Builder>::permute(circuit, x);
+    Poseidon2::Circuit<Builder>::permute(&circuit, x);
     for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
         auto v = circuit.auxiliary();
         circuit(v == x[i]);
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(LM62_8) {
     VectorDense<E> z = ccs.assigment();
     std::ranges::copy(b, std::back_inserter(z.elements));
 
-    Poseidon2::Assigner<Builder::degree()>::permute(b, z.elements);
+    Poseidon2::Assigner<Builder::degree()>::permute(b, &z.elements);
     std::ranges::copy(b, std::back_inserter(z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }

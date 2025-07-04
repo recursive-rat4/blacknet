@@ -112,37 +112,34 @@ struct Circuit {
     using LogicGate = LogicGate<R>::template Circuit<Builder>;
     using VectorDense = VectorDense<R>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
 
-    constexpr Circuit(Builder& circuit) : circuit(circuit) {}
+    constexpr Circuit(Builder* circuit) : circuit(circuit) {}
 
     constexpr VectorDense decompose(
         NumericType radix, std::size_t digits,
         const LinearCombination& f
     ) {
         if (radix != 2) throw std::runtime_error("Not implemented");
-        auto scope = circuit.scope("LatticeGadget::decompose");
+        auto scope = circuit->scope("LatticeGadget::decompose");
         R p = R::multiplicative_identity();
         LinearCombination composed;
         VectorDense pieces(circuit, digits);
         for (auto& piece : pieces) {
-            LinearCombination digit = circuit.auxiliary();
+            LinearCombination digit = circuit->auxiliary();
             piece = digit;
             composed += digit * p;
             p *= radix;
         }
         LogicGate(circuit).RangeCheck(pieces);
-        circuit(f == composed);
+        scope(f == composed);
         return pieces;
     }
 };
 
 template<std::size_t Degree>
 struct Assigner {
-    std::vector<R>& assigment;
-
-    constexpr Assigner(std::vector<R>& assigment)
-        : assigment(assigment) {}
+    std::vector<R>* assigment;
 
     constexpr VectorDense<R> decompose(
         NumericType radix, std::size_t digits,
@@ -161,7 +158,7 @@ private:
     ) {
         auto representative = f.canonical();
         for (std::size_t j = 0; j < digits; ++j) {
-            pieces[j] = assigment.emplace_back(
+            pieces[j] = assigment->emplace_back(
                 representative % radix
             );
             representative /= radix;

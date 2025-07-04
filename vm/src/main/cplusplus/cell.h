@@ -75,35 +75,35 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
     using Hash = typename Jive::HashCircuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
     Hash value;
 
-    constexpr Circuit(Builder& circuit, const Hash& value)
+    constexpr Circuit(Builder* circuit, const Hash& value)
         : circuit(circuit), value(value) {}
 
-    constexpr static Circuit null(Builder& circuit) {
+    constexpr static Circuit null(Builder* circuit) {
         return { circuit, {} };
     }
 
-    constexpr static Circuit cons(Builder& circuit, const Circuit& left, const Circuit& right) {
-        auto scope = circuit.scope("Cell::cons");
+    constexpr static Circuit cons(Builder* circuit, const Circuit& left, const Circuit& right) {
+        auto scope = circuit->scope("Cell::cons");
         auto hash = Jive::template Circuit<Builder>::compress(circuit, left.value, right.value);
         return { circuit, hash };
     }
 
     constexpr Circuit car(const Circuit& left, const Circuit& right) const {
-        auto scope = circuit.scope("Cell::car");
+        auto scope = circuit->scope("Cell::car");
         auto hash = Jive::template Circuit<Builder>::compress(circuit, left.value, right.value);
         for (const auto& [x, y] : std::views::zip(hash, value))
-            circuit(x == y);
+            scope(x == y);
         return left;
     }
 
     constexpr Circuit cdr(const Circuit& left, const Circuit& right) const {
-        auto scope = circuit.scope("Cell::cdr");
+        auto scope = circuit->scope("Cell::cdr");
         auto hash = Jive::template Circuit<Builder>::compress(circuit, left.value, right.value);
         for (const auto& [x, y] : std::views::zip(hash, value))
-            circuit(x == y);
+            scope(x == y);
         return right;
     }
 };
@@ -111,9 +111,9 @@ struct Circuit {
 template<std::size_t Degree>
 struct Assigner {
     Cell cell;
-    std::vector<E>& assigment;
+    std::vector<E>* assigment;
 
-    constexpr static Cell cons(const Cell& left, const Cell& right, std::vector<E>& assigment) {
+    constexpr static Cell cons(const Cell& left, const Cell& right, std::vector<E>* assigment) {
         return { Jive::template Assigner<Degree>::compress(left.value, right.value, assigment) };
     }
 

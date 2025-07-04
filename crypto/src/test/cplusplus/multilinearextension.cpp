@@ -175,9 +175,9 @@ BOOST_AUTO_TEST_CASE(circuit) {
     using Builder = CircuitBuilder<E, 2>;
     Builder circuit;
     using Circuit = MultilinearExtension<E>::Circuit<Builder>;
-    Circuit mle_circuit(circuit, Builder::Variable::Type::Input, 2);
+    Circuit mle_circuit(&circuit, Builder::Variable::Type::Input, 2);
     using PointCircuit = Point<E>::Circuit<Builder>;
-    PointCircuit x_circuit(circuit, Builder::Variable::Type::Input, 2);
+    PointCircuit x_circuit(&circuit, Builder::Variable::Type::Input, 2);
     mle_circuit(x_circuit);
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(circuit) {
     std::ranges::copy(x, std::back_inserter(z.elements));
 
     using Assigner = MultilinearExtension<E>::Assigner<Builder::degree()>;
-    Assigner mle_assigner(mle, z.elements);
+    Assigner mle_assigner(mle, &z.elements);
     BOOST_TEST(mle(x) == mle_assigner(x));
     BOOST_TEST(ccs.isSatisfied(z));
 }

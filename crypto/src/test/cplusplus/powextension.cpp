@@ -107,13 +107,13 @@ BOOST_AUTO_TEST_CASE(circuit) {
     Builder circuit;
     auto tau_var = circuit.input();
     using PowCircuit = PowExtension<E>::Circuit<Builder>;
-    PowCircuit::powers(circuit, tau_var, ell);
+    PowCircuit::powers(&circuit, tau_var, ell);
 
     CustomizableConstraintSystem<E> ccs(circuit.ccs());
     VectorDense<E> z = ccs.assigment();
     z.elements.push_back(tau);
 
-    BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::Assigner<Builder::degree()>::powers(tau, ell, z.elements));
+    BOOST_TEST(PowExtension<E>::powers(tau, ell) == PowExtension<E>::Assigner<Builder::degree()>::powers(tau, ell, &z.elements));
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

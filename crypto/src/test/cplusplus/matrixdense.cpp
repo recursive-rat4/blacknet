@@ -169,9 +169,9 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
     using Builder = CircuitBuilder<R, 2>;
     Builder circuit;
     using MatrixCircuit = MatrixDense<R>::Circuit<Builder>;
-    MatrixCircuit a_circuit(circuit, Builder::Variable::Type::Input, a.rows, a.columns);
+    MatrixCircuit a_circuit(&circuit, Builder::Variable::Type::Input, a.rows, a.columns);
     using VectorDenseCircuit = VectorDense<R>::Circuit<Builder>;
-    VectorDenseCircuit b_circuit(circuit, Builder::Variable::Type::Input, b.size());
+    VectorDenseCircuit b_circuit(&circuit, Builder::Variable::Type::Input, b.size());
     auto c_circuit = a_circuit * b_circuit;
 
     R1CS<R> r1cs(circuit.r1cs());
@@ -180,9 +180,9 @@ BOOST_AUTO_TEST_CASE(VectorProduct) {
     std::ranges::copy(b.elements, std::back_inserter(z.elements));
 
     using MatrixAssigner = MatrixDense<R>::Assigner<Builder::degree()>;
-    MatrixAssigner a_assigner(a, z.elements);
+    MatrixAssigner a_assigner(a, &z.elements);
     using VectorDenseAssigner = VectorDense<R>::Assigner<Builder::degree()>;
-    VectorDenseAssigner b_assigner(b, z.elements);
+    VectorDenseAssigner b_assigner(b, &z.elements);
     auto c_assigned = a_assigner * b_assigner;
     BOOST_TEST(c == c_assigned.vector);
     BOOST_TEST(r1cs.isSatisfied(z));

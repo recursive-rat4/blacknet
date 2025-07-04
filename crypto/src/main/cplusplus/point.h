@@ -95,8 +95,8 @@ struct Circuit {
 
     constexpr Circuit(std::size_t size) : coordinates(size) {}
 
-    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t size) : coordinates(size) {
-        std::ranges::generate(coordinates, [&]{ return circuit.variable(type); });
+    constexpr Circuit(Builder* circuit, Variable::Type type, std::size_t size) : coordinates(size) {
+        std::ranges::generate(coordinates, [&]{ return circuit->variable(type); });
     }
 
     constexpr LinearCombination& operator [] (std::size_t i) {

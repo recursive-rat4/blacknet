@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     using Builder = CircuitBuilder<E, 3>;
     Builder circuit;
     using Circuit = Sponge::Circuit<Builder>;
-    Circuit sponge_circuit(circuit);
+    Circuit sponge_circuit(&circuit);
     std::array<typename Builder::LinearCombination, T> inputs;
     std::ranges::generate(inputs, [&]{ return circuit.input(); });
     std::array<typename Builder::LinearCombination, T> outputs;
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(BlacknetCircuit) {
     std::ranges::copy(b, std::back_inserter(z.elements));
 
     using Assigner = Sponge::Assigner<Builder::degree()>;
-    Assigner assigner(z.elements);
+    Assigner assigner(&z.elements);
     assigner.absorb(b);
     assigner.squeeze(c);
     std::ranges::copy(c, std::back_inserter(z.elements));

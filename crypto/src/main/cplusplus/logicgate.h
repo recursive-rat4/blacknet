@@ -46,29 +46,29 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
     using VectorDenseCircuit = VectorDense<R>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
 
-    constexpr Circuit(Builder& circuit) : circuit(circuit) {}
+    constexpr Circuit(Builder* circuit) : circuit(circuit) {}
 
     constexpr void RangeCheck(const LinearCombination& a) {
-        auto scope = circuit.scope("LogicGate::RangeCheck");
-        circuit(R(0) == a * (a - R(1)));
+        auto scope = circuit->scope("LogicGate::RangeCheck");
+        scope(R(0) == a * (a - R(1)));
     }
     constexpr void RangeCheck(const VectorDenseCircuit& a) {
-        auto scope = circuit.scope("LogicGate::RangeCheck");
+        auto scope = circuit->scope("LogicGate::RangeCheck");
         for (const auto& i : a) {
-            circuit(R(0) == i * (i - R(1)));
+            scope(R(0) == i * (i - R(1)));
         }
     }
 
     constexpr void LessOrEqualCheck(const VectorDenseCircuit& a, const VectorDense<R>& b) {
-        auto scope = circuit.scope("LogicGate::LessOrEqualCheck");
+        auto scope = circuit->scope("LogicGate::LessOrEqualCheck");
         VectorDenseCircuit current_run(circuit);
         std::optional<LinearCombination> last_run;
         for (std::size_t i = b.size(); i --> 0;) {
             const auto& digit = a[i];
             if (b[i] == R(1)) {
-                circuit(R(0) == digit * (digit - R(1)));
+                scope(R(0) == digit * (digit - R(1)));
                 current_run.elements.push_back(digit);
             } else {
                 if (!current_run.elements.empty()) {
@@ -79,43 +79,43 @@ struct Circuit {
                     current_run.elements.clear();
                 }
                 if (last_run.has_value()) {
-                    circuit(R(0) == digit * (digit - R(1) + *last_run));
+                    scope(R(0) == digit * (digit - R(1) + *last_run));
                 } else {
-                    circuit(R(0) == digit);
+                    scope(R(0) == digit);
                 }
             }
         }
     }
 
     constexpr LinearCombination Xor(const LinearCombination& a, const LinearCombination& b) {
-        auto scope = circuit.scope("LogicGate::Xor");
-        LinearCombination ab = circuit.auxiliary();
-        circuit(ab == a * b);
+        auto scope = circuit->scope("LogicGate::Xor");
+        LinearCombination ab = circuit->auxiliary();
+        scope(ab == a * b);
         return a + b - ab * R(2);
     }
 
     constexpr LinearCombination And(const LinearCombination& a, const LinearCombination& b) {
-        auto scope = circuit.scope("LogicGate::And");
-        LinearCombination ab = circuit.auxiliary();
-        circuit(ab == a * b);
+        auto scope = circuit->scope("LogicGate::And");
+        LinearCombination ab = circuit->auxiliary();
+        scope(ab == a * b);
         return ab;
     }
     constexpr LinearCombination And(const VectorDenseCircuit& a) {
         if (a.size() == 1) return a[0];
-        auto scope = circuit.scope("LogicGate::And");
+        auto scope = circuit->scope("LogicGate::And");
         LinearCombination pi = R::multiplicative_identity();
         for (const auto& i : a) {
-            LinearCombination p = circuit.auxiliary();
-            circuit(p == pi * i);
+            LinearCombination p = circuit->auxiliary();
+            scope(p == pi * i);
             pi = p;
         }
         return pi;
     }
 
     constexpr LinearCombination Or(const LinearCombination& a, const LinearCombination& b) {
-        auto scope = circuit.scope("LogicGate::Or");
-        LinearCombination ab = circuit.auxiliary();
-        circuit(ab == a * b);
+        auto scope = circuit->scope("LogicGate::Or");
+        LinearCombination ab = circuit->auxiliary();
+        scope(ab == a * b);
         return a + b - ab;
     }
 
@@ -126,10 +126,7 @@ struct Circuit {
 
 template<std::size_t Degree>
 struct Assigner {
-    std::vector<R>& assigment;
-
-    constexpr Assigner(std::vector<R>& assigment)
-        : assigment(assigment) {}
+    std::vector<R>* assigment;
 
     constexpr void LessOrEqualCheck(const VectorDense<R>& a, const VectorDense<R>& b) {
         VectorDense<R> current_run;
@@ -151,13 +148,13 @@ struct Assigner {
     }
 
     constexpr R Xor(const R& a, const R& b) {
-        return a + b - assigment.emplace_back(
+        return a + b - assigment->emplace_back(
             a * b
         ).douple();
     }
 
     constexpr R And(const R& a, const R& b) {
-        return assigment.emplace_back(
+        return assigment->emplace_back(
             a * b
         );
     }
@@ -171,7 +168,7 @@ struct Assigner {
     }
 
     constexpr R Or(const R& a, const R& b) {
-        return a + b - assigment.emplace_back(
+        return a + b - assigment->emplace_back(
             a * b
         );
     }

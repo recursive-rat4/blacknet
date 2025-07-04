@@ -87,16 +87,16 @@ struct Circuit {
     using LinearCombination = Builder::LinearCombination;
 
     constexpr static std::vector<LinearCombination> powers(
-        Builder& circuit,
+        Builder* circuit,
         const LinearCombination& tau,
         std::size_t variables
     ) {
-        auto scope = circuit.scope("PowExtension::powers");
+        auto scope = circuit->scope("PowExtension::powers");
         std::vector<LinearCombination> coefficients(variables);
         coefficients[0] = tau;
         for (std::size_t i = 1; i < variables; ++i) {
-            auto cs = circuit.auxiliary();
-            circuit(cs == coefficients[i - 1] * coefficients[i - 1]);
+            auto cs = circuit->auxiliary();
+            scope(cs == coefficients[i - 1] * coefficients[i - 1]);
             coefficients[i] = cs;
         }
         return coefficients;
@@ -105,11 +105,11 @@ struct Circuit {
 
 template<std::size_t Degree>
 struct Assigner {
-    constexpr static std::vector<E> powers(const E& tau, std::size_t variables, std::vector<E>& assigment) {
+    constexpr static std::vector<E> powers(const E& tau, std::size_t variables, std::vector<E>* assigment) {
         std::vector<E> coefficients(variables);
         coefficients[0] = tau;
         for (std::size_t i = 1; i < variables; ++i)
-            coefficients[i] = assigment.emplace_back(
+            coefficients[i] = assigment->emplace_back(
                 coefficients[i - 1].square()
             );
         return coefficients;

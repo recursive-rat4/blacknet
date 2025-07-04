@@ -242,55 +242,55 @@ private:
         }
     }
 
-    constexpr static void sboxp(Builder& circuit, LinearCombination& x) {
+    constexpr static void sboxp(Builder* circuit, LinearCombination& x) {
         if constexpr (Params::a == 3) {
-            if constexpr (circuit.degree() >= 3) {
-                auto x3 = circuit.auxiliary();
-                circuit(x3 == x * x * x);
+            if constexpr (Builder::degree() >= 3) {
+                auto x3 = circuit->auxiliary();
+                (*circuit)(x3 == x * x * x);
                 x = x3;
             } else {
-                auto x2 = circuit.auxiliary();
-                auto x3 = circuit.auxiliary();
-                circuit(x2 == x * x);
-                circuit(x3 == x * x2);
+                auto x2 = circuit->auxiliary();
+                auto x3 = circuit->auxiliary();
+                (*circuit)(x2 == x * x);
+                (*circuit)(x3 == x * x2);
                 x = x3;
             }
         } else if constexpr (Params::a == 5) {
             // Lessen constraints if degree >= 3
-            auto x2 = circuit.auxiliary();
-            auto x4 = circuit.auxiliary();
-            auto x5 = circuit.auxiliary();
-            circuit(x2 == x * x);
-            circuit(x4 == x2 * x2);
-            circuit(x5 == x * x4);
+            auto x2 = circuit->auxiliary();
+            auto x4 = circuit->auxiliary();
+            auto x5 = circuit->auxiliary();
+            (*circuit)(x2 == x * x);
+            (*circuit)(x4 == x2 * x2);
+            (*circuit)(x5 == x * x4);
             x = x5;
         } else if constexpr (Params::a == 17) {
             // Lessen constraints if 16 >= degree >= 4
-            if constexpr (circuit.degree() >= 17) {
-                auto x17 = circuit.auxiliary();
-                circuit(x17 == x * x * x * x * x * x * x * x * x * x * x * x * x * x * x * x * x);
+            if constexpr (Builder::degree() >= 17) {
+                auto x17 = circuit->auxiliary();
+                (*circuit)(x17 == x * x * x * x * x * x * x * x * x * x * x * x * x * x * x * x * x);
                 x = x17;
-            } else if constexpr (circuit.degree() >= 3) {
-                auto x3 = circuit.auxiliary();
-                auto x9 = circuit.auxiliary();
-                auto x15 = circuit.auxiliary();
-                auto x17 = circuit.auxiliary();
-                circuit(x3 == x * x * x);
-                circuit(x9 == x3 * x3 * x3);
-                circuit(x15 == x3 * x3 * x9);
-                circuit(x17 == x * x * x15);
+            } else if constexpr (Builder::degree() >= 3) {
+                auto x3 = circuit->auxiliary();
+                auto x9 = circuit->auxiliary();
+                auto x15 = circuit->auxiliary();
+                auto x17 = circuit->auxiliary();
+                (*circuit)(x3 == x * x * x);
+                (*circuit)(x9 == x3 * x3 * x3);
+                (*circuit)(x15 == x3 * x3 * x9);
+                (*circuit)(x17 == x * x * x15);
                 x = x17;
             } else {
-                auto x2 = circuit.auxiliary();
-                auto x4 = circuit.auxiliary();
-                auto x8 = circuit.auxiliary();
-                auto x16 = circuit.auxiliary();
-                auto x17 = circuit.auxiliary();
-                circuit(x2 == x * x);
-                circuit(x4 == x2 * x2);
-                circuit(x8 == x4 * x4);
-                circuit(x16 == x8 * x8);
-                circuit(x17 == x * x16);
+                auto x2 = circuit->auxiliary();
+                auto x4 = circuit->auxiliary();
+                auto x8 = circuit->auxiliary();
+                auto x16 = circuit->auxiliary();
+                auto x17 = circuit->auxiliary();
+                (*circuit)(x2 == x * x);
+                (*circuit)(x4 == x2 * x2);
+                (*circuit)(x8 == x4 * x4);
+                (*circuit)(x16 == x8 * x8);
+                (*circuit)(x17 == x * x16);
                 x = x17;
             }
         } else {
@@ -298,13 +298,13 @@ private:
         }
     }
 
-    constexpr static void sbox(Builder& circuit, std::array<LinearCombination, T>& x) {
+    constexpr static void sbox(Builder* circuit, std::array<LinearCombination, T>& x) {
         for (std::size_t i = 0; i < T; ++i)
             sboxp(circuit, x[i]);
     }
 public:
-    constexpr static void permute(Builder& circuit, std::array<LinearCombination, T>& x) {
-        auto scope = circuit.scope("Poseidon2::permute");
+    constexpr static void permute(Builder* circuit, std::array<LinearCombination, T>& x) {
+        auto scope = circuit->scope("Poseidon2::permute");
 
         Circuit::external(x);
 
@@ -331,26 +331,26 @@ public:
 template<std::size_t Degree>
 struct Assigner {
 private:
-    constexpr static void sboxp(F& x, std::vector<F>& assigment) {
+    constexpr static void sboxp(F& x, std::vector<F>* assigment) {
         if constexpr (Params::a == 3) {
             if constexpr (Degree >= 3) {
-                assigment.push_back(
+                assigment->push_back(
                     x *= x.square()
                 );
             } else {
-                assigment.push_back(
-                    x *= assigment.emplace_back(
+                assigment->push_back(
+                    x *= assigment->emplace_back(
                         x.square())
                 );
             }
         } else if constexpr (Params::a == 5) {
-            assigment.push_back(
-                x *= assigment.emplace_back(assigment.emplace_back(
+            assigment->push_back(
+                x *= assigment->emplace_back(assigment->emplace_back(
                     x.square()).square())
             );
         } else if constexpr (Params::a == 17) {
             if constexpr (Degree >= 17) {
-                assigment.push_back(
+                assigment->push_back(
                     x *= x.square().square().square().square()
                 );
             } else if constexpr (Degree >= 3) {
@@ -361,13 +361,13 @@ private:
                 F x15{ x6 * x9 };
                 F x17{ x2 * x15 };
                 x = x17;
-                assigment.emplace_back(std::move(x3));
-                assigment.emplace_back(std::move(x9));
-                assigment.emplace_back(std::move(x15));
-                assigment.emplace_back(std::move(x17));
+                assigment->emplace_back(std::move(x3));
+                assigment->emplace_back(std::move(x9));
+                assigment->emplace_back(std::move(x15));
+                assigment->emplace_back(std::move(x17));
             } else {
-                assigment.push_back(
-                    x *= assigment.emplace_back(assigment.emplace_back(assigment.emplace_back(assigment.emplace_back(
+                assigment->push_back(
+                    x *= assigment->emplace_back(assigment->emplace_back(assigment->emplace_back(assigment->emplace_back(
                         x.square()).square()).square()).square())
                 );
             }
@@ -376,12 +376,12 @@ private:
         }
     }
 
-    constexpr static void sbox(std::array<F, T>& x, std::vector<F>& assigment) {
+    constexpr static void sbox(std::array<F, T>& x, std::vector<F>* assigment) {
         for (std::size_t i = 0; i < T; ++i)
             sboxp(x[i], assigment);
     }
 public:
-    constexpr static void permute(std::array<F, T>& x, std::vector<F>& assigment) {
+    constexpr static void permute(std::array<F, T>& x, std::vector<F>* assigment) {
         external(x);
 
         for (std::size_t round = 0; round < Params::rb; ++round) {

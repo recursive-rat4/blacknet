@@ -65,20 +65,20 @@ BOOST_AUTO_TEST_CASE(distribution) {
     using Builder = CircuitBuilder<Z, 2>;
     Builder circuit;
     using SpongeCircuit = Sponge::Circuit<Builder>;
-    SpongeCircuit sponge_circuit(circuit);
+    SpongeCircuit sponge_circuit(&circuit);
     using DistributionCircuit = JL::DistributionSponge<Sponge>::Circuit<Builder>;
-    DistributionCircuit distribution_circuit(circuit);
+    DistributionCircuit distribution_circuit(&circuit);
     using VectorDenseCircuit = VectorDense<Z>::Circuit<Builder>;
-    VectorDenseCircuit v_circuit(circuit, 32);
+    VectorDenseCircuit v_circuit(&circuit, 32);
     std::ranges::generate(v_circuit, [&] { return distribution_circuit(sponge_circuit); });
 
     R1CS<Z> r1cs(circuit.r1cs());
     VectorDense<Z> z = r1cs.assigment();
 
     using SpongeAssigner = Sponge::Assigner<Builder::degree()>;
-    SpongeAssigner sponge_assigner(z.elements);
+    SpongeAssigner sponge_assigner(&z.elements);
     using DistributionAssigner = JL::DistributionSponge<Sponge>::Assigner<Builder::degree()>;
-    DistributionAssigner distribution_assigner(z.elements);
+    DistributionAssigner distribution_assigner(&z.elements);
     VectorDense<Z> v_assigned(32);
     std::ranges::generate(v_assigned, [&] { return distribution_assigner(sponge_assigner); });
     BOOST_TEST(r1cs.isSatisfied(z));

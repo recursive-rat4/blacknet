@@ -71,10 +71,10 @@ struct JohnsonLindenstrauss {
         using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Circuit<Builder>;
         using SpongeCircuit = Sponge::template Circuit<Builder>;
 
-        Builder& circuit;
+        Builder* circuit;
         BinaryUniformDistribution bud;
 
-        constexpr Circuit(Builder& circuit) : circuit(circuit), bud(circuit) {}
+        constexpr Circuit(Builder* circuit) : circuit(circuit), bud(circuit) {}
 
         constexpr void reset() noexcept {
             bud.reset();
@@ -90,10 +90,10 @@ struct JohnsonLindenstrauss {
         using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Assigner<Degree>;
         using SpongeAssigner = Sponge::template Assigner<Degree>;
 
-        std::vector<Z>& assigment;
         BinaryUniformDistribution bud;
+        std::vector<Z>* assigment;
 
-        constexpr Assigner(std::vector<Z>& assigment) : assigment(assigment), bud(assigment) {}
+        constexpr Assigner(std::vector<Z>* assigment) : bud(assigment), assigment(assigment) {}
 
         constexpr void reset() noexcept {
             bud.reset();

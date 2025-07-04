@@ -187,22 +187,22 @@ struct Circuit {
     using EqExtension = EqExtension<E>::template Circuit<Builder>;
     using Point = Point<E>::template Circuit<Builder>;
 
-    Builder& circuit;
+    Builder* circuit;
     std::vector<LinearCombination> coefficients;
 
-    constexpr Circuit(Builder& circuit, Variable::Type type, std::size_t variables)
+    constexpr Circuit(Builder* circuit, Variable::Type type, std::size_t variables)
         : circuit(circuit), coefficients(1 << variables)
     {
-        std::ranges::generate(coefficients, [&]{ return circuit.variable(type); });
+        std::ranges::generate(coefficients, [&]{ return circuit->variable(type); });
     }
 
     constexpr LinearCombination operator () (const Point& point) const {
-        auto scope = circuit.scope("MultilinearExtension::point");
+        auto scope = circuit->scope("MultilinearExtension::point");
         auto pis = EqExtension::hypercube(circuit, point.coordinates);
         LinearCombination sigma;
         for (std::size_t i = 0; i < coefficients.size(); ++i) {
-            auto pc = circuit.auxiliary();
-            circuit(pc == pis[i] * coefficients[i]);
+            auto pc = circuit->auxiliary();
+            scope(pc == pis[i] * coefficients[i]);
             sigma += pc;
         }
         return sigma;
@@ -223,16 +223,16 @@ struct Assigner {
     using EqExtension = EqExtension<E>::template Assigner<Degree>;
 
     MultilinearExtension mle;
-    std::vector<E>& assigment;
+    std::vector<E>* assigment;
 
-    constexpr Assigner(const MultilinearExtension& mle, std::vector<E>& assigment)
+    constexpr Assigner(const MultilinearExtension& mle, std::vector<E>* assigment)
         : mle(mle), assigment(assigment) {}
 
     constexpr E operator () (const Point<E>& point) const {
         const std::vector<E>& pis = EqExtension(assigment).hypercube(point.coordinates);
         E sigma(E::additive_identity());
         for (std::size_t i = 0; i < mle.coefficients.size(); ++i)
-            sigma += assigment.emplace_back(
+            sigma += assigment->emplace_back(
                 pis[i] * mle.coefficients[i]
             );
         return sigma;
