@@ -35,26 +35,26 @@ class WeierstrassGroupAffine {
 public:
     typedef BF Base;
     typedef SF Scalar;
-    consteval static WeierstrassGroupAffine additive_identity() { return WeierstrassGroupAffine(); }
+    consteval static WeierstrassGroupAffine additive_identity() { return WeierstrassGroupAffine(0, 0); }
 
     consteval WeierstrassGroupAffine() = default;
-    constexpr WeierstrassGroupAffine(const BF& x, const BF& y) : x{x}, y(y) {}
+    constexpr WeierstrassGroupAffine(const BF& x, const BF& y) : x(x), y(y) {}
 
     constexpr bool operator == (const WeierstrassGroupAffine& other) const {
         return x == other.x && y == other.y;
     }
 
     constexpr WeierstrassGroupAffine operator - () const {
-        if (*this != WeierstrassGroupAffine())
+        if (*this != additive_identity())
             return WeierstrassGroupAffine(x, -y);
         else
-            return WeierstrassGroupAffine();
+            return additive_identity();
     }
 
     constexpr WeierstrassGroupAffine operator + (const WeierstrassGroupAffine& other) const {
-        if (*this == WeierstrassGroupAffine())
+        if (*this == additive_identity())
             return other;
-        if (other == WeierstrassGroupAffine())
+        if (other == additive_identity())
             return *this;
 
         if (x != other.x) {
@@ -65,13 +65,13 @@ public:
         } else if (y == other.y) {
             return douple();
         } else {
-            return WeierstrassGroupAffine();
+            return additive_identity();
         }
     }
 
     constexpr WeierstrassGroupAffine douple() const {
-        if (*this == WeierstrassGroupAffine())
-            return WeierstrassGroupAffine();
+        if (*this == additive_identity())
+            return additive_identity();
 
         BF xx(x.square());
         BF k(xx + xx + xx);
@@ -91,9 +91,9 @@ public:
 #ifdef BLACKNET_OPTIMIZE
         return *this + -other;
 #else
-        if (*this == WeierstrassGroupAffine())
+        if (*this == additive_identity())
             return -other;
-        if (other == WeierstrassGroupAffine())
+        if (other == additive_identity())
             return *this;
 
         if (x != other.x) {
@@ -105,7 +105,7 @@ public:
         } else if (y == -other.y) {
             return douple();
         } else {
-            return WeierstrassGroupAffine();
+            return additive_identity();
         }
 #endif
     }
@@ -124,7 +124,7 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const WeierstrassGroupAffine& val)
     {
-        if (val != WeierstrassGroupAffine())
+        if (val != additive_identity())
             out << '(' << val.x << ", " << val.y << ')';
         else
             out << "Infinity";

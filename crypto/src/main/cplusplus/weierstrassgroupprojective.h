@@ -36,9 +36,10 @@ class WeierstrassGroupProjective {
 public:
     typedef BF Base;
     typedef SF Scalar;
-    consteval static WeierstrassGroupProjective additive_identity() { return WeierstrassGroupProjective(); }
+    consteval static WeierstrassGroupProjective additive_identity() { return WeierstrassGroupProjective(0, 0, 0); }
 
     consteval WeierstrassGroupProjective() = default;
+    constexpr WeierstrassGroupProjective(const BF& x, const BF& y) : x{x}, y(y), z(BF(1)) {}
     constexpr WeierstrassGroupProjective(const BF& x, const BF& y, const BF& z) : x{x}, y(y), z(z) {}
 
     constexpr bool operator == (const WeierstrassGroupProjective& other) const {
@@ -53,16 +54,16 @@ public:
     }
 
     constexpr WeierstrassGroupProjective operator - () const {
-        if (*this != WeierstrassGroupProjective())
+        if (*this != additive_identity())
             return WeierstrassGroupProjective(x, -y, z);
         else
-            return WeierstrassGroupProjective();
+            return additive_identity();
     }
 
     constexpr WeierstrassGroupProjective operator + (const WeierstrassGroupProjective& other) const {
-        if (*this == WeierstrassGroupProjective())
+        if (*this == additive_identity())
             return other;
-        if (other == WeierstrassGroupProjective())
+        if (other == additive_identity())
             return *this;
 
         BF u1(other.y * z);
@@ -87,13 +88,13 @@ public:
         } else if (u1 == u2) {
             return douple();
         } else {
-            return WeierstrassGroupProjective();
+            return additive_identity();
         }
     }
 
     constexpr WeierstrassGroupProjective douple() const {
-        if (*this == WeierstrassGroupProjective())
-            return WeierstrassGroupProjective();
+        if (*this == additive_identity())
+            return additive_identity();
         // dbl-2007-bl
         BF xx(x.square());
         BF w(xx + xx + xx);
@@ -119,9 +120,9 @@ public:
 #ifdef BLACKNET_OPTIMIZE
         return *this + -other;
 #else
-        if (*this == WeierstrassGroupProjective())
+        if (*this == additive_identity())
             return -other;
-        if (other == WeierstrassGroupProjective())
+        if (other == additive_identity())
             return *this;
 
         BF u1(other.y * z);
@@ -146,7 +147,7 @@ public:
         } else if (-u1 == u2) {
             return douple();
         } else {
-            return WeierstrassGroupProjective();
+            return additive_identity();
         }
 #endif
     }
@@ -168,13 +169,13 @@ public:
             BF& a = *maybeInv;
             return WeierstrassGroupProjective(x * a, y * a, BF(1));
         } else {
-            return WeierstrassGroupProjective();
+            return additive_identity();
         }
     }
 
     friend std::ostream& operator << (std::ostream& out, const WeierstrassGroupProjective& val)
     {
-        if (val != WeierstrassGroupProjective())
+        if (val != additive_identity())
             out << '(' << val.x << ", " << val.y << ", " << val.z << ')';
         else
             out << "Infinity";
@@ -196,7 +197,7 @@ public:
                 BF& y = *maybeY;
                 if (ySign)
                     y = -y;
-                return WeierstrassGroupProjective(x, y, BF(1));
+                return WeierstrassGroupProjective(x, y);
             }
         }
     }

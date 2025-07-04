@@ -33,10 +33,10 @@ class TwistedEdwardsGroupAffine {
 public:
     typedef BF Base;
     typedef SR Scalar;
-    consteval static TwistedEdwardsGroupAffine additive_identity() { return TwistedEdwardsGroupAffine(); }
+    consteval static TwistedEdwardsGroupAffine additive_identity() { return TwistedEdwardsGroupAffine(0, 1); }
 
-    consteval TwistedEdwardsGroupAffine() : x(0), y(1) {}
-    constexpr TwistedEdwardsGroupAffine(const BF& x, const BF& y) : x{x}, y(y) {}
+    consteval TwistedEdwardsGroupAffine() = default;
+    constexpr TwistedEdwardsGroupAffine(const BF& x, const BF& y) : x(x), y(y) {}
 
     constexpr bool operator == (const TwistedEdwardsGroupAffine& other) const = default;
 

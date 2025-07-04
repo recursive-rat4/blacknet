@@ -160,8 +160,8 @@ BOOST_AUTO_TEST_CASE(groupNegAffine) {
     VestaGroupAffine  d(dx, dy);
     BOOST_TEST(b == -a);
     BOOST_TEST(d == -c);
-    BOOST_TEST(PallasGroupAffine() == -PallasGroupAffine());
-    BOOST_TEST(VestaGroupAffine() == -VestaGroupAffine());
+    BOOST_TEST(PallasGroupAffine::additive_identity() == -PallasGroupAffine::additive_identity());
+    BOOST_TEST(VestaGroupAffine::additive_identity() == -VestaGroupAffine::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupSubAffine) {
@@ -185,11 +185,11 @@ BOOST_AUTO_TEST_CASE(groupSubAffine) {
     VestaGroupAffine  f(fx, fy);
     BOOST_TEST(c == a - b);
     BOOST_TEST(c == -b + a);
-    BOOST_TEST(VestaGroupAffine() == d - d);
+    BOOST_TEST(VestaGroupAffine::additive_identity() == d - d);
     BOOST_TEST(d == e - f);
-    BOOST_TEST(-c == PallasGroupAffine() - c);
-    BOOST_TEST(c == c - PallasGroupAffine());
-    BOOST_TEST(VestaGroupAffine() == VestaGroupAffine() - VestaGroupAffine());
+    BOOST_TEST(-c == PallasGroupAffine::additive_identity() - c);
+    BOOST_TEST(c == c - PallasGroupAffine::additive_identity());
+    BOOST_TEST(VestaGroupAffine::additive_identity() == VestaGroupAffine::additive_identity() - VestaGroupAffine::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupAddAffine) {
@@ -214,10 +214,10 @@ BOOST_AUTO_TEST_CASE(groupAddAffine) {
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
     BOOST_TEST(e == d + d);
-    BOOST_TEST(VestaGroupAffine() == e + f);
-    BOOST_TEST(c == PallasGroupAffine() + c);
-    BOOST_TEST(c == c + PallasGroupAffine());
-    BOOST_TEST(VestaGroupAffine() == VestaGroupAffine() + VestaGroupAffine());
+    BOOST_TEST(VestaGroupAffine::additive_identity() == e + f);
+    BOOST_TEST(c == PallasGroupAffine::additive_identity() + c);
+    BOOST_TEST(c == c + PallasGroupAffine::additive_identity());
+    BOOST_TEST(VestaGroupAffine::additive_identity() == VestaGroupAffine::additive_identity() + VestaGroupAffine::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupMulAffine) {
@@ -231,8 +231,8 @@ BOOST_AUTO_TEST_CASE(groupMulAffine) {
     constexpr PallasField  d("251d364ed569cbf14184665ce3fa321e9678002959e04609d1a0ecc692cee9e1");
     BOOST_TEST(c == a * b);
     BOOST_TEST(a == a * VestaField(1));
-    BOOST_TEST(PallasGroupAffine() == a * VestaField(0));
-    BOOST_TEST(VestaGroupAffine() == VestaGroupAffine() * d);
+    BOOST_TEST(PallasGroupAffine::additive_identity() == a * VestaField(0));
+    BOOST_TEST(VestaGroupAffine::additive_identity() == VestaGroupAffine::additive_identity() * d);
 }
 
 BOOST_AUTO_TEST_CASE(groupNegJacobian) {
@@ -244,14 +244,14 @@ BOOST_AUTO_TEST_CASE(groupNegJacobian) {
     constexpr VestaField  cy("0e2e3683b3e12f2b986560a0b3a208f29066185aad807056b440e687f990a70a");
     constexpr VestaField  dx("29ccc7054c866d02883e099de5420e2bd07ca59ebc8f1901696496382d2b1c17");
     constexpr VestaField  dy("31d1c97c4c1ed0d4679a9f5f4c5df70d91e080a15c143886d8060499066f58f7");
-    PallasGroupJacobian a(ax, ay, PallasField(1));
-    PallasGroupJacobian b(bx, by, PallasField(1));
-    VestaGroupJacobian  c(cx, cy, VestaField(1));
-    VestaGroupJacobian  d(dx, dy, VestaField(1));
+    PallasGroupJacobian a(ax, ay);
+    PallasGroupJacobian b(bx, by);
+    VestaGroupJacobian  c(cx, cy);
+    VestaGroupJacobian  d(dx, dy);
     BOOST_TEST(b == -a);
     BOOST_TEST(d == -c);
-    BOOST_TEST(PallasGroupJacobian() == -PallasGroupJacobian());
-    BOOST_TEST(VestaGroupJacobian() == -VestaGroupJacobian());
+    BOOST_TEST(PallasGroupJacobian::additive_identity() == -PallasGroupJacobian::additive_identity());
+    BOOST_TEST(VestaGroupJacobian::additive_identity() == -VestaGroupJacobian::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupSubJacobian) {
@@ -267,19 +267,19 @@ BOOST_AUTO_TEST_CASE(groupSubJacobian) {
     constexpr VestaField  ey("01d858f8d8cbea25bc870538280467c2ca440be332b2e33860552b61476160a0");
     constexpr VestaField  fx("20902e52296c05a0a09ef0150af8bafe836cb1f934f0325abc1afbebc93c09c8");
     constexpr VestaField  fy("3e27a707273415da4378fac7d7fb983d58028d18d6e1c5a52bf1bfbfb89e9f61");
-    PallasGroupJacobian a(ax, ay, PallasField(1));
-    PallasGroupJacobian b(bx, by, PallasField(1));
-    PallasGroupJacobian c(cx, cy, PallasField(1));
-    VestaGroupJacobian  d(dx, dy, VestaField(1));
-    VestaGroupJacobian  e(ex, ey, VestaField(1));
-    VestaGroupJacobian  f(fx, fy, VestaField(1));
+    PallasGroupJacobian a(ax, ay);
+    PallasGroupJacobian b(bx, by);
+    PallasGroupJacobian c(cx, cy);
+    VestaGroupJacobian  d(dx, dy);
+    VestaGroupJacobian  e(ex, ey);
+    VestaGroupJacobian  f(fx, fy);
     BOOST_TEST(c == a - b);
     BOOST_TEST(c == -b + a);
-    BOOST_TEST(VestaGroupJacobian() == d - d);
+    BOOST_TEST(VestaGroupJacobian::additive_identity() == d - d);
     BOOST_TEST(d == e - f);
-    BOOST_TEST(-c == PallasGroupJacobian() - c);
-    BOOST_TEST(c == c - PallasGroupJacobian());
-    BOOST_TEST(VestaGroupJacobian() == VestaGroupJacobian() - VestaGroupJacobian());
+    BOOST_TEST(-c == PallasGroupJacobian::additive_identity() - c);
+    BOOST_TEST(c == c - PallasGroupJacobian::additive_identity());
+    BOOST_TEST(VestaGroupJacobian::additive_identity() == VestaGroupJacobian::additive_identity() - VestaGroupJacobian::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupAddJacobian) {
@@ -295,19 +295,19 @@ BOOST_AUTO_TEST_CASE(groupAddJacobian) {
     constexpr VestaField  ey("01d858f8d8cbea25bc870538280467c2ca440be332b2e33860552b61476160a0");
     constexpr VestaField  fx("20902e52296c05a0a09ef0150af8bafe836cb1f934f0325abc1afbebc93c09c8");
     constexpr VestaField  fy("3e27a707273415da4378fac7d7fb983d58028d18d6e1c5a52bf1bfbfb89e9f61");
-    PallasGroupJacobian a(ax, ay, PallasField(1));
-    PallasGroupJacobian b(bx, by, PallasField(1));
-    PallasGroupJacobian c(cx, cy, PallasField(1));
-    VestaGroupJacobian  d(dx, dy, VestaField(1));
-    VestaGroupJacobian  e(ex, ey, VestaField(1));
-    VestaGroupJacobian  f(fx, fy, VestaField(1));
+    PallasGroupJacobian a(ax, ay);
+    PallasGroupJacobian b(bx, by);
+    PallasGroupJacobian c(cx, cy);
+    VestaGroupJacobian  d(dx, dy);
+    VestaGroupJacobian  e(ex, ey);
+    VestaGroupJacobian  f(fx, fy);
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
     BOOST_TEST(e == d + d);
-    BOOST_TEST(VestaGroupJacobian() == e + f);
-    BOOST_TEST(c == PallasGroupJacobian() + c);
-    BOOST_TEST(c == c + PallasGroupJacobian());
-    BOOST_TEST(VestaGroupJacobian() == VestaGroupJacobian() + VestaGroupJacobian());
+    BOOST_TEST(VestaGroupJacobian::additive_identity() == e + f);
+    BOOST_TEST(c == PallasGroupJacobian::additive_identity() + c);
+    BOOST_TEST(c == c + PallasGroupJacobian::additive_identity());
+    BOOST_TEST(VestaGroupJacobian::additive_identity() == VestaGroupJacobian::additive_identity() + VestaGroupJacobian::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupMulJacobian) {
@@ -315,14 +315,14 @@ BOOST_AUTO_TEST_CASE(groupMulJacobian) {
     constexpr PallasField ay("1b01d848ea1769e4e319244446ceebeab80d1687ecd75e1191f8c158a02aaec6");
     constexpr PallasField cx("3ae71da7c530d0bbb097cc6b688bb849d1ee146e167637e27486eb874a015ded");
     constexpr PallasField cy("101f7a91b0e870b0626c7234eb0024120b66bd06109e55f892fdd00bd5192419");
-    constexpr PallasGroupJacobian a(ax, ay, PallasField(1));
+    constexpr PallasGroupJacobian a(ax, ay);
     constexpr VestaField   b("27d286de826c7abc89876e85217410148a67ed053968ac6d326ae99eeb11d7f1");
-    constexpr PallasGroupJacobian c(cx, cy, PallasField(1));
+    constexpr PallasGroupJacobian c(cx, cy);
     constexpr PallasField  d("08f41a93bb8c52e757404c04e2519c5f66b126176b9f7307de457606b2be8946");
     BOOST_TEST(c == a * b);
     BOOST_TEST(a == a * VestaField(1));
-    BOOST_TEST(PallasGroupJacobian() == a * VestaField(0));
-    BOOST_TEST(VestaGroupJacobian() == VestaGroupJacobian() * d);
+    BOOST_TEST(PallasGroupJacobian::additive_identity() == a * VestaField(0));
+    BOOST_TEST(VestaGroupJacobian::additive_identity() == VestaGroupJacobian::additive_identity() * d);
 }
 
 BOOST_AUTO_TEST_CASE(groupNegProjective) {
@@ -334,14 +334,14 @@ BOOST_AUTO_TEST_CASE(groupNegProjective) {
     constexpr VestaField  cy("0e2e3683b3e12f2b986560a0b3a208f29066185aad807056b440e687f990a70a");
     constexpr VestaField  dx("29ccc7054c866d02883e099de5420e2bd07ca59ebc8f1901696496382d2b1c17");
     constexpr VestaField  dy("31d1c97c4c1ed0d4679a9f5f4c5df70d91e080a15c143886d8060499066f58f7");
-    PallasGroupProjective a(ax, ay, PallasField(1));
-    PallasGroupProjective b(bx, by, PallasField(1));
-    VestaGroupProjective  c(cx, cy, VestaField(1));
-    VestaGroupProjective  d(dx, dy, VestaField(1));
+    PallasGroupProjective a(ax, ay);
+    PallasGroupProjective b(bx, by);
+    VestaGroupProjective  c(cx, cy);
+    VestaGroupProjective  d(dx, dy);
     BOOST_TEST(b == -a);
     BOOST_TEST(d == -c);
-    BOOST_TEST(PallasGroupProjective() == -PallasGroupProjective());
-    BOOST_TEST(VestaGroupProjective() == -VestaGroupProjective());
+    BOOST_TEST(PallasGroupProjective::additive_identity() == -PallasGroupProjective::additive_identity());
+    BOOST_TEST(VestaGroupProjective::additive_identity() == -VestaGroupProjective::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupSubProjective) {
@@ -357,19 +357,19 @@ BOOST_AUTO_TEST_CASE(groupSubProjective) {
     constexpr VestaField  ey("01d858f8d8cbea25bc870538280467c2ca440be332b2e33860552b61476160a0");
     constexpr VestaField  fx("20902e52296c05a0a09ef0150af8bafe836cb1f934f0325abc1afbebc93c09c8");
     constexpr VestaField  fy("3e27a707273415da4378fac7d7fb983d58028d18d6e1c5a52bf1bfbfb89e9f61");
-    PallasGroupProjective a(ax, ay, PallasField(1));
-    PallasGroupProjective b(bx, by, PallasField(1));
-    PallasGroupProjective c(cx, cy, PallasField(1));
-    VestaGroupProjective  d(dx, dy, VestaField(1));
-    VestaGroupProjective  e(ex, ey, VestaField(1));
-    VestaGroupProjective  f(fx, fy, VestaField(1));
+    PallasGroupProjective a(ax, ay);
+    PallasGroupProjective b(bx, by);
+    PallasGroupProjective c(cx, cy);
+    VestaGroupProjective  d(dx, dy);
+    VestaGroupProjective  e(ex, ey);
+    VestaGroupProjective  f(fx, fy);
     BOOST_TEST(c == a - b);
     BOOST_TEST(c == -b + a);
-    BOOST_TEST(VestaGroupProjective() == d - d);
+    BOOST_TEST(VestaGroupProjective::additive_identity() == d - d);
     BOOST_TEST(d == e - f);
-    BOOST_TEST(-c == PallasGroupProjective() - c);
-    BOOST_TEST(c == c - PallasGroupProjective());
-    BOOST_TEST(VestaGroupProjective() == VestaGroupProjective() - VestaGroupProjective());
+    BOOST_TEST(-c == PallasGroupProjective::additive_identity() - c);
+    BOOST_TEST(c == c - PallasGroupProjective::additive_identity());
+    BOOST_TEST(VestaGroupProjective::additive_identity() == VestaGroupProjective::additive_identity() - VestaGroupProjective::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupAddProjective) {
@@ -385,19 +385,19 @@ BOOST_AUTO_TEST_CASE(groupAddProjective) {
     constexpr VestaField  ey("01d858f8d8cbea25bc870538280467c2ca440be332b2e33860552b61476160a0");
     constexpr VestaField  fx("20902e52296c05a0a09ef0150af8bafe836cb1f934f0325abc1afbebc93c09c8");
     constexpr VestaField  fy("3e27a707273415da4378fac7d7fb983d58028d18d6e1c5a52bf1bfbfb89e9f61");
-    PallasGroupProjective a(ax, ay, PallasField(1));
-    PallasGroupProjective b(bx, by, PallasField(1));
-    PallasGroupProjective c(cx, cy, PallasField(1));
-    VestaGroupProjective  d(dx, dy, VestaField(1));
-    VestaGroupProjective  e(ex, ey, VestaField(1));
-    VestaGroupProjective  f(fx, fy, VestaField(1));
+    PallasGroupProjective a(ax, ay);
+    PallasGroupProjective b(bx, by);
+    PallasGroupProjective c(cx, cy);
+    VestaGroupProjective  d(dx, dy);
+    VestaGroupProjective  e(ex, ey);
+    VestaGroupProjective  f(fx, fy);
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
     BOOST_TEST(e == d + d);
-    BOOST_TEST(VestaGroupProjective() == e + f);
-    BOOST_TEST(c == PallasGroupProjective() + c);
-    BOOST_TEST(c == c + PallasGroupProjective());
-    BOOST_TEST(VestaGroupProjective() == VestaGroupProjective() + VestaGroupProjective());
+    BOOST_TEST(VestaGroupProjective::additive_identity() == e + f);
+    BOOST_TEST(c == PallasGroupProjective::additive_identity() + c);
+    BOOST_TEST(c == c + PallasGroupProjective::additive_identity());
+    BOOST_TEST(VestaGroupProjective::additive_identity() == VestaGroupProjective::additive_identity() + VestaGroupProjective::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupMulProjective) {
@@ -405,14 +405,14 @@ BOOST_AUTO_TEST_CASE(groupMulProjective) {
     constexpr PallasField ay("1b01d848ea1769e4e319244446ceebeab80d1687ecd75e1191f8c158a02aaec6");
     constexpr PallasField cx("3ae71da7c530d0bbb097cc6b688bb849d1ee146e167637e27486eb874a015ded");
     constexpr PallasField cy("101f7a91b0e870b0626c7234eb0024120b66bd06109e55f892fdd00bd5192419");
-    constexpr PallasGroupProjective a(ax, ay, PallasField(1));
+    constexpr PallasGroupProjective a(ax, ay);
     constexpr VestaField   b("27d286de826c7abc89876e85217410148a67ed053968ac6d326ae99eeb11d7f1");
-    constexpr PallasGroupProjective c(cx, cy, PallasField(1));
+    constexpr PallasGroupProjective c(cx, cy);
     constexpr PallasField  d("08f41a93bb8c52e757404c04e2519c5f66b126176b9f7307de457606b2be8946");
     BOOST_TEST(c == a * b);
     BOOST_TEST(a == a * VestaField(1));
-    BOOST_TEST(PallasGroupProjective() == a * VestaField(0));
-    BOOST_TEST(VestaGroupProjective() == VestaGroupProjective() * d);
+    BOOST_TEST(PallasGroupProjective::additive_identity() == a * VestaField(0));
+    BOOST_TEST(VestaGroupProjective::additive_identity() == VestaGroupProjective::additive_identity() * d);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

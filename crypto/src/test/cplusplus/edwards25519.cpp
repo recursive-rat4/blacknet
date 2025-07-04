@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(groupNegAffine) {
     Edwards25519GroupAffine a(ax, ay);
     Edwards25519GroupAffine b(bx, by);
     BOOST_TEST(b == -a);
-    BOOST_TEST(Edwards25519GroupAffine() == -Edwards25519GroupAffine());
+    BOOST_TEST(Edwards25519GroupAffine::additive_identity() == -Edwards25519GroupAffine::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupSubAffine) {
@@ -124,10 +124,10 @@ BOOST_AUTO_TEST_CASE(groupSubAffine) {
     Edwards25519GroupAffine d(dx, dy);
     BOOST_TEST(c == a - b);
     BOOST_TEST(c == -b + a);
-    BOOST_TEST(Edwards25519GroupAffine() == d - d);
-    BOOST_TEST(-c == Edwards25519GroupAffine() - c);
-    BOOST_TEST(c == c - Edwards25519GroupAffine());
-    BOOST_TEST(Edwards25519GroupAffine() == Edwards25519GroupAffine() - Edwards25519GroupAffine());
+    BOOST_TEST(Edwards25519GroupAffine::additive_identity() == d - d);
+    BOOST_TEST(-c == Edwards25519GroupAffine::additive_identity() - c);
+    BOOST_TEST(c == c - Edwards25519GroupAffine::additive_identity());
+    BOOST_TEST(Edwards25519GroupAffine::additive_identity() == Edwards25519GroupAffine::additive_identity() - Edwards25519GroupAffine::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupAddAffine) {
@@ -152,10 +152,10 @@ BOOST_AUTO_TEST_CASE(groupAddAffine) {
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
     BOOST_TEST(e == d + d);
-    BOOST_TEST(Edwards25519GroupAffine() == e + f);
-    BOOST_TEST(c == Edwards25519GroupAffine() + c);
-    BOOST_TEST(c == c + Edwards25519GroupAffine());
-    BOOST_TEST(Edwards25519GroupAffine() == Edwards25519GroupAffine() + Edwards25519GroupAffine());
+    BOOST_TEST(Edwards25519GroupAffine::additive_identity() == e + f);
+    BOOST_TEST(c == Edwards25519GroupAffine::additive_identity() + c);
+    BOOST_TEST(c == c + Edwards25519GroupAffine::additive_identity());
+    BOOST_TEST(Edwards25519GroupAffine::additive_identity() == Edwards25519GroupAffine::additive_identity() + Edwards25519GroupAffine::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupMulAffine) {
@@ -169,8 +169,8 @@ BOOST_AUTO_TEST_CASE(groupMulAffine) {
     constexpr Edwards25519GroupAffine c(cx, cy);
     BOOST_TEST(c == a * b);
     BOOST_TEST(a == a * UInt256(1));
-    BOOST_TEST(Edwards25519GroupAffine() == a * UInt256(0));
-    BOOST_TEST(Edwards25519GroupAffine() == Edwards25519GroupAffine() * d);
+    BOOST_TEST(Edwards25519GroupAffine::additive_identity() == a * UInt256(0));
+    BOOST_TEST(Edwards25519GroupAffine::additive_identity() == Edwards25519GroupAffine::additive_identity() * d);
 }
 
 BOOST_AUTO_TEST_CASE(groupNegExtended) {
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(groupNegExtended) {
     Edwards25519GroupExtended a(ax, ay);
     Edwards25519GroupExtended b(bx, by);
     BOOST_TEST(b == -a);
-    BOOST_TEST(Edwards25519GroupExtended() == -Edwards25519GroupExtended());
+    BOOST_TEST(Edwards25519GroupExtended::additive_identity() == -Edwards25519GroupExtended::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupSubExtended) {
@@ -199,10 +199,10 @@ BOOST_AUTO_TEST_CASE(groupSubExtended) {
     Edwards25519GroupExtended d(dx, dy);
     BOOST_TEST(c == a - b);
     BOOST_TEST(c == -b + a);
-    BOOST_TEST(Edwards25519GroupExtended() == d - d);
-    BOOST_TEST(-c == Edwards25519GroupExtended() - c);
-    BOOST_TEST(c == c - Edwards25519GroupExtended());
-    BOOST_TEST(Edwards25519GroupExtended() == Edwards25519GroupExtended() - Edwards25519GroupExtended());
+    BOOST_TEST(Edwards25519GroupExtended::additive_identity() == d - d);
+    BOOST_TEST(-c == Edwards25519GroupExtended::additive_identity() - c);
+    BOOST_TEST(c == c - Edwards25519GroupExtended::additive_identity());
+    BOOST_TEST(Edwards25519GroupExtended::additive_identity() == Edwards25519GroupExtended::additive_identity() - Edwards25519GroupExtended::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupAddExtended) {
@@ -227,10 +227,10 @@ BOOST_AUTO_TEST_CASE(groupAddExtended) {
     BOOST_TEST(c == a + b);
     BOOST_TEST(c == b + a);
     BOOST_TEST(e == d + d);
-    BOOST_TEST(Edwards25519GroupExtended() == e + f);
-    BOOST_TEST(c == Edwards25519GroupExtended() + c);
-    BOOST_TEST(c == c + Edwards25519GroupExtended());
-    BOOST_TEST(Edwards25519GroupExtended() == Edwards25519GroupExtended() + Edwards25519GroupExtended());
+    BOOST_TEST(Edwards25519GroupExtended::additive_identity() == e + f);
+    BOOST_TEST(c == Edwards25519GroupExtended::additive_identity() + c);
+    BOOST_TEST(c == c + Edwards25519GroupExtended::additive_identity());
+    BOOST_TEST(Edwards25519GroupExtended::additive_identity() == Edwards25519GroupExtended::additive_identity() + Edwards25519GroupExtended::additive_identity());
 }
 
 BOOST_AUTO_TEST_CASE(groupMulExtended) {
@@ -244,8 +244,8 @@ BOOST_AUTO_TEST_CASE(groupMulExtended) {
     constexpr Edwards25519GroupExtended c(cx, cy);
     BOOST_TEST(c == a * b);
     BOOST_TEST(a == a * UInt256(1));
-    BOOST_TEST(Edwards25519GroupExtended() == a * UInt256(0));
-    BOOST_TEST(Edwards25519GroupExtended() == Edwards25519GroupExtended() * d);
+    BOOST_TEST(Edwards25519GroupExtended::additive_identity() == a * UInt256(0));
+    BOOST_TEST(Edwards25519GroupExtended::additive_identity() == Edwards25519GroupExtended::additive_identity() * d);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

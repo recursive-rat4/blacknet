@@ -37,9 +37,9 @@ class TwistedEdwardsGroupExtended {
 public:
     typedef BF Base;
     typedef SR Scalar;
-    consteval static TwistedEdwardsGroupExtended additive_identity() { return TwistedEdwardsGroupExtended(); }
+    consteval static TwistedEdwardsGroupExtended additive_identity() { return TwistedEdwardsGroupExtended(0, 1, 1, 0); }
 
-    consteval TwistedEdwardsGroupExtended() : x(0), y(1), z(1), t(0) {}
+    consteval TwistedEdwardsGroupExtended() = default;
     constexpr TwistedEdwardsGroupExtended(const BF& x, const BF& y) : x{x}, y(y), z(BF(1)), t(x * y) {}
     constexpr TwistedEdwardsGroupExtended(const BF& x, const BF& y, const BF& z, const BF& t) : x{x}, y(y), z(z), t(t) {}
 
@@ -132,6 +132,15 @@ public:
 
     constexpr TwistedEdwardsGroupExtended& operator *= (const Scalar& other) {
         return *this = *this * other;
+    }
+
+    constexpr TwistedEdwardsGroupExtended scale() const {
+        if (auto maybeInv = z.invert()) {
+            BF& a = *maybeInv;
+            return TwistedEdwardsGroupExtended(x * a, y * a, BF(1), t * a);
+        } else {
+            throw ArithmeticException("Not a point on the curve");
+        }
     }
 
     friend std::ostream& operator << (std::ostream& out, const TwistedEdwardsGroupExtended& val)

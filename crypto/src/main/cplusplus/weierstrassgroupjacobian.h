@@ -36,10 +36,11 @@ class WeierstrassGroupJacobian {
 public:
     typedef BF Base;
     typedef SF Scalar;
-    consteval static WeierstrassGroupJacobian additive_identity() { return WeierstrassGroupJacobian(); }
+    consteval static WeierstrassGroupJacobian additive_identity() { return WeierstrassGroupJacobian(0, 0, 0); }
 
     consteval WeierstrassGroupJacobian() = default;
-    constexpr WeierstrassGroupJacobian(const BF& x, const BF& y, const BF& z) : x{x}, y(y), z(z) {}
+    constexpr WeierstrassGroupJacobian(const BF& x, const BF& y) : x(x), y(y), z(BF(1)) {}
+    constexpr WeierstrassGroupJacobian(const BF& x, const BF& y, const BF& z) : x(x), y(y), z(z) {}
 
     constexpr bool operator == (const WeierstrassGroupJacobian& other) const {
         bool i1 = z == BF(0);
@@ -58,16 +59,16 @@ public:
     }
 
     constexpr WeierstrassGroupJacobian operator - () const {
-        if (*this != WeierstrassGroupJacobian())
+        if (*this != additive_identity())
             return WeierstrassGroupJacobian(x, -y, z);
         else
-            return WeierstrassGroupJacobian();
+            return additive_identity();
     }
 
     constexpr WeierstrassGroupJacobian operator + (const WeierstrassGroupJacobian& other) const {
-        if (*this == WeierstrassGroupJacobian())
+        if (*this == additive_identity())
             return other;
-        if (other == WeierstrassGroupJacobian())
+        if (other == additive_identity())
             return *this;
 
         BF z1z1(z.square());
@@ -92,13 +93,13 @@ public:
         } else if (v1 == v2) {
             return douple();
         } else {
-            return WeierstrassGroupJacobian();
+            return additive_identity();
         }
     }
 
     constexpr WeierstrassGroupJacobian douple() const {
-        if (*this == WeierstrassGroupJacobian())
-            return WeierstrassGroupJacobian();
+        if (*this == additive_identity())
+            return additive_identity();
         // dbl-1986-cc
         BF xx(x.square());
         BF yy(y.square());
@@ -123,9 +124,9 @@ public:
 #ifdef BLACKNET_OPTIMIZE
         return *this + -other;
 #else
-        if (*this == WeierstrassGroupJacobian())
+        if (*this == additive_identity())
             return -other;
-        if (other == WeierstrassGroupJacobian())
+        if (other == additive_identity())
             return *this;
 
         BF z1z1(z.square());
@@ -150,7 +151,7 @@ public:
         } else if (v1 == -v2) {
             return douple();
         } else {
-            return WeierstrassGroupJacobian();
+            return additive_identity();
         }
 #endif
     }
@@ -174,13 +175,13 @@ public:
             BF aaa(a * aa);
             return WeierstrassGroupJacobian(x * aa, y * aaa, BF(1));
         } else {
-            return WeierstrassGroupJacobian();
+            return additive_identity();
         }
     }
 
     friend std::ostream& operator << (std::ostream& out, const WeierstrassGroupJacobian& val)
     {
-        if (val != WeierstrassGroupJacobian())
+        if (val != additive_identity())
             out << '(' << val.x << ", " << val.y << ", " << val.z << ')';
         else
             out << "Infinity";
@@ -202,7 +203,7 @@ public:
                 BF& y = *maybeY;
                 if (ySign)
                     y = -y;
-                return WeierstrassGroupJacobian(x, y, BF(1));
+                return WeierstrassGroupJacobian(x, y);
             }
         }
     }
