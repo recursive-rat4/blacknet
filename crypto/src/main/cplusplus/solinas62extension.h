@@ -116,15 +116,10 @@ struct Solinas62RingDegree64NTTParams {
 
     constexpr static const std::size_t N = 64;
 
-    using Convolution = NTT<Z, N>::Convolution;
+    using NTT = NumberTheoreticTransform<Z, N>;
+    using Convolution = NTT::Convolution;
     constexpr static void convolute(std::array<Z, N>& r, const std::array<Z, N>& a, const std::array<Z, N>& b) {
         Convolution::call(r, a, b);
-    }
-    constexpr static void toForm(std::array<Z, N>& a) {
-        NTT<Z, N>::cooley_tukey(a);
-    }
-    constexpr static void fromForm(std::array<Z, N>& a) {
-        NTT<Z, N>::gentleman_sande(a);
     }
 };
 

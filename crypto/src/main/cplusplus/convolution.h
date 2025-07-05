@@ -38,6 +38,24 @@ struct Negacyclic {
             }
         }
     }
+
+template<typename Builder>
+requires(std::same_as<Z, typename Builder::R>)
+struct Circuit {
+    using Variable = Builder::Variable;
+    using LinearCombination = Builder::LinearCombination;
+
+    Builder* circuit;
+
+    constexpr Circuit(Builder* circuit) : circuit(circuit) {}
+    // Not implemented
+};
+
+template<std::size_t Degree>
+struct Assigner {
+    std::vector<Z>* assigment;
+    // Not implemented
+};
 };
 
 template<typename Z, std::size_t N, std::size_t M>

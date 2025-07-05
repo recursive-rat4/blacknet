@@ -71,6 +71,14 @@ public:
         return Params::N;
     }
 
+    constexpr Z& operator [] (std::size_t i) {
+        return coefficients[i];
+    }
+
+    constexpr const Z& operator [] (std::size_t i) const {
+        return coefficients[i];
+    }
+
     constexpr PolynomialRing& operator += (const PolynomialRing& other) {
         for (std::size_t i = 0; i < N; ++i)
             coefficients[i] += other.coefficients[i];
@@ -315,6 +323,8 @@ struct Assigner {
     PolynomialRing polynomial;
     std::vector<Z>* assigment;
 
+    constexpr Assigner(std::vector<Z>* assigment)
+        : polynomial(), assigment(assigment) {}
     constexpr Assigner(const PolynomialRing& polynomial, std::vector<Z>* assigment)
         : polynomial(polynomial), assigment(assigment) {}
 

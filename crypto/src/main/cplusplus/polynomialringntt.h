@@ -57,7 +57,7 @@ public:
 
     consteval PolynomialRingNTT() noexcept = default;
     constexpr PolynomialRingNTT(const Isomorphism& e) : spectrum(e.coefficients) {
-        Params::toForm(spectrum);
+        Params::NTT::cooley_tukey(spectrum);
     }
     constexpr PolynomialRingNTT(const Z& e) {
         for (std::size_t i = 0; i < N; ++i) {
@@ -70,7 +70,7 @@ public:
     constexpr PolynomialRingNTT(std::initializer_list<Z> init) {
         std::ranges::copy(init, spectrum.begin());
         std::fill_n(spectrum.begin() + init.size(), N - init.size(), Z(0));
-        Params::toForm(spectrum);
+        Params::NTT::cooley_tukey(spectrum);
     }
 
     constexpr bool operator == (const PolynomialRingNTT&) const = default;
@@ -81,6 +81,14 @@ public:
 
     consteval static std::size_t dimension() noexcept {
         return Params::N;
+    }
+
+    constexpr Z& operator [] (std::size_t i) {
+        return spectrum[i];
+    }
+
+    constexpr const Z& operator [] (std::size_t i) const {
+        return spectrum[i];
     }
 
     constexpr PolynomialRingNTT& operator += (const PolynomialRingNTT& other) {
@@ -198,7 +206,7 @@ public:
     constexpr Isomorphism isomorph() const {
         Isomorphism t;
         t.coefficients = spectrum;
-        Params::fromForm(t.coefficients);
+        Params::NTT::gentleman_sande(t.coefficients);
         return t;
     }
 
@@ -275,17 +283,25 @@ struct Circuit {
     using Variable = Builder::Variable;
     using LinearCombination = Builder::LinearCombination;
     using Convolution = Params::Convolution::template Circuit<Builder>;
+    using IsomorphismCircuit = Isomorphism::template Circuit<Builder>;
+    using NTT = Params::NTT::template Circuit<Builder>;
 
     Builder* circuit;
     Convolution convolution;
+    NTT ntt;
     std::array<LinearCombination, N> spectrum;
 
     constexpr Circuit(Builder* circuit)
-        : circuit(circuit), convolution(circuit), spectrum() {}
+        : circuit(circuit), convolution(circuit), ntt(circuit), spectrum() {}
     constexpr Circuit(Builder* circuit, Variable::Type type)
-        : circuit(circuit), convolution(circuit)
+        : circuit(circuit), convolution(circuit), ntt(circuit)
     {
         std::ranges::generate(spectrum, [&]{ return circuit->variable(type); });
+    }
+    constexpr Circuit(const IsomorphismCircuit& e)
+        : circuit(e.circuit), convolution(e.circuit), ntt(e.circuit), spectrum(e.coefficients)
+    {
+        ntt.cooley_tukey(spectrum);
     }
 
     constexpr LinearCombination& operator [] (std::size_t i) {
@@ -322,11 +338,14 @@ struct Circuit {
 
 template<std::size_t Degree>
 struct Assigner {
-    using Convolution = Params::Convolution:: template Assigner<Degree>;
+    using Convolution = Params::Convolution::template Assigner<Degree>;
+    using IsomorphismAssigner = Isomorphism::template Assigner<Degree>;
 
     PolynomialRingNTT polynomial;
     std::vector<Z>* assigment;
 
+    constexpr Assigner(const IsomorphismAssigner& e)
+        : polynomial(e.polynomial), assigment(e.assigment) {}
     constexpr Assigner(const PolynomialRingNTT& polynomial, std::vector<Z>* assigment)
         : polynomial(polynomial), assigment(assigment) {}
 

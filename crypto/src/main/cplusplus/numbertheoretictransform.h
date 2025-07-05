@@ -27,7 +27,7 @@ namespace blacknet::crypto {
 // https://arxiv.org/abs/2211.13546
 
 template<typename Z, std::size_t N>
-struct NTT {
+struct NumberTheoreticTransform {
     constexpr static const std::size_t inertia = N / Z::twiddles();
 
     constexpr static void cooley_tukey(std::array<Z, N>& a) {
@@ -233,11 +233,11 @@ struct Assigner {
     std::vector<Z>* assigment;
 
     constexpr void cooley_tukey(std::array<Z, N>& a) const {
-        return NTT::cooley_tukey(a);
+        return NumberTheoreticTransform::cooley_tukey(a);
     }
 
     constexpr void gentleman_sande(std::array<Z, N>& a) const {
-        return NTT::gentleman_sande(a);
+        return NumberTheoreticTransform::gentleman_sande(a);
     }
 };
 

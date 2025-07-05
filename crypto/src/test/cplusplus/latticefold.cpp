@@ -139,15 +139,21 @@ using LatticeFold = LatticeFold<Z, F, R, RIso>;
 using Duplex = Poseidon2LM62Sponge<{64, 65, 66, 67}>;
 
 BOOST_AUTO_TEST_CASE(Distributions) {
+    Duplex duplex_plain;
+    LatticeFold::Distribution<Duplex> distribution_plain;
+    RIso a_plain = distribution_plain(duplex_plain);
+
     using Builder = CircuitBuilder<F, 2>;
     Builder circuit;
     using DuplexCircuit = Duplex::Circuit<Builder>;
     DuplexCircuit duplex_circuit(&circuit);
     using DistributionCircuit = LatticeFold::Distribution<Duplex>::Circuit<Builder>;
     DistributionCircuit distribution_circuit(&circuit);
-    using VectorDenseCircuit = VectorDense<F>::Circuit<Builder>;
-    VectorDenseCircuit a_circuit(&circuit, LatticeFold::D);
-    std::ranges::generate(a_circuit, [&] { return distribution_circuit(duplex_circuit); });
+    using RIsoCircuit = RIso::Circuit<Builder>;
+    RIsoCircuit a_circuit(&circuit);
+    a_circuit = distribution_circuit(duplex_circuit);
+    for (std::size_t i = 0; i < RIso::dimension(); ++i)
+        circuit(a_plain[i] == a_circuit[i]);
 
     CustomizableConstraintSystem<F> ccs(circuit.ccs());
     VectorDense<F> z = ccs.assigment();
@@ -156,8 +162,9 @@ BOOST_AUTO_TEST_CASE(Distributions) {
     DuplexAssigner duplex_assigner(&z.elements);
     using DistributionAssigner = LatticeFold::Distribution<Duplex>::Assigner<Builder::degree()>;
     DistributionAssigner distribution_assigner(&z.elements);
-    std::array<F, LatticeFold::D> a_assigned;
-    std::ranges::generate(a_assigned, [&] { return distribution_assigner(duplex_assigner); });
+    using RIsoAssigner = RIso::Assigner<Builder::degree()>;
+    RIsoAssigner a_assigner = distribution_assigner(duplex_assigner);
+    BOOST_TEST(a_plain == a_assigner.polynomial);
     BOOST_TEST(ccs.isSatisfied(z));
 }
 

@@ -18,6 +18,7 @@
 #ifndef BLACKNET_CRYPTO_LATTICEFOLD_H
 #define BLACKNET_CRYPTO_LATTICEFOLD_H
 
+#include <algorithm>
 #include <concepts>
 
 #include "ajtaicommitment.h"
@@ -71,7 +72,7 @@ struct LatticeFold {
 
     template<typename Sponge>
     struct Distribution {
-        using result_type = Fq;
+        using result_type = RqIso;
 
         BinaryUniformDistributionSponge<Sponge> bud;
 
@@ -82,7 +83,11 @@ struct LatticeFold {
         }
 
         constexpr result_type operator () (Sponge& sponge) {
-            return bud(sponge).douple() - bud(sponge);
+            Rq r;
+            std::ranges::generate(r.coefficients, [&] {
+                return bud(sponge).douple() - bud(sponge);
+            });
+            return r;
         }
 
     template<typename Builder>
@@ -91,6 +96,8 @@ struct LatticeFold {
         using Variable = Builder::Variable;
         using LinearCombination = Builder::LinearCombination;
         using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Circuit<Builder>;
+        using RqCircuit = Rq::template Circuit<Builder>;
+        using RqIsoCircuit = RqIso::template Circuit<Builder>;
         using SpongeCircuit = Sponge::template Circuit<Builder>;
 
         Builder* circuit;
@@ -102,14 +109,20 @@ struct LatticeFold {
             bud.reset();
         }
 
-        constexpr LinearCombination operator () (SpongeCircuit& sponge) {
-            return bud(sponge) * Fq(2) - bud(sponge);
+        constexpr RqIsoCircuit operator () (SpongeCircuit& sponge) {
+            RqCircuit r(circuit);
+            std::ranges::generate(r.coefficients, [&] {
+                return bud(sponge) * Fq(2) - bud(sponge);
+            });
+            return r;
         }
     };
 
     template<std::size_t Degree>
     struct Assigner {
         using BinaryUniformDistribution = BinaryUniformDistributionSponge<Sponge>::template Assigner<Degree>;
+        using RqAssigner = Rq::template Assigner<Degree>;
+        using RqIsoAssigner = RqIso::template Assigner<Degree>;
         using SpongeAssigner = Sponge::template Assigner<Degree>;
 
         BinaryUniformDistribution bud;
@@ -121,8 +134,12 @@ struct LatticeFold {
             bud.reset();
         }
 
-        constexpr result_type operator () (SpongeAssigner& sponge) {
-            return bud(sponge).douple() - bud(sponge);
+        constexpr RqIsoAssigner operator () (SpongeAssigner& sponge) {
+            RqAssigner r(assigment);
+            std::ranges::generate(r.polynomial.coefficients, [&] {
+                return bud(sponge).douple() - bud(sponge);
+            });
+            return r;
         }
     };
 
