@@ -1,6 +1,5 @@
-#!/bin/false
 #
-# Copyright (c) 2020-2025 Pavel Vasin
+# Copyright (c) 2025 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -16,16 +15,21 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-on:
-  push:
-    branches:
-      - '**'
-jobs:
-  test-on-mac:
-    runs-on: macos-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo build
-      - run: cargo test
+[workspace]
+resolver = "3"
+members = [
+    "crypto",
+]
+
+[workspace.package]
+version = "0.3.0"
+authors = ["Blacknet Team"]
+edition = "2024"
+description = "Decentralized peer-to-peer network that secures a public zero-knowledge platform with the proof of stake consensus"
+documentation = "https://blacknet.ninja/documentation.html"
+readme = "README.md"
+homepage = "https://blacknet.ninja"
+repository = "https://gitlab.com:blacknet-ninja/blacknet"
+license = "LGPL-3.0-or-later"
+keywords = ["blacknet", "decentralized", "zero-knowledge", "finance", "p2p"]
+categories = ["cryptography::cryptocurrencies"]
