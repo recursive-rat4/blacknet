@@ -15,5 +15,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod bigint;
-pub mod magma;
+use core::ops::{Add, AddAssign, Mul, MulAssign};
+
+#[rustfmt::skip]
+pub trait AdditiveMagma
+    : Copy
+    + Eq
+    + Add<Output = Self>
+    + AddAssign
+{
+    fn double(self) -> Self;
+}
+
+#[rustfmt::skip]
+pub trait MultiplicativeMagma
+    : Copy
+    + Eq
+    + Mul<Output = Self>
+    + MulAssign
+{
+    fn square(self) -> Self;
+}
+
+pub trait Inv {
+    type Output;
+
+    fn inv(self) -> Self::Output;
+}
