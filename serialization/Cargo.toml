@@ -1,6 +1,5 @@
-#!/bin/false
 #
-# Copyright (c) 2020-2025 Pavel Vasin
+# Copyright (c) 2025 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -16,23 +15,27 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-on:
-  push:
-    branches:
-      - '**'
-jobs:
-  test-on-mac:
-    runs-on: macos-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - uses: actions/checkout@v4
-      - run: cargo build
-      - run: cargo test
+[package]
+name = "blacknet-serialization"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description.workspace = true
+documentation.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+
+[lib]
+doctest = false
+path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "bbf"
+path = "src/test/rust/bbf.rs"

@@ -15,4 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod bigint;
+use crate::error::Result;
+
+pub trait Encoder {
+    fn encode_u8(&mut self, v: u8) -> Result<()>;
+    fn encode_u16(&mut self, v: u16) -> Result<()>;
+    fn encode_u32(&mut self, v: u32) -> Result<()>;
+    fn encode_u64(&mut self, v: u64) -> Result<()>;
+
+    fn encode_f32(&mut self, v: f32) -> Result<()>;
+    fn encode_f64(&mut self, v: f64) -> Result<()>;
+
+    fn encode_bytes(&mut self, v: &[u8]) -> Result<()>;
+
+    fn encode_var_int(&mut self, v: u32) -> Result<()>;
+}

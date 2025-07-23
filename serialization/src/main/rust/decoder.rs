@@ -15,4 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod bigint;
+use crate::error::Result;
+
+pub trait Decoder {
+    fn decode_u8(&mut self) -> Result<u8>;
+    fn decode_u16(&mut self) -> Result<u16>;
+    fn decode_u32(&mut self) -> Result<u32>;
+    fn decode_u64(&mut self) -> Result<u64>;
+
+    fn decode_f32(&mut self) -> Result<f32>;
+    fn decode_f64(&mut self) -> Result<f64>;
+
+    fn decode_bytes(&mut self, len: u32) -> Result<Vec<u8>>;
+
+    fn decode_var_int(&mut self) -> Result<u32>;
+}
