@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub mod abeliangroup;
 pub mod bigint;
 pub mod group;
 pub mod magma;
