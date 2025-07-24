@@ -15,7 +15,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod bigint;
-pub mod magma;
-pub mod monoid;
-pub mod semigroup;
+use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+
+#[rustfmt::skip]
+pub trait AdditiveMonoid
+    : Default
+    + AdditiveSemigroup
+{
+    const IDENTITY: Self;
+}
+
+impl<M: AdditiveMonoid> AdditiveSemigroup for M {
+    const LEFT_IDENTITY: Self = M::IDENTITY;
+    const RIGHT_IDENTITY: Self = M::IDENTITY;
+}
+
+#[rustfmt::skip]
+pub trait MultiplicativeMonoid
+    : Default
+    + MultiplicativeSemigroup
+{
+    const IDENTITY: Self;
+}
+
+impl<M: MultiplicativeMonoid> MultiplicativeSemigroup for M {
+    const LEFT_IDENTITY: Self = M::IDENTITY;
+    const RIGHT_IDENTITY: Self = M::IDENTITY;
+}
