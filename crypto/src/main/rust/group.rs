@@ -15,8 +15,40 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod bigint;
-pub mod group;
-pub mod magma;
-pub mod monoid;
-pub mod semigroup;
+use crate::magma::Inv;
+use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use core::ops::{Div, DivAssign, Neg, Sub, SubAssign};
+
+#[rustfmt::skip]
+pub trait AdditiveGroup
+    : AdditiveMonoid
+    + Neg<Output = Self>
+    + Sub<Output = Self>
+    + SubAssign
+{
+}
+
+#[rustfmt::skip]
+impl<T
+    : AdditiveMonoid
+    + Neg<Output = Self>
+    + Sub<Output = Self>
+    + SubAssign
+> AdditiveGroup for T {}
+
+#[rustfmt::skip]
+pub trait MultiplicativeGroup
+    : MultiplicativeMonoid
+    + Inv<Output = Self>
+    + Div<Output = Self>
+    + DivAssign
+{
+}
+
+#[rustfmt::skip]
+impl<T
+    : MultiplicativeMonoid
+    + Inv<Output = Self>
+    + Div<Output = Self>
+    + DivAssign
+> MultiplicativeGroup for T {}
