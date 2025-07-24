@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,11 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod abeliangroup;
-pub mod bigint;
-pub mod field;
-pub mod group;
-pub mod magma;
-pub mod monoid;
-pub mod ring;
-pub mod semigroup;
+use crate::ring::{CommutativeRing, DivisionRing, IntegerRing};
+use core::ops::Div;
+
+#[rustfmt::skip]
+pub trait Field
+    : CommutativeRing
+    + DivisionRing
+    + Div<Output = Option<Self>>
+{
+    const ONE: Self = Self::UNITY;
+}
+
+#[rustfmt::skip]
+pub trait PrimeField
+    : Field
+    + IntegerRing
+{
+}
+
+impl<F: PrimeField> Field for F {}
