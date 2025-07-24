@@ -17,3 +17,4 @@
 
 pub mod bigint;
 pub mod magma;
+pub mod semigroup;
