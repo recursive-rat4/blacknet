@@ -19,11 +19,17 @@
 resolver = "3"
 members = [
     "crypto",
+    "network",
     "serialization",
 ]
 
 [workspace.dependencies]
+data-encoding = { version = "2.9.0" }
+data-encoding-macro = { version = "0.1.18" }
 serde = { version = "1.0.219", features = ["derive"] }
+sha2 = { version = "0.10.9" }
+sha3 = { version = "0.10.8" }
+tokio = { version = "1.46.1", features = ["net", "rt-multi-thread"] }
 
 [workspace.package]
 version = "0.3.0"
