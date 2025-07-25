@@ -17,7 +17,7 @@
 
 use crate::decoder::Decoder;
 use crate::error::{Error, Result};
-use serde::de::{self, DeserializeSeed, SeqAccess, Visitor};
+use serde::de::{self, DeserializeSeed, EnumAccess, SeqAccess, VariantAccess, Visitor};
 
 pub struct Deserializer<D: Decoder> {
     decoder: D,
@@ -177,13 +177,14 @@ impl<'de, D: Decoder> de::Deserializer<'de> for &mut Deserializer<D> {
         self,
         _name: &'static str,
         _variants: &'static [&'static str],
-        _visitor: V,
+        visitor: V,
     ) -> Result<V::Value> {
-        todo!("Enum");
+        visitor.visit_enum(Enum::new(self))
     }
 
-    fn deserialize_identifier<V: Visitor<'de>>(self, _visitor: V) -> Result<V::Value> {
-        Err(Error::Message("Unsupported".to_string()))
+    fn deserialize_identifier<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
+        let variant = self.decoder.decode_var_int()?;
+        visitor.visit_u32(variant)
     }
 
     fn deserialize_ignored_any<V: Visitor<'de>>(self, _visitor: V) -> Result<V::Value> {
@@ -213,5 +214,50 @@ impl<'de, 'a, D: Decoder> SeqAccess<'de> for Sequence<'a, D> {
         } else {
             Ok(None)
         }
+    }
+}
+
+struct Enum<'a, D: Decoder> {
+    de: &'a mut Deserializer<D>,
+}
+
+impl<'a, D: Decoder> Enum<'a, D> {
+    fn new(de: &'a mut Deserializer<D>) -> Self {
+        Enum { de }
+    }
+}
+
+impl<'de, 'a, D: Decoder> EnumAccess<'de> for Enum<'a, D> {
+    type Error = Error;
+    type Variant = Self;
+
+    fn variant_seed<V: DeserializeSeed<'de>>(self, seed: V) -> Result<(V::Value, Self::Variant)> {
+        let variant = seed.deserialize(&mut *self.de)?;
+        Ok((variant, self))
+    }
+}
+
+impl<'de, 'a, D: Decoder> VariantAccess<'de> for Enum<'a, D> {
+    type Error = Error;
+
+    fn unit_variant(self) -> Result<()> {
+        Ok(())
+    }
+
+    fn newtype_variant_seed<T: DeserializeSeed<'de>>(self, seed: T) -> Result<T::Value> {
+        seed.deserialize(self.de)
+    }
+
+    fn tuple_variant<V: Visitor<'de>>(self, len: usize, visitor: V) -> Result<V::Value> {
+        de::Deserializer::deserialize_tuple(self.de, len, visitor)
+    }
+
+    fn struct_variant<V: Visitor<'de>>(
+        self,
+        fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value> {
+        let len = fields.len() as u32;
+        visitor.visit_seq(Sequence::new(self.de, len))
     }
 }

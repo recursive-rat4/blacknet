@@ -15,9 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-//use blacknet_serialization::format::{from_bytes, to_bytes, to_size};
-//use serde::{Deserialize, Serialize};
 use blacknet_network::endpoint::Endpoint;
+use blacknet_serialization::format::{from_bytes, to_bytes, to_size};
 
 #[test]
 fn ipv4() {
@@ -108,4 +107,24 @@ fn compare() {
     assert_ne!(b, c);
     assert_eq!(c, d);
     assert_ne!(d, a);
+}
+
+#[test]
+fn serialization() {
+    let endpoint = Endpoint::parse("127.0.0.4", 258).unwrap();
+    #[rustfmt::skip]
+    let bytes: [u8; 7] = [
+        0x80,
+        0x01, 0x02,
+        0x7F, 0x00, 0x00, 0x04
+    ];
+
+    let deserialized = from_bytes::<Endpoint>(&bytes, false).unwrap();
+    assert_eq!(deserialized, endpoint);
+
+    let size = to_size(&endpoint).unwrap();
+    assert_eq!(size, bytes.len());
+
+    let serialized = to_bytes(&endpoint).unwrap();
+    assert_eq!(serialized, bytes);
 }

@@ -30,7 +30,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-serde = { workspace = true }
+serde.workspace = true
 
 [lib]
 doctest = false

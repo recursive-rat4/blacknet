@@ -46,6 +46,7 @@ version = "0.3.0"
 name = "blacknet-network"
 version = "0.3.0"
 dependencies = [
+ "blacknet-serialization",
  "data-encoding",
  "data-encoding-macro",
  "serde",
