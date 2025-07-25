@@ -38,5 +38,9 @@ name = "bigint"
 path = "src/test/rust/bigint.rs"
 
 [[test]]
+name = "module"
+path = "src/test/rust/module.rs"
+
+[[test]]
 name = "z2"
 path = "src/test/rust/z2.rs"

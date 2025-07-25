@@ -15,13 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod abeliangroup;
-pub mod bigint;
-pub mod field;
-pub mod group;
-pub mod magma;
-pub mod module;
-pub mod monoid;
-pub mod ring;
-pub mod semigroup;
-pub mod z2;
+use blacknet_crypto::module::FreeModule;
+use blacknet_crypto::ring::Ring;
+
+type R = blacknet_crypto::z2::Z2;
+type M = FreeModule<R, 2>;
+
+#[test]
+fn right() {
+    let r = R::new(3);
+    let s = R::new(5);
+    let x = M::from([7, 11].map(R::new));
+    let y = M::from([13, 17].map(R::new));
+
+    assert_eq!(x * r + y * r, (x + y) * r);
+    assert_eq!(x * r + x * s, x * (r + s));
+    assert_eq!((x * s) * r, x * (r * s));
+    assert_eq!(x, x * R::UNITY);
+}

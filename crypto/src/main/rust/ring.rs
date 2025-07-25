@@ -17,6 +17,7 @@
 
 use crate::abeliangroup::AdditiveAbelianGroup;
 use crate::magma::Inv;
+use crate::module::Module;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 
 #[rustfmt::skip]
@@ -36,7 +37,10 @@ pub trait CommutativeRing: Ring {}
 
 impl<Z: IntegerRing> CommutativeRing for Z {}
 
-pub trait CyclotomicRing: Ring {
+#[rustfmt::skip]
+pub trait CyclotomicRing<R: Ring, const N: usize>
+    : PolynomialRing<R, N>
+{
     fn conjugate(self) -> Self;
 
     const CYCLOTOMIC_INDEX: usize;
@@ -51,4 +55,12 @@ pub trait DivisionRing
 
 pub trait IntegerRing: Ring {
     const BITS: usize;
+}
+
+#[rustfmt::skip]
+pub trait PolynomialRing<R: Ring, const N: usize>
+    : Ring
+    + Module<R, N>
+{
+    fn constant_term(self) -> R;
 }

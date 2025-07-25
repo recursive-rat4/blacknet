@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::ring::{CommutativeRing, DivisionRing, IntegerRing};
+use crate::ring::{CommutativeRing, DivisionRing, IntegerRing, PolynomialRing};
 use core::ops::Div;
 
 #[rustfmt::skip]
@@ -35,3 +35,10 @@ pub trait PrimeField
 }
 
 impl<F: PrimeField> Field for F {}
+
+#[rustfmt::skip]
+pub trait AlgebraicExtension<F: Field, const N: usize>
+    : Field
+    + PolynomialRing<F, N>
+{
+}
