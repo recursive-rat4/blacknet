@@ -19,6 +19,7 @@
 resolver = "3"
 members = [
     "crypto",
+    "daemon",
     "network",
     "serialization",
 ]
