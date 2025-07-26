@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::bigint::UInt256;
+use blacknet_crypto::bigint::{UInt256, UInt512};
 use core::cmp::Ordering;
 
 #[test]
@@ -94,4 +94,25 @@ fn sub() {
     let d = UInt256::from_hex("3BAAE2A4884282F4362A441FAA554E83D0DCB78B99CD03E040C9AAE6127D4ECB");
     assert_eq!(a - b, c);
     assert_eq!(b - a, d);
+}
+
+#[test]
+fn mul() {
+    let a = UInt256::from_hex("00F97CF9ECB6C4F46539B01EE42D4E9A2492C11E609BDE89B73DE031C564E2D7");
+    let b = UInt256::from_hex("32192A679771050176C433E125E9389AA7185605C591D8201BA219EB7AAE6037");
+    let c = UInt512::from_hex(
+        "0030D2EF5819B091A74BE63C749C5ECE71995382110FE3BCFA03A0E4C26578B7452E2E03236EC2422C7EB89A069CA17D8C3F288A32A977CEF3154DC0E1DF5C31",
+    );
+    assert_eq!(a.mul(b), c);
+    assert_eq!(b.mul(a), c);
+}
+
+#[test]
+fn sqr() {
+    let a = UInt256::from_hex("6B3D316D1EEEEB1FF5A4A8F48B87F93B9C0C6CE0DE0AB366CD6901E304C7F7B9");
+    let b = UInt512::from_hex(
+        "2CEC35F1CF676AC395C6090AAD06AD8AA93B975F4EDB571C88FA5F7E1C416F3303186FE30B4BCA7D00B8357919AA2B42D7771EB3CC1FDB8E8A69A006D95483B1",
+    );
+    assert_eq!(a.mul(a), b);
+    assert_eq!(a.square(), b);
 }

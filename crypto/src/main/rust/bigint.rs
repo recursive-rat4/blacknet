@@ -18,7 +18,6 @@
 use core::array;
 use core::cmp::Ordering;
 use core::fmt;
-use core::iter::zip;
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
@@ -39,6 +38,76 @@ impl<const N: usize> BigInt<N> {
             }),
         }
     }
+
+    #[allow(clippy::should_implement_trait)]
+    pub fn mul<const M: usize, const NM: usize>(self, rps: BigInt<M>) -> BigInt<NM> {
+        let mut c: u128 = 0;
+        let mut n = BigInt::<NM>::default();
+        for i in 0..N {
+            for j in 0..M {
+                c += self.limbs[i] as u128 * rps.limbs[j] as u128 + n.limbs[i + j] as u128;
+                n.limbs[i + j] = c as u64;
+                c >>= u64::BITS;
+            }
+            n.limbs[i + M] = c as u64;
+            c = 0;
+        }
+        n
+    }
+
+    #[inline]
+    pub fn square<const NN: usize>(self) -> BigInt<NN> {
+        const SQUARE_THRESHOLD: usize = 4;
+
+        if N <= SQUARE_THRESHOLD {
+            self.mul(self)
+        } else {
+            self.square_impl()
+        }
+    }
+
+    fn square_impl<const NN: usize>(self) -> BigInt<NN> {
+        let mut c: u64 = 0;
+        let mut n = BigInt::<NN>::default();
+        let mut j = N * 2;
+        for i in (0..N).rev() {
+            let p = self.limbs[i] as u128 * self.limbs[i] as u128;
+            j -= 1;
+            n.limbs[j] = ((c as u128) << (u64::BITS - 1) | p >> (u64::BITS + 1)) as u64;
+            j -= 1;
+            n.limbs[j] = (p >> 1) as u64;
+            c = p as u64;
+        }
+
+        j = 2;
+        let mut b: u128 = 0;
+        for i in 1..N {
+            let mut d: u128 = 0;
+            for k in 0..i {
+                d += self.limbs[i] as u128 * self.limbs[k] as u128 + n.limbs[i + k] as u128;
+                n.limbs[i + k] = d as u64;
+                d >>= u64::BITS;
+            }
+            b += d;
+            b += n.limbs[j] as u128;
+            n.limbs[j] = b as u64;
+            j += 1;
+            b >>= u64::BITS;
+            b += n.limbs[j] as u128;
+            n.limbs[j] = b as u64;
+            j += 1;
+            b >>= u64::BITS;
+        }
+
+        c = self.limbs[0] << (u64::BITS - 1);
+        for i in 0..N * 2 {
+            let d = n.limbs[i];
+            n.limbs[i] = d << 1 | c >> (u64::BITS - 1);
+            c = d;
+        }
+
+        n
+    }
 }
 
 impl<const N: usize> fmt::Debug for BigInt<N> {
@@ -51,6 +120,7 @@ impl<const N: usize> fmt::Debug for BigInt<N> {
 }
 
 impl<const N: usize> Default for BigInt<N> {
+    #[inline]
     fn default() -> Self {
         Self { limbs: [0; N] }
     }
@@ -73,10 +143,10 @@ impl<const N: usize> From<[u64; N]> for BigInt<N> {
 
 impl<const N: usize> Ord for BigInt<N> {
     fn cmp(&self, rps: &Self) -> Ordering {
-        for (l, r) in zip(self.limbs, rps.limbs).rev() {
-            if l < r {
+        for i in (0..N).rev() {
+            if self.limbs[i] < rps.limbs[i] {
                 return Ordering::Less;
-            } else if l > r {
+            } else if self.limbs[i] > rps.limbs[i] {
                 return Ordering::Greater;
             }
         }
@@ -159,9 +229,9 @@ impl<const N: usize> Shr<u32> for BigInt<N> {
     fn shr(self, rps: u32) -> Self::Output {
         let mut n = Self::default();
         let mut c = 0;
-        for (n, l) in zip(n.limbs.iter_mut(), self.limbs).rev() {
-            *n = (l >> rps) | (c << (u64::BITS - rps));
-            c = l & ((1 << rps) - 1);
+        for i in (0..N).rev() {
+            n.limbs[i] = (self.limbs[i] >> rps) | (c << (u64::BITS - rps));
+            c = self.limbs[i] & ((1 << rps) - 1);
         }
         n
     }
