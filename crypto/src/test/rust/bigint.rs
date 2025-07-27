@@ -19,15 +19,30 @@ use blacknet_crypto::bigint::{UInt256, UInt512};
 use core::cmp::Ordering;
 
 #[test]
+fn even() {
+    let a = UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000000");
+    let b = UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000001");
+    let c = UInt256::from_hex("8000000000000000000000000000000000000000000000000000000000000000");
+    let d = UInt256::from_hex("8000000000000000000000000000000000000000000000000000000000000001");
+    assert!(a.is_even());
+    assert!(!b.is_even());
+    assert!(c.is_even());
+    assert!(!d.is_even());
+}
+
+#[test]
 fn hex() {
-    let a = UInt256::from_hex("82040BFACDA49378AA9A7091D231DF1C798CC6CFF650CF22D30557C9C39DA70C");
-    let b = UInt256::from([
+    let a = "82040BFACDA49378AA9A7091D231DF1C0000000000000000D30557C9C39DA70C";
+    let b = UInt256::from_hex(a);
+    let c = UInt256::from([
         0xD30557C9C39DA70C,
-        0x798CC6CFF650CF22,
+        0x0000000000000000,
         0xAA9A7091D231DF1C,
         0x82040BFACDA49378,
     ]);
-    assert_eq!(a, b);
+    let d = format!("{:?}", c);
+    assert_eq!(b, c);
+    assert_eq!(d, a);
 }
 
 #[test]

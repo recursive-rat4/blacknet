@@ -31,12 +31,22 @@ pub struct BigInt<const N: usize> {
 }
 
 impl<const N: usize> BigInt<N> {
-    pub fn from_hex(hex: &str) -> Self {
-        Self {
-            limbs: array::from_fn(|i| {
-                u64::from_str_radix(&hex[(N - i - 1) * 16..(N - i) * 16], 16).unwrap()
-            }),
+    pub const fn from_hex(mut hex: &str) -> Self {
+        let mut limbs = [0; N];
+        let mut i = 0;
+        loop {
+            let chunk: &str;
+            (hex, chunk) = hex.split_at(hex.len() - 16);
+            match u64::from_str_radix(chunk, 16) {
+                Ok(v) => limbs[i] = v,
+                Err(_) => panic!("Can't parse a chunk of hex"),
+            }
+            i += 1;
+            if i == N {
+                break;
+            }
         }
+        Self { limbs }
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -108,12 +118,47 @@ impl<const N: usize> BigInt<N> {
 
         n
     }
+
+    pub const fn bits<const M: usize>(self) -> [bool; M] {
+        let mut bits = [false; M];
+        let mut i = 0;
+        let mut j = 0;
+        let mut k = 0;
+        loop {
+            bits[i] = self.limbs[j] >> k & 1 == 1;
+            i += 1;
+            if i == M {
+                break;
+            }
+            k += 1;
+            if k == u64::BITS {
+                k = 0;
+                j += 1;
+            }
+        }
+        bits
+    }
+
+    pub const fn is_even(self) -> bool {
+        self.limbs[0] & 1 == 0
+    }
+
+    pub const fn limbs(self) -> [u64; N] {
+        self.limbs
+    }
+
+    pub const ZERO: Self = Self { limbs: [0; N] };
+    pub const ONE: Self = {
+        let mut limbs = [0; N];
+        limbs[0] = 1;
+        Self { limbs }
+    };
 }
 
 impl<const N: usize> fmt::Debug for BigInt<N> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for limb in self.limbs.iter().rev() {
-            write!(f, "{limb:X}")?;
+            write!(f, "{limb:016X}")?;
         }
         Ok(())
     }
@@ -122,7 +167,7 @@ impl<const N: usize> fmt::Debug for BigInt<N> {
 impl<const N: usize> Default for BigInt<N> {
     #[inline]
     fn default() -> Self {
-        Self { limbs: [0; N] }
+        Self::ZERO
     }
 }
 

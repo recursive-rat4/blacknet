@@ -157,12 +157,18 @@ impl MultiplicativeMonoid for Z2 {
 
 impl Ring for Z2 {
     type BaseRing = Self;
+    type Int = i8;
 }
 
 impl DivisionRing for Z2 {}
 
 impl IntegerRing for Z2 {
+    fn canonical(self) -> Self::Int {
+        self.n.into()
+    }
+
     const BITS: usize = 1;
+    const MODULUS: Self::Int = 2;
 }
 
 impl PrimeField for Z2 {}
