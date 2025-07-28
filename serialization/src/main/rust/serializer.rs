@@ -151,8 +151,13 @@ impl<E: Encoder> ser::Serializer for &mut Serializer<E> {
     }
 
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq> {
-        self.encoder.encode_var_int(len.unwrap() as u32)?;
-        Ok(self)
+        match len {
+            Some(len) => {
+                self.encoder.encode_var_int(len as u32)?;
+                Ok(self)
+            }
+            None => Err(Error::Message("Unsized sequence".to_string())),
+        }
     }
 
     fn serialize_tuple(self, _len: usize) -> Result<Self::SerializeTuple> {

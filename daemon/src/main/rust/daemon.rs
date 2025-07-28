@@ -15,11 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::mode::mode;
+use blacknet_compat::xdgdirectories::XDGDirectories;
+use blacknet_network::node::Node;
 use std::env::args;
+use std::process::ExitCode;
 
-fn main() {
+fn main() -> ExitCode {
     if args().nth(1).is_some_and(|arg| arg == "--version") {
         println!("Blacknet Daemon {}", env!("CARGO_PKG_VERSION"));
-        return;
+        return ExitCode::SUCCESS;
     }
+    let mode = match mode() {
+        Ok(mode) => mode,
+        Err(msg) => {
+            eprintln!("{msg}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let dirs = match XDGDirectories::new(mode.subdirectory()) {
+        Ok(dirs) => dirs,
+        Err(msg) => {
+            eprintln!("{msg}");
+            return ExitCode::FAILURE;
+        }
+    };
+    Node::new(mode, dirs);
+    ExitCode::SUCCESS
 }

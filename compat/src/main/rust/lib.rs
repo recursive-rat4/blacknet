@@ -15,5 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod endpoint;
-pub mod node;
+pub mod errno;
+pub mod getentropy;
+pub mod getuid;
+pub mod magic;
+pub mod mode;
+pub mod uname;
+pub mod xdgdirectories;

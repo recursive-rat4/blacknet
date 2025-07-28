@@ -15,5 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod endpoint;
-pub mod node;
+#[cfg(target_family = "unix")]
+pub type UId = libc::uid_t;
+
+#[cfg(target_family = "unix")]
+pub fn getuid() -> UId {
+    unsafe { libc::getuid() }
+}
+
+#[cfg(not(target_family = "unix"))]
+pub type UId = i32;
+
+#[cfg(not(target_family = "unix"))]
+pub fn getuid() -> UId {
+    -1
+}

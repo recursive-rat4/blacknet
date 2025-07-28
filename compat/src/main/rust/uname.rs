@@ -15,5 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod endpoint;
-pub mod node;
+use platform_info::{PlatformInfo, PlatformInfoAPI, UNameAPI};
+
+pub fn uname() -> (String, String, String) {
+    match PlatformInfo::new() {
+        Ok(info) => (
+            info.sysname().to_string_lossy().into(),
+            info.release().to_string_lossy().into(),
+            info.machine().to_string_lossy().into(),
+        ),
+        Err(..) => ("unknown".into(), "unknown".into(), "unknown".into()),
+    }
+}

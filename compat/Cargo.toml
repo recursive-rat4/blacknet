@@ -16,7 +16,7 @@
 #
 
 [package]
-name = "blacknet-network"
+name = "blacknet-compat"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -30,20 +30,14 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-blacknet-compat.workspace = true
-blacknet-crypto.workspace = true
-blacknet-serialization.workspace = true
-data-encoding.workspace = true
-data-encoding-macro.workspace = true
-serde.workspace = true
-sha2.workspace = true
-sha3.workspace = true
-tokio.workspace = true
+platform-info.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
 
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
-
-[[test]]
-name = "endpoint"
-path = "src/test/rust/endpoint.rs"

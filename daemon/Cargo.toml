@@ -30,6 +30,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+blacknet-compat.workspace = true
 blacknet-network.workspace = true
 
 [[bin]]
