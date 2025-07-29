@@ -18,9 +18,10 @@
 use crate::ring::Ring;
 use core::cmp::Ordering;
 use core::marker::PhantomData;
-use core::ops::{Add, Mul, Neg, Sub};
+use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::collections::BTreeMap;
 
+#[derive(Copy, Clone)]
 pub struct Constant<R: Ring> {
     value: R,
 }
@@ -30,11 +31,65 @@ impl<R: Ring> Constant<R> {
     pub const ZERO: Self = Self { value: R::ZERO };
 }
 
+impl<R: Ring> From<R> for Constant<R> {
+    fn from(value: R) -> Self {
+        Self { value }
+    }
+}
+
+impl<R: Ring> Add for Constant<R> {
+    type Output = Constant<R>;
+
+    fn add(self, rps: Constant<R>) -> Self::Output {
+        Self {
+            value: self.value + rps.value,
+        }
+    }
+}
+
+impl<R: Ring> AddAssign for Constant<R> {
+    fn add_assign(&mut self, rps: Self) {
+        *self = *self + rps
+    }
+}
+
 impl<R: Ring> Neg for Constant<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self { value: -self.value }
+    }
+}
+
+impl<R: Ring> Sub for Constant<R> {
+    type Output = Constant<R>;
+
+    fn sub(self, rps: Constant<R>) -> Self::Output {
+        Self {
+            value: self.value - rps.value,
+        }
+    }
+}
+
+impl<R: Ring> SubAssign for Constant<R> {
+    fn sub_assign(&mut self, rps: Self) {
+        *self = *self - rps
+    }
+}
+
+impl<R: Ring> Mul for Constant<R> {
+    type Output = Constant<R>;
+
+    fn mul(self, rps: Constant<R>) -> Self::Output {
+        Self {
+            value: self.value * rps.value,
+        }
+    }
+}
+
+impl<R: Ring> MulAssign for Constant<R> {
+    fn mul_assign(&mut self, rps: Self) {
+        *self = *self * rps
     }
 }
 
