@@ -19,9 +19,13 @@ use crate::ring::Ring;
 use core::cmp::Ordering;
 use core::marker::PhantomData;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 
-#[derive(Copy, Clone)]
+pub trait Expression {
+    fn degree(&self) -> usize;
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Constant<R: Ring> {
     value: R,
 }
@@ -29,6 +33,12 @@ pub struct Constant<R: Ring> {
 impl<R: Ring> Constant<R> {
     pub const UNITY: Self = Self { value: R::UNITY };
     pub const ZERO: Self = Self { value: R::ZERO };
+}
+
+impl<R: Ring> Expression for Constant<R> {
+    fn degree(&self) -> usize {
+        0
+    }
 }
 
 impl<R: Ring> From<R> for Constant<R> {
@@ -118,6 +128,12 @@ impl<R: Ring> Variable<R> {
     };
 }
 
+impl<R: Ring> Expression for Variable<R> {
+    fn degree(&self) -> usize {
+        1
+    }
+}
+
 impl<R: Ring> Ord for Variable<R> {
     fn cmp(&self, rps: &Self) -> Ordering {
         match self.kind.cmp(&rps.kind) {
@@ -194,6 +210,36 @@ type Term<R> = (Variable<R>, Constant<R>);
 
 pub struct LinearCombination<R: Ring> {
     terms: BTreeMap<Variable<R>, Constant<R>>,
+}
+
+impl<R: Ring> Expression for LinearCombination<R> {
+    fn degree(&self) -> usize {
+        if self
+            .terms
+            .values()
+            .any(|coefficient| *coefficient != Constant::ZERO)
+        {
+            1
+        } else {
+            0
+        }
+    }
+}
+
+impl<R: Ring> From<Constant<R>> for LinearCombination<R> {
+    fn from(constant: Constant<R>) -> Self {
+        Self {
+            terms: [(Variable::CONSTANT, constant)].into(),
+        }
+    }
+}
+
+impl<R: Ring> From<Variable<R>> for LinearCombination<R> {
+    fn from(variable: Variable<R>) -> Self {
+        Self {
+            terms: [(variable, Constant::UNITY)].into(),
+        }
+    }
 }
 
 impl<R: Ring> From<Term<R>> for LinearCombination<R> {
@@ -426,7 +472,13 @@ impl<R: Ring> Mul for LinearCombination<R> {
 }
 
 pub struct LinearMonoid<R: Ring> {
-    factors: Vec<LinearCombination<R>>,
+    factors: VecDeque<LinearCombination<R>>,
+}
+
+impl<R: Ring> Expression for LinearMonoid<R> {
+    fn degree(&self) -> usize {
+        self.factors.iter().map(Expression::degree).sum()
+    }
 }
 
 impl<R: Ring, const N: usize> From<[LinearCombination<R>; N]> for LinearMonoid<R> {
@@ -434,5 +486,98 @@ impl<R: Ring, const N: usize> From<[LinearCombination<R>; N]> for LinearMonoid<R
         Self {
             factors: factors.into(),
         }
+    }
+}
+
+impl<R: Ring> Mul<Constant<R>> for LinearMonoid<R> {
+    type Output = Self;
+
+    fn mul(mut self, rps: Constant<R>) -> Self::Output {
+        self *= rps;
+        self
+    }
+}
+
+impl<R: Ring> MulAssign<Constant<R>> for LinearMonoid<R> {
+    fn mul_assign(&mut self, rps: Constant<R>) {
+        match self.factors.back_mut() {
+            Some(factor) => *factor *= rps,
+            None => self.factors.push_back(rps.into()),
+        }
+    }
+}
+
+impl<R: Ring> Mul<LinearMonoid<R>> for Constant<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
+        match rps.factors.front_mut() {
+            Some(factor) => *factor *= self, // The Phantom Menace
+            None => rps.factors.push_front(self.into()),
+        }
+        rps
+    }
+}
+
+impl<R: Ring> Mul<Variable<R>> for LinearMonoid<R> {
+    type Output = Self;
+
+    fn mul(mut self, rps: Variable<R>) -> Self::Output {
+        self *= rps;
+        self
+    }
+}
+
+impl<R: Ring> MulAssign<Variable<R>> for LinearMonoid<R> {
+    fn mul_assign(&mut self, rps: Variable<R>) {
+        self.factors.push_back(rps.into())
+    }
+}
+
+impl<R: Ring> Mul<LinearMonoid<R>> for Variable<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
+        rps.factors.push_front(self.into());
+        rps
+    }
+}
+
+impl<R: Ring> Mul<LinearCombination<R>> for LinearMonoid<R> {
+    type Output = Self;
+
+    fn mul(mut self, rps: LinearCombination<R>) -> Self::Output {
+        self *= rps;
+        self
+    }
+}
+
+impl<R: Ring> MulAssign<LinearCombination<R>> for LinearMonoid<R> {
+    fn mul_assign(&mut self, rps: LinearCombination<R>) {
+        self.factors.push_back(rps)
+    }
+}
+
+impl<R: Ring> Mul<LinearMonoid<R>> for LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
+        rps.factors.push_front(self);
+        rps
+    }
+}
+
+impl<R: Ring> Mul for LinearMonoid<R> {
+    type Output = Self;
+
+    fn mul(mut self, rps: Self) -> Self::Output {
+        self *= rps;
+        self
+    }
+}
+
+impl<R: Ring> MulAssign for LinearMonoid<R> {
+    fn mul_assign(&mut self, mut rps: Self) {
+        self.factors.append(&mut rps.factors)
     }
 }
