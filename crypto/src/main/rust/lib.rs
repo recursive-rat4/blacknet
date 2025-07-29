@@ -17,6 +17,7 @@
 
 pub mod abeliangroup;
 pub mod bigint;
+pub mod circuitbuilder;
 pub mod field;
 pub mod field25519;
 pub mod group;
