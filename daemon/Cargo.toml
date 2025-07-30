@@ -31,6 +31,7 @@ categories.workspace = true
 
 [dependencies]
 blacknet-compat.workspace = true
+blacknet-log.workspace = true
 blacknet-network.workspace = true
 
 [[bin]]

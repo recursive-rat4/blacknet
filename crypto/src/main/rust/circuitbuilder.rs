@@ -619,7 +619,9 @@ impl<R: Ring> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
 
 impl<R: Ring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
     fn from(vectors: VecDeque<LinearCombination<R>>) -> Self {
-        Self { vectors: vectors.into() }
+        Self {
+            vectors: vectors.into(),
+        }
     }
 }
 

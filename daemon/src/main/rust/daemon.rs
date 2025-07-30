@@ -17,6 +17,7 @@
 
 use blacknet_compat::mode::mode;
 use blacknet_compat::xdgdirectories::XDGDirectories;
+use blacknet_log::logmanager::{LogManager, Strategy};
 use blacknet_network::node::Node;
 use std::env::args;
 use std::process::ExitCode;
@@ -40,6 +41,18 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    Node::new(mode, dirs);
-    ExitCode::SUCCESS
+    let log_manager = match LogManager::new(Strategy::Daemon, dirs.state()) {
+        Ok(log_manager) => log_manager,
+        Err(msg) => {
+            eprintln!("{msg}");
+            return ExitCode::FAILURE;
+        }
+    };
+    match Node::new(mode, dirs, log_manager) {
+        Ok(..) => ExitCode::SUCCESS,
+        Err(msg) => {
+            eprintln!("{msg}");
+            ExitCode::FAILURE
+        }
+    }
 }

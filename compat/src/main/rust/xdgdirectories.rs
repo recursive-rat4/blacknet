@@ -17,12 +17,15 @@
 
 use crate::magic::XDG_SUBDIRECTORY;
 use std::env::VarError;
+use std::error::Error;
 use std::fs::DirBuilder;
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::DirBuilderExt;
 use std::path::{Path, PathBuf};
 
 // https://specifications.freedesktop.org/basedir-spec/0.8/
+
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 pub struct XDGDirectories {
     config: PathBuf,
@@ -31,7 +34,7 @@ pub struct XDGDirectories {
 }
 
 impl XDGDirectories {
-    pub fn new(subdirectory: Option<&'static str>) -> Result<Self, String> {
+    pub fn new(subdirectory: Option<&'static str>) -> Result<Self> {
         let config = Self::env("BLACKNET_CONFIGDIR").or_else(|_| Self::cfg(subdirectory))?;
         Self::mkdirs(&config)?;
         let data = Self::env("BLACKNET_DATADIR").or_else(|_| Self::dat(subdirectory))?;
@@ -57,15 +60,15 @@ impl XDGDirectories {
         &self.state
     }
 
-    fn mkdirs(path: &Path) -> Result<(), String> {
+    fn mkdirs(path: &Path) -> Result<()> {
         let mut builder = DirBuilder::new();
         builder.recursive(true);
         #[cfg(target_family = "unix")]
         builder.mode(0o700);
-        builder.create(path).map_err(|e| e.to_string())
+        Ok(builder.create(path)?)
     }
 
-    fn home() -> Result<PathBuf, String> {
+    fn home() -> Result<PathBuf> {
         #[cfg(target_family = "unix")]
         let var = "HOME";
         #[cfg(target_os = "windows")]
@@ -73,15 +76,17 @@ impl XDGDirectories {
         Self::env(var)
     }
 
-    fn env(name: &'static str) -> Result<PathBuf, String> {
+    fn env(name: &'static str) -> Result<PathBuf> {
         match std::env::var(name) {
             Ok(val) => Ok(PathBuf::from(val)),
             Err(VarError::NotUnicode(val)) => Ok(PathBuf::from(val)),
-            Err(VarError::NotPresent) => Err(format!("Environment variable {name} is not set")),
+            Err(VarError::NotPresent) => {
+                Err(format!("Environment variable {name} is not set").into())
+            }
         }
     }
 
-    fn cfg(subdirectory: Option<&'static str>) -> Result<PathBuf, String> {
+    fn cfg(subdirectory: Option<&'static str>) -> Result<PathBuf> {
         #[cfg(all(target_family = "unix", not(target_os = "macos")))]
         let dir = Self::xdg("XDG_CONFIG_HOME", subdirectory, &[".config"]);
         #[cfg(target_os = "windows")]
@@ -91,7 +96,7 @@ impl XDGDirectories {
         dir
     }
 
-    fn dat(subdirectory: Option<&'static str>) -> Result<PathBuf, String> {
+    fn dat(subdirectory: Option<&'static str>) -> Result<PathBuf> {
         #[cfg(all(target_family = "unix", not(target_os = "macos")))]
         let dir = Self::xdg("XDG_DATA_HOME", subdirectory, &[".local", "share"]);
         #[cfg(target_os = "windows")]
@@ -101,7 +106,7 @@ impl XDGDirectories {
         dir
     }
 
-    fn stat(subdirectory: Option<&'static str>) -> Result<PathBuf, String> {
+    fn stat(subdirectory: Option<&'static str>) -> Result<PathBuf> {
         #[cfg(all(target_family = "unix", not(target_os = "macos")))]
         let dir = Self::xdg("XDG_STATE_HOME", subdirectory, &[".local", "state"]);
         #[cfg(target_os = "windows")]
@@ -116,7 +121,7 @@ impl XDGDirectories {
         base: &'static str,
         subdirectory: Option<&'static str>,
         fallback: &[&'static str],
-    ) -> Result<PathBuf, String> {
+    ) -> Result<PathBuf> {
         let base = Self::env(base);
         let mut dir = if base.as_ref().is_ok_and(|base| base.is_absolute()) {
             let mut dir = base?;
@@ -135,7 +140,7 @@ impl XDGDirectories {
     }
 
     #[cfg(target_os = "windows")]
-    fn win(subdirectory: Option<&'static str>) -> Result<PathBuf, String> {
+    fn win(subdirectory: Option<&'static str>) -> Result<PathBuf> {
         let mut dir = Self::home()?;
         dir.push("AppData");
         dir.push("Local");
@@ -147,7 +152,7 @@ impl XDGDirectories {
     }
 
     #[cfg(target_os = "macos")]
-    fn mac(subdirectory: Option<&'static str>) -> Result<PathBuf, String> {
+    fn mac(subdirectory: Option<&'static str>) -> Result<PathBuf> {
         let mut dir = Self::home()?;
         dir.push("Library");
         dir.push("Application Support");

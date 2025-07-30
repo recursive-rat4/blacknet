@@ -19,29 +19,37 @@ use blacknet_compat::getuid::getuid;
 use blacknet_compat::mode::Mode;
 use blacknet_compat::uname::uname;
 use blacknet_compat::xdgdirectories::XDGDirectories;
+use blacknet_log::logmanager::LogManager;
+use blacknet_log::{info, warn};
 use core::num::NonZero;
+use std::error::Error;
 
 pub struct Node {}
 
 impl Node {
-    pub fn new(mode: Mode, dirs: XDGDirectories) -> Self {
+    pub fn new(
+        mode: Mode,
+        dirs: XDGDirectories,
+        log_manager: LogManager,
+    ) -> Result<Self, Box<dyn Error>> {
         let (os_name, os_version, os_machine) = uname();
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
         let cpu_cores = std::thread::available_parallelism()
             .map(NonZero::get)
             .unwrap_or(0);
 
-        println!("Starting up {agent_name} node {agent_version}");
-        println!("CPU: {cpu_cores} cores {os_machine}");
-        println!("OS: {os_name} version {os_version}");
-        println!("Using config directory {}", dirs.config().display());
-        println!("Using data directory {}", dirs.data().display());
-        println!("Using state directory {}", dirs.state().display());
+        let logger = log_manager.logger("Node")?;
+        info!(logger, "Starting up {agent_name} node {agent_version}");
+        info!(logger, "CPU: {cpu_cores} cores {os_machine}");
+        info!(logger, "OS: {os_name} version {os_version}");
+        info!(logger, "Using config directory {}", dirs.config().display());
+        info!(logger, "Using data directory {}", dirs.data().display());
+        info!(logger, "Using state directory {}", dirs.state().display());
 
         if getuid() == 0 {
-            println!("Running as root");
+            warn!(logger, "Running as root");
         }
 
-        Self {}
+        Ok(Self {})
     }
 }
