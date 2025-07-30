@@ -21,11 +21,12 @@ use core::marker::PhantomData;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::collections::{BTreeMap, VecDeque};
 
-pub trait Expression {
+pub trait Expression<R: Ring>: 'static {
+    fn compile(self) -> LinearSpan<R>;
     fn degree(&self) -> usize;
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Constant<R: Ring> {
     value: R,
 }
@@ -35,7 +36,11 @@ impl<R: Ring> Constant<R> {
     pub const ZERO: Self = Self { value: R::ZERO };
 }
 
-impl<R: Ring> Expression for Constant<R> {
+impl<R: Ring> Expression<R> for Constant<R> {
+    fn compile(self) -> LinearSpan<R> {
+        vec![self.into()].into()
+    }
+
     fn degree(&self) -> usize {
         0
     }
@@ -128,7 +133,11 @@ impl<R: Ring> Variable<R> {
     };
 }
 
-impl<R: Ring> Expression for Variable<R> {
+impl<R: Ring> Expression<R> for Variable<R> {
+    fn compile(self) -> LinearSpan<R> {
+        vec![self.into()].into()
+    }
+
     fn degree(&self) -> usize {
         1
     }
@@ -206,13 +215,25 @@ impl<R: Ring> Mul<Variable<R>> for Constant<R> {
     }
 }
 
-type Term<R> = (Variable<R>, Constant<R>);
+impl<R: Ring> Mul for Variable<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        [self.into(), rps.into()].into()
+    }
+}
+
+pub type Term<R> = (Variable<R>, Constant<R>);
 
 pub struct LinearCombination<R: Ring> {
     terms: BTreeMap<Variable<R>, Constant<R>>,
 }
 
-impl<R: Ring> Expression for LinearCombination<R> {
+impl<R: Ring> Expression<R> for LinearCombination<R> {
+    fn compile(self) -> LinearSpan<R> {
+        vec![self].into()
+    }
+
     fn degree(&self) -> usize {
         if self
             .terms
@@ -475,7 +496,11 @@ pub struct LinearMonoid<R: Ring> {
     factors: VecDeque<LinearCombination<R>>,
 }
 
-impl<R: Ring> Expression for LinearMonoid<R> {
+impl<R: Ring> Expression<R> for LinearMonoid<R> {
+    fn compile(self) -> LinearSpan<R> {
+        self.factors.into()
+    }
+
     fn degree(&self) -> usize {
         self.factors.iter().map(Expression::degree).sum()
     }
@@ -580,4 +605,38 @@ impl<R: Ring> MulAssign for LinearMonoid<R> {
     fn mul_assign(&mut self, mut rps: Self) {
         self.factors.append(&mut rps.factors)
     }
+}
+
+pub struct LinearSpan<R: Ring> {
+    vectors: Vec<LinearCombination<R>>,
+}
+
+impl<R: Ring> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
+    fn from(vectors: Vec<LinearCombination<R>>) -> Self {
+        Self { vectors }
+    }
+}
+
+impl<R: Ring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
+    fn from(vectors: VecDeque<LinearCombination<R>>) -> Self {
+        Self { vectors: vectors.into() }
+    }
+}
+
+pub struct Constraint<R: Ring> {
+    lps: Box<dyn Expression<R>>,
+    rps: Box<dyn Expression<R>>,
+}
+
+impl<R: Ring> Constraint<R> {
+    pub fn new<LPS: Expression<R>, RPS: Expression<R>>(lps: LPS, rps: RPS) -> Self {
+        Self {
+            lps: Box::new(lps),
+            rps: Box::new(rps),
+        }
+    }
+}
+
+pub struct CircuitBuilder<R: Ring> {
+    constraints: Vec<Constraint<R>>,
 }
