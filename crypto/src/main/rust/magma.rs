@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use core::fmt::Debug;
 use core::ops::{Add, AddAssign, Mul, MulAssign};
 
 #[rustfmt::skip]
@@ -22,6 +23,7 @@ pub trait AdditiveMagma
     : 'static
     + Copy
     + Eq
+    + Debug
     + Add<Output = Self>
     + AddAssign
 {
@@ -33,6 +35,7 @@ pub trait MultiplicativeMagma
     : 'static
     + Copy
     + Eq
+    + Debug
     + Mul<Output = Self>
     + MulAssign
 {

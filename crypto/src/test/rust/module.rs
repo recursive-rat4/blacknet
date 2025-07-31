@@ -18,15 +18,15 @@
 use blacknet_crypto::module::FreeModule;
 use blacknet_crypto::ring::Ring;
 
-type R = blacknet_crypto::z2::Z2;
+type R = blacknet_crypto::field25519::Field25519;
 type M = FreeModule<R, 2>;
 
 #[test]
 fn right() {
-    let r = R::new(3);
-    let s = R::new(5);
-    let x = M::from([7, 11].map(R::new));
-    let y = M::from([13, 17].map(R::new));
+    let r = R::from(3);
+    let s = R::from(5);
+    let x = M::from([7, 11].map(R::from));
+    let y = M::from([13, 17].map(R::from));
 
     assert_eq!(x * r + y * r, (x + y) * r);
     assert_eq!(x * r + x * s, x * (r + s));

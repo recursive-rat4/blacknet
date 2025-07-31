@@ -20,6 +20,7 @@ use crate::magma::AdditiveMagma;
 use crate::monoid::AdditiveMonoid;
 use crate::ring::Ring;
 use core::array;
+use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -33,7 +34,7 @@ pub trait Module<R: Ring, const N: usize>
 {
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FreeModule<R: Ring, const N: usize> {
     components: [R; N],
 }
@@ -59,6 +60,12 @@ impl<R: Ring, const N: usize> From<[R; N]> for FreeModule<R, N> {
     #[inline]
     fn from(components: [R; N]) -> Self {
         Self { components }
+    }
+}
+
+impl<R: Ring, const N: usize> Debug for FreeModule<R, N> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{:?}", self.components)
     }
 }
 

@@ -46,5 +46,9 @@ name = "module"
 path = "src/test/rust/module.rs"
 
 [[test]]
+name = "vectordense"
+path = "src/test/rust/vectordense.rs"
+
+[[test]]
 name = "z2"
 path = "src/test/rust/z2.rs"

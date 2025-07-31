@@ -26,4 +26,5 @@ pub mod module;
 pub mod monoid;
 pub mod ring;
 pub mod semigroup;
+pub mod vectordense;
 pub mod z2;
