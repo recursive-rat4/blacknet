@@ -38,6 +38,10 @@ impl<R: Ring> VectorDense<R> {
         }
     }
 
+    pub const fn dimension(&self) -> usize {
+        self.elements.len()
+    }
+
     pub fn cat(&self, rps: &Self) -> Self {
         let mut r = Vec::<R>::with_capacity(self.elements.len() + rps.elements.len());
         r.extend(self.elements.iter());
