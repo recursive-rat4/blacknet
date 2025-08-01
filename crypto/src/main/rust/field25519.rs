@@ -144,8 +144,8 @@ impl Field25519 {
             .bits();
 }
 
-impl From<i8> for Field25519 {
-    fn from(n: i8) -> Self {
+impl From<i16> for Field25519 {
+    fn from(n: i16) -> Self {
         if n >= 0 {
             Self::new((n as u64).into())
         } else {

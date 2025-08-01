@@ -26,6 +26,12 @@ pub struct VectorDense<R: Ring> {
 }
 
 impl<R: Ring> VectorDense<R> {
+    pub fn fill(size: usize, element: R) -> Self {
+        Self {
+            elements: vec![element; size],
+        }
+    }
+
     pub fn identity(size: usize) -> Self {
         Self {
             elements: vec![R::UNITY; size],

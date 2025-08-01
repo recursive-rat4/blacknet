@@ -42,6 +42,10 @@ name = "field25519"
 path = "src/test/rust/field25519.rs"
 
 [[test]]
+name = "matrixsparse"
+path = "src/test/rust/matrixsparse.rs"
+
+[[test]]
 name = "module"
 path = "src/test/rust/module.rs"
 
