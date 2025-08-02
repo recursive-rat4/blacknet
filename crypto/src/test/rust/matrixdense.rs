@@ -15,14 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![rustfmt::skip]
-
 use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::vectordense::VectorDense;
 
 type R = blacknet_crypto::field25519::Field25519;
 
 #[test]
+#[rustfmt::skip]
 fn add() {
     let a = MatrixDense::<R>::new(3, 2, [
         1, 3,
@@ -44,6 +43,7 @@ fn add() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn mul() {
     let a = MatrixDense::<R>::new(4, 3, [
         1, 0, 1,
@@ -66,6 +66,7 @@ fn mul() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn vector() {
     let a = MatrixDense::<R>::new(3, 2, [
         17, 18,
@@ -90,6 +91,7 @@ fn vector() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn cat() {
     let a = MatrixDense::<R>::new(3, 2, [
         1, 3,
@@ -110,6 +112,7 @@ fn cat() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn trace() {
     let a = MatrixDense::<R>::new(2, 2, [
         1, 3,
@@ -120,6 +123,7 @@ fn trace() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn transpose() {
     let a = MatrixDense::<R>::new(3, 2, [
         1, 2,

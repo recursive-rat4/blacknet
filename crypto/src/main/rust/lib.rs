@@ -31,4 +31,5 @@ pub mod r1cs;
 pub mod ring;
 pub mod semigroup;
 pub mod vectordense;
+pub mod vectorsparse;
 pub mod z2;

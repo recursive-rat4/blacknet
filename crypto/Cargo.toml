@@ -66,5 +66,9 @@ name = "vectordense"
 path = "src/test/rust/vectordense.rs"
 
 [[test]]
+name = "vectorsparse"
+path = "src/test/rust/vectorsparse.rs"
+
+[[test]]
 name = "z2"
 path = "src/test/rust/z2.rs"
