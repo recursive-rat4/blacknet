@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::matrixdense::MatrixDense;
 use crate::ring::Ring;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::zip;
@@ -47,16 +48,28 @@ impl<R: Ring> VectorDense<R> {
     }
 
     pub fn cat(&self, rps: &Self) -> Self {
-        let mut r = Vec::<R>::with_capacity(self.elements.len() + rps.elements.len());
-        r.extend(self.elements.iter());
-        r.extend(rps.elements.iter());
-        r.into()
+        let mut elements = Vec::<R>::with_capacity(self.elements.len() + rps.elements.len());
+        elements.extend(self.elements.iter());
+        elements.extend(rps.elements.iter());
+        elements.into()
     }
 
     pub fn dot(&self, rps: &Self) -> R {
         zip(self.elements.iter(), rps.elements.iter())
             .map(|(&l, &r)| l * r)
             .sum()
+    }
+
+    pub fn tensor(&self, rps: &Self) -> MatrixDense<R> {
+        let rows = self.elements.len();
+        let columns = rps.elements.len();
+        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        for i in 0..rows {
+            for j in 0..columns {
+                elements.push(self.elements[i] * rps.elements[j])
+            }
+        }
+        MatrixDense::new(rows, columns, elements)
     }
 }
 

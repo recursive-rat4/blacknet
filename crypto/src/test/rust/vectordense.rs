@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::vectordense::VectorDense;
 
 type R = blacknet_crypto::field25519::Field25519;
@@ -82,4 +83,29 @@ fn dot() {
     assert_eq!(a.dot(&b), c);
     assert_eq!(b.dot(&a), c);
     assert_eq!(a.dot(&a), d);
+}
+
+#[test]
+#[rustfmt::skip]
+fn tensor() {
+    let a = VectorDense::<R>::from([
+        0,
+        1,
+        2,
+    ].map(R::from));
+    let b = VectorDense::<R>::from([
+        3,
+        4,
+    ].map(R::from));
+    let c = MatrixDense::<R>::new(3, 2, [
+        0, 0,
+        3, 4,
+        6, 8,
+    ].map(R::from).into());
+    let d = MatrixDense::<R>::new(2, 3, [
+        0, 3, 6,
+        0, 4, 8,
+    ].map(R::from).into());
+    assert_eq!(a.tensor(&b), c);
+    assert_eq!(b.tensor(&a), d);
 }
