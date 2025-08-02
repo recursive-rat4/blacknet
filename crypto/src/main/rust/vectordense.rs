@@ -42,6 +42,10 @@ impl<R: Ring> VectorDense<R> {
         self.elements.len()
     }
 
+    pub fn steal(self) -> Vec<R> {
+        self.elements
+    }
+
     pub fn cat(&self, rps: &Self) -> Self {
         let mut r = Vec::<R>::with_capacity(self.elements.len() + rps.elements.len());
         r.extend(self.elements.iter());

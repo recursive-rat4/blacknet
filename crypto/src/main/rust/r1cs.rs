@@ -39,6 +39,10 @@ impl<R: Ring> R1CS<R> {
         self.a.columns()
     }
 
+    pub fn steal(self) -> (MatrixSparse<R>, MatrixSparse<R>, MatrixSparse<R>) {
+        (self.a, self.b, self.c)
+    }
+
     pub fn is_satisfied(&self, z: &VectorDense<R>) -> bool {
         debug_assert!(
             z.dimension() == self.variables(),
