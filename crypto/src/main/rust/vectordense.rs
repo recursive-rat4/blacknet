@@ -55,7 +55,7 @@ impl<R: Ring> VectorDense<R> {
 
     pub fn dot(&self, rps: &Self) -> R {
         zip(self.elements.iter(), rps.elements.iter())
-            .map(|(l, r)| *l * *r)
+            .map(|(&l, &r)| l * r)
             .sum()
     }
 }
@@ -118,7 +118,7 @@ impl<R: Ring> Add<&VectorDense<R>> for VectorDense<R> {
 
     fn add(self, rps: &VectorDense<R>) -> Self::Output {
         zip(self.elements, rps.elements.iter())
-            .map(|(l, r)| l + *r)
+            .map(|(l, &r)| l + r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -126,7 +126,7 @@ impl<R: Ring> Add<&VectorDense<R>> for VectorDense<R> {
 
 impl<R: Ring> AddAssign<&VectorDense<R>> for VectorDense<R> {
     fn add_assign(&mut self, rps: &VectorDense<R>) {
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l += *r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l += r);
     }
 }
 
@@ -135,7 +135,7 @@ impl<R: Ring> Add<VectorDense<R>> for &VectorDense<R> {
 
     fn add(self, rps: VectorDense<R>) -> Self::Output {
         zip(self.elements.iter(), rps.elements)
-            .map(|(l, r)| *l + r)
+            .map(|(&l, r)| l + r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -146,7 +146,7 @@ impl<R: Ring> Add for &VectorDense<R> {
 
     fn add(self, rps: Self) -> Self::Output {
         zip(self.elements.iter(), rps.elements.iter())
-            .map(|(l, r)| *l + *r)
+            .map(|(&l, &r)| l + r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -168,7 +168,7 @@ impl<R: Ring> Neg for &VectorDense<R> {
     type Output = VectorDense<R>;
 
     fn neg(self) -> Self::Output {
-        self.elements.iter().map(|e| -*e).collect::<Vec<R>>().into()
+        self.elements.iter().map(|&e| -e).collect::<Vec<R>>().into()
     }
 }
 
@@ -194,7 +194,7 @@ impl<R: Ring> Sub<&VectorDense<R>> for VectorDense<R> {
 
     fn sub(self, rps: &VectorDense<R>) -> Self::Output {
         zip(self.elements, rps.elements.iter())
-            .map(|(l, r)| l - *r)
+            .map(|(l, &r)| l - r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -202,7 +202,7 @@ impl<R: Ring> Sub<&VectorDense<R>> for VectorDense<R> {
 
 impl<R: Ring> SubAssign<&VectorDense<R>> for VectorDense<R> {
     fn sub_assign(&mut self, rps: &VectorDense<R>) {
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l -= *r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l -= r);
     }
 }
 
@@ -211,7 +211,7 @@ impl<R: Ring> Sub<VectorDense<R>> for &VectorDense<R> {
 
     fn sub(self, rps: VectorDense<R>) -> Self::Output {
         zip(self.elements.iter(), rps.elements)
-            .map(|(l, r)| *l - r)
+            .map(|(&l, r)| l - r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -222,7 +222,7 @@ impl<R: Ring> Sub for &VectorDense<R> {
 
     fn sub(self, rps: Self) -> Self::Output {
         zip(self.elements.iter(), rps.elements.iter())
-            .map(|(l, r)| *l - *r)
+            .map(|(&l, &r)| l - r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -250,7 +250,7 @@ impl<R: Ring> Mul<&VectorDense<R>> for VectorDense<R> {
 
     fn mul(self, rps: &VectorDense<R>) -> Self::Output {
         zip(self.elements, rps.elements.iter())
-            .map(|(l, r)| l * *r)
+            .map(|(l, &r)| l * r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -258,7 +258,7 @@ impl<R: Ring> Mul<&VectorDense<R>> for VectorDense<R> {
 
 impl<R: Ring> MulAssign<&VectorDense<R>> for VectorDense<R> {
     fn mul_assign(&mut self, rps: &VectorDense<R>) {
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l *= *r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l *= r);
     }
 }
 
@@ -267,7 +267,7 @@ impl<R: Ring> Mul<VectorDense<R>> for &VectorDense<R> {
 
     fn mul(self, rps: VectorDense<R>) -> Self::Output {
         zip(self.elements.iter(), rps.elements)
-            .map(|(l, r)| *l * r)
+            .map(|(&l, r)| l * r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -278,7 +278,7 @@ impl<R: Ring> Mul for &VectorDense<R> {
 
     fn mul(self, rps: Self) -> Self::Output {
         zip(self.elements.iter(), rps.elements.iter())
-            .map(|(l, r)| *l * *r)
+            .map(|(&l, &r)| l * r)
             .collect::<Vec<R>>()
             .into()
     }
@@ -308,7 +308,7 @@ impl<R: Ring> Mul<R> for &VectorDense<R> {
     fn mul(self, rps: R) -> Self::Output {
         self.elements
             .iter()
-            .map(|l| *l * rps)
+            .map(|&l| l * rps)
             .collect::<Vec<R>>()
             .into()
     }

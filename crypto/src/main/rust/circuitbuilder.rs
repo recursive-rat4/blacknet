@@ -238,7 +238,7 @@ impl<R: Ring> Expression<R> for LinearCombination<R> {
         if self
             .terms
             .values()
-            .any(|coefficient| *coefficient != Constant::ZERO)
+            .any(|&coefficient| coefficient != Constant::ZERO)
         {
             1
         } else {
