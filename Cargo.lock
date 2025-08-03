@@ -91,6 +91,7 @@ dependencies = [
  "blacknet-compat",
  "blacknet-log",
  "blacknet-network",
+ "tokio",
 ]
 
 [[package]]

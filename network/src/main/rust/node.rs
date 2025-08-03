@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::router::Router;
 use blacknet_compat::getuid::getuid;
 use blacknet_compat::mode::Mode;
 use blacknet_compat::uname::uname;
@@ -23,14 +24,19 @@ use blacknet_log::logmanager::LogManager;
 use blacknet_log::{info, warn};
 use core::num::NonZero;
 use std::error::Error;
+use std::sync::Arc;
+use tokio::runtime::Runtime;
 
-pub struct Node {}
+pub struct Node {
+    router: Arc<Router>,
+}
 
 impl Node {
     pub fn new(
-        mode: Mode,
-        dirs: XDGDirectories,
-        log_manager: LogManager,
+        mode: &Mode,
+        dirs: &XDGDirectories,
+        log_manager: &LogManager,
+        runtime: &Runtime,
     ) -> Result<Self, Box<dyn Error>> {
         let (os_name, os_version, os_machine) = uname();
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
@@ -50,6 +56,12 @@ impl Node {
             warn!(logger, "Running as root");
         }
 
-        Ok(Self {})
+        Ok(Self {
+            router: Router::new(log_manager, runtime)?,
+        })
+    }
+
+    pub fn router(&self) -> Arc<Router> {
+        self.router.clone()
     }
 }

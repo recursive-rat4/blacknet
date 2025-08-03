@@ -20,35 +20,25 @@ use blacknet_compat::xdgdirectories::XDGDirectories;
 use blacknet_log::logmanager::{LogManager, Strategy};
 use blacknet_network::node::Node;
 use std::env::args;
+use std::error::Error;
 use std::process::ExitCode;
+use tokio::runtime::Runtime;
 
-fn main() -> ExitCode {
+fn daemon() -> Result<(), Box<dyn Error>> {
     if args().nth(1).is_some_and(|arg| arg == "--version") {
         println!("Blacknet Daemon {}", env!("CARGO_PKG_VERSION"));
-        return ExitCode::SUCCESS;
+        return Ok(());
     }
-    let mode = match mode() {
-        Ok(mode) => mode,
-        Err(msg) => {
-            eprintln!("{msg}");
-            return ExitCode::FAILURE;
-        }
-    };
-    let dirs = match XDGDirectories::new(mode.subdirectory()) {
-        Ok(dirs) => dirs,
-        Err(msg) => {
-            eprintln!("{msg}");
-            return ExitCode::FAILURE;
-        }
-    };
-    let log_manager = match LogManager::new(Strategy::Daemon, dirs.state()) {
-        Ok(log_manager) => log_manager,
-        Err(msg) => {
-            eprintln!("{msg}");
-            return ExitCode::FAILURE;
-        }
-    };
-    match Node::new(mode, dirs, log_manager) {
+    let mode = mode()?;
+    let dirs = XDGDirectories::new(mode.subdirectory())?;
+    let log_manager = LogManager::new(Strategy::Daemon, dirs.state())?;
+    let runtime = Runtime::new()?;
+    let node = Node::new(&mode, &dirs, &log_manager, &runtime)?;
+    Ok(())
+}
+
+fn main() -> ExitCode {
+    match daemon() {
         Ok(..) => ExitCode::SUCCESS,
         Err(msg) => {
             eprintln!("{msg}");

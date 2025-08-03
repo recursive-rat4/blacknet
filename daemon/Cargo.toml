@@ -33,6 +33,7 @@ categories.workspace = true
 blacknet-compat.workspace = true
 blacknet-log.workspace = true
 blacknet-network.workspace = true
+tokio.workspace = true
 
 [[bin]]
 name = "blacknet-daemon"

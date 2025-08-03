@@ -180,6 +180,20 @@ fn to_log_ipv4(port: u16, address: [u8; 4], detail: bool) -> String {
     }
 }
 
+pub fn ipv4_any(port: u16) -> Endpoint {
+    Endpoint::IPv4 {
+        address: IPV4_ANY_ADDRESS,
+        port,
+    }
+}
+
+pub fn ipv4_loopback(port: u16) -> Endpoint {
+    Endpoint::IPv4 {
+        address: IPV4_LOOPBACK_ADDRESS,
+        port,
+    }
+}
+
 const IPV4_ANY_ADDRESS: [u8; 4] = [0, 0, 0, 0];
 const IPV4_LOOPBACK_ADDRESS: [u8; 4] = [127, 0, 0, 1];
 
@@ -242,6 +256,20 @@ fn to_log_ipv6(port: u16, address: [u8; 16], detail: bool) -> String {
         format!("[{}]:{}", to_host_ipv6(address), port)
     } else {
         "IPv6 endpoint".to_string()
+    }
+}
+
+pub fn ipv6_any(port: u16) -> Endpoint {
+    Endpoint::IPv6 {
+        address: IPV6_ANY_ADDRESS,
+        port,
+    }
+}
+
+pub fn ipv6_loopback(port: u16) -> Endpoint {
+    Endpoint::IPv6 {
+        address: IPV6_LOOPBACK_ADDRESS,
+        port,
     }
 }
 
