@@ -27,6 +27,7 @@ pub mod matrixdense;
 pub mod matrixsparse;
 pub mod module;
 pub mod monoid;
+pub mod point;
 pub mod r1cs;
 pub mod ring;
 pub mod semigroup;
