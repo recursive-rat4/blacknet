@@ -74,7 +74,7 @@ impl<R: Ring> Mul<&VectorDense<R>> for &MatrixSparse<R> {
 
 impl<R: Ring> From<&MatrixDense<R>> for MatrixSparse<R> {
     fn from(dense: &MatrixDense<R>) -> Self {
-        let mut builder = Builder::<R>::new(dense.rows(), dense.columns());
+        let mut builder = MatrixSparseBuilder::<R>::new(dense.rows(), dense.columns());
         for i in 0..dense.rows() {
             for j in 0..dense.columns() {
                 let e = dense[(i, j)];
@@ -103,14 +103,14 @@ impl<R: Ring> From<&MatrixSparse<R>> for MatrixDense<R> {
     }
 }
 
-pub struct Builder<R: Ring> {
+pub struct MatrixSparseBuilder<R: Ring> {
     columns: usize,
     r_index: Vec<usize>,
     c_index: Vec<usize>,
     elements: Vec<R>,
 }
 
-impl<R: Ring> Builder<R> {
+impl<R: Ring> MatrixSparseBuilder<R> {
     pub fn new(rows: usize, columns: usize) -> Self {
         let mut r_index = Vec::<usize>::with_capacity(rows + 1);
         r_index.push(0);

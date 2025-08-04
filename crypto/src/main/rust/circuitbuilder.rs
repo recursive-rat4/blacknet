@@ -15,14 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::customizableconstraintsystem::CustomizableConstraintSystem;
+use crate::matrixsparse::MatrixSparseBuilder;
+use crate::r1cs::R1CS;
 use crate::ring::Ring;
-use core::cmp::Ordering;
+use core::cell::{Cell, RefCell};
+use core::cmp::{Ordering, max};
+use core::fmt::{Display, Formatter, Result};
 use core::marker::PhantomData;
-use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
+use orx_tree::{Dyn, DynTree, NodeIdx, NodeRef};
 use std::collections::{BTreeMap, VecDeque};
 
 pub trait Expression<R: Ring>: 'static {
-    fn compile(self) -> LinearSpan<R>;
+    fn span(&self) -> LinearSpan<R>;
     fn degree(&self) -> usize;
 }
 
@@ -37,8 +43,8 @@ impl<R: Ring> Constant<R> {
 }
 
 impl<R: Ring> Expression<R> for Constant<R> {
-    fn compile(self) -> LinearSpan<R> {
-        vec![self.into()].into()
+    fn span(&self) -> LinearSpan<R> {
+        vec![(*self).into()].into()
     }
 
     fn degree(&self) -> usize {
@@ -108,7 +114,7 @@ impl<R: Ring> MulAssign for Constant<R> {
     }
 }
 
-#[derive(Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
 pub enum VariableKind {
     Constant,
     PublicInput,
@@ -118,7 +124,7 @@ pub enum VariableKind {
     Auxiliary,
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Variable<R: Ring> {
     kind: VariableKind,
     number: usize,
@@ -126,16 +132,20 @@ pub struct Variable<R: Ring> {
 }
 
 impl<R: Ring> Variable<R> {
-    const CONSTANT: Self = Self {
-        kind: VariableKind::Constant,
-        number: 0,
-        phantom: PhantomData,
-    };
+    const fn new(kind: VariableKind, number: usize) -> Self {
+        Self {
+            kind,
+            number,
+            phantom: PhantomData,
+        }
+    }
+
+    const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
 }
 
 impl<R: Ring> Expression<R> for Variable<R> {
-    fn compile(self) -> LinearSpan<R> {
-        vec![self.into()].into()
+    fn span(&self) -> LinearSpan<R> {
+        vec![(*self).into()].into()
     }
 
     fn degree(&self) -> usize {
@@ -175,6 +185,18 @@ impl<R: Ring> Add<Variable<R>> for Constant<R> {
     }
 }
 
+impl<R: Ring> Add for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: Self) -> Self::Output {
+        if self != rps {
+            [(self, Constant::UNITY), (rps, Constant::UNITY)].into()
+        } else {
+            [(self, Constant::UNITY + Constant::UNITY)].into()
+        }
+    }
+}
+
 impl<R: Ring> Neg for Variable<R> {
     type Output = LinearCombination<R>;
 
@@ -196,6 +218,18 @@ impl<R: Ring> Sub<Variable<R>> for Constant<R> {
 
     fn sub(self, rps: Variable<R>) -> Self::Output {
         [(Variable::CONSTANT, self), (rps, -Constant::UNITY)].into()
+    }
+}
+
+impl<R: Ring> Sub for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        if self != rps {
+            [(self, Constant::UNITY), (rps, -Constant::UNITY)].into()
+        } else {
+            [].into()
+        }
     }
 }
 
@@ -225,13 +259,14 @@ impl<R: Ring> Mul for Variable<R> {
 
 pub type Term<R> = (Variable<R>, Constant<R>);
 
+#[derive(Clone)]
 pub struct LinearCombination<R: Ring> {
     terms: BTreeMap<Variable<R>, Constant<R>>,
 }
 
 impl<R: Ring> Expression<R> for LinearCombination<R> {
-    fn compile(self) -> LinearSpan<R> {
-        vec![self].into()
+    fn span(&self) -> LinearSpan<R> {
+        vec![self.clone()].into()
     }
 
     fn degree(&self) -> usize {
@@ -497,8 +532,8 @@ pub struct LinearMonoid<R: Ring> {
 }
 
 impl<R: Ring> Expression<R> for LinearMonoid<R> {
-    fn compile(self) -> LinearSpan<R> {
-        self.factors.into()
+    fn span(&self) -> LinearSpan<R> {
+        self.factors.clone().into()
     }
 
     fn degree(&self) -> usize {
@@ -611,6 +646,12 @@ pub struct LinearSpan<R: Ring> {
     vectors: Vec<LinearCombination<R>>,
 }
 
+impl<R: Ring> LinearSpan<R> {
+    pub fn dimension(&self) -> usize {
+        self.vectors.len()
+    }
+}
+
 impl<R: Ring> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
     fn from(vectors: Vec<LinearCombination<R>>) -> Self {
         Self { vectors }
@@ -625,20 +666,374 @@ impl<R: Ring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
     }
 }
 
+impl<R: Ring> Index<usize> for LinearSpan<R> {
+    type Output = LinearCombination<R>;
+
+    fn index(&self, dimension: usize) -> &Self::Output {
+        &self.vectors[dimension]
+    }
+}
+
 pub struct Constraint<R: Ring> {
     lps: Box<dyn Expression<R>>,
     rps: Box<dyn Expression<R>>,
 }
 
-impl<R: Ring> Constraint<R> {
-    pub fn new<LPS: Expression<R>, RPS: Expression<R>>(lps: LPS, rps: RPS) -> Self {
+pub struct CircuitBuilder<R: Ring> {
+    degree: usize,
+    public_inputs: Cell<usize>,
+    public_outputs: Cell<usize>,
+    private_inputs: Cell<usize>,
+    private_outputs: Cell<usize>,
+    auxiliaries: Cell<usize>,
+    constraints: RefCell<Vec<Constraint<R>>>,
+    scopes: RefCell<DynTree<ScopeInfo>>,
+    current_scope: RefCell<NodeIdx<Dyn<ScopeInfo>>>,
+}
+
+impl<R: Ring> CircuitBuilder<R> {
+    pub fn new(degree: usize) -> Self {
+        let mut tree = DynTree::empty();
+        let root = tree.push_root(ScopeInfo::root());
         Self {
+            degree,
+            public_inputs: Cell::new(0),
+            public_outputs: Cell::new(0),
+            private_inputs: Cell::new(0),
+            private_outputs: Cell::new(0),
+            auxiliaries: Cell::new(0),
+            constraints: RefCell::new(Vec::new()),
+            scopes: RefCell::new(tree),
+            current_scope: RefCell::new(root),
+        }
+    }
+
+    pub const fn degree(&self) -> usize {
+        self.degree
+    }
+
+    pub fn constraints(&self) -> usize {
+        self.constraints.borrow().len()
+    }
+
+    pub fn variables(&self) -> usize {
+        1 + self.public_inputs.get()
+            + self.public_outputs.get()
+            + self.private_inputs.get()
+            + self.private_outputs.get()
+            + self.auxiliaries.get()
+    }
+
+    pub fn scope(&self, name: &'static str) -> Scope<R> {
+        let mut scopes = self.scopes.borrow_mut();
+        let mut current_scope = self.current_scope.borrow_mut();
+        let info = ScopeInfo::new(name);
+        let mut node = scopes.get_node_mut(&*current_scope).expect("Scope");
+        *current_scope = node.push_child(info);
+        Scope { builder: self }
+    }
+
+    pub fn r1cs(self) -> R1CS<R> {
+        let (constraints_num, variables_num) = (self.constraints(), self.variables());
+        let constraints = self.constraints.take();
+        let (lps_degree, rps_degree) = constraints
+            .iter()
+            .map(|c| (c.lps.degree(), c.rps.degree()))
+            .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
+        assert!(
+            lps_degree <= 2 && rps_degree <= 1,
+            "Shape [{lps_degree}, {rps_degree}] is not compatible with [2, 1]"
+        );
+        let mut a = MatrixSparseBuilder::<R>::new(constraints_num, variables_num);
+        let mut b = MatrixSparseBuilder::<R>::new(constraints_num, variables_num);
+        let mut c = MatrixSparseBuilder::<R>::new(constraints_num, variables_num);
+
+        self.lay_out();
+        for constraint in constraints {
+            let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
+            match lps_span.dimension() {
+                2 => {
+                    self.put(&mut a, &lps_span[0]);
+                    self.put(&mut b, &lps_span[1]);
+                }
+                1 => {
+                    self.put(&mut a, &lps_span[0]);
+                    self.pad(&mut b);
+                }
+                0 => {
+                    self.pad(&mut a);
+                    self.pad(&mut b);
+                }
+                _ => unreachable!(),
+            }
+            match rps_span.dimension() {
+                1 => {
+                    self.put(&mut c, &rps_span[0]);
+                }
+                0 => {
+                    self.pad(&mut c);
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        R1CS::new(a.build(), b.build(), c.build())
+    }
+
+    pub fn ccs(self) -> CustomizableConstraintSystem<R> {
+        let (constraints_num, variables_num) = (self.constraints(), self.variables());
+        let constraints = self.constraints.take();
+        let (lps_degree, rps_degree) = constraints
+            .iter()
+            .map(|c| (c.lps.degree(), c.rps.degree()))
+            .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
+        let (mut lps_matrices, mut rps_matrices) = (Vec::new(), Vec::new());
+        lps_matrices.resize_with(lps_degree, || {
+            MatrixSparseBuilder::<R>::new(constraints_num, variables_num)
+        });
+        rps_matrices.resize_with(rps_degree, || {
+            MatrixSparseBuilder::<R>::new(constraints_num, variables_num)
+        });
+
+        self.lay_out();
+        #[allow(clippy::needless_range_loop)]
+        for constraint in constraints {
+            let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
+            for i in 0..lps_span.dimension() {
+                self.put(&mut lps_matrices[i], &lps_span[i])
+            }
+            for i in lps_span.dimension()..lps_degree {
+                self.pad(&mut lps_matrices[i]);
+            }
+            for i in 0..rps_span.dimension() {
+                self.put(&mut rps_matrices[i], &rps_span[i])
+            }
+            for i in rps_span.dimension()..rps_degree {
+                self.pad(&mut rps_matrices[i]);
+            }
+        }
+
+        let mut matrices = Vec::with_capacity(lps_degree + rps_degree);
+        lps_matrices
+            .into_iter()
+            .for_each(|b| matrices.push(b.build()));
+        rps_matrices
+            .into_iter()
+            .for_each(|b| matrices.push(b.build()));
+
+        let multisets = vec![(0..matrices.len() - 1).collect(), vec![matrices.len() - 1]];
+
+        let constants = vec![R::UNITY, -R::UNITY];
+
+        CustomizableConstraintSystem::new(
+            constraints_num,
+            variables_num,
+            matrices,
+            multisets,
+            constants,
+        )
+    }
+
+    #[must_use = "Circuit variable should be constrained"]
+    fn allocate(&self, kind: VariableKind) -> Variable<R> {
+        let mut scopes = self.scopes.borrow_mut();
+        let current_scope = self.current_scope.borrow();
+        let mut scope = scopes.get_node_mut(&*current_scope).expect("Scope");
+        let info = scope.data_mut();
+        info.variables += 1;
+
+        let n = match kind {
+            VariableKind::PublicInput => {
+                let n = self.public_inputs.get();
+                self.public_inputs.update(|n| n + 1);
+                n
+            }
+            VariableKind::PublicOutput => {
+                let n = self.public_outputs.get();
+                self.public_outputs.update(|n| n + 1);
+                n
+            }
+            VariableKind::PrivateInput => {
+                let n = self.private_inputs.get();
+                self.private_inputs.update(|n| n + 1);
+                n
+            }
+            VariableKind::PrivateOutput => {
+                let n = self.private_outputs.get();
+                self.private_outputs.update(|n| n + 1);
+                n
+            }
+            VariableKind::Auxiliary => {
+                let n = self.auxiliaries.get();
+                self.auxiliaries.update(|n| n + 1);
+                n
+            }
+            VariableKind::Constant => panic!("New constant variable requested"),
+        };
+        Variable::new(kind, n)
+    }
+
+    fn constrain(&self, constraint: Constraint<R>) {
+        let mut scopes = self.scopes.borrow_mut();
+        let current_scope = self.current_scope.borrow();
+        let mut scope = scopes.get_node_mut(&*current_scope).expect("Scope");
+        let info = scope.data_mut();
+
+        assert!(
+            self.degree >= constraint.lps.degree(),
+            "In scope {} constraint left degree {} is higher than circuit degree {}",
+            info.name,
+            constraint.lps.degree(),
+            self.degree
+        );
+        assert!(
+            self.degree >= constraint.rps.degree(),
+            "In scope {} constraint right degree {} is higher than circuit degree {}",
+            info.name,
+            constraint.lps.degree(),
+            self.degree
+        );
+
+        info.constraints += 1;
+        let mut constraints = self.constraints.borrow_mut();
+        constraints.push(constraint)
+    }
+
+    fn put(&self, m: &mut MatrixSparseBuilder<R>, lc: &LinearCombination<R>) {
+        for (variable, coefficient) in &lc.terms {
+            let column: usize = match variable.kind {
+                VariableKind::Constant => 0,
+                VariableKind::PublicInput => self.public_inputs.get() + variable.number,
+                VariableKind::PublicOutput => self.public_outputs.get() + variable.number,
+                VariableKind::PrivateInput => self.private_inputs.get() + variable.number,
+                VariableKind::PrivateOutput => self.private_outputs.get() + variable.number,
+                VariableKind::Auxiliary => self.auxiliaries.get() + variable.number,
+            };
+            m.column(column, coefficient.value);
+        }
+        m.row();
+    }
+
+    fn pad(&self, m: &mut MatrixSparseBuilder<R>) {
+        m.column(0, R::UNITY);
+        m.row();
+    }
+
+    fn lay_out(&self) {
+        let mut n;
+        let mut offset = 1;
+
+        n = self.public_inputs.get();
+        self.public_inputs.set(offset);
+        offset += n;
+
+        n = self.public_outputs.get();
+        self.public_outputs.set(offset);
+        offset += n;
+
+        n = self.private_inputs.get();
+        self.private_inputs.set(offset);
+        offset += n;
+
+        n = self.private_outputs.get();
+        self.private_outputs.set(offset);
+        offset += n;
+
+        self.auxiliaries.set(offset);
+    }
+}
+
+impl<R: Ring> Display for CircuitBuilder<R> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(
+            f,
+            "Circuit degree {} constraints {} variables {}\n{}",
+            self.degree,
+            self.constraints(),
+            self.variables(),
+            self.scopes.borrow()
+        )
+    }
+}
+
+pub struct Scope<'a, R: Ring> {
+    builder: &'a CircuitBuilder<R>,
+}
+
+impl<'a, R: Ring> Scope<'a, R> {
+    pub fn constrain<LPS: Expression<R>, RPS: Expression<R>>(&self, lps: LPS, rps: RPS) {
+        self.builder.constrain(Constraint {
             lps: Box::new(lps),
             rps: Box::new(rps),
+        })
+    }
+
+    #[must_use = "Circuit variable should be constrained"]
+    pub fn public_input(&self) -> Variable<R> {
+        self.builder.allocate(VariableKind::PublicInput)
+    }
+
+    #[must_use = "Circuit variable should be constrained"]
+    pub fn public_output(&self) -> Variable<R> {
+        self.builder.allocate(VariableKind::PublicOutput)
+    }
+
+    #[must_use = "Circuit variable should be constrained"]
+    pub fn private_input(&self) -> Variable<R> {
+        self.builder.allocate(VariableKind::PrivateInput)
+    }
+
+    #[must_use = "Circuit variable should be constrained"]
+    pub fn private_output(&self) -> Variable<R> {
+        self.builder.allocate(VariableKind::PrivateOutput)
+    }
+
+    #[must_use = "Circuit variable should be constrained"]
+    pub fn auxiliary(&self) -> Variable<R> {
+        self.builder.allocate(VariableKind::Auxiliary)
+    }
+
+    #[must_use = "Circuit variable should be constrained"]
+    pub fn variable(&self, kind: VariableKind) -> Variable<R> {
+        self.builder.allocate(kind)
+    }
+}
+
+impl<'a, R: Ring> Drop for Scope<'a, R> {
+    fn drop(&mut self) {
+        let scopes = self.builder.scopes.borrow();
+        let mut current_scope = self.builder.current_scope.borrow_mut();
+        let node = scopes.get_node(&*current_scope).expect("Tree");
+        *current_scope = node.parent().expect("Scope").idx();
+    }
+}
+
+struct ScopeInfo {
+    name: &'static str,
+    constraints: usize,
+    variables: usize,
+}
+
+impl ScopeInfo {
+    fn new(name: &'static str) -> Self {
+        Self {
+            name,
+            constraints: 0,
+            variables: 0,
+        }
+    }
+
+    fn root() -> Self {
+        Self {
+            name: "Root",
+            constraints: 0,
+            variables: 1,
         }
     }
 }
 
-pub struct CircuitBuilder<R: Ring> {
-    constraints: Vec<Constraint<R>>,
+impl Display for ScopeInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{} {}x{}", self.name, self.constraints, self.variables)
+    }
 }
