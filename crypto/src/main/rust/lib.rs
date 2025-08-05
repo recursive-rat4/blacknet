@@ -24,6 +24,7 @@ pub mod field25519;
 pub mod group;
 pub mod magma;
 pub mod matrixdense;
+pub mod matrixring;
 pub mod matrixsparse;
 pub mod module;
 pub mod monoid;

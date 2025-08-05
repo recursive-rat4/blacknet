@@ -57,6 +57,10 @@ name = "matrixdense"
 path = "src/test/rust/matrixdense.rs"
 
 [[test]]
+name = "matrixring"
+path = "src/test/rust/matrixring.rs"
+
+[[test]]
 name = "matrixsparse"
 path = "src/test/rust/matrixsparse.rs"
 
