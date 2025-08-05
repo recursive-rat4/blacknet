@@ -18,3 +18,4 @@
 pub mod endpoint;
 pub mod node;
 pub mod router;
+pub mod socks5;
