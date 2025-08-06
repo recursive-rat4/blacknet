@@ -22,7 +22,7 @@ use data_encoding_macro::new_encoding;
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[repr(u8)]
 pub enum Endpoint {
     IPv4 { port: u16, address: [u8; 4] } = 128,

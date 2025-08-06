@@ -57,7 +57,7 @@ impl Node {
         }
 
         Ok(Self {
-            router: Router::new(log_manager, runtime)?,
+            router: Router::new(mode, log_manager, runtime)?,
         })
     }
 

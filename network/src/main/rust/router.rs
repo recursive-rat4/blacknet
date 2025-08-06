@@ -15,44 +15,49 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::endpoint::{ipv4_any, ipv6_any};
+use crate::endpoint::{Endpoint, ipv4_any, ipv6_any};
+use crate::peertable::PeerTable;
+use crate::settings::Settings;
+use blacknet_compat::mode::Mode;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{info, warn};
 use spdlog::Logger;
 use std::cmp::min;
+use std::collections::HashSet;
 use std::error::Error;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
 
-pub struct Settings {
-    port: u16,
-    ipv4: bool,
-    ipv6: bool,
-    tor: bool,
-    i2p: bool,
-}
-
 pub struct Router {
     logger: Logger,
     settings: Settings,
+    listens: RwLock<HashSet<Endpoint>>,
+    peer_table: PeerTable,
 }
 
 impl Router {
-    pub fn new(log_manager: &LogManager, runtime: &Runtime) -> Result<Arc<Self>, Box<dyn Error>> {
+    pub fn new(
+        mode: &Mode,
+        log_manager: &LogManager,
+        runtime: &Runtime,
+    ) -> Result<Arc<Self>, Box<dyn Error>> {
+        let settings = Settings::new(mode);
         let router = Arc::new(Self {
             logger: log_manager.logger("Router")?,
-            settings: Settings {
-                port: 28453,
-                ipv4: true,
-                ipv6: true,
-                tor: true,
-                i2p: true,
-            },
+            settings,
+            listens: RwLock::new(HashSet::new()),
+            peer_table: PeerTable::new(mode, log_manager, settings)?,
         });
         if router.settings.ipv6 || router.settings.ipv4 {
             runtime.spawn(router.clone().listen_ip());
+        }
+        if router.settings.tor {
+            runtime.spawn(router.clone().listen_tor());
+        }
+        if router.settings.i2p {
+            runtime.spawn(router.clone().listen_i2p());
         }
         Ok(router)
     }
@@ -70,6 +75,17 @@ impl Router {
             match TcpListener::bind(endpoint.to_rust().expect("TCP/IP")).await {
                 Ok(listener) => {
                     timeout = Self::INIT_TIMEOUT;
+                    self.add_listener(endpoint);
+                    loop {
+                        match listener.accept().await {
+                            Ok((_socket, _addr)) => todo!(),
+                            Err(msg) => {
+                                warn!(self.logger, "{msg}");
+                                break;
+                            }
+                        }
+                    }
+                    self.remove_listener(endpoint);
                 }
                 Err(msg) => {
                     warn!(self.logger, "{msg}");
@@ -78,6 +94,43 @@ impl Router {
 
             sleep(timeout).await;
             timeout = min(timeout * 2, Self::MAX_TIMEOUT);
+        }
+    }
+
+    async fn listen_tor(self: Arc<Self>) {
+        todo!();
+    }
+
+    async fn listen_i2p(self: Arc<Self>) {
+        todo!();
+    }
+
+    fn add_listener(&self, endpoint: Endpoint) {
+        info!(
+            self.logger,
+            "Listening on {}",
+            endpoint.to_log(self.settings.log_endpoint)
+        );
+        let inserted = {
+            let mut listens = self.listens.write().unwrap();
+            listens.insert(endpoint)
+        };
+        if inserted {
+            self.peer_table.contacted(endpoint)
+        }
+    }
+    fn remove_listener(&self, endpoint: Endpoint) {
+        info!(
+            self.logger,
+            "Lost binding to {}",
+            endpoint.to_log(self.settings.log_endpoint)
+        );
+        let removed = {
+            let mut listens = self.listens.write().unwrap();
+            listens.remove(&endpoint)
+        };
+        if removed {
+            self.peer_table.discontacted(endpoint)
         }
     }
 
