@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,34 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{CommutativeAlgebra, DivisionAlgebra};
-use crate::ring::{CommutativeRing, DivisionRing, IntegerRing, PolynomialRing};
-use core::ops::Div;
+use crate::module::Module;
+use crate::ring::{CommutativeRing, DivisionRing, Ring};
 
 #[rustfmt::skip]
-pub trait Field
-    : CommutativeRing
+pub trait Algebra<R: Ring, const N: usize>
+    : Module<R, N>
+    + Ring<BaseRing = R>
+    + From<R>
+{
+}
+
+#[rustfmt::skip]
+pub trait CommutativeAlgebra<R: CommutativeRing, const N: usize>
+    : Algebra<R, N>
+    + CommutativeRing
+{
+}
+
+#[rustfmt::skip]
+pub trait DivisionAlgebra<R: DivisionRing, const N: usize>
+    : Algebra<R, N>
     + DivisionRing
-    + Div<Output = Option<Self>>
-{
-    const ONE: Self = Self::UNITY;
-}
-
-#[rustfmt::skip]
-pub trait PrimeField
-    : Field
-    + IntegerRing
-{
-}
-
-impl<F: PrimeField> Field for F {}
-
-#[rustfmt::skip]
-pub trait AlgebraicExtension<F: Field, const N: usize>
-    : Field
-    + PolynomialRing<F, N>
-    + CommutativeAlgebra<F, N>
-    + DivisionAlgebra<F, N>
-    + Div<F, Output = Option<Self>>
 {
 }

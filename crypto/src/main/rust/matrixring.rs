@@ -15,8 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Algebra;
 use crate::magma::{AdditiveMagma, MultiplicativeMagma};
-use crate::module::FreeModule;
+use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::Ring;
 use core::array;
@@ -85,6 +86,22 @@ impl<R: Ring, const N: usize, const NN: usize> Default for MatrixRing<R, N, NN> 
 impl<R: Ring, const N: usize, const NN: usize> From<R> for MatrixRing<R, N, NN> {
     fn from(scalar: R) -> Self {
         Self::const_from(scalar)
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Index<usize> for MatrixRing<R, N, NN> {
+    type Output = R;
+
+    #[inline]
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.elements[index]
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> IndexMut<usize> for MatrixRing<R, N, NN> {
+    #[inline]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.elements[index]
     }
 }
 
@@ -254,7 +271,11 @@ impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRi
     const IDENTITY: Self = Self::const_from(R::UNITY);
 }
 
+impl<R: Ring, const N: usize, const NN: usize> Module<R, NN> for MatrixRing<R, N, NN> {}
+
 impl<R: Ring, const N: usize, const NN: usize> Ring for MatrixRing<R, N, NN> {
     type BaseRing = R;
     type Int = R::Int;
 }
+
+impl<R: Ring, const N: usize, const NN: usize> Algebra<R, NN> for MatrixRing<R, N, NN> {}
