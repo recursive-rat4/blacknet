@@ -58,6 +58,10 @@ impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
         N
     }
 
+    pub const fn elements(self) -> [R; NN] {
+        self.elements
+    }
+
     pub fn trace(&self) -> R {
         let mut sigma = R::ZERO;
         for i in 0..N {

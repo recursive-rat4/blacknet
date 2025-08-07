@@ -219,6 +219,9 @@ impl IntegerRing for FermatField {
             x
         }
     }
+    fn absolute(self) -> Self::Int {
+        self.balanced().abs()
+    }
 
     const BITS: usize = 17;
     const MODULUS: Self::Int = 65537;

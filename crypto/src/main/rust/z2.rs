@@ -164,6 +164,9 @@ impl IntegerRing for Z2 {
     fn canonical(self) -> Self::Int {
         self.n.into()
     }
+    fn absolute(self) -> Self::Int {
+        self.n.into()
+    }
 
     const BITS: usize = 1;
     const MODULUS: Self::Int = 2;

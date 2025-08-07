@@ -78,7 +78,7 @@ impl Field25519 {
     }
 
     fn legendre_symbol(self) -> Self {
-        self.square_and_multiply(Self::P_MINUS_1_HALVED)
+        self.square_and_multiply(Self::P_MINUS_1_HALVED_BITS)
     }
 
     fn power(self, rps: Self) -> Self {
@@ -132,9 +132,9 @@ impl Field25519 {
     const TWO_INVERTED: Self = Self {
         n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000013"),
     };
-    const P_MINUS_1_HALVED: [bool; 254] =
-        UInt256::from_hex("3FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF6")
-            .bits();
+    const P_MINUS_1_HALVED_NUM: UInt256 =
+        UInt256::from_hex("3FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF6");
+    const P_MINUS_1_HALVED_BITS: [bool; 254] = Self::P_MINUS_1_HALVED_NUM.bits();
     const S: Self = Self::TWO;
     const Q: [bool; 253] =
         UInt256::from_hex("1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB")
@@ -309,6 +309,14 @@ impl Ring for Field25519 {
 impl IntegerRing for Field25519 {
     fn canonical(self) -> UInt256 {
         Self::from_form(self.n)
+    }
+    fn absolute(self) -> UInt256 {
+        let n = self.canonical();
+        if n <= Self::P_MINUS_1_HALVED_NUM {
+            n
+        } else {
+            Self::MODULUS - n
+        }
     }
 
     const BITS: usize = 255;

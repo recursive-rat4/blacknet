@@ -16,6 +16,7 @@
  */
 
 use blacknet_crypto::matrixdense::MatrixDense;
+use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::vectordense::VectorDense;
 
 type R = blacknet_crypto::fermat::FermatField;
@@ -136,4 +137,17 @@ fn transpose() {
     ].map(R::from).into());
     assert_eq!(a.transpose(), b);
     assert_eq!(b.transpose(), a);
+}
+
+#[test]
+#[rustfmt::skip]
+fn infinity_norm() {
+    let a = MatrixDense::<R>::new(2, 2, [
+        0, 1,
+        2, 3,
+    ].map(R::from).into());
+    let nb = 3;
+    let ng = 4;
+    assert!(!a.check_infinity_norm(nb));
+    assert!(a.check_infinity_norm(ng));
 }

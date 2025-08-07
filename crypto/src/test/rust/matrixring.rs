@@ -17,6 +17,7 @@
 
 use blacknet_crypto::matrixring::MatrixRing;
 use blacknet_crypto::module::FreeModule;
+use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::fermat::FermatField;
 type M = FreeModule<Z, 2>;
@@ -127,4 +128,17 @@ fn transpose() {
     ].map(Z::from));
     assert_eq!(a.transpose(), b);
     assert_eq!(b.transpose(), a);
+}
+
+#[test]
+#[rustfmt::skip]
+fn infinity_norm() {
+    let a = R::new([
+        0, 1,
+        2, 3,
+    ].map(Z::from));
+    let nb = 3;
+    let ng = 4;
+    assert!(!a.check_infinity_norm(nb));
+    assert!(a.check_infinity_norm(ng));
 }

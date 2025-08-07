@@ -26,7 +26,7 @@ pub trait Ring
     + MultiplicativeMonoid
 {
     type BaseRing: Ring;
-    type Int;
+    type Int: Copy + Ord;
 
     const UNITY: Self = <Self as MultiplicativeMonoid>::IDENTITY;
     const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
@@ -56,6 +56,7 @@ pub trait DivisionRing
 
 pub trait IntegerRing: Ring {
     fn canonical(self) -> Self::Int;
+    fn absolute(self) -> Self::Int;
 
     const BITS: usize;
     const MODULUS: Self::Int;

@@ -15,11 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::bigint::UInt256;
 use blacknet_crypto::field::Field;
 use blacknet_crypto::magma::{Inv, MultiplicativeMagma};
-use blacknet_crypto::ring::Ring;
+use blacknet_crypto::ring::{IntegerRing, Ring};
 
 type F = blacknet_crypto::field25519::Field25519;
+
+#[test]
+fn representative() {
+    let a = UInt256::from(1);
+    let b = UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC");
+    let c = F::from(-1);
+    let d = F::new(b);
+    assert_eq!(d, c);
+    assert_eq!(c.canonical(), b);
+    assert_eq!(d.canonical(), b);
+    assert_eq!(c.absolute(), a);
+    assert_eq!(d.absolute(), a);
+}
 
 #[test]
 fn add() {

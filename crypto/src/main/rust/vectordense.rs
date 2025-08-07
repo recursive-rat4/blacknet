@@ -43,6 +43,10 @@ impl<R: Ring> VectorDense<R> {
         self.elements.len()
     }
 
+    pub const fn elements(&self) -> &Vec<R> {
+        &self.elements
+    }
+
     pub fn steal(self) -> Vec<R> {
         self.elements
     }

@@ -48,6 +48,10 @@ impl<R: Ring> MatrixDense<R> {
         self.columns
     }
 
+    pub const fn elements(&self) -> &Vec<R> {
+        &self.elements
+    }
+
     pub fn cat(&self, rps: &Self) -> Self {
         let mut elements = Vec::<R>::with_capacity(self.rows * (self.columns + rps.columns));
         for i in 0..self.rows {

@@ -16,6 +16,7 @@
  */
 
 use blacknet_crypto::magma::{Inv, MultiplicativeMagma};
+use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::z2::Z2;
 
 #[test]
@@ -58,4 +59,12 @@ fn sub() {
 fn inv() {
     assert_eq!(Z2::new(1).inv().unwrap(), Z2::new(1));
     assert!(Z2::new(0).inv().is_none());
+}
+
+#[test]
+fn infinity_norm() {
+    assert!(!Z2::new(0).check_infinity_norm(0));
+    assert!(Z2::new(0).check_infinity_norm(1));
+    assert!(!Z2::new(1).check_infinity_norm(0));
+    assert!(!Z2::new(1).check_infinity_norm(1));
 }

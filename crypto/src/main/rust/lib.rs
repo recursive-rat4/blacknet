@@ -30,6 +30,7 @@ pub mod matrixring;
 pub mod matrixsparse;
 pub mod module;
 pub mod monoid;
+pub mod norm;
 pub mod point;
 pub mod r1cs;
 pub mod ring;

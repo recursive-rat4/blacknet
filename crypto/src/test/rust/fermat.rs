@@ -16,6 +16,7 @@
  */
 
 use blacknet_crypto::magma::{Inv, MultiplicativeMagma};
+use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::ring::{IntegerRing, Ring};
 
 type Z = blacknet_crypto::fermat::FermatField;
@@ -29,6 +30,8 @@ fn representative() {
     assert_eq!(b.canonical(), 65536);
     assert_eq!(a.balanced(), -1);
     assert_eq!(b.balanced(), -1);
+    assert_eq!(a.absolute(), 1);
+    assert_eq!(b.absolute(), 1);
 }
 
 #[test]
@@ -89,4 +92,16 @@ fn inv() {
     assert_eq!(c.inv().unwrap(), d);
     assert_eq!(d.inv().unwrap(), c);
     assert_eq!(Z::ZERO.inv(), None);
+}
+
+#[test]
+fn infinity_norm() {
+    let a = Z::from(-30000);
+    let b = Z::from(30000);
+    let nb = 30000;
+    let ng = 30001;
+    assert!(!a.check_infinity_norm(nb));
+    assert!(a.check_infinity_norm(ng));
+    assert!(!b.check_infinity_norm(nb));
+    assert!(b.check_infinity_norm(ng));
 }
