@@ -18,7 +18,7 @@
 use blacknet_crypto::matrixring::MatrixRing;
 use blacknet_crypto::module::FreeModule;
 
-type Z = blacknet_crypto::field25519::Field25519;
+type Z = blacknet_crypto::fermat::FermatField;
 type M = FreeModule<Z, 2>;
 type R = MatrixRing<Z, 2, 4>;
 

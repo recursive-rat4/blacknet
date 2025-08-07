@@ -49,6 +49,10 @@ name = "customizableconstraintsystem"
 path = "src/test/rust/customizableconstraintsystem.rs"
 
 [[test]]
+name = "fermat"
+path = "src/test/rust/fermat.rs"
+
+[[test]]
 name = "field25519"
 path = "src/test/rust/field25519.rs"
 

@@ -20,7 +20,7 @@
 use crate::field::PrimeField;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{DivisionRing, IntegerRing, Ring};
+use crate::ring::{IntegerRing, Ring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -159,8 +159,6 @@ impl Ring for Z2 {
     type BaseRing = Self;
     type Int = i8;
 }
-
-impl DivisionRing for Z2 {}
 
 impl IntegerRing for Z2 {
     fn canonical(self) -> Self::Int {

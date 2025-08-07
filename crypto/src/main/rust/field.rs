@@ -28,6 +28,8 @@ pub trait Field
     const ONE: Self = Self::UNITY;
 }
 
+impl<F: Field> DivisionRing for F {}
+
 #[rustfmt::skip]
 pub trait PrimeField
     : Field

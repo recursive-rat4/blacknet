@@ -19,7 +19,7 @@ use crate::bigint::{UInt256, UInt512};
 use crate::field::{Field, PrimeField};
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{DivisionRing, IntegerRing, Ring};
+use crate::ring::{IntegerRing, Ring};
 use crate::semigroup::MultiplicativeSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -315,7 +315,5 @@ impl IntegerRing for Field25519 {
     const MODULUS: UInt256 =
         UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED");
 }
-
-impl DivisionRing for Field25519 {}
 
 impl PrimeField for Field25519 {}

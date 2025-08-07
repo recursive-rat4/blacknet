@@ -20,6 +20,7 @@ pub mod algebra;
 pub mod bigint;
 pub mod circuitbuilder;
 pub mod customizableconstraintsystem;
+pub mod fermat;
 pub mod field;
 pub mod field25519;
 pub mod group;
