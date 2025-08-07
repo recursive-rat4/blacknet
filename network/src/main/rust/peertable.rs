@@ -19,7 +19,7 @@ use crate::endpoint::Endpoint;
 use crate::settings::Settings;
 use blacknet_compat::mode::Mode;
 use blacknet_log::logmanager::LogManager;
-use blacknet_log::{debug, error};
+use blacknet_log::{debug, error, info};
 use blacknet_time::milliseconds::Milliseconds;
 use blacknet_time::systemclock::SystemClock;
 use core::error::Error;
@@ -49,6 +49,14 @@ impl PeerTable {
             settings,
             peers: RwLock::new(HashMap::with_capacity(MAX_SIZE)),
         });
+
+        if peer_table.len() < 128 {
+            let added = peer_table.add(Self::builtin_peers(mode));
+            if added > 0 {
+                info!(peer_table.logger, "Added {added} built-in peers");
+            }
+        }
+
         Ok(peer_table)
     }
 
@@ -157,6 +165,46 @@ impl PeerTable {
         }
     }
 
+    pub fn add(&self, mut new_peers: impl Iterator<Item = Endpoint>) -> usize {
+        let mut added = 0;
+        {
+            let mut peers = self.peers.write().unwrap();
+            let free_slots = if MAX_SIZE > peers.len() {
+                MAX_SIZE - peers.len()
+            } else {
+                0
+            };
+            while added < free_slots {
+                if let Some(peer) = new_peers.next() {
+                    if Self::add_impl(&mut peers, peer) {
+                        added += 1;
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+        added
+    }
+
+    fn add_impl(peers: &mut HashMap<Endpoint, Entry>, peer: Endpoint) -> bool {
+        if peer.is_local() || peer.is_private() {
+            return false;
+        }
+        if let Endpoint::TORv2 {
+            port: _,
+            address: _,
+        } = peer
+        {
+            return false;
+        } // obsolete
+        if peers.contains_key(&peer) {
+            return false;
+        }
+        peers.insert(peer, Entry::new(false));
+        true
+    }
+
     pub(crate) async fn rotate(self: Arc<Self>) {
         let mut rotated = 0;
         let now = SystemClock::now();
@@ -184,6 +232,12 @@ impl PeerTable {
 
     async fn save(&self) {
         todo!();
+    }
+
+    fn builtin_peers(mode: &Mode) -> impl Iterator<Item = Endpoint> {
+        mode.builtin_peers()
+            .lines()
+            .map(|line| Endpoint::parse(line, mode.default_p2p_port()).expect("peers.txt"))
     }
 }
 

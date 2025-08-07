@@ -28,6 +28,7 @@ pub struct Mode {
     agent_name: String,
     default_p2p_port: u16,
     network_magic: u32,
+    builtin_peers: &'static str,
 }
 
 impl Mode {
@@ -37,6 +38,7 @@ impl Mode {
         subdirectory: Option<&'static str>,
         address_prefix: Option<&'static str>,
         requires_network: bool,
+        builtin_peers: &'static str,
     ) -> Self {
         Self {
             subdirectory,
@@ -48,6 +50,7 @@ impl Mode {
             },
             default_p2p_port: DEFAULT_P2P_PORT + ordinal as u16,
             network_magic: NETWORK_MAGIC + ordinal as u32,
+            builtin_peers,
         }
     }
 
@@ -55,12 +58,13 @@ impl Mode {
      * The main network. It's the production mode.
      */
     fn mainnet() -> Self {
-        Self::new(0, None, None, None, true)
+        let peers_txt = include_str!("../../../../kernel/src/main/resources/peers.txt");
+        Self::new(0, None, None, None, true, peers_txt)
     }
 
     #[allow(dead_code)]
     fn testnet() -> Self {
-        Self::new(1, Some("-TestNet"), Some("TestNet"), Some("t"), true)
+        Self::new(1, Some("-TestNet"), Some("TestNet"), Some("t"), true, "")
     }
 
     /**
@@ -68,7 +72,7 @@ impl Mode {
      * or else it can be a tiny private network.
      */
     fn regtest() -> Self {
-        Self::new(3, Some("-RegTest"), Some("RegTest"), Some("r"), false)
+        Self::new(3, Some("-RegTest"), Some("RegTest"), Some("r"), false, "")
     }
 
     fn default() -> Self {
@@ -107,6 +111,10 @@ impl Mode {
 
     pub fn network_magic(&self) -> u32 {
         self.network_magic
+    }
+
+    pub fn builtin_peers(&self) -> &'static str {
+        self.builtin_peers
     }
 }
 
