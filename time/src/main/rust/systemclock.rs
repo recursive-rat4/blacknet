@@ -15,26 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::mode::Mode;
+use crate::milliseconds::Milliseconds;
+use std::time::SystemTime;
 
-pub struct Settings {
-    pub port: u16,
-    pub ipv4: bool,
-    pub ipv6: bool,
-    pub tor: bool,
-    pub i2p: bool,
-    pub log_endpoint: bool,
-}
+// In milliseconds since UNIX epoch not counting leap seconds
+pub struct SystemClock {}
 
-impl Settings {
-    pub fn new(_mode: &Mode) -> Self {
-        Self {
-            port: 28453,
-            ipv4: true,
-            ipv6: true,
-            tor: true,
-            i2p: true,
-            log_endpoint: false,
+impl SystemClock {
+    pub fn now() -> Milliseconds {
+        let now = SystemTime::now();
+        match now.duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(since) => (since.as_millis() as i64).into(),
+            Err(until) => (-(until.duration().as_millis() as i64)).into(),
         }
     }
 }

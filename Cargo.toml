@@ -24,6 +24,7 @@ members = [
     "log",
     "network",
     "serialization",
+    "time",
 ]
 
 [workspace.dependencies]
@@ -32,6 +33,7 @@ blacknet-crypto = { path = "crypto" }
 blacknet-log = { path = "log" }
 blacknet-network = { path = "network" }
 blacknet-serialization = { path = "serialization" }
+blacknet-time = { path = "time" }
 data-encoding = { version = "2.9.0" }
 data-encoding-macro = { version = "0.1.18" }
 libc = { version = "0.2.174" }

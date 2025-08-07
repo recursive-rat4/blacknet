@@ -18,13 +18,15 @@
 use crate::endpoint::Endpoint;
 use crate::settings::Settings;
 use blacknet_compat::mode::Mode;
-use blacknet_log::error;
 use blacknet_log::logmanager::LogManager;
+use blacknet_log::{debug, error};
+use blacknet_time::milliseconds::Milliseconds;
+use blacknet_time::systemclock::SystemClock;
 use core::error::Error;
 use serde::{Deserialize, Serialize};
 use spdlog::Logger;
 use std::collections::{HashMap, HashSet};
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 const MAX_SIZE: usize = 8192;
 const FILE_VERSION: u32 = 5;
@@ -32,7 +34,7 @@ const FILE_NAME: &str = "peers.dat";
 
 pub struct PeerTable {
     logger: Logger,
-    settings: Settings,
+    settings: Arc<Settings>,
     peers: RwLock<HashMap<Endpoint, Entry>>,
 }
 
@@ -40,13 +42,14 @@ impl PeerTable {
     pub fn new(
         mode: &Mode,
         log_manager: &LogManager,
-        settings: Settings,
-    ) -> Result<Self, Box<dyn Error>> {
-        Ok(Self {
+        settings: Arc<Settings>,
+    ) -> Result<Arc<Self>, Box<dyn Error>> {
+        let peer_table = Arc::new(Self {
             logger: log_manager.logger("PeerTable")?,
             settings,
             peers: RwLock::new(HashMap::with_capacity(MAX_SIZE)),
-        })
+        });
+        Ok(peer_table)
     }
 
     pub fn contains(&self, endpoint: Endpoint) -> bool {
@@ -138,7 +141,7 @@ impl PeerTable {
             });
         }
         if discontacted {
-            return;
+            // return
         } else if !visited {
             error!(
                 self.logger,
@@ -153,6 +156,35 @@ impl PeerTable {
             );
         }
     }
+
+    pub(crate) async fn rotate(self: Arc<Self>) {
+        let mut rotated = 0;
+        let now = SystemClock::now();
+        {
+            let mut peers = self.peers.write().unwrap();
+            peers.retain(|_, entry| {
+                let mut retain = true;
+                if entry.is_old(now) && !entry.in_contact {
+                    retain = false;
+                    rotated += 1;
+                    entry.in_contact = true;
+                }
+                retain
+            });
+        }
+        if rotated != 0 {
+            self.save().await;
+            debug!(self.logger, "Rotated {rotated} endpoints");
+        }
+    }
+
+    async fn load(&self) {
+        todo!();
+    }
+
+    async fn save(&self) {
+        todo!();
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -160,11 +192,11 @@ struct Entry {
     #[serde(skip)]
     in_contact: bool,
     attempts: u64,
-    last_try: u64,
-    last_connected: u64,
+    last_try: Milliseconds,
+    last_connected: Milliseconds,
     user_agent: String,
     subnetworks: HashSet<[u8; 32]>,
-    added: u64,
+    added: Milliseconds,
 }
 
 impl Entry {
@@ -172,11 +204,24 @@ impl Entry {
         Self {
             in_contact,
             attempts: 0,
-            last_try: 0,
-            last_connected: 0,
+            last_try: Milliseconds::ZERO,
+            last_connected: Milliseconds::ZERO,
             user_agent: String::new(),
             subnetworks: HashSet::new(),
-            added: 0,
+            added: Milliseconds::ZERO,
         }
+    }
+
+    fn is_old(&self, now: Milliseconds) -> bool {
+        if self.last_connected == Milliseconds::ZERO && self.attempts > 15 {
+            return true;
+        }
+        if self.last_connected != Milliseconds::ZERO
+            && now - self.last_connected > Milliseconds::from_days(15)
+        {
+            return true;
+        }
+
+        false
     }
 }

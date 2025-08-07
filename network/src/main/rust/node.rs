@@ -15,7 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::connection::Connection;
+use crate::peertable::PeerTable;
 use crate::router::Router;
+use crate::settings::Settings;
 use blacknet_compat::getuid::getuid;
 use blacknet_compat::mode::Mode;
 use blacknet_compat::uname::uname;
@@ -24,10 +27,16 @@ use blacknet_log::logmanager::LogManager;
 use blacknet_log::{info, warn};
 use core::num::NonZero;
 use std::error::Error;
-use std::sync::Arc;
+use std::sync::atomic::AtomicU64;
+use std::sync::{Arc, RwLock};
 use tokio::runtime::Runtime;
+use tokio::time::{Duration, sleep};
 
 pub struct Node {
+    settings: Arc<Settings>,
+    next_peer_id: AtomicU64,
+    connections: RwLock<Vec<Connection>>,
+    peer_table: Arc<PeerTable>,
     router: Arc<Router>,
 }
 
@@ -37,7 +46,7 @@ impl Node {
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
-    ) -> Result<Self, Box<dyn Error>> {
+    ) -> Result<Arc<Self>, Box<dyn Error>> {
         let (os_name, os_version, os_machine) = uname();
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
         let cpu_cores = std::thread::available_parallelism()
@@ -56,12 +65,36 @@ impl Node {
             warn!(logger, "Running as root");
         }
 
-        Ok(Self {
-            router: Router::new(mode, log_manager, runtime)?,
-        })
+        let settings = Arc::new(Settings::new(mode));
+        let peer_table = PeerTable::new(mode, log_manager, settings.clone())?;
+        let node = Arc::new(Self {
+            settings: settings.clone(),
+            next_peer_id: AtomicU64::new(1),
+            connections: RwLock::new(Vec::new()),
+            peer_table: peer_table.clone(),
+            router: Router::new(log_manager, runtime, settings, peer_table)?,
+        });
+
+        runtime.spawn(node.clone().rotator());
+
+        Ok(node)
     }
 
-    pub fn router(&self) -> Arc<Router> {
-        self.router.clone()
+    pub fn is_online(&self) -> bool {
+        let connections = self.connections.read().unwrap();
+        connections.iter().any(Connection::is_established)
+    }
+
+    async fn rotator(self: Arc<Self>) {
+        loop {
+            sleep(Duration::from_secs(60 * 60)).await;
+
+            // Await while node gets online
+            if !self.is_online() {
+                continue;
+            }
+
+            self.peer_table.clone().rotate().await;
+        }
     }
 }

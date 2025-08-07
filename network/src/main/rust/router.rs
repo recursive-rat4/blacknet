@@ -18,7 +18,6 @@
 use crate::endpoint::{Endpoint, ipv4_any, ipv6_any};
 use crate::peertable::PeerTable;
 use crate::settings::Settings;
-use blacknet_compat::mode::Mode;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{info, warn};
 use spdlog::Logger;
@@ -32,24 +31,25 @@ use tokio::time::{Duration, sleep};
 
 pub struct Router {
     logger: Logger,
-    settings: Settings,
+    settings: Arc<Settings>,
     listens: RwLock<HashSet<Endpoint>>,
-    peer_table: PeerTable,
+    peer_table: Arc<PeerTable>,
 }
 
 impl Router {
     pub fn new(
-        mode: &Mode,
         log_manager: &LogManager,
         runtime: &Runtime,
+        settings: Arc<Settings>,
+        peer_table: Arc<PeerTable>,
     ) -> Result<Arc<Self>, Box<dyn Error>> {
-        let settings = Settings::new(mode);
         let router = Arc::new(Self {
             logger: log_manager.logger("Router")?,
             settings,
             listens: RwLock::new(HashSet::new()),
-            peer_table: PeerTable::new(mode, log_manager, settings)?,
+            peer_table,
         });
+
         if router.settings.ipv6 || router.settings.ipv4 {
             runtime.spawn(router.clone().listen_ip());
         }
@@ -59,6 +59,7 @@ impl Router {
         if router.settings.i2p {
             runtime.spawn(router.clone().listen_i2p());
         }
+
         Ok(router)
     }
 

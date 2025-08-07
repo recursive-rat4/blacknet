@@ -112,6 +112,7 @@ dependencies = [
  "blacknet-crypto",
  "blacknet-log",
  "blacknet-serialization",
+ "blacknet-time",
  "data-encoding",
  "data-encoding-macro",
  "serde",
@@ -123,6 +124,13 @@ dependencies = [
 
 [[package]]
 name = "blacknet-serialization"
+version = "0.3.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "blacknet-time"
 version = "0.3.0"
 dependencies = [
  "serde",
