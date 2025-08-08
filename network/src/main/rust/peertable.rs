@@ -18,14 +18,19 @@
 use crate::endpoint::Endpoint;
 use crate::settings::Settings;
 use blacknet_compat::mode::Mode;
+use blacknet_compat::xdgdirectories::XDGDirectories;
 use blacknet_log::logmanager::LogManager;
-use blacknet_log::{debug, error, info};
+use blacknet_log::{debug, error, info, warn};
+use blacknet_serialization::format::{from_read, to_write};
 use blacknet_time::milliseconds::Milliseconds;
 use blacknet_time::systemclock::SystemClock;
 use core::error::Error;
 use serde::{Deserialize, Serialize};
 use spdlog::Logger;
 use std::collections::{HashMap, HashSet};
+use std::fs::File;
+use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
+use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
 const MAX_SIZE: usize = 8192;
@@ -35,29 +40,40 @@ const FILE_NAME: &str = "peers.dat";
 pub struct PeerTable {
     logger: Logger,
     settings: Arc<Settings>,
+    file_path: PathBuf,
     peers: RwLock<HashMap<Endpoint, Entry>>,
 }
 
 impl PeerTable {
     pub fn new(
         mode: &Mode,
+        dirs: &XDGDirectories,
         log_manager: &LogManager,
         settings: Arc<Settings>,
     ) -> Result<Arc<Self>, Box<dyn Error>> {
-        let peer_table = Arc::new(Self {
+        let peer_table = Self {
             logger: log_manager.logger("PeerTable")?,
             settings,
+            file_path: dirs.data().join(FILE_NAME),
             peers: RwLock::new(HashMap::with_capacity(MAX_SIZE)),
-        });
-
+        };
+        match peer_table.load() {
+            Ok(()) => {
+                if !peer_table.is_empty() {
+                    info!(peer_table.logger, "Loaded {} peers", peer_table.len());
+                }
+            }
+            Err(err) => {
+                warn!(peer_table.logger, "{err}");
+            }
+        }
         if peer_table.len() < 128 {
             let added = peer_table.add(Self::builtin_peers(mode));
             if added > 0 {
                 info!(peer_table.logger, "Added {added} built-in peers");
             }
         }
-
-        Ok(peer_table)
+        Ok(Arc::new(peer_table))
     }
 
     pub fn contains(&self, endpoint: Endpoint) -> bool {
@@ -221,23 +237,67 @@ impl PeerTable {
             });
         }
         if rotated != 0 {
-            self.save().await;
+            self.save();
             debug!(self.logger, "Rotated {rotated} endpoints");
         }
     }
 
-    async fn load(&self) {
-        todo!();
+    fn load(&self) -> Result<(), Box<dyn Error>> {
+        let mut peers = self.peers.write().unwrap();
+        let mut file = match File::open(&self.file_path) {
+            Ok(file) => BufReader::new(file),
+            Err(err) => {
+                if err.kind() == ErrorKind::NotFound {
+                    // first run or unlinked file
+                    return Ok(());
+                } else {
+                    return Err(Box::new(err));
+                }
+            }
+        };
+        let mut version = [0u8; 4];
+        file.read_exact(&mut version)?;
+        let version = u32::from_be_bytes(version);
+        if version != FILE_VERSION {
+            warn!(self.logger, "Unknown {FILE_NAME} version {version}");
+            return Ok(());
+        }
+        let deserealized: HashMap<Endpoint, Entry> = from_read(&mut file)?;
+        peers.extend(deserealized);
+        Ok(())
     }
 
-    async fn save(&self) {
-        todo!();
+    fn save(&self) {
+        //TODO atomic
+        let peers = self.peers.read().unwrap();
+        let mut file = match File::create(&self.file_path) {
+            Ok(file) => BufWriter::new(file),
+            Err(err) => {
+                error!(self.logger, "Can't create {FILE_NAME}: {err}");
+                return;
+            }
+        };
+        let version = FILE_VERSION.to_be_bytes();
+        if let Err(err) = file.write_all(&version) {
+            error!(self.logger, "Can't write {FILE_NAME}: {err}");
+            return;
+        }
+        if let Err(err) = to_write(&*peers, &mut file) {
+            error!(self.logger, "Can't write {FILE_NAME}: {err}");
+            // return;
+        }
     }
 
     fn builtin_peers(mode: &Mode) -> impl Iterator<Item = Endpoint> {
         mode.builtin_peers()
             .lines()
             .map(|line| Endpoint::parse(line, mode.default_p2p_port()).expect("peers.txt"))
+    }
+}
+
+impl Drop for PeerTable {
+    fn drop(&mut self) {
+        self.save();
     }
 }
 

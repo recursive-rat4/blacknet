@@ -22,6 +22,7 @@ use crate::serializer::Serializer;
 use crate::sizer::Sizer;
 use crate::writer::Writer;
 use serde::{Deserialize, Serialize};
+use std::io::{Read, Write};
 
 pub fn from_bytes<'a, T: Deserialize<'a>>(bytes: &[u8], trail: bool) -> Result<T> {
     let reader = Reader::new(bytes);
@@ -33,6 +34,12 @@ pub fn from_bytes<'a, T: Deserialize<'a>>(bytes: &[u8], trail: bool) -> Result<T
     } else {
         Err(Error::TrailingBytes(remaining))
     }
+}
+
+pub fn from_read<'a, T: Deserialize<'a>, R: Read>(read: &mut R) -> Result<T> {
+    let reader = Reader::new(read);
+    let mut deserializer = Deserializer::new(reader);
+    T::deserialize(&mut deserializer)
 }
 
 pub fn to_bytes<T: Serialize>(value: &T) -> Result<Vec<u8>> {
@@ -47,4 +54,11 @@ pub fn to_size<T: Serialize>(value: &T) -> Result<usize> {
     let mut serializer = Serializer::new(Sizer::default());
     value.serialize(&mut serializer)?;
     Ok(serializer.encoder().output())
+}
+
+pub fn to_write<T: Serialize, W: Write>(value: &T, write: &mut W) -> Result<()> {
+    let writer = Writer::new(write);
+    let mut serializer = Serializer::new(writer);
+    value.serialize(&mut serializer)?;
+    Ok(())
 }

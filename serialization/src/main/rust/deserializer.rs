@@ -17,7 +17,7 @@
 
 use crate::decoder::Decoder;
 use crate::error::{Error, Result};
-use serde::de::{self, DeserializeSeed, EnumAccess, SeqAccess, VariantAccess, Visitor};
+use serde::de::{self, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess, Visitor};
 
 pub struct Deserializer<D: Decoder> {
     decoder: D,
@@ -160,7 +160,7 @@ impl<'de, D: Decoder> de::Deserializer<'de> for &mut Deserializer<D> {
 
     fn deserialize_map<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
         let len = self.decoder.decode_var_int()?;
-        visitor.visit_seq(Sequence::new(self, len))
+        visitor.visit_map(Sequence::new(self, len))
     }
 
     fn deserialize_struct<V: Visitor<'de>>(
@@ -201,6 +201,18 @@ struct Sequence<'a, D: Decoder> {
 impl<'a, D: Decoder> Sequence<'a, D> {
     fn new(de: &'a mut Deserializer<D>, len: u32) -> Self {
         Sequence { de, len, pos: 0 }
+    }
+}
+
+impl<'de, 'a, D: Decoder> MapAccess<'de> for Sequence<'a, D> {
+    type Error = Error;
+
+    fn next_key_seed<T: DeserializeSeed<'de>>(&mut self, seed: T) -> Result<Option<T::Value>> {
+        self.next_element_seed(seed)
+    }
+
+    fn next_value_seed<T: DeserializeSeed<'de>>(&mut self, seed: T) -> Result<T::Value> {
+        seed.deserialize(&mut *self.de)
     }
 }
 

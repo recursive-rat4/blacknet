@@ -66,7 +66,7 @@ impl Node {
         }
 
         let settings = Arc::new(Settings::new(mode));
-        let peer_table = PeerTable::new(mode, log_manager, settings.clone())?;
+        let peer_table = PeerTable::new(mode, dirs, log_manager, settings.clone())?;
         let node = Arc::new(Self {
             settings: settings.clone(),
             next_peer_id: AtomicU64::new(1),
