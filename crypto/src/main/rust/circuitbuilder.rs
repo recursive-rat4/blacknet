@@ -724,7 +724,7 @@ impl<R: Ring> CircuitBuilder<R> {
             + self.auxiliaries.get()
     }
 
-    pub fn scope(&self, name: &'static str) -> Scope<R> {
+    pub fn scope<'a>(&'a self, name: &'static str) -> Scope<'a, R> {
         let mut scopes = self.scopes.borrow_mut();
         let mut current_scope = self.current_scope.borrow_mut();
         let info = ScopeInfo::new(name);
