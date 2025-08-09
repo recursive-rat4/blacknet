@@ -24,6 +24,7 @@ pub mod fermat;
 pub mod field;
 pub mod field25519;
 pub mod group;
+pub mod hypercube;
 pub mod magma;
 pub mod matrixdense;
 pub mod matrixring;

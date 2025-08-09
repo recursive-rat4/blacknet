@@ -57,6 +57,10 @@ name = "field25519"
 path = "src/test/rust/field25519.rs"
 
 [[test]]
+name = "hypercube"
+path = "src/test/rust/hypercube.rs"
+
+[[test]]
 name = "matrixdense"
 path = "src/test/rust/matrixdense.rs"
 
