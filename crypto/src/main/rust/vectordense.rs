@@ -21,7 +21,7 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct VectorDense<R: Ring> {
     elements: Vec<R>,
 }
@@ -47,6 +47,7 @@ impl<R: Ring> VectorDense<R> {
         &self.elements
     }
 
+    #[inline]
     pub fn steal(self) -> Vec<R> {
         self.elements
     }
@@ -86,6 +87,7 @@ impl<R: Ring, const N: usize> From<[R; N]> for VectorDense<R> {
 }
 
 impl<R: Ring> From<Vec<R>> for VectorDense<R> {
+    #[inline]
     fn from(elements: Vec<R>) -> Self {
         Self { elements }
     }

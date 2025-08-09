@@ -23,7 +23,7 @@ use core::ops::Mul;
 // https://arxiv.org/abs/2404.06047
 // CSR format
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MatrixSparse<R: Ring> {
     columns: usize,
     r_index: Vec<usize>,

@@ -20,7 +20,7 @@ use crate::vectordense::VectorDense;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MatrixDense<R: Ring> {
     rows: usize,
     columns: usize,

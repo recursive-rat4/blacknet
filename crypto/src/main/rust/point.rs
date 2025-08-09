@@ -18,7 +18,7 @@
 use core::fmt::{Debug, Formatter, Result};
 use core::ops::{Index, IndexMut};
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Point<S> {
     coordinates: Vec<S>,
 }
@@ -32,6 +32,7 @@ impl<S> Point<S> {
         &self.coordinates
     }
 
+    #[inline]
     pub fn steal(self) -> Vec<S> {
         self.coordinates
     }
@@ -46,6 +47,7 @@ impl<S, const N: usize> From<[S; N]> for Point<S> {
 }
 
 impl<S> From<Vec<S>> for Point<S> {
+    #[inline]
     fn from(coordinates: Vec<S>) -> Self {
         Self { coordinates }
     }

@@ -21,7 +21,7 @@ use crate::vectordense::VectorDense;
 use core::iter::zip;
 use core::ops::Mul;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct VectorSparse<R: Ring> {
     dimension: usize,
     index: Vec<usize>,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,28 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod abeliangroup;
-pub mod algebra;
-pub mod bigint;
-pub mod circuitbuilder;
-pub mod customizableconstraintsystem;
-pub mod fermat;
-pub mod field;
-pub mod field25519;
-pub mod group;
-pub mod magma;
-pub mod matrixdense;
-pub mod matrixring;
-pub mod matrixsparse;
-pub mod module;
-pub mod monoid;
-pub mod norm;
-pub mod point;
-pub mod polynomial;
-pub mod r1cs;
-pub mod ring;
-pub mod semigroup;
-pub mod twistededwardsgroup;
-pub mod vectordense;
-pub mod vectorsparse;
-pub mod z2;
+use crate::point::Point;
+use crate::ring::Ring;
+use crate::vectordense::VectorDense;
+
+#[rustfmt::skip]
+pub trait Polynomial<R: Ring>
+    : Clone
+{
+    fn bind(&mut self, e: R);
+
+    fn point(&self, point: &Point<R>) -> R;
+    fn hypercube_with_var<const VAL: i8>(&self) -> VectorDense<R>;
+
+    fn degree(&self) -> usize;
+    fn variables(&self) -> usize;
+}
