@@ -32,6 +32,7 @@ pub mod matrixsparse;
 pub mod module;
 pub mod monoid;
 pub mod norm;
+pub mod pervushin;
 pub mod point;
 pub mod polynomial;
 pub mod r1cs;

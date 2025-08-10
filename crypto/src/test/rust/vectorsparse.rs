@@ -19,7 +19,7 @@ use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::vectordense::VectorDense;
 use blacknet_crypto::vectorsparse::VectorSparse;
 
-type R = blacknet_crypto::fermat::FermatField;
+type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn conversion() {

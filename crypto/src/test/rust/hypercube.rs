@@ -19,7 +19,7 @@ use blacknet_crypto::hypercube::Hypercube;
 use blacknet_crypto::point::Point;
 use core::iter::zip;
 
-type R = blacknet_crypto::fermat::FermatField;
+type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn index() {

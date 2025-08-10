@@ -18,7 +18,7 @@
 use blacknet_crypto::module::FreeModule;
 use blacknet_crypto::ring::Ring;
 
-type R = blacknet_crypto::fermat::FermatField;
+type R = blacknet_crypto::pervushin::PervushinField;
 type M = FreeModule<R, 2>;
 
 #[test]

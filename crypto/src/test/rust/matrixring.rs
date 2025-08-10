@@ -19,7 +19,7 @@ use blacknet_crypto::matrixring::MatrixRing;
 use blacknet_crypto::module::FreeModule;
 use blacknet_crypto::norm::InfinityNorm;
 
-type Z = blacknet_crypto::fermat::FermatField;
+type Z = blacknet_crypto::pervushin::PervushinField;
 type M = FreeModule<Z, 2>;
 type R = MatrixRing<Z, 2, 4>;
 

@@ -49,16 +49,12 @@ fn add() {
 }
 
 #[test]
-fn mul() {
-    let a = F::from_hex("4CFC44A5ED3B23B2EE255AAB66FAEDFB6BEB462C92269E0EC2616D6CBD1A359D");
-    let b = F::from_hex("3CF69A2302FB516F08473812AFAA2A9837D72E85A03DD5D60B5A93B8B3FE84B6");
-    let c = F::from_hex("2D3960B5603F737CEC7C3B65CD2524FECD5A4961F4792DF842EF6ABADDD9A09B");
-    assert_eq!(a * b, c);
-    assert_eq!(b * a, c);
-    assert_eq!(F::ZERO * c, F::ZERO);
-    assert_eq!(c * F::ZERO, F::ZERO);
-    assert_eq!(c * F::ONE, c);
-    assert_eq!(F::ONE * c, c);
+fn neg() {
+    let a = F::from_hex("12610BC44A0BBC319A91FC24E99A98EF2BD29A2B535BBD1A74BC100A698E34FA");
+    let b = F::from_hex("6D9EF43BB5F443CE656E03DB16656710D42D65D4ACA442E58B43EFF59671CAF3");
+    assert_eq!(-a, b);
+    assert_eq!(-b, a);
+    assert_eq!(-(-F::ONE), F::ONE);
 }
 
 #[test]
@@ -75,6 +71,19 @@ fn sub() {
 }
 
 #[test]
+fn mul() {
+    let a = F::from_hex("4CFC44A5ED3B23B2EE255AAB66FAEDFB6BEB462C92269E0EC2616D6CBD1A359D");
+    let b = F::from_hex("3CF69A2302FB516F08473812AFAA2A9837D72E85A03DD5D60B5A93B8B3FE84B6");
+    let c = F::from_hex("2D3960B5603F737CEC7C3B65CD2524FECD5A4961F4792DF842EF6ABADDD9A09B");
+    assert_eq!(a * b, c);
+    assert_eq!(b * a, c);
+    assert_eq!(F::ZERO * c, F::ZERO);
+    assert_eq!(c * F::ZERO, F::ZERO);
+    assert_eq!(c * F::ONE, c);
+    assert_eq!(F::ONE * c, c);
+}
+
+#[test]
 fn div() {
     let a = F::from_hex("3FACED132F5641F57B1162D06ED827D8CA9FA69F0C7B14822818EEF4DB6F6FDC");
     let b = F::from_hex("152D43A9A19991AA7F8C98ED185A79EDA9B2562E4C456BB554C0C0D4D0362904");
@@ -84,15 +93,6 @@ fn div() {
     assert!((c / F::ZERO).is_none());
     assert_eq!((F::ONE / F::ONE).unwrap(), F::ONE);
     assert_eq!((c / F::ONE).unwrap(), c);
-}
-
-#[test]
-fn neg() {
-    let a = F::from_hex("12610BC44A0BBC319A91FC24E99A98EF2BD29A2B535BBD1A74BC100A698E34FA");
-    let b = F::from_hex("6D9EF43BB5F443CE656E03DB16656710D42D65D4ACA442E58B43EFF59671CAF3");
-    assert_eq!(-a, b);
-    assert_eq!(-F::ZERO, F::ZERO);
-    assert_eq!(-(-F::ONE), F::ONE);
 }
 
 #[test]

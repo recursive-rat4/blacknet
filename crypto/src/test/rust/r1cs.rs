@@ -20,7 +20,7 @@ use blacknet_crypto::matrixsparse::MatrixSparse;
 use blacknet_crypto::r1cs::R1CS;
 use blacknet_crypto::vectordense::VectorDense;
 
-type R = blacknet_crypto::fermat::FermatField;
+type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn satisfaction() {

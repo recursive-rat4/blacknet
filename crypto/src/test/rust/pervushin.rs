@@ -19,15 +19,15 @@ use blacknet_crypto::magma::{Inv, MultiplicativeMagma};
 use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::ring::{IntegerRing, Ring};
 
-type Z = blacknet_crypto::fermat::FermatField;
+type Z = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn representative() {
     let a = Z::new(-1);
-    let b = Z::new(65536);
+    let b = Z::new(2305843009213693950);
     assert_eq!(b, a);
-    assert_eq!(a.canonical(), 65536);
-    assert_eq!(b.canonical(), 65536);
+    assert_eq!(a.canonical(), 2305843009213693950);
+    assert_eq!(b.canonical(), 2305843009213693950);
     assert_eq!(a.balanced(), -1);
     assert_eq!(b.balanced(), -1);
     assert_eq!(a.absolute(), 1);
@@ -36,9 +36,9 @@ fn representative() {
 
 #[test]
 fn add() {
-    let a = Z::new(981);
-    let b = Z::new(-1516);
-    let c = Z::new(-535);
+    let a = Z::new(1152921504606846974);
+    let b = Z::new(1152921504606846970);
+    let c = Z::new(-7);
     assert_eq!(a + b, c);
     assert_eq!(b + a, c);
     assert_eq!(c + Z::ZERO, c);
@@ -58,10 +58,10 @@ fn neg() {
 
 #[test]
 fn sub() {
-    let a = Z::new(-1045);
-    let b = Z::new(32750);
-    let c = Z::new(31742);
-    let d = Z::new(-31742);
+    let a = Z::new(-2048);
+    let b = Z::new(65536);
+    let c = Z::new(-67584);
+    let d = Z::new(67584);
     assert_eq!(a - b, c);
     assert_eq!(b - a, d);
     assert_eq!(c - Z::ZERO, c);
@@ -71,9 +71,9 @@ fn sub() {
 
 #[test]
 fn mul() {
-    let a = Z::new(-684);
-    let b = Z::new(-133);
-    let c = Z::new(25435);
+    let a = Z::new(1152102451225612864);
+    let b = Z::new(-32);
+    let c = Z::new(26209708199491568);
     assert_eq!(a * b, c);
     assert_eq!(b * a, c);
     assert_eq!(c * Z::ZERO, Z::ZERO);
@@ -92,9 +92,9 @@ fn sqr() {
 #[test]
 fn inv() {
     let a = Z::new(24);
-    let b = Z::new(19115);
+    let b = Z::new(-672537544353994069);
     let c = Z::new(-25);
-    let d = Z::new(-5243);
+    let d = Z::new(92233720368547758);
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
     assert_eq!(c.inv().unwrap(), d);
@@ -104,12 +104,14 @@ fn inv() {
 
 #[test]
 fn infinity_norm() {
-    let a = Z::new(-30000);
-    let b = Z::new(30000);
-    let nb = 30000;
-    let ng = 30001;
-    assert!(!a.check_infinity_norm(nb));
-    assert!(a.check_infinity_norm(ng));
-    assert!(!b.check_infinity_norm(nb));
-    assert!(b.check_infinity_norm(ng));
+    let a = Z::new(-677133638855483916);
+    let b = Z::new(1140329745848183219);
+    let ab = 677133638855483916;
+    let ag = 677133638855483917;
+    let bb = 1140329745848183219;
+    let bg = 1140329745848183220;
+    assert!(!a.check_infinity_norm(ab));
+    assert!(a.check_infinity_norm(ag));
+    assert!(!b.check_infinity_norm(bb));
+    assert!(b.check_infinity_norm(bg));
 }

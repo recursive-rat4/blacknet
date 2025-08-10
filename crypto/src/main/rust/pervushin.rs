@@ -24,34 +24,29 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
-// 2¹⁶ + 1
+// 2⁶¹ - 1
 
 #[derive(Clone, Copy, Default, Eq)]
-pub struct FermatField {
-    n: i32,
+pub struct PervushinField {
+    n: i64,
 }
 
-impl FermatField {
-    pub const fn new(n: i32) -> Self {
+impl PervushinField {
+    pub const fn new(n: i64) -> Self {
         Self {
             n: Self::reduce_add(n),
         }
     }
 
-    // Lazy reduction
-    pub const fn reduce(self) -> Self {
-        Self::new(self.n)
+    const fn reduce_add(x: i64) -> i64 {
+        (x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)
     }
 
-    const fn reduce_add(x: i32) -> i32 {
-        (x & 0xFFFF) - (x >> 16)
+    const fn reduce_mul(x: i128) -> i64 {
+        Self::reduce_add(((x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)) as i64)
     }
 
-    const fn reduce_mul(x: i64) -> i32 {
-        ((x & 0xFFFF) - (x >> 16)) as i32
-    }
-
-    pub const fn balanced(self) -> i32 {
+    pub const fn balanced(self) -> i64 {
         let x = Self::reduce_add(self.n);
         if x > Self::MODULUS / 2 {
             x - Self::MODULUS
@@ -62,7 +57,7 @@ impl FermatField {
         }
     }
 
-    const fn bits<const N: usize>(n: u32) -> [bool; N] {
+    const fn bits<const N: usize>(n: u64) -> [bool; N] {
         let mut bits = [false; N];
         let mut i = 0;
         loop {
@@ -75,49 +70,75 @@ impl FermatField {
         bits
     }
 
-    const P_MINUS_2: [bool; 16] = Self::bits(0xFFFF);
+    const P_MINUS_2: [bool; 61] = Self::bits(0x1FFFFFFFFFFFFFFD);
 }
 
-impl Debug for FermatField {
+impl Debug for PervushinField {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{}", self.balanced())
     }
 }
 
-impl From<i8> for FermatField {
+impl From<i8> for PervushinField {
     fn from(n: i8) -> Self {
         Self { n: n.into() }
     }
 }
 
-impl From<u8> for FermatField {
+impl From<i16> for PervushinField {
+    fn from(n: i16) -> Self {
+        Self { n: n.into() }
+    }
+}
+
+impl From<i32> for PervushinField {
+    fn from(n: i32) -> Self {
+        Self { n: n.into() }
+    }
+}
+
+impl From<u8> for PervushinField {
     fn from(n: u8) -> Self {
         Self { n: n.into() }
     }
 }
 
-impl PartialEq for FermatField {
+impl From<u16> for PervushinField {
+    fn from(n: u16) -> Self {
+        Self { n: n.into() }
+    }
+}
+
+impl From<u32> for PervushinField {
+    fn from(n: u32) -> Self {
+        Self { n: n.into() }
+    }
+}
+
+impl PartialEq for PervushinField {
     fn eq(&self, rps: &Self) -> bool {
         self.balanced() == rps.balanced()
     }
 }
 
-impl Add for FermatField {
+impl Add for PervushinField {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        Self { n: self.n + rps.n }
+        Self {
+            n: Self::reduce_add(self.n + rps.n),
+        }
     }
 }
 
-impl AddAssign for FermatField {
+impl AddAssign for PervushinField {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
     }
 }
 
-impl Neg for FermatField {
+impl Neg for PervushinField {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -125,39 +146,41 @@ impl Neg for FermatField {
     }
 }
 
-impl Sub for FermatField {
+impl Sub for PervushinField {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        Self { n: self.n - rps.n }
+        Self {
+            n: Self::reduce_add(self.n - rps.n),
+        }
     }
 }
 
-impl SubAssign for FermatField {
+impl SubAssign for PervushinField {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
     }
 }
 
-impl Mul for FermatField {
+impl Mul for PervushinField {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n as i64 * rps.n as i64),
+            n: Self::reduce_mul(self.n as i128 * rps.n as i128),
         }
     }
 }
 
-impl MulAssign for FermatField {
+impl MulAssign for PervushinField {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
     }
 }
 
-impl Inv for FermatField {
+impl Inv for PervushinField {
     type Output = Option<Self>;
 
     fn inv(self) -> Self::Output {
@@ -170,7 +193,7 @@ impl Inv for FermatField {
     }
 }
 
-impl Div for FermatField {
+impl Div for PervushinField {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
@@ -178,45 +201,47 @@ impl Div for FermatField {
     }
 }
 
-impl Sum for FermatField {
+impl Sum for PervushinField {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
-impl Product for FermatField {
+impl Product for PervushinField {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::UNITY)
     }
 }
 
-impl AdditiveMagma for FermatField {
+impl AdditiveMagma for PervushinField {
     fn double(self) -> Self {
-        Self { n: self.n << 1 }
+        Self {
+            n: Self::reduce_add(self.n << 1),
+        }
     }
 }
 
-impl AdditiveMonoid for FermatField {
+impl AdditiveMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 0 };
 }
 
-impl MultiplicativeMagma for FermatField {
+impl MultiplicativeMagma for PervushinField {
     #[inline]
     fn square(self) -> Self {
         self * self
     }
 }
 
-impl MultiplicativeMonoid for FermatField {
+impl MultiplicativeMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 1 };
 }
 
-impl Ring for FermatField {
+impl Ring for PervushinField {
     type BaseRing = Self;
-    type Int = i32;
+    type Int = i64;
 }
 
-impl IntegerRing for FermatField {
+impl IntegerRing for PervushinField {
     fn canonical(self) -> Self::Int {
         let x = Self::reduce_add(self.n);
         if x >= Self::MODULUS {
@@ -231,8 +256,8 @@ impl IntegerRing for FermatField {
         self.balanced().abs()
     }
 
-    const BITS: usize = 17;
-    const MODULUS: Self::Int = 65537;
+    const BITS: usize = 61;
+    const MODULUS: Self::Int = 2305843009213693951;
 }
 
-impl PrimeField for FermatField {}
+impl PrimeField for PervushinField {}
