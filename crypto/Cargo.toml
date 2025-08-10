@@ -49,6 +49,10 @@ name = "customizableconstraintsystem"
 path = "src/test/rust/customizableconstraintsystem.rs"
 
 [[test]]
+name = "eqextension"
+path = "src/test/rust/eqextension.rs"
+
+[[test]]
 name = "fermat"
 path = "src/test/rust/fermat.rs"
 
