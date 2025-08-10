@@ -17,13 +17,13 @@
 
 use crate::matrixsparse::MatrixSparse;
 use crate::r1cs::R1CS;
-use crate::ring::Ring;
+use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
 
 // https://eprint.iacr.org/2023/552
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct CustomizableConstraintSystem<R: Ring> {
+pub struct CustomizableConstraintSystem<R: UnitalRing> {
     constraints: usize,
     variables: usize,
     matrices: Vec<MatrixSparse<R>>,
@@ -31,7 +31,7 @@ pub struct CustomizableConstraintSystem<R: Ring> {
     constants: Vec<R>,
 }
 
-impl<R: Ring> CustomizableConstraintSystem<R> {
+impl<R: UnitalRing> CustomizableConstraintSystem<R> {
     pub const fn new(
         constraints: usize,
         variables: usize,
@@ -81,7 +81,7 @@ impl<R: Ring> CustomizableConstraintSystem<R> {
     }
 }
 
-impl<R: Ring> From<R1CS<R>> for CustomizableConstraintSystem<R> {
+impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
     fn from(r1cs: R1CS<R>) -> Self {
         let constraints = r1cs.constraints();
         let variables = r1cs.variables();

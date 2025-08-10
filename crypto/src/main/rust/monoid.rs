@@ -37,8 +37,3 @@ pub trait MultiplicativeMonoid
 {
     const IDENTITY: Self;
 }
-
-impl<M: MultiplicativeMonoid> MultiplicativeSemigroup for M {
-    const LEFT_IDENTITY: Self = M::IDENTITY;
-    const RIGHT_IDENTITY: Self = M::IDENTITY;
-}

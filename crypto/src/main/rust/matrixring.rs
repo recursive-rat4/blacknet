@@ -15,11 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Algebra;
+use crate::algebra::{Algebra, UnitalAlgebra};
 use crate::magma::{AdditiveMagma, MultiplicativeMagma};
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::Ring;
+use crate::ring::{Ring, UnitalRing};
+use crate::semigroup::MultiplicativeSemigroup;
 use core::array;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -248,7 +249,8 @@ impl<R: Ring, const N: usize, const NN: usize> Sum for MatrixRing<R, N, NN> {
 
 impl<R: Ring, const N: usize, const NN: usize> Product for MatrixRing<R, N, NN> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::UNITY)
+        iter.reduce(|lps, rps| lps * rps)
+            .unwrap_or(<Self as MultiplicativeSemigroup>::LEFT_IDENTITY)
     }
 }
 
@@ -271,7 +273,12 @@ impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMagma for MatrixRin
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for MatrixRing<R, N, NN> {
+    const LEFT_IDENTITY: Self = Self::const_from(<R as MultiplicativeSemigroup>::LEFT_IDENTITY);
+    const RIGHT_IDENTITY: Self = Self::const_from(<R as MultiplicativeSemigroup>::RIGHT_IDENTITY);
+}
+
+impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRing<R, N, NN> {
     const IDENTITY: Self = Self::const_from(R::UNITY);
 }
 
@@ -283,3 +290,5 @@ impl<R: Ring, const N: usize, const NN: usize> Ring for MatrixRing<R, N, NN> {
 }
 
 impl<R: Ring, const N: usize, const NN: usize> Algebra<R, NN> for MatrixRing<R, N, NN> {}
+
+impl<R: UnitalRing, const N: usize, const NN: usize> UnitalAlgebra<R, NN> for MatrixRing<R, N, NN> {}

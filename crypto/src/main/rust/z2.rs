@@ -20,7 +20,8 @@
 use crate::field::PrimeField;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{IntegerRing, Ring};
+use crate::ring::{IntegerRing, Ring, UnitalRing};
+use crate::semigroup::MultiplicativeSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -149,6 +150,11 @@ impl MultiplicativeMagma for Z2 {
     fn square(self) -> Self {
         self
     }
+}
+
+impl MultiplicativeSemigroup for Z2 {
+    const LEFT_IDENTITY: Self = Self { n: true };
+    const RIGHT_IDENTITY: Self = Self { n: true };
 }
 
 impl MultiplicativeMonoid for Z2 {

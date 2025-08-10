@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::module::FreeModule;
-use blacknet_crypto::ring::Ring;
+use blacknet_crypto::ring::UnitalRing;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 type M = FreeModule<R, 2>;

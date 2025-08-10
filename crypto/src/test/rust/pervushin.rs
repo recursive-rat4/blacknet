@@ -17,7 +17,7 @@
 
 use blacknet_crypto::magma::{Inv, MultiplicativeMagma};
 use blacknet_crypto::norm::InfinityNorm;
-use blacknet_crypto::ring::{IntegerRing, Ring};
+use blacknet_crypto::ring::{IntegerRing, Ring, UnitalRing};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 

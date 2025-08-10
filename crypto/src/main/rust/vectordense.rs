@@ -16,7 +16,7 @@
  */
 
 use crate::matrixdense::MatrixDense;
-use crate::ring::Ring;
+use crate::ring::{Ring, UnitalRing};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -30,12 +30,6 @@ impl<R: Ring> VectorDense<R> {
     pub fn fill(size: usize, element: R) -> Self {
         Self {
             elements: vec![element; size],
-        }
-    }
-
-    pub fn identity(size: usize) -> Self {
-        Self {
-            elements: vec![R::UNITY; size],
         }
     }
 
@@ -75,6 +69,14 @@ impl<R: Ring> VectorDense<R> {
             }
         }
         MatrixDense::new(rows, columns, elements)
+    }
+}
+
+impl<R: UnitalRing> VectorDense<R> {
+    pub fn identity(size: usize) -> Self {
+        Self {
+            elements: vec![R::UNITY; size],
+        }
     }
 }
 

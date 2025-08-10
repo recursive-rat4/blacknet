@@ -18,7 +18,7 @@
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
 use crate::matrixsparse::MatrixSparseBuilder;
 use crate::r1cs::R1CS;
-use crate::ring::Ring;
+use crate::ring::UnitalRing;
 use core::cell::{Cell, RefCell};
 use core::cmp::{Ordering, max};
 use core::fmt::{Display, Formatter, Result};
@@ -27,22 +27,22 @@ use core::ops::{Add, AddAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 use orx_tree::{Dyn, DynTree, NodeIdx, NodeRef};
 use std::collections::{BTreeMap, VecDeque};
 
-pub trait Expression<R: Ring>: 'static {
+pub trait Expression<R: UnitalRing>: 'static {
     fn span(&self) -> LinearSpan<R>;
     fn degree(&self) -> usize;
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub struct Constant<R: Ring> {
+pub struct Constant<R: UnitalRing> {
     value: R,
 }
 
-impl<R: Ring> Constant<R> {
+impl<R: UnitalRing> Constant<R> {
     pub const UNITY: Self = Self { value: R::UNITY };
     pub const ZERO: Self = Self { value: R::ZERO };
 }
 
-impl<R: Ring> Expression<R> for Constant<R> {
+impl<R: UnitalRing> Expression<R> for Constant<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![(*self).into()].into()
     }
@@ -52,13 +52,13 @@ impl<R: Ring> Expression<R> for Constant<R> {
     }
 }
 
-impl<R: Ring> From<R> for Constant<R> {
+impl<R: UnitalRing> From<R> for Constant<R> {
     fn from(value: R) -> Self {
         Self { value }
     }
 }
 
-impl<R: Ring> Add for Constant<R> {
+impl<R: UnitalRing> Add for Constant<R> {
     type Output = Constant<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
@@ -68,13 +68,13 @@ impl<R: Ring> Add for Constant<R> {
     }
 }
 
-impl<R: Ring> AddAssign for Constant<R> {
+impl<R: UnitalRing> AddAssign for Constant<R> {
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
     }
 }
 
-impl<R: Ring> Neg for Constant<R> {
+impl<R: UnitalRing> Neg for Constant<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -82,7 +82,7 @@ impl<R: Ring> Neg for Constant<R> {
     }
 }
 
-impl<R: Ring> Sub for Constant<R> {
+impl<R: UnitalRing> Sub for Constant<R> {
     type Output = Constant<R>;
 
     fn sub(self, rps: Constant<R>) -> Self::Output {
@@ -92,13 +92,13 @@ impl<R: Ring> Sub for Constant<R> {
     }
 }
 
-impl<R: Ring> SubAssign for Constant<R> {
+impl<R: UnitalRing> SubAssign for Constant<R> {
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
     }
 }
 
-impl<R: Ring> Mul for Constant<R> {
+impl<R: UnitalRing> Mul for Constant<R> {
     type Output = Constant<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -108,7 +108,7 @@ impl<R: Ring> Mul for Constant<R> {
     }
 }
 
-impl<R: Ring> MulAssign for Constant<R> {
+impl<R: UnitalRing> MulAssign for Constant<R> {
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
     }
@@ -125,13 +125,13 @@ pub enum VariableKind {
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub struct Variable<R: Ring> {
+pub struct Variable<R: UnitalRing> {
     kind: VariableKind,
     number: usize,
     phantom: PhantomData<R>,
 }
 
-impl<R: Ring> Variable<R> {
+impl<R: UnitalRing> Variable<R> {
     const fn new(kind: VariableKind, number: usize) -> Self {
         Self {
             kind,
@@ -143,7 +143,7 @@ impl<R: Ring> Variable<R> {
     const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
 }
 
-impl<R: Ring> Expression<R> for Variable<R> {
+impl<R: UnitalRing> Expression<R> for Variable<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![(*self).into()].into()
     }
@@ -153,7 +153,7 @@ impl<R: Ring> Expression<R> for Variable<R> {
     }
 }
 
-impl<R: Ring> Ord for Variable<R> {
+impl<R: UnitalRing> Ord for Variable<R> {
     fn cmp(&self, rps: &Self) -> Ordering {
         match self.kind.cmp(&rps.kind) {
             Ordering::Equal => self.number.cmp(&rps.number),
@@ -163,13 +163,13 @@ impl<R: Ring> Ord for Variable<R> {
     }
 }
 
-impl<R: Ring> PartialOrd for Variable<R> {
+impl<R: UnitalRing> PartialOrd for Variable<R> {
     fn partial_cmp(&self, rps: &Self) -> Option<Ordering> {
         Some(self.cmp(rps))
     }
 }
 
-impl<R: Ring> Add<Constant<R>> for Variable<R> {
+impl<R: UnitalRing> Add<Constant<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
@@ -177,7 +177,7 @@ impl<R: Ring> Add<Constant<R>> for Variable<R> {
     }
 }
 
-impl<R: Ring> Add<Variable<R>> for Constant<R> {
+impl<R: UnitalRing> Add<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -185,7 +185,7 @@ impl<R: Ring> Add<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: Ring> Add for Variable<R> {
+impl<R: UnitalRing> Add for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -197,7 +197,7 @@ impl<R: Ring> Add for Variable<R> {
     }
 }
 
-impl<R: Ring> Neg for Variable<R> {
+impl<R: UnitalRing> Neg for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn neg(self) -> Self::Output {
@@ -205,7 +205,7 @@ impl<R: Ring> Neg for Variable<R> {
     }
 }
 
-impl<R: Ring> Sub<Constant<R>> for Variable<R> {
+impl<R: UnitalRing> Sub<Constant<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Constant<R>) -> Self::Output {
@@ -213,7 +213,7 @@ impl<R: Ring> Sub<Constant<R>> for Variable<R> {
     }
 }
 
-impl<R: Ring> Sub<Variable<R>> for Constant<R> {
+impl<R: UnitalRing> Sub<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Variable<R>) -> Self::Output {
@@ -221,7 +221,7 @@ impl<R: Ring> Sub<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: Ring> Sub for Variable<R> {
+impl<R: UnitalRing> Sub for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
@@ -233,7 +233,7 @@ impl<R: Ring> Sub for Variable<R> {
     }
 }
 
-impl<R: Ring> Mul<Constant<R>> for Variable<R> {
+impl<R: UnitalRing> Mul<Constant<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -241,7 +241,7 @@ impl<R: Ring> Mul<Constant<R>> for Variable<R> {
     }
 }
 
-impl<R: Ring> Mul<Variable<R>> for Constant<R> {
+impl<R: UnitalRing> Mul<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -249,7 +249,7 @@ impl<R: Ring> Mul<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: Ring> Mul for Variable<R> {
+impl<R: UnitalRing> Mul for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -260,11 +260,11 @@ impl<R: Ring> Mul for Variable<R> {
 pub type Term<R> = (Variable<R>, Constant<R>);
 
 #[derive(Clone)]
-pub struct LinearCombination<R: Ring> {
+pub struct LinearCombination<R: UnitalRing> {
     terms: BTreeMap<Variable<R>, Constant<R>>,
 }
 
-impl<R: Ring> Expression<R> for LinearCombination<R> {
+impl<R: UnitalRing> Expression<R> for LinearCombination<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone()].into()
     }
@@ -282,7 +282,7 @@ impl<R: Ring> Expression<R> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> From<Constant<R>> for LinearCombination<R> {
+impl<R: UnitalRing> From<Constant<R>> for LinearCombination<R> {
     fn from(constant: Constant<R>) -> Self {
         Self {
             terms: [(Variable::CONSTANT, constant)].into(),
@@ -290,7 +290,7 @@ impl<R: Ring> From<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> From<Variable<R>> for LinearCombination<R> {
+impl<R: UnitalRing> From<Variable<R>> for LinearCombination<R> {
     fn from(variable: Variable<R>) -> Self {
         Self {
             terms: [(variable, Constant::UNITY)].into(),
@@ -298,7 +298,7 @@ impl<R: Ring> From<Variable<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> From<Term<R>> for LinearCombination<R> {
+impl<R: UnitalRing> From<Term<R>> for LinearCombination<R> {
     fn from(term: Term<R>) -> Self {
         Self {
             terms: [term].into(),
@@ -306,7 +306,7 @@ impl<R: Ring> From<Term<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring, const N: usize> From<[Term<R>; N]> for LinearCombination<R> {
+impl<R: UnitalRing, const N: usize> From<[Term<R>; N]> for LinearCombination<R> {
     fn from(terms: [Term<R>; N]) -> Self {
         Self {
             terms: terms.into(),
@@ -314,7 +314,7 @@ impl<R: Ring, const N: usize> From<[Term<R>; N]> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> AddAssign<Term<R>> for LinearCombination<R> {
+impl<R: UnitalRing> AddAssign<Term<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: Term<R>) {
         let (variable, coefficient) = rps;
         self.terms
@@ -324,7 +324,7 @@ impl<R: Ring> AddAssign<Term<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> Add<Constant<R>> for LinearCombination<R> {
+impl<R: UnitalRing> Add<Constant<R>> for LinearCombination<R> {
     type Output = Self;
 
     fn add(mut self, rps: Constant<R>) -> Self::Output {
@@ -333,13 +333,13 @@ impl<R: Ring> Add<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> AddAssign<Constant<R>> for LinearCombination<R> {
+impl<R: UnitalRing> AddAssign<Constant<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: Constant<R>) {
         *self += (Variable::CONSTANT, rps)
     }
 }
 
-impl<R: Ring> Add<LinearCombination<R>> for Constant<R> {
+impl<R: UnitalRing> Add<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -348,7 +348,7 @@ impl<R: Ring> Add<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: Ring> Add<Variable<R>> for LinearCombination<R> {
+impl<R: UnitalRing> Add<Variable<R>> for LinearCombination<R> {
     type Output = Self;
 
     fn add(mut self, rps: Variable<R>) -> Self::Output {
@@ -357,13 +357,13 @@ impl<R: Ring> Add<Variable<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> AddAssign<Variable<R>> for LinearCombination<R> {
+impl<R: UnitalRing> AddAssign<Variable<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: Variable<R>) {
         *self += (rps, Constant::UNITY)
     }
 }
 
-impl<R: Ring> Add<LinearCombination<R>> for Variable<R> {
+impl<R: UnitalRing> Add<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -372,7 +372,7 @@ impl<R: Ring> Add<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: Ring> Add for LinearCombination<R> {
+impl<R: UnitalRing> Add for LinearCombination<R> {
     type Output = Self;
 
     fn add(mut self, rps: Self) -> Self::Output {
@@ -381,7 +381,7 @@ impl<R: Ring> Add for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> AddAssign for LinearCombination<R> {
+impl<R: UnitalRing> AddAssign for LinearCombination<R> {
     fn add_assign(&mut self, rps: Self) {
         for term in rps.terms {
             *self += term
@@ -389,7 +389,7 @@ impl<R: Ring> AddAssign for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> Neg for LinearCombination<R> {
+impl<R: UnitalRing> Neg for LinearCombination<R> {
     type Output = Self;
 
     fn neg(mut self) -> Self::Output {
@@ -400,7 +400,7 @@ impl<R: Ring> Neg for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> SubAssign<Term<R>> for LinearCombination<R> {
+impl<R: UnitalRing> SubAssign<Term<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: Term<R>) {
         let (variable, coefficient) = rps;
         self.terms
@@ -410,7 +410,7 @@ impl<R: Ring> SubAssign<Term<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> Sub<Constant<R>> for LinearCombination<R> {
+impl<R: UnitalRing> Sub<Constant<R>> for LinearCombination<R> {
     type Output = Self;
 
     fn sub(mut self, rps: Constant<R>) -> Self::Output {
@@ -419,13 +419,13 @@ impl<R: Ring> Sub<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> SubAssign<Constant<R>> for LinearCombination<R> {
+impl<R: UnitalRing> SubAssign<Constant<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: Constant<R>) {
         *self -= (Variable::CONSTANT, rps)
     }
 }
 
-impl<R: Ring> Sub<LinearCombination<R>> for Constant<R> {
+impl<R: UnitalRing> Sub<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -434,7 +434,7 @@ impl<R: Ring> Sub<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: Ring> Sub<Variable<R>> for LinearCombination<R> {
+impl<R: UnitalRing> Sub<Variable<R>> for LinearCombination<R> {
     type Output = Self;
 
     fn sub(mut self, rps: Variable<R>) -> Self::Output {
@@ -443,13 +443,13 @@ impl<R: Ring> Sub<Variable<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> SubAssign<Variable<R>> for LinearCombination<R> {
+impl<R: UnitalRing> SubAssign<Variable<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: Variable<R>) {
         *self -= (rps, Constant::UNITY)
     }
 }
 
-impl<R: Ring> Sub<LinearCombination<R>> for Variable<R> {
+impl<R: UnitalRing> Sub<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -458,7 +458,7 @@ impl<R: Ring> Sub<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: Ring> Sub for LinearCombination<R> {
+impl<R: UnitalRing> Sub for LinearCombination<R> {
     type Output = Self;
 
     fn sub(mut self, rps: Self) -> Self::Output {
@@ -467,7 +467,7 @@ impl<R: Ring> Sub for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> SubAssign for LinearCombination<R> {
+impl<R: UnitalRing> SubAssign for LinearCombination<R> {
     fn sub_assign(&mut self, rps: Self) {
         for term in rps.terms {
             *self -= term
@@ -475,7 +475,7 @@ impl<R: Ring> SubAssign for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> Mul<Constant<R>> for LinearCombination<R> {
+impl<R: UnitalRing> Mul<Constant<R>> for LinearCombination<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Constant<R>) -> Self::Output {
@@ -484,7 +484,7 @@ impl<R: Ring> Mul<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> MulAssign<Constant<R>> for LinearCombination<R> {
+impl<R: UnitalRing> MulAssign<Constant<R>> for LinearCombination<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
         for coefficient in self.terms.values_mut() {
             *coefficient *= rps;
@@ -492,7 +492,7 @@ impl<R: Ring> MulAssign<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> Mul<LinearCombination<R>> for Constant<R> {
+impl<R: UnitalRing> Mul<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -503,7 +503,7 @@ impl<R: Ring> Mul<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: Ring> Mul<Variable<R>> for LinearCombination<R> {
+impl<R: UnitalRing> Mul<Variable<R>> for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -511,7 +511,7 @@ impl<R: Ring> Mul<Variable<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> Mul<LinearCombination<R>> for Variable<R> {
+impl<R: UnitalRing> Mul<LinearCombination<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
@@ -519,7 +519,7 @@ impl<R: Ring> Mul<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: Ring> Mul for LinearCombination<R> {
+impl<R: UnitalRing> Mul for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -527,11 +527,11 @@ impl<R: Ring> Mul for LinearCombination<R> {
     }
 }
 
-pub struct LinearMonoid<R: Ring> {
+pub struct LinearMonoid<R: UnitalRing> {
     factors: VecDeque<LinearCombination<R>>,
 }
 
-impl<R: Ring> Expression<R> for LinearMonoid<R> {
+impl<R: UnitalRing> Expression<R> for LinearMonoid<R> {
     fn span(&self) -> LinearSpan<R> {
         self.factors.clone().into()
     }
@@ -541,7 +541,7 @@ impl<R: Ring> Expression<R> for LinearMonoid<R> {
     }
 }
 
-impl<R: Ring, const N: usize> From<[LinearCombination<R>; N]> for LinearMonoid<R> {
+impl<R: UnitalRing, const N: usize> From<[LinearCombination<R>; N]> for LinearMonoid<R> {
     fn from(factors: [LinearCombination<R>; N]) -> Self {
         Self {
             factors: factors.into(),
@@ -549,7 +549,7 @@ impl<R: Ring, const N: usize> From<[LinearCombination<R>; N]> for LinearMonoid<R
     }
 }
 
-impl<R: Ring> Mul<Constant<R>> for LinearMonoid<R> {
+impl<R: UnitalRing> Mul<Constant<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Constant<R>) -> Self::Output {
@@ -558,7 +558,7 @@ impl<R: Ring> Mul<Constant<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Ring> MulAssign<Constant<R>> for LinearMonoid<R> {
+impl<R: UnitalRing> MulAssign<Constant<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
         match self.factors.back_mut() {
             Some(factor) => *factor *= rps,
@@ -567,7 +567,7 @@ impl<R: Ring> MulAssign<Constant<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Ring> Mul<LinearMonoid<R>> for Constant<R> {
+impl<R: UnitalRing> Mul<LinearMonoid<R>> for Constant<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
@@ -579,7 +579,7 @@ impl<R: Ring> Mul<LinearMonoid<R>> for Constant<R> {
     }
 }
 
-impl<R: Ring> Mul<Variable<R>> for LinearMonoid<R> {
+impl<R: UnitalRing> Mul<Variable<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Variable<R>) -> Self::Output {
@@ -588,13 +588,13 @@ impl<R: Ring> Mul<Variable<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Ring> MulAssign<Variable<R>> for LinearMonoid<R> {
+impl<R: UnitalRing> MulAssign<Variable<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: Variable<R>) {
         self.factors.push_back(rps.into())
     }
 }
 
-impl<R: Ring> Mul<LinearMonoid<R>> for Variable<R> {
+impl<R: UnitalRing> Mul<LinearMonoid<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
@@ -603,7 +603,7 @@ impl<R: Ring> Mul<LinearMonoid<R>> for Variable<R> {
     }
 }
 
-impl<R: Ring> Mul<LinearCombination<R>> for LinearMonoid<R> {
+impl<R: UnitalRing> Mul<LinearCombination<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: LinearCombination<R>) -> Self::Output {
@@ -612,13 +612,13 @@ impl<R: Ring> Mul<LinearCombination<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Ring> MulAssign<LinearCombination<R>> for LinearMonoid<R> {
+impl<R: UnitalRing> MulAssign<LinearCombination<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: LinearCombination<R>) {
         self.factors.push_back(rps)
     }
 }
 
-impl<R: Ring> Mul<LinearMonoid<R>> for LinearCombination<R> {
+impl<R: UnitalRing> Mul<LinearMonoid<R>> for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
@@ -627,7 +627,7 @@ impl<R: Ring> Mul<LinearMonoid<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Ring> Mul for LinearMonoid<R> {
+impl<R: UnitalRing> Mul for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Self) -> Self::Output {
@@ -636,29 +636,29 @@ impl<R: Ring> Mul for LinearMonoid<R> {
     }
 }
 
-impl<R: Ring> MulAssign for LinearMonoid<R> {
+impl<R: UnitalRing> MulAssign for LinearMonoid<R> {
     fn mul_assign(&mut self, mut rps: Self) {
         self.factors.append(&mut rps.factors)
     }
 }
 
-pub struct LinearSpan<R: Ring> {
+pub struct LinearSpan<R: UnitalRing> {
     vectors: Vec<LinearCombination<R>>,
 }
 
-impl<R: Ring> LinearSpan<R> {
+impl<R: UnitalRing> LinearSpan<R> {
     pub fn dimension(&self) -> usize {
         self.vectors.len()
     }
 }
 
-impl<R: Ring> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
+impl<R: UnitalRing> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
     fn from(vectors: Vec<LinearCombination<R>>) -> Self {
         Self { vectors }
     }
 }
 
-impl<R: Ring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
+impl<R: UnitalRing> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
     fn from(vectors: VecDeque<LinearCombination<R>>) -> Self {
         Self {
             vectors: vectors.into(),
@@ -666,7 +666,7 @@ impl<R: Ring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
     }
 }
 
-impl<R: Ring> Index<usize> for LinearSpan<R> {
+impl<R: UnitalRing> Index<usize> for LinearSpan<R> {
     type Output = LinearCombination<R>;
 
     fn index(&self, dimension: usize) -> &Self::Output {
@@ -674,12 +674,12 @@ impl<R: Ring> Index<usize> for LinearSpan<R> {
     }
 }
 
-pub struct Constraint<R: Ring> {
+pub struct Constraint<R: UnitalRing> {
     lps: Box<dyn Expression<R>>,
     rps: Box<dyn Expression<R>>,
 }
 
-pub struct CircuitBuilder<R: Ring> {
+pub struct CircuitBuilder<R: UnitalRing> {
     degree: usize,
     public_inputs: Cell<usize>,
     public_outputs: Cell<usize>,
@@ -691,7 +691,7 @@ pub struct CircuitBuilder<R: Ring> {
     current_scope: RefCell<NodeIdx<Dyn<ScopeInfo>>>,
 }
 
-impl<R: Ring> CircuitBuilder<R> {
+impl<R: UnitalRing> CircuitBuilder<R> {
     pub fn new(degree: usize) -> Self {
         let mut tree = DynTree::empty();
         let root = tree.push_root(ScopeInfo::root());
@@ -943,7 +943,7 @@ impl<R: Ring> CircuitBuilder<R> {
     }
 }
 
-impl<R: Ring> Display for CircuitBuilder<R> {
+impl<R: UnitalRing> Display for CircuitBuilder<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -956,11 +956,11 @@ impl<R: Ring> Display for CircuitBuilder<R> {
     }
 }
 
-pub struct Scope<'a, R: Ring> {
+pub struct Scope<'a, R: UnitalRing> {
     builder: &'a CircuitBuilder<R>,
 }
 
-impl<'a, R: Ring> Scope<'a, R> {
+impl<'a, R: UnitalRing> Scope<'a, R> {
     pub fn constrain<LPS: Expression<R>, RPS: Expression<R>>(&self, lps: LPS, rps: RPS) {
         self.builder.constrain(Constraint {
             lps: Box::new(lps),
@@ -999,7 +999,7 @@ impl<'a, R: Ring> Scope<'a, R> {
     }
 }
 
-impl<'a, R: Ring> Drop for Scope<'a, R> {
+impl<'a, R: UnitalRing> Drop for Scope<'a, R> {
     fn drop(&mut self) {
         let scopes = self.builder.scopes.borrow();
         let mut current_scope = self.builder.current_scope.borrow_mut();

@@ -18,7 +18,7 @@
 use crate::field::PrimeField;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{IntegerRing, Ring};
+use crate::ring::{IntegerRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -205,6 +205,11 @@ impl MultiplicativeMagma for FermatField {
     fn square(self) -> Self {
         self * self
     }
+}
+
+impl MultiplicativeSemigroup for FermatField {
+    const LEFT_IDENTITY: Self = Self { n: 1 };
+    const RIGHT_IDENTITY: Self = Self { n: 1 };
 }
 
 impl MultiplicativeMonoid for FermatField {

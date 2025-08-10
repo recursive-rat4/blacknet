@@ -16,31 +16,42 @@
  */
 
 use crate::abeliangroup::AdditiveAbelianGroup;
-use crate::algebra::Algebra;
+use crate::algebra::{Algebra, CommutativeAlgebra};
 use crate::magma::Inv;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::semigroup::MultiplicativeSemigroup;
 
 #[rustfmt::skip]
 pub trait Ring
     : AdditiveAbelianGroup
-    + MultiplicativeMonoid
+    + MultiplicativeSemigroup
 {
     type BaseRing: Ring;
     type Int: Copy + Ord;
 
-    const UNITY: Self = <Self as MultiplicativeMonoid>::IDENTITY;
     const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
 }
 
 impl<R: Ring> AdditiveAbelianGroup for R {}
 
-pub trait CommutativeRing: Ring {}
+#[rustfmt::skip]
+pub trait UnitalRing
+    : Ring
+    + MultiplicativeMonoid
+{
+    const UNITY: Self = <Self as MultiplicativeMonoid>::IDENTITY;
+}
+
+impl<R: Ring + MultiplicativeMonoid> UnitalRing for R {}
+
+pub trait CommutativeRing: UnitalRing {}
 
 impl<Z: IntegerRing> CommutativeRing for Z {}
 
 #[rustfmt::skip]
 pub trait CyclotomicRing<Z: IntegerRing, const N: usize>
     : PolynomialRing<Z, N>
+    + CommutativeAlgebra<Z, N>
 {
     fn conjugate(self) -> Self;
 
@@ -54,7 +65,7 @@ pub trait DivisionRing
 {
 }
 
-pub trait IntegerRing: Ring {
+pub trait IntegerRing: UnitalRing {
     fn canonical(self) -> Self::Int;
     fn absolute(self) -> Self::Int;
 

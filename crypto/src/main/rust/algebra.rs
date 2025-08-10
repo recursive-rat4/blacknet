@@ -16,7 +16,7 @@
  */
 
 use crate::module::Module;
-use crate::ring::{CommutativeRing, DivisionRing, Ring};
+use crate::ring::{CommutativeRing, DivisionRing, Ring, UnitalRing};
 
 #[rustfmt::skip]
 pub trait Algebra<R: Ring, const N: usize>
@@ -27,8 +27,15 @@ pub trait Algebra<R: Ring, const N: usize>
 }
 
 #[rustfmt::skip]
-pub trait CommutativeAlgebra<R: CommutativeRing, const N: usize>
+pub trait UnitalAlgebra<R: UnitalRing, const N: usize>
     : Algebra<R, N>
+    + UnitalRing
+{
+}
+
+#[rustfmt::skip]
+pub trait CommutativeAlgebra<R: CommutativeRing, const N: usize>
+    : UnitalAlgebra<R, N>
     + CommutativeRing
 {
 }

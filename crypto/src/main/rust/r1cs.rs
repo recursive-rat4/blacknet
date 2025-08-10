@@ -16,17 +16,17 @@
  */
 
 use crate::matrixsparse::MatrixSparse;
-use crate::ring::Ring;
+use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct R1CS<R: Ring> {
+pub struct R1CS<R: UnitalRing> {
     a: MatrixSparse<R>,
     b: MatrixSparse<R>,
     c: MatrixSparse<R>,
 }
 
-impl<R: Ring> R1CS<R> {
+impl<R: UnitalRing> R1CS<R> {
     pub const fn new(a: MatrixSparse<R>, b: MatrixSparse<R>, c: MatrixSparse<R>) -> Self {
         Self { a, b, c }
     }

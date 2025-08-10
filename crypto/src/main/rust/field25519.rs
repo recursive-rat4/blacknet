@@ -325,6 +325,15 @@ impl MultiplicativeMagma for Field25519 {
     }
 }
 
+impl MultiplicativeSemigroup for Field25519 {
+    const LEFT_IDENTITY: Self = Self {
+        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
+    };
+    const RIGHT_IDENTITY: Self = Self {
+        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
+    };
+}
+
 impl MultiplicativeMonoid for Field25519 {
     const IDENTITY: Self = Self {
         n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
