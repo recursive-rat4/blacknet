@@ -31,6 +31,7 @@ pub trait Module<R: Ring, const N: usize>
     + MulAssign<R>
     + Index<usize, Output = R>
     + IndexMut<usize, Output = R>
+    + IntoIterator<Item = R>
 {
 }
 
@@ -82,6 +83,15 @@ impl<R: Ring, const N: usize> IndexMut<usize> for FreeModule<R, N> {
     #[inline]
     fn index_mut(&mut self, i: usize) -> &mut Self::Output {
         &mut self.components[i]
+    }
+}
+
+impl<R: Ring, const N: usize> IntoIterator for FreeModule<R, N> {
+    type Item = R;
+    type IntoIter = core::array::IntoIter<R, N>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.components.into_iter()
     }
 }
 

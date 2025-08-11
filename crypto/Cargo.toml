@@ -81,6 +81,10 @@ name = "module"
 path = "src/test/rust/module.rs"
 
 [[test]]
+name = "multilinearextension"
+path = "src/test/rust/multilinearextension.rs"
+
+[[test]]
 name = "pervushin"
 path = "src/test/rust/pervushin.rs"
 

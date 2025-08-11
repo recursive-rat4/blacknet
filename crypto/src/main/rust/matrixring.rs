@@ -128,6 +128,15 @@ impl<R: Ring, const N: usize, const NN: usize> IndexMut<(usize, usize)> for Matr
     }
 }
 
+impl<R: Ring, const N: usize, const NN: usize> IntoIterator for MatrixRing<R, N, NN> {
+    type Item = R;
+    type IntoIter = core::array::IntoIter<R, NN>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elements.into_iter()
+    }
+}
+
 impl<R: Ring, const N: usize, const NN: usize> Add for MatrixRing<R, N, NN> {
     type Output = Self;
 

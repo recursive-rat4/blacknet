@@ -32,9 +32,7 @@ impl<R: UnitalRing> EqExtension<R> {
     pub const fn new(coefficients: Vec<R>, z: R) -> Self {
         Self { coefficients, z }
     }
-}
 
-impl<R: UnitalRing> EqExtension<R> {
     pub fn basis(coefficients: &[R]) -> Vec<R> {
         Self::evaluate(coefficients, R::UNITY)
     }

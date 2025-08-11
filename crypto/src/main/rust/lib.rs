@@ -32,6 +32,7 @@ pub mod matrixring;
 pub mod matrixsparse;
 pub mod module;
 pub mod monoid;
+pub mod multilinearextension;
 pub mod norm;
 pub mod pervushin;
 pub mod point;
