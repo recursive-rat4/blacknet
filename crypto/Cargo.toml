@@ -93,6 +93,10 @@ name = "r1cs"
 path = "src/test/rust/r1cs.rs"
 
 [[test]]
+name = "univariatepolynomial"
+path = "src/test/rust/univariatepolynomial.rs"
+
+[[test]]
 name = "vectordense"
 path = "src/test/rust/vectordense.rs"
 
