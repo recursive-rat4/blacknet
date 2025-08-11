@@ -15,13 +15,57 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::integer::{FloatOn, Integer};
 use crate::matrixdense::MatrixDense;
 use crate::matrixring::MatrixRing;
 use crate::module::FreeModule;
 use crate::ring::{IntegerRing, Ring};
 use crate::vectordense::VectorDense;
+use crate::vectorsparse::VectorSparse;
 
-pub trait InfinityNorm<N: Copy + Ord> {
+pub trait EuclideanNorm {
+    fn euclidean_norm(&self) -> f64;
+}
+
+impl<Z: IntegerRing> EuclideanNorm for Z {
+    fn euclidean_norm(&self) -> f64 {
+        self.absolute().float_on()
+    }
+}
+
+impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N> {
+    fn euclidean_norm(&self) -> f64 {
+        self.into_iter()
+            .map(|i| i.euclidean_norm())
+            .map(|i| i * i)
+            .sum::<f64>()
+            .sqrt()
+    }
+}
+
+impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorDense<R> {
+    fn euclidean_norm(&self) -> f64 {
+        self.elements()
+            .iter()
+            .map(|i| i.euclidean_norm())
+            .map(|i| i * i)
+            .sum::<f64>()
+            .sqrt()
+    }
+}
+
+impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorSparse<R> {
+    fn euclidean_norm(&self) -> f64 {
+        self.elements()
+            .iter()
+            .map(|i| i.euclidean_norm())
+            .map(|i| i * i)
+            .sum::<f64>()
+            .sqrt()
+    }
+}
+
+pub trait InfinityNorm<N: Integer> {
     fn check_infinity_norm(&self, bound: N) -> bool;
 }
 

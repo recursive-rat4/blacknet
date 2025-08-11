@@ -17,6 +17,7 @@
 
 use crate::abeliangroup::AdditiveAbelianGroup;
 use crate::algebra::{Algebra, CommutativeAlgebra};
+use crate::integer::Integer;
 use crate::magma::Inv;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::semigroup::MultiplicativeSemigroup;
@@ -27,7 +28,7 @@ pub trait Ring
     + MultiplicativeSemigroup
 {
     type BaseRing: Ring;
-    type Int: Copy + Ord;
+    type Int: Integer;
 
     const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
 }

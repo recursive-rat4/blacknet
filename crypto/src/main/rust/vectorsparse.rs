@@ -40,6 +40,10 @@ impl<R: Ring> VectorSparse<R> {
     pub const fn dimension(&self) -> usize {
         self.dimension
     }
+
+    pub const fn elements(&self) -> &Vec<R> {
+        &self.elements
+    }
 }
 
 impl<R: Ring> Mul<&MatrixDense<R>> for &VectorSparse<R> {
