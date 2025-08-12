@@ -65,7 +65,7 @@ impl Node {
             warn!(logger, "Running as root");
         }
 
-        let settings = Arc::new(Settings::new(mode));
+        let settings = Arc::new(Settings::default(mode));
         let peer_table = PeerTable::new(mode, dirs, log_manager, settings.clone())?;
         let node = Arc::new(Self {
             settings: settings.clone(),

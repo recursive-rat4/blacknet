@@ -297,6 +297,7 @@ impl PeerTable {
 
 impl Drop for PeerTable {
     fn drop(&mut self) {
+        info!(self.logger, "Saving {FILE_NAME}");
         self.save();
     }
 }

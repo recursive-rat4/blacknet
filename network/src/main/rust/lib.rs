@@ -17,6 +17,7 @@
 
 pub mod connection;
 pub mod endpoint;
+pub mod natpmp;
 pub mod node;
 pub mod peertable;
 pub mod router;

@@ -23,18 +23,20 @@ pub struct Settings {
     pub ipv6: bool,
     pub tor: bool,
     pub i2p: bool,
+    pub natpmp: bool,
     pub log_endpoint: bool,
 }
 
 impl Settings {
-    pub fn new(_mode: &Mode) -> Self {
+    pub fn default(mode: &Mode) -> Self {
         Self {
-            port: 28453,
-            ipv4: true,
-            ipv6: true,
-            tor: true,
-            i2p: true,
-            log_endpoint: false,
+            port: mode.default_p2p_port(),
+            ipv4: mode.requires_network(),
+            ipv6: mode.requires_network(),
+            tor: mode.requires_network(),
+            i2p: mode.requires_network(),
+            natpmp: mode.requires_network(),
+            log_endpoint: !mode.requires_network(),
         }
     }
 }

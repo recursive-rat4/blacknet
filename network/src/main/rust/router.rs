@@ -16,6 +16,7 @@
  */
 
 use crate::endpoint::{Endpoint, ipv4_any, ipv6_any};
+use crate::natpmp::natpmp_forward;
 use crate::peertable::PeerTable;
 use crate::settings::Settings;
 use blacknet_log::logmanager::LogManager;
@@ -52,6 +53,9 @@ impl Router {
 
         if router.settings.ipv6 || router.settings.ipv4 {
             runtime.spawn(router.clone().listen_ip());
+            if router.settings.natpmp {
+                runtime.spawn(router.clone().forward_natpmp());
+            }
         }
         if router.settings.tor {
             runtime.spawn(router.clone().listen_tor());
@@ -104,6 +108,17 @@ impl Router {
 
     async fn listen_i2p(self: Arc<Self>) {
         todo!();
+    }
+
+    async fn forward_natpmp(self: Arc<Self>) {
+        match natpmp_forward(self.settings.port).await {
+            Ok(endpoint) => {
+                self.add_listener(endpoint);
+            }
+            Err(msg) => {
+                info!(self.logger, "NAT-PMP: {msg}");
+            }
+        }
     }
 
     fn add_listener(&self, endpoint: Endpoint) {
