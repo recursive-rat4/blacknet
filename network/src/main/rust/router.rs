@@ -19,6 +19,8 @@ use crate::endpoint::{Endpoint, ipv4_any, ipv6_any};
 use crate::natpmp::natpmp_forward;
 use crate::peertable::PeerTable;
 use crate::settings::Settings;
+use crate::torcontroller::TorController;
+use blacknet_compat::xdgdirectories::XDGDirectories;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{info, warn};
 use spdlog::Logger;
@@ -28,6 +30,7 @@ use std::error::Error;
 use std::sync::{Arc, RwLock};
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
+use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
 
 pub struct Router {
@@ -35,10 +38,12 @@ pub struct Router {
     settings: Arc<Settings>,
     listens: RwLock<HashSet<Endpoint>>,
     peer_table: Arc<PeerTable>,
+    tor_controller: Mutex<TorController>,
 }
 
 impl Router {
     pub fn new(
+        dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
         settings: Arc<Settings>,
@@ -46,21 +51,22 @@ impl Router {
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let router = Arc::new(Self {
             logger: log_manager.logger("Router")?,
-            settings,
+            settings: settings.clone(),
             listens: RwLock::new(HashSet::new()),
             peer_table,
+            tor_controller: Mutex::new(TorController::new(dirs, log_manager, settings.clone())?),
         });
 
-        if router.settings.ipv6 || router.settings.ipv4 {
+        if settings.ipv6 || settings.ipv4 {
             runtime.spawn(router.clone().listen_ip());
-            if router.settings.natpmp {
+            if settings.natpmp {
                 runtime.spawn(router.clone().forward_natpmp());
             }
         }
-        if router.settings.tor {
+        if settings.tor {
             runtime.spawn(router.clone().listen_tor());
         }
-        if router.settings.i2p {
+        if settings.i2p {
             runtime.spawn(router.clone().listen_i2p());
         }
 
@@ -103,7 +109,25 @@ impl Router {
     }
 
     async fn listen_tor(self: Arc<Self>) {
-        todo!();
+        let mut timeout = Self::INIT_TIMEOUT;
+        let mut tor_controller = self.tor_controller.lock().await;
+        loop {
+            match tor_controller.create_session().await {
+                Ok(mut tor_session) => {
+                    timeout = Self::INIT_TIMEOUT;
+                    self.add_listener(tor_session.endpoint());
+                    tor_session.hung().await;
+                    info!(self.logger, "Closing TOR session");
+                    self.remove_listener(tor_session.endpoint());
+                }
+                Err(msg) => {
+                    warn!(self.logger, "{msg}");
+                }
+            }
+
+            sleep(timeout).await;
+            timeout = min(timeout * 2, Self::MAX_TIMEOUT);
+        }
     }
 
     async fn listen_i2p(self: Arc<Self>) {

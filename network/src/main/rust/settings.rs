@@ -25,6 +25,8 @@ pub struct Settings {
     pub i2p: bool,
     pub natpmp: bool,
     pub log_endpoint: bool,
+    pub tor_control_host: String,
+    pub tor_control_port: u16,
 }
 
 impl Settings {
@@ -37,6 +39,8 @@ impl Settings {
             i2p: mode.requires_network(),
             natpmp: mode.requires_network(),
             log_endpoint: !mode.requires_network(),
+            tor_control_host: "127.0.0.1".to_string(),
+            tor_control_port: 9051,
         }
     }
 }

@@ -72,7 +72,7 @@ impl Node {
             next_peer_id: AtomicU64::new(1),
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
-            router: Router::new(log_manager, runtime, settings, peer_table)?,
+            router: Router::new(dirs, log_manager, runtime, settings, peer_table)?,
         });
 
         runtime.spawn(node.clone().rotator());

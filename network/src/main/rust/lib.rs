@@ -23,3 +23,4 @@ pub mod peertable;
 pub mod router;
 pub mod settings;
 pub mod socks5;
+pub mod torcontroller;

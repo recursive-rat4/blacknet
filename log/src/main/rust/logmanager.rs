@@ -82,7 +82,7 @@ impl LogManager {
             .name(name)
             .level_filter(LevelFilter::MoreSevereEqual(filter_level))
             .flush_level_filter(LevelFilter::MoreSevereEqual(Level::Error))
-            .sinks(sinks.iter().map(Clone::clone))
+            .sinks(sinks.iter().cloned())
             .build()?)
     }
 
