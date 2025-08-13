@@ -15,10 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::field::PrimeField;
+use crate::algebra::DivisionAlgebra;
+use crate::convolution::Negacyclic;
+use crate::field::{AlgebraicExtension, Field, PrimeField};
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{IntegerRing, Ring, UnitalRing};
+use crate::polynomialringmonomial::PolynomialRingMonomial;
+use crate::ring::{CommutativeRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -246,6 +249,8 @@ impl Ring for PervushinField {
     type Int = i64;
 }
 
+impl CommutativeRing for PervushinField {}
+
 impl IntegerRing for PervushinField {
     fn canonical(self) -> Self::Int {
         let x = Self::reduce_add(self.n);
@@ -266,3 +271,48 @@ impl IntegerRing for PervushinField {
 }
 
 impl PrimeField for PervushinField {}
+
+// (2⁶¹ - 1) / (x² + 1)
+
+pub type PervushinField2 = PolynomialRingMonomial<PervushinField, 2, Negacyclic>;
+
+impl PervushinField2 {
+    const R1: [bool; 61] = PervushinField::bits(0x1FFFFFFFFFFFFFFF);
+}
+
+impl Inv for PervushinField2 {
+    type Output = Option<Self>;
+
+    fn inv(self) -> Self::Output {
+        if self != Self::ZERO {
+            // Feng and Itoh-Tsujii algorithm
+            let r1 = self.square_and_multiply(Self::R1);
+            let r0 = (r1 * self).constant_term();
+            Some((r1 / r0).expect("multiplicative group of subfield"))
+        } else {
+            None
+        }
+    }
+}
+
+impl Div for PervushinField2 {
+    type Output = Option<Self>;
+
+    fn div(self, rps: Self) -> Self::Output {
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div<PervushinField> for PervushinField2 {
+    type Output = Option<Self>;
+
+    fn div(self, rps: PervushinField) -> Self::Output {
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl Field for PervushinField2 {}
+
+impl DivisionAlgebra<PervushinField, 2> for PervushinField2 {}
+
+impl AlgebraicExtension<PervushinField, 2, Negacyclic> for PervushinField2 {}

@@ -18,7 +18,7 @@
 use crate::field::PrimeField;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{IntegerRing, Ring, UnitalRing};
+use crate::ring::{CommutativeRing, IntegerRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -220,6 +220,8 @@ impl Ring for FermatField {
     type BaseRing = Self;
     type Int = i32;
 }
+
+impl CommutativeRing for FermatField {}
 
 impl IntegerRing for FermatField {
     fn canonical(self) -> Self::Int {

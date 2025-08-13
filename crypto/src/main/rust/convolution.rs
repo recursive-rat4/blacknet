@@ -15,37 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{CommutativeAlgebra, DivisionAlgebra};
-use crate::convolution::Convolution;
-use crate::ring::{CommutativeRing, DivisionRing, IntegerRing, PolynomialRing};
-use core::ops::Div;
+use crate::ring::Ring;
 
 #[rustfmt::skip]
-pub trait Field
-    : CommutativeRing
-    + DivisionRing
-    + Div<Output = Option<Self>>
+pub trait Convolution<R: Ring, const N: usize>
+    : 'static
+    + Copy
+    + Eq
 {
-    const ONE: Self = Self::UNITY;
+    fn convolute(lps: [R; N], rps: [R; N]) -> [R; N];
 }
 
-impl<F: Field> DivisionRing for F {}
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct Negacyclic {}
 
-#[rustfmt::skip]
-pub trait PrimeField
-    : Field
-    + IntegerRing
-{
-}
-
-impl<F: PrimeField> Field for F {}
-
-#[rustfmt::skip]
-pub trait AlgebraicExtension<F: Field, const N: usize, C: Convolution<F, N>>
-    : Field
-    + PolynomialRing<F, N, C>
-    + CommutativeAlgebra<F, N>
-    + DivisionAlgebra<F, N>
-    + Div<F, Output = Option<Self>>
-{
+impl<R: Ring, const N: usize> Convolution<R, N> for Negacyclic {
+    fn convolute(lps: [R; N], rps: [R; N]) -> [R; N] {
+        let mut s = [R::ZERO; N];
+        for k in 0..N {
+            for i in 0..k + 1 {
+                s[k] += lps[i] * rps[k - i]
+            }
+            for i in k + 1..N {
+                s[k] -= lps[i] * rps[k + N - i]
+            }
+        }
+        s
+    }
 }

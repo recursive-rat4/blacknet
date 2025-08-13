@@ -20,9 +20,10 @@ use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::ring::{IntegerRing, Ring, UnitalRing};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
+type F = blacknet_crypto::pervushin::PervushinField2;
 
 #[test]
-fn representative() {
+fn z_representative() {
     let a = Z::new(-1);
     let b = Z::new(2305843009213693950);
     assert_eq!(b, a);
@@ -35,7 +36,7 @@ fn representative() {
 }
 
 #[test]
-fn add() {
+fn z_add() {
     let a = Z::new(1152921504606846974);
     let b = Z::new(1152921504606846970);
     let c = Z::new(-7);
@@ -49,7 +50,7 @@ fn add() {
 }
 
 #[test]
-fn neg() {
+fn z_neg() {
     let a = Z::new(4);
     let b = Z::new(-4);
     assert_eq!(-a, b);
@@ -57,7 +58,7 @@ fn neg() {
 }
 
 #[test]
-fn sub() {
+fn z_sub() {
     let a = Z::new(-2048);
     let b = Z::new(65536);
     let c = Z::new(-67584);
@@ -70,7 +71,7 @@ fn sub() {
 }
 
 #[test]
-fn mul() {
+fn z_mul() {
     let a = Z::new(1152102451225612864);
     let b = Z::new(-32);
     let c = Z::new(26209708199491568);
@@ -83,14 +84,14 @@ fn mul() {
 }
 
 #[test]
-fn sqr() {
+fn z_sqr() {
     assert_eq!(Z::new(-1).square(), Z::new(1));
     assert_eq!(Z::new(0).square(), Z::new(0));
     assert_eq!(Z::new(1).square(), Z::new(1));
 }
 
 #[test]
-fn inv() {
+fn z_inv() {
     let a = Z::new(24);
     let b = Z::new(-672537544353994069);
     let c = Z::new(-25);
@@ -103,7 +104,7 @@ fn inv() {
 }
 
 #[test]
-fn infinity_norm() {
+fn z_infinity_norm() {
     let a = Z::new(-677133638855483916);
     let b = Z::new(1140329745848183219);
     let ab = 677133638855483916;
@@ -114,4 +115,34 @@ fn infinity_norm() {
     assert!(a.check_infinity_norm(ag));
     assert!(!b.check_infinity_norm(bb));
     assert!(b.check_infinity_norm(bg));
+}
+
+#[test]
+fn f_add() {
+    let a = F::from([4, 3].map(Z::new));
+    let b = F::from([2, 1].map(Z::new));
+    let c = F::from([6, 4].map(Z::new));
+    assert_eq!(a + b, c);
+    assert_eq!(b + a, c);
+}
+
+#[test]
+fn f_mul() {
+    let a = F::from([-562956929497444169, 136532190776072177].map(Z::new));
+    let b = Z::new(51280928868087145);
+    let c = F::from([-557186355960048698, -800938371403945454].map(Z::new));
+    let d = F::from([483463506662809566, -624462247079014308].map(Z::new));
+    assert_eq!(a * b, c);
+    //assert_eq!(b * a, c);
+    assert_eq!(a * c, d);
+    assert_eq!(c * a, d);
+}
+
+#[test]
+fn f_inv() {
+    let a = F::from([-355525067034500326, -826748688154628891].map(Z::new));
+    let b = F::from([654336260586812980, -209289517407125934].map(Z::new));
+    assert_eq!(b.inv().unwrap(), a);
+    assert_eq!(a.inv().unwrap(), b);
+    assert_eq!(F::ZERO.inv(), None);
 }

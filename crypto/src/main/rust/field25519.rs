@@ -19,7 +19,7 @@ use crate::bigint::{UInt256, UInt512};
 use crate::field::{Field, PrimeField};
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{IntegerRing, Ring};
+use crate::ring::{CommutativeRing, IntegerRing, Ring};
 use crate::semigroup::MultiplicativeSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -344,6 +344,8 @@ impl Ring for Field25519 {
     type BaseRing = Self;
     type Int = UInt256;
 }
+
+impl CommutativeRing for Field25519 {}
 
 impl IntegerRing for Field25519 {
     fn canonical(self) -> UInt256 {

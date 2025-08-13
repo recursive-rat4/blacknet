@@ -17,6 +17,7 @@
 
 use crate::abeliangroup::AdditiveAbelianGroup;
 use crate::algebra::{Algebra, CommutativeAlgebra};
+use crate::convolution::Convolution;
 use crate::integer::Integer;
 use crate::magma::Inv;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
@@ -47,11 +48,9 @@ impl<R: Ring + MultiplicativeMonoid> UnitalRing for R {}
 
 pub trait CommutativeRing: UnitalRing {}
 
-impl<Z: IntegerRing> CommutativeRing for Z {}
-
 #[rustfmt::skip]
-pub trait CyclotomicRing<Z: IntegerRing, const N: usize>
-    : PolynomialRing<Z, N>
+pub trait CyclotomicRing<Z: IntegerRing, const N: usize, C: Convolution<Z, N>>
+    : PolynomialRing<Z, N, C>
     + CommutativeAlgebra<Z, N>
 {
     fn conjugate(self) -> Self;
@@ -66,7 +65,7 @@ pub trait DivisionRing
 {
 }
 
-pub trait IntegerRing: UnitalRing {
+pub trait IntegerRing: CommutativeRing {
     fn canonical(self) -> Self::Int;
     fn absolute(self) -> Self::Int;
 
@@ -75,7 +74,7 @@ pub trait IntegerRing: UnitalRing {
 }
 
 #[rustfmt::skip]
-pub trait PolynomialRing<R: Ring, const N: usize>
+pub trait PolynomialRing<R: Ring, const N: usize, C: Convolution<R, N>>
     : Algebra<R, N>
 {
     fn constant_term(self) -> R;
