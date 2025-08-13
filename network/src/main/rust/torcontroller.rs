@@ -204,6 +204,7 @@ type Result<T> = core::result::Result<T, Error>;
 pub enum Error {
     Message(String),
     Io(std::io::Error),
+    Log(blacknet_log::error::Error),
 }
 
 impl fmt::Display for Error {
@@ -211,6 +212,7 @@ impl fmt::Display for Error {
         match self {
             Error::Message(msg) => write!(formatter, "{msg}"),
             Error::Io(err) => write!(formatter, "{err}"),
+            Error::Log(err) => write!(formatter, "{err}"),
         }
     }
 }
@@ -229,8 +231,8 @@ impl From<std::io::Error> for Error {
     }
 }
 
-impl From<Box<dyn core::error::Error>> for Error {
-    fn from(err: Box<dyn core::error::Error>) -> Self {
-        Error::Message(err.to_string())
+impl From<blacknet_log::error::Error> for Error {
+    fn from(err: blacknet_log::error::Error) -> Self {
+        Error::Log(err)
     }
 }

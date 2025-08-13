@@ -15,6 +15,29 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod error;
-pub mod logger;
-pub mod logmanager;
+use core::fmt;
+
+#[derive(Debug)]
+pub enum Error {
+    NotUnicodeLogLevel,
+    Spdlog(spdlog::error::Error),
+}
+
+impl core::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::NotUnicodeLogLevel => formatter.write_str("Not unicode data in environment variable BLACKNET_LOGLEVEL"),
+            Error::Spdlog(err) => write!(formatter, "{err}"),
+        }
+    }
+}
+
+impl From<spdlog::error::Error> for Error {
+    fn from(err: spdlog::error::Error) -> Self {
+        Error::Spdlog(err)
+    }
+}
+
+pub type Result<T> = core::result::Result<T, Error>;

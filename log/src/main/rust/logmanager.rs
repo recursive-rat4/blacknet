@@ -16,6 +16,7 @@
  */
 
 use crate::info;
+use crate::error::{Error, Result};
 use spdlog::Level;
 use spdlog::sink::RotatingFileSink;
 use spdlog::sink::RotationPolicy;
@@ -24,7 +25,6 @@ use spdlog::sink::StdStreamSink;
 use spdlog::terminal_style::StyleMode;
 use spdlog::{LevelFilter, Logger};
 use std::env::VarError;
-use std::error::Error;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -44,7 +44,7 @@ pub struct LogManager {
 }
 
 impl LogManager {
-    pub fn new(strategy: Strategy, dir: &Path) -> Result<Self, Box<dyn Error>> {
+    pub fn new(strategy: Strategy, dir: &Path) -> Result<Self> {
         let (mut filter_level, sinks) = match strategy {
             Strategy::Daemon => (
                 Level::Info,
@@ -56,7 +56,7 @@ impl LogManager {
         match std::env::var("BLACKNET_LOGLEVEL") {
             Ok(val) => filter_level = Level::from_str(&val)?,
             Err(VarError::NotUnicode(_)) => {
-                return Err("Not unicode data in environment variable BLACKNET_LOGLEVEL".into());
+                return Err(Error::NotUnicodeLogLevel);
             }
             Err(VarError::NotPresent) => (),
         }
@@ -69,7 +69,7 @@ impl LogManager {
         })
     }
 
-    pub fn logger(&self, name: &'static str) -> Result<Logger, Box<dyn Error>> {
+    pub fn logger(&self, name: &'static str) -> Result<Logger> {
         Self::factory(name, self.filter_level, &self.sinks)
     }
 
@@ -77,7 +77,7 @@ impl LogManager {
         name: &'static str,
         filter_level: Level,
         sinks: &Vec<Arc<dyn Sink>>,
-    ) -> Result<Logger, Box<dyn Error>> {
+    ) -> Result<Logger> {
         Ok(Logger::builder()
             .name(name)
             .level_filter(LevelFilter::MoreSevereEqual(filter_level))
@@ -86,7 +86,7 @@ impl LogManager {
             .build()?)
     }
 
-    fn console_sink() -> Result<Arc<dyn Sink>, Box<dyn Error>> {
+    fn console_sink() -> Result<Arc<dyn Sink>> {
         Ok(StdStreamSink::builder()
             .stdout()
             .style_mode(StyleMode::Auto)
@@ -94,7 +94,7 @@ impl LogManager {
             .map(|sink| Arc::new(sink) as Arc<dyn Sink>)?)
     }
 
-    fn file_sink(dir: &Path) -> Result<Arc<dyn Sink>, Box<dyn Error>> {
+    fn file_sink(dir: &Path) -> Result<Arc<dyn Sink>> {
         Ok(RotatingFileSink::builder()
             .base_path(dir.join("debug.log"))
             .rotation_policy(RotationPolicy::FileSize(5000000))
