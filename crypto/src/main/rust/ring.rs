@@ -28,7 +28,6 @@ pub trait Ring
     : AdditiveAbelianGroup
     + MultiplicativeSemigroup
 {
-    type BaseRing: Ring;
     type Int: Integer;
 
     const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
@@ -51,7 +50,7 @@ pub trait CommutativeRing: UnitalRing {}
 #[rustfmt::skip]
 pub trait CyclotomicRing<Z: IntegerRing, const N: usize, C: Convolution<Z, N>>
     : PolynomialRing<Z, N, C>
-    + CommutativeAlgebra<Z, N>
+    + CommutativeAlgebra<Z>
 {
     fn conjugate(self) -> Self;
 
@@ -75,7 +74,8 @@ pub trait IntegerRing: CommutativeRing {
 
 #[rustfmt::skip]
 pub trait PolynomialRing<R: Ring, const N: usize, C: Convolution<R, N>>
-    : Algebra<R, N>
+    : Algebra<R>
+    + IntoIterator<Item = R>
 {
     fn constant_term(self) -> R;
     fn evaluate(self, point: R) -> R;

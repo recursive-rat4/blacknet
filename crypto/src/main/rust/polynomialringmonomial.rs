@@ -273,22 +273,21 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMonoid
     };
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Module<R, N>
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Module<R>
     for PolynomialRingMonomial<R, N, C>
 {
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Ring for PolynomialRingMonomial<R, N, C> {
-    type BaseRing = R;
     type Int = R::Int;
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Algebra<R, N>
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Algebra<R>
     for PolynomialRingMonomial<R, N, C>
 {
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> UnitalAlgebra<R, N>
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> UnitalAlgebra<R>
     for PolynomialRingMonomial<R, N, C>
 {
 }
@@ -319,7 +318,7 @@ impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> CommutativeRing
 {
 }
 
-impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> CommutativeAlgebra<R, N>
+impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> CommutativeAlgebra<R>
     for PolynomialRingMonomial<R, N, C>
 {
 }

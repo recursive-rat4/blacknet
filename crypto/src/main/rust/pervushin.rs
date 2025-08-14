@@ -18,6 +18,7 @@
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::Negacyclic;
 use crate::field::{AlgebraicExtension, Field, PrimeField};
+use crate::interpolation::InterpolationConsts;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::polynomialringmonomial::PolynomialRingMonomial;
@@ -245,7 +246,6 @@ impl MultiplicativeMonoid for PervushinField {
 }
 
 impl Ring for PervushinField {
-    type BaseRing = Self;
     type Int = i64;
 }
 
@@ -271,6 +271,51 @@ impl IntegerRing for PervushinField {
 }
 
 impl PrimeField for PervushinField {}
+
+impl InterpolationConsts for PervushinField {
+    const INV2: Self = Self {
+        n: -1152921504606846975,
+    };
+    const INV3: Self = Self {
+        n: -768614336404564650,
+    };
+    const INV4: Self = Self {
+        n: 576460752303423488,
+    };
+    const INV6: Self = Self {
+        n: -384307168202282325,
+    };
+    const INV12: Self = Self {
+        n: 960767920505705813,
+    };
+    const INV20: Self = Self {
+        n: 1037629354146162278,
+    };
+    const INV24: Self = Self {
+        n: -672537544353994069,
+    };
+    const INV30: Self = Self {
+        n: -76861433640456465,
+    };
+    const INV120: Self = Self {
+        n: -595676110713537604,
+    };
+    const INV3_MUL2: Self = Self {
+        n: 768614336404564651,
+    };
+    const INV4_MUL5: Self = Self {
+        n: 576460752303423489,
+    };
+    const INV12_MUL5: Self = Self {
+        n: 192153584101141163,
+    };
+    const INV12_MUL7: Self = Self {
+        n: -192153584101141162,
+    };
+    const INV24_MUL7: Self = Self {
+        n: -96076792050570581,
+    };
+}
 
 // (2⁶¹ - 1) / (x² + 1)
 
@@ -313,6 +358,6 @@ impl Div<PervushinField> for PervushinField2 {
 
 impl Field for PervushinField2 {}
 
-impl DivisionAlgebra<PervushinField, 2> for PervushinField2 {}
+impl DivisionAlgebra<PervushinField> for PervushinField2 {}
 
 impl AlgebraicExtension<PervushinField, 2, Negacyclic> for PervushinField2 {}

@@ -19,30 +19,38 @@ use crate::module::Module;
 use crate::ring::{CommutativeRing, DivisionRing, Ring, UnitalRing};
 
 #[rustfmt::skip]
-pub trait Algebra<R: Ring, const N: usize>
-    : Module<R, N>
-    + Ring<BaseRing = R>
+pub trait Algebra<R: Ring>
+    : Module<R>
+    + Ring
     + From<R>
 {
 }
 
+impl<R: Ring> Algebra<R> for R {}
+
 #[rustfmt::skip]
-pub trait UnitalAlgebra<R: UnitalRing, const N: usize>
-    : Algebra<R, N>
+pub trait UnitalAlgebra<R: UnitalRing>
+    : Algebra<R>
     + UnitalRing
 {
 }
 
+impl<R: UnitalRing> UnitalAlgebra<R> for R {}
+
 #[rustfmt::skip]
-pub trait CommutativeAlgebra<R: CommutativeRing, const N: usize>
-    : UnitalAlgebra<R, N>
+pub trait CommutativeAlgebra<R: CommutativeRing>
+    : UnitalAlgebra<R>
     + CommutativeRing
 {
 }
 
+impl<R: CommutativeRing> CommutativeAlgebra<R> for R {}
+
 #[rustfmt::skip]
-pub trait DivisionAlgebra<R: DivisionRing, const N: usize>
-    : Algebra<R, N>
+pub trait DivisionAlgebra<R: DivisionRing>
+    : Algebra<R>
     + DivisionRing
 {
 }
+
+impl<R: DivisionRing> DivisionAlgebra<R> for R {}

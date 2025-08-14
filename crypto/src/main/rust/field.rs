@@ -44,8 +44,8 @@ impl<F: PrimeField> Field for F {}
 pub trait AlgebraicExtension<F: Field, const N: usize, C: Convolution<F, N>>
     : Field
     + PolynomialRing<F, N, C>
-    + CommutativeAlgebra<F, N>
-    + DivisionAlgebra<F, N>
+    + CommutativeAlgebra<F>
+    + DivisionAlgebra<F>
     + Div<F, Output = Option<Self>>
 {
 }

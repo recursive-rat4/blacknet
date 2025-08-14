@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::info;
 use crate::error::{Error, Result};
+use crate::info;
 use spdlog::Level;
 use spdlog::sink::RotatingFileSink;
 use spdlog::sink::RotationPolicy;

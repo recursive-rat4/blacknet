@@ -25,15 +25,14 @@ use core::iter::Sum;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[rustfmt::skip]
-pub trait Module<R: Ring, const N: usize>
+pub trait Module<R: Ring>
     : AdditiveAbelianGroup
     + Mul<R, Output = Self>
     + MulAssign<R>
-    + Index<usize, Output = R>
-    + IndexMut<usize, Output = R>
-    + IntoIterator<Item = R>
 {
 }
+
+impl<R: Ring> Module<R> for R {}
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FreeModule<R: Ring, const N: usize> {
@@ -178,4 +177,4 @@ impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
 
 impl<R: Ring, const N: usize> AdditiveAbelianGroup for FreeModule<R, N> {}
 
-impl<R: Ring, const N: usize> Module<R, N> for FreeModule<R, N> {}
+impl<R: Ring, const N: usize> Module<R> for FreeModule<R, N> {}

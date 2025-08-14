@@ -341,7 +341,6 @@ impl MultiplicativeMonoid for Field25519 {
 }
 
 impl Ring for Field25519 {
-    type BaseRing = Self;
     type Int = UInt256;
 }
 

@@ -28,7 +28,9 @@ impl core::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::NotUnicodeLogLevel => formatter.write_str("Not unicode data in environment variable BLACKNET_LOGLEVEL"),
+            Error::NotUnicodeLogLevel => {
+                formatter.write_str("Not unicode data in environment variable BLACKNET_LOGLEVEL")
+            }
             Error::Spdlog(err) => write!(formatter, "{err}"),
         }
     }

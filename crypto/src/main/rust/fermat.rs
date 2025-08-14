@@ -217,7 +217,6 @@ impl MultiplicativeMonoid for FermatField {
 }
 
 impl Ring for FermatField {
-    type BaseRing = Self;
     type Int = i32;
 }
 

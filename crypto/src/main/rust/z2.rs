@@ -162,7 +162,6 @@ impl MultiplicativeMonoid for Z2 {
 }
 
 impl Ring for Z2 {
-    type BaseRing = Self;
     type Int = i8;
 }
 
