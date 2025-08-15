@@ -17,6 +17,7 @@
 
 use blacknet_crypto::magma::{Inv, MultiplicativeMagma};
 use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::ring::IntegerRing;
 use blacknet_crypto::z2::Z2;
 
 #[test]

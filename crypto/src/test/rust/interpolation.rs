@@ -22,29 +22,35 @@ type Z = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn balanced() {
-    let p1 = UnivariatePolynomial::from([2, 3].map(Z::new));
-    let p2 = UnivariatePolynomial::from([2, 3, 5].map(Z::new));
-    let p3 = UnivariatePolynomial::from([2, 3, 5, 7].map(Z::new));
-    let p4 = UnivariatePolynomial::from([2, 3, 5, 7, 11].map(Z::new));
-    let p5 = UnivariatePolynomial::from([2, 3, 5, 7, 11, 13].map(Z::new));
-    assert_eq!(interpolate_1(Z::new(2), Z::new(5)), p1);
-    assert_eq!(interpolate_2(Z::new(4), Z::new(2), Z::new(10)), p2);
+    let p1 = UnivariatePolynomial::from([2, 3].map(Z::from));
+    let p2 = UnivariatePolynomial::from([2, 3, 5].map(Z::from));
+    let p3 = UnivariatePolynomial::from([2, 3, 5, 7].map(Z::from));
+    let p4 = UnivariatePolynomial::from([2, 3, 5, 7, 11].map(Z::from));
+    let p5 = UnivariatePolynomial::from([2, 3, 5, 7, 11, 13].map(Z::from));
+    assert_eq!(interpolate_1(Z::from(2), Z::from(5)), p1);
+    assert_eq!(interpolate_2(Z::from(4), Z::from(2), Z::from(10)), p2);
     assert_eq!(
-        interpolate_3(Z::new(-3), Z::new(2), Z::new(17), Z::new(84)),
+        interpolate_3(Z::from(-3), Z::from(2), Z::from(17), Z::from(84)),
         p3
     );
     assert_eq!(
-        interpolate_4(Z::new(136), Z::new(8), Z::new(2), Z::new(28), Z::new(260)),
+        interpolate_4(
+            Z::from(136),
+            Z::from(8),
+            Z::from(2),
+            Z::from(28),
+            Z::from(260)
+        ),
         p4
     );
     assert_eq!(
         interpolate_5(
-            Z::new(-280),
-            Z::new(-5),
-            Z::new(2),
-            Z::new(41),
-            Z::new(676),
-            Z::new(4295)
+            Z::from(-280),
+            Z::from(-5),
+            Z::from(2),
+            Z::from(41),
+            Z::from(676),
+            Z::from(4295)
         ),
         p5
     );

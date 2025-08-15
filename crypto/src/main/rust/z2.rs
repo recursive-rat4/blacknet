@@ -18,6 +18,7 @@
 #![allow(clippy::suspicious_arithmetic_impl)]
 
 use crate::field::PrimeField;
+use crate::integer::Integer;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{CommutativeRing, IntegerRing, Ring, UnitalRing};
@@ -29,12 +30,6 @@ use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
 pub struct Z2 {
     n: bool,
-}
-
-impl Z2 {
-    pub const fn new(n: i8) -> Self {
-        Self { n: (n & 1) == 1 }
-    }
 }
 
 impl Debug for Z2 {
@@ -168,6 +163,13 @@ impl Ring for Z2 {
 impl CommutativeRing for Z2 {}
 
 impl IntegerRing for Z2 {
+    fn new(n: Self::Int) -> Self {
+        Self { n: (n & 1) == 1 }
+    }
+    fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
+        Self::new(n)
+    }
+
     fn canonical(self) -> Self::Int {
         self.n.into()
     }

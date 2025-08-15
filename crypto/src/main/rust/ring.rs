@@ -16,12 +16,12 @@
  */
 
 use crate::abeliangroup::AdditiveAbelianGroup;
-use crate::algebra::{Algebra, CommutativeAlgebra};
-use crate::convolution::Convolution;
+use crate::algebra::{CommutativeAlgebra, UnitalAlgebra};
 use crate::integer::Integer;
 use crate::magma::Inv;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::semigroup::MultiplicativeSemigroup;
+use core::ops::{Index, IndexMut};
 
 #[rustfmt::skip]
 pub trait Ring
@@ -48,8 +48,8 @@ impl<R: Ring + MultiplicativeMonoid> UnitalRing for R {}
 pub trait CommutativeRing: UnitalRing {}
 
 #[rustfmt::skip]
-pub trait CyclotomicRing<Z: IntegerRing, const N: usize, C: Convolution<Z, N>>
-    : PolynomialRing<Z, N, C>
+pub trait CyclotomicRing<Z: IntegerRing>
+    : PolynomialRing<Z>
     + CommutativeAlgebra<Z>
 {
     fn conjugate(self) -> Self;
@@ -65,6 +65,9 @@ pub trait DivisionRing
 }
 
 pub trait IntegerRing: CommutativeRing {
+    fn new(n: Self::Int) -> Self;
+    fn with_limb(n: <Self::Int as Integer>::Limb) -> Self;
+
     fn canonical(self) -> Self::Int;
     fn absolute(self) -> Self::Int;
 
@@ -73,8 +76,10 @@ pub trait IntegerRing: CommutativeRing {
 }
 
 #[rustfmt::skip]
-pub trait PolynomialRing<R: Ring, const N: usize, C: Convolution<R, N>>
-    : Algebra<R>
+pub trait PolynomialRing<R: UnitalRing>
+    : UnitalAlgebra<R>
+    + Index<usize, Output = R>
+    + IndexMut<usize, Output = R>
     + IntoIterator<Item = R>
 {
     fn constant_term(self) -> R;

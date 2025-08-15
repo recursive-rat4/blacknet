@@ -16,7 +16,6 @@
  */
 
 use crate::algebra::{CommutativeAlgebra, DivisionAlgebra};
-use crate::convolution::Convolution;
 use crate::ring::{CommutativeRing, DivisionRing, IntegerRing, PolynomialRing};
 use core::ops::Div;
 
@@ -41,9 +40,9 @@ pub trait PrimeField
 impl<F: PrimeField> Field for F {}
 
 #[rustfmt::skip]
-pub trait AlgebraicExtension<F: Field, const N: usize, C: Convolution<F, N>>
+pub trait AlgebraicExtension<F: Field>
     : Field
-    + PolynomialRing<F, N, C>
+    + PolynomialRing<F>
     + CommutativeAlgebra<F>
     + DivisionAlgebra<F>
     + Div<F, Output = Option<Self>>

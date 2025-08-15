@@ -19,7 +19,7 @@ use crate::matrixdense::MatrixDense;
 use crate::ring::{Ring, UnitalRing};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::zip;
-use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct VectorDense<R: Ring> {
@@ -101,6 +101,15 @@ impl<R: Ring> Debug for VectorDense<R> {
     }
 }
 
+impl<R: Ring> Deref for VectorDense<R> {
+    type Target = [R];
+
+    #[inline]
+    fn deref(&self) -> &[R] {
+        &self.elements
+    }
+}
+
 impl<R: Ring> Index<usize> for VectorDense<R> {
     type Output = R;
 
@@ -114,6 +123,16 @@ impl<R: Ring> IndexMut<usize> for VectorDense<R> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.elements[index]
+    }
+}
+
+impl<R: Ring> IntoIterator for VectorDense<R> {
+    type Item = R;
+    type IntoIter = std::vec::IntoIter<R>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.elements.into_iter()
     }
 }
 

@@ -17,6 +17,7 @@
 
 use crate::bigint::{UInt256, UInt512};
 use crate::field::{Field, PrimeField};
+use crate::integer::Integer;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{CommutativeRing, IntegerRing, Ring};
@@ -33,12 +34,6 @@ pub struct Field25519 {
 }
 
 impl Field25519 {
-    pub fn new(n: UInt256) -> Self {
-        Self {
-            n: Self::to_form(n),
-        }
-    }
-
     pub fn from_hex(hex: &str) -> Self {
         Self::new(UInt256::from_hex(hex))
     }
@@ -347,6 +342,17 @@ impl Ring for Field25519 {
 impl CommutativeRing for Field25519 {}
 
 impl IntegerRing for Field25519 {
+    fn new(n: UInt256) -> Self {
+        Self {
+            n: Self::to_form(n),
+        }
+    }
+    fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
+        Self {
+            n: Self::to_form(n.into()),
+        }
+    }
+
     fn canonical(self) -> UInt256 {
         Self::from_form(self.n)
     }

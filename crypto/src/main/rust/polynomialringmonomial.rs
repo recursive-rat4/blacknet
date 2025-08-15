@@ -282,6 +282,11 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Ring for PolynomialRin
     type Int = R::Int;
 }
 
+impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> CommutativeRing
+    for PolynomialRingMonomial<R, N, C>
+{
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Algebra<R>
     for PolynomialRingMonomial<R, N, C>
 {
@@ -292,7 +297,12 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> UnitalAlgebra<R>
 {
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> PolynomialRing<R, N, C>
+impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> CommutativeAlgebra<R>
+    for PolynomialRingMonomial<R, N, C>
+{
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> PolynomialRing<R>
     for PolynomialRingMonomial<R, N, C>
 {
     fn constant_term(self) -> R {
@@ -311,14 +321,4 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> PolynomialRing<R, N, C
         }
         sigma
     }
-}
-
-impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> CommutativeRing
-    for PolynomialRingMonomial<R, N, C>
-{
-}
-
-impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> CommutativeAlgebra<R>
-    for PolynomialRingMonomial<R, N, C>
-{
 }

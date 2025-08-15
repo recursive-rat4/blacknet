@@ -16,6 +16,7 @@
  */
 
 use crate::field::PrimeField;
+use crate::integer::Integer;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{CommutativeRing, IntegerRing, Ring, UnitalRing};
@@ -32,14 +33,8 @@ pub struct FermatField {
 }
 
 impl FermatField {
-    pub const fn new(n: i32) -> Self {
-        Self {
-            n: Self::reduce_add(n),
-        }
-    }
-
     // Lazy reduction
-    pub const fn reduce(self) -> Self {
+    pub fn reduce(self) -> Self {
         Self::new(self.n)
     }
 
@@ -223,6 +218,15 @@ impl Ring for FermatField {
 impl CommutativeRing for FermatField {}
 
 impl IntegerRing for FermatField {
+    fn new(n: Self::Int) -> Self {
+        Self {
+            n: Self::reduce_add(n),
+        }
+    }
+    fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
+        Self::new(n)
+    }
+
     fn canonical(self) -> Self::Int {
         let x = Self::reduce_add(self.n);
         if x >= Self::MODULUS {

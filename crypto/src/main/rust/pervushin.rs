@@ -18,6 +18,7 @@
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::Negacyclic;
 use crate::field::{AlgebraicExtension, Field, PrimeField};
+use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
@@ -36,12 +37,6 @@ pub struct PervushinField {
 }
 
 impl PervushinField {
-    pub const fn new(n: i64) -> Self {
-        Self {
-            n: Self::reduce_add(n),
-        }
-    }
-
     const fn reduce_add(x: i64) -> i64 {
         (x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)
     }
@@ -252,6 +247,15 @@ impl Ring for PervushinField {
 impl CommutativeRing for PervushinField {}
 
 impl IntegerRing for PervushinField {
+    fn new(n: Self::Int) -> Self {
+        Self {
+            n: Self::reduce_add(n),
+        }
+    }
+    fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
+        Self::new(n)
+    }
+
     fn canonical(self) -> Self::Int {
         let x = Self::reduce_add(self.n);
         if x >= Self::MODULUS {
@@ -360,4 +364,4 @@ impl Field for PervushinField2 {}
 
 impl DivisionAlgebra<PervushinField> for PervushinField2 {}
 
-impl AlgebraicExtension<PervushinField, 2, Negacyclic> for PervushinField2 {}
+impl AlgebraicExtension<PervushinField> for PervushinField2 {}

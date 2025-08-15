@@ -223,6 +223,14 @@ impl<const N: usize> BitAndAssign for BigInt<N> {
     }
 }
 
+impl<const N: usize> BitAnd<u64> for BigInt<N> {
+    type Output = u64;
+
+    fn bitand(self, rps: u64) -> Self::Output {
+        self.limbs[0] & rps
+    }
+}
+
 impl<const N: usize> Add for BigInt<N> {
     type Output = Self;
 
@@ -246,45 +254,45 @@ impl<const N: usize> AddAssign for BigInt<N> {
     }
 }
 
-impl<const N: usize> Shl<u32> for BigInt<N> {
+impl<const N: usize> Shl<u64> for BigInt<N> {
     type Output = Self;
 
-    fn shl(self, rps: u32) -> Self::Output {
+    fn shl(self, rps: u64) -> Self::Output {
         let mut c = 0;
         Self {
             limbs: array::from_fn(|i| {
                 let n = (self.limbs[i] << rps) | c;
-                c = self.limbs[i] >> (u64::BITS - rps);
+                c = self.limbs[i] >> (u64::BITS as u64 - rps);
                 n
             }),
         }
     }
 }
 
-impl<const N: usize> ShlAssign<u32> for BigInt<N> {
+impl<const N: usize> ShlAssign<u64> for BigInt<N> {
     #[inline]
-    fn shl_assign(&mut self, rps: u32) {
+    fn shl_assign(&mut self, rps: u64) {
         *self = *self << rps
     }
 }
 
-impl<const N: usize> Shr<u32> for BigInt<N> {
+impl<const N: usize> Shr<u64> for BigInt<N> {
     type Output = Self;
 
-    fn shr(self, rps: u32) -> Self::Output {
+    fn shr(self, rps: u64) -> Self::Output {
         let mut n = Self::default();
         let mut c = 0;
         for i in (0..N).rev() {
-            n.limbs[i] = (self.limbs[i] >> rps) | (c << (u64::BITS - rps));
+            n.limbs[i] = (self.limbs[i] >> rps) | (c << (u64::BITS as u64 - rps));
             c = self.limbs[i] & ((1 << rps) - 1);
         }
         n
     }
 }
 
-impl<const N: usize> ShrAssign<u32> for BigInt<N> {
+impl<const N: usize> ShrAssign<u64> for BigInt<N> {
     #[inline]
-    fn shr_assign(&mut self, rps: u32) {
+    fn shr_assign(&mut self, rps: u64) {
         *self = *self >> rps
     }
 }
