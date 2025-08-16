@@ -49,6 +49,10 @@ name = "customizableconstraintsystem"
 path = "src/test/rust/customizableconstraintsystem.rs"
 
 [[test]]
+name = "duplex"
+path = "src/test/rust/duplex.rs"
+
+[[test]]
 name = "eqextension"
 path = "src/test/rust/eqextension.rs"
 

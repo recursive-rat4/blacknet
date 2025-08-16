@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
@@ -128,5 +129,17 @@ impl<R: UnitalRing> Mul<R> for EqExtension<R> {
 impl<R: UnitalRing> MulAssign<R> for EqExtension<R> {
     fn mul_assign(&mut self, rps: R) {
         self.z *= rps
+    }
+}
+
+impl<R: UnitalRing + Absorb<R>> Absorb<R> for EqExtension<R> {
+    fn absorb_into(&self, duplex: &mut impl Duplex<R>) {
+        duplex.absorb(&self.coefficients)
+    }
+}
+
+impl<R: UnitalRing + Squeeze<R>> SqueezeWithSize<R> for EqExtension<R> {
+    fn squeeze_from(duplex: &mut impl Duplex<R>, size: usize) -> Self {
+        duplex.squeeze_with_size::<Vec<R>>(size).into()
     }
 }

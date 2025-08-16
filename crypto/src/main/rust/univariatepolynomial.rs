@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::ring::{Ring, UnitalRing};
 use core::ops::Add;
 
@@ -64,5 +65,17 @@ impl<R: Ring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
 impl<R: Ring> From<Vec<R>> for UnivariatePolynomial<R> {
     fn from(coefficients: Vec<R>) -> Self {
         Self { coefficients }
+    }
+}
+
+impl<R: Ring + Absorb<R>> Absorb<R> for UnivariatePolynomial<R> {
+    fn absorb_into(&self, duplex: &mut impl Duplex<R>) {
+        duplex.absorb(&self.coefficients)
+    }
+}
+
+impl<R: Ring + Squeeze<R>> SqueezeWithSize<R> for UnivariatePolynomial<R> {
+    fn squeeze_from(duplex: &mut impl Duplex<R>, size: usize) -> Self {
+        duplex.squeeze_with_size::<Vec<R>>(size).into()
     }
 }

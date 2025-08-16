@@ -17,6 +17,7 @@
 
 use crate::algebra::{Algebra, CommutativeAlgebra, UnitalAlgebra};
 use crate::convolution::Convolution;
+use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::magma::{AdditiveMagma, MultiplicativeMagma};
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
@@ -320,5 +321,21 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> PolynomialRing<R>
             sigma += self.coefficients[N - 1] * power;
         }
         sigma
+    }
+}
+
+impl<R: UnitalRing + Absorb<R>, const N: usize, C: Convolution<R, N>> Absorb<R>
+    for PolynomialRingMonomial<R, N, C>
+{
+    fn absorb_into(&self, duplex: &mut impl Duplex<R>) {
+        duplex.absorb(&self.coefficients)
+    }
+}
+
+impl<R: UnitalRing + Squeeze<R>, const N: usize, C: Convolution<R, N>> Squeeze<R>
+    for PolynomialRingMonomial<R, N, C>
+{
+    fn squeeze_from(duplex: &mut impl Duplex<R>) -> Self {
+        duplex.squeeze::<FreeModule<R, N>>().into()
     }
 }

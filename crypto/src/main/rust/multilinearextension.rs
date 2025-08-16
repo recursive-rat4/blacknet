@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::eqextension::EqExtension;
 use crate::matrixdense::MatrixDense;
 use crate::point::Point;
@@ -213,5 +214,17 @@ impl<R: UnitalRing> Mul<R> for MultilinearExtension<R> {
 impl<R: UnitalRing> MulAssign<R> for MultilinearExtension<R> {
     fn mul_assign(&mut self, rps: R) {
         self.coefficients.iter_mut().for_each(|l| *l *= rps);
+    }
+}
+
+impl<R: UnitalRing + Absorb<R>> Absorb<R> for MultilinearExtension<R> {
+    fn absorb_into(&self, duplex: &mut impl Duplex<R>) {
+        duplex.absorb(&self.coefficients)
+    }
+}
+
+impl<R: UnitalRing + Squeeze<R>> SqueezeWithSize<R> for MultilinearExtension<R> {
+    fn squeeze_from(duplex: &mut impl Duplex<R>, size: usize) -> Self {
+        duplex.squeeze_with_size::<Vec<R>>(size).into()
     }
 }

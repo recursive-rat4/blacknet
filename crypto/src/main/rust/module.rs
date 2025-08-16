@@ -16,6 +16,7 @@
  */
 
 use crate::abeliangroup::AdditiveAbelianGroup;
+use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::magma::AdditiveMagma;
 use crate::monoid::AdditiveMonoid;
 use crate::ring::Ring;
@@ -178,3 +179,15 @@ impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
 impl<R: Ring, const N: usize> AdditiveAbelianGroup for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> Module<R> for FreeModule<R, N> {}
+
+impl<R: Ring + Absorb<R>, const N: usize> Absorb<R> for FreeModule<R, N> {
+    fn absorb_into(&self, duplex: &mut impl Duplex<R>) {
+        duplex.absorb(&self.components)
+    }
+}
+
+impl<R: Ring + Squeeze<R>, const N: usize> Squeeze<R> for FreeModule<R, N> {
+    fn squeeze_from(duplex: &mut impl Duplex<R>) -> Self {
+        duplex.squeeze::<[R; N]>().into()
+    }
+}
