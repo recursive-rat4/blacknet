@@ -102,3 +102,9 @@ impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for VectorDense<R> {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
+
+impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for VectorSparse<R> {
+    fn check_infinity_norm(&self, bound: R::Int) -> bool {
+        self.elements().iter().all(|i| i.check_infinity_norm(bound))
+    }
+}

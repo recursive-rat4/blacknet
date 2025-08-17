@@ -16,6 +16,7 @@
  */
 
 pub mod abeliangroup;
+pub mod ajtaicommitment;
 pub mod algebra;
 pub mod bigint;
 pub mod binaryuniformdistribution;
