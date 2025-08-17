@@ -18,6 +18,7 @@
 pub mod abeliangroup;
 pub mod algebra;
 pub mod bigint;
+pub mod binaryuniformdistribution;
 pub mod circuitbuilder;
 pub mod convolution;
 pub mod customizableconstraintsystem;

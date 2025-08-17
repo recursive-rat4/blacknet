@@ -270,7 +270,7 @@ impl IntegerRing for PervushinField {
         self.balanced().abs()
     }
 
-    const BITS: usize = 61;
+    const BITS: u32 = 61;
     const MODULUS: Self::Int = 2305843009213693951;
 }
 

@@ -79,7 +79,7 @@ impl Field25519 {
     }
 
     fn power(self, rps: Self) -> Self {
-        self.square_and_multiply(rps.canonical().bits::<{ Self::BITS }>())
+        self.square_and_multiply(rps.canonical().bits::<{ Self::BITS as usize }>())
     }
 
     fn to_form(x: UInt256) -> UInt256 {
@@ -365,7 +365,7 @@ impl IntegerRing for Field25519 {
         }
     }
 
-    const BITS: usize = 255;
+    const BITS: u32 = 255;
     const MODULUS: UInt256 =
         UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED");
 }

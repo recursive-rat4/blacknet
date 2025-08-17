@@ -177,7 +177,7 @@ impl IntegerRing for Z2 {
         self.n.into()
     }
 
-    const BITS: usize = 1;
+    const BITS: u32 = 1;
     const MODULUS: Self::Int = 2;
 }
 

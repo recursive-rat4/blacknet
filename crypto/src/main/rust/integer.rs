@@ -21,12 +21,17 @@ use core::ops::{BitAnd, ShrAssign};
 #[rustfmt::skip]
 pub trait Integer
     : Copy
+    + Default
     + Ord
     + FloatOn
     + BitAnd<Self::Limb, Output = Self::Limb>
     + ShrAssign<Self::Limb>
 {
     type Limb: Copy;
+
+    fn count_ones(self) -> u32;
+
+    const LIMB_ONE: Self::Limb;
 }
 
 pub trait FloatOn {
@@ -65,20 +70,55 @@ impl<const N: usize> FloatOn for BigInt<N> {
 
 impl Integer for i8 {
     type Limb = Self;
+
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+
+    const LIMB_ONE: Self::Limb = 1;
 }
 
 impl Integer for i16 {
     type Limb = Self;
+
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+
+    const LIMB_ONE: Self::Limb = 1;
 }
 
 impl Integer for i32 {
     type Limb = Self;
+
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+
+    const LIMB_ONE: Self::Limb = 1;
 }
 
 impl Integer for i64 {
     type Limb = Self;
+
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+
+    const LIMB_ONE: Self::Limb = 1;
 }
 
 impl<const N: usize> Integer for BigInt<N> {
     type Limb = u64;
+
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+
+    const LIMB_ONE: Self::Limb = 1;
 }

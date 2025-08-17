@@ -71,7 +71,7 @@ pub trait IntegerRing: CommutativeRing {
     fn canonical(self) -> Self::Int;
     fn absolute(self) -> Self::Int;
 
-    const BITS: usize;
+    const BITS: u32;
     const MODULUS: Self::Int;
 }
 

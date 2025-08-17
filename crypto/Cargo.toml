@@ -41,6 +41,10 @@ name = "bigint"
 path = "src/test/rust/bigint.rs"
 
 [[test]]
+name = "binaryuniformdistribution"
+path = "src/test/rust/binaryuniformdistribution.rs"
+
+[[test]]
 name = "circuitbuilder"
 path = "src/test/rust/circuitbuilder.rs"
 

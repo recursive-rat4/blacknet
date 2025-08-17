@@ -147,6 +147,20 @@ impl<const N: usize> BigInt<N> {
         self.limbs
     }
 
+    pub const fn count_ones(self) -> u32 {
+        let mut ones = 0;
+        let mut i = 0;
+        loop {
+            if i != N {
+                ones += self.limbs[i].count_ones();
+                i += 1;
+            } else {
+                break;
+            }
+        }
+        ones
+    }
+
     pub const ZERO: Self = Self { limbs: [0; N] };
     pub const ONE: Self = {
         let mut limbs = [0; N];
