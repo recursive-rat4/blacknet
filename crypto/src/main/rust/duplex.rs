@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::distribution::UniformGenerator;
 use crate::group::AdditiveGroup;
 use crate::permutation::Permutation;
 use core::array;
@@ -215,5 +216,21 @@ impl<
         let e = self.state[self.position];
         self.position += 1;
         e
+    }
+}
+
+impl<
+    S: AdditiveGroup + From<i8>,
+    const RATE: usize,
+    const CAPACITY: usize,
+    const WIDTH: usize,
+    P: Permutation<Domain = [S; WIDTH]>,
+> UniformGenerator for DuplexImpl<S, RATE, CAPACITY, WIDTH, P>
+{
+    type Output = S;
+
+    #[inline]
+    fn generate(&mut self) -> Self::Output {
+        self.squeeze_native()
     }
 }

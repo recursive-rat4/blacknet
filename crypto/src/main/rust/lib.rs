@@ -21,6 +21,7 @@ pub mod bigint;
 pub mod circuitbuilder;
 pub mod convolution;
 pub mod customizableconstraintsystem;
+pub mod distribution;
 pub mod duplex;
 pub mod eqextension;
 pub mod fermat;
