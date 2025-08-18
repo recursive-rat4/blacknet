@@ -50,6 +50,7 @@ pub mod polynomialringmonomial;
 pub mod r1cs;
 pub mod ring;
 pub mod semigroup;
+pub mod sumcheck;
 pub mod twistededwardsgroup;
 pub mod univariatepolynomial;
 pub mod vectordense;

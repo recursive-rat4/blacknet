@@ -31,7 +31,7 @@ enum Phase {
     Squeeze,
 }
 
-pub trait Duplex<T: Copy>: Default {
+pub trait Duplex<T: Copy>: Default + UniformGenerator {
     fn reset(&mut self);
 
     fn absorb_native(&mut self, e: T);
