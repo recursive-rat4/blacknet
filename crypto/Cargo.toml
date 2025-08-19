@@ -113,6 +113,10 @@ name = "r1cs"
 path = "src/test/rust/r1cs.rs"
 
 [[test]]
+name = "ternaryuniformdistribution"
+path = "src/test/rust/ternaryuniformdistribution.rs"
+
+[[test]]
 name = "univariatepolynomial"
 path = "src/test/rust/univariatepolynomial.rs"
 

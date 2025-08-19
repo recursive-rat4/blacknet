@@ -16,22 +16,30 @@
  */
 
 use crate::bigint::BigInt;
-use core::ops::{BitAnd, ShrAssign};
+use core::ops::{BitAnd, ShrAssign, Sub};
 
 #[rustfmt::skip]
 pub trait Integer
     : Copy
     + Default
+    + From<Self::Limb>
     + Ord
     + FloatOn
     + BitAnd<Self::Limb, Output = Self::Limb>
     + ShrAssign<Self::Limb>
 {
-    type Limb: Copy;
+    type Limb
+        : Copy
+        + Eq
+        + Sub<Output = Self::Limb>
+        ;
 
     fn count_ones(self) -> u32;
 
+    const BITS: u32;
     const LIMB_ONE: Self::Limb;
+    const LIMB_TWO: Self::Limb;
+    const LIMB_THREE: Self::Limb;
 }
 
 pub trait FloatOn {
@@ -76,7 +84,10 @@ impl Integer for i8 {
         self.count_ones()
     }
 
+    const BITS: u32 = Self::BITS;
     const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
 }
 
 impl Integer for i16 {
@@ -87,7 +98,10 @@ impl Integer for i16 {
         self.count_ones()
     }
 
+    const BITS: u32 = Self::BITS;
     const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
 }
 
 impl Integer for i32 {
@@ -98,7 +112,10 @@ impl Integer for i32 {
         self.count_ones()
     }
 
+    const BITS: u32 = Self::BITS;
     const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
 }
 
 impl Integer for i64 {
@@ -109,7 +126,10 @@ impl Integer for i64 {
         self.count_ones()
     }
 
+    const BITS: u32 = Self::BITS;
     const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
 }
 
 impl<const N: usize> Integer for BigInt<N> {
@@ -120,5 +140,8 @@ impl<const N: usize> Integer for BigInt<N> {
         self.count_ones()
     }
 
+    const BITS: u32 = Self::BITS;
     const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
 }
