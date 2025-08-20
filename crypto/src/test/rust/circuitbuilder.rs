@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::circuitbuilder::{CircuitBuilder, Constant};
+use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant};
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::matrixsparse::MatrixSparse;

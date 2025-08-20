@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::assigner::assigment::Assigment;
 use crate::matrixsparse::MatrixSparse;
 use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
@@ -53,9 +54,9 @@ impl<R: UnitalRing> R1CS<R> {
         (&self.a * z) * (&self.b * z) == &self.c * z
     }
 
-    pub fn assigment(&self) -> VectorDense<R> {
-        let mut z = Vec::<R>::with_capacity(self.variables());
+    pub fn assigment(&self) -> Assigment<R> {
+        let z = Assigment::new(self.variables());
         z.push(R::UNITY);
-        z.into()
+        z
     }
 }

@@ -18,9 +18,10 @@
 pub mod abeliangroup;
 pub mod ajtaicommitment;
 pub mod algebra;
+pub mod assigner;
 pub mod bigint;
 pub mod binaryuniformdistribution;
-pub mod circuitbuilder;
+pub mod circuit;
 pub mod convolution;
 pub mod customizableconstraintsystem;
 pub mod distribution;

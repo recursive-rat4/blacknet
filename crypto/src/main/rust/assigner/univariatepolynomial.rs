@@ -15,25 +15,38 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
+use crate::assigner::assigment::Assigment;
 use crate::ring::{Ring, UnitalRing};
-use core::ops::{Add, Deref};
+use core::ops::Add;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UnivariatePolynomial<R: Ring> {
+pub struct UnivariatePolynomial<'a, R: Ring> {
     coefficients: Vec<R>,
+    assigment: &'a Assigment<R>,
 }
 
-impl<R: UnitalRing> UnivariatePolynomial<R> {
+impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
+    pub fn new(coefficients: Vec<R>, assigment: &'a Assigment<R>) -> Self {
+        Self {
+            coefficients,
+            assigment,
+        }
+    }
+
     pub fn evaluate(&self, point: R) -> R {
         let mut sigma = self.coefficients[0];
         let mut power = point;
         for i in 1..self.coefficients.len() - 1 {
-            sigma += self.coefficients[i] * power;
-            power *= point;
+            let cp = self.coefficients[i] * power;
+            self.assigment.push(cp);
+            sigma += cp;
+            let pp = power * point;
+            self.assigment.push(pp);
+            power = pp;
         }
         if self.coefficients.len() > 1 {
-            sigma += self.coefficients[self.coefficients.len() - 1] * power;
+            let cp = self.coefficients[self.coefficients.len() - 1] * power;
+            self.assigment.push(cp);
+            sigma += cp;
         }
         sigma
     }
@@ -52,54 +65,14 @@ impl<R: UnitalRing> UnivariatePolynomial<R> {
     pub const fn variables(&self) -> usize {
         1
     }
-
-    #[inline]
-    pub fn steal(self) -> Vec<R> {
-        self.coefficients
-    }
 }
 
-impl<R: Ring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
-    fn from(coefficients: [R; N]) -> Self {
-        Self {
-            coefficients: coefficients.into(),
-        }
-    }
-}
-
-impl<R: Ring> From<Vec<R>> for UnivariatePolynomial<R> {
-    fn from(coefficients: Vec<R>) -> Self {
-        Self { coefficients }
-    }
-}
-
-impl<R: Ring> Deref for UnivariatePolynomial<R> {
-    type Target = [R];
-
-    #[inline]
-    fn deref(&self) -> &[R] {
-        &self.coefficients
-    }
-}
-
-impl<R: Ring> IntoIterator for UnivariatePolynomial<R> {
+impl<'a, R: Ring> IntoIterator for UnivariatePolynomial<'a, R> {
     type Item = R;
     type IntoIter = std::vec::IntoIter<R>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.coefficients.into_iter()
-    }
-}
-
-impl<R: Ring + Absorb<R>> Absorb<R> for UnivariatePolynomial<R> {
-    fn absorb_into(&self, duplex: &mut impl Duplex<R>) {
-        duplex.absorb(&self.coefficients)
-    }
-}
-
-impl<R: Ring + Squeeze<R>> SqueezeWithSize<R> for UnivariatePolynomial<R> {
-    fn squeeze_from(duplex: &mut impl Duplex<R>, size: usize) -> Self {
-        duplex.squeeze_with_size::<Vec<R>>(size).into()
     }
 }

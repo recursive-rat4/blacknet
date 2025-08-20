@@ -15,19 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::assigner::univariatepolynomial::UnivariatePolynomial as Assigner;
+use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
+use blacknet_crypto::circuit::univariatepolynomial::UnivariatePolynomial as Circuit;
 use blacknet_crypto::univariatepolynomial::UnivariatePolynomial;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
-fn meta() {
+fn polynomial() {
     let p = UnivariatePolynomial::from([2, 3, 4, 5].map(R::from));
     assert_eq!(p.degree(), 3);
     assert_eq!(p.variables(), 1);
 }
 
 #[test]
-fn evaluate() {
+fn plain_evaluate() {
     let a = UnivariatePolynomial::from([2, 3, 4, 5].map(R::from));
     let b = UnivariatePolynomial::from([2, 3, 4].map(R::from));
     let c = UnivariatePolynomial::from([2, 3].map(R::from));
@@ -42,4 +45,29 @@ fn evaluate() {
     assert_eq!(b.at_0_plus_1(), R::from(11));
     assert_eq!(c.at_0_plus_1(), R::from(7));
     assert_eq!(d.at_0_plus_1(), R::from(4));
+}
+
+#[test]
+fn circuit_evaluate() {
+    let p_plain = UnivariatePolynomial::from([2, 3, 4, 5, 6].map(R::from));
+    let x_plain = R::from(7);
+    let y_plain = p_plain.evaluate(x_plain);
+
+    let circuit = CircuitBuilder::<R>::new(2);
+    let scope = circuit.scope("test");
+    let p_circuit = Circuit::<R>::allocate(&circuit, VariableKind::PublicInput, p_plain.degree());
+    let x_circuit = scope.public_input();
+    let _y_circuit = p_circuit.evaluate(&x_circuit.into());
+    drop(scope);
+
+    let r1cs = circuit.r1cs();
+    let z = r1cs.assigment();
+    z.extend_from_slice(&p_plain);
+    z.push(x_plain);
+
+    let p_assigner = Assigner::new(p_plain.steal(), &z);
+    let y_assigned = p_assigner.evaluate(x_plain);
+
+    assert_eq!(y_assigned, y_plain);
+    assert!(r1cs.is_satisfied(&z.finish()));
 }
