@@ -282,6 +282,14 @@ impl<R: UnitalRing> Expression<R> for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Default for LinearCombination<R> {
+    fn default() -> Self {
+        Self {
+            terms: BTreeMap::new(),
+        }
+    }
+}
+
 impl<R: UnitalRing> From<Constant<R>> for LinearCombination<R> {
     fn from(constant: Constant<R>) -> Self {
         Self {
@@ -339,12 +347,28 @@ impl<R: UnitalRing> AddAssign<Constant<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Add<Constant<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: Constant<R>) -> Self::Output {
+        self.clone() + rps
+    }
+}
+
 impl<R: UnitalRing> Add<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
         rps += (Variable::CONSTANT, self);
         rps
+    }
+}
+
+impl<R: UnitalRing> Add<&LinearCombination<R>> for Constant<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &LinearCombination<R>) -> Self::Output {
+        self + rps.clone()
     }
 }
 
@@ -363,12 +387,28 @@ impl<R: UnitalRing> AddAssign<Variable<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Add<Variable<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: Variable<R>) -> Self::Output {
+        self.clone() + rps
+    }
+}
+
 impl<R: UnitalRing> Add<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
         rps += (self, Constant::UNITY);
         rps
+    }
+}
+
+impl<R: UnitalRing> Add<&LinearCombination<R>> for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &LinearCombination<R>) -> Self::Output {
+        self + rps.clone()
     }
 }
 
@@ -389,6 +429,31 @@ impl<R: UnitalRing> AddAssign for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Add<&Self> for LinearCombination<R> {
+    type Output = Self;
+
+    fn add(mut self, rps: &Self) -> Self::Output {
+        self += rps;
+        self
+    }
+}
+
+impl<R: UnitalRing> AddAssign<&Self> for LinearCombination<R> {
+    fn add_assign(&mut self, rps: &Self) {
+        for (&variable, &coefficient) in &rps.terms {
+            *self += (variable, coefficient)
+        }
+    }
+}
+
+impl<R: UnitalRing> Add for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: Self) -> Self::Output {
+        self.clone() + rps
+    }
+}
+
 impl<R: UnitalRing> Neg for LinearCombination<R> {
     type Output = Self;
 
@@ -400,13 +465,25 @@ impl<R: UnitalRing> Neg for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Neg for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn neg(self) -> Self::Output {
+        let mut lc = LinearCombination::default();
+        for (&variable, &coefficient) in &self.terms {
+            lc += (variable, -coefficient);
+        }
+        lc
+    }
+}
+
 impl<R: UnitalRing> SubAssign<Term<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: Term<R>) {
         let (variable, coefficient) = rps;
         self.terms
             .entry(variable)
             .and_modify(|value| *value -= coefficient)
-            .or_insert(coefficient);
+            .or_insert(-coefficient);
     }
 }
 
@@ -425,12 +502,28 @@ impl<R: UnitalRing> SubAssign<Constant<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Sub<Constant<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: Constant<R>) -> Self::Output {
+        self.clone() - rps
+    }
+}
+
 impl<R: UnitalRing> Sub<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
         rps -= (Variable::CONSTANT, self);
         rps
+    }
+}
+
+impl<R: UnitalRing> Sub<&LinearCombination<R>> for Constant<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
+        self - rps.clone()
     }
 }
 
@@ -449,12 +542,28 @@ impl<R: UnitalRing> SubAssign<Variable<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Sub<Variable<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: Variable<R>) -> Self::Output {
+        self.clone() - rps
+    }
+}
+
 impl<R: UnitalRing> Sub<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
         rps -= (self, Constant::UNITY);
         rps
+    }
+}
+
+impl<R: UnitalRing> Sub<&LinearCombination<R>> for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
+        self - rps.clone()
     }
 }
 
@@ -475,6 +584,31 @@ impl<R: UnitalRing> SubAssign for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Sub<&Self> for LinearCombination<R> {
+    type Output = Self;
+
+    fn sub(mut self, rps: &Self) -> Self::Output {
+        self -= rps;
+        self
+    }
+}
+
+impl<R: UnitalRing> SubAssign<&Self> for LinearCombination<R> {
+    fn sub_assign(&mut self, rps: &Self) {
+        for (&variable, &coefficient) in &rps.terms {
+            *self -= (variable, coefficient)
+        }
+    }
+}
+
+impl<R: UnitalRing> Sub for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        self.clone() - rps
+    }
+}
+
 impl<R: UnitalRing> Mul<Constant<R>> for LinearCombination<R> {
     type Output = Self;
 
@@ -492,6 +626,18 @@ impl<R: UnitalRing> MulAssign<Constant<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Mul<Constant<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn mul(self, rps: Constant<R>) -> Self::Output {
+        let mut lc = LinearCombination::default();
+        for (&variable, &coefficient) in &self.terms {
+            lc += (variable, coefficient * rps);
+        }
+        lc
+    }
+}
+
 impl<R: UnitalRing> Mul<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
@@ -503,11 +649,31 @@ impl<R: UnitalRing> Mul<LinearCombination<R>> for Constant<R> {
     }
 }
 
+impl<R: UnitalRing> Mul<&LinearCombination<R>> for Constant<R> {
+    type Output = LinearCombination<R>;
+
+    fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
+        let mut lc = LinearCombination::default();
+        for (&variable, &coefficient) in &rps.terms {
+            lc += (variable, self * coefficient);
+        }
+        lc
+    }
+}
+
 impl<R: UnitalRing> Mul<Variable<R>> for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
         [self, (rps, Constant::UNITY).into()].into()
+    }
+}
+
+impl<R: UnitalRing> Mul<Variable<R>> for &LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: Variable<R>) -> Self::Output {
+        self.clone() * rps
     }
 }
 
@@ -519,6 +685,14 @@ impl<R: UnitalRing> Mul<LinearCombination<R>> for Variable<R> {
     }
 }
 
+impl<R: UnitalRing> Mul<&LinearCombination<R>> for Variable<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
+        self * rps.clone()
+    }
+}
+
 impl<R: UnitalRing> Mul for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
@@ -527,6 +701,31 @@ impl<R: UnitalRing> Mul for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Mul<&Self> for LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &Self) -> Self::Output {
+        [self, rps.clone()].into()
+    }
+}
+
+impl<R: UnitalRing> Mul<LinearCombination<R>> for &LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: LinearCombination<R>) -> Self::Output {
+        [self.clone(), rps].into()
+    }
+}
+
+impl<R: UnitalRing> Mul for &LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        [self.clone(), rps.clone()].into()
+    }
+}
+
+#[derive(Clone)]
 pub struct LinearMonoid<R: UnitalRing> {
     factors: VecDeque<LinearCombination<R>>,
 }
@@ -567,15 +766,31 @@ impl<R: UnitalRing> MulAssign<Constant<R>> for LinearMonoid<R> {
     }
 }
 
+impl<R: UnitalRing> Mul<Constant<R>> for &LinearMonoid<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: Constant<R>) -> Self::Output {
+        self.clone() * rps
+    }
+}
+
 impl<R: UnitalRing> Mul<LinearMonoid<R>> for Constant<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
         match rps.factors.front_mut() {
-            Some(factor) => *factor *= self, // The Phantom Menace
+            Some(factor) => *factor = self * &*factor,
             None => rps.factors.push_front(self.into()),
         }
         rps
+    }
+}
+
+impl<R: UnitalRing> Mul<&LinearMonoid<R>> for Constant<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
+        self * rps.clone()
     }
 }
 
@@ -594,12 +809,28 @@ impl<R: UnitalRing> MulAssign<Variable<R>> for LinearMonoid<R> {
     }
 }
 
+impl<R: UnitalRing> Mul<Variable<R>> for &LinearMonoid<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: Variable<R>) -> Self::Output {
+        self.clone() * rps
+    }
+}
+
 impl<R: UnitalRing> Mul<LinearMonoid<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
         rps.factors.push_front(self.into());
         rps
+    }
+}
+
+impl<R: UnitalRing> Mul<&LinearMonoid<R>> for Variable<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
+        self * rps.clone()
     }
 }
 
@@ -618,12 +849,60 @@ impl<R: UnitalRing> MulAssign<LinearCombination<R>> for LinearMonoid<R> {
     }
 }
 
+impl<R: UnitalRing> Mul<LinearCombination<R>> for &LinearMonoid<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: LinearCombination<R>) -> Self::Output {
+        self.clone() * rps
+    }
+}
+
+impl<R: UnitalRing> Mul<&LinearCombination<R>> for LinearMonoid<R> {
+    type Output = Self;
+
+    fn mul(mut self, rps: &LinearCombination<R>) -> Self::Output {
+        self *= rps;
+        self
+    }
+}
+
+impl<R: UnitalRing> MulAssign<&LinearCombination<R>> for LinearMonoid<R> {
+    fn mul_assign(&mut self, rps: &LinearCombination<R>) {
+        self.factors.push_back(rps.clone())
+    }
+}
+
 impl<R: UnitalRing> Mul<LinearMonoid<R>> for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
         rps.factors.push_front(self);
         rps
+    }
+}
+
+impl<R: UnitalRing> Mul<LinearMonoid<R>> for &LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
+        rps.factors.push_front(self.clone());
+        rps
+    }
+}
+
+impl<R: UnitalRing> Mul<&LinearMonoid<R>> for LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
+        self * rps.clone()
+    }
+}
+
+impl<R: UnitalRing> Mul<&LinearMonoid<R>> for &LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
+        self.clone() * rps.clone()
     }
 }
 
@@ -639,6 +918,37 @@ impl<R: UnitalRing> Mul for LinearMonoid<R> {
 impl<R: UnitalRing> MulAssign for LinearMonoid<R> {
     fn mul_assign(&mut self, mut rps: Self) {
         self.factors.append(&mut rps.factors)
+    }
+}
+
+impl<R: UnitalRing> Mul<&Self> for LinearMonoid<R> {
+    type Output = Self;
+
+    fn mul(mut self, rps: &Self) -> Self::Output {
+        self *= rps.clone();
+        self
+    }
+}
+
+impl<R: UnitalRing> MulAssign<&Self> for LinearMonoid<R> {
+    fn mul_assign(&mut self, rps: &Self) {
+        self.factors.extend(rps.factors.iter().cloned())
+    }
+}
+
+impl<R: UnitalRing> Mul<LinearMonoid<R>> for &LinearMonoid<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: LinearMonoid<R>) -> Self::Output {
+        self.clone() * rps
+    }
+}
+
+impl<R: UnitalRing> Mul for &LinearMonoid<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        self.clone() * rps.clone()
     }
 }
 
