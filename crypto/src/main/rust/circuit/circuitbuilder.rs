@@ -471,7 +471,7 @@ impl<R: UnitalRing> Neg for &LinearCombination<R> {
     fn neg(self) -> Self::Output {
         let mut lc = LinearCombination::default();
         for (&variable, &coefficient) in &self.terms {
-            lc += (variable, -coefficient);
+            lc -= (variable, coefficient);
         }
         lc
     }
@@ -514,7 +514,8 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
-        rps -= (Variable::CONSTANT, self);
+        rps = -rps;
+        rps += (Variable::CONSTANT, self);
         rps
     }
 }
@@ -554,7 +555,8 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
-        rps -= (self, Constant::UNITY);
+        rps = -rps;
+        rps += (self, Constant::UNITY);
         rps
     }
 }

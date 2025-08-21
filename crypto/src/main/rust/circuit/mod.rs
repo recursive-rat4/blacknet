@@ -16,4 +16,5 @@
  */
 
 pub mod circuitbuilder;
+pub mod logicgate;
 pub mod univariatepolynomial;
