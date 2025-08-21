@@ -16,6 +16,7 @@
  */
 
 use crate::bigint::{UInt256, UInt512};
+use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::{Field, PrimeField};
 use crate::integer::Integer;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
@@ -311,6 +312,8 @@ impl AdditiveMagma for Field25519 {
 impl AdditiveMonoid for Field25519 {
     const IDENTITY: Self = Self { n: UInt256::ZERO };
 }
+
+impl AdditiveCyclicGroup for Field25519 {}
 
 impl MultiplicativeMagma for Field25519 {
     fn square(self) -> Self {

@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::PrimeField;
 use crate::integer::Integer;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
@@ -194,6 +195,8 @@ impl AdditiveMagma for FermatField {
 impl AdditiveMonoid for FermatField {
     const IDENTITY: Self = Self { n: 0 };
 }
+
+impl AdditiveCyclicGroup for FermatField {}
 
 impl MultiplicativeMagma for FermatField {
     #[inline]

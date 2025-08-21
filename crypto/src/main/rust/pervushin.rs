@@ -17,6 +17,7 @@
 
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::Negacyclic;
+use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::{AlgebraicExtension, Field, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
@@ -223,6 +224,8 @@ impl AdditiveMagma for PervushinField {
 impl AdditiveMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 0 };
 }
+
+impl AdditiveCyclicGroup for PervushinField {}
 
 impl MultiplicativeMagma for PervushinField {
     #[inline]

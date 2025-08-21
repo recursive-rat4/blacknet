@@ -17,6 +17,7 @@
 
 use crate::abeliangroup::AdditiveAbelianGroup;
 use crate::algebra::{CommutativeAlgebra, UnitalAlgebra};
+use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::integer::Integer;
 use crate::magma::Inv;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
@@ -64,7 +65,11 @@ pub trait DivisionRing
 {
 }
 
-pub trait IntegerRing: CommutativeRing {
+#[rustfmt::skip]
+pub trait IntegerRing
+    : AdditiveCyclicGroup
+    + CommutativeRing
+{
     fn new(n: Self::Int) -> Self;
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self;
 

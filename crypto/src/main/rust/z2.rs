@@ -17,6 +17,7 @@
 
 #![allow(clippy::suspicious_arithmetic_impl)]
 
+use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::PrimeField;
 use crate::integer::Integer;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
@@ -139,6 +140,8 @@ impl AdditiveMagma for Z2 {
 impl AdditiveMonoid for Z2 {
     const IDENTITY: Self = Self { n: false };
 }
+
+impl AdditiveCyclicGroup for Z2 {}
 
 impl MultiplicativeMagma for Z2 {
     #[inline]

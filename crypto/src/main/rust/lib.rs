@@ -24,6 +24,7 @@ pub mod binaryuniformdistribution;
 pub mod circuit;
 pub mod convolution;
 pub mod customizableconstraintsystem;
+pub mod cyclicgroup;
 pub mod distribution;
 pub mod duplex;
 pub mod eqextension;
