@@ -65,13 +65,16 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
         Constant::UNITY - a
     }
 
+    #[allow(clippy::len_zero)]
     pub fn and_slice(&self, a: &[LinearCombination<R>]) -> LinearCombination<R> {
-        if a.len() == 1 {
+        if a.len() == 0 {
+            return Constant::UNITY.into();
+        } else if a.len() == 1 {
             return a[0].clone();
         }
         let scope = self.circuit.scope("LogicGate::and_slice");
-        let mut pi = LinearCombination::from(Constant::<R>::UNITY);
-        for a in a {
+        let mut pi = a[0].clone();
+        for a in a.iter().skip(1) {
             let p = scope.auxiliary();
             scope.constrain(pi * a, p);
             pi = p.into();

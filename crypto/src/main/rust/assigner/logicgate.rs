@@ -49,12 +49,15 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
         R::UNITY - a
     }
 
+    #[allow(clippy::len_zero)]
     pub fn and_slice(&self, a: &[R]) -> R {
-        if a.len() == 1 {
+        if a.len() == 0 {
+            return R::UNITY;
+        } else if a.len() == 1 {
             return a[0];
         };
-        let mut pi = R::UNITY;
-        for &a in a {
+        let mut pi = a[0];
+        for &a in a.iter().skip(1) {
             pi = self.and(pi, a);
         }
         pi
