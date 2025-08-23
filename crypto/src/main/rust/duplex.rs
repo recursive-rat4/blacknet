@@ -26,15 +26,15 @@ use core::marker::PhantomData;
 // http://fuee.u-fukui.ac.jp/~hirose/publication/ask20160930.pdf
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-enum Phase {
+pub enum Phase {
     Absorb,
     Squeeze,
 }
 
-pub trait Duplex<T: Copy>: Default + UniformGenerator {
+pub trait Duplex<T>: UniformGenerator {
     fn reset(&mut self);
 
-    fn absorb_native(&mut self, e: T);
+    fn absorb_native(&mut self, e: &T);
     fn squeeze_native(&mut self) -> T;
 
     #[inline]
@@ -53,56 +53,56 @@ pub trait Duplex<T: Copy>: Default + UniformGenerator {
     }
 }
 
-pub trait Absorb<T: Copy> {
-    fn absorb_into(&self, duplex: &mut impl Duplex<T>);
+pub trait Absorb<T> {
+    fn absorb_into(&self, duplex: &mut (impl Duplex<T> + ?Sized));
 }
 
-impl<T: Copy> Absorb<T> for T {
+impl<T> Absorb<T> for T {
     #[inline]
-    fn absorb_into(&self, duplex: &mut impl Duplex<T>) {
-        duplex.absorb_native(*self)
+    fn absorb_into(&self, duplex: &mut (impl Duplex<T> + ?Sized)) {
+        duplex.absorb_native(self)
     }
 }
 
-impl<T: Copy + Absorb<T>, const N: usize> Absorb<T> for [T; N] {
+impl<T: Absorb<T>, const N: usize> Absorb<T> for [T; N] {
     #[inline]
-    fn absorb_into(&self, duplex: &mut impl Duplex<T>) {
+    fn absorb_into(&self, duplex: &mut (impl Duplex<T> + ?Sized)) {
         self.iter().for_each(|i| duplex.absorb(i))
     }
 }
 
-impl<T: Copy + Absorb<T>> Absorb<T> for Vec<T> {
+impl<T: Absorb<T>> Absorb<T> for Vec<T> {
     #[inline]
-    fn absorb_into(&self, duplex: &mut impl Duplex<T>) {
+    fn absorb_into(&self, duplex: &mut (impl Duplex<T> + ?Sized)) {
         self.iter().for_each(|i| duplex.absorb(i))
     }
 }
 
-pub trait Squeeze<T: Copy> {
-    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self;
+pub trait Squeeze<T> {
+    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized)) -> Self;
 }
 
-impl<T: Copy> Squeeze<T> for T {
+impl<T> Squeeze<T> for T {
     #[inline]
-    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self {
+    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized)) -> Self {
         duplex.squeeze_native()
     }
 }
 
-impl<T: Copy, const N: usize> Squeeze<T> for [T; N] {
+impl<T, const N: usize> Squeeze<T> for [T; N] {
     #[inline]
-    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self {
+    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized)) -> Self {
         array::from_fn(|_| duplex.squeeze())
     }
 }
 
-pub trait SqueezeWithSize<T: Copy> {
-    fn squeeze_from(duplex: &mut impl Duplex<T>, size: usize) -> Self;
+pub trait SqueezeWithSize<T> {
+    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized), size: usize) -> Self;
 }
 
-impl<T: Copy + Squeeze<T>> SqueezeWithSize<T> for Vec<T> {
+impl<T: Squeeze<T>> SqueezeWithSize<T> for Vec<T> {
     #[inline]
-    fn squeeze_from(duplex: &mut impl Duplex<T>, size: usize) -> Self {
+    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized), size: usize) -> Self {
         (0..size).map(|_| duplex.squeeze()).collect::<Vec<T>>()
     }
 }
@@ -191,7 +191,7 @@ impl<
         self.state = [S::IDENTITY; WIDTH];
     }
 
-    fn absorb_native(&mut self, e: S) {
+    fn absorb_native(&mut self, e: &S) {
         if self.phase == Phase::Squeeze {
             self.phase = Phase::Absorb;
             self.position = 0;
@@ -199,7 +199,7 @@ impl<
             P::permute(&mut self.state);
             self.position = 0;
         }
-        self.state[self.position] = e;
+        self.state[self.position] = *e;
         self.position += 1
     }
 

@@ -218,13 +218,13 @@ impl<R: UnitalRing> MulAssign<R> for MultilinearExtension<R> {
 }
 
 impl<R: UnitalRing + Absorb<R>> Absorb<R> for MultilinearExtension<R> {
-    fn absorb_into(&self, duplex: &mut impl Duplex<R>) {
+    fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
         duplex.absorb(&self.coefficients)
     }
 }
 
 impl<R: UnitalRing + Squeeze<R>> SqueezeWithSize<R> for MultilinearExtension<R> {
-    fn squeeze_from(duplex: &mut impl Duplex<R>, size: usize) -> Self {
+    fn squeeze_from(duplex: &mut (impl Duplex<R> + ?Sized), size: usize) -> Self {
         duplex.squeeze_with_size::<Vec<R>>(size).into()
     }
 }

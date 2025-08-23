@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod circuitbuilder;
-pub mod duplex;
-pub mod logicgate;
-pub mod permutation;
-pub mod univariatepolynomial;
+use crate::circuit::circuitbuilder::CircuitBuilder;
+use crate::ring::UnitalRing;
+
+pub trait Permutation<S: UnitalRing> {
+    type Domain;
+
+    fn permute(circuit: &CircuitBuilder<S>, x: &mut Self::Domain);
+}

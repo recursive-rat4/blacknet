@@ -16,5 +16,7 @@
  */
 
 pub mod assigment;
+pub mod duplex;
 pub mod logicgate;
+pub mod permutation;
 pub mod univariatepolynomial;
