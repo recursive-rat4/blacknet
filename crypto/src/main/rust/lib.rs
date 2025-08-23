@@ -36,6 +36,7 @@ pub mod hypercube;
 pub mod integer;
 pub mod interpolation;
 pub mod latticegadget;
+pub mod lm;
 pub mod magma;
 pub mod matrixdense;
 pub mod matrixring;

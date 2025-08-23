@@ -85,6 +85,10 @@ name = "latticegadget"
 path = "src/test/rust/latticegadget.rs"
 
 [[test]]
+name = "lm"
+path = "src/test/rust/lm.rs"
+
+[[test]]
 name = "logicgate"
 path = "src/test/rust/logicgate.rs"
 
