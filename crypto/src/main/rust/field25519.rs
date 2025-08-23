@@ -43,12 +43,8 @@ impl Field25519 {
         // Tonelli–Shanks algorithm
         let ls = self.legendre_symbol();
         if ls == Self::ONE {
-            let mut z = Self::TWO;
-            while z.legendre_symbol() == Self::ONE {
-                z += Self::ONE;
-            }
             let mut m = Self::S;
-            let mut c = z.square_and_multiply(Self::Q);
+            let mut c = Self::Z_IN_Q;
             let mut t = self.square_and_multiply(Self::Q);
             let mut r = self.square_and_multiply(Self::Q_PLUS_1_HALVED);
             loop {
@@ -140,6 +136,9 @@ impl Field25519 {
     const Q_PLUS_1_HALVED: [bool; 252] =
         UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE")
             .bits();
+    const Z_IN_Q: Self = Self {
+        n: UInt256::from_hex("75776B0BD6C71BA86D6E16BF336202D103F590FDB51BE9ED3B5807D4FE2BDB04"),
+    };
 }
 
 impl From<i8> for Field25519 {
