@@ -64,7 +64,7 @@ pub fn getentropy<const N: usize>() -> Result<[u8; N], Error> {
             offset += process;
             continue;
         } else {
-            return Err(Error::Message("RtlGenRandom failed"));
+            return Err(Error::Message("RtlGenRandom failed".to_owned()));
         }
     }
     Ok(buf)

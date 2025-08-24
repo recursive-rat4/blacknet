@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[cfg(target_family = "unix")]
 use core::ffi::CStr;
 use core::fmt;
 
