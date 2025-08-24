@@ -15,10 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod binaryuniformdistribution;
-pub mod circuitbuilder;
-pub mod distribution;
-pub mod duplex;
-pub mod logicgate;
-pub mod permutation;
-pub mod univariatepolynomial;
+use crate::assigner::assigment::Assigment;
+use crate::distribution::{UniformDistribution, UniformGenerator};
+use crate::ring::UnitalRing;
+
+pub trait Distribution<'a, R: UnitalRing, G: UniformGenerator> {
+    type Output;
+
+    fn new(assigment: &'a Assigment<R>) -> Self;
+
+    fn sample(&mut self, generator: &mut G) -> Self::Output;
+}
+
+impl<'a, R: UnitalRing, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution {
+    type Output = G::Output;
+
+    fn new(_: &'a Assigment<R>) -> Self {
+        Self {}
+    }
+
+    #[inline]
+    fn sample(&mut self, generator: &mut G) -> Self::Output {
+        generator.generate()
+    }
+}

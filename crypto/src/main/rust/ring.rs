@@ -78,6 +78,17 @@ pub trait IntegerRing
 
     const BITS: u32;
     const MODULUS: Self::Int;
+
+    fn gadget(self) -> Vec<Self> {
+        let mut representative = self.canonical();
+        let mut bits = Vec::<Self>::with_capacity(Self::BITS as usize);
+        for _ in 0..Self::BITS {
+            let bit = representative & Self::Int::LIMB_ONE;
+            bits.push(Self::with_limb(bit));
+            representative >>= Self::Int::LIMB_ONE;
+        }
+        bits
+    }
 }
 
 #[rustfmt::skip]

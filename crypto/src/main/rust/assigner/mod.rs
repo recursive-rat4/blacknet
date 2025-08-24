@@ -16,6 +16,8 @@
  */
 
 pub mod assigment;
+pub mod binaryuniformdistribution;
+pub mod distribution;
 pub mod duplex;
 pub mod logicgate;
 pub mod permutation;
