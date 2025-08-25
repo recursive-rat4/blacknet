@@ -48,13 +48,12 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
 
     pub fn point(&self, point: &Point<LinearCombination<R>>) -> LinearCombination<R> {
         let scope = self.circuit.scope("EqExtension::point");
-        let two = Constant::<R>::UNITY + Constant::<R>::UNITY;
         let mut pi = LinearCombination::<R>::from(Constant::UNITY);
         zip(self.coefficients.iter(), point.coordinates()).for_each(|(c, p)| {
             let cp = scope.auxiliary();
             scope.constrain(c * p, cp);
             let t = scope.auxiliary();
-            scope.constrain(&pi * (cp * two - c - p + Constant::UNITY), t);
+            scope.constrain(&pi * (cp.double() - c - p + Constant::UNITY), t);
             pi = t.into();
         });
         pi

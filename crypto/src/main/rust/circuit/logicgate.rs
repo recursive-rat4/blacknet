@@ -41,10 +41,9 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
 
     pub fn xor(&self, a: &LinearCombination<R>, b: &LinearCombination<R>) -> LinearCombination<R> {
         let scope = self.circuit.scope("LogicGate::xor");
-        let two = Constant::<R>::UNITY + Constant::<R>::UNITY;
         let ab = scope.auxiliary();
         scope.constrain(a * b, ab);
-        a + b - ab * two
+        a + b - ab.double()
     }
 
     pub fn and(&self, a: &LinearCombination<R>, b: &LinearCombination<R>) -> LinearCombination<R> {

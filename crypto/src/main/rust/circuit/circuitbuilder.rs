@@ -40,6 +40,12 @@ pub struct Constant<R: UnitalRing> {
 impl<R: UnitalRing> Constant<R> {
     pub const UNITY: Self = Self { value: R::UNITY };
     pub const ZERO: Self = Self { value: R::ZERO };
+
+    pub fn double(self) -> Self {
+        Self {
+            value: self.value.double(),
+        }
+    }
 }
 
 impl<R: UnitalRing> Expression<R> for Constant<R> {
@@ -140,6 +146,10 @@ impl<R: UnitalRing> Variable<R> {
         }
     }
 
+    pub fn double(self) -> LinearCombination<R> {
+        [(self, Constant::UNITY.double())].into()
+    }
+
     const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
 }
 
@@ -192,7 +202,7 @@ impl<R: UnitalRing> Add for Variable<R> {
         if self != rps {
             [(self, Constant::UNITY), (rps, Constant::UNITY)].into()
         } else {
-            [(self, Constant::UNITY + Constant::UNITY)].into()
+            [(self, Constant::UNITY.double())].into()
         }
     }
 }
