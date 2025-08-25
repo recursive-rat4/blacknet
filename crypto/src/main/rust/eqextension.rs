@@ -49,9 +49,9 @@ impl<R: UnitalRing> EqExtension<R> {
         for i in (0..coefficients.len()).rev() {
             let mut l = j;
             for k in 0..j {
-                let launder = coefficients[i] * r[k];
-                r[l] = launder;
-                r[k] -= launder;
+                let t = coefficients[i] * r[k];
+                r[l] = t;
+                r[k] -= t;
                 l += 1;
             }
             j <<= 1;

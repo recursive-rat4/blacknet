@@ -19,6 +19,7 @@ pub mod binaryuniformdistribution;
 pub mod circuitbuilder;
 pub mod distribution;
 pub mod duplex;
+pub mod eqextension;
 pub mod logicgate;
 pub mod permutation;
 pub mod univariatepolynomial;

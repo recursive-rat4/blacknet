@@ -15,6 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::assigner::eqextension::EqExtension as Assigner;
+use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
+use blacknet_crypto::circuit::eqextension::EqExtension as Circuit;
 use blacknet_crypto::eqextension::EqExtension;
 use blacknet_crypto::hypercube::Hypercube;
 use blacknet_crypto::point::Point;
@@ -108,4 +111,58 @@ fn hypercube() {
             assert_eq!(pis[i], R::ZERO);
         }
     });
+}
+
+#[test]
+fn circuit_point() {
+    let coefficients_plain = [2, 3, 5].map(R::from);
+    let eq_plain = EqExtension::<R>::from(coefficients_plain);
+    let x_plain = Point::<R>::from([7, 11, 13].map(R::from));
+    let y_plain = eq_plain.point(&x_plain);
+
+    let circuit = CircuitBuilder::<R>::new(2);
+    let scope = circuit.scope("test");
+    let eq_circuit = Circuit::allocate(&circuit, VariableKind::PublicInput, eq_plain.variables());
+    let x_circuit = Point::from(
+        (0..x_plain.dimension())
+            .map(|_| scope.public_input())
+            .map(From::from)
+            .collect::<Vec<_>>(),
+    );
+    let _y_circuit = eq_circuit.point(&x_circuit);
+    drop(scope);
+
+    let r1cs = circuit.r1cs();
+    let z = r1cs.assigment();
+    z.extend(coefficients_plain);
+    z.extend_from_slice(x_plain.coordinates());
+
+    let eq_assigner = Assigner::new(coefficients_plain.into(), &z);
+    let y_assigned = eq_assigner.point(&x_plain);
+
+    assert_eq!(y_assigned, y_plain);
+    assert!(r1cs.is_satisfied(&z.finish()));
+}
+
+#[test]
+fn circuit_hypercube() {
+    let coefficients_plain = [29, 31, 37].map(R::from);
+    let eq_plain = EqExtension::<R>::from(coefficients_plain);
+    let y_plain = eq_plain.hypercube();
+
+    let circuit = CircuitBuilder::<R>::new(2);
+    let scope = circuit.scope("test");
+    let eq_circuit = Circuit::allocate(&circuit, VariableKind::PublicInput, eq_plain.variables());
+    let _y_circuit = eq_circuit.hypercube();
+    drop(scope);
+
+    let r1cs = circuit.r1cs();
+    let z = r1cs.assigment();
+    z.extend(coefficients_plain);
+
+    let eq_assigner = Assigner::new(coefficients_plain.into(), &z);
+    let y_assigned = eq_assigner.hypercube();
+
+    assert_eq!(y_assigned, y_plain);
+    assert!(r1cs.is_satisfied(&z.finish()));
 }
