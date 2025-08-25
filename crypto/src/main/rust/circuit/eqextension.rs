@@ -16,7 +16,7 @@
  */
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination, VariableKind};
-use crate::point::Point;
+use crate::circuit::point::Point;
 use crate::ring::UnitalRing;
 use core::iter::zip;
 
@@ -46,7 +46,7 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
         }
     }
 
-    pub fn point(&self, point: &Point<LinearCombination<R>>) -> LinearCombination<R> {
+    pub fn point(&self, point: &Point<R>) -> LinearCombination<R> {
         let scope = self.circuit.scope("EqExtension::point");
         let mut pi = LinearCombination::<R>::from(Constant::UNITY);
         zip(self.coefficients.iter(), point.coordinates()).for_each(|(c, p)| {

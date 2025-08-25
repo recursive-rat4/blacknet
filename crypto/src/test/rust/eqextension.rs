@@ -18,6 +18,7 @@
 use blacknet_crypto::assigner::eqextension::EqExtension as Assigner;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::eqextension::EqExtension as Circuit;
+use blacknet_crypto::circuit::point::Point as PointCircuit;
 use blacknet_crypto::eqextension::EqExtension;
 use blacknet_crypto::hypercube::Hypercube;
 use blacknet_crypto::point::Point;
@@ -123,12 +124,8 @@ fn circuit_point() {
     let circuit = CircuitBuilder::<R>::new(2);
     let scope = circuit.scope("test");
     let eq_circuit = Circuit::allocate(&circuit, VariableKind::PublicInput, eq_plain.variables());
-    let x_circuit = Point::from(
-        (0..x_plain.dimension())
-            .map(|_| scope.public_input())
-            .map(From::from)
-            .collect::<Vec<_>>(),
-    );
+    let x_circuit =
+        PointCircuit::allocate(&circuit, VariableKind::PublicInput, x_plain.dimension());
     let _y_circuit = eq_circuit.point(&x_circuit);
     drop(scope);
 
