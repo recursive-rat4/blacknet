@@ -23,4 +23,5 @@ pub mod eqextension;
 pub mod logicgate;
 pub mod permutation;
 pub mod point;
+pub mod sumcheck;
 pub mod univariatepolynomial;

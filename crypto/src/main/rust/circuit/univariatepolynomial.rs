@@ -16,6 +16,7 @@
  */
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination, VariableKind};
+use crate::duplex::{Absorb, Duplex};
 use crate::ring::UnitalRing;
 use core::ops::Add;
 
@@ -59,5 +60,11 @@ impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
         self.coefficients
             .iter()
             .fold(self.coefficients[0].clone(), Add::add)
+    }
+}
+
+impl<'a, R: UnitalRing> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, R> {
+    fn absorb_into(&self, duplex: &mut (impl Duplex<LinearCombination<R>> + ?Sized)) {
+        duplex.absorb(&self.coefficients)
     }
 }

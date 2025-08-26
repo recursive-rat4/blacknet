@@ -16,6 +16,7 @@
  */
 
 use crate::assigner::assigment::Assigment;
+use crate::duplex::{Absorb, Duplex};
 use crate::ring::{Ring, UnitalRing};
 use core::ops::Add;
 
@@ -74,5 +75,11 @@ impl<'a, R: Ring> IntoIterator for UnivariatePolynomial<'a, R> {
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.coefficients.into_iter()
+    }
+}
+
+impl<'a, R: Ring + Absorb<R>> Absorb<R> for UnivariatePolynomial<'a, R> {
+    fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+        duplex.absorb(&self.coefficients)
     }
 }

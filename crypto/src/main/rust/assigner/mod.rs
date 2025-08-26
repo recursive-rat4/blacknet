@@ -22,4 +22,5 @@ pub mod duplex;
 pub mod eqextension;
 pub mod logicgate;
 pub mod permutation;
+pub mod sumcheck;
 pub mod univariatepolynomial;
