@@ -138,6 +138,7 @@ dependencies = [
  "blacknet-time",
  "data-encoding",
  "data-encoding-macro",
+ "fastrand",
  "natpmp",
  "serde",
  "sha2",
@@ -303,6 +304,12 @@ name = "dyn-clone"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
+
+[[package]]
+name = "fastrand"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
 name = "generic-array"

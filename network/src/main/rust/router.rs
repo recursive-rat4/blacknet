@@ -16,10 +16,12 @@
  */
 
 use crate::endpoint::{Endpoint, ipv4_any, ipv6_any};
+use crate::i2psam::SAM;
 use crate::natpmp::natpmp_forward;
 use crate::peertable::PeerTable;
 use crate::settings::Settings;
 use crate::torcontroller::TorController;
+use blacknet_compat::mode::Mode;
 use blacknet_compat::xdgdirectories::XDGDirectories;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{info, warn};
@@ -38,11 +40,13 @@ pub struct Router {
     settings: Arc<Settings>,
     listens: RwLock<HashSet<Endpoint>>,
     peer_table: Arc<PeerTable>,
+    i2p_sam: Mutex<SAM>,
     tor_controller: Mutex<TorController>,
 }
 
 impl Router {
     pub fn new(
+        mode: &Mode,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
@@ -54,6 +58,7 @@ impl Router {
             settings: settings.clone(),
             listens: RwLock::new(HashSet::new()),
             peer_table,
+            i2p_sam: Mutex::new(SAM::new(mode, dirs, log_manager, settings.clone())?),
             tor_controller: Mutex::new(TorController::new(dirs, log_manager, settings.clone())?),
         });
 
@@ -113,12 +118,12 @@ impl Router {
         let mut tor_controller = self.tor_controller.lock().await;
         loop {
             match tor_controller.create_session().await {
-                Ok(mut tor_session) => {
+                Ok(mut session) => {
                     timeout = Self::INIT_TIMEOUT;
-                    self.add_listener(tor_session.endpoint());
-                    tor_session.hung().await;
+                    self.add_listener(session.endpoint());
+                    session.hung().await;
                     info!(self.logger, "Closing TOR session");
-                    self.remove_listener(tor_session.endpoint());
+                    self.remove_listener(session.endpoint());
                 }
                 Err(msg) => {
                     warn!(self.logger, "{msg}");
@@ -131,7 +136,26 @@ impl Router {
     }
 
     async fn listen_i2p(self: Arc<Self>) {
-        todo!();
+        let mut timeout = Self::INIT_TIMEOUT;
+        let mut i2p_sam = self.i2p_sam.lock().await;
+        loop {
+            match i2p_sam.create_session().await {
+                Ok(mut session) => {
+                    timeout = Self::INIT_TIMEOUT;
+                    self.add_listener(session.endpoint());
+                    session.hung().await;
+                    //TODO accept
+                    info!(self.logger, "Closing I2P session");
+                    self.remove_listener(session.endpoint());
+                }
+                Err(msg) => {
+                    warn!(self.logger, "{msg}");
+                }
+            }
+
+            sleep(timeout).await;
+            timeout = min(timeout * 2, Self::MAX_TIMEOUT);
+        }
     }
 
     async fn forward_natpmp(self: Arc<Self>) {

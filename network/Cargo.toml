@@ -37,6 +37,7 @@ blacknet-serialization.workspace = true
 blacknet-time.workspace = true
 data-encoding.workspace = true
 data-encoding-macro.workspace = true
+fastrand.workspace = true
 natpmp.workspace = true
 serde.workspace = true
 sha2.workspace = true
@@ -51,3 +52,7 @@ path = "src/main/rust/lib.rs"
 [[test]]
 name = "endpoint"
 path = "src/test/rust/endpoint.rs"
+
+[[test]]
+name = "i2psam"
+path = "src/test/rust/i2psam.rs"
