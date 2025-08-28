@@ -17,14 +17,12 @@
 
 desktop_main_includes = [
     wallet_main_includes,
-    network_main_includes,
     logging_main_includes,
     config_includes,
     include_directories('.')
 ]
 desktop_main_dependencies = [
     wallet_main_dependencies,
-    network_main_dependencies,
     logging_main_dependencies,
     qt_dependency,
     boost_dependency,
