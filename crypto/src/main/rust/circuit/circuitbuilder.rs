@@ -19,13 +19,16 @@ use crate::customizableconstraintsystem::CustomizableConstraintSystem;
 use crate::matrixsparse::MatrixSparseBuilder;
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
+use alloc::boxed::Box;
+use alloc::collections::{BTreeMap, VecDeque};
+use alloc::vec;
+use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
 use core::cmp::{Ordering, max};
 use core::fmt::{Display, Formatter, Result};
 use core::marker::PhantomData;
 use core::ops::{Add, AddAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 use orx_tree::{Dyn, DynTree, NodeIdx, NodeRef};
-use std::collections::{BTreeMap, VecDeque};
 
 pub trait Expression<R: UnitalRing>: 'static {
     fn span(&self) -> LinearSpan<R>;

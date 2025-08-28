@@ -20,6 +20,8 @@ use crate::matrixsparse::MatrixSparse;
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
+use alloc::vec;
+use alloc::vec::Vec;
 
 // https://eprint.iacr.org/2023/552
 

@@ -55,10 +55,12 @@ impl<R: Ring> AjtaiCommitment<R> {
 }
 
 impl<R: Ring + EuclideanNorm> AjtaiCommitment<R> {
+    #[cfg(feature = "core_float_math")]
     pub fn open_dense_l2(&self, c: &VectorDense<R>, m: &VectorDense<R>, bound: f64) -> bool {
         m.euclidean_norm() < bound && &self.a * m == *c
     }
 
+    #[cfg(feature = "core_float_math")]
     pub fn open_sparse_l2(&self, c: &VectorDense<R>, m: &VectorSparse<R>, bound: f64) -> bool {
         m.euclidean_norm() < bound && &self.a * m == *c
     }

@@ -18,6 +18,7 @@
 use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::duplex::{Absorb, Duplex};
 use crate::ring::UnitalRing;
+use alloc::vec::Vec;
 use core::ops::Add;
 
 pub struct UnivariatePolynomial<'a, R: UnitalRing> {

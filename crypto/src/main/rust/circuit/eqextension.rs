@@ -18,6 +18,8 @@
 use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination, VariableKind};
 use crate::circuit::point::Point;
 use crate::ring::UnitalRing;
+use alloc::vec;
+use alloc::vec::Vec;
 use core::iter::zip;
 
 pub struct EqExtension<'a, R: UnitalRing> {

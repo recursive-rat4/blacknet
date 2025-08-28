@@ -18,6 +18,7 @@
 use crate::distribution::UniformGenerator;
 use crate::group::AdditiveGroup;
 use crate::permutation::Permutation;
+use alloc::vec::Vec;
 use core::array;
 use core::marker::PhantomData;
 

@@ -17,6 +17,8 @@
 
 use crate::matrixdense::MatrixDense;
 use crate::ring::{Ring, UnitalRing};
+use alloc::vec;
+use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -128,7 +130,7 @@ impl<R: Ring> IndexMut<usize> for VectorDense<R> {
 
 impl<R: Ring> IntoIterator for VectorDense<R> {
     type Item = R;
-    type IntoIter = std::vec::IntoIter<R>;
+    type IntoIter = alloc::vec::IntoIter<R>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {

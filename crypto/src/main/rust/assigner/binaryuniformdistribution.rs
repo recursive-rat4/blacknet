@@ -21,6 +21,7 @@ use crate::assigner::logicgate::LogicGate;
 use crate::distribution::UniformGenerator;
 use crate::integer::Integer;
 use crate::ring::{IntegerRing, UnitalRing};
+use alloc::vec::Vec;
 
 pub struct BinaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerRing>> {
     cache: Vec<G::Output>,

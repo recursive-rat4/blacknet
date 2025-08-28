@@ -22,6 +22,7 @@ use crate::duplex::Duplex;
 use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
+use alloc::vec::Vec;
 use core::marker::PhantomData;
 
 pub struct Proof<'a, R: UnitalRing> {

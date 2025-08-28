@@ -19,6 +19,8 @@ use crate::assigner::assigment::Assigment;
 use crate::point::Point;
 use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
+use alloc::vec;
+use alloc::vec::Vec;
 use core::iter::zip;
 
 pub struct EqExtension<'a, R: UnitalRing> {

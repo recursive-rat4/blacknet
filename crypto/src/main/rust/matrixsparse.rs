@@ -18,6 +18,7 @@
 use crate::matrixdense::MatrixDense;
 use crate::ring::Ring;
 use crate::vectordense::VectorDense;
+use alloc::vec::Vec;
 use core::ops::Mul;
 
 // https://arxiv.org/abs/2404.06047

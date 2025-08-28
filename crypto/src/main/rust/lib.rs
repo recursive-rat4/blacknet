@@ -15,6 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![no_std]
+
+extern crate alloc;
+
 pub mod abeliangroup;
 pub mod ajtaicommitment;
 pub mod algebra;

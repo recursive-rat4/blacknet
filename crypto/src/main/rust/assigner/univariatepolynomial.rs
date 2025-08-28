@@ -18,6 +18,7 @@
 use crate::assigner::assigment::Assigment;
 use crate::duplex::{Absorb, Duplex};
 use crate::ring::{Ring, UnitalRing};
+use alloc::vec::Vec;
 use core::ops::Add;
 
 pub struct UnivariatePolynomial<'a, R: Ring> {
@@ -70,7 +71,7 @@ impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
 
 impl<'a, R: Ring> IntoIterator for UnivariatePolynomial<'a, R> {
     type Item = R;
-    type IntoIter = std::vec::IntoIter<R>;
+    type IntoIter = alloc::vec::IntoIter<R>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {

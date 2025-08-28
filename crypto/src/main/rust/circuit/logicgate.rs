@@ -17,6 +17,7 @@
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
 use crate::ring::UnitalRing;
+use alloc::vec::Vec;
 
 pub struct LogicGate<'a, R: UnitalRing> {
     circuit: &'a CircuitBuilder<R>,

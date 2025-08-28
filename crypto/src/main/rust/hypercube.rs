@@ -18,6 +18,7 @@
 use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
+use alloc::vec::Vec;
 use core::marker::PhantomData;
 
 pub struct Hypercube<R: UnitalRing> {

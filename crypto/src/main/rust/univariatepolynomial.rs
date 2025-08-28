@@ -17,6 +17,7 @@
 
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::ring::{Ring, UnitalRing};
+use alloc::vec::Vec;
 use core::ops::{Add, Deref};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -84,7 +85,7 @@ impl<R: Ring> Deref for UnivariatePolynomial<R> {
 
 impl<R: Ring> IntoIterator for UnivariatePolynomial<R> {
     type Item = R;
-    type IntoIter = std::vec::IntoIter<R>;
+    type IntoIter = alloc::vec::IntoIter<R>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {

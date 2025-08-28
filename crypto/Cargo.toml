@@ -32,6 +32,9 @@ categories.workspace = true
 [dependencies]
 orx-tree.workspace = true
 
+[features]
+core_float_math = []
+
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"

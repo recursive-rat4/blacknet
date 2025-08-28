@@ -19,6 +19,8 @@ use crate::integer::Integer;
 use crate::matrixdense::MatrixDense;
 use crate::ring::{IntegerRing, PolynomialRing};
 use crate::vectordense::VectorDense;
+use alloc::vec;
+use alloc::vec::Vec;
 
 // https://eprint.iacr.org/2018/946
 

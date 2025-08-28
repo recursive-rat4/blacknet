@@ -22,6 +22,7 @@ use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
+use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 

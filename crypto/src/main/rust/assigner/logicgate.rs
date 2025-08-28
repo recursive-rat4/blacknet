@@ -17,6 +17,7 @@
 
 use crate::assigner::assigment::Assigment;
 use crate::ring::UnitalRing;
+use alloc::vec::Vec;
 
 pub struct LogicGate<'a, R: UnitalRing> {
     assigment: &'a Assigment<R>,

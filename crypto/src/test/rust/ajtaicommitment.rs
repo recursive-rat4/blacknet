@@ -37,6 +37,7 @@ fn test() {
         .into(),
     );
     let cs = AjtaiCommitment::new(setup);
+    #[cfg(feature = "core_float_math")]
     let b_ecd = 7.22;
     let b_inf = 8;
     let z1 = Z::new(1);
@@ -57,9 +58,13 @@ fn test() {
         "Homomorphism"
     );
 
+    #[cfg(feature = "core_float_math")]
     assert!(cs.open_dense_l2(&c12, &m12, b_ecd), "Opening");
+    #[cfg(feature = "core_float_math")]
     assert!(!cs.open_dense_l2(&c34, &m12, b_ecd), "Binding");
+    #[cfg(feature = "core_float_math")]
     assert!(!cs.open_dense_l2(&c12, &m21, b_ecd), "Positional binding");
+    #[cfg(feature = "core_float_math")]
     assert!(
         cs.open_dense_l2(&(&c12 + &c34), &(&m12 + &m34), b_ecd),
         "Homomorphism"

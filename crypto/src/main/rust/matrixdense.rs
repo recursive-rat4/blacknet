@@ -17,6 +17,8 @@
 
 use crate::ring::Ring;
 use crate::vectordense::VectorDense;
+use alloc::vec;
+use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 

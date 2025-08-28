@@ -22,6 +22,7 @@ use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
 use crate::univariatepolynomial::UnivariatePolynomial;
+use alloc::vec::Vec;
 use core::fmt;
 use core::marker::PhantomData;
 

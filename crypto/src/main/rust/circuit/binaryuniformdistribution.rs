@@ -21,6 +21,8 @@ use crate::circuit::logicgate::LogicGate;
 use crate::distribution::UniformGenerator;
 use crate::integer::Integer;
 use crate::ring::IntegerRing;
+use alloc::vec;
+use alloc::vec::Vec;
 
 pub struct BinaryUniformDistribution<
     'a,

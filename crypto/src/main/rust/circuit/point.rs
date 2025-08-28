@@ -17,6 +17,7 @@
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::ring::UnitalRing;
+use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
 
 pub struct Point<S: UnitalRing> {

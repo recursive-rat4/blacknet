@@ -22,6 +22,7 @@ use crate::integer::Integer;
 use crate::magma::Inv;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::semigroup::MultiplicativeSemigroup;
+use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
 
 #[rustfmt::skip]

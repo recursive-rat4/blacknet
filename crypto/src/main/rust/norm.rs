@@ -33,6 +33,7 @@ impl<Z: IntegerRing> EuclideanNorm for Z {
     }
 }
 
+#[cfg(feature = "core_float_math")]
 impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N> {
     fn euclidean_norm(&self) -> f64 {
         self.into_iter()
@@ -43,6 +44,7 @@ impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N>
     }
 }
 
+#[cfg(feature = "core_float_math")]
 impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorDense<R> {
     fn euclidean_norm(&self) -> f64 {
         self.elements()
@@ -54,6 +56,7 @@ impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorDense<R> {
     }
 }
 
+#[cfg(feature = "core_float_math")]
 impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorSparse<R> {
     fn euclidean_norm(&self) -> f64 {
         self.elements()

@@ -17,6 +17,7 @@
 
 use crate::ring::Ring;
 use crate::vectordense::VectorDense;
+use alloc::vec::Vec;
 use core::cell::RefCell;
 
 pub struct Assigment<R: Ring> {
