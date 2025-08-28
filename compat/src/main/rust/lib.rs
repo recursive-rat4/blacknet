@@ -15,10 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod errno;
-pub mod getentropy;
-pub mod getuid;
-pub mod magic;
-pub mod mode;
-pub mod uname;
-pub mod xdgdirectories;
+mod errno;
+mod getentropy;
+mod getuid;
+mod magic;
+mod mode;
+mod uname;
+mod xdgdirectories;
+
+pub use errno::*;
+pub use getentropy::*;
+pub use getuid::*;
+pub use mode::*;
+pub use uname::*;
+pub use xdgdirectories::*;

@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::mode::mode;
-use blacknet_compat::xdgdirectories::XDGDirectories;
+use blacknet_compat::{XDGDirectories, mode};
 use blacknet_log::logmanager::{LogManager, Strategy};
 use blacknet_network::node::Node;
 use std::env::args;

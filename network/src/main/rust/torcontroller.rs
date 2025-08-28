@@ -17,7 +17,7 @@
 
 use crate::endpoint::Endpoint;
 use crate::settings::Settings;
-use blacknet_compat::xdgdirectories::XDGDirectories;
+use blacknet_compat::XDGDirectories;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{error, info, warn};
 use core::fmt;

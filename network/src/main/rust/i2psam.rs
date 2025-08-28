@@ -17,9 +17,7 @@
 
 use crate::endpoint::Endpoint;
 use crate::settings::Settings;
-use blacknet_compat::getentropy::getentropy;
-use blacknet_compat::mode::Mode;
-use blacknet_compat::xdgdirectories::XDGDirectories;
+use blacknet_compat::{Mode, XDGDirectories, getentropy};
 use blacknet_log::error::Error as LogError;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{error, info, warn};

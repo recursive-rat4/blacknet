@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::mode::Mode;
+use blacknet_compat::Mode;
 
 pub struct Settings {
     pub port: u16,
