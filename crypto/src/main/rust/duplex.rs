@@ -169,6 +169,9 @@ impl<
 > Default for DuplexImpl<S, RATE, CAPACITY, WIDTH, P>
 {
     fn default() -> Self {
+        const {
+            assert!(RATE + CAPACITY == WIDTH);
+        }
         Self {
             phase: Phase::Absorb,
             position: 0,

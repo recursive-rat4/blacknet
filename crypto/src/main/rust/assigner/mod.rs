@@ -17,9 +17,11 @@
 
 pub mod assigment;
 pub mod binaryuniformdistribution;
+pub mod compressionfunction;
 pub mod distribution;
 pub mod duplex;
 pub mod eqextension;
+pub mod jive;
 pub mod logicgate;
 pub mod permutation;
 pub mod sumcheck;

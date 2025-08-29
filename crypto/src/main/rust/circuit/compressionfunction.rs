@@ -15,15 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod binaryuniformdistribution;
-pub mod circuitbuilder;
-pub mod compressionfunction;
-pub mod distribution;
-pub mod duplex;
-pub mod eqextension;
-pub mod jive;
-pub mod logicgate;
-pub mod permutation;
-pub mod point;
-pub mod sumcheck;
-pub mod univariatepolynomial;
+pub trait CompressionFunction {
+    type Hash;
+
+    fn compress(&self, a: &Self::Hash, b: &Self::Hash) -> Self::Hash;
+}

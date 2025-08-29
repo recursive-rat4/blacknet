@@ -32,6 +32,9 @@ pub struct MatrixRing<R: Ring, const N: usize, const NN: usize> {
 
 impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
     pub const fn new(elements: [R; NN]) -> Self {
+        const {
+            assert!(N * N == NN);
+        }
         Self { elements }
     }
 

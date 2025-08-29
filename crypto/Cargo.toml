@@ -84,6 +84,10 @@ name = "interpolation"
 path = "src/test/rust/interpolation.rs"
 
 [[test]]
+name = "jive"
+path = "src/test/rust/jive.rs"
+
+[[test]]
 name = "latticegadget"
 path = "src/test/rust/latticegadget.rs"
 
