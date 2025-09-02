@@ -162,6 +162,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "blacknet-vm"
+version = "0.3.0"
+dependencies = [
+ "blacknet-crypto",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

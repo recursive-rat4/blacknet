@@ -15,8 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "blacknet-config.h"
+pub trait Register<T> {
+    fn read(&self) -> T;
+    fn write(&mut self, value: T);
+}
 
-int main(int argc, char* argv[]) {
-    return 0;
+pub struct Zero {}
+
+impl<T: Default> Register<T> for Zero {
+    fn read(&self) -> T {
+        T::default()
+    }
+
+    fn write(&mut self, _: T) {}
+}
+
+pub struct General<T> {
+    value: T,
+}
+
+impl<T: Copy> Register<T> for General<T> {
+    fn read(&self) -> T {
+        self.value
+    }
+
+    fn write(&mut self, value: T) {
+        self.value = value;
+    }
 }

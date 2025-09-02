@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,5 +15,4 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE vm
-#include <boost/test/unit_test.hpp>
+pub mod register;

@@ -16,7 +16,6 @@
 #
 
 wallet_main_includes = [
-    vm_main_includes,
     crypto_main_includes,
     logging_main_includes,
     compat_main_includes,
@@ -26,6 +25,5 @@ wallet_main_dependencies = [
     logging_main_dependencies,
     compat_main_dependencies,
     crypto_main_dependencies,
-    vm_main_dependencies,
     sqlite_dependency,
 ]
