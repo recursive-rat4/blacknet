@@ -23,6 +23,7 @@ pub mod duplex;
 pub mod eqextension;
 pub mod jive;
 pub mod logicgate;
+pub mod numbertheoretictransform;
 pub mod permutation;
 pub mod point;
 pub mod sumcheck;

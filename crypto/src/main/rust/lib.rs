@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![allow(clippy::missing_safety_doc)]
 #![no_std]
 
 extern crate alloc;
@@ -51,6 +52,7 @@ pub mod module;
 pub mod monoid;
 pub mod multilinearextension;
 pub mod norm;
+pub mod numbertheoretictransform;
 pub mod permutation;
 pub mod pervushin;
 pub mod point;
@@ -61,6 +63,7 @@ pub mod ring;
 pub mod semigroup;
 pub mod sumcheck;
 pub mod ternaryuniformdistribution;
+pub mod twiddles;
 pub mod twistededwardsgroup;
 pub mod univariatepolynomial;
 pub mod vectordense;

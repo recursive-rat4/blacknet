@@ -34,6 +34,10 @@ pub struct FermatField {
 }
 
 impl FermatField {
+    pub const unsafe fn from_unchecked(n: i32) -> Self {
+        Self { n }
+    }
+
     // Lazy reduction
     pub fn reduce(self) -> Self {
         Self::new(self.n)

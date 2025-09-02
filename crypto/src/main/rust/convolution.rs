@@ -44,26 +44,36 @@ impl<R: Ring, const N: usize> Convolution<R, N> for Negacyclic {
     }
 }
 
+#[inline]
+pub fn binomial<R: Ring, const N: usize>(c: &mut [R], a: &[R], b: &[R], zeta: R) {
+    match N {
+        4 => {
+            c[0] = a[0] * b[0] - zeta * (a[1] * b[3] + a[2] * b[2] + a[3] * b[1]);
+            c[1] = a[0] * b[1] + a[1] * b[0] - zeta * (a[2] * b[3] + a[3] * b[2]);
+            c[2] = a[0] * b[2] + a[1] * b[1] + a[2] * b[0] - zeta * (a[3] * b[3]);
+            c[3] = a[0] * b[3] + a[1] * b[2] + a[2] * b[1] + a[3] * b[0];
+        }
+        3 => {
+            c[0] = a[0] * b[0] - zeta * (a[1] * b[2] + a[2] * b[1]);
+            c[1] = a[0] * b[1] + a[1] * b[0] - zeta * (a[2] * b[2]);
+            c[2] = a[0] * b[2] + a[1] * b[1] + a[2] * b[0];
+        }
+        2 => {
+            c[0] = a[0] * b[0] - zeta * (a[1] * b[1]);
+            c[1] = a[0] * b[1] + a[1] * b[0];
+        }
+        _ => {
+            unimplemented!("Binomial convolution of length = {N}");
+        }
+    }
+}
+
 pub trait Binomial<R: Ring, const N: usize>: Convolution<R, N> {
     const ZETA: R;
 
     fn convolute(a: [R; N], b: [R; N]) -> [R; N] {
         let mut c = [R::ZERO; N];
-        if N == 4 {
-            c[0] = a[0] * b[0] - Self::ZETA * (a[1] * b[3] + a[2] * b[2] + a[3] * b[1]);
-            c[1] = a[0] * b[1] + a[1] * b[0] - Self::ZETA * (a[2] * b[3] + a[3] * b[2]);
-            c[2] = a[0] * b[2] + a[1] * b[1] + a[2] * b[0] - Self::ZETA * (a[3] * b[3]);
-            c[3] = a[0] * b[3] + a[1] * b[2] + a[2] * b[1] + a[3] * b[0];
-        } else if N == 3 {
-            c[0] = a[0] * b[0] - Self::ZETA * (a[1] * b[2] + a[2] * b[1]);
-            c[1] = a[0] * b[1] + a[1] * b[0] - Self::ZETA * (a[2] * b[2]);
-            c[2] = a[0] * b[2] + a[1] * b[1] + a[2] * b[0];
-        } else if N == 2 {
-            c[0] = a[0] * b[0] - Self::ZETA * (a[1] * b[1]);
-            c[1] = a[0] * b[1] + a[1] * b[0];
-        } else {
-            unimplemented!("Binomial convolution for N = {N}");
-        }
+        binomial::<R, N>(&mut c, &a, &b, Self::ZETA);
         c
     }
 }
