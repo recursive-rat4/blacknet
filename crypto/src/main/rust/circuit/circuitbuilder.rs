@@ -1150,13 +1150,7 @@ impl<R: UnitalRing> CircuitBuilder<R> {
 
         let constants = vec![R::UNITY, -R::UNITY];
 
-        CustomizableConstraintSystem::new(
-            constraints_num,
-            variables_num,
-            matrices,
-            multisets,
-            constants,
-        )
+        CustomizableConstraintSystem::new(matrices, multisets, constants)
     }
 
     #[must_use = "Circuit variable should be constrained"]

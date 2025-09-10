@@ -16,6 +16,7 @@
  */
 
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant};
+use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::matrixsparse::MatrixSparse;
@@ -116,7 +117,7 @@ fn comparatism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = VectorDense::from([1, 4, 4, 4].map(R::from));
-    assert!(r1cs.is_satisfied(&z));
+    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
 }
 
 #[test]
@@ -169,7 +170,7 @@ fn additivism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = VectorDense::from([1, 8, 2, 4].map(R::from));
-    assert!(r1cs.is_satisfied(&z));
+    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
 }
 
 #[test]
@@ -222,7 +223,7 @@ fn multiplism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = VectorDense::from([1, 16, 2, 4].map(R::from));
-    assert!(r1cs.is_satisfied(&z));
+    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
 }
 
 #[test]
@@ -291,7 +292,7 @@ fn expressionism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = VectorDense::from([1, 4, 4, 4, 16].map(R::from));
-    assert!(r1cs.is_satisfied(&z));
+    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
 }
 
 #[test]
@@ -317,8 +318,6 @@ fn cubism() {
         350, 0, 0, 0, 0,
     ].map(R::from).into());
     let ccs = CustomizableConstraintSystem::new(
-        2,
-        5,
         [&am, &bm, &cm, &dm].map(MatrixSparse::from).into(),
         vec![vec![0, 1, 2], vec![3]],
         [1, -1].map(R::from).into(),
@@ -340,5 +339,5 @@ fn cubism() {
     assert_eq!(circuit.ccs(), ccs);
 
     let z = VectorDense::from([1, 2, 3, 5, 8].map(R::from));
-    assert!(ccs.is_satisfied(&z));
+    assert_eq!(ccs.is_satisfied(&z), Ok(()));
 }

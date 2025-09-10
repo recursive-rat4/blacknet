@@ -19,6 +19,7 @@ use blacknet_crypto::assigner::eqextension::EqExtension as Assigner;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::eqextension::EqExtension as Circuit;
 use blacknet_crypto::circuit::point::Point as PointCircuit;
+use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::eqextension::EqExtension;
 use blacknet_crypto::hypercube::Hypercube;
 use blacknet_crypto::point::Point;
@@ -138,7 +139,7 @@ fn circuit_point() {
     let y_assigned = eq_assigner.point(&x_plain);
 
     assert_eq!(y_assigned, y_plain);
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -161,5 +162,5 @@ fn circuit_hypercube() {
     let y_assigned = eq_assigner.hypercube();
 
     assert_eq!(y_assigned, y_plain);
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

@@ -21,6 +21,7 @@ use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
 use blacknet_crypto::circuit::duplex::DuplexImpl as Circuit;
 use blacknet_crypto::circuit::permutation::Permutation as PermutationCircuit;
+use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::duplex::{Duplex, DuplexImpl};
 use blacknet_crypto::permutation::Permutation as PermutationPlain;
 use blacknet_crypto::ring::UnitalRing;
@@ -122,5 +123,5 @@ fn circuit_blacknet() {
     let y_assigned: [Z; 3] = duplex_assigner.squeeze();
 
     assert_eq!(y_assigned, y_plain);
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

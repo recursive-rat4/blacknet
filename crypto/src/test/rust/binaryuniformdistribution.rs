@@ -21,6 +21,7 @@ use blacknet_crypto::binaryuniformdistribution::BinaryUniformDistribution;
 use blacknet_crypto::circuit::binaryuniformdistribution::BinaryUniformDistribution as Circuit;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
 use blacknet_crypto::circuit::distribution::Distribution as DistributionCircuit;
+use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::distribution::{Distribution, UniformGenerator};
 use core::array;
 
@@ -95,5 +96,5 @@ fn circuit_reproducible() {
     let a_assigned: [Z; 16] = array::from_fn(|_| bud_assigner.sample(&mut g_assigner));
 
     assert_eq!(a_assigned, a_plain);
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

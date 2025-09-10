@@ -18,6 +18,7 @@
 use blacknet_crypto::assigner::logicgate::LogicGate as Assigner;
 use blacknet_crypto::circuit::circuitbuilder::CircuitBuilder;
 use blacknet_crypto::circuit::logicgate::LogicGate as Circuit;
+use blacknet_crypto::constraintsystem::ConstraintSystem;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -54,7 +55,7 @@ fn xor() {
         assigner.xor(a, b);
     }
 
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -90,7 +91,7 @@ fn and() {
         assigner.and(a, b);
     }
 
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -126,7 +127,7 @@ fn or() {
         assigner.or(a, b);
     }
 
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -159,7 +160,7 @@ fn not() {
         assigner.not(a);
     }
 
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -184,5 +185,5 @@ fn check_less_or_equal() {
     let assigner = Assigner::new(&z);
     assigner.check_less_or_equal(&a, &b);
 
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

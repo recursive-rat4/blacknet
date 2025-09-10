@@ -16,9 +16,11 @@
  */
 
 use crate::assigner::assigment::Assigment;
+use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrixsparse::MatrixSparse;
 use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
+use core::iter::zip;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct R1CS<R: UnitalRing> {
@@ -32,31 +34,39 @@ impl<R: UnitalRing> R1CS<R> {
         Self { a, b, c }
     }
 
-    pub const fn constraints(&self) -> usize {
-        self.a.rows()
-    }
-
-    pub const fn variables(&self) -> usize {
-        self.a.columns()
-    }
-
     pub fn steal(self) -> (MatrixSparse<R>, MatrixSparse<R>, MatrixSparse<R>) {
         (self.a, self.b, self.c)
-    }
-
-    pub fn is_satisfied(&self, z: &VectorDense<R>) -> bool {
-        debug_assert!(
-            z.dimension() == self.variables(),
-            "Assigned {} variables instead of {} required",
-            z.dimension(),
-            self.variables()
-        );
-        (&self.a * z) * (&self.b * z) == &self.c * z
     }
 
     pub fn assigment(&self) -> Assigment<R> {
         let z = Assigment::new(self.variables());
         z.push(R::UNITY);
         z
+    }
+}
+
+impl<R: UnitalRing> ConstraintSystem<R> for R1CS<R> {
+    fn degree(&self) -> usize {
+        2
+    }
+
+    fn constraints(&self) -> usize {
+        self.a.rows()
+    }
+
+    fn variables(&self) -> usize {
+        self.a.columns()
+    }
+
+    fn is_satisfied(&self, z: &VectorDense<R>) -> Result<R> {
+        if z.dimension() != self.variables() {
+            return Err(Error::Length(z.dimension(), self.variables()));
+        }
+        let az_bz = (&self.a * z) * (&self.b * z);
+        let cz = &self.c * z;
+        match zip(az_bz, cz).enumerate().find(|(_, (a, e))| a != e) {
+            Some((i, (a, e))) => Err(Error::Mismatch(i, a, e)),
+            None => Ok(()),
+        }
     }
 }

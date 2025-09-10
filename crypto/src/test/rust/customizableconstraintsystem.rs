@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::matrixsparse::MatrixSparse;
@@ -29,11 +30,14 @@ fn satisfaction() {
     let z = VectorDense::from([1, 16, 2].map(R::from));
 
     let ccs = CustomizableConstraintSystem::new(
-        1,
-        3,
         vec![MatrixSparse::from(&m1), MatrixSparse::from(&m2)],
         vec![vec![0, 0, 0, 0], vec![1]],
         [1, -1].map(R::from).into(),
     );
-    assert!(ccs.is_satisfied(&z));
+
+    assert_eq!(ccs.degree(), 4);
+    assert_eq!(ccs.constraints(), 1);
+    assert_eq!(ccs.variables(), 3);
+
+    assert_eq!(ccs.is_satisfied(&z), Ok(()));
 }

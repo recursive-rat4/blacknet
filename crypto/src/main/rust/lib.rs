@@ -28,6 +28,7 @@ pub mod bigint;
 pub mod binaryuniformdistribution;
 pub mod circuit;
 pub mod compressionfunction;
+pub mod constraintsystem;
 pub mod convolution;
 pub mod customizableconstraintsystem;
 pub mod cyclicgroup;

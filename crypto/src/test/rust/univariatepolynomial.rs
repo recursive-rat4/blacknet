@@ -18,6 +18,7 @@
 use blacknet_crypto::assigner::univariatepolynomial::UnivariatePolynomial as Assigner;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::univariatepolynomial::UnivariatePolynomial as Circuit;
+use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::univariatepolynomial::UnivariatePolynomial;
 
 type R = blacknet_crypto::pervushin::PervushinField;
@@ -69,5 +70,5 @@ fn circuit_evaluate() {
     let y_assigned = p_assigner.evaluate(x_plain);
 
     assert_eq!(y_assigned, y_plain);
-    assert!(r1cs.is_satisfied(&z.finish()));
+    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
