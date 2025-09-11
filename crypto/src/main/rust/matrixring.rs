@@ -117,16 +117,14 @@ impl<R: Ring, const N: usize, const NN: usize> Index<(usize, usize)> for MatrixR
     type Output = R;
 
     #[inline]
-    fn index(&self, index: (usize, usize)) -> &Self::Output {
-        let (i, j) = index;
+    fn index(&self, (i, j): (usize, usize)) -> &Self::Output {
         &self.elements[i * N + j]
     }
 }
 
 impl<R: Ring, const N: usize, const NN: usize> IndexMut<(usize, usize)> for MatrixRing<R, N, NN> {
     #[inline]
-    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
-        let (i, j) = index;
+    fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut Self::Output {
         &mut self.elements[i * N + j]
     }
 }

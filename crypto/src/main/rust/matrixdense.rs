@@ -95,16 +95,14 @@ impl<R: Ring> Index<(usize, usize)> for MatrixDense<R> {
     type Output = R;
 
     #[inline]
-    fn index(&self, index: (usize, usize)) -> &Self::Output {
-        let (i, j) = index;
+    fn index(&self, (i, j): (usize, usize)) -> &Self::Output {
         &self.elements[i * self.columns + j]
     }
 }
 
 impl<R: Ring> IndexMut<(usize, usize)> for MatrixDense<R> {
     #[inline]
-    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
-        let (i, j) = index;
+    fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut Self::Output {
         &mut self.elements[i * self.columns + j]
     }
 }
