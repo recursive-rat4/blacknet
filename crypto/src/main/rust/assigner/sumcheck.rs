@@ -68,13 +68,14 @@ impl<'a, R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distribution<'a, R, D
         duplex: &mut D,
     ) -> (Point<R>, R) {
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
+        let mut exceptional_set = E::new(self.assigment);
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
             duplex.absorb(claim);
-            let mut exceptional_set = E::new(self.assigment);
             let challenge = exceptional_set.sample(duplex);
             sum = claim.evaluate(challenge);
             coordinates.push(challenge);
+            exceptional_set.reset();
         }
         let r = Point::from(coordinates);
         (r, sum)

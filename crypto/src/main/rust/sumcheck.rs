@@ -54,14 +54,15 @@ impl<
 {
     pub fn prove(mut polynomial: P, mut sum: R, duplex: &mut D) -> Proof<R> {
         let mut claims = Vec::<UnivariatePolynomial<R>>::with_capacity(polynomial.variables());
+        let mut exceptional_set = E::default();
         for _ in 0..polynomial.variables() {
             let claim = Self::prove_round(&polynomial, sum);
             duplex.absorb(&claim);
-            let mut exceptional_set = E::default();
             let challenge = exceptional_set.sample(duplex);
             polynomial.bind(challenge);
             sum = claim.evaluate(challenge);
             claims.push(claim);
+            exceptional_set.reset();
         }
         claims.into()
     }
@@ -76,6 +77,7 @@ impl<
             return Err(Error::Claims(proof.claims.len(), polynomial.variables()));
         }
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
+        let mut exceptional_set = E::default();
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
             if claim.degree() != polynomial.degree() {
@@ -85,10 +87,10 @@ impl<
                 return Err(Error::Sum(i, claim.at_0_plus_1(), sum));
             }
             duplex.absorb(claim);
-            let mut exceptional_set = E::default();
             let challenge = exceptional_set.sample(duplex);
             sum = claim.evaluate(challenge);
             coordinates.push(challenge);
+            exceptional_set.reset();
         }
         let r = Point::from(coordinates);
         if polynomial.point(&r) != sum {
@@ -107,6 +109,7 @@ impl<
             return Err(Error::Claims(proof.claims.len(), polynomial.variables()));
         }
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
+        let mut exceptional_set = E::default();
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
             if claim.degree() != polynomial.degree() {
@@ -116,10 +119,10 @@ impl<
                 return Err(Error::Sum(i, claim.at_0_plus_1(), sum));
             }
             duplex.absorb(claim);
-            let mut exceptional_set = E::default();
             let challenge = exceptional_set.sample(duplex);
             sum = claim.evaluate(challenge);
             coordinates.push(challenge);
+            exceptional_set.reset();
         }
         let r = Point::from(coordinates);
         Ok((r, sum))

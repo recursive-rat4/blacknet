@@ -25,6 +25,8 @@ pub trait Distribution<G: UniformGenerator>: Default {
     type Output;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output;
+
+    fn reset(&mut self);
 }
 
 #[derive(Default)]
@@ -37,4 +39,7 @@ impl<G: UniformGenerator> Distribution<G> for UniformDistribution {
     fn sample(&mut self, generator: &mut G) -> Self::Output {
         generator.generate()
     }
+
+    #[inline]
+    fn reset(&mut self) {}
 }

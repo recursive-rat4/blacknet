@@ -74,14 +74,15 @@ impl<
     ) -> (Point<R>, LinearCombination<R>) {
         let scope = self.circuit.scope("SumCheck::verify_early_stopping");
         let mut coordinates = Vec::<LinearCombination<R>>::with_capacity(polynomial.variables());
+        let mut exceptional_set = E::new(self.circuit);
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
             scope.constrain(claim.at_0_plus_1(), sum.clone());
             duplex.absorb(claim);
-            let mut exceptional_set = E::new(self.circuit);
             let challenge = exceptional_set.sample(duplex);
             sum = claim.evaluate(&challenge);
             coordinates.push(challenge);
+            exceptional_set.reset();
         }
         let r = Point::from(coordinates);
         (r, sum)

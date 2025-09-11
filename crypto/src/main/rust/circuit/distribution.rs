@@ -25,6 +25,8 @@ pub trait Distribution<'a, R: UnitalRing, G: UniformGenerator> {
     fn new(circuit: &'a CircuitBuilder<R>) -> Self;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output;
+
+    fn reset(&mut self);
 }
 
 impl<'a, R: UnitalRing, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution {
@@ -38,4 +40,7 @@ impl<'a, R: UnitalRing, G: UniformGenerator> Distribution<'a, R, G> for UniformD
     fn sample(&mut self, generator: &mut G) -> Self::Output {
         generator.generate()
     }
+
+    #[inline]
+    fn reset(&mut self) {}
 }

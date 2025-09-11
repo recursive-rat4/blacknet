@@ -56,4 +56,8 @@ impl<G: UniformGenerator<Output: IntegerRing>> Distribution<G> for BinaryUniform
         self.have_bits -= 1;
         G::Output::with_limb(result)
     }
+
+    fn reset(&mut self) {
+        self.have_bits = 0
+    }
 }

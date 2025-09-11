@@ -57,4 +57,8 @@ impl<G: UniformGenerator<Output: Integer>> Distribution<G> for TernaryUniformDis
             }
         }
     }
+
+    fn reset(&mut self) {
+        self.have_bits = 0
+    }
 }

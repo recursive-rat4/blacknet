@@ -67,4 +67,8 @@ impl<'a, G: UniformGenerator<Output: IntegerRing>> Distribution<'a, G::Output, G
         self.have_bits -= 1;
         result
     }
+
+    fn reset(&mut self) {
+        self.have_bits = 0
+    }
 }
