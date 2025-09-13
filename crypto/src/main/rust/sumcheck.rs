@@ -52,9 +52,13 @@ impl<
     E: Distribution<D, Output = R>,
 > SumCheck<R, P, D, E>
 {
-    pub fn prove(mut polynomial: P, mut sum: R, duplex: &mut D) -> Proof<R> {
+    pub fn prove(
+        mut polynomial: P,
+        mut sum: R,
+        duplex: &mut D,
+        exceptional_set: &mut E,
+    ) -> Proof<R> {
         let mut claims = Vec::<UnivariatePolynomial<R>>::with_capacity(polynomial.variables());
-        let mut exceptional_set = E::default();
         for _ in 0..polynomial.variables() {
             let claim = Self::prove_round(&polynomial, sum);
             duplex.absorb(&claim);
@@ -72,12 +76,12 @@ impl<
         mut sum: R,
         proof: &Proof<R>,
         duplex: &mut D,
+        exceptional_set: &mut E,
     ) -> Result<(), Error<R>> {
         if proof.claims.len() != polynomial.variables() {
             return Err(Error::Claims(proof.claims.len(), polynomial.variables()));
         }
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
-        let mut exceptional_set = E::default();
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
             if claim.degree() != polynomial.degree() {
@@ -104,12 +108,12 @@ impl<
         mut sum: R,
         proof: &Proof<R>,
         duplex: &mut D,
+        exceptional_set: &mut E,
     ) -> Result<(Point<R>, R), Error<R>> {
         if proof.claims.len() != polynomial.variables() {
             return Err(Error::Claims(proof.claims.len(), polynomial.variables()));
         }
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
-        let mut exceptional_set = E::default();
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
             if claim.degree() != polynomial.degree() {

@@ -21,7 +21,7 @@ pub trait UniformGenerator {
     fn generate(&mut self) -> Self::Output;
 }
 
-pub trait Distribution<G: UniformGenerator>: Default {
+pub trait Distribution<G: UniformGenerator> {
     type Output;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output;
