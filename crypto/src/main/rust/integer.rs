@@ -16,7 +16,7 @@
  */
 
 use crate::bigint::BigInt;
-use core::ops::{BitAnd, ShrAssign, Sub};
+use core::ops::{BitAnd, BitOrAssign, Shl, ShrAssign, Sub};
 
 #[rustfmt::skip]
 pub trait Integer
@@ -25,19 +25,29 @@ pub trait Integer
     + From<Self::Limb>
     + Ord
     + FloatOn
+    + BitAnd<Self, Output = Self>
     + BitAnd<Self::Limb, Output = Self::Limb>
+    + BitOrAssign<Self>
+    + Shl<u32, Output = Self>
     + ShrAssign<Self::Limb>
+    + ShrAssign<u32>
+    + Sub<Output = Self>
 {
     type Limb
         : Copy
         + Ord
         + Sub<Output = Self::Limb>
         ;
+    type CastUnsigned: Integer;
 
+    fn cast_unsigned(self) -> Self::CastUnsigned;
     fn count_ones(self) -> u32;
     fn leading_zeros(self) -> u32;
 
     const BITS: u32;
+
+    const ONE: Self;
+
     const LIMB_ONE: Self::Limb;
     const LIMB_TWO: Self::Limb;
     const LIMB_THREE: Self::Limb;
@@ -71,6 +81,30 @@ impl FloatOn for i64 {
     }
 }
 
+impl FloatOn for u8 {
+    fn float_on(self) -> f64 {
+        self as f64
+    }
+}
+
+impl FloatOn for u16 {
+    fn float_on(self) -> f64 {
+        self as f64
+    }
+}
+
+impl FloatOn for u32 {
+    fn float_on(self) -> f64 {
+        self as f64
+    }
+}
+
+impl FloatOn for u64 {
+    fn float_on(self) -> f64 {
+        self as f64
+    }
+}
+
 impl<const N: usize> FloatOn for BigInt<N> {
     fn float_on(self) -> f64 {
         unimplemented!("BigInt::float_on");
@@ -79,7 +113,12 @@ impl<const N: usize> FloatOn for BigInt<N> {
 
 impl Integer for i8 {
     type Limb = Self;
+    type CastUnsigned = u8;
 
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self.cast_unsigned()
+    }
     #[inline]
     fn count_ones(self) -> u32 {
         self.count_ones()
@@ -90,6 +129,9 @@ impl Integer for i8 {
     }
 
     const BITS: u32 = Self::BITS;
+
+    const ONE: Self = 1;
+
     const LIMB_ONE: Self::Limb = 1;
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
@@ -97,7 +139,12 @@ impl Integer for i8 {
 
 impl Integer for i16 {
     type Limb = Self;
+    type CastUnsigned = u16;
 
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self.cast_unsigned()
+    }
     #[inline]
     fn count_ones(self) -> u32 {
         self.count_ones()
@@ -108,6 +155,9 @@ impl Integer for i16 {
     }
 
     const BITS: u32 = Self::BITS;
+
+    const ONE: Self = 1;
+
     const LIMB_ONE: Self::Limb = 1;
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
@@ -115,7 +165,12 @@ impl Integer for i16 {
 
 impl Integer for i32 {
     type Limb = Self;
+    type CastUnsigned = u32;
 
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self.cast_unsigned()
+    }
     #[inline]
     fn count_ones(self) -> u32 {
         self.count_ones()
@@ -126,6 +181,9 @@ impl Integer for i32 {
     }
 
     const BITS: u32 = Self::BITS;
+
+    const ONE: Self = 1;
+
     const LIMB_ONE: Self::Limb = 1;
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
@@ -133,7 +191,12 @@ impl Integer for i32 {
 
 impl Integer for i64 {
     type Limb = Self;
+    type CastUnsigned = u64;
 
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self.cast_unsigned()
+    }
     #[inline]
     fn count_ones(self) -> u32 {
         self.count_ones()
@@ -144,6 +207,113 @@ impl Integer for i64 {
     }
 
     const BITS: u32 = Self::BITS;
+
+    const ONE: Self = 1;
+
+    const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
+}
+
+impl Integer for u8 {
+    type Limb = Self;
+    type CastUnsigned = Self;
+
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self
+    }
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
+    }
+
+    const BITS: u32 = Self::BITS;
+
+    const ONE: Self = 1;
+
+    const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
+}
+
+impl Integer for u16 {
+    type Limb = Self;
+    type CastUnsigned = Self;
+
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self
+    }
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
+    }
+
+    const BITS: u32 = Self::BITS;
+
+    const ONE: Self = 1;
+
+    const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
+}
+
+impl Integer for u32 {
+    type Limb = Self;
+    type CastUnsigned = Self;
+
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self
+    }
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
+    }
+
+    const BITS: u32 = Self::BITS;
+
+    const ONE: Self = 1;
+
+    const LIMB_ONE: Self::Limb = 1;
+    const LIMB_TWO: Self::Limb = 2;
+    const LIMB_THREE: Self::Limb = 3;
+}
+
+impl Integer for u64 {
+    type Limb = Self;
+    type CastUnsigned = Self;
+
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self
+    }
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.count_ones()
+    }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
+    }
+
+    const BITS: u32 = Self::BITS;
+
+    const ONE: Self = 1;
+
     const LIMB_ONE: Self::Limb = 1;
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
@@ -151,7 +321,12 @@ impl Integer for i64 {
 
 impl<const N: usize> Integer for BigInt<N> {
     type Limb = u64;
+    type CastUnsigned = Self;
 
+    #[inline]
+    fn cast_unsigned(self) -> Self::CastUnsigned {
+        self
+    }
     #[inline]
     fn count_ones(self) -> u32 {
         self.count_ones()
@@ -162,6 +337,9 @@ impl<const N: usize> Integer for BigInt<N> {
     }
 
     const BITS: u32 = Self::BITS;
+
+    const ONE: Self = Self::ONE;
+
     const LIMB_ONE: Self::Limb = 1;
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;

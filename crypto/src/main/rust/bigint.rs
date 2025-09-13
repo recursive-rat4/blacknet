@@ -19,7 +19,8 @@ use core::array;
 use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
+    SubAssign,
 };
 
 pub type UInt256 = BigInt<4>;
@@ -264,6 +265,30 @@ impl<const N: usize> BitAnd<u64> for BigInt<N> {
     }
 }
 
+impl<const N: usize> BitOr for BigInt<N> {
+    type Output = Self;
+
+    fn bitor(self, rps: Self) -> Self::Output {
+        Self {
+            limbs: array::from_fn(|i| self.limbs[i] | rps.limbs[i]),
+        }
+    }
+}
+
+impl<const N: usize> BitOrAssign for BigInt<N> {
+    #[inline]
+    fn bitor_assign(&mut self, rps: Self) {
+        *self = *self | rps
+    }
+}
+
+impl<const N: usize> BitOrAssign<u64> for BigInt<N> {
+    #[inline]
+    fn bitor_assign(&mut self, rps: u64) {
+        self.limbs[0] |= rps
+    }
+}
+
 impl<const N: usize> Add for BigInt<N> {
     type Output = Self;
 
@@ -284,6 +309,25 @@ impl<const N: usize> AddAssign for BigInt<N> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl<const N: usize> Shl<i32> for BigInt<N> {
+    type Output = Self;
+
+    #[inline]
+    fn shl(self, rps: i32) -> Self::Output {
+        debug_assert!(rps >= 0);
+        self << rps as u64
+    }
+}
+
+impl<const N: usize> Shl<u32> for BigInt<N> {
+    type Output = Self;
+
+    #[inline]
+    fn shl(self, rps: u32) -> Self::Output {
+        self << rps as u64
     }
 }
 
@@ -320,6 +364,21 @@ impl<const N: usize> Shr<u64> for BigInt<N> {
             c = self.limbs[i] & ((1 << rps) - 1);
         }
         n
+    }
+}
+
+impl<const N: usize> ShrAssign<i32> for BigInt<N> {
+    #[inline]
+    fn shr_assign(&mut self, rps: i32) {
+        debug_assert!(rps >= 0);
+        *self = *self >> rps as u64
+    }
+}
+
+impl<const N: usize> ShrAssign<u32> for BigInt<N> {
+    #[inline]
+    fn shr_assign(&mut self, rps: u32) {
+        *self = *self >> rps as u64
     }
 }
 
