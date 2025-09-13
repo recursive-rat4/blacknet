@@ -161,6 +161,25 @@ impl<const N: usize> BigInt<N> {
         ones
     }
 
+    pub const fn leading_zeros(self) -> u32 {
+        let mut zeros = 0;
+        let mut i = N;
+        loop {
+            if i != 0 {
+                let n = self.limbs[i - 1].leading_zeros();
+                zeros += n;
+                if n == u64::BITS {
+                    i -= 1;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        zeros
+    }
+
     pub const ZERO: Self = Self { limbs: [0; N] };
     pub const ONE: Self = {
         let mut limbs = [0; N];

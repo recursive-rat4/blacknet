@@ -30,11 +30,12 @@ pub trait Integer
 {
     type Limb
         : Copy
-        + Eq
+        + Ord
         + Sub<Output = Self::Limb>
         ;
 
     fn count_ones(self) -> u32;
+    fn leading_zeros(self) -> u32;
 
     const BITS: u32;
     const LIMB_ONE: Self::Limb;
@@ -83,6 +84,10 @@ impl Integer for i8 {
     fn count_ones(self) -> u32 {
         self.count_ones()
     }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
+    }
 
     const BITS: u32 = Self::BITS;
     const LIMB_ONE: Self::Limb = 1;
@@ -96,6 +101,10 @@ impl Integer for i16 {
     #[inline]
     fn count_ones(self) -> u32 {
         self.count_ones()
+    }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
     }
 
     const BITS: u32 = Self::BITS;
@@ -111,6 +120,10 @@ impl Integer for i32 {
     fn count_ones(self) -> u32 {
         self.count_ones()
     }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
+    }
 
     const BITS: u32 = Self::BITS;
     const LIMB_ONE: Self::Limb = 1;
@@ -125,6 +138,10 @@ impl Integer for i64 {
     fn count_ones(self) -> u32 {
         self.count_ones()
     }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
+    }
 
     const BITS: u32 = Self::BITS;
     const LIMB_ONE: Self::Limb = 1;
@@ -138,6 +155,10 @@ impl<const N: usize> Integer for BigInt<N> {
     #[inline]
     fn count_ones(self) -> u32 {
         self.count_ones()
+    }
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.leading_zeros()
     }
 
     const BITS: u32 = Self::BITS;

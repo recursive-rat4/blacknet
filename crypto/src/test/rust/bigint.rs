@@ -131,3 +131,15 @@ fn sqr() {
     assert_eq!(a.mul(a), b);
     assert_eq!(a.square(), b);
 }
+
+#[test]
+fn clz() {
+    let a = UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000000");
+    let b = UInt256::from_hex("00000000000000000000FFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFF00000000");
+    let c = UInt256::from_hex("0000FFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFF00000000");
+    let d = UInt256::from_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    assert_eq!(a.leading_zeros(), 256);
+    assert_eq!(b.leading_zeros(), 80);
+    assert_eq!(c.leading_zeros(), 16);
+    assert_eq!(d.leading_zeros(), 0);
+}
