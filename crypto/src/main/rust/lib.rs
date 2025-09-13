@@ -39,6 +39,7 @@ pub mod cyclicgroup;
 pub mod distribution;
 pub mod duplex;
 pub mod eqextension;
+pub mod fastdrg;
 pub mod fermat;
 pub mod field;
 pub mod field25519;

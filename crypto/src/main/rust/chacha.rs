@@ -20,11 +20,11 @@ use core::mem::transmute;
 
 // https://cr.yp.to/chacha/chacha-20080128.pdf
 
-type Word = u32;
-const KEY_SIZE: usize = 32;
+pub type Word = u32;
+pub const KEY_SIZE: usize = 32;
 const IV_SIZE: usize = 12;
 const BLOCK_SIZE: usize = 64;
-const L: usize = 16;
+pub const L: usize = 16;
 const SIGMA: [Word; 4] = [0x61707865, 0x3320646E, 0x79622D32, 0x6B206574];
 
 pub struct ChaCha<const ROUNDS: usize> {

@@ -73,6 +73,10 @@ name = "eqextension"
 path = "src/test/rust/eqextension.rs"
 
 [[test]]
+name = "fastdrg"
+path = "src/test/rust/fastdrg.rs"
+
+[[test]]
 name = "fermat"
 path = "src/test/rust/fermat.rs"
 
