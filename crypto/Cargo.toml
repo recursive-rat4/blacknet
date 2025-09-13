@@ -33,7 +33,8 @@ categories.workspace = true
 orx-tree.workspace = true
 
 [features]
-core_float_math = []
+default = ["std"]
+std = []
 
 [lib]
 doctest = false

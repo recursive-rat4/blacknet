@@ -20,6 +20,9 @@
 
 extern crate alloc;
 
+#[cfg(feature = "std")]
+extern crate std;
+
 pub mod abeliangroup;
 pub mod ajtaicommitment;
 pub mod algebra;
