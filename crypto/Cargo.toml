@@ -30,11 +30,12 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+blacknet-compat = { workspace = true, optional = true }
 orx-tree.workspace = true
 
 [features]
 default = ["std"]
-std = []
+std = ["dep:blacknet-compat"]
 
 [lib]
 doctest = false

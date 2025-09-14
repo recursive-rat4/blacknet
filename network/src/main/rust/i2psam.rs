@@ -17,14 +17,16 @@
 
 use crate::endpoint::Endpoint;
 use crate::settings::Settings;
-use blacknet_compat::{Mode, XDGDirectories, getentropy};
+use blacknet_compat::{Mode, XDGDirectories};
+use blacknet_crypto::distribution::Distribution;
+use blacknet_crypto::fastrng::{FAST_RNG, FastRNG};
+use blacknet_crypto::uniformintdistribution::UniformIntDistribution;
 use blacknet_log::error::Error as LogError;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{error, info, warn};
 use core::fmt;
 use data_encoding::{DecodeError, Encoding};
 use data_encoding_macro::new_encoding;
-use fastrand::Rng;
 use sha2::{Digest, Sha256};
 use spdlog::Logger;
 use std::fs::File;
@@ -298,12 +300,13 @@ impl SAM {
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
         ];
-        let seed = getentropy::<8>().expect("source of entropy");
-        let mut rng = Rng::with_seed(u64::from_ne_bytes(seed));
         let mut id = String::with_capacity(LEN);
-        for _ in 0..LEN {
-            id.push(ALPHABET[rng.usize(..ALPHABET.len())]);
-        }
+        let mut dst = UniformIntDistribution::<FastRNG>::new(ALPHABET.len() as u32);
+        FAST_RNG.with_borrow_mut(|rng| {
+            for _ in 0..LEN {
+                id.push(ALPHABET[dst.sample(rng) as usize]);
+            }
+        });
         id
     }
 
