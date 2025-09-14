@@ -16,7 +16,7 @@
  */
 
 use crate::bigint::BigInt;
-use core::ops::{BitAnd, BitOrAssign, Shl, ShrAssign, Sub};
+use core::ops::{Add, BitAnd, BitOrAssign, Shl, ShrAssign, Sub};
 
 #[rustfmt::skip]
 pub trait Integer
@@ -24,13 +24,13 @@ pub trait Integer
     + Default
     + From<Self::Limb>
     + Ord
-    + FloatOn
     + BitAnd<Self, Output = Self>
     + BitAnd<Self::Limb, Output = Self::Limb>
     + BitOrAssign<Self>
     + Shl<u32, Output = Self>
     + ShrAssign<Self::Limb>
     + ShrAssign<u32>
+    + Add<Output = Self>
     + Sub<Output = Self>
 {
     type Limb
@@ -51,64 +51,6 @@ pub trait Integer
     const LIMB_ONE: Self::Limb;
     const LIMB_TWO: Self::Limb;
     const LIMB_THREE: Self::Limb;
-}
-
-pub trait FloatOn {
-    fn float_on(self) -> f64;
-}
-
-impl FloatOn for i8 {
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn for i16 {
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn for i32 {
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn for i64 {
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn for u8 {
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn for u16 {
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn for u32 {
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn for u64 {
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl<const N: usize> FloatOn for BigInt<N> {
-    fn float_on(self) -> f64 {
-        unimplemented!("BigInt::float_on");
-    }
 }
 
 impl Integer for i8 {

@@ -15,7 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::integer::{FloatOn, Integer};
+use crate::float::FloatOn;
+use crate::integer::Integer;
 use crate::matrixdense::MatrixDense;
 use crate::matrixring::MatrixRing;
 use crate::module::FreeModule;
@@ -27,7 +28,7 @@ pub trait EuclideanNorm {
     fn euclidean_norm(&self) -> f64;
 }
 
-impl<Z: IntegerRing> EuclideanNorm for Z {
+impl<Z: IntegerRing<Int: FloatOn<f64>>> EuclideanNorm for Z {
     fn euclidean_norm(&self) -> f64 {
         self.absolute().float_on()
     }
