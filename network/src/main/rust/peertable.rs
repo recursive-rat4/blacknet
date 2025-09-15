@@ -18,6 +18,7 @@
 use crate::endpoint::Endpoint;
 use crate::settings::Settings;
 use blacknet_compat::{Mode, XDGDirectories};
+use blacknet_io::file::replace;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{debug, error, info, warn};
 use blacknet_serialization::format::{from_read, to_write};
@@ -28,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use spdlog::Logger;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
-use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
+use std::io::{BufReader, ErrorKind, Read, Write};
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
@@ -39,7 +40,7 @@ const FILE_NAME: &str = "peers.dat";
 pub struct PeerTable {
     logger: Logger,
     settings: Arc<Settings>,
-    file_path: PathBuf,
+    data_dir: PathBuf,
     peers: RwLock<HashMap<Endpoint, Entry>>,
 }
 
@@ -53,7 +54,7 @@ impl PeerTable {
         let peer_table = Self {
             logger: log_manager.logger("PeerTable")?,
             settings,
-            file_path: dirs.data().join(FILE_NAME),
+            data_dir: dirs.data().to_owned(),
             peers: RwLock::new(HashMap::with_capacity(MAX_SIZE)),
         };
         match peer_table.load() {
@@ -243,7 +244,7 @@ impl PeerTable {
 
     fn load(&self) -> Result<(), Box<dyn Error>> {
         let mut peers = self.peers.write().unwrap();
-        let mut file = match File::open(&self.file_path) {
+        let mut file = match File::open(self.data_dir.join(FILE_NAME)) {
             Ok(file) => BufReader::new(file),
             Err(err) => {
                 if err.kind() == ErrorKind::NotFound {
@@ -267,23 +268,13 @@ impl PeerTable {
     }
 
     fn save(&self) {
-        //TODO atomic
         let peers = self.peers.read().unwrap();
-        let mut file = match File::create(&self.file_path) {
-            Ok(file) => BufWriter::new(file),
-            Err(err) => {
-                error!(self.logger, "Can't create {FILE_NAME}: {err}");
-                return;
-            }
-        };
-        let version = FILE_VERSION.to_be_bytes();
-        if let Err(err) = file.write_all(&version) {
+        if let Err(err) = replace(&self.data_dir, FILE_NAME, |buffered| {
+            let version = FILE_VERSION.to_be_bytes();
+            buffered.write_all(&version)?;
+            to_write(&*peers, buffered)
+        }) {
             error!(self.logger, "Can't write {FILE_NAME}: {err}");
-            return;
-        }
-        if let Err(err) = to_write(&*peers, &mut file) {
-            error!(self.logger, "Can't write {FILE_NAME}: {err}");
-            // return;
         }
     }
 

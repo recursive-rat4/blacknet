@@ -21,6 +21,7 @@ use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_crypto::distribution::Distribution;
 use blacknet_crypto::fastrng::{FAST_RNG, FastRNG};
 use blacknet_crypto::uniformintdistribution::UniformIntDistribution;
+use blacknet_io::file::replace;
 use blacknet_log::error::Error as LogError;
 use blacknet_log::logmanager::LogManager;
 use blacknet_log::{error, info, warn};
@@ -29,8 +30,7 @@ use data_encoding::{DecodeError, Encoding};
 use data_encoding_macro::new_encoding;
 use sha2::{Digest, Sha256};
 use spdlog::Logger;
-use std::fs::File;
-use std::io::{BufWriter, Error as IoError, Write};
+use std::io::{Error as IoError, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufStream};
@@ -233,7 +233,7 @@ impl Session {
 pub struct SAM {
     logger: Logger,
     settings: Arc<Settings>,
-    file_path: PathBuf,
+    data_dir: PathBuf,
     private_key: String,
     endpoint: Endpoint,
     agent_name: String,
@@ -251,13 +251,13 @@ impl SAM {
             None => return Err("Can't parse settings.i2p_sam_host".into()),
         };
 
-        let file_path = dirs.data().join(FILE_NAME);
-        let private_key = Self::read_private_key_or_transient(&file_path);
+        let data_dir = dirs.data().to_owned();
+        let private_key = Self::read_private_key_or_transient(&data_dir);
 
         Ok(Self {
             logger: log_manager.logger("I2PSAM")?,
             settings,
-            file_path,
+            data_dir,
             private_key,
             endpoint,
             agent_name: mode.agent_name().to_owned(),
@@ -310,7 +310,8 @@ impl SAM {
         id
     }
 
-    fn read_private_key_or_transient(file_path: &Path) -> String {
+    fn read_private_key_or_transient(data_dir: &Path) -> String {
+        let file_path = data_dir.join(FILE_NAME);
         if let Ok(private_key) = std::fs::read_to_string(file_path) {
             private_key
         } else {
@@ -321,15 +322,9 @@ impl SAM {
     fn save_private_key(&mut self, new_key: String) {
         self.private_key = new_key;
         info!(self.logger, "Saving I2P private key");
-        //TODO atomic
-        let mut file = match File::create(&self.file_path) {
-            Ok(file) => BufWriter::new(file),
-            Err(err) => {
-                error!(self.logger, "Can't create {FILE_NAME}: {err}");
-                return;
-            }
-        };
-        if let Err(err) = file.write_all(self.private_key.as_bytes()) {
+        if let Err(err) = replace(&self.data_dir, FILE_NAME, |buffered| {
+            buffered.write_all(self.private_key.as_bytes())
+        }) {
             error!(self.logger, "Can't write {FILE_NAME}: {err}");
         }
     }

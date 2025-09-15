@@ -21,6 +21,7 @@ members = [
     "compat",
     "crypto",
     "daemon",
+    "io",
     "log",
     "network",
     "serialization",
@@ -31,6 +32,7 @@ members = [
 [workspace.dependencies]
 blacknet-compat = { path = "compat" }
 blacknet-crypto = { path = "crypto" }
+blacknet-io = { path = "io" }
 blacknet-log = { path = "log" }
 blacknet-network = { path = "network" }
 blacknet-serialization = { path = "serialization" }

@@ -116,6 +116,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "blacknet-io"
+version = "0.3.0"
+dependencies = [
+ "blacknet-crypto",
+]
+
+[[package]]
 name = "blacknet-log"
 version = "0.3.0"
 dependencies = [
@@ -128,6 +135,7 @@ version = "0.3.0"
 dependencies = [
  "blacknet-compat",
  "blacknet-crypto",
+ "blacknet-io",
  "blacknet-log",
  "blacknet-serialization",
  "blacknet-time",

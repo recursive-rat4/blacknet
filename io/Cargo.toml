@@ -16,7 +16,7 @@
 #
 
 [package]
-name = "blacknet-network"
+name = "blacknet-io"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -30,29 +30,8 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-blacknet-compat.workspace = true
 blacknet-crypto.workspace = true
-blacknet-io.workspace = true
-blacknet-log.workspace = true
-blacknet-serialization.workspace = true
-blacknet-time.workspace = true
-data-encoding.workspace = true
-data-encoding-macro.workspace = true
-natpmp.workspace = true
-serde.workspace = true
-sha2.workspace = true
-sha3.workspace = true
-spdlog-rs.workspace = true
-tokio.workspace = true
 
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
-
-[[test]]
-name = "endpoint"
-path = "src/test/rust/endpoint.rs"
-
-[[test]]
-name = "i2psam"
-path = "src/test/rust/i2psam.rs"
