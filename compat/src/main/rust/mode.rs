@@ -23,7 +23,8 @@ use std::env::VarError;
  */
 pub struct Mode {
     subdirectory: Option<&'static str>,
-    address_prefix: Option<&'static str>,
+    address_readable_part: String,
+    message_sign_name: String,
     requires_network: bool,
     agent_name: String,
     default_p2p_port: u16,
@@ -37,16 +38,24 @@ impl Mode {
         agent_suffix: Option<&'static str>,
         subdirectory: Option<&'static str>,
         address_prefix: Option<&'static str>,
+        sign_suffix: Option<&'static str>,
         requires_network: bool,
         builtin_peers: &'static str,
     ) -> Self {
         Self {
             subdirectory,
-            address_prefix,
+            address_readable_part: match address_prefix {
+                Some(val) => format!("{val}{ADDRESS_READABLE_PART}"),
+                None => ADDRESS_READABLE_PART.to_owned(),
+            },
+            message_sign_name: match sign_suffix {
+                Some(val) => format!("{MESSAGE_SIGN_NAME}{val}"),
+                None => MESSAGE_SIGN_NAME.to_owned(),
+            },
             requires_network,
             agent_name: match agent_suffix {
                 Some(val) => format!("{AGENT_NAME}{val}"),
-                None => AGENT_NAME.to_string(),
+                None => AGENT_NAME.to_owned(),
             },
             default_p2p_port: DEFAULT_P2P_PORT + ordinal as u16,
             network_magic: NETWORK_MAGIC + ordinal as u32,
@@ -59,12 +68,20 @@ impl Mode {
      */
     fn mainnet() -> Self {
         let peers_txt = include_str!("../../../../kernel/src/main/resources/peers.txt");
-        Self::new(0, None, None, None, true, peers_txt)
+        Self::new(0, None, None, None, None, true, peers_txt)
     }
 
     #[allow(dead_code)]
     fn testnet() -> Self {
-        Self::new(1, Some("-TestNet"), Some("TestNet"), Some("t"), true, "")
+        Self::new(
+            1,
+            Some("-TestNet"),
+            Some("TestNet"),
+            Some("t"),
+            Some(" TestNet"),
+            true,
+            "",
+        )
     }
 
     /**
@@ -72,7 +89,15 @@ impl Mode {
      * or else it can be a tiny private network.
      */
     fn regtest() -> Self {
-        Self::new(3, Some("-RegTest"), Some("RegTest"), Some("r"), false, "")
+        Self::new(
+            3,
+            Some("-RegTest"),
+            Some("RegTest"),
+            Some("r"),
+            Some(" RegTest"),
+            false,
+            "",
+        )
     }
 
     fn default() -> Self {
@@ -86,10 +111,16 @@ impl Mode {
         self.subdirectory
     }
     /**
-     * An address prefix to designate a different network.
+     * An address readable part to designate a different network.
      */
-    pub fn address_prefix(&self) -> Option<&'static str> {
-        self.address_prefix
+    pub fn address_readable_part(&self) -> &str {
+        &self.address_readable_part
+    }
+    /**
+     * A message sign name to personalize a digital text.
+     */
+    pub fn message_sign_name(&self) -> &str {
+        &self.message_sign_name
     }
     /**
      * Whether the node requires network peers.
