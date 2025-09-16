@@ -18,11 +18,16 @@
 use crate::endpoint::Endpoint;
 use crate::settings::Settings;
 use blacknet_compat::{Mode, XDGDirectories};
+use blacknet_crypto::distribution::Distribution;
+use blacknet_crypto::fastrng::{FAST_RNG, FastRNG};
+use blacknet_crypto::float01distribution::Float01Distribution;
+use blacknet_crypto::uniformintdistribution::UniformIntDistribution;
 use blacknet_io::file::replace;
 use blacknet_log::{LogManager, debug, error, info, warn};
 use blacknet_serialization::format::{from_read, to_write};
 use blacknet_time::milliseconds::Milliseconds;
 use blacknet_time::systemclock::SystemClock;
+use core::cmp::min;
 use core::error::Error;
 use serde::{Deserialize, Serialize};
 use spdlog::Logger;
@@ -30,6 +35,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufReader, ErrorKind, Read, Write};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 
 const MAX_SIZE: usize = 8192;
@@ -102,8 +108,7 @@ impl PeerTable {
             peers
                 .entry(endpoint)
                 .and_modify(|entry| {
-                    if !entry.in_contact {
-                        entry.in_contact = true;
+                    if entry.contact() {
                         contacted = true;
                     }
                 })
@@ -127,8 +132,7 @@ impl PeerTable {
             peers
                 .entry(endpoint)
                 .and_modify(|entry| {
-                    if !entry.in_contact {
-                        entry.in_contact = true;
+                    if entry.contact() {
                         contacted = true;
                     }
                 })
@@ -157,8 +161,7 @@ impl PeerTable {
             let mut peers = self.peers.write().unwrap();
             peers.entry(endpoint).and_modify(|entry| {
                 visited = true;
-                if entry.in_contact {
-                    entry.in_contact = false;
+                if entry.discontact() {
                     discontacted = true;
                 }
             });
@@ -220,6 +223,55 @@ impl PeerTable {
         true
     }
 
+    pub fn candidate(&self, predicate: impl Fn(&Endpoint, &Entry) -> bool) -> Option<Endpoint> {
+        let peers = self.peers.read().unwrap();
+        let mut candidates = Vec::<(&Endpoint, &Entry, f32)>::with_capacity(peers.len());
+        let now = SystemClock::now();
+        for (endpoint, entry) in peers.iter() {
+            if predicate(endpoint, entry) {
+                candidates.push((endpoint, entry, entry.chance(now)));
+            }
+        }
+        let mut uid = UniformIntDistribution::<FastRNG>::default();
+        let mut f01 = Float01Distribution::<f32, FastRNG>::default();
+        FAST_RNG.with_borrow_mut(|rng| {
+            while !candidates.is_empty() {
+                uid.set_bound(candidates.len() as u32);
+                let random = uid.sample(rng) as usize;
+                let (endpoint, entry, chance) = candidates[random];
+                if chance > f01.sample(rng) && entry.contact() {
+                    return Some(*endpoint);
+                } else {
+                    candidates.swap_remove(random);
+                }
+            }
+            None
+        })
+    }
+
+    pub fn random(&self, n: usize) -> Vec<Endpoint> {
+        let peers = self.peers.read().unwrap();
+        let mut candidates = Vec::<Endpoint>::with_capacity(peers.len());
+        for (&endpoint, _) in peers.iter() {
+            candidates.push(endpoint);
+        }
+        Self::shuffle(&mut candidates);
+        let x = min(candidates.len(), n);
+        candidates.truncate(x);
+        candidates
+    }
+
+    fn shuffle(slice: &mut [Endpoint]) {
+        let mut uid = UniformIntDistribution::<FastRNG>::default();
+        FAST_RNG.with_borrow_mut(|rng| {
+            for i in 1..slice.len() {
+                uid.set_bound((i + 1) as u32);
+                let j = uid.sample(rng) as usize;
+                slice.swap(i, j);
+            }
+        })
+    }
+
     pub(crate) async fn rotate(self: Arc<Self>) {
         let mut rotated = 0;
         let now = SystemClock::now();
@@ -227,10 +279,9 @@ impl PeerTable {
             let mut peers = self.peers.write().unwrap();
             peers.retain(|_, entry| {
                 let mut retain = true;
-                if entry.is_old(now) && !entry.in_contact {
+                if entry.is_old(now) && entry.contact() {
                     retain = false;
                     rotated += 1;
-                    entry.in_contact = true;
                 }
                 retain
             });
@@ -292,9 +343,9 @@ impl Drop for PeerTable {
 }
 
 #[derive(Deserialize, Serialize)]
-struct Entry {
+pub struct Entry {
     #[serde(skip)]
-    in_contact: bool,
+    in_contact: AtomicBool,
     attempts: u64,
     last_try: Milliseconds,
     last_connected: Milliseconds,
@@ -306,7 +357,7 @@ struct Entry {
 impl Entry {
     fn new(in_contact: bool) -> Self {
         Self {
-            in_contact,
+            in_contact: AtomicBool::new(in_contact),
             attempts: 0,
             last_try: Milliseconds::ZERO,
             last_connected: Milliseconds::ZERO,
@@ -314,6 +365,18 @@ impl Entry {
             subnetworks: HashSet::new(),
             added: Milliseconds::ZERO,
         }
+    }
+
+    fn contact(&self) -> bool {
+        self.in_contact
+            .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
+            .is_ok()
+    }
+
+    fn discontact(&self) -> bool {
+        self.in_contact
+            .compare_exchange(true, false, Ordering::Relaxed, Ordering::Relaxed)
+            .is_ok()
     }
 
     fn is_old(&self, now: Milliseconds) -> bool {
@@ -327,5 +390,16 @@ impl Entry {
         }
 
         false
+    }
+
+    fn chance(&self, now: Milliseconds) -> f32 {
+        let age = now - self.last_try;
+        let attempts = min(self.attempts, i32::MAX as u64) as i32;
+        let chance = 0.66_f32.powi(min(attempts, 8));
+        if age > Milliseconds::from_minutes(15) {
+            chance
+        } else {
+            chance * 0.01
+        }
     }
 }

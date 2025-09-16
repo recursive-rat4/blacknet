@@ -37,6 +37,11 @@ impl<G: UniformGenerator<Output: Integer>> UniformIntDistribution<G> {
         }
     }
 
+    pub fn set_bound(&mut self, bound: <G::Output as Integer>::CastUnsigned) {
+        self.bound = bound;
+        self.output_bits = Self::output_bits(bound);
+    }
+
     const fn useful_bits() -> u32 {
         G::Output::BITS
     }
@@ -79,6 +84,13 @@ impl<G: UniformGenerator<Output: Integer>> UniformIntDistribution<G> {
             self.have_bits -= need_bits;
             result
         }
+    }
+}
+
+impl<G: UniformGenerator<Output: Integer>> Default for UniformIntDistribution<G> {
+    fn default() -> Self {
+        let bound = <G::Output as Integer>::CastUnsigned::MAX;
+        Self::new(bound)
     }
 }
 

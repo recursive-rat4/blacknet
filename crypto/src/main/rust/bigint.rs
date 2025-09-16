@@ -181,6 +181,11 @@ impl<const N: usize> BigInt<N> {
         zeros
     }
 
+    pub const BITS: u32 = N as u32 * u64::BITS;
+    pub const MAX: Self = Self {
+        limbs: [u64::MAX; N],
+    };
+
     pub const ZERO: Self = Self { limbs: [0; N] };
     pub const ONE: Self = {
         let mut limbs = [0; N];

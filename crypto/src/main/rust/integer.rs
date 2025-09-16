@@ -45,6 +45,7 @@ pub trait Integer
     fn leading_zeros(self) -> u32;
 
     const BITS: u32;
+    const MAX: Self;
 
     const ONE: Self;
 
@@ -71,6 +72,7 @@ impl Integer for i8 {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = 1;
 
@@ -97,6 +99,7 @@ impl Integer for i16 {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = 1;
 
@@ -123,6 +126,7 @@ impl Integer for i32 {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = 1;
 
@@ -149,6 +153,7 @@ impl Integer for i64 {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = 1;
 
@@ -175,6 +180,7 @@ impl Integer for u8 {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = 1;
 
@@ -201,6 +207,7 @@ impl Integer for u16 {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = 1;
 
@@ -227,6 +234,7 @@ impl Integer for u32 {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = 1;
 
@@ -253,6 +261,7 @@ impl Integer for u64 {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = 1;
 
@@ -279,6 +288,7 @@ impl<const N: usize> Integer for BigInt<N> {
     }
 
     const BITS: u32 = Self::BITS;
+    const MAX: Self = Self::MAX;
 
     const ONE: Self = Self::ONE;
 
