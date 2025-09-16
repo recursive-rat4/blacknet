@@ -16,7 +16,7 @@
  */
 
 use blacknet_compat::{XDGDirectories, mode};
-use blacknet_log::logmanager::{LogManager, Strategy};
+use blacknet_log::{LogManager, Strategy};
 use blacknet_network::node::Node;
 use std::env::args;
 use std::error::Error;

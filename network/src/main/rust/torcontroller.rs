@@ -19,11 +19,10 @@ use crate::endpoint::Endpoint;
 use crate::settings::Settings;
 use blacknet_compat::XDGDirectories;
 use blacknet_io::file::replace;
-use blacknet_log::logmanager::LogManager;
-use blacknet_log::{error, info, warn};
+use blacknet_log::{Error as LogError, LogManager, error, info, warn};
 use core::fmt;
 use spdlog::Logger;
-use std::io::Write;
+use std::io::{Error as IoError, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufStream};
@@ -198,8 +197,8 @@ type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
     Message(String),
-    Io(std::io::Error),
-    Log(blacknet_log::error::Error),
+    Io(IoError),
+    Log(LogError),
 }
 
 impl fmt::Display for Error {
@@ -220,14 +219,14 @@ impl From<&str> for Error {
     }
 }
 
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
+impl From<IoError> for Error {
+    fn from(err: IoError) -> Self {
         Error::Io(err)
     }
 }
 
-impl From<blacknet_log::error::Error> for Error {
-    fn from(err: blacknet_log::error::Error) -> Self {
+impl From<LogError> for Error {
+    fn from(err: LogError) -> Self {
         Error::Log(err)
     }
 }
