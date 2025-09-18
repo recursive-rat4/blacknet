@@ -81,10 +81,10 @@ def write_rings_rust():
             file.write('\n')
             for extension in param.extensions:
                 file.write(f"impl Twiddles<{len(extension.twiddles)}> for {spec.type_name}" + " {\n")
-                file.write(f"    const TWIDDLES: [Self; {len(extension.twiddles)}] = [\n")
+                file.write(f"    const TWIDDLES: [Self; {len(extension.twiddles)}]" + " = unsafe {\n        [\n")
                 for twiddle in extension.twiddles:
-                    file.write("        unsafe { " + f"Self::from_unchecked({twiddle})" + " },\n")
-                file.write("    ];\n")
+                    file.write(f"            Self::from_unchecked({twiddle}),\n")
+                file.write("        ]\n    };\n")
                 file.write("    const SCALE: Self = unsafe { " + f"Self::from_unchecked({extension.inv_ntt_scale})" + " };\n")
                 file.write("}\n")
 

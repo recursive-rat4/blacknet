@@ -38,6 +38,10 @@ pub struct PervushinField {
 }
 
 impl PervushinField {
+    pub const unsafe fn from_unchecked(n: i64) -> Self {
+        Self { n }
+    }
+
     const fn reduce_add(x: i64) -> i64 {
         (x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)
     }
