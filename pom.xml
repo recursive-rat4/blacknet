@@ -78,7 +78,7 @@
         <atomicfu.version>0.29.0</atomicfu.version>
         <eddsa.version>0.3.0</eddsa.version>
         <blake2b.version>2.0.0</blake2b.version>
-        <bouncycastle.version>1.81</bouncycastle.version>
+        <bouncycastle.version>1.82</bouncycastle.version>
         <leveldb-java.version>0.12</leveldb-java.version>
         <slf4j.version>2.0.17</slf4j.version>
         <logging.version>7.0.11</logging.version>
