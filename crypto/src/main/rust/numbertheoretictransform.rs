@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![allow(clippy::manual_is_multiple_of)]
+
 use crate::convolution::{Convolution, binomial};
 use crate::ring::UnitalRing;
 use core::array;
