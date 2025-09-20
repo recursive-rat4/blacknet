@@ -277,6 +277,18 @@ pub struct LinearCombination<R: UnitalRing> {
     terms: BTreeMap<Variable<R>, Constant<R>>,
 }
 
+impl<R: UnitalRing> LinearCombination<R> {
+    pub fn double(&self) -> Self {
+        Self {
+            terms: self
+                .terms
+                .iter()
+                .map(|(&var, &val)| (var, val.double()))
+                .collect(),
+        }
+    }
+}
+
 impl<R: UnitalRing> Expression<R> for LinearCombination<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone()].into()

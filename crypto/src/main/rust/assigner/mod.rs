@@ -24,5 +24,8 @@ pub mod eqextension;
 pub mod jive;
 pub mod logicgate;
 pub mod permutation;
+pub mod poseidon2;
+pub mod poseidon2lm;
+pub mod poseidon2pervushin;
 pub mod sumcheck;
 pub mod univariatepolynomial;

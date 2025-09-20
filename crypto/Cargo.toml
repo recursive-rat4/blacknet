@@ -33,6 +33,9 @@ categories.workspace = true
 blacknet-compat = { workspace = true, optional = true }
 orx-tree.workspace = true
 
+[dev-dependencies]
+criterion.workspace = true
+
 [features]
 default = ["std"]
 std = ["dep:blacknet-compat"]
@@ -134,6 +137,10 @@ name = "pervushin"
 path = "src/test/rust/pervushin.rs"
 
 [[test]]
+name = "poseidon2"
+path = "src/test/rust/poseidon2.rs"
+
+[[test]]
 name = "r1cs"
 path = "src/test/rust/r1cs.rs"
 
@@ -156,3 +163,8 @@ path = "src/test/rust/vectorsparse.rs"
 [[test]]
 name = "z2"
 path = "src/test/rust/z2.rs"
+
+[[bench]]
+name = "poseidon2"
+path = "src/benchmark/rust/poseidon2.rs"
+harness = false
