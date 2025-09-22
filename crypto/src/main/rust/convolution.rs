@@ -22,6 +22,8 @@ pub trait Convolution<R: Ring, const N: usize>
     : 'static
     + Copy
     + Eq
+    + Send
+    + Sync
 {
     fn convolute(a: [R; N], b: [R; N]) -> [R; N];
 }

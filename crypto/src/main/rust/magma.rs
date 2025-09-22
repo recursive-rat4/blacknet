@@ -24,6 +24,8 @@ pub trait AdditiveMagma
     + Copy
     + Eq
     + Debug
+    + Send
+    + Sync
     + Add<Output = Self>
     + AddAssign
 {
@@ -36,6 +38,8 @@ pub trait MultiplicativeMagma
     + Copy
     + Eq
     + Debug
+    + Send
+    + Sync
     + Mul<Output = Self>
     + MulAssign
 {

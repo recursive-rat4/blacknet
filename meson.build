@@ -27,7 +27,6 @@ project('blacknet', 'cpp',
 
 desktop_feature = get_option('desktop')
 
-oneapi_tbb_dependency = dependency('tbb', version : '>=2020.0.0')
 fmt_dependency = dependency('fmt', version : '>=9.1.0')
 spdlog_dependency = dependency('spdlog', version : '>=1.5.0')
 sqlite_dependency = dependency('sqlite3', version : '>=3.37.2')
