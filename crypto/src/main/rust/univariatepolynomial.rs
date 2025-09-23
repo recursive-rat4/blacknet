@@ -54,6 +54,10 @@ impl<R: UnitalRing> UnivariatePolynomial<R> {
         1
     }
 
+    pub const fn coefficients(&self) -> &Vec<R> {
+        &self.coefficients
+    }
+
     #[inline]
     pub fn steal(self) -> Vec<R> {
         self.coefficients

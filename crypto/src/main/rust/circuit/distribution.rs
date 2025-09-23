@@ -29,11 +29,11 @@ pub trait Distribution<'a, R: UnitalRing, G: UniformGenerator> {
     fn reset(&mut self);
 }
 
-impl<'a, R: UnitalRing, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution {
+impl<'a, R: UnitalRing, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution<G> {
     type Output = G::Output;
 
     fn new(_: &'a CircuitBuilder<R>) -> Self {
-        Self {}
+        Self::default()
     }
 
     #[inline]

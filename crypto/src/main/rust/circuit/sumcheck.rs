@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination};
+use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::distribution::Distribution;
 use crate::circuit::point::Point;
 use crate::circuit::univariatepolynomial::UnivariatePolynomial;
@@ -27,6 +27,21 @@ use core::marker::PhantomData;
 
 pub struct Proof<'a, R: UnitalRing> {
     claims: Vec<UnivariatePolynomial<'a, R>>,
+}
+
+impl<'a, R: UnitalRing> Proof<'a, R> {
+    pub fn allocate(
+        circuit: &'a CircuitBuilder<R>,
+        kind: VariableKind,
+        variables: usize,
+        degree: usize,
+    ) -> Self {
+        Self {
+            claims: (0..variables)
+                .map(|_| UnivariatePolynomial::allocate(circuit, kind, degree))
+                .collect(),
+        }
+    }
 }
 
 impl<'a, R: UnitalRing> From<Vec<UnivariatePolynomial<'a, R>>> for Proof<'a, R> {
@@ -71,10 +86,10 @@ impl<
         mut sum: LinearCombination<R>,
         proof: &Proof<'a, R>,
         duplex: &mut D,
+        exceptional_set: &mut E,
     ) -> (Point<R>, LinearCombination<R>) {
         let scope = self.circuit.scope("SumCheck::verify_early_stopping");
         let mut coordinates = Vec::<LinearCombination<R>>::with_capacity(polynomial.variables());
-        let mut exceptional_set = E::new(self.circuit);
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
             scope.constrain(claim.at_0_plus_1(), sum.clone());

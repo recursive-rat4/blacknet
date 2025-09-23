@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use core::marker::PhantomData;
+
 pub trait UniformGenerator {
     type Output;
 
@@ -29,10 +31,19 @@ pub trait Distribution<G: UniformGenerator> {
     fn reset(&mut self);
 }
 
-#[derive(Default)]
-pub struct UniformDistribution {}
+pub struct UniformDistribution<G: UniformGenerator> {
+    phantom: PhantomData<G>,
+}
 
-impl<G: UniformGenerator> Distribution<G> for UniformDistribution {
+impl<G: UniformGenerator> Default for UniformDistribution<G> {
+    fn default() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<G: UniformGenerator> Distribution<G> for UniformDistribution<G> {
     type Output = G::Output;
 
     #[inline]

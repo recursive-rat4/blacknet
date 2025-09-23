@@ -42,7 +42,7 @@ pub struct SumCheck<
     D: Duplex<R>,
     E: Distribution<'a, R, D, Output = R>,
 > {
-    assigment: &'a Assigment<R>,
+    _assigment: &'a Assigment<R>,
     phantom_p: PhantomData<P>,
     phantom_d: PhantomData<D>,
     phantom_e: PhantomData<E>,
@@ -53,7 +53,7 @@ impl<'a, R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distribution<'a, R, D
 {
     pub fn new(assigment: &'a Assigment<R>) -> Self {
         Self {
-            assigment,
+            _assigment: assigment,
             phantom_p: PhantomData,
             phantom_d: PhantomData,
             phantom_e: PhantomData,
@@ -66,9 +66,9 @@ impl<'a, R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distribution<'a, R, D
         mut sum: R,
         proof: &Proof<'a, R>,
         duplex: &mut D,
+        exceptional_set: &mut E,
     ) -> (Point<R>, R) {
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
-        let mut exceptional_set = E::new(self.assigment);
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
             duplex.absorb(claim);

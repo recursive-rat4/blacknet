@@ -133,7 +133,7 @@ fn circuit_point() {
     let r1cs = circuit.r1cs();
     let z = r1cs.assigment();
     z.extend(coefficients_plain);
-    z.extend_from_slice(x_plain.coordinates());
+    z.extend_from_slice(&x_plain);
 
     let eq_assigner = Assigner::new(coefficients_plain.into(), &z);
     let y_assigned = eq_assigner.point(&x_plain);

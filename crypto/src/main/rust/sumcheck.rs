@@ -32,6 +32,12 @@ pub struct Proof<R: UnitalRing> {
     claims: Vec<UnivariatePolynomial<R>>,
 }
 
+impl<R: UnitalRing> Proof<R> {
+    pub const fn claims(&self) -> &Vec<UnivariatePolynomial<R>> {
+        &self.claims
+    }
+}
+
 impl<R: UnitalRing> From<Vec<UnivariatePolynomial<R>>> for Proof<R> {
     fn from(claims: Vec<UnivariatePolynomial<R>>) -> Self {
         Self { claims }
@@ -179,7 +185,7 @@ impl<
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Error<R: UnitalRing> {
     Claims(usize, usize),
     Degree(usize, usize, usize),

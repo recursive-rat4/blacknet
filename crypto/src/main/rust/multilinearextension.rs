@@ -35,6 +35,10 @@ impl<R: UnitalRing> MultilinearExtension<R> {
     pub fn hypercube(&self) -> &Vec<R> {
         &self.coefficients
     }
+
+    pub const fn coefficients(&self) -> &Vec<R> {
+        &self.coefficients
+    }
 }
 
 impl<R: UnitalRing, const N: usize> From<[R; N]> for MultilinearExtension<R> {

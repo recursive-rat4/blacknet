@@ -17,7 +17,7 @@
 
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
-use core::ops::{Index, IndexMut};
+use core::ops::{Deref, Index, IndexMut};
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Point<S> {
@@ -57,6 +57,15 @@ impl<S> From<Vec<S>> for Point<S> {
 impl<S: Debug> Debug for Point<S> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.coordinates)
+    }
+}
+
+impl<S> Deref for Point<S> {
+    type Target = [S];
+
+    #[inline]
+    fn deref(&self) -> &[S] {
+        &self.coordinates
     }
 }
 
