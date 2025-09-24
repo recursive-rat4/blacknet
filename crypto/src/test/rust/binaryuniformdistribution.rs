@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::binaryuniformdistribution::BinaryUniformDistribution as Assigner;
 use blacknet_crypto::assigner::distribution::Distribution as DistributionAssigner;
 use blacknet_crypto::binaryuniformdistribution::BinaryUniformDistribution;
@@ -96,5 +97,5 @@ fn circuit_reproducible() {
     let a_assigned: [Z; 16] = array::from_fn(|_| bud_assigner.sample(&mut g_assigner));
 
     assert_eq!(a_assigned, a_plain);
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }

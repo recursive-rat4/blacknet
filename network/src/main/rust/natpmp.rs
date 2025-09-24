@@ -16,8 +16,8 @@
  */
 
 use crate::endpoint::Endpoint;
-use core::fmt;
 use natpmp::{Protocol, Response, new_tokio_natpmp};
+use thiserror::Error;
 
 //TODO lifetime
 
@@ -48,25 +48,10 @@ pub async fn natpmp_forward(port: u16) -> Result<Endpoint, Error> {
     })
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("Unexpected response kind")]
     UnexpectedResponseKind,
-    NATPMP(natpmp::Error),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::UnexpectedResponseKind => formatter.write_str("Unexpected response kind"),
-            Error::NATPMP(err) => write!(formatter, "{err}"),
-        }
-    }
-}
-
-impl core::error::Error for Error {}
-
-impl From<natpmp::Error> for Error {
-    fn from(err: natpmp::Error) -> Self {
-        Error::NATPMP(err)
-    }
+    #[error("{0}")]
+    NATPMP(#[from] natpmp::Error),
 }

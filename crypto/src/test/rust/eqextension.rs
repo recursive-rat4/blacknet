@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::eqextension::EqExtension as Assigner;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::eqextension::EqExtension as Circuit;
@@ -139,7 +140,7 @@ fn circuit_point() {
     let y_assigned = eq_assigner.point(&x_plain);
 
     assert_eq!(y_assigned, y_plain);
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }
 
 #[test]
@@ -162,5 +163,5 @@ fn circuit_hypercube() {
     let y_assigned = eq_assigner.hypercube();
 
     assert_eq!(y_assigned, y_plain);
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }

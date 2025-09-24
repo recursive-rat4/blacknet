@@ -23,8 +23,8 @@ use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
 use crate::univariatepolynomial::UnivariatePolynomial;
 use alloc::vec::Vec;
-use core::fmt;
 use core::marker::PhantomData;
+use thiserror::Error;
 
 // https://users.cs.fiu.edu/~giri/teach/5420/f01/LundIPS.pdf
 
@@ -185,34 +185,14 @@ impl<
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Error)]
 pub enum Error<R: UnitalRing> {
+    #[error("Expected {1} claims got {0}")]
     Claims(usize, usize),
+    #[error("At round {0} expected {2} degree claim got {1}")]
     Degree(usize, usize, usize),
+    #[error("Partial sum at round {0} doesn't match")]
     Sum(usize, R, R),
+    #[error("Polynomial identity check failed")]
     PolynomialIdentity(R, R),
-}
-
-impl<R: UnitalRing> core::error::Error for Error<R> {}
-
-impl<R: UnitalRing> fmt::Display for Error<R> {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::Claims(actual, expected) => {
-                write!(formatter, "Expected {expected} claims got {actual}")
-            }
-            Error::Degree(round, actual, expected) => {
-                write!(
-                    formatter,
-                    "At round {round} expected {expected} degree claim got {actual}"
-                )
-            }
-            Error::Sum(round, _, _) => {
-                write!(formatter, "Partial sum at round {round} doesn't match")
-            }
-            Error::PolynomialIdentity(_, _) => {
-                write!(formatter, "Polynomial identity check failed")
-            }
-        }
-    }
 }

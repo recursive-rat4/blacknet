@@ -31,6 +31,7 @@ categories.workspace = true
 
 [dependencies]
 platform-info.workspace = true
+thiserror.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true

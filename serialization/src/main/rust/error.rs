@@ -15,57 +15,37 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::fmt;
+use core::fmt::Display;
 use serde::{de, ser};
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("{0}")]
     Message(String),
-    Io(std::io::Error),
-    Utf8(std::string::FromUtf8Error),
+    #[error("{0}")]
+    Io(#[from] std::io::Error),
+    #[error("{0}")]
+    Utf8(#[from] std::string::FromUtf8Error),
+    #[error("Too long VarInt")]
     TooLongVarInt,
+    #[error("0x{0:X} is not boolean")]
     InvalidBool(u8),
+    #[error("0x{0:X} is not option")]
     InvalidOption(u8),
+    #[error("{0} trailing bytes")]
     TrailingBytes(usize),
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::Message(msg) => formatter.write_str(msg),
-            Error::Io(err) => write!(formatter, "{err}"),
-            Error::Utf8(err) => write!(formatter, "{err}"),
-            Error::TooLongVarInt => formatter.write_str("Too long VarInt"),
-            Error::InvalidBool(byte) => write!(formatter, "0x{byte:X} is not boolean"),
-            Error::InvalidOption(byte) => write!(formatter, "0x{byte:X} is not option"),
-            Error::TrailingBytes(remaining) => write!(formatter, "{remaining} trailing bytes"),
-        }
-    }
-}
-
-impl core::error::Error for Error {}
-
 impl ser::Error for Error {
-    fn custom<T: fmt::Display>(msg: T) -> Self {
+    fn custom<T: Display>(msg: T) -> Self {
         Error::Message(msg.to_string())
     }
 }
 
 impl de::Error for Error {
-    fn custom<T: fmt::Display>(msg: T) -> Self {
+    fn custom<T: Display>(msg: T) -> Self {
         Error::Message(msg.to_string())
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Error::Io(err)
-    }
-}
-
-impl From<std::string::FromUtf8Error> for Error {
-    fn from(err: std::string::FromUtf8Error) -> Self {
-        Error::Utf8(err)
     }
 }
 

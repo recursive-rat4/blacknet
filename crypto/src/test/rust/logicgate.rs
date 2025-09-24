@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::logicgate::LogicGate as Assigner;
 use blacknet_crypto::circuit::circuitbuilder::CircuitBuilder;
 use blacknet_crypto::circuit::logicgate::LogicGate as Circuit;
@@ -55,7 +56,7 @@ fn xor() {
         assigner.xor(a, b);
     }
 
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }
 
 #[test]
@@ -91,7 +92,7 @@ fn and() {
         assigner.and(a, b);
     }
 
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }
 
 #[test]
@@ -127,7 +128,7 @@ fn or() {
         assigner.or(a, b);
     }
 
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }
 
 #[test]
@@ -160,7 +161,7 @@ fn not() {
         assigner.not(a);
     }
 
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }
 
 #[test]
@@ -185,5 +186,5 @@ fn check_less_or_equal() {
     let assigner = Assigner::new(&z);
     assigner.check_less_or_equal(&a, &b);
 
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }

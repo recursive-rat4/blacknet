@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::assert_ok;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
@@ -117,7 +118,7 @@ fn comparatism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = VectorDense::from([1, 4, 4, 4].map(R::from));
-    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z));
 }
 
 #[test]
@@ -170,7 +171,7 @@ fn additivism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = VectorDense::from([1, 8, 2, 4].map(R::from));
-    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z));
 }
 
 #[test]
@@ -223,7 +224,7 @@ fn multiplism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = VectorDense::from([1, 16, 2, 4].map(R::from));
-    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z));
 }
 
 #[test]
@@ -292,7 +293,7 @@ fn expressionism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = VectorDense::from([1, 4, 4, 4, 16].map(R::from));
-    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z));
 }
 
 #[test]
@@ -339,5 +340,5 @@ fn cubism() {
     assert_eq!(circuit.ccs(), ccs);
 
     let z = VectorDense::from([1, 2, 3, 5, 8].map(R::from));
-    assert_eq!(ccs.is_satisfied(&z), Ok(()));
+    assert_ok!(ccs.is_satisfied(&z));
 }

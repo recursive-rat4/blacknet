@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::assert_ok;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::matrixsparse::MatrixSparse;
@@ -54,5 +55,5 @@ fn satisfaction() {
     assert_eq!(r1cs.constraints(), 3);
     assert_eq!(r1cs.variables(), 5);
 
-    assert_eq!(r1cs.is_satisfied(&z), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z));
 }

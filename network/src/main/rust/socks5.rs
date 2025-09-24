@@ -16,7 +16,8 @@
  */
 
 use crate::endpoint::Endpoint;
-use core::fmt;
+use std::io::Error as IoError;
+use thiserror::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufStream};
 use tokio::net::TcpStream;
 
@@ -106,39 +107,22 @@ pub async fn socks5(proxy: Endpoint, destination: Endpoint) -> Result<BufStream<
     Ok(stream)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("Unsupported proxy endpoint")]
     Endpoint,
+    #[error("Unsupported destination endpoint")]
     Destination,
+    #[error("Unknown socks version {0}")]
     Version(u8),
+    #[error("Authentication not accepted ({0})")]
     Authentication(u8),
+    #[error("Access not granted ({0})")]
     NotGranted(u8),
+    #[error("Unknown socks reply ({0})")]
     Unknown(u8),
+    #[error("Reserved socks reply ({0})")]
     Reserved(u8),
-    Io(std::io::Error),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::Endpoint => formatter.write_str("Unsupported proxy endpoint"),
-            Error::Destination => formatter.write_str("Unsupported destination endpoint"),
-            Error::Version(version) => write!(formatter, "Unknown socks version {version}"),
-            Error::Authentication(authentication) => {
-                write!(formatter, "Authentication not accepted ({authentication})")
-            }
-            Error::NotGranted(reply) => write!(formatter, "Access not granted ({reply})"),
-            Error::Unknown(unknown) => write!(formatter, "Unknown socks reply ({unknown})"),
-            Error::Reserved(reserved) => write!(formatter, "Reserved socks reply ({reserved})"),
-            Error::Io(err) => write!(formatter, "{err}"),
-        }
-    }
-}
-
-impl core::error::Error for Error {}
-
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Error::Io(err)
-    }
+    #[error("{0}")]
+    Io(#[from] IoError),
 }

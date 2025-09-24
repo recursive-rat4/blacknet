@@ -17,7 +17,7 @@
 
 #[cfg(target_family = "unix")]
 use core::ffi::CStr;
-use core::fmt;
+use thiserror::Error;
 
 #[cfg(all(target_family = "unix", not(target_os = "macos")))]
 pub fn errno() -> libc::c_int {
@@ -34,21 +34,11 @@ pub fn strerror<'a>(errno: libc::c_int) -> &'a CStr {
     unsafe { CStr::from_ptr(libc::strerror(errno)) }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
     #[cfg(target_family = "unix")]
+    #[error("{}", &strerror(*.0).to_string_lossy())]
     Errno(libc::c_int),
+    #[error("{0}")]
     Message(String),
 }
-
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            #[cfg(target_family = "unix")]
-            Error::Errno(errno) => formatter.write_str(&strerror(*errno).to_string_lossy()),
-            Error::Message(msg) => formatter.write_str(msg),
-        }
-    }
-}
-
-impl core::error::Error for Error {}

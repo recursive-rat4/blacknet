@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::duplex::DuplexImpl as Assigner;
 use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;
@@ -123,5 +124,5 @@ fn circuit_blacknet() {
     let y_assigned: [Z; 3] = duplex_assigner.squeeze();
 
     assert_eq!(y_assigned, y_plain);
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }

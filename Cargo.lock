@@ -115,6 +115,7 @@ version = "0.3.0"
 dependencies = [
  "libc",
  "platform-info",
+ "thiserror 2.0.16",
  "windows-sys 0.61.0",
 ]
 
@@ -125,6 +126,7 @@ dependencies = [
  "blacknet-compat",
  "criterion",
  "orx-tree",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -149,6 +151,7 @@ name = "blacknet-log"
 version = "0.3.0"
 dependencies = [
  "spdlog-rs",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -168,6 +171,7 @@ dependencies = [
  "sha2",
  "sha3",
  "spdlog-rs",
+ "thiserror 2.0.16",
  "tokio",
 ]
 
@@ -176,6 +180,7 @@ name = "blacknet-serialization"
 version = "0.3.0"
 dependencies = [
  "serde",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -690,7 +695,7 @@ dependencies = [
  "anyhow",
  "byteorder",
  "paste",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1058,7 +1063,7 @@ dependencies = [
  "nom",
  "strum",
  "strum_macros",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1092,7 +1097,7 @@ dependencies = [
  "rustc_version",
  "spdlog-macros",
  "spin",
- "thiserror",
+ "thiserror 1.0.69",
  "winapi",
 ]
 
@@ -1176,7 +1181,16 @@ version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 1.0.69",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3467d614147380f2e4e374161426ff399c91084acd2363eaf549172b3d5e60c0"
+dependencies = [
+ "thiserror-impl 2.0.16",
 ]
 
 [[package]]
@@ -1184,6 +1198,17 @@ name = "thiserror-impl"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c5e1be1c48b9172ee610da68fd9cd2770e7a4056cb3fc98710ee6906f0c7960"
 dependencies = [
  "proc-macro2",
  "quote",

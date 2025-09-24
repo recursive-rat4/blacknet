@@ -15,24 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::ring::Ring;
-use crate::vectordense::VectorDense;
-use thiserror::Error;
-
-pub trait ConstraintSystem<R: Ring> {
-    fn degree(&self) -> usize;
-    fn constraints(&self) -> usize;
-    fn variables(&self) -> usize;
-
-    fn is_satisfied(&self, z: &VectorDense<R>) -> Result<R>;
+#[macro_export]
+macro_rules! assert_ok {
+    ($e:expr) => {
+        let result = $e;
+        assert!(result.is_ok(), "{:?}", result);
+    };
 }
 
-#[derive(Debug, Error)]
-pub enum Error<R: Ring> {
-    #[error("Assigned {0} variables instead of {1} required")]
-    Length(usize, usize),
-    #[error("Mismatch at position {0}")]
-    Mismatch(usize, R, R),
+#[macro_export]
+macro_rules! assert_err {
+    ($e:expr) => {
+        let result = $e;
+        assert!(result.is_err(), "{:?}", result);
+    };
 }
-
-pub type Result<R> = core::result::Result<(), Error<R>>;

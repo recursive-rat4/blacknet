@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::compressionfunction::CompressionFunction as CompressionFunctionAssigner;
 use blacknet_crypto::assigner::jive::Jive as Assigner;
@@ -104,5 +105,5 @@ fn circuit() {
     let c_assigned: [Z; 2] = jive_assigner.compress(a_plain, b_plain);
 
     assert_eq!(c_assigned, c_plain);
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }

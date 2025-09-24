@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::univariatepolynomial::UnivariatePolynomial as Assigner;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::univariatepolynomial::UnivariatePolynomial as Circuit;
@@ -70,5 +71,5 @@ fn circuit_evaluate() {
     let y_assigned = p_assigner.evaluate(x_plain);
 
     assert_eq!(y_assigned, y_plain);
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }

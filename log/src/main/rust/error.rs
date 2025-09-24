@@ -15,31 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::fmt;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("Not unicode data in environment variable BLACKNET_LOGLEVEL")]
     NotUnicodeLogLevel,
-    Spdlog(spdlog::error::Error),
-}
-
-impl core::error::Error for Error {}
-
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::NotUnicodeLogLevel => {
-                formatter.write_str("Not unicode data in environment variable BLACKNET_LOGLEVEL")
-            }
-            Error::Spdlog(err) => write!(formatter, "{err}"),
-        }
-    }
-}
-
-impl From<spdlog::error::Error> for Error {
-    fn from(err: spdlog::error::Error) -> Self {
-        Error::Spdlog(err)
-    }
+    #[error("{0}")]
+    Spdlog(#[from] spdlog::error::Error),
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

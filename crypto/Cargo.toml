@@ -32,8 +32,10 @@ categories.workspace = true
 [dependencies]
 blacknet-compat = { workspace = true, optional = true }
 orx-tree.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
+blacknet-compat.workspace = true
 criterion.workspace = true
 
 [features]

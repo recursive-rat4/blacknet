@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::{assert_err, assert_ok};
 use blacknet_crypto::assigner::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinAssigner;
 use blacknet_crypto::assigner::sumcheck::{Proof as ProofAssigner, SumCheck as SumCheckAssigner};
 use blacknet_crypto::assigner::univariatepolynomial::UnivariatePolynomial as UnivariatePolynomialAssigner;
@@ -51,38 +52,53 @@ fn mle() {
     duplex.reset();
     exceptional_set.reset();
 
-    assert_eq!(
-        SC::verify(&p1, s1, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_ok!(SC::verify(
+        &p1,
+        s1,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p1,
+        s2,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p2, s1, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p2,
+        s1,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p2, s2, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p2,
+        s2,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p3, s1, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p3,
+        s1,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
@@ -90,17 +106,23 @@ fn mle() {
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p1, s1, &proof2, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p1,
+        s1,
+        &proof2,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p1, s2, &proof2, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p1,
+        s2,
+        &proof2,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 }
@@ -120,31 +142,43 @@ fn eq() {
     duplex.reset();
     exceptional_set.reset();
 
-    assert_eq!(
-        SC::verify(&p1, s1, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_ok!(SC::verify(
+        &p1,
+        s1,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p1,
+        s2,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p2, s1, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p2,
+        s1,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p2, s2, &proof, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p2,
+        s2,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
@@ -152,17 +186,23 @@ fn eq() {
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p1, s1, &proof2, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p1,
+        s1,
+        &proof2,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ne!(
-        SC::verify(&p1, s2, &proof2, &mut duplex, &mut exceptional_set),
-        Ok(())
-    );
+    assert_err!(SC::verify(
+        &p1,
+        s2,
+        &proof2,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 }
@@ -183,17 +223,29 @@ fn early_stopping() {
     exceptional_set.reset();
 
     let maybe = SC::verify_early_stopping(&p1, s1, &proof, &mut duplex, &mut exceptional_set);
-    assert!(maybe.is_ok());
+    assert_ok!(&maybe);
     let (point, state) = maybe.unwrap();
     assert_eq!(state, p1.point(&point));
     duplex.reset();
     exceptional_set.reset();
 
-    assert!(SC::verify_early_stopping(&p1, s2, &proof, &mut duplex, &mut exceptional_set).is_err());
+    assert_err!(SC::verify_early_stopping(
+        &p1,
+        s2,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
-    assert!(SC::verify_early_stopping(&p2, s2, &proof, &mut duplex, &mut exceptional_set).is_err());
+    assert_err!(SC::verify_early_stopping(
+        &p2,
+        s2,
+        &proof,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 
@@ -201,9 +253,13 @@ fn early_stopping() {
     duplex.reset();
     exceptional_set.reset();
 
-    assert!(
-        SC::verify_early_stopping(&p1, s1, &proof2, &mut duplex, &mut exceptional_set).is_err()
-    );
+    assert_err!(SC::verify_early_stopping(
+        &p1,
+        s1,
+        &proof2,
+        &mut duplex,
+        &mut exceptional_set
+    ));
     duplex.reset();
     exceptional_set.reset();
 }
@@ -299,5 +355,5 @@ fn circuit() {
     );
     assert_eq!(point_assigned, point_plain);
     assert_eq!(state_assigned, state_plain);
-    assert_eq!(r1cs.is_satisfied(&z.finish()), Ok(()));
+    assert_ok!(r1cs.is_satisfied(&z.finish()));
 }

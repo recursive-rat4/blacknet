@@ -23,7 +23,6 @@ use blacknet_crypto::fastrng::{FAST_RNG, FastRNG};
 use blacknet_crypto::uniformintdistribution::UniformIntDistribution;
 use blacknet_io::file::replace;
 use blacknet_log::{Error as LogError, LogManager, error, info, warn};
-use core::fmt;
 use data_encoding::{DecodeError, Encoding};
 use data_encoding_macro::new_encoding;
 use sha2::{Digest, Sha256};
@@ -31,6 +30,7 @@ use spdlog::Logger;
 use std::io::{Error as IoError, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufStream};
 use tokio::net::TcpStream;
 
@@ -328,26 +328,17 @@ impl SAM {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("{0}")]
     Message(String),
-    Decode(DecodeError),
-    Io(IoError),
-    Log(LogError),
+    #[error("{0}")]
+    Decode(#[from] DecodeError),
+    #[error("{0}")]
+    Io(#[from] IoError),
+    #[error("{0}")]
+    Log(#[from] LogError),
 }
-
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::Message(msg) => write!(formatter, "{msg}"),
-            Error::Decode(err) => write!(formatter, "{err}"),
-            Error::Io(err) => write!(formatter, "{err}"),
-            Error::Log(err) => write!(formatter, "{err}"),
-        }
-    }
-}
-
-impl core::error::Error for Error {}
 
 impl From<&str> for Error {
     fn from(err: &str) -> Self {
@@ -358,23 +349,5 @@ impl From<&str> for Error {
 impl From<String> for Error {
     fn from(err: String) -> Self {
         Error::Message(err)
-    }
-}
-
-impl From<DecodeError> for Error {
-    fn from(err: DecodeError) -> Self {
-        Error::Decode(err)
-    }
-}
-
-impl From<IoError> for Error {
-    fn from(err: IoError) -> Self {
-        Error::Io(err)
-    }
-}
-
-impl From<LogError> for Error {
-    fn from(err: LogError) -> Self {
-        Error::Log(err)
     }
 }
