@@ -101,12 +101,7 @@ impl<R: UnitalRing> ConstraintSystem<R> for CustomizableConstraintSystem<R> {
             }
             sigma += circle;
         }
-        match sigma
-            .steal()
-            .into_iter()
-            .enumerate()
-            .find(|(_, e)| *e != R::ZERO)
-        {
+        match sigma.into_iter().enumerate().find(|(_, e)| *e != R::ZERO) {
             Some((i, e)) => Err(Error::Mismatch(i, e, R::ZERO)),
             None => Ok(()),
         }

@@ -141,43 +141,43 @@ impl<
     fn prove_round(polynomial: &P, sum: R) -> UnivariatePolynomial<R> {
         if polynomial.degree() == 5 {
             let evaluations = polynomial.hypercube_with_var::<-2>();
-            let n2 = evaluations.steal().into_iter().sum::<R>();
+            let n2 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<-1>();
-            let n1 = evaluations.steal().into_iter().sum::<R>();
+            let n1 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<1>();
-            let p1 = evaluations.steal().into_iter().sum::<R>();
+            let p1 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<2>();
-            let p2 = evaluations.steal().into_iter().sum::<R>();
+            let p2 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<3>();
-            let p3 = evaluations.steal().into_iter().sum::<R>();
+            let p3 = evaluations.into_iter().sum::<R>();
             interpolate_5(n2, n1, sum - p1, p1, p2, p3)
         } else if polynomial.degree() == 4 {
             let evaluations = polynomial.hypercube_with_var::<-2>();
-            let n2 = evaluations.steal().into_iter().sum::<R>();
+            let n2 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<-1>();
-            let n1 = evaluations.steal().into_iter().sum::<R>();
+            let n1 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<1>();
-            let p1 = evaluations.steal().into_iter().sum::<R>();
+            let p1 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<2>();
-            let p2 = evaluations.steal().into_iter().sum::<R>();
+            let p2 = evaluations.into_iter().sum::<R>();
             interpolate_4(n2, n1, sum - p1, p1, p2)
         } else if polynomial.degree() == 3 {
             let evaluations = polynomial.hypercube_with_var::<-1>();
-            let n1 = evaluations.steal().into_iter().sum::<R>();
+            let n1 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<1>();
-            let p1 = evaluations.steal().into_iter().sum::<R>();
+            let p1 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<2>();
-            let p2 = evaluations.steal().into_iter().sum::<R>();
+            let p2 = evaluations.into_iter().sum::<R>();
             interpolate_3(n1, sum - p1, p1, p2)
         } else if polynomial.degree() == 2 {
             let evaluations = polynomial.hypercube_with_var::<-1>();
-            let n1 = evaluations.steal().into_iter().sum::<R>();
+            let n1 = evaluations.into_iter().sum::<R>();
             let evaluations = polynomial.hypercube_with_var::<1>();
-            let p1 = evaluations.steal().into_iter().sum::<R>();
+            let p1 = evaluations.into_iter().sum::<R>();
             interpolate_2(n1, sum - p1, p1)
         } else if polynomial.degree() == 1 {
             let evaluations = polynomial.hypercube_with_var::<1>();
-            let p1 = evaluations.steal().into_iter().sum::<R>();
+            let p1 = evaluations.into_iter().sum::<R>();
             interpolate_1(sum - p1, p1)
         } else {
             unimplemented!("Sum-check prover for degree {}", polynomial.degree());
