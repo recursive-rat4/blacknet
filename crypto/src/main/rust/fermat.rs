@@ -15,13 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::convolution::Negacyclic;
 use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::PrimeField;
 use crate::integer::Integer;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::nttring::NTTRing;
 use crate::ring::{CommutativeRing, IntegerRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
+use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -253,3 +256,9 @@ impl IntegerRing for FermatField {
 }
 
 impl PrimeField for FermatField {}
+
+// (2¹⁶ + 1) / (x¹⁰²⁴ + 1)
+
+pub type FermatRing1024 = UnivariateRing<FermatField, 1024, Negacyclic>;
+
+pub type FermatNTT1024 = NTTRing<FermatField, 1024, 1024>;

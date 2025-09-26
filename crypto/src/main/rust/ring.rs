@@ -20,6 +20,7 @@ use crate::algebra::{CommutativeAlgebra, UnitalAlgebra};
 use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::integer::Integer;
 use crate::magma::Inv;
+use crate::module::Module;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::semigroup::MultiplicativeSemigroup;
 use alloc::vec::Vec;
@@ -99,6 +100,7 @@ pub trait PolynomialRing<R: UnitalRing>
     + IndexMut<usize, Output = R>
     + IntoIterator<Item = R>
 {
+    fn coefficients(self) -> impl Module<R>;
     fn constant_term(self) -> R;
     fn evaluate(self, point: R) -> R;
 }

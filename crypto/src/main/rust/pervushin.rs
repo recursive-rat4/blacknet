@@ -23,9 +23,9 @@ use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::polynomialringmonomial::PolynomialRingMonomial;
 use crate::ring::{CommutativeRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
+use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -330,7 +330,7 @@ impl InterpolationConsts for PervushinField {
 
 // (2⁶¹ - 1) / (x² + 1)
 
-pub type PervushinField2 = PolynomialRingMonomial<PervushinField, 2, Negacyclic>;
+pub type PervushinField2 = UnivariateRing<PervushinField, 2, Negacyclic>;
 
 impl PervushinField2 {
     const R1: [bool; 61] = PervushinField::bits(0x1FFFFFFFFFFFFFFF);

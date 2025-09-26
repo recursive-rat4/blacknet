@@ -48,6 +48,11 @@ impl<R: Ring, const N: usize> FreeModule<R, N> {
     pub const fn components(self) -> [R; N] {
         self.components
     }
+
+    #[inline]
+    pub fn from_fn<F: FnMut(usize) -> R>(f: F) -> Self {
+        Self::from(array::from_fn(f))
+    }
 }
 
 impl<R: Ring, const N: usize> Default for FreeModule<R, N> {

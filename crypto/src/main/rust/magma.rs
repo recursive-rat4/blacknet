@@ -18,6 +18,8 @@
 use core::fmt::Debug;
 use core::ops::{Add, AddAssign, Mul, MulAssign};
 
+// Finite magmata
+
 #[rustfmt::skip]
 pub trait AdditiveMagma
     : 'static

@@ -16,16 +16,17 @@
  */
 
 use crate::algebra::DivisionAlgebra;
-use crate::convolution::{Binomial, Convolution};
+use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::{AlgebraicExtension, Field, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::polynomialringmonomial::PolynomialRingMonomial;
+use crate::nttring::NTTRing;
 use crate::ring::{CommutativeRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
+use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -346,7 +347,7 @@ impl Binomial<LMField, 2> for LMField2Convolution {
     };
 }
 
-pub type LMField2 = PolynomialRingMonomial<LMField, 2, LMField2Convolution>;
+pub type LMField2 = UnivariateRing<LMField, 2, LMField2Convolution>;
 
 impl LMField2 {
     const R1: [bool; 61] = LMField::bits(0x1000000000000021);
@@ -388,3 +389,9 @@ impl Field for LMField2 {}
 impl DivisionAlgebra<LMField> for LMField2 {}
 
 impl AlgebraicExtension<LMField> for LMField2 {}
+
+// (2⁶⁰ + 2⁵ + 1) / (x⁶⁴ + 1)
+
+pub type LMRing64 = UnivariateRing<LMField, 64, Negacyclic>;
+
+pub type LMNTT64 = NTTRing<LMField, 16, 64>;
