@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![cfg(feature = "std")]
+
 use crate::milliseconds::Milliseconds;
 use std::time::SystemTime;
 

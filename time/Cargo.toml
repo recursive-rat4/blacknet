@@ -32,6 +32,10 @@ categories.workspace = true
 [dependencies]
 serde.workspace = true
 
+[features]
+default = ["std"]
+std = ["serde/std"]
+
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
