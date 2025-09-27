@@ -37,7 +37,7 @@ impl<'de, D: Decoder> de::Deserializer<'de> for &mut Deserializer<D> {
     type Error = Error;
 
     fn deserialize_any<V: Visitor<'de>>(self, _visitor: V) -> Result<V::Value> {
-        Err(Error::Message("Unsupported".to_string()))
+        Err(Error::StaticMessage("Unsupported"))
     }
 
     fn deserialize_bool<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
@@ -188,7 +188,7 @@ impl<'de, D: Decoder> de::Deserializer<'de> for &mut Deserializer<D> {
     }
 
     fn deserialize_ignored_any<V: Visitor<'de>>(self, _visitor: V) -> Result<V::Value> {
-        Err(Error::Message("Unsupported".to_string()))
+        Err(Error::StaticMessage("Unsupported"))
     }
 }
 

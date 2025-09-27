@@ -156,7 +156,7 @@ impl<E: Encoder> ser::Serializer for &mut Serializer<E> {
                 self.encoder.encode_var_int(len as u32)?;
                 Ok(self)
             }
-            None => Err(Error::Message("Unsized sequence".to_string())),
+            None => Err(Error::StaticMessage("Unsized sequence")),
         }
     }
 
