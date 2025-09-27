@@ -51,16 +51,6 @@ impl<R: Ring + MultiplicativeMonoid> UnitalRing for R {}
 pub trait CommutativeRing: UnitalRing {}
 
 #[rustfmt::skip]
-pub trait CyclotomicRing<Z: IntegerRing>
-    : PolynomialRing<Z>
-    + CommutativeAlgebra<Z>
-{
-    fn conjugate(self) -> Self;
-
-    const CYCLOTOMIC_INDEX: usize;
-}
-
-#[rustfmt::skip]
 pub trait DivisionRing
     : Ring
     + Inv<Output = Option<Self>>
@@ -103,4 +93,12 @@ pub trait PolynomialRing<R: UnitalRing>
     fn coefficients(self) -> impl Module<R>;
     fn constant_term(self) -> R;
     fn evaluate(self, point: R) -> R;
+}
+
+#[rustfmt::skip]
+pub trait PowerOfTwoCyclotomicRing<Z: IntegerRing>
+    : PolynomialRing<Z>
+    + CommutativeAlgebra<Z>
+{
+    fn conjugate(self) -> Self;
 }

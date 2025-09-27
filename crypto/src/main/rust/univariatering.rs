@@ -16,12 +16,14 @@
  */
 
 use crate::algebra::{Algebra, CommutativeAlgebra, UnitalAlgebra};
-use crate::convolution::Convolution;
+use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::magma::{AdditiveMagma, MultiplicativeMagma};
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{CommutativeRing, PolynomialRing, Ring, UnitalRing};
+use crate::ring::{
+    CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing,
+};
 use crate::semigroup::MultiplicativeSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -300,6 +302,25 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> PolynomialRing<R>
             sigma += self.coefficients[N - 1] * power;
         }
         sigma
+    }
+}
+
+impl<R: IntegerRing, const N: usize> PowerOfTwoCyclotomicRing<R>
+    for UnivariateRing<R, N, Negacyclic>
+{
+    fn conjugate(self) -> Self {
+        const {
+            assert!(N.is_power_of_two());
+        };
+        let mut coefficients = self.coefficients;
+        for i in 1..N / 2 {
+            let a = -coefficients[i];
+            let b = -coefficients[N - i];
+            coefficients[N - i] = a;
+            coefficients[i] = b;
+        }
+        coefficients[N / 2] = -coefficients[N / 2];
+        coefficients.into()
     }
 }
 

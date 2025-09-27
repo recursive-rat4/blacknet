@@ -17,7 +17,7 @@
 
 use blacknet_crypto::magma::{Inv, MultiplicativeMagma};
 use blacknet_crypto::norm::InfinityNorm;
-use blacknet_crypto::ring::{IntegerRing, Ring, UnitalRing};
+use blacknet_crypto::ring::{IntegerRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type F = blacknet_crypto::pervushin::PervushinField2;
@@ -145,4 +145,13 @@ fn f_inv() {
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
     assert_eq!(F::ZERO.inv(), None);
+}
+
+#[test]
+fn f_cnj() {
+    let a = F::from([4, 0].map(Z::new));
+    let b = F::from([654336260586812980, -209289517407125934].map(Z::new));
+    let c = F::from([654336260586812980, 209289517407125934].map(Z::new));
+    assert_eq!(a.conjugate(), a);
+    assert_eq!(b.conjugate(), c);
 }

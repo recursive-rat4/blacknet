@@ -18,12 +18,12 @@
 #![allow(clippy::manual_is_multiple_of)]
 
 use crate::convolution::{Convolution, binomial};
-use crate::ring::UnitalRing;
+use crate::ring::IntegerRing;
 use core::array;
 
 // https://arxiv.org/abs/2211.13546
 
-pub trait Twiddles<const N: usize>: UnitalRing {
+pub trait Twiddles<const N: usize>: IntegerRing {
     const TWIDDLES: [Self; N];
     const SCALE: Self;
 }

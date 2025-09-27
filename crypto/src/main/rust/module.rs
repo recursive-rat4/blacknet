@@ -53,6 +53,10 @@ impl<R: Ring, const N: usize> FreeModule<R, N> {
     pub fn from_fn<F: FnMut(usize) -> R>(f: F) -> Self {
         Self::from(array::from_fn(f))
     }
+
+    pub const fn swap(&mut self, a: usize, b: usize) {
+        self.components.swap(a, b)
+    }
 }
 
 impl<R: Ring, const N: usize> Default for FreeModule<R, N> {
