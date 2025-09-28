@@ -21,28 +21,24 @@ use core::ops::{
 };
 use serde::{Deserialize, Serialize};
 
-// A timestamp or a time interval measured in milliseconds. The value may be negative.
+// A timestamp or a time interval measured in seconds. The value may be negative.
 
 #[derive(Clone, Copy, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
-pub struct Milliseconds {
+pub struct Seconds {
     n: i64,
 }
 
-impl Milliseconds {
-    pub const fn from_seconds(n: i64) -> Self {
-        Self { n: n * 1000 }
-    }
-
+impl Seconds {
     pub const fn from_minutes(n: i64) -> Self {
-        Self { n: n * 60000 }
+        Self { n: n * 60 }
     }
 
     pub const fn from_hours(n: i64) -> Self {
-        Self { n: n * 3600000 }
+        Self { n: n * 3600 }
     }
 
     pub const fn from_days(n: i64) -> Self {
-        Self { n: n * 86400000 }
+        Self { n: n * 86400 }
     }
 
     pub const MAX: Self = Self { n: i64::MAX };
@@ -50,38 +46,38 @@ impl Milliseconds {
     pub const ZERO: Self = Self { n: 0 };
 }
 
-impl Debug for Milliseconds {
+impl Debug for Seconds {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{}", self.n)
     }
 }
 
-impl Default for Milliseconds {
+impl Default for Seconds {
     #[inline]
     fn default() -> Self {
         Self::ZERO
     }
 }
 
-impl Display for Milliseconds {
+impl Display for Seconds {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{}", self.n)
     }
 }
 
-impl From<i64> for Milliseconds {
+impl From<i64> for Seconds {
     fn from(n: i64) -> Self {
         Self { n }
     }
 }
 
-impl From<Milliseconds> for i64 {
-    fn from(millis: Milliseconds) -> Self {
-        millis.n
+impl From<Seconds> for i64 {
+    fn from(secs: Seconds) -> Self {
+        secs.n
     }
 }
 
-impl Add for Milliseconds {
+impl Add for Seconds {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -89,14 +85,14 @@ impl Add for Milliseconds {
     }
 }
 
-impl AddAssign for Milliseconds {
+impl AddAssign for Seconds {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
     }
 }
 
-impl Neg for Milliseconds {
+impl Neg for Seconds {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -104,7 +100,7 @@ impl Neg for Milliseconds {
     }
 }
 
-impl Sub for Milliseconds {
+impl Sub for Seconds {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
@@ -112,14 +108,14 @@ impl Sub for Milliseconds {
     }
 }
 
-impl SubAssign for Milliseconds {
+impl SubAssign for Seconds {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
     }
 }
 
-impl Mul<i64> for Milliseconds {
+impl Mul<i64> for Seconds {
     type Output = Self;
 
     fn mul(self, rps: i64) -> Self::Output {
@@ -127,14 +123,14 @@ impl Mul<i64> for Milliseconds {
     }
 }
 
-impl MulAssign<i64> for Milliseconds {
+impl MulAssign<i64> for Seconds {
     #[inline]
     fn mul_assign(&mut self, rps: i64) {
         *self = *self * rps
     }
 }
 
-impl Div for Milliseconds {
+impl Div for Seconds {
     type Output = i64;
 
     fn div(self, rps: Self) -> Self::Output {
@@ -142,22 +138,22 @@ impl Div for Milliseconds {
     }
 }
 
-impl Div<i64> for Milliseconds {
-    type Output = Milliseconds;
+impl Div<i64> for Seconds {
+    type Output = Seconds;
 
     fn div(self, rps: i64) -> Self::Output {
         Self { n: self.n / rps }
     }
 }
 
-impl DivAssign<i64> for Milliseconds {
+impl DivAssign<i64> for Seconds {
     #[inline]
     fn div_assign(&mut self, rps: i64) {
         *self = *self / rps
     }
 }
 
-impl Rem for Milliseconds {
+impl Rem for Seconds {
     type Output = Self;
 
     fn rem(self, rps: Self) -> Self::Output {
@@ -165,14 +161,14 @@ impl Rem for Milliseconds {
     }
 }
 
-impl RemAssign for Milliseconds {
+impl RemAssign for Seconds {
     #[inline]
     fn rem_assign(&mut self, rps: Self) {
         *self = *self % rps
     }
 }
 
-impl Rem<i64> for Milliseconds {
+impl Rem<i64> for Seconds {
     type Output = Self;
 
     fn rem(self, rps: i64) -> Self::Output {
@@ -180,7 +176,7 @@ impl Rem<i64> for Milliseconds {
     }
 }
 
-impl RemAssign<i64> for Milliseconds {
+impl RemAssign<i64> for Seconds {
     #[inline]
     fn rem_assign(&mut self, rps: i64) {
         *self = *self % rps

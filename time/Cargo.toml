@@ -45,5 +45,9 @@ name = "milliseconds"
 path = "src/test/rust/milliseconds.rs"
 
 [[test]]
+name = "seconds"
+path = "src/test/rust/seconds.rs"
+
+[[test]]
 name = "systemclock"
 path = "src/test/rust/systemclock.rs"

@@ -21,4 +21,5 @@
 extern crate std;
 
 pub mod milliseconds;
+pub mod seconds;
 pub mod systemclock;
