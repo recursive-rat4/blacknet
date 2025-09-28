@@ -15,10 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![cfg(feature = "std")]
+
 use blacknet_crypto::distribution::UniformGenerator;
 use blacknet_crypto::fastrng::FAST_RNG;
 use blacknet_crypto::integer::Integer;
-use std::error::Error;
+use alloc::format;
+use core::error::Error;
 use std::fs::{File, remove_file, rename};
 use std::io::{BufWriter, Error as IoError, ErrorKind};
 use std::path::{Path, PathBuf};
