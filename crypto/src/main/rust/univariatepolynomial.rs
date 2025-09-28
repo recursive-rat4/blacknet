@@ -78,6 +78,13 @@ impl<R: Ring> From<Vec<R>> for UnivariatePolynomial<R> {
     }
 }
 
+impl<R: Ring> AsRef<[R]> for UnivariatePolynomial<R> {
+    #[inline]
+    fn as_ref(&self) -> &[R] {
+        &self.coefficients
+    }
+}
+
 impl<R: Ring> Deref for UnivariatePolynomial<R> {
     type Target = [R];
 

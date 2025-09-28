@@ -60,6 +60,13 @@ impl<S: Debug> Debug for Point<S> {
     }
 }
 
+impl<S> AsRef<[S]> for Point<S> {
+    #[inline]
+    fn as_ref(&self) -> &[S] {
+        &self.coordinates
+    }
+}
+
 impl<S> Deref for Point<S> {
     type Target = [S];
 

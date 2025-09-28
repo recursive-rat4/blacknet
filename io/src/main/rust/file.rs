@@ -17,10 +17,10 @@
 
 #![cfg(feature = "std")]
 
+use alloc::format;
 use blacknet_crypto::distribution::UniformGenerator;
 use blacknet_crypto::fastrng::FAST_RNG;
 use blacknet_crypto::integer::Integer;
-use alloc::format;
 use core::error::Error;
 use std::fs::{File, remove_file, rename};
 use std::io::{BufWriter, Error as IoError, ErrorKind};

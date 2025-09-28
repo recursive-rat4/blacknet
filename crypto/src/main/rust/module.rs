@@ -79,6 +79,13 @@ impl<R: Ring, const N: usize> Debug for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> AsRef<[R]> for FreeModule<R, N> {
+    #[inline]
+    fn as_ref(&self) -> &[R] {
+        &self.components
+    }
+}
+
 impl<R: Ring, const N: usize> Index<usize> for FreeModule<R, N> {
     type Output = R;
 

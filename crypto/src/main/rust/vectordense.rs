@@ -103,6 +103,13 @@ impl<R: Ring> Debug for VectorDense<R> {
     }
 }
 
+impl<R: Ring> AsRef<[R]> for VectorDense<R> {
+    #[inline]
+    fn as_ref(&self) -> &[R] {
+        &self.elements
+    }
+}
+
 impl<R: Ring> Deref for VectorDense<R> {
     type Target = [R];
 
