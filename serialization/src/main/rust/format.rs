@@ -21,8 +21,8 @@ use crate::reader::Reader;
 use crate::serializer::Serializer;
 use crate::sizer::Sizer;
 use crate::writer::Writer;
+use blacknet_io::{Read, Write};
 use serde::{Deserialize, Serialize};
-use std::io::{Read, Write};
 
 pub fn from_bytes<'a, T: Deserialize<'a>>(bytes: &[u8], trail: bool) -> Result<T> {
     let reader = Reader::new(bytes);

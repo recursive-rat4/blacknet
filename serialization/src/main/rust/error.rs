@@ -26,7 +26,7 @@ pub enum Error {
     #[error("{0}")]
     StaticMessage(&'static str),
     #[error("{0}")]
-    Io(#[from] std::io::Error),
+    Io(#[from] blacknet_io::Error),
     #[error("{0}")]
     Utf8(#[from] std::string::FromUtf8Error),
     #[error("Too long VarInt")]

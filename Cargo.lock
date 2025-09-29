@@ -179,6 +179,7 @@ dependencies = [
 name = "blacknet-serialization"
 version = "0.3.0"
 dependencies = [
+ "blacknet-io",
  "serde",
  "thiserror 2.0.16",
 ]

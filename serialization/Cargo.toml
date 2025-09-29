@@ -30,6 +30,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+blacknet-io.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 

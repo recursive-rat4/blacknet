@@ -22,4 +22,13 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "std")]
+pub use std::io::Error;
+
 pub mod file;
+
+#[cfg(feature = "std")]
+pub use std::io::Read;
+
+#[cfg(feature = "std")]
+pub use std::io::Write;

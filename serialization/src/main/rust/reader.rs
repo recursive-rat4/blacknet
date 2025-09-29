@@ -17,7 +17,7 @@
 
 use crate::decoder::Decoder;
 use crate::error::{Error, Result};
-use std::io::Read;
+use blacknet_io::Read;
 
 pub struct Reader<T: Read> {
     input: T,

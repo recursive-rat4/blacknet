@@ -17,7 +17,7 @@
 
 use crate::encoder::Encoder;
 use crate::error::Result;
-use std::io::Write;
+use blacknet_io::Write;
 
 pub struct Writer<T: Write> {
     output: T,
