@@ -16,6 +16,7 @@
  */
 
 use blacknet_crypto::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
+use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::ring::{IntegerRing, Ring, UnitalRing};
 
 type Z = blacknet_crypto::lm::LMField;
@@ -384,4 +385,20 @@ fn r64_mul() {
     assert_eq!(a_ntt * b_ntt, c_ntt);
     assert_eq!(NTT64::UNITY * c_ntt, c_ntt);
     assert_eq!(c_ntt * Z::ZERO, NTT64::ZERO);
+}
+
+#[test]
+fn r64_infinity_norm() {
+    let mut coeffs = [Z::ZERO; 64];
+    coeffs[..8].copy_from_slice(&[-67133638855483916, 6, 5, 4, 3, 2, 1, 0].map(Z::new));
+    let bad = 67133638855483916;
+    let good = 67133638855483917;
+
+    let elt = R64::from(coeffs);
+    assert!(!elt.check_infinity_norm(bad));
+    assert!(elt.check_infinity_norm(good));
+
+    let elt = NTT64::from(coeffs);
+    assert!(!elt.check_infinity_norm(bad));
+    assert!(elt.check_infinity_norm(good));
 }

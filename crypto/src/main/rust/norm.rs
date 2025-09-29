@@ -15,12 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::convolution::Convolution;
 use crate::float::FloatOn;
 use crate::integer::Integer;
 use crate::matrixdense::MatrixDense;
 use crate::matrixring::MatrixRing;
 use crate::module::FreeModule;
-use crate::ring::{IntegerRing, Ring};
+use crate::nttring::NTTRing;
+use crate::numbertheoretictransform::Twiddles;
+use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
+use crate::univariatering::UnivariateRing;
 use crate::vectordense::VectorDense;
 use crate::vectorsparse::VectorSparse;
 
@@ -48,6 +52,15 @@ impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N>
 }
 
 #[cfg(feature = "std")]
+impl<Z: Twiddles<M> + EuclideanNorm, const M: usize, const N: usize> EuclideanNorm
+    for NTTRing<Z, M, N>
+{
+    fn euclidean_norm(&self) -> f64 {
+        self.coefficients().euclidean_norm()
+    }
+}
+
+#[cfg(feature = "std")]
 impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorDense<R> {
     fn euclidean_norm(&self) -> f64 {
         self.elements()
@@ -68,6 +81,15 @@ impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorSparse<R> {
             .map(|i| i * i)
             .sum::<f64>()
             .sqrt()
+    }
+}
+
+#[cfg(feature = "std")]
+impl<R: UnitalRing + EuclideanNorm, const N: usize, C: Convolution<R, N>> EuclideanNorm
+    for UnivariateRing<R, N, C>
+{
+    fn euclidean_norm(&self) -> f64 {
+        self.coefficients().euclidean_norm()
     }
 }
 
@@ -103,6 +125,14 @@ impl<R: Ring + InfinityNorm<R::Int>, const N: usize, const NN: usize> InfinityNo
     }
 }
 
+impl<Z: Twiddles<M> + InfinityNorm<Z::Int>, const M: usize, const N: usize> InfinityNorm<Z::Int>
+    for NTTRing<Z, M, N>
+{
+    fn check_infinity_norm(&self, bound: Z::Int) -> bool {
+        self.coefficients().check_infinity_norm(bound)
+    }
+}
+
 impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for VectorDense<R> {
     fn check_infinity_norm(&self, bound: R::Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
@@ -112,5 +142,13 @@ impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for VectorDense<R> {
 impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for VectorSparse<R> {
     fn check_infinity_norm(&self, bound: R::Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
+    }
+}
+
+impl<R: UnitalRing + InfinityNorm<R::Int>, const N: usize, C: Convolution<R, N>>
+    InfinityNorm<R::Int> for UnivariateRing<R, N, C>
+{
+    fn check_infinity_norm(&self, bound: R::Int) -> bool {
+        self.coefficients().check_infinity_norm(bound)
     }
 }
