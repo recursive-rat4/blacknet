@@ -15,19 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![no_std]
+use thiserror::Error;
 
-extern crate alloc;
+#[derive(Debug, Error)]
+#[error("{message}")]
+pub struct Error {
+    message: &'static str,
+}
 
-#[cfg(feature = "std")]
-extern crate std;
+impl Error {
+    pub(crate) fn unexpected_eof() -> Self {
+        Self {
+            message: "Unexpected end of file",
+        }
+    }
+}
 
-pub mod decoder;
-pub mod deserializer;
-pub mod encoder;
-pub mod error;
-pub mod format;
-pub mod reader;
-pub mod serializer;
-pub mod sizer;
-pub mod writer;
+pub type Result<T> = core::result::Result<T, Error>;

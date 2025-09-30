@@ -16,6 +16,7 @@
  */
 
 use crate::error::Result;
+use alloc::vec::Vec;
 
 pub trait Decoder {
     fn decode_u8(&mut self) -> Result<u8>;

@@ -144,6 +144,7 @@ name = "blacknet-io"
 version = "0.3.0"
 dependencies = [
  "blacknet-crypto",
+ "thiserror 2.0.17",
 ]
 
 [[package]]

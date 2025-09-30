@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use alloc::string::{FromUtf8Error, String, ToString};
 use core::fmt::Display;
 use serde::{de, ser};
 use thiserror::Error;
@@ -28,7 +29,7 @@ pub enum Error {
     #[error("{0}")]
     Io(#[from] blacknet_io::Error),
     #[error("{0}")]
-    Utf8(#[from] std::string::FromUtf8Error),
+    Utf8(#[from] FromUtf8Error),
     #[error("Too long VarInt")]
     TooLongVarInt,
     #[error("0x{0:X} is not boolean")]

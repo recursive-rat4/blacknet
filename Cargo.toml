@@ -32,7 +32,7 @@ members = [
 [workspace.dependencies]
 blacknet-compat = { path = "compat" }
 blacknet-crypto = { path = "crypto" }
-blacknet-io = { path = "io" }
+blacknet-io = { path = "io", default-features = false }
 blacknet-log = { path = "log" }
 blacknet-network = { path = "network" }
 blacknet-serialization = { path = "serialization" }

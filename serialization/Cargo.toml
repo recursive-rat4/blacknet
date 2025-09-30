@@ -34,6 +34,10 @@ blacknet-io.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 
+[features]
+default = ["std"]
+std = ["blacknet-io/std"]
+
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"

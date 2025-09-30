@@ -15,19 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![no_std]
+use crate::error::Result;
+use alloc::vec::Vec;
 
-extern crate alloc;
+pub trait Write {
+    fn write_all(&mut self, buf: &[u8]) -> Result<()>;
+}
 
-#[cfg(feature = "std")]
-extern crate std;
+impl Write for Vec<u8> {
+    fn write_all(&mut self, buf: &[u8]) -> Result<()> {
+        self.extend(buf);
+        Ok(())
+    }
+}
 
-pub mod decoder;
-pub mod deserializer;
-pub mod encoder;
-pub mod error;
-pub mod format;
-pub mod reader;
-pub mod serializer;
-pub mod sizer;
-pub mod writer;
+impl<W: Write> Write for &mut W {
+    fn write_all(&mut self, buf: &[u8]) -> Result<()> {
+        (*self).write_all(buf)
+    }
+}

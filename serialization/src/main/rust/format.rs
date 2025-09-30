@@ -21,6 +21,7 @@ use crate::reader::Reader;
 use crate::serializer::Serializer;
 use crate::sizer::Sizer;
 use crate::writer::Writer;
+use alloc::vec::Vec;
 use blacknet_io::{Read, Write};
 use serde::{Deserialize, Serialize};
 

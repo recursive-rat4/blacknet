@@ -24,11 +24,23 @@ extern crate std;
 
 #[cfg(feature = "std")]
 pub use std::io::Error;
+#[cfg(not(feature = "std"))]
+mod error;
+#[cfg(not(feature = "std"))]
+pub use error::Error;
 
 pub mod file;
 
 #[cfg(feature = "std")]
 pub use std::io::Read;
+#[cfg(not(feature = "std"))]
+mod read;
+#[cfg(not(feature = "std"))]
+pub use read::Read;
 
 #[cfg(feature = "std")]
 pub use std::io::Write;
+#[cfg(not(feature = "std"))]
+mod write;
+#[cfg(not(feature = "std"))]
+pub use write::Write;

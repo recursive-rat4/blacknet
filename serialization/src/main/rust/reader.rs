@@ -17,6 +17,8 @@
 
 use crate::decoder::Decoder;
 use crate::error::{Error, Result};
+use alloc::vec;
+use alloc::vec::Vec;
 use blacknet_io::Read;
 
 pub struct Reader<T: Read> {

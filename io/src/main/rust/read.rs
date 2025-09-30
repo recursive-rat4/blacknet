@@ -15,19 +15,26 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![no_std]
+use crate::error::{Error, Result};
 
-extern crate alloc;
+pub trait Read {
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()>;
+}
 
-#[cfg(feature = "std")]
-extern crate std;
+impl Read for &[u8] {
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
+        if let Some((right, left)) = self.split_at_checked(buf.len()) {
+            buf.copy_from_slice(right);
+            *self = left;
+            Ok(())
+        } else {
+            Err(Error::unexpected_eof())
+        }
+    }
+}
 
-pub mod decoder;
-pub mod deserializer;
-pub mod encoder;
-pub mod error;
-pub mod format;
-pub mod reader;
-pub mod serializer;
-pub mod sizer;
-pub mod writer;
+impl<R: Read> Read for &mut R {
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
+        (*self).read_exact(buf)
+    }
+}
