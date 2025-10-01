@@ -29,5 +29,6 @@ pub mod point;
 pub mod poseidon2;
 pub mod poseidon2lm;
 pub mod poseidon2pervushin;
+pub mod quartaryuniformdistribution;
 pub mod sumcheck;
 pub mod univariatepolynomial;

@@ -70,6 +70,7 @@ pub mod polynomial;
 pub mod poseidon2;
 pub mod poseidon2lm;
 pub mod poseidon2pervushin;
+pub mod quartaryuniformdistribution;
 pub mod r1cs;
 pub mod ring;
 pub mod semigroup;

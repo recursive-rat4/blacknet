@@ -143,6 +143,10 @@ name = "poseidon2"
 path = "src/test/rust/poseidon2.rs"
 
 [[test]]
+name = "quartaryuniformdistribution"
+path = "src/test/rust/quartaryuniformdistribution.rs"
+
+[[test]]
 name = "r1cs"
 path = "src/test/rust/r1cs.rs"
 
