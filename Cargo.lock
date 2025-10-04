@@ -151,6 +151,7 @@ dependencies = [
 name = "blacknet-log"
 version = "0.3.0"
 dependencies = [
+ "chrono",
  "spdlog-rs",
  "thiserror 2.0.17",
 ]

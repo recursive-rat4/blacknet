@@ -16,8 +16,9 @@
  */
 
 use crate::error::{Error, Result};
-use crate::info;
+use crate::{UTC, info};
 use spdlog::Level;
+use spdlog::formatter::{Formatter, PatternFormatter, pattern};
 use spdlog::sink::RotatingFileSink;
 use spdlog::sink::RotationPolicy;
 use spdlog::sink::Sink;
@@ -28,8 +29,6 @@ use std::env::VarError;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
-
-//TODO logger->set_pattern("%+", spdlog::pattern_time_type::utc);
 
 pub enum Strategy {
     Daemon,
@@ -90,6 +89,7 @@ impl LogManager {
         Ok(StdStreamSink::builder()
             .stdout()
             .style_mode(StyleMode::Auto)
+            .formatter(Self::formatter())
             .build()
             .map(|sink| Arc::new(sink) as Arc<dyn Sink>)?)
     }
@@ -100,8 +100,17 @@ impl LogManager {
             .rotation_policy(RotationPolicy::FileSize(5000000))
             .max_files(2)
             .rotate_on_open(false)
+            .formatter(Self::formatter())
             .build()
             .map(|sink| Arc::new(sink) as Arc<dyn Sink>)?)
+    }
+
+    fn formatter() -> impl Formatter {
+        let pattern = pattern!(
+            "[{$utc}] [{logger}] [{^{level}}] {payload}{eol}",
+            {$utc} => UTC::default,
+        );
+        PatternFormatter::new(pattern)
     }
 }
 
