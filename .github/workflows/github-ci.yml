@@ -38,7 +38,7 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - run: cargo build --package blacknet-crypto --package blacknet-io --package blacknet-serialization --package blacknet-time --no-default-features
-      - run: cargo test --package blacknet-crypto --package blacknet-io --package blacknet-serialization --package blacknet-time --no-default-features
+      - run: cargo build --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
+      - run: cargo test --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
       - run: cargo build
       - run: cargo test
