@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,14 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![no_std]
+use alloc::string::String;
+use thiserror::Error;
 
-extern crate alloc;
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Already have {0}")]
+    AlreadyHave(String),
+    #[error("Too far in future {0}")]
+    InFuture(String),
+    #[error("{0}")]
+    Invalid(String),
+    #[error("Not reachable vertex {0}")]
+    NotReachableVertex(String),
+}
 
-pub mod account;
-pub mod amount;
-pub mod blake2b;
-pub mod error;
-pub mod hashlock;
-pub mod proofofstake;
-pub mod timelock;
+pub type Result<T> = core::result::Result<T, Error>;

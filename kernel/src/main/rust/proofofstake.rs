@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2014-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,14 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![no_std]
-
-extern crate alloc;
-
-pub mod account;
-pub mod amount;
-pub mod blake2b;
-pub mod error;
-pub mod hashlock;
-pub mod proofofstake;
-pub mod timelock;
+/**
+ * Number of confirmations to make coins eligible for staking
+ */
+pub const MATURITY: u32 = 1350;
