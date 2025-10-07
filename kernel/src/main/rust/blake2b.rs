@@ -17,4 +17,6 @@
 
 pub type Blake2b256 = blake2::Blake2b<digest::consts::U32>;
 
+pub type Hash = [u8; 32];
+
 pub type Blake2b512 = blake2::Blake2b512;

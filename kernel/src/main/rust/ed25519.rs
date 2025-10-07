@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,18 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![no_std]
+use alloc::vec::Vec;
+use core::array::TryFromSliceError;
+use core::mem::transmute;
+use serde::{Deserialize, Serialize};
 
-extern crate alloc;
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Signature {
+    r: [u8; 32],
+    s: [u8; 32],
+}
 
-pub mod account;
-pub mod amount;
-pub mod blake2b;
-pub mod block;
-pub mod ed25519;
-pub mod error;
-pub mod hashlock;
-pub mod proofofstake;
-pub mod timelock;
-pub mod transaction;
-pub mod txkind;
+impl TryFrom<Vec<u8>> for Signature {
+    type Error = TryFromSliceError;
+
+    fn try_from(vec: Vec<u8>) -> Result<Self, Self::Error> {
+        let bytes = <[u8; 64]>::try_from(vec.as_slice())?;
+        let rs: [[u8; 32]; 2] = unsafe { transmute(bytes) };
+        Ok(Self { r: rs[0], s: rs[1] })
+    }
+}
+
+pub type PublicKey = [u8; 32];
+
+pub type PrivateKey = [u8; 32];

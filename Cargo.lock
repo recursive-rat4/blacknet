@@ -153,8 +153,10 @@ version = "0.3.0"
 dependencies = [
  "blacknet-compat",
  "blacknet-crypto",
+ "blacknet-serialization",
  "blacknet-time",
  "blake2",
+ "data-encoding",
  "digest",
  "ripemd",
  "serde",

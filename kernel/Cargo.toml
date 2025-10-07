@@ -42,10 +42,16 @@ thiserror.workspace = true
 
 [dev-dependencies]
 blacknet-compat.workspace = true
+blacknet-serialization.workspace = true
+data-encoding.workspace = true
 
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "block"
+path = "src/test/rust/block.rs"
 
 [[test]]
 name = "hashlock"
