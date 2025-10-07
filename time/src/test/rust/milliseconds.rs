@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_time::milliseconds::Milliseconds;
+use blacknet_time::Milliseconds;
 
 #[test]
 fn compare() {

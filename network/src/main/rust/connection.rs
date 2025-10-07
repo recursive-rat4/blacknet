@@ -16,7 +16,7 @@
  */
 
 use crate::endpoint::Endpoint;
-use blacknet_time::milliseconds::Milliseconds;
+use blacknet_time::Milliseconds;
 
 pub struct Connection {
     id: u64,

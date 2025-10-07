@@ -17,7 +17,7 @@
 
 #![cfg(feature = "std")]
 
-use blacknet_time::systemclock::SystemClock;
+use blacknet_time::SystemClock;
 
 #[test]
 fn access() {

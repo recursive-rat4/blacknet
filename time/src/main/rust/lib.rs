@@ -20,6 +20,11 @@
 #[cfg(feature = "std")]
 extern crate std;
 
-pub mod milliseconds;
-pub mod seconds;
-pub mod systemclock;
+mod milliseconds;
+mod seconds;
+mod systemclock;
+
+pub use milliseconds::*;
+pub use seconds::*;
+#[cfg(feature = "std")]
+pub use systemclock::*;
