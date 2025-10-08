@@ -18,7 +18,7 @@
 use crate::amount::Amount;
 use crate::blake2b::{Blake2b256, Hash};
 use crate::ed25519::{PublicKey, Signature};
-use crate::txkind::TxKind;
+use crate::transaction::TxKind;
 use alloc::boxed::Box;
 use core::mem::size_of;
 use digest::Digest;

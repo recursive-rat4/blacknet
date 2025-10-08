@@ -15,18 +15,34 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::module_inception)]
-#![no_std]
+mod batch;
+mod blob;
+mod burn;
+mod cancellease;
+mod claimhtlc;
+mod createhtlc;
+mod createmultisig;
+mod dispel;
+mod lease;
+mod refundhtlc;
+mod spendmultisig;
+mod transaction;
+mod transfer;
+mod txkind;
+mod withdrawfromlease;
 
-extern crate alloc;
-
-pub mod account;
-pub mod amount;
-pub mod blake2b;
-pub mod block;
-pub mod ed25519;
-pub mod error;
-pub mod hashlock;
-pub mod proofofstake;
-pub mod timelock;
-pub mod transaction;
+pub use batch::*;
+pub use blob::*;
+pub use burn::*;
+pub use cancellease::*;
+pub use claimhtlc::*;
+pub use createhtlc::*;
+pub use createmultisig::*;
+pub use dispel::*;
+pub use lease::*;
+pub use refundhtlc::*;
+pub use spendmultisig::*;
+pub use transaction::*;
+pub use transfer::*;
+pub use txkind::*;
+pub use withdrawfromlease::*;

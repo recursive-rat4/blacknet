@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,18 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::module_inception)]
-#![no_std]
+use crate::amount::Amount;
+use crate::ed25519::PublicKey;
+use crate::hashlock::HashLock;
+use crate::timelock::TimeLock;
+use serde::{Deserialize, Serialize};
 
-extern crate alloc;
+pub type HashTimeLockContractId = [u8; 32];
 
-pub mod account;
-pub mod amount;
-pub mod blake2b;
-pub mod block;
-pub mod ed25519;
-pub mod error;
-pub mod hashlock;
-pub mod proofofstake;
-pub mod timelock;
-pub mod transaction;
+#[derive(Deserialize, Serialize)]
+pub struct CreateHTLC {
+    amount: Amount,
+    to: PublicKey,
+    time_lock: TimeLock,
+    hash_lock: HashLock,
+}

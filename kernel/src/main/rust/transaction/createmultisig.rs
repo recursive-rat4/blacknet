@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,18 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::module_inception)]
-#![no_std]
+use crate::amount::Amount;
+use crate::ed25519::{PublicKey, Signature};
+use alloc::boxed::Box;
+use serde::{Deserialize, Serialize};
 
-extern crate alloc;
+pub type MultiSignatureLockContractId = [u8; 32];
 
-pub mod account;
-pub mod amount;
-pub mod blake2b;
-pub mod block;
-pub mod ed25519;
-pub mod error;
-pub mod hashlock;
-pub mod proofofstake;
-pub mod timelock;
-pub mod transaction;
+#[derive(Deserialize, Serialize)]
+pub struct Deposit {
+    from: PublicKey,
+    amount: Amount,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct Sig {
+    index: u8,
+    signature: Signature,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct CreateMultisig {
+    n: u8,
+    deposits: Box<[Deposit]>,
+    signatures: Box<[Sig]>,
+}
