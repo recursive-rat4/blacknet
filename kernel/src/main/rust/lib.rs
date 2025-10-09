@@ -27,6 +27,8 @@ pub mod block;
 pub mod ed25519;
 pub mod error;
 pub mod hashlock;
+pub mod htlc;
+pub mod multisig;
 pub mod proofofstake;
 pub mod timelock;
 pub mod transaction;

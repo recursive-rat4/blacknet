@@ -16,11 +16,40 @@
  */
 
 use crate::amount::Amount;
+use crate::blake2b::Hash;
 use crate::ed25519::PublicKey;
+use crate::error::{Error, Result};
+use crate::proofofstake::MIN_LEASE;
+use crate::transaction::{CoinTx, Transaction, TxData};
+use alloc::format;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct Lease {
     amount: Amount,
     to: PublicKey,
+}
+
+impl TxData for Lease {
+    fn process_impl(
+        &self,
+        tx: Transaction,
+        _hash: Hash,
+        _data_index: u32,
+        coin_tx: impl CoinTx,
+    ) -> Result<()> {
+        if self.amount < MIN_LEASE {
+            return Err(Error::Invalid(format!(
+                "{0} less than minimal {MIN_LEASE}",
+                self.amount
+            )));
+        }
+        let mut account = coin_tx.get_account(tx.from)?;
+        account.credit(self.amount)?;
+        coin_tx.set_account(tx.from, account);
+        let mut to_account = coin_tx.get_or_create(self.to);
+        to_account.add_lease(tx.from, coin_tx.height(), self.amount);
+        coin_tx.set_account(self.to, to_account);
+        Ok(())
+    }
 }

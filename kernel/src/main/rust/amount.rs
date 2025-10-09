@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use core::fmt::{Display, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
@@ -26,6 +27,24 @@ pub struct Amount {
 
 impl Amount {
     pub const ZERO: Self = Self { value: 0 };
+    /**
+     * The satoshi is a monetary unit of many cryptocurrencies
+     */
+    pub const COIN: Self = Self { value: 100000000 };
+
+    pub const fn new(value: u64) -> Self {
+        Self { value }
+    }
+
+    pub const fn value(self) -> u64 {
+        self.value
+    }
+}
+
+impl Display for Amount {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}", self.value)
+    }
 }
 
 impl From<u64> for Amount {

@@ -15,7 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::amount::Amount;
+use crate::blake2b::Hash;
+use crate::error::{Error, Result};
+use crate::transaction::{CoinTx, Transaction, TxData};
+use alloc::borrow::ToOwned;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct Dispel;
+
+impl TxData for Dispel {
+    fn process_impl(
+        &self,
+        tx: Transaction,
+        _hash: Hash,
+        _data_index: u32,
+        _coin_tx: impl CoinTx,
+    ) -> Result<()> {
+        if tx.fee > Amount::ZERO {
+            Ok(())
+        } else {
+            Err(Error::Invalid("Invalid transaction fee".to_owned()))
+        }
+    }
+}

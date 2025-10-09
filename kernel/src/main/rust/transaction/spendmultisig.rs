@@ -26,3 +26,5 @@ pub struct SpendMultisig {
     amounts: Box<[Amount]>,
     signatures: Box<[Sig]>,
 }
+
+//TODO

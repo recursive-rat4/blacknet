@@ -16,20 +16,22 @@
  */
 
 use crate::blake2b::Blake2b256;
+use crate::error::{Error, Result};
+use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
+use alloc::format;
 use digest::Digest;
 use ripemd::Ripemd160;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use sha3::Keccak256;
-use thiserror::Error;
 
 pub const BLAKE2B_256: u8 = 0;
 pub const SHA2_256: u8 = 1;
 pub const KECCAK_256: u8 = 2;
 pub const RIPEMD_160: u8 = 3;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct HashLock {
     algorithm: u8,
     image: Box<[u8]>,
@@ -48,10 +50,11 @@ impl HashLock {
         if lengthe == self.image.len() {
             Ok(())
         } else {
-            Err(Error::InvalidLengthe {
-                expected: lengthe,
-                actual: self.image.len(),
-            })
+            Err(Error::Invalid(format!(
+                "Expected hash lock lengthe {0} actual {1}",
+                lengthe,
+                self.image.len(),
+            )))
         }
     }
 
@@ -61,12 +64,17 @@ impl HashLock {
             SHA2_256 => Box::new(Into::<[u8; 32]>::into(Sha256::digest(preimage))),
             KECCAK_256 => Box::new(Into::<[u8; 32]>::into(Keccak256::digest(preimage))),
             RIPEMD_160 => Box::new(Into::<[u8; 20]>::into(Ripemd160::digest(preimage))),
-            _ => return Err(Error::UnknownType(self.algorithm)),
+            _ => {
+                return Err(Error::Invalid(format!(
+                    "Unknown hash type {0}",
+                    self.algorithm
+                )));
+            }
         };
         if hash == self.image {
             Ok(())
         } else {
-            Err(Error::InvalidPreimage)
+            Err(Error::Invalid("Invalid hash lock preimage".to_owned()))
         }
     }
 
@@ -76,19 +84,12 @@ impl HashLock {
             SHA2_256 => 32,
             KECCAK_256 => 32,
             RIPEMD_160 => 20,
-            _ => return Err(Error::UnknownType(self.algorithm)),
+            _ => {
+                return Err(Error::Invalid(format!(
+                    "Unknown hash type {0}",
+                    self.algorithm
+                )));
+            }
         })
     }
 }
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("Unknown hash type {0}")]
-    UnknownType(u8),
-    #[error("Expected hash lock lengthe {expected} actual {actual}")]
-    InvalidLengthe { expected: usize, actual: usize },
-    #[error("Invalid hash lock preimage")]
-    InvalidPreimage,
-}
-
-pub type Result<T> = core::result::Result<T, Error>;

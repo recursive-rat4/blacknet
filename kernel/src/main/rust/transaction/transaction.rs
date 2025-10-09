@@ -26,13 +26,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct Transaction {
-    signature: Signature,
-    from: PublicKey,
-    seq: u32,
-    anchor: Hash,
-    fee: Amount,
-    kind: TxKind,
-    data: Box<[u8]>,
+    pub signature: Signature,
+    pub from: PublicKey,
+    pub seq: u32,
+    pub anchor: Hash,
+    pub fee: Amount,
+    pub kind: TxKind,
+    pub data: Box<[u8]>,
 }
 
 impl Transaction {

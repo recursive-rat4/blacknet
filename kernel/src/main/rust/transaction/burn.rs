@@ -16,6 +16,10 @@
  */
 
 use crate::amount::Amount;
+use crate::blake2b::Hash;
+use crate::error::{Error, Result};
+use crate::transaction::{CoinTx, Transaction, TxData};
+use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
@@ -23,4 +27,23 @@ use serde::{Deserialize, Serialize};
 pub struct Burn {
     amount: Amount,
     message: Box<[u8]>,
+}
+
+impl TxData for Burn {
+    fn process_impl(
+        &self,
+        tx: Transaction,
+        _hash: Hash,
+        _data_index: u32,
+        coin_tx: impl CoinTx,
+    ) -> Result<()> {
+        if self.amount == Amount::ZERO {
+            return Err(Error::Invalid("Invalid amount".to_owned()));
+        }
+        let mut account = coin_tx.get_account(tx.from)?;
+        account.credit(self.amount)?;
+        coin_tx.set_account(tx.from, account);
+        coin_tx.sub_supply(self.amount);
+        Ok(())
+    }
 }

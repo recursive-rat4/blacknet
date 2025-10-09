@@ -15,10 +15,40 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::transaction::HashTimeLockContractId;
+use crate::blake2b::Hash;
+use crate::error::{Error, Result};
+use crate::transaction::{CoinTx, HashTimeLockContractId, Transaction, TxData};
+use alloc::borrow::ToOwned;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct RefundHTLC {
     id: HashTimeLockContractId,
+}
+
+impl TxData for RefundHTLC {
+    fn process_impl(
+        &self,
+        tx: Transaction,
+        _hash: Hash,
+        _data_index: u32,
+        coin_tx: impl CoinTx,
+    ) -> Result<()> {
+        let htlc = coin_tx.get_htlc(self.id)?;
+        if tx.from != htlc.from {
+            return Err(Error::Invalid("Invalid sender".to_owned()));
+        }
+        htlc.time_lock.verify(
+            htlc.height,
+            htlc.time,
+            coin_tx.height(),
+            coin_tx.block_time(),
+        )?;
+
+        let mut account = coin_tx.get_account(tx.from)?;
+        account.debit(coin_tx.height(), htlc.amount);
+        coin_tx.set_account(tx.from, account);
+        coin_tx.remove_htlc(self.id);
+        Ok(())
+    }
 }

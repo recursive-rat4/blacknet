@@ -16,40 +16,19 @@
  */
 
 use crate::amount::Amount;
-use crate::blake2b::Hash;
 use crate::ed25519::PublicKey;
-use crate::error::Result;
-use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::boxed::Box;
+use crate::hashlock::HashLock;
+use crate::timelock::TimeLock;
+use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-pub struct PaymentId {
-    kind: u8,
-    payload: Box<[u8]>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct Transfer {
-    amount: Amount,
-    to: PublicKey,
-    payment_id: PaymentId,
-}
-
-impl TxData for Transfer {
-    fn process_impl(
-        &self,
-        tx: Transaction,
-        _hash: Hash,
-        _data_index: u32,
-        coin_tx: impl CoinTx,
-    ) -> Result<()> {
-        let mut account = coin_tx.get_account(tx.from)?;
-        account.credit(self.amount)?;
-        coin_tx.set_account(tx.from, account);
-        let mut to_account = coin_tx.get_or_create(self.to);
-        to_account.debit(coin_tx.height(), self.amount);
-        coin_tx.set_account(self.to, to_account);
-        Ok(())
-    }
+pub struct HTLC {
+    pub height: u32,
+    pub time: Seconds,
+    pub amount: Amount,
+    pub from: PublicKey,
+    pub to: PublicKey,
+    pub time_lock: TimeLock,
+    pub hash_lock: HashLock,
 }

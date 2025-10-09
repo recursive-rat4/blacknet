@@ -20,32 +20,52 @@ use blacknet_kernel::timelock::*;
 
 #[test]
 fn absolute_time() {
-    assert_err!(TimeLock::new(TIME, 1000000).verify(0, 0, 0, 1000000 - 1));
-    assert_err!(TimeLock::new(TIME, 1000000).verify(0, 0, 0, 1000000));
-    assert_ok!(TimeLock::new(TIME, 1000000).verify(0, 0, 0, 1000001));
-    assert_ok!(TimeLock::new(TIME, 1000000).verify(0, 0, 0, 1000001 + 1));
+    assert_err!(TimeLock::new(TIME, 1000000).verify(0, 0.into(), 0, (1000000 - 1).into()));
+    assert_err!(TimeLock::new(TIME, 1000000).verify(0, 0.into(), 0, 1000000.into()));
+    assert_ok!(TimeLock::new(TIME, 1000000).verify(0, 0.into(), 0, 1000001.into()));
+    assert_ok!(TimeLock::new(TIME, 1000000).verify(0, 0.into(), 0, (1000001 + 1).into()));
 }
 
 #[test]
 fn absolute_height() {
-    assert_err!(TimeLock::new(HEIGHT, 1000000).verify(0, 0, 1000000 - 1, 0));
-    assert_err!(TimeLock::new(HEIGHT, 1000000).verify(0, 0, 1000000, 0));
-    assert_ok!(TimeLock::new(HEIGHT, 1000000).verify(0, 0, 1000001, 0));
-    assert_ok!(TimeLock::new(HEIGHT, 1000000).verify(0, 0, 1000001 + 1, 0));
+    assert_err!(TimeLock::new(HEIGHT, 1000000).verify(0, 0.into(), 1000000 - 1, 0.into()));
+    assert_err!(TimeLock::new(HEIGHT, 1000000).verify(0, 0.into(), 1000000, 0.into()));
+    assert_ok!(TimeLock::new(HEIGHT, 1000000).verify(0, 0.into(), 1000001, 0.into()));
+    assert_ok!(TimeLock::new(HEIGHT, 1000000).verify(0, 0.into(), 1000001 + 1, 0.into()));
 }
 
 #[test]
 fn relative_time() {
-    assert_err!(TimeLock::new(RELATIVE_TIME, 10000).verify(0, 990000, 0, 1000000 - 1));
-    assert_err!(TimeLock::new(RELATIVE_TIME, 10000).verify(0, 990000, 0, 1000000));
-    assert_ok!(TimeLock::new(RELATIVE_TIME, 10000).verify(0, 990000, 0, 1000001));
-    assert_ok!(TimeLock::new(RELATIVE_TIME, 10000).verify(0, 990000, 0, 1000001 + 1));
+    assert_err!(TimeLock::new(RELATIVE_TIME, 10000).verify(
+        0,
+        990000.into(),
+        0,
+        (1000000 - 1).into()
+    ));
+    assert_err!(TimeLock::new(RELATIVE_TIME, 10000).verify(0, 990000.into(), 0, 1000000.into()));
+    assert_ok!(TimeLock::new(RELATIVE_TIME, 10000).verify(0, 990000.into(), 0, 1000001.into()));
+    assert_ok!(TimeLock::new(RELATIVE_TIME, 10000).verify(
+        0,
+        990000.into(),
+        0,
+        (1000001 + 1).into()
+    ));
 }
 
 #[test]
 fn relative_height() {
-    assert_err!(TimeLock::new(RELATIVE_HEIGHT, 10000).verify(990000, 0, 1000000 - 1, 0));
-    assert_err!(TimeLock::new(RELATIVE_HEIGHT, 10000).verify(990000, 0, 1000000, 0));
-    assert_ok!(TimeLock::new(RELATIVE_HEIGHT, 10000).verify(990000, 0, 1000001, 0));
-    assert_ok!(TimeLock::new(RELATIVE_HEIGHT, 10000).verify(990000, 0, 1000001 + 1, 0));
+    assert_err!(TimeLock::new(RELATIVE_HEIGHT, 10000).verify(
+        990000,
+        0.into(),
+        1000000 - 1,
+        0.into()
+    ));
+    assert_err!(TimeLock::new(RELATIVE_HEIGHT, 10000).verify(990000, 0.into(), 1000000, 0.into()));
+    assert_ok!(TimeLock::new(RELATIVE_HEIGHT, 10000).verify(990000, 0.into(), 1000001, 0.into()));
+    assert_ok!(TimeLock::new(RELATIVE_HEIGHT, 10000).verify(
+        990000,
+        0.into(),
+        1000001 + 1,
+        0.into()
+    ));
 }

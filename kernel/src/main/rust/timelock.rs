@@ -15,15 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::error::{Error, Result};
+use alloc::borrow::ToOwned;
+use alloc::format;
+use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 pub const TIME: u8 = 0;
 pub const HEIGHT: u8 = 1;
 pub const RELATIVE_TIME: u8 = 2;
 pub const RELATIVE_HEIGHT: u8 = 3;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct TimeLock {
     algorithm: u8,
     data: i64,
@@ -40,38 +43,36 @@ impl TimeLock {
             HEIGHT => Ok(()),
             RELATIVE_TIME => Ok(()),
             RELATIVE_HEIGHT => Ok(()),
-            _ => Err(Error::UnknownType(self.algorithm)),
+            _ => Err(Error::Invalid(format!(
+                "Unknown time lock type {0}",
+                self.algorithm
+            ))),
         }
     }
 
     pub fn verify(
         &self,
         compiler_height: u32,
-        compiler_time: i64,
+        compiler_time: Seconds,
         height: u32,
-        time: i64,
+        time: Seconds,
     ) -> Result<()> {
         let result = match self.algorithm {
-            TIME => self.data < time,
+            TIME => self.data < time.into(),
             HEIGHT => self.data < height as i64,
-            RELATIVE_TIME => compiler_time + self.data < time,
+            RELATIVE_TIME => compiler_time + self.data.into() < time,
             RELATIVE_HEIGHT => compiler_height as i64 + self.data < height as i64,
-            _ => return Err(Error::UnknownType(self.algorithm)),
+            _ => {
+                return Err(Error::Invalid(format!(
+                    "Unknown time lock type {0}",
+                    self.algorithm
+                )));
+            }
         };
         if result {
             Ok(())
         } else {
-            Err(Error::InvalidTime)
+            Err(Error::Invalid("Invalid time lock".to_owned()))
         }
     }
 }
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("Unknown time lock type {0}")]
-    UnknownType(u8),
-    #[error("Invalid time")]
-    InvalidTime,
-}
-
-pub type Result<T> = core::result::Result<T, Error>;

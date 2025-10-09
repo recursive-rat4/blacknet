@@ -16,9 +16,11 @@
  */
 
 use crate::amount::Amount;
+use crate::ed25519::PublicKey;
 use crate::error::{Error, Result};
-use crate::proofofstake::MATURITY;
+use crate::proofofstake::{MATURITY, MIN_LEASE};
 use alloc::borrow::ToOwned;
+use alloc::format;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
@@ -98,6 +100,57 @@ impl Account {
         }
     }
 
+    pub fn add_lease(&mut self, public_key: PublicKey, height: u32, amount: Amount) {
+        self.leases.push(Lease {
+            public_key,
+            height,
+            amount,
+        })
+    }
+
+    pub fn remove_lease(
+        &mut self,
+        public_key: PublicKey,
+        height: u32,
+        amount: Amount,
+    ) -> Result<()> {
+        let lease = Lease {
+            public_key,
+            height,
+            amount,
+        };
+        let position = self
+            .leases
+            .iter()
+            .copied()
+            .position(|i| i == lease)
+            .ok_or(Error::Invalid("Lease not found".to_owned()))?;
+        self.leases.remove(position);
+        Ok(())
+    }
+
+    pub fn withdraw_from_lease(
+        &mut self,
+        withdraw: Amount,
+        amount: Amount,
+        public_key: PublicKey,
+        height: u32,
+    ) -> Result<()> {
+        let lease = Lease {
+            public_key,
+            height,
+            amount,
+        };
+        let position = self
+            .leases
+            .iter()
+            .copied()
+            .position(|i| i == lease)
+            .ok_or(Error::Invalid("Lease not found".to_owned()))?;
+        self.leases[position].withdraw(withdraw)?;
+        Ok(())
+    }
+
     pub fn prune(&mut self, height: u32) -> bool {
         let mature = self
             .immature
@@ -152,9 +205,9 @@ impl Input {
     }
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Lease {
-    public_key: [u8; 32],
+    public_key: PublicKey,
     height: u32,
     amount: Amount,
 }
@@ -172,5 +225,15 @@ impl Lease {
         } else {
             Amount::ZERO
         }
+    }
+    fn withdraw(&mut self, withdraw: Amount) -> Result<()> {
+        if withdraw > self.amount - MIN_LEASE {
+            return Err(Error::Invalid(format!(
+                "Can not withdraw more than {0}",
+                self.amount - MIN_LEASE
+            )));
+        }
+        self.amount -= withdraw;
+        Ok(())
     }
 }

@@ -16,7 +16,10 @@
  */
 
 use crate::amount::Amount;
+use crate::blake2b::Hash;
 use crate::ed25519::PublicKey;
+use crate::error::Result;
+use crate::transaction::{CoinTx, Transaction, TxData};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -24,4 +27,22 @@ pub struct CancelLease {
     amount: Amount,
     to: PublicKey,
     height: u32,
+}
+
+impl TxData for CancelLease {
+    fn process_impl(
+        &self,
+        tx: Transaction,
+        _hash: Hash,
+        _data_index: u32,
+        coin_tx: impl CoinTx,
+    ) -> Result<()> {
+        let mut to_account = coin_tx.get_account(self.to)?;
+        to_account.remove_lease(tx.from, self.height, self.amount)?;
+        coin_tx.set_account(self.to, to_account);
+        let mut account = coin_tx.get_account(tx.from)?;
+        account.debit(coin_tx.height(), self.amount);
+        coin_tx.set_account(tx.from, account);
+        Ok(())
+    }
 }

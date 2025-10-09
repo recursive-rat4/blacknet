@@ -15,6 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::blake2b::Hash;
+use crate::error::Result;
+use crate::transaction::{CoinTx, Transaction, TxData};
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
@@ -24,4 +27,16 @@ pub type Tag = [u8; 4];
 pub struct Blob {
     tag: Tag,
     data: Box<[u8]>,
+}
+
+impl TxData for Blob {
+    fn process_impl(
+        &self,
+        _tx: Transaction,
+        _hash: Hash,
+        _data_index: u32,
+        _coin_tx: impl CoinTx,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
