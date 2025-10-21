@@ -22,6 +22,7 @@ use std::env::args;
 use std::error::Error;
 use std::process::ExitCode;
 use tokio::runtime::Runtime;
+use tokio::signal::ctrl_c;
 
 fn daemon() -> Result<(), Box<dyn Error>> {
     if args().nth(1).is_some_and(|arg| arg == "--version") {
@@ -32,7 +33,10 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     let dirs = XDGDirectories::new(mode.subdirectory())?;
     let log_manager = LogManager::new(Strategy::Daemon, dirs.state())?;
     let runtime = Runtime::new()?;
-    let node = Node::new(&mode, &dirs, &log_manager, &runtime)?;
+    let _node = Node::new(&mode, &dirs, &log_manager, &runtime)?;
+    runtime.block_on(async {
+        ctrl_c().await.unwrap();
+    });
     Ok(())
 }
 
