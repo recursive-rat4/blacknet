@@ -153,6 +153,7 @@ impl Connection {
     async fn write(&mut self, message: &str) -> Result<(), IoError> {
         // debug!(self._logger, "-> {:?}", message);
         self.stream.write_all(message.as_bytes()).await?;
+        self.stream.flush().await?;
         Ok(())
     }
 

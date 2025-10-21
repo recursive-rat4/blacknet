@@ -181,7 +181,9 @@ impl TorConnection {
 
     async fn write(&mut self, message: &str) -> Result<()> {
         // debug!(self._logger, "-> {:?}", message);
-        Ok(self.stream.write_all(message.as_bytes()).await?)
+        self.stream.write_all(message.as_bytes()).await?;
+        self.stream.flush().await?;
+        Ok(())
     }
 
     async fn read(&mut self) -> Result<String> {
