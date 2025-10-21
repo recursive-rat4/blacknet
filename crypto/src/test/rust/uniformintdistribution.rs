@@ -44,7 +44,7 @@ impl UniformGenerator for TestGenerator {
 #[test]
 fn binary() {
     let mut g = TestGenerator::new();
-    let mut bud = UniformIntDistribution::<TestGenerator>::new(2);
+    let mut bud = UniformIntDistribution::<TestGenerator>::new(0..2);
     let a: [u16; 16] = [0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1];
     let b: [u16; 16] = array::from_fn(|_| bud.sample(&mut g));
     assert_eq!(b, a);
@@ -53,7 +53,7 @@ fn binary() {
 #[test]
 fn ternary() {
     let mut g = TestGenerator::new();
-    let mut tud = UniformIntDistribution::<TestGenerator>::new(3);
+    let mut tud = UniformIntDistribution::<TestGenerator>::new(0..3);
     let a: [u16; 6] = [0, 1, 2, 2, 0, 2];
     let b: [u16; 6] = array::from_fn(|_| tud.sample(&mut g));
     assert_eq!(b, a);
@@ -62,7 +62,7 @@ fn ternary() {
 #[test]
 fn byte() {
     let mut g = TestGenerator::new();
-    let mut uid = UniformIntDistribution::<TestGenerator>::new(256);
+    let mut uid = UniformIntDistribution::<TestGenerator>::new(0..256);
     let a: [u16; 6] = [0xE4, 0xE2, 0xE5, 0xE2, 0xE6, 0xE2];
     let b: [u16; 6] = array::from_fn(|_| uid.sample(&mut g));
     assert_eq!(b, a);
@@ -71,7 +71,7 @@ fn byte() {
 #[test]
 fn max() {
     let mut g = TestGenerator::new();
-    let mut uid = UniformIntDistribution::<TestGenerator>::new(u16::MAX);
+    let mut uid = UniformIntDistribution::<TestGenerator>::new(0..u16::MAX);
     let a: [u16; 3] = [0xE2E4, 0xE2E5, 0xE2E6];
     let b: [u16; 3] = array::from_fn(|_| uid.sample(&mut g));
     assert_eq!(b, a);

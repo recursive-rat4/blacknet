@@ -41,7 +41,7 @@ impl FastSeeder {
     }
 
     pub fn generate<const N: usize>(&mut self) -> [u8; N] {
-        let mut dst = UniformIntDistribution::<FastDRG>::new(256);
+        let mut dst = UniformIntDistribution::<FastDRG>::new(0..256);
         array::from_fn(|_| dst.sample(&mut self.drg) as u8)
     }
 }

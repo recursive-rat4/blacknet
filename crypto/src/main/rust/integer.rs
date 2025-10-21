@@ -47,6 +47,7 @@ pub trait Integer
     const BITS: u32;
     const MAX: Self;
 
+    const ZERO: Self;
     const ONE: Self;
 
     const LIMB_ONE: Self::Limb;
@@ -74,6 +75,7 @@ impl Integer for i8 {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = 0;
     const ONE: Self = 1;
 
     const LIMB_ONE: Self::Limb = 1;
@@ -101,6 +103,7 @@ impl Integer for i16 {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = 0;
     const ONE: Self = 1;
 
     const LIMB_ONE: Self::Limb = 1;
@@ -128,6 +131,7 @@ impl Integer for i32 {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = 0;
     const ONE: Self = 1;
 
     const LIMB_ONE: Self::Limb = 1;
@@ -155,6 +159,7 @@ impl Integer for i64 {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = 0;
     const ONE: Self = 1;
 
     const LIMB_ONE: Self::Limb = 1;
@@ -182,6 +187,7 @@ impl Integer for u8 {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = 0;
     const ONE: Self = 1;
 
     const LIMB_ONE: Self::Limb = 1;
@@ -209,6 +215,7 @@ impl Integer for u16 {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = 0;
     const ONE: Self = 1;
 
     const LIMB_ONE: Self::Limb = 1;
@@ -236,6 +243,7 @@ impl Integer for u32 {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = 0;
     const ONE: Self = 1;
 
     const LIMB_ONE: Self::Limb = 1;
@@ -263,6 +271,7 @@ impl Integer for u64 {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = 0;
     const ONE: Self = 1;
 
     const LIMB_ONE: Self::Limb = 1;
@@ -290,6 +299,7 @@ impl<const N: usize> Integer for BigInt<N> {
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
 
+    const ZERO: Self = Self::ZERO;
     const ONE: Self = Self::ONE;
 
     const LIMB_ONE: Self::Limb = 1;

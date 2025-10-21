@@ -17,29 +17,49 @@
 
 use crate::distribution::{Distribution, UniformGenerator};
 use crate::integer::Integer;
+use core::ops::{Bound, RangeBounds};
 
-// In range [0, bound)
+// In range [0, max]
 
 pub struct UniformIntDistribution<G: UniformGenerator<Output: Integer>> {
     cache: <G::Output as Integer>::CastUnsigned,
     have_bits: u32,
-    bound: <G::Output as Integer>::CastUnsigned,
+    max: <G::Output as Integer>::CastUnsigned,
     output_bits: u32,
 }
 
 impl<G: UniformGenerator<Output: Integer>> UniformIntDistribution<G> {
-    pub fn new(bound: <G::Output as Integer>::CastUnsigned) -> Self {
+    pub fn new(range: impl RangeBounds<<G::Output as Integer>::CastUnsigned>) -> Self {
+        let max = Self::max(range);
         Self {
             cache: Default::default(),
             have_bits: 0,
-            bound,
-            output_bits: Self::output_bits(bound),
+            max,
+            output_bits: Self::output_bits(max),
         }
     }
 
-    pub fn set_bound(&mut self, bound: <G::Output as Integer>::CastUnsigned) {
-        self.bound = bound;
-        self.output_bits = Self::output_bits(bound);
+    pub fn set_range(&mut self, range: impl RangeBounds<<G::Output as Integer>::CastUnsigned>) {
+        let max = Self::max(range);
+        self.max = max;
+        self.output_bits = Self::output_bits(max);
+    }
+
+    fn max(
+        range: impl RangeBounds<<G::Output as Integer>::CastUnsigned>,
+    ) -> <G::Output as Integer>::CastUnsigned {
+        let zero = <G::Output as Integer>::CastUnsigned::ZERO;
+        let one = <G::Output as Integer>::CastUnsigned::ONE;
+        assert!(
+            range.start_bound() == Bound::Included(&zero)
+                || range.start_bound() == Bound::Unbounded,
+            "Not implemented"
+        );
+        match range.end_bound() {
+            Bound::Included(&n) => n,
+            Bound::Excluded(&n) => n - one,
+            Bound::Unbounded => <G::Output as Integer>::CastUnsigned::MAX,
+        }
     }
 
     const fn useful_bits() -> u32 {
@@ -47,9 +67,8 @@ impl<G: UniformGenerator<Output: Integer>> UniformIntDistribution<G> {
     }
 
     #[inline]
-    fn output_bits(bound: <G::Output as Integer>::CastUnsigned) -> u32 {
-        let one = <G::Output as Integer>::CastUnsigned::ONE;
-        G::Output::BITS - (bound - one).leading_zeros()
+    fn output_bits(max: <G::Output as Integer>::CastUnsigned) -> u32 {
+        G::Output::BITS - max.leading_zeros()
     }
 
     #[inline]
@@ -89,8 +108,7 @@ impl<G: UniformGenerator<Output: Integer>> UniformIntDistribution<G> {
 
 impl<G: UniformGenerator<Output: Integer>> Default for UniformIntDistribution<G> {
     fn default() -> Self {
-        let bound = <G::Output as Integer>::CastUnsigned::MAX;
-        Self::new(bound)
+        Self::new(..)
     }
 }
 
@@ -100,7 +118,7 @@ impl<G: UniformGenerator<Output: Integer>> Distribution<G> for UniformIntDistrib
     fn sample(&mut self, generator: &mut G) -> Self::Output {
         loop {
             let result = self.next(generator);
-            if result < self.bound {
+            if result <= self.max {
                 return result;
             }
         }
