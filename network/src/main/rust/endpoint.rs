@@ -286,8 +286,10 @@ fn checksum_torv3(public_key: [u8; 32]) -> [u8; 2] {
     hasher.update(b".onion checksum");
     hasher.update(public_key);
     hasher.update([3_u8]);
-    let hash = hasher.finalize();
-    hash.as_slice()[0..2].try_into().expect("hash.len() == 32")
+    let hash: [u8; 32] = hasher.finalize().into();
+    let mut checksum: [u8; 2] = Default::default();
+    checksum.copy_from_slice(&hash[0..2]);
+    checksum
 }
 
 fn parse_torv3(string: &str, port: u16) -> Option<Endpoint> {
