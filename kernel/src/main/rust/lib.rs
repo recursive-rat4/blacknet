@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::module_inception)]
 #![no_std]
 
 extern crate alloc;

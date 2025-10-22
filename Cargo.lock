@@ -151,6 +151,7 @@ dependencies = [
  "blacknet-compat",
  "blacknet-crypto",
  "blacknet-io",
+ "blacknet-kernel",
  "blacknet-log",
  "blacknet-serialization",
  "blacknet-time",

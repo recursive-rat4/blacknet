@@ -38,6 +38,9 @@ thiserror.workspace = true
 default = ["std"]
 std = ["blacknet-io/std"]
 
+[lints]
+workspace = true
+
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"

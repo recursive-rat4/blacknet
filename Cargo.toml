@@ -59,6 +59,9 @@ thiserror = { version = "2.0.17", default-features = false }
 tokio = { version = "1.48.0", features = ["io-util", "net", "rt-multi-thread", "signal", "sync", "time"] }
 windows-sys = { version = "0.61.2", features = ["Win32_Security_Authentication_Identity"] }
 
+[workspace.lints.clippy]
+module_inception = "allow"
+
 [workspace.package]
 version = "0.3.0"
 authors = ["Blacknet Team"]

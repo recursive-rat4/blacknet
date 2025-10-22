@@ -34,6 +34,9 @@ chrono.workspace = true
 spdlog-rs.workspace = true
 thiserror.workspace = true
 
+[lints]
+workspace = true
+
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"

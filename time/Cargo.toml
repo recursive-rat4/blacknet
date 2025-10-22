@@ -36,6 +36,9 @@ serde.workspace = true
 default = ["std"]
 std = ["serde/std"]
 
+[lints]
+workspace = true
+
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"

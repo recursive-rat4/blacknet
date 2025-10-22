@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,14 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod connection;
-pub mod endpoint;
-pub mod i2psam;
-pub mod natpmp;
-pub mod node;
-pub mod packet;
-pub mod peertable;
-pub mod router;
-pub mod settings;
-pub mod socks5;
-pub mod torcontroller;
+use blacknet_kernel::blake2b::Hash;
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize)]
+pub struct Blocks {
+    hashes: Box<[Hash]>,
+    blocks: Box<[Box<[u8]>]>,
+}

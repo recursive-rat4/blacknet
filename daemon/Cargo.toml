@@ -35,6 +35,9 @@ blacknet-log.workspace = true
 blacknet-network.workspace = true
 tokio.workspace = true
 
+[lints]
+workspace = true
+
 [[bin]]
 name = "blacknet-daemon"
 test = false

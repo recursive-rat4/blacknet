@@ -37,6 +37,9 @@ thiserror.workspace = true
 default = ["std"]
 std = ["dep:blacknet-crypto"]
 
+[lints]
+workspace = true
+
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"

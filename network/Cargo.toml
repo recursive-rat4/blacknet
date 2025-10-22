@@ -33,6 +33,7 @@ categories.workspace = true
 blacknet-compat.workspace = true
 blacknet-crypto.workspace = true
 blacknet-io.workspace = true
+blacknet-kernel.workspace = true
 blacknet-log.workspace = true
 blacknet-serialization.workspace = true
 blacknet-time.workspace = true
@@ -45,6 +46,9 @@ sha3.workspace = true
 spdlog-rs.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
+
+[lints]
+workspace = true
 
 [lib]
 doctest = false

@@ -45,6 +45,9 @@ blacknet-compat.workspace = true
 blacknet-serialization.workspace = true
 data-encoding.workspace = true
 
+[lints]
+workspace = true
+
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"

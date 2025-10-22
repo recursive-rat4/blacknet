@@ -15,14 +15,32 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod connection;
-pub mod endpoint;
-pub mod i2psam;
-pub mod natpmp;
-pub mod node;
-pub mod packet;
-pub mod peertable;
-pub mod router;
-pub mod settings;
-pub mod socks5;
-pub mod torcontroller;
+mod blockannounce;
+mod blocks;
+mod consensusfault;
+mod getblocks;
+mod gettransactions;
+mod hello;
+mod inventory;
+mod packet;
+mod peers;
+mod ping;
+mod pingv1;
+mod pong;
+mod transactions;
+mod version;
+
+pub use blockannounce::*;
+pub use blocks::*;
+pub use consensusfault::*;
+pub use getblocks::*;
+pub use gettransactions::*;
+pub use hello::*;
+pub use inventory::*;
+pub use packet::*;
+pub use peers::*;
+pub use ping::*;
+pub use pingv1::*;
+pub use pong::*;
+pub use transactions::*;
+pub use version::*;
