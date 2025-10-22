@@ -16,10 +16,12 @@
  */
 
 mod error;
-mod logger;
 mod logmanager;
+mod macros;
 mod utc;
 
 pub use error::*;
 pub use logmanager::*;
 pub use utc::*;
+
+pub use spdlog::Logger;
