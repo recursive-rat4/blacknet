@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,20 +16,88 @@
  */
 
 use crate::endpoint::Endpoint;
-use blacknet_time::Milliseconds;
+use crate::packet::BlockAnnounce;
+use blacknet_crypto::bigint::UInt256;
+use blacknet_kernel::amount::Amount;
+use blacknet_log::{Logger, info};
+use blacknet_time::{Milliseconds, Seconds};
+use std::sync::atomic::{AtomicU8, Ordering};
 
 pub struct Connection {
-    id: u64,
+    logger: Logger,
+
     remote_endpoint: Endpoint,
     local_endpoint: Endpoint,
+    state: State,
+
+    dos_score: AtomicU8,
+    connected_at: Seconds,
+
     last_packet_time: Milliseconds,
+    last_block: BlockAnnounce,
     last_block_time: Milliseconds,
     last_tx_time: Milliseconds,
     last_ping_time: Milliseconds,
+    last_inv_sent_time: Milliseconds,
+    time_offset: Seconds,
+    ping: Milliseconds,
+    requested_difficulty: UInt256,
+
+    id: u64,
+    version: u32,
+    agent: String,
+    fee_filter: Amount,
 }
 
 impl Connection {
-    pub fn is_established(&self) -> bool {
+    pub fn close(&self) {
         todo!();
+    }
+
+    pub fn dos(&self, reason: &str) {
+        let score = self.dos_score.fetch_add(1, Ordering::AcqRel);
+        if score == 100 {
+            self.close();
+        }
+        info!(self.logger, "{reason} DoS {score}");
+    }
+
+    pub fn dos_score(&self) -> u8 {
+        self.dos_score.load(Ordering::Acquire)
+    }
+
+    pub fn is_established(&self) -> bool {
+        self.state.is_established()
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum State {
+    IncomingConnected,
+    IncomingWaiting,
+    OutgoingConnected,
+    OutgoingWaiting,
+    ProberConnected,
+    ProberWaiting,
+}
+
+impl State {
+    // ProberConnected skips main logic
+    pub fn is_established(self) -> bool {
+        matches!(self, State::IncomingConnected | State::OutgoingConnected)
+    }
+
+    pub fn is_incoming(self) -> bool {
+        matches!(self, State::IncomingConnected | State::IncomingWaiting)
+    }
+
+    pub fn is_outgoing(self) -> bool {
+        matches!(
+            self,
+            State::OutgoingConnected
+                | State::OutgoingWaiting
+                | State::ProberConnected
+                | State::ProberWaiting
+        )
     }
 }

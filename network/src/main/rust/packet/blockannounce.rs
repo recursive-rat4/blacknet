@@ -27,3 +27,12 @@ pub struct BlockAnnounce {
     #[serde(rename = "cumulativeDifficulty")]
     cumulative_difficulty: Box<[u8]>,
 }
+
+impl Default for BlockAnnounce {
+    fn default() -> Self {
+        Self {
+            hash: Default::default(),
+            cumulative_difficulty: Box::new([0; 1]),
+        }
+    }
+}
