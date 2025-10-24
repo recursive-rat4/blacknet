@@ -55,7 +55,7 @@ impl Connection {
     }
 
     pub fn dos(&self, reason: &str) {
-        let score = self.dos_score.fetch_add(1, Ordering::AcqRel);
+        let score = self.dos_score.fetch_add(1, Ordering::AcqRel) + 1;
         if score == 100 {
             self.close();
         }
