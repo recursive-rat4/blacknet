@@ -15,21 +15,29 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
+use crate::connection::{Connection, State};
+use crate::endpoint::Endpoint;
 use crate::peertable::PeerTable;
 use crate::router::Router;
 use crate::settings::Settings;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
-use blacknet_log::{LogManager, info, warn};
+use blacknet_io::Write;
+use blacknet_io::file::replace;
+use blacknet_log::{LogManager, Logger, error, info, warn};
+use blacknet_serialization::format::to_write;
 use core::num::NonZero;
+use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::path::PathBuf;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
 
 pub struct Node {
+    logger: Logger,
     settings: Arc<Settings>,
+    state_dir: PathBuf,
     next_peer_id: AtomicU64,
     connections: RwLock<Vec<Connection>>,
     peer_table: Arc<PeerTable>,
@@ -64,7 +72,9 @@ impl Node {
         let settings = Arc::new(Settings::default(mode));
         let peer_table = PeerTable::new(mode, dirs, log_manager, settings.clone())?;
         let node = Arc::new(Self {
+            logger,
             settings: settings.clone(),
+            state_dir: dirs.state().to_owned(),
             next_peer_id: AtomicU64::new(1),
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
@@ -93,4 +103,37 @@ impl Node {
             self.peer_table.clone().rotate().await;
         }
     }
+}
+
+impl Drop for Node {
+    fn drop(&mut self) {
+        let mut connections = self.connections.write().unwrap();
+        info!(self.logger, "Closing {} p2p connections", connections.len());
+        let mut peers = Vec::with_capacity(connections.len());
+        for connection in connections.iter() {
+            // probers ain't interesting
+            if connection.state() == State::OutgoingConnected {
+                peers.push(connection.remote_endpoint());
+            }
+            connection.close();
+        }
+        connections.clear();
+        info!(self.logger, "Saving node state");
+        let persistent = Persistent { peers };
+        if let Err(err) = replace(&self.state_dir, DATA_FILENAME, |buffered| {
+            let version = DATA_VERSION.to_be_bytes();
+            buffered.write_all(&version)?;
+            to_write(&persistent, buffered)
+        }) {
+            error!(self.logger, "Can't write {DATA_FILENAME}: {err}");
+        }
+    }
+}
+
+const DATA_VERSION: u32 = 1;
+const DATA_FILENAME: &str = "node.dat";
+
+#[derive(Deserialize, Serialize)]
+struct Persistent {
+    peers: Vec<Endpoint>,
 }

@@ -69,9 +69,21 @@ impl Connection {
     pub fn is_established(&self) -> bool {
         self.state.is_established()
     }
+
+    pub fn local_endpoint(&self) -> Endpoint {
+        self.local_endpoint
+    }
+
+    pub fn remote_endpoint(&self) -> Endpoint {
+        self.remote_endpoint
+    }
+
+    pub fn state(&self) -> State {
+        self.state
+    }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum State {
     IncomingConnected,
     IncomingWaiting,
