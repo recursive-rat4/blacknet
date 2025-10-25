@@ -29,6 +29,7 @@ members = [
     "serialization",
     "time",
     "vm",
+    "wallet",
 ]
 
 [workspace.dependencies]
@@ -42,6 +43,8 @@ blacknet-network = { path = "network" }
 blacknet-serialization = { path = "serialization" }
 blacknet-time = { path = "time" }
 blacknet-vm = { path = "vm" }
+blacknet-wallet = { path = "wallet" }
+bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 blake2 = { version = "0.10.6", default-features = false }
 chrono = { version = "0.4.42", default-features = false }
 criterion = { version = "0.7.0", default-features = false, features = ["cargo_bench_support"] }

@@ -66,13 +66,12 @@ impl Mode {
     /**
      * The main network. It's the production mode.
      */
-    fn mainnet() -> Self {
+    pub fn mainnet() -> Self {
         let peers_txt = include_str!("../../../../kernel/src/main/resources/peers.txt");
         Self::new(0, None, None, None, None, true, peers_txt)
     }
 
-    #[allow(dead_code)]
-    fn testnet() -> Self {
+    pub fn testnet() -> Self {
         Self::new(
             1,
             Some("-TestNet"),
@@ -88,7 +87,7 @@ impl Mode {
      * A regression testing mode. Usually it's a sole offline node,
      * or else it can be a tiny private network.
      */
-    fn regtest() -> Self {
+    pub fn regtest() -> Self {
         Self::new(
             3,
             Some("-RegTest"),

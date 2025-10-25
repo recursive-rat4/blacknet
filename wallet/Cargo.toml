@@ -16,7 +16,7 @@
 #
 
 [package]
-name = "blacknet-json-rpc"
+name = "blacknet-wallet"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -30,12 +30,13 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+blacknet-compat.workspace = true
 blacknet-kernel.workspace = true
-blacknet-network.workspace = true
-blacknet-time.workspace = true
-blacknet-wallet.workspace = true
-serde.workspace = true
-serde_json.workspace = true
+bech32.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+data-encoding.workspace = true
 
 [lints]
 workspace = true
@@ -43,3 +44,7 @@ workspace = true
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "address"
+path = "src/test/rust/address.rs"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2020-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,15 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::Mode;
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_wallet::address::AddressCodec;
-use serde::{Deserialize, Serialize};
+use data_encoding::HEXUPPER;
 
-#[derive(Deserialize, Serialize)]
-pub struct PublicKeyInfo(String);
-
-impl PublicKeyInfo {
-    pub fn new(public_key: PublicKey, address_codec: &AddressCodec) -> Self {
-        Self(address_codec.encode(public_key).expect("PublicKey"))
-    }
+#[test]
+fn account() {
+    let string = "blacknet1klnycx794hg9jvuhua0gy75d5v374rrwrlnpg25xpykfxkg30egqq83tj0";
+    let bytes: PublicKey = HEXUPPER
+        .decode(b"B7E64C1BC5ADD0593397E75E827A8DA323EA8C6E1FE6142A86092C9359117E50")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    let address_codec = AddressCodec::new(&Mode::mainnet()).unwrap();
+    assert_eq!(address_codec.encode(bytes).unwrap(), string);
+    assert_eq!(address_codec.decode(string).unwrap(), bytes);
 }

@@ -15,15 +15,4 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::ed25519::PublicKey;
-use blacknet_wallet::address::AddressCodec;
-use serde::{Deserialize, Serialize};
-
-#[derive(Deserialize, Serialize)]
-pub struct PublicKeyInfo(String);
-
-impl PublicKeyInfo {
-    pub fn new(public_key: PublicKey, address_codec: &AddressCodec) -> Self {
-        Self(address_codec.encode(public_key).expect("PublicKey"))
-    }
-}
+pub mod address;

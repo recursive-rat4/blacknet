@@ -18,6 +18,7 @@
 use crate::v2::{HashInfo, PublicKeyInfo};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
+use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -33,7 +34,13 @@ pub struct BlockNotification {
 }
 
 impl BlockNotification {
-    pub fn new(block: &Block, hash: Hash, height: u32, size: u32) -> Self {
+    pub fn new(
+        block: &Block,
+        hash: Hash,
+        height: u32,
+        size: u32,
+        address_codec: &AddressCodec,
+    ) -> Self {
         Self {
             hash: hash.into(),
             height,
@@ -41,7 +48,7 @@ impl BlockNotification {
             version: block.version(),
             previous: block.previous().into(),
             time: block.time().into(),
-            generator: block.generator().into(),
+            generator: PublicKeyInfo::new(block.generator(), address_codec),
             transactions: block.raw_transactions().len() as u32,
         }
     }

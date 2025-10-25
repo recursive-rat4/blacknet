@@ -17,6 +17,7 @@
 
 use crate::v2::{AmountInfo, PublicKeyInfo};
 use blacknet_kernel::account::{Account, Lease};
+use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -29,13 +30,23 @@ pub struct AccountInfo {
 }
 
 impl AccountInfo {
-    pub fn new(account: &Account, height: u32, confirmations: u32) -> Self {
+    pub fn new(
+        account: &Account,
+        height: u32,
+        confirmations: u32,
+        address_codec: &AddressCodec,
+    ) -> Self {
         Self {
             seq: account.seq(),
             balance: account.balance().into(),
             confirmedBalance: account.confirmed_balance(height, confirmations).into(),
             stakingBalance: account.staking_balance(height).into(),
-            inLeases: account.leases().iter().copied().map(From::from).collect(),
+            inLeases: account
+                .leases()
+                .iter()
+                .copied()
+                .map(|i| LeaseInfo::new(i, address_codec))
+                .collect(),
         }
     }
 }
@@ -47,10 +58,10 @@ struct LeaseInfo {
     amount: AmountInfo,
 }
 
-impl From<Lease> for LeaseInfo {
-    fn from(lease: Lease) -> Self {
+impl LeaseInfo {
+    fn new(lease: Lease, address_codec: &AddressCodec) -> Self {
         Self {
-            publicKey: lease.public_key().into(),
+            publicKey: PublicKeyInfo::new(lease.public_key(), address_codec),
             height: lease.height(),
             amount: lease.balance().into(),
         }

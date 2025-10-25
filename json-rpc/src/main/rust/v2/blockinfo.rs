@@ -18,6 +18,7 @@
 use crate::v2::{HashInfo, PublicKeyInfo, SignatureInfo};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
+use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -35,7 +36,13 @@ pub struct BlockInfo {
 }
 
 impl BlockInfo {
-    pub fn new(block: &Block, hash: Hash, size: u32, tx_detail: bool) -> Self {
+    pub fn new(
+        block: &Block,
+        hash: Hash,
+        size: u32,
+        tx_detail: bool,
+        address_codec: &AddressCodec,
+    ) -> Self {
         let transactions = if tx_detail {
             #[expect(unreachable_code)]
             Value::Array(todo!())
@@ -48,7 +55,7 @@ impl BlockInfo {
             version: block.version(),
             previous: block.previous().into(),
             time: block.time().into(),
-            generator: block.generator().into(),
+            generator: PublicKeyInfo::new(block.generator(), address_codec),
             contentHash: block.content_hash().into(),
             signature: block.signature().into(),
             transactions,
