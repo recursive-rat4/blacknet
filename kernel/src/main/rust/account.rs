@@ -33,6 +33,14 @@ pub struct Account {
 }
 
 impl Account {
+    pub fn seq(&self) -> u32 {
+        self.seq
+    }
+
+    pub fn leases(&self) -> &[Lease] {
+        &self.leases
+    }
+
     pub fn balance(&self) -> Amount {
         self.stake + self.immature.iter().copied().map(Input::balance).sum()
     }
@@ -213,11 +221,17 @@ pub struct Lease {
 }
 
 impl Lease {
+    pub fn public_key(self) -> PublicKey {
+        self.public_key
+    }
+    pub fn height(self) -> u32 {
+        self.height
+    }
+    pub fn balance(self) -> Amount {
+        self.amount
+    }
     fn is_mature(self, height: u32) -> bool {
         height > self.height + MATURITY
-    }
-    fn balance(self) -> Amount {
-        self.amount
     }
     fn mature_balance(self, height: u32) -> Amount {
         if self.is_mature(height) {

@@ -26,6 +26,16 @@ pub struct Signature {
     s: [u8; 32],
 }
 
+impl Signature {
+    pub fn raw_r(self) -> [u8; 32] {
+        self.r
+    }
+
+    pub fn raw_s(self) -> [u8; 32] {
+        self.s
+    }
+}
+
 impl TryFrom<Vec<u8>> for Signature {
     type Error = TryFromSliceError;
 

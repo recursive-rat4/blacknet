@@ -15,22 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::blake2b::Hash;
+use crate::v2::BlockNotification;
 use serde::{Deserialize, Serialize};
-
-//TODO BigIntegerSerializer
+use serde_json::{Value, to_value};
 
 #[derive(Deserialize, Serialize)]
-pub struct BlockAnnounce {
-    hash: Hash,
-    cumulative_difficulty: Box<[u8]>,
+pub struct WebSocketNotification {
+    route: String,
+    message: Value,
 }
 
-impl Default for BlockAnnounce {
-    fn default() -> Self {
+impl WebSocketNotification {
+    pub fn with_block(notification: BlockNotification) -> Self {
         Self {
-            hash: Default::default(),
-            cumulative_difficulty: Box::new([0; 1]),
+            route: "block".to_owned(),
+            message: to_value(notification).expect("BlockNotification"),
         }
     }
 }

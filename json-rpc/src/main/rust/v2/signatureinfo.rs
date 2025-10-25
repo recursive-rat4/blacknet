@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,22 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::ed25519::Signature;
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
-//TODO BigIntegerSerializer
-
 #[derive(Deserialize, Serialize)]
-pub struct BlockAnnounce {
-    hash: Hash,
-    cumulative_difficulty: Box<[u8]>,
-}
+pub struct SignatureInfo(String);
 
-impl Default for BlockAnnounce {
-    fn default() -> Self {
-        Self {
-            hash: Default::default(),
-            cumulative_difficulty: Box::new([0; 1]),
+impl From<Signature> for SignatureInfo {
+    fn from(signature: Signature) -> Self {
+        let mut hex = String::with_capacity(128);
+        for i in signature.raw_r() {
+            write!(hex, "{i:02X}").expect("hex format");
         }
+        for i in signature.raw_s() {
+            write!(hex, "{i:02X}").expect("hex format");
+        }
+        Self(hex)
     }
 }

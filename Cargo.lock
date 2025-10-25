@@ -118,6 +118,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "blacknet-json-rpc"
+version = "0.3.0"
+dependencies = [
+ "blacknet-kernel",
+ "blacknet-network",
+ "blacknet-time",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "blacknet-kernel"
 version = "0.3.0"
 dependencies = [

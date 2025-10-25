@@ -66,6 +66,34 @@ impl Connection {
         self.dos_score.load(Ordering::Acquire)
     }
 
+    pub fn last_block(&self) -> &BlockAnnounce {
+        &self.last_block
+    }
+
+    pub fn requested_blocks(&self) -> bool {
+        self.requested_difficulty != UInt256::ZERO
+    }
+
+    pub fn connected_at(&self) -> Seconds {
+        self.connected_at
+    }
+
+    pub fn id(&self) -> u64 {
+        self.id
+    }
+
+    pub fn version(&self) -> u32 {
+        self.version
+    }
+
+    pub fn agent(&self) -> &str {
+        &self.agent
+    }
+
+    pub fn fee_filter(&self) -> Amount {
+        self.fee_filter
+    }
+
     pub fn is_established(&self) -> bool {
         self.state.is_established()
     }
@@ -78,8 +106,24 @@ impl Connection {
         self.remote_endpoint
     }
 
+    pub fn ping(&self) -> Milliseconds {
+        self.ping
+    }
+
+    pub fn time_offset(&self) -> Seconds {
+        self.time_offset
+    }
+
     pub fn state(&self) -> State {
         self.state
+    }
+
+    pub fn total_bytes_read(&self) -> u64 {
+        todo!();
+    }
+
+    pub fn total_bytes_written(&self) -> u64 {
+        todo!();
     }
 }
 

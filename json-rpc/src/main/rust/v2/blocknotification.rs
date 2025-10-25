@@ -15,22 +15,34 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::v2::{HashInfo, PublicKeyInfo};
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::block::Block;
 use serde::{Deserialize, Serialize};
 
-//TODO BigIntegerSerializer
-
 #[derive(Deserialize, Serialize)]
-pub struct BlockAnnounce {
-    hash: Hash,
-    cumulative_difficulty: Box<[u8]>,
+pub struct BlockNotification {
+    hash: HashInfo,
+    height: u32,
+    size: u32,
+    version: u32,
+    previous: HashInfo,
+    time: i64,
+    generator: PublicKeyInfo,
+    transactions: u32,
 }
 
-impl Default for BlockAnnounce {
-    fn default() -> Self {
+impl BlockNotification {
+    pub fn new(block: &Block, hash: Hash, height: u32, size: u32) -> Self {
         Self {
-            hash: Default::default(),
-            cumulative_difficulty: Box::new([0; 1]),
+            hash: hash.into(),
+            height,
+            size,
+            version: block.version(),
+            previous: block.previous().into(),
+            time: block.time().into(),
+            generator: block.generator().into(),
+            transactions: block.raw_transactions().len() as u32,
         }
     }
 }

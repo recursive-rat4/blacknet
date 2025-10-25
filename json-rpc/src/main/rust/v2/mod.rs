@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,22 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::blake2b::Hash;
-use serde::{Deserialize, Serialize};
+#![allow(non_snake_case)]
 
-//TODO BigIntegerSerializer
+mod accountinfo;
+mod amountinfo;
+mod blockinfo;
+mod blocknotification;
+mod endpointinfo;
+mod hashinfo;
+mod peerinfo;
+mod publickeyinfo;
+mod signatureinfo;
+mod stakinginfo;
+mod websocketnotification;
 
-#[derive(Deserialize, Serialize)]
-pub struct BlockAnnounce {
-    hash: Hash,
-    cumulative_difficulty: Box<[u8]>,
-}
-
-impl Default for BlockAnnounce {
-    fn default() -> Self {
-        Self {
-            hash: Default::default(),
-            cumulative_difficulty: Box::new([0; 1]),
-        }
-    }
-}
+pub use accountinfo::*;
+pub use amountinfo::*;
+pub use blockinfo::*;
+pub use blocknotification::*;
+pub use endpointinfo::*;
+pub use hashinfo::*;
+pub use peerinfo::*;
+pub use publickeyinfo::*;
+pub use signatureinfo::*;
+pub use stakinginfo::*;
+pub use websocketnotification::*;

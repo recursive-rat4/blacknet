@@ -73,11 +73,39 @@ impl Block {
         }
     }
 
-    pub fn hash(bytes: &[u8]) -> Hash {
+    pub fn compute_hash(bytes: &[u8]) -> Hash {
         Blake2b256::digest(&bytes[..HEADER_SIZE_BYTES - size_of::<Signature>()]).into()
     }
 
-    pub fn content_hash(bytes: &[u8]) -> Hash {
+    pub fn compute_content_hash(bytes: &[u8]) -> Hash {
         Blake2b256::digest(&bytes[HEADER_SIZE_BYTES..]).into()
+    }
+
+    pub fn version(&self) -> u32 {
+        self.version
+    }
+
+    pub fn previous(&self) -> Hash {
+        self.previous
+    }
+
+    pub fn time(&self) -> Seconds {
+        self.time
+    }
+
+    pub fn generator(&self) -> PublicKey {
+        self.generator
+    }
+
+    pub fn content_hash(&self) -> Hash {
+        self.content_hash
+    }
+
+    pub fn signature(&self) -> Signature {
+        self.signature
+    }
+
+    pub fn raw_transactions(&self) -> &[Box<[u8]>] {
+        &self.transactions
     }
 }
