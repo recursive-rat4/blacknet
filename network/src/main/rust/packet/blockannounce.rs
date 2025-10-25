@@ -15,15 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
-
-//TODO BigIntegerSerializer
 
 #[derive(Deserialize, Serialize)]
 pub struct BlockAnnounce {
     hash: Hash,
     cumulative_difficulty: Box<[u8]>,
+}
+
+impl BlockAnnounce {
+    pub fn new(hash: Hash, cumulative_difficulty: UInt256) -> Self {
+        Self {
+            hash,
+            cumulative_difficulty: unsafe { Box::new(cumulative_difficulty.to_java::<32>()) },
+        }
+    }
+
+    pub fn hash(&self) -> Hash {
+        self.hash
+    }
+
+    pub fn cumulative_difficulty(&self) -> UInt256 {
+        unsafe { UInt256::from_java(&self.cumulative_difficulty) }
+    }
 }
 
 impl Default for BlockAnnounce {

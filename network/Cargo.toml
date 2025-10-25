@@ -55,6 +55,10 @@ doctest = false
 path = "src/main/rust/lib.rs"
 
 [[test]]
+name = "blockannounce"
+path = "src/test/rust/blockannounce.rs"
+
+[[test]]
 name = "endpoint"
 path = "src/test/rust/endpoint.rs"
 

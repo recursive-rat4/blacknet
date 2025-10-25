@@ -192,6 +192,31 @@ impl<const N: usize> BigInt<N> {
         limbs[0] = 1;
         Self { limbs }
     };
+
+    pub unsafe fn from_java(bytes: &[u8]) -> Self {
+        let mut num = Self::ZERO;
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..bytes.len() - 1 {
+            let digit = bytes[i];
+            num |= digit as u64;
+            num <<= u8::BITS;
+        }
+        if let Some(&digit) = bytes.last() {
+            num |= digit as u64;
+        }
+        num
+    }
+    pub unsafe fn to_java<const M: usize>(mut self) -> [u8; M] {
+        const {
+            assert!(Self::BITS == M as u32 * u8::BITS);
+        };
+        let mut bytes = [0_u8; M];
+        for i in (0..M).rev() {
+            bytes[i] = (self & u8::MAX as u64) as u8;
+            self >>= u8::BITS;
+        }
+        bytes
+    }
 }
 
 impl<const N: usize> fmt::Debug for BigInt<N> {
@@ -348,6 +373,13 @@ impl<const N: usize> Shl<u64> for BigInt<N> {
                 n
             }),
         }
+    }
+}
+
+impl<const N: usize> ShlAssign<u32> for BigInt<N> {
+    #[inline]
+    fn shl_assign(&mut self, rps: u32) {
+        *self = *self << rps as u64
     }
 }
 
