@@ -40,6 +40,10 @@ impl BlockAnnounce {
     pub fn cumulative_difficulty(&self) -> UInt256 {
         unsafe { UInt256::from_java(&self.cumulative_difficulty) }
     }
+
+    pub fn raw_cumulative_difficulty(&self) -> &[u8] {
+        &self.cumulative_difficulty
+    }
 }
 
 impl Default for BlockAnnounce {

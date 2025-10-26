@@ -35,7 +35,7 @@ impl TxData for RefundHTLC {
         coin_tx: impl CoinTx,
     ) -> Result<()> {
         let htlc = coin_tx.get_htlc(self.id)?;
-        if tx.from != htlc.from {
+        if tx.from() != htlc.from {
             return Err(Error::Invalid("Invalid sender".to_owned()));
         }
         htlc.time_lock.verify(
@@ -45,9 +45,9 @@ impl TxData for RefundHTLC {
             coin_tx.block_time(),
         )?;
 
-        let mut account = coin_tx.get_account(tx.from)?;
+        let mut account = coin_tx.get_account(tx.from())?;
         account.debit(coin_tx.height(), htlc.amount);
-        coin_tx.set_account(tx.from, account);
+        coin_tx.set_account(tx.from(), account);
         coin_tx.remove_htlc(self.id);
         Ok(())
     }

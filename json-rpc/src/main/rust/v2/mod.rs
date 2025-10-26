@@ -19,24 +19,34 @@
 
 mod accountinfo;
 mod amountinfo;
+mod bigintegerinfo;
 mod blockinfo;
 mod blocknotification;
 mod endpointinfo;
+mod error;
 mod hashinfo;
 mod peerinfo;
 mod publickeyinfo;
 mod signatureinfo;
 mod stakinginfo;
+mod transactioninfo;
+mod transactionnotification;
+mod txdatainfo;
 mod websocketnotification;
 
 pub use accountinfo::*;
 pub use amountinfo::*;
+pub use bigintegerinfo::*;
 pub use blockinfo::*;
 pub use blocknotification::*;
 pub use endpointinfo::*;
+pub use error::*;
 pub use hashinfo::*;
 pub use peerinfo::*;
 pub use publickeyinfo::*;
 pub use signatureinfo::*;
 pub use stakinginfo::*;
+pub use transactioninfo::*;
+pub use transactionnotification::*;
+pub use txdatainfo::*;
 pub use websocketnotification::*;

@@ -26,13 +26,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct Transaction {
-    pub signature: Signature,
-    pub from: PublicKey,
-    pub seq: u32,
-    pub anchor: Hash,
-    pub fee: Amount,
-    pub kind: TxKind,
-    pub data: Box<[u8]>,
+    signature: Signature,
+    from: PublicKey,
+    seq: u32,
+    anchor: Hash,
+    fee: Amount,
+    kind: TxKind,
+    data: Box<[u8]>,
 }
 
 impl Transaction {
@@ -69,5 +69,29 @@ impl Transaction {
 
     pub fn hash(bytes: &[u8]) -> Hash {
         Blake2b256::digest(&bytes[size_of::<Signature>()..]).into()
+    }
+
+    pub fn anchor(&self) -> Hash {
+        self.anchor
+    }
+
+    pub fn fee(&self) -> Amount {
+        self.fee
+    }
+
+    pub fn from(&self) -> PublicKey {
+        self.from
+    }
+
+    pub fn kind(&self) -> TxKind {
+        self.kind
+    }
+
+    pub fn seq(&self) -> u32 {
+        self.seq
+    }
+
+    pub fn signature(&self) -> Signature {
+        self.signature
     }
 }

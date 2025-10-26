@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2025 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,28 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::error::{Error, Result};
-use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::borrow::ToOwned;
-use serde::{Deserialize, Serialize};
+use core::error::Error;
 
-#[derive(Deserialize, Serialize)]
-pub struct Dispel;
-
-impl TxData for Dispel {
-    fn process_impl(
-        &self,
-        tx: Transaction,
-        _hash: Hash,
-        _data_index: u32,
-        _coin_tx: impl CoinTx,
-    ) -> Result<()> {
-        if tx.fee() > Amount::ZERO {
-            Ok(())
-        } else {
-            Err(Error::Invalid("Invalid transaction fee".to_owned()))
-        }
-    }
-}
+pub type Result<T> = core::result::Result<T, Box<dyn Error + Send + Sync>>;

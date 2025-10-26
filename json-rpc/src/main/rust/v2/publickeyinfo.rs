@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::v2::Result;
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
@@ -23,7 +24,7 @@ use serde::{Deserialize, Serialize};
 pub struct PublicKeyInfo(String);
 
 impl PublicKeyInfo {
-    pub fn new(public_key: PublicKey, address_codec: &AddressCodec) -> Self {
-        Self(address_codec.encode(public_key).expect("PublicKey"))
+    pub fn new(public_key: PublicKey, address_codec: &AddressCodec) -> Result<Self> {
+        Ok(Self(address_codec.encode(public_key)?))
     }
 }

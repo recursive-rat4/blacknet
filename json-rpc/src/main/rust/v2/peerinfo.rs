@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, EndpointInfo, HashInfo};
+use crate::v2::{AmountInfo, BigIntegerInfo, EndpointInfo, HashInfo};
 use blacknet_network::connection::Connection;
 use blacknet_network::packet::BlockAnnounce;
 use serde::{Deserialize, Serialize};
@@ -39,8 +39,8 @@ pub struct PeerInfo {
     totalBytesWritten: u64,
 }
 
-impl From<&Connection> for PeerInfo {
-    fn from(connection: &Connection) -> Self {
+impl PeerInfo {
+    pub fn new(connection: &Connection) -> Self {
         Self {
             peerId: connection.id(),
             remoteAddress: connection.remote_endpoint().into(),
@@ -64,12 +64,17 @@ impl From<&Connection> for PeerInfo {
 #[derive(Deserialize, Serialize)]
 struct ChainInfo {
     chain: HashInfo,
-    cumulativeDifficulty: String,
+    cumulativeDifficulty: BigIntegerInfo,
     fork: bool,
 }
 
 impl From<&BlockAnnounce> for ChainInfo {
     fn from(block_announce: &BlockAnnounce) -> Self {
-        todo!();
+        #[expect(unreachable_code)]
+        Self {
+            chain: block_announce.hash().into(),
+            cumulativeDifficulty: block_announce.raw_cumulative_difficulty().into(),
+            fork: todo!(),
+        }
     }
 }

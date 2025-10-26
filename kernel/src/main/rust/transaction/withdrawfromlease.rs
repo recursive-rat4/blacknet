@@ -45,9 +45,9 @@ impl TxData for WithdrawFromLease {
         let mut to_account = coin_tx.get_account(self.to)?;
         to_account.withdraw_from_lease(self.withdraw, self.amount, self.to, self.height)?;
         coin_tx.set_account(self.to, to_account);
-        let mut account = coin_tx.get_account(tx.from)?;
+        let mut account = coin_tx.get_account(tx.from())?;
         account.debit(coin_tx.height(), self.withdraw);
-        coin_tx.set_account(tx.from, account);
+        coin_tx.set_account(tx.from(), account);
         Ok(())
     }
 }

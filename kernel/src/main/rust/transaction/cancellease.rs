@@ -38,11 +38,11 @@ impl TxData for CancelLease {
         coin_tx: impl CoinTx,
     ) -> Result<()> {
         let mut to_account = coin_tx.get_account(self.to)?;
-        to_account.remove_lease(tx.from, self.height, self.amount)?;
+        to_account.remove_lease(tx.from(), self.height, self.amount)?;
         coin_tx.set_account(self.to, to_account);
-        let mut account = coin_tx.get_account(tx.from)?;
+        let mut account = coin_tx.get_account(tx.from())?;
         account.debit(coin_tx.height(), self.amount);
-        coin_tx.set_account(tx.from, account);
+        coin_tx.set_account(tx.from(), account);
         Ok(())
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2025 Pavel Vasin
+ * Copyright (c) 2019-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,28 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::error::{Error, Result};
-use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::borrow::ToOwned;
+use blacknet_kernel::transaction::TxKind;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Deserialize, Serialize)]
-pub struct Dispel;
+pub struct TxDataInfo {
+    r#type: u8,
+    dataIndex: u32,
+    data: Value,
+}
 
-impl TxData for Dispel {
-    fn process_impl(
-        &self,
-        tx: Transaction,
-        _hash: Hash,
-        _data_index: u32,
-        _coin_tx: impl CoinTx,
-    ) -> Result<()> {
-        if tx.fee() > Amount::ZERO {
-            Ok(())
-        } else {
-            Err(Error::Invalid("Invalid transaction fee".to_owned()))
+impl TxDataInfo {
+    pub fn new(kind: TxKind, data_index: u32, data: &[u8]) -> Self {
+        #[expect(unreachable_code)]
+        Self {
+            r#type: kind as u8,
+            dataIndex: data_index,
+            data: todo!(),
         }
     }
 }

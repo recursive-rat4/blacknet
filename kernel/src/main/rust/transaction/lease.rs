@@ -44,11 +44,11 @@ impl TxData for Lease {
                 self.amount
             )));
         }
-        let mut account = coin_tx.get_account(tx.from)?;
+        let mut account = coin_tx.get_account(tx.from())?;
         account.credit(self.amount)?;
-        coin_tx.set_account(tx.from, account);
+        coin_tx.set_account(tx.from(), account);
         let mut to_account = coin_tx.get_or_create(self.to);
-        to_account.add_lease(tx.from, coin_tx.height(), self.amount);
+        to_account.add_lease(tx.from(), coin_tx.height(), self.amount);
         coin_tx.set_account(self.to, to_account);
         Ok(())
     }

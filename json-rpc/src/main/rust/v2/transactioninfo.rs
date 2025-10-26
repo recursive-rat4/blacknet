@@ -15,41 +15,41 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{HashInfo, PublicKeyInfo, Result};
+use crate::v2::{AmountInfo, HashInfo, PublicKeyInfo, Result, SignatureInfo, TxDataInfo};
 use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::block::Block;
+use blacknet_kernel::transaction::Transaction;
 use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-pub struct BlockNotification {
+pub struct TransactionInfo {
     hash: HashInfo,
-    height: u32,
     size: u32,
-    version: u32,
-    previous: HashInfo,
-    time: i64,
-    generator: PublicKeyInfo,
-    transactions: u32,
+    signature: SignatureInfo,
+    from: PublicKeyInfo,
+    seq: u32,
+    referenceChain: HashInfo,
+    fee: AmountInfo,
+    data: Box<[TxDataInfo]>,
 }
 
-impl BlockNotification {
+impl TransactionInfo {
     pub fn new(
-        block: &Block,
+        tx: &Transaction,
         hash: Hash,
-        height: u32,
         size: u32,
         address_codec: &AddressCodec,
     ) -> Result<Self> {
+        #[expect(unreachable_code)]
         Ok(Self {
             hash: hash.into(),
-            height,
             size,
-            version: block.version(),
-            previous: block.previous().into(),
-            time: block.time().into(),
-            generator: PublicKeyInfo::new(block.generator(), address_codec)?,
-            transactions: block.raw_transactions().len() as u32,
+            signature: tx.signature().into(),
+            from: PublicKeyInfo::new(tx.from(), address_codec)?,
+            seq: tx.seq(),
+            referenceChain: tx.anchor().into(),
+            fee: tx.fee().into(),
+            data: todo!(),
         })
     }
 }

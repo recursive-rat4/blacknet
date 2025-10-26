@@ -59,7 +59,7 @@ impl TxData for CreateHTLC {
             return Err(Error::Invalid("Invalid amount".to_owned()));
         }
 
-        let mut account = coin_tx.get_account(tx.from)?;
+        let mut account = coin_tx.get_account(tx.from())?;
         account.credit(self.amount)?;
 
         let id = id(hash, data_index);
@@ -67,12 +67,12 @@ impl TxData for CreateHTLC {
             height: coin_tx.height(),
             time: coin_tx.block_time(),
             amount: self.amount,
-            from: tx.from,
+            from: tx.from(),
             to: self.to,
             time_lock: self.time_lock.clone(),
             hash_lock: self.hash_lock.clone(),
         };
-        coin_tx.set_account(tx.from, account);
+        coin_tx.set_account(tx.from(), account);
         coin_tx.add_htlc(id, htlc);
         Ok(())
     }

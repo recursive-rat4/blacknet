@@ -40,9 +40,9 @@ impl TxData for Burn {
         if self.amount == Amount::ZERO {
             return Err(Error::Invalid("Invalid amount".to_owned()));
         }
-        let mut account = coin_tx.get_account(tx.from)?;
+        let mut account = coin_tx.get_account(tx.from())?;
         account.credit(self.amount)?;
-        coin_tx.set_account(tx.from, account);
+        coin_tx.set_account(tx.from(), account);
         coin_tx.sub_supply(self.amount);
         Ok(())
     }

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, PublicKeyInfo};
+use crate::v2::{AmountInfo, PublicKeyInfo, Result};
 use blacknet_kernel::account::{Account, Lease};
 use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
@@ -35,8 +35,8 @@ impl AccountInfo {
         height: u32,
         confirmations: u32,
         address_codec: &AddressCodec,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             seq: account.seq(),
             balance: account.balance().into(),
             confirmedBalance: account.confirmed_balance(height, confirmations).into(),
@@ -46,8 +46,8 @@ impl AccountInfo {
                 .iter()
                 .copied()
                 .map(|i| LeaseInfo::new(i, address_codec))
-                .collect(),
-        }
+                .collect::<Result<Vec<LeaseInfo>>>()?,
+        })
     }
 }
 
@@ -59,11 +59,11 @@ struct LeaseInfo {
 }
 
 impl LeaseInfo {
-    fn new(lease: Lease, address_codec: &AddressCodec) -> Self {
-        Self {
-            publicKey: PublicKeyInfo::new(lease.public_key(), address_codec),
+    fn new(lease: Lease, address_codec: &AddressCodec) -> Result<Self> {
+        Ok(Self {
+            publicKey: PublicKeyInfo::new(lease.public_key(), address_codec)?,
             height: lease.height(),
             amount: lease.balance().into(),
-        }
+        })
     }
 }

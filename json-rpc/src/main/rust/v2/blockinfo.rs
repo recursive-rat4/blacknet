@@ -15,12 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{HashInfo, PublicKeyInfo, SignatureInfo};
+use crate::v2::{HashInfo, PublicKeyInfo, Result, SignatureInfo, TransactionInfo};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
+use blacknet_kernel::transaction::Transaction;
+use blacknet_serialization::format::from_bytes;
 use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Value, to_value};
 
 #[derive(Deserialize, Serialize)]
 pub struct BlockInfo {
@@ -42,23 +44,29 @@ impl BlockInfo {
         size: u32,
         tx_detail: bool,
         address_codec: &AddressCodec,
-    ) -> Self {
+    ) -> Result<Self> {
         let transactions = if tx_detail {
-            #[expect(unreachable_code)]
-            Value::Array(todo!())
+            let mut txs = Vec::with_capacity(block.raw_transactions().len());
+            for bytes in block.raw_transactions() {
+                let tx = from_bytes::<Transaction>(bytes, false)?;
+                let tx_hash = Transaction::hash(bytes);
+                let info = TransactionInfo::new(&tx, tx_hash, bytes.len() as u32, address_codec)?;
+                txs.push(to_value(info)?);
+            }
+            Value::Array(txs)
         } else {
             Value::Number(block.raw_transactions().len().into())
         };
-        Self {
+        Ok(Self {
             hash: hash.into(),
             size,
             version: block.version(),
             previous: block.previous().into(),
             time: block.time().into(),
-            generator: PublicKeyInfo::new(block.generator(), address_codec),
+            generator: PublicKeyInfo::new(block.generator(), address_codec)?,
             contentHash: block.content_hash().into(),
             signature: block.signature().into(),
             transactions,
-        }
+        })
     }
 }

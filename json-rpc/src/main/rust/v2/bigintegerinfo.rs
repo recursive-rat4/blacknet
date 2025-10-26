@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2025 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,28 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::error::{Error, Result};
-use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::borrow::ToOwned;
+use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-pub struct Dispel;
+pub struct BigIntegerInfo(String);
 
-impl TxData for Dispel {
-    fn process_impl(
-        &self,
-        tx: Transaction,
-        _hash: Hash,
-        _data_index: u32,
-        _coin_tx: impl CoinTx,
-    ) -> Result<()> {
-        if tx.fee() > Amount::ZERO {
-            Ok(())
-        } else {
-            Err(Error::Invalid("Invalid transaction fee".to_owned()))
-        }
+impl From<&[u8]> for BigIntegerInfo {
+    fn from(bytes: &[u8]) -> Self {
+        Self(BigUint::from_bytes_be(bytes).to_str_radix(10))
     }
+}
+
+#[test]
+fn test() {
+    let bytes = [
+        0x01, 0x5E, 0x6B, 0x7F, 0xEE, 0x4E, 0x21, 0xDF, 0x56, 0xBD, 0xAE,
+    ];
+    let string = "1654811289011657408691630";
+    let info = BigIntegerInfo::from(bytes.as_slice());
+    assert_eq!(info.0, string);
 }

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::BlockNotification;
+use crate::v2::{BlockNotification, Result, TransactionNotification};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, to_value};
 
@@ -26,10 +26,17 @@ pub struct WebSocketNotification {
 }
 
 impl WebSocketNotification {
-    pub fn with_block(notification: BlockNotification) -> Self {
-        Self {
+    pub fn with_block(notification: BlockNotification) -> Result<Self> {
+        Ok(Self {
             route: "block".to_owned(),
-            message: to_value(notification).expect("BlockNotification"),
-        }
+            message: to_value(notification)?,
+        })
+    }
+
+    pub fn with_transaction(notification: TransactionNotification) -> Result<Self> {
+        Ok(Self {
+            route: "transaction".to_owned(),
+            message: to_value(notification)?,
+        })
     }
 }
