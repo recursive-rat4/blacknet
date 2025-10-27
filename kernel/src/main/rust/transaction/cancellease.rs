@@ -29,6 +29,20 @@ pub struct CancelLease {
     height: u32,
 }
 
+impl CancelLease {
+    pub fn amount(&self) -> Amount {
+        self.amount
+    }
+
+    pub fn to(&self) -> PublicKey {
+        self.to
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+}
+
 impl TxData for CancelLease {
     fn process_impl(
         &self,

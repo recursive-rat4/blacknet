@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,24 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::transaction::TxKind;
+use crate::v2::ByteArrayInfo;
+use crate::v2::error::Result;
+use blacknet_kernel::transaction::ClaimHTLC;
+use blacknet_serialization::format::from_bytes;
+use blacknet_wallet::address::{AddressCodec, AddressKind};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 #[derive(Deserialize, Serialize)]
-pub struct TxDataInfo {
-    r#type: u8,
-    dataIndex: u32,
-    data: Value,
+pub struct ClaimHTLCInfo {
+    id: String,
+    preimage: ByteArrayInfo,
 }
 
-impl TxDataInfo {
-    pub fn new(kind: TxKind, data_index: u32, data: &[u8]) -> Self {
-        #[expect(unreachable_code)]
-        Self {
-            r#type: kind as u8,
-            dataIndex: data_index,
-            data: todo!(),
-        }
+impl ClaimHTLCInfo {
+    pub fn new(data: &[u8], address_codec: &AddressCodec) -> Result<Self> {
+        let claim_htlc = from_bytes::<ClaimHTLC>(data, false)?;
+        Ok(Self {
+            id: address_codec.encode_with_kind(AddressKind::HTLC, &claim_htlc.id())?,
+            preimage: claim_htlc.preimage().into(),
+        })
     }
 }

@@ -44,6 +44,24 @@ pub struct CreateHTLC {
     hash_lock: HashLock,
 }
 
+impl CreateHTLC {
+    pub fn amount(&self) -> Amount {
+        self.amount
+    }
+
+    pub fn to(&self) -> PublicKey {
+        self.to
+    }
+
+    pub fn time_lock(&self) -> &TimeLock {
+        &self.time_lock
+    }
+
+    pub fn hash_lock(&self) -> &HashLock {
+        &self.hash_lock
+    }
+}
+
 impl TxData for CreateHTLC {
     fn process_impl(
         &self,

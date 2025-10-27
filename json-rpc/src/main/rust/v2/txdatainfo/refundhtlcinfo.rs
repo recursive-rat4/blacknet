@@ -15,24 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::v2::error::Result;
+use blacknet_kernel::transaction::RefundHTLC;
+use blacknet_serialization::format::from_bytes;
+use blacknet_wallet::address::{AddressCodec, AddressKind};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
-#[repr(u8)]
-pub enum TxKind {
-    Transfer = 0,
-    Burn = 1,
-    Lease = 2,
-    CancelLease = 3,
-    Blob = 4,
-    CreateHTLC = 5,
-    RefundHTLC = 7,
-    CreateMultisig = 9,
-    SpendMultisig = 10,
-    WithdrawFromLease = 11,
-    ClaimHTLC = 12,
-    // Dispel = 13,
-    Batch = 16,
-    // Genesis = 125,
-    Generated = 254,
+#[derive(Deserialize, Serialize)]
+pub struct RefundHTLCInfo {
+    id: String,
+}
+
+impl RefundHTLCInfo {
+    pub fn new(data: &[u8], address_codec: &AddressCodec) -> Result<Self> {
+        let refund_htlc = from_bytes::<RefundHTLC>(data, false)?;
+        Ok(Self {
+            id: address_codec.encode_with_kind(AddressKind::HTLC, &refund_htlc.id())?,
+        })
+    }
 }

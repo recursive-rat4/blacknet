@@ -28,6 +28,16 @@ pub struct ClaimHTLC {
     preimage: Box<[u8]>,
 }
 
+impl ClaimHTLC {
+    pub fn id(&self) -> HashTimeLockContractId {
+        self.id
+    }
+
+    pub fn preimage(&self) -> &[u8] {
+        &self.preimage
+    }
+}
+
 impl TxData for ClaimHTLC {
     fn process_impl(
         &self,

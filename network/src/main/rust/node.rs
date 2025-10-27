@@ -34,6 +34,7 @@ use std::sync::{Arc, RwLock};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
 
+#[expect(dead_code)]
 pub struct Node {
     logger: Logger,
     settings: Arc<Settings>,

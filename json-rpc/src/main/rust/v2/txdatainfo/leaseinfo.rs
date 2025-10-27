@@ -15,24 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::v2::error::Result;
+use crate::v2::{AmountInfo, PublicKeyInfo};
+use blacknet_kernel::transaction::Lease;
+use blacknet_serialization::format::from_bytes;
+use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
-#[repr(u8)]
-pub enum TxKind {
-    Transfer = 0,
-    Burn = 1,
-    Lease = 2,
-    CancelLease = 3,
-    Blob = 4,
-    CreateHTLC = 5,
-    RefundHTLC = 7,
-    CreateMultisig = 9,
-    SpendMultisig = 10,
-    WithdrawFromLease = 11,
-    ClaimHTLC = 12,
-    // Dispel = 13,
-    Batch = 16,
-    // Genesis = 125,
-    Generated = 254,
+#[derive(Deserialize, Serialize)]
+pub struct LeaseInfo {
+    amount: AmountInfo,
+    to: PublicKeyInfo,
+}
+
+impl LeaseInfo {
+    pub fn new(data: &[u8], address_codec: &AddressCodec) -> Result<Self> {
+        let lease = from_bytes::<Lease>(data, false)?;
+        Ok(Self {
+            amount: lease.amount().into(),
+            to: PublicKeyInfo::new(lease.to(), address_codec)?,
+        })
+    }
 }

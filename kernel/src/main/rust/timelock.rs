@@ -75,4 +75,12 @@ impl TimeLock {
             Err(Error::Invalid("Invalid time lock".to_owned()))
         }
     }
+
+    pub fn algorithm(&self) -> u8 {
+        self.algorithm
+    }
+
+    pub fn data(&self) -> i64 {
+        self.data
+    }
 }

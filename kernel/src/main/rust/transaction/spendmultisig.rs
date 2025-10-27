@@ -27,4 +27,18 @@ pub struct SpendMultisig {
     signatures: Box<[Sig]>,
 }
 
+impl SpendMultisig {
+    pub fn id(&self) -> MultiSignatureLockContractId {
+        self.id
+    }
+
+    pub fn amounts(&self) -> &[Amount] {
+        &self.amounts
+    }
+
+    pub fn signatures(&self) -> &[Sig] {
+        &self.signatures
+    }
+}
+
 //TODO

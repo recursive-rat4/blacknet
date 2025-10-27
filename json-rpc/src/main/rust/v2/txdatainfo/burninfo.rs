@@ -15,24 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::v2::error::Result;
+use crate::v2::{AmountInfo, ByteArrayInfo};
+use blacknet_kernel::transaction::Burn;
+use blacknet_serialization::format::from_bytes;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
-#[repr(u8)]
-pub enum TxKind {
-    Transfer = 0,
-    Burn = 1,
-    Lease = 2,
-    CancelLease = 3,
-    Blob = 4,
-    CreateHTLC = 5,
-    RefundHTLC = 7,
-    CreateMultisig = 9,
-    SpendMultisig = 10,
-    WithdrawFromLease = 11,
-    ClaimHTLC = 12,
-    // Dispel = 13,
-    Batch = 16,
-    // Genesis = 125,
-    Generated = 254,
+#[derive(Deserialize, Serialize)]
+pub struct BurnInfo {
+    amount: AmountInfo,
+    message: ByteArrayInfo,
+}
+
+impl BurnInfo {
+    pub fn new(data: &[u8]) -> Result<Self> {
+        let burn = from_bytes::<Burn>(data, false)?;
+        Ok(Self {
+            amount: burn.amount().into(),
+            message: burn.message().into(),
+        })
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,24 +15,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde::{Deserialize, Serialize};
+mod blobinfo;
+mod burninfo;
+mod cancelleaseinfo;
+mod claimhtlcinfo;
+mod createhtlcinfo;
+mod createmultisiginfo;
+mod dispelinfo;
+mod leaseinfo;
+mod refundhtlcinfo;
+mod spendmultisiginfo;
+mod transferinfo;
+mod txdatainfo;
+mod withdrawfromleaseinfo;
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
-#[repr(u8)]
-pub enum TxKind {
-    Transfer = 0,
-    Burn = 1,
-    Lease = 2,
-    CancelLease = 3,
-    Blob = 4,
-    CreateHTLC = 5,
-    RefundHTLC = 7,
-    CreateMultisig = 9,
-    SpendMultisig = 10,
-    WithdrawFromLease = 11,
-    ClaimHTLC = 12,
-    // Dispel = 13,
-    Batch = 16,
-    // Genesis = 125,
-    Generated = 254,
-}
+pub use blobinfo::*;
+pub use burninfo::*;
+pub use cancelleaseinfo::*;
+pub use claimhtlcinfo::*;
+pub use createhtlcinfo::*;
+pub use createmultisiginfo::*;
+pub use dispelinfo::*;
+pub use leaseinfo::*;
+pub use refundhtlcinfo::*;
+pub use spendmultisiginfo::*;
+pub use transferinfo::*;
+pub use txdatainfo::*;
+pub use withdrawfromleaseinfo::*;

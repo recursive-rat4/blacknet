@@ -31,6 +31,24 @@ pub struct WithdrawFromLease {
     height: u32,
 }
 
+impl WithdrawFromLease {
+    pub fn withdraw(&self) -> Amount {
+        self.withdraw
+    }
+
+    pub fn amount(&self) -> Amount {
+        self.amount
+    }
+
+    pub fn to(&self) -> PublicKey {
+        self.to
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+}
+
 impl TxData for WithdrawFromLease {
     fn process_impl(
         &self,

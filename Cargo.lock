@@ -132,6 +132,7 @@ dependencies = [
  "blacknet-serialization",
  "blacknet-time",
  "blacknet-wallet",
+ "data-encoding",
  "num-bigint",
  "serde",
  "serde_json",

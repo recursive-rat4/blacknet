@@ -30,7 +30,7 @@ pub struct TransactionInfo {
     seq: u32,
     referenceChain: HashInfo,
     fee: AmountInfo,
-    data: Box<[TxDataInfo]>,
+    data: Vec<TxDataInfo>,
 }
 
 impl TransactionInfo {
@@ -40,7 +40,6 @@ impl TransactionInfo {
         size: u32,
         address_codec: &AddressCodec,
     ) -> Result<Self> {
-        #[expect(unreachable_code)]
         Ok(Self {
             hash: hash.into(),
             size,
@@ -49,7 +48,7 @@ impl TransactionInfo {
             seq: tx.seq(),
             referenceChain: tx.anchor().into(),
             fee: tx.fee().into(),
-            data: todo!(),
+            data: TxDataInfo::new(tx.kind(), tx.raw_data(), address_codec)?,
         })
     }
 }

@@ -22,16 +22,36 @@ use serde::{Deserialize, Serialize};
 
 pub type MultiSignatureLockContractId = [u8; 32];
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct Deposit {
     from: PublicKey,
     amount: Amount,
 }
 
-#[derive(Deserialize, Serialize)]
+impl Deposit {
+    pub fn from(self) -> PublicKey {
+        self.from
+    }
+
+    pub fn amount(self) -> Amount {
+        self.amount
+    }
+}
+
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct Sig {
     index: u8,
     signature: Signature,
+}
+
+impl Sig {
+    pub fn index(self) -> u8 {
+        self.index
+    }
+
+    pub fn signature(self) -> Signature {
+        self.signature
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -39,6 +59,20 @@ pub struct CreateMultisig {
     n: u8,
     deposits: Box<[Deposit]>,
     signatures: Box<[Sig]>,
+}
+
+impl CreateMultisig {
+    pub fn n(&self) -> u8 {
+        self.n
+    }
+
+    pub fn deposits(&self) -> &[Deposit] {
+        &self.deposits
+    }
+
+    pub fn signatures(&self) -> &[Sig] {
+        &self.signatures
+    }
 }
 
 //TODO

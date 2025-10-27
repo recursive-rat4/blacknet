@@ -33,7 +33,7 @@ pub struct TransactionNotification {
     referenceChain: HashInfo,
     fee: AmountInfo,
     r#type: u8,
-    data: Box<[TxDataInfo]>,
+    data: Vec<TxDataInfo>,
 }
 
 impl TransactionNotification {
@@ -44,7 +44,6 @@ impl TransactionNotification {
         size: u32,
         address_codec: &AddressCodec,
     ) -> Result<Self> {
-        #[expect(unreachable_code)]
         Ok(Self {
             hash: hash.into(),
             time: time.into(),
@@ -55,7 +54,7 @@ impl TransactionNotification {
             referenceChain: tx.anchor().into(),
             fee: tx.fee().into(),
             r#type: tx.kind() as u8,
-            data: todo!(),
+            data: TxDataInfo::new(tx.kind(), tx.raw_data(), address_codec)?,
         })
     }
 }

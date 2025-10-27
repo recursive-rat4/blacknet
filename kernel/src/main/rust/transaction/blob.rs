@@ -29,6 +29,16 @@ pub struct Blob {
     data: Box<[u8]>,
 }
 
+impl Blob {
+    pub fn tag(&self) -> Tag {
+        self.tag
+    }
+
+    pub fn data(&self) -> &[u8] {
+        &self.data
+    }
+}
+
 impl TxData for Blob {
     fn process_impl(
         &self,

@@ -29,6 +29,16 @@ pub struct Burn {
     message: Box<[u8]>,
 }
 
+impl Burn {
+    pub fn amount(&self) -> Amount {
+        self.amount
+    }
+
+    pub fn message(&self) -> &[u8] {
+        &self.message
+    }
+}
+
 impl TxData for Burn {
     fn process_impl(
         &self,

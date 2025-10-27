@@ -23,6 +23,7 @@ use blacknet_log::{Logger, info};
 use blacknet_time::{Milliseconds, Seconds};
 use std::sync::atomic::{AtomicU8, Ordering};
 
+#[expect(dead_code)]
 pub struct Connection {
     logger: Logger,
 

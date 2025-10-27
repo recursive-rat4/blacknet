@@ -92,4 +92,12 @@ impl HashLock {
             }
         })
     }
+
+    pub fn algorithm(&self) -> u8 {
+        self.algorithm
+    }
+
+    pub fn image(&self) -> &[u8] {
+        &self.image
+    }
 }

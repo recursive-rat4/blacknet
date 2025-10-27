@@ -26,6 +26,12 @@ pub struct RefundHTLC {
     id: HashTimeLockContractId,
 }
 
+impl RefundHTLC {
+    pub fn id(&self) -> HashTimeLockContractId {
+        self.id
+    }
+}
+
 impl TxData for RefundHTLC {
     fn process_impl(
         &self,

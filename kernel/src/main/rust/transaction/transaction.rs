@@ -94,4 +94,8 @@ impl Transaction {
     pub fn signature(&self) -> Signature {
         self.signature
     }
+
+    pub fn raw_data(&self) -> &[u8] {
+        &self.data
+    }
 }

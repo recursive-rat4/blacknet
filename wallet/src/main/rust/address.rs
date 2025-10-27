@@ -22,6 +22,7 @@ use blacknet_compat::Mode;
 use blacknet_kernel::ed25519::PublicKey;
 use thiserror::Error;
 
+#[derive(Clone, Copy)]
 #[repr(u8)]
 pub enum AddressKind {
     // Account = None,
@@ -29,6 +30,17 @@ pub enum AddressKind {
     HTLC = 1,
     Multisig = 2,
     Blob = 3,
+}
+
+impl AddressKind {
+    pub fn size(self) -> usize {
+        match self {
+            Self::Staker => 32,
+            Self::HTLC => 32,
+            Self::Multisig => 32,
+            Self::Blob => 4,
+        }
+    }
 }
 
 pub struct AddressCodec {
@@ -58,6 +70,16 @@ impl AddressCodec {
         let mut public_key: PublicKey = Default::default();
         public_key.copy_from_slice(&data);
         Ok(public_key)
+    }
+
+    pub fn encode_with_kind(&self, kind: AddressKind, data: &[u8]) -> Result<String> {
+        if kind.size() != data.len() {
+            return Err(Error::WrongSize);
+        }
+        let mut bytes = Vec::with_capacity(kind.size() + 1);
+        bytes.push(kind as u8);
+        bytes.extend(data);
+        Ok(encode::<Bech32>(self.hrp, &bytes)?)
     }
 }
 

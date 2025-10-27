@@ -29,11 +29,35 @@ pub struct PaymentId {
     payload: Box<[u8]>,
 }
 
+impl PaymentId {
+    pub fn kind(&self) -> u8 {
+        self.kind
+    }
+
+    pub fn payload(&self) -> &[u8] {
+        &self.payload
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct Transfer {
     amount: Amount,
     to: PublicKey,
     payment_id: PaymentId,
+}
+
+impl Transfer {
+    pub fn amount(&self) -> Amount {
+        self.amount
+    }
+
+    pub fn to(&self) -> PublicKey {
+        self.to
+    }
+
+    pub fn payment_id(&self) -> &PaymentId {
+        &self.payment_id
+    }
 }
 
 impl TxData for Transfer {

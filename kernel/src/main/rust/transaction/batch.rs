@@ -18,6 +18,9 @@
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
+pub const MIN_SIZE: usize = 2;
+pub const MAX_SIZE: usize = 20;
+
 #[derive(Deserialize, Serialize)]
 pub struct Batchee {
     kind: u8,

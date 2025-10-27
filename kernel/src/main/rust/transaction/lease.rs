@@ -30,6 +30,16 @@ pub struct Lease {
     to: PublicKey,
 }
 
+impl Lease {
+    pub fn amount(&self) -> Amount {
+        self.amount
+    }
+
+    pub fn to(&self) -> PublicKey {
+        self.to
+    }
+}
+
 impl TxData for Lease {
     fn process_impl(
         &self,
