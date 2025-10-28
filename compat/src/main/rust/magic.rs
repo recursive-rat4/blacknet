@@ -43,6 +43,11 @@ pub const ADDRESS_READABLE_PART: &str = "blacknet";
 pub(crate) const DEFAULT_P2P_PORT: u16 = 28453;
 
 /**
+ * The default port for RPC.
+ */
+pub(crate) const DEFAULT_RPC_PORT: u16 = 8283;
+
+/**
  * The nonce that is used for quickly distinguishing networks.
  */
 pub(crate) const NETWORK_MAGIC: u32 = 0x17895E7D;

@@ -28,6 +28,7 @@ pub struct Mode {
     requires_network: bool,
     agent_name: String,
     default_p2p_port: u16,
+    default_rpc_port: u16,
     network_magic: u32,
     builtin_peers: &'static str,
 }
@@ -58,6 +59,7 @@ impl Mode {
                 None => AGENT_NAME.to_owned(),
             },
             default_p2p_port: DEFAULT_P2P_PORT + ordinal as u16,
+            default_rpc_port: DEFAULT_RPC_PORT + ordinal as u16,
             network_magic: NETWORK_MAGIC + ordinal as u32,
             builtin_peers,
         }
@@ -137,6 +139,10 @@ impl Mode {
 
     pub fn default_p2p_port(&self) -> u16 {
         self.default_p2p_port
+    }
+
+    pub fn default_rpc_port(&self) -> u16 {
+        self.default_rpc_port
     }
 
     pub fn network_magic(&self) -> u32 {

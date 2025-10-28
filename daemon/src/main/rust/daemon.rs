@@ -16,6 +16,7 @@
  */
 
 use blacknet_compat::{XDGDirectories, mode};
+use blacknet_json_rpc::{Settings as RPCSettings, rpc_server};
 use blacknet_log::{LogManager, Strategy};
 use blacknet_network::node::Node;
 use std::env::args;
@@ -23,6 +24,7 @@ use std::error::Error;
 use std::process::ExitCode;
 use tokio::runtime::Runtime;
 use tokio::signal::ctrl_c;
+use tokio::sync::mpsc::unbounded_channel;
 
 fn daemon() -> Result<(), Box<dyn Error>> {
     if args().nth(1).is_some_and(|arg| arg == "--version") {
@@ -33,9 +35,19 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     let dirs = XDGDirectories::new(mode.subdirectory())?;
     let log_manager = LogManager::new(Strategy::Daemon, dirs.state())?;
     let runtime = Runtime::new()?;
+    let (shutdown_send, mut shutdown_recv) = unbounded_channel::<()>();
     let _node = Node::new(&mode, &dirs, &log_manager, &runtime)?;
-    runtime.block_on(async {
-        ctrl_c().await.unwrap();
+    let rpc_settings = RPCSettings::default(&mode);
+    if rpc_settings.enabled {
+        runtime.spawn(async move {
+            rpc_server(rpc_settings, &log_manager, shutdown_send).await;
+        });
+    }
+    runtime.block_on(async move {
+        tokio::select! {
+            _ = ctrl_c() => {},
+            _ = shutdown_recv.recv() => {},
+        }
     });
     Ok(())
 }

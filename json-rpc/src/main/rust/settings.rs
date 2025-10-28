@@ -15,9 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod rpcserver;
-mod settings;
-pub mod v2;
+use blacknet_compat::Mode;
 
-pub use rpcserver::*;
-pub use settings::*;
+pub struct Settings {
+    pub enabled: bool,
+    pub host: String,
+    pub port: u16,
+}
+
+impl Settings {
+    pub fn default(mode: &Mode) -> Self {
+        Self {
+            enabled: true,
+            host: "127.0.0.1".to_owned(),
+            port: mode.default_rpc_port(),
+        }
+    }
+}

@@ -30,15 +30,20 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+blacknet-compat.workspace = true
 blacknet-kernel.workspace = true
+blacknet-log.workspace = true
 blacknet-network.workspace = true
 blacknet-serialization.workspace = true
 blacknet-time.workspace = true
 blacknet-wallet.workspace = true
+axum.workspace = true
 data-encoding.workspace = true
 num-bigint.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+spdlog-rs.workspace = true
+tokio.workspace = true
 
 [lints]
 workspace = true
