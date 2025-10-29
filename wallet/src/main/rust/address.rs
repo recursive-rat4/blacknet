@@ -81,6 +81,22 @@ impl AddressCodec {
         bytes.extend(data);
         Ok(encode::<Bech32>(self.hrp, &bytes)?)
     }
+
+    pub fn decode_with_kind(&self, kind: AddressKind, string: &str) -> Result<Vec<u8>> {
+        CheckedHrpstring::new::<Bech32>(string)?; // reject Bech32m
+        let (hrp, mut data) = decode(string)?;
+        if hrp != self.hrp {
+            return Err(Error::WrongHrp);
+        }
+        if data.len() != 1 + kind.size() {
+            return Err(Error::WrongSize);
+        }
+        if data[0] != kind as u8 {
+            return Err(Error::WrongKind);
+        }
+        data.remove(0);
+        Ok(data)
+    }
 }
 
 #[derive(Debug, Error)]
@@ -89,6 +105,8 @@ pub enum Error {
     WrongHrp,
     #[error("Wrong address size")]
     WrongSize,
+    #[error("Wrong address kind")]
+    WrongKind,
     #[error("{0}")]
     Bech32Checksum(CheckedHrpstringError),
     #[error("{0}")]

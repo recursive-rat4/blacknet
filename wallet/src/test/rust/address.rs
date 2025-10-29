@@ -17,7 +17,7 @@
 
 use blacknet_compat::Mode;
 use blacknet_kernel::ed25519::PublicKey;
-use blacknet_wallet::address::AddressCodec;
+use blacknet_wallet::address::{AddressCodec, AddressKind};
 use data_encoding::HEXUPPER;
 
 #[test]
@@ -31,4 +31,49 @@ fn account() {
     let address_codec = AddressCodec::new(&Mode::mainnet()).unwrap();
     assert_eq!(address_codec.encode(bytes).unwrap(), string);
     assert_eq!(address_codec.decode(string).unwrap(), bytes);
+}
+
+#[test]
+fn htlc() {
+    let string = "blacknet1q8llal0ul0a0n78h7m6lfulj78cwlmhdan47460gulnwte8ruts7q6rcsw5";
+    let address_codec = AddressCodec::new(&Mode::mainnet()).unwrap();
+    let address = address_codec
+        .decode_with_kind(AddressKind::HTLC, string)
+        .unwrap();
+    assert_eq!(
+        address_codec
+            .encode_with_kind(AddressKind::HTLC, &address)
+            .unwrap(),
+        string
+    );
+}
+
+#[test]
+fn multisig() {
+    let string = "blacknet1qtl0ml8mltul3alk7h608uh37rh7am0va04wn688umj7fclzu8sd7467cge";
+    let address_codec = AddressCodec::new(&Mode::mainnet()).unwrap();
+    let address = address_codec
+        .decode_with_kind(AddressKind::Multisig, string)
+        .unwrap();
+    assert_eq!(
+        address_codec
+            .encode_with_kind(AddressKind::Multisig, &address)
+            .unwrap(),
+        string
+    );
+}
+
+#[test]
+fn blob() {
+    let string = "blacknet1q07le7l69mvwv3";
+    let address_codec = AddressCodec::new(&Mode::mainnet()).unwrap();
+    let address = address_codec
+        .decode_with_kind(AddressKind::Blob, string)
+        .unwrap();
+    assert_eq!(
+        address_codec
+            .encode_with_kind(AddressKind::Blob, &address)
+            .unwrap(),
+        string
+    );
 }

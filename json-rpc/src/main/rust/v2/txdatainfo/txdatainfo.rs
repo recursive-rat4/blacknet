@@ -17,7 +17,8 @@
 
 use crate::v2::error::Result;
 use crate::v2::txdatainfo::*;
-use blacknet_kernel::transaction::TxKind;
+use blacknet_kernel::transaction::{Batch, TxKind};
+use blacknet_serialization::format::from_bytes;
 use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
@@ -40,13 +41,23 @@ impl TxDataInfo {
         } else if kind != TxKind::Batch {
             Ok(vec![Self::single(kind, 0, data, address_codec)?])
         } else {
-            todo!();
+            let batch = from_bytes::<Batch>(data, false)?;
+            let mut result = Vec::with_capacity(batch.len());
+            for (index, batchee) in batch.multi_data().iter().enumerate() {
+                result.push(Self::single(
+                    batchee.kind(),
+                    index + 1,
+                    batchee.raw_data(),
+                    address_codec,
+                )?);
+            }
+            Ok(result)
         }
     }
 
     fn single(
         kind: TxKind,
-        data_index: u32,
+        data_index: usize,
         data: &[u8],
         address_codec: &AddressCodec,
     ) -> Result<Self> {
@@ -70,7 +81,7 @@ impl TxDataInfo {
         };
         Ok(Self {
             r#type: kind as u8,
-            dataIndex: data_index,
+            dataIndex: data_index as u32,
             data,
         })
     }

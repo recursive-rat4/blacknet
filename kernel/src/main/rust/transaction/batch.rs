@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::transaction::TxKind;
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
@@ -23,11 +24,32 @@ pub const MAX_SIZE: usize = 20;
 
 #[derive(Deserialize, Serialize)]
 pub struct Batchee {
-    kind: u8,
+    kind: TxKind,
     data: Box<[u8]>,
+}
+
+impl Batchee {
+    pub fn kind(&self) -> TxKind {
+        self.kind
+    }
+
+    pub fn raw_data(&self) -> &[u8] {
+        &self.data
+    }
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct Batch {
     multi_data: Box<[Batchee]>,
+}
+
+impl Batch {
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize {
+        self.multi_data.len()
+    }
+
+    pub fn multi_data(&self) -> &[Batchee] {
+        &self.multi_data
+    }
 }
