@@ -38,7 +38,7 @@ pub trait Integer
         + Ord
         + Sub<Output = Self::Limb>
         ;
-    type CastUnsigned: Integer;
+    type CastUnsigned: UnsignedInteger;
 
     fn cast_unsigned(self) -> Self::CastUnsigned;
     fn count_ones(self) -> u32;
@@ -54,6 +54,9 @@ pub trait Integer
     const LIMB_TWO: Self::Limb;
     const LIMB_THREE: Self::Limb;
 }
+
+pub trait SignedInteger: Integer {}
+pub trait UnsignedInteger: Integer {}
 
 impl Integer for i8 {
     type Limb = Self;
@@ -83,6 +86,8 @@ impl Integer for i8 {
     const LIMB_THREE: Self::Limb = 3;
 }
 
+impl SignedInteger for i8 {}
+
 impl Integer for i16 {
     type Limb = Self;
     type CastUnsigned = u16;
@@ -110,6 +115,8 @@ impl Integer for i16 {
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
 }
+
+impl SignedInteger for i16 {}
 
 impl Integer for i32 {
     type Limb = Self;
@@ -139,6 +146,8 @@ impl Integer for i32 {
     const LIMB_THREE: Self::Limb = 3;
 }
 
+impl SignedInteger for i32 {}
+
 impl Integer for i64 {
     type Limb = Self;
     type CastUnsigned = u64;
@@ -166,6 +175,8 @@ impl Integer for i64 {
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
 }
+
+impl SignedInteger for i64 {}
 
 impl Integer for isize {
     type Limb = Self;
@@ -195,6 +206,8 @@ impl Integer for isize {
     const LIMB_THREE: Self::Limb = 3;
 }
 
+impl SignedInteger for isize {}
+
 impl Integer for u8 {
     type Limb = Self;
     type CastUnsigned = Self;
@@ -222,6 +235,8 @@ impl Integer for u8 {
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
 }
+
+impl UnsignedInteger for u8 {}
 
 impl Integer for u16 {
     type Limb = Self;
@@ -251,6 +266,8 @@ impl Integer for u16 {
     const LIMB_THREE: Self::Limb = 3;
 }
 
+impl UnsignedInteger for u16 {}
+
 impl Integer for u32 {
     type Limb = Self;
     type CastUnsigned = Self;
@@ -278,6 +295,8 @@ impl Integer for u32 {
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
 }
+
+impl UnsignedInteger for u32 {}
 
 impl Integer for u64 {
     type Limb = Self;
@@ -307,6 +326,8 @@ impl Integer for u64 {
     const LIMB_THREE: Self::Limb = 3;
 }
 
+impl UnsignedInteger for u64 {}
+
 impl Integer for usize {
     type Limb = Self;
     type CastUnsigned = Self;
@@ -335,6 +356,8 @@ impl Integer for usize {
     const LIMB_THREE: Self::Limb = 3;
 }
 
+impl UnsignedInteger for usize {}
+
 impl<const N: usize> Integer for BigInt<N> {
     type Limb = u64;
     type CastUnsigned = Self;
@@ -362,3 +385,5 @@ impl<const N: usize> Integer for BigInt<N> {
     const LIMB_TWO: Self::Limb = 2;
     const LIMB_THREE: Self::Limb = 3;
 }
+
+impl<const N: usize> UnsignedInteger for BigInt<N> {}
