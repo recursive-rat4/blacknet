@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,40 +15,36 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::transaction::TxKind;
-use alloc::boxed::Box;
-use serde::{Deserialize, Serialize};
+use blacknet_kernel::blake2b::Hash;
+use std::collections::{HashMap, hash_map::Keys};
 
-pub const MIN_SIZE: usize = 2;
-pub const MAX_SIZE: usize = 20;
-
-#[derive(Deserialize, Serialize)]
-pub struct Batchee {
-    kind: TxKind,
-    data: Box<[u8]>,
+pub struct TxPool {
+    map: HashMap<Hash, Box<[u8]>>,
+    data_len: usize,
 }
 
-impl Batchee {
-    pub fn kind(&self) -> TxKind {
-        self.kind
+impl TxPool {
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+            data_len: 0,
+        }
     }
 
-    pub fn raw_data(&self) -> &[u8] {
-        &self.data
-    }
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct Batch {
-    multi_data: Box<[Batchee]>,
-}
-
-impl Batch {
     pub fn len(&self) -> usize {
-        self.multi_data.len()
+        self.map.len()
     }
 
-    pub fn multi_data(&self) -> &[Batchee] {
-        &self.multi_data
+    pub fn data_len(&self) -> usize {
+        self.data_len
+    }
+
+    pub fn hashes(&self) -> Keys<'_, Hash, Box<[u8]>> {
+        self.map.keys()
+    }
+
+    pub fn get(&self, hash: Hash) -> Option<&[u8]> {
+        self.map.get(&hash).map(|x| &**x)
     }
 }

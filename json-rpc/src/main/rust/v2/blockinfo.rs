@@ -50,7 +50,7 @@ impl BlockInfo {
             for bytes in block.raw_transactions() {
                 let tx = from_bytes::<Transaction>(bytes, false)?;
                 let tx_hash = Transaction::hash(bytes);
-                let info = TransactionInfo::new(&tx, tx_hash, bytes.len() as u32, address_codec)?;
+                let info = TransactionInfo::new(&tx, tx_hash, bytes.len(), address_codec)?;
                 txs.push(to_value(info)?);
             }
             Value::Array(txs)

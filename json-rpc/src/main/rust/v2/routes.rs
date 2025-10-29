@@ -15,15 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod connection;
-pub mod endpoint;
-pub mod i2psam;
-pub mod natpmp;
-pub mod node;
-pub mod packet;
-pub mod peertable;
-pub mod router;
-pub mod settings;
-pub mod socks5;
-pub mod torcontroller;
-pub mod txpool;
+use crate::v2;
+use axum::Router;
+use blacknet_network::node::Node;
+use std::sync::Arc;
+
+pub fn routes() -> Router<Arc<Node>> {
+    Router::new().merge(v2::node::routes())
+}

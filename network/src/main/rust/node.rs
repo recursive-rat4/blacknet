@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2018-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,19 +20,24 @@ use crate::endpoint::Endpoint;
 use crate::peertable::PeerTable;
 use crate::router::Router;
 use crate::settings::Settings;
+use crate::txpool::TxPool;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
 use blacknet_io::Write;
 use blacknet_io::file::replace;
 use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::to_write;
+use blacknet_wallet::walletdb::WalletDB;
 use core::num::NonZero;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
+
+pub const PROTOCOL_VERSION: u32 = 15;
 
 #[expect(dead_code)]
 pub struct Node {
@@ -43,11 +48,17 @@ pub struct Node {
     connections: RwLock<Vec<Connection>>,
     peer_table: Arc<PeerTable>,
     router: Arc<Router>,
+    tx_pool: RwLock<TxPool>,
+    wallet_db: WalletDB,
+    agent_string: String,
+    agent_name: String,
+    agent_version: String,
+    mode: Mode,
 }
 
 impl Node {
     pub fn new(
-        mode: &Mode,
+        mode: Mode,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
@@ -70,8 +81,8 @@ impl Node {
             warn!(logger, "Running as root");
         }
 
-        let settings = Arc::new(Settings::default(mode));
-        let peer_table = PeerTable::new(mode, dirs, log_manager, settings.clone())?;
+        let settings = Arc::new(Settings::default(&mode));
+        let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
         let node = Arc::new(Self {
             logger,
             settings: settings.clone(),
@@ -79,7 +90,13 @@ impl Node {
             next_peer_id: AtomicU64::new(1),
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
-            router: Router::new(mode, dirs, log_manager, runtime, settings, peer_table)?,
+            router: Router::new(&mode, dirs, log_manager, runtime, settings, peer_table)?,
+            tx_pool: RwLock::new(TxPool::new()),
+            wallet_db: WalletDB::new(&mode)?,
+            agent_string: format!("/{agent_name}:{agent_version}/"),
+            agent_name: agent_name.to_owned(),
+            agent_version: agent_version.to_owned(),
+            mode,
         });
 
         runtime.spawn(node.clone().rotator());
@@ -87,9 +104,62 @@ impl Node {
         Ok(node)
     }
 
+    pub fn agent_string(&self) -> &str {
+        &self.agent_string
+    }
+
+    pub fn agent_name(&self) -> &str {
+        &self.agent_name
+    }
+
+    pub fn agent_version(&self) -> &str {
+        &self.agent_version
+    }
+
     pub fn is_online(&self) -> bool {
         let connections = self.connections.read().unwrap();
         connections.iter().any(Connection::is_established)
+    }
+
+    pub fn outgoing(&self) -> usize {
+        let connections = self.connections.read().unwrap();
+        connections
+            .iter()
+            .filter(|connection| connection.state() == State::OutgoingConnected)
+            .count()
+    }
+
+    pub fn incoming(&self) -> usize {
+        let connections = self.connections.read().unwrap();
+        connections
+            .iter()
+            .filter(|connection| connection.state() == State::IncomingConnected)
+            .count()
+    }
+
+    pub fn connections(&self) -> &RwLock<Vec<Connection>> {
+        &self.connections
+    }
+
+    pub fn listening(&self) -> &RwLock<HashSet<Endpoint>> {
+        self.router.listening()
+    }
+
+    pub fn warnings(&self) -> Vec<String> {
+        //TODO
+        vec![]
+    }
+
+    pub fn tx_pool(&self) -> &RwLock<TxPool> {
+        &self.tx_pool
+    }
+
+    pub fn wallet_db(&self) -> &WalletDB {
+        &self.wallet_db
+    }
+
+    pub fn mode(&self) -> &Mode {
+        &self.mode
     }
 
     async fn rotator(self: Arc<Self>) {

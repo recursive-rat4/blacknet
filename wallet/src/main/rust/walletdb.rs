@@ -15,15 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod connection;
-pub mod endpoint;
-pub mod i2psam;
-pub mod natpmp;
-pub mod node;
-pub mod packet;
-pub mod peertable;
-pub mod router;
-pub mod settings;
-pub mod socks5;
-pub mod torcontroller;
-pub mod txpool;
+use crate::address::AddressCodec;
+use blacknet_compat::Mode;
+use core::error::Error;
+
+pub struct WalletDB {
+    address_codec: AddressCodec,
+}
+
+impl WalletDB {
+    pub fn new(mode: &Mode) -> Result<Self, Box<dyn Error>> {
+        Ok(Self {
+            address_codec: AddressCodec::new(mode)?,
+        })
+    }
+
+    pub fn address_codec(&self) -> &AddressCodec {
+        &self.address_codec
+    }
+}

@@ -37,6 +37,7 @@ blacknet-kernel.workspace = true
 blacknet-log.workspace = true
 blacknet-serialization.workspace = true
 blacknet-time.workspace = true
+blacknet-wallet.workspace = true
 data-encoding.workspace = true
 data-encoding-macro.workspace = true
 natpmp.workspace = true

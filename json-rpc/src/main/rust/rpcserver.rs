@@ -15,21 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::Settings;
+use crate::{Settings, v2};
 use axum::{Router, routing::get};
 use blacknet_log::{LogManager, error};
+use blacknet_network::node::Node;
+use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::mpsc::UnboundedSender;
 
 pub async fn rpc_server(
     settings: Settings,
     log_manager: &LogManager,
+    node: Arc<Node>,
     shutdown_send: UnboundedSender<()>,
 ) {
-    let router = Router::new().route(
-        "/api/shutdown",
-        get(|| async move { shutdown_send.send(()).unwrap() }),
-    );
+    let router = Router::new()
+        .route(
+            "/api/shutdown",
+            get(|| async move { shutdown_send.send(()).unwrap() }),
+        )
+        .merge(v2::routes())
+        .with_state(node);
     let addr = format!("{}:{}", settings.host, settings.port);
     match TcpListener::bind(&addr).await {
         Ok(listener) => axum::serve(listener, router).await.unwrap(),

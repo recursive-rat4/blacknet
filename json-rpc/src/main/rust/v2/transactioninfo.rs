@@ -37,12 +37,12 @@ impl TransactionInfo {
     pub fn new(
         tx: &Transaction,
         hash: Hash,
-        size: u32,
+        size: usize,
         address_codec: &AddressCodec,
     ) -> Result<Self> {
         Ok(Self {
             hash: hash.into(),
-            size,
+            size: size as u32,
             signature: tx.signature().into(),
             from: PublicKeyInfo::new(tx.from(), address_codec)?,
             seq: tx.seq(),

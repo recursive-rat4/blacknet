@@ -36,11 +36,11 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     let log_manager = LogManager::new(Strategy::Daemon, dirs.state())?;
     let runtime = Runtime::new()?;
     let (shutdown_send, mut shutdown_recv) = unbounded_channel::<()>();
-    let _node = Node::new(&mode, &dirs, &log_manager, &runtime)?;
     let rpc_settings = RPCSettings::default(&mode);
+    let node = Node::new(mode, &dirs, &log_manager, &runtime)?;
     if rpc_settings.enabled {
         runtime.spawn(async move {
-            rpc_server(rpc_settings, &log_manager, shutdown_send).await;
+            rpc_server(rpc_settings, &log_manager, node.clone(), shutdown_send).await;
         });
     }
     runtime.block_on(async move {

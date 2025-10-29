@@ -194,6 +194,9 @@ impl Router {
             self.peer_table.discontacted(endpoint)
         }
     }
+    pub fn listening(&self) -> &RwLock<HashSet<Endpoint>> {
+        &self.listens
+    }
 
     const INIT_TIMEOUT: Duration = Duration::from_secs(60);
     const MAX_TIMEOUT: Duration = Duration::from_secs(2 * 60 * 60);

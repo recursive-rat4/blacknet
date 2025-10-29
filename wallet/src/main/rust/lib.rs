@@ -16,3 +16,4 @@
  */
 
 pub mod address;
+pub mod walletdb;
