@@ -39,8 +39,9 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     let rpc_settings = RPCSettings::default(&mode);
     let node = Node::new(mode, &dirs, &log_manager, &runtime)?;
     if rpc_settings.enabled {
+        let node = node.clone();
         runtime.spawn(async move {
-            rpc_server(rpc_settings, &log_manager, node.clone(), shutdown_send).await;
+            rpc_server(rpc_settings, &log_manager, node, shutdown_send).await;
         });
     }
     runtime.block_on(async move {
@@ -49,6 +50,7 @@ fn daemon() -> Result<(), Box<dyn Error>> {
             _ = shutdown_recv.recv() => {},
         }
     });
+    node.dispose();
     Ok(())
 }
 

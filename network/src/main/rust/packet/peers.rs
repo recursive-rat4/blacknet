@@ -15,10 +15,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::connection::Connection;
 use crate::endpoint::Endpoint;
+use crate::packet::Packet;
+use blacknet_log::debug;
 use serde::{Deserialize, Serialize};
+
+pub const MAX: usize = 1000;
 
 #[derive(Deserialize, Serialize)]
 pub struct Peers {
     list: Box<[Endpoint]>,
+}
+
+impl Packet for Peers {
+    fn handle(self, connection: &Connection) {
+        if self.list.len() > MAX {
+            connection.dos("Invalid Peers size");
+            return;
+        }
+
+        let peer_table = connection.node().peer_table();
+        let added = peer_table.add(self.list.into_iter());
+        if added > 0 {
+            debug!(connection.logger(), "{added} new peer addresses");
+        }
+    }
 }

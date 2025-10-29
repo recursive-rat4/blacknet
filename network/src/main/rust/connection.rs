@@ -16,16 +16,21 @@
  */
 
 use crate::endpoint::Endpoint;
+use crate::node::Node;
 use crate::packet::BlockAnnounce;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{Logger, info};
 use blacknet_time::{Milliseconds, Seconds};
-use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::{
+    Arc,
+    atomic::{AtomicU8, Ordering},
+};
 
 #[expect(dead_code)]
 pub struct Connection {
     logger: Logger,
+    node: Arc<Node>,
 
     remote_endpoint: Endpoint,
     local_endpoint: Endpoint,
@@ -125,6 +130,14 @@ impl Connection {
 
     pub fn total_bytes_written(&self) -> u64 {
         todo!();
+    }
+
+    pub fn logger(&self) -> &Logger {
+        &self.logger
+    }
+
+    pub fn node(&self) -> &Node {
+        &self.node
     }
 }
 

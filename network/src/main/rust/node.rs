@@ -150,6 +150,10 @@ impl Node {
         vec![]
     }
 
+    pub fn peer_table(&self) -> &PeerTable {
+        &self.peer_table
+    }
+
     pub fn tx_pool(&self) -> &RwLock<TxPool> {
         &self.tx_pool
     }
@@ -174,10 +178,8 @@ impl Node {
             self.peer_table.clone().rotate().await;
         }
     }
-}
 
-impl Drop for Node {
-    fn drop(&mut self) {
+    pub fn dispose(self: Arc<Self>) {
         let mut connections = self.connections.write().unwrap();
         info!(self.logger, "Closing {} p2p connections", connections.len());
         let mut peers = Vec::with_capacity(connections.len());

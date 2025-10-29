@@ -15,8 +15,32 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::connection::Connection;
+
 /**
  * Packet length is used for delimiting, and as such doesn't count towards packet size.
  */
 pub const PACKET_LENGTH_SIZE_BYTES: usize = 4;
 pub const PACKET_HEADER_SIZE_BYTES: usize = 4;
+
+pub trait Packet {
+    fn handle(self, connection: &Connection);
+}
+
+#[non_exhaustive]
+#[repr(u32)]
+pub enum PacketKind {
+    Version = 0,
+    PingV1 = 1,
+    Pong = 2,
+    GetBlocks = 8,
+    Blocks = 9,
+    BlockAnnounce = 10,
+    ConsensusFault = 11,
+    Inventory = 12,
+    GetTransactions = 13,
+    Transactions = 14,
+    Peers = 15,
+    Ping = 16,
+    Hello = 17,
+}
