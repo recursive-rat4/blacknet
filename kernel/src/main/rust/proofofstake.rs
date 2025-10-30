@@ -23,6 +23,11 @@ use crate::amount::Amount;
 pub const MATURITY: u32 = 1350;
 
 /**
+ * Depth of rolling checkpoint
+ */
+pub const ROLLBACK_LIMIT: usize = 1350;
+
+/**
  * Minimum amount that can be leased out for cold staking
  */
 pub const MIN_LEASE: Amount = Amount::new(1000 * Amount::COIN.value());

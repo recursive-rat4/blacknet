@@ -15,11 +15,37 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::connection::Connection;
+use crate::packet::Packet;
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
 use serde::{Deserialize, Serialize};
+
+pub const MAX_BLOCKS: usize = 1000;
+pub const MAX_HASHES: usize = ROLLBACK_LIMIT;
 
 #[derive(Deserialize, Serialize)]
 pub struct Blocks {
     hashes: Box<[Hash]>,
     blocks: Box<[Box<[u8]>]>,
+}
+
+impl Packet for Blocks {
+    fn handle(self, connection: &mut Connection) {
+        if self.hashes.len() > MAX_HASHES {
+            connection.dos("Invalid hashes len");
+            return;
+        }
+        if self.blocks.len() > MAX_BLOCKS {
+            connection.dos("Invalid blocks len");
+            return;
+        }
+        if !self.hashes.is_empty() && !self.blocks.is_empty() {
+            connection.dos("Both blocks and hashes");
+            return;
+        }
+
+        let block_fetcher = connection.node().block_fetcher();
+        block_fetcher.blocks(connection, self);
+    }
 }

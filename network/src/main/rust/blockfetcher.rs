@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::BlockAnnounce;
+use crate::packet::{BlockAnnounce, Blocks};
 
 pub struct BlockFetcher {}
 
@@ -27,6 +27,10 @@ impl BlockFetcher {
     }
 
     pub fn offer(&self, _connection: &Connection, _block_announce: BlockAnnounce) {
+        todo!();
+    }
+
+    pub fn blocks(&self, _connection: &Connection, _blocks: Blocks) {
         todo!();
     }
 }
