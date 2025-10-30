@@ -19,6 +19,7 @@ use crate::v2::{AmountInfo, BigIntegerInfo, EndpointInfo, HashInfo};
 use blacknet_network::connection::Connection;
 use blacknet_network::packet::BlockAnnounce;
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 
 #[derive(Deserialize, Serialize)]
 pub struct PeerInfo {
@@ -53,7 +54,7 @@ impl PeerInfo {
             banScore: connection.dos_score(),
             feeFilter: connection.fee_filter().into(),
             connectedAt: connection.connected_at().into(),
-            lastChain: connection.last_block().into(),
+            lastChain: connection.last_block().deref().into(),
             requestedBlocks: connection.requested_blocks(),
             totalBytesRead: connection.total_bytes_read(),
             totalBytesWritten: connection.total_bytes_written(),

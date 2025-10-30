@@ -24,7 +24,7 @@ pub const PACKET_LENGTH_SIZE_BYTES: usize = 4;
 pub const PACKET_HEADER_SIZE_BYTES: usize = 4;
 
 pub trait Packet {
-    fn handle(self, connection: &Connection);
+    fn handle(self, connection: &mut Connection);
 }
 
 #[non_exhaustive]

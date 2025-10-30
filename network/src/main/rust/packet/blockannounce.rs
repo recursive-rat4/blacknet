@@ -15,11 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::connection::Connection;
+use crate::packet::Packet;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct BlockAnnounce {
     hash: Hash,
     cumulative_difficulty: Box<[u8]>,
@@ -52,5 +54,20 @@ impl Default for BlockAnnounce {
             hash: Default::default(),
             cumulative_difficulty: Box::new([0; 1]),
         }
+    }
+}
+
+impl Packet for BlockAnnounce {
+    fn handle(self, connection: &mut Connection) {
+        let len = self.cumulative_difficulty.len();
+        if len == 0 || len > 32 {
+            connection.dos("Invalid cumulative difficulty len {len}");
+            return;
+        }
+
+        connection.set_last_block(self.clone());
+
+        let block_fetcher = connection.node().block_fetcher();
+        block_fetcher.offer(connection, self);
     }
 }

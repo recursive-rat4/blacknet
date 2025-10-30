@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::blockfetcher::BlockFetcher;
 use crate::connection::{Connection, State};
 use crate::endpoint::Endpoint;
 use crate::peertable::PeerTable;
@@ -48,6 +49,7 @@ pub struct Node {
     connections: RwLock<Vec<Connection>>,
     peer_table: Arc<PeerTable>,
     router: Arc<Router>,
+    block_fetcher: BlockFetcher,
     tx_pool: RwLock<TxPool>,
     wallet_db: WalletDB,
     agent_string: String,
@@ -91,6 +93,7 @@ impl Node {
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
             router: Router::new(&mode, dirs, log_manager, runtime, settings, peer_table)?,
+            block_fetcher: BlockFetcher::new(),
             tx_pool: RwLock::new(TxPool::new()),
             wallet_db: WalletDB::new(&mode)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),
@@ -148,6 +151,10 @@ impl Node {
     pub fn warnings(&self) -> Vec<String> {
         //TODO
         vec![]
+    }
+
+    pub fn block_fetcher(&self) -> &BlockFetcher {
+        &self.block_fetcher
     }
 
     pub fn peer_table(&self) -> &PeerTable {

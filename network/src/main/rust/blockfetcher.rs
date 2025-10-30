@@ -16,29 +16,17 @@
  */
 
 use crate::connection::Connection;
-use crate::endpoint::Endpoint;
-use crate::packet::Packet;
-use blacknet_log::debug;
-use serde::{Deserialize, Serialize};
+use crate::packet::BlockAnnounce;
 
-pub const MAX: usize = 1000;
+pub struct BlockFetcher {}
 
-#[derive(Deserialize, Serialize)]
-pub struct Peers {
-    list: Box<[Endpoint]>,
-}
+impl BlockFetcher {
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Self {
+        Self {}
+    }
 
-impl Packet for Peers {
-    fn handle(self, connection: &mut Connection) {
-        if self.list.len() > MAX {
-            connection.dos("Invalid Peers size");
-            return;
-        }
-
-        let peer_table = connection.node().peer_table();
-        let added = peer_table.add(self.list.into_iter());
-        if added > 0 {
-            debug!(connection.logger(), "{added} new peer addresses");
-        }
+    pub fn offer(&self, _connection: &Connection, _block_announce: BlockAnnounce) {
+        todo!();
     }
 }

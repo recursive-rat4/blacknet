@@ -40,7 +40,7 @@ pub struct Connection {
     connected_at: Seconds,
 
     last_packet_time: Milliseconds,
-    last_block: BlockAnnounce,
+    last_block: Arc<BlockAnnounce>,
     last_block_time: Milliseconds,
     last_tx_time: Milliseconds,
     last_ping_time: Milliseconds,
@@ -72,8 +72,12 @@ impl Connection {
         self.dos_score.load(Ordering::Acquire)
     }
 
-    pub fn last_block(&self) -> &BlockAnnounce {
+    pub fn last_block(&self) -> &Arc<BlockAnnounce> {
         &self.last_block
+    }
+
+    pub fn set_last_block(&mut self, block_announce: BlockAnnounce) {
+        *Arc::make_mut(&mut self.last_block) = block_announce;
     }
 
     pub fn requested_blocks(&self) -> bool {
