@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::{BlockAnnounce, Blocks};
+use crate::packet::{BlockAnnounce, Blocks, ConsensusFault};
 
 pub struct BlockFetcher {}
 
@@ -27,6 +27,10 @@ impl BlockFetcher {
     }
 
     pub fn offer(&self, _connection: &Connection, _block_announce: BlockAnnounce) {
+        todo!();
+    }
+
+    pub fn consensus_fault(&self, _connection: &Connection, _consensus_fault: ConsensusFault) {
         todo!();
     }
 

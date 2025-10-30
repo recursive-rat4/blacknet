@@ -15,7 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::connection::Connection;
+use crate::packet::Packet;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct ConsensusFault;
+
+impl Packet for ConsensusFault {
+    fn handle(self, connection: &mut Connection) {
+        let block_fetcher = connection.node().block_fetcher();
+        block_fetcher.consensus_fault(connection, self);
+    }
+}
