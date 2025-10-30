@@ -31,3 +31,13 @@ pub const ROLLBACK_LIMIT: usize = 1350;
  * Minimum amount that can be leased out for cold staking
  */
 pub const MIN_LEASE: Amount = Amount::new(1000 * Amount::COIN.value());
+
+/**
+ * Reserved from maximum block size
+ */
+pub const BLOCK_RESERVED_SIZE: u32 = 100;
+
+/**
+ * Minimum maximum block size
+ */
+pub const DEFAULT_MAX_BLOCK_SIZE: u32 = 100000;

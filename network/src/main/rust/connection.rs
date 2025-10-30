@@ -17,7 +17,7 @@
 
 use crate::endpoint::Endpoint;
 use crate::node::Node;
-use crate::packet::BlockAnnounce;
+use crate::packet::{BlockAnnounce, Packet};
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{Logger, info};
@@ -56,6 +56,10 @@ pub struct Connection {
 }
 
 impl Connection {
+    pub fn send_packet<T: Packet>(&self, _packet: T) {
+        todo!();
+    }
+
     pub fn close(&self) {
         todo!();
     }

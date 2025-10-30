@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::blockdb::BlockDB;
 use crate::blockfetcher::BlockFetcher;
 use crate::connection::{Connection, State};
 use crate::endpoint::Endpoint;
@@ -25,6 +26,7 @@ use crate::txpool::TxPool;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
 use blacknet_io::Write;
 use blacknet_io::file::replace;
+use blacknet_kernel::proofofstake::{BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE};
 use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::to_write;
 use blacknet_wallet::walletdb::WalletDB;
@@ -49,6 +51,7 @@ pub struct Node {
     connections: RwLock<Vec<Connection>>,
     peer_table: Arc<PeerTable>,
     router: Arc<Router>,
+    block_db: BlockDB,
     block_fetcher: BlockFetcher,
     tx_pool: RwLock<TxPool>,
     wallet_db: WalletDB,
@@ -93,6 +96,7 @@ impl Node {
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
             router: Router::new(&mode, dirs, log_manager, runtime, settings, peer_table)?,
+            block_db: BlockDB::new(),
             block_fetcher: BlockFetcher::new(),
             tx_pool: RwLock::new(TxPool::new()),
             wallet_db: WalletDB::new(&mode)?,
@@ -151,6 +155,14 @@ impl Node {
     pub fn warnings(&self) -> Vec<String> {
         //TODO
         vec![]
+    }
+
+    pub fn min_packet_size(&self) -> u32 {
+        DEFAULT_MAX_BLOCK_SIZE + BLOCK_RESERVED_SIZE
+    }
+
+    pub fn block_db(&self) -> &BlockDB {
+        &self.block_db
     }
 
     pub fn block_fetcher(&self) -> &BlockFetcher {

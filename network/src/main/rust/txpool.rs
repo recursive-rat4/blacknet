@@ -24,7 +24,7 @@ pub struct TxPool {
 }
 
 impl TxPool {
-    #[allow(clippy::new_without_default)]
+    #[expect(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             map: HashMap::new(),

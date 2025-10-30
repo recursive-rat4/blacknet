@@ -26,8 +26,31 @@ pub const MAX_HASHES: usize = ROLLBACK_LIMIT;
 
 #[derive(Deserialize, Serialize)]
 pub struct Blocks {
-    hashes: Box<[Hash]>,
-    blocks: Box<[Box<[u8]>]>,
+    hashes: Vec<Hash>,
+    blocks: Vec<Box<[u8]>>,
+}
+
+impl Blocks {
+    pub fn with_block(bytes: &[u8]) -> Self {
+        Self {
+            hashes: Default::default(),
+            blocks: vec![Box::from(bytes)],
+        }
+    }
+
+    pub fn with_blocks(blocks: Vec<Box<[u8]>>) -> Self {
+        Self {
+            hashes: Default::default(),
+            blocks,
+        }
+    }
+
+    pub fn with_hashes(hashes: Vec<Hash>) -> Self {
+        Self {
+            hashes,
+            blocks: Default::default(),
+        }
+    }
 }
 
 impl Packet for Blocks {
