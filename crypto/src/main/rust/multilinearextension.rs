@@ -32,7 +32,7 @@ pub struct MultilinearExtension<R: UnitalRing> {
 }
 
 impl<R: UnitalRing> MultilinearExtension<R> {
-    pub fn hypercube(&self) -> &Vec<R> {
+    pub const fn hypercube(&self) -> &Vec<R> {
         &self.coefficients
     }
 

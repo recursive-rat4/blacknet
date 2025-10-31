@@ -45,19 +45,19 @@ pub struct CreateHTLC {
 }
 
 impl CreateHTLC {
-    pub fn amount(&self) -> Amount {
+    pub const fn amount(&self) -> Amount {
         self.amount
     }
 
-    pub fn to(&self) -> PublicKey {
+    pub const fn to(&self) -> PublicKey {
         self.to
     }
 
-    pub fn time_lock(&self) -> &TimeLock {
+    pub const fn time_lock(&self) -> &TimeLock {
         &self.time_lock
     }
 
-    pub fn hash_lock(&self) -> &HashLock {
+    pub const fn hash_lock(&self) -> &HashLock {
         &self.hash_lock
     }
 }

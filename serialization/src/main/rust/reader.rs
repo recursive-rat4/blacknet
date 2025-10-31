@@ -26,7 +26,7 @@ pub struct Reader<T: Read> {
 }
 
 impl<T: Read> Reader<T> {
-    pub fn new(input: T) -> Self {
+    pub const fn new(input: T) -> Self {
         Self { input }
     }
 

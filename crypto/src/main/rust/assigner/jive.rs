@@ -41,7 +41,7 @@ impl<
     P: Permutation<G, Domain = [G; WIDTH]>,
 > Jive<'a, G, RANK, WIDTH, P>
 {
-    pub fn new(assigment: &'a Assigment<G>) -> Self {
+    pub const fn new(assigment: &'a Assigment<G>) -> Self {
         const {
             assert!(RANK * 2 == WIDTH);
         }

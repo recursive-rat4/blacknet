@@ -53,7 +53,7 @@ impl Block {
         }
     }
 
-    pub fn with_all(
+    pub const fn with_all(
         version: u32,
         previous: Hash,
         time: Seconds,
@@ -81,27 +81,27 @@ impl Block {
         Blake2b256::digest(&bytes[HEADER_SIZE_BYTES..]).into()
     }
 
-    pub fn version(&self) -> u32 {
+    pub const fn version(&self) -> u32 {
         self.version
     }
 
-    pub fn previous(&self) -> Hash {
+    pub const fn previous(&self) -> Hash {
         self.previous
     }
 
-    pub fn time(&self) -> Seconds {
+    pub const fn time(&self) -> Seconds {
         self.time
     }
 
-    pub fn generator(&self) -> PublicKey {
+    pub const fn generator(&self) -> PublicKey {
         self.generator
     }
 
-    pub fn content_hash(&self) -> Hash {
+    pub const fn content_hash(&self) -> Hash {
         self.content_hash
     }
 
-    pub fn signature(&self) -> Signature {
+    pub const fn signature(&self) -> Signature {
         self.signature
     }
 

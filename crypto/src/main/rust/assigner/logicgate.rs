@@ -24,7 +24,7 @@ pub struct LogicGate<'a, R: UnitalRing> {
 }
 
 impl<'a, R: UnitalRing> LogicGate<'a, R> {
-    pub fn new(assigment: &'a Assigment<R>) -> Self {
+    pub const fn new(assigment: &'a Assigment<R>) -> Self {
         Self { assigment }
     }
 

@@ -41,7 +41,7 @@ impl Endpoint {
         parse_ipv4(string, port))))
     }
 
-    pub fn is_permissionless(self) -> bool {
+    pub const fn is_permissionless(self) -> bool {
         match self {
             Endpoint::IPv4 { .. } => false,
             Endpoint::IPv6 { .. } => false,
@@ -61,7 +61,7 @@ impl Endpoint {
         }
     }
 
-    pub fn is_private(self) -> bool {
+    pub const fn is_private(self) -> bool {
         match self {
             Endpoint::IPv4 { port: _, address } => is_private_ipv4(address),
             Endpoint::IPv6 { port: _, address } => is_private_ipv6(address),
@@ -121,7 +121,7 @@ fn parse_ipv4(string: &str, port: u16) -> Option<Endpoint> {
     }
 }
 
-fn is_local_ipv4(address: [u8; 4]) -> bool {
+const fn is_local_ipv4(address: [u8; 4]) -> bool {
     // 0.0.0.0 – 0.255.255.255
     if address[0] == 0 {
         return true;
@@ -138,7 +138,7 @@ fn is_local_ipv4(address: [u8; 4]) -> bool {
     false
 }
 
-fn is_private_ipv4(address: [u8; 4]) -> bool {
+const fn is_private_ipv4(address: [u8; 4]) -> bool {
     // 10.0.0.0 – 10.255.255.255
     if address[0] == 10 {
         return true;
@@ -180,14 +180,14 @@ fn to_log_ipv4(port: u16, address: [u8; 4], detail: bool) -> String {
     }
 }
 
-pub fn ipv4_any(port: u16) -> Endpoint {
+pub const fn ipv4_any(port: u16) -> Endpoint {
     Endpoint::IPv4 {
         address: IPV4_ANY_ADDRESS,
         port,
     }
 }
 
-pub fn ipv4_loopback(port: u16) -> Endpoint {
+pub const fn ipv4_loopback(port: u16) -> Endpoint {
     Endpoint::IPv4 {
         address: IPV4_LOOPBACK_ADDRESS,
         port,
@@ -233,7 +233,7 @@ fn is_local_ipv6(address: [u8; 16]) -> bool {
     false
 }
 
-fn is_private_ipv6(address: [u8; 16]) -> bool {
+const fn is_private_ipv6(address: [u8; 16]) -> bool {
     // 0200:: - 03ff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
     if (address[0] & 0xFE) == 0x02 {
         return true;
@@ -259,14 +259,14 @@ fn to_log_ipv6(port: u16, address: [u8; 16], detail: bool) -> String {
     }
 }
 
-pub fn ipv6_any(port: u16) -> Endpoint {
+pub const fn ipv6_any(port: u16) -> Endpoint {
     Endpoint::IPv6 {
         address: IPV6_ANY_ADDRESS,
         port,
     }
 }
 
-pub fn ipv6_loopback(port: u16) -> Endpoint {
+pub const fn ipv6_loopback(port: u16) -> Endpoint {
     Endpoint::IPv6 {
         address: IPV6_LOOPBACK_ADDRESS,
         port,

@@ -24,7 +24,7 @@ pub struct Sizer {
 }
 
 impl Sizer {
-    pub fn output(self) -> usize {
+    pub const fn output(self) -> usize {
         self.output
     }
 }

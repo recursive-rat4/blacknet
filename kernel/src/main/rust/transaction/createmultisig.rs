@@ -29,11 +29,11 @@ pub struct Deposit {
 }
 
 impl Deposit {
-    pub fn from(self) -> PublicKey {
+    pub const fn from(self) -> PublicKey {
         self.from
     }
 
-    pub fn amount(self) -> Amount {
+    pub const fn amount(self) -> Amount {
         self.amount
     }
 }
@@ -45,11 +45,11 @@ pub struct Sig {
 }
 
 impl Sig {
-    pub fn index(self) -> u8 {
+    pub const fn index(self) -> u8 {
         self.index
     }
 
-    pub fn signature(self) -> Signature {
+    pub const fn signature(self) -> Signature {
         self.signature
     }
 }
@@ -62,15 +62,15 @@ pub struct CreateMultisig {
 }
 
 impl CreateMultisig {
-    pub fn n(&self) -> u8 {
+    pub const fn n(&self) -> u8 {
         self.n
     }
 
-    pub fn deposits(&self) -> &[Deposit] {
+    pub const fn deposits(&self) -> &[Deposit] {
         &self.deposits
     }
 
-    pub fn signatures(&self) -> &[Sig] {
+    pub const fn signatures(&self) -> &[Sig] {
         &self.signatures
     }
 }

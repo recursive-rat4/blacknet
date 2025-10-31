@@ -108,7 +108,7 @@ impl Mode {
     /**
      * A subdirectory to separate data.
      */
-    pub fn subdirectory(&self) -> Option<&'static str> {
+    pub const fn subdirectory(&self) -> Option<&'static str> {
         self.subdirectory
     }
     /**
@@ -126,7 +126,7 @@ impl Mode {
     /**
      * Whether the node requires network peers.
      */
-    pub fn requires_network(&self) -> bool {
+    pub const fn requires_network(&self) -> bool {
         self.requires_network
     }
 
@@ -137,19 +137,19 @@ impl Mode {
         &self.agent_name
     }
 
-    pub fn default_p2p_port(&self) -> u16 {
+    pub const fn default_p2p_port(&self) -> u16 {
         self.default_p2p_port
     }
 
-    pub fn default_rpc_port(&self) -> u16 {
+    pub const fn default_rpc_port(&self) -> u16 {
         self.default_rpc_port
     }
 
-    pub fn network_magic(&self) -> u32 {
+    pub const fn network_magic(&self) -> u32 {
         self.network_magic
     }
 
-    pub fn builtin_peers(&self) -> &'static str {
+    pub const fn builtin_peers(&self) -> &'static str {
         self.builtin_peers
     }
 }

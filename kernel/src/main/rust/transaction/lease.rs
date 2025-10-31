@@ -31,11 +31,11 @@ pub struct Lease {
 }
 
 impl Lease {
-    pub fn amount(&self) -> Amount {
+    pub const fn amount(&self) -> Amount {
         self.amount
     }
 
-    pub fn to(&self) -> PublicKey {
+    pub const fn to(&self) -> PublicKey {
         self.to
     }
 }

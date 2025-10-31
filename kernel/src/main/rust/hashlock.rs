@@ -93,11 +93,11 @@ impl HashLock {
         })
     }
 
-    pub fn algorithm(&self) -> u8 {
+    pub const fn algorithm(&self) -> u8 {
         self.algorithm
     }
 
-    pub fn image(&self) -> &[u8] {
+    pub const fn image(&self) -> &[u8] {
         &self.image
     }
 }

@@ -24,7 +24,7 @@ pub struct Serializer<E: Encoder> {
 }
 
 impl<E: Encoder> Serializer<E> {
-    pub fn new(encoder: E) -> Self {
+    pub const fn new(encoder: E) -> Self {
         Self { encoder }
     }
 

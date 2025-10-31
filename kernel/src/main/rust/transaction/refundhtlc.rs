@@ -27,7 +27,7 @@ pub struct RefundHTLC {
 }
 
 impl RefundHTLC {
-    pub fn id(&self) -> HashTimeLockContractId {
+    pub const fn id(&self) -> HashTimeLockContractId {
         self.id
     }
 }

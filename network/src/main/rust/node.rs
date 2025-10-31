@@ -150,7 +150,7 @@ impl Node {
             .count()
     }
 
-    pub fn connections(&self) -> &RwLock<Vec<Connection>> {
+    pub const fn connections(&self) -> &RwLock<Vec<Connection>> {
         &self.connections
     }
 
@@ -158,12 +158,12 @@ impl Node {
         self.router.listening()
     }
 
-    pub fn warnings(&self) -> Vec<String> {
+    pub const fn warnings(&self) -> Vec<String> {
         //TODO
         vec![]
     }
 
-    pub fn min_packet_size(&self) -> u32 {
+    pub const fn min_packet_size(&self) -> u32 {
         DEFAULT_MAX_BLOCK_SIZE + BLOCK_RESERVED_SIZE
     }
 
@@ -173,11 +173,11 @@ impl Node {
             && guess_initial_synchronization(todo!(), SystemClock::secs(), todo!())
     }
 
-    pub fn block_db(&self) -> &BlockDB {
+    pub const fn block_db(&self) -> &BlockDB {
         &self.block_db
     }
 
-    pub fn block_fetcher(&self) -> &BlockFetcher {
+    pub const fn block_fetcher(&self) -> &BlockFetcher {
         &self.block_fetcher
     }
 
@@ -185,19 +185,19 @@ impl Node {
         &self.peer_table
     }
 
-    pub fn tx_pool(&self) -> &RwLock<TxPool> {
+    pub const fn tx_pool(&self) -> &RwLock<TxPool> {
         &self.tx_pool
     }
 
-    pub fn tx_fetcher(&self) -> &TxFetcher {
+    pub const fn tx_fetcher(&self) -> &TxFetcher {
         &self.tx_fetcher
     }
 
-    pub fn wallet_db(&self) -> &WalletDB {
+    pub const fn wallet_db(&self) -> &WalletDB {
         &self.wallet_db
     }
 
-    pub fn mode(&self) -> &Mode {
+    pub const fn mode(&self) -> &Mode {
         &self.mode
     }
 

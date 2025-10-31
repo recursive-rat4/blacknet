@@ -30,15 +30,15 @@ pub struct CancelLease {
 }
 
 impl CancelLease {
-    pub fn amount(&self) -> Amount {
+    pub const fn amount(&self) -> Amount {
         self.amount
     }
 
-    pub fn to(&self) -> PublicKey {
+    pub const fn to(&self) -> PublicKey {
         self.to
     }
 
-    pub fn height(&self) -> u32 {
+    pub const fn height(&self) -> u32 {
         self.height
     }
 }

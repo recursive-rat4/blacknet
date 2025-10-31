@@ -76,7 +76,7 @@ impl Connection {
         self.dos_score.load(Ordering::Acquire)
     }
 
-    pub fn last_block(&self) -> &Arc<BlockAnnounce> {
+    pub const fn last_block(&self) -> &Arc<BlockAnnounce> {
         &self.last_block
     }
 
@@ -88,15 +88,15 @@ impl Connection {
         self.requested_difficulty != UInt256::ZERO
     }
 
-    pub fn connected_at(&self) -> Seconds {
+    pub const fn connected_at(&self) -> Seconds {
         self.connected_at
     }
 
-    pub fn id(&self) -> u64 {
+    pub const fn id(&self) -> u64 {
         self.id
     }
 
-    pub fn version(&self) -> u32 {
+    pub const fn version(&self) -> u32 {
         self.version
     }
 
@@ -104,31 +104,31 @@ impl Connection {
         &self.agent
     }
 
-    pub fn fee_filter(&self) -> Amount {
+    pub const fn fee_filter(&self) -> Amount {
         self.fee_filter
     }
 
-    pub fn is_established(&self) -> bool {
+    pub const fn is_established(&self) -> bool {
         self.state.is_established()
     }
 
-    pub fn local_endpoint(&self) -> Endpoint {
+    pub const fn local_endpoint(&self) -> Endpoint {
         self.local_endpoint
     }
 
-    pub fn remote_endpoint(&self) -> Endpoint {
+    pub const fn remote_endpoint(&self) -> Endpoint {
         self.remote_endpoint
     }
 
-    pub fn ping(&self) -> Milliseconds {
+    pub const fn ping(&self) -> Milliseconds {
         self.ping
     }
 
-    pub fn time_offset(&self) -> Seconds {
+    pub const fn time_offset(&self) -> Seconds {
         self.time_offset
     }
 
-    pub fn state(&self) -> State {
+    pub const fn state(&self) -> State {
         self.state
     }
 
@@ -140,7 +140,7 @@ impl Connection {
         todo!();
     }
 
-    pub fn logger(&self) -> &Logger {
+    pub const fn logger(&self) -> &Logger {
         &self.logger
     }
 
@@ -161,15 +161,15 @@ pub enum State {
 
 impl State {
     // ProberConnected skips main logic
-    pub fn is_established(self) -> bool {
+    pub const fn is_established(self) -> bool {
         matches!(self, State::IncomingConnected | State::OutgoingConnected)
     }
 
-    pub fn is_incoming(self) -> bool {
+    pub const fn is_incoming(self) -> bool {
         matches!(self, State::IncomingConnected | State::IncomingWaiting)
     }
 
-    pub fn is_outgoing(self) -> bool {
+    pub const fn is_outgoing(self) -> bool {
         matches!(
             self,
             State::OutgoingConnected

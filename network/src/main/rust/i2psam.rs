@@ -48,7 +48,7 @@ pub struct Answer {
 }
 
 impl Answer {
-    pub fn new(raw: String) -> Self {
+    pub const fn new(raw: String) -> Self {
         Self { raw }
     }
 
@@ -223,7 +223,7 @@ impl Session {
         Ok(connection)
     }
 
-    pub fn endpoint(&self) -> Endpoint {
+    pub const fn endpoint(&self) -> Endpoint {
         self.local_endpoint
     }
 }

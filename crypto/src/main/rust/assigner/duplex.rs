@@ -46,7 +46,7 @@ impl<
     P: Permutation<S, Domain = [S; WIDTH]>,
 > DuplexImpl<'a, S, RATE, CAPACITY, WIDTH, P>
 {
-    pub fn new(assigment: &'a Assigment<S>) -> Self {
+    pub const fn new(assigment: &'a Assigment<S>) -> Self {
         Self {
             phase: Phase::Absorb,
             position: 0,

@@ -25,7 +25,7 @@ pub struct Deserializer<D: Decoder> {
 }
 
 impl<D: Decoder> Deserializer<D> {
-    pub fn new(decoder: D) -> Self {
+    pub const fn new(decoder: D) -> Self {
         Self { decoder }
     }
 
@@ -200,7 +200,7 @@ struct Sequence<'a, D: Decoder> {
 }
 
 impl<'a, D: Decoder> Sequence<'a, D> {
-    fn new(de: &'a mut Deserializer<D>, len: u32) -> Self {
+    const fn new(de: &'a mut Deserializer<D>, len: u32) -> Self {
         Sequence { de, len, pos: 0 }
     }
 }
@@ -235,7 +235,7 @@ struct Enum<'a, D: Decoder> {
 }
 
 impl<'a, D: Decoder> Enum<'a, D> {
-    fn new(de: &'a mut Deserializer<D>) -> Self {
+    const fn new(de: &'a mut Deserializer<D>) -> Self {
         Enum { de }
     }
 }

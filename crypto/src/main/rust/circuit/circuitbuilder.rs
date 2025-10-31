@@ -984,7 +984,7 @@ pub struct LinearSpan<R: UnitalRing> {
 }
 
 impl<R: UnitalRing> LinearSpan<R> {
-    pub fn dimension(&self) -> usize {
+    pub const fn dimension(&self) -> usize {
         self.vectors.len()
     }
 }
@@ -1053,7 +1053,7 @@ impl<R: UnitalRing> CircuitBuilder<R> {
         self.constraints.borrow().len()
     }
 
-    pub fn variables(&self) -> usize {
+    pub const fn variables(&self) -> usize {
         1 + self.public_inputs.get()
             + self.public_outputs.get()
             + self.private_inputs.get()
@@ -1346,7 +1346,7 @@ struct ScopeInfo {
 }
 
 impl ScopeInfo {
-    fn new(name: &'static str) -> Self {
+    const fn new(name: &'static str) -> Self {
         Self {
             name,
             constraints: 0,
@@ -1354,7 +1354,7 @@ impl ScopeInfo {
         }
     }
 
-    fn root() -> Self {
+    const fn root() -> Self {
         Self {
             name: "Root",
             constraints: 0,

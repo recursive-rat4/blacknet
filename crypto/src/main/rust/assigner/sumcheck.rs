@@ -51,7 +51,7 @@ pub struct SumCheck<
 impl<'a, R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distribution<'a, R, D, Output = R>>
     SumCheck<'a, R, P, D, E>
 {
-    pub fn new(assigment: &'a Assigment<R>) -> Self {
+    pub const fn new(assigment: &'a Assigment<R>) -> Self {
         Self {
             _assigment: assigment,
             phantom_p: PhantomData,

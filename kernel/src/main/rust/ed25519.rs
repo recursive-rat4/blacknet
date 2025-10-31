@@ -27,11 +27,11 @@ pub struct Signature {
 }
 
 impl Signature {
-    pub fn raw_r(self) -> [u8; 32] {
+    pub const fn raw_r(self) -> [u8; 32] {
         self.r
     }
 
-    pub fn raw_s(self) -> [u8; 32] {
+    pub const fn raw_s(self) -> [u8; 32] {
         self.s
     }
 }

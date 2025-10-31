@@ -30,23 +30,23 @@ pub struct BlockIndex {
 }
 
 impl BlockIndex {
-    pub fn previous(self) -> Hash {
+    pub const fn previous(self) -> Hash {
         self.previous
     }
 
-    pub fn next(self) -> Hash {
+    pub const fn next(self) -> Hash {
         self.next
     }
 
-    pub fn next_size(self) -> u32 {
+    pub const fn next_size(self) -> u32 {
         self.next_size
     }
 
-    pub fn height(self) -> u32 {
+    pub const fn height(self) -> u32 {
         self.height
     }
 
-    pub fn generated(self) -> Amount {
+    pub const fn generated(self) -> Amount {
         self.generated
     }
 }
@@ -64,7 +64,7 @@ impl BlockDB {
     }
 
     #[allow(clippy::type_complexity)]
-    pub fn cached_block(&self) -> &Arc<Option<(Hash, Box<[u8]>)>> {
+    pub const fn cached_block(&self) -> &Arc<Option<(Hash, Box<[u8]>)>> {
         &self.cached_block
     }
 

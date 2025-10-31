@@ -155,7 +155,7 @@ impl<
         }
     }
 
-    pub fn sneak(self) -> [S; WIDTH] {
+    pub const fn sneak(self) -> [S; WIDTH] {
         self.state
     }
 }

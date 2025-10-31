@@ -28,15 +28,15 @@ pub struct SpendMultisig {
 }
 
 impl SpendMultisig {
-    pub fn id(&self) -> MultiSignatureLockContractId {
+    pub const fn id(&self) -> MultiSignatureLockContractId {
         self.id
     }
 
-    pub fn amounts(&self) -> &[Amount] {
+    pub const fn amounts(&self) -> &[Amount] {
         &self.amounts
     }
 
-    pub fn signatures(&self) -> &[Sig] {
+    pub const fn signatures(&self) -> &[Sig] {
         &self.signatures
     }
 }

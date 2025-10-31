@@ -27,7 +27,7 @@ pub struct UnivariatePolynomial<'a, R: Ring> {
 }
 
 impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
-    pub fn new(coefficients: Vec<R>, assigment: &'a Assigment<R>) -> Self {
+    pub const fn new(coefficients: Vec<R>, assigment: &'a Assigment<R>) -> Self {
         Self {
             coefficients,
             assigment,

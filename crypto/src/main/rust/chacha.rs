@@ -65,8 +65,7 @@ impl<const ROUNDS: usize> ChaCha<ROUNDS> {
         self.crypt(plain_text, cipher_text)
     }
 
-    #[inline]
-    fn quarter(state: &mut [Word; L], a: usize, b: usize, c: usize, d: usize) {
+    const fn quarter(state: &mut [Word; L], a: usize, b: usize, c: usize, d: usize) {
         state[a] = state[a].wrapping_add(state[b]);
         state[d] ^= state[a];
         state[d] = state[d].rotate_left(16);

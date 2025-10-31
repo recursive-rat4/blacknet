@@ -35,7 +35,7 @@ impl BlockAnnounce {
         }
     }
 
-    pub fn hash(&self) -> Hash {
+    pub const fn hash(&self) -> Hash {
         self.hash
     }
 

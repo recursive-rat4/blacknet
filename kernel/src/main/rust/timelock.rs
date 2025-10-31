@@ -33,7 +33,7 @@ pub struct TimeLock {
 }
 
 impl TimeLock {
-    pub fn new(algorithm: u8, data: i64) -> Self {
+    pub const fn new(algorithm: u8, data: i64) -> Self {
         Self { algorithm, data }
     }
 
@@ -76,11 +76,11 @@ impl TimeLock {
         }
     }
 
-    pub fn algorithm(&self) -> u8 {
+    pub const fn algorithm(&self) -> u8 {
         self.algorithm
     }
 
-    pub fn data(&self) -> i64 {
+    pub const fn data(&self) -> i64 {
         self.data
     }
 }

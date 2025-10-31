@@ -71,31 +71,31 @@ impl Transaction {
         Blake2b256::digest(&bytes[size_of::<Signature>()..]).into()
     }
 
-    pub fn anchor(&self) -> Hash {
+    pub const fn anchor(&self) -> Hash {
         self.anchor
     }
 
-    pub fn fee(&self) -> Amount {
+    pub const fn fee(&self) -> Amount {
         self.fee
     }
 
-    pub fn from(&self) -> PublicKey {
+    pub const fn from(&self) -> PublicKey {
         self.from
     }
 
-    pub fn kind(&self) -> TxKind {
+    pub const fn kind(&self) -> TxKind {
         self.kind
     }
 
-    pub fn seq(&self) -> u32 {
+    pub const fn seq(&self) -> u32 {
         self.seq
     }
 
-    pub fn signature(&self) -> Signature {
+    pub const fn signature(&self) -> Signature {
         self.signature
     }
 
-    pub fn raw_data(&self) -> &[u8] {
+    pub const fn raw_data(&self) -> &[u8] {
         &self.data
     }
 }

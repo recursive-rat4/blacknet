@@ -24,7 +24,7 @@ pub struct LogicGate<'a, R: UnitalRing> {
 }
 
 impl<'a, R: UnitalRing> LogicGate<'a, R> {
-    pub fn new(circuit: &'a CircuitBuilder<R>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<R>) -> Self {
         Self { circuit }
     }
 

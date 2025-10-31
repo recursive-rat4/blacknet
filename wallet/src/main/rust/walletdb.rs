@@ -30,7 +30,7 @@ impl WalletDB {
         })
     }
 
-    pub fn address_codec(&self) -> &AddressCodec {
+    pub const fn address_codec(&self) -> &AddressCodec {
         &self.address_codec
     }
 }

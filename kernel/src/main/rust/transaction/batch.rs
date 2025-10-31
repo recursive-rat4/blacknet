@@ -29,11 +29,11 @@ pub struct Batchee {
 }
 
 impl Batchee {
-    pub fn kind(&self) -> TxKind {
+    pub const fn kind(&self) -> TxKind {
         self.kind
     }
 
-    pub fn raw_data(&self) -> &[u8] {
+    pub const fn raw_data(&self) -> &[u8] {
         &self.data
     }
 }

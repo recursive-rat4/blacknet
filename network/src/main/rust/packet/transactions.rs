@@ -27,7 +27,7 @@ pub struct Transactions {
 }
 
 impl Transactions {
-    pub fn new(list: Vec<Box<[u8]>>) -> Self {
+    pub const fn new(list: Vec<Box<[u8]>>) -> Self {
         Self { list }
     }
 }

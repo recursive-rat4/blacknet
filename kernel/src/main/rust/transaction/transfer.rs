@@ -30,11 +30,11 @@ pub struct PaymentId {
 }
 
 impl PaymentId {
-    pub fn kind(&self) -> u8 {
+    pub const fn kind(&self) -> u8 {
         self.kind
     }
 
-    pub fn payload(&self) -> &[u8] {
+    pub const fn payload(&self) -> &[u8] {
         &self.payload
     }
 }
@@ -47,15 +47,15 @@ pub struct Transfer {
 }
 
 impl Transfer {
-    pub fn amount(&self) -> Amount {
+    pub const fn amount(&self) -> Amount {
         self.amount
     }
 
-    pub fn to(&self) -> PublicKey {
+    pub const fn to(&self) -> PublicKey {
         self.to
     }
 
-    pub fn payment_id(&self) -> &PaymentId {
+    pub const fn payment_id(&self) -> &PaymentId {
         &self.payment_id
     }
 }

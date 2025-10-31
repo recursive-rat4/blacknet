@@ -42,7 +42,7 @@ impl<
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
 > Jive<'a, G, RANK, WIDTH, P>
 {
-    pub fn new(circuit: &'a CircuitBuilder<G>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<G>) -> Self {
         const {
             assert!(RANK * 2 == WIDTH);
         }

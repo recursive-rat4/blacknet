@@ -36,7 +36,7 @@ impl TxPool {
         self.map.len()
     }
 
-    pub fn data_len(&self) -> usize {
+    pub const fn data_len(&self) -> usize {
         self.data_len
     }
 

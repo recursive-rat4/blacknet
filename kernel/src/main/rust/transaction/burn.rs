@@ -30,11 +30,11 @@ pub struct Burn {
 }
 
 impl Burn {
-    pub fn amount(&self) -> Amount {
+    pub const fn amount(&self) -> Amount {
         self.amount
     }
 
-    pub fn message(&self) -> &[u8] {
+    pub const fn message(&self) -> &[u8] {
         &self.message
     }
 }

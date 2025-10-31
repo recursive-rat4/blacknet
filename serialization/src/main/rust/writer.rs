@@ -24,7 +24,7 @@ pub struct Writer<T: Write> {
 }
 
 impl<T: Write> Writer<T> {
-    pub fn new(output: T) -> Self {
+    pub const fn new(output: T) -> Self {
         Self { output }
     }
 

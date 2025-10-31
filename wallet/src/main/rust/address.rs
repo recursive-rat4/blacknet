@@ -33,7 +33,7 @@ pub enum AddressKind {
 }
 
 impl AddressKind {
-    pub fn size(self) -> usize {
+    pub const fn size(self) -> usize {
         match self {
             Self::Staker => 32,
             Self::HTLC => 32,

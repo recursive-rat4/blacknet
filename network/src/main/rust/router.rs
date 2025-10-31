@@ -194,7 +194,7 @@ impl Router {
             self.peer_table.discontacted(endpoint)
         }
     }
-    pub fn listening(&self) -> &RwLock<HashSet<Endpoint>> {
+    pub const fn listening(&self) -> &RwLock<HashSet<Endpoint>> {
         &self.listens
     }
 

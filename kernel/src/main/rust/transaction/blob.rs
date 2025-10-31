@@ -30,11 +30,11 @@ pub struct Blob {
 }
 
 impl Blob {
-    pub fn tag(&self) -> Tag {
+    pub const fn tag(&self) -> Tag {
         self.tag
     }
 
-    pub fn data(&self) -> &[u8] {
+    pub const fn data(&self) -> &[u8] {
         &self.data
     }
 }

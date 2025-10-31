@@ -33,7 +33,7 @@ pub struct Account {
 }
 
 impl Account {
-    pub fn seq(&self) -> u32 {
+    pub const fn seq(&self) -> u32 {
         self.seq
     }
 
@@ -188,23 +188,23 @@ pub struct Input {
 }
 
 impl Input {
-    fn is_confirmed(self, height: u32, confirmations: u32) -> bool {
+    const fn is_confirmed(self, height: u32, confirmations: u32) -> bool {
         height > self.height + confirmations
     }
-    fn is_mature(self, height: u32) -> bool {
+    const fn is_mature(self, height: u32) -> bool {
         height > self.height + MATURITY
     }
-    fn balance(self) -> Amount {
+    const fn balance(self) -> Amount {
         self.amount
     }
-    fn confirmed_balance(self, height: u32, confirmations: u32) -> Amount {
+    const fn confirmed_balance(self, height: u32, confirmations: u32) -> Amount {
         if self.is_confirmed(height, confirmations) {
             self.amount
         } else {
             Amount::ZERO
         }
     }
-    fn mature_balance(self, height: u32) -> Amount {
+    const fn mature_balance(self, height: u32) -> Amount {
         if self.is_mature(height) {
             self.amount
         } else {
@@ -221,19 +221,19 @@ pub struct Lease {
 }
 
 impl Lease {
-    pub fn public_key(self) -> PublicKey {
+    pub const fn public_key(self) -> PublicKey {
         self.public_key
     }
-    pub fn height(self) -> u32 {
+    pub const fn height(self) -> u32 {
         self.height
     }
-    pub fn balance(self) -> Amount {
+    pub const fn balance(self) -> Amount {
         self.amount
     }
-    fn is_mature(self, height: u32) -> bool {
+    const fn is_mature(self, height: u32) -> bool {
         height > self.height + MATURITY
     }
-    fn mature_balance(self, height: u32) -> Amount {
+    const fn mature_balance(self, height: u32) -> Amount {
         if self.is_mature(height) {
             self.amount
         } else {

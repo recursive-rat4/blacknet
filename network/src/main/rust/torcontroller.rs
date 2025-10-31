@@ -116,7 +116,7 @@ pub struct TorSession {
 }
 
 impl TorSession {
-    pub fn endpoint(&self) -> Endpoint {
+    pub const fn endpoint(&self) -> Endpoint {
         self.endpoint
     }
 

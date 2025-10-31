@@ -71,7 +71,7 @@ impl<
     E: Distribution<'a, R, D, Output = LinearCombination<R>>,
 > SumCheck<'a, R, P, D, E>
 {
-    pub fn new(circuit: &'a CircuitBuilder<R>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<R>) -> Self {
         Self {
             circuit,
             phantom_p: PhantomData,

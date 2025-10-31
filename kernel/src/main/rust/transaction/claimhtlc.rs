@@ -29,11 +29,11 @@ pub struct ClaimHTLC {
 }
 
 impl ClaimHTLC {
-    pub fn id(&self) -> HashTimeLockContractId {
+    pub const fn id(&self) -> HashTimeLockContractId {
         self.id
     }
 
-    pub fn preimage(&self) -> &[u8] {
+    pub const fn preimage(&self) -> &[u8] {
         &self.preimage
     }
 }
