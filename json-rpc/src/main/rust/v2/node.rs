@@ -50,7 +50,7 @@ async fn tx_pool_transaction(
 ) -> Response<String> {
     let address_codec = node.wallet_db().address_codec();
     let tx_pool = node.tx_pool().read().unwrap();
-    if let Some(bytes) = tx_pool.get(hash) {
+    if let Some(bytes) = tx_pool.get_raw(hash) {
         if let Some(raw) = raw
             && raw
         {

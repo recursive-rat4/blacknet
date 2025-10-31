@@ -44,7 +44,7 @@ impl TxPool {
         self.map.keys()
     }
 
-    pub fn get(&self, hash: Hash) -> Option<&[u8]> {
+    pub fn get_raw(&self, hash: Hash) -> Option<&[u8]> {
         self.map.get(&hash).map(|x| &**x)
     }
 }

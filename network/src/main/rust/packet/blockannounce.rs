@@ -61,7 +61,7 @@ impl Packet for BlockAnnounce {
     fn handle(self, connection: &mut Connection) {
         let len = self.cumulative_difficulty.len();
         if len == 0 || len > 32 {
-            connection.dos("Invalid cumulative difficulty len {len}");
+            connection.dos("Invalid cumulative difficulty len");
             return;
         }
 

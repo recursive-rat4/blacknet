@@ -15,9 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::connection::Connection;
+use crate::packet::Packet;
 use serde::{Deserialize, Serialize};
+
+pub const MAX_TRANSACTIONS: usize = 1000;
 
 #[derive(Deserialize, Serialize)]
 pub struct Transactions {
-    list: Box<[Box<[u8]>]>,
+    list: Vec<Box<[u8]>>,
+}
+
+impl Transactions {
+    pub fn new(list: Vec<Box<[u8]>>) -> Self {
+        Self { list }
+    }
+}
+
+impl Packet for Transactions {
+    fn handle(self, _connection: &mut Connection) {
+        todo!();
+    }
 }
