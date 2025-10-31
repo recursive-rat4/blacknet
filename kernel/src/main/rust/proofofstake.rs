@@ -16,6 +16,38 @@
  */
 
 use crate::amount::Amount;
+use blacknet_time::Seconds;
+
+#[derive(Clone, Copy)]
+pub enum Version {
+    V4,
+    V4_1,
+}
+
+pub fn guess_initial_synchronization(
+    version: Version,
+    external: Seconds,
+    internal: Seconds,
+) -> bool {
+    external > internal + target_block_time(version) * (ROLLBACK_LIMIT as i64)
+}
+
+/**
+ * Length of time slot
+ */
+pub fn time_slot(version: Version) -> Seconds {
+    match version {
+        Version::V4 => 16.into(),
+        Version::V4_1 => 4.into(),
+    }
+}
+
+/**
+ * Expected block time
+ */
+pub fn target_block_time(version: Version) -> Seconds {
+    4 * time_slot(version)
+}
 
 /**
  * Number of confirmations to make coins eligible for staking

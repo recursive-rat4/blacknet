@@ -21,5 +21,6 @@ use blacknet_time::SystemClock;
 
 #[test]
 fn access() {
-    SystemClock::now();
+    SystemClock::millis();
+    SystemClock::secs();
 }

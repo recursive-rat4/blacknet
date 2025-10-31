@@ -134,6 +134,14 @@ impl MulAssign<i64> for Milliseconds {
     }
 }
 
+impl Mul<Milliseconds> for i64 {
+    type Output = Milliseconds;
+
+    fn mul(self, rps: Milliseconds) -> Self::Output {
+        Milliseconds { n: self * rps.n }
+    }
+}
+
 impl Div for Milliseconds {
     type Output = i64;
 

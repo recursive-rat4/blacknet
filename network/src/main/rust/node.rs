@@ -22,13 +22,17 @@ use crate::endpoint::Endpoint;
 use crate::peertable::PeerTable;
 use crate::router::Router;
 use crate::settings::Settings;
+use crate::txfetcher::TxFetcher;
 use crate::txpool::TxPool;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
 use blacknet_io::Write;
 use blacknet_io::file::replace;
-use blacknet_kernel::proofofstake::{BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE};
+use blacknet_kernel::proofofstake::{
+    BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization,
+};
 use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::to_write;
+use blacknet_time::SystemClock;
 use blacknet_wallet::walletdb::WalletDB;
 use core::num::NonZero;
 use serde::{Deserialize, Serialize};
@@ -54,6 +58,7 @@ pub struct Node {
     block_db: BlockDB,
     block_fetcher: BlockFetcher,
     tx_pool: RwLock<TxPool>,
+    tx_fetcher: TxFetcher,
     wallet_db: WalletDB,
     agent_string: String,
     agent_name: String,
@@ -99,6 +104,7 @@ impl Node {
             block_db: BlockDB::new(),
             block_fetcher: BlockFetcher::new(),
             tx_pool: RwLock::new(TxPool::new()),
+            tx_fetcher: TxFetcher::new(),
             wallet_db: WalletDB::new(&mode)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),
             agent_name: agent_name.to_owned(),
@@ -161,6 +167,12 @@ impl Node {
         DEFAULT_MAX_BLOCK_SIZE + BLOCK_RESERVED_SIZE
     }
 
+    #[expect(unreachable_code)]
+    pub fn is_initial_synchronization(&self) -> bool {
+        self.block_fetcher.is_synchronizing()
+            && guess_initial_synchronization(todo!(), SystemClock::secs(), todo!())
+    }
+
     pub fn block_db(&self) -> &BlockDB {
         &self.block_db
     }
@@ -175,6 +187,10 @@ impl Node {
 
     pub fn tx_pool(&self) -> &RwLock<TxPool> {
         &self.tx_pool
+    }
+
+    pub fn tx_fetcher(&self) -> &TxFetcher {
+        &self.tx_fetcher
     }
 
     pub fn wallet_db(&self) -> &WalletDB {

@@ -18,17 +18,26 @@
 #![cfg(feature = "std")]
 
 use crate::milliseconds::Milliseconds;
+use crate::seconds::Seconds;
 use std::time::SystemTime;
 
-// In milliseconds since UNIX epoch not counting leap seconds
+// Since UNIX epoch not counting leap seconds
 pub struct SystemClock {}
 
 impl SystemClock {
-    pub fn now() -> Milliseconds {
+    pub fn millis() -> Milliseconds {
         let now = SystemTime::now();
         match now.duration_since(SystemTime::UNIX_EPOCH) {
             Ok(since) => (since.as_millis() as i64).into(),
             Err(until) => (-(until.duration().as_millis() as i64)).into(),
+        }
+    }
+
+    pub fn secs() -> Seconds {
+        let now = SystemTime::now();
+        match now.duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(since) => (since.as_secs() as i64).into(),
+            Err(until) => (-(until.duration().as_secs() as i64)).into(),
         }
     }
 }

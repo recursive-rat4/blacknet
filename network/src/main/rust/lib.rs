@@ -28,4 +28,5 @@ pub mod router;
 pub mod settings;
 pub mod socks5;
 pub mod torcontroller;
+pub mod txfetcher;
 pub mod txpool;

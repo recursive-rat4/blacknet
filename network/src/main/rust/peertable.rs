@@ -224,7 +224,7 @@ impl PeerTable {
     pub fn candidate(&self, predicate: impl Fn(&Endpoint, &Entry) -> bool) -> Option<Endpoint> {
         let peers = self.peers.read().unwrap();
         let mut candidates = Vec::<(&Endpoint, &Entry, f32)>::with_capacity(peers.len());
-        let now = SystemClock::now();
+        let now = SystemClock::millis();
         for (endpoint, entry) in peers.iter() {
             if predicate(endpoint, entry) {
                 candidates.push((endpoint, entry, entry.chance(now)));
@@ -272,7 +272,7 @@ impl PeerTable {
 
     pub(crate) async fn rotate(self: Arc<Self>) {
         let mut rotated = 0;
-        let now = SystemClock::now();
+        let now = SystemClock::millis();
         {
             let mut peers = self.peers.write().unwrap();
             peers.retain(|_, entry| {

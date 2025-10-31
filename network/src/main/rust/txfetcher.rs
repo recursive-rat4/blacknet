@@ -16,29 +16,17 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::{BlockAnnounce, Blocks, ConsensusFault};
+use crate::packet::Inventory;
 
-pub struct BlockFetcher {}
+pub struct TxFetcher {}
 
-impl BlockFetcher {
+impl TxFetcher {
     #[expect(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {}
     }
 
-    pub fn is_synchronizing(&self) -> bool {
-        todo!();
-    }
-
-    pub fn offer(&self, _connection: &Connection, _block_announce: BlockAnnounce) {
-        todo!();
-    }
-
-    pub fn consensus_fault(&self, _connection: &Connection, _consensus_fault: ConsensusFault) {
-        todo!();
-    }
-
-    pub fn blocks(&self, _connection: &Connection, _blocks: Blocks) {
+    pub fn offer(&self, _connection: &Connection, _inventory: Inventory) {
         todo!();
     }
 }
