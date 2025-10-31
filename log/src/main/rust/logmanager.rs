@@ -30,6 +30,7 @@ use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
+#[derive(Clone, Copy)]
 pub enum Strategy {
     Daemon,
     Desktop,

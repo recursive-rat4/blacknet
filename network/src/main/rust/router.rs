@@ -47,7 +47,7 @@ impl Router {
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
-        settings: Arc<Settings>,
+        settings: &Arc<Settings>,
         peer_table: Arc<PeerTable>,
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let router = Arc::new(Self {

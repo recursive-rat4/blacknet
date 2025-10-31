@@ -95,7 +95,7 @@ impl Node {
             next_peer_id: AtomicU64::new(1),
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
-            router: Router::new(&mode, dirs, log_manager, runtime, settings, peer_table)?,
+            router: Router::new(&mode, dirs, log_manager, runtime, &settings, peer_table)?,
             block_db: BlockDB::new(),
             block_fetcher: BlockFetcher::new(),
             tx_pool: RwLock::new(TxPool::new()),
