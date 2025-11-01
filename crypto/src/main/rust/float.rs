@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::integer::Integer;
+use crate::integer::{Integer, UnsignedInteger};
 use core::ops::{Add, Div, Mul, Sub};
 
 #[rustfmt::skip]
@@ -26,18 +26,34 @@ pub trait Float
     + Mul<Output = Self>
     + Div<Output = Self>
 {
+    type FromBits: UnsignedInteger;
+
+    fn from_bits(v: Self::FromBits) -> Self;
+
     const MANTISSA_DIGITS: u32;
 
     const ONE: Self;
 }
 
 impl Float for f32 {
+    type FromBits = u32;
+
+    fn from_bits(v: Self::FromBits) -> Self {
+        Self::from_bits(v)
+    }
+
     const MANTISSA_DIGITS: u32 = Self::MANTISSA_DIGITS;
 
     const ONE: Self = 1.0;
 }
 
 impl Float for f64 {
+    type FromBits = u64;
+
+    fn from_bits(v: Self::FromBits) -> Self {
+        Self::from_bits(v)
+    }
+
     const MANTISSA_DIGITS: u32 = Self::MANTISSA_DIGITS;
 
     const ONE: Self = 1.0;
