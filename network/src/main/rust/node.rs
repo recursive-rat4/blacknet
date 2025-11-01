@@ -106,7 +106,7 @@ impl Node {
             router: Router::new(&mode, dirs, log_manager, runtime, &settings, peer_table)?,
             block_db: BlockDB::new(),
             block_fetcher: BlockFetcher::new(),
-            tx_pool: RwLock::new(TxPool::new()),
+            tx_pool: RwLock::new(TxPool::new(log_manager, settings.clone())?),
             tx_fetcher: TxFetcher::new(),
             wallet_db: WalletDB::new(&mode)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),

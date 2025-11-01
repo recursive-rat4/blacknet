@@ -16,6 +16,7 @@
  */
 
 use blacknet_compat::Mode;
+use blacknet_kernel::amount::Amount;
 
 pub struct Settings {
     pub port: u16,
@@ -29,6 +30,8 @@ pub struct Settings {
     pub i2p_sam_port: u16,
     pub tor_control_host: String,
     pub tor_control_port: u16,
+    pub tx_pool_size: usize,
+    pub min_relay_fee_rate: Amount,
 }
 
 impl Settings {
@@ -45,6 +48,8 @@ impl Settings {
             i2p_sam_port: 7656,
             tor_control_host: "127.0.0.1".to_owned(),
             tor_control_port: 9051,
+            tx_pool_size: 128 * 1024 * 1024,
+            min_relay_fee_rate: Amount::new(100000), // 0.001
         }
     }
 }

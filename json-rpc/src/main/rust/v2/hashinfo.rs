@@ -16,7 +16,6 @@
  */
 
 use blacknet_kernel::blake2b::Hash;
-use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -24,10 +23,6 @@ pub struct HashInfo(String);
 
 impl From<Hash> for HashInfo {
     fn from(hash: Hash) -> Self {
-        let mut hex = String::with_capacity(64);
-        for i in hash {
-            write!(hex, "{i:02X}").expect("hex format");
-        }
-        Self(hex)
+        Self(hash.to_string())
     }
 }

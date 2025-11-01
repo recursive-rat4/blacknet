@@ -15,8 +15,63 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use core::fmt::{Debug, Display, Formatter, Result as FmtResult};
+use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
+use serde::{Deserialize, Serialize};
+
 pub type Blake2b256 = blake2::Blake2b<digest::consts::U32>;
 
-pub type Hash = [u8; 32];
+#[derive(Clone, Copy, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct Hash([u8; 32]);
+
+impl AsRef<[u8]> for Hash {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl Debug for Hash {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", self)
+    }
+}
+
+impl Display for Hash {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", HEXUPPER.encode(&self.0))
+    }
+}
+
+impl From<[u8; 32]> for Hash {
+    fn from(array: [u8; 32]) -> Self {
+        Self(array)
+    }
+}
+
+#[expect(deprecated)]
+impl From<digest::generic_array::GenericArray<u8, digest::consts::U32>> for Hash {
+    fn from(array: digest::generic_array::GenericArray<u8, digest::consts::U32>) -> Self {
+        Self(array.into())
+    }
+}
+
+impl TryFrom<&str> for Hash {
+    type Error = DecodeError;
+
+    fn try_from(hex: &str) -> Result<Self, Self::Error> {
+        if hex.len() == 64 {
+            let mut buf: [u8; 32] = Default::default();
+            match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {
+                Ok(_) => Ok(Self(buf)),
+                Err(err) => Err(err.error),
+            }
+        } else {
+            Err(DecodeError {
+                position: 0,
+                kind: DecodeKind::Length,
+            })
+        }
+    }
+}
 
 pub type Blake2b512 = blake2::Blake2b512;

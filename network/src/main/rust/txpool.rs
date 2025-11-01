@@ -15,26 +15,35 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::settings::Settings;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::error::Result;
+use blacknet_kernel::error::{Error, Result};
+use blacknet_log::{Error as LogError, LogManager, Logger, warn};
 use blacknet_time::Milliseconds;
-use std::collections::{HashMap, hash_map::Keys};
+use std::collections::{HashMap, HashSet, hash_map::Keys};
+use std::sync::Arc;
 
 pub struct TxPool {
+    logger: Logger,
+    settings: Arc<Settings>,
     map: HashMap<Hash, Box<[u8]>>,
+    rejects: HashSet<Hash>,
     data_len: usize,
-    min_fee_rate: Amount,
 }
 
 impl TxPool {
-    #[expect(clippy::new_without_default)]
-    pub fn new() -> Self {
-        Self {
+    pub fn new(
+        log_manager: &LogManager,
+        settings: Arc<Settings>,
+    ) -> core::result::Result<Self, LogError> {
+        Ok(Self {
+            logger: log_manager.logger("TxPool")?,
+            settings,
             map: HashMap::new(),
+            rejects: HashSet::new(),
             data_len: 0,
-            min_fee_rate: Amount::ZERO, //TODO
-        }
+        })
     }
 
     pub fn len(&self) -> usize {
@@ -45,8 +54,8 @@ impl TxPool {
         self.data_len
     }
 
-    pub const fn min_fee_rate(&self) -> Amount {
-        self.min_fee_rate
+    pub fn min_fee_rate(&self) -> Amount {
+        self.settings.min_relay_fee_rate
     }
 
     pub fn hashes(&self) -> Keys<'_, Hash, Box<[u8]>> {
@@ -57,13 +66,38 @@ impl TxPool {
         self.map.get(&hash).map(|x| &**x)
     }
 
+    pub fn is_interesting(&self, hash: Hash) -> bool {
+        !self.rejects.contains(&hash) && !self.map.contains_key(&hash)
+    }
+
     pub fn process(
-        &self,
-        _hash: Hash,
-        _bytes: &[u8],
-        _time: Milliseconds,
-        _remote: bool,
+        &mut self,
+        hash: Hash,
+        bytes: &[u8],
+        time: Milliseconds,
+        remote: bool,
     ) -> Result<Amount> {
+        if self.rejects.contains(&hash) {
+            return Err(Error::Invalid("Already rejected tx".to_owned()));
+        }
+        if self.map.contains_key(&hash) {
+            return Err(Error::AlreadyHave(hash.to_string()));
+        }
+        if self.data_len + bytes.len() > self.settings.tx_pool_size {
+            if remote {
+                return Err(Error::InFuture("TxPool is full".to_owned()));
+            } else {
+                warn!(self.logger, "TxPool is full");
+            }
+        }
+        let result = self.process_impl(hash, bytes, time);
+        if matches!(result, Err(Error::Invalid(_)) | Err(Error::InFuture(_))) {
+            self.rejects.insert(hash);
+        }
+        result
+    }
+
+    fn process_impl(&self, _hash: Hash, _bytes: &[u8], _time: Milliseconds) -> Result<Amount> {
         todo!();
     }
 }

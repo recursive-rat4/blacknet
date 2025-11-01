@@ -51,7 +51,7 @@ impl Packet for Transactions {
 
         let node = connection.node();
         let tx_fetcher = node.tx_fetcher();
-        let tx_pool = node.tx_pool().write().unwrap();
+        let mut tx_pool = node.tx_pool().write().unwrap();
 
         for bytes in self.list.into_iter() {
             let hash = if let Some(hash) = Transaction::compute_hash(&bytes) {

@@ -39,7 +39,7 @@ blacknet-serialization.workspace = true
 blacknet-time.workspace = true
 blacknet-wallet.workspace = true
 blake2.workspace = true
-data-encoding.workspace = true
+data-encoding = { workspace = true, features = ["std"] }
 data-encoding-macro.workspace = true
 natpmp.workspace = true
 serde.workspace = true

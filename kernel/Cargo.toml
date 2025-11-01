@@ -33,6 +33,7 @@ categories.workspace = true
 blacknet-crypto.workspace = true
 blacknet-time.workspace = true
 blake2.workspace = true
+data-encoding.workspace = true
 digest.workspace = true
 ripemd.workspace = true
 serde.workspace = true
@@ -43,7 +44,6 @@ thiserror.workspace = true
 [dev-dependencies]
 blacknet-compat.workspace = true
 blacknet-serialization.workspace = true
-data-encoding.workspace = true
 
 [lints]
 workspace = true
