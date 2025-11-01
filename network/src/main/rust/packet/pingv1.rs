@@ -15,9 +15,45 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::connection::Connection;
+use crate::node::NETWORK_TIMEOUT;
+use crate::packet::{Packet, Pong};
+use blacknet_kernel::blake2b::Blake2b256;
+use blake2::Digest;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct PingV1 {
     challenge: u32,
+}
+
+impl PingV1 {
+    pub fn solve(magic: u32, challenge: u32) -> u32 {
+        let mut hasher = Blake2b256::default();
+        hasher.update(magic.to_be_bytes());
+        hasher.update(challenge.to_be_bytes());
+        let hash = hasher.finalize();
+        let mut buf: [u8; 4] = Default::default();
+        buf.copy_from_slice(&hash[..4]);
+        u32::from_be_bytes(buf)
+    }
+}
+
+impl Packet for PingV1 {
+    fn handle(self, connection: &mut Connection) {
+        let response = if connection.version() == 13 {
+            let magic = connection.node().mode().network_magic();
+            Self::solve(magic, self.challenge)
+        } else {
+            self.challenge
+        };
+        connection.send_packet(Pong::new(response));
+        let last_packet_time = connection.last_packet_time();
+        let last_ping_time = connection.last_ping_time();
+        connection.set_last_ping_time(last_packet_time);
+        if last_packet_time > last_ping_time + NETWORK_TIMEOUT / 2 {
+        } else {
+            connection.dos("Too many ping requests");
+        }
+    }
 }

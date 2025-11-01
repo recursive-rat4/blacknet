@@ -32,7 +32,7 @@ use blacknet_kernel::proofofstake::{
 };
 use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::to_write;
-use blacknet_time::SystemClock;
+use blacknet_time::{Milliseconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
 use core::num::NonZero;
 use serde::{Deserialize, Serialize};
@@ -44,6 +44,7 @@ use std::sync::{Arc, RwLock};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
 
+pub const NETWORK_TIMEOUT: Milliseconds = Milliseconds::from_seconds(90);
 pub const PROTOCOL_VERSION: u32 = 15;
 
 #[expect(dead_code)]

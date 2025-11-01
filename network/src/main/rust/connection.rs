@@ -47,6 +47,7 @@ pub struct Connection {
     last_inv_sent_time: Milliseconds,
     time_offset: Seconds,
     ping: Milliseconds,
+    ping_request: Option<(u32, Milliseconds)>,
     requested_difficulty: UInt256,
 
     id: u64,
@@ -92,6 +93,18 @@ impl Connection {
         self.connected_at
     }
 
+    pub const fn last_packet_time(&self) -> Milliseconds {
+        self.last_packet_time
+    }
+
+    pub const fn last_ping_time(&self) -> Milliseconds {
+        self.last_ping_time
+    }
+
+    pub const fn set_last_ping_time(&mut self, last_ping_time: Milliseconds) {
+        self.last_ping_time = last_ping_time;
+    }
+
     pub const fn id(&self) -> u64 {
         self.id
     }
@@ -124,8 +137,24 @@ impl Connection {
         self.ping
     }
 
+    pub const fn set_ping(&mut self, ping: Milliseconds) {
+        self.ping = ping;
+    }
+
+    pub const fn ping_request(&self) -> Option<(u32, Milliseconds)> {
+        self.ping_request
+    }
+
+    pub const fn set_ping_request(&mut self, ping_request: Option<(u32, Milliseconds)>) {
+        self.ping_request = ping_request;
+    }
+
     pub const fn time_offset(&self) -> Seconds {
         self.time_offset
+    }
+
+    pub const fn set_time_offset(&mut self, time_offset: Seconds) {
+        self.time_offset = time_offset;
     }
 
     pub const fn state(&self) -> State {

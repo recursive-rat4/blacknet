@@ -246,6 +246,7 @@ dependencies = [
  "blacknet-serialization",
  "blacknet-time",
  "blacknet-wallet",
+ "blake2",
  "data-encoding",
  "data-encoding-macro",
  "natpmp",
