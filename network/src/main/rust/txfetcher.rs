@@ -17,6 +17,7 @@
 
 use crate::connection::Connection;
 use crate::packet::Inventory;
+use blacknet_kernel::blake2b::Hash;
 
 pub struct TxFetcher {}
 
@@ -27,6 +28,10 @@ impl TxFetcher {
     }
 
     pub fn offer(&self, _connection: &Connection, _inventory: Inventory) {
+        todo!();
+    }
+
+    pub fn fetched(&self, _connection: &Connection, _hash: Hash) -> bool {
         todo!();
     }
 }

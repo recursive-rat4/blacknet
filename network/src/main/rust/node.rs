@@ -19,6 +19,7 @@ use crate::blockdb::BlockDB;
 use crate::blockfetcher::BlockFetcher;
 use crate::connection::{Connection, State};
 use crate::endpoint::Endpoint;
+use crate::packet::UnfilteredInvList;
 use crate::peertable::PeerTable;
 use crate::router::Router;
 use crate::settings::Settings;
@@ -200,6 +201,10 @@ impl Node {
 
     pub const fn mode(&self) -> &Mode {
         &self.mode
+    }
+
+    pub fn broadcast_inv(&self, _unfiltered: UnfilteredInvList, _source: Option<u64>) -> usize {
+        todo!();
     }
 
     async fn rotator(self: Arc<Self>) {

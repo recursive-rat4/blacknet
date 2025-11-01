@@ -97,6 +97,14 @@ impl Connection {
         self.last_packet_time
     }
 
+    pub const fn last_tx_time(&self) -> Milliseconds {
+        self.last_tx_time
+    }
+
+    pub const fn set_last_tx_time(&mut self, last_tx_time: Milliseconds) {
+        self.last_tx_time = last_tx_time;
+    }
+
     pub const fn last_ping_time(&self) -> Milliseconds {
         self.last_ping_time
     }

@@ -15,7 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::error::Result;
+use blacknet_time::Milliseconds;
 use std::collections::{HashMap, hash_map::Keys};
 
 pub struct TxPool {
@@ -46,5 +49,15 @@ impl TxPool {
 
     pub fn get_raw(&self, hash: Hash) -> Option<&[u8]> {
         self.map.get(&hash).map(|x| &**x)
+    }
+
+    pub fn process(
+        &self,
+        _hash: Hash,
+        _bytes: &[u8],
+        _time: Milliseconds,
+        _remote: bool,
+    ) -> Result<Amount> {
+        todo!();
     }
 }
