@@ -24,6 +24,7 @@ use std::collections::{HashMap, hash_map::Keys};
 pub struct TxPool {
     map: HashMap<Hash, Box<[u8]>>,
     data_len: usize,
+    min_fee_rate: Amount,
 }
 
 impl TxPool {
@@ -32,6 +33,7 @@ impl TxPool {
         Self {
             map: HashMap::new(),
             data_len: 0,
+            min_fee_rate: Amount::ZERO, //TODO
         }
     }
 
@@ -41,6 +43,10 @@ impl TxPool {
 
     pub const fn data_len(&self) -> usize {
         self.data_len
+    }
+
+    pub const fn min_fee_rate(&self) -> Amount {
+        self.min_fee_rate
     }
 
     pub fn hashes(&self) -> Keys<'_, Hash, Box<[u8]>> {

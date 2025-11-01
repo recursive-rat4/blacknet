@@ -47,6 +47,7 @@ use tokio::time::{Duration, sleep};
 
 pub const NETWORK_TIMEOUT: Milliseconds = Milliseconds::from_seconds(90);
 pub const PROTOCOL_VERSION: u32 = 15;
+pub const MIN_PROTOCOL_VERSION: u32 = 12;
 
 #[expect(dead_code)]
 pub struct Node {
@@ -129,6 +130,10 @@ impl Node {
 
     pub fn agent_version(&self) -> &str {
         &self.agent_version
+    }
+
+    pub fn nonce(&self) -> u64 {
+        todo!();
     }
 
     pub fn is_online(&self) -> bool {

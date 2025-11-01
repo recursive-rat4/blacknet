@@ -94,6 +94,25 @@ impl PeerTable {
         peers.len()
     }
 
+    pub fn connected(
+        &self,
+        endpoint: Endpoint,
+        time: Milliseconds,
+        user_agent: &str,
+        prober: bool,
+    ) {
+        if endpoint.is_local() || endpoint.is_private() {
+            return;
+        }
+        let mut peers = self.peers.write().unwrap();
+        peers
+            .entry(endpoint)
+            .and_modify(|entry| {
+                entry.connected(time, user_agent, prober);
+            })
+            .or_insert_with(|| Entry::with_connected(time, user_agent));
+    }
+
     pub fn try_contact(&self, endpoint: Endpoint) -> bool {
         if endpoint.is_local() || endpoint.is_private() {
             return false;
@@ -361,8 +380,30 @@ impl Entry {
             last_connected: Milliseconds::ZERO,
             user_agent: String::new(),
             subnetworks: HashSet::new(),
-            added: Milliseconds::ZERO,
+            added: SystemClock::millis(),
         }
+    }
+
+    fn with_connected(time: Milliseconds, user_agent: &str) -> Self {
+        Self {
+            in_contact: AtomicBool::new(true),
+            attempts: 0,
+            last_try: Milliseconds::ZERO,
+            last_connected: time,
+            user_agent: user_agent.to_owned(),
+            subnetworks: HashSet::new(),
+            added: SystemClock::millis(),
+        }
+    }
+
+    fn connected(&mut self, time: Milliseconds, user_agent: &str, prober: bool) {
+        self.last_connected = time;
+        self.user_agent = user_agent.to_owned();
+        if !prober {
+            self.subnetworks.clear();
+        }
+        self.attempts = 0;
+        self.last_try = time;
     }
 
     fn contact(&self) -> bool {

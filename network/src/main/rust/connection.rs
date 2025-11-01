@@ -37,7 +37,7 @@ pub struct Connection {
     state: State,
 
     dos_score: AtomicU8,
-    connected_at: Seconds,
+    connected_at: Milliseconds,
 
     last_packet_time: Milliseconds,
     last_block: Arc<BlockAnnounce>,
@@ -89,7 +89,7 @@ impl Connection {
         self.requested_difficulty != UInt256::ZERO
     }
 
-    pub const fn connected_at(&self) -> Seconds {
+    pub const fn connected_at(&self) -> Milliseconds {
         self.connected_at
     }
 
@@ -121,12 +121,24 @@ impl Connection {
         self.version
     }
 
+    pub const fn set_version(&mut self, version: u32) {
+        self.version = version;
+    }
+
     pub fn agent(&self) -> &str {
         &self.agent
     }
 
+    pub fn set_agent(&self, _string: &str) {
+        todo!();
+    }
+
     pub const fn fee_filter(&self) -> Amount {
         self.fee_filter
+    }
+
+    pub const fn set_fee_filter(&mut self, fee_filter: Amount) {
+        self.fee_filter = fee_filter;
     }
 
     pub const fn is_established(&self) -> bool {
@@ -169,6 +181,10 @@ impl Connection {
         self.state
     }
 
+    pub const fn set_state(&mut self, state: State) {
+        self.state = state;
+    }
+
     pub fn total_bytes_read(&self) -> u64 {
         todo!();
     }
@@ -186,7 +202,7 @@ impl Connection {
     }
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum State {
     IncomingConnected,
     IncomingWaiting,

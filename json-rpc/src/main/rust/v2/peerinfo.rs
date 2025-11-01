@@ -53,7 +53,7 @@ impl PeerInfo {
             outgoing: connection.state().is_outgoing(),
             banScore: connection.dos_score(),
             feeFilter: connection.fee_filter().into(),
-            connectedAt: connection.connected_at().into(),
+            connectedAt: Into::<i64>::into(connection.connected_at()) / 1000,
             lastChain: connection.last_block().deref().into(),
             requestedBlocks: connection.requested_blocks(),
             totalBytesRead: connection.total_bytes_read(),
