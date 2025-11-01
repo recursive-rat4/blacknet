@@ -54,7 +54,12 @@ impl Packet for Transactions {
         let tx_pool = node.tx_pool().write().unwrap();
 
         for bytes in self.list.into_iter() {
-            let hash = Transaction::hash(&bytes);
+            let hash = if let Some(hash) = Transaction::compute_hash(&bytes) {
+                hash
+            } else {
+                connection.dos("Unhashable tx");
+                continue;
+            };
 
             if !tx_fetcher.fetched(connection, hash) {
                 connection.dos("Unrequested tx");

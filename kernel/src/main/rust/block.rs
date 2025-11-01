@@ -73,12 +73,20 @@ impl Block {
         }
     }
 
-    pub fn compute_hash(bytes: &[u8]) -> Hash {
-        Blake2b256::digest(&bytes[..HEADER_SIZE_BYTES - size_of::<Signature>()]).into()
+    pub fn compute_hash(bytes: &[u8]) -> Option<Hash> {
+        if bytes.len() > HEADER_SIZE_BYTES {
+            Some(Blake2b256::digest(&bytes[..HEADER_SIZE_BYTES - size_of::<Signature>()]).into())
+        } else {
+            None
+        }
     }
 
-    pub fn compute_content_hash(bytes: &[u8]) -> Hash {
-        Blake2b256::digest(&bytes[HEADER_SIZE_BYTES..]).into()
+    pub fn compute_content_hash(bytes: &[u8]) -> Option<Hash> {
+        if bytes.len() > HEADER_SIZE_BYTES {
+            Some(Blake2b256::digest(&bytes[HEADER_SIZE_BYTES..]).into())
+        } else {
+            None
+        }
     }
 
     pub const fn version(&self) -> u32 {

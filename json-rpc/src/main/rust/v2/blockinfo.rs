@@ -49,7 +49,7 @@ impl BlockInfo {
             let mut txs = Vec::with_capacity(block.raw_transactions().len());
             for bytes in block.raw_transactions() {
                 let tx = from_bytes::<Transaction>(bytes, false)?;
-                let tx_hash = Transaction::hash(bytes);
+                let tx_hash = Transaction::compute_hash(bytes).ok_or("Compute hash failed")?;
                 let info = TransactionInfo::new(&tx, tx_hash, bytes.len(), address_codec)?;
                 txs.push(to_value(info)?);
             }

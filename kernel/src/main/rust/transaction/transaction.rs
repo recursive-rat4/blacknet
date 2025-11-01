@@ -24,6 +24,13 @@ use core::mem::size_of;
 use digest::Digest;
 use serde::{Deserialize, Serialize};
 
+const HEADER_SIZE_BYTES: usize = size_of::<Signature>()
+    + size_of::<PublicKey>()
+    + size_of::<u32>()
+    + size_of::<Hash>()
+    + size_of::<Amount>()
+    + size_of::<TxKind>();
+
 #[derive(Deserialize, Serialize)]
 pub struct Transaction {
     signature: Signature,
@@ -67,8 +74,12 @@ impl Transaction {
         }
     }
 
-    pub fn hash(bytes: &[u8]) -> Hash {
-        Blake2b256::digest(&bytes[size_of::<Signature>()..]).into()
+    pub fn compute_hash(bytes: &[u8]) -> Option<Hash> {
+        if bytes.len() > HEADER_SIZE_BYTES {
+            Some(Blake2b256::digest(&bytes[size_of::<Signature>()..]).into())
+        } else {
+            None
+        }
     }
 
     pub const fn anchor(&self) -> Hash {

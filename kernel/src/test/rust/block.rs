@@ -37,3 +37,10 @@ fn serialization() {
         deserialized
     );
 }
+
+#[test]
+fn hash() {
+    let invalid_bytes: [u8; 4] = [0, 1, 2, 3];
+    assert_eq!(Block::compute_hash(&invalid_bytes), None);
+    assert_eq!(Block::compute_content_hash(&invalid_bytes), None);
+}
