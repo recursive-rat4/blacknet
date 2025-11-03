@@ -17,22 +17,22 @@
 
 use crate::v2::error::Result;
 use crate::v2::{AmountInfo, PublicKeyInfo, SignatureInfo};
-use blacknet_kernel::transaction::{CreateMultisig, Deposit, Sig};
+use blacknet_kernel::transaction::{CreateMultisig, Dep, Sig};
 use blacknet_serialization::format::from_bytes;
 use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-pub struct DepositInfo {
+pub struct DepInfo {
     from: PublicKeyInfo,
     amount: AmountInfo,
 }
 
-impl DepositInfo {
-    pub fn new(deposit: Deposit, address_codec: &AddressCodec) -> Result<Self> {
+impl DepInfo {
+    pub fn new(dep: Dep, address_codec: &AddressCodec) -> Result<Self> {
         Ok(Self {
-            from: PublicKeyInfo::new(deposit.from(), address_codec)?,
-            amount: deposit.amount().into(),
+            from: PublicKeyInfo::new(dep.from(), address_codec)?,
+            amount: dep.amount().into(),
         })
     }
 }
@@ -55,7 +55,7 @@ impl From<Sig> for SigInfo {
 #[derive(Deserialize, Serialize)]
 pub struct CreateMultisigInfo {
     n: u8,
-    deposits: Vec<DepositInfo>,
+    deposits: Vec<DepInfo>,
     signatures: Vec<SigInfo>,
 }
 
@@ -68,7 +68,7 @@ impl CreateMultisigInfo {
                 .deposits()
                 .iter()
                 .copied()
-                .map(|deposit| DepositInfo::new(deposit, address_codec))
+                .map(|dep| DepInfo::new(dep, address_codec))
                 .collect::<Result<Vec<_>>>()?,
             signatures: create_multisig
                 .signatures()

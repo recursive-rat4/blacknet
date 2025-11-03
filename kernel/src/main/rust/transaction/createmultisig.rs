@@ -16,19 +16,33 @@
  */
 
 use crate::amount::Amount;
-use crate::ed25519::{PublicKey, Signature};
+use crate::blake2b::{Blake2b256, Hash};
+use crate::ed25519::{PublicKey, Signature, verify};
+use crate::error::{Error, Result};
+use crate::multisig::{Deposit, Multisig};
+use crate::transaction::{CoinTx, Transaction, TxData};
+use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
+use blacknet_serialization::format::to_bytes;
+use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 pub type MultiSignatureLockContractId = [u8; 32];
 
+fn id(hash: Hash, data_index: u32) -> MultiSignatureLockContractId {
+    let mut hasher = Blake2b256::new();
+    hasher.update(hash);
+    hasher.update(data_index.to_be_bytes());
+    hasher.finalize().into()
+}
+
 #[derive(Clone, Copy, Deserialize, Serialize)]
-pub struct Deposit {
+pub struct Dep {
     from: PublicKey,
     amount: Amount,
 }
 
-impl Deposit {
+impl Dep {
     pub const fn from(self) -> PublicKey {
         self.from
     }
@@ -57,7 +71,7 @@ impl Sig {
 #[derive(Deserialize, Serialize)]
 pub struct CreateMultisig {
     n: u8,
-    deposits: Box<[Deposit]>,
+    deposits: Box<[Dep]>,
     signatures: Box<[Sig]>,
 }
 
@@ -66,13 +80,92 @@ impl CreateMultisig {
         self.n
     }
 
-    pub const fn deposits(&self) -> &[Deposit] {
+    pub const fn deposits(&self) -> &[Dep] {
         &self.deposits
     }
 
     pub const fn signatures(&self) -> &[Sig] {
         &self.signatures
     }
+
+    fn checked_sum(&self) -> Option<Amount> {
+        let mut sum = Amount::ZERO;
+        for dep in self.deposits.iter() {
+            if let Some(amount) = sum.checked_add(dep.amount()) {
+                sum = amount;
+            } else {
+                return None;
+            }
+        }
+        Some(sum)
+    }
+
+    fn hash(&self, from: PublicKey, seq: u32, data_index: u32) -> Result<Hash> {
+        let copy = Self {
+            n: self.n,
+            deposits: self.deposits.clone(),
+            signatures: Default::default(),
+        };
+        let bytes = to_bytes::<CreateMultisig>(&copy)?;
+        let mut hasher = Blake2b256::new();
+        hasher.update(from);
+        hasher.update(seq.to_be_bytes());
+        hasher.update(data_index.to_be_bytes());
+        hasher.update(bytes);
+        Ok(hasher.finalize().into())
+    }
 }
 
-//TODO
+impl TxData for CreateMultisig {
+    fn process_impl(
+        &self,
+        tx: Transaction,
+        hash: Hash,
+        data_index: u32,
+        coin_tx: impl CoinTx,
+    ) -> Result<()> {
+        if self.n as usize > self.deposits.len() {
+            return Err(Error::Invalid("Invalid n".to_owned()));
+        }
+        if self.deposits.len() > 20 {
+            return Err(Error::Invalid("Too many deposits".to_owned()));
+        }
+        if self.signatures.len() > self.deposits.len() {
+            return Err(Error::Invalid("Too many signatures".to_owned()));
+        }
+        match self.checked_sum() {
+            Some(sum) => {
+                if sum == Amount::ZERO {
+                    return Err(Error::Invalid("Invalid total amount".to_owned()));
+                }
+            }
+            None => return Err(Error::Invalid("Invalid total amount".to_owned())),
+        };
+
+        let multisig_hash = self.hash(tx.from(), tx.seq(), data_index)?;
+        for (index, deposit) in self.deposits.iter().enumerate() {
+            if deposit.amount() != Amount::ZERO {
+                let sig = self
+                    .signatures
+                    .iter()
+                    .find(|sig| sig.index == index as u8)
+                    .ok_or(Error::Invalid("Unsigned deposit".to_owned()))?;
+                verify(sig.signature(), multisig_hash, deposit.from())?;
+                let mut deposit_account = coin_tx.get_account(deposit.from())?;
+                deposit_account.credit(deposit.amount())?;
+                coin_tx.set_account(deposit.from(), deposit_account);
+            }
+        }
+
+        let id = id(hash, data_index);
+        let multisig = Multisig::new(
+            self.n,
+            self.deposits
+                .iter()
+                .map(|dep| Deposit::new(dep.from(), dep.amount()))
+                .collect(),
+        );
+        coin_tx.add_multisig(id, multisig);
+        Ok(())
+    }
+}

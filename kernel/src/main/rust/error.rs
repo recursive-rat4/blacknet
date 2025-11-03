@@ -15,7 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
+use blacknet_serialization::error::Error as SerializationError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -28,6 +29,12 @@ pub enum Error {
     Invalid(String),
     #[error("Not reachable vertex {0}")]
     NotReachableVertex(String),
+}
+
+impl From<SerializationError> for Error {
+    fn from(error: SerializationError) -> Self {
+        Error::Invalid(error.to_string())
+    }
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

@@ -39,6 +39,14 @@ impl Amount {
     pub const fn value(self) -> u64 {
         self.value
     }
+
+    pub const fn checked_add(self, rps: Amount) -> Option<Amount> {
+        if let Some(value) = self.value.checked_add(rps.value) {
+            Some(Self::new(value))
+        } else {
+            None
+        }
+    }
 }
 
 impl Display for Amount {

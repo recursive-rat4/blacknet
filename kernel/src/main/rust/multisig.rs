@@ -26,8 +26,20 @@ pub struct Deposit {
     amount: Amount,
 }
 
+impl Deposit {
+    pub const fn new(from: PublicKey, amount: Amount) -> Self {
+        Self { from, amount }
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct Multisig {
     n: u8,
     deposits: Box<[Deposit]>,
+}
+
+impl Multisig {
+    pub const fn new(n: u8, deposits: Box<[Deposit]>) -> Self {
+        Self { n, deposits }
+    }
 }

@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::blake2b::Hash;
+use crate::error::Error;
 use alloc::vec::Vec;
 use core::array::TryFromSliceError;
 use core::mem::transmute;
@@ -49,3 +51,7 @@ impl TryFrom<Vec<u8>> for Signature {
 pub type PublicKey = [u8; 32];
 
 pub type PrivateKey = [u8; 32];
+
+pub fn verify(_signature: Signature, _hash: Hash, _public_key: PublicKey) -> Result<(), Error> {
+    todo!();
+}
