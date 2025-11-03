@@ -17,7 +17,7 @@
 
 use crate::abeliangroup::AdditiveAbelianGroup;
 use crate::duplex::{Absorb, Duplex, Squeeze};
-use crate::magma::AdditiveMagma;
+use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
 use crate::monoid::AdditiveMonoid;
 use crate::ring::Ring;
 use core::array;
@@ -186,13 +186,13 @@ impl<R: Ring, const N: usize> AdditiveMagma for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
+
 impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
     const IDENTITY: Self = Self {
         components: [R::ZERO; N],
     };
 }
-
-impl<R: Ring, const N: usize> AdditiveAbelianGroup for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> Module<R> for FreeModule<R, N> {}
 

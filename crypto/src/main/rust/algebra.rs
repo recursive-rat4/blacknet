@@ -45,6 +45,12 @@ pub trait CommutativeAlgebra<R: CommutativeRing>
 }
 
 #[rustfmt::skip]
+impl<
+    R: CommutativeRing,
+    A: UnitalAlgebra<R> + CommutativeRing
+> CommutativeAlgebra<R> for A {}
+
+#[rustfmt::skip]
 pub trait DivisionAlgebra<R: DivisionRing>
     : Algebra<R>
     + DivisionRing

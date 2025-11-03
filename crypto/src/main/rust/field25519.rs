@@ -16,12 +16,14 @@
  */
 
 use crate::bigint::{UInt256, UInt512};
-use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::{Field, PrimeField};
 use crate::integer::Integer;
-use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
+use crate::magma::{
+    AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeCommutativeMagma,
+    MultiplicativeMagma,
+};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{CommutativeRing, IntegerRing, Ring};
+use crate::ring::{IntegerRing, Ring};
 use crate::semigroup::MultiplicativeSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -308,11 +310,11 @@ impl AdditiveMagma for Field25519 {
     }
 }
 
+impl AdditiveCommutativeMagma for Field25519 {}
+
 impl AdditiveMonoid for Field25519 {
     const IDENTITY: Self = Self { n: UInt256::ZERO };
 }
-
-impl AdditiveCyclicGroup for Field25519 {}
 
 impl MultiplicativeMagma for Field25519 {
     fn square(self) -> Self {
@@ -321,6 +323,8 @@ impl MultiplicativeMagma for Field25519 {
         }
     }
 }
+
+impl MultiplicativeCommutativeMagma for Field25519 {}
 
 impl MultiplicativeSemigroup for Field25519 {
     const LEFT_IDENTITY: Self = Self {
@@ -340,8 +344,6 @@ impl MultiplicativeMonoid for Field25519 {
 impl Ring for Field25519 {
     type Int = UInt256;
 }
-
-impl CommutativeRing for Field25519 {}
 
 impl IntegerRing for Field25519 {
     fn new(n: UInt256) -> Self {

@@ -17,14 +17,16 @@
 
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::{Binomial, Convolution, Negacyclic};
-use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::{AlgebraicExtension, Field, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
-use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
+use crate::magma::{
+    AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeCommutativeMagma,
+    MultiplicativeMagma,
+};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
-use crate::ring::{CommutativeRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
+use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -227,11 +229,11 @@ impl AdditiveMagma for LMField {
     }
 }
 
+impl AdditiveCommutativeMagma for LMField {}
+
 impl AdditiveMonoid for LMField {
     const IDENTITY: Self = Self { n: 0 };
 }
-
-impl AdditiveCyclicGroup for LMField {}
 
 impl MultiplicativeMagma for LMField {
     #[inline]
@@ -239,6 +241,8 @@ impl MultiplicativeMagma for LMField {
         self * self
     }
 }
+
+impl MultiplicativeCommutativeMagma for LMField {}
 
 impl MultiplicativeSemigroup for LMField {
     const LEFT_IDENTITY: Self = Self { n: 1 };
@@ -252,8 +256,6 @@ impl MultiplicativeMonoid for LMField {
 impl Ring for LMField {
     type Int = i64;
 }
-
-impl CommutativeRing for LMField {}
 
 impl IntegerRing for LMField {
     fn new(n: Self::Int) -> Self {

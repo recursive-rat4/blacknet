@@ -17,13 +17,15 @@
 
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::Negacyclic;
-use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::field::{AlgebraicExtension, Field, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
-use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
+use crate::magma::{
+    AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeCommutativeMagma,
+    MultiplicativeMagma,
+};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{CommutativeRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
+use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -225,11 +227,11 @@ impl AdditiveMagma for PervushinField {
     }
 }
 
+impl AdditiveCommutativeMagma for PervushinField {}
+
 impl AdditiveMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 0 };
 }
-
-impl AdditiveCyclicGroup for PervushinField {}
 
 impl MultiplicativeMagma for PervushinField {
     #[inline]
@@ -237,6 +239,8 @@ impl MultiplicativeMagma for PervushinField {
         self * self
     }
 }
+
+impl MultiplicativeCommutativeMagma for PervushinField {}
 
 impl MultiplicativeSemigroup for PervushinField {
     const LEFT_IDENTITY: Self = Self { n: 1 };
@@ -250,8 +254,6 @@ impl MultiplicativeMonoid for PervushinField {
 impl Ring for PervushinField {
     type Int = i64;
 }
-
-impl CommutativeRing for PervushinField {}
 
 impl IntegerRing for PervushinField {
     fn new(n: Self::Int) -> Self {

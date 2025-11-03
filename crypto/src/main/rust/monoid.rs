@@ -15,7 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveCommutativeSemigroup, AdditiveSemigroup, MultiplicativeCommutativeSemigroup,
+    MultiplicativeSemigroup,
+};
 
 #[rustfmt::skip]
 pub trait AdditiveMonoid
@@ -31,9 +34,30 @@ impl<M: AdditiveMonoid> AdditiveSemigroup for M {
 }
 
 #[rustfmt::skip]
+pub trait AdditiveCommutativeMonoid
+    : AdditiveMonoid
+    + AdditiveCommutativeSemigroup
+{
+}
+
+impl<G: AdditiveMonoid + AdditiveCommutativeSemigroup> AdditiveCommutativeMonoid for G {}
+
+#[rustfmt::skip]
 pub trait MultiplicativeMonoid
     : Default
     + MultiplicativeSemigroup
 {
     const IDENTITY: Self;
+}
+
+#[rustfmt::skip]
+pub trait MultiplicativeCommutativeMonoid
+    : MultiplicativeMonoid
+    + MultiplicativeCommutativeSemigroup
+{
+}
+
+impl<G: MultiplicativeMonoid + MultiplicativeCommutativeSemigroup> MultiplicativeCommutativeMonoid
+    for G
+{
 }

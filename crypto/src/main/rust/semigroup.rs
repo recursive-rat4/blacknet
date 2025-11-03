@@ -15,7 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::magma::{AdditiveMagma, MultiplicativeMagma};
+use crate::magma::{
+    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+};
 use core::iter::{Product, Sum};
 
 #[rustfmt::skip]
@@ -40,6 +42,15 @@ pub trait AdditiveSemigroup
 }
 
 #[rustfmt::skip]
+pub trait AdditiveCommutativeSemigroup
+    : AdditiveSemigroup
+    + AdditiveCommutativeMagma
+{
+}
+
+impl<G: AdditiveSemigroup + AdditiveCommutativeMagma> AdditiveCommutativeSemigroup for G {}
+
+#[rustfmt::skip]
 pub trait MultiplicativeSemigroup
     : MultiplicativeMagma
     + Product
@@ -58,4 +69,16 @@ pub trait MultiplicativeSemigroup
         }
         r
     }
+}
+
+#[rustfmt::skip]
+pub trait MultiplicativeCommutativeSemigroup
+    : MultiplicativeSemigroup
+    + MultiplicativeCommutativeMagma
+{
+}
+
+impl<G: MultiplicativeSemigroup + MultiplicativeCommutativeMagma> MultiplicativeCommutativeSemigroup
+    for G
+{
 }

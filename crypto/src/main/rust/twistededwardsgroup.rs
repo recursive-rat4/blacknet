@@ -15,9 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::abeliangroup::AdditiveAbelianGroup;
 use crate::field::Field;
-use crate::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
+use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::AdditiveMonoid;
 use crate::ring::Ring;
 use core::fmt::{Debug, Formatter, Result};
@@ -147,14 +146,14 @@ impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupAffine<P
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupAffine<P> {}
+
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupAffine<P> {
     const IDENTITY: Self = Self {
         x: P::F::ZERO,
         y: P::F::ONE,
     };
 }
-
-impl<P: TwistedEdwardsGroupParams> AdditiveAbelianGroup for TwistedEdwardsGroupAffine<P> {}
 
 #[derive(Clone, Copy, Eq)]
 pub struct TwistedEdwardsGroupExtended<P: TwistedEdwardsGroupParams> {
@@ -324,6 +323,8 @@ impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupExtended
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
+
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupExtended<P> {
     const IDENTITY: Self = Self {
         x: P::F::ZERO,
@@ -332,5 +333,3 @@ impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupExtende
         t: P::F::ZERO,
     };
 }
-
-impl<P: TwistedEdwardsGroupParams> AdditiveAbelianGroup for TwistedEdwardsGroupExtended<P> {}

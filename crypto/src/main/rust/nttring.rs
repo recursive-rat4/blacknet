@@ -17,14 +17,16 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
-use crate::algebra::{Algebra, CommutativeAlgebra, UnitalAlgebra};
+use crate::algebra::{Algebra, UnitalAlgebra};
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
-use crate::magma::{AdditiveMagma, MultiplicativeMagma};
+use crate::magma::{
+    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+};
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
-use crate::ring::{CommutativeRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing};
+use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing};
 use crate::semigroup::MultiplicativeSemigroup;
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -239,6 +241,8 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMagma for NTTRing<Z
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveCommutativeMagma for NTTRing<Z, M, N> {}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMonoid for NTTRing<Z, M, N> {
     const IDENTITY: Self = Self {
         spectrum: FreeModule::<Z, N>::IDENTITY,
@@ -257,6 +261,11 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMagma for NTT
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMagma
+    for NTTRing<Z, M, N>
+{
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for NTTRing<Z, M, N> {
     const LEFT_IDENTITY: Self = Self::const_from(Z::UNITY);
     const RIGHT_IDENTITY: Self = Self::const_from(Z::UNITY);
@@ -272,13 +281,9 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Ring for NTTRing<Z, M, N> {
     type Int = Z::Int;
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> CommutativeRing for NTTRing<Z, M, N> {}
-
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> UnitalAlgebra<Z> for NTTRing<Z, M, N> {}
-
-impl<Z: Twiddles<M>, const M: usize, const N: usize> CommutativeAlgebra<Z> for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> PolynomialRing<Z> for NTTRing<Z, M, N> {
     #[allow(refining_impl_trait_reachable)]

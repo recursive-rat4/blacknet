@@ -34,6 +34,8 @@ pub trait AdditiveMagma
     fn double(self) -> Self;
 }
 
+pub trait AdditiveCommutativeMagma: AdditiveMagma {}
+
 #[rustfmt::skip]
 pub trait MultiplicativeMagma
     : 'static
@@ -47,6 +49,8 @@ pub trait MultiplicativeMagma
 {
     fn square(self) -> Self;
 }
+
+pub trait MultiplicativeCommutativeMagma: MultiplicativeMagma {}
 
 pub trait Inv {
     type Output;

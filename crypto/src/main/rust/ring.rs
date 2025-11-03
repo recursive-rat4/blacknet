@@ -21,7 +21,7 @@ use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::integer::Integer;
 use crate::magma::Inv;
 use crate::module::Module;
-use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::monoid::{AdditiveMonoid, MultiplicativeCommutativeMonoid, MultiplicativeMonoid};
 use crate::semigroup::MultiplicativeSemigroup;
 use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
@@ -36,8 +36,6 @@ pub trait Ring
     const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
 }
 
-impl<R: Ring> AdditiveAbelianGroup for R {}
-
 #[rustfmt::skip]
 pub trait UnitalRing
     : Ring
@@ -48,7 +46,14 @@ pub trait UnitalRing
 
 impl<R: Ring + MultiplicativeMonoid> UnitalRing for R {}
 
-pub trait CommutativeRing: UnitalRing {}
+#[rustfmt::skip]
+pub trait CommutativeRing
+    : UnitalRing
+    + MultiplicativeCommutativeMonoid
+{
+}
+
+impl<R: UnitalRing + MultiplicativeCommutativeMonoid> CommutativeRing for R {}
 
 #[rustfmt::skip]
 pub trait DivisionRing
@@ -82,6 +87,8 @@ pub trait IntegerRing
         bits
     }
 }
+
+impl<Z: IntegerRing> AdditiveCyclicGroup for Z {}
 
 #[rustfmt::skip]
 pub trait PolynomialRing<R: UnitalRing>

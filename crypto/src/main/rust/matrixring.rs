@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{Algebra, UnitalAlgebra};
-use crate::magma::{AdditiveMagma, MultiplicativeMagma};
+use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeMagma};
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{Ring, UnitalRing};
@@ -271,6 +271,8 @@ impl<R: Ring, const N: usize, const NN: usize> AdditiveMagma for MatrixRing<R, N
         }
     }
 }
+
+impl<R: Ring, const N: usize, const NN: usize> AdditiveCommutativeMagma for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {
     const IDENTITY: Self = Self::const_from(R::ZERO);

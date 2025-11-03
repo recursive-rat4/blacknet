@@ -16,8 +16,9 @@
  */
 
 use crate::group::{AdditiveGroup, MultiplicativeGroup};
+use crate::monoid::{AdditiveCommutativeMonoid, MultiplicativeCommutativeMonoid};
 
-pub trait AdditiveAbelianGroup: AdditiveGroup {
+pub trait AdditiveAbelianGroup: AdditiveGroup + AdditiveCommutativeMonoid {
     // Speeding up the computations on an elliptic curve using addition-subtraction chains
     // ADDSUBCHAIN-D
     // http://www.numdam.org/item/ITA_1990__24_6_531_0/
@@ -78,4 +79,13 @@ pub trait AdditiveAbelianGroup: AdditiveGroup {
     }
 }
 
-pub trait MultiplicativeAbelianGroup: MultiplicativeGroup {}
+impl<G: AdditiveGroup + AdditiveCommutativeMonoid> AdditiveAbelianGroup for G {}
+
+#[rustfmt::skip]
+pub trait MultiplicativeAbelianGroup
+    : MultiplicativeGroup
+    + MultiplicativeCommutativeMonoid
+{
+}
+
+impl<G: MultiplicativeGroup + MultiplicativeCommutativeMonoid> MultiplicativeAbelianGroup for G {}
