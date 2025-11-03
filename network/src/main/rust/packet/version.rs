@@ -22,6 +22,7 @@ use blacknet_kernel::amount::Amount;
 use blacknet_log::{error, info};
 use blacknet_time::{Seconds, SystemClock};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct Version {
@@ -57,7 +58,7 @@ impl Version {
 }
 
 impl Packet for Version {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         let magic = connection.node().mode().network_magic();
         if self.magic != magic {
             // connection from another network

@@ -23,6 +23,7 @@ use blacknet_kernel::error::Error;
 use blacknet_kernel::transaction::Transaction;
 use blacknet_log::debug;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 pub type UnfilteredInvList = Vec<(Hash, u32, Amount)>;
 
@@ -40,7 +41,7 @@ impl Transactions {
 }
 
 impl Packet for Transactions {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         if self.list.len() > MAX_TRANSACTIONS {
             connection.dos("Invalid Transactions len");
             return;

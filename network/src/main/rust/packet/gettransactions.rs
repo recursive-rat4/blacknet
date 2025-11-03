@@ -19,14 +19,21 @@ use crate::connection::Connection;
 use crate::packet::{MAX_TRANSACTIONS, PACKET_HEADER_SIZE_BYTES, Packet, Transactions};
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct GetTransactions {
-    list: Box<[Hash]>,
+    list: Vec<Hash>,
+}
+
+impl GetTransactions {
+    pub const fn new(list: Vec<Hash>) -> Self {
+        Self { list }
+    }
 }
 
 impl Packet for GetTransactions {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         let len = self.list.len();
         if len > MAX_TRANSACTIONS {
             connection.dos("Invalid GetTransactions len");

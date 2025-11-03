@@ -20,6 +20,7 @@ use crate::packet::Packet;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 pub const MAX_BLOCKS: usize = 1000;
 pub const MAX_HASHES: usize = ROLLBACK_LIMIT;
@@ -54,7 +55,7 @@ impl Blocks {
 }
 
 impl Packet for Blocks {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         if self.hashes.len() > MAX_HASHES {
             connection.dos("Invalid hashes len");
             return;

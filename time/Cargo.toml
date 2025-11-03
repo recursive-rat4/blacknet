@@ -34,7 +34,7 @@ serde.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde/std"]
+std = []
 
 [lints]
 workspace = true

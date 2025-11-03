@@ -21,6 +21,7 @@ use crate::packet::{
 };
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct GetBlocks {
@@ -29,7 +30,7 @@ pub struct GetBlocks {
 }
 
 impl Packet for GetBlocks {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         let node = connection.node();
         let block_db = node.block_db();
         if let Some((previous_hash, bytes)) = &**block_db.cached_block()

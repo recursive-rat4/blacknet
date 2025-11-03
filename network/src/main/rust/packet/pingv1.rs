@@ -21,6 +21,7 @@ use crate::packet::{Packet, Pong};
 use blacknet_kernel::blake2b::Blake2b256;
 use blake2::Digest;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct PingV1 {
@@ -40,7 +41,7 @@ impl PingV1 {
 }
 
 impl Packet for PingV1 {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         let response = if connection.version() == 13 {
             let magic = connection.node().mode().network_magic();
             Self::solve(magic, self.challenge)

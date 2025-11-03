@@ -22,9 +22,10 @@ use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{Logger, info};
 use blacknet_time::{Milliseconds, Seconds};
+use core::mem::transmute;
 use std::sync::{
-    Arc,
-    atomic::{AtomicU8, Ordering},
+    Arc, Mutex,
+    atomic::{AtomicI64, AtomicU8, AtomicU32, AtomicU64, Ordering},
 };
 
 #[expect(dead_code)]
@@ -34,26 +35,26 @@ pub struct Connection {
 
     remote_endpoint: Endpoint,
     local_endpoint: Endpoint,
-    state: State,
+    state: AtomicU8,
 
     dos_score: AtomicU8,
     connected_at: Milliseconds,
 
     last_packet_time: Milliseconds,
-    last_block: Arc<BlockAnnounce>,
+    last_block: Mutex<BlockAnnounce>,
     last_block_time: Milliseconds,
-    last_tx_time: Milliseconds,
-    last_ping_time: Milliseconds,
+    last_tx_time: AtomicI64,
+    last_ping_time: AtomicI64,
     last_inv_sent_time: Milliseconds,
-    time_offset: Seconds,
-    ping: Milliseconds,
-    ping_request: Option<(u32, Milliseconds)>,
+    time_offset: AtomicI64,
+    ping: AtomicI64,
+    ping_request: Mutex<Option<(u32, Milliseconds)>>,
     requested_difficulty: UInt256,
 
     id: u64,
-    version: u32,
+    version: AtomicU32,
     agent: String,
-    fee_filter: Amount,
+    fee_filter: AtomicU64,
 }
 
 impl Connection {
@@ -77,12 +78,14 @@ impl Connection {
         self.dos_score.load(Ordering::Acquire)
     }
 
-    pub const fn last_block(&self) -> &Arc<BlockAnnounce> {
-        &self.last_block
+    pub fn last_block(&self) -> BlockAnnounce {
+        let x = self.last_block.lock().unwrap();
+        x.clone()
     }
 
-    pub fn set_last_block(&mut self, block_announce: BlockAnnounce) {
-        *Arc::make_mut(&mut self.last_block) = block_announce;
+    pub fn set_last_block(&self, last_block: BlockAnnounce) {
+        let mut x = self.last_block.lock().unwrap();
+        *x = last_block;
     }
 
     pub fn requested_blocks(&self) -> bool {
@@ -97,32 +100,34 @@ impl Connection {
         self.last_packet_time
     }
 
-    pub const fn last_tx_time(&self) -> Milliseconds {
+    pub fn last_tx_time(&self) -> Milliseconds {
+        self.last_tx_time.load(Ordering::Acquire).into()
+    }
+
+    pub fn set_last_tx_time(&self, last_tx_time: Milliseconds) {
         self.last_tx_time
+            .store(last_tx_time.into(), Ordering::Release);
     }
 
-    pub const fn set_last_tx_time(&mut self, last_tx_time: Milliseconds) {
-        self.last_tx_time = last_tx_time;
+    pub fn last_ping_time(&self) -> Milliseconds {
+        self.last_ping_time.load(Ordering::Acquire).into()
     }
 
-    pub const fn last_ping_time(&self) -> Milliseconds {
+    pub fn set_last_ping_time(&self, last_ping_time: Milliseconds) {
         self.last_ping_time
-    }
-
-    pub const fn set_last_ping_time(&mut self, last_ping_time: Milliseconds) {
-        self.last_ping_time = last_ping_time;
+            .store(last_ping_time.into(), Ordering::Release);
     }
 
     pub const fn id(&self) -> u64 {
         self.id
     }
 
-    pub const fn version(&self) -> u32 {
-        self.version
+    pub fn version(&self) -> u32 {
+        self.version.load(Ordering::Acquire)
     }
 
-    pub const fn set_version(&mut self, version: u32) {
-        self.version = version;
+    pub fn set_version(&self, version: u32) {
+        self.version.store(version, Ordering::Release);
     }
 
     pub fn agent(&self) -> &str {
@@ -133,16 +138,16 @@ impl Connection {
         todo!();
     }
 
-    pub const fn fee_filter(&self) -> Amount {
-        self.fee_filter
+    pub fn fee_filter(&self) -> Amount {
+        self.fee_filter.load(Ordering::Acquire).into()
     }
 
-    pub const fn set_fee_filter(&mut self, fee_filter: Amount) {
-        self.fee_filter = fee_filter;
+    pub fn set_fee_filter(&self, fee_filter: Amount) {
+        self.fee_filter.store(fee_filter.into(), Ordering::Release);
     }
 
-    pub const fn is_established(&self) -> bool {
-        self.state.is_established()
+    pub fn is_established(&self) -> bool {
+        self.state().is_established()
     }
 
     pub const fn local_endpoint(&self) -> Endpoint {
@@ -153,36 +158,39 @@ impl Connection {
         self.remote_endpoint
     }
 
-    pub const fn ping(&self) -> Milliseconds {
-        self.ping
+    pub fn ping(&self) -> Milliseconds {
+        self.ping.load(Ordering::Acquire).into()
     }
 
-    pub const fn set_ping(&mut self, ping: Milliseconds) {
-        self.ping = ping;
+    pub fn set_ping(&self, ping: Milliseconds) {
+        self.ping.store(ping.into(), Ordering::Release);
     }
 
-    pub const fn ping_request(&self) -> Option<(u32, Milliseconds)> {
-        self.ping_request
+    pub fn ping_request(&self) -> Option<(u32, Milliseconds)> {
+        let x = self.ping_request.lock().unwrap();
+        *x
     }
 
-    pub const fn set_ping_request(&mut self, ping_request: Option<(u32, Milliseconds)>) {
-        self.ping_request = ping_request;
+    pub fn set_ping_request(&self, ping_request: Option<(u32, Milliseconds)>) {
+        let mut x = self.ping_request.lock().unwrap();
+        *x = ping_request;
     }
 
-    pub const fn time_offset(&self) -> Seconds {
+    pub fn time_offset(&self) -> Seconds {
+        self.time_offset.load(Ordering::Acquire).into()
+    }
+
+    pub fn set_time_offset(&self, time_offset: Seconds) {
         self.time_offset
+            .store(time_offset.into(), Ordering::Release);
     }
 
-    pub const fn set_time_offset(&mut self, time_offset: Seconds) {
-        self.time_offset = time_offset;
+    pub fn state(&self) -> State {
+        unsafe { transmute(self.state.load(Ordering::Acquire)) }
     }
 
-    pub const fn state(&self) -> State {
-        self.state
-    }
-
-    pub const fn set_state(&mut self, state: State) {
-        self.state = state;
+    pub fn set_state(&self, state: State) {
+        self.state.store(state as u8, Ordering::Release);
     }
 
     pub fn total_bytes_read(&self) -> u64 {
@@ -203,6 +211,7 @@ impl Connection {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
 pub enum State {
     IncomingConnected,
     IncomingWaiting,

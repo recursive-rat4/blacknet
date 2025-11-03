@@ -20,6 +20,7 @@ use crate::packet::Packet;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_time::Milliseconds;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 pub const MAX_INVENTORY: usize = 50000;
 pub const INVENTORY_SEND_MAX: usize = 512;
@@ -30,9 +31,25 @@ pub struct Inventory {
     list: Box<[Hash]>,
 }
 
+impl Inventory {
+    pub const fn len(&self) -> usize {
+        self.list.len()
+    }
+}
+
+impl IntoIterator for Inventory {
+    type Item = Hash;
+    type IntoIter = <Box<[Hash]> as IntoIterator>::IntoIter;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.list.into_iter()
+    }
+}
+
 impl Packet for Inventory {
-    fn handle(self, connection: &mut Connection) {
-        if self.list.len() > MAX_INVENTORY {
+    fn handle(self, connection: &Arc<Connection>) {
+        if self.list.is_empty() || self.list.len() > MAX_INVENTORY {
             connection.dos("Invalid Inventory len");
             return;
         }
@@ -44,6 +61,6 @@ impl Packet for Inventory {
             return;
         }
 
-        tx_fetcher.offer(connection, self);
+        tx_fetcher.offer(Arc::downgrade(connection), self);
     }
 }

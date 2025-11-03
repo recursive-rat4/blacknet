@@ -20,6 +20,7 @@ use crate::endpoint::Endpoint;
 use crate::packet::Packet;
 use blacknet_log::debug;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 pub const MAX: usize = 1000;
 
@@ -29,7 +30,7 @@ pub struct Peers {
 }
 
 impl Packet for Peers {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         if self.list.len() > MAX {
             connection.dos("Invalid Peers size");
             return;

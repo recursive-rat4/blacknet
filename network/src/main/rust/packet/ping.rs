@@ -20,6 +20,7 @@ use crate::node::NETWORK_TIMEOUT;
 use crate::packet::{Packet, Pong};
 use blacknet_time::{Seconds, SystemClock};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct Ping {
@@ -36,7 +37,7 @@ impl Ping {
 }
 
 impl Packet for Ping {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         connection.set_time_offset(self.time - SystemClock::secs());
 
         let magic = connection.node().mode().network_magic();

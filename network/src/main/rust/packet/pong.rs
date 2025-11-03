@@ -18,6 +18,7 @@
 use crate::connection::Connection;
 use crate::packet::{Packet, Ping, PingV1};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct Pong {
@@ -31,7 +32,7 @@ impl Pong {
 }
 
 impl Packet for Pong {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         if let Some((challenge, request_time)) = connection.ping_request() {
             let magic = connection.node().mode().network_magic();
             let solution = if connection.version() >= Ping::MIN_VERSION {

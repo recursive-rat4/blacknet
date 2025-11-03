@@ -20,6 +20,7 @@ use crate::packet::Packet;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct BlockAnnounce {
@@ -58,7 +59,7 @@ impl Default for BlockAnnounce {
 }
 
 impl Packet for BlockAnnounce {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         let len = self.cumulative_difficulty.len();
         if len == 0 || len > 32 {
             connection.dos("Invalid cumulative difficulty len");

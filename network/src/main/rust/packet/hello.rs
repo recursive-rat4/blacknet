@@ -23,6 +23,7 @@ use blacknet_log::{error, info};
 use blacknet_serialization::format::from_bytes;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 const MAGIC: u8 = 128;
 const VERSION: u8 = 129;
@@ -78,7 +79,7 @@ impl Hello {
 }
 
 impl Packet for Hello {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         let network_magic = connection.node().mode().network_magic();
         if let Some(magic) = self.magic()
             && magic != network_magic

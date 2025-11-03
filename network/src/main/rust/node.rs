@@ -60,8 +60,8 @@ pub struct Node {
     router: Arc<Router>,
     block_db: BlockDB,
     block_fetcher: BlockFetcher,
-    tx_pool: RwLock<TxPool>,
-    tx_fetcher: TxFetcher,
+    tx_pool: Arc<RwLock<TxPool>>,
+    tx_fetcher: Arc<TxFetcher>,
     wallet_db: WalletDB,
     agent_string: String,
     agent_name: String,
@@ -96,6 +96,7 @@ impl Node {
 
         let settings = Arc::new(Settings::default(&mode));
         let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
+        let tx_pool = Arc::new(RwLock::new(TxPool::new(log_manager, settings.clone())?));
         let node = Arc::new(Self {
             logger,
             settings: settings.clone(),
@@ -106,8 +107,8 @@ impl Node {
             router: Router::new(&mode, dirs, log_manager, runtime, &settings, peer_table)?,
             block_db: BlockDB::new(),
             block_fetcher: BlockFetcher::new(),
-            tx_pool: RwLock::new(TxPool::new(log_manager, settings.clone())?),
-            tx_fetcher: TxFetcher::new(),
+            tx_pool: tx_pool.clone(),
+            tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),
             agent_name: agent_name.to_owned(),
@@ -192,11 +193,11 @@ impl Node {
         &self.peer_table
     }
 
-    pub const fn tx_pool(&self) -> &RwLock<TxPool> {
+    pub const fn tx_pool(&self) -> &Arc<RwLock<TxPool>> {
         &self.tx_pool
     }
 
-    pub const fn tx_fetcher(&self) -> &TxFetcher {
+    pub const fn tx_fetcher(&self) -> &Arc<TxFetcher> {
         &self.tx_fetcher
     }
 

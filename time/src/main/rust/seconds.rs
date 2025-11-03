@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::fmt::{Debug, Display, Formatter, Result};
+use core::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
@@ -47,7 +47,7 @@ impl Seconds {
 }
 
 impl Debug for Seconds {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.n)
     }
 }
@@ -60,7 +60,7 @@ impl Default for Seconds {
 }
 
 impl Display for Seconds {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.n)
     }
 }
@@ -74,6 +74,14 @@ impl From<i64> for Seconds {
 impl From<Seconds> for i64 {
     fn from(secs: Seconds) -> Self {
         secs.n
+    }
+}
+
+impl TryFrom<Seconds> for core::time::Duration {
+    type Error = core::num::TryFromIntError;
+
+    fn try_from(secs: Seconds) -> Result<Self, Self::Error> {
+        Ok(Self::from_secs(secs.n.try_into()?))
     }
 }
 

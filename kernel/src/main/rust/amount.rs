@@ -53,6 +53,12 @@ impl From<u64> for Amount {
     }
 }
 
+impl From<Amount> for u64 {
+    fn from(amount: Amount) -> Self {
+        amount.value
+    }
+}
+
 impl Add for Amount {
     type Output = Self;
 

@@ -18,12 +18,13 @@
 use crate::connection::Connection;
 use crate::packet::Packet;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct ConsensusFault;
 
 impl Packet for ConsensusFault {
-    fn handle(self, connection: &mut Connection) {
+    fn handle(self, connection: &Arc<Connection>) {
         let block_fetcher = connection.node().block_fetcher();
         block_fetcher.consensus_fault(connection, self);
     }

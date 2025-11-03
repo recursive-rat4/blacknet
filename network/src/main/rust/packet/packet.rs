@@ -17,6 +17,7 @@
 
 use crate::connection::Connection;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 /**
  * Packet length is used for delimiting, and as such doesn't count towards packet size.
@@ -25,7 +26,7 @@ pub const PACKET_LENGTH_SIZE_BYTES: u32 = 4;
 pub const PACKET_HEADER_SIZE_BYTES: u32 = 4;
 
 pub trait Packet: for<'de> Deserialize<'de> + Serialize {
-    fn handle(self, connection: &mut Connection);
+    fn handle(self, connection: &Arc<Connection>);
 }
 
 #[non_exhaustive]
