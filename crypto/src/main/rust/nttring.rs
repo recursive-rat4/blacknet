@@ -27,7 +27,7 @@ use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing};
-use crate::semigroup::MultiplicativeSemigroup;
+use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -242,6 +242,11 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMagma for NTTRing<Z
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveCommutativeMagma for NTTRing<Z, M, N> {}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveSemigroup for NTTRing<Z, M, N> {
+    const LEFT_IDENTITY: Self = Self::const_from(Z::ZERO);
+    const RIGHT_IDENTITY: Self = Self::const_from(Z::ZERO);
+}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMonoid for NTTRing<Z, M, N> {
     const IDENTITY: Self = Self {

@@ -25,7 +25,7 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
 use crate::ring::{IntegerRing, Ring, UnitalRing};
-use crate::semigroup::MultiplicativeSemigroup;
+use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -202,6 +202,11 @@ impl AdditiveMagma for FermatField {
 }
 
 impl AdditiveCommutativeMagma for FermatField {}
+
+impl AdditiveSemigroup for FermatField {
+    const LEFT_IDENTITY: Self = Self { n: 0 };
+    const RIGHT_IDENTITY: Self = Self { n: 0 };
+}
 
 impl AdditiveMonoid for FermatField {
     const IDENTITY: Self = Self { n: 0 };

@@ -25,7 +25,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{IntegerRing, Ring, UnitalRing};
-use crate::semigroup::MultiplicativeSemigroup;
+use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -140,6 +140,11 @@ impl AdditiveMagma for Z2 {
 }
 
 impl AdditiveCommutativeMagma for Z2 {}
+
+impl AdditiveSemigroup for Z2 {
+    const LEFT_IDENTITY: Self = Self { n: false };
+    const RIGHT_IDENTITY: Self = Self { n: false };
+}
 
 impl AdditiveMonoid for Z2 {
     const IDENTITY: Self = Self { n: false };

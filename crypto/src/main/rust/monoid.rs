@@ -28,11 +28,6 @@ pub trait AdditiveMonoid
     const IDENTITY: Self;
 }
 
-impl<M: AdditiveMonoid> AdditiveSemigroup for M {
-    const LEFT_IDENTITY: Self = M::IDENTITY;
-    const RIGHT_IDENTITY: Self = M::IDENTITY;
-}
-
 #[rustfmt::skip]
 pub trait AdditiveCommutativeMonoid
     : AdditiveMonoid

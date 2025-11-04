@@ -19,6 +19,7 @@ use crate::field::Field;
 use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeMagma};
 use crate::monoid::AdditiveMonoid;
 use crate::ring::Ring;
+use crate::semigroup::AdditiveSemigroup;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Neg, Sub, SubAssign};
@@ -147,6 +148,17 @@ impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupAffine<P
 }
 
 impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupAffine<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupAffine<P> {
+    const LEFT_IDENTITY: Self = Self {
+        x: P::F::ZERO,
+        y: P::F::ONE,
+    };
+    const RIGHT_IDENTITY: Self = Self {
+        x: P::F::ZERO,
+        y: P::F::ONE,
+    };
+}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupAffine<P> {
     const IDENTITY: Self = Self {
@@ -324,6 +336,21 @@ impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupExtended
 }
 
 impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupExtended<P> {
+    const LEFT_IDENTITY: Self = Self {
+        x: P::F::ZERO,
+        y: P::F::ONE,
+        z: P::F::ONE,
+        t: P::F::ZERO,
+    };
+    const RIGHT_IDENTITY: Self = Self {
+        x: P::F::ZERO,
+        y: P::F::ONE,
+        z: P::F::ONE,
+        t: P::F::ZERO,
+    };
+}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupExtended<P> {
     const IDENTITY: Self = Self {

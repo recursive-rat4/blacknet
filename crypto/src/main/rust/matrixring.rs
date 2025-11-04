@@ -20,7 +20,7 @@ use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeMagma}
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{Ring, UnitalRing};
-use crate::semigroup::MultiplicativeSemigroup;
+use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::array;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -273,6 +273,11 @@ impl<R: Ring, const N: usize, const NN: usize> AdditiveMagma for MatrixRing<R, N
 }
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveCommutativeMagma for MatrixRing<R, N, NN> {}
+
+impl<R: Ring, const N: usize, const NN: usize> AdditiveSemigroup for MatrixRing<R, N, NN> {
+    const LEFT_IDENTITY: Self = Self::const_from(<R as AdditiveSemigroup>::LEFT_IDENTITY);
+    const RIGHT_IDENTITY: Self = Self::const_from(<R as AdditiveSemigroup>::RIGHT_IDENTITY);
+}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {
     const IDENTITY: Self = Self::const_from(R::ZERO);

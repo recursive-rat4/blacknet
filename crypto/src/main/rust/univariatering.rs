@@ -26,7 +26,7 @@ use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{
     CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing,
 };
-use crate::semigroup::MultiplicativeSemigroup;
+use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::marker::PhantomData;
@@ -207,6 +207,23 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMagma
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveCommutativeMagma
     for UnivariateRing<R, N, C>
 {
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveSemigroup
+    for UnivariateRing<R, N, C>
+{
+    const LEFT_IDENTITY: Self = {
+        Self {
+            coefficients: FreeModule::<R, N>::LEFT_IDENTITY,
+            phantom: PhantomData,
+        }
+    };
+    const RIGHT_IDENTITY: Self = {
+        Self {
+            coefficients: FreeModule::<R, N>::RIGHT_IDENTITY,
+            phantom: PhantomData,
+        }
+    };
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMonoid

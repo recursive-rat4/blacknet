@@ -26,7 +26,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
-use crate::semigroup::MultiplicativeSemigroup;
+use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -228,6 +228,11 @@ impl AdditiveMagma for PervushinField {
 }
 
 impl AdditiveCommutativeMagma for PervushinField {}
+
+impl AdditiveSemigroup for PervushinField {
+    const LEFT_IDENTITY: Self = Self { n: 0 };
+    const RIGHT_IDENTITY: Self = Self { n: 0 };
+}
 
 impl AdditiveMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 0 };

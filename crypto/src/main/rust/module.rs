@@ -20,6 +20,7 @@ use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
 use crate::monoid::AdditiveMonoid;
 use crate::ring::Ring;
+use crate::semigroup::AdditiveSemigroup;
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
@@ -187,6 +188,15 @@ impl<R: Ring, const N: usize> AdditiveMagma for FreeModule<R, N> {
 }
 
 impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
+
+impl<R: Ring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {
+    const LEFT_IDENTITY: Self = Self {
+        components: [R::ZERO; N],
+    };
+    const RIGHT_IDENTITY: Self = Self {
+        components: [R::ZERO; N],
+    };
+}
 
 impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
     const IDENTITY: Self = Self {

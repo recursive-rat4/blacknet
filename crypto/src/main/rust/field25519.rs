@@ -24,7 +24,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::ring::{IntegerRing, Ring};
-use crate::semigroup::MultiplicativeSemigroup;
+use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -311,6 +311,11 @@ impl AdditiveMagma for Field25519 {
 }
 
 impl AdditiveCommutativeMagma for Field25519 {}
+
+impl AdditiveSemigroup for Field25519 {
+    const LEFT_IDENTITY: Self = Self { n: UInt256::ZERO };
+    const RIGHT_IDENTITY: Self = Self { n: UInt256::ZERO };
+}
 
 impl AdditiveMonoid for Field25519 {
     const IDENTITY: Self = Self { n: UInt256::ZERO };
