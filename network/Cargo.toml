@@ -65,5 +65,9 @@ name = "endpoint"
 path = "src/test/rust/endpoint.rs"
 
 [[test]]
+name = "hello"
+path = "src/test/rust/hello.rs"
+
+[[test]]
 name = "i2psam"
 path = "src/test/rust/i2psam.rs"

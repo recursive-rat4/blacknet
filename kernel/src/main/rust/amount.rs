@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::fmt::{Display, Formatter, Result};
+use core::fmt::{Debug, Display, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
@@ -46,6 +46,12 @@ impl Amount {
         } else {
             None
         }
+    }
+}
+
+impl Debug for Amount {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}", self.value)
     }
 }
 

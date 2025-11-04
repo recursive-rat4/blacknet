@@ -20,7 +20,8 @@ use crate::node::MIN_PROTOCOL_VERSION;
 use crate::packet::Packet;
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{error, info};
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::error::Error as SerializationError;
+use blacknet_serialization::format::{from_bytes, to_bytes};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -31,13 +32,13 @@ const NONCE: u8 = 130;
 const AGENT: u8 = 131;
 const FEE_FILTER: u8 = 132;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct Hello {
-    data: HashMap<u8, Box<[u8]>>,
+    data: HashMap<u8, Vec<u8>>,
 }
 
 impl Hello {
-    fn magic(&self) -> Option<u32> {
+    pub fn magic(&self) -> Option<u32> {
         if let Some(bytes) = self.data.get(&MAGIC) {
             from_bytes::<u32>(bytes, false).ok()
         } else {
@@ -45,7 +46,13 @@ impl Hello {
         }
     }
 
-    fn version(&self) -> Option<u32> {
+    pub fn set_magic(&mut self, magic: u32) -> Result<(), SerializationError> {
+        let bytes = to_bytes::<u32>(&magic)?;
+        self.data.insert(MAGIC, bytes);
+        Ok(())
+    }
+
+    pub fn version(&self) -> Option<u32> {
         if let Some(bytes) = self.data.get(&VERSION) {
             from_bytes::<u32>(bytes, false).ok()
         } else {
@@ -53,7 +60,13 @@ impl Hello {
         }
     }
 
-    fn nonce(&self) -> Option<u64> {
+    pub fn set_version(&mut self, version: u32) -> Result<(), SerializationError> {
+        let bytes = to_bytes::<u32>(&version)?;
+        self.data.insert(VERSION, bytes);
+        Ok(())
+    }
+
+    pub fn nonce(&self) -> Option<u64> {
         if let Some(bytes) = self.data.get(&NONCE) {
             from_bytes::<u64>(bytes, false).ok()
         } else {
@@ -61,7 +74,13 @@ impl Hello {
         }
     }
 
-    fn agent(&self) -> Option<String> {
+    pub fn set_nonce(&mut self, nonce: u64) -> Result<(), SerializationError> {
+        let bytes = to_bytes::<u64>(&nonce)?;
+        self.data.insert(NONCE, bytes);
+        Ok(())
+    }
+
+    pub fn agent(&self) -> Option<String> {
         if let Some(bytes) = self.data.get(&AGENT) {
             from_bytes::<String>(bytes, false).ok()
         } else {
@@ -69,12 +88,24 @@ impl Hello {
         }
     }
 
-    fn fee_filter(&self) -> Option<Amount> {
+    pub fn set_agent(&mut self, agent: &str) -> Result<(), SerializationError> {
+        let bytes = to_bytes::<&str>(&agent)?;
+        self.data.insert(AGENT, bytes);
+        Ok(())
+    }
+
+    pub fn fee_filter(&self) -> Option<Amount> {
         if let Some(bytes) = self.data.get(&FEE_FILTER) {
             from_bytes::<Amount>(bytes, false).ok()
         } else {
             None
         }
+    }
+
+    pub fn set_fee_filter(&mut self, fee_filter: Amount) -> Result<(), SerializationError> {
+        let bytes = to_bytes::<Amount>(&fee_filter)?;
+        self.data.insert(FEE_FILTER, bytes);
+        Ok(())
     }
 }
 
