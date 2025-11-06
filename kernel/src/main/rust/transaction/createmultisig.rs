@@ -88,18 +88,6 @@ impl CreateMultisig {
         &self.signatures
     }
 
-    fn checked_sum(&self) -> Option<Amount> {
-        let mut sum = Amount::ZERO;
-        for dep in self.deposits.iter() {
-            if let Some(amount) = sum.checked_add(dep.amount()) {
-                sum = amount;
-            } else {
-                return None;
-            }
-        }
-        Some(sum)
-    }
-
     fn hash(&self, from: PublicKey, seq: u32, data_index: u32) -> Result<Hash> {
         let copy = Self {
             n: self.n,
@@ -133,7 +121,7 @@ impl TxData for CreateMultisig {
         if self.signatures.len() > self.deposits.len() {
             return Err(Error::Invalid("Too many signatures".to_owned()));
         }
-        match self.checked_sum() {
+        match Amount::checked_sum(self.deposits.iter().copied().map(Dep::amount)) {
             Some(sum) => {
                 if sum == Amount::ZERO {
                     return Err(Error::Invalid("Invalid total amount".to_owned()));

@@ -20,7 +20,7 @@ use crate::ed25519::PublicKey;
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct Deposit {
     from: PublicKey,
     amount: Amount,
@@ -29,6 +29,14 @@ pub struct Deposit {
 impl Deposit {
     pub const fn new(from: PublicKey, amount: Amount) -> Self {
         Self { from, amount }
+    }
+
+    pub const fn from(self) -> PublicKey {
+        self.from
+    }
+
+    pub const fn amount(self) -> Amount {
+        self.amount
     }
 }
 
@@ -41,5 +49,17 @@ pub struct Multisig {
 impl Multisig {
     pub const fn new(n: u8, deposits: Box<[Deposit]>) -> Self {
         Self { n, deposits }
+    }
+
+    pub const fn n(&self) -> u8 {
+        self.n
+    }
+
+    pub const fn deposits(&self) -> &[Deposit] {
+        &self.deposits
+    }
+
+    pub fn amount(&self) -> Amount {
+        self.deposits.iter().copied().map(Deposit::amount).sum()
     }
 }
