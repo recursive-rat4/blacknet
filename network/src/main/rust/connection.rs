@@ -17,27 +17,32 @@
 
 use crate::endpoint::Endpoint;
 use crate::node::Node;
-use crate::packet::{BlockAnnounce, INVENTORY_SEND_MAX, Inventory, Packet};
+use crate::packet::{BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, Packet};
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
-use blacknet_log::{Logger, info};
+use blacknet_log::{Logger, error, info};
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use core::mem::transmute;
 use std::sync::{
-    Arc, Mutex, MutexGuard,
-    atomic::{AtomicI64, AtomicU8, AtomicU32, AtomicU64, Ordering},
+    Arc, Mutex, MutexGuard, RwLock,
+    atomic::{AtomicBool, AtomicI64, AtomicU8, AtomicU32, AtomicU64, Ordering},
 };
+use tokio::runtime::Runtime;
+use tokio::task::JoinHandle;
+use tokio::time::sleep;
 
 #[expect(dead_code)]
 pub struct Connection {
     logger: Logger,
+    handles: RwLock<Vec<JoinHandle<()>>>,
     node: Arc<Node>,
 
     remote_endpoint: Endpoint,
     local_endpoint: Endpoint,
     state: AtomicU8,
 
+    closed: AtomicBool,
     dos_score: AtomicU8,
     inventory_to_send: Mutex<Vec<Hash>>,
     connected_at: Milliseconds,
@@ -60,6 +65,25 @@ pub struct Connection {
 }
 
 impl Connection {
+    pub fn launch(self: Arc<Self>, runtime: &Runtime) {
+        let mut handles = self.handles.write().unwrap();
+        handles.push(runtime.spawn(self.clone().pusher()));
+    }
+
+    pub async fn join(&self) {
+        loop {
+            let handle = {
+                let mut handles = self.handles.write().unwrap();
+                if let Some(handle) = handles.pop() {
+                    handle
+                } else {
+                    break;
+                }
+            };
+            let _ = handle.await;
+        }
+    }
+
     pub fn inventory(&self, inv: Hash) {
         let mut inventory_to_send = self.inventory_to_send.lock().unwrap();
         inventory_to_send.push(inv);
@@ -88,7 +112,6 @@ impl Connection {
         }
     }
 
-    #[expect(dead_code)]
     fn send_inventory(&self, time: Milliseconds) {
         let mut inventory_to_send = self.inventory_to_send.lock().unwrap();
         if !inventory_to_send.is_empty() {
@@ -115,8 +138,33 @@ impl Connection {
         self.fee_filter() <= fee
     }
 
+    #[expect(unreachable_code)]
     pub fn close(&self) {
-        todo!();
+        if !self.closed.fetch_or(true, Ordering::AcqRel) {
+            todo!("close socket");
+
+            if let Ok(mut connections) = self.node().connections().write() {
+                if let Some(index) = connections
+                    .iter()
+                    .position(|connection| connection.id() == self.id())
+                {
+                    connections.swap_remove(index);
+                } else {
+                    error!(self.logger(), "Close can't find connection");
+                }
+            }
+
+            if self.is_established() {
+                self.node().block_fetcher().disconnected(self);
+            }
+
+            let handles = self.handles.read().unwrap();
+            handles.iter().for_each(JoinHandle::abort);
+        }
+    }
+
+    pub fn is_closed(&self) -> bool {
+        self.closed.load(Ordering::Acquire)
     }
 
     pub fn dos(&self, reason: &str) {
@@ -269,6 +317,19 @@ impl Connection {
 
     pub fn node(&self) -> &Node {
         &self.node
+    }
+
+    async fn pusher(self: Arc<Self>) {
+        while !self.is_established() {
+            sleep(INVENTORY_SEND_TIMEOUT.try_into().unwrap()).await;
+        }
+        loop {
+            let now = SystemClock::millis();
+            if now >= self.last_inv_sent_time() + INVENTORY_SEND_TIMEOUT {
+                self.send_inventory(now);
+            }
+            sleep(INVENTORY_SEND_TIMEOUT.try_into().unwrap()).await;
+        }
     }
 }
 

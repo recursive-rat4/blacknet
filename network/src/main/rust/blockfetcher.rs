@@ -32,6 +32,10 @@ impl BlockFetcher {
         todo!();
     }
 
+    pub fn disconnected(&self, _connection: &Connection) {
+        todo!();
+    }
+
     pub fn offer(&self, _connection: &Connection, _block_announce: BlockAnnounce) {
         todo!();
     }

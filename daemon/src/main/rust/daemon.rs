@@ -23,6 +23,7 @@ use std::env::args;
 use std::error::Error;
 use std::process::ExitCode;
 use tokio::runtime::Runtime;
+use tokio::select;
 use tokio::signal::ctrl_c;
 use tokio::sync::mpsc::unbounded_channel;
 
@@ -45,7 +46,7 @@ fn daemon() -> Result<(), Box<dyn Error>> {
         });
     }
     runtime.block_on(async move {
-        tokio::select! {
+        select! {
             _ = ctrl_c() => {},
             _ = shutdown_recv.recv() => {},
         }
