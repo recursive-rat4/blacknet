@@ -79,7 +79,7 @@ impl Packet for Transactions {
         drop(tx_pool);
 
         if !inv.is_empty() {
-            node.broadcast_inv(inv, Some(connection.id()));
+            node.broadcast_inv(&inv, Some(connection.id()));
             connection.set_last_tx_time(time);
         }
     }

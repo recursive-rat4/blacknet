@@ -17,6 +17,8 @@
 
 use crate::connection::Connection;
 use crate::packet::{BlockAnnounce, Blocks, ConsensusFault};
+use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::error::Result;
 
 pub struct BlockFetcher {}
 
@@ -31,6 +33,10 @@ impl BlockFetcher {
     }
 
     pub fn offer(&self, _connection: &Connection, _block_announce: BlockAnnounce) {
+        todo!();
+    }
+
+    pub async fn staked_block(&self, _hash: Hash, _bytes: Vec<u8>) -> Result<usize> {
         todo!();
     }
 

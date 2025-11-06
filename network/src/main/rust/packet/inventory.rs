@@ -28,10 +28,14 @@ pub const INVENTORY_SEND_TIMEOUT: Milliseconds = Milliseconds::from_seconds(5);
 
 #[derive(Deserialize, Serialize)]
 pub struct Inventory {
-    list: Box<[Hash]>,
+    list: Vec<Hash>,
 }
 
 impl Inventory {
+    pub const fn new(list: Vec<Hash>) -> Self {
+        Self { list }
+    }
+
     pub const fn len(&self) -> usize {
         self.list.len()
     }

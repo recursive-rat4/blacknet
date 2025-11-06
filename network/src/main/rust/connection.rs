@@ -17,14 +17,15 @@
 
 use crate::endpoint::Endpoint;
 use crate::node::Node;
-use crate::packet::{BlockAnnounce, Packet};
+use crate::packet::{BlockAnnounce, INVENTORY_SEND_MAX, Inventory, Packet};
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
+use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{Logger, info};
-use blacknet_time::{Milliseconds, Seconds};
+use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use core::mem::transmute;
 use std::sync::{
-    Arc, Mutex,
+    Arc, Mutex, MutexGuard,
     atomic::{AtomicI64, AtomicU8, AtomicU32, AtomicU64, Ordering},
 };
 
@@ -38,6 +39,7 @@ pub struct Connection {
     state: AtomicU8,
 
     dos_score: AtomicU8,
+    inventory_to_send: Mutex<Vec<Hash>>,
     connected_at: Milliseconds,
 
     last_packet_time: Milliseconds,
@@ -45,7 +47,7 @@ pub struct Connection {
     last_block_time: Milliseconds,
     last_tx_time: AtomicI64,
     last_ping_time: AtomicI64,
-    last_inv_sent_time: Milliseconds,
+    last_inv_sent_time: AtomicI64,
     time_offset: AtomicI64,
     ping: AtomicI64,
     ping_request: Mutex<Option<(u32, Milliseconds)>>,
@@ -58,8 +60,59 @@ pub struct Connection {
 }
 
 impl Connection {
+    pub fn inventory(&self, inv: Hash) {
+        let mut inventory_to_send = self.inventory_to_send.lock().unwrap();
+        inventory_to_send.push(inv);
+        if inventory_to_send.len() == INVENTORY_SEND_MAX {
+            self.send_inventory_impl(&mut inventory_to_send, SystemClock::millis());
+        }
+    }
+
+    pub fn inventory_slice(&self, inv: &[Hash]) {
+        let mut inventory_to_send = self.inventory_to_send.lock().unwrap();
+        let new_len = inventory_to_send.len() + inv.len();
+        if new_len < INVENTORY_SEND_MAX {
+            inventory_to_send.extend(inv);
+        } else if new_len > INVENTORY_SEND_MAX {
+            let n = INVENTORY_SEND_MAX - inventory_to_send.len();
+            for &item in inv.iter().take(n) {
+                inventory_to_send.push(item);
+            }
+            self.send_inventory_impl(&mut inventory_to_send, SystemClock::millis());
+            for &item in inv.iter().skip(n) {
+                inventory_to_send.push(item);
+            }
+        } else {
+            inventory_to_send.extend(inv);
+            self.send_inventory_impl(&mut inventory_to_send, SystemClock::millis());
+        }
+    }
+
+    #[expect(dead_code)]
+    fn send_inventory(&self, time: Milliseconds) {
+        let mut inventory_to_send = self.inventory_to_send.lock().unwrap();
+        if !inventory_to_send.is_empty() {
+            self.send_inventory_impl(&mut inventory_to_send, time);
+        }
+    }
+
+    fn send_inventory_impl(
+        &self,
+        inventory_to_send: &mut MutexGuard<Vec<Hash>>,
+        time: Milliseconds,
+    ) {
+        self.send_packet(Inventory::new(inventory_to_send.clone()));
+        inventory_to_send.clear();
+        self.set_last_inv_sent_time(time);
+    }
+
     pub fn send_packet<T: Packet>(&self, _packet: T) {
         todo!();
+    }
+
+    pub fn check_fee_filter(&self, _size: u32, fee: Amount) -> bool {
+        //FIXME use size
+        self.fee_filter() <= fee
     }
 
     pub fn close(&self) {
@@ -116,6 +169,15 @@ impl Connection {
     pub fn set_last_ping_time(&self, last_ping_time: Milliseconds) {
         self.last_ping_time
             .store(last_ping_time.into(), Ordering::Release);
+    }
+
+    pub fn last_inv_sent_time(&self) -> Milliseconds {
+        self.last_inv_sent_time.load(Ordering::Acquire).into()
+    }
+
+    pub fn set_last_inv_sent_time(&self, last_inv_sent_time: Milliseconds) {
+        self.last_inv_sent_time
+            .store(last_inv_sent_time.into(), Ordering::Release);
     }
 
     pub const fn id(&self) -> u64 {

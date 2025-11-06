@@ -28,6 +28,8 @@ use crate::txpool::TxPool;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
 use blacknet_io::Write;
 use blacknet_io::file::replace;
+use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::error::Error;
 use blacknet_kernel::proofofstake::{
     BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization,
 };
@@ -35,10 +37,10 @@ use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::to_write;
 use blacknet_time::{Milliseconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
+use core::error::Error as StdError;
 use core::num::NonZero;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::error::Error;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
@@ -75,7 +77,7 @@ impl Node {
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
-    ) -> Result<Arc<Self>, Box<dyn Error>> {
+    ) -> Result<Arc<Self>, Box<dyn StdError>> {
         let (os_name, os_version, os_machine) = uname();
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
         let cpu_cores = std::thread::available_parallelism()
@@ -209,8 +211,60 @@ impl Node {
         &self.mode
     }
 
-    pub fn broadcast_inv(&self, _unfiltered: UnfilteredInvList, _source: Option<u64>) -> usize {
-        todo!();
+    pub async fn broadcast_block(&self, hash: Hash, bytes: Vec<u8>) -> bool {
+        match self.block_fetcher.staked_block(hash, bytes).await {
+            Ok(n) => {
+                if self.mode().requires_network() {
+                    info!(self.logger, "Announced to {n} peers");
+                }
+                true
+            }
+            Err(error) => {
+                info!(self.logger, "{error}");
+                false
+            }
+        }
+    }
+
+    pub fn broadcast_tx(&self, hash: Hash, bytes: &[u8]) -> Result<(), Error> {
+        let now = SystemClock::millis();
+        let result = {
+            let mut tx_pool = self.tx_pool.write().unwrap();
+            tx_pool.process(hash, bytes, now, false)
+        };
+        if let Ok(fee) = result {
+            let connections = self.connections.read().unwrap();
+            for connection in connections.iter() {
+                if connection.is_established()
+                    && connection.check_fee_filter(bytes.len() as u32, fee)
+                {
+                    connection.inventory(hash)
+                }
+            }
+        };
+        result.map(|_| ())
+    }
+
+    pub fn broadcast_inv(&self, unfiltered: &UnfilteredInvList, source: Option<u64>) -> usize {
+        let mut n = 0;
+        let mut to_send = Vec::<Hash>::with_capacity(unfiltered.len());
+        let connections = self.connections.read().unwrap();
+        for connection in connections.iter() {
+            if Some(connection.id()) != source && connection.is_established() {
+                for i in unfiltered.iter() {
+                    let &(hash, size, fee) = i;
+                    if connection.check_fee_filter(size, fee) {
+                        to_send.push(hash);
+                    }
+                }
+                if !to_send.is_empty() {
+                    connection.inventory_slice(&to_send);
+                    to_send.clear();
+                    n += 1;
+                }
+            }
+        }
+        n
     }
 
     async fn rotator(self: Arc<Self>) {
