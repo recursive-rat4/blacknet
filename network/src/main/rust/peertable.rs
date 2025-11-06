@@ -98,7 +98,7 @@ impl PeerTable {
         &self,
         endpoint: Endpoint,
         time: Milliseconds,
-        user_agent: &str,
+        user_agent: String,
         prober: bool,
     ) {
         if endpoint.is_local() || endpoint.is_private() {
@@ -108,7 +108,7 @@ impl PeerTable {
         peers
             .entry(endpoint)
             .and_modify(|entry| {
-                entry.connected(time, user_agent, prober);
+                entry.connected(time, user_agent.clone(), prober);
             })
             .or_insert_with(|| Entry::with_connected(time, user_agent));
     }
@@ -384,21 +384,21 @@ impl Entry {
         }
     }
 
-    fn with_connected(time: Milliseconds, user_agent: &str) -> Self {
+    fn with_connected(time: Milliseconds, user_agent: String) -> Self {
         Self {
             in_contact: AtomicBool::new(true),
             attempts: 0,
             last_try: Milliseconds::ZERO,
             last_connected: time,
-            user_agent: user_agent.to_owned(),
+            user_agent,
             subnetworks: HashSet::new(),
             added: SystemClock::millis(),
         }
     }
 
-    fn connected(&mut self, time: Milliseconds, user_agent: &str, prober: bool) {
+    fn connected(&mut self, time: Milliseconds, user_agent: String, prober: bool) {
         self.last_connected = time;
-        self.user_agent = user_agent.to_owned();
+        self.user_agent = user_agent;
         if !prober {
             self.subnetworks.clear();
         }

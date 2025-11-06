@@ -23,6 +23,7 @@ use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{Logger, error, info};
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
+use core::cmp::min;
 use core::mem::transmute;
 use std::sync::{
     Arc, Mutex, MutexGuard, RwLock,
@@ -60,7 +61,7 @@ pub struct Connection {
 
     id: u64,
     version: AtomicU32,
-    agent: String,
+    agent: Mutex<String>,
     fee_filter: AtomicU64,
 }
 
@@ -240,12 +241,24 @@ impl Connection {
         self.version.store(version, Ordering::Release);
     }
 
-    pub fn agent(&self) -> &str {
-        &self.agent
+    pub fn agent(&self) -> String {
+        let agent = self.agent.lock().unwrap();
+        agent.clone()
     }
 
-    pub fn set_agent(&self, _string: &str) {
-        todo!();
+    pub fn set_agent(&self, string: &str) {
+        const MAX_LENGTH: usize = 256;
+        const SAFE_CHARS: &str =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,;-_/:?@()";
+        let length = min(string.len(), MAX_LENGTH);
+        let mut sanitized = String::with_capacity(length);
+        for ch in string.chars() {
+            if SAFE_CHARS.contains(ch) {
+                sanitized.push(ch);
+            }
+        }
+        let mut agent = self.agent.lock().unwrap();
+        *agent = sanitized;
     }
 
     pub fn fee_filter(&self) -> Amount {
