@@ -28,7 +28,7 @@ pub trait Field
     const ONE: Self = Self::UNITY;
 }
 
-impl<F: Field> DivisionRing for F {}
+impl<R: CommutativeRing + DivisionRing + Div<Output = Option<Self>>> Field for R {}
 
 #[rustfmt::skip]
 pub trait PrimeField
@@ -36,8 +36,6 @@ pub trait PrimeField
     + IntegerRing
 {
 }
-
-impl<F: PrimeField> Field for F {}
 
 #[rustfmt::skip]
 pub trait AlgebraicExtension<F: Field>

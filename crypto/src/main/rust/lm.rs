@@ -17,7 +17,7 @@
 
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::{Binomial, Convolution, Negacyclic};
-use crate::field::{AlgebraicExtension, Field, PrimeField};
+use crate::field::{AlgebraicExtension, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{
@@ -26,7 +26,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
-use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -262,6 +262,8 @@ impl Ring for LMField {
     type Int = i64;
 }
 
+impl DivisionRing for LMField {}
+
 impl IntegerRing for LMField {
     fn new(n: Self::Int) -> Self {
         Self {
@@ -391,7 +393,7 @@ impl Div<LMField> for LMField2 {
     }
 }
 
-impl Field for LMField2 {}
+impl DivisionRing for LMField2 {}
 
 impl DivisionAlgebra<LMField> for LMField2 {}
 

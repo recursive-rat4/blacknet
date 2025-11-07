@@ -23,7 +23,7 @@ use crate::magma::{
     MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{IntegerRing, Ring};
+use crate::ring::{DivisionRing, IntegerRing, Ring};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -349,6 +349,8 @@ impl MultiplicativeMonoid for Field25519 {
 impl Ring for Field25519 {
     type Int = UInt256;
 }
+
+impl DivisionRing for Field25519 {}
 
 impl IntegerRing for Field25519 {
     fn new(n: UInt256) -> Self {

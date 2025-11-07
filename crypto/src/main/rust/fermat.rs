@@ -24,7 +24,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
-use crate::ring::{IntegerRing, Ring, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -233,6 +233,8 @@ impl MultiplicativeMonoid for FermatField {
 impl Ring for FermatField {
     type Int = i32;
 }
+
+impl DivisionRing for FermatField {}
 
 impl IntegerRing for FermatField {
     fn new(n: Self::Int) -> Self {

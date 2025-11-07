@@ -24,7 +24,7 @@ use crate::magma::{
     MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{IntegerRing, Ring, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -171,6 +171,8 @@ impl MultiplicativeMonoid for Z2 {
 impl Ring for Z2 {
     type Int = i8;
 }
+
+impl DivisionRing for Z2 {}
 
 impl IntegerRing for Z2 {
     fn new(n: Self::Int) -> Self {

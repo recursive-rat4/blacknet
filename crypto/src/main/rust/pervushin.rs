@@ -17,7 +17,7 @@
 
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::Negacyclic;
-use crate::field::{AlgebraicExtension, Field, PrimeField};
+use crate::field::{AlgebraicExtension, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{
@@ -25,7 +25,7 @@ use crate::magma::{
     MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -260,6 +260,8 @@ impl Ring for PervushinField {
     type Int = i64;
 }
 
+impl DivisionRing for PervushinField {}
+
 impl IntegerRing for PervushinField {
     fn new(n: Self::Int) -> Self {
         Self {
@@ -374,7 +376,7 @@ impl Div<PervushinField> for PervushinField2 {
     }
 }
 
-impl Field for PervushinField2 {}
+impl DivisionRing for PervushinField2 {}
 
 impl DivisionAlgebra<PervushinField> for PervushinField2 {}
 
