@@ -48,7 +48,7 @@ impl PeerInfo {
             timeOffset: connection.time_offset().into(),
             ping: connection.ping().into(),
             protocolVersion: connection.version(),
-            agent: connection.agent().into(),
+            agent: connection.agent(),
             outgoing: connection.state().is_outgoing(),
             banScore: connection.dos_score(),
             feeFilter: connection.fee_filter().into(),

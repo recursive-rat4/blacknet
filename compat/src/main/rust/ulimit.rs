@@ -15,20 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod assert;
-mod errno;
-mod getentropy;
-mod getuid;
-mod magic;
-mod mode;
-mod ulimit;
-mod uname;
-mod xdgdirectories;
+use crate::errno::Error;
+use core::cmp::min;
+use core::ffi::c_long;
+use core::mem::MaybeUninit;
 
-pub use errno::*;
-pub use getentropy::*;
-pub use getuid::*;
-pub use mode::*;
-pub use ulimit::*;
-pub use uname::*;
-pub use xdgdirectories::*;
+#[cfg(target_family = "unix")]
+use crate::errno::errno;
+
+#[cfg(target_family = "unix")]
+pub fn ulimit() -> Result<c_long, Error> {
+    let mut rlimit = MaybeUninit::<libc::rlimit>::uninit();
+    unsafe {
+        if libc::getrlimit(libc::RLIMIT_NOFILE, rlimit.as_mut_ptr()) == 0 {
+            let rlimit = rlimit.assume_init();
+            Ok(min(rlimit.rlim_cur, c_long::MAX as libc::rlim_t) as c_long)
+        } else {
+            Err(Error::Errno(errno()))
+        }
+    }
+}
+
+#[cfg(target_family = "windows")]
+pub fn ulimit() -> Result<c_long, Error> {
+    Ok(512)
+}
