@@ -31,9 +31,11 @@ pub struct Mode {
     default_rpc_port: u16,
     network_magic: u32,
     builtin_peers: &'static str,
+    genesis_json: &'static str,
 }
 
 impl Mode {
+    #[allow(clippy::too_many_arguments)]
     fn new(
         ordinal: u8,
         agent_suffix: Option<&'static str>,
@@ -42,6 +44,7 @@ impl Mode {
         sign_suffix: Option<&'static str>,
         requires_network: bool,
         builtin_peers: &'static str,
+        genesis_json: &'static str,
     ) -> Self {
         Self {
             subdirectory,
@@ -62,6 +65,7 @@ impl Mode {
             default_rpc_port: DEFAULT_RPC_PORT + ordinal as u16,
             network_magic: NETWORK_MAGIC + ordinal as u32,
             builtin_peers,
+            genesis_json,
         }
     }
 
@@ -70,7 +74,8 @@ impl Mode {
      */
     pub fn mainnet() -> Self {
         let peers_txt = include_str!("../../../../kernel/src/main/resources/peers.txt");
-        Self::new(0, None, None, None, None, true, peers_txt)
+        let genesis_json = include_str!("../../../../kernel/src/main/resources/genesis.json");
+        Self::new(0, None, None, None, None, true, peers_txt, genesis_json)
     }
 
     pub fn testnet() -> Self {
@@ -82,6 +87,7 @@ impl Mode {
             Some(" TestNet"),
             true,
             "",
+            "",
         )
     }
 
@@ -90,6 +96,7 @@ impl Mode {
      * or else it can be a tiny private network.
      */
     pub fn regtest() -> Self {
+        let genesis_json = include_str!("../../../../kernel/src/main/resources/regtest.json");
         Self::new(
             3,
             Some("-RegTest"),
@@ -98,6 +105,7 @@ impl Mode {
             Some(" RegTest"),
             false,
             "",
+            genesis_json,
         )
     }
 
@@ -151,6 +159,10 @@ impl Mode {
 
     pub const fn builtin_peers(&self) -> &'static str {
         self.builtin_peers
+    }
+
+    pub const fn genesis_json(&self) -> &'static str {
+        self.genesis_json
     }
 }
 

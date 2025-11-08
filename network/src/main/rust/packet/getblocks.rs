@@ -47,7 +47,7 @@ impl Packet for GetBlocks {
 
             loop {
                 let hash = block_index.next();
-                if hash == Hash::default() {
+                if hash == Hash::ZERO {
                     break;
                 }
                 size += block_index.next_size() + 4; //XXX VarInt.size()

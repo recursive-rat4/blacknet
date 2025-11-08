@@ -52,7 +52,7 @@ impl BlockAnnounce {
 impl Default for BlockAnnounce {
     fn default() -> Self {
         Self {
-            hash: Default::default(),
+            hash: Hash::ZERO,
             cumulative_difficulty: Box::new([0; 1]),
         }
     }

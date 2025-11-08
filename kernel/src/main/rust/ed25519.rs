@@ -15,11 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::Hash;
+use crate::blake2b::{Blake2b256, Hash};
 use crate::error::Error;
 use alloc::vec::Vec;
 use core::array::TryFromSliceError;
 use core::mem::transmute;
+use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -50,7 +51,24 @@ impl TryFrom<Vec<u8>> for Signature {
 
 pub type PublicKey = [u8; 32];
 
+pub fn to_public_key(_private_key: PrivateKey) -> PublicKey {
+    todo!();
+}
+
 pub type PrivateKey = [u8; 32];
+
+const fn check_version(bytes: [u8; 32]) -> bool {
+    bytes[0] & 0xF0 == 0x10
+}
+
+pub fn to_private_key(mnemonic: &str) -> Option<PrivateKey> {
+    let hash: [u8; 32] = Blake2b256::digest(mnemonic).into();
+    if check_version(hash) {
+        Some(hash)
+    } else {
+        None
+    }
+}
 
 pub fn verify(_signature: Signature, _hash: Hash, _public_key: PublicKey) -> Result<(), Error> {
     todo!();

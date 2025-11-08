@@ -29,6 +29,10 @@ pub struct Milliseconds {
 }
 
 impl Milliseconds {
+    pub const fn new(n: i64) -> Self {
+        Self { n }
+    }
+
     pub const fn from_seconds(n: i64) -> Self {
         Self { n: n * 1000 }
     }

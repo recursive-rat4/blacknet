@@ -47,7 +47,7 @@ impl Block {
             previous,
             time,
             generator,
-            content_hash: Default::default(),
+            content_hash: Hash::ZERO,
             signature: Default::default(),
             transactions: Default::default(),
         }

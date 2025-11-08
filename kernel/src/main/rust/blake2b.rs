@@ -24,6 +24,10 @@ pub type Blake2b256 = blake2::Blake2b<digest::consts::U32>;
 #[derive(Clone, Copy, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Hash([u8; 32]);
 
+impl Hash {
+    pub const ZERO: Self = Self([0; 32]);
+}
+
 impl AsRef<[u8]> for Hash {
     fn as_ref(&self) -> &[u8] {
         &self.0

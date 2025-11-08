@@ -19,6 +19,7 @@ pub mod blockdb;
 pub mod blockfetcher;
 pub mod connection;
 pub mod endpoint;
+pub mod genesis;
 pub mod i2psam;
 pub mod natpmp;
 pub mod node;

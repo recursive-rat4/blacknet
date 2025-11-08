@@ -24,7 +24,7 @@ use data_encoding::HEXUPPER;
 fn serialization() {
     let deserialized = Block::with_all(
         0,
-        Default::default(),
+        Hash::ZERO,
         1545556624.into(),
         HEXUPPER.decode(b"B7E64C1BC5ADD0593397E75E827A8DA323EA8C6E1FE6142A86092C9359117E50").unwrap().try_into().unwrap(),
         Hash::try_from("45B0CFC220CEEC5B7C1C62C4D4193D38E4EBA48E8815729CE75F9C0AB0E4C1C0").unwrap(),
