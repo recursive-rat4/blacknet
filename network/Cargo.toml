@@ -41,6 +41,7 @@ blacknet-wallet.workspace = true
 blake2.workspace = true
 data-encoding = { workspace = true, features = ["std"] }
 data-encoding-macro.workspace = true
+hashlink.workspace = true
 natpmp.workspace = true
 serde = { workspace = true, features = ["std"] }
 sha2.workspace = true
@@ -71,3 +72,7 @@ path = "src/test/rust/hello.rs"
 [[test]]
 name = "i2psam"
 path = "src/test/rust/i2psam.rs"
+
+[[test]]
+name = "rollinghashset"
+path = "src/test/rust/rollinghashset.rs"

@@ -15,19 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod blockdb;
-pub mod blockfetcher;
-pub mod connection;
-pub mod endpoint;
-pub mod i2psam;
-pub mod natpmp;
-pub mod node;
-pub mod packet;
-pub mod peertable;
-pub mod rollinghashset;
-pub mod router;
-pub mod settings;
-pub mod socks5;
-pub mod torcontroller;
-pub mod txfetcher;
-pub mod txpool;
+use blacknet_network::rollinghashset::RollingHashSet;
+
+#[test]
+fn test() {
+    let mut set = RollingHashSet::<i32>::new(3);
+    assert!(set.is_empty());
+    set.insert(0);
+    set.insert(1);
+    set.insert(2);
+    set.insert(1);
+    set.insert(3);
+    assert_eq!(3, set.len());
+    assert!(!set.contains(&0));
+    assert!(set.contains(&1));
+    assert!(set.contains(&2));
+    assert!(set.contains(&3));
+}

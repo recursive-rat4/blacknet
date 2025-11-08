@@ -15,8 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::rollinghashset::RollingHashSet;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -53,6 +55,7 @@ impl BlockIndex {
 
 pub struct BlockDB {
     cached_block: Arc<Option<(Hash, Box<[u8]>)>>,
+    rejects: RollingHashSet<Hash>,
 }
 
 impl BlockDB {
@@ -60,12 +63,17 @@ impl BlockDB {
     pub fn new() -> Self {
         Self {
             cached_block: Arc::new(None),
+            rejects: RollingHashSet::new(ROLLBACK_LIMIT),
         }
     }
 
     #[allow(clippy::type_complexity)]
     pub const fn cached_block(&self) -> &Arc<Option<(Hash, Box<[u8]>)>> {
         &self.cached_block
+    }
+
+    pub fn is_rejected(&self, hash: Hash) -> bool {
+        self.rejects.contains(&hash)
     }
 
     pub fn index(&self, _hash: Hash) -> Option<BlockIndex> {
