@@ -32,6 +32,7 @@ mod peerinfo;
 mod publickeyinfo;
 pub mod response;
 mod routes;
+pub mod sendtransaction;
 mod signatureinfo;
 mod stakinginfo;
 mod transactioninfo;

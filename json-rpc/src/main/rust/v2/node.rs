@@ -61,7 +61,7 @@ async fn tx_pool_transaction(
             respond_json(&info)
         }
     } else {
-        respond_error("Transaction not found")
+        respond_error("Transaction not found".to_owned())
     }
 }
 
@@ -75,7 +75,7 @@ async fn add_peer(
     ) {
         endpoint
     } else {
-        return respond_error("Invalid endpoint");
+        return respond_error("Invalid endpoint".to_owned());
     };
 
     todo!();
@@ -91,7 +91,7 @@ async fn disconnect_peer_by_address(
     ) {
         endpoint
     } else {
-        return respond_error("Invalid endpoint");
+        return respond_error("Invalid endpoint".to_owned());
     };
 
     let connections = node.connections().read().unwrap();
@@ -100,9 +100,9 @@ async fn disconnect_peer_by_address(
         .find(|connection| connection.remote_endpoint() == endpoint)
     {
         connection.close();
-        respond_text("true")
+        respond_text("true".to_owned())
     } else {
-        respond_text("false")
+        respond_text("false".to_owned())
     }
 }
 
@@ -113,9 +113,9 @@ async fn disconnect_peer(
     let connections = node.connections().read().unwrap();
     if let Some(connection) = connections.iter().find(|connection| connection.id() == id) {
         connection.close();
-        respond_text("true")
+        respond_text("true".to_owned())
     } else {
-        respond_text("false")
+        respond_text("false".to_owned())
     }
 }
 

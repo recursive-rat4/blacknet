@@ -38,6 +38,10 @@ pub struct HashLock {
 }
 
 impl HashLock {
+    pub const fn new(algorithm: u8, image: Box<[u8]>) -> Self {
+        Self { algorithm, image }
+    }
+
     pub fn with_slice(algorithm: u8, image: &[u8]) -> Self {
         Self {
             algorithm,

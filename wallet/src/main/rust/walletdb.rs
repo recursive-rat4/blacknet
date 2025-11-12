@@ -17,6 +17,8 @@
 
 use crate::address::AddressCodec;
 use blacknet_compat::Mode;
+use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::ed25519::PublicKey;
 use core::error::Error;
 
 pub struct WalletDB {
@@ -32,5 +34,13 @@ impl WalletDB {
 
     pub const fn address_codec(&self) -> &AddressCodec {
         &self.address_codec
+    }
+
+    pub fn get_sequence(&self, _public_key: PublicKey) -> u32 {
+        todo!();
+    }
+
+    pub fn anchor(&self) -> Hash {
+        todo!();
     }
 }

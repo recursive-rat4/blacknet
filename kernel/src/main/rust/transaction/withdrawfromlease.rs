@@ -32,6 +32,15 @@ pub struct WithdrawFromLease {
 }
 
 impl WithdrawFromLease {
+    pub const fn new(withdraw: Amount, amount: Amount, to: PublicKey, height: u32) -> Self {
+        Self {
+            withdraw,
+            amount,
+            to,
+            height,
+        }
+    }
+
     pub const fn withdraw(&self) -> Amount {
         self.withdraw
     }

@@ -30,6 +30,10 @@ pub struct Burn {
 }
 
 impl Burn {
+    pub const fn new(amount: Amount, message: Box<[u8]>) -> Self {
+        Self { amount, message }
+    }
+
     pub const fn amount(&self) -> Amount {
         self.amount
     }

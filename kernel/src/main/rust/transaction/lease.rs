@@ -31,6 +31,10 @@ pub struct Lease {
 }
 
 impl Lease {
+    pub const fn new(amount: Amount, to: PublicKey) -> Self {
+        Self { amount, to }
+    }
+
     pub const fn amount(&self) -> Amount {
         self.amount
     }

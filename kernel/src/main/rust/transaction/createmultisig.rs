@@ -76,6 +76,14 @@ pub struct CreateMultisig {
 }
 
 impl CreateMultisig {
+    pub const fn new(n: u8, deposits: Box<[Dep]>, signatures: Box<[Sig]>) -> Self {
+        Self {
+            n,
+            deposits,
+            signatures,
+        }
+    }
+
     pub const fn n(&self) -> u8 {
         self.n
     }

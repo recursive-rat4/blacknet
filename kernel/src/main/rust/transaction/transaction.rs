@@ -17,9 +17,11 @@
 
 use crate::amount::Amount;
 use crate::blake2b::{Blake2b256, Hash};
-use crate::ed25519::{PublicKey, Signature};
+use crate::ed25519::{PrivateKey, PublicKey, Signature, sign};
 use crate::transaction::TxKind;
 use alloc::boxed::Box;
+use alloc::vec::Vec;
+use blacknet_serialization::format::to_bytes;
 use core::mem::size_of;
 use digest::Digest;
 use serde::{Deserialize, Serialize};
@@ -80,6 +82,15 @@ impl Transaction {
         } else {
             None
         }
+    }
+
+    pub fn sign(&mut self, private_key: PrivateKey) -> (Hash, Vec<u8>) {
+        let mut bytes = to_bytes(&self).expect("Transaction serialization");
+        let hash = Self::compute_hash(&bytes).expect("Transaction serialized");
+        self.signature = sign(hash, private_key);
+        bytes[0..32].copy_from_slice(&self.signature.raw_r());
+        bytes[32..64].copy_from_slice(&self.signature.raw_s());
+        (hash, bytes)
     }
 
     pub const fn anchor(&self) -> Hash {

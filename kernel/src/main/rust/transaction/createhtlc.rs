@@ -45,6 +45,20 @@ pub struct CreateHTLC {
 }
 
 impl CreateHTLC {
+    pub const fn new(
+        amount: Amount,
+        to: PublicKey,
+        time_lock: TimeLock,
+        hash_lock: HashLock,
+    ) -> Self {
+        Self {
+            amount,
+            to,
+            time_lock,
+            hash_lock,
+        }
+    }
+
     pub const fn amount(&self) -> Amount {
         self.amount
     }

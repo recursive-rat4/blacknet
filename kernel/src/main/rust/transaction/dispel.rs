@@ -25,6 +25,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize)]
 pub struct Dispel;
 
+impl Dispel {
+    #[allow(clippy::new_without_default)]
+    pub const fn new() -> Self {
+        Self {}
+    }
+}
+
 impl TxData for Dispel {
     fn process_impl(
         &self,

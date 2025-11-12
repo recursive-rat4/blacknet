@@ -36,6 +36,18 @@ pub struct SpendMultisig {
 }
 
 impl SpendMultisig {
+    pub const fn new(
+        id: MultiSignatureLockContractId,
+        amounts: Box<[Amount]>,
+        signatures: Box<[Sig]>,
+    ) -> Self {
+        Self {
+            id,
+            amounts,
+            signatures,
+        }
+    }
+
     pub const fn id(&self) -> MultiSignatureLockContractId {
         self.id
     }

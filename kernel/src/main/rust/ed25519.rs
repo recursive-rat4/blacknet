@@ -70,6 +70,10 @@ pub fn to_private_key(mnemonic: &str) -> Option<PrivateKey> {
     }
 }
 
+pub fn sign(_hash: Hash, _private_key: PrivateKey) -> Signature {
+    todo!();
+}
+
 pub fn verify(_signature: Signature, _hash: Hash, _public_key: PublicKey) -> Result<(), Error> {
     todo!();
 }

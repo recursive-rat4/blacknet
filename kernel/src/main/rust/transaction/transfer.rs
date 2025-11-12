@@ -23,13 +23,24 @@ use crate::transaction::{CoinTx, Transaction, TxData};
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+const PLAIN: u8 = 0;
+#[expect(dead_code)]
+const X25519_CHACHA20: u8 = 1;
+
+#[derive(Default, Deserialize, Serialize)]
 pub struct PaymentId {
     kind: u8,
     payload: Box<[u8]>,
 }
 
 impl PaymentId {
+    pub fn plain(payload: &str) -> Self {
+        Self {
+            kind: PLAIN,
+            payload: payload.as_bytes().into(),
+        }
+    }
+
     pub const fn kind(&self) -> u8 {
         self.kind
     }
@@ -47,6 +58,14 @@ pub struct Transfer {
 }
 
 impl Transfer {
+    pub const fn new(amount: Amount, to: PublicKey, payment_id: PaymentId) -> Self {
+        Self {
+            amount,
+            to,
+            payment_id,
+        }
+    }
+
     pub const fn amount(&self) -> Amount {
         self.amount
     }

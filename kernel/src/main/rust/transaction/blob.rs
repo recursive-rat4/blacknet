@@ -30,6 +30,10 @@ pub struct Blob {
 }
 
 impl Blob {
+    pub const fn new(tag: Tag, data: Box<[u8]>) -> Self {
+        Self { tag, data }
+    }
+
     pub const fn tag(&self) -> Tag {
         self.tag
     }

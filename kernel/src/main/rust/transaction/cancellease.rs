@@ -30,6 +30,10 @@ pub struct CancelLease {
 }
 
 impl CancelLease {
+    pub const fn new(amount: Amount, to: PublicKey, height: u32) -> Self {
+        Self { amount, to, height }
+    }
+
     pub const fn amount(&self) -> Amount {
         self.amount
     }

@@ -44,11 +44,15 @@ pub struct Batch {
 }
 
 impl Batch {
-    pub fn len(&self) -> usize {
+    pub const fn new(multi_data: Box<[Batchee]>) -> Self {
+        Self { multi_data }
+    }
+
+    pub const fn len(&self) -> usize {
         self.multi_data.len()
     }
 
-    pub fn multi_data(&self) -> &[Batchee] {
+    pub const fn multi_data(&self) -> &[Batchee] {
         &self.multi_data
     }
 }
