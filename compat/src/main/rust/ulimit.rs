@@ -16,12 +16,14 @@
  */
 
 use crate::errno::Error;
-use core::cmp::min;
 use core::ffi::c_long;
-use core::mem::MaybeUninit;
 
 #[cfg(target_family = "unix")]
 use crate::errno::errno;
+#[cfg(target_family = "unix")]
+use core::cmp::min;
+#[cfg(target_family = "unix")]
+use core::mem::MaybeUninit;
 
 #[cfg(target_family = "unix")]
 pub fn ulimit() -> Result<c_long, Error> {
