@@ -52,7 +52,6 @@ impl From<[u8; 32]> for Hash {
     }
 }
 
-#[expect(deprecated)]
 impl From<digest::generic_array::GenericArray<u8, digest::consts::U32>> for Hash {
     fn from(array: digest::generic_array::GenericArray<u8, digest::consts::U32>) -> Self {
         Self(array.into())
