@@ -23,6 +23,7 @@ use crate::magma::{
 };
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::operation::{Double, Square};
 use crate::ring::{
     CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing,
 };
@@ -128,6 +129,14 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AddAssign for Univaria
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Double for UnivariateRing<R, N, C> {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self::from(self.coefficients.double())
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Neg for UnivariateRing<R, N, C> {
     type Output = Self;
 
@@ -169,6 +178,15 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign for Univaria
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Square for UnivariateRing<R, N, C> {
+    type Output = Self;
+
+    #[inline]
+    fn square(self) -> Self {
+        self * self
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<R> for UnivariateRing<R, N, C> {
     type Output = Self;
 
@@ -199,9 +217,6 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Product for Univariate
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMagma
     for UnivariateRing<R, N, C>
 {
-    fn double(self) -> Self {
-        Self::from(self.coefficients.double())
-    }
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveCommutativeMagma
@@ -238,10 +253,6 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMonoid
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMagma
     for UnivariateRing<R, N, C>
 {
-    #[inline]
-    fn square(self) -> Self {
-        self * self
-    }
 }
 
 impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> MultiplicativeCommutativeMagma

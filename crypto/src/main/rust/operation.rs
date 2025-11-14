@@ -15,40 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::operation::Inv;
-use core::ops::{Div, DivAssign, Neg, Sub, SubAssign};
+pub trait Double {
+    type Output;
 
-#[rustfmt::skip]
-pub trait AdditiveGroup
-    : AdditiveMonoid
-    + Neg<Output = Self>
-    + Sub<Output = Self>
-    + SubAssign
-{
+    fn double(self) -> Self::Output;
 }
 
-#[rustfmt::skip]
-impl<T
-    : AdditiveMonoid
-    + Neg<Output = Self>
-    + Sub<Output = Self>
-    + SubAssign
-> AdditiveGroup for T {}
+pub trait Square {
+    type Output;
 
-#[rustfmt::skip]
-pub trait MultiplicativeGroup
-    : MultiplicativeMonoid
-    + Inv<Output = Self>
-    + Div<Output = Self>
-    + DivAssign
-{
+    fn square(self) -> Self::Output;
 }
 
-#[rustfmt::skip]
-impl<T
-    : MultiplicativeMonoid
-    + Inv<Output = Self>
-    + Div<Output = Self>
-    + DivAssign
-> MultiplicativeGroup for T {}
+pub trait Inv {
+    type Output;
+
+    fn inv(self) -> Self::Output;
+}

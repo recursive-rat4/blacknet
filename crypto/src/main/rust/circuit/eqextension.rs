@@ -17,6 +17,7 @@
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination, VariableKind};
 use crate::circuit::point::Point;
+use crate::operation::Double;
 use crate::ring::UnitalRing;
 use alloc::vec;
 use alloc::vec::Vec;

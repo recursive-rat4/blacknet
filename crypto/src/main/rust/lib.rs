@@ -63,6 +63,7 @@ pub mod multilinearextension;
 pub mod norm;
 pub mod nttring;
 pub mod numbertheoretictransform;
+pub mod operation;
 pub mod permutation;
 pub mod pervushin;
 pub mod point;

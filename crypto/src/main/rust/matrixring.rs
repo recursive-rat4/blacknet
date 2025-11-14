@@ -19,6 +19,7 @@ use crate::algebra::{Algebra, UnitalAlgebra};
 use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeMagma};
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::operation::{Double, Square};
 use crate::ring::{Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::array;
@@ -155,6 +156,16 @@ impl<R: Ring, const N: usize, const NN: usize> AddAssign for MatrixRing<R, N, NN
     }
 }
 
+impl<R: Ring, const N: usize, const NN: usize> Double for MatrixRing<R, N, NN> {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self {
+            elements: array::from_fn(|i| self.elements[i].double()),
+        }
+    }
+}
+
 impl<R: Ring, const N: usize, const NN: usize> Neg for MatrixRing<R, N, NN> {
     type Output = Self;
 
@@ -203,6 +214,15 @@ impl<R: Ring, const N: usize, const NN: usize> MulAssign for MatrixRing<R, N, NN
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Square for MatrixRing<R, N, NN> {
+    type Output = Self;
+
+    #[inline]
+    fn square(self) -> Self {
+        self * self
     }
 }
 
@@ -264,13 +284,7 @@ impl<R: Ring, const N: usize, const NN: usize> Product for MatrixRing<R, N, NN> 
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> AdditiveMagma for MatrixRing<R, N, NN> {
-    fn double(self) -> Self {
-        Self {
-            elements: array::from_fn(|i| self.elements[i].double()),
-        }
-    }
-}
+impl<R: Ring, const N: usize, const NN: usize> AdditiveMagma for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveCommutativeMagma for MatrixRing<R, N, NN> {}
 
@@ -283,12 +297,7 @@ impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, 
     const IDENTITY: Self = Self::const_from(R::ZERO);
 }
 
-impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMagma for MatrixRing<R, N, NN> {
-    #[inline]
-    fn square(self) -> Self {
-        self * self
-    }
-}
+impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMagma for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for MatrixRing<R, N, NN> {
     const LEFT_IDENTITY: Self = Self::const_from(<R as MultiplicativeSemigroup>::LEFT_IDENTITY);

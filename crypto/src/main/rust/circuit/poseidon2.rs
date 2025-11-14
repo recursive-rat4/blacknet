@@ -19,6 +19,7 @@
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination, Scope};
 use crate::field::PrimeField;
+use crate::operation::Double;
 use crate::poseidon2::Poseidon2Params;
 
 pub trait Poseidon2Circuit<

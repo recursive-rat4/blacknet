@@ -20,10 +20,10 @@
 use crate::field::PrimeField;
 use crate::integer::Integer;
 use crate::magma::{
-    AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeCommutativeMagma,
-    MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
@@ -59,6 +59,15 @@ impl AddAssign for Z2 {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl Double for Z2 {
+    type Output = Self;
+
+    #[inline]
+    fn double(self) -> Self {
+        Self::ZERO
     }
 }
 
@@ -101,6 +110,15 @@ impl MulAssign for Z2 {
     }
 }
 
+impl Square for Z2 {
+    type Output = Self;
+
+    #[inline]
+    fn square(self) -> Self {
+        self
+    }
+}
+
 impl Inv for Z2 {
     type Output = Option<Self>;
 
@@ -132,12 +150,7 @@ impl Product for Z2 {
     }
 }
 
-impl AdditiveMagma for Z2 {
-    #[inline]
-    fn double(self) -> Self {
-        Self::ZERO
-    }
-}
+impl AdditiveMagma for Z2 {}
 
 impl AdditiveCommutativeMagma for Z2 {}
 
@@ -150,12 +163,7 @@ impl AdditiveMonoid for Z2 {
     const IDENTITY: Self = Self { n: false };
 }
 
-impl MultiplicativeMagma for Z2 {
-    #[inline]
-    fn square(self) -> Self {
-        self
-    }
-}
+impl MultiplicativeMagma for Z2 {}
 
 impl MultiplicativeCommutativeMagma for Z2 {}
 

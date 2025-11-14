@@ -16,8 +16,9 @@
  */
 
 use crate::field::Field;
-use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeMagma};
+use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
 use crate::monoid::AdditiveMonoid;
+use crate::operation::{Double, Inv, Square};
 use crate::ring::Ring;
 use crate::semigroup::AdditiveSemigroup;
 use core::fmt::{Debug, Formatter, Result};
@@ -84,6 +85,26 @@ impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupAffine<P> {
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Double for TwistedEdwardsGroupAffine<P> {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        let xx = self.x.square();
+        let yy = self.y.square();
+        let k = P::D * xx * yy;
+        let xr = (self.x * self.y).double() / (P::F::ONE + k);
+        let yr = if P::A_IS_MINUS_ONE {
+            (yy + xx) / (P::F::ONE - k)
+        } else {
+            (yy - P::A * xx) / (P::F::ONE - k)
+        };
+        Self {
+            x: xr.expect("Elliptic curve arithmetic"),
+            y: yr.expect("Elliptic curve arithmetic"),
+        }
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> Neg for TwistedEdwardsGroupAffine<P> {
     type Output = Self;
 
@@ -129,23 +150,7 @@ impl<P: TwistedEdwardsGroupParams> Sum for TwistedEdwardsGroupAffine<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupAffine<P> {
-    fn double(self) -> Self {
-        let xx = self.x.square();
-        let yy = self.y.square();
-        let k = P::D * xx * yy;
-        let xr = (self.x * self.y).double() / (P::F::ONE + k);
-        let yr = if P::A_IS_MINUS_ONE {
-            (yy + xx) / (P::F::ONE - k)
-        } else {
-            (yy - P::A * xx) / (P::F::ONE - k)
-        };
-        Self {
-            x: xr.expect("Elliptic curve arithmetic"),
-            y: yr.expect("Elliptic curve arithmetic"),
-        }
-    }
-}
+impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupAffine<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupAffine<P> {}
 
@@ -255,6 +260,32 @@ impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupExtended<P> 
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Double for TwistedEdwardsGroupExtended<P> {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        // dbl-2008-hwcd
+        let xx = self.x.square();
+        let yy = self.y.square();
+        let zz2 = self.z.square().double();
+        let d = if P::A_IS_MINUS_ONE { -xx } else { P::A * xx };
+        let e = (self.x + self.y).square() - xx - yy;
+        let g = d + yy;
+        let f = g - zz2;
+        let h = d - yy;
+        let xr = e * f;
+        let yr = g * h;
+        let zr = f * g;
+        let tr = e * h;
+        Self {
+            x: xr,
+            y: yr,
+            z: zr,
+            t: tr,
+        }
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> Neg for TwistedEdwardsGroupExtended<P> {
     type Output = Self;
 
@@ -311,29 +342,7 @@ impl<P: TwistedEdwardsGroupParams> Sum for TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupExtended<P> {
-    fn double(self) -> Self {
-        // dbl-2008-hwcd
-        let xx = self.x.square();
-        let yy = self.y.square();
-        let zz2 = self.z.square().double();
-        let d = if P::A_IS_MINUS_ONE { -xx } else { P::A * xx };
-        let e = (self.x + self.y).square() - xx - yy;
-        let g = d + yy;
-        let f = g - zz2;
-        let h = d - yy;
-        let xr = e * f;
-        let yr = g * h;
-        let zr = f * g;
-        let tr = e * h;
-        Self {
-            x: xr,
-            y: yr,
-            z: zr,
-            t: tr,
-        }
-    }
-}
+impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupExtended<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
 

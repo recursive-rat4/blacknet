@@ -16,6 +16,7 @@
  */
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
+use crate::operation::Double;
 use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 

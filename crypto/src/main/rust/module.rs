@@ -19,6 +19,7 @@ use crate::abeliangroup::AdditiveAbelianGroup;
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
 use crate::monoid::AdditiveMonoid;
+use crate::operation::Double;
 use crate::ring::Ring;
 use crate::semigroup::AdditiveSemigroup;
 use core::array;
@@ -129,6 +130,16 @@ impl<R: Ring, const N: usize> AddAssign for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> Double for FreeModule<R, N> {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self {
+            components: array::from_fn(|i| self.components[i].double()),
+        }
+    }
+}
+
 impl<R: Ring, const N: usize> Neg for FreeModule<R, N> {
     type Output = Self;
 
@@ -179,13 +190,7 @@ impl<R: Ring, const N: usize> Sum for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> AdditiveMagma for FreeModule<R, N> {
-    fn double(self) -> Self {
-        Self {
-            components: array::from_fn(|i| self.components[i].double()),
-        }
-    }
-}
+impl<R: Ring, const N: usize> AdditiveMagma for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
 

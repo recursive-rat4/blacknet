@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::magma::{AdditiveMagma, Inv, MultiplicativeMagma};
 use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::operation::{Double, Inv, Square};
 use blacknet_crypto::ring::{IntegerRing, Ring, UnitalRing};
 
 type Z = blacknet_crypto::lm::LMField;

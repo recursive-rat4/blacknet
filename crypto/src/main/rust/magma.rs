@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::operation::{Double, Square};
 use core::fmt::Debug;
 use core::ops::{Add, AddAssign, Mul, MulAssign};
 
@@ -30,8 +31,8 @@ pub trait AdditiveMagma
     + Sync
     + Add<Output = Self>
     + AddAssign
+    + Double<Output = Self>
 {
-    fn double(self) -> Self;
 }
 
 pub trait AdditiveCommutativeMagma: AdditiveMagma {}
@@ -46,14 +47,8 @@ pub trait MultiplicativeMagma
     + Sync
     + Mul<Output = Self>
     + MulAssign
+    + Square<Output = Self>
 {
-    fn square(self) -> Self;
 }
 
 pub trait MultiplicativeCommutativeMagma: MultiplicativeMagma {}
-
-pub trait Inv {
-    type Output;
-
-    fn inv(self) -> Self::Output;
-}

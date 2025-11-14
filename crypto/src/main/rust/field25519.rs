@@ -19,10 +19,10 @@ use crate::bigint::{UInt256, UInt512};
 use crate::field::{Field, PrimeField};
 use crate::integer::Integer;
 use crate::magma::{
-    AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeCommutativeMagma,
-    MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, Ring};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
@@ -206,6 +206,16 @@ impl AddAssign for Field25519 {
     }
 }
 
+impl Double for Field25519 {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self {
+            n: Self::reduce_add(self.n << 1),
+        }
+    }
+}
+
 impl Neg for Field25519 {
     type Output = Self;
 
@@ -247,6 +257,16 @@ impl MulAssign for Field25519 {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl Square for Field25519 {
+    type Output = Self;
+
+    fn square(self) -> Self {
+        Self {
+            n: Self::reduce_mul(self.n.square()),
+        }
     }
 }
 
@@ -302,13 +322,7 @@ impl Product for Field25519 {
     }
 }
 
-impl AdditiveMagma for Field25519 {
-    fn double(self) -> Self {
-        Self {
-            n: Self::reduce_add(self.n << 1),
-        }
-    }
-}
+impl AdditiveMagma for Field25519 {}
 
 impl AdditiveCommutativeMagma for Field25519 {}
 
@@ -321,13 +335,7 @@ impl AdditiveMonoid for Field25519 {
     const IDENTITY: Self = Self { n: UInt256::ZERO };
 }
 
-impl MultiplicativeMagma for Field25519 {
-    fn square(self) -> Self {
-        Self {
-            n: Self::reduce_mul(self.n.square()),
-        }
-    }
-}
+impl MultiplicativeMagma for Field25519 {}
 
 impl MultiplicativeCommutativeMagma for Field25519 {}
 

@@ -17,7 +17,7 @@
 
 use crate::binaryuniformdistribution::BinaryUniformDistribution;
 use crate::distribution::{Distribution, UniformGenerator};
-use crate::magma::AdditiveMagma;
+use crate::operation::Double;
 use crate::ring::IntegerRing;
 
 pub struct QuartaryUniformDistribution<G: UniformGenerator<Output: IntegerRing>> {

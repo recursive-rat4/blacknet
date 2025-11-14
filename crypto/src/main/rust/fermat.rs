@@ -19,11 +19,11 @@ use crate::convolution::Negacyclic;
 use crate::field::PrimeField;
 use crate::integer::Integer;
 use crate::magma::{
-    AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeCommutativeMagma,
-    MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
+use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
@@ -122,6 +122,14 @@ impl AddAssign for FermatField {
     }
 }
 
+impl Double for FermatField {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self { n: self.n << 1 }
+    }
+}
+
 impl Neg for FermatField {
     type Output = Self;
 
@@ -162,6 +170,15 @@ impl MulAssign for FermatField {
     }
 }
 
+impl Square for FermatField {
+    type Output = Self;
+
+    #[inline]
+    fn square(self) -> Self {
+        self * self
+    }
+}
+
 impl Inv for FermatField {
     type Output = Option<Self>;
 
@@ -195,11 +212,7 @@ impl Product for FermatField {
     }
 }
 
-impl AdditiveMagma for FermatField {
-    fn double(self) -> Self {
-        Self { n: self.n << 1 }
-    }
-}
+impl AdditiveMagma for FermatField {}
 
 impl AdditiveCommutativeMagma for FermatField {}
 
@@ -212,12 +225,7 @@ impl AdditiveMonoid for FermatField {
     const IDENTITY: Self = Self { n: 0 };
 }
 
-impl MultiplicativeMagma for FermatField {
-    #[inline]
-    fn square(self) -> Self {
-        self * self
-    }
-}
+impl MultiplicativeMagma for FermatField {}
 
 impl MultiplicativeCommutativeMagma for FermatField {}
 

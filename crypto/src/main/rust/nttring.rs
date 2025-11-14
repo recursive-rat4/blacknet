@@ -26,6 +26,7 @@ use crate::magma::{
 use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
+use crate::operation::{Double, Square};
 use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
@@ -157,6 +158,16 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AddAssign for NTTRing<Z, M,
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Double for NTTRing<Z, M, N> {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self {
+            spectrum: self.spectrum.double(),
+        }
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Neg for NTTRing<Z, M, N> {
     type Output = Self;
 
@@ -204,6 +215,20 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign for NTTRing<Z, M,
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Square for NTTRing<Z, M, N> {
+    type Output = Self;
+
+    fn square(self) -> Self {
+        if Self::INERTIA == 1 {
+            Self {
+                spectrum: FreeModule::<Z, N>::from_fn(|i| self.spectrum[i].square()),
+            }
+        } else {
+            self * self
+        }
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<Z> for NTTRing<Z, M, N> {
     type Output = Self;
 
@@ -233,13 +258,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Product for NTTRing<Z, M, N
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMagma for NTTRing<Z, M, N> {
-    fn double(self) -> Self {
-        Self {
-            spectrum: self.spectrum.double(),
-        }
-    }
-}
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMagma for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveCommutativeMagma for NTTRing<Z, M, N> {}
 
@@ -254,17 +273,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMonoid for NTTRing<
     };
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMagma for NTTRing<Z, M, N> {
-    fn square(self) -> Self {
-        if Self::INERTIA == 1 {
-            Self {
-                spectrum: FreeModule::<Z, N>::from_fn(|i| self.spectrum[i].square()),
-            }
-        } else {
-            self * self
-        }
-    }
-}
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMagma for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMagma
     for NTTRing<Z, M, N>

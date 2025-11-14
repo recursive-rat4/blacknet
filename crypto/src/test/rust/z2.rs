@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::magma::{Inv, MultiplicativeMagma};
 use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::operation::{Inv, Square};
 use blacknet_crypto::ring::IntegerRing;
 use blacknet_crypto::z2::Z2;
 

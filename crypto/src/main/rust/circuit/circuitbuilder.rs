@@ -17,6 +17,7 @@
 
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
 use crate::matrixsparse::MatrixSparseBuilder;
+use crate::operation::Double;
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
 use alloc::boxed::Box;
@@ -43,12 +44,6 @@ pub struct Constant<R: UnitalRing> {
 impl<R: UnitalRing> Constant<R> {
     pub const UNITY: Self = Self { value: R::UNITY };
     pub const ZERO: Self = Self { value: R::ZERO };
-
-    pub fn double(self) -> Self {
-        Self {
-            value: self.value.double(),
-        }
-    }
 }
 
 impl<R: UnitalRing> Expression<R> for Constant<R> {
@@ -80,6 +75,16 @@ impl<R: UnitalRing> Add for Constant<R> {
 impl<R: UnitalRing> AddAssign for Constant<R> {
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl<R: UnitalRing> Double for Constant<R> {
+    type Output = Self;
+
+    fn double(self) -> Self::Output {
+        Self {
+            value: self.value.double(),
+        }
     }
 }
 
@@ -149,10 +154,6 @@ impl<R: UnitalRing> Variable<R> {
         }
     }
 
-    pub fn double(self) -> LinearCombination<R> {
-        [(self, Constant::UNITY.double())].into()
-    }
-
     const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
 }
 
@@ -207,6 +208,14 @@ impl<R: UnitalRing> Add for Variable<R> {
         } else {
             [(self, Constant::UNITY.double())].into()
         }
+    }
+}
+
+impl<R: UnitalRing> Double for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn double(self) -> Self::Output {
+        [(self, Constant::UNITY.double())].into()
     }
 }
 
@@ -275,18 +284,6 @@ pub type Term<R> = (Variable<R>, Constant<R>);
 #[derive(Clone)]
 pub struct LinearCombination<R: UnitalRing> {
     terms: BTreeMap<Variable<R>, Constant<R>>,
-}
-
-impl<R: UnitalRing> LinearCombination<R> {
-    pub fn double(&self) -> Self {
-        Self {
-            terms: self
-                .terms
-                .iter()
-                .map(|(&var, &val)| (var, val.double()))
-                .collect(),
-        }
-    }
 }
 
 impl<R: UnitalRing> Expression<R> for LinearCombination<R> {
@@ -476,6 +473,20 @@ impl<R: UnitalRing> Add for &LinearCombination<R> {
 
     fn add(self, rps: Self) -> Self::Output {
         self.clone() + rps
+    }
+}
+
+impl<R: UnitalRing> Double for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn double(self) -> Self::Output {
+        LinearCombination::<R> {
+            terms: self
+                .terms
+                .iter()
+                .map(|(&var, &val)| (var, val.double()))
+                .collect(),
+        }
     }
 }
 

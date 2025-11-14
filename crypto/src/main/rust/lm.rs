@@ -21,11 +21,11 @@ use crate::field::{AlgebraicExtension, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{
-    AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeCommutativeMagma,
-    MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
+use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
@@ -146,6 +146,16 @@ impl AddAssign for LMField {
     }
 }
 
+impl Double for LMField {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self {
+            n: Self::reduce_add(self.n << 1),
+        }
+    }
+}
+
 impl Neg for LMField {
     type Output = Self;
 
@@ -188,6 +198,15 @@ impl MulAssign for LMField {
     }
 }
 
+impl Square for LMField {
+    type Output = Self;
+
+    #[inline]
+    fn square(self) -> Self {
+        self * self
+    }
+}
+
 impl Inv for LMField {
     type Output = Option<Self>;
 
@@ -221,13 +240,7 @@ impl Product for LMField {
     }
 }
 
-impl AdditiveMagma for LMField {
-    fn double(self) -> Self {
-        Self {
-            n: Self::reduce_add(self.n << 1),
-        }
-    }
-}
+impl AdditiveMagma for LMField {}
 
 impl AdditiveCommutativeMagma for LMField {}
 
@@ -240,12 +253,7 @@ impl AdditiveMonoid for LMField {
     const IDENTITY: Self = Self { n: 0 };
 }
 
-impl MultiplicativeMagma for LMField {
-    #[inline]
-    fn square(self) -> Self {
-        self * self
-    }
-}
+impl MultiplicativeMagma for LMField {}
 
 impl MultiplicativeCommutativeMagma for LMField {}
 

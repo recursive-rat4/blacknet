@@ -21,10 +21,10 @@ use crate::field::{AlgebraicExtension, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{
-    AdditiveCommutativeMagma, AdditiveMagma, Inv, MultiplicativeCommutativeMagma,
-    MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
@@ -144,6 +144,16 @@ impl AddAssign for PervushinField {
     }
 }
 
+impl Double for PervushinField {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self {
+            n: Self::reduce_add(self.n << 1),
+        }
+    }
+}
+
 impl Neg for PervushinField {
     type Output = Self;
 
@@ -186,6 +196,15 @@ impl MulAssign for PervushinField {
     }
 }
 
+impl Square for PervushinField {
+    type Output = Self;
+
+    #[inline]
+    fn square(self) -> Self {
+        self * self
+    }
+}
+
 impl Inv for PervushinField {
     type Output = Option<Self>;
 
@@ -219,13 +238,7 @@ impl Product for PervushinField {
     }
 }
 
-impl AdditiveMagma for PervushinField {
-    fn double(self) -> Self {
-        Self {
-            n: Self::reduce_add(self.n << 1),
-        }
-    }
-}
+impl AdditiveMagma for PervushinField {}
 
 impl AdditiveCommutativeMagma for PervushinField {}
 
@@ -238,12 +251,7 @@ impl AdditiveMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 0 };
 }
 
-impl MultiplicativeMagma for PervushinField {
-    #[inline]
-    fn square(self) -> Self {
-        self * self
-    }
-}
+impl MultiplicativeMagma for PervushinField {}
 
 impl MultiplicativeCommutativeMagma for PervushinField {}
 
