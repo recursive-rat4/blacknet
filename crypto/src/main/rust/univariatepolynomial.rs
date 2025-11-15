@@ -16,9 +16,11 @@
  */
 
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
+use crate::operation::Double;
 use crate::ring::{Ring, UnitalRing};
 use alloc::vec::Vec;
-use core::ops::{Add, Deref};
+use core::iter::zip;
+use core::ops::{Add, AddAssign, Deref, Neg};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UnivariatePolynomial<R: Ring> {
@@ -101,6 +103,44 @@ impl<R: Ring> IntoIterator for UnivariatePolynomial<R> {
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.coefficients.into_iter()
+    }
+}
+
+impl<R: UnitalRing> Add for UnivariatePolynomial<R> {
+    type Output = Self;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self {
+            coefficients: zip(self.coefficients, rps.coefficients)
+                .map(|(l, r)| l + r)
+                .collect(),
+        }
+    }
+}
+
+impl<R: UnitalRing> AddAssign for UnivariatePolynomial<R> {
+    fn add_assign(&mut self, rps: Self) {
+        zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
+    }
+}
+
+impl<R: UnitalRing> Double for UnivariatePolynomial<R> {
+    type Output = Self;
+
+    fn double(self) -> Self::Output {
+        Self {
+            coefficients: self.coefficients.into_iter().map(Double::double).collect(),
+        }
+    }
+}
+
+impl<R: UnitalRing> Neg for UnivariatePolynomial<R> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            coefficients: self.coefficients.into_iter().map(Neg::neg).collect(),
+        }
     }
 }
 

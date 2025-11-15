@@ -18,6 +18,7 @@
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::eqextension::EqExtension;
 use crate::matrixdense::MatrixDense;
+use crate::operation::Double;
 use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
@@ -143,6 +144,16 @@ impl<R: UnitalRing> Add for MultilinearExtension<R> {
 impl<R: UnitalRing> AddAssign for MultilinearExtension<R> {
     fn add_assign(&mut self, rps: Self) {
         zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
+    }
+}
+
+impl<R: UnitalRing> Double for MultilinearExtension<R> {
+    type Output = Self;
+
+    fn double(self) -> Self::Output {
+        Self {
+            coefficients: self.coefficients.into_iter().map(Double::double).collect(),
+        }
     }
 }
 

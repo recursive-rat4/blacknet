@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::operation::Double;
 use crate::ring::Ring;
 use crate::vectordense::VectorDense;
 use alloc::vec;
@@ -127,6 +128,18 @@ impl<R: Ring> AddAssign for MatrixDense<R> {
     }
 }
 
+impl<R: Ring> Double for MatrixDense<R> {
+    type Output = Self;
+
+    fn double(self) -> Self::Output {
+        MatrixDense::new(
+            self.rows,
+            self.columns,
+            self.elements.into_iter().map(Double::double).collect(),
+        )
+    }
+}
+
 impl<R: Ring> Add<&MatrixDense<R>> for MatrixDense<R> {
     type Output = MatrixDense<R>;
 
@@ -182,7 +195,7 @@ impl<R: Ring> Neg for MatrixDense<R> {
         MatrixDense::new(
             self.rows,
             self.columns,
-            self.elements.into_iter().map(|e| -e).collect(),
+            self.elements.into_iter().map(Neg::neg).collect(),
         )
     }
 }

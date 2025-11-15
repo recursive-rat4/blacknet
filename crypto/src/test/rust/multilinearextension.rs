@@ -19,6 +19,7 @@ use blacknet_crypto::hypercube::Hypercube;
 use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::module::FreeModule;
 use blacknet_crypto::multilinearextension::MultilinearExtension;
+use blacknet_crypto::operation::Double;
 use blacknet_crypto::polynomial::Polynomial;
 use blacknet_crypto::vectordense::VectorDense;
 use core::iter::zip;
@@ -41,11 +42,25 @@ fn add() {
 }
 
 #[test]
+fn dbl() {
+    let a = MultilinearExtension::from([1, 2, 3, 4].map(R::from));
+    let b = MultilinearExtension::from([2, 4, 6, 8].map(R::from));
+    assert_eq!(a.double(), b);
+}
+
+#[test]
 fn sub() {
     let a = MultilinearExtension::from([99, 98, 97, 96].map(R::from));
     let b = R::from(3);
     let c = MultilinearExtension::from([96, 95, 94, 93].map(R::from));
     assert_eq!(a - b, c);
+}
+
+#[test]
+fn neg() {
+    let a = MultilinearExtension::from([7, 0, -1].map(R::from));
+    let b = MultilinearExtension::from([-7, 0, 1].map(R::from));
+    assert_eq!(-a, b);
 }
 
 #[test]

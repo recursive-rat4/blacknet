@@ -19,7 +19,8 @@ use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination, Variable
 use crate::duplex::{Absorb, Duplex};
 use crate::ring::UnitalRing;
 use alloc::vec::Vec;
-use core::ops::Add;
+use core::iter::zip;
+use core::ops::{Add, AddAssign};
 
 pub struct UnivariatePolynomial<'a, R: UnitalRing> {
     circuit: &'a CircuitBuilder<R>,
@@ -61,6 +62,25 @@ impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
         self.coefficients
             .iter()
             .fold(self.coefficients[0].clone(), Add::add)
+    }
+}
+
+impl<'a, R: UnitalRing> Add for UnivariatePolynomial<'a, R> {
+    type Output = Self;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self {
+            circuit: self.circuit,
+            coefficients: zip(self.coefficients, rps.coefficients)
+                .map(|(l, r)| l + r)
+                .collect(),
+        }
+    }
+}
+
+impl<'a, R: UnitalRing> AddAssign for UnivariatePolynomial<'a, R> {
+    fn add_assign(&mut self, rps: Self) {
+        zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
     }
 }
 

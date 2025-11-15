@@ -19,7 +19,7 @@ use crate::matrixdense::MatrixDense;
 use crate::ring::Ring;
 use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
-use core::ops::Mul;
+use core::ops::{Mul, Neg};
 
 // https://arxiv.org/abs/2404.06047
 // CSR format
@@ -53,6 +53,19 @@ impl<R: Ring> MatrixSparse<R> {
 
     pub const fn columns(&self) -> usize {
         self.columns
+    }
+}
+
+impl<R: Ring> Neg for MatrixSparse<R> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            columns: self.columns,
+            r_index: self.r_index,
+            c_index: self.c_index,
+            elements: self.elements.into_iter().map(Neg::neg).collect(),
+        }
     }
 }
 

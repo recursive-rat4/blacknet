@@ -16,6 +16,7 @@
  */
 
 use crate::matrixdense::MatrixDense;
+use crate::operation::Double;
 use crate::ring::{Ring, UnitalRing};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -162,6 +163,18 @@ impl<R: Ring> AddAssign for VectorDense<R> {
     }
 }
 
+impl<R: Ring> Double for VectorDense<R> {
+    type Output = Self;
+
+    fn double(self) -> Self::Output {
+        self.elements
+            .into_iter()
+            .map(Double::double)
+            .collect::<Vec<R>>()
+            .into()
+    }
+}
+
 impl<R: Ring> Add<&VectorDense<R>> for VectorDense<R> {
     type Output = Self;
 
@@ -207,7 +220,7 @@ impl<R: Ring> Neg for VectorDense<R> {
     fn neg(self) -> Self::Output {
         self.elements
             .into_iter()
-            .map(|e| -e)
+            .map(Neg::neg)
             .collect::<Vec<R>>()
             .into()
     }

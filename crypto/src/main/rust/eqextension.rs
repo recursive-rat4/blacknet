@@ -16,6 +16,7 @@
  */
 
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
+use crate::operation::Double;
 use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
@@ -23,7 +24,7 @@ use crate::vectordense::VectorDense;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
-use core::ops::{Mul, MulAssign};
+use core::ops::{Mul, MulAssign, Neg};
 
 #[derive(Clone)]
 pub struct EqExtension<R: UnitalRing> {
@@ -114,6 +115,28 @@ impl<R: UnitalRing + From<u8>> Polynomial<R> for EqExtension<R> {
 
     fn variables(&self) -> usize {
         self.coefficients.len()
+    }
+}
+
+impl<R: UnitalRing> Double for EqExtension<R> {
+    type Output = Self;
+
+    fn double(self) -> Self::Output {
+        Self {
+            coefficients: self.coefficients,
+            z: self.z.double(),
+        }
+    }
+}
+
+impl<R: UnitalRing> Neg for EqExtension<R> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            coefficients: self.coefficients,
+            z: -self.z,
+        }
     }
 }
 

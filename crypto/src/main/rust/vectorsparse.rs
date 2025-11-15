@@ -20,7 +20,7 @@ use crate::ring::Ring;
 use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::iter::zip;
-use core::ops::Mul;
+use core::ops::{Mul, Neg};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct VectorSparse<R: Ring> {
@@ -44,6 +44,18 @@ impl<R: Ring> VectorSparse<R> {
 
     pub const fn elements(&self) -> &Vec<R> {
         &self.elements
+    }
+}
+
+impl<R: Ring> Neg for VectorSparse<R> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            dimension: self.dimension,
+            index: self.index,
+            elements: self.elements.into_iter().map(Neg::neg).collect(),
+        }
     }
 }
 
