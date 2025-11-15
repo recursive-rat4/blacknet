@@ -27,7 +27,7 @@ use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use crate::operation::{Double, Square};
-use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing};
+use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing, Ring, RingOfIntegers, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -294,6 +294,8 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Module<Z> for NTTRing<Z, M,
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Ring for NTTRing<Z, M, N> {
     type Int = Z::Int;
 }
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> RingOfIntegers for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> {}
 

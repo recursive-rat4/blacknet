@@ -26,7 +26,7 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, RingOfIntegers, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -269,6 +269,8 @@ impl MultiplicativeMonoid for LMField {
 impl Ring for LMField {
     type Int = i64;
 }
+
+impl RingOfIntegers for LMField {}
 
 impl DivisionRing for LMField {}
 

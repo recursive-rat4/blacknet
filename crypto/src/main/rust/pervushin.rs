@@ -25,7 +25,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, RingOfIntegers, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -267,6 +267,8 @@ impl MultiplicativeMonoid for PervushinField {
 impl Ring for PervushinField {
     type Int = i64;
 }
+
+impl RingOfIntegers for PervushinField {}
 
 impl DivisionRing for PervushinField {}
 

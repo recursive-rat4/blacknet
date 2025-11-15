@@ -56,6 +56,12 @@ pub trait CommutativeRing
 impl<R: UnitalRing + MultiplicativeCommutativeMonoid> CommutativeRing for R {}
 
 #[rustfmt::skip]
+pub trait RingOfIntegers
+    : CommutativeRing
+{
+}
+
+#[rustfmt::skip]
 pub trait DivisionRing
     : Ring
     + Inv<Output = Option<Self>>
@@ -64,8 +70,8 @@ pub trait DivisionRing
 
 #[rustfmt::skip]
 pub trait IntegerRing
-    : AdditiveCyclicGroup
-    + CommutativeRing
+    : RingOfIntegers
+    + AdditiveCyclicGroup
 {
     fn new(n: Self::Int) -> Self;
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self;
@@ -104,7 +110,8 @@ pub trait PolynomialRing<R: UnitalRing>
 
 #[rustfmt::skip]
 pub trait PowerOfTwoCyclotomicRing<Z: IntegerRing>
-    : PolynomialRing<Z>
+    : RingOfIntegers
+    + PolynomialRing<Z>
     + CommutativeAlgebra<Z>
 {
     fn conjugate(self) -> Self;

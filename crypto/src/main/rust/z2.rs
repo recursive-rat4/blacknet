@@ -24,7 +24,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, Ring, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, Ring, RingOfIntegers, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -179,6 +179,8 @@ impl MultiplicativeMonoid for Z2 {
 impl Ring for Z2 {
     type Int = i8;
 }
+
+impl RingOfIntegers for Z2 {}
 
 impl DivisionRing for Z2 {}
 

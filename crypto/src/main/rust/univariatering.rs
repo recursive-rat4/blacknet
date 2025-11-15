@@ -25,7 +25,8 @@ use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Square};
 use crate::ring::{
-    CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing,
+    CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, RingOfIntegers,
+    UnitalRing,
 };
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
 use core::fmt::{Debug, Formatter, Result};
@@ -299,6 +300,8 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Module<R> for Univaria
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Ring for UnivariateRing<R, N, C> {
     type Int = R::Int;
 }
+
+impl<R: IntegerRing, const N: usize> RingOfIntegers for UnivariateRing<R, N, Negacyclic> {}
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Algebra<R> for UnivariateRing<R, N, C> {}
 
