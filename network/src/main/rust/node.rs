@@ -17,6 +17,7 @@
 
 use crate::blockdb::BlockDB;
 use crate::blockfetcher::BlockFetcher;
+use crate::coindb::CoinDB;
 use crate::connection::{Connection, State};
 use crate::endpoint::Endpoint;
 use crate::packet::UnfilteredInvList;
@@ -62,6 +63,7 @@ pub struct Node {
     router: Arc<Router>,
     block_db: BlockDB,
     block_fetcher: BlockFetcher,
+    coin_db: CoinDB,
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
     wallet_db: WalletDB,
@@ -109,6 +111,7 @@ impl Node {
             router: Router::new(&mode, dirs, log_manager, runtime, &settings, peer_table)?,
             block_db: BlockDB::new(),
             block_fetcher: BlockFetcher::new(),
+            coin_db: CoinDB::new(&mode),
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode)?,
@@ -189,6 +192,10 @@ impl Node {
 
     pub const fn block_fetcher(&self) -> &BlockFetcher {
         &self.block_fetcher
+    }
+
+    pub const fn coin_db(&self) -> &CoinDB {
+        &self.coin_db
     }
 
     pub fn peer_table(&self) -> &PeerTable {

@@ -15,21 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod blockdb;
-pub mod blockfetcher;
-pub mod coindb;
-pub mod connection;
-pub mod endpoint;
-pub mod genesis;
-pub mod i2psam;
-pub mod natpmp;
-pub mod node;
-pub mod packet;
-pub mod peertable;
-pub mod rollinghashset;
-pub mod router;
-pub mod settings;
-pub mod socks5;
-pub mod torcontroller;
-pub mod txfetcher;
-pub mod txpool;
+use crate::v2::{AmountInfo, HashInfo};
+use blacknet_network::blockdb::BlockIndex;
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize)]
+pub struct BlockIndexInfo {
+    previous: HashInfo,
+    next: HashInfo,
+    nextSize: u32,
+    height: u32,
+    generated: AmountInfo,
+}
+
+impl BlockIndexInfo {
+    pub fn new(index: BlockIndex) -> Self {
+        Self {
+            previous: index.previous().into(),
+            next: index.next().into(),
+            nextSize: index.next_size(),
+            height: index.height(),
+            generated: index.generated().into(),
+        }
+    }
+}

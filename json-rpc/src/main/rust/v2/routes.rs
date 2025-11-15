@@ -22,6 +22,7 @@ use std::sync::Arc;
 
 pub fn routes() -> Router<Arc<Node>> {
     Router::new()
+        .merge(v2::database::routes())
         .merge(v2::node::routes())
         .merge(v2::sendtransaction::routes())
 }

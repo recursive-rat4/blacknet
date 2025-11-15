@@ -18,8 +18,10 @@
 use crate::rollinghashset::RollingHashSet;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::block::Block;
 use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
@@ -80,6 +82,10 @@ impl BlockDB {
         todo!();
     }
 
+    pub fn get(&self, _hash: Hash) -> Option<(Block, usize)> {
+        todo!();
+    }
+
     pub fn get_raw(&self, _hash: Hash) -> Option<Box<[u8]>> {
         todo!();
     }
@@ -87,4 +93,27 @@ impl BlockDB {
     pub fn next_block_hashes(&self, _start: Hash, _max: usize) -> Option<Vec<Hash>> {
         todo!();
     }
+
+    pub fn hash(&self, _height: u32) -> Option<Hash> {
+        todo!();
+    }
+
+    /**
+     * Return a `Path` of written data or `None` if not synchronized
+     */
+    pub fn export(&self) -> Option<PathBuf> {
+        todo!();
+    }
+
+    pub fn check(&self) -> Check {
+        todo!();
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct Check {
+    result: bool,
+    height: u32,
+    indexes: u32,
+    blocks: u32,
 }

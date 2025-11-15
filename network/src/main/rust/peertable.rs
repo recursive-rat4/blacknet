@@ -23,6 +23,7 @@ use blacknet_crypto::fastrng::{FAST_RNG, FastRNG};
 use blacknet_crypto::float01distribution::Float01Distribution;
 use blacknet_crypto::uniformintdistribution::UniformIntDistribution;
 use blacknet_io::file::replace;
+use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{LogManager, Logger, debug, error, info, warn};
 use blacknet_serialization::format::{from_read, to_write};
 use blacknet_time::{Milliseconds, SystemClock};
@@ -92,6 +93,16 @@ impl PeerTable {
     pub fn len(&self) -> usize {
         let peers = self.peers.read().unwrap();
         peers.len()
+    }
+
+    pub fn endpoints<R, F: Fn(Endpoint) -> R>(&self, f: F) -> Vec<R> {
+        let peers = self.peers.read().unwrap();
+        peers.keys().copied().map(f).collect()
+    }
+
+    pub fn map<R, F: Fn((&Endpoint, &Entry)) -> R>(&self, f: F) -> Vec<R> {
+        let peers = self.peers.read().unwrap();
+        peers.iter().map(f).collect()
     }
 
     pub fn connected(
@@ -367,7 +378,7 @@ pub struct Entry {
     last_try: Milliseconds,
     last_connected: Milliseconds,
     user_agent: String,
-    subnetworks: HashSet<[u8; 32]>,
+    subnetworks: HashSet<Hash>,
     added: Milliseconds,
 }
 
@@ -440,5 +451,33 @@ impl Entry {
         } else {
             chance * 0.01
         }
+    }
+
+    pub fn in_contact(&self) -> bool {
+        self.in_contact.load(Ordering::Relaxed)
+    }
+
+    pub const fn attempts(&self) -> u64 {
+        self.attempts
+    }
+
+    pub const fn last_try(&self) -> Milliseconds {
+        self.last_try
+    }
+
+    pub const fn last_connected(&self) -> Milliseconds {
+        self.last_connected
+    }
+
+    pub fn user_agent(&self) -> &str {
+        &self.user_agent
+    }
+
+    pub const fn subnetworks(&self) -> &HashSet<Hash> {
+        &self.subnetworks
+    }
+
+    pub const fn added(&self) -> Milliseconds {
+        self.added
     }
 }

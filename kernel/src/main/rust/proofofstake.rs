@@ -50,6 +50,11 @@ pub fn target_block_time(version: Version) -> Seconds {
 }
 
 /**
+ * Recommended number of confirmations that is not enforced by protocol
+ */
+pub const DEFAULT_CONFIRMATIONS: u32 = 10;
+
+/**
  * Number of confirmations to make coins eligible for staking
  */
 pub const MATURITY: u32 = 1350;
