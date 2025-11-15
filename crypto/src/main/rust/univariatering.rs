@@ -42,6 +42,18 @@ pub struct UnivariateRing<R: UnitalRing, const N: usize, C: Convolution<R, N>> {
     phantom: PhantomData<C>,
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> UnivariateRing<R, N, C> {
+    pub const fn new(coefficients: FreeModule<R, N>) -> Self {
+        const {
+            assert!(N.is_power_of_two(), "Not implemented");
+        };
+        Self {
+            coefficients,
+            phantom: PhantomData,
+        }
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Debug for UnivariateRing<R, N, C> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.coefficients)
@@ -58,10 +70,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Default for Univariate
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> From<[R; N]> for UnivariateRing<R, N, C> {
     #[inline]
     fn from(coefficients: [R; N]) -> Self {
-        Self {
-            coefficients: coefficients.into(),
-            phantom: PhantomData,
-        }
+        Self::new(coefficients.into())
     }
 }
 
@@ -70,10 +79,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> From<FreeModule<R, N>>
 {
     #[inline]
     fn from(coefficients: FreeModule<R, N>) -> Self {
-        Self {
-            coefficients,
-            phantom: PhantomData,
-        }
+        Self::new(coefficients)
     }
 }
 
@@ -81,10 +87,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> From<R> for Univariate
     fn from(scalar: R) -> Self {
         let mut t = [R::ZERO; N];
         t[0] = scalar;
-        Self {
-            coefficients: FreeModule::<R, N>::const_new(t),
-            phantom: PhantomData,
-        }
+        Self::new(FreeModule::<R, N>::new(t))
     }
 }
 
@@ -119,7 +122,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Add for UnivariateRing
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        Self::from(self.coefficients + rps.coefficients)
+        Self::new(self.coefficients + rps.coefficients)
     }
 }
 
@@ -134,7 +137,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Double for UnivariateR
     type Output = Self;
 
     fn double(self) -> Self {
-        Self::from(self.coefficients.double())
+        Self::new(self.coefficients.double())
     }
 }
 
@@ -142,7 +145,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Neg for UnivariateRing
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self::from(-self.coefficients)
+        Self::new(-self.coefficients)
     }
 }
 
@@ -150,7 +153,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub for UnivariateRing
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        Self::from(self.coefficients - rps.coefficients)
+        Self::new(self.coefficients - rps.coefficients)
     }
 }
 
@@ -192,7 +195,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<R> for UnivariateR
     type Output = Self;
 
     fn mul(self, rps: R) -> Self::Output {
-        Self::from(self.coefficients * rps)
+        Self::new(self.coefficients * rps)
     }
 }
 
@@ -228,27 +231,14 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveCommutativeMag
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveSemigroup
     for UnivariateRing<R, N, C>
 {
-    const LEFT_IDENTITY: Self = {
-        Self {
-            coefficients: FreeModule::<R, N>::LEFT_IDENTITY,
-            phantom: PhantomData,
-        }
-    };
-    const RIGHT_IDENTITY: Self = {
-        Self {
-            coefficients: FreeModule::<R, N>::RIGHT_IDENTITY,
-            phantom: PhantomData,
-        }
-    };
+    const LEFT_IDENTITY: Self = Self::new(FreeModule::<R, N>::LEFT_IDENTITY);
+    const RIGHT_IDENTITY: Self = Self::new(FreeModule::<R, N>::RIGHT_IDENTITY);
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMonoid
     for UnivariateRing<R, N, C>
 {
-    const IDENTITY: Self = Self {
-        coefficients: FreeModule::<R, N>::IDENTITY,
-        phantom: PhantomData,
-    };
+    const IDENTITY: Self = Self::new(FreeModule::<R, N>::IDENTITY);
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMagma
@@ -267,18 +257,12 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeSemigrou
     const LEFT_IDENTITY: Self = {
         let mut t = [R::ZERO; N];
         t[0] = R::UNITY;
-        Self {
-            coefficients: FreeModule::<R, N>::const_new(t),
-            phantom: PhantomData,
-        }
+        Self::new(FreeModule::<R, N>::new(t))
     };
     const RIGHT_IDENTITY: Self = {
         let mut t = [R::ZERO; N];
         t[0] = R::UNITY;
-        Self {
-            coefficients: FreeModule::<R, N>::const_new(t),
-            phantom: PhantomData,
-        }
+        Self::new(FreeModule::<R, N>::new(t))
     };
 }
 
@@ -288,10 +272,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMonoid
     const IDENTITY: Self = {
         let mut t = [R::ZERO; N];
         t[0] = R::UNITY;
-        Self {
-            coefficients: FreeModule::<R, N>::const_new(t),
-            phantom: PhantomData,
-        }
+        Self::new(FreeModule::<R, N>::new(t))
     };
 }
 
@@ -342,9 +323,6 @@ impl<R: IntegerRing, const N: usize> PowerOfTwoCyclotomicRing<R>
     for UnivariateRing<R, N, Negacyclic>
 {
     fn conjugate(self) -> Self {
-        const {
-            assert!(N.is_power_of_two());
-        };
         let mut coefficients = self.coefficients;
         for i in 1..N / 2 {
             let a = -coefficients[i];

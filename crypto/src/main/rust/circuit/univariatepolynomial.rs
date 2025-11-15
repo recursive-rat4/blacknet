@@ -69,6 +69,7 @@ impl<'a, R: UnitalRing> Add for UnivariatePolynomial<'a, R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         Self {
             circuit: self.circuit,
             coefficients: zip(self.coefficients, rps.coefficients)
@@ -80,6 +81,7 @@ impl<'a, R: UnitalRing> Add for UnivariatePolynomial<'a, R> {
 
 impl<'a, R: UnitalRing> AddAssign for UnivariatePolynomial<'a, R> {
     fn add_assign(&mut self, rps: Self) {
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
     }
 }

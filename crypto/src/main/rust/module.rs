@@ -43,7 +43,7 @@ pub struct FreeModule<R: Ring, const N: usize> {
 }
 
 impl<R: Ring, const N: usize> FreeModule<R, N> {
-    pub const fn const_new(components: [R; N]) -> Self {
+    pub const fn new(components: [R; N]) -> Self {
         Self { components }
     }
 

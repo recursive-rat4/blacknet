@@ -64,7 +64,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> NTTRing<Z, M, N> {
             }
         }
         Self {
-            spectrum: FreeModule::<Z, N>::const_new(t),
+            spectrum: FreeModule::<Z, N>::new(t),
         }
     }
 }
