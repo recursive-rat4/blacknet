@@ -58,6 +58,12 @@ impl From<digest::generic_array::GenericArray<u8, digest::consts::U32>> for Hash
     }
 }
 
+impl From<Hash> for [u8; 32] {
+    fn from(hash: Hash) -> Self {
+        hash.0
+    }
+}
+
 impl TryFrom<&str> for Hash {
     type Error = DecodeError;
 

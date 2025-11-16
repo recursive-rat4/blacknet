@@ -16,19 +16,28 @@
  */
 
 use crate::address::AddressCodec;
+use crate::wallet::Wallet;
 use blacknet_compat::Mode;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::PublicKey;
+use blacknet_log::{LogManager, Logger, info};
 use core::error::Error;
+use std::collections::HashMap;
 
 pub struct WalletDB {
+    logger: Logger,
     address_codec: AddressCodec,
+    wallets: HashMap<PublicKey, Wallet>,
 }
 
 impl WalletDB {
-    pub fn new(mode: &Mode) -> Result<Self, Box<dyn Error>> {
+    pub fn new(mode: &Mode, log_manager: &LogManager) -> Result<Self, Box<dyn Error>> {
+        let logger = log_manager.logger("WalletDB")?;
+        info!(logger, "Driving SQLite {}", rusqlite::version());
         Ok(Self {
+            logger,
             address_codec: AddressCodec::new(mode)?,
+            wallets: HashMap::new(), //TODO
         })
     }
 
@@ -36,11 +45,17 @@ impl WalletDB {
         &self.address_codec
     }
 
-    pub fn get_sequence(&self, _public_key: PublicKey) -> u32 {
-        todo!();
+    pub fn sequence(&self, public_key: PublicKey) -> Option<u32> {
+        self.wallets.get(&public_key).map(Wallet::sequence)
     }
 
     pub fn anchor(&self) -> Hash {
         todo!();
+    }
+}
+
+impl Drop for WalletDB {
+    fn drop(&mut self) {
+        info!(self.logger, "Braking SQLite");
     }
 }

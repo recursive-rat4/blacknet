@@ -32,7 +32,10 @@ categories.workspace = true
 [dependencies]
 blacknet-compat.workspace = true
 blacknet-kernel.workspace = true
+blacknet-log.workspace = true
 bech32.workspace = true
+rusqlite.workspace = true
+spdlog-rs.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
@@ -48,3 +51,7 @@ path = "src/main/rust/lib.rs"
 [[test]]
 name = "address"
 path = "src/test/rust/address.rs"
+
+[[test]]
+name = "wallet"
+path = "src/test/rust/wallet.rs"

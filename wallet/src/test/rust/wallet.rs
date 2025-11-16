@@ -15,6 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod address;
-pub mod wallet;
-pub mod walletdb;
+use blacknet_compat::{Mode, assert_err, assert_ok};
+use blacknet_kernel::blake2b::Hash;
+use blacknet_wallet::wallet::Wallet;
+use rusqlite::Connection;
+
+#[test]
+fn ephemeral() {
+    let mode = Mode::regtest();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let tx_id = Hash::ZERO;
+    let tx_bytes = [10, 11, 12, 13];
+    assert_ok!(wallet.put_transaction(tx_id, &tx_bytes));
+    let bytes = wallet.get_transaction(tx_id).unwrap();
+    assert_eq!(bytes, tx_bytes.into());
+}
+
+#[test]
+fn magic() {
+    let mode = Mode::regtest();
+    let connection = Connection::open_in_memory().unwrap();
+    assert_err!(Wallet::attach(connection, &mode));
+}
