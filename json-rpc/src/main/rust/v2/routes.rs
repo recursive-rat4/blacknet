@@ -25,4 +25,5 @@ pub fn routes() -> Router<Arc<Node>> {
         .merge(v2::database::routes())
         .merge(v2::node::routes())
         .merge(v2::sendtransaction::routes())
+        .merge(v2::staking::routes())
 }

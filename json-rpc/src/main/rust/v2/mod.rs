@@ -38,6 +38,7 @@ pub mod response;
 mod routes;
 pub mod sendtransaction;
 mod signatureinfo;
+pub mod staking;
 mod stakinginfo;
 mod transactioninfo;
 mod transactionnotification;
