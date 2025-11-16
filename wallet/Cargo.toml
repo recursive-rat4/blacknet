@@ -34,9 +34,14 @@ blacknet-compat.workspace = true
 blacknet-kernel.workspace = true
 blacknet-log.workspace = true
 bech32.workspace = true
-rusqlite.workspace = true
 spdlog-rs.workspace = true
 thiserror.workspace = true
+
+[target.'cfg(not(windows))'.dependencies]
+rusqlite.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+rusqlite = { workspace = true, features = ["bundled"] }
 
 [dev-dependencies]
 data-encoding.workspace = true
