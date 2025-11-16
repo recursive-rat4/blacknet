@@ -29,7 +29,6 @@ desktop_feature = get_option('desktop')
 
 fmt_dependency = dependency('fmt', version : '>=9.1.0')
 spdlog_dependency = dependency('spdlog', version : '>=1.5.0')
-sqlite_dependency = dependency('sqlite3', version : '>=3.37.2')
 boost_dependency = dependency('boost', version : '>=1.83.0')
 qt_dependency = dependency('qt6', modules : 'Widgets', version : '>=6.2.5', required : desktop_feature)
 
@@ -83,7 +82,6 @@ config_includes = include_directories('.')
 subdir('compat')
 subdir('crypto')
 subdir('log')
-subdir('wallet')
 if desktop_feature.allowed()
     subdir('desktop')
 endif
