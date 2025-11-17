@@ -26,8 +26,9 @@ use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct MultilinearExtension<R: UnitalRing> {
     coefficients: Vec<R>,
 }

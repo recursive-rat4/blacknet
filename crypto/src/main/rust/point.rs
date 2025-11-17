@@ -18,8 +18,9 @@
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
 use core::ops::{Deref, Index, IndexMut};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Point<S> {
     coordinates: Vec<S>,
 }

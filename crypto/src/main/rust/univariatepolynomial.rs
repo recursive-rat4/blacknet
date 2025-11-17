@@ -21,8 +21,9 @@ use crate::ring::{Ring, UnitalRing};
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref, Neg};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct UnivariatePolynomial<R: Ring> {
     coefficients: Vec<R>,
 }

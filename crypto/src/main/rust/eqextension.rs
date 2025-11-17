@@ -25,8 +25,9 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Mul, MulAssign, Neg};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct EqExtension<R: UnitalRing> {
     coefficients: Vec<R>,
     z: R,
@@ -159,7 +160,8 @@ impl<R: UnitalRing> MulAssign<R> for EqExtension<R> {
 
 impl<R: UnitalRing + Absorb<R>> Absorb<R> for EqExtension<R> {
     fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb(&self.coefficients)
+        duplex.absorb(&self.coefficients);
+        duplex.absorb(&self.z);
     }
 }
 

@@ -21,8 +21,9 @@ use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Mul, Neg};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct VectorSparse<R: Ring> {
     dimension: usize,
     index: Vec<usize>,

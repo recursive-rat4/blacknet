@@ -20,11 +20,12 @@ use crate::ring::Ring;
 use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::ops::{Mul, Neg};
+use serde::{Deserialize, Serialize};
 
 // https://arxiv.org/abs/2404.06047
 // CSR format
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct MatrixSparse<R: Ring> {
     columns: usize,
     r_index: Vec<usize>,

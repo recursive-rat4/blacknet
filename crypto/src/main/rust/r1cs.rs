@@ -21,8 +21,9 @@ use crate::matrixsparse::MatrixSparse;
 use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
 use core::iter::zip;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct R1CS<R: UnitalRing> {
     a: MatrixSparse<R>,
     b: MatrixSparse<R>,

@@ -23,8 +23,9 @@ use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct VectorDense<R: Ring> {
     elements: Vec<R>,
 }

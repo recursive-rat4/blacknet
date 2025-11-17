@@ -23,10 +23,11 @@ use crate::ring::UnitalRing;
 use crate::vectordense::VectorDense;
 use alloc::vec;
 use alloc::vec::Vec;
+use serde::{Deserialize, Serialize};
 
 // https://eprint.iacr.org/2023/552
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CustomizableConstraintSystem<R: UnitalRing> {
     matrices: Vec<MatrixSparse<R>>,
     multisets: Vec<Vec<usize>>,

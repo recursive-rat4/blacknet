@@ -24,10 +24,12 @@ use crate::ring::UnitalRing;
 use crate::univariatepolynomial::UnivariatePolynomial;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 // https://users.cs.fiu.edu/~giri/teach/5420/f01/LundIPS.pdf
 
+#[derive(Deserialize, Serialize)]
 pub struct Proof<R: UnitalRing> {
     claims: Vec<UnivariatePolynomial<R>>,
 }
