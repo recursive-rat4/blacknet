@@ -15,24 +15,40 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::bigint::UInt256;
 use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct BigIntegerInfo(String);
 
-impl From<&[u8]> for BigIntegerInfo {
-    fn from(bytes: &[u8]) -> Self {
+impl BigIntegerInfo {
+    pub fn from_be_bytes(bytes: &[u8]) -> Self {
         Self(BigUint::from_bytes_be(bytes).to_str_radix(10))
     }
 }
 
+impl From<UInt256> for BigIntegerInfo {
+    fn from(n: UInt256) -> Self {
+        let bytes = unsafe { n.to_java::<32>() };
+        Self::from_be_bytes(&bytes)
+    }
+}
+
 #[test]
-fn test() {
+fn test_bytes() {
     let bytes = [
         0x01, 0x5E, 0x6B, 0x7F, 0xEE, 0x4E, 0x21, 0xDF, 0x56, 0xBD, 0xAE,
     ];
     let string = "1654811289011657408691630";
-    let info = BigIntegerInfo::from(bytes.as_slice());
+    let info = BigIntegerInfo::from_be_bytes(bytes.as_slice());
+    assert_eq!(info.0, string);
+}
+
+#[test]
+fn test_uint256() {
+    let n = UInt256::from_hex("000000000000000000000000000000000000000000015E6B7FEE4E21DF56BDAE");
+    let string = "1654811289011657408691630";
+    let info = BigIntegerInfo::from(n);
     assert_eq!(info.0, string);
 }

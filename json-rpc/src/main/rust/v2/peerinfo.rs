@@ -73,7 +73,9 @@ impl From<BlockAnnounce> for ChainInfo {
         #[expect(unreachable_code)]
         Self {
             chain: block_announce.hash().into(),
-            cumulativeDifficulty: block_announce.raw_cumulative_difficulty().into(),
+            cumulativeDifficulty: BigIntegerInfo::from_be_bytes(
+                block_announce.raw_cumulative_difficulty(),
+            ),
             fork: todo!(),
         }
     }

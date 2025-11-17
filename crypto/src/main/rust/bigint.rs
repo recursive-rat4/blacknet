@@ -22,11 +22,16 @@ use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
     SubAssign,
 };
+use serde::{Deserialize, Serialize};
 
 pub type UInt256 = BigInt<4>;
 pub type UInt512 = BigInt<8>;
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(bound(
+    deserialize = "[u64; N]: Deserialize<'de>",
+    serialize = "[u64; N]: Serialize"
+))]
 pub struct BigInt<const N: usize> {
     limbs: [u64; N],
 }

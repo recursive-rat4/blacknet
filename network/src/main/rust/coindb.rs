@@ -17,11 +17,12 @@
 
 use crate::genesis;
 use blacknet_compat::Mode;
+use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::account::Account;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::PublicKey;
-use blacknet_kernel::proofofstake::DEFAULT_MAX_BLOCK_SIZE;
+use blacknet_kernel::proofofstake::{DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY};
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 
@@ -54,8 +55,8 @@ pub struct State {
     height: u32,
     block_hash: Hash,
     block_time: Seconds,
-    difficulty: [u8; 32],            //UInt256,
-    cumulative_difficulty: [u8; 32], //UInt256,
+    difficulty: UInt256,
+    cumulative_difficulty: UInt256,
     supply: Amount,
     nxtrng: Hash,
     rolling_checkpoint: Hash,
@@ -65,7 +66,6 @@ pub struct State {
 }
 
 impl State {
-    #[expect(unused)]
     pub fn genesis(mode: &Mode) -> Self {
         let balances = genesis::balances(mode);
         let supply = balances.values().copied().sum();
@@ -73,8 +73,8 @@ impl State {
             height: 0,
             block_hash: genesis::hash(),
             block_time: genesis::time(),
-            difficulty: todo!(),
-            cumulative_difficulty: todo!(),
+            difficulty: INITIAL_DIFFICULTY,
+            cumulative_difficulty: genesis::cumulative_difficulty(),
             supply,
             nxtrng: Hash::ZERO,
             rolling_checkpoint: genesis::hash(),
@@ -94,6 +94,14 @@ impl State {
 
     pub const fn block_time(self) -> Seconds {
         self.block_time
+    }
+
+    pub const fn difficulty(self) -> UInt256 {
+        self.difficulty
+    }
+
+    pub const fn cumulative_difficulty(self) -> UInt256 {
+        self.cumulative_difficulty
     }
 
     pub const fn supply(self) -> Amount {

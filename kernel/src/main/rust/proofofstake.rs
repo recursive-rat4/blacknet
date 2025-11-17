@@ -16,6 +16,7 @@
  */
 
 use crate::amount::Amount;
+use blacknet_crypto::bigint::UInt256;
 use blacknet_time::Seconds;
 
 #[derive(Clone, Copy)]
@@ -68,6 +69,17 @@ pub const ROLLBACK_LIMIT: usize = 1350;
  * Minimum amount that can be leased out for cold staking
  */
 pub const MIN_LEASE: Amount = Amount::new(1000 * Amount::COIN.value());
+
+/**
+ * Difficulty of genesis block
+ */
+pub const INITIAL_DIFFICULTY: UInt256 =
+    UInt256::from_hex("00000000000000AFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+/**
+ * Maximum value of difficulty
+ */
+pub const MAX_DIFFICULTY: UInt256 = UInt256::MAX;
 
 /**
  * Reserved from maximum block size

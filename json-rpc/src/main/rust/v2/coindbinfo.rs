@@ -33,15 +33,14 @@ pub struct CoinDBInfo {
 }
 
 impl CoinDBInfo {
-    #[expect(unreachable_code)]
     pub fn new(state: State) -> Self {
         Self {
             height: state.height(),
             blockHash: state.block_hash().into(),
             blockTime: state.block_time().into(),
             rollingCheckpoint: state.rolling_checkpoint().into(),
-            difficulty: todo!(),
-            cumulativeDifficulty: todo!(),
+            difficulty: state.difficulty().into(),
+            cumulativeDifficulty: state.cumulative_difficulty().into(),
             supply: state.supply().into(),
             maxBlockSize: state.max_block_size(),
             nxtrng: state.nxtrng().into(),
