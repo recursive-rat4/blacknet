@@ -35,14 +35,16 @@ impl<R: UnitalRing> R1CS<R> {
         Self { a, b, c }
     }
 
-    pub fn steal(self) -> (MatrixSparse<R>, MatrixSparse<R>, MatrixSparse<R>) {
-        (self.a, self.b, self.c)
-    }
-
     pub fn assigment(&self) -> Assigment<R> {
         let z = Assigment::new(self.variables());
         z.push(R::UNITY);
         z
+    }
+}
+
+impl<R: UnitalRing> From<R1CS<R>> for (MatrixSparse<R>, MatrixSparse<R>, MatrixSparse<R>) {
+    fn from(r1cs: R1CS<R>) -> Self {
+        (r1cs.a, r1cs.b, r1cs.c)
     }
 }
 

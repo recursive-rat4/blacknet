@@ -45,11 +45,6 @@ impl<R: Ring> VectorDense<R> {
         &self.elements
     }
 
-    #[inline]
-    pub fn steal(self) -> Vec<R> {
-        self.elements
-    }
-
     pub fn cat(&self, rps: &Self) -> Self {
         let mut elements = Vec::<R>::with_capacity(self.elements.len() + rps.elements.len());
         elements.extend(self.elements.iter());
@@ -96,6 +91,13 @@ impl<R: Ring> From<Vec<R>> for VectorDense<R> {
     #[inline]
     fn from(elements: Vec<R>) -> Self {
         Self { elements }
+    }
+}
+
+impl<R: Ring> From<VectorDense<R>> for Vec<R> {
+    #[inline]
+    fn from(vector: VectorDense<R>) -> Self {
+        vector.elements
     }
 }
 

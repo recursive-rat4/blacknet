@@ -60,11 +60,6 @@ impl<R: UnitalRing> UnivariatePolynomial<R> {
     pub const fn coefficients(&self) -> &Vec<R> {
         &self.coefficients
     }
-
-    #[inline]
-    pub fn steal(self) -> Vec<R> {
-        self.coefficients
-    }
 }
 
 impl<R: Ring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
@@ -76,8 +71,16 @@ impl<R: Ring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
 }
 
 impl<R: Ring> From<Vec<R>> for UnivariatePolynomial<R> {
+    #[inline]
     fn from(coefficients: Vec<R>) -> Self {
         Self { coefficients }
+    }
+}
+
+impl<R: Ring> From<UnivariatePolynomial<R>> for Vec<R> {
+    #[inline]
+    fn from(polynomial: UnivariatePolynomial<R>) -> Self {
+        polynomial.coefficients
     }
 }
 

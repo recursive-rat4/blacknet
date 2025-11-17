@@ -41,11 +41,6 @@ impl<S: UnitalRing> Point<S> {
     pub const fn coordinates(&self) -> &Vec<LinearCombination<S>> {
         &self.coordinates
     }
-
-    #[inline]
-    pub fn steal(self) -> Vec<LinearCombination<S>> {
-        self.coordinates
-    }
 }
 
 impl<S: UnitalRing, const N: usize> From<[LinearCombination<S>; N]> for Point<S> {
@@ -60,6 +55,13 @@ impl<S: UnitalRing> From<Vec<LinearCombination<S>>> for Point<S> {
     #[inline]
     fn from(coordinates: Vec<LinearCombination<S>>) -> Self {
         Self { coordinates }
+    }
+}
+
+impl<S: UnitalRing> From<Point<S>> for Vec<LinearCombination<S>> {
+    #[inline]
+    fn from(point: Point<S>) -> Self {
+        point.coordinates
     }
 }
 

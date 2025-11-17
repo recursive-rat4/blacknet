@@ -33,11 +33,6 @@ impl<S> Point<S> {
     pub const fn coordinates(&self) -> &Vec<S> {
         &self.coordinates
     }
-
-    #[inline]
-    pub fn steal(self) -> Vec<S> {
-        self.coordinates
-    }
 }
 
 impl<S, const N: usize> From<[S; N]> for Point<S> {
@@ -52,6 +47,13 @@ impl<S> From<Vec<S>> for Point<S> {
     #[inline]
     fn from(coordinates: Vec<S>) -> Self {
         Self { coordinates }
+    }
+}
+
+impl<S> From<Point<S>> for Vec<S> {
+    #[inline]
+    fn from(point: Point<S>) -> Self {
+        point.coordinates
     }
 }
 

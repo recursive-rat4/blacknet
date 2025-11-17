@@ -56,7 +56,7 @@ impl<R: UnitalRing> CustomizableConstraintSystem<R> {
 
 impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
     fn from(r1cs: R1CS<R>) -> Self {
-        let (a, b, c) = r1cs.steal();
+        let (a, b, c) = r1cs.into();
         Self {
             matrices: vec![a, b, c],
             multisets: vec![vec![0, 1], vec![2]],

@@ -52,6 +52,7 @@ impl<R: UnitalRing, const N: usize> From<[R; N]> for MultilinearExtension<R> {
 }
 
 impl<R: UnitalRing> From<Vec<R>> for MultilinearExtension<R> {
+    #[inline]
     fn from(coefficients: Vec<R>) -> Self {
         Self { coefficients }
     }
@@ -67,8 +68,9 @@ impl<R: UnitalRing> FromIterator<R> for MultilinearExtension<R> {
 
 impl<R: UnitalRing> From<MatrixDense<R>> for MultilinearExtension<R> {
     fn from(matrix: MatrixDense<R>) -> Self {
+        let (_, _, elements) = matrix.into();
         Self {
-            coefficients: matrix.steal(),
+            coefficients: elements,
         }
     }
 }
@@ -76,7 +78,7 @@ impl<R: UnitalRing> From<MatrixDense<R>> for MultilinearExtension<R> {
 impl<R: UnitalRing> From<VectorDense<R>> for MultilinearExtension<R> {
     fn from(vector: VectorDense<R>) -> Self {
         Self {
-            coefficients: vector.steal(),
+            coefficients: vector.into(),
         }
     }
 }

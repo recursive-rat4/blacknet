@@ -83,7 +83,7 @@ fn circuit_evaluate() {
     z.extend_from_slice(&p_plain);
     z.push(x_plain);
 
-    let p_assigner = Assigner::new(p_plain.steal(), &z);
+    let p_assigner = Assigner::new(p_plain.into(), &z);
     let y_assigned = p_assigner.evaluate(x_plain);
 
     assert_eq!(y_assigned, y_plain);
