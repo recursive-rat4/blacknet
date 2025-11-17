@@ -83,7 +83,7 @@ impl TxFetcher {
             }
 
             let capacity = min(inventory.len(), MAX_TRANSACTIONS);
-            let mut list = Vec::<Hash>::with_capacity(capacity);
+            let mut request = GetTransactions::with_capacity(capacity);
             let tx_pool_strong = self.tx_pool.upgrade().unwrap();
             let tx_pool = tx_pool_strong.read().unwrap();
             let now = SystemClock::millis();
@@ -95,17 +95,17 @@ impl TxFetcher {
 
                 if tx_pool.is_interesting(hash) {
                     requests.insert(hash, (connection.id(), now));
-                    list.push(hash);
+                    request.push(hash);
                 }
 
-                if list.len() == MAX_TRANSACTIONS {
-                    connection.send_packet(GetTransactions::new(list));
-                    list = Vec::<Hash>::with_capacity(capacity);
+                if request.len() == MAX_TRANSACTIONS {
+                    connection.send_packet(&request);
+                    request.clear();
                 }
             }
 
-            if !list.is_empty() {
-                connection.send_packet(GetTransactions::new(list));
+            if !request.is_empty() {
+                connection.send_packet(&request);
             }
         }
     }

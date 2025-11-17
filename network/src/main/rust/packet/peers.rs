@@ -17,7 +17,7 @@
 
 use crate::connection::Connection;
 use crate::endpoint::Endpoint;
-use crate::packet::Packet;
+use crate::packet::{Packet, PacketKind};
 use blacknet_log::debug;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -30,6 +30,10 @@ pub struct Peers {
 }
 
 impl Packet for Peers {
+    fn kind() -> PacketKind {
+        PacketKind::Peers
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         if self.list.len() > MAX {
             connection.dos("Invalid Peers size");

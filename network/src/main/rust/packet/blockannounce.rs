@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::Packet;
+use crate::packet::{Packet, PacketKind};
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
@@ -59,6 +59,10 @@ impl Default for BlockAnnounce {
 }
 
 impl Packet for BlockAnnounce {
+    fn kind() -> PacketKind {
+        PacketKind::BlockAnnounce
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         let len = self.cumulative_difficulty.len();
         if len == 0 || len > 32 {

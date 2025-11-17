@@ -17,7 +17,7 @@
 
 use crate::connection::Connection;
 use crate::packet::{
-    Blocks, ConsensusFault, MAX_BLOCKS, MAX_HASHES, PACKET_HEADER_SIZE_BYTES, Packet,
+    Blocks, ConsensusFault, MAX_BLOCKS, MAX_HASHES, PACKET_HEADER_SIZE_BYTES, Packet, PacketKind,
 };
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
@@ -30,13 +30,17 @@ pub struct GetBlocks {
 }
 
 impl Packet for GetBlocks {
+    fn kind() -> PacketKind {
+        PacketKind::GetBlocks
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         let node = connection.node();
         let block_db = node.block_db();
         if let Some((previous_hash, bytes)) = &**block_db.cached_block()
             && self.best == *previous_hash
         {
-            connection.send_packet(Blocks::with_block(bytes));
+            connection.send_packet(&Blocks::with_block(bytes));
             return;
         }
 
@@ -69,13 +73,13 @@ impl Packet for GetBlocks {
                 }
             }
 
-            connection.send_packet(Blocks::with_blocks(response));
+            connection.send_packet(&Blocks::with_blocks(response));
         } else if let Some(next_block_hashes) =
             block_db.next_block_hashes(self.checkpoint, MAX_HASHES)
         {
-            connection.send_packet(Blocks::with_hashes(next_block_hashes));
+            connection.send_packet(&Blocks::with_hashes(next_block_hashes));
         } else {
-            connection.send_packet(ConsensusFault);
+            connection.send_packet(&ConsensusFault);
             connection.dos("Consensus fault");
         }
     }

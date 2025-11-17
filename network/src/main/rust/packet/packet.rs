@@ -26,6 +26,7 @@ pub const PACKET_LENGTH_SIZE_BYTES: u32 = 4;
 pub const PACKET_HEADER_SIZE_BYTES: u32 = 4;
 
 pub trait Packet: for<'de> Deserialize<'de> + Serialize {
+    fn kind() -> PacketKind;
     fn handle(self, connection: &Arc<Connection>);
 }
 

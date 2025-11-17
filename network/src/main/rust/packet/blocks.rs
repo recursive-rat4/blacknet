@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::Packet;
+use crate::packet::{Packet, PacketKind};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
 use serde::{Deserialize, Serialize};
@@ -55,6 +55,10 @@ impl Blocks {
 }
 
 impl Packet for Blocks {
+    fn kind() -> PacketKind {
+        PacketKind::Blocks
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         if self.hashes.len() > MAX_HASHES {
             connection.dos("Invalid hashes len");

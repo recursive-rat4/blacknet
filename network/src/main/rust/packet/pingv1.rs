@@ -17,7 +17,7 @@
 
 use crate::connection::Connection;
 use crate::node::NETWORK_TIMEOUT;
-use crate::packet::{Packet, Pong};
+use crate::packet::{Packet, PacketKind, Pong};
 use blacknet_kernel::blake2b::Blake2b256;
 use blake2::Digest;
 use serde::{Deserialize, Serialize};
@@ -41,6 +41,10 @@ impl PingV1 {
 }
 
 impl Packet for PingV1 {
+    fn kind() -> PacketKind {
+        PacketKind::PingV1
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         let response = if connection.version() == 13 {
             let magic = connection.node().mode().network_magic();
@@ -48,7 +52,7 @@ impl Packet for PingV1 {
         } else {
             self.challenge
         };
-        connection.send_packet(Pong::new(response));
+        connection.send_packet(&Pong::new(response));
         let last_packet_time = connection.last_packet_time();
         let last_ping_time = connection.last_ping_time();
         connection.set_last_ping_time(last_packet_time);

@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::Packet;
+use crate::packet::{Packet, PacketKind};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -24,6 +24,10 @@ use std::sync::Arc;
 pub struct ConsensusFault;
 
 impl Packet for ConsensusFault {
+    fn kind() -> PacketKind {
+        PacketKind::ConsensusFault
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         let block_fetcher = connection.node().block_fetcher();
         block_fetcher.consensus_fault(connection, self);

@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::{Packet, Ping, PingV1};
+use crate::packet::{Packet, PacketKind, Ping, PingV1};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -32,6 +32,10 @@ impl Pong {
 }
 
 impl Packet for Pong {
+    fn kind() -> PacketKind {
+        PacketKind::Pong
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         if let Some((challenge, request_time)) = connection.ping_request() {
             let magic = connection.node().mode().network_magic();

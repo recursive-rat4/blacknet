@@ -176,6 +176,10 @@ impl Node {
         vec![]
     }
 
+    pub const fn max_packet_size(&self) -> u32 {
+        todo!();
+    }
+
     pub const fn min_packet_size(&self) -> u32 {
         DEFAULT_MAX_BLOCK_SIZE + BLOCK_RESERVED_SIZE
     }

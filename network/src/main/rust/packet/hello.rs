@@ -17,7 +17,7 @@
 
 use crate::connection::{Connection, State};
 use crate::node::MIN_PROTOCOL_VERSION;
-use crate::packet::Packet;
+use crate::packet::{Packet, PacketKind};
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{error, info};
 use blacknet_serialization::error::Error as SerializationError;
@@ -110,6 +110,10 @@ impl Hello {
 }
 
 impl Packet for Hello {
+    fn kind() -> PacketKind {
+        PacketKind::Hello
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         let network_magic = connection.node().mode().network_magic();
         if let Some(magic) = self.magic()

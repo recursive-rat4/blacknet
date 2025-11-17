@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::Packet;
+use crate::packet::{Packet, PacketKind};
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::error::Error;
@@ -38,9 +38,35 @@ impl Transactions {
     pub const fn new(list: Vec<Box<[u8]>>) -> Self {
         Self { list }
     }
+
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            list: Vec::with_capacity(capacity),
+        }
+    }
+
+    pub fn push(&mut self, bytes: Box<[u8]>) {
+        self.list.push(bytes)
+    }
+
+    pub fn clear(&mut self) {
+        self.list.clear()
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.list.is_empty()
+    }
+
+    pub const fn len(&self) -> usize {
+        self.list.len()
+    }
 }
 
 impl Packet for Transactions {
+    fn kind() -> PacketKind {
+        PacketKind::Transactions
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         if self.list.len() > MAX_TRANSACTIONS {
             connection.dos("Invalid Transactions len");

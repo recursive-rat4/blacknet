@@ -17,19 +17,20 @@
 
 use crate::endpoint::Endpoint;
 use crate::node::Node;
-use crate::packet::{BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, Packet};
+use crate::packet::{
+    BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, Packet, PacketKind,
+};
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{Logger, error, info};
+use blacknet_serialization::format::to_bytes;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use core::cmp::min;
 use core::mem::transmute;
-use std::sync::{
-    Arc, Mutex, MutexGuard, RwLock,
-    atomic::{AtomicBool, AtomicI64, AtomicU8, AtomicU32, AtomicU64, Ordering},
-};
+use std::sync::{Arc, Mutex, MutexGuard, RwLock, atomic::*};
 use tokio::runtime::Runtime;
+use tokio::sync::mpsc::UnboundedSender;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
@@ -45,6 +46,8 @@ pub struct Connection {
 
     closed: AtomicBool,
     dos_score: AtomicU8,
+    send_channel_size: AtomicUsize,
+    send_channel: UnboundedSender<(PacketKind, Vec<u8>)>,
     inventory_to_send: Mutex<Vec<Hash>>,
     connected_at: Milliseconds,
 
@@ -125,13 +128,31 @@ impl Connection {
         inventory_to_send: &mut MutexGuard<Vec<Hash>>,
         time: Milliseconds,
     ) {
-        self.send_packet(Inventory::new(inventory_to_send.clone()));
+        self.send_packet(&Inventory::new(inventory_to_send.clone()));
         inventory_to_send.clear();
         self.set_last_inv_sent_time(time);
     }
 
-    pub fn send_packet<T: Packet>(&self, _packet: T) {
-        todo!();
+    pub fn send_packet<T: Packet>(&self, packet: &T) {
+        let bytes = match to_bytes(&packet) {
+            Ok(bytes) => bytes,
+            Err(err) => {
+                error!(self.logger, "Serialization error: {err}");
+                return;
+            }
+        };
+        //TODO review threshold
+        if self
+            .send_channel_size
+            .fetch_add(bytes.len(), Ordering::AcqRel)
+            + bytes.len()
+            <= self.node().max_packet_size() as usize * 10
+        {
+            self.send_channel.send((T::kind(), bytes)).unwrap();
+        } else {
+            info!(self.logger, "Disconnecting on send queue overflow");
+            self.close();
+        }
     }
 
     pub fn check_fee_filter(&self, _size: u32, fee: Amount) -> bool {

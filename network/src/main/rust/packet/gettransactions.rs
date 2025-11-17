@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::{MAX_TRANSACTIONS, PACKET_HEADER_SIZE_BYTES, Packet, Transactions};
+use crate::packet::{MAX_TRANSACTIONS, PACKET_HEADER_SIZE_BYTES, Packet, PacketKind, Transactions};
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -30,9 +30,35 @@ impl GetTransactions {
     pub const fn new(list: Vec<Hash>) -> Self {
         Self { list }
     }
+
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            list: Vec::with_capacity(capacity),
+        }
+    }
+
+    pub fn push(&mut self, hash: Hash) {
+        self.list.push(hash)
+    }
+
+    pub fn clear(&mut self) {
+        self.list.clear()
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.list.is_empty()
+    }
+
+    pub const fn len(&self) -> usize {
+        self.list.len()
+    }
 }
 
 impl Packet for GetTransactions {
+    fn kind() -> PacketKind {
+        PacketKind::GetTransactions
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         let len = self.list.len();
         if len > MAX_TRANSACTIONS {
@@ -45,7 +71,7 @@ impl Packet for GetTransactions {
 
         let mut size = PACKET_HEADER_SIZE_BYTES + 2;
         let max_size = node.min_packet_size(); // actual value is unknown, minimum is assumed
-        let mut response = Vec::<Box<[u8]>>::with_capacity(len);
+        let mut response = Transactions::with_capacity(len);
 
         for hash in self.list.into_iter() {
             if let Some(bytes) = tx_pool.get_raw(hash) {
@@ -55,14 +81,14 @@ impl Packet for GetTransactions {
                     response.push(bytes.into());
                     size = new_size;
                     if size > max_size {
-                        connection.send_packet(Transactions::new(response));
-                        response = Vec::<Box<[u8]>>::with_capacity(len);
+                        connection.send_packet(&response);
+                        response.clear();
                         size = PACKET_HEADER_SIZE_BYTES + 2;
                     }
                 } else {
                     if new_size > max_size {
-                        connection.send_packet(Transactions::new(response));
-                        response = Vec::<Box<[u8]>>::with_capacity(len);
+                        connection.send_packet(&response);
+                        response.clear();
                         size = PACKET_HEADER_SIZE_BYTES + 2;
                     }
                     response.push(bytes.into());
@@ -72,7 +98,7 @@ impl Packet for GetTransactions {
         }
 
         if !response.is_empty() {
-            connection.send_packet(Transactions::new(response));
+            connection.send_packet(&response);
         }
     }
 }

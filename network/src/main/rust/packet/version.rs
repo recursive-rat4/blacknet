@@ -17,7 +17,7 @@
 
 use crate::connection::{Connection, State};
 use crate::node::{MIN_PROTOCOL_VERSION, PROTOCOL_VERSION};
-use crate::packet::{BlockAnnounce, Packet};
+use crate::packet::{BlockAnnounce, Packet, PacketKind};
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{error, info};
 use blacknet_time::{Seconds, SystemClock};
@@ -58,6 +58,10 @@ impl Version {
 }
 
 impl Packet for Version {
+    fn kind() -> PacketKind {
+        PacketKind::Version
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         let magic = connection.node().mode().network_magic();
         if self.magic != magic {
@@ -147,7 +151,7 @@ fn send_version(connection: &Connection, nonce: u64) {
     let magic = connection.node().mode().network_magic();
     let user_agent = connection.node().agent_string();
     let min_fee_rate = connection.node().tx_pool().read().unwrap().min_fee_rate();
-    connection.send_packet(Version::new(
+    connection.send_packet(&Version::new(
         magic,
         PROTOCOL_VERSION,
         SystemClock::secs(),

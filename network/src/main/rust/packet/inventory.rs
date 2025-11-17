@@ -16,7 +16,7 @@
  */
 
 use crate::connection::Connection;
-use crate::packet::Packet;
+use crate::packet::{Packet, PacketKind};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_time::Milliseconds;
 use serde::{Deserialize, Serialize};
@@ -52,6 +52,10 @@ impl IntoIterator for Inventory {
 }
 
 impl Packet for Inventory {
+    fn kind() -> PacketKind {
+        PacketKind::Inventory
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         if self.list.is_empty() || self.list.len() > MAX_INVENTORY {
             connection.dos("Invalid Inventory len");

@@ -17,7 +17,7 @@
 
 use crate::connection::Connection;
 use crate::node::NETWORK_TIMEOUT;
-use crate::packet::{Packet, Pong};
+use crate::packet::{Packet, PacketKind, Pong};
 use blacknet_time::{Seconds, SystemClock};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -37,11 +37,15 @@ impl Ping {
 }
 
 impl Packet for Ping {
+    fn kind() -> PacketKind {
+        PacketKind::Ping
+    }
+
     fn handle(self, connection: &Arc<Connection>) {
         connection.set_time_offset(self.time - SystemClock::secs());
 
         let magic = connection.node().mode().network_magic();
-        connection.send_packet(Pong::new(Self::solve(magic, self.challenge)));
+        connection.send_packet(&Pong::new(Self::solve(magic, self.challenge)));
 
         let last_packet_time = connection.last_packet_time();
         let last_ping_time = connection.last_ping_time();
