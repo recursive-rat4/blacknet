@@ -20,7 +20,7 @@ use blacknet_crypto::assigner::univariatepolynomial::UnivariatePolynomial as Ass
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::univariatepolynomial::UnivariatePolynomial as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::operation::Double;
+use blacknet_crypto::operation::{Double, Square};
 use blacknet_crypto::univariatepolynomial::UnivariatePolynomial;
 
 type R = blacknet_crypto::pervushin::PervushinField;
@@ -45,6 +45,21 @@ fn dbl() {
     let a = UnivariatePolynomial::from([1, 2, 3, 4].map(R::from));
     let b = UnivariatePolynomial::from([2, 4, 6, 8].map(R::from));
     assert_eq!(a.double(), b);
+}
+
+#[test]
+fn mul() {
+    let a = UnivariatePolynomial::from([2, 3].map(R::from));
+    let b = UnivariatePolynomial::from([5, 7, 11].map(R::from));
+    let c = UnivariatePolynomial::from([10, 29, 43, 33].map(R::from));
+    assert_eq!(a * b, c);
+}
+
+#[test]
+fn sqr() {
+    let a = UnivariatePolynomial::from([2, 3, 5].map(R::from));
+    let b = UnivariatePolynomial::from([4, 12, 29, 30, 25].map(R::from));
+    assert_eq!(a.square(), b);
 }
 
 #[test]

@@ -16,11 +16,11 @@
  */
 
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
-use crate::operation::Double;
+use crate::operation::{Double, Square};
 use crate::ring::{Ring, UnitalRing};
 use alloc::vec::Vec;
 use core::iter::zip;
-use core::ops::{Add, AddAssign, Deref, Neg};
+use core::ops::{Add, AddAssign, Deref, Mul, MulAssign, Neg};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -147,6 +147,47 @@ impl<R: UnitalRing> Neg for UnivariatePolynomial<R> {
         Self {
             coefficients: self.coefficients.into_iter().map(Neg::neg).collect(),
         }
+    }
+}
+
+impl<R: UnitalRing> Mul for UnivariatePolynomial<R> {
+    type Output = Self;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        &self * &rps
+    }
+}
+
+impl<R: UnitalRing> MulAssign for UnivariatePolynomial<R> {
+    fn mul_assign(&mut self, rps: Self) {
+        *self = &*self * &rps;
+    }
+}
+
+impl<R: UnitalRing> Square for UnivariatePolynomial<R> {
+    type Output = Self;
+
+    fn square(self) -> Self::Output {
+        &self * &self
+    }
+}
+
+impl<R: UnitalRing> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R> {
+    type Output = UnivariatePolynomial<R>;
+
+    fn mul(self, rps: &UnivariatePolynomial<R>) -> Self::Output {
+        // Long method
+        let mut coefficients = Vec::new();
+        coefficients.resize(
+            self.coefficients.len() + rps.coefficients.len() - 1,
+            R::ZERO,
+        );
+        for i in 0..self.coefficients.len() {
+            for j in 0..rps.coefficients.len() {
+                coefficients[i + j] += self.coefficients[i] * rps.coefficients[j];
+            }
+        }
+        Self::Output { coefficients }
     }
 }
 
