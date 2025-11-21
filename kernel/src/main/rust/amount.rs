@@ -32,6 +32,9 @@ impl Amount {
      */
     pub const COIN: Self = Self { value: 100000000 };
 
+    pub const MAX: Self = Self { value: u64::MAX };
+    pub const MIN: Self = Self { value: u64::MIN };
+
     pub const fn new(value: u64) -> Self {
         Self { value }
     }

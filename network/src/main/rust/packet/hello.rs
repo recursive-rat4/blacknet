@@ -16,8 +16,8 @@
  */
 
 use crate::connection::{Connection, State};
-use crate::node::MIN_PROTOCOL_VERSION;
-use crate::packet::{Packet, PacketKind};
+use crate::node::{MIN_PROTOCOL_VERSION, PROTOCOL_VERSION};
+use crate::packet::{BlockAnnounce, Packet, PacketKind};
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{error, info};
 use blacknet_serialization::error::Error as SerializationError;
@@ -158,7 +158,11 @@ impl Packet for Hello {
                     connection.close();
                     return;
                 }
-                send_handshake(connection);
+                if let Err(err) = send_handshake(connection) {
+                    error!(connection.logger(), "Send handshake error: {err}");
+                    connection.close();
+                    return;
+                }
                 info!(
                     connection.logger(),
                     "Accepted connection from {}",
@@ -201,6 +205,35 @@ impl Packet for Hello {
     }
 }
 
-fn send_handshake(_connection: &Connection) {
-    todo!();
+fn send_handshake(connection: &Connection) -> Result<(), SerializationError> {
+    let node = connection.node();
+
+    let mut hello = Hello::default();
+    hello.set_magic(node.mode().network_magic())?;
+    hello.set_version(PROTOCOL_VERSION)?;
+    if !connection.remote_endpoint().is_permissionless()
+        && connection.state() == State::OutgoingWaiting
+    {
+        hello.set_nonce(node.nonce())?;
+    }
+    hello.set_agent(if connection.state() == State::ProberWaiting {
+        node.prober_agent_string()
+    } else {
+        node.agent_string()
+    })?;
+    hello.set_fee_filter(if connection.state() == State::ProberWaiting {
+        Amount::MAX
+    } else {
+        let tx_pool = node.tx_pool().read().unwrap();
+        tx_pool.min_fee_rate()
+    })?;
+    connection.send_packet(&hello);
+
+    if connection.state() != State::ProberWaiting {
+        let state = node.coin_db().state();
+        let block_announce = BlockAnnounce::new(state.block_hash(), state.cumulative_difficulty());
+        connection.send_packet(&block_announce);
+    }
+
+    Ok(())
 }

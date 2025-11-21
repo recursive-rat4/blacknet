@@ -146,11 +146,12 @@ impl Packet for Version {
     }
 }
 
-#[expect(unreachable_code)]
 fn send_version(connection: &Connection, nonce: u64) {
-    let magic = connection.node().mode().network_magic();
-    let user_agent = connection.node().agent_string();
-    let min_fee_rate = connection.node().tx_pool().read().unwrap().min_fee_rate();
+    let node = connection.node();
+    let magic = node.mode().network_magic();
+    let user_agent = node.agent_string();
+    let min_fee_rate = node.tx_pool().read().unwrap().min_fee_rate();
+    let state = node.coin_db().state();
     connection.send_packet(&Version::new(
         magic,
         PROTOCOL_VERSION,
@@ -158,6 +159,6 @@ fn send_version(connection: &Connection, nonce: u64) {
         nonce,
         user_agent.to_owned(),
         min_fee_rate,
-        BlockAnnounce::new(todo!(), todo!()),
+        BlockAnnounce::new(state.block_hash(), state.cumulative_difficulty()),
     ));
 }

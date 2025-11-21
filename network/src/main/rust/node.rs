@@ -68,6 +68,7 @@ pub struct Node {
     tx_fetcher: Arc<TxFetcher>,
     wallet_db: WalletDB,
     agent_string: String,
+    prober_agent_string: String,
     agent_name: String,
     agent_version: String,
     mode: Mode,
@@ -116,6 +117,7 @@ impl Node {
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode, log_manager)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),
+            prober_agent_string: format!("/{agent_name}-prober:{agent_version}/"),
             agent_name: agent_name.to_owned(),
             agent_version: agent_version.to_owned(),
             mode,
@@ -128,6 +130,10 @@ impl Node {
 
     pub fn agent_string(&self) -> &str {
         &self.agent_string
+    }
+
+    pub fn prober_agent_string(&self) -> &str {
+        &self.prober_agent_string
     }
 
     pub fn agent_name(&self) -> &str {
