@@ -24,7 +24,7 @@ pub struct Error {
 }
 
 impl Error {
-    pub(crate) fn unexpected_eof() -> Self {
+    pub(crate) const fn unexpected_eof() -> Self {
         Self {
             message: "Unexpected end of file",
         }
