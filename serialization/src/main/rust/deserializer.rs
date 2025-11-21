@@ -18,7 +18,9 @@
 use crate::decoder::Decoder;
 use crate::error::{Error, Result};
 use alloc::string::String;
-use serde::de::{self, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess, Visitor};
+use serde_core::de::{
+    self, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess, Visitor,
+};
 
 pub struct Deserializer<D: Decoder> {
     decoder: D,

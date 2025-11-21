@@ -23,7 +23,7 @@ use crate::sizer::Sizer;
 use crate::writer::Writer;
 use alloc::vec::Vec;
 use blacknet_io::{Read, Write};
-use serde::{Deserialize, Serialize};
+use serde_core::{Deserialize, Serialize};
 
 pub fn from_bytes<'a, T: Deserialize<'a>>(bytes: &[u8], trail: bool) -> Result<T> {
     let reader = Reader::new(bytes);

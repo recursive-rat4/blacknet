@@ -17,7 +17,7 @@
 
 use alloc::string::{FromUtf8Error, String, ToString};
 use core::fmt::Display;
-use serde::{de, ser};
+use serde_core::{de, ser};
 use thiserror::Error;
 
 #[derive(Debug, Error)]

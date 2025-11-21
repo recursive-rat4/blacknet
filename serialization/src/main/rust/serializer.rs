@@ -17,7 +17,7 @@
 
 use crate::encoder::Encoder;
 use crate::error::{Error, Result};
-use serde::{Serialize, ser};
+use serde_core::{Serialize, ser};
 
 pub struct Serializer<E: Encoder> {
     encoder: E,

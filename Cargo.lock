@@ -270,6 +270,7 @@ version = "0.3.0"
 dependencies = [
  "blacknet-io",
  "serde",
+ "serde_core",
  "thiserror 2.0.17",
 ]
 
