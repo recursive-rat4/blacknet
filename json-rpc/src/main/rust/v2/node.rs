@@ -16,7 +16,7 @@
  */
 
 use crate::v2::response::*;
-use crate::v2::{NodeInfo, PeerInfo, TransactionInfo, TxPoolInfo};
+use crate::v2::{NodeInfo, PeerInfo, TransactionInfo, TxPoolInfo, fork_cache_new};
 use axum::{
     Json, Router,
     extract::{Path, State},
@@ -31,8 +31,15 @@ use blacknet_serialization::format::from_bytes;
 use std::sync::Arc;
 
 async fn peers(State(node): State<Arc<Node>>) -> Json<Vec<PeerInfo>> {
+    let block_db = node.block_db();
     let connections = node.connections().read().unwrap();
-    Json(connections.iter().map(PeerInfo::new).collect())
+    let mut fork_cache = fork_cache_new();
+    Json(
+        connections
+            .iter()
+            .map(|connection| PeerInfo::new(connection, &mut fork_cache, block_db))
+            .collect(),
+    )
 }
 
 async fn node(State(node): State<Arc<Node>>) -> Json<NodeInfo> {

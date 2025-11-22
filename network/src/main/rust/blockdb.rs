@@ -78,6 +78,10 @@ impl BlockDB {
         self.rejects.contains(&hash)
     }
 
+    pub fn contains(&self, _hash: Hash) -> bool {
+        todo!();
+    }
+
     pub fn index(&self, _hash: Hash) -> Option<BlockIndex> {
         todo!();
     }
