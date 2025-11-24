@@ -17,7 +17,7 @@
 
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
 use crate::matrixsparse::MatrixSparseBuilder;
-use crate::operation::Double;
+use crate::operation::{Double, Square};
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
 use alloc::boxed::Box;
@@ -125,6 +125,16 @@ impl<R: UnitalRing> Mul for Constant<R> {
 impl<R: UnitalRing> MulAssign for Constant<R> {
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl<R: UnitalRing> Square for Constant<R> {
+    type Output = Self;
+
+    fn square(self) -> Self::Output {
+        Self {
+            value: self.value.square(),
+        }
     }
 }
 
@@ -276,6 +286,14 @@ impl<R: UnitalRing> Mul for Variable<R> {
 
     fn mul(self, rps: Self) -> Self::Output {
         [self.into(), rps.into()].into()
+    }
+}
+
+impl<R: UnitalRing> Square for Variable<R> {
+    type Output = LinearMonoid<R>;
+
+    fn square(self) -> Self::Output {
+        [self.into(), self.into()].into()
     }
 }
 
@@ -777,6 +795,22 @@ impl<R: UnitalRing> Mul for &LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Square for LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn square(self) -> Self::Output {
+        [self.clone(), self].into()
+    }
+}
+
+impl<R: UnitalRing> Square for &LinearCombination<R> {
+    type Output = LinearMonoid<R>;
+
+    fn square(self) -> Self::Output {
+        [self.clone(), self.clone()].into()
+    }
+}
+
 #[derive(Clone)]
 pub struct LinearMonoid<R: UnitalRing> {
     factors: VecDeque<LinearCombination<R>>,
@@ -1001,6 +1035,22 @@ impl<R: UnitalRing> Mul for &LinearMonoid<R> {
 
     fn mul(self, rps: Self) -> Self::Output {
         self.clone() * rps.clone()
+    }
+}
+
+impl<R: UnitalRing> Square for LinearMonoid<R> {
+    type Output = LinearMonoid<R>;
+
+    fn square(self) -> Self::Output {
+        self.clone() * self
+    }
+}
+
+impl<R: UnitalRing> Square for &LinearMonoid<R> {
+    type Output = LinearMonoid<R>;
+
+    fn square(self) -> Self::Output {
+        self * self
     }
 }
 

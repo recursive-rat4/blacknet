@@ -19,7 +19,7 @@
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination, Scope};
 use crate::field::PrimeField;
-use crate::operation::Double;
+use crate::operation::{Double, Square};
 use crate::poseidon2::Poseidon2Params;
 
 pub trait Poseidon2Circuit<
@@ -132,7 +132,7 @@ pub trait Poseidon2Circuit<
             3 => {
                 let x2 = scope.auxiliary();
                 let x3 = scope.auxiliary();
-                scope.constrain(&*x * &*x, x2);
+                scope.constrain((&*x).square(), x2);
                 scope.constrain(&*x * x2, x3);
                 *x = x3.into();
             }
@@ -140,8 +140,8 @@ pub trait Poseidon2Circuit<
                 let x2 = scope.auxiliary();
                 let x4 = scope.auxiliary();
                 let x5 = scope.auxiliary();
-                scope.constrain(&*x * &*x, x2);
-                scope.constrain(x2 * x2, x4);
+                scope.constrain((&*x).square(), x2);
+                scope.constrain(x2.square(), x4);
                 scope.constrain(&*x * x4, x5);
                 *x = x5.into();
             }
@@ -150,9 +150,9 @@ pub trait Poseidon2Circuit<
                 let x4 = scope.auxiliary();
                 let x8 = scope.auxiliary();
                 let x9 = scope.auxiliary();
-                scope.constrain(&*x * &*x, x2);
-                scope.constrain(x2 * x2, x4);
-                scope.constrain(x4 * x4, x8);
+                scope.constrain((&*x).square(), x2);
+                scope.constrain(x2.square(), x4);
+                scope.constrain(x4.square(), x8);
                 scope.constrain(&*x * x8, x9);
                 *x = x9.into();
             }
@@ -162,10 +162,10 @@ pub trait Poseidon2Circuit<
                 let x8 = scope.auxiliary();
                 let x16 = scope.auxiliary();
                 let x17 = scope.auxiliary();
-                scope.constrain(&*x * &*x, x2);
-                scope.constrain(x2 * x2, x4);
-                scope.constrain(x4 * x4, x8);
-                scope.constrain(x8 * x8, x16);
+                scope.constrain((&*x).square(), x2);
+                scope.constrain(x2.square(), x4);
+                scope.constrain(x4.square(), x8);
+                scope.constrain(x8.square(), x16);
                 scope.constrain(&*x * x16, x17);
                 *x = x17.into();
             }
