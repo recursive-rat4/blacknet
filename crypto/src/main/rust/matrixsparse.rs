@@ -74,16 +74,18 @@ impl<R: Ring> Mul<&VectorDense<R>> for &MatrixSparse<R> {
     type Output = VectorDense<R>;
 
     fn mul(self, rps: &VectorDense<R>) -> Self::Output {
-        let mut v = VectorDense::<R>::fill(self.rows(), R::ZERO);
-        for i in 0..self.rows() {
-            let row_start = self.r_index[i];
-            let row_end = self.r_index[i + 1];
-            for j in row_start..row_end {
-                let column = self.c_index[j];
-                v[i] += self.elements[j] * rps[column];
-            }
-        }
-        v
+        (0..self.rows())
+            .map(|i| {
+                let row_start = self.r_index[i];
+                let row_end = self.r_index[i + 1];
+                (row_start..row_end)
+                    .map(|j| {
+                        let column = self.c_index[j];
+                        self.elements[j] * rps[column]
+                    })
+                    .sum()
+            })
+            .collect()
     }
 }
 
