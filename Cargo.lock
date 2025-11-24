@@ -1135,9 +1135,9 @@ checksum = "67a8e35dfe18921e475b9861266fd58a5ecfd681161f242d24a9e2d1e07fbc28"
 
 [[package]]
 name = "orx-selfref-col"
-version = "2.15.0"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffb38719b8b6dcae5ca1788bee1950de5ea23bf859bd7708a4f220fd61ea5647"
+checksum = "e719611dd7fe235cd5e0d3ae4268fa01b36dfed45852d4f1d78e5cb3359621e4"
 dependencies = [
  "orx-fixed-vec",
  "orx-pinned-vec",
@@ -1159,9 +1159,9 @@ dependencies = [
 
 [[package]]
 name = "orx-tree"
-version = "1.10.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cbf00140472b0f14f90836d5471f10419423591c86e230394b6cedaafa0137a"
+checksum = "a9882677287f95ab0ca5765d2c4a27eae04abbfc19b21c2d57f203caa6638035"
 dependencies = [
  "orx-concurrent-iter",
  "orx-iterable",

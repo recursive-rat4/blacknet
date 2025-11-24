@@ -1076,7 +1076,7 @@ impl<R: UnitalRing> CircuitBuilder<R> {
         let mut scopes = self.scopes.borrow_mut();
         let mut current_scope = self.current_scope.borrow_mut();
         let info = ScopeInfo::new(name);
-        let mut node = scopes.get_node_mut(&*current_scope).expect("Scope");
+        let mut node = scopes.get_node_mut(*current_scope).expect("Scope");
         *current_scope = node.push_child(info);
         Scope { builder: self }
     }
@@ -1180,7 +1180,7 @@ impl<R: UnitalRing> CircuitBuilder<R> {
     fn allocate(&self, kind: VariableKind) -> Variable<R> {
         let mut scopes = self.scopes.borrow_mut();
         let current_scope = self.current_scope.borrow();
-        let mut scope = scopes.get_node_mut(&*current_scope).expect("Scope");
+        let mut scope = scopes.get_node_mut(*current_scope).expect("Scope");
         let info = scope.data_mut();
         info.variables += 1;
 
@@ -1218,7 +1218,7 @@ impl<R: UnitalRing> CircuitBuilder<R> {
     fn constrain(&self, constraint: Constraint<R>) {
         let mut scopes = self.scopes.borrow_mut();
         let current_scope = self.current_scope.borrow();
-        let mut scope = scopes.get_node_mut(&*current_scope).expect("Scope");
+        let mut scope = scopes.get_node_mut(*current_scope).expect("Scope");
         let info = scope.data_mut();
 
         assert!(
@@ -1345,7 +1345,7 @@ impl<'a, R: UnitalRing> Drop for Scope<'a, R> {
     fn drop(&mut self) {
         let scopes = self.builder.scopes.borrow();
         let mut current_scope = self.builder.current_scope.borrow_mut();
-        let node = scopes.get_node(&*current_scope).expect("Tree");
+        let node = scopes.get_node(*current_scope).expect("Tree");
         *current_scope = node.parent().expect("Scope").idx();
     }
 }
