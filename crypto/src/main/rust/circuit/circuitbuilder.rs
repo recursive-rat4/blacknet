@@ -476,6 +476,20 @@ impl<R: UnitalRing> Add for &LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing> Double for LinearCombination<R> {
+    type Output = Self;
+
+    fn double(self) -> Self::Output {
+        Self {
+            terms: self
+                .terms
+                .into_iter()
+                .map(|(var, val)| (var, val.double()))
+                .collect(),
+        }
+    }
+}
+
 impl<R: UnitalRing> Double for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 

@@ -35,8 +35,8 @@ pub trait Poseidon2Circuit<
             let j = i << 2;
             let t0 = &x[j] + &x[j + 1];
             let t1 = &x[j + 2] + &x[j + 3];
-            let t2 = x[j + 1].double() + &t1;
-            let t3 = x[j + 3].double() + &t0;
+            let t2 = (&x[j + 1]).double() + &t1;
+            let t3 = (&x[j + 3]).double() + &t0;
             let t4 = t1.double().double() + &t3;
             let t5 = t0.double().double() + &t2;
             let t6 = t3 + &t5;
@@ -88,13 +88,13 @@ pub trait Poseidon2Circuit<
             2 => {
                 let s = &x[0] + &x[1];
                 x[0] += &s;
-                x[1] = x[1].double() + s;
+                x[1] = (&x[1]).double() + s;
             }
             3 => {
                 let s = &x[0] + &x[1] + &x[2];
                 x[0] += &s;
                 x[1] += &s;
-                x[2] = x[2].double() + s;
+                x[2] = (&x[2]).double() + s;
             }
             4 | 8 | 12 | 16 | 20 | 24 => {
                 let mut s = x[0].clone();
