@@ -71,7 +71,7 @@ impl UniformGenerator for GeneratorCircuit {
     type Output = LinearCombination<Z>;
 
     fn generate(&mut self) -> Self::Output {
-        let result = Constant::from(self.i);
+        let result = Constant::new(self.i);
         self.i += 1.into();
         result.into()
     }

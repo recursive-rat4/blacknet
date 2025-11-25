@@ -102,7 +102,7 @@ pub trait Poseidon2Circuit<
                     s += &x[i];
                 }
                 for i in 0..WIDTH {
-                    x[i] = &x[i] * Constant::from(Self::M[i]) + &s;
+                    x[i] = &x[i] * Constant::new(Self::M[i]) + &s;
                 }
             }
             _ => {
@@ -113,17 +113,17 @@ pub trait Poseidon2Circuit<
 
     fn rcb(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
         for i in 0..WIDTH {
-            x[i] += Constant::from(Self::RCB[round * WIDTH + i]);
+            x[i] += Constant::new(Self::RCB[round * WIDTH + i]);
         }
     }
 
     fn rcp(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
-        x[0] += Constant::from(Self::RCP[round]);
+        x[0] += Constant::new(Self::RCP[round]);
     }
 
     fn rce(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
         for i in 0..WIDTH {
-            x[i] += Constant::from(Self::RCE[round * WIDTH + i]);
+            x[i] += Constant::new(Self::RCE[round * WIDTH + i]);
         }
     }
 

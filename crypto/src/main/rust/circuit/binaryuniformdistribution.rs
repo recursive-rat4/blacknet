@@ -76,7 +76,7 @@ impl<
             for i in 0..Z::BITS {
                 let digit = scope.auxiliary();
                 self.cache[i as usize] = digit.into();
-                composed += digit * Constant::from(p);
+                composed += digit * Constant::new(p);
                 p = p.double();
             }
             scope.constrain(composed, generated);

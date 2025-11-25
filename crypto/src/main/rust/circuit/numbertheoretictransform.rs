@@ -38,7 +38,7 @@ pub fn cooley_tukey<Z: UnitalRing + Twiddles<M>, const M: usize, const N: usize>
             let zeta = Z::TWIDDLES[j];
             i = l;
             while i < l + k {
-                let t = &a[i + k] * Constant::from(zeta);
+                let t = &a[i + k] * Constant::new(zeta);
                 a[i + k] = &a[i] - &t;
                 a[i] += t;
                 i += 1;
@@ -69,12 +69,12 @@ pub fn gentleman_sande<Z: UnitalRing + Twiddles<M>, const M: usize, const N: usi
                 let t = a[i].clone();
                 a[i] += a[i + k].clone();
                 a[i + k] = t - &a[i + k];
-                a[i + k] *= Constant::from(zeta);
+                a[i + k] *= Constant::new(zeta);
                 i += 1;
             }
             l = i + k;
         }
         k <<= 1;
     }
-    a.iter_mut().for_each(|i| *i *= Constant::from(Z::SCALE));
+    a.iter_mut().for_each(|i| *i *= Constant::new(Z::SCALE));
 }

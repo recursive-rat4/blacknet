@@ -62,7 +62,7 @@ impl PermutationCircuit<Z> for TestPermutation {
     fn permute(_: &CircuitBuilder<Z>, x: &mut Self::Domain) {
         x.iter_mut()
             .enumerate()
-            .for_each(|(i, e)| *e += Constant::from(Z::from(i as i8 + 1)));
+            .for_each(|(i, e)| *e += Constant::new(Z::from(i as i8 + 1)));
     }
 }
 
@@ -92,8 +92,8 @@ fn circuit() {
     let a_circuit: [LinearCombination<Z>; 2] = array::from_fn(|_| scope.public_input().into());
     let b_circuit: [LinearCombination<Z>; 2] = array::from_fn(|_| scope.public_input().into());
     let c_circuit = jive_circuit.compress(&a_circuit, &b_circuit);
-    scope.constrain(c_circuit[0].clone(), Constant::from(c_plain[0]));
-    scope.constrain(c_circuit[1].clone(), Constant::from(c_plain[1]));
+    scope.constrain(c_circuit[0].clone(), Constant::new(c_plain[0]));
+    scope.constrain(c_circuit[1].clone(), Constant::new(c_plain[1]));
     drop(scope);
 
     let r1cs = circuit.r1cs();

@@ -110,9 +110,9 @@ fn circuit_blacknet() {
     let x_circuit: [LinearCombination<Z>; 3] = array::from_fn(|_| scope.public_input().into());
     duplex_circuit.absorb(&x_circuit);
     let y_circuit: [LinearCombination<Z>; 3] = duplex_circuit.squeeze();
-    scope.constrain(y_circuit[0].clone(), Constant::from(y_plain[0]));
-    scope.constrain(y_circuit[1].clone(), Constant::from(y_plain[1]));
-    scope.constrain(y_circuit[2].clone(), Constant::from(y_plain[2]));
+    scope.constrain(y_circuit[0].clone(), Constant::new(y_plain[0]));
+    scope.constrain(y_circuit[1].clone(), Constant::new(y_plain[1]));
+    scope.constrain(y_circuit[2].clone(), Constant::new(y_plain[2]));
     drop(scope);
 
     let r1cs = circuit.r1cs();

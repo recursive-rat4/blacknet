@@ -104,7 +104,7 @@ fn comparatism() {
     let circuit = CircuitBuilder::<R>::new(1);
 
     let scope = circuit.scope("equalism");
-    let c = Constant::from(R::from(4));
+    let c = Constant::new(R::from(4));
     let x = scope.public_input();
     let y = scope.public_output();
     let w = scope.private_input();
@@ -156,7 +156,7 @@ fn additivism() {
     let circuit = CircuitBuilder::<R>::new(1);
 
     let scope = circuit.scope("additivism");
-    let c = Constant::from(R::from(4));
+    let c = Constant::new(R::from(4));
     let x = scope.public_input();
     let y = scope.public_input();
     let w = scope.private_output();
@@ -209,7 +209,7 @@ fn multiplism() {
     let circuit = CircuitBuilder::<R>::new(2);
 
     let scope = circuit.scope("multiplism");
-    let c = Constant::from(R::from(4));
+    let c = Constant::new(R::from(4));
     let x = scope.public_output();
     let y = scope.public_output();
     let w = scope.private_input();
@@ -271,10 +271,10 @@ fn expressionism() {
     let circuit = CircuitBuilder::<R>::new(2);
 
     let scope = circuit.scope("expressionism");
-    let a = Constant::from(R::from(160));
-    let b = Constant::from(R::from(2));
-    let c = Constant::from(R::from(4));
-    let d = Constant::from(R::from(24));
+    let a = Constant::new(R::from(160));
+    let b = Constant::new(R::from(2));
+    let c = Constant::new(R::from(4));
+    let d = Constant::new(R::from(24));
     let x = scope.public_input();
     let y = scope.public_input();
     let z = scope.public_input();
@@ -327,7 +327,7 @@ fn cubism() {
     let circuit = CircuitBuilder::<R>::new(3);
 
     let scope = circuit.scope("cubism");
-    let c = Constant::from(R::from(350));
+    let c = Constant::new(R::from(350));
     let x = scope.public_input();
     let y = scope.public_input();
     let z = scope.public_input();

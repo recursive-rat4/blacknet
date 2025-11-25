@@ -42,8 +42,12 @@ pub struct Constant<R: UnitalRing> {
 }
 
 impl<R: UnitalRing> Constant<R> {
-    pub const UNITY: Self = Self { value: R::UNITY };
-    pub const ZERO: Self = Self { value: R::ZERO };
+    pub const UNITY: Self = Self::new(R::UNITY);
+    pub const ZERO: Self = Self::new(R::ZERO);
+
+    pub const fn new(value: R) -> Self {
+        Self { value }
+    }
 }
 
 impl<R: UnitalRing> Expression<R> for Constant<R> {
@@ -66,9 +70,7 @@ impl<R: UnitalRing> Add for Constant<R> {
     type Output = Constant<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
-        Self {
-            value: self.value + rps.value,
-        }
+        Self::new(self.value + rps.value)
     }
 }
 
@@ -82,9 +84,7 @@ impl<R: UnitalRing> Double for Constant<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
-        Self {
-            value: self.value.double(),
-        }
+        Self::new(self.value.double())
     }
 }
 
@@ -92,7 +92,7 @@ impl<R: UnitalRing> Neg for Constant<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self { value: -self.value }
+        Self::new(-self.value)
     }
 }
 
@@ -100,9 +100,7 @@ impl<R: UnitalRing> Sub for Constant<R> {
     type Output = Constant<R>;
 
     fn sub(self, rps: Constant<R>) -> Self::Output {
-        Self {
-            value: self.value - rps.value,
-        }
+        Self::new(self.value - rps.value)
     }
 }
 
@@ -116,9 +114,7 @@ impl<R: UnitalRing> Mul for Constant<R> {
     type Output = Constant<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
-        Self {
-            value: self.value * rps.value,
-        }
+        Self::new(self.value * rps.value)
     }
 }
 
@@ -132,9 +128,7 @@ impl<R: UnitalRing> Square for Constant<R> {
     type Output = Self;
 
     fn square(self) -> Self::Output {
-        Self {
-            value: self.value.square(),
-        }
+        Self::new(self.value.square())
     }
 }
 

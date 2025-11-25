@@ -76,7 +76,7 @@ impl<
             self.position += 1;
             self.state[self.position..RATE].fill(LinearCombination::default());
             self.position = RATE;
-            self.state[WIDTH - 1] += Constant::from(S::from(2));
+            self.state[WIDTH - 1] += Constant::new(S::from(2));
         } else {
             self.state[WIDTH - 1] += Constant::UNITY;
         }
