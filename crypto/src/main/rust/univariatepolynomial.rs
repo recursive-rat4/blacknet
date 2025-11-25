@@ -18,6 +18,7 @@
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::operation::{Double, Square};
 use crate::ring::{Ring, UnitalRing};
+use alloc::borrow::Borrow;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref, Mul, MulAssign, Neg};
@@ -87,6 +88,13 @@ impl<R: Ring> From<UnivariatePolynomial<R>> for Vec<R> {
 impl<R: Ring> AsRef<[R]> for UnivariatePolynomial<R> {
     #[inline]
     fn as_ref(&self) -> &[R] {
+        &self.coefficients
+    }
+}
+
+impl<R: Ring> Borrow<[R]> for UnivariatePolynomial<R> {
+    #[inline]
+    fn borrow(&self) -> &[R] {
         &self.coefficients
     }
 }

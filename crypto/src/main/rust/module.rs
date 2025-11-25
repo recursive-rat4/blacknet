@@ -23,6 +23,7 @@ use crate::operation::Double;
 use crate::ring::Ring;
 use crate::semigroup::AdditiveSemigroup;
 use core::array;
+use core::borrow::Borrow;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -84,6 +85,13 @@ impl<R: Ring, const N: usize> Debug for FreeModule<R, N> {
 impl<R: Ring, const N: usize> AsRef<[R]> for FreeModule<R, N> {
     #[inline]
     fn as_ref(&self) -> &[R] {
+        &self.components
+    }
+}
+
+impl<R: Ring, const N: usize> Borrow<[R]> for FreeModule<R, N> {
+    #[inline]
+    fn borrow(&self) -> &[R] {
         &self.components
     }
 }

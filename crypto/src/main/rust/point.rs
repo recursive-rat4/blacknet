@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use alloc::borrow::Borrow;
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
 use core::ops::{Deref, Index, IndexMut};
@@ -66,6 +67,13 @@ impl<S: Debug> Debug for Point<S> {
 impl<S> AsRef<[S]> for Point<S> {
     #[inline]
     fn as_ref(&self) -> &[S] {
+        &self.coordinates
+    }
+}
+
+impl<S> Borrow<[S]> for Point<S> {
+    #[inline]
+    fn borrow(&self) -> &[S] {
         &self.coordinates
     }
 }

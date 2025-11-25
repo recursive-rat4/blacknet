@@ -18,6 +18,7 @@
 use crate::matrixdense::MatrixDense;
 use crate::operation::Double;
 use crate::ring::{Ring, UnitalRing};
+use alloc::borrow::Borrow;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
@@ -105,6 +106,13 @@ impl<R: Ring> Debug for VectorDense<R> {
 impl<R: Ring> AsRef<[R]> for VectorDense<R> {
     #[inline]
     fn as_ref(&self) -> &[R] {
+        &self.elements
+    }
+}
+
+impl<R: Ring> Borrow<[R]> for VectorDense<R> {
+    #[inline]
+    fn borrow(&self) -> &[R] {
         &self.elements
     }
 }
