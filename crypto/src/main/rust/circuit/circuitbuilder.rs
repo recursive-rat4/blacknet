@@ -20,6 +20,7 @@ use crate::matrixsparse::MatrixSparseBuilder;
 use crate::operation::{Double, Square};
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use alloc::boxed::Box;
 use alloc::collections::{BTreeMap, VecDeque};
 use alloc::vec;
@@ -31,26 +32,26 @@ use core::marker::PhantomData;
 use core::ops::{Add, AddAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 use orx_tree::{Dyn, DynTree, NodeIdx, NodeRef};
 
-pub trait Expression<R: UnitalRing>: 'static {
+pub trait Expression<R: Semiring>: 'static {
     fn span(&self) -> LinearSpan<R>;
     fn degree(&self) -> usize;
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub struct Constant<R: UnitalRing> {
+pub struct Constant<R: Semiring> {
     value: R,
 }
 
-impl<R: UnitalRing> Constant<R> {
-    pub const UNITY: Self = Self::new(R::UNITY);
+impl<R: Semiring> Constant<R> {
     pub const ZERO: Self = Self::new(R::ZERO);
+    pub const ONE: Self = Self::new(R::ONE);
 
     pub const fn new(value: R) -> Self {
         Self { value }
     }
 }
 
-impl<R: UnitalRing> Expression<R> for Constant<R> {
+impl<R: Semiring> Expression<R> for Constant<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![(*self).into()].into()
     }
@@ -60,13 +61,13 @@ impl<R: UnitalRing> Expression<R> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> From<R> for Constant<R> {
+impl<R: Semiring> From<R> for Constant<R> {
     fn from(value: R) -> Self {
         Self { value }
     }
 }
 
-impl<R: UnitalRing> Add for Constant<R> {
+impl<R: Semiring> Add for Constant<R> {
     type Output = Constant<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
@@ -74,13 +75,13 @@ impl<R: UnitalRing> Add for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> AddAssign for Constant<R> {
+impl<R: Semiring> AddAssign for Constant<R> {
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
     }
 }
 
-impl<R: UnitalRing> Double for Constant<R> {
+impl<R: Semiring> Double for Constant<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -110,7 +111,7 @@ impl<R: UnitalRing> SubAssign for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Mul for Constant<R> {
+impl<R: Semiring> Mul for Constant<R> {
     type Output = Constant<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -118,13 +119,13 @@ impl<R: UnitalRing> Mul for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> MulAssign for Constant<R> {
+impl<R: Semiring> MulAssign for Constant<R> {
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
     }
 }
 
-impl<R: UnitalRing> Square for Constant<R> {
+impl<R: Semiring> Square for Constant<R> {
     type Output = Self;
 
     fn square(self) -> Self::Output {
@@ -143,13 +144,13 @@ pub enum VariableKind {
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub struct Variable<R: UnitalRing> {
+pub struct Variable<R: Semiring> {
     kind: VariableKind,
     number: usize,
     phantom: PhantomData<R>,
 }
 
-impl<R: UnitalRing> Variable<R> {
+impl<R: Semiring> Variable<R> {
     const fn new(kind: VariableKind, number: usize) -> Self {
         Self {
             kind,
@@ -161,7 +162,7 @@ impl<R: UnitalRing> Variable<R> {
     const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
 }
 
-impl<R: UnitalRing> Expression<R> for Variable<R> {
+impl<R: Semiring> Expression<R> for Variable<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![(*self).into()].into()
     }
@@ -171,7 +172,7 @@ impl<R: UnitalRing> Expression<R> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Ord for Variable<R> {
+impl<R: Semiring> Ord for Variable<R> {
     fn cmp(&self, rps: &Self) -> Ordering {
         match self.kind.cmp(&rps.kind) {
             Ordering::Equal => self.number.cmp(&rps.number),
@@ -181,45 +182,45 @@ impl<R: UnitalRing> Ord for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> PartialOrd for Variable<R> {
+impl<R: Semiring> PartialOrd for Variable<R> {
     fn partial_cmp(&self, rps: &Self) -> Option<Ordering> {
         Some(self.cmp(rps))
     }
 }
 
-impl<R: UnitalRing> Add<Constant<R>> for Variable<R> {
+impl<R: Semiring> Add<Constant<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
-        [(self, Constant::UNITY), (Variable::CONSTANT, rps)].into()
+        [(self, Constant::ONE), (Variable::CONSTANT, rps)].into()
     }
 }
 
-impl<R: UnitalRing> Add<Variable<R>> for Constant<R> {
+impl<R: Semiring> Add<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
-        [(Variable::CONSTANT, self), (rps, Constant::UNITY)].into()
+        [(Variable::CONSTANT, self), (rps, Constant::ONE)].into()
     }
 }
 
-impl<R: UnitalRing> Add for Variable<R> {
+impl<R: Semiring> Add for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
         if self != rps {
-            [(self, Constant::UNITY), (rps, Constant::UNITY)].into()
+            [(self, Constant::ONE), (rps, Constant::ONE)].into()
         } else {
-            [(self, Constant::UNITY.double())].into()
+            [(self, Constant::ONE.double())].into()
         }
     }
 }
 
-impl<R: UnitalRing> Double for Variable<R> {
+impl<R: Semiring> Double for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn double(self) -> Self::Output {
-        [(self, Constant::UNITY.double())].into()
+        [(self, Constant::ONE.double())].into()
     }
 }
 
@@ -227,7 +228,7 @@ impl<R: UnitalRing> Neg for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn neg(self) -> Self::Output {
-        [(self, -Constant::UNITY)].into()
+        [(self, -Constant::ONE)].into()
     }
 }
 
@@ -235,7 +236,7 @@ impl<R: UnitalRing> Sub<Constant<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Constant<R>) -> Self::Output {
-        [(self, Constant::UNITY), (Variable::CONSTANT, -rps)].into()
+        [(self, Constant::ONE), (Variable::CONSTANT, -rps)].into()
     }
 }
 
@@ -243,7 +244,7 @@ impl<R: UnitalRing> Sub<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Variable<R>) -> Self::Output {
-        [(Variable::CONSTANT, self), (rps, -Constant::UNITY)].into()
+        [(Variable::CONSTANT, self), (rps, -Constant::ONE)].into()
     }
 }
 
@@ -252,14 +253,14 @@ impl<R: UnitalRing> Sub for Variable<R> {
 
     fn sub(self, rps: Self) -> Self::Output {
         if self != rps {
-            [(self, Constant::UNITY), (rps, -Constant::UNITY)].into()
+            [(self, Constant::ONE), (rps, -Constant::ONE)].into()
         } else {
             [].into()
         }
     }
 }
 
-impl<R: UnitalRing> Mul<Constant<R>> for Variable<R> {
+impl<R: Semiring> Mul<Constant<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -267,7 +268,7 @@ impl<R: UnitalRing> Mul<Constant<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<Variable<R>> for Constant<R> {
+impl<R: Semiring> Mul<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -275,7 +276,7 @@ impl<R: UnitalRing> Mul<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Mul for Variable<R> {
+impl<R: Semiring> Mul for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -283,7 +284,7 @@ impl<R: UnitalRing> Mul for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Square for Variable<R> {
+impl<R: Semiring> Square for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
@@ -294,11 +295,11 @@ impl<R: UnitalRing> Square for Variable<R> {
 pub type Term<R> = (Variable<R>, Constant<R>);
 
 #[derive(Clone, Default)]
-pub struct LinearCombination<R: UnitalRing> {
+pub struct LinearCombination<R: Semiring> {
     terms: BTreeMap<Variable<R>, Constant<R>>,
 }
 
-impl<R: UnitalRing> LinearCombination<R> {
+impl<R: Semiring> LinearCombination<R> {
     pub const fn new() -> Self {
         Self {
             terms: BTreeMap::new(),
@@ -310,7 +311,7 @@ impl<R: UnitalRing> LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Expression<R> for LinearCombination<R> {
+impl<R: Semiring> Expression<R> for LinearCombination<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone()].into()
     }
@@ -328,7 +329,7 @@ impl<R: UnitalRing> Expression<R> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> From<Constant<R>> for LinearCombination<R> {
+impl<R: Semiring> From<Constant<R>> for LinearCombination<R> {
     fn from(constant: Constant<R>) -> Self {
         Self {
             terms: [(Variable::CONSTANT, constant)].into(),
@@ -336,15 +337,15 @@ impl<R: UnitalRing> From<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> From<Variable<R>> for LinearCombination<R> {
+impl<R: Semiring> From<Variable<R>> for LinearCombination<R> {
     fn from(variable: Variable<R>) -> Self {
         Self {
-            terms: [(variable, Constant::UNITY)].into(),
+            terms: [(variable, Constant::ONE)].into(),
         }
     }
 }
 
-impl<R: UnitalRing> From<Term<R>> for LinearCombination<R> {
+impl<R: Semiring> From<Term<R>> for LinearCombination<R> {
     fn from(term: Term<R>) -> Self {
         Self {
             terms: [term].into(),
@@ -352,7 +353,7 @@ impl<R: UnitalRing> From<Term<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing, const N: usize> From<[Term<R>; N]> for LinearCombination<R> {
+impl<R: Semiring, const N: usize> From<[Term<R>; N]> for LinearCombination<R> {
     fn from(terms: [Term<R>; N]) -> Self {
         Self {
             terms: terms.into(),
@@ -360,7 +361,7 @@ impl<R: UnitalRing, const N: usize> From<[Term<R>; N]> for LinearCombination<R> 
     }
 }
 
-impl<R: UnitalRing> AddAssign<Term<R>> for LinearCombination<R> {
+impl<R: Semiring> AddAssign<Term<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: Term<R>) {
         let (variable, coefficient) = rps;
         self.terms
@@ -370,7 +371,7 @@ impl<R: UnitalRing> AddAssign<Term<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Add<Constant<R>> for LinearCombination<R> {
+impl<R: Semiring> Add<Constant<R>> for LinearCombination<R> {
     type Output = Self;
 
     fn add(mut self, rps: Constant<R>) -> Self::Output {
@@ -379,13 +380,13 @@ impl<R: UnitalRing> Add<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> AddAssign<Constant<R>> for LinearCombination<R> {
+impl<R: Semiring> AddAssign<Constant<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: Constant<R>) {
         *self += (Variable::CONSTANT, rps)
     }
 }
 
-impl<R: UnitalRing> Add<Constant<R>> for &LinearCombination<R> {
+impl<R: Semiring> Add<Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
@@ -393,7 +394,7 @@ impl<R: UnitalRing> Add<Constant<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Add<LinearCombination<R>> for Constant<R> {
+impl<R: Semiring> Add<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -402,7 +403,7 @@ impl<R: UnitalRing> Add<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Add<&LinearCombination<R>> for Constant<R> {
+impl<R: Semiring> Add<&LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -410,7 +411,7 @@ impl<R: UnitalRing> Add<&LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Add<Variable<R>> for LinearCombination<R> {
+impl<R: Semiring> Add<Variable<R>> for LinearCombination<R> {
     type Output = Self;
 
     fn add(mut self, rps: Variable<R>) -> Self::Output {
@@ -419,13 +420,13 @@ impl<R: UnitalRing> Add<Variable<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> AddAssign<Variable<R>> for LinearCombination<R> {
+impl<R: Semiring> AddAssign<Variable<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: Variable<R>) {
-        *self += (rps, Constant::UNITY)
+        *self += (rps, Constant::ONE)
     }
 }
 
-impl<R: UnitalRing> Add<Variable<R>> for &LinearCombination<R> {
+impl<R: Semiring> Add<Variable<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -433,16 +434,16 @@ impl<R: UnitalRing> Add<Variable<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Add<LinearCombination<R>> for Variable<R> {
+impl<R: Semiring> Add<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
-        rps += (self, Constant::UNITY);
+        rps += (self, Constant::ONE);
         rps
     }
 }
 
-impl<R: UnitalRing> Add<&LinearCombination<R>> for Variable<R> {
+impl<R: Semiring> Add<&LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -450,7 +451,7 @@ impl<R: UnitalRing> Add<&LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Add for LinearCombination<R> {
+impl<R: Semiring> Add for LinearCombination<R> {
     type Output = Self;
 
     fn add(mut self, rps: Self) -> Self::Output {
@@ -459,7 +460,7 @@ impl<R: UnitalRing> Add for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> AddAssign for LinearCombination<R> {
+impl<R: Semiring> AddAssign for LinearCombination<R> {
     fn add_assign(&mut self, rps: Self) {
         for term in rps.terms {
             *self += term
@@ -467,7 +468,7 @@ impl<R: UnitalRing> AddAssign for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Add<&Self> for LinearCombination<R> {
+impl<R: Semiring> Add<&Self> for LinearCombination<R> {
     type Output = Self;
 
     fn add(mut self, rps: &Self) -> Self::Output {
@@ -476,7 +477,7 @@ impl<R: UnitalRing> Add<&Self> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> AddAssign<&Self> for LinearCombination<R> {
+impl<R: Semiring> AddAssign<&Self> for LinearCombination<R> {
     fn add_assign(&mut self, rps: &Self) {
         for (&variable, &coefficient) in &rps.terms {
             *self += (variable, coefficient)
@@ -484,7 +485,7 @@ impl<R: UnitalRing> AddAssign<&Self> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Add for &LinearCombination<R> {
+impl<R: Semiring> Add for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -492,7 +493,7 @@ impl<R: UnitalRing> Add for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Double for LinearCombination<R> {
+impl<R: Semiring> Double for LinearCombination<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -506,7 +507,7 @@ impl<R: UnitalRing> Double for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Double for &LinearCombination<R> {
+impl<R: Semiring> Double for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn double(self) -> Self::Output {
@@ -605,7 +606,7 @@ impl<R: UnitalRing> Sub<Variable<R>> for LinearCombination<R> {
 
 impl<R: UnitalRing> SubAssign<Variable<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: Variable<R>) {
-        *self -= (rps, Constant::UNITY)
+        *self -= (rps, Constant::ONE)
     }
 }
 
@@ -622,7 +623,7 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for Variable<R> {
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
         rps = -rps;
-        rps += (self, Constant::UNITY);
+        rps += (self, Constant::ONE);
         rps
     }
 }
@@ -677,7 +678,7 @@ impl<R: UnitalRing> Sub for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<Constant<R>> for LinearCombination<R> {
+impl<R: Semiring> Mul<Constant<R>> for LinearCombination<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Constant<R>) -> Self::Output {
@@ -686,7 +687,7 @@ impl<R: UnitalRing> Mul<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> MulAssign<Constant<R>> for LinearCombination<R> {
+impl<R: Semiring> MulAssign<Constant<R>> for LinearCombination<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
         for coefficient in self.terms.values_mut() {
             *coefficient *= rps;
@@ -694,7 +695,7 @@ impl<R: UnitalRing> MulAssign<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<Constant<R>> for &LinearCombination<R> {
+impl<R: Semiring> Mul<Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -706,7 +707,7 @@ impl<R: UnitalRing> Mul<Constant<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<LinearCombination<R>> for Constant<R> {
+impl<R: Semiring> Mul<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -717,7 +718,7 @@ impl<R: UnitalRing> Mul<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<&LinearCombination<R>> for Constant<R> {
+impl<R: Semiring> Mul<&LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -729,15 +730,15 @@ impl<R: UnitalRing> Mul<&LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<Variable<R>> for LinearCombination<R> {
+impl<R: Semiring> Mul<Variable<R>> for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
-        [self, (rps, Constant::UNITY).into()].into()
+        [self, (rps, Constant::ONE).into()].into()
     }
 }
 
-impl<R: UnitalRing> Mul<Variable<R>> for &LinearCombination<R> {
+impl<R: Semiring> Mul<Variable<R>> for &LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -745,15 +746,15 @@ impl<R: UnitalRing> Mul<Variable<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<LinearCombination<R>> for Variable<R> {
+impl<R: Semiring> Mul<LinearCombination<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
-        [(self, Constant::UNITY).into(), rps].into()
+        [(self, Constant::ONE).into(), rps].into()
     }
 }
 
-impl<R: UnitalRing> Mul<&LinearCombination<R>> for Variable<R> {
+impl<R: Semiring> Mul<&LinearCombination<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -761,7 +762,7 @@ impl<R: UnitalRing> Mul<&LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Mul for LinearCombination<R> {
+impl<R: Semiring> Mul for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -769,7 +770,7 @@ impl<R: UnitalRing> Mul for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<&Self> for LinearCombination<R> {
+impl<R: Semiring> Mul<&Self> for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &Self) -> Self::Output {
@@ -777,7 +778,7 @@ impl<R: UnitalRing> Mul<&Self> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<LinearCombination<R>> for &LinearCombination<R> {
+impl<R: Semiring> Mul<LinearCombination<R>> for &LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
@@ -785,7 +786,7 @@ impl<R: UnitalRing> Mul<LinearCombination<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul for &LinearCombination<R> {
+impl<R: Semiring> Mul for &LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -793,7 +794,7 @@ impl<R: UnitalRing> Mul for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Square for LinearCombination<R> {
+impl<R: Semiring> Square for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
@@ -801,7 +802,7 @@ impl<R: UnitalRing> Square for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Square for &LinearCombination<R> {
+impl<R: Semiring> Square for &LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
@@ -810,11 +811,11 @@ impl<R: UnitalRing> Square for &LinearCombination<R> {
 }
 
 #[derive(Clone)]
-pub struct LinearMonoid<R: UnitalRing> {
+pub struct LinearMonoid<R: Semiring> {
     factors: VecDeque<LinearCombination<R>>,
 }
 
-impl<R: UnitalRing> Expression<R> for LinearMonoid<R> {
+impl<R: Semiring> Expression<R> for LinearMonoid<R> {
     fn span(&self) -> LinearSpan<R> {
         self.factors.clone().into()
     }
@@ -824,7 +825,7 @@ impl<R: UnitalRing> Expression<R> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing, const N: usize> From<[LinearCombination<R>; N]> for LinearMonoid<R> {
+impl<R: Semiring, const N: usize> From<[LinearCombination<R>; N]> for LinearMonoid<R> {
     fn from(factors: [LinearCombination<R>; N]) -> Self {
         Self {
             factors: factors.into(),
@@ -832,7 +833,7 @@ impl<R: UnitalRing, const N: usize> From<[LinearCombination<R>; N]> for LinearMo
     }
 }
 
-impl<R: UnitalRing> Mul<Constant<R>> for LinearMonoid<R> {
+impl<R: Semiring> Mul<Constant<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Constant<R>) -> Self::Output {
@@ -841,7 +842,7 @@ impl<R: UnitalRing> Mul<Constant<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> MulAssign<Constant<R>> for LinearMonoid<R> {
+impl<R: Semiring> MulAssign<Constant<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
         match self.factors.back_mut() {
             Some(factor) => *factor *= rps,
@@ -850,7 +851,7 @@ impl<R: UnitalRing> MulAssign<Constant<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<Constant<R>> for &LinearMonoid<R> {
+impl<R: Semiring> Mul<Constant<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -858,7 +859,7 @@ impl<R: UnitalRing> Mul<Constant<R>> for &LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<LinearMonoid<R>> for Constant<R> {
+impl<R: Semiring> Mul<LinearMonoid<R>> for Constant<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
@@ -870,7 +871,7 @@ impl<R: UnitalRing> Mul<LinearMonoid<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<&LinearMonoid<R>> for Constant<R> {
+impl<R: Semiring> Mul<&LinearMonoid<R>> for Constant<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
@@ -878,7 +879,7 @@ impl<R: UnitalRing> Mul<&LinearMonoid<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<Variable<R>> for LinearMonoid<R> {
+impl<R: Semiring> Mul<Variable<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Variable<R>) -> Self::Output {
@@ -887,13 +888,13 @@ impl<R: UnitalRing> Mul<Variable<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> MulAssign<Variable<R>> for LinearMonoid<R> {
+impl<R: Semiring> MulAssign<Variable<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: Variable<R>) {
         self.factors.push_back(rps.into())
     }
 }
 
-impl<R: UnitalRing> Mul<Variable<R>> for &LinearMonoid<R> {
+impl<R: Semiring> Mul<Variable<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -901,7 +902,7 @@ impl<R: UnitalRing> Mul<Variable<R>> for &LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<LinearMonoid<R>> for Variable<R> {
+impl<R: Semiring> Mul<LinearMonoid<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
@@ -910,7 +911,7 @@ impl<R: UnitalRing> Mul<LinearMonoid<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<&LinearMonoid<R>> for Variable<R> {
+impl<R: Semiring> Mul<&LinearMonoid<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
@@ -918,7 +919,7 @@ impl<R: UnitalRing> Mul<&LinearMonoid<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<LinearCombination<R>> for LinearMonoid<R> {
+impl<R: Semiring> Mul<LinearCombination<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: LinearCombination<R>) -> Self::Output {
@@ -927,13 +928,13 @@ impl<R: UnitalRing> Mul<LinearCombination<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> MulAssign<LinearCombination<R>> for LinearMonoid<R> {
+impl<R: Semiring> MulAssign<LinearCombination<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: LinearCombination<R>) {
         self.factors.push_back(rps)
     }
 }
 
-impl<R: UnitalRing> Mul<LinearCombination<R>> for &LinearMonoid<R> {
+impl<R: Semiring> Mul<LinearCombination<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
@@ -941,7 +942,7 @@ impl<R: UnitalRing> Mul<LinearCombination<R>> for &LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<&LinearCombination<R>> for LinearMonoid<R> {
+impl<R: Semiring> Mul<&LinearCombination<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: &LinearCombination<R>) -> Self::Output {
@@ -950,13 +951,13 @@ impl<R: UnitalRing> Mul<&LinearCombination<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> MulAssign<&LinearCombination<R>> for LinearMonoid<R> {
+impl<R: Semiring> MulAssign<&LinearCombination<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: &LinearCombination<R>) {
         self.factors.push_back(rps.clone())
     }
 }
 
-impl<R: UnitalRing> Mul<LinearMonoid<R>> for LinearCombination<R> {
+impl<R: Semiring> Mul<LinearMonoid<R>> for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
@@ -965,7 +966,7 @@ impl<R: UnitalRing> Mul<LinearMonoid<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<LinearMonoid<R>> for &LinearCombination<R> {
+impl<R: Semiring> Mul<LinearMonoid<R>> for &LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
@@ -974,7 +975,7 @@ impl<R: UnitalRing> Mul<LinearMonoid<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<&LinearMonoid<R>> for LinearCombination<R> {
+impl<R: Semiring> Mul<&LinearMonoid<R>> for LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
@@ -982,7 +983,7 @@ impl<R: UnitalRing> Mul<&LinearMonoid<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<&LinearMonoid<R>> for &LinearCombination<R> {
+impl<R: Semiring> Mul<&LinearMonoid<R>> for &LinearCombination<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
@@ -990,7 +991,7 @@ impl<R: UnitalRing> Mul<&LinearMonoid<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Mul for LinearMonoid<R> {
+impl<R: Semiring> Mul for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Self) -> Self::Output {
@@ -999,13 +1000,13 @@ impl<R: UnitalRing> Mul for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> MulAssign for LinearMonoid<R> {
+impl<R: Semiring> MulAssign for LinearMonoid<R> {
     fn mul_assign(&mut self, mut rps: Self) {
         self.factors.append(&mut rps.factors)
     }
 }
 
-impl<R: UnitalRing> Mul<&Self> for LinearMonoid<R> {
+impl<R: Semiring> Mul<&Self> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: &Self) -> Self::Output {
@@ -1014,13 +1015,13 @@ impl<R: UnitalRing> Mul<&Self> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> MulAssign<&Self> for LinearMonoid<R> {
+impl<R: Semiring> MulAssign<&Self> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: &Self) {
         self.factors.extend(rps.factors.iter().cloned())
     }
 }
 
-impl<R: UnitalRing> Mul<LinearMonoid<R>> for &LinearMonoid<R> {
+impl<R: Semiring> Mul<LinearMonoid<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearMonoid<R>) -> Self::Output {
@@ -1028,7 +1029,7 @@ impl<R: UnitalRing> Mul<LinearMonoid<R>> for &LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> Mul for &LinearMonoid<R> {
+impl<R: Semiring> Mul for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -1036,7 +1037,7 @@ impl<R: UnitalRing> Mul for &LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> Square for LinearMonoid<R> {
+impl<R: Semiring> Square for LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
@@ -1044,7 +1045,7 @@ impl<R: UnitalRing> Square for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalRing> Square for &LinearMonoid<R> {
+impl<R: Semiring> Square for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
@@ -1052,23 +1053,23 @@ impl<R: UnitalRing> Square for &LinearMonoid<R> {
     }
 }
 
-pub struct LinearSpan<R: UnitalRing> {
+pub struct LinearSpan<R: Semiring> {
     vectors: Vec<LinearCombination<R>>,
 }
 
-impl<R: UnitalRing> LinearSpan<R> {
+impl<R: Semiring> LinearSpan<R> {
     pub const fn dimension(&self) -> usize {
         self.vectors.len()
     }
 }
 
-impl<R: UnitalRing> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
+impl<R: Semiring> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
     fn from(vectors: Vec<LinearCombination<R>>) -> Self {
         Self { vectors }
     }
 }
 
-impl<R: UnitalRing> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
+impl<R: Semiring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
     fn from(vectors: VecDeque<LinearCombination<R>>) -> Self {
         Self {
             vectors: vectors.into(),
@@ -1076,7 +1077,7 @@ impl<R: UnitalRing> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
     }
 }
 
-impl<R: UnitalRing> Index<usize> for LinearSpan<R> {
+impl<R: Semiring> Index<usize> for LinearSpan<R> {
     type Output = LinearCombination<R>;
 
     fn index(&self, dimension: usize) -> &Self::Output {
@@ -1084,12 +1085,12 @@ impl<R: UnitalRing> Index<usize> for LinearSpan<R> {
     }
 }
 
-pub struct Constraint<R: UnitalRing> {
+pub struct Constraint<R: Semiring> {
     lps: Box<dyn Expression<R>>,
     rps: Box<dyn Expression<R>>,
 }
 
-pub struct CircuitBuilder<R: UnitalRing> {
+pub struct CircuitBuilder<R: Semiring> {
     degree: usize,
     public_inputs: Cell<usize>,
     public_outputs: Cell<usize>,
@@ -1101,7 +1102,7 @@ pub struct CircuitBuilder<R: UnitalRing> {
     current_scope: RefCell<NodeIdx<Dyn<ScopeInfo>>>,
 }
 
-impl<R: UnitalRing> CircuitBuilder<R> {
+impl<R: Semiring> CircuitBuilder<R> {
     pub fn new(degree: usize) -> Self {
         let mut tree = DynTree::empty();
         let root = tree.push_root(ScopeInfo::root());
@@ -1190,54 +1191,6 @@ impl<R: UnitalRing> CircuitBuilder<R> {
         R1CS::new(a.build(), b.build(), c.build())
     }
 
-    pub fn ccs(self) -> CustomizableConstraintSystem<R> {
-        let (constraints_num, variables_num) = (self.constraints(), self.variables());
-        let constraints = self.constraints.take();
-        let (lps_degree, rps_degree) = constraints
-            .iter()
-            .map(|c| (c.lps.degree(), c.rps.degree()))
-            .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
-        let (mut lps_matrices, mut rps_matrices) = (Vec::new(), Vec::new());
-        lps_matrices.resize_with(lps_degree, || {
-            MatrixSparseBuilder::<R>::new(constraints_num, variables_num)
-        });
-        rps_matrices.resize_with(rps_degree, || {
-            MatrixSparseBuilder::<R>::new(constraints_num, variables_num)
-        });
-
-        self.lay_out();
-        #[allow(clippy::needless_range_loop)]
-        for constraint in constraints {
-            let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
-            for i in 0..lps_span.dimension() {
-                self.put(&mut lps_matrices[i], &lps_span[i])
-            }
-            for i in lps_span.dimension()..lps_degree {
-                self.pad(&mut lps_matrices[i]);
-            }
-            for i in 0..rps_span.dimension() {
-                self.put(&mut rps_matrices[i], &rps_span[i])
-            }
-            for i in rps_span.dimension()..rps_degree {
-                self.pad(&mut rps_matrices[i]);
-            }
-        }
-
-        let mut matrices = Vec::with_capacity(lps_degree + rps_degree);
-        lps_matrices
-            .into_iter()
-            .for_each(|b| matrices.push(b.build()));
-        rps_matrices
-            .into_iter()
-            .for_each(|b| matrices.push(b.build()));
-
-        let multisets = vec![(0..matrices.len() - 1).collect(), vec![matrices.len() - 1]];
-
-        let constants = vec![R::UNITY, -R::UNITY];
-
-        CustomizableConstraintSystem::new(matrices, multisets, constants)
-    }
-
     #[must_use = "Circuit variable should be constrained"]
     fn allocate(&self, kind: VariableKind) -> Variable<R> {
         let mut scopes = self.scopes.borrow_mut();
@@ -1319,7 +1272,7 @@ impl<R: UnitalRing> CircuitBuilder<R> {
     }
 
     fn pad(&self, m: &mut MatrixSparseBuilder<R>) {
-        m.column(0, R::UNITY);
+        m.column(0, R::ONE);
         m.row();
     }
 
@@ -1347,7 +1300,57 @@ impl<R: UnitalRing> CircuitBuilder<R> {
     }
 }
 
-impl<R: UnitalRing> Display for CircuitBuilder<R> {
+impl<R: UnitalRing> CircuitBuilder<R> {
+    pub fn ccs(self) -> CustomizableConstraintSystem<R> {
+        let (constraints_num, variables_num) = (self.constraints(), self.variables());
+        let constraints = self.constraints.take();
+        let (lps_degree, rps_degree) = constraints
+            .iter()
+            .map(|c| (c.lps.degree(), c.rps.degree()))
+            .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
+        let (mut lps_matrices, mut rps_matrices) = (Vec::new(), Vec::new());
+        lps_matrices.resize_with(lps_degree, || {
+            MatrixSparseBuilder::<R>::new(constraints_num, variables_num)
+        });
+        rps_matrices.resize_with(rps_degree, || {
+            MatrixSparseBuilder::<R>::new(constraints_num, variables_num)
+        });
+
+        self.lay_out();
+        #[allow(clippy::needless_range_loop)]
+        for constraint in constraints {
+            let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
+            for i in 0..lps_span.dimension() {
+                self.put(&mut lps_matrices[i], &lps_span[i])
+            }
+            for i in lps_span.dimension()..lps_degree {
+                self.pad(&mut lps_matrices[i]);
+            }
+            for i in 0..rps_span.dimension() {
+                self.put(&mut rps_matrices[i], &rps_span[i])
+            }
+            for i in rps_span.dimension()..rps_degree {
+                self.pad(&mut rps_matrices[i]);
+            }
+        }
+
+        let mut matrices = Vec::with_capacity(lps_degree + rps_degree);
+        lps_matrices
+            .into_iter()
+            .for_each(|b| matrices.push(b.build()));
+        rps_matrices
+            .into_iter()
+            .for_each(|b| matrices.push(b.build()));
+
+        let multisets = vec![(0..matrices.len() - 1).collect(), vec![matrices.len() - 1]];
+
+        let constants = vec![R::ONE, -R::ONE];
+
+        CustomizableConstraintSystem::new(matrices, multisets, constants)
+    }
+}
+
+impl<R: Semiring> Display for CircuitBuilder<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -1360,11 +1363,11 @@ impl<R: UnitalRing> Display for CircuitBuilder<R> {
     }
 }
 
-pub struct Scope<'a, R: UnitalRing> {
+pub struct Scope<'a, R: Semiring> {
     builder: &'a CircuitBuilder<R>,
 }
 
-impl<'a, R: UnitalRing> Scope<'a, R> {
+impl<'a, R: Semiring> Scope<'a, R> {
     pub fn constrain<LPS: Expression<R>, RPS: Expression<R>>(&self, lps: LPS, rps: RPS) {
         self.builder.constrain(Constraint {
             lps: Box::new(lps),
@@ -1403,7 +1406,7 @@ impl<'a, R: UnitalRing> Scope<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing> Drop for Scope<'a, R> {
+impl<'a, R: Semiring> Drop for Scope<'a, R> {
     fn drop(&mut self) {
         let scopes = self.builder.scopes.borrow();
         let mut current_scope = self.builder.current_scope.borrow_mut();

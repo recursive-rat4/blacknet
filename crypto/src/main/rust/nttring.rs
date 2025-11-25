@@ -27,8 +27,9 @@ use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use crate::operation::{Double, Square};
-use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing, Ring, RingOfIntegers, UnitalRing};
+use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing, Ring};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semiring::{Presemiring, Semiring};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -254,7 +255,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Sum for NTTRing<Z, M, N> {
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Product for NTTRing<Z, M, N> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::UNITY)
+        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
     }
 }
 
@@ -281,12 +282,12 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMa
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for NTTRing<Z, M, N> {
-    const LEFT_IDENTITY: Self = Self::const_from(Z::UNITY);
-    const RIGHT_IDENTITY: Self = Self::const_from(Z::UNITY);
+    const LEFT_IDENTITY: Self = Self::const_from(Z::ONE);
+    const RIGHT_IDENTITY: Self = Self::const_from(Z::ONE);
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMonoid for NTTRing<Z, M, N> {
-    const IDENTITY: Self = Self::const_from(Z::UNITY);
+    const IDENTITY: Self = Self::const_from(Z::ONE);
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Module<Z> for NTTRing<Z, M, N> {}
@@ -294,8 +295,6 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Module<Z> for NTTRing<Z, M,
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Ring for NTTRing<Z, M, N> {
     type Int = Z::Int;
 }
-
-impl<Z: Twiddles<M>, const M: usize, const N: usize> RingOfIntegers for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> {}
 

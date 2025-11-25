@@ -19,13 +19,13 @@ use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination
 use crate::circuit::permutation::Permutation;
 use crate::distribution::UniformGenerator;
 use crate::duplex::{Duplex, Phase};
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use core::array;
 use core::marker::PhantomData;
 
 pub struct DuplexImpl<
     'a,
-    S: UnitalRing + From<i8>,
+    S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -40,7 +40,7 @@ pub struct DuplexImpl<
 
 impl<
     'a,
-    S: UnitalRing + From<i8>,
+    S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -74,7 +74,7 @@ impl<
 
     fn pad(&mut self) {
         if self.position != RATE {
-            self.state[self.position] = Constant::UNITY.into();
+            self.state[self.position] = Constant::ONE.into();
             self.position += 1;
             self.state[self.position..RATE]
                 .iter_mut()
@@ -82,14 +82,14 @@ impl<
             self.position = RATE;
             self.state[WIDTH - 1] += Constant::new(S::from(2));
         } else {
-            self.state[WIDTH - 1] += Constant::UNITY;
+            self.state[WIDTH - 1] += Constant::ONE;
         }
     }
 }
 
 impl<
     'a,
-    S: UnitalRing + From<i8>,
+    S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -132,7 +132,7 @@ impl<
 
 impl<
     'a,
-    S: UnitalRing + From<i8>,
+    S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,

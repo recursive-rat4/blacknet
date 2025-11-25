@@ -31,13 +31,13 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
 
     pub fn check_range(&self, a: &LinearCombination<R>) {
         let scope = self.circuit.scope("LogicGate::check_range");
-        scope.constrain(a * (a - Constant::UNITY), Constant::ZERO);
+        scope.constrain(a * (a - Constant::ONE), Constant::ZERO);
     }
 
     pub fn check_range_slice(&self, a: &[LinearCombination<R>]) {
         let scope = self.circuit.scope("LogicGate::check_range_slice");
         for a in a {
-            scope.constrain(a * (a - Constant::UNITY), Constant::ZERO);
+            scope.constrain(a * (a - Constant::ONE), Constant::ZERO);
         }
     }
 
@@ -63,13 +63,13 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
     }
 
     pub fn not(&self, a: &LinearCombination<R>) -> LinearCombination<R> {
-        Constant::UNITY - a
+        Constant::ONE - a
     }
 
     #[allow(clippy::len_zero)]
     pub fn and_slice(&self, a: &[LinearCombination<R>]) -> LinearCombination<R> {
         if a.len() == 0 {
-            return Constant::UNITY.into();
+            return Constant::ONE.into();
         } else if a.len() == 1 {
             return a[0].clone();
         }
@@ -89,8 +89,8 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
         let mut last_run: Option<LinearCombination<R>> = None;
         for i in (0..b.len()).rev() {
             let digit = &a[i];
-            if b[i] == R::UNITY {
-                scope.constrain(digit * (digit - Constant::UNITY), Constant::ZERO);
+            if b[i] == R::ONE {
+                scope.constrain(digit * (digit - Constant::ONE), Constant::ZERO);
                 current_run.push(digit.clone());
             } else {
                 if !current_run.is_empty() {
@@ -101,7 +101,7 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
                     current_run.clear();
                 }
                 if let Some(last_run) = &last_run {
-                    scope.constrain(digit * (digit - Constant::UNITY + last_run), Constant::ZERO);
+                    scope.constrain(digit * (digit - Constant::ONE + last_run), Constant::ZERO);
                 } else {
                     scope.constrain(digit.clone(), Constant::ZERO);
                 }

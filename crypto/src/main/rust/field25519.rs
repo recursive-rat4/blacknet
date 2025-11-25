@@ -16,15 +16,15 @@
  */
 
 use crate::bigint::{UInt256, UInt512};
-use crate::field::{Field, PrimeField};
 use crate::integer::Integer;
 use crate::magma::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, Ring, RingOfIntegers};
+use crate::ring::{DivisionRing, IntegerRing, Ring};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semiring::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -358,8 +358,6 @@ impl Ring for Field25519 {
     type Int = UInt256;
 }
 
-impl RingOfIntegers for Field25519 {}
-
 impl DivisionRing for Field25519 {}
 
 impl IntegerRing for Field25519 {
@@ -390,5 +388,3 @@ impl IntegerRing for Field25519 {
     const MODULUS: UInt256 =
         UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED");
 }
-
-impl PrimeField for Field25519 {}

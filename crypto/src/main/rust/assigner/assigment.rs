@@ -15,16 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::ring::Ring;
+use crate::semiring::Presemiring;
 use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
-pub struct Assigment<R: Ring> {
+pub struct Assigment<R: Presemiring> {
     assigment: RefCell<Vec<R>>,
 }
 
-impl<R: Ring> Assigment<R> {
+impl<R: Presemiring> Assigment<R> {
     pub fn new(variables: usize) -> Self {
         Self {
             assigment: RefCell::new(Vec::with_capacity(variables)),

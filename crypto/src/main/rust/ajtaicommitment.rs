@@ -18,17 +18,17 @@
 use crate::distribution::UniformGenerator;
 use crate::matrixdense::MatrixDense;
 use crate::norm::{EuclideanNorm, InfinityNorm};
-use crate::ring::RingOfIntegers;
+use crate::ring::CommutativeRing;
 use crate::vectordense::VectorDense;
 use crate::vectorsparse::VectorSparse;
 
 // https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
 
-pub struct AjtaiCommitment<R: RingOfIntegers> {
+pub struct AjtaiCommitment<R: CommutativeRing> {
     a: MatrixDense<R>,
 }
 
-impl<R: RingOfIntegers> AjtaiCommitment<R> {
+impl<R: CommutativeRing> AjtaiCommitment<R> {
     pub const fn new(a: MatrixDense<R>) -> Self {
         Self { a }
     }
@@ -55,7 +55,7 @@ impl<R: RingOfIntegers> AjtaiCommitment<R> {
 }
 
 //RUST currently requires std for sqrt
-impl<R: RingOfIntegers + EuclideanNorm> AjtaiCommitment<R> {
+impl<R: CommutativeRing + EuclideanNorm> AjtaiCommitment<R> {
     #[cfg(feature = "std")]
     pub fn open_dense_l2(&self, c: &VectorDense<R>, m: &VectorDense<R>, bound: f64) -> bool {
         m.euclidean_norm() < bound && &self.a * m == *c
@@ -67,7 +67,7 @@ impl<R: RingOfIntegers + EuclideanNorm> AjtaiCommitment<R> {
     }
 }
 
-impl<R: RingOfIntegers + InfinityNorm<R::Int>> AjtaiCommitment<R> {
+impl<R: CommutativeRing + InfinityNorm<R::Int>> AjtaiCommitment<R> {
     pub fn open_dense_linf(&self, c: &VectorDense<R>, m: &VectorDense<R>, bound: R::Int) -> bool {
         m.check_infinity_norm(bound) && &self.a * m == *c
     }

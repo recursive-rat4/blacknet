@@ -17,7 +17,6 @@
 
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::Negacyclic;
-use crate::field::{AlgebraicExtension, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{
@@ -25,8 +24,9 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, RingOfIntegers, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semiring::{Presemiring, Semiring};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -234,7 +234,7 @@ impl Sum for PervushinField {
 
 impl Product for PervushinField {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::UNITY)
+        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
     }
 }
 
@@ -268,8 +268,6 @@ impl Ring for PervushinField {
     type Int = i64;
 }
 
-impl RingOfIntegers for PervushinField {}
-
 impl DivisionRing for PervushinField {}
 
 impl IntegerRing for PervushinField {
@@ -299,8 +297,6 @@ impl IntegerRing for PervushinField {
     const BITS: u32 = 61;
     const MODULUS: Self::Int = 2305843009213693951;
 }
-
-impl PrimeField for PervushinField {}
 
 impl InterpolationConsts for PervushinField {
     const INV2: Self = Self {
@@ -389,5 +385,3 @@ impl Div<PervushinField> for PervushinField2 {
 impl DivisionRing for PervushinField2 {}
 
 impl DivisionAlgebra<PervushinField> for PervushinField2 {}
-
-impl AlgebraicExtension<PervushinField> for PervushinField2 {}

@@ -25,10 +25,10 @@ use crate::module::{FreeModule, Module};
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Square};
 use crate::ring::{
-    CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, RingOfIntegers,
-    UnitalRing,
+    CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing,
 };
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semiring::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::marker::PhantomData;
@@ -214,7 +214,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sum for UnivariateRing
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Product for UnivariateRing<R, N, C> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::UNITY)
+        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
     }
 }
 
@@ -256,12 +256,12 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeSemigrou
 {
     const LEFT_IDENTITY: Self = {
         let mut t = [R::ZERO; N];
-        t[0] = R::UNITY;
+        t[0] = R::ONE;
         Self::new(FreeModule::<R, N>::new(t))
     };
     const RIGHT_IDENTITY: Self = {
         let mut t = [R::ZERO; N];
-        t[0] = R::UNITY;
+        t[0] = R::ONE;
         Self::new(FreeModule::<R, N>::new(t))
     };
 }
@@ -271,7 +271,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMonoid
 {
     const IDENTITY: Self = {
         let mut t = [R::ZERO; N];
-        t[0] = R::UNITY;
+        t[0] = R::ONE;
         Self::new(FreeModule::<R, N>::new(t))
     };
 }
@@ -281,8 +281,6 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Module<R> for Univaria
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Ring for UnivariateRing<R, N, C> {
     type Int = R::Int;
 }
-
-impl<R: IntegerRing, const N: usize> RingOfIntegers for UnivariateRing<R, N, Negacyclic> {}
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Algebra<R> for UnivariateRing<R, N, C> {}
 

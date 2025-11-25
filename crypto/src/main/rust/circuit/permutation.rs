@@ -16,9 +16,9 @@
  */
 
 use crate::circuit::circuitbuilder::CircuitBuilder;
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 
-pub trait Permutation<S: UnitalRing> {
+pub trait Permutation<S: Semiring> {
     type Domain;
 
     fn permute(circuit: &CircuitBuilder<S>, x: &mut Self::Domain);

@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::module::FreeModule;
-use blacknet_crypto::ring::UnitalRing;
+use blacknet_crypto::semiring::Semiring;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 type M = FreeModule<R, 2>;
@@ -31,5 +31,5 @@ fn right() {
     assert_eq!(x * r + y * r, (x + y) * r);
     assert_eq!(x * r + x * s, x * (r + s));
     assert_eq!((x * s) * r, x * (r * s));
-    assert_eq!(x, x * R::UNITY);
+    assert_eq!(x, x * R::ONE);
 }

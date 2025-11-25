@@ -22,6 +22,7 @@ use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Square};
 use crate::ring::{Ring, UnitalRing};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semiring::Presemiring;
 use core::array;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -305,7 +306,7 @@ impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for Matri
 }
 
 impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRing<R, N, NN> {
-    const IDENTITY: Self = Self::const_from(R::UNITY);
+    const IDENTITY: Self = Self::const_from(R::ONE);
 }
 
 impl<R: Ring, const N: usize, const NN: usize> Module<R> for MatrixRing<R, N, NN> {}

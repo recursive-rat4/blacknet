@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{CommutativeAlgebra, DivisionAlgebra};
-use crate::ring::{CommutativeRing, DivisionRing, IntegerRing, PolynomialRing};
+use crate::ring::{CommutativeRing, DivisionRing, IntegerRing};
 use core::ops::Div;
 
 #[rustfmt::skip]
@@ -25,7 +24,6 @@ pub trait Field
     + DivisionRing
     + Div<Output = Option<Self>>
 {
-    const ONE: Self = Self::UNITY;
 }
 
 impl<R: CommutativeRing + DivisionRing + Div<Output = Option<Self>>> Field for R {}
@@ -37,12 +35,4 @@ pub trait PrimeField
 {
 }
 
-#[rustfmt::skip]
-pub trait AlgebraicExtension<F: Field>
-    : Field
-    + PolynomialRing<F>
-    + CommutativeAlgebra<F>
-    + DivisionAlgebra<F>
-    + Div<F, Output = Option<Self>>
-{
-}
+impl<F: Field + IntegerRing> PrimeField for F {}

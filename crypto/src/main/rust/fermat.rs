@@ -16,7 +16,6 @@
  */
 
 use crate::convolution::Negacyclic;
-use crate::field::PrimeField;
 use crate::integer::Integer;
 use crate::magma::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
@@ -24,8 +23,9 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, Ring, RingOfIntegers, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, Ring};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semiring::{Presemiring, Semiring};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -208,7 +208,7 @@ impl Sum for FermatField {
 
 impl Product for FermatField {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::UNITY)
+        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
     }
 }
 
@@ -242,8 +242,6 @@ impl Ring for FermatField {
     type Int = i32;
 }
 
-impl RingOfIntegers for FermatField {}
-
 impl DivisionRing for FermatField {}
 
 impl IntegerRing for FermatField {
@@ -273,8 +271,6 @@ impl IntegerRing for FermatField {
     const BITS: u32 = 17;
     const MODULUS: Self::Int = 65537;
 }
-
-impl PrimeField for FermatField {}
 
 // (2¹⁶ + 1) / (x¹⁰²⁴ + 1)
 

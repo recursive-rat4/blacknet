@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::ring::Ring;
+use crate::semiring::Presemiring;
 use crate::vectordense::VectorDense;
 use thiserror::Error;
 
-pub trait ConstraintSystem<R: Ring> {
+pub trait ConstraintSystem<R: Presemiring> {
     fn degree(&self) -> usize;
     fn constraints(&self) -> usize;
     fn variables(&self) -> usize;
@@ -28,7 +28,7 @@ pub trait ConstraintSystem<R: Ring> {
 }
 
 #[derive(Debug, Error)]
-pub enum Error<R: Ring> {
+pub enum Error<R: Presemiring> {
     #[error("Assigned {0} variables instead of {1} required")]
     Length(usize, usize),
     #[error("Mismatch at position {0}")]

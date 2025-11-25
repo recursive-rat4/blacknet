@@ -17,9 +17,9 @@
 
 use crate::assigner::assigment::Assigment;
 use crate::distribution::{UniformDistribution, UniformGenerator};
-use crate::ring::UnitalRing;
+use crate::semiring::Presemiring;
 
-pub trait Distribution<'a, R: UnitalRing, G: UniformGenerator> {
+pub trait Distribution<'a, R: Presemiring, G: UniformGenerator> {
     type Output;
 
     fn new(assigment: &'a Assigment<R>) -> Self;
@@ -29,7 +29,7 @@ pub trait Distribution<'a, R: UnitalRing, G: UniformGenerator> {
     fn reset(&mut self);
 }
 
-impl<'a, R: UnitalRing, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution<G> {
+impl<'a, R: Presemiring, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution<G> {
     type Output = G::Output;
 
     fn new(_: &'a Assigment<R>) -> Self {

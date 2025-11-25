@@ -17,17 +17,17 @@
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::duplex::{Absorb, Duplex};
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign};
 
-pub struct UnivariatePolynomial<'a, R: UnitalRing> {
+pub struct UnivariatePolynomial<'a, R: Semiring> {
     circuit: &'a CircuitBuilder<R>,
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
     pub fn allocate(circuit: &'a CircuitBuilder<R>, kind: VariableKind, degree: usize) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {
@@ -65,7 +65,7 @@ impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing> Add for UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> Add for UnivariatePolynomial<'a, R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -79,14 +79,14 @@ impl<'a, R: UnitalRing> Add for UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing> AddAssign for UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> AddAssign for UnivariatePolynomial<'a, R> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<'a, R: UnitalRing> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, R> {
     fn absorb_into(&self, duplex: &mut (impl Duplex<LinearCombination<R>> + ?Sized)) {
         duplex.absorb(&self.coefficients)
     }

@@ -17,7 +17,8 @@
 
 use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::operation::{Double, Inv, Square};
-use blacknet_crypto::ring::{IntegerRing, Ring, UnitalRing};
+use blacknet_crypto::ring::IntegerRing;
+use blacknet_crypto::semiring::{Presemiring, Semiring};
 
 type Z = blacknet_crypto::lm::LMField;
 type F2 = blacknet_crypto::lm::LMField2;
@@ -128,8 +129,8 @@ fn f2_add() {
     assert_eq!(b + a, c);
     assert_eq!(F2::ZERO + c, c);
     assert_eq!(c + F2::ZERO, c);
-    assert_eq!(F2::UNITY + F2::ZERO, F2::UNITY);
-    assert_eq!(F2::ZERO + F2::UNITY, F2::UNITY);
+    assert_eq!(F2::ONE + F2::ZERO, F2::ONE);
+    assert_eq!(F2::ZERO + F2::ONE, F2::ONE);
 }
 
 #[test]
@@ -151,8 +152,8 @@ fn f2_mul() {
     assert_eq!(c * a, d);
     assert_eq!(F2::ZERO * c, F2::ZERO);
     assert_eq!(c * F2::ZERO, F2::ZERO);
-    assert_eq!(c * F2::UNITY, c);
-    assert_eq!(F2::UNITY * c, c);
+    assert_eq!(c * F2::ONE, c);
+    assert_eq!(F2::ONE * c, c);
 }
 
 #[test]
@@ -375,7 +376,7 @@ fn r64_mul() {
     let c = R64::from(c_coeffs);
 
     assert_eq!(a * b, c);
-    assert_eq!(R64::UNITY * c, c);
+    assert_eq!(R64::ONE * c, c);
     assert_eq!(c * Z::ZERO, R64::ZERO);
 
     let a_ntt = NTT64::from(a_coeffs);
@@ -383,7 +384,7 @@ fn r64_mul() {
     let c_ntt = NTT64::from(c_coeffs);
 
     assert_eq!(a_ntt * b_ntt, c_ntt);
-    assert_eq!(NTT64::UNITY * c_ntt, c_ntt);
+    assert_eq!(NTT64::ONE * c_ntt, c_ntt);
     assert_eq!(c_ntt * Z::ZERO, NTT64::ZERO);
 }
 

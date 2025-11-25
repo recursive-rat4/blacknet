@@ -75,6 +75,7 @@ pub mod quartaryuniformdistribution;
 pub mod r1cs;
 pub mod ring;
 pub mod semigroup;
+pub mod semiring;
 pub mod sumcheck;
 pub mod twiddles;
 pub mod twistededwardsgroup;

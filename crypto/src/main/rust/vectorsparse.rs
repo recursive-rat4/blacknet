@@ -17,6 +17,7 @@
 
 use crate::matrixdense::MatrixDense;
 use crate::ring::Ring;
+use crate::semiring::Presemiring;
 use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -24,13 +25,13 @@ use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct VectorSparse<R: Ring> {
+pub struct VectorSparse<R: Presemiring> {
     dimension: usize,
     index: Vec<usize>,
     elements: Vec<R>,
 }
 
-impl<R: Ring> VectorSparse<R> {
+impl<R: Presemiring> VectorSparse<R> {
     pub const fn new(dimension: usize, index: Vec<usize>, elements: Vec<R>) -> Self {
         Self {
             dimension,
@@ -60,7 +61,7 @@ impl<R: Ring> Neg for VectorSparse<R> {
     }
 }
 
-impl<R: Ring> Mul<&MatrixDense<R>> for &VectorSparse<R> {
+impl<R: Presemiring> Mul<&MatrixDense<R>> for &VectorSparse<R> {
     type Output = VectorDense<R>;
 
     fn mul(self, rps: &MatrixDense<R>) -> Self::Output {
@@ -76,7 +77,7 @@ impl<R: Ring> Mul<&MatrixDense<R>> for &VectorSparse<R> {
     }
 }
 
-impl<R: Ring> Mul<&VectorSparse<R>> for &MatrixDense<R> {
+impl<R: Presemiring> Mul<&VectorSparse<R>> for &MatrixDense<R> {
     type Output = VectorDense<R>;
 
     fn mul(self, rps: &VectorSparse<R>) -> Self::Output {
@@ -92,7 +93,7 @@ impl<R: Ring> Mul<&VectorSparse<R>> for &MatrixDense<R> {
     }
 }
 
-impl<R: Ring> From<&VectorDense<R>> for VectorSparse<R> {
+impl<R: Presemiring> From<&VectorDense<R>> for VectorSparse<R> {
     fn from(dense: &VectorDense<R>) -> Self {
         let mut index = Vec::<usize>::new();
         let mut elements = Vec::<R>::new();
@@ -107,7 +108,7 @@ impl<R: Ring> From<&VectorDense<R>> for VectorSparse<R> {
     }
 }
 
-impl<R: Ring> From<&VectorSparse<R>> for VectorDense<R> {
+impl<R: Presemiring> From<&VectorSparse<R>> for VectorDense<R> {
     fn from(sparse: &VectorSparse<R>) -> Self {
         let mut dense = VectorDense::fill(sparse.dimension(), R::ZERO);
         zip(sparse.index.iter(), sparse.elements.iter()).for_each(|(&i, &e)| dense[i] = e);

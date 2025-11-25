@@ -74,7 +74,7 @@ pub fn matrix<Z: IntegerRing, R: PolynomialRing<Z>>(
     n: usize,
 ) -> MatrixDense<R> {
     let mut powers = Vec::<R>::with_capacity(n);
-    let mut power = R::UNITY;
+    let mut power = R::ONE;
     powers.push(power);
     power = radix;
     powers.push(power);

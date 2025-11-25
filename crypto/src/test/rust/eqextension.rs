@@ -25,7 +25,7 @@ use blacknet_crypto::eqextension::EqExtension;
 use blacknet_crypto::hypercube::Hypercube;
 use blacknet_crypto::point::Point;
 use blacknet_crypto::polynomial::Polynomial;
-use blacknet_crypto::ring::{Ring, UnitalRing};
+use blacknet_crypto::semiring::{Presemiring, Semiring};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -94,7 +94,7 @@ fn point() {
     let eq = EqExtension::<R>::from(a.coordinates().clone());
     hc.iter_vertex().for_each(|b| {
         if a == b {
-            assert_eq!(eq.point(&b), R::UNITY);
+            assert_eq!(eq.point(&b), R::ONE);
         } else {
             assert_eq!(eq.point(&b), R::ZERO);
         }
@@ -109,7 +109,7 @@ fn hypercube() {
     let pis = eq.hypercube();
     hc.iter_index().for_each(|i| {
         if i == 4 {
-            assert_eq!(pis[i], R::UNITY);
+            assert_eq!(pis[i], R::ONE);
         } else {
             assert_eq!(pis[i], R::ZERO);
         }

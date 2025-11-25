@@ -17,15 +17,15 @@
 
 #![allow(clippy::suspicious_arithmetic_impl)]
 
-use crate::field::PrimeField;
 use crate::integer::Integer;
 use crate::magma::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, Ring, RingOfIntegers, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, Ring};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semiring::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -124,7 +124,7 @@ impl Inv for Z2 {
 
     fn inv(self) -> Self::Output {
         match self.n {
-            true => Some(Self::UNITY),
+            true => Some(Self::ONE),
             false => None,
         }
     }
@@ -146,7 +146,7 @@ impl Sum for Z2 {
 
 impl Product for Z2 {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::UNITY)
+        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
     }
 }
 
@@ -180,8 +180,6 @@ impl Ring for Z2 {
     type Int = i8;
 }
 
-impl RingOfIntegers for Z2 {}
-
 impl DivisionRing for Z2 {}
 
 impl IntegerRing for Z2 {
@@ -202,5 +200,3 @@ impl IntegerRing for Z2 {
     const BITS: u32 = 1;
     const MODULUS: Self::Int = 2;
 }
-
-impl PrimeField for Z2 {}

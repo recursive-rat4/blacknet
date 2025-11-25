@@ -20,6 +20,7 @@ use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrixsparse::MatrixSparse;
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use crate::vectordense::VectorDense;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -28,13 +29,13 @@ use serde::{Deserialize, Serialize};
 // https://eprint.iacr.org/2023/552
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct CustomizableConstraintSystem<R: UnitalRing> {
+pub struct CustomizableConstraintSystem<R: Semiring> {
     matrices: Vec<MatrixSparse<R>>,
     multisets: Vec<Vec<usize>>,
     constants: Vec<R>,
 }
 
-impl<R: UnitalRing> CustomizableConstraintSystem<R> {
+impl<R: Semiring> CustomizableConstraintSystem<R> {
     pub const fn new(
         matrices: Vec<MatrixSparse<R>>,
         multisets: Vec<Vec<usize>>,
@@ -49,7 +50,7 @@ impl<R: UnitalRing> CustomizableConstraintSystem<R> {
 
     pub fn assigment(&self) -> Assigment<R> {
         let z = Assigment::new(self.variables());
-        z.push(R::UNITY);
+        z.push(R::ONE);
         z
     }
 }
@@ -60,12 +61,12 @@ impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
         Self {
             matrices: vec![a, b, c],
             multisets: vec![vec![0, 1], vec![2]],
-            constants: vec![R::UNITY, -R::UNITY],
+            constants: vec![R::ONE, -R::ONE],
         }
     }
 }
 
-impl<R: UnitalRing> ConstraintSystem<R> for CustomizableConstraintSystem<R> {
+impl<R: Semiring> ConstraintSystem<R> for CustomizableConstraintSystem<R> {
     fn degree(&self) -> usize {
         self.multisets
             .iter()

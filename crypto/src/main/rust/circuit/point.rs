@@ -16,15 +16,15 @@
  */
 
 use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination, VariableKind};
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
 
-pub struct Point<S: UnitalRing> {
+pub struct Point<S: Semiring> {
     coordinates: Vec<LinearCombination<S>>,
 }
 
-impl<S: UnitalRing> Point<S> {
+impl<S: Semiring> Point<S> {
     pub fn allocate(circuit: &CircuitBuilder<S>, kind: VariableKind, dimension: usize) -> Self {
         let scope = circuit.scope("Point::allocate");
         Self {
@@ -43,7 +43,7 @@ impl<S: UnitalRing> Point<S> {
     }
 }
 
-impl<S: UnitalRing, const N: usize> From<[LinearCombination<S>; N]> for Point<S> {
+impl<S: Semiring, const N: usize> From<[LinearCombination<S>; N]> for Point<S> {
     fn from(coordinates: [LinearCombination<S>; N]) -> Self {
         Self {
             coordinates: coordinates.into(),
@@ -51,21 +51,21 @@ impl<S: UnitalRing, const N: usize> From<[LinearCombination<S>; N]> for Point<S>
     }
 }
 
-impl<S: UnitalRing> From<Vec<LinearCombination<S>>> for Point<S> {
+impl<S: Semiring> From<Vec<LinearCombination<S>>> for Point<S> {
     #[inline]
     fn from(coordinates: Vec<LinearCombination<S>>) -> Self {
         Self { coordinates }
     }
 }
 
-impl<S: UnitalRing> From<Point<S>> for Vec<LinearCombination<S>> {
+impl<S: Semiring> From<Point<S>> for Vec<LinearCombination<S>> {
     #[inline]
     fn from(point: Point<S>) -> Self {
         point.coordinates
     }
 }
 
-impl<S: UnitalRing> Index<usize> for Point<S> {
+impl<S: Semiring> Index<usize> for Point<S> {
     type Output = LinearCombination<S>;
 
     #[inline]
@@ -74,7 +74,7 @@ impl<S: UnitalRing> Index<usize> for Point<S> {
     }
 }
 
-impl<S: UnitalRing> IndexMut<usize> for Point<S> {
+impl<S: Semiring> IndexMut<usize> for Point<S> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.coordinates[index]

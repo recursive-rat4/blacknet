@@ -51,12 +51,12 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
 
     pub fn point(&self, point: &Point<R>) -> LinearCombination<R> {
         let scope = self.circuit.scope("EqExtension::point");
-        let mut pi = LinearCombination::<R>::from(Constant::UNITY);
+        let mut pi = LinearCombination::<R>::from(Constant::ONE);
         zip(self.coefficients.iter(), point.coordinates()).for_each(|(c, p)| {
             let cp = scope.auxiliary();
             scope.constrain(c * p, cp);
             let t = scope.auxiliary();
-            scope.constrain(&pi * (cp.double() - c - p + Constant::UNITY), t);
+            scope.constrain(&pi * (cp.double() - c - p + Constant::ONE), t);
             pi = t.into();
         });
         pi
@@ -65,7 +65,7 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
     pub fn hypercube(&self) -> Vec<LinearCombination<R>> {
         let scope = self.circuit.scope("EqExtension::hypercube");
         let mut r = vec![LinearCombination::<R>::default(); 1 << self.coefficients.len()];
-        r[0] = Constant::UNITY.into();
+        r[0] = Constant::ONE.into();
         let mut j = 1;
         for i in (0..self.coefficients.len()).rev() {
             let mut l = j;

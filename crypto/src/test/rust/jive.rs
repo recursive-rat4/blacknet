@@ -28,7 +28,7 @@ use blacknet_crypto::compressionfunction::CompressionFunction;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::jive::Jive;
 use blacknet_crypto::permutation::Permutation as PermutationPlain;
-use blacknet_crypto::ring::UnitalRing;
+use blacknet_crypto::semiring::Semiring;
 use core::array;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
@@ -42,7 +42,7 @@ impl PermutationPlain for TestPermutation {
     fn permute(x: &mut Self::Domain) {
         x.iter_mut()
             .enumerate()
-            .for_each(|(i, e)| *e += Z::from(i as i8) + Z::UNITY);
+            .for_each(|(i, e)| *e += Z::from(i as i8) + Z::ONE);
     }
 }
 
@@ -74,7 +74,7 @@ impl PermutationAssigner<Z> for TestPermutation {
     fn permute(_: &Assigment<Z>, x: &mut Self::Domain) {
         x.iter_mut()
             .enumerate()
-            .for_each(|(i, e)| *e += Z::from(i as i8) + Z::UNITY);
+            .for_each(|(i, e)| *e += Z::from(i as i8) + Z::ONE);
     }
 }
 

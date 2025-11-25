@@ -17,7 +17,6 @@
 
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::{Binomial, Convolution, Negacyclic};
-use crate::field::{AlgebraicExtension, PrimeField};
 use crate::integer::Integer;
 use crate::interpolation::InterpolationConsts;
 use crate::magma::{
@@ -26,8 +25,9 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring, RingOfIntegers, UnitalRing};
+use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring};
 use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semiring::{Presemiring, Semiring};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -236,7 +236,7 @@ impl Sum for LMField {
 
 impl Product for LMField {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::UNITY)
+        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
     }
 }
 
@@ -270,8 +270,6 @@ impl Ring for LMField {
     type Int = i64;
 }
 
-impl RingOfIntegers for LMField {}
-
 impl DivisionRing for LMField {}
 
 impl IntegerRing for LMField {
@@ -301,8 +299,6 @@ impl IntegerRing for LMField {
     const BITS: u32 = 61;
     const MODULUS: Self::Int = 1152921504606847009;
 }
-
-impl PrimeField for LMField {}
 
 impl InterpolationConsts for LMField {
     const INV2: Self = Self {
@@ -406,8 +402,6 @@ impl Div<LMField> for LMField2 {
 impl DivisionRing for LMField2 {}
 
 impl DivisionAlgebra<LMField> for LMField2 {}
-
-impl AlgebraicExtension<LMField> for LMField2 {}
 
 // (2⁶⁰ + 2⁵ + 1) / (x⁶⁴ + 1)
 

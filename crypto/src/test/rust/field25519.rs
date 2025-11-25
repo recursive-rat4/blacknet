@@ -16,9 +16,9 @@
  */
 
 use blacknet_crypto::bigint::UInt256;
-use blacknet_crypto::field::Field;
 use blacknet_crypto::operation::{Inv, Square};
-use blacknet_crypto::ring::{IntegerRing, Ring};
+use blacknet_crypto::ring::IntegerRing;
+use blacknet_crypto::semiring::{Presemiring, Semiring};
 
 type F = blacknet_crypto::field25519::Field25519;
 

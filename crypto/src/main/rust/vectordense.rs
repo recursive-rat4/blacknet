@@ -17,7 +17,8 @@
 
 use crate::matrixdense::MatrixDense;
 use crate::operation::Double;
-use crate::ring::{Ring, UnitalRing};
+use crate::ring::Ring;
+use crate::semiring::{Presemiring, Semiring};
 use alloc::borrow::Borrow;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -27,11 +28,11 @@ use core::ops::{Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Neg, Sub
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
-pub struct VectorDense<R: Ring> {
+pub struct VectorDense<R: Presemiring> {
     elements: Vec<R>,
 }
 
-impl<R: Ring> VectorDense<R> {
+impl<R: Presemiring> VectorDense<R> {
     pub fn fill(size: usize, element: R) -> Self {
         Self {
             elements: vec![element; size],
@@ -67,15 +68,15 @@ impl<R: Ring> VectorDense<R> {
     }
 }
 
-impl<R: UnitalRing> VectorDense<R> {
+impl<R: Semiring> VectorDense<R> {
     pub fn identity(size: usize) -> Self {
         Self {
-            elements: vec![R::UNITY; size],
+            elements: vec![R::ONE; size],
         }
     }
 }
 
-impl<R: Ring, const N: usize> From<[R; N]> for VectorDense<R> {
+impl<R: Presemiring, const N: usize> From<[R; N]> for VectorDense<R> {
     fn from(elements: [R; N]) -> Self {
         Self {
             elements: elements.into(),
@@ -83,41 +84,41 @@ impl<R: Ring, const N: usize> From<[R; N]> for VectorDense<R> {
     }
 }
 
-impl<R: Ring> From<Vec<R>> for VectorDense<R> {
+impl<R: Presemiring> From<Vec<R>> for VectorDense<R> {
     #[inline]
     fn from(elements: Vec<R>) -> Self {
         Self { elements }
     }
 }
 
-impl<R: Ring> From<VectorDense<R>> for Vec<R> {
+impl<R: Presemiring> From<VectorDense<R>> for Vec<R> {
     #[inline]
     fn from(vector: VectorDense<R>) -> Self {
         vector.elements
     }
 }
 
-impl<R: Ring> Debug for VectorDense<R> {
+impl<R: Presemiring> Debug for VectorDense<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.elements)
     }
 }
 
-impl<R: Ring> AsRef<[R]> for VectorDense<R> {
+impl<R: Presemiring> AsRef<[R]> for VectorDense<R> {
     #[inline]
     fn as_ref(&self) -> &[R] {
         &self.elements
     }
 }
 
-impl<R: Ring> Borrow<[R]> for VectorDense<R> {
+impl<R: Presemiring> Borrow<[R]> for VectorDense<R> {
     #[inline]
     fn borrow(&self) -> &[R] {
         &self.elements
     }
 }
 
-impl<R: Ring> Deref for VectorDense<R> {
+impl<R: Presemiring> Deref for VectorDense<R> {
     type Target = [R];
 
     #[inline]
@@ -126,7 +127,7 @@ impl<R: Ring> Deref for VectorDense<R> {
     }
 }
 
-impl<R: Ring> Index<usize> for VectorDense<R> {
+impl<R: Presemiring> Index<usize> for VectorDense<R> {
     type Output = R;
 
     #[inline]
@@ -135,14 +136,14 @@ impl<R: Ring> Index<usize> for VectorDense<R> {
     }
 }
 
-impl<R: Ring> IndexMut<usize> for VectorDense<R> {
+impl<R: Presemiring> IndexMut<usize> for VectorDense<R> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.elements[index]
     }
 }
 
-impl<R: Ring> FromIterator<R> for VectorDense<R> {
+impl<R: Presemiring> FromIterator<R> for VectorDense<R> {
     #[inline]
     fn from_iter<I: IntoIterator<Item = R>>(iter: I) -> Self {
         Self {
@@ -151,7 +152,7 @@ impl<R: Ring> FromIterator<R> for VectorDense<R> {
     }
 }
 
-impl<R: Ring> IntoIterator for VectorDense<R> {
+impl<R: Presemiring> IntoIterator for VectorDense<R> {
     type Item = R;
     type IntoIter = alloc::vec::IntoIter<R>;
 
@@ -161,7 +162,7 @@ impl<R: Ring> IntoIterator for VectorDense<R> {
     }
 }
 
-impl<'a, R: Ring> IntoIterator for &'a VectorDense<R> {
+impl<'a, R: Presemiring> IntoIterator for &'a VectorDense<R> {
     type Item = &'a R;
     type IntoIter = core::slice::Iter<'a, R>;
 
@@ -171,7 +172,7 @@ impl<'a, R: Ring> IntoIterator for &'a VectorDense<R> {
     }
 }
 
-impl<'a, R: Ring> IntoIterator for &'a mut VectorDense<R> {
+impl<'a, R: Presemiring> IntoIterator for &'a mut VectorDense<R> {
     type Item = &'a mut R;
     type IntoIter = core::slice::IterMut<'a, R>;
 
@@ -181,7 +182,7 @@ impl<'a, R: Ring> IntoIterator for &'a mut VectorDense<R> {
     }
 }
 
-impl<R: Ring> Add for VectorDense<R> {
+impl<R: Presemiring> Add for VectorDense<R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -189,13 +190,13 @@ impl<R: Ring> Add for VectorDense<R> {
     }
 }
 
-impl<R: Ring> AddAssign for VectorDense<R> {
+impl<R: Presemiring> AddAssign for VectorDense<R> {
     fn add_assign(&mut self, rps: Self) {
         zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Ring> Double for VectorDense<R> {
+impl<R: Presemiring> Double for VectorDense<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -203,7 +204,7 @@ impl<R: Ring> Double for VectorDense<R> {
     }
 }
 
-impl<R: Ring> Add<&VectorDense<R>> for VectorDense<R> {
+impl<R: Presemiring> Add<&VectorDense<R>> for VectorDense<R> {
     type Output = Self;
 
     fn add(self, rps: &VectorDense<R>) -> Self::Output {
@@ -211,13 +212,13 @@ impl<R: Ring> Add<&VectorDense<R>> for VectorDense<R> {
     }
 }
 
-impl<R: Ring> AddAssign<&VectorDense<R>> for VectorDense<R> {
+impl<R: Presemiring> AddAssign<&VectorDense<R>> for VectorDense<R> {
     fn add_assign(&mut self, rps: &VectorDense<R>) {
         zip(self, rps).for_each(|(l, &r)| *l += r);
     }
 }
 
-impl<R: Ring> Add<VectorDense<R>> for &VectorDense<R> {
+impl<R: Presemiring> Add<VectorDense<R>> for &VectorDense<R> {
     type Output = VectorDense<R>;
 
     fn add(self, rps: VectorDense<R>) -> Self::Output {
@@ -225,7 +226,7 @@ impl<R: Ring> Add<VectorDense<R>> for &VectorDense<R> {
     }
 }
 
-impl<R: Ring> Add for &VectorDense<R> {
+impl<R: Presemiring> Add for &VectorDense<R> {
     type Output = VectorDense<R>;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -293,7 +294,7 @@ impl<R: Ring> Sub for &VectorDense<R> {
     }
 }
 
-impl<R: Ring> Mul for VectorDense<R> {
+impl<R: Presemiring> Mul for VectorDense<R> {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -301,13 +302,13 @@ impl<R: Ring> Mul for VectorDense<R> {
     }
 }
 
-impl<R: Ring> MulAssign for VectorDense<R> {
+impl<R: Presemiring> MulAssign for VectorDense<R> {
     fn mul_assign(&mut self, rps: Self) {
         zip(self, rps).for_each(|(l, r)| *l *= r);
     }
 }
 
-impl<R: Ring> Mul<&VectorDense<R>> for VectorDense<R> {
+impl<R: Presemiring> Mul<&VectorDense<R>> for VectorDense<R> {
     type Output = Self;
 
     fn mul(self, rps: &VectorDense<R>) -> Self::Output {
@@ -315,13 +316,13 @@ impl<R: Ring> Mul<&VectorDense<R>> for VectorDense<R> {
     }
 }
 
-impl<R: Ring> MulAssign<&VectorDense<R>> for VectorDense<R> {
+impl<R: Presemiring> MulAssign<&VectorDense<R>> for VectorDense<R> {
     fn mul_assign(&mut self, rps: &VectorDense<R>) {
         zip(self, rps).for_each(|(l, &r)| *l *= r);
     }
 }
 
-impl<R: Ring> Mul<VectorDense<R>> for &VectorDense<R> {
+impl<R: Presemiring> Mul<VectorDense<R>> for &VectorDense<R> {
     type Output = VectorDense<R>;
 
     fn mul(self, rps: VectorDense<R>) -> Self::Output {
@@ -329,7 +330,7 @@ impl<R: Ring> Mul<VectorDense<R>> for &VectorDense<R> {
     }
 }
 
-impl<R: Ring> Mul for &VectorDense<R> {
+impl<R: Presemiring> Mul for &VectorDense<R> {
     type Output = VectorDense<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -337,7 +338,7 @@ impl<R: Ring> Mul for &VectorDense<R> {
     }
 }
 
-impl<R: Ring> Mul<R> for VectorDense<R> {
+impl<R: Presemiring> Mul<R> for VectorDense<R> {
     type Output = Self;
 
     fn mul(self, rps: R) -> Self::Output {
@@ -345,13 +346,13 @@ impl<R: Ring> Mul<R> for VectorDense<R> {
     }
 }
 
-impl<R: Ring> MulAssign<R> for VectorDense<R> {
+impl<R: Presemiring> MulAssign<R> for VectorDense<R> {
     fn mul_assign(&mut self, rps: R) {
         self.into_iter().for_each(|l| *l *= rps);
     }
 }
 
-impl<R: Ring> Mul<R> for &VectorDense<R> {
+impl<R: Presemiring> Mul<R> for &VectorDense<R> {
     type Output = VectorDense<R>;
 
     fn mul(self, rps: R) -> Self::Output {

@@ -16,11 +16,11 @@
  */
 
 use crate::point::Point;
-use crate::ring::Ring;
+use crate::semiring::Semiring;
 use crate::vectordense::VectorDense;
 
 #[rustfmt::skip]
-pub trait Polynomial<R: Ring>
+pub trait Polynomial<R: Semiring>
     : Clone
 {
     fn bind(&mut self, e: R);

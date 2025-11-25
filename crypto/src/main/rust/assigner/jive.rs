@@ -19,12 +19,12 @@ use crate::assigner::assigment::Assigment;
 use crate::assigner::compressionfunction::CompressionFunction;
 use crate::assigner::permutation::Permutation;
 use crate::cyclicgroup::AdditiveCyclicGroup;
-use crate::ring::Ring;
+use crate::semiring::Presemiring;
 use core::marker::PhantomData;
 
 pub struct Jive<
     'a,
-    G: Ring + AdditiveCyclicGroup,
+    G: Presemiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [G; WIDTH]>,
@@ -35,7 +35,7 @@ pub struct Jive<
 
 impl<
     'a,
-    G: Ring + AdditiveCyclicGroup,
+    G: Presemiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [G; WIDTH]>,
@@ -54,7 +54,7 @@ impl<
 
 impl<
     'a,
-    G: Ring + AdditiveCyclicGroup,
+    G: Presemiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [G; WIDTH]>,

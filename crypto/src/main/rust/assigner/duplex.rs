@@ -19,12 +19,12 @@ use crate::assigner::assigment::Assigment;
 use crate::assigner::permutation::Permutation;
 use crate::distribution::UniformGenerator;
 use crate::duplex::{Duplex, Phase};
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use core::marker::PhantomData;
 
 pub struct DuplexImpl<
     'a,
-    S: UnitalRing + From<i8>,
+    S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -39,7 +39,7 @@ pub struct DuplexImpl<
 
 impl<
     'a,
-    S: UnitalRing + From<i8>,
+    S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -71,20 +71,20 @@ impl<
 
     fn pad(&mut self) {
         if self.position != RATE {
-            self.state[self.position] = S::UNITY;
+            self.state[self.position] = S::ONE;
             self.position += 1;
             self.state[self.position..RATE].fill(S::ZERO);
             self.position = RATE;
             self.state[WIDTH - 1] += S::from(2);
         } else {
-            self.state[WIDTH - 1] += S::UNITY;
+            self.state[WIDTH - 1] += S::ONE;
         }
     }
 }
 
 impl<
     'a,
-    S: UnitalRing + From<i8>,
+    S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -127,7 +127,7 @@ impl<
 
 impl<
     'a,
-    S: UnitalRing + From<i8>,
+    S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,

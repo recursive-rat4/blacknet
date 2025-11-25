@@ -20,46 +20,36 @@ use crate::algebra::{CommutativeAlgebra, UnitalAlgebra};
 use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::integer::Integer;
 use crate::module::Module;
-use crate::monoid::{AdditiveMonoid, MultiplicativeCommutativeMonoid, MultiplicativeMonoid};
 use crate::operation::Inv;
-use crate::semigroup::MultiplicativeSemigroup;
+use crate::semiring::{CommutativeSemiring, Presemiring, Semiring};
 use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
 
 #[rustfmt::skip]
 pub trait Ring
-    : AdditiveAbelianGroup
-    + MultiplicativeSemigroup
+    : Presemiring
+    + AdditiveAbelianGroup
 {
     type Int: Integer;
-
-    const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
 }
 
 #[rustfmt::skip]
 pub trait UnitalRing
     : Ring
-    + MultiplicativeMonoid
+    + Semiring
 {
-    const UNITY: Self = <Self as MultiplicativeMonoid>::IDENTITY;
 }
 
-impl<R: Ring + MultiplicativeMonoid> UnitalRing for R {}
+impl<R: Ring + Semiring> UnitalRing for R {}
 
 #[rustfmt::skip]
 pub trait CommutativeRing
     : UnitalRing
-    + MultiplicativeCommutativeMonoid
+    + CommutativeSemiring
 {
 }
 
-impl<R: UnitalRing + MultiplicativeCommutativeMonoid> CommutativeRing for R {}
-
-#[rustfmt::skip]
-pub trait RingOfIntegers
-    : CommutativeRing
-{
-}
+impl<R: UnitalRing + CommutativeSemiring> CommutativeRing for R {}
 
 #[rustfmt::skip]
 pub trait DivisionRing
@@ -70,7 +60,7 @@ pub trait DivisionRing
 
 #[rustfmt::skip]
 pub trait IntegerRing
-    : RingOfIntegers
+    : CommutativeRing
     + AdditiveCyclicGroup
 {
     fn new(n: Self::Int) -> Self;
@@ -110,8 +100,7 @@ pub trait PolynomialRing<R: UnitalRing>
 
 #[rustfmt::skip]
 pub trait PowerOfTwoCyclotomicRing<Z: IntegerRing>
-    : RingOfIntegers
-    + PolynomialRing<Z>
+    : PolynomialRing<Z>
     + CommutativeAlgebra<Z>
 {
     fn conjugate(self) -> Self;

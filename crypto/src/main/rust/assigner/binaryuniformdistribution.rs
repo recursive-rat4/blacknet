@@ -20,7 +20,8 @@ use crate::assigner::distribution::Distribution;
 use crate::assigner::logicgate::LogicGate;
 use crate::distribution::UniformGenerator;
 use crate::integer::Integer;
-use crate::ring::{IntegerRing, UnitalRing};
+use crate::ring::IntegerRing;
+use crate::semiring::Semiring;
 use alloc::vec::Vec;
 
 pub struct BinaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerRing>> {
@@ -58,7 +59,7 @@ impl<'a, G: UniformGenerator<Output: IntegerRing>> Distribution<'a, G::Output, G
         if self.have_bits == 0 {
             let gadget = generator.generate().gadget();
             self.assigment.extend_from_slice(&gadget);
-            let m1_gadget = (-G::Output::UNITY).gadget(); //XXX make static?
+            let m1_gadget = (-G::Output::ONE).gadget(); //XXX make static?
             self.logic_gate.check_less_or_equal(&gadget, &m1_gadget);
             self.cache = gadget;
             self.have_bits = Self::useful_bits();

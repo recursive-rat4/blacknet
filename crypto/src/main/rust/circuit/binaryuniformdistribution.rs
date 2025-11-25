@@ -71,7 +71,7 @@ impl<
         if self.have_bits == 0 {
             let scope = self.circuit.scope("BinaryUniformDistribution::sample");
             let generated = generator.generate();
-            let mut p = Z::UNITY;
+            let mut p = Z::ONE;
             let mut composed = LinearCombination::<Z>::default();
             for i in 0..Z::BITS {
                 let digit = scope.auxiliary();
@@ -80,7 +80,7 @@ impl<
                 p = p.double();
             }
             scope.constrain(composed, generated);
-            let m1_gadget = (-Z::UNITY).gadget();
+            let m1_gadget = (-Z::ONE).gadget();
             self.logic_gate.check_less_or_equal(&self.cache, &m1_gadget);
             self.have_bits = Self::useful_bits();
         }

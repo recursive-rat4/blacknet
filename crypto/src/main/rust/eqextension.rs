@@ -39,7 +39,7 @@ impl<R: UnitalRing> EqExtension<R> {
     }
 
     pub fn basis(coefficients: &[R]) -> Vec<R> {
-        Self::evaluate(coefficients, R::UNITY)
+        Self::evaluate(coefficients, R::ONE)
     }
 
     pub fn hypercube(&self) -> VectorDense<R> {
@@ -68,7 +68,7 @@ impl<R: UnitalRing, const N: usize> From<[R; N]> for EqExtension<R> {
     fn from(coefficients: [R; N]) -> Self {
         Self {
             coefficients: coefficients.into(),
-            z: R::UNITY,
+            z: R::ONE,
         }
     }
 }
@@ -77,21 +77,21 @@ impl<R: UnitalRing> From<Vec<R>> for EqExtension<R> {
     fn from(coefficients: Vec<R>) -> Self {
         Self {
             coefficients,
-            z: R::UNITY,
+            z: R::ONE,
         }
     }
 }
 
 impl<R: UnitalRing + From<u8>> Polynomial<R> for EqExtension<R> {
     fn bind(&mut self, e: R) {
-        self.z *= (self.coefficients[0] * e).double() - self.coefficients[0] - e + R::UNITY;
+        self.z *= (self.coefficients[0] * e).double() - self.coefficients[0] - e + R::ONE;
         self.coefficients.remove(0);
     }
 
     fn point(&self, point: &Point<R>) -> R {
         self.z
             * zip(self.coefficients.iter(), point.coordinates())
-                .map(|(&c, &p)| (c * p).double() - c - p + R::UNITY)
+                .map(|(&c, &p)| (c * p).double() - c - p + R::ONE)
                 .product()
     }
 
@@ -100,9 +100,9 @@ impl<R: UnitalRing + From<u8>> Polynomial<R> for EqExtension<R> {
         let z = match VAL {
             -2 => self.z * (R::from(3) - self.coefficients[0] - self.coefficients[0].double().double()),
             -1 => self.z * (R::from(2) - self.coefficients[0] - self.coefficients[0].double()),
-            0 => self.z * (R::UNITY - self.coefficients[0]),
+            0 => self.z * (R::ONE - self.coefficients[0]),
             1 => self.z * self.coefficients[0],
-            2 => self.z * (self.coefficients[0].double() + self.coefficients[0] - R::UNITY),
+            2 => self.z * (self.coefficients[0].double() + self.coefficients[0] - R::ONE),
             3 => self.z * (self.coefficients[0].double().double() + self.coefficients[0] - R::from(2)),
             4 => self.z * (self.coefficients[0].double().double().double() - self.coefficients[0] - R::from(3)),
             _ => unimplemented!("hypercube_with_var for val = {VAL}"),

@@ -16,9 +16,9 @@
  */
 
 use crate::assigner::assigment::Assigment;
-use crate::ring::Ring;
+use crate::semiring::Presemiring;
 
-pub trait Permutation<S: Ring> {
+pub trait Permutation<S: Presemiring> {
     type Domain;
 
     fn permute(assigment: &Assigment<S>, x: &mut Self::Domain);

@@ -47,13 +47,13 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
     }
 
     pub fn not(&self, a: R) -> R {
-        R::UNITY - a
+        R::ONE - a
     }
 
     #[allow(clippy::len_zero)]
     pub fn and_slice(&self, a: &[R]) -> R {
         if a.len() == 0 {
-            return R::UNITY;
+            return R::ONE;
         } else if a.len() == 1 {
             return a[0];
         };
@@ -69,7 +69,7 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
         let mut last_run: Option<R> = None;
         for i in (0..b.len()).rev() {
             let digit = a[i];
-            if b[i] == R::UNITY {
+            if b[i] == R::ONE {
                 current_run.push(digit);
             } else if !current_run.is_empty() {
                 if let Some(last_run) = last_run {

@@ -18,37 +18,37 @@
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrixsparse::MatrixSparse;
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use crate::vectordense::VectorDense;
 use core::iter::zip;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct R1CS<R: UnitalRing> {
+pub struct R1CS<R: Semiring> {
     a: MatrixSparse<R>,
     b: MatrixSparse<R>,
     c: MatrixSparse<R>,
 }
 
-impl<R: UnitalRing> R1CS<R> {
+impl<R: Semiring> R1CS<R> {
     pub const fn new(a: MatrixSparse<R>, b: MatrixSparse<R>, c: MatrixSparse<R>) -> Self {
         Self { a, b, c }
     }
 
     pub fn assigment(&self) -> Assigment<R> {
         let z = Assigment::new(self.variables());
-        z.push(R::UNITY);
+        z.push(R::ONE);
         z
     }
 }
 
-impl<R: UnitalRing> From<R1CS<R>> for (MatrixSparse<R>, MatrixSparse<R>, MatrixSparse<R>) {
+impl<R: Semiring> From<R1CS<R>> for (MatrixSparse<R>, MatrixSparse<R>, MatrixSparse<R>) {
     fn from(r1cs: R1CS<R>) -> Self {
         (r1cs.a, r1cs.b, r1cs.c)
     }
 }
 
-impl<R: UnitalRing> ConstraintSystem<R> for R1CS<R> {
+impl<R: Semiring> ConstraintSystem<R> for R1CS<R> {
     fn degree(&self) -> usize {
         2
     }

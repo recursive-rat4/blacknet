@@ -25,7 +25,7 @@ use blacknet_crypto::circuit::permutation::Permutation as PermutationCircuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::duplex::{Duplex, DuplexImpl};
 use blacknet_crypto::permutation::Permutation as PermutationPlain;
-use blacknet_crypto::ring::UnitalRing;
+use blacknet_crypto::semiring::Semiring;
 use core::array;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
@@ -37,7 +37,7 @@ impl PermutationPlain for TestPermutation {
     type Domain = [Z; 4];
 
     fn permute(x: &mut Self::Domain) {
-        x.iter_mut().for_each(|i| *i += Z::UNITY);
+        x.iter_mut().for_each(|i| *i += Z::ONE);
     }
 }
 
@@ -83,7 +83,7 @@ impl PermutationCircuit<Z> for TestPermutation {
     type Domain = [LinearCombination<Z>; 4];
 
     fn permute(_: &CircuitBuilder<Z>, x: &mut Self::Domain) {
-        x.iter_mut().for_each(|i| *i += Constant::UNITY);
+        x.iter_mut().for_each(|i| *i += Constant::ONE);
     }
 }
 
@@ -93,7 +93,7 @@ impl PermutationAssigner<Z> for TestPermutation {
     type Domain = [Z; 4];
 
     fn permute(_: &Assigment<Z>, x: &mut Self::Domain) {
-        x.iter_mut().for_each(|i| *i += Z::UNITY);
+        x.iter_mut().for_each(|i| *i += Z::ONE);
     }
 }
 

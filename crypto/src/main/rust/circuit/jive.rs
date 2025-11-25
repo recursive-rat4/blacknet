@@ -19,13 +19,13 @@ use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination};
 use crate::circuit::compressionfunction::CompressionFunction;
 use crate::circuit::permutation::Permutation;
 use crate::cyclicgroup::AdditiveCyclicGroup;
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use core::array;
 use core::marker::PhantomData;
 
 pub struct Jive<
     'a,
-    G: UnitalRing + AdditiveCyclicGroup,
+    G: Semiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
@@ -36,7 +36,7 @@ pub struct Jive<
 
 impl<
     'a,
-    G: UnitalRing + AdditiveCyclicGroup,
+    G: Semiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
@@ -55,7 +55,7 @@ impl<
 
 impl<
     'a,
-    G: UnitalRing + AdditiveCyclicGroup,
+    G: Semiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,

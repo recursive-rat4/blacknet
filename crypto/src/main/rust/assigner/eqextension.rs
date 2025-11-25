@@ -37,11 +37,11 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
     }
 
     pub fn point(&self, point: &Point<R>) -> R {
-        let mut pi = R::UNITY;
+        let mut pi = R::ONE;
         zip(self.coefficients.iter(), point.coordinates()).for_each(|(&c, &p)| {
             let cp = c * p;
             self.assigment.push(cp);
-            let t = pi * (cp.double() - c - p + R::UNITY);
+            let t = pi * (cp.double() - c - p + R::ONE);
             self.assigment.push(t);
             pi = t;
         });
@@ -50,7 +50,7 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
 
     pub fn hypercube(&self) -> VectorDense<R> {
         let mut r = vec![R::ZERO; 1 << self.coefficients.len()];
-        r[0] = R::UNITY;
+        r[0] = R::ONE;
         let mut j = 1;
         for i in (0..self.coefficients.len()).rev() {
             let mut l = j;

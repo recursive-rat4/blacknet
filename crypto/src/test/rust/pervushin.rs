@@ -17,7 +17,8 @@
 
 use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::operation::{Inv, Square};
-use blacknet_crypto::ring::{IntegerRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing};
+use blacknet_crypto::ring::{IntegerRing, PowerOfTwoCyclotomicRing};
+use blacknet_crypto::semiring::{Presemiring, Semiring};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type F = blacknet_crypto::pervushin::PervushinField2;
@@ -44,8 +45,8 @@ fn z_add() {
     assert_eq!(b + a, c);
     assert_eq!(c + Z::ZERO, c);
     assert_eq!(Z::ZERO + c, c);
-    assert_eq!(Z::UNITY + Z::ZERO, Z::UNITY);
-    assert_eq!(Z::ZERO + Z::UNITY, Z::UNITY);
+    assert_eq!(Z::ONE + Z::ZERO, Z::ONE);
+    assert_eq!(Z::ZERO + Z::ONE, Z::ONE);
     assert_eq!(Z::new(1) + Z::new(-1), Z::ZERO);
 }
 
@@ -67,7 +68,7 @@ fn z_sub() {
     assert_eq!(b - a, d);
     assert_eq!(c - Z::ZERO, c);
     assert_eq!(Z::ZERO - Z::ZERO, Z::ZERO);
-    assert_eq!(Z::UNITY - Z::UNITY, Z::ZERO);
+    assert_eq!(Z::ONE - Z::ONE, Z::ZERO);
 }
 
 #[test]
@@ -79,8 +80,8 @@ fn z_mul() {
     assert_eq!(b * a, c);
     assert_eq!(c * Z::ZERO, Z::ZERO);
     assert_eq!(Z::ZERO * c, Z::ZERO);
-    assert_eq!(Z::UNITY * c, c);
-    assert_eq!(c * Z::UNITY, c);
+    assert_eq!(Z::ONE * c, c);
+    assert_eq!(c * Z::ONE, c);
 }
 
 #[test]

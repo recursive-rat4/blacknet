@@ -17,9 +17,9 @@
 
 use crate::circuit::circuitbuilder::CircuitBuilder;
 use crate::distribution::{UniformDistribution, UniformGenerator};
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 
-pub trait Distribution<'a, R: UnitalRing, G: UniformGenerator> {
+pub trait Distribution<'a, R: Semiring, G: UniformGenerator> {
     type Output;
 
     fn new(circuit: &'a CircuitBuilder<R>) -> Self;
@@ -29,7 +29,7 @@ pub trait Distribution<'a, R: UnitalRing, G: UniformGenerator> {
     fn reset(&mut self);
 }
 
-impl<'a, R: UnitalRing, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution<G> {
+impl<'a, R: Semiring, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution<G> {
     type Output = G::Output;
 
     fn new(_: &'a CircuitBuilder<R>) -> Self {

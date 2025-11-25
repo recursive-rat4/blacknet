@@ -17,17 +17,17 @@
 
 use crate::point::Point;
 use crate::polynomial::Polynomial;
-use crate::ring::UnitalRing;
+use crate::semiring::Semiring;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-pub struct Hypercube<R: UnitalRing> {
+pub struct Hypercube<R: Semiring> {
     dimension: usize,
     vertices: usize,
     phantom: PhantomData<R>,
 }
 
-impl<R: UnitalRing> Hypercube<R> {
+impl<R: Semiring> Hypercube<R> {
     pub const fn new(dimension: usize) -> Self {
         Self {
             dimension,
@@ -106,7 +106,7 @@ pub struct VertexIterator<R> {
     phantom: PhantomData<R>,
 }
 
-impl<R: UnitalRing> Iterator for VertexIterator<R> {
+impl<R: Semiring> Iterator for VertexIterator<R> {
     type Item = Point<R>;
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -121,7 +121,7 @@ impl<R: UnitalRing> Iterator for VertexIterator<R> {
             for _ in 0..self.dimension {
                 s >>= 1;
                 if self.index & s == s {
-                    coordinates.push(R::UNITY)
+                    coordinates.push(R::ONE)
                 } else {
                     coordinates.push(R::ZERO)
                 }
@@ -134,7 +134,7 @@ impl<R: UnitalRing> Iterator for VertexIterator<R> {
     }
 }
 
-impl<R: UnitalRing> ExactSizeIterator for VertexIterator<R> {
+impl<R: Semiring> ExactSizeIterator for VertexIterator<R> {
     fn len(&self) -> usize {
         self.last - self.index
     }

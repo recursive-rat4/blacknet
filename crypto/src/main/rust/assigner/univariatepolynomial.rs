@@ -18,17 +18,17 @@
 use crate::assigner::assigment::Assigment;
 use crate::duplex::{Absorb, Duplex};
 use crate::operation::Double;
-use crate::ring::{Ring, UnitalRing};
+use crate::semiring::Semiring;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign};
 
-pub struct UnivariatePolynomial<'a, R: Ring> {
+pub struct UnivariatePolynomial<'a, R: Semiring> {
     coefficients: Vec<R>,
     assigment: &'a Assigment<R>,
 }
 
-impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
     pub const fn new(coefficients: Vec<R>, assigment: &'a Assigment<R>) -> Self {
         Self {
             coefficients,
@@ -71,7 +71,7 @@ impl<'a, R: UnitalRing> UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: Ring> IntoIterator for UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> IntoIterator for UnivariatePolynomial<'a, R> {
     type Item = R;
     type IntoIter = alloc::vec::IntoIter<R>;
 
@@ -81,7 +81,7 @@ impl<'a, R: Ring> IntoIterator for UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing> Add for UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> Add for UnivariatePolynomial<'a, R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -95,14 +95,14 @@ impl<'a, R: UnitalRing> Add for UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing> AddAssign for UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> AddAssign for UnivariatePolynomial<'a, R> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<'a, R: UnitalRing> Double for UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> Double for UnivariatePolynomial<'a, R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -113,7 +113,7 @@ impl<'a, R: UnitalRing> Double for UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: Ring + Absorb<R>> Absorb<R> for UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring + Absorb<R>> Absorb<R> for UnivariatePolynomial<'a, R> {
     fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
         duplex.absorb(&self.coefficients)
     }
