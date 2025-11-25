@@ -64,13 +64,11 @@ impl<
     type Hash = [LinearCombination<G>; RANK];
 
     fn compress(&self, a: &Self::Hash, b: &Self::Hash) -> Self::Hash {
-        let mut state: [LinearCombination<G>; WIDTH] =
-            array::from_fn(|_| LinearCombination::default());
+        let mut state: [LinearCombination<G>; WIDTH] = array::from_fn(|_| LinearCombination::new());
         state[..WIDTH / 2].clone_from_slice(a);
         state[WIDTH / 2..].clone_from_slice(b);
         P::permute(self.circuit, &mut state);
-        let mut hash: [LinearCombination<G>; RANK] =
-            array::from_fn(|_| LinearCombination::default());
+        let mut hash: [LinearCombination<G>; RANK] = array::from_fn(|_| LinearCombination::new());
         for i in 0..RANK {
             hash[i] = &a[i] + &b[i] + &state[i] + &state[i + RANK];
         }

@@ -52,7 +52,7 @@ impl<
             circuit,
             phase: Phase::Absorb,
             position: 0,
-            state: array::from_fn(|_| LinearCombination::default()),
+            state: array::from_fn(|_| LinearCombination::new()),
             phantom: PhantomData,
         }
     }
@@ -66,7 +66,9 @@ impl<
     pub fn reset_with_iv(&mut self, iv: &[LinearCombination<S>; CAPACITY]) {
         self.phase = Phase::Absorb;
         self.position = 0;
-        self.state[..RATE].fill(LinearCombination::default());
+        self.state[..RATE]
+            .iter_mut()
+            .for_each(LinearCombination::clear);
         self.state[RATE..WIDTH].clone_from_slice(iv);
     }
 
@@ -74,7 +76,9 @@ impl<
         if self.position != RATE {
             self.state[self.position] = Constant::UNITY.into();
             self.position += 1;
-            self.state[self.position..RATE].fill(LinearCombination::default());
+            self.state[self.position..RATE]
+                .iter_mut()
+                .for_each(LinearCombination::clear);
             self.position = RATE;
             self.state[WIDTH - 1] += Constant::new(S::from(2));
         } else {
@@ -95,7 +99,7 @@ impl<
     fn reset(&mut self) {
         self.phase = Phase::Absorb;
         self.position = 0;
-        self.state = array::from_fn(|_| LinearCombination::default());
+        self.state.iter_mut().for_each(LinearCombination::clear);
     }
 
     fn absorb_native(&mut self, e: &LinearCombination<S>) {

@@ -293,9 +293,21 @@ impl<R: UnitalRing> Square for Variable<R> {
 
 pub type Term<R> = (Variable<R>, Constant<R>);
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct LinearCombination<R: UnitalRing> {
     terms: BTreeMap<Variable<R>, Constant<R>>,
+}
+
+impl<R: UnitalRing> LinearCombination<R> {
+    pub const fn new() -> Self {
+        Self {
+            terms: BTreeMap::new(),
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.terms.clear()
+    }
 }
 
 impl<R: UnitalRing> Expression<R> for LinearCombination<R> {
@@ -312,14 +324,6 @@ impl<R: UnitalRing> Expression<R> for LinearCombination<R> {
             1
         } else {
             0
-        }
-    }
-}
-
-impl<R: UnitalRing> Default for LinearCombination<R> {
-    fn default() -> Self {
-        Self {
-            terms: BTreeMap::new(),
         }
     }
 }
@@ -531,7 +535,7 @@ impl<R: UnitalRing> Neg for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn neg(self) -> Self::Output {
-        let mut lc = LinearCombination::default();
+        let mut lc = LinearCombination::new();
         for (&variable, &coefficient) in &self.terms {
             lc -= (variable, coefficient);
         }
@@ -694,7 +698,7 @@ impl<R: UnitalRing> Mul<Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
-        let mut lc = LinearCombination::default();
+        let mut lc = LinearCombination::new();
         for (&variable, &coefficient) in &self.terms {
             lc += (variable, coefficient * rps);
         }
@@ -717,7 +721,7 @@ impl<R: UnitalRing> Mul<&LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
-        let mut lc = LinearCombination::default();
+        let mut lc = LinearCombination::new();
         for (&variable, &coefficient) in &rps.terms {
             lc += (variable, self * coefficient);
         }
