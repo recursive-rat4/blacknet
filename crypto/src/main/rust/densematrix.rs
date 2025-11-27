@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::densevector::DenseVector;
 use crate::operation::Double;
 use crate::ring::Ring;
 use crate::semiring::Presemiring;
-use crate::vectordense::VectorDense;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -26,13 +26,13 @@ use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAs
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct MatrixDense<R: Presemiring> {
+pub struct DenseMatrix<R: Presemiring> {
     rows: usize,
     columns: usize,
     elements: Vec<R>,
 }
 
-impl<R: Presemiring> MatrixDense<R> {
+impl<R: Presemiring> DenseMatrix<R> {
     pub const fn new(rows: usize, columns: usize, elements: Vec<R>) -> Self {
         Self {
             rows,
@@ -89,13 +89,13 @@ impl<R: Presemiring> MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> From<MatrixDense<R>> for (usize, usize, Vec<R>) {
-    fn from(matrix: MatrixDense<R>) -> Self {
+impl<R: Presemiring> From<DenseMatrix<R>> for (usize, usize, Vec<R>) {
+    fn from(matrix: DenseMatrix<R>) -> Self {
         (matrix.rows, matrix.columns, matrix.elements)
     }
 }
 
-impl<R: Presemiring> Index<(usize, usize)> for MatrixDense<R> {
+impl<R: Presemiring> Index<(usize, usize)> for DenseMatrix<R> {
     type Output = R;
 
     #[inline]
@@ -104,18 +104,18 @@ impl<R: Presemiring> Index<(usize, usize)> for MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> IndexMut<(usize, usize)> for MatrixDense<R> {
+impl<R: Presemiring> IndexMut<(usize, usize)> for DenseMatrix<R> {
     #[inline]
     fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut Self::Output {
         &mut self.elements[i * self.columns + j]
     }
 }
 
-impl<R: Presemiring> Add for MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Presemiring> Add for DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
     fn add(self, rps: Self) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             zip(self.elements, rps.elements)
@@ -125,17 +125,17 @@ impl<R: Presemiring> Add for MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> AddAssign for MatrixDense<R> {
+impl<R: Presemiring> AddAssign for DenseMatrix<R> {
     fn add_assign(&mut self, rps: Self) {
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Double for MatrixDense<R> {
+impl<R: Presemiring> Double for DenseMatrix<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             self.elements.into_iter().map(Double::double).collect(),
@@ -143,11 +143,11 @@ impl<R: Presemiring> Double for MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> Add<&MatrixDense<R>> for MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Presemiring> Add<&DenseMatrix<R>> for DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
-    fn add(self, rps: &MatrixDense<R>) -> Self::Output {
-        MatrixDense::new(
+    fn add(self, rps: &DenseMatrix<R>) -> Self::Output {
+        DenseMatrix::new(
             self.rows,
             self.columns,
             zip(self.elements, rps.elements.iter())
@@ -157,17 +157,17 @@ impl<R: Presemiring> Add<&MatrixDense<R>> for MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> AddAssign<&MatrixDense<R>> for MatrixDense<R> {
-    fn add_assign(&mut self, rps: &MatrixDense<R>) {
+impl<R: Presemiring> AddAssign<&DenseMatrix<R>> for DenseMatrix<R> {
+    fn add_assign(&mut self, rps: &DenseMatrix<R>) {
         zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Add<MatrixDense<R>> for &MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Presemiring> Add<DenseMatrix<R>> for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
-    fn add(self, rps: MatrixDense<R>) -> Self::Output {
-        MatrixDense::new(
+    fn add(self, rps: DenseMatrix<R>) -> Self::Output {
+        DenseMatrix::new(
             self.rows,
             self.columns,
             zip(self.elements.iter(), rps.elements)
@@ -177,11 +177,11 @@ impl<R: Presemiring> Add<MatrixDense<R>> for &MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> Add for &MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Presemiring> Add for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
     fn add(self, rps: Self) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             zip(self.elements.iter(), rps.elements.iter())
@@ -191,11 +191,11 @@ impl<R: Presemiring> Add for &MatrixDense<R> {
     }
 }
 
-impl<R: Ring> Neg for MatrixDense<R> {
+impl<R: Ring> Neg for DenseMatrix<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             self.elements.into_iter().map(Neg::neg).collect(),
@@ -203,11 +203,11 @@ impl<R: Ring> Neg for MatrixDense<R> {
     }
 }
 
-impl<R: Ring> Neg for &MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Ring> Neg for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
     fn neg(self) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             self.elements.iter().map(|&e| -e).collect(),
@@ -215,11 +215,11 @@ impl<R: Ring> Neg for &MatrixDense<R> {
     }
 }
 
-impl<R: Ring> Sub for MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Ring> Sub for DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             zip(self.elements, rps.elements)
@@ -229,17 +229,17 @@ impl<R: Ring> Sub for MatrixDense<R> {
     }
 }
 
-impl<R: Ring> SubAssign for MatrixDense<R> {
+impl<R: Ring> SubAssign for DenseMatrix<R> {
     fn sub_assign(&mut self, rps: Self) {
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<&MatrixDense<R>> for MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Ring> Sub<&DenseMatrix<R>> for DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
-    fn sub(self, rps: &MatrixDense<R>) -> Self::Output {
-        MatrixDense::new(
+    fn sub(self, rps: &DenseMatrix<R>) -> Self::Output {
+        DenseMatrix::new(
             self.rows,
             self.columns,
             zip(self.elements, rps.elements.iter())
@@ -249,17 +249,17 @@ impl<R: Ring> Sub<&MatrixDense<R>> for MatrixDense<R> {
     }
 }
 
-impl<R: Ring> SubAssign<&MatrixDense<R>> for MatrixDense<R> {
-    fn sub_assign(&mut self, rps: &MatrixDense<R>) {
+impl<R: Ring> SubAssign<&DenseMatrix<R>> for DenseMatrix<R> {
+    fn sub_assign(&mut self, rps: &DenseMatrix<R>) {
         zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<MatrixDense<R>> for &MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Ring> Sub<DenseMatrix<R>> for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
-    fn sub(self, rps: MatrixDense<R>) -> Self::Output {
-        MatrixDense::new(
+    fn sub(self, rps: DenseMatrix<R>) -> Self::Output {
+        DenseMatrix::new(
             self.rows,
             self.columns,
             zip(self.elements.iter(), rps.elements)
@@ -269,11 +269,11 @@ impl<R: Ring> Sub<MatrixDense<R>> for &MatrixDense<R> {
     }
 }
 
-impl<R: Ring> Sub for &MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Ring> Sub for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             zip(self.elements.iter(), rps.elements.iter())
@@ -283,7 +283,7 @@ impl<R: Ring> Sub for &MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> Mul for MatrixDense<R> {
+impl<R: Presemiring> Mul for DenseMatrix<R> {
     type Output = Self;
 
     #[inline]
@@ -292,44 +292,44 @@ impl<R: Presemiring> Mul for MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> MulAssign for MatrixDense<R> {
+impl<R: Presemiring> MulAssign for DenseMatrix<R> {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = &*self * &rps
     }
 }
 
-impl<R: Presemiring> Mul<&MatrixDense<R>> for MatrixDense<R> {
+impl<R: Presemiring> Mul<&DenseMatrix<R>> for DenseMatrix<R> {
     type Output = Self;
 
     #[inline]
-    fn mul(self, rps: &MatrixDense<R>) -> Self::Output {
+    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
         &self * rps
     }
 }
 
-impl<R: Presemiring> MulAssign<&MatrixDense<R>> for MatrixDense<R> {
+impl<R: Presemiring> MulAssign<&DenseMatrix<R>> for DenseMatrix<R> {
     #[inline]
-    fn mul_assign(&mut self, rps: &MatrixDense<R>) {
+    fn mul_assign(&mut self, rps: &DenseMatrix<R>) {
         *self = &*self * rps
     }
 }
 
-impl<R: Presemiring> Mul<MatrixDense<R>> for &MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Presemiring> Mul<DenseMatrix<R>> for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
     #[inline]
-    fn mul(self, rps: MatrixDense<R>) -> Self::Output {
+    fn mul(self, rps: DenseMatrix<R>) -> Self::Output {
         self * &rps
     }
 }
 
-impl<R: Presemiring> Mul for &MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Presemiring> Mul for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
-    fn mul(self, rps: &MatrixDense<R>) -> Self::Output {
+    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
         // Iterative algorithm
-        let mut r = MatrixDense::fill(self.rows, rps.columns, R::ZERO);
+        let mut r = DenseMatrix::fill(self.rows, rps.columns, R::ZERO);
         for i in 0..self.rows {
             for j in 0..rps.columns {
                 for k in 0..self.columns {
@@ -341,11 +341,11 @@ impl<R: Presemiring> Mul for &MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> Mul<R> for MatrixDense<R> {
+impl<R: Presemiring> Mul<R> for DenseMatrix<R> {
     type Output = Self;
 
     fn mul(self, rps: R) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             self.elements.into_iter().map(|e| e * rps).collect(),
@@ -353,17 +353,17 @@ impl<R: Presemiring> Mul<R> for MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> MulAssign<R> for MatrixDense<R> {
+impl<R: Presemiring> MulAssign<R> for DenseMatrix<R> {
     fn mul_assign(&mut self, rps: R) {
         self.elements.iter_mut().for_each(|e| *e *= rps);
     }
 }
 
-impl<R: Presemiring> Mul<R> for &MatrixDense<R> {
-    type Output = MatrixDense<R>;
+impl<R: Presemiring> Mul<R> for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
 
     fn mul(self, rps: R) -> Self::Output {
-        MatrixDense::new(
+        DenseMatrix::new(
             self.rows,
             self.columns,
             self.elements.iter().map(|&e| e * rps).collect(),
@@ -371,11 +371,11 @@ impl<R: Presemiring> Mul<R> for &MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> Mul<&VectorDense<R>> for &MatrixDense<R> {
-    type Output = VectorDense<R>;
+impl<R: Presemiring> Mul<&DenseVector<R>> for &DenseMatrix<R> {
+    type Output = DenseVector<R>;
 
-    fn mul(self, rps: &VectorDense<R>) -> Self::Output {
-        let mut r = VectorDense::fill(self.rows, R::ZERO);
+    fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+        let mut r = DenseVector::fill(self.rows, R::ZERO);
         for i in 0..self.rows {
             for j in 0..self.columns {
                 r[i] += self[(i, j)] * rps[j]
@@ -385,11 +385,11 @@ impl<R: Presemiring> Mul<&VectorDense<R>> for &MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> Mul<&MatrixDense<R>> for &VectorDense<R> {
-    type Output = VectorDense<R>;
+impl<R: Presemiring> Mul<&DenseMatrix<R>> for &DenseVector<R> {
+    type Output = DenseVector<R>;
 
-    fn mul(self, rps: &MatrixDense<R>) -> Self::Output {
-        let mut r = VectorDense::fill(rps.columns, R::ZERO);
+    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+        let mut r = DenseVector::fill(rps.columns, R::ZERO);
         for i in 0..rps.rows {
             for j in 0..rps.columns {
                 r[j] += self[i] * rps[(i, j)]

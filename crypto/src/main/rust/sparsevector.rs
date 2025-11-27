@@ -15,23 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matrixdense::MatrixDense;
+use crate::densematrix::DenseMatrix;
+use crate::densevector::DenseVector;
 use crate::ring::Ring;
 use crate::semiring::Presemiring;
-use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct VectorSparse<R: Presemiring> {
+pub struct SparseVector<R: Presemiring> {
     dimension: usize,
     index: Vec<usize>,
     elements: Vec<R>,
 }
 
-impl<R: Presemiring> VectorSparse<R> {
+impl<R: Presemiring> SparseVector<R> {
     pub const fn new(dimension: usize, index: Vec<usize>, elements: Vec<R>) -> Self {
         Self {
             dimension,
@@ -49,7 +49,7 @@ impl<R: Presemiring> VectorSparse<R> {
     }
 }
 
-impl<R: Ring> Neg for VectorSparse<R> {
+impl<R: Ring> Neg for SparseVector<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -61,11 +61,11 @@ impl<R: Ring> Neg for VectorSparse<R> {
     }
 }
 
-impl<R: Presemiring> Mul<&MatrixDense<R>> for &VectorSparse<R> {
-    type Output = VectorDense<R>;
+impl<R: Presemiring> Mul<&DenseMatrix<R>> for &SparseVector<R> {
+    type Output = DenseVector<R>;
 
-    fn mul(self, rps: &MatrixDense<R>) -> Self::Output {
-        let mut v = VectorDense::<R>::fill(rps.columns(), R::ZERO);
+    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+        let mut v = DenseVector::<R>::fill(rps.columns(), R::ZERO);
         let lps_nnz = self.index.len();
         for i in 0..lps_nnz {
             for j in 0..rps.columns() {
@@ -77,11 +77,11 @@ impl<R: Presemiring> Mul<&MatrixDense<R>> for &VectorSparse<R> {
     }
 }
 
-impl<R: Presemiring> Mul<&VectorSparse<R>> for &MatrixDense<R> {
-    type Output = VectorDense<R>;
+impl<R: Presemiring> Mul<&SparseVector<R>> for &DenseMatrix<R> {
+    type Output = DenseVector<R>;
 
-    fn mul(self, rps: &VectorSparse<R>) -> Self::Output {
-        let mut v = VectorDense::<R>::fill(self.rows(), R::ZERO);
+    fn mul(self, rps: &SparseVector<R>) -> Self::Output {
+        let mut v = DenseVector::<R>::fill(self.rows(), R::ZERO);
         let rps_nnz = rps.index.len();
         for i in 0..self.rows() {
             for j in 0..rps_nnz {
@@ -93,8 +93,8 @@ impl<R: Presemiring> Mul<&VectorSparse<R>> for &MatrixDense<R> {
     }
 }
 
-impl<R: Presemiring> From<&VectorDense<R>> for VectorSparse<R> {
-    fn from(dense: &VectorDense<R>) -> Self {
+impl<R: Presemiring> From<&DenseVector<R>> for SparseVector<R> {
+    fn from(dense: &DenseVector<R>) -> Self {
         let mut index = Vec::<usize>::new();
         let mut elements = Vec::<R>::new();
         for i in 0..dense.dimension() {
@@ -104,13 +104,13 @@ impl<R: Presemiring> From<&VectorDense<R>> for VectorSparse<R> {
                 elements.push(e);
             }
         }
-        VectorSparse::new(dense.dimension(), index, elements)
+        SparseVector::new(dense.dimension(), index, elements)
     }
 }
 
-impl<R: Presemiring> From<&VectorSparse<R>> for VectorDense<R> {
-    fn from(sparse: &VectorSparse<R>) -> Self {
-        let mut dense = VectorDense::fill(sparse.dimension(), R::ZERO);
+impl<R: Presemiring> From<&SparseVector<R>> for DenseVector<R> {
+    fn from(sparse: &SparseVector<R>) -> Self {
+        let mut dense = DenseVector::fill(sparse.dimension(), R::ZERO);
         zip(sparse.index.iter(), sparse.elements.iter()).for_each(|(&i, &e)| dense[i] = e);
         dense
     }

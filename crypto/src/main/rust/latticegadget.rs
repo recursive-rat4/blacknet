@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::densematrix::DenseMatrix;
+use crate::densevector::DenseVector;
 use crate::integer::Integer;
-use crate::matrixdense::MatrixDense;
 use crate::ring::{IntegerRing, PolynomialRing};
-use crate::vectordense::VectorDense;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -44,18 +44,18 @@ pub fn decompose<Z: IntegerRing, R: PolynomialRing<Z>>(
     radix_mask: <Z::Int as Integer>::Limb,
     radix_shift: <Z::Int as Integer>::Limb,
     digits: usize,
-) -> VectorDense<R> {
+) -> DenseVector<R> {
     let mut pieces = vec![R::ZERO; digits];
     decompose_impl(polynomial, radix_mask, radix_shift, &mut pieces);
     pieces.into()
 }
 
 pub fn decompose_vector<Z: IntegerRing, R: PolynomialRing<Z>>(
-    vector: &VectorDense<R>,
+    vector: &DenseVector<R>,
     radix_mask: <Z::Int as Integer>::Limb,
     radix_shift: <Z::Int as Integer>::Limb,
     digits: usize,
-) -> VectorDense<R> {
+) -> DenseVector<R> {
     let mut pieces = vec![R::ZERO; vector.dimension() * digits];
     for (i, &polynomial) in vector.iter().enumerate() {
         decompose_impl(
@@ -72,7 +72,7 @@ pub fn matrix<Z: IntegerRing, R: PolynomialRing<Z>>(
     radix: R,
     m: usize,
     n: usize,
-) -> MatrixDense<R> {
+) -> DenseMatrix<R> {
     let mut powers = Vec::<R>::with_capacity(n);
     let mut power = R::ONE;
     powers.push(power);
@@ -83,14 +83,14 @@ pub fn matrix<Z: IntegerRing, R: PolynomialRing<Z>>(
         power *= radix;
     }
     powers.push(radix * power);
-    VectorDense::<R>::identity(m).tensor(&powers.into())
+    DenseVector::<R>::identity(m).tensor(&powers.into())
 }
 
 pub fn vector<Z: IntegerRing, R: PolynomialRing<Z>>(
     polynomial: R,
     radix: Z,
     digits: usize,
-) -> VectorDense<R> {
+) -> DenseVector<R> {
     let mut powers = Vec::<R>::with_capacity(digits);
     powers.push(polynomial);
     let mut power = radix;

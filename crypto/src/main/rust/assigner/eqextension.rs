@@ -16,9 +16,9 @@
  */
 
 use crate::assigner::assigment::Assigment;
+use crate::densevector::DenseVector;
 use crate::point::Point;
 use crate::ring::UnitalRing;
-use crate::vectordense::VectorDense;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -48,7 +48,7 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
         pi
     }
 
-    pub fn hypercube(&self) -> VectorDense<R> {
+    pub fn hypercube(&self) -> DenseVector<R> {
         let mut r = vec![R::ZERO; 1 << self.coefficients.len()];
         r[0] = R::ONE;
         let mut j = 1;

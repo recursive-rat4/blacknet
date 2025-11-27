@@ -75,6 +75,14 @@ name = "customizableconstraintsystem"
 path = "src/test/rust/customizableconstraintsystem.rs"
 
 [[test]]
+name = "densematrix"
+path = "src/test/rust/densematrix.rs"
+
+[[test]]
+name = "densevector"
+path = "src/test/rust/densevector.rs"
+
+[[test]]
 name = "duplex"
 path = "src/test/rust/duplex.rs"
 
@@ -119,16 +127,8 @@ name = "logicgate"
 path = "src/test/rust/logicgate.rs"
 
 [[test]]
-name = "matrixdense"
-path = "src/test/rust/matrixdense.rs"
-
-[[test]]
 name = "matrixring"
 path = "src/test/rust/matrixring.rs"
-
-[[test]]
-name = "matrixsparse"
-path = "src/test/rust/matrixsparse.rs"
 
 [[test]]
 name = "module"
@@ -155,6 +155,14 @@ name = "r1cs"
 path = "src/test/rust/r1cs.rs"
 
 [[test]]
+name = "sparsematrix"
+path = "src/test/rust/sparsematrix.rs"
+
+[[test]]
+name = "sparsevector"
+path = "src/test/rust/sparsevector.rs"
+
+[[test]]
 name = "sumcheck"
 path = "src/test/rust/sumcheck.rs"
 
@@ -165,14 +173,6 @@ path = "src/test/rust/uniformintdistribution.rs"
 [[test]]
 name = "univariatepolynomial"
 path = "src/test/rust/univariatepolynomial.rs"
-
-[[test]]
-name = "vectordense"
-path = "src/test/rust/vectordense.rs"
-
-[[test]]
-name = "vectorsparse"
-path = "src/test/rust/vectorsparse.rs"
 
 [[test]]
 name = "z2"

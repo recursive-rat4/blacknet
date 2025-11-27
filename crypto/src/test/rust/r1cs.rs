@@ -17,38 +17,38 @@
 
 use blacknet_compat::assert_ok;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::matrixdense::MatrixDense;
-use blacknet_crypto::matrixsparse::MatrixSparse;
+use blacknet_crypto::densematrix::DenseMatrix;
+use blacknet_crypto::densevector::DenseVector;
 use blacknet_crypto::r1cs::R1CS;
-use blacknet_crypto::vectordense::VectorDense;
+use blacknet_crypto::sparsematrix::SparseMatrix;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn satisfaction() {
     #[rustfmt::skip]
-    let a = MatrixDense::new(3, 5, [
+    let a = DenseMatrix::new(3, 5, [
         0, 0, 1, 0, 0,
         0, 0, 0, 1, 0,
         0, 0, 0, 0, 1,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let b = MatrixDense::new(3, 5, [
+    let b = DenseMatrix::new(3, 5, [
         0, 0, 0, 1, 0,
         0, 0, 0, 1, 0,
         0, 0, 0, 0, 1,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let c = MatrixDense::new(3, 5, [
+    let c = DenseMatrix::new(3, 5, [
         4, 1, 0, 0, 0,
         0, 0, 1, 0, 0,
         0, 0, 0, 1, 0,
     ].map(R::from).into());
-    let z = VectorDense::from([1, 60, 16, 4, 2].map(R::from));
+    let z = DenseVector::from([1, 60, 16, 4, 2].map(R::from));
     let r1cs = R1CS::new(
-        MatrixSparse::from(&a),
-        MatrixSparse::from(&b),
-        MatrixSparse::from(&c),
+        SparseMatrix::from(&a),
+        SparseMatrix::from(&b),
+        SparseMatrix::from(&c),
     );
 
     assert_eq!(r1cs.degree(), 2);

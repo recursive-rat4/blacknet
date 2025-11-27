@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matrixdense::MatrixDense;
+use crate::densematrix::DenseMatrix;
+use crate::densevector::DenseVector;
 use crate::ring::Ring;
 use crate::semiring::Presemiring;
-use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
@@ -27,14 +27,14 @@ use serde::{Deserialize, Serialize};
 // CSR format
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct MatrixSparse<R: Presemiring> {
+pub struct SparseMatrix<R: Presemiring> {
     columns: usize,
     r_index: Vec<usize>,
     c_index: Vec<usize>,
     elements: Vec<R>,
 }
 
-impl<R: Presemiring> MatrixSparse<R> {
+impl<R: Presemiring> SparseMatrix<R> {
     pub const fn new(
         columns: usize,
         r_index: Vec<usize>,
@@ -58,7 +58,7 @@ impl<R: Presemiring> MatrixSparse<R> {
     }
 }
 
-impl<R: Ring> Neg for MatrixSparse<R> {
+impl<R: Ring> Neg for SparseMatrix<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -71,10 +71,10 @@ impl<R: Ring> Neg for MatrixSparse<R> {
     }
 }
 
-impl<R: Presemiring> Mul<&VectorDense<R>> for &MatrixSparse<R> {
-    type Output = VectorDense<R>;
+impl<R: Presemiring> Mul<&DenseVector<R>> for &SparseMatrix<R> {
+    type Output = DenseVector<R>;
 
-    fn mul(self, rps: &VectorDense<R>) -> Self::Output {
+    fn mul(self, rps: &DenseVector<R>) -> Self::Output {
         (0..self.rows())
             .map(|i| {
                 let row_start = self.r_index[i];
@@ -90,9 +90,9 @@ impl<R: Presemiring> Mul<&VectorDense<R>> for &MatrixSparse<R> {
     }
 }
 
-impl<R: Presemiring> From<&MatrixDense<R>> for MatrixSparse<R> {
-    fn from(dense: &MatrixDense<R>) -> Self {
-        let mut builder = MatrixSparseBuilder::<R>::new(dense.rows(), dense.columns());
+impl<R: Presemiring> From<&DenseMatrix<R>> for SparseMatrix<R> {
+    fn from(dense: &DenseMatrix<R>) -> Self {
+        let mut builder = SparseMatrixBuilder::<R>::new(dense.rows(), dense.columns());
         for i in 0..dense.rows() {
             for j in 0..dense.columns() {
                 let e = dense[(i, j)];
@@ -106,9 +106,9 @@ impl<R: Presemiring> From<&MatrixDense<R>> for MatrixSparse<R> {
     }
 }
 
-impl<R: Presemiring> From<&MatrixSparse<R>> for MatrixDense<R> {
-    fn from(sparse: &MatrixSparse<R>) -> Self {
-        let mut dense = MatrixDense::<R>::fill(sparse.rows(), sparse.columns(), R::ZERO);
+impl<R: Presemiring> From<&SparseMatrix<R>> for DenseMatrix<R> {
+    fn from(sparse: &SparseMatrix<R>) -> Self {
+        let mut dense = DenseMatrix::<R>::fill(sparse.rows(), sparse.columns(), R::ZERO);
         for i in 0..sparse.rows() {
             let row_start = sparse.r_index[i];
             let row_end = sparse.r_index[i + 1];
@@ -121,14 +121,14 @@ impl<R: Presemiring> From<&MatrixSparse<R>> for MatrixDense<R> {
     }
 }
 
-pub struct MatrixSparseBuilder<R: Presemiring> {
+pub struct SparseMatrixBuilder<R: Presemiring> {
     columns: usize,
     r_index: Vec<usize>,
     c_index: Vec<usize>,
     elements: Vec<R>,
 }
 
-impl<R: Presemiring> MatrixSparseBuilder<R> {
+impl<R: Presemiring> SparseMatrixBuilder<R> {
     pub fn new(rows: usize, columns: usize) -> Self {
         let mut r_index = Vec::<usize>::with_capacity(rows + 1);
         r_index.push(0);
@@ -149,7 +149,7 @@ impl<R: Presemiring> MatrixSparseBuilder<R> {
         self.r_index.push(self.elements.len());
     }
 
-    pub fn build(self) -> MatrixSparse<R> {
-        MatrixSparse::<R>::new(self.columns, self.r_index, self.c_index, self.elements)
+    pub fn build(self) -> SparseMatrix<R> {
+        SparseMatrix::<R>::new(self.columns, self.r_index, self.c_index, self.elements)
     }
 }

@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::densevector::DenseVector;
 use crate::semiring::Presemiring;
-use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
@@ -46,7 +46,7 @@ impl<R: Presemiring> Assigment<R> {
         self.assigment.borrow_mut().push(value)
     }
 
-    pub fn finish(self) -> VectorDense<R> {
+    pub fn finish(self) -> DenseVector<R> {
         self.assigment.take().into()
     }
 }

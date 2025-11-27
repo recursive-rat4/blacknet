@@ -17,21 +17,21 @@
 
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
-use crate::matrixsparse::MatrixSparse;
+use crate::densevector::DenseVector;
 use crate::semiring::Semiring;
-use crate::vectordense::VectorDense;
+use crate::sparsematrix::SparseMatrix;
 use core::iter::zip;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct R1CS<R: Semiring> {
-    a: MatrixSparse<R>,
-    b: MatrixSparse<R>,
-    c: MatrixSparse<R>,
+    a: SparseMatrix<R>,
+    b: SparseMatrix<R>,
+    c: SparseMatrix<R>,
 }
 
 impl<R: Semiring> R1CS<R> {
-    pub const fn new(a: MatrixSparse<R>, b: MatrixSparse<R>, c: MatrixSparse<R>) -> Self {
+    pub const fn new(a: SparseMatrix<R>, b: SparseMatrix<R>, c: SparseMatrix<R>) -> Self {
         Self { a, b, c }
     }
 
@@ -42,7 +42,7 @@ impl<R: Semiring> R1CS<R> {
     }
 }
 
-impl<R: Semiring> From<R1CS<R>> for (MatrixSparse<R>, MatrixSparse<R>, MatrixSparse<R>) {
+impl<R: Semiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, SparseMatrix<R>) {
     fn from(r1cs: R1CS<R>) -> Self {
         (r1cs.a, r1cs.b, r1cs.c)
     }
@@ -61,7 +61,7 @@ impl<R: Semiring> ConstraintSystem<R> for R1CS<R> {
         self.a.columns()
     }
 
-    fn is_satisfied(&self, z: &VectorDense<R>) -> Result<R> {
+    fn is_satisfied(&self, z: &DenseVector<R>) -> Result<R> {
         if z.dimension() != self.variables() {
             return Err(Error::Length(z.dimension(), self.variables()));
         }

@@ -16,11 +16,11 @@
  */
 
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
-use crate::matrixsparse::MatrixSparseBuilder;
 use crate::operation::{Double, Square};
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
 use crate::semiring::Semiring;
+use crate::sparsematrix::SparseMatrixBuilder;
 use alloc::boxed::Box;
 use alloc::collections::{BTreeMap, VecDeque};
 use alloc::vec;
@@ -1155,9 +1155,9 @@ impl<R: Semiring> CircuitBuilder<R> {
             lps_degree <= 2 && rps_degree <= 1,
             "Shape [{lps_degree}, {rps_degree}] is not compatible with [2, 1]"
         );
-        let mut a = MatrixSparseBuilder::<R>::new(constraints_num, variables_num);
-        let mut b = MatrixSparseBuilder::<R>::new(constraints_num, variables_num);
-        let mut c = MatrixSparseBuilder::<R>::new(constraints_num, variables_num);
+        let mut a = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
+        let mut b = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
+        let mut c = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
 
         self.lay_out();
         for constraint in constraints {
@@ -1256,7 +1256,7 @@ impl<R: Semiring> CircuitBuilder<R> {
         constraints.push(constraint)
     }
 
-    fn put(&self, m: &mut MatrixSparseBuilder<R>, lc: &LinearCombination<R>) {
+    fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: &LinearCombination<R>) {
         for (variable, coefficient) in &lc.terms {
             let column: usize = match variable.kind {
                 VariableKind::Constant => 0,
@@ -1271,7 +1271,7 @@ impl<R: Semiring> CircuitBuilder<R> {
         m.row();
     }
 
-    fn pad(&self, m: &mut MatrixSparseBuilder<R>) {
+    fn pad(&self, m: &mut SparseMatrixBuilder<R>) {
         m.column(0, R::ONE);
         m.row();
     }
@@ -1310,10 +1310,10 @@ impl<R: UnitalRing> CircuitBuilder<R> {
             .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
         let (mut lps_matrices, mut rps_matrices) = (Vec::new(), Vec::new());
         lps_matrices.resize_with(lps_degree, || {
-            MatrixSparseBuilder::<R>::new(constraints_num, variables_num)
+            SparseMatrixBuilder::<R>::new(constraints_num, variables_num)
         });
         rps_matrices.resize_with(rps_degree, || {
-            MatrixSparseBuilder::<R>::new(constraints_num, variables_num)
+            SparseMatrixBuilder::<R>::new(constraints_num, variables_num)
         });
 
         self.lay_out();

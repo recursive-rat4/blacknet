@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::densevector::DenseVector;
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::operation::Double;
 use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
-use crate::vectordense::VectorDense;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -42,7 +42,7 @@ impl<R: UnitalRing> EqExtension<R> {
         Self::evaluate(coefficients, R::ONE)
     }
 
-    pub fn hypercube(&self) -> VectorDense<R> {
+    pub fn hypercube(&self) -> DenseVector<R> {
         Self::evaluate(&self.coefficients, self.z).into()
     }
 
@@ -96,7 +96,7 @@ impl<R: UnitalRing + From<u8>> Polynomial<R> for EqExtension<R> {
     }
 
     #[rustfmt::skip]
-    fn hypercube_with_var<const VAL: i8>(&self) -> VectorDense<R> {
+    fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
         let z = match VAL {
             -2 => self.z * (R::from(3) - self.coefficients[0] - self.coefficients[0].double().double()),
             -1 => self.z * (R::from(2) - self.coefficients[0] - self.coefficients[0].double()),

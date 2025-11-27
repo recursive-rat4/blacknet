@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::densevector::DenseVector;
 use crate::point::Point;
 use crate::semiring::Semiring;
-use crate::vectordense::VectorDense;
 
 #[rustfmt::skip]
 pub trait Polynomial<R: Semiring>
@@ -26,7 +26,7 @@ pub trait Polynomial<R: Semiring>
     fn bind(&mut self, e: R);
 
     fn point(&self, point: &Point<R>) -> R;
-    fn hypercube_with_var<const VAL: i8>(&self) -> VectorDense<R>;
+    fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R>;
 
     fn degree(&self) -> usize;
     fn variables(&self) -> usize;

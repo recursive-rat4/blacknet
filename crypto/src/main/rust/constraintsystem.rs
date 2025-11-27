@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::densevector::DenseVector;
 use crate::semiring::Presemiring;
-use crate::vectordense::VectorDense;
 use thiserror::Error;
 
 pub trait ConstraintSystem<R: Presemiring> {
@@ -24,7 +24,7 @@ pub trait ConstraintSystem<R: Presemiring> {
     fn constraints(&self) -> usize;
     fn variables(&self) -> usize;
 
-    fn is_satisfied(&self, z: &VectorDense<R>) -> Result<R>;
+    fn is_satisfied(&self, z: &DenseVector<R>) -> Result<R>;
 }
 
 #[derive(Debug, Error)]

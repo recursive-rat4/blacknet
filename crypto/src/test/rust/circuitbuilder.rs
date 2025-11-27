@@ -19,10 +19,10 @@ use blacknet_compat::assert_ok;
 use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
-use blacknet_crypto::matrixdense::MatrixDense;
-use blacknet_crypto::matrixsparse::MatrixSparse;
+use blacknet_crypto::densematrix::DenseMatrix;
+use blacknet_crypto::densevector::DenseVector;
 use blacknet_crypto::r1cs::R1CS;
-use blacknet_crypto::vectordense::VectorDense;
+use blacknet_crypto::sparsematrix::SparseMatrix;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -75,30 +75,30 @@ Root 0x1
 #[test]
 fn comparatism() {
     #[rustfmt::skip]
-    let am = MatrixDense::new(4, 4, [
+    let am = DenseMatrix::new(4, 4, [
         0, 1, 0, 0,
         0, 0, 0, 1,
         0, 0, 0, 1,
         4, 0, 0, 0,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let bm = MatrixDense::new(4, 4, [
+    let bm = DenseMatrix::new(4, 4, [
         1, 0, 0, 0,
         1, 0, 0, 0,
         1, 0, 0, 0,
         1, 0, 0, 0,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let cm = MatrixDense::new(4, 4, [
+    let cm = DenseMatrix::new(4, 4, [
         0, 0, 0, 1,
         0, 0, 1, 0,
         4, 0, 0, 0,
         0, 0, 0, 1,
     ].map(R::from).into());
     let r1cs = R1CS::new(
-        MatrixSparse::from(&am),
-        MatrixSparse::from(&bm),
-        MatrixSparse::from(&cm),
+        SparseMatrix::from(&am),
+        SparseMatrix::from(&bm),
+        SparseMatrix::from(&cm),
     );
 
     let circuit = CircuitBuilder::<R>::new(1);
@@ -117,14 +117,14 @@ fn comparatism() {
     drop(scope);
     assert_eq!(circuit.r1cs(), r1cs);
 
-    let z = VectorDense::from([1, 4, 4, 4].map(R::from));
+    let z = DenseVector::from([1, 4, 4, 4].map(R::from));
     assert_ok!(r1cs.is_satisfied(&z));
 }
 
 #[test]
 fn additivism() {
     #[rustfmt::skip]
-    let am = MatrixDense::new(5, 4, [
+    let am = DenseMatrix::new(5, 4, [
         0, 0, 0, 2,
         0, 0, 2, 0,
         0, 0, 2, 0,
@@ -132,7 +132,7 @@ fn additivism() {
         4, 0, 0, 1,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let bm = MatrixDense::new(5, 4, [
+    let bm = DenseMatrix::new(5, 4, [
         1, 0, 0, 0,
         1, 0, 0, 0,
         1, 0, 0, 0,
@@ -140,7 +140,7 @@ fn additivism() {
         1, 0, 0, 0,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let cm = MatrixDense::new(5, 4, [
+    let cm = DenseMatrix::new(5, 4, [
         0, 1, 0, 0,
         0, 0, 0, 1,
         4, 0, 0, 0,
@@ -148,9 +148,9 @@ fn additivism() {
         0, 1, 0, 0,
     ].map(R::from).into());
     let r1cs = R1CS::new(
-        MatrixSparse::from(&am),
-        MatrixSparse::from(&bm),
-        MatrixSparse::from(&cm),
+        SparseMatrix::from(&am),
+        SparseMatrix::from(&bm),
+        SparseMatrix::from(&cm),
     );
 
     let circuit = CircuitBuilder::<R>::new(1);
@@ -170,14 +170,14 @@ fn additivism() {
     drop(scope);
     assert_eq!(circuit.r1cs(), r1cs);
 
-    let z = VectorDense::from([1, 8, 2, 4].map(R::from));
+    let z = DenseVector::from([1, 8, 2, 4].map(R::from));
     assert_ok!(r1cs.is_satisfied(&z));
 }
 
 #[test]
 fn multiplism() {
     #[rustfmt::skip]
-    let am = MatrixDense::new(5, 4, [
+    let am = DenseMatrix::new(5, 4, [
         0, 0, 0, 1,
         0, 0, 1, 0,
         0, 0, 1, 0,
@@ -185,7 +185,7 @@ fn multiplism() {
         0, 0, 0, 4,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let bm = MatrixDense::new(5, 4, [
+    let bm = DenseMatrix::new(5, 4, [
         0, 0, 0, 1,
         0, 0, 1, 0,
         0, 0, 1, 0,
@@ -193,7 +193,7 @@ fn multiplism() {
         1, 0, 0, 0,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let cm = MatrixDense::new(5, 4, [
+    let cm = DenseMatrix::new(5, 4, [
         0, 1, 0, 0,
         0, 0, 0, 1,
         4, 0, 0, 0,
@@ -201,9 +201,9 @@ fn multiplism() {
         0, 1, 0, 0,
     ].map(R::from).into());
     let r1cs = R1CS::new(
-        MatrixSparse::from(&am),
-        MatrixSparse::from(&bm),
-        MatrixSparse::from(&cm),
+        SparseMatrix::from(&am),
+        SparseMatrix::from(&bm),
+        SparseMatrix::from(&cm),
     );
 
     let circuit = CircuitBuilder::<R>::new(2);
@@ -223,14 +223,14 @@ fn multiplism() {
     drop(scope);
     assert_eq!(circuit.r1cs(), r1cs);
 
-    let z = VectorDense::from([1, 16, 2, 4].map(R::from));
+    let z = DenseVector::from([1, 16, 2, 4].map(R::from));
     assert_ok!(r1cs.is_satisfied(&z));
 }
 
 #[test]
 fn expressionism() {
     #[rustfmt::skip]
-    let am = MatrixDense::new(8, 5, [
+    let am = DenseMatrix::new(8, 5, [
         0, 1, 1, 0, 0,
         0, 0, 0, 1, 0,
         4, 1, 1, 1, 0,
@@ -241,7 +241,7 @@ fn expressionism() {
         8, 2, 0, 0, 0,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let bm = MatrixDense::new(8, 5, [
+    let bm = DenseMatrix::new(8, 5, [
         0, 0, 0, 1, 1,
         0, 0, 0, 1, 0,
         1, 0, 0, 0, 0,
@@ -252,7 +252,7 @@ fn expressionism() {
         1, 0, 0, 0, 0,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let cm = MatrixDense::new(8, 5, [
+    let cm = DenseMatrix::new(8, 5, [
         160, 0, 0, 0, 0,
         0, 4, 0, 0, 0,
         0, 0, 0, 0, 1,
@@ -263,9 +263,9 @@ fn expressionism() {
         0, 0, 0, 0, 1,
     ].map(R::from).into());
     let r1cs = R1CS::new(
-        MatrixSparse::from(&am),
-        MatrixSparse::from(&bm),
-        MatrixSparse::from(&cm),
+        SparseMatrix::from(&am),
+        SparseMatrix::from(&bm),
+        SparseMatrix::from(&cm),
     );
 
     let circuit = CircuitBuilder::<R>::new(2);
@@ -292,34 +292,34 @@ fn expressionism() {
     drop(scope);
     assert_eq!(circuit.r1cs(), r1cs);
 
-    let z = VectorDense::from([1, 4, 4, 4, 16].map(R::from));
+    let z = DenseVector::from([1, 4, 4, 4, 16].map(R::from));
     assert_ok!(r1cs.is_satisfied(&z));
 }
 
 #[test]
 fn cubism() {
     #[rustfmt::skip]
-    let am = MatrixDense::new(2, 5, [
+    let am = DenseMatrix::new(2, 5, [
         0, 1, 0, 0, 0,
         0, 1, 1, 0, 0,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let bm = MatrixDense::new(2, 5, [
+    let bm = DenseMatrix::new(2, 5, [
         0, 1, 0, 0, 0,
         0, 1, 0, 1, 0,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let cm = MatrixDense::new(2, 5, [
+    let cm = DenseMatrix::new(2, 5, [
         0, 1, 0, 0, 0,
         0, 1, 0, 0, 1,
     ].map(R::from).into());
     #[rustfmt::skip]
-    let dm = MatrixDense::new(2, 5, [
+    let dm = DenseMatrix::new(2, 5, [
         0, 0, 0, 0, 1,
         350, 0, 0, 0, 0,
     ].map(R::from).into());
     let ccs = CustomizableConstraintSystem::new(
-        [&am, &bm, &cm, &dm].map(MatrixSparse::from).into(),
+        [&am, &bm, &cm, &dm].map(SparseMatrix::from).into(),
         vec![vec![0, 1, 2], vec![3]],
         [1, -1].map(R::from).into(),
     );
@@ -339,6 +339,6 @@ fn cubism() {
     drop(scope);
     assert_eq!(circuit.ccs(), ccs);
 
-    let z = VectorDense::from([1, 2, 3, 5, 8].map(R::from));
+    let z = DenseVector::from([1, 2, 3, 5, 8].map(R::from));
     assert_ok!(ccs.is_satisfied(&z));
 }

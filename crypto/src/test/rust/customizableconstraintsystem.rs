@@ -18,20 +18,20 @@
 use blacknet_compat::assert_ok;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
-use blacknet_crypto::matrixdense::MatrixDense;
-use blacknet_crypto::matrixsparse::MatrixSparse;
-use blacknet_crypto::vectordense::VectorDense;
+use blacknet_crypto::densematrix::DenseMatrix;
+use blacknet_crypto::densevector::DenseVector;
+use blacknet_crypto::sparsematrix::SparseMatrix;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn satisfaction() {
-    let m1 = MatrixDense::new(1, 3, [0, 0, 1].map(R::from).into());
-    let m2 = MatrixDense::new(1, 3, [0, 1, 0].map(R::from).into());
-    let z = VectorDense::from([1, 16, 2].map(R::from));
+    let m1 = DenseMatrix::new(1, 3, [0, 0, 1].map(R::from).into());
+    let m2 = DenseMatrix::new(1, 3, [0, 1, 0].map(R::from).into());
+    let z = DenseVector::from([1, 16, 2].map(R::from));
 
     let ccs = CustomizableConstraintSystem::new(
-        vec![MatrixSparse::from(&m1), MatrixSparse::from(&m2)],
+        vec![SparseMatrix::from(&m1), SparseMatrix::from(&m2)],
         vec![vec![0, 0, 0, 0], vec![1]],
         [1, -1].map(R::from).into(),
     );

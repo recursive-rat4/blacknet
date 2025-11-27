@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::densematrix::DenseMatrix;
+use crate::densevector::DenseVector;
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::eqextension::EqExtension;
-use crate::matrixdense::MatrixDense;
 use crate::operation::Double;
 use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
-use crate::vectordense::VectorDense;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -66,8 +66,8 @@ impl<R: UnitalRing> FromIterator<R> for MultilinearExtension<R> {
     }
 }
 
-impl<R: UnitalRing> From<MatrixDense<R>> for MultilinearExtension<R> {
-    fn from(matrix: MatrixDense<R>) -> Self {
+impl<R: UnitalRing> From<DenseMatrix<R>> for MultilinearExtension<R> {
+    fn from(matrix: DenseMatrix<R>) -> Self {
         let (_, _, elements) = matrix.into();
         Self {
             coefficients: elements,
@@ -75,8 +75,8 @@ impl<R: UnitalRing> From<MatrixDense<R>> for MultilinearExtension<R> {
     }
 }
 
-impl<R: UnitalRing> From<VectorDense<R>> for MultilinearExtension<R> {
-    fn from(vector: VectorDense<R>) -> Self {
+impl<R: UnitalRing> From<DenseVector<R>> for MultilinearExtension<R> {
+    fn from(vector: DenseVector<R>) -> Self {
         Self {
             coefficients: vector.into(),
         }
@@ -98,7 +98,7 @@ impl<R: UnitalRing + From<u8>> Polynomial<R> for MultilinearExtension<R> {
             .sum()
     }
 
-    fn hypercube_with_var<const VAL: i8>(&self) -> VectorDense<R> {
+    fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
         let (left, right) = self.coefficients.split_at(self.coefficients.len() >> 1);
         match VAL {
             -2 => zip(left, right)

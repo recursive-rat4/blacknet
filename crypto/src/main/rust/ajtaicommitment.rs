@@ -15,21 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::densematrix::DenseMatrix;
+use crate::densevector::DenseVector;
 use crate::distribution::UniformGenerator;
-use crate::matrixdense::MatrixDense;
 use crate::norm::{EuclideanNorm, InfinityNorm};
 use crate::ring::CommutativeRing;
-use crate::vectordense::VectorDense;
-use crate::vectorsparse::VectorSparse;
+use crate::sparsevector::SparseVector;
 
 // https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
 
 pub struct AjtaiCommitment<R: CommutativeRing> {
-    a: MatrixDense<R>,
+    a: DenseMatrix<R>,
 }
 
 impl<R: CommutativeRing> AjtaiCommitment<R> {
-    pub const fn new(a: MatrixDense<R>) -> Self {
+    pub const fn new(a: DenseMatrix<R>) -> Self {
         Self { a }
     }
 
@@ -37,19 +37,19 @@ impl<R: CommutativeRing> AjtaiCommitment<R> {
         g: &mut impl UniformGenerator<Output = R>,
         rows: usize,
         columns: usize,
-    ) -> MatrixDense<R> {
-        MatrixDense::<R>::new(
+    ) -> DenseMatrix<R> {
+        DenseMatrix::<R>::new(
             rows,
             columns,
             (0..rows * columns).map(|_| g.generate()).collect(),
         )
     }
 
-    pub fn commit_dense(&self, m: &VectorDense<R>) -> VectorDense<R> {
+    pub fn commit_dense(&self, m: &DenseVector<R>) -> DenseVector<R> {
         &self.a * m
     }
 
-    pub fn commit_sparse(&self, m: &VectorSparse<R>) -> VectorDense<R> {
+    pub fn commit_sparse(&self, m: &SparseVector<R>) -> DenseVector<R> {
         &self.a * m
     }
 }
@@ -57,22 +57,22 @@ impl<R: CommutativeRing> AjtaiCommitment<R> {
 //RUST currently requires std for sqrt
 impl<R: CommutativeRing + EuclideanNorm> AjtaiCommitment<R> {
     #[cfg(feature = "std")]
-    pub fn open_dense_l2(&self, c: &VectorDense<R>, m: &VectorDense<R>, bound: f64) -> bool {
+    pub fn open_dense_l2(&self, c: &DenseVector<R>, m: &DenseVector<R>, bound: f64) -> bool {
         m.euclidean_norm() < bound && &self.a * m == *c
     }
 
     #[cfg(feature = "std")]
-    pub fn open_sparse_l2(&self, c: &VectorDense<R>, m: &VectorSparse<R>, bound: f64) -> bool {
+    pub fn open_sparse_l2(&self, c: &DenseVector<R>, m: &SparseVector<R>, bound: f64) -> bool {
         m.euclidean_norm() < bound && &self.a * m == *c
     }
 }
 
 impl<R: CommutativeRing + InfinityNorm<R::Int>> AjtaiCommitment<R> {
-    pub fn open_dense_linf(&self, c: &VectorDense<R>, m: &VectorDense<R>, bound: R::Int) -> bool {
+    pub fn open_dense_linf(&self, c: &DenseVector<R>, m: &DenseVector<R>, bound: R::Int) -> bool {
         m.check_infinity_norm(bound) && &self.a * m == *c
     }
 
-    pub fn open_sparse_linf(&self, c: &VectorDense<R>, m: &VectorSparse<R>, bound: R::Int) -> bool {
+    pub fn open_sparse_linf(&self, c: &DenseVector<R>, m: &SparseVector<R>, bound: R::Int) -> bool {
         m.check_infinity_norm(bound) && &self.a * m == *c
     }
 }

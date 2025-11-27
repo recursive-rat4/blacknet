@@ -16,17 +16,17 @@
  */
 
 use crate::convolution::Convolution;
+use crate::densematrix::DenseMatrix;
+use crate::densevector::DenseVector;
 use crate::float::FloatOn;
 use crate::integer::Integer;
-use crate::matrixdense::MatrixDense;
 use crate::matrixring::MatrixRing;
 use crate::module::FreeModule;
 use crate::nttring::NTTRing;
 use crate::numbertheoretictransform::Twiddles;
 use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
+use crate::sparsevector::SparseVector;
 use crate::univariatering::UnivariateRing;
-use crate::vectordense::VectorDense;
-use crate::vectorsparse::VectorSparse;
 
 pub trait EuclideanNorm {
     fn euclidean_norm(&self) -> f64;
@@ -61,7 +61,7 @@ impl<Z: Twiddles<M> + EuclideanNorm, const M: usize, const N: usize> EuclideanNo
 }
 
 #[cfg(feature = "std")]
-impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorDense<R> {
+impl<R: Ring + EuclideanNorm> EuclideanNorm for DenseVector<R> {
     fn euclidean_norm(&self) -> f64 {
         self.elements()
             .iter()
@@ -73,7 +73,7 @@ impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorDense<R> {
 }
 
 #[cfg(feature = "std")]
-impl<R: Ring + EuclideanNorm> EuclideanNorm for VectorSparse<R> {
+impl<R: Ring + EuclideanNorm> EuclideanNorm for SparseVector<R> {
     fn euclidean_norm(&self) -> f64 {
         self.elements()
             .iter()
@@ -111,7 +111,7 @@ impl<R: Ring + InfinityNorm<R::Int>, const N: usize> InfinityNorm<R::Int> for Fr
     }
 }
 
-impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for MatrixDense<R> {
+impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for DenseMatrix<R> {
     fn check_infinity_norm(&self, bound: R::Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
@@ -133,13 +133,13 @@ impl<Z: Twiddles<M> + InfinityNorm<Z::Int>, const M: usize, const N: usize> Infi
     }
 }
 
-impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for VectorDense<R> {
+impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for DenseVector<R> {
     fn check_infinity_norm(&self, bound: R::Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for VectorSparse<R> {
+impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for SparseVector<R> {
     fn check_infinity_norm(&self, bound: R::Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }

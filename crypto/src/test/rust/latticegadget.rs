@@ -15,17 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::densevector::DenseVector;
 use blacknet_crypto::latticegadget;
 use blacknet_crypto::ring::IntegerRing;
-use blacknet_crypto::vectordense::VectorDense;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type R = blacknet_crypto::pervushin::PervushinField2;
 
 #[test]
 fn matrix() {
-    let a = VectorDense::from([3, 2, 1, 0].map(Z::from).map(R::from));
-    let b = VectorDense::from([4295098371].map(Z::new).map(R::from));
+    let a = DenseVector::from([3, 2, 1, 0].map(Z::from).map(R::from));
+    let b = DenseVector::from([4295098371].map(Z::new).map(R::from));
     let g = latticegadget::matrix(R::from(Z::from(65536)), 1, 4);
     assert_eq!(&g * &a, b);
     let c = latticegadget::decompose_vector(&b, 65535, 16, 4);

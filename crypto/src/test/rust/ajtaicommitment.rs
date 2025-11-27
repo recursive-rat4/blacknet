@@ -16,15 +16,15 @@
  */
 
 use blacknet_crypto::ajtaicommitment::AjtaiCommitment;
-use blacknet_crypto::matrixdense::MatrixDense;
+use blacknet_crypto::densematrix::DenseMatrix;
+use blacknet_crypto::densevector::DenseVector;
 use blacknet_crypto::ring::IntegerRing;
-use blacknet_crypto::vectordense::VectorDense;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn test() {
-    let setup = MatrixDense::new(
+    let setup = DenseMatrix::new(
         2,
         2,
         [
@@ -45,9 +45,9 @@ fn test() {
     let z2 = Z::new(2);
     let z3 = Z::new(3);
     let z4 = Z::new(4);
-    let m12 = VectorDense::from([z1, z2]);
-    let m21 = VectorDense::from([z2, z1]);
-    let m34 = VectorDense::from([z3, z4]);
+    let m12 = DenseVector::from([z1, z2]);
+    let m21 = DenseVector::from([z2, z1]);
+    let m34 = DenseVector::from([z3, z4]);
     let c12 = cs.commit_dense(&m12);
     let c34 = cs.commit_dense(&m34);
 

@@ -15,13 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::densematrix::DenseMatrix;
+use blacknet_crypto::densevector::DenseVector;
 use blacknet_crypto::hypercube::Hypercube;
-use blacknet_crypto::matrixdense::MatrixDense;
 use blacknet_crypto::module::FreeModule;
 use blacknet_crypto::multilinearextension::MultilinearExtension;
 use blacknet_crypto::operation::Double;
 use blacknet_crypto::polynomial::Polynomial;
-use blacknet_crypto::vectordense::VectorDense;
 use core::iter::zip;
 
 type R = blacknet_crypto::pervushin::PervushinField;
@@ -120,7 +120,7 @@ fn bind() {
 fn matrix() {
     let hc = Hypercube::<R>::new(3);
     #[rustfmt::skip]
-    let a = MatrixDense::new(2, 4, [
+    let a = DenseMatrix::new(2, 4, [
         30, 31, 32, 33,
         43, 44, 45, 46,
     ].map(R::from).into());
@@ -132,7 +132,7 @@ fn matrix() {
 #[test]
 fn vector() {
     let hc = Hypercube::<R>::new(3);
-    let a = VectorDense::from([63, 64, 65, 66, 67, 68, 69, 70].map(R::from));
+    let a = DenseVector::from([63, 64, 65, 66, 67, 68, 69, 70].map(R::from));
     let mle = MultilinearExtension::from(a.clone());
     zip(hc.iter_index(), hc.iter_vertex())
         .for_each(|(index, b)| assert_eq!(mle.point(&b), a[index]));

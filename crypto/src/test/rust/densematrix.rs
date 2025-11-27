@@ -15,26 +15,26 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::matrixdense::MatrixDense;
+use blacknet_crypto::densematrix::DenseMatrix;
+use blacknet_crypto::densevector::DenseVector;
 use blacknet_crypto::norm::InfinityNorm;
-use blacknet_crypto::vectordense::VectorDense;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 #[rustfmt::skip]
 fn add() {
-    let a = MatrixDense::<R>::new(3, 2, [
+    let a = DenseMatrix::<R>::new(3, 2, [
         1, 3,
         1, 0,
         1, 2,
     ].map(R::from).into());
-    let b = MatrixDense::<R>::new(3, 2, [
+    let b = DenseMatrix::<R>::new(3, 2, [
         0, 0,
         7, 5,
         2, 1,
     ].map(R::from).into());
-    let c = MatrixDense::<R>::new(3, 2, [
+    let c = DenseMatrix::<R>::new(3, 2, [
         1, 3,
         8, 5,
         3, 3,
@@ -46,18 +46,18 @@ fn add() {
 #[test]
 #[rustfmt::skip]
 fn mul() {
-    let a = MatrixDense::<R>::new(4, 3, [
+    let a = DenseMatrix::<R>::new(4, 3, [
         1, 0, 1,
         2, 1, 1,
         0, 1, 1,
         1, 1, 2,
     ].map(R::from).into());
-    let b = MatrixDense::<R>::new(3, 3, [
+    let b = DenseMatrix::<R>::new(3, 3, [
         1, 2, 1,
         2, 3, 1,
         4, 2, 2,
     ].map(R::from).into());
-    let c = MatrixDense::<R>::new(4, 3, [
+    let c = DenseMatrix::<R>::new(4, 3, [
         5, 4, 3,
         8, 9, 5,
         6, 5, 3,
@@ -69,21 +69,21 @@ fn mul() {
 #[test]
 #[rustfmt::skip]
 fn vector() {
-    let a = MatrixDense::<R>::new(3, 2, [
+    let a = DenseMatrix::<R>::new(3, 2, [
         17, 18,
         33, 34,
         49, 50,
     ].map(R::from).into());
-    let b = VectorDense::<R>::from([
+    let b = DenseVector::<R>::from([
         2,
         3,
     ].map(R::from));
-    let c = VectorDense::<R>::from([
+    let c = DenseVector::<R>::from([
         88,
         168,
         248,
     ].map(R::from));
-    let d = VectorDense::<R>::from([
+    let d = DenseVector::<R>::from([
         19192,
         19696,
     ].map(R::from));
@@ -94,17 +94,17 @@ fn vector() {
 #[test]
 #[rustfmt::skip]
 fn cat() {
-    let a = MatrixDense::<R>::new(3, 2, [
+    let a = DenseMatrix::<R>::new(3, 2, [
         1, 3,
         1, 0,
         1, 2,
     ].map(R::from).into());
-    let b = MatrixDense::<R>::new(3, 2, [
+    let b = DenseMatrix::<R>::new(3, 2, [
         0, 0,
         7, 5,
         2, 1,
     ].map(R::from).into());
-    let c = MatrixDense::<R>::new(3, 4, [
+    let c = DenseMatrix::<R>::new(3, 4, [
         1, 3, 0, 0,
         1, 0, 7, 5,
         1, 2, 2, 1,
@@ -115,7 +115,7 @@ fn cat() {
 #[test]
 #[rustfmt::skip]
 fn trace() {
-    let a = MatrixDense::<R>::new(2, 2, [
+    let a = DenseMatrix::<R>::new(2, 2, [
         1, 3,
         7, 5,
     ].map(R::from).into());
@@ -126,12 +126,12 @@ fn trace() {
 #[test]
 #[rustfmt::skip]
 fn transpose() {
-    let a = MatrixDense::<R>::new(3, 2, [
+    let a = DenseMatrix::<R>::new(3, 2, [
         1, 2,
         3, 4,
         5, 6,
     ].map(R::from).into());
-    let b = MatrixDense::<R>::new(2, 3, [
+    let b = DenseMatrix::<R>::new(2, 3, [
         1, 3, 5,
         2, 4, 6,
     ].map(R::from).into());
@@ -142,7 +142,7 @@ fn transpose() {
 #[test]
 #[rustfmt::skip]
 fn infinity_norm() {
-    let a = MatrixDense::<R>::new(2, 2, [
+    let a = DenseMatrix::<R>::new(2, 2, [
         0, 1,
         2, 3,
     ].map(R::from).into());

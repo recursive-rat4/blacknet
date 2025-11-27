@@ -17,11 +17,11 @@
 
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
-use crate::matrixsparse::MatrixSparse;
+use crate::densevector::DenseVector;
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
 use crate::semiring::Semiring;
-use crate::vectordense::VectorDense;
+use crate::sparsematrix::SparseMatrix;
 use alloc::vec;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
@@ -30,14 +30,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CustomizableConstraintSystem<R: Semiring> {
-    matrices: Vec<MatrixSparse<R>>,
+    matrices: Vec<SparseMatrix<R>>,
     multisets: Vec<Vec<usize>>,
     constants: Vec<R>,
 }
 
 impl<R: Semiring> CustomizableConstraintSystem<R> {
     pub const fn new(
-        matrices: Vec<MatrixSparse<R>>,
+        matrices: Vec<SparseMatrix<R>>,
         multisets: Vec<Vec<usize>>,
         constants: Vec<R>,
     ) -> Self {
@@ -78,26 +78,26 @@ impl<R: Semiring> ConstraintSystem<R> for CustomizableConstraintSystem<R> {
     fn constraints(&self) -> usize {
         self.matrices
             .first()
-            .map(MatrixSparse::rows)
+            .map(SparseMatrix::rows)
             .expect("Valid CCS")
     }
 
     fn variables(&self) -> usize {
         self.matrices
             .first()
-            .map(MatrixSparse::columns)
+            .map(SparseMatrix::columns)
             .expect("Valid CCS")
     }
 
-    fn is_satisfied(&self, z: &VectorDense<R>) -> Result<R> {
+    fn is_satisfied(&self, z: &DenseVector<R>) -> Result<R> {
         let constraints = self.constraints();
         let variables = self.variables();
         if z.dimension() != variables {
             return Err(Error::Length(z.dimension(), variables));
         }
-        let mut sigma = VectorDense::fill(constraints, R::ZERO);
+        let mut sigma = DenseVector::fill(constraints, R::ZERO);
         for (i, &c) in self.constants.iter().enumerate() {
-            let mut circle = VectorDense::fill(constraints, c);
+            let mut circle = DenseVector::fill(constraints, c);
             for &j in &self.multisets[i] {
                 circle *= &self.matrices[j] * z;
             }

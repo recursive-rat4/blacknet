@@ -15,34 +15,34 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::matrixdense::MatrixDense;
-use blacknet_crypto::matrixsparse::MatrixSparse;
-use blacknet_crypto::vectordense::VectorDense;
+use blacknet_crypto::densematrix::DenseMatrix;
+use blacknet_crypto::densevector::DenseVector;
+use blacknet_crypto::sparsematrix::SparseMatrix;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn conversion() {
-    let s = MatrixSparse::<R>::new(
+    let s = SparseMatrix::<R>::new(
         4,
         [0, 2, 5, 7, 9].into(),
         [0, 1, 1, 2, 3, 0, 3, 1, 3].into(),
         [1, 2, 3, 4, 5, 6, 7, 8, 9].map(R::from).into(),
     );
     #[rustfmt::skip]
-    let d = MatrixDense::<R>::new(4, 4, [
+    let d = DenseMatrix::<R>::new(4, 4, [
         1, 2, 0, 0,
         0, 3, 4, 5,
         6, 0, 0, 7,
         0, 8, 0, 9,
     ].map(R::from).into());
-    assert_eq!(MatrixSparse::from(&d), s);
-    assert_eq!(MatrixDense::from(&s), d);
+    assert_eq!(SparseMatrix::from(&d), s);
+    assert_eq!(DenseMatrix::from(&s), d);
 }
 
 #[test]
 fn vector() {
-    let a = MatrixSparse::<R>::new(
+    let a = SparseMatrix::<R>::new(
         4,
         [0, 3, 3, 6, 9, 11].into(),
         [0, 1, 3, 0, 1, 3, 0, 1, 3, 1, 3].into(),
@@ -50,7 +50,7 @@ fn vector() {
             .map(R::from)
             .into(),
     );
-    let b = VectorDense::<R>::from([61, 67, 71, 73].map(R::from));
-    let c = VectorDense::<R>::from([2497, 0, 6517, 8527, 7426].map(R::from));
+    let b = DenseVector::<R>::from([61, 67, 71, 73].map(R::from));
+    let c = DenseVector::<R>::from([2497, 0, 6517, 8527, 7426].map(R::from));
     assert_eq!(&a * &b, c);
 }

@@ -15,31 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::matrixdense::MatrixDense;
-use blacknet_crypto::vectordense::VectorDense;
-use blacknet_crypto::vectorsparse::VectorSparse;
+use blacknet_crypto::densematrix::DenseMatrix;
+use blacknet_crypto::densevector::DenseVector;
+use blacknet_crypto::sparsevector::SparseVector;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn conversion() {
-    let s = VectorSparse::<R>::new(8, [0, 2, 5, 7].into(), [1, 2, 3, 4].map(R::from).into());
-    let d = VectorDense::<R>::from([1, 0, 2, 0, 0, 3, 0, 4].map(R::from));
-    assert_eq!(VectorSparse::from(&d), s);
-    assert_eq!(VectorDense::from(&s), d);
+    let s = SparseVector::<R>::new(8, [0, 2, 5, 7].into(), [1, 2, 3, 4].map(R::from).into());
+    let d = DenseVector::<R>::from([1, 0, 2, 0, 0, 3, 0, 4].map(R::from));
+    assert_eq!(SparseVector::from(&d), s);
+    assert_eq!(DenseVector::from(&s), d);
 }
 
 #[test]
 fn product() {
     #[rustfmt::skip]
-    let a = MatrixDense::<R>::new(2, 4, [
+    let a = DenseMatrix::<R>::new(2, 4, [
         11, 13, 17, 19,
         23, 29, 31, 37,
     ].map(R::from).into());
-    let b = VectorSparse::<R>::new(4, [1, 2].into(), [3, 5].map(R::from).into());
-    let c = VectorDense::<R>::from([124, 242].map(R::from));
-    let d = VectorSparse::<R>::new(2, [0].into(), [3].map(R::from).into());
-    let e = VectorDense::<R>::from([33, 39, 51, 57].map(R::from));
+    let b = SparseVector::<R>::new(4, [1, 2].into(), [3, 5].map(R::from).into());
+    let c = DenseVector::<R>::from([124, 242].map(R::from));
+    let d = SparseVector::<R>::new(2, [0].into(), [3].map(R::from).into());
+    let e = DenseVector::<R>::from([33, 39, 51, 57].map(R::from));
     assert_eq!(&a * &b, c);
     assert_eq!(&d * &a, e);
 }
