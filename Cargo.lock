@@ -1159,9 +1159,9 @@ dependencies = [
 
 [[package]]
 name = "orx-tree"
-version = "2.0.0"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9882677287f95ab0ca5765d2c4a27eae04abbfc19b21c2d57f203caa6638035"
+checksum = "ca165979d144396fd18a694eee8cb586c543c3334c81746aafa6c4d27c0a3ca0"
 dependencies = [
  "orx-concurrent-iter",
  "orx-iterable",
