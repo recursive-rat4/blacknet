@@ -60,6 +60,12 @@ impl LogManager {
             }
             Err(VarError::NotPresent) => (),
         }
+
+        #[cfg(feature = "log")]
+        spdlog::init_log_crate_proxy()?;
+        #[cfg(feature = "log")]
+        log::set_max_level(log::LevelFilter::Trace);
+
         let logger = Self::factory("LogManager", filter_level, &sinks)?;
         info!(logger, "Initialized logging");
         Ok(Self {

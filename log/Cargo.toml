@@ -31,8 +31,13 @@ categories.workspace = true
 
 [dependencies]
 chrono.workspace = true
+log = { workspace = true, optional = true }
 spdlog-rs.workspace = true
 thiserror.workspace = true
+
+[features]
+default = []
+log = ["dep:log", "spdlog-rs/log"]
 
 [lints]
 workspace = true

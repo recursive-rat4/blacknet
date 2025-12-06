@@ -73,4 +73,11 @@ impl From<Up> for Error {
     }
 }
 
+#[cfg(feature = "log")]
+impl From<log::SetLoggerError> for Error {
+    fn from(err: log::SetLoggerError) -> Self {
+        Self::Upstream(err.to_string())
+    }
+}
+
 pub type Result<T> = core::result::Result<T, Error>;
