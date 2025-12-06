@@ -45,7 +45,7 @@ blacknet-time = { path = "time" }
 blacknet-vm = { path = "vm" }
 blacknet-wallet = { path = "wallet" }
 axum = { version = "0.8.7", default-features = false, features = ["form", "http1", "json", "tokio", "ws"] }
-bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+bech32 = { version = "0.11.1", default-features = false, features = ["alloc"] }
 blake2 = { version = "0.10.6", default-features = false }
 chrono = { version = "0.4.42", default-features = false }
 criterion = { version = "0.8.0", default-features = false, features = ["cargo_bench_support"] }
