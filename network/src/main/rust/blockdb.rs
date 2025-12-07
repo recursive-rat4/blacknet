@@ -99,8 +99,24 @@ impl BlockDB {
         self.blocks.get_bytes(hash)
     }
 
-    pub fn next_block_hashes(&self, _start: Hash, _max: usize) -> Option<Vec<Hash>> {
-        todo!();
+    pub fn next_block_hashes(&self, start: Hash, max: usize) -> Option<Vec<Hash>> {
+        let mut index = self.indexes.get(start)?;
+        let mut result = Vec::<Hash>::with_capacity(max);
+        loop {
+            let hash = index.next();
+            if hash == Hash::ZERO {
+                break;
+            }
+            result.push(hash);
+            if result.len() == max {
+                break;
+            }
+            index = match self.indexes.get(index.next()) {
+                Some(index) => index,
+                None => break,
+            };
+        }
+        Some(result)
     }
 
     pub fn hash(&self, _height: u32) -> Option<Hash> {
