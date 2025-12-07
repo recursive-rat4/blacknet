@@ -15,11 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::dbview::DBView;
 use crate::rollinghashset::RollingHashSet;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
 use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
+use fjall::{Keyspace, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -58,15 +60,18 @@ impl BlockIndex {
 pub struct BlockDB {
     cached_block: Arc<Option<(Hash, Box<[u8]>)>>,
     rejects: RollingHashSet<Hash>,
+    blocks: DBView<Hash, Block>,
+    indexes: DBView<Hash, BlockIndex>,
 }
 
 impl BlockDB {
-    #[expect(clippy::new_without_default)]
-    pub fn new() -> Self {
-        Self {
+    pub fn new(fjall: &Keyspace) -> Result<Self> {
+        Ok(Self {
             cached_block: Arc::new(None),
             rejects: RollingHashSet::new(ROLLBACK_LIMIT),
-        }
+            blocks: DBView::with_blob(fjall, "blocks")?,
+            indexes: DBView::new(fjall, "indexes")?,
+        })
     }
 
     #[allow(clippy::type_complexity)]
@@ -78,20 +83,20 @@ impl BlockDB {
         self.rejects.contains(&hash)
     }
 
-    pub fn contains(&self, _hash: Hash) -> bool {
-        todo!();
+    pub fn contains(&self, hash: Hash) -> bool {
+        self.indexes.contains(hash)
     }
 
-    pub fn index(&self, _hash: Hash) -> Option<BlockIndex> {
-        todo!();
+    pub fn index(&self, hash: Hash) -> Option<BlockIndex> {
+        self.indexes.get(hash)
     }
 
-    pub fn get(&self, _hash: Hash) -> Option<(Block, usize)> {
-        todo!();
+    pub fn get(&self, hash: Hash) -> Option<(Block, usize)> {
+        self.blocks.get_with_size(hash)
     }
 
-    pub fn get_raw(&self, _hash: Hash) -> Option<Box<[u8]>> {
-        todo!();
+    pub fn get_bytes(&self, hash: Hash) -> Option<Box<[u8]>> {
+        self.blocks.get_bytes(hash)
     }
 
     pub fn next_block_hashes(&self, _start: Hash, _max: usize) -> Option<Vec<Hash>> {

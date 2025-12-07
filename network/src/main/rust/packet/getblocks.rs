@@ -58,7 +58,7 @@ impl Packet for GetBlocks {
                 if !response.is_empty() && size >= max_size {
                     break;
                 }
-                if let Some(bytes) = block_db.get_raw(hash) {
+                if let Some(bytes) = block_db.get_bytes(hash) {
                     response.push(bytes);
                 } else {
                     break;

@@ -20,6 +20,7 @@ use crate::blockfetcher::BlockFetcher;
 use crate::coindb::CoinDB;
 use crate::connection::{Connection, State};
 use crate::endpoint::Endpoint;
+use crate::fjall::Fjall;
 use crate::packet::UnfilteredInvList;
 use crate::peertable::PeerTable;
 use crate::router::Router;
@@ -40,6 +41,7 @@ use blacknet_time::{Milliseconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
 use core::error::Error as StdError;
 use core::num::NonZero;
+use fjall::Keyspace;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -64,6 +66,7 @@ pub struct Node {
     block_db: BlockDB,
     block_fetcher: BlockFetcher,
     coin_db: CoinDB,
+    fjall: Keyspace,
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
     wallet_db: WalletDB,
@@ -102,6 +105,7 @@ impl Node {
         let settings = Arc::new(Settings::default(&mode));
         let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
         let tx_pool = Arc::new(RwLock::new(TxPool::new(log_manager, settings.clone())?));
+        let fjall = Fjall::new(dirs, &settings)?;
         let node = Arc::new(Self {
             logger,
             settings: settings.clone(),
@@ -110,9 +114,10 @@ impl Node {
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
             router: Router::new(&mode, dirs, log_manager, runtime, &settings, peer_table)?,
-            block_db: BlockDB::new(),
+            block_db: BlockDB::new(&fjall)?,
             block_fetcher: BlockFetcher::new(),
-            coin_db: CoinDB::new(&mode),
+            coin_db: CoinDB::new(&mode, &fjall)?,
+            fjall,
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode, log_manager)?,

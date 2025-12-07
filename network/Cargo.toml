@@ -34,13 +34,14 @@ blacknet-compat.workspace = true
 blacknet-crypto.workspace = true
 blacknet-io.workspace = true
 blacknet-kernel.workspace = true
-blacknet-log.workspace = true
+blacknet-log = { workspace = true, features = ["log"] }
 blacknet-serialization.workspace = true
 blacknet-time.workspace = true
 blacknet-wallet.workspace = true
 blake2.workspace = true
 data-encoding = { workspace = true, features = ["std"] }
 data-encoding-macro.workspace = true
+fjall.workspace = true
 hashlink.workspace = true
 natpmp.workspace = true
 serde = { workspace = true, features = ["std"] }

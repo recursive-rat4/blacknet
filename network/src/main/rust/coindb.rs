@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::dbview::DBView;
 use crate::genesis;
 use blacknet_compat::Mode;
 use blacknet_crypto::bigint::UInt256;
@@ -22,27 +23,45 @@ use blacknet_kernel::account::Account;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::PublicKey;
+use blacknet_kernel::htlc::HTLC;
+use blacknet_kernel::multisig::Multisig;
 use blacknet_kernel::proofofstake::{DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY};
+use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_time::Seconds;
+use fjall::{Keyspace, Result};
 use serde::{Deserialize, Serialize};
 
 pub struct CoinDB {
     state: State,
+    accounts: DBView<PublicKey, Account>,
+    htlcs: DBView<HashTimeLockContractId, HTLC>,
+    multisigs: DBView<MultiSignatureLockContractId, Multisig>,
 }
 
 impl CoinDB {
-    pub fn new(mode: &Mode) -> Self {
-        Self {
+    pub fn new(mode: &Mode, fjall: &Keyspace) -> Result<Self> {
+        Ok(Self {
             state: State::genesis(mode), //TODO
-        }
+            accounts: DBView::new(fjall, "accounts")?,
+            htlcs: DBView::new(fjall, "htlcs")?,
+            multisigs: DBView::new(fjall, "multisigs")?,
+        })
     }
 
     pub const fn state(&self) -> State {
         self.state
     }
 
-    pub fn account(&self, _public_key: PublicKey) -> Option<Account> {
-        todo!();
+    pub fn account(&self, public_key: PublicKey) -> Option<Account> {
+        self.accounts.get(public_key)
+    }
+
+    pub fn htlc(&self, id: HashTimeLockContractId) -> Option<HTLC> {
+        self.htlcs.get(id)
+    }
+
+    pub fn multisig(&self, id: MultiSignatureLockContractId) -> Option<Multisig> {
+        self.multisigs.get(id)
     }
 
     pub fn check(&self) -> Check {
