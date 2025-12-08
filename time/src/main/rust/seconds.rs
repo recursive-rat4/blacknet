@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use bytemuck::NoUninit;
 use core::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
@@ -23,7 +24,8 @@ use serde::{Deserialize, Serialize};
 
 // A timestamp or a time interval measured in seconds. The value may be negative.
 
-#[derive(Clone, Copy, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, Copy, Deserialize, Eq, NoUninit, Ord, PartialEq, PartialOrd, Serialize)]
+#[repr(transparent)]
 pub struct Seconds {
     n: i64,
 }

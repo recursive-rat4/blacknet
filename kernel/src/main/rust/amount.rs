@@ -15,12 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use bytemuck::NoUninit;
 use core::fmt::{Debug, Display, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Default, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(
+    Clone, Copy, Default, Deserialize, Eq, NoUninit, Ord, PartialEq, PartialOrd, Serialize,
+)]
+#[repr(transparent)]
 pub struct Amount {
     value: u64,
 }

@@ -38,7 +38,9 @@ blacknet-log = { workspace = true, features = ["log"] }
 blacknet-serialization.workspace = true
 blacknet-time.workspace = true
 blacknet-wallet.workspace = true
+atomic.workspace = true
 blake2.workspace = true
+bytemuck.workspace = true
 data-encoding = { workspace = true, features = ["std"] }
 data-encoding-macro.workspace = true
 fjall.workspace = true

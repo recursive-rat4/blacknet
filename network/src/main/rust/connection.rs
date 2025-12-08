@@ -20,14 +20,15 @@ use crate::node::Node;
 use crate::packet::{
     BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, Packet, PacketKind,
 };
+use atomic::Atomic;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{Logger, error, info};
 use blacknet_serialization::format::to_bytes;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
+use bytemuck::NoUninit;
 use core::cmp::min;
-use core::mem::transmute;
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, atomic::*};
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc::UnboundedSender;
@@ -42,7 +43,7 @@ pub struct Connection {
 
     remote_endpoint: Endpoint,
     local_endpoint: Endpoint,
-    state: AtomicU8,
+    state: Atomic<State>,
 
     closed: AtomicBool,
     dos_score: AtomicU8,
@@ -54,18 +55,18 @@ pub struct Connection {
     last_packet_time: Milliseconds,
     last_block: Mutex<BlockAnnounce>,
     last_block_time: Milliseconds,
-    last_tx_time: AtomicI64,
-    last_ping_time: AtomicI64,
-    last_inv_sent_time: AtomicI64,
-    time_offset: AtomicI64,
-    ping: AtomicI64,
+    last_tx_time: Atomic<Milliseconds>,
+    last_ping_time: Atomic<Milliseconds>,
+    last_inv_sent_time: Atomic<Milliseconds>,
+    time_offset: Atomic<Seconds>,
+    ping: Atomic<Milliseconds>,
     ping_request: Mutex<Option<(u32, Milliseconds)>>,
     requested_difficulty: UInt256,
 
     id: u64,
     version: AtomicU32,
     agent: Mutex<String>,
-    fee_filter: AtomicU64,
+    fee_filter: Atomic<Amount>,
 }
 
 impl Connection {
@@ -224,30 +225,28 @@ impl Connection {
     }
 
     pub fn last_tx_time(&self) -> Milliseconds {
-        self.last_tx_time.load(Ordering::Acquire).into()
+        self.last_tx_time.load(Ordering::Acquire)
     }
 
     pub fn set_last_tx_time(&self, last_tx_time: Milliseconds) {
-        self.last_tx_time
-            .store(last_tx_time.into(), Ordering::Release);
+        self.last_tx_time.store(last_tx_time, Ordering::Release);
     }
 
     pub fn last_ping_time(&self) -> Milliseconds {
-        self.last_ping_time.load(Ordering::Acquire).into()
+        self.last_ping_time.load(Ordering::Acquire)
     }
 
     pub fn set_last_ping_time(&self, last_ping_time: Milliseconds) {
-        self.last_ping_time
-            .store(last_ping_time.into(), Ordering::Release);
+        self.last_ping_time.store(last_ping_time, Ordering::Release);
     }
 
     pub fn last_inv_sent_time(&self) -> Milliseconds {
-        self.last_inv_sent_time.load(Ordering::Acquire).into()
+        self.last_inv_sent_time.load(Ordering::Acquire)
     }
 
     pub fn set_last_inv_sent_time(&self, last_inv_sent_time: Milliseconds) {
         self.last_inv_sent_time
-            .store(last_inv_sent_time.into(), Ordering::Release);
+            .store(last_inv_sent_time, Ordering::Release);
     }
 
     pub const fn id(&self) -> u64 {
@@ -283,11 +282,11 @@ impl Connection {
     }
 
     pub fn fee_filter(&self) -> Amount {
-        self.fee_filter.load(Ordering::Acquire).into()
+        self.fee_filter.load(Ordering::Acquire)
     }
 
     pub fn set_fee_filter(&self, fee_filter: Amount) {
-        self.fee_filter.store(fee_filter.into(), Ordering::Release);
+        self.fee_filter.store(fee_filter, Ordering::Release);
     }
 
     pub fn is_established(&self) -> bool {
@@ -303,11 +302,11 @@ impl Connection {
     }
 
     pub fn ping(&self) -> Milliseconds {
-        self.ping.load(Ordering::Acquire).into()
+        self.ping.load(Ordering::Acquire)
     }
 
     pub fn set_ping(&self, ping: Milliseconds) {
-        self.ping.store(ping.into(), Ordering::Release);
+        self.ping.store(ping, Ordering::Release);
     }
 
     pub fn ping_request(&self) -> Option<(u32, Milliseconds)> {
@@ -321,20 +320,19 @@ impl Connection {
     }
 
     pub fn time_offset(&self) -> Seconds {
-        self.time_offset.load(Ordering::Acquire).into()
+        self.time_offset.load(Ordering::Acquire)
     }
 
     pub fn set_time_offset(&self, time_offset: Seconds) {
-        self.time_offset
-            .store(time_offset.into(), Ordering::Release);
+        self.time_offset.store(time_offset, Ordering::Release);
     }
 
     pub fn state(&self) -> State {
-        unsafe { transmute(self.state.load(Ordering::Acquire)) }
+        self.state.load(Ordering::Acquire)
     }
 
     pub fn set_state(&self, state: State) {
-        self.state.store(state as u8, Ordering::Release);
+        self.state.store(state, Ordering::Release);
     }
 
     pub fn total_bytes_read(&self) -> u64 {
@@ -367,7 +365,7 @@ impl Connection {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, NoUninit, PartialEq)]
 #[repr(u8)]
 pub enum State {
     IncomingConnected,
