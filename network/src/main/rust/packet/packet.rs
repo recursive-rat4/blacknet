@@ -30,6 +30,7 @@ pub trait Packet: for<'de> Deserialize<'de> + Serialize {
     fn handle(self, connection: &Arc<Connection>);
 }
 
+#[derive(Debug)]
 #[non_exhaustive]
 #[repr(u32)]
 pub enum PacketKind {

@@ -18,20 +18,24 @@
 use crate::endpoint::Endpoint;
 use crate::node::Node;
 use crate::packet::{
-    BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, Packet, PacketKind,
+    BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, PACKET_HEADER_SIZE_BYTES,
+    Packet, PacketKind,
 };
 use atomic::Atomic;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
-use blacknet_log::{Logger, error, info};
+use blacknet_log::{Logger, debug, error, info};
 use blacknet_serialization::format::to_bytes;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use bytemuck::NoUninit;
 use core::cmp::min;
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, atomic::*};
+use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
+use tokio::net::TcpStream;
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::runtime::Runtime;
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
@@ -70,9 +74,13 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn launch(self: Arc<Self>, runtime: &Runtime) {
+    #[expect(unused)]
+    pub fn launch(self: Arc<Self>, tcp_stream: TcpStream, runtime: &Runtime) {
         let mut handles = self.handles.write().unwrap();
+        let (tcp_read, tcp_write) = tcp_stream.into_split();
         handles.push(runtime.spawn(self.clone().pusher()));
+        handles.push(runtime.spawn(self.clone().receiver(tcp_read)));
+        handles.push(runtime.spawn(self.clone().sender(todo!(), tcp_write)));
     }
 
     pub async fn join(&self) {
@@ -361,6 +369,34 @@ impl Connection {
                 self.send_inventory(now);
             }
             sleep(INVENTORY_SEND_TIMEOUT.try_into().unwrap()).await;
+        }
+    }
+
+    async fn receiver(self: Arc<Self>, tcp_read: OwnedReadHalf) {
+        let _buf_reader = BufReader::new(tcp_read);
+        loop {
+            todo!();
+        }
+    }
+
+    async fn sender(
+        self: Arc<Self>,
+        mut recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
+        tcp_write: OwnedWriteHalf,
+    ) {
+        let mut buf_writer = BufWriter::new(tcp_write);
+        loop {
+            let (kind, bytes) = recv_channel.recv().await.unwrap();
+            debug!(self.logger, "Sending {:?}", kind);
+            buf_writer
+                .write_u32(bytes.len() as u32 + PACKET_HEADER_SIZE_BYTES)
+                .await
+                .unwrap();
+            buf_writer.write_u32(kind as u32).await.unwrap();
+            buf_writer.write_all(&bytes).await.unwrap();
+            buf_writer.flush().await.unwrap();
+            self.send_channel_size
+                .fetch_sub(bytes.len(), Ordering::AcqRel);
         }
     }
 }
