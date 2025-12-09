@@ -182,3 +182,8 @@ path = "src/test/rust/z2.rs"
 name = "poseidon2"
 path = "src/benchmark/rust/poseidon2.rs"
 harness = false
+
+[[bench]]
+name = "sumcheck"
+path = "src/benchmark/rust/sumcheck.rs"
+harness = false
