@@ -31,7 +31,7 @@ use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use bytemuck::NoUninit;
 use core::cmp::min;
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, atomic::*};
-use tokio::io::{AsyncWriteExt, BufReader, BufWriter};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::TcpStream;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::runtime::Runtime;
@@ -48,6 +48,8 @@ pub struct Connection {
     remote_endpoint: Endpoint,
     local_endpoint: Endpoint,
     state: Atomic<State>,
+    total_bytes_read: AtomicU64,
+    total_bytes_written: AtomicU64,
 
     closed: AtomicBool,
     dos_score: AtomicU8,
@@ -344,11 +346,11 @@ impl Connection {
     }
 
     pub fn total_bytes_read(&self) -> u64 {
-        todo!();
+        self.total_bytes_read.load(Ordering::Relaxed)
     }
 
     pub fn total_bytes_written(&self) -> u64 {
-        todo!();
+        self.total_bytes_written.load(Ordering::Relaxed)
     }
 
     pub const fn logger(&self) -> &Logger {
@@ -372,10 +374,14 @@ impl Connection {
         }
     }
 
+    #[expect(unused)]
     async fn receiver(self: Arc<Self>, tcp_read: OwnedReadHalf) {
-        let _buf_reader = BufReader::new(tcp_read);
+        let mut buf_reader = BufReader::new(tcp_read);
         loop {
+            let size = buf_reader.read_u32().await.unwrap();
             todo!();
+            self.total_bytes_read
+                .fetch_add(4 + size as u64, Ordering::Relaxed);
         }
     }
 
@@ -397,6 +403,8 @@ impl Connection {
             buf_writer.flush().await.unwrap();
             self.send_channel_size
                 .fetch_sub(bytes.len(), Ordering::AcqRel);
+            self.total_bytes_written
+                .fetch_add(8 + bytes.len() as u64, Ordering::Relaxed);
         }
     }
 }
