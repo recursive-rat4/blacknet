@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::binaritypolynomial::BinarityPolynomial;
 use blacknet_crypto::distribution::{Distribution, UniformDistribution};
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::eqextension::EqExtension;
@@ -22,15 +23,24 @@ use blacknet_crypto::lm::LMField;
 use blacknet_crypto::multilinearextension::MultilinearExtension;
 use blacknet_crypto::operation::Double;
 use blacknet_crypto::poseidon2lm::DuplexPoseidon2LM;
+use blacknet_crypto::ring::IntegerRing;
 use blacknet_crypto::semiring::{Presemiring, Semiring};
 use blacknet_crypto::sumcheck::SumCheck;
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 
-const VARS: usize = 16;
+const VARS: usize = 15;
 type Z = LMField;
 type D = DuplexPoseidon2LM;
 type E = UniformDistribution<D>;
+
+fn make_bin() -> (BinarityPolynomial<Z>, Z) {
+    let mut coefficients = Vec::<Z>::with_capacity(1 << VARS);
+    (0..1 << VARS).for_each(|i| {
+        coefficients.push(Z::new(i & 1));
+    });
+    (coefficients.into(), Z::ZERO)
+}
 
 fn make_eq() -> (EqExtension<Z>, Z) {
     let mut i = Z::ONE;
@@ -58,6 +68,19 @@ fn criterion_benchmark(crit: &mut Criterion) {
     let mut duplex = D::default();
     let mut exceptional_set = UniformDistribution::default();
 
+    let (bin, sum) = black_box(make_bin());
+    crit.bench_function("SumCheck prove Bin", |bench| {
+        bench.iter(|| {
+            type SC = SumCheck<Z, BinarityPolynomial<Z>, D, E>;
+
+            let proof = SC::prove(bin.clone(), sum, &mut duplex, &mut exceptional_set);
+            duplex.reset();
+            exceptional_set.reset();
+
+            proof
+        })
+    });
+
     let (eq, sum) = black_box(make_eq());
     crit.bench_function("SumCheck prove Eq", |bench| {
         bench.iter(|| {
@@ -72,7 +95,7 @@ fn criterion_benchmark(crit: &mut Criterion) {
     });
 
     let (mle, sum) = black_box(make_mle());
-    crit.bench_function("SumCheck prove MLE", |bench| {
+    crit.bench_function("SumCheck prove Mle", |bench| {
         bench.iter(|| {
             type SC = SumCheck<Z, MultilinearExtension<Z>, D, E>;
 

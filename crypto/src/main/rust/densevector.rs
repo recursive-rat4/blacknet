@@ -16,7 +16,7 @@
  */
 
 use crate::densematrix::DenseMatrix;
-use crate::operation::Double;
+use crate::operation::{Double, Square};
 use crate::ring::Ring;
 use crate::semiring::{Presemiring, Semiring};
 use alloc::borrow::Borrow;
@@ -204,6 +204,14 @@ impl<R: Presemiring> Double for DenseVector<R> {
     }
 }
 
+impl<R: Presemiring> Double for &DenseVector<R> {
+    type Output = DenseVector<R>;
+
+    fn double(self) -> Self::Output {
+        self.into_iter().copied().map(Double::double).collect()
+    }
+}
+
 impl<R: Presemiring> Add<&DenseVector<R>> for DenseVector<R> {
     type Output = Self;
 
@@ -357,5 +365,21 @@ impl<R: Presemiring> Mul<R> for &DenseVector<R> {
 
     fn mul(self, rps: R) -> Self::Output {
         self.into_iter().map(|&l| l * rps).collect()
+    }
+}
+
+impl<R: Presemiring> Square for DenseVector<R> {
+    type Output = Self;
+
+    fn square(self) -> Self::Output {
+        self.into_iter().map(Square::square).collect()
+    }
+}
+
+impl<R: Presemiring> Square for &DenseVector<R> {
+    type Output = DenseVector<R>;
+
+    fn square(self) -> Self::Output {
+        self.into_iter().copied().map(Square::square).collect()
     }
 }
