@@ -35,14 +35,28 @@ pub struct Proof<R: UnitalRing> {
 }
 
 impl<R: UnitalRing> Proof<R> {
-    pub const fn claims(&self) -> &Vec<UnivariatePolynomial<R>> {
-        &self.claims
+    pub fn claim(&self, index: usize) -> &UnivariatePolynomial<R> {
+        &self.claims[index]
+    }
+
+    pub const fn variables(&self) -> usize {
+        self.claims.len()
     }
 }
 
 impl<R: UnitalRing> From<Vec<UnivariatePolynomial<R>>> for Proof<R> {
     fn from(claims: Vec<UnivariatePolynomial<R>>) -> Self {
         Self { claims }
+    }
+}
+
+impl<'a, R: UnitalRing> IntoIterator for &'a Proof<R> {
+    type Item = &'a UnivariatePolynomial<R>;
+    type IntoIter = core::slice::Iter<'a, UnivariatePolynomial<R>>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.claims.iter()
     }
 }
 
@@ -86,12 +100,12 @@ impl<
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> Result<(), Error<R>> {
-        if proof.claims.len() != polynomial.variables() {
-            return Err(Error::Claims(proof.claims.len(), polynomial.variables()));
+        if proof.variables() != polynomial.variables() {
+            return Err(Error::Variables(proof.variables(), polynomial.variables()));
         }
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
         for i in 0..polynomial.variables() {
-            let claim = &proof.claims[i];
+            let claim = proof.claim(i);
             if claim.degree() != polynomial.degree() {
                 return Err(Error::Degree(i, claim.degree(), polynomial.degree()));
             }
@@ -118,12 +132,12 @@ impl<
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> Result<(Point<R>, R), Error<R>> {
-        if proof.claims.len() != polynomial.variables() {
-            return Err(Error::Claims(proof.claims.len(), polynomial.variables()));
+        if proof.variables() != polynomial.variables() {
+            return Err(Error::Variables(proof.variables(), polynomial.variables()));
         }
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
         for i in 0..polynomial.variables() {
-            let claim = &proof.claims[i];
+            let claim = proof.claim(i);
             if claim.degree() != polynomial.degree() {
                 return Err(Error::Degree(i, claim.degree(), polynomial.degree()));
             }
@@ -190,7 +204,7 @@ impl<
 #[derive(Debug, Error)]
 pub enum Error<R: UnitalRing> {
     #[error("Expected {1} claims got {0}")]
-    Claims(usize, usize),
+    Variables(usize, usize),
     #[error("At round {0} expected {2} degree claim got {1}")]
     Degree(usize, usize, usize),
     #[error("Partial sum at round {0} doesn't match")]

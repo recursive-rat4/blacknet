@@ -119,6 +119,16 @@ impl<R: Semiring> IntoIterator for UnivariatePolynomial<R> {
     }
 }
 
+impl<'a, R: Semiring> IntoIterator for &'a UnivariatePolynomial<R> {
+    type Item = &'a R;
+    type IntoIter = core::slice::Iter<'a, R>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coefficients.iter()
+    }
+}
+
 impl<R: Semiring> Add for UnivariatePolynomial<R> {
     type Output = Self;
 

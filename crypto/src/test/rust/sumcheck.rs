@@ -322,14 +322,11 @@ fn circuit() {
     let r1cs = circuit.r1cs();
     let z = r1cs.assigment();
     z.push(sum_plain);
-    for claim in proof_plain.claims() {
-        z.extend_from_slice(claim);
-    }
+    z.extend((&proof_plain).into_iter().flatten().copied());
 
     let proof_assigner = ProofAssigner::from(
-        proof_plain
-            .claims()
-            .iter()
+        (&proof_plain)
+            .into_iter()
             .map(|i| UnivariatePolynomialAssigner::new(i.coefficients().to_owned(), &z))
             .collect::<Vec<_>>(),
     );
