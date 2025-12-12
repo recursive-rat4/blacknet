@@ -16,6 +16,9 @@
  */
 
 use crate::connection::Connection;
+use crate::packet::*;
+use blacknet_log::info;
+use blacknet_serialization::format::from_bytes;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -30,7 +33,7 @@ pub trait Packet: for<'de> Deserialize<'de> + Serialize {
     fn handle(self, connection: &Arc<Connection>);
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 #[repr(u32)]
 pub enum PacketKind {
@@ -47,4 +50,143 @@ pub enum PacketKind {
     Peers = 15,
     Ping = 16,
     Hello = 17,
+}
+
+impl PacketKind {
+    pub const fn is_handshake(self) -> bool {
+        matches!(self, PacketKind::Version | PacketKind::Hello)
+    }
+
+    pub fn handle(self, bytes: &[u8], connection: &Arc<Connection>) -> bool {
+        match self {
+            PacketKind::Version => match from_bytes::<Version>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::PingV1 => match from_bytes::<PingV1>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::Pong => match from_bytes::<Pong>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::GetBlocks => match from_bytes::<GetBlocks>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::Blocks => match from_bytes::<Blocks>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::BlockAnnounce => match from_bytes::<BlockAnnounce>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::ConsensusFault => match from_bytes::<ConsensusFault>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::Inventory => match from_bytes::<Inventory>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::GetTransactions => match from_bytes::<GetTransactions>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::Transactions => match from_bytes::<Transactions>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::Peers => match from_bytes::<Peers>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::Ping => match from_bytes::<Ping>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+            PacketKind::Hello => match from_bytes::<Hello>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
+        }
+        true
+    }
+}
+
+impl TryFrom<u32> for PacketKind {
+    type Error = String;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => PacketKind::Version,
+            1 => PacketKind::PingV1,
+            2 => PacketKind::Pong,
+            8 => PacketKind::GetBlocks,
+            9 => PacketKind::Blocks,
+            10 => PacketKind::BlockAnnounce,
+            11 => PacketKind::ConsensusFault,
+            12 => PacketKind::Inventory,
+            13 => PacketKind::GetTransactions,
+            14 => PacketKind::Transactions,
+            15 => PacketKind::Peers,
+            16 => PacketKind::Ping,
+            17 => PacketKind::Hello,
+            _ => return Err(format!("Unknown packet kind 0x{value:08X}")),
+        })
+    }
 }

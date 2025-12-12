@@ -58,9 +58,9 @@ pub struct Connection {
     inventory_to_send: Mutex<Vec<Hash>>,
     connected_at: Milliseconds,
 
-    last_packet_time: Milliseconds,
+    last_packet_time: Atomic<Milliseconds>,
     last_block: Mutex<BlockAnnounce>,
-    last_block_time: Milliseconds,
+    last_block_time: Atomic<Milliseconds>,
     last_tx_time: Atomic<Milliseconds>,
     last_ping_time: Atomic<Milliseconds>,
     last_inv_sent_time: Atomic<Milliseconds>,
@@ -230,8 +230,13 @@ impl Connection {
         self.connected_at
     }
 
-    pub const fn last_packet_time(&self) -> Milliseconds {
+    pub fn last_packet_time(&self) -> Milliseconds {
+        self.last_packet_time.load(Ordering::Acquire)
+    }
+
+    pub fn set_last_packet_time(&self, last_packet_time: Milliseconds) {
         self.last_packet_time
+            .store(last_packet_time, Ordering::Release);
     }
 
     pub fn last_tx_time(&self) -> Milliseconds {
@@ -374,12 +379,42 @@ impl Connection {
         }
     }
 
-    #[expect(unused)]
     async fn receiver(self: Arc<Self>, tcp_read: OwnedReadHalf) {
         let mut buf_reader = BufReader::new(tcp_read);
         loop {
             let size = buf_reader.read_u32().await.unwrap();
-            todo!();
+            let max = self.node.max_packet_size();
+            if size > max {
+                if self.is_established() {
+                    info!(
+                        self.logger,
+                        "Too long packet {size} max {max} Disconnecting"
+                    );
+                }
+                self.close();
+                break;
+            }
+            let kind: PacketKind = match buf_reader.read_u32().await.unwrap().try_into() {
+                Ok(kind) => kind,
+                Err(msg) => {
+                    info!(self.logger, "{msg} Disconnecting");
+                    self.close();
+                    break;
+                }
+            };
+            if (self.is_established() && kind.is_handshake())
+                || (!self.is_established() && !kind.is_handshake())
+            {
+                self.close();
+                break;
+            }
+            let mut bytes = vec![0; size as usize];
+            buf_reader.read_exact(&mut bytes).await.unwrap();
+            debug!(self.logger, "Received {kind:?}");
+            if !kind.handle(&bytes, &self) {
+                break;
+            }
+            self.set_last_packet_time(SystemClock::millis());
             self.total_bytes_read
                 .fetch_add(4 + size as u64, Ordering::Relaxed);
         }
