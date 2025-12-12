@@ -23,7 +23,7 @@ use alloc::borrow::Borrow;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
-use core::iter::{chain, zip};
+use core::iter::{chain, repeat_n, zip};
 use core::ops::{Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
@@ -36,6 +36,18 @@ impl<R: Presemiring> DenseVector<R> {
     pub fn fill(size: usize, element: R) -> Self {
         Self {
             elements: vec![element; size],
+        }
+    }
+
+    pub fn pad_to_power_of_two(&self) -> Self {
+        let n = self.elements.len().next_power_of_two() - self.elements.len();
+        Self {
+            elements: self
+                .elements
+                .iter()
+                .copied()
+                .chain(repeat_n(R::ZERO, n))
+                .collect(),
         }
     }
 

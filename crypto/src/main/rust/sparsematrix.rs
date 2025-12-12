@@ -20,6 +20,7 @@ use crate::densevector::DenseVector;
 use crate::ring::Ring;
 use crate::semiring::Presemiring;
 use alloc::vec::Vec;
+use core::iter::repeat_n;
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
@@ -46,6 +47,17 @@ impl<R: Presemiring> SparseMatrix<R> {
             r_index,
             c_index,
             elements,
+        }
+    }
+
+    pub fn pad_to_power_of_two(self) -> Self {
+        let n = self.rows().next_power_of_two() - self.rows();
+        let e = *self.r_index.last().expect("Not empty matrix");
+        Self {
+            columns: self.columns.next_power_of_two(),
+            r_index: self.r_index.into_iter().chain(repeat_n(e, n)).collect(),
+            c_index: self.c_index,
+            elements: self.elements,
         }
     }
 

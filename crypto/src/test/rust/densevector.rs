@@ -112,6 +112,14 @@ fn tensor() {
 }
 
 #[test]
+fn pad() {
+    let a = DenseVector::<R>::from([1, 2, 3].map(R::from));
+    let b = DenseVector::<R>::from([1, 2, 3, 0].map(R::from));
+    assert_eq!(a.pad_to_power_of_two(), b);
+    assert_eq!(b.pad_to_power_of_two(), b);
+}
+
+#[test]
 fn infinity_norm() {
     let a = DenseVector::<R>::from([0, 1, 2, 3].map(R::from));
     let nb = 3;

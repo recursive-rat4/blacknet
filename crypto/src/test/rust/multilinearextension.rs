@@ -58,8 +58,8 @@ fn sub() {
 
 #[test]
 fn neg() {
-    let a = MultilinearExtension::from([7, 0, -1].map(R::from));
-    let b = MultilinearExtension::from([-7, 0, 1].map(R::from));
+    let a = MultilinearExtension::from([7, 0, -1, 0].map(R::from));
+    let b = MultilinearExtension::from([-7, 0, 1, 0].map(R::from));
     assert_eq!(-a, b);
 }
 

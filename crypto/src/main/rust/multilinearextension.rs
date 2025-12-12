@@ -45,6 +45,7 @@ impl<R: UnitalRing> MultilinearExtension<R> {
 
 impl<R: UnitalRing, const N: usize> From<[R; N]> for MultilinearExtension<R> {
     fn from(coefficients: [R; N]) -> Self {
+        debug_assert!(N.is_power_of_two());
         Self {
             coefficients: coefficients.into(),
         }
@@ -54,21 +55,25 @@ impl<R: UnitalRing, const N: usize> From<[R; N]> for MultilinearExtension<R> {
 impl<R: UnitalRing> From<Vec<R>> for MultilinearExtension<R> {
     #[inline]
     fn from(coefficients: Vec<R>) -> Self {
+        debug_assert!(coefficients.len().is_power_of_two());
         Self { coefficients }
     }
 }
 
 impl<R: UnitalRing> FromIterator<R> for MultilinearExtension<R> {
     fn from_iter<I: IntoIterator<Item = R>>(iter: I) -> Self {
-        Self {
+        let result = Self {
             coefficients: iter.into_iter().collect(),
-        }
+        };
+        debug_assert!(result.coefficients.len().is_power_of_two());
+        result
     }
 }
 
 impl<R: UnitalRing> From<DenseMatrix<R>> for MultilinearExtension<R> {
     fn from(matrix: DenseMatrix<R>) -> Self {
-        let (_, _, elements) = matrix.into();
+        let (rows, columns, elements) = matrix.into();
+        debug_assert!((rows * columns).is_power_of_two());
         Self {
             coefficients: elements,
         }
@@ -77,6 +82,7 @@ impl<R: UnitalRing> From<DenseMatrix<R>> for MultilinearExtension<R> {
 
 impl<R: UnitalRing> From<DenseVector<R>> for MultilinearExtension<R> {
     fn from(vector: DenseVector<R>) -> Self {
+        debug_assert!(vector.dimension().is_power_of_two());
         Self {
             coefficients: vector.into(),
         }

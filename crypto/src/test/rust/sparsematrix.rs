@@ -54,3 +54,21 @@ fn vector() {
     let c = DenseVector::<R>::from([2497, 0, 6517, 8527, 7426].map(R::from));
     assert_eq!(&a * &b, c);
 }
+
+#[test]
+fn pad() {
+    let a = SparseMatrix::<R>::new(
+        3,
+        [0, 2, 4, 5].into(),
+        [0, 1, 1, 2, 0].into(),
+        [1, 2, 3, 4, 5].map(R::from).into(),
+    );
+    let b = SparseMatrix::<R>::new(
+        4,
+        [0, 2, 4, 5, 5].into(),
+        [0, 1, 1, 2, 0].into(),
+        [1, 2, 3, 4, 5].map(R::from).into(),
+    );
+    assert_eq!(a.pad_to_power_of_two(), b);
+    assert_eq!(b.clone().pad_to_power_of_two(), b);
+}

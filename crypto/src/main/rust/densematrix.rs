@@ -45,6 +45,24 @@ impl<R: Presemiring> DenseMatrix<R> {
         Self::new(rows, columns, vec![element; rows * columns])
     }
 
+    pub fn pad_to_power_of_two(&self) -> Self {
+        let m = self.rows.next_power_of_two() - self.rows;
+        let n = self.columns.next_power_of_two() - self.columns;
+        let mut elements = Vec::<R>::with_capacity((self.rows + m) * (self.columns + n));
+        for i in 0..self.rows {
+            for j in 0..self.columns {
+                elements.push(self[(i, j)])
+            }
+            for _j in 0..n {
+                elements.push(R::ZERO)
+            }
+        }
+        for _ in 0..m * (self.columns + n) {
+            elements.push(R::ZERO)
+        }
+        Self::new(self.rows + m, self.columns + n, elements)
+    }
+
     pub const fn rows(&self) -> usize {
         self.rows
     }

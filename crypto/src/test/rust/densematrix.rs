@@ -141,6 +141,24 @@ fn transpose() {
 
 #[test]
 #[rustfmt::skip]
+fn pad() {
+    let a = DenseMatrix::<R>::new(3, 3, [
+        1, 2, 3,
+        4, 5, 6,
+        7, 8, 9,
+    ].map(R::from).into());
+    let b = DenseMatrix::<R>::new(4, 4, [
+        1, 2, 3, 0,
+        4, 5, 6, 0,
+        7, 8, 9, 0,
+        0, 0, 0, 0,
+    ].map(R::from).into());
+    assert_eq!(a.pad_to_power_of_two(), b);
+    assert_eq!(b.pad_to_power_of_two(), b);
+}
+
+#[test]
+#[rustfmt::skip]
 fn infinity_norm() {
     let a = DenseMatrix::<R>::new(2, 2, [
         0, 1,

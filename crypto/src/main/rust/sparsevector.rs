@@ -40,6 +40,14 @@ impl<R: Presemiring> SparseVector<R> {
         }
     }
 
+    pub fn pad_to_power_of_two(self) -> Self {
+        Self {
+            dimension: self.dimension.next_power_of_two(),
+            index: self.index,
+            elements: self.elements,
+        }
+    }
+
     pub const fn dimension(&self) -> usize {
         self.dimension
     }

@@ -43,3 +43,11 @@ fn product() {
     assert_eq!(&a * &b, c);
     assert_eq!(&d * &a, e);
 }
+
+#[test]
+fn pad() {
+    let a = SparseVector::<R>::new(3, [0, 1, 2].into(), [1, 2, 3].map(R::from).into());
+    let b = SparseVector::<R>::new(4, [0, 1, 2].into(), [1, 2, 3].map(R::from).into());
+    assert_eq!(a.pad_to_power_of_two(), b);
+    assert_eq!(b.clone().pad_to_power_of_two(), b);
+}
