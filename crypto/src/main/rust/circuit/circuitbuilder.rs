@@ -485,6 +485,14 @@ impl<R: Semiring> AddAssign<&Self> for LinearCombination<R> {
     }
 }
 
+impl<R: Semiring> Add<LinearCombination<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: LinearCombination<R>) -> Self::Output {
+        self.clone() + rps
+    }
+}
+
 impl<R: Semiring> Add for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
@@ -667,6 +675,14 @@ impl<R: UnitalRing> SubAssign<&Self> for LinearCombination<R> {
         for (&variable, &coefficient) in &rps.terms {
             *self -= (variable, coefficient)
         }
+    }
+}
+
+impl<R: UnitalRing> Sub<LinearCombination<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: LinearCombination<R>) -> Self::Output {
+        self.clone() - rps
     }
 }
 
