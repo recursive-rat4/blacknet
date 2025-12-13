@@ -1332,9 +1332,9 @@ checksum = "67a8e35dfe18921e475b9861266fd58a5ecfd681161f242d24a9e2d1e07fbc28"
 
 [[package]]
 name = "orx-selfref-col"
-version = "3.1.0"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33baaaef34938b87f4b61e82ecbc2f82aa7bc75566e8cfd2457f7e871dfa736a"
+checksum = "e719611dd7fe235cd5e0d3ae4268fa01b36dfed45852d4f1d78e5cb3359621e4"
 dependencies = [
  "orx-fixed-vec",
  "orx-pinned-vec",
