@@ -17,11 +17,12 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
-use crate::circuit::circuitbuilder::{Constant, LinearCombination};
+use crate::circuit::circuitbuilder::{Constant, LinearCombination, Scope};
+use crate::circuit::convolution::{Convolution, binomial};
 use crate::numbertheoretictransform::Twiddles;
-use crate::ring::UnitalRing;
+use core::array;
 
-pub fn cooley_tukey<Z: UnitalRing + Twiddles<M>, const M: usize, const N: usize>(
+pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(
     a: &mut [LinearCombination<Z>; N],
 ) {
     let inertia: usize = const {
@@ -49,7 +50,7 @@ pub fn cooley_tukey<Z: UnitalRing + Twiddles<M>, const M: usize, const N: usize>
     }
 }
 
-pub fn gentleman_sande<Z: UnitalRing + Twiddles<M>, const M: usize, const N: usize>(
+pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(
     a: &mut [LinearCombination<Z>; N],
 ) {
     let inertia: usize = const {
@@ -77,4 +78,52 @@ pub fn gentleman_sande<Z: UnitalRing + Twiddles<M>, const M: usize, const N: usi
         k <<= 1;
     }
     a.iter_mut().for_each(|i| *i *= Constant::new(Z::SCALE));
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct NTTConvolution<const M: usize, const N: usize> {}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTConvolution<M, N> {
+    fn convolute(
+        scope: &Scope<Z>,
+        a: [LinearCombination<Z>; N],
+        b: [LinearCombination<Z>; N],
+    ) -> [LinearCombination<Z>; N] {
+        let inertia: usize = const {
+            assert!(N % M == 0);
+            N / M
+        };
+        match inertia {
+            1 => array::from_fn(|i| {
+                let c = scope.auxiliary();
+                scope.constrain(&a[i] * &b[i], c);
+                c.into()
+            }),
+            4 => {
+                let k = inertia * 2;
+                let l = N / k;
+                let mut c: [LinearCombination<Z>; N] = array::from_fn(|_| Default::default());
+                for i in 0..l {
+                    binomial::<Z, 4>(
+                        scope,
+                        &mut c[i * k..i * k + 4],
+                        &a[i * k..i * k + 4],
+                        &b[i * k..i * k + 4],
+                        Constant::new(-Z::TWIDDLES[l + i]),
+                    );
+                    binomial::<Z, 4>(
+                        scope,
+                        &mut c[i * k + inertia..i * k + inertia + 4],
+                        &a[i * k + inertia..i * k + inertia + 4],
+                        &b[i * k + inertia..i * k + inertia + 4],
+                        Constant::new(Z::TWIDDLES[l + i]),
+                    );
+                }
+                c
+            }
+            _ => {
+                unimplemented!("NTT convolution with inertia = {inertia}");
+            }
+        }
+    }
 }

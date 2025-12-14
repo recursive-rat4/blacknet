@@ -18,6 +18,7 @@
 pub mod binaryuniformdistribution;
 pub mod circuitbuilder;
 pub mod compressionfunction;
+pub mod convolution;
 pub mod distribution;
 pub mod duplex;
 pub mod eqextension;
