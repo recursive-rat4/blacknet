@@ -27,7 +27,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
 use core::cmp::{Ordering, max};
-use core::fmt::{Display, Formatter, Result};
+use core::fmt::{Debug, Display, Formatter, Result};
 use core::marker::PhantomData;
 use core::ops::{Add, AddAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 use orx_tree::{Dyn, DynTree, NodeIdx, NodeRef};
@@ -37,7 +37,7 @@ pub trait Expression<R: Semiring>: 'static {
     fn degree(&self) -> usize;
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Constant<R: Semiring> {
     value: R,
 }
@@ -133,7 +133,7 @@ impl<R: Semiring> Square for Constant<R> {
     }
 }
 
-#[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum VariableKind {
     Constant,
     PublicInput,
@@ -169,6 +169,16 @@ impl<R: Semiring> Expression<R> for Variable<R> {
 
     fn degree(&self) -> usize {
         1
+    }
+}
+
+impl<R: Semiring> Debug for Variable<R> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(
+            f,
+            "Variable {{ kind: {:?}, number: {:?} }}",
+            self.kind, self.number
+        )
     }
 }
 
