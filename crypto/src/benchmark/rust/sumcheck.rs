@@ -70,40 +70,70 @@ fn criterion_benchmark(crit: &mut Criterion) {
 
     let (bin, sum) = black_box(make_bin());
     crit.bench_function("SumCheck prove Bin", |bench| {
+        type SC = SumCheck<Z, BinarityPolynomial<Z>, D, E>;
         bench.iter(|| {
-            type SC = SumCheck<Z, BinarityPolynomial<Z>, D, E>;
-
             let proof = SC::prove(bin.clone(), sum, &mut duplex, &mut exceptional_set);
             duplex.reset();
             exceptional_set.reset();
-
             proof
+        })
+    });
+    crit.bench_function("SumCheck verify Bin", |bench| {
+        type SC = SumCheck<Z, BinarityPolynomial<Z>, D, E>;
+        let proof = SC::prove(bin.clone(), sum, &mut duplex, &mut exceptional_set);
+        duplex.reset();
+        exceptional_set.reset();
+        bench.iter(|| {
+            let result = SC::verify(&bin, sum, &proof, &mut duplex, &mut exceptional_set);
+            duplex.reset();
+            exceptional_set.reset();
+            result.unwrap()
         })
     });
 
     let (eq, sum) = black_box(make_eq());
     crit.bench_function("SumCheck prove Eq", |bench| {
+        type SC = SumCheck<Z, EqExtension<Z>, D, E>;
         bench.iter(|| {
-            type SC = SumCheck<Z, EqExtension<Z>, D, E>;
-
             let proof = SC::prove(eq.clone(), sum, &mut duplex, &mut exceptional_set);
             duplex.reset();
             exceptional_set.reset();
-
             proof
+        })
+    });
+    crit.bench_function("SumCheck verify Eq", |bench| {
+        type SC = SumCheck<Z, EqExtension<Z>, D, E>;
+        let proof = SC::prove(eq.clone(), sum, &mut duplex, &mut exceptional_set);
+        duplex.reset();
+        exceptional_set.reset();
+        bench.iter(|| {
+            let result = SC::verify(&eq, sum, &proof, &mut duplex, &mut exceptional_set);
+            duplex.reset();
+            exceptional_set.reset();
+            result.unwrap()
         })
     });
 
     let (mle, sum) = black_box(make_mle());
     crit.bench_function("SumCheck prove Mle", |bench| {
+        type SC = SumCheck<Z, MultilinearExtension<Z>, D, E>;
         bench.iter(|| {
-            type SC = SumCheck<Z, MultilinearExtension<Z>, D, E>;
-
             let proof = SC::prove(mle.clone(), sum, &mut duplex, &mut exceptional_set);
             duplex.reset();
             exceptional_set.reset();
-
             proof
+        })
+    });
+    crit.bench_function("SumCheck verify Mle", |bench| {
+        type SC = SumCheck<Z, MultilinearExtension<Z>, D, E>;
+        let proof = SC::prove(mle.clone(), sum, &mut duplex, &mut exceptional_set);
+        duplex.reset();
+        exceptional_set.reset();
+        bench.iter(|| {
+            let result = SC::verify(&mle, sum, &proof, &mut duplex, &mut exceptional_set);
+            duplex.reset();
+            exceptional_set.reset();
+            result.unwrap()
         })
     });
 }
