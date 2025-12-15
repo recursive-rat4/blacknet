@@ -16,8 +16,9 @@
  */
 
 use crate::blake2b::Hash;
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::transaction::{CoinTx, Transaction};
+use alloc::format;
 
 pub trait TxData {
     fn process_impl(
@@ -27,4 +28,20 @@ pub trait TxData {
         data_index: u32,
         coin_tx: impl CoinTx,
     ) -> Result<()>;
+
+    fn process(&self, tx: Transaction, hash: Hash, coin_tx: impl CoinTx) -> Result<()> {
+        let mut account = coin_tx.get_account(tx.from())?;
+        if tx.seq() != account.seq() {
+            let msg = format!("sequence {} expected {}", tx.seq(), account.seq());
+            if tx.seq() < account.seq() {
+                return Err(Error::AlreadyHave(msg));
+            } else {
+                return Err(Error::InFuture(msg));
+            }
+        }
+        account.credit(tx.fee())?;
+        account.increment_seq();
+        coin_tx.set_account(tx.from(), account);
+        self.process_impl(tx, hash, 0, coin_tx)
+    }
 }

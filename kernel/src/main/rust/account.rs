@@ -37,6 +37,10 @@ impl Account {
         self.seq
     }
 
+    pub const fn increment_seq(&mut self) {
+        self.seq = self.seq.wrapping_add(1);
+    }
+
     pub fn leases(&self) -> &[Lease] {
         &self.leases
     }
