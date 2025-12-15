@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::module::FreeModule;
+use blacknet_crypto::freemodule::FreeModule;
 use blacknet_crypto::semiring::Semiring;
 
 type R = blacknet_crypto::pervushin::PervushinField;

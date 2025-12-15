@@ -16,8 +16,9 @@
  */
 
 use crate::algebra::{Algebra, UnitalAlgebra};
+use crate::freemodule::FreeModule;
 use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeMagma};
-use crate::module::{FreeModule, Module};
+use crate::module::Module;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Square};
 use crate::ring::{Ring, UnitalRing};

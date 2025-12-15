@@ -18,10 +18,11 @@
 use crate::algebra::{Algebra, UnitalAlgebra};
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
+use crate::freemodule::FreeModule;
 use crate::magma::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
-use crate::module::{FreeModule, Module};
+use crate::module::Module;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Square};
 use crate::ring::{

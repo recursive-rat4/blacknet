@@ -17,8 +17,8 @@
 
 use blacknet_crypto::densematrix::DenseMatrix;
 use blacknet_crypto::densevector::DenseVector;
+use blacknet_crypto::freemodule::FreeModule;
 use blacknet_crypto::hypercube::Hypercube;
-use blacknet_crypto::module::FreeModule;
 use blacknet_crypto::multilinearextension::MultilinearExtension;
 use blacknet_crypto::operation::Double;
 use blacknet_crypto::polynomial::Polynomial;
