@@ -20,7 +20,6 @@ use crate::float::{Float, FloatOn};
 use crate::integer::Integer;
 use crate::uniformintdistribution::UniformIntDistribution;
 use core::marker::PhantomData;
-use core::mem::size_of;
 
 // In range [0, 1)
 

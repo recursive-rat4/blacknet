@@ -22,7 +22,6 @@ use crate::transaction::TxKind;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use blacknet_serialization::format::to_bytes;
-use core::mem::size_of;
 use digest::Digest;
 use serde::{Deserialize, Serialize};
 

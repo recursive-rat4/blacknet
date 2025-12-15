@@ -19,7 +19,6 @@ use crate::blake2b::{Blake2b256, Hash};
 use crate::ed25519::{PublicKey, Signature};
 use alloc::boxed::Box;
 use blacknet_time::Seconds;
-use core::mem::size_of;
 use digest::Digest;
 use serde::{Deserialize, Serialize};
 
