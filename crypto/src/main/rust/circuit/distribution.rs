@@ -19,20 +19,22 @@ use crate::circuit::circuitbuilder::CircuitBuilder;
 use crate::distribution::{UniformDistribution, UniformGenerator};
 use crate::semiring::Semiring;
 
-pub trait Distribution<'a, R: Semiring, G: UniformGenerator> {
+pub trait Distribution<'a, 'b, R: Semiring, G: UniformGenerator> {
     type Output;
 
-    fn new(circuit: &'a CircuitBuilder<R>) -> Self;
+    fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output;
 
     fn reset(&mut self);
 }
 
-impl<'a, R: Semiring, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution<G> {
+impl<'a, 'b, R: Semiring, G: UniformGenerator> Distribution<'a, 'b, R, G>
+    for UniformDistribution<G>
+{
     type Output = G::Output;
 
-    fn new(_: &'a CircuitBuilder<R>) -> Self {
+    fn new(_: &'a CircuitBuilder<'b, R>) -> Self {
         Self::default()
     }
 

@@ -87,7 +87,7 @@ impl PermutationCircuit<Z> for TestPermutation {
     }
 }
 
-type DuplexCircuit<'a> = Circuit<'a, Z, 2, 2, 4, TestPermutation>;
+type DuplexCircuit<'a, 'b> = Circuit<'a, 'b, Z, 2, 2, 4, TestPermutation>;
 
 impl PermutationAssigner<Z> for TestPermutation {
     type Domain = [Z; 4];

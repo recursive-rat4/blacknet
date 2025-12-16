@@ -20,12 +20,12 @@ use crate::operation::Double;
 use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 
-pub struct LogicGate<'a, R: UnitalRing> {
-    circuit: &'a CircuitBuilder<R>,
+pub struct LogicGate<'a, 'b, R: UnitalRing> {
+    circuit: &'a CircuitBuilder<'b, R>,
 }
 
-impl<'a, R: UnitalRing> LogicGate<'a, R> {
-    pub const fn new(circuit: &'a CircuitBuilder<R>) -> Self {
+impl<'a, 'b, R: UnitalRing> LogicGate<'a, 'b, R> {
+    pub const fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self {
         Self { circuit }
     }
 

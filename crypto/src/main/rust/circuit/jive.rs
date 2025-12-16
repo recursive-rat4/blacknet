@@ -25,24 +25,26 @@ use core::marker::PhantomData;
 
 pub struct Jive<
     'a,
+    'b,
     G: Semiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
 > {
-    circuit: &'a CircuitBuilder<G>,
+    circuit: &'a CircuitBuilder<'b, G>,
     phantom: PhantomData<P>,
 }
 
 impl<
     'a,
+    'b,
     G: Semiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
-> Jive<'a, G, RANK, WIDTH, P>
+> Jive<'a, 'b, G, RANK, WIDTH, P>
 {
-    pub const fn new(circuit: &'a CircuitBuilder<G>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<'b, G>) -> Self {
         const {
             assert!(RANK * 2 == WIDTH);
         }
@@ -55,11 +57,12 @@ impl<
 
 impl<
     'a,
+    'b,
     G: Semiring + AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
-> CompressionFunction for Jive<'a, G, RANK, WIDTH, P>
+> CompressionFunction for Jive<'a, 'b, G, RANK, WIDTH, P>
 {
     type Hash = [LinearCombination<G>; RANK];
 

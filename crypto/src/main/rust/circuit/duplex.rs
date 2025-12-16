@@ -25,13 +25,14 @@ use core::marker::PhantomData;
 
 pub struct DuplexImpl<
     'a,
+    'b,
     S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [LinearCombination<S>; WIDTH]>,
 > {
-    circuit: &'a CircuitBuilder<S>,
+    circuit: &'a CircuitBuilder<'b, S>,
     phase: Phase,
     position: usize,
     state: [LinearCombination<S>; WIDTH],
@@ -40,14 +41,15 @@ pub struct DuplexImpl<
 
 impl<
     'a,
+    'b,
     S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [LinearCombination<S>; WIDTH]>,
-> DuplexImpl<'a, S, RATE, CAPACITY, WIDTH, P>
+> DuplexImpl<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
 {
-    pub fn new(circuit: &'a CircuitBuilder<S>) -> Self {
+    pub fn new(circuit: &'a CircuitBuilder<'b, S>) -> Self {
         Self {
             circuit,
             phase: Phase::Absorb,
@@ -57,7 +59,10 @@ impl<
         }
     }
 
-    pub fn with_iv(circuit: &'a CircuitBuilder<S>, iv: &[LinearCombination<S>; CAPACITY]) -> Self {
+    pub fn with_iv(
+        circuit: &'a CircuitBuilder<'b, S>,
+        iv: &[LinearCombination<S>; CAPACITY],
+    ) -> Self {
         let mut duplex = Self::new(circuit);
         duplex.state[RATE..WIDTH].clone_from_slice(iv);
         duplex
@@ -89,12 +94,13 @@ impl<
 
 impl<
     'a,
+    'b,
     S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [LinearCombination<S>; WIDTH]>,
-> Duplex<LinearCombination<S>> for DuplexImpl<'a, S, RATE, CAPACITY, WIDTH, P>
+> Duplex<LinearCombination<S>> for DuplexImpl<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
 {
     fn reset(&mut self) {
         self.phase = Phase::Absorb;
@@ -132,12 +138,13 @@ impl<
 
 impl<
     'a,
+    'b,
     S: Semiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [LinearCombination<S>; WIDTH]>,
-> UniformGenerator for DuplexImpl<'a, S, RATE, CAPACITY, WIDTH, P>
+> UniformGenerator for DuplexImpl<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
 {
     type Output = LinearCombination<S>;
 

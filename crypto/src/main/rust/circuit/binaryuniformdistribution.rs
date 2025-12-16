@@ -26,11 +26,12 @@ use alloc::vec::Vec;
 
 pub struct BinaryUniformDistribution<
     'a,
+    'b,
     Z: IntegerRing,
     G: UniformGenerator<Output = LinearCombination<Z>>,
 > {
-    circuit: &'a CircuitBuilder<Z>,
-    logic_gate: LogicGate<'a, Z>,
+    circuit: &'a CircuitBuilder<'b, Z>,
+    logic_gate: LogicGate<'a, 'b, Z>,
     cache: Vec<G::Output>,
     have_bits: u32,
 }
@@ -38,9 +39,10 @@ pub struct BinaryUniformDistribution<
 #[rustfmt::skip]
 impl<
     'a,
+    'b,
     Z: IntegerRing,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> BinaryUniformDistribution<'a, Z, G> {
+> BinaryUniformDistribution<'a, 'b, Z, G> {
     fn useful_bits() -> u32 {
         if Z::MODULUS.count_ones() == 1 {
             Z::BITS
@@ -53,12 +55,13 @@ impl<
 #[rustfmt::skip]
 impl<
     'a,
+    'b,
     Z: IntegerRing,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> Distribution<'a, Z, G> for BinaryUniformDistribution<'a, Z, G> {
+> Distribution<'a, 'b, Z, G> for BinaryUniformDistribution<'a, 'b, Z, G> {
     type Output = LinearCombination<Z>;
 
-    fn new(circuit: &'a CircuitBuilder<Z>) -> Self {
+    fn new(circuit: &'a CircuitBuilder<'b, Z>) -> Self {
         Self {
             circuit,
             logic_gate: LogicGate::new(circuit),

@@ -24,21 +24,23 @@ use crate::ring::IntegerRing;
 
 pub struct QuartaryUniformDistribution<
     'a,
+    'b,
     Z: IntegerRing,
     G: UniformGenerator<Output = LinearCombination<Z>>,
 > {
-    bud: BinaryUniformDistribution<'a, Z, G>,
+    bud: BinaryUniformDistribution<'a, 'b, Z, G>,
 }
 
 #[rustfmt::skip]
 impl<
     'a,
+    'b,
     Z: IntegerRing,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> Distribution<'a, Z, G> for QuartaryUniformDistribution<'a, Z, G> {
+> Distribution<'a, 'b, Z, G> for QuartaryUniformDistribution<'a, 'b, Z, G> {
     type Output = LinearCombination<Z>;
 
-    fn new(circuit: &'a CircuitBuilder<Z>) -> Self {
+    fn new(circuit: &'a CircuitBuilder<'b, Z>) -> Self {
         Self {
             bud: BinaryUniformDistribution::new(circuit),
         }

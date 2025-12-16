@@ -25,13 +25,13 @@ use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-pub struct Proof<'a, R: UnitalRing> {
-    claims: Vec<UnivariatePolynomial<'a, R>>,
+pub struct Proof<'a, 'b, R: UnitalRing> {
+    claims: Vec<UnivariatePolynomial<'a, 'b, R>>,
 }
 
-impl<'a, R: UnitalRing> Proof<'a, R> {
+impl<'a, 'b, R: UnitalRing> Proof<'a, 'b, R> {
     pub fn allocate(
-        circuit: &'a CircuitBuilder<R>,
+        circuit: &'a CircuitBuilder<'b, R>,
         kind: VariableKind,
         variables: usize,
         degree: usize,
@@ -44,20 +44,21 @@ impl<'a, R: UnitalRing> Proof<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing> From<Vec<UnivariatePolynomial<'a, R>>> for Proof<'a, R> {
-    fn from(claims: Vec<UnivariatePolynomial<'a, R>>) -> Self {
+impl<'a, 'b, R: UnitalRing> From<Vec<UnivariatePolynomial<'a, 'b, R>>> for Proof<'a, 'b, R> {
+    fn from(claims: Vec<UnivariatePolynomial<'a, 'b, R>>) -> Self {
         Self { claims }
     }
 }
 
 pub struct SumCheck<
     'a,
+    'b,
     R: UnitalRing,
     P: Polynomial<R>,
     D: Duplex<LinearCombination<R>>,
-    E: Distribution<'a, R, D, Output = LinearCombination<R>>,
+    E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
 > {
-    circuit: &'a CircuitBuilder<R>,
+    circuit: &'a CircuitBuilder<'b, R>,
     phantom_p: PhantomData<P>,
     phantom_d: PhantomData<D>,
     phantom_e: PhantomData<E>,
@@ -65,13 +66,14 @@ pub struct SumCheck<
 
 impl<
     'a,
+    'b,
     R: UnitalRing,
     P: Polynomial<R>,
     D: Duplex<LinearCombination<R>>,
-    E: Distribution<'a, R, D, Output = LinearCombination<R>>,
-> SumCheck<'a, R, P, D, E>
+    E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
+> SumCheck<'a, 'b, R, P, D, E>
 {
-    pub const fn new(circuit: &'a CircuitBuilder<R>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self {
         Self {
             circuit,
             phantom_p: PhantomData,
@@ -84,7 +86,7 @@ impl<
         &self,
         polynomial: &P,
         mut sum: LinearCombination<R>,
-        proof: &Proof<'a, R>,
+        proof: &Proof<'a, 'b, R>,
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> (Point<R>, LinearCombination<R>) {

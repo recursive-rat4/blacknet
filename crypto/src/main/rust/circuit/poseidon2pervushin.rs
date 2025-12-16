@@ -32,8 +32,8 @@ impl Permutation<PervushinField> for Poseidon2Pervushin12 {
     }
 }
 
-pub type DuplexPoseidon2Pervushin<'a> =
-    DuplexImpl<'a, PervushinField, 8, 4, 12, Poseidon2Pervushin12>;
+pub type DuplexPoseidon2Pervushin<'a, 'b> =
+    DuplexImpl<'a, 'b, PervushinField, 8, 4, 12, Poseidon2Pervushin12>;
 
 impl Permutation<PervushinField> for Poseidon2Pervushin8 {
     type Domain = [LinearCombination<PervushinField>; 8];
@@ -44,4 +44,4 @@ impl Permutation<PervushinField> for Poseidon2Pervushin8 {
     }
 }
 
-pub type JivePoseidon2Pervushin<'a> = Jive<'a, PervushinField, 4, 8, Poseidon2Pervushin8>;
+pub type JivePoseidon2Pervushin<'a, 'b> = Jive<'a, 'b, PervushinField, 4, 8, Poseidon2Pervushin8>;

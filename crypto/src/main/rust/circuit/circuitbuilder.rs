@@ -32,7 +32,7 @@ use core::marker::PhantomData;
 use core::ops::{Add, AddAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 use orx_tree::{Dyn, DynTree, NodeIdx, NodeRef};
 
-pub trait Expression<R: Semiring>: 'static {
+pub trait Expression<'a, R: Semiring + 'a>: 'a {
     fn span(&self) -> LinearSpan<R>;
     fn degree(&self) -> usize;
 }
@@ -51,7 +51,7 @@ impl<R: Semiring> Constant<R> {
     }
 }
 
-impl<R: Semiring> Expression<R> for Constant<R> {
+impl<'a, R: Semiring + 'a> Expression<'a, R> for Constant<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![(*self).into()].into()
     }
@@ -162,7 +162,7 @@ impl<R: Semiring> Variable<R> {
     const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
 }
 
-impl<R: Semiring> Expression<R> for Variable<R> {
+impl<'a, R: Semiring + 'a> Expression<'a, R> for Variable<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![(*self).into()].into()
     }
@@ -321,7 +321,7 @@ impl<R: Semiring> LinearCombination<R> {
     }
 }
 
-impl<R: Semiring> Expression<R> for LinearCombination<R> {
+impl<'a, R: Semiring + 'a> Expression<'a, R> for LinearCombination<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone()].into()
     }
@@ -841,7 +841,7 @@ pub struct LinearMonoid<R: Semiring> {
     factors: VecDeque<LinearCombination<R>>,
 }
 
-impl<R: Semiring> Expression<R> for LinearMonoid<R> {
+impl<'a, R: Semiring + 'a> Expression<'a, R> for LinearMonoid<R> {
     fn span(&self) -> LinearSpan<R> {
         self.factors.clone().into()
     }
@@ -1111,24 +1111,24 @@ impl<R: Semiring> Index<usize> for LinearSpan<R> {
     }
 }
 
-pub struct Constraint<R: Semiring> {
-    lps: Box<dyn Expression<R>>,
-    rps: Box<dyn Expression<R>>,
+pub struct Constraint<'a, R: Semiring> {
+    lps: Box<dyn Expression<'a, R>>,
+    rps: Box<dyn Expression<'a, R>>,
 }
 
-pub struct CircuitBuilder<R: Semiring> {
+pub struct CircuitBuilder<'a, R: Semiring> {
     degree: usize,
     public_inputs: Cell<usize>,
     public_outputs: Cell<usize>,
     private_inputs: Cell<usize>,
     private_outputs: Cell<usize>,
     auxiliaries: Cell<usize>,
-    constraints: RefCell<Vec<Constraint<R>>>,
+    constraints: RefCell<Vec<Constraint<'a, R>>>,
     scopes: RefCell<DynTree<ScopeInfo>>,
     current_scope: RefCell<NodeIdx<Dyn<ScopeInfo>>>,
 }
 
-impl<R: Semiring> CircuitBuilder<R> {
+impl<'a, R: Semiring> CircuitBuilder<'a, R> {
     pub fn new(degree: usize) -> Self {
         let mut tree = DynTree::empty();
         let root = tree.push_root(ScopeInfo::root());
@@ -1161,7 +1161,7 @@ impl<R: Semiring> CircuitBuilder<R> {
             + self.auxiliaries.get()
     }
 
-    pub fn scope<'a>(&'a self, name: &'static str) -> Scope<'a, R> {
+    pub fn scope<'b>(&'b self, name: &'static str) -> Scope<'b, 'a, R> {
         let mut scopes = self.scopes.borrow_mut();
         let mut current_scope = self.current_scope.borrow_mut();
         let info = ScopeInfo::new(name);
@@ -1256,7 +1256,7 @@ impl<R: Semiring> CircuitBuilder<R> {
         Variable::new(kind, n)
     }
 
-    fn constrain(&self, constraint: Constraint<R>) {
+    fn constrain(&self, constraint: Constraint<'a, R>) {
         let mut scopes = self.scopes.borrow_mut();
         let current_scope = self.current_scope.borrow();
         let mut scope = scopes.get_node_mut(*current_scope).expect("Scope");
@@ -1326,7 +1326,7 @@ impl<R: Semiring> CircuitBuilder<R> {
     }
 }
 
-impl<R: UnitalRing> CircuitBuilder<R> {
+impl<'a, R: UnitalRing> CircuitBuilder<'a, R> {
     pub fn ccs(self) -> CustomizableConstraintSystem<R> {
         let (constraints_num, variables_num) = (self.constraints(), self.variables());
         let constraints = self.constraints.take();
@@ -1376,7 +1376,7 @@ impl<R: UnitalRing> CircuitBuilder<R> {
     }
 }
 
-impl<R: Semiring> Display for CircuitBuilder<R> {
+impl<'a, R: Semiring> Display for CircuitBuilder<'a, R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -1389,12 +1389,12 @@ impl<R: Semiring> Display for CircuitBuilder<R> {
     }
 }
 
-pub struct Scope<'a, R: Semiring> {
-    builder: &'a CircuitBuilder<R>,
+pub struct Scope<'a, 'b, R: Semiring> {
+    builder: &'a CircuitBuilder<'b, R>,
 }
 
-impl<'a, R: Semiring> Scope<'a, R> {
-    pub fn constrain<LPS: Expression<R>, RPS: Expression<R>>(&self, lps: LPS, rps: RPS) {
+impl<'a, 'b, R: Semiring> Scope<'a, 'b, R> {
+    pub fn constrain<LPS: Expression<'b, R>, RPS: Expression<'b, R>>(&self, lps: LPS, rps: RPS) {
         self.builder.constrain(Constraint {
             lps: Box::new(lps),
             rps: Box::new(rps),
@@ -1432,7 +1432,7 @@ impl<'a, R: Semiring> Scope<'a, R> {
     }
 }
 
-impl<'a, R: Semiring> Drop for Scope<'a, R> {
+impl<'a, 'b, R: Semiring> Drop for Scope<'a, 'b, R> {
     fn drop(&mut self) {
         let scopes = self.builder.scopes.borrow();
         let mut current_scope = self.builder.current_scope.borrow_mut();

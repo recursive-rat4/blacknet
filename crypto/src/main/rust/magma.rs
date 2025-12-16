@@ -19,12 +19,10 @@ use crate::operation::{Double, Square};
 use core::fmt::Debug;
 use core::ops::{Add, AddAssign, Mul, MulAssign};
 
-// Finite magmata
-
+/// A set that is closed under addition.
 #[rustfmt::skip]
 pub trait AdditiveMagma
-    : 'static
-    + Copy
+    : Copy
     + Eq
     + Debug
     + Send
@@ -35,12 +33,13 @@ pub trait AdditiveMagma
 {
 }
 
+/// A marker for magmata with commutative addition.
 pub trait AdditiveCommutativeMagma: AdditiveMagma {}
 
+/// A set that is closed under multiplication.
 #[rustfmt::skip]
 pub trait MultiplicativeMagma
-    : 'static
-    + Copy
+    : Copy
     + Eq
     + Debug
     + Send
@@ -51,4 +50,5 @@ pub trait MultiplicativeMagma
 {
 }
 
+/// A marker for magmata with commutative multiplication.
 pub trait MultiplicativeCommutativeMagma: MultiplicativeMagma {}

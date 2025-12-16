@@ -32,7 +32,7 @@ impl Permutation<LMField> for Poseidon2LM12 {
     }
 }
 
-pub type DuplexPoseidon2LM<'a> = DuplexImpl<'a, LMField, 8, 4, 12, Poseidon2LM12>;
+pub type DuplexPoseidon2LM<'a, 'b> = DuplexImpl<'a, 'b, LMField, 8, 4, 12, Poseidon2LM12>;
 
 impl Permutation<LMField> for Poseidon2LM8 {
     type Domain = [LinearCombination<LMField>; 8];
@@ -43,4 +43,4 @@ impl Permutation<LMField> for Poseidon2LM8 {
     }
 }
 
-pub type JivePoseidon2LM<'a> = Jive<'a, LMField, 4, 8, Poseidon2LM8>;
+pub type JivePoseidon2LM<'a, 'b> = Jive<'a, 'b, LMField, 4, 8, Poseidon2LM8>;

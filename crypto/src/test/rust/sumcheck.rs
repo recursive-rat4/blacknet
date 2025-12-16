@@ -298,16 +298,17 @@ fn circuit() {
         poly_plain.variables(),
         poly_plain.degree(),
     );
-    type DuplexCircuit<'a> = DuplexPoseidon2PervushinCircuit<'a>;
+    type DuplexCircuit<'a, 'b> = DuplexPoseidon2PervushinCircuit<'a, 'b>;
     let mut duplex_circuit = DuplexCircuit::new(&circuit);
-    type UniformDistributionCircuit<'a> = UniformDistribution<DuplexCircuit<'a>>;
+    type UniformDistributionCircuit<'a, 'b> = UniformDistribution<DuplexCircuit<'a, 'b>>;
     let mut exceptional_set_circuit = UniformDistributionCircuit::default();
-    type SCCircuit<'a> = SumCheckCircuit<
+    type SCCircuit<'a, 'b> = SumCheckCircuit<
         'a,
+        'b,
         Z,
         MultilinearExtension<Z>,
-        DuplexCircuit<'a>,
-        UniformDistributionCircuit<'a>,
+        DuplexCircuit<'a, 'b>,
+        UniformDistributionCircuit<'a, 'b>,
     >;
     let sumcheck_circuit = SCCircuit::new(&circuit);
     sumcheck_circuit.verify_early_stopping(
