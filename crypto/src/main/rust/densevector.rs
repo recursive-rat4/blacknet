@@ -110,7 +110,7 @@ impl<R: Presemiring> From<DenseVector<R>> for Vec<R> {
     }
 }
 
-impl<R: Presemiring> Debug for DenseVector<R> {
+impl<R: Presemiring + Debug> Debug for DenseVector<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.elements)
     }

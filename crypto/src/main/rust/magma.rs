@@ -16,7 +16,6 @@
  */
 
 use crate::operation::{Double, Square};
-use core::fmt::Debug;
 use core::ops::{Add, AddAssign, Mul, MulAssign};
 
 /// A set that is closed under addition.
@@ -24,7 +23,6 @@ use core::ops::{Add, AddAssign, Mul, MulAssign};
 pub trait AdditiveMagma
     : Copy
     + Eq
-    + Debug
     + Send
     + Sync
     + Add<Output = Self>
@@ -41,7 +39,6 @@ pub trait AdditiveCommutativeMagma: AdditiveMagma {}
 pub trait MultiplicativeMagma
     : Copy
     + Eq
-    + Debug
     + Send
     + Sync
     + Mul<Output = Self>

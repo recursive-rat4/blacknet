@@ -46,7 +46,7 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Debug for TwistedEdwardsGroupAffine<P> {
+impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupAffine<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "({:?}, {:?})", self.x, self.y)
     }
@@ -201,7 +201,7 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Debug for TwistedEdwardsGroupExtended<P> {
+impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupExtended<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,

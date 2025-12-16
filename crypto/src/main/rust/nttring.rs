@@ -71,7 +71,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> NTTRing<Z, M, N> {
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Debug for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M> + Debug, const M: usize, const N: usize> Debug for NTTRing<Z, M, N> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.spectrum)
     }

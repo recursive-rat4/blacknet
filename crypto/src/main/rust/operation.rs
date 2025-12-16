@@ -15,20 +15,29 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+/// The addition of an object to itself.
 pub trait Double {
+    /// Result type.
     type Output;
 
+    /// Perform the operation equivalent to `self + self`.
     fn double(self) -> Self::Output;
 }
 
+/// The multiplication of an object by itself.
 pub trait Square {
+    /// Result type.
     type Output;
 
+    /// Perform the operation equivalent to `self * self`.
     fn square(self) -> Self::Output;
 }
 
+/// The unary inversion operator `/`.
 pub trait Inv {
+    /// Result type.
     type Output;
 
+    /// Perform the unary `/` operation.
     fn inv(self) -> Self::Output;
 }

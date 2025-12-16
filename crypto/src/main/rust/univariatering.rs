@@ -55,7 +55,9 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> UnivariateRing<R, N, C
     }
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Debug for UnivariateRing<R, N, C> {
+impl<R: UnitalRing + Debug, const N: usize, C: Convolution<R, N>> Debug
+    for UnivariateRing<R, N, C>
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.coefficients)
     }

@@ -66,7 +66,7 @@ impl<R: Ring, const N: usize> From<[R; N]> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Debug for FreeModule<R, N> {
+impl<R: Ring + Debug, const N: usize> Debug for FreeModule<R, N> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.components)
     }
