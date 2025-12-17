@@ -30,6 +30,7 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
+/// The quotient ring `ℤ/2ℤ`.
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
 pub struct Z2 {
     n: bool,
@@ -55,10 +56,26 @@ impl Add for Z2 {
     }
 }
 
+impl Add<&Self> for Z2 {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl AddAssign for Z2 {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl AddAssign<&Self> for Z2 {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -88,10 +105,26 @@ impl Sub for Z2 {
     }
 }
 
+impl Sub<&Self> for Z2 {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl SubAssign for Z2 {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl SubAssign<&Self> for Z2 {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
     }
 }
 
@@ -103,10 +136,26 @@ impl Mul for Z2 {
     }
 }
 
+impl Mul<&Self> for Z2 {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl MulAssign for Z2 {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl MulAssign<&Self> for Z2 {
+    #[inline]
+    fn mul_assign(&mut self, rps: &Self) {
+        *self = *self * *rps
     }
 }
 
@@ -138,15 +187,38 @@ impl Div for Z2 {
     }
 }
 
+impl Div<&Self> for Z2 {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
 impl Sum for Z2 {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
+impl<'a> Sum<&'a Self> for Z2 {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
+}
+
 impl Product for Z2 {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
+    }
+}
+
+impl<'a> Product<&'a Self> for Z2 {
+    #[inline]
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
     }
 }
 

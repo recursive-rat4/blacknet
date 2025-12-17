@@ -24,6 +24,7 @@ use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearC
 use blacknet_crypto::circuit::distribution::Distribution as DistributionCircuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::distribution::{Distribution, UniformGenerator};
+use blacknet_crypto::ring::IntegerRing;
 use core::array;
 
 type Z = blacknet_crypto::lm::LMField;
@@ -72,7 +73,7 @@ impl UniformGenerator for GeneratorCircuit {
 
     fn generate(&mut self) -> Self::Output {
         let result = Constant::new(self.i);
-        self.i += 1.into();
+        self.i += Z::new(1);
         result.into()
     }
 }

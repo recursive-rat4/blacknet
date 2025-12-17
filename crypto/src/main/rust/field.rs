@@ -23,10 +23,19 @@ pub trait Field
     : CommutativeRing
     + DivisionRing
     + Div<Output = Option<Self>>
+    + for<'a> Div<&'a Self, Output = Option<Self>>
 {
 }
 
-impl<R: CommutativeRing + DivisionRing + Div<Output = Option<Self>>> Field for R {}
+#[rustfmt::skip]
+impl<R
+    : CommutativeRing
+    + DivisionRing
+    + Div<Output = Option<Self>>
+    + for<'a> Div<&'a Self, Output = Option<Self>>
+> Field for R
+{
+}
 
 #[rustfmt::skip]
 pub trait PrimeField

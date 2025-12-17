@@ -78,10 +78,26 @@ impl<P: TwistedEdwardsGroupParams> Add for TwistedEdwardsGroupAffine<P> {
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Add<&Self> for TwistedEdwardsGroupAffine<P> {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupAffine<P> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> AddAssign<&Self> for TwistedEdwardsGroupAffine<P> {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -137,6 +153,15 @@ impl<P: TwistedEdwardsGroupParams> Sub for TwistedEdwardsGroupAffine<P> {
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Sub<&Self> for TwistedEdwardsGroupAffine<P> {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> SubAssign for TwistedEdwardsGroupAffine<P> {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
@@ -144,9 +169,23 @@ impl<P: TwistedEdwardsGroupParams> SubAssign for TwistedEdwardsGroupAffine<P> {
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> SubAssign<&Self> for TwistedEdwardsGroupAffine<P> {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> Sum for TwistedEdwardsGroupAffine<P> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::IDENTITY)
+    }
+}
+
+impl<'a, P: TwistedEdwardsGroupParams> Sum<&'a Self> for TwistedEdwardsGroupAffine<P> {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
     }
 }
 
@@ -253,10 +292,26 @@ impl<P: TwistedEdwardsGroupParams> Add for TwistedEdwardsGroupExtended<P> {
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Add<&Self> for TwistedEdwardsGroupExtended<P> {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupExtended<P> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> AddAssign<&Self> for TwistedEdwardsGroupExtended<P> {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -329,6 +384,15 @@ impl<P: TwistedEdwardsGroupParams> Sub for TwistedEdwardsGroupExtended<P> {
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Sub<&Self> for TwistedEdwardsGroupExtended<P> {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> SubAssign for TwistedEdwardsGroupExtended<P> {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
@@ -336,9 +400,23 @@ impl<P: TwistedEdwardsGroupParams> SubAssign for TwistedEdwardsGroupExtended<P> 
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> SubAssign<&Self> for TwistedEdwardsGroupExtended<P> {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> Sum for TwistedEdwardsGroupExtended<P> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::IDENTITY)
+    }
+}
+
+impl<'a, P: TwistedEdwardsGroupParams> Sum<&'a Self> for TwistedEdwardsGroupExtended<P> {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
     }
 }
 

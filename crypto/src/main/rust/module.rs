@@ -24,6 +24,8 @@ pub trait Module<R: Ring>
     : AdditiveAbelianGroup
     + Mul<R, Output = Self>
     + MulAssign<R>
+    + for<'a> Mul<&'a R, Output = Self>
+    + for<'a> MulAssign<&'a R>
 {
 }
 

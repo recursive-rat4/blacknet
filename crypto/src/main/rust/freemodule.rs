@@ -121,10 +121,26 @@ impl<R: Ring, const N: usize> Add for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> Add<&Self> for FreeModule<R, N> {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl<R: Ring, const N: usize> AddAssign for FreeModule<R, N> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl<R: Ring, const N: usize> AddAssign<&Self> for FreeModule<R, N> {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -158,10 +174,26 @@ impl<R: Ring, const N: usize> Sub for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> Sub<&Self> for FreeModule<R, N> {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl<R: Ring, const N: usize> SubAssign for FreeModule<R, N> {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl<R: Ring, const N: usize> SubAssign<&Self> for FreeModule<R, N> {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
     }
 }
 
@@ -175,6 +207,15 @@ impl<R: Ring, const N: usize> Mul<R> for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> Mul<&R> for FreeModule<R, N> {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &R) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl<R: Ring, const N: usize> MulAssign<R> for FreeModule<R, N> {
     #[inline]
     fn mul_assign(&mut self, rps: R) {
@@ -182,9 +223,23 @@ impl<R: Ring, const N: usize> MulAssign<R> for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> MulAssign<&R> for FreeModule<R, N> {
+    #[inline]
+    fn mul_assign(&mut self, rps: &R) {
+        *self = *self * *rps
+    }
+}
+
 impl<R: Ring, const N: usize> Sum for FreeModule<R, N> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::IDENTITY)
+    }
+}
+
+impl<'a, R: Ring, const N: usize> Sum<&'a Self> for FreeModule<R, N> {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
     }
 }
 

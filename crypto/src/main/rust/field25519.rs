@@ -199,10 +199,26 @@ impl Add for Field25519 {
     }
 }
 
+impl Add<&Self> for Field25519 {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl AddAssign for Field25519 {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl AddAssign<&Self> for Field25519 {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -236,10 +252,26 @@ impl Sub for Field25519 {
     }
 }
 
+impl Sub<&Self> for Field25519 {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl SubAssign for Field25519 {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl SubAssign<&Self> for Field25519 {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
     }
 }
 
@@ -253,10 +285,26 @@ impl Mul for Field25519 {
     }
 }
 
+impl Mul<&Self> for Field25519 {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl MulAssign for Field25519 {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl MulAssign<&Self> for Field25519 {
+    #[inline]
+    fn mul_assign(&mut self, rps: &Self) {
+        *self = *self * *rps
     }
 }
 
@@ -310,15 +358,38 @@ impl Div for Field25519 {
     }
 }
 
+impl Div<&Self> for Field25519 {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
 impl Sum for Field25519 {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
+impl<'a> Sum<&'a Self> for Field25519 {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
+}
+
 impl Product for Field25519 {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
+    }
+}
+
+impl<'a> Product<&'a Self> for Field25519 {
+    #[inline]
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
     }
 }
 

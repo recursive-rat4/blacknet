@@ -129,10 +129,28 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Add for UnivariateRing
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Add<&Self> for UnivariateRing<R, N, C> {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AddAssign for UnivariateRing<R, N, C> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AddAssign<&Self>
+    for UnivariateRing<R, N, C>
+{
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -160,10 +178,28 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub for UnivariateRing
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub<&Self> for UnivariateRing<R, N, C> {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> SubAssign for UnivariateRing<R, N, C> {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> SubAssign<&Self>
+    for UnivariateRing<R, N, C>
+{
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
     }
 }
 
@@ -178,10 +214,28 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul for UnivariateRing
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&Self> for UnivariateRing<R, N, C> {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign for UnivariateRing<R, N, C> {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign<&Self>
+    for UnivariateRing<R, N, C>
+{
+    #[inline]
+    fn mul_assign(&mut self, rps: &Self) {
+        *self = *self * *rps
     }
 }
 
@@ -202,9 +256,27 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<R> for UnivariateR
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&R> for UnivariateRing<R, N, C> {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &R) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign<R> for UnivariateRing<R, N, C> {
     #[inline]
     fn mul_assign(&mut self, rps: R) {
+        *self = *self * rps
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign<&R>
+    for UnivariateRing<R, N, C>
+{
+    #[inline]
+    fn mul_assign(&mut self, rps: &R) {
         *self = *self * rps
     }
 }
@@ -215,9 +287,27 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sum for UnivariateRing
     }
 }
 
+impl<'a, R: UnitalRing, const N: usize, C: Convolution<R, N>> Sum<&'a Self>
+    for UnivariateRing<R, N, C>
+{
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Product for UnivariateRing<R, N, C> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
+    }
+}
+
+impl<'a, R: UnitalRing, const N: usize, C: Convolution<R, N>> Product<&'a Self>
+    for UnivariateRing<R, N, C>
+{
+    #[inline]
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
     }
 }
 

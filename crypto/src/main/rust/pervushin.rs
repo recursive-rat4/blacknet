@@ -137,10 +137,26 @@ impl Add for PervushinField {
     }
 }
 
+impl Add<&Self> for PervushinField {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl AddAssign for PervushinField {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl AddAssign<&Self> for PervushinField {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -172,10 +188,26 @@ impl Sub for PervushinField {
     }
 }
 
+impl Sub<&Self> for PervushinField {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl SubAssign for PervushinField {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl SubAssign<&Self> for PervushinField {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
     }
 }
 
@@ -189,10 +221,26 @@ impl Mul for PervushinField {
     }
 }
 
+impl Mul<&Self> for PervushinField {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl MulAssign for PervushinField {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl MulAssign<&Self> for PervushinField {
+    #[inline]
+    fn mul_assign(&mut self, rps: &Self) {
+        *self = *self * *rps
     }
 }
 
@@ -226,15 +274,38 @@ impl Div for PervushinField {
     }
 }
 
+impl Div<&Self> for PervushinField {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
 impl Sum for PervushinField {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
+impl<'a> Sum<&'a Self> for PervushinField {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
+}
+
 impl Product for PervushinField {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
+    }
+}
+
+impl<'a> Product<&'a Self> for PervushinField {
+    #[inline]
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
     }
 }
 
@@ -374,11 +445,29 @@ impl Div for PervushinField2 {
     }
 }
 
+impl Div<&Self> for PervushinField2 {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
 impl Div<PervushinField> for PervushinField2 {
     type Output = Option<Self>;
 
     fn div(self, rps: PervushinField) -> Self::Output {
         rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div<&PervushinField> for PervushinField2 {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &PervushinField) -> Self::Output {
+        self / *rps
     }
 }
 

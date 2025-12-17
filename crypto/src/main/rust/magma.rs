@@ -26,6 +26,8 @@ pub trait AdditiveMagma
     + Add<Output = Self>
     + AddAssign
     + Double<Output = Self>
+    + for<'a> Add<&'a Self, Output = Self>
+    + for<'a> AddAssign<&'a Self>
 {
 }
 
@@ -40,6 +42,8 @@ pub trait MultiplicativeMagma
     + Mul<Output = Self>
     + MulAssign
     + Square<Output = Self>
+    + for<'a> Mul<&'a Self, Output = Self>
+    + for<'a> MulAssign<&'a Self>
 {
 }
 

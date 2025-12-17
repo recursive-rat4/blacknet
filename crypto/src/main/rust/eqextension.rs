@@ -92,7 +92,7 @@ impl<R: UnitalRing + From<u8>> Polynomial<R> for EqExtension<R> {
         self.z
             * zip(self.coefficients.iter(), point.coordinates())
                 .map(|(&c, &p)| (c * p).double() - c - p + R::ONE)
-                .product()
+                .product::<R>()
     }
 
     #[rustfmt::skip]

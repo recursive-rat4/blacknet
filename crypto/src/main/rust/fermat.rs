@@ -115,10 +115,26 @@ impl Add for FermatField {
     }
 }
 
+impl Add<&Self> for FermatField {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl AddAssign for FermatField {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl AddAssign<&Self> for FermatField {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -146,10 +162,26 @@ impl Sub for FermatField {
     }
 }
 
+impl Sub<&Self> for FermatField {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl SubAssign for FermatField {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl SubAssign<&Self> for FermatField {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
     }
 }
 
@@ -163,10 +195,26 @@ impl Mul for FermatField {
     }
 }
 
+impl Mul<&Self> for FermatField {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl MulAssign for FermatField {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl MulAssign<&Self> for FermatField {
+    #[inline]
+    fn mul_assign(&mut self, rps: &Self) {
+        *self = *self * *rps
     }
 }
 
@@ -200,15 +248,38 @@ impl Div for FermatField {
     }
 }
 
+impl Div<&Self> for FermatField {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
 impl Sum for FermatField {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
+impl<'a> Sum<&'a Self> for FermatField {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
+}
+
 impl Product for FermatField {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
+    }
+}
+
+impl<'a> Product<&'a Self> for FermatField {
+    #[inline]
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
     }
 }
 

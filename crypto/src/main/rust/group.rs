@@ -25,6 +25,8 @@ pub trait AdditiveGroup
     + Neg<Output = Self>
     + Sub<Output = Self>
     + SubAssign
+    + for<'a> Sub<&'a Self, Output = Self>
+    + for<'a> SubAssign<&'a Self>
 {
 }
 
@@ -34,6 +36,8 @@ impl<T
     + Neg<Output = Self>
     + Sub<Output = Self>
     + SubAssign
+    + for<'a> Sub<&'a Self, Output = Self>
+    + for<'a> SubAssign<&'a Self>
 > AdditiveGroup for T {}
 
 #[rustfmt::skip]
@@ -42,6 +46,8 @@ pub trait MultiplicativeGroup
     + Inv<Output = Self>
     + Div<Output = Self>
     + DivAssign
+    + for<'a> Div<&'a Self, Output = Self>
+    + for<'a> DivAssign<&'a Self>
 {
 }
 
@@ -51,4 +57,6 @@ impl<T
     + Inv<Output = Self>
     + Div<Output = Self>
     + DivAssign
+    + for<'a> Div<&'a Self, Output = Self>
+    + for<'a> DivAssign<&'a Self>
 > MultiplicativeGroup for T {}

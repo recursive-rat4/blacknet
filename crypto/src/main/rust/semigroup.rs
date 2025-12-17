@@ -24,6 +24,7 @@ use core::iter::{Product, Sum};
 pub trait AdditiveSemigroup
     : AdditiveMagma
     + Sum
+    + for<'a> Sum<&'a Self>
 {
     const LEFT_IDENTITY: Self;
     const RIGHT_IDENTITY: Self;
@@ -41,6 +42,7 @@ pub trait AdditiveSemigroup
     }
 }
 
+/// A marker for semigroups with commutative addition.
 #[rustfmt::skip]
 pub trait AdditiveCommutativeSemigroup
     : AdditiveSemigroup
@@ -54,6 +56,7 @@ impl<G: AdditiveSemigroup + AdditiveCommutativeMagma> AdditiveCommutativeSemigro
 pub trait MultiplicativeSemigroup
     : MultiplicativeMagma
     + Product
+    + for<'a> Product<&'a Self>
 {
     const LEFT_IDENTITY: Self;
     const RIGHT_IDENTITY: Self;
@@ -71,6 +74,7 @@ pub trait MultiplicativeSemigroup
     }
 }
 
+/// A marker for semigroups with commutative multiplication.
 #[rustfmt::skip]
 pub trait MultiplicativeCommutativeSemigroup
     : MultiplicativeSemigroup

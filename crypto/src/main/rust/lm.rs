@@ -139,10 +139,26 @@ impl Add for LMField {
     }
 }
 
+impl Add<&Self> for LMField {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl AddAssign for LMField {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl AddAssign<&Self> for LMField {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -174,10 +190,26 @@ impl Sub for LMField {
     }
 }
 
+impl Sub<&Self> for LMField {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl SubAssign for LMField {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl SubAssign<&Self> for LMField {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
     }
 }
 
@@ -191,10 +223,26 @@ impl Mul for LMField {
     }
 }
 
+impl Mul<&Self> for LMField {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl MulAssign for LMField {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl MulAssign<&Self> for LMField {
+    #[inline]
+    fn mul_assign(&mut self, rps: &Self) {
+        *self = *self * *rps
     }
 }
 
@@ -228,15 +276,38 @@ impl Div for LMField {
     }
 }
 
+impl Div<&Self> for LMField {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
 impl Sum for LMField {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
+impl<'a> Sum<&'a Self> for LMField {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
+}
+
 impl Product for LMField {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
+    }
+}
+
+impl<'a> Product<&'a Self> for LMField {
+    #[inline]
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
     }
 }
 
@@ -391,11 +462,29 @@ impl Div for LMField2 {
     }
 }
 
+impl Div<&Self> for LMField2 {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
 impl Div<LMField> for LMField2 {
     type Output = Option<Self>;
 
     fn div(self, rps: LMField) -> Self::Output {
         rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div<&LMField> for LMField2 {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &LMField) -> Self::Output {
+        self / *rps
     }
 }
 

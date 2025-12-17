@@ -153,10 +153,26 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Add for NTTRing<Z, M, N> {
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Add<&Self> for NTTRing<Z, M, N> {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AddAssign for NTTRing<Z, M, N> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AddAssign<&Self> for NTTRing<Z, M, N> {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
     }
 }
 
@@ -190,10 +206,26 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Sub for NTTRing<Z, M, N> {
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Sub<&Self> for NTTRing<Z, M, N> {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> SubAssign for NTTRing<Z, M, N> {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> SubAssign<&Self> for NTTRing<Z, M, N> {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
     }
 }
 
@@ -210,10 +242,26 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul for NTTRing<Z, M, N> {
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Self> for NTTRing<Z, M, N> {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign for NTTRing<Z, M, N> {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<&Self> for NTTRing<Z, M, N> {
+    #[inline]
+    fn mul_assign(&mut self, rps: &Self) {
+        *self = *self * *rps
     }
 }
 
@@ -241,10 +289,26 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<Z> for NTTRing<Z, M, N>
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Z> for NTTRing<Z, M, N> {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Z) -> Self::Output {
+        self * *rps
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<Z> for NTTRing<Z, M, N> {
     #[inline]
     fn mul_assign(&mut self, rps: Z) {
         *self = *self * rps
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<&Z> for NTTRing<Z, M, N> {
+    #[inline]
+    fn mul_assign(&mut self, rps: &Z) {
+        *self = *self * *rps
     }
 }
 
@@ -254,9 +318,23 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Sum for NTTRing<Z, M, N> {
     }
 }
 
+impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Sum<&'a Self> for NTTRing<Z, M, N> {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Product for NTTRing<Z, M, N> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
+    }
+}
+
+impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Product<&'a Self> for NTTRing<Z, M, N> {
+    #[inline]
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
     }
 }
 

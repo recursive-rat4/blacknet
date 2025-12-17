@@ -21,6 +21,7 @@ use crate::monoid::{
 };
 use crate::semigroup::MultiplicativeSemigroup;
 
+/// A generalization of [nonunital ring][`crate::ring::Ring`] that doesn't require subtraction.
 #[rustfmt::skip]
 pub trait Presemiring
     : AdditiveCommutativeMonoid
@@ -31,6 +32,7 @@ pub trait Presemiring
 
 impl<R: AdditiveCommutativeMonoid + MultiplicativeSemigroup> Presemiring for R {}
 
+/// A generalization of [unital ring][`crate::ring::UnitalRing`] that doesn't require subtraction.
 #[rustfmt::skip]
 pub trait Semiring
     : Presemiring
@@ -41,6 +43,8 @@ pub trait Semiring
 
 impl<R: Presemiring + MultiplicativeMonoid> Semiring for R {}
 
+/// A marker for semirings with commutative multiplication.
+/// Semiring elements commute under addition by definition.
 #[rustfmt::skip]
 pub trait CommutativeSemiring
     : Semiring

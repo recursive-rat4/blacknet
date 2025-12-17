@@ -27,6 +27,7 @@ use core::iter::{chain, repeat_n, zip};
 use core::ops::{Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
+/// A row (column) vector is a `1 ⨉ n` (`m ⨉ 1`) matrix.
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DenseVector<R: Presemiring> {
     elements: Vec<R>,
