@@ -17,7 +17,8 @@
 
 use crate::amount::Amount;
 use crate::blake2b::{Blake2b256, Hash};
-use crate::ed25519::{PrivateKey, PublicKey, Signature, sign};
+use crate::ed25519::{PrivateKey, PublicKey, Signature, sign, verify};
+use crate::error::Result;
 use crate::transaction::TxKind;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
@@ -92,6 +93,10 @@ impl Transaction {
         (hash, bytes)
     }
 
+    pub fn verify_signature(&self, hash: Hash) -> Result<()> {
+        verify(self.signature, hash, self.from)
+    }
+
     pub const fn anchor(&self) -> Hash {
         self.anchor
     }
@@ -116,7 +121,7 @@ impl Transaction {
         self.signature
     }
 
-    pub const fn raw_data(&self) -> &[u8] {
+    pub const fn data_bytes(&self) -> &[u8] {
         &self.data
     }
 }

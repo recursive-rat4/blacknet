@@ -38,7 +38,7 @@ impl TxData for Dispel {
         tx: Transaction,
         _hash: Hash,
         _data_index: u32,
-        _coin_tx: impl CoinTx,
+        _coin_tx: &(impl CoinTx + ?Sized),
     ) -> Result<()> {
         if tx.fee() > Amount::ZERO {
             Ok(())

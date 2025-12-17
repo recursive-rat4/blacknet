@@ -49,7 +49,7 @@ impl TxData for Blob {
         _tx: Transaction,
         _hash: Hash,
         _data_index: u32,
-        _coin_tx: impl CoinTx,
+        _coin_tx: &(impl CoinTx + ?Sized),
     ) -> Result<()> {
         Ok(())
     }

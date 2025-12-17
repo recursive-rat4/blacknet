@@ -85,7 +85,7 @@ impl TxData for Transfer {
         tx: Transaction,
         _hash: Hash,
         _data_index: u32,
-        coin_tx: impl CoinTx,
+        coin_tx: &(impl CoinTx + ?Sized),
     ) -> Result<()> {
         let mut account = coin_tx.get_account(tx.from())?;
         account.credit(self.amount)?;

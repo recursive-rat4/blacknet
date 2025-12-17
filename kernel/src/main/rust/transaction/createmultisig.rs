@@ -118,7 +118,7 @@ impl TxData for CreateMultisig {
         tx: Transaction,
         hash: Hash,
         data_index: u32,
-        coin_tx: impl CoinTx,
+        coin_tx: &(impl CoinTx + ?Sized),
     ) -> Result<()> {
         if self.n as usize > self.deposits.len() {
             return Err(Error::Invalid("Invalid n".to_owned()));

@@ -64,7 +64,7 @@ impl TxData for WithdrawFromLease {
         tx: Transaction,
         _hash: Hash,
         _data_index: u32,
-        coin_tx: impl CoinTx,
+        coin_tx: &(impl CoinTx + ?Sized),
     ) -> Result<()> {
         if self.withdraw == Amount::ZERO || self.withdraw > self.amount {
             return Err(Error::Invalid("Invalid withdraw amount".to_owned()));

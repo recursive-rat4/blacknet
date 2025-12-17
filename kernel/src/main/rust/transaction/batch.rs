@@ -15,7 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::transaction::TxKind;
+use crate::blake2b::Hash;
+use crate::error::Result;
+use crate::transaction::{CoinTx, Transaction, TxData, TxKind};
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
@@ -54,5 +56,17 @@ impl Batch {
 
     pub const fn multi_data(&self) -> &[Batchee] {
         &self.multi_data
+    }
+}
+
+impl TxData for Batch {
+    fn process_impl(
+        &self,
+        _tx: Transaction,
+        _hash: Hash,
+        _data_index: u32,
+        _coin_tx: &(impl CoinTx + ?Sized),
+    ) -> Result<()> {
+        todo!();
     }
 }

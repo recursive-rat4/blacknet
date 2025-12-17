@@ -54,7 +54,7 @@ impl TransactionNotification {
             referenceChain: tx.anchor().into(),
             fee: tx.fee().into(),
             r#type: tx.kind() as u8,
-            data: TxDataInfo::new(tx.kind(), tx.raw_data(), address_codec)?,
+            data: TxDataInfo::new(tx.kind(), tx.data_bytes(), address_codec)?,
         })
     }
 }
