@@ -23,8 +23,6 @@ use core::ops::{Add, AddAssign, Mul, MulAssign};
 pub trait AdditiveMagma
     : Copy
     + Eq
-    + Send
-    + Sync
     + Add<Output = Self>
     + AddAssign
     + Double<Output = Self>
@@ -39,8 +37,6 @@ pub trait AdditiveCommutativeMagma: AdditiveMagma {}
 pub trait MultiplicativeMagma
     : Copy
     + Eq
-    + Send
-    + Sync
     + Mul<Output = Self>
     + MulAssign
     + Square<Output = Self>

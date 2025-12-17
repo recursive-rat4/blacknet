@@ -34,7 +34,9 @@ impl<R: Semiring> R1CS<R> {
     pub const fn new(a: SparseMatrix<R>, b: SparseMatrix<R>, c: SparseMatrix<R>) -> Self {
         Self { a, b, c }
     }
+}
 
+impl<R: Semiring + Send + Sync> R1CS<R> {
     pub fn assigment(&self) -> Assigment<R> {
         let z = Assigment::new(self.variables());
         z.push(R::ONE);
@@ -48,7 +50,7 @@ impl<R: Semiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, SparseMat
     }
 }
 
-impl<R: Semiring> ConstraintSystem<R> for R1CS<R> {
+impl<R: Semiring + Send + Sync> ConstraintSystem<R> for R1CS<R> {
     fn degree(&self) -> usize {
         2
     }

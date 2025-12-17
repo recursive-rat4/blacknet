@@ -68,8 +68,8 @@ pub struct SumCheck<R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distributi
 }
 
 impl<
-    R: UnitalRing + InterpolationConsts,
-    P: Polynomial<R>,
+    R: UnitalRing + InterpolationConsts + Send + Sync,
+    P: Polynomial<R> + Send + Sync,
     D: Duplex<R>,
     E: Distribution<D, Output = R>,
 > SumCheck<R, P, D, E>
