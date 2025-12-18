@@ -27,7 +27,7 @@ pub trait Convolution<R: UnitalRing, const N: usize>: Copy + Eq + Send + Sync {
     ) -> [LinearCombination<R>; N];
 }
 
-pub fn binomial<R: UnitalRing, const N: usize>(
+pub fn binomial<R: UnitalRing + Eq, const N: usize>(
     scope: &Scope<R>,
     c: &mut [LinearCombination<R>],
     a: &[LinearCombination<R>],

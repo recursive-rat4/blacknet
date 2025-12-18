@@ -20,6 +20,7 @@ use crate::magma::{
 };
 use core::iter::{Product, Sum};
 
+/// A magma with associative addition.
 #[rustfmt::skip]
 pub trait AdditiveSemigroup
     : AdditiveMagma
@@ -52,6 +53,7 @@ pub trait AdditiveCommutativeSemigroup
 
 impl<G: AdditiveSemigroup + AdditiveCommutativeMagma> AdditiveCommutativeSemigroup for G {}
 
+/// A magma with associative multiplication.
 #[rustfmt::skip]
 pub trait MultiplicativeSemigroup
     : MultiplicativeMagma

@@ -26,7 +26,7 @@ pub struct LinearMonoid<R: Semiring> {
     pub(super) factors: VecDeque<LinearCombination<R>>,
 }
 
-impl<'a, R: Semiring + 'a> Expression<'a, R> for LinearMonoid<R> {
+impl<'a, R: Semiring + Eq + 'a> Expression<'a, R> for LinearMonoid<R> {
     fn span(&self) -> LinearSpan<R> {
         self.factors.clone().into()
     }

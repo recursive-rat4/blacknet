@@ -40,7 +40,7 @@ impl<R: Semiring> LinearCombination<R> {
     }
 }
 
-impl<'a, R: Semiring + 'a> Expression<'a, R> for LinearCombination<R> {
+impl<'a, R: Semiring + Eq + 'a> Expression<'a, R> for LinearCombination<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone()].into()
     }

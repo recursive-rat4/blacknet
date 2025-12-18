@@ -22,7 +22,6 @@ use core::ops::{Add, AddAssign, Mul, MulAssign};
 #[rustfmt::skip]
 pub trait AdditiveMagma
     : Copy
-    + Eq
     + Add<Output = Self>
     + AddAssign
     + Double<Output = Self>
@@ -38,7 +37,6 @@ pub trait AdditiveCommutativeMagma: AdditiveMagma {}
 #[rustfmt::skip]
 pub trait MultiplicativeMagma
     : Copy
-    + Eq
     + Mul<Output = Self>
     + MulAssign
     + Square<Output = Self>

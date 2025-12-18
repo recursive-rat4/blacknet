@@ -101,7 +101,7 @@ impl<R: Presemiring> Mul<&SparseVector<R>> for &DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> From<&DenseVector<R>> for SparseVector<R> {
+impl<R: Presemiring + Eq> From<&DenseVector<R>> for SparseVector<R> {
     fn from(dense: &DenseVector<R>) -> Self {
         let mut index = Vec::<usize>::new();
         let mut elements = Vec::<R>::new();

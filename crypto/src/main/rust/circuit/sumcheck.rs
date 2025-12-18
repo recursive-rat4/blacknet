@@ -29,7 +29,7 @@ pub struct Proof<'a, 'b, R: UnitalRing> {
     claims: Vec<UnivariatePolynomial<'a, 'b, R>>,
 }
 
-impl<'a, 'b, R: UnitalRing> Proof<'a, 'b, R> {
+impl<'a, 'b, R: UnitalRing + Eq> Proof<'a, 'b, R> {
     pub fn allocate(
         circuit: &'a CircuitBuilder<'b, R>,
         kind: VariableKind,
@@ -67,7 +67,7 @@ pub struct SumCheck<
 impl<
     'a,
     'b,
-    R: UnitalRing,
+    R: UnitalRing + Eq,
     P: Polynomial<R>,
     D: Duplex<LinearCombination<R>>,
     E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,

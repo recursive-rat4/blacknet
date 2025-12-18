@@ -55,7 +55,7 @@ impl<R: CommutativeRing> AjtaiCommitment<R> {
 }
 
 //RUST currently requires std for sqrt
-impl<R: CommutativeRing + EuclideanNorm> AjtaiCommitment<R> {
+impl<R: CommutativeRing + Eq + EuclideanNorm> AjtaiCommitment<R> {
     #[cfg(feature = "std")]
     pub fn open_dense_l2(&self, c: &DenseVector<R>, m: &DenseVector<R>, bound: f64) -> bool {
         m.euclidean_norm() < bound && &self.a * m == *c
@@ -67,7 +67,7 @@ impl<R: CommutativeRing + EuclideanNorm> AjtaiCommitment<R> {
     }
 }
 
-impl<R: CommutativeRing + InfinityNorm<R::Int>> AjtaiCommitment<R> {
+impl<R: CommutativeRing + Eq + InfinityNorm<R::Int>> AjtaiCommitment<R> {
     pub fn open_dense_linf(&self, c: &DenseVector<R>, m: &DenseVector<R>, bound: R::Int) -> bool {
         m.check_infinity_norm(bound) && &self.a * m == *c
     }

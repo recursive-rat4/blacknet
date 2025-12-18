@@ -28,7 +28,7 @@ pub struct EqExtension<'a, 'b, R: UnitalRing> {
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: UnitalRing> EqExtension<'a, 'b, R> {
+impl<'a, 'b, R: UnitalRing + Eq> EqExtension<'a, 'b, R> {
     pub const fn new(
         circuit: &'a CircuitBuilder<'b, R>,
         coefficients: Vec<LinearCombination<R>>,

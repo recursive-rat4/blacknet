@@ -49,7 +49,7 @@ impl<R: Semiring> CustomizableConstraintSystem<R> {
     }
 }
 
-impl<R: Semiring + Send + Sync> CustomizableConstraintSystem<R> {
+impl<R: Semiring + Eq + Send + Sync> CustomizableConstraintSystem<R> {
     pub fn assigment(&self) -> Assigment<R> {
         let z = Assigment::new(self.variables());
         z.push(R::ONE);
@@ -68,7 +68,7 @@ impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
     }
 }
 
-impl<R: Semiring + Send + Sync> ConstraintSystem<R> for CustomizableConstraintSystem<R> {
+impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for CustomizableConstraintSystem<R> {
     fn degree(&self) -> usize {
         self.multisets
             .iter()

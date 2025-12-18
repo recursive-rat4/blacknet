@@ -277,7 +277,7 @@ impl<P: TwistedEdwardsGroupParams> Default for TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> PartialEq for TwistedEdwardsGroupExtended<P> {
+impl<P: TwistedEdwardsGroupParams<F: PartialEq>> PartialEq for TwistedEdwardsGroupExtended<P> {
     fn eq(&self, rps: &Self) -> bool {
         (self.x * rps.z == self.z * rps.x) && (self.y * rps.z == self.z * rps.y)
     }

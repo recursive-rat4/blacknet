@@ -41,7 +41,7 @@ impl<'a, G: UniformGenerator<Output: IntegerRing>> BinaryUniformDistribution<'a,
     }
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerRing>> Distribution<'a, G::Output, G>
+impl<'a, G: UniformGenerator<Output: IntegerRing + Eq>> Distribution<'a, G::Output, G>
     for BinaryUniformDistribution<'a, G>
 {
     type Output = G::Output;

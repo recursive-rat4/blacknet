@@ -102,7 +102,7 @@ impl<R: Presemiring> Mul<&DenseVector<R>> for &SparseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> From<&DenseMatrix<R>> for SparseMatrix<R> {
+impl<R: Presemiring + Eq> From<&DenseMatrix<R>> for SparseMatrix<R> {
     fn from(dense: &DenseMatrix<R>) -> Self {
         let mut builder = SparseMatrixBuilder::<R>::new(dense.rows(), dense.columns());
         for i in 0..dense.rows() {

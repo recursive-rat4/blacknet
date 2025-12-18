@@ -27,7 +27,7 @@ pub struct UnivariatePolynomial<'a, 'b, R: Semiring> {
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: Semiring> UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: Semiring + Eq> UnivariatePolynomial<'a, 'b, R> {
     pub fn allocate(circuit: &'a CircuitBuilder<'b, R>, kind: VariableKind, degree: usize) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {

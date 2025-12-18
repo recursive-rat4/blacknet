@@ -35,7 +35,7 @@ pub enum VariableKind {
     Auxiliary,
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy)]
 pub struct Variable<R: Semiring> {
     pub(super) kind: VariableKind,
     pub(super) number: usize,
@@ -73,6 +73,14 @@ impl<R: Semiring> Debug for Variable<R> {
         )
     }
 }
+
+impl<R: Semiring> PartialEq for Variable<R> {
+    fn eq(&self, rps: &Self) -> bool {
+        self.kind == rps.kind && self.number == rps.number
+    }
+}
+
+impl<R: Semiring> Eq for Variable<R> {}
 
 impl<R: Semiring> Ord for Variable<R> {
     fn cmp(&self, rps: &Self) -> Ordering {

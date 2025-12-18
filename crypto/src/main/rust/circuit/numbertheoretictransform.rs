@@ -83,7 +83,9 @@ pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct NTTConvolution<const M: usize, const N: usize> {}
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTConvolution<M, N> {
+impl<Z: Twiddles<M> + Eq, const M: usize, const N: usize> Convolution<Z, N>
+    for NTTConvolution<M, N>
+{
     fn convolute(
         scope: &Scope<Z>,
         a: [LinearCombination<Z>; N],

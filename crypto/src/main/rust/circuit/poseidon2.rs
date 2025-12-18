@@ -23,7 +23,7 @@ use crate::operation::{Double, Square};
 use crate::poseidon2::Poseidon2Params;
 
 pub trait Poseidon2Circuit<
-    F: PrimeField,
+    F: PrimeField + Eq,
     const WIDTH: usize,
     const RBC: usize,
     const RPC: usize,
@@ -207,7 +207,7 @@ pub trait Poseidon2Circuit<
 }
 
 impl<
-    F: PrimeField,
+    F: PrimeField + Eq,
     const WIDTH: usize,
     const RBC: usize,
     const RPC: usize,

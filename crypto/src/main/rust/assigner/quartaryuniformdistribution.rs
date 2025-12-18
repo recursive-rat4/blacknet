@@ -26,7 +26,7 @@ pub struct QuartaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerRi
     bud: BinaryUniformDistribution<'a, G>,
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerRing>> Distribution<'a, G::Output, G>
+impl<'a, G: UniformGenerator<Output: IntegerRing + Eq>> Distribution<'a, G::Output, G>
     for QuartaryUniformDistribution<'a, G>
 {
     type Output = G::Output;

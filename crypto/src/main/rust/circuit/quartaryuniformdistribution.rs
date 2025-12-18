@@ -35,7 +35,7 @@ pub struct QuartaryUniformDistribution<
 impl<
     'a,
     'b,
-    Z: IntegerRing,
+    Z: IntegerRing + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
 > Distribution<'a, 'b, Z, G> for QuartaryUniformDistribution<'a, 'b, Z, G> {
     type Output = LinearCombination<Z>;
