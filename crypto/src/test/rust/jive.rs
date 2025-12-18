@@ -20,7 +20,7 @@ use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::compressionfunction::CompressionFunction as CompressionFunctionAssigner;
 use blacknet_crypto::assigner::jive::Jive as Assigner;
 use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;
-use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use blacknet_crypto::circuit::compressionfunction::CompressionFunction as CompressionFunctionCircuit;
 use blacknet_crypto::circuit::jive::Jive as Circuit;
 use blacknet_crypto::circuit::permutation::Permutation as PermutationCircuit;

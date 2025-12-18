@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::circuitbuilder::CircuitBuilder;
+use crate::circuit::builder::CircuitBuilder;
 use crate::semiring::Semiring;
 
 pub trait Permutation<S: Semiring> {

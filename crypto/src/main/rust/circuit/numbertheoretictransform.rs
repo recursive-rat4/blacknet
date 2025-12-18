@@ -17,7 +17,7 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
-use crate::circuit::circuitbuilder::{Constant, LinearCombination, Scope};
+use crate::circuit::builder::{Constant, LinearCombination, Scope};
 use crate::circuit::convolution::{Convolution, binomial};
 use crate::numbertheoretictransform::Twiddles;
 use core::array;

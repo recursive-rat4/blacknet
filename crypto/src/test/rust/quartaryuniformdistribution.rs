@@ -18,7 +18,7 @@
 use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::distribution::Distribution as DistributionAssigner;
 use blacknet_crypto::assigner::quartaryuniformdistribution::QuartaryUniformDistribution as Assigner;
-use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use blacknet_crypto::circuit::distribution::Distribution as DistributionCircuit;
 use blacknet_crypto::circuit::quartaryuniformdistribution::QuartaryUniformDistribution as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;

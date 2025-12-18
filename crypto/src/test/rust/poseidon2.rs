@@ -17,7 +17,7 @@
 
 use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::poseidon2::Poseidon2Assigner;
-use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, LinearCombination};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, LinearCombination};
 use blacknet_crypto::circuit::poseidon2::Poseidon2Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::lm::LMField;

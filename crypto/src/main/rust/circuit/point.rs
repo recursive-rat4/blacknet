@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination, VariableKind};
+use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::semiring::Semiring;
 use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};

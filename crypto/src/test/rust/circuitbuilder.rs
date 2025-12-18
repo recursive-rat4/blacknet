@@ -16,7 +16,7 @@
  */
 
 use blacknet_compat::assert_ok;
-use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::densematrix::DenseMatrix;

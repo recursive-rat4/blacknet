@@ -17,7 +17,7 @@
 
 #![allow(clippy::needless_range_loop)]
 
-use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination, Scope};
+use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, Scope};
 use crate::field::PrimeField;
 use crate::operation::{Double, Square};
 use crate::poseidon2::Poseidon2Params;

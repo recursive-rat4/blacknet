@@ -17,7 +17,7 @@
 
 use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::logicgate::LogicGate as Assigner;
-use blacknet_crypto::circuit::circuitbuilder::CircuitBuilder;
+use blacknet_crypto::circuit::builder::CircuitBuilder;
 use blacknet_crypto::circuit::logicgate::LogicGate as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 

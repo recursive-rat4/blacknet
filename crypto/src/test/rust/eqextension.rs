@@ -17,7 +17,7 @@
 
 use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::eqextension::EqExtension as Assigner;
-use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::eqextension::EqExtension as Circuit;
 use blacknet_crypto::circuit::point::Point as PointCircuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;

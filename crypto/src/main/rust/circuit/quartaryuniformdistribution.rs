@@ -16,7 +16,7 @@
  */
 
 use crate::circuit::binaryuniformdistribution::BinaryUniformDistribution;
-use crate::circuit::circuitbuilder::{CircuitBuilder, LinearCombination};
+use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::distribution::Distribution;
 use crate::distribution::UniformGenerator;
 use crate::operation::Double;

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination, VariableKind};
+use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, VariableKind};
 use crate::circuit::point::Point;
 use crate::operation::Double;
 use crate::ring::UnitalRing;

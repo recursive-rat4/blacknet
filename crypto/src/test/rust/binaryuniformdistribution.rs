@@ -20,7 +20,7 @@ use blacknet_crypto::assigner::binaryuniformdistribution::BinaryUniformDistribut
 use blacknet_crypto::assigner::distribution::Distribution as DistributionAssigner;
 use blacknet_crypto::binaryuniformdistribution::BinaryUniformDistribution;
 use blacknet_crypto::circuit::binaryuniformdistribution::BinaryUniformDistribution as Circuit;
-use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use blacknet_crypto::circuit::distribution::Distribution as DistributionCircuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::distribution::{Distribution, UniformGenerator};

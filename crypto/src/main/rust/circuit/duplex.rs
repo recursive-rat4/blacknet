@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
+use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::permutation::Permutation;
 use crate::distribution::UniformGenerator;
 use crate::duplex::{Duplex, Phase};

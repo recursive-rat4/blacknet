@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::circuitbuilder::{Constant, LinearCombination, Scope};
+use crate::circuit::builder::{Constant, LinearCombination, Scope};
 use crate::ring::UnitalRing;
 use core::array;
 

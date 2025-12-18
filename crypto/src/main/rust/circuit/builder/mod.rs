@@ -15,21 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod binaryuniformdistribution;
-pub mod builder;
-pub mod compressionfunction;
-pub mod convolution;
-pub mod distribution;
-pub mod duplex;
-pub mod eqextension;
-pub mod jive;
-pub mod logicgate;
-pub mod numbertheoretictransform;
-pub mod permutation;
-pub mod point;
-pub mod poseidon2;
-pub mod poseidon2lm;
-pub mod poseidon2pervushin;
-pub mod quartaryuniformdistribution;
-pub mod sumcheck;
-pub mod univariatepolynomial;
+mod circuitbuilder;
+mod constant;
+mod linearcombination;
+mod linearmonoid;
+mod linearspan;
+mod variable;
+
+pub use circuitbuilder::{CircuitBuilder, Constraint, Expression, Scope, Term};
+pub use constant::Constant;
+pub use linearcombination::LinearCombination;
+pub use linearmonoid::LinearMonoid;
+pub use linearspan::LinearSpan;
+pub use variable::{Variable, VariableKind};

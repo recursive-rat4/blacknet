@@ -19,7 +19,7 @@ use blacknet_compat::{assert_err, assert_ok};
 use blacknet_crypto::assigner::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinAssigner;
 use blacknet_crypto::assigner::sumcheck::{Proof as ProofAssigner, SumCheck as SumCheckAssigner};
 use blacknet_crypto::assigner::univariatepolynomial::UnivariatePolynomial as UnivariatePolynomialAssigner;
-use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, VariableKind};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinCircuit;
 use blacknet_crypto::circuit::sumcheck::{Proof as ProofCircuit, SumCheck as SumCheckCircuit};
 use blacknet_crypto::constraintsystem::ConstraintSystem;

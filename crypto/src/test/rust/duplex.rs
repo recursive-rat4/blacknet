@@ -19,7 +19,7 @@ use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::duplex::DuplexImpl as Assigner;
 use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;
-use blacknet_crypto::circuit::circuitbuilder::{CircuitBuilder, Constant, LinearCombination};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use blacknet_crypto::circuit::duplex::DuplexImpl as Circuit;
 use blacknet_crypto::circuit::permutation::Permutation as PermutationCircuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
