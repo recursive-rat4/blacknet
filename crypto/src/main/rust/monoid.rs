@@ -28,6 +28,7 @@ pub trait AdditiveMonoid
     const IDENTITY: Self;
 }
 
+/// A marker for monoids with commutative addition.
 #[rustfmt::skip]
 pub trait AdditiveCommutativeMonoid
     : AdditiveMonoid
@@ -45,6 +46,7 @@ pub trait MultiplicativeMonoid
     const IDENTITY: Self;
 }
 
+/// A marker for monoids with commutative multiplication.
 #[rustfmt::skip]
 pub trait MultiplicativeCommutativeMonoid
     : MultiplicativeMonoid

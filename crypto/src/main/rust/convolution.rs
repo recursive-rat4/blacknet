@@ -19,8 +19,7 @@ use crate::ring::Ring;
 
 #[rustfmt::skip]
 pub trait Convolution<R: Ring, const N: usize>
-    : 'static
-    + Copy
+    : Copy
     + Eq
     + Send
     + Sync

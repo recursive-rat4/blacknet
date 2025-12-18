@@ -91,6 +91,10 @@ name = "duplex"
 path = "src/test/rust/duplex.rs"
 
 [[test]]
+name = "edwards25519"
+path = "src/test/rust/edwards25519.rs"
+
+[[test]]
 name = "eqextension"
 path = "src/test/rust/eqextension.rs"
 

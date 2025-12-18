@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::abeliangroup::AdditiveAbelianGroup;
 use crate::field::Field;
 use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
 use crate::monoid::AdditiveMonoid;
@@ -23,9 +24,9 @@ use crate::semigroup::AdditiveSemigroup;
 use crate::semiring::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
-use core::ops::{Add, AddAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-pub trait TwistedEdwardsGroupParams: 'static + Copy + Eq {
+pub trait TwistedEdwardsGroupParams: Copy + Eq {
     type F: Field;
 
     const A: Self::F;
@@ -173,6 +174,26 @@ impl<P: TwistedEdwardsGroupParams> SubAssign<&Self> for TwistedEdwardsGroupAffin
     #[inline]
     fn sub_assign(&mut self, rps: &Self) {
         *self = *self - *rps
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> Mul<Scalar>
+    for TwistedEdwardsGroupAffine<P>
+{
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: Scalar) -> Self::Output {
+        self.add_sub_chain(rps)
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> MulAssign<Scalar>
+    for TwistedEdwardsGroupAffine<P>
+{
+    #[inline]
+    fn mul_assign(&mut self, rps: Scalar) {
+        *self = *self * rps;
     }
 }
 
@@ -404,6 +425,26 @@ impl<P: TwistedEdwardsGroupParams> SubAssign<&Self> for TwistedEdwardsGroupExten
     #[inline]
     fn sub_assign(&mut self, rps: &Self) {
         *self = *self - *rps
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> Mul<Scalar>
+    for TwistedEdwardsGroupExtended<P>
+{
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: Scalar) -> Self::Output {
+        self.add_sub_chain(rps)
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> MulAssign<Scalar>
+    for TwistedEdwardsGroupExtended<P>
+{
+    #[inline]
+    fn mul_assign(&mut self, rps: Scalar) {
+        *self = *self * rps;
     }
 }
 

@@ -41,6 +41,10 @@ impl Field25519 {
         Self::new(UInt256::from_hex(hex))
     }
 
+    pub const unsafe fn from_unchecked(n: UInt256) -> Self {
+        Self { n }
+    }
+
     pub fn sqrt(self) -> Option<Self> {
         // Tonelli–Shanks algorithm
         let ls = self.legendre_symbol();

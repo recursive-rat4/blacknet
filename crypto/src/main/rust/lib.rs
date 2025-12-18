@@ -41,6 +41,7 @@ pub mod densematrix;
 pub mod densevector;
 pub mod distribution;
 pub mod duplex;
+pub mod edwards25519;
 pub mod eqextension;
 pub mod fastdrg;
 pub mod fastrng;

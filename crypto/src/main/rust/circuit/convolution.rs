@@ -19,7 +19,7 @@ use crate::circuit::circuitbuilder::{Constant, LinearCombination, Scope};
 use crate::ring::UnitalRing;
 use core::array;
 
-pub trait Convolution<R: UnitalRing, const N: usize>: 'static + Copy + Eq + Send + Sync {
+pub trait Convolution<R: UnitalRing, const N: usize>: Copy + Eq + Send + Sync {
     fn convolute(
         scope: &Scope<R>,
         a: [LinearCombination<R>; N],
