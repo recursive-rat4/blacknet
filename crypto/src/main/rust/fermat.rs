@@ -31,19 +31,21 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
-// 2¹⁶ + 1
-
+/// The prime field of Fermat number `2¹⁶ + 1`.
 #[derive(Clone, Copy, Default, Eq)]
 pub struct FermatField {
     n: i32,
 }
 
 impl FermatField {
+    /// Construct an element.
+    /// # Safety
+    /// `n` requires spare bits.
     pub const unsafe fn from_unchecked(n: i32) -> Self {
         Self { n }
     }
 
-    // Lazy reduction
+    /// Lazy reduction
     pub fn reduce(self) -> Self {
         Self::new(self.n)
     }

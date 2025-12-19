@@ -28,12 +28,14 @@ use core::array;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
+/// A ring of square matrices.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct MatrixRing<R: Ring, const N: usize, const NN: usize> {
     elements: [R; NN],
 }
 
 impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
+    /// Construct a new matrix.
     pub const fn new(elements: [R; NN]) -> Self {
         const {
             assert!(N * N == NN);
@@ -41,12 +43,14 @@ impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
         Self { elements }
     }
 
+    /// Fill a new matrix with single `element`.
     pub const fn fill(element: R) -> Self {
         Self {
             elements: [element; NN],
         }
     }
 
+    /// Map from the scalar ring into the matrix ring.
     pub const fn const_from(scalar: R) -> Self {
         let mut elements = [R::ZERO; NN];
         let mut i = 0;
@@ -57,18 +61,22 @@ impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
         Self { elements }
     }
 
+    /// The number of rows.
     pub const fn rows() -> usize {
         N
     }
 
+    /// The number of columns.
     pub const fn columns() -> usize {
         N
     }
 
+    /// The entries.
     pub const fn elements(self) -> [R; NN] {
         self.elements
     }
 
+    /// Compute the trace.
     pub fn trace(&self) -> R {
         let mut sigma = R::ZERO;
         for i in 0..N {
@@ -77,6 +85,7 @@ impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
         sigma
     }
 
+    /// Transpose.
     pub fn transpose(&self) -> Self {
         let mut m = Self::ZERO;
         for j in 0..N {

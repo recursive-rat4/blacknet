@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::missing_safety_doc)]
 #![no_std]
 
 extern crate alloc;

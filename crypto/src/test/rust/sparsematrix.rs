@@ -23,12 +23,14 @@ type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 fn conversion() {
-    let s = SparseMatrix::<R>::new(
-        4,
-        [0, 2, 5, 7, 9].into(),
-        [0, 1, 1, 2, 3, 0, 3, 1, 3].into(),
-        [1, 2, 3, 4, 5, 6, 7, 8, 9].map(R::from).into(),
-    );
+    let s = unsafe {
+        SparseMatrix::<R>::new(
+            4,
+            [0, 2, 5, 7, 9].into(),
+            [0, 1, 1, 2, 3, 0, 3, 1, 3].into(),
+            [1, 2, 3, 4, 5, 6, 7, 8, 9].map(R::from).into(),
+        )
+    };
     #[rustfmt::skip]
     let d = DenseMatrix::<R>::new(4, 4, [
         1, 2, 0, 0,
@@ -42,14 +44,16 @@ fn conversion() {
 
 #[test]
 fn vector() {
-    let a = SparseMatrix::<R>::new(
-        4,
-        [0, 3, 3, 6, 9, 11].into(),
-        [0, 1, 3, 0, 1, 3, 0, 1, 3, 1, 3].into(),
-        [11, 12, 14, 31, 32, 34, 41, 42, 44, 52, 54]
-            .map(R::from)
-            .into(),
-    );
+    let a = unsafe {
+        SparseMatrix::<R>::new(
+            4,
+            [0, 3, 3, 6, 9, 11].into(),
+            [0, 1, 3, 0, 1, 3, 0, 1, 3, 1, 3].into(),
+            [11, 12, 14, 31, 32, 34, 41, 42, 44, 52, 54]
+                .map(R::from)
+                .into(),
+        )
+    };
     let b = DenseVector::<R>::from([61, 67, 71, 73].map(R::from));
     let c = DenseVector::<R>::from([2497, 0, 6517, 8527, 7426].map(R::from));
     assert_eq!(&a * &b, c);
@@ -57,18 +61,22 @@ fn vector() {
 
 #[test]
 fn pad() {
-    let a = SparseMatrix::<R>::new(
-        3,
-        [0, 2, 4, 5].into(),
-        [0, 1, 1, 2, 0].into(),
-        [1, 2, 3, 4, 5].map(R::from).into(),
-    );
-    let b = SparseMatrix::<R>::new(
-        4,
-        [0, 2, 4, 5, 5].into(),
-        [0, 1, 1, 2, 0].into(),
-        [1, 2, 3, 4, 5].map(R::from).into(),
-    );
+    let a = unsafe {
+        SparseMatrix::<R>::new(
+            3,
+            [0, 2, 4, 5].into(),
+            [0, 1, 1, 2, 0].into(),
+            [1, 2, 3, 4, 5].map(R::from).into(),
+        )
+    };
+    let b = unsafe {
+        SparseMatrix::<R>::new(
+            4,
+            [0, 2, 4, 5, 5].into(),
+            [0, 1, 1, 2, 0].into(),
+            [1, 2, 3, 4, 5].map(R::from).into(),
+        )
+    };
     assert_eq!(a.pad_to_power_of_two(), b);
     assert_eq!(b.clone().pad_to_power_of_two(), b);
 }

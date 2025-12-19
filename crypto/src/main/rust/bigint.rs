@@ -198,6 +198,7 @@ impl<const N: usize> BigInt<N> {
         Self { limbs }
     };
 
+    #[doc(hidden)]
     pub unsafe fn from_java(bytes: &[u8]) -> Self {
         let mut num = Self::ZERO;
         #[allow(clippy::needless_range_loop)]
@@ -211,6 +212,7 @@ impl<const N: usize> BigInt<N> {
         }
         num
     }
+    #[doc(hidden)]
     pub unsafe fn to_java<const M: usize>(mut self) -> [u8; M] {
         const {
             assert!(Self::BITS == M as u32 * u8::BITS);

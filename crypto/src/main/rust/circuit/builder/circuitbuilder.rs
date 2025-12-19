@@ -101,58 +101,6 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
         Scope { builder: self }
     }
 
-    /// Compile to R1CS.
-    ///
-    /// # Panics
-    ///
-    /// If the shape is not compatible.
-    pub fn r1cs(self) -> R1CS<R> {
-        let (constraints_num, variables_num) = (self.constraints(), self.variables());
-        let constraints = self.constraints.take();
-        let (lps_degree, rps_degree) = constraints
-            .iter()
-            .map(|c| (c.lps.degree(), c.rps.degree()))
-            .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
-        assert!(
-            lps_degree <= 2 && rps_degree <= 1,
-            "Shape [{lps_degree}, {rps_degree}] is not compatible with [2, 1]"
-        );
-        let mut a = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
-        let mut b = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
-        let mut c = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
-
-        self.lay_out();
-        for constraint in constraints {
-            let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
-            match lps_span.dimension() {
-                2 => {
-                    self.put(&mut a, &lps_span[0]);
-                    self.put(&mut b, &lps_span[1]);
-                }
-                1 => {
-                    self.put(&mut a, &lps_span[0]);
-                    self.pad(&mut b);
-                }
-                0 => {
-                    self.pad(&mut a);
-                    self.pad(&mut b);
-                }
-                _ => unreachable!(),
-            }
-            match rps_span.dimension() {
-                1 => {
-                    self.put(&mut c, &rps_span[0]);
-                }
-                0 => {
-                    self.pad(&mut c);
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        R1CS::new(a.build(), b.build(), c.build())
-    }
-
     #[must_use = "Circuit variable should be constrained"]
     fn allocate(&self, kind: VariableKind) -> Variable<R> {
         let mut scopes = self.scopes.borrow_mut();
@@ -218,23 +166,8 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
         constraints.push(constraint)
     }
 
-    fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: &LinearCombination<R>) {
-        for (variable, coefficient) in &lc.terms {
-            let column: usize = match variable.kind {
-                VariableKind::Constant => 0,
-                VariableKind::PublicInput => self.public_inputs.get() + variable.number,
-                VariableKind::PublicOutput => self.public_outputs.get() + variable.number,
-                VariableKind::PrivateInput => self.private_inputs.get() + variable.number,
-                VariableKind::PrivateOutput => self.private_outputs.get() + variable.number,
-                VariableKind::Auxiliary => self.auxiliaries.get() + variable.number,
-            };
-            m.column(column, coefficient.value);
-        }
-        m.row();
-    }
-
     fn pad(&self, m: &mut SparseMatrixBuilder<R>) {
-        m.column(0, R::ONE);
+        unsafe { m.column_unchecked(0, R::ONE) };
         m.row();
     }
 
@@ -262,7 +195,76 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing> CircuitBuilder<'a, R> {
+impl<'a, R: Semiring + Eq> CircuitBuilder<'a, R> {
+    fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: &LinearCombination<R>) {
+        for (variable, coefficient) in &lc.terms {
+            let column: usize = match variable.kind {
+                VariableKind::Constant => 0,
+                VariableKind::PublicInput => self.public_inputs.get() + variable.number,
+                VariableKind::PublicOutput => self.public_outputs.get() + variable.number,
+                VariableKind::PrivateInput => self.private_inputs.get() + variable.number,
+                VariableKind::PrivateOutput => self.private_outputs.get() + variable.number,
+                VariableKind::Auxiliary => self.auxiliaries.get() + variable.number,
+            };
+            m.column(column, coefficient.value);
+        }
+        m.row();
+    }
+
+    /// Compile to R1CS.
+    ///
+    /// # Panics
+    ///
+    /// If the shape is not compatible.
+    pub fn r1cs(self) -> R1CS<R> {
+        let (constraints_num, variables_num) = (self.constraints(), self.variables());
+        let constraints = self.constraints.take();
+        let (lps_degree, rps_degree) = constraints
+            .iter()
+            .map(|c| (c.lps.degree(), c.rps.degree()))
+            .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
+        assert!(
+            lps_degree <= 2 && rps_degree <= 1,
+            "Shape [{lps_degree}, {rps_degree}] is not compatible with [2, 1]"
+        );
+        let mut a = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
+        let mut b = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
+        let mut c = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
+
+        self.lay_out();
+        for constraint in constraints {
+            let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
+            match lps_span.dimension() {
+                2 => {
+                    self.put(&mut a, &lps_span[0]);
+                    self.put(&mut b, &lps_span[1]);
+                }
+                1 => {
+                    self.put(&mut a, &lps_span[0]);
+                    self.pad(&mut b);
+                }
+                0 => {
+                    self.pad(&mut a);
+                    self.pad(&mut b);
+                }
+                _ => unreachable!(),
+            }
+            match rps_span.dimension() {
+                1 => {
+                    self.put(&mut c, &rps_span[0]);
+                }
+                0 => {
+                    self.pad(&mut c);
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        R1CS::new(a.build(), b.build(), c.build())
+    }
+}
+
+impl<'a, R: UnitalRing + Eq> CircuitBuilder<'a, R> {
     /// Compile to CCS.
     pub fn ccs(self) -> CustomizableConstraintSystem<R> {
         let (constraints_num, variables_num) = (self.constraints(), self.variables());

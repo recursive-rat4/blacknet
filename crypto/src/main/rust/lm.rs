@@ -33,14 +33,16 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
-// 2⁶⁰ + 2⁵ + 1
-
+/// `2⁶⁰ + 2⁵ + 1`
 #[derive(Clone, Copy, Default, Eq)]
 pub struct LMField {
     n: i64,
 }
 
 impl LMField {
+    /// Construct an element.
+    /// # Safety
+    /// `n` requires spare bits.
     pub const unsafe fn from_unchecked(n: i64) -> Self {
         Self { n }
     }

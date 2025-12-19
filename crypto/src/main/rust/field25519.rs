@@ -29,8 +29,7 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
-// 2²⁵⁵ - 19
-
+/// The prime field `2²⁵⁵ - 19`.
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
 pub struct Field25519 {
     n: UInt256,
@@ -41,10 +40,14 @@ impl Field25519 {
         Self::new(UInt256::from_hex(hex))
     }
 
+    /// Construct an element.
+    /// # Safety
+    /// `n` requires spare bit and Montgomery form.
     pub const unsafe fn from_unchecked(n: UInt256) -> Self {
         Self { n }
     }
 
+    /// Square root.
     pub fn sqrt(self) -> Option<Self> {
         // Tonelli–Shanks algorithm
         let ls = self.legendre_symbol();

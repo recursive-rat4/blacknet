@@ -24,9 +24,8 @@ use core::iter::repeat_n;
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
-// https://arxiv.org/abs/2404.06047
-// CSR format
-
+/// A sparse matrix in CSR format.
+/// <https://arxiv.org/abs/2404.06047>
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SparseMatrix<R: Presemiring> {
     columns: usize,
@@ -36,7 +35,10 @@ pub struct SparseMatrix<R: Presemiring> {
 }
 
 impl<R: Presemiring> SparseMatrix<R> {
-    pub const fn new(
+    /// Construct a new matrix.
+    /// # Safety
+    /// Arguments must be valid, and in particular `elements` doesn't contain zeroes.
+    pub const unsafe fn new(
         columns: usize,
         r_index: Vec<usize>,
         c_index: Vec<usize>,
@@ -154,7 +156,9 @@ impl<R: Presemiring> SparseMatrixBuilder<R> {
         }
     }
 
-    pub fn column(&mut self, column: usize, element: R) {
+    /// # Safety
+    /// `element` is not zero.
+    pub unsafe fn column_unchecked(&mut self, column: usize, element: R) {
         self.c_index.push(column);
         self.elements.push(element);
     }
@@ -164,6 +168,14 @@ impl<R: Presemiring> SparseMatrixBuilder<R> {
     }
 
     pub fn build(self) -> SparseMatrix<R> {
-        SparseMatrix::<R>::new(self.columns, self.r_index, self.c_index, self.elements)
+        unsafe { SparseMatrix::<R>::new(self.columns, self.r_index, self.c_index, self.elements) }
+    }
+}
+
+impl<R: Presemiring + Eq> SparseMatrixBuilder<R> {
+    pub fn column(&mut self, column: usize, element: R) {
+        if element != R::ZERO {
+            unsafe { self.column_unchecked(column, element) };
+        }
     }
 }
