@@ -21,6 +21,7 @@ use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 use core::ops::Index;
 
+/// A smallest linear subspace that contains an expression.
 pub struct LinearSpan<R: Semiring> {
     vectors: Vec<LinearCombination<R>>,
 }

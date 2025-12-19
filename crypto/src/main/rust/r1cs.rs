@@ -23,6 +23,8 @@ use crate::sparsematrix::SparseMatrix;
 use core::iter::zip;
 use serde::{Deserialize, Serialize};
 
+/// Rank-1 constraint system over semirings consists of matrices `a, b, c`.
+/// It asks for a vector `z` such that `(a * z) * (b * z) = (c * z)`.
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct R1CS<R: Semiring> {
     a: SparseMatrix<R>,
@@ -31,6 +33,7 @@ pub struct R1CS<R: Semiring> {
 }
 
 impl<R: Semiring> R1CS<R> {
+    /// Construct a new R1CS given the three matrices.
     pub const fn new(a: SparseMatrix<R>, b: SparseMatrix<R>, c: SparseMatrix<R>) -> Self {
         Self { a, b, c }
     }

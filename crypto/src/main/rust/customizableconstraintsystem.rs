@@ -26,8 +26,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
-// https://eprint.iacr.org/2023/552
-
+/// CCS <https://eprint.iacr.org/2023/552>
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CustomizableConstraintSystem<R: Semiring> {
     matrices: Vec<SparseMatrix<R>>,

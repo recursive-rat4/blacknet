@@ -15,7 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::builder::{Constant, Expression, LinearCombination, LinearMonoid, LinearSpan};
+use crate::circuit::builder::{
+    Constant, Expression, LinearCombination, LinearMonoid, LinearSpan, LinearTerm,
+};
 use crate::operation::{Double, Square};
 use crate::ring::UnitalRing;
 use crate::semiring::Semiring;
@@ -25,6 +27,7 @@ use core::fmt::{Debug, Formatter, Result};
 use core::marker::PhantomData;
 use core::ops::{Add, Mul, Neg, Sub};
 
+/// Layout of variables in assigment.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum VariableKind {
     Constant,
@@ -35,6 +38,7 @@ pub enum VariableKind {
     Auxiliary,
 }
 
+/// An allocated variable.
 #[derive(Clone, Copy)]
 pub struct Variable<R: Semiring> {
     pub(super) kind: VariableKind,
@@ -98,47 +102,31 @@ impl<R: Semiring> PartialOrd for Variable<R> {
     }
 }
 
-impl<R: Semiring> Add<Constant<R>> for Variable<R> {
-    type Output = LinearCombination<R>;
-
-    fn add(self, rps: Constant<R>) -> Self::Output {
-        [(self, Constant::ONE), (Variable::CONSTANT, rps)].into()
-    }
-}
-
 impl<R: Semiring> Add for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
         if self != rps {
-            [(self, Constant::ONE), (rps, Constant::ONE)].into()
+            [(self, Constant::ONE).into(), (rps, Constant::ONE).into()].into()
         } else {
-            [(self, Constant::ONE.double())].into()
+            [(self, Constant::ONE.double()).into()].into()
         }
     }
 }
 
 impl<R: Semiring> Double for Variable<R> {
-    type Output = LinearCombination<R>;
+    type Output = LinearTerm<R>;
 
     fn double(self) -> Self::Output {
-        [(self, Constant::ONE.double())].into()
+        (self, Constant::ONE.double()).into()
     }
 }
 
 impl<R: UnitalRing> Neg for Variable<R> {
-    type Output = LinearCombination<R>;
+    type Output = LinearTerm<R>;
 
     fn neg(self) -> Self::Output {
-        [(self, -Constant::ONE)].into()
-    }
-}
-
-impl<R: UnitalRing> Sub<Constant<R>> for Variable<R> {
-    type Output = LinearCombination<R>;
-
-    fn sub(self, rps: Constant<R>) -> Self::Output {
-        [(self, Constant::ONE), (Variable::CONSTANT, -rps)].into()
+        (self, -Constant::ONE).into()
     }
 }
 
@@ -147,18 +135,10 @@ impl<R: UnitalRing> Sub for Variable<R> {
 
     fn sub(self, rps: Self) -> Self::Output {
         if self != rps {
-            [(self, Constant::ONE), (rps, -Constant::ONE)].into()
+            [(self, Constant::ONE).into(), (rps, -Constant::ONE).into()].into()
         } else {
             [].into()
         }
-    }
-}
-
-impl<R: Semiring> Mul<Constant<R>> for Variable<R> {
-    type Output = LinearCombination<R>;
-
-    fn mul(self, rps: Constant<R>) -> Self::Output {
-        [(self, rps)].into()
     }
 }
 
@@ -178,11 +158,71 @@ impl<R: Semiring> Square for Variable<R> {
     }
 }
 
+impl<R: Semiring> Add<Constant<R>> for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: Constant<R>) -> Self::Output {
+        [
+            (self, Constant::ONE).into(),
+            (Variable::CONSTANT, rps).into(),
+        ]
+        .into()
+    }
+}
+
+impl<R: UnitalRing> Sub<Constant<R>> for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: Constant<R>) -> Self::Output {
+        [
+            (self, Constant::ONE).into(),
+            (Variable::CONSTANT, -rps).into(),
+        ]
+        .into()
+    }
+}
+
+impl<R: Semiring> Mul<Constant<R>> for Variable<R> {
+    type Output = LinearTerm<R>;
+
+    fn mul(self, rps: Constant<R>) -> Self::Output {
+        (self, rps).into()
+    }
+}
+
+impl<R: Semiring> Add<LinearTerm<R>> for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: LinearTerm<R>) -> Self::Output {
+        let mut lc: LinearCombination<R> = self.into();
+        lc += rps;
+        lc
+    }
+}
+
+impl<R: UnitalRing> Sub<LinearTerm<R>> for Variable<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: LinearTerm<R>) -> Self::Output {
+        let mut lc: LinearCombination<R> = self.into();
+        lc -= rps;
+        lc
+    }
+}
+
+impl<R: Semiring> Mul<LinearTerm<R>> for Variable<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: LinearTerm<R>) -> Self::Output {
+        [LinearTerm::new(self, Constant::ONE).into(), rps.into()].into()
+    }
+}
+
 impl<R: Semiring> Add<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
-        rps += (self, Constant::ONE);
+        rps += LinearTerm::new(self, Constant::ONE);
         rps
     }
 }
@@ -200,7 +240,7 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for Variable<R> {
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
         rps = -rps;
-        rps += (self, Constant::ONE);
+        rps += LinearTerm::new(self, Constant::ONE);
         rps
     }
 }
@@ -217,7 +257,7 @@ impl<R: Semiring> Mul<LinearCombination<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
-        [(self, Constant::ONE).into(), rps].into()
+        [LinearTerm::new(self, Constant::ONE).into(), rps].into()
     }
 }
 

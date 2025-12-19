@@ -27,6 +27,7 @@ pub trait Presemiring
     : AdditiveCommutativeMonoid
     + MultiplicativeSemigroup
 {
+    /// The additive identity.
     const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
 }
 
@@ -38,6 +39,7 @@ pub trait Semiring
     : Presemiring
     + MultiplicativeMonoid
 {
+    /// The multiplicative identity.
     const ONE: Self = <Self as MultiplicativeMonoid>::IDENTITY;
 }
 

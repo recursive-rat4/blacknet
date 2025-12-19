@@ -15,16 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+//! Arithmetic circuit builder.
+//!
+//! It can output [R1CS][crate::r1cs::R1CS] over semirings,
+//! and [CCS][crate::customizableconstraintsystem::CustomizableConstraintSystem] over rings.
+
 mod circuitbuilder;
 mod constant;
 mod linearcombination;
 mod linearmonoid;
 mod linearspan;
+mod linearterm;
 mod variable;
 
-pub use circuitbuilder::{CircuitBuilder, Constraint, Expression, Scope, Term};
+pub use circuitbuilder::{CircuitBuilder, Constraint, Expression, Scope};
 pub use constant::Constant;
 pub use linearcombination::LinearCombination;
 pub use linearmonoid::LinearMonoid;
 pub use linearspan::LinearSpan;
+pub use linearterm::LinearTerm;
 pub use variable::{Variable, VariableKind};

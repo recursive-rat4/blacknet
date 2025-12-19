@@ -15,12 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::builder::{Constant, Expression, LinearCombination, LinearSpan, Variable};
+use crate::circuit::builder::{
+    Constant, Expression, LinearCombination, LinearSpan, LinearTerm, Variable,
+};
 use crate::operation::Square;
 use crate::semiring::Semiring;
 use alloc::collections::VecDeque;
 use core::ops::{Mul, MulAssign};
 
+/// Linear monoid is a product of linear combinations.
 #[derive(Clone)]
 pub struct LinearMonoid<R: Semiring> {
     pub(super) factors: VecDeque<LinearCombination<R>>,
@@ -89,6 +92,29 @@ impl<R: Semiring> Mul<Variable<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
+        self.clone() * rps
+    }
+}
+
+impl<R: Semiring> Mul<LinearTerm<R>> for LinearMonoid<R> {
+    type Output = Self;
+
+    fn mul(mut self, rps: LinearTerm<R>) -> Self::Output {
+        self *= rps;
+        self
+    }
+}
+
+impl<R: Semiring> MulAssign<LinearTerm<R>> for LinearMonoid<R> {
+    fn mul_assign(&mut self, rps: LinearTerm<R>) {
+        self.factors.push_back(rps.into())
+    }
+}
+
+impl<R: Semiring> Mul<LinearTerm<R>> for &LinearMonoid<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: LinearTerm<R>) -> Self::Output {
         self.clone() * rps
     }
 }

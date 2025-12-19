@@ -61,10 +61,12 @@ impl<R: Presemiring> SparseMatrix<R> {
         }
     }
 
+    /// The number of rows.
     pub const fn rows(&self) -> usize {
         self.r_index.len() - 1
     }
 
+    /// The number of columns.
     pub const fn columns(&self) -> usize {
         self.columns
     }

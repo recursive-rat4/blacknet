@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::builder::{Constant, LinearCombination, LinearSpan, Variable, VariableKind};
+use crate::circuit::builder::{LinearCombination, LinearSpan, Variable, VariableKind};
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
@@ -29,18 +29,19 @@ use core::cmp::max;
 use core::fmt::{Display, Formatter, Result};
 use orx_tree::{Dyn, DynTree, NodeIdx, NodeRef};
 
+/// An expression to be constrained.
 pub trait Expression<'a, R: Semiring + 'a>: 'a {
     fn span(&self) -> LinearSpan<R>;
     fn degree(&self) -> usize;
 }
 
-pub type Term<R> = (Variable<R>, Constant<R>);
-
+/// An equivalence constraint.
 pub struct Constraint<'a, R: Semiring> {
     lps: Box<dyn Expression<'a, R>>,
     rps: Box<dyn Expression<'a, R>>,
 }
 
+/// The builder.
 pub struct CircuitBuilder<'a, R: Semiring> {
     degree: usize,
     public_inputs: Cell<usize>,
@@ -54,6 +55,7 @@ pub struct CircuitBuilder<'a, R: Semiring> {
 }
 
 impl<'a, R: Semiring> CircuitBuilder<'a, R> {
+    /// Construct a new builder with a maximum `degree` of constraints.
     pub fn new(degree: usize) -> Self {
         let mut tree = DynTree::empty();
         let root = tree.push_root(ScopeInfo::root());
@@ -70,14 +72,17 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
         }
     }
 
+    /// Maximum degree of constraints.
     pub const fn degree(&self) -> usize {
         self.degree
     }
 
+    /// Number of constraints.
     pub fn constraints(&self) -> usize {
         self.constraints.borrow().len()
     }
 
+    /// Number of variables.
     pub const fn variables(&self) -> usize {
         1 + self.public_inputs.get()
             + self.public_outputs.get()
@@ -86,6 +91,7 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
             + self.auxiliaries.get()
     }
 
+    /// Enter a new scope.
     pub fn scope<'b>(&'b self, name: &'static str) -> Scope<'b, 'a, R> {
         let mut scopes = self.scopes.borrow_mut();
         let mut current_scope = self.current_scope.borrow_mut();
@@ -95,6 +101,11 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
         Scope { builder: self }
     }
 
+    /// Compile to R1CS.
+    ///
+    /// # Panics
+    ///
+    /// If the shape is not compatible.
     pub fn r1cs(self) -> R1CS<R> {
         let (constraints_num, variables_num) = (self.constraints(), self.variables());
         let constraints = self.constraints.take();
@@ -198,7 +209,7 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
             self.degree >= constraint.rps.degree(),
             "In scope {} constraint right degree {} is higher than circuit degree {}",
             info.name,
-            constraint.lps.degree(),
+            constraint.rps.degree(),
             self.degree
         );
 
@@ -252,6 +263,7 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
 }
 
 impl<'a, R: UnitalRing> CircuitBuilder<'a, R> {
+    /// Compile to CCS.
     pub fn ccs(self) -> CustomizableConstraintSystem<R> {
         let (constraints_num, variables_num) = (self.constraints(), self.variables());
         let constraints = self.constraints.take();
@@ -314,11 +326,17 @@ impl<'a, R: Semiring> Display for CircuitBuilder<'a, R> {
     }
 }
 
+/// A named scope to allocate variables and constrain expressions.
 pub struct Scope<'a, 'b, R: Semiring> {
     builder: &'a CircuitBuilder<'b, R>,
 }
 
 impl<'a, 'b, R: Semiring> Scope<'a, 'b, R> {
+    /// Build a constraint `lps == rps`.
+    ///
+    /// # Panics
+    ///
+    /// If constraint degree is higher than circuit degree.
     pub fn constrain<LPS: Expression<'b, R>, RPS: Expression<'b, R>>(&self, lps: LPS, rps: RPS) {
         self.builder.constrain(Constraint {
             lps: Box::new(lps),
@@ -326,31 +344,41 @@ impl<'a, 'b, R: Semiring> Scope<'a, 'b, R> {
         })
     }
 
+    /// Allocate [PublicInput][crate::circuit::builder::VariableKind::PublicInput] variable.
     #[must_use = "Circuit variable should be constrained"]
     pub fn public_input(&self) -> Variable<R> {
         self.builder.allocate(VariableKind::PublicInput)
     }
 
+    /// Allocate [PublicOutput][crate::circuit::builder::VariableKind::PublicOutput] variable.
     #[must_use = "Circuit variable should be constrained"]
     pub fn public_output(&self) -> Variable<R> {
         self.builder.allocate(VariableKind::PublicOutput)
     }
 
+    /// Allocate [PrivateInput][crate::circuit::builder::VariableKind::PrivateInput] variable.
     #[must_use = "Circuit variable should be constrained"]
     pub fn private_input(&self) -> Variable<R> {
         self.builder.allocate(VariableKind::PrivateInput)
     }
 
+    /// Allocate [PrivateOutput][crate::circuit::builder::VariableKind::PrivateOutput] variable.
     #[must_use = "Circuit variable should be constrained"]
     pub fn private_output(&self) -> Variable<R> {
         self.builder.allocate(VariableKind::PrivateOutput)
     }
 
+    /// Allocate [Auxiliary][crate::circuit::builder::VariableKind::Auxiliary] variable.
     #[must_use = "Circuit variable should be constrained"]
     pub fn auxiliary(&self) -> Variable<R> {
         self.builder.allocate(VariableKind::Auxiliary)
     }
 
+    /// Allocate a variable of given kind.
+    ///
+    /// # Panics
+    ///
+    /// If the kind is [Constant][crate::circuit::builder::VariableKind::Constant].
     #[must_use = "Circuit variable should be constrained"]
     pub fn variable(&self, kind: VariableKind) -> Variable<R> {
         self.builder.allocate(kind)
