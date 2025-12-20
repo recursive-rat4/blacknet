@@ -54,7 +54,7 @@ impl<R: CommutativeRing> AjtaiCommitment<R> {
     }
 }
 
-//RUST currently requires std for sqrt
+//RUST currently requires std for sqrt, https://github.com/rust-lang/rust/issues/137578
 impl<R: CommutativeRing + Eq + EuclideanNorm> AjtaiCommitment<R> {
     #[cfg(feature = "std")]
     pub fn open_dense_l2(&self, c: &DenseVector<R>, m: &DenseVector<R>, bound: f64) -> bool {

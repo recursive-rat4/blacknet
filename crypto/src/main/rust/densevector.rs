@@ -28,15 +28,24 @@ use core::ops::{Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Neg, Sub
 use serde::{Deserialize, Serialize};
 
 /// A row (column) vector is a `1 ⨉ n` (`m ⨉ 1`) matrix.
+///
+/// # Panics
+///
+/// In debug builds, panic on incompatible dimensions.
+///
+/// # Safety
+///
+/// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DenseVector<R: Presemiring> {
     elements: Vec<R>,
 }
 
 impl<R: Presemiring> DenseVector<R> {
-    pub fn fill(size: usize, element: R) -> Self {
+    /// Fill a new `n`-dimensional vector with a single `element`.
+    pub fn fill(n: usize, element: R) -> Self {
         Self {
-            elements: vec![element; size],
+            elements: vec![element; n],
         }
     }
 
@@ -52,22 +61,28 @@ impl<R: Presemiring> DenseVector<R> {
         }
     }
 
+    /// The number of dimensions.
     pub const fn dimension(&self) -> usize {
         self.elements.len()
     }
 
+    /// The entries.
     pub const fn elements(&self) -> &Vec<R> {
         &self.elements
     }
 
+    /// Concatenate horizontally.
     pub fn cat(&self, rps: &Self) -> Self {
         chain(self, rps).copied().collect()
     }
 
+    /// Compute the dot product.
     pub fn dot(&self, rps: &Self) -> R {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(&l, &r)| l * r).sum()
     }
 
+    /// Compute the tensor product.
     pub fn tensor(&self, rps: &Self) -> DenseMatrix<R> {
         let rows = self.elements.len();
         let columns = rps.elements.len();
@@ -82,9 +97,10 @@ impl<R: Presemiring> DenseVector<R> {
 }
 
 impl<R: Semiring> DenseVector<R> {
-    pub fn identity(size: usize) -> Self {
+    /// The `n`-dimensional multiplicative identity.
+    pub fn identity(n: usize) -> Self {
         Self {
-            elements: vec![R::ONE; size],
+            elements: vec![R::ONE; n],
         }
     }
 }
@@ -199,12 +215,14 @@ impl<R: Presemiring> Add for DenseVector<R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(l, r)| l + r).collect()
     }
 }
 
 impl<R: Presemiring> AddAssign for DenseVector<R> {
     fn add_assign(&mut self, rps: Self) {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
@@ -229,12 +247,14 @@ impl<R: Presemiring> Add<&DenseVector<R>> for DenseVector<R> {
     type Output = Self;
 
     fn add(self, rps: &DenseVector<R>) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(l, &r)| l + r).collect()
     }
 }
 
 impl<R: Presemiring> AddAssign<&DenseVector<R>> for DenseVector<R> {
     fn add_assign(&mut self, rps: &DenseVector<R>) {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, &r)| *l += r);
     }
 }
@@ -243,6 +263,7 @@ impl<R: Presemiring> Add<DenseVector<R>> for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn add(self, rps: DenseVector<R>) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(&l, r)| l + r).collect()
     }
 }
@@ -251,6 +272,7 @@ impl<R: Presemiring> Add for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn add(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(&l, &r)| l + r).collect()
     }
 }
@@ -275,12 +297,14 @@ impl<R: Ring> Sub for DenseVector<R> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(l, r)| l - r).collect()
     }
 }
 
 impl<R: Ring> SubAssign for DenseVector<R> {
     fn sub_assign(&mut self, rps: Self) {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, r)| *l -= r);
     }
 }
@@ -289,12 +313,14 @@ impl<R: Ring> Sub<&DenseVector<R>> for DenseVector<R> {
     type Output = Self;
 
     fn sub(self, rps: &DenseVector<R>) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(l, &r)| l - r).collect()
     }
 }
 
 impl<R: Ring> SubAssign<&DenseVector<R>> for DenseVector<R> {
     fn sub_assign(&mut self, rps: &DenseVector<R>) {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, &r)| *l -= r);
     }
 }
@@ -303,6 +329,7 @@ impl<R: Ring> Sub<DenseVector<R>> for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn sub(self, rps: DenseVector<R>) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(&l, r)| l - r).collect()
     }
 }
@@ -311,6 +338,7 @@ impl<R: Ring> Sub for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(&l, &r)| l - r).collect()
     }
 }
@@ -319,12 +347,14 @@ impl<R: Presemiring> Mul for DenseVector<R> {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(l, r)| l * r).collect()
     }
 }
 
 impl<R: Presemiring> MulAssign for DenseVector<R> {
     fn mul_assign(&mut self, rps: Self) {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, r)| *l *= r);
     }
 }
@@ -333,12 +363,14 @@ impl<R: Presemiring> Mul<&DenseVector<R>> for DenseVector<R> {
     type Output = Self;
 
     fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(l, &r)| l * r).collect()
     }
 }
 
 impl<R: Presemiring> MulAssign<&DenseVector<R>> for DenseVector<R> {
     fn mul_assign(&mut self, rps: &DenseVector<R>) {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, &r)| *l *= r);
     }
 }
@@ -347,6 +379,7 @@ impl<R: Presemiring> Mul<DenseVector<R>> for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: DenseVector<R>) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(&l, r)| l * r).collect()
     }
 }
@@ -355,6 +388,7 @@ impl<R: Presemiring> Mul for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(&l, &r)| l * r).collect()
     }
 }

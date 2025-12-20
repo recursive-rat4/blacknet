@@ -38,7 +38,7 @@ impl<Z: IntegerRing<Int: FloatOn<f64>>> EuclideanNorm for Z {
     }
 }
 
-//RUST currently requires std for sqrt
+//RUST currently requires std for sqrt, https://github.com/rust-lang/rust/issues/137578
 
 #[cfg(feature = "std")]
 impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N> {

@@ -37,7 +37,7 @@ fn test() {
         .into(),
     );
     let cs = AjtaiCommitment::new(setup);
-    //RUST currently requires std for sqrt
+    //RUST currently requires std for sqrt, https://github.com/rust-lang/rust/issues/137578
     #[cfg(feature = "std")]
     let b_ecd = 7.22;
     let b_inf = 8;
