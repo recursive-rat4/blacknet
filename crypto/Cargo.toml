@@ -188,6 +188,11 @@ name = "z2"
 path = "src/test/rust/z2.rs"
 
 [[bench]]
+name = "field25519"
+path = "src/benchmark/rust/field25519.rs"
+harness = false
+
+[[bench]]
 name = "poseidon2"
 path = "src/benchmark/rust/poseidon2.rs"
 harness = false
