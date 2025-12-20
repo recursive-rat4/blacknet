@@ -20,7 +20,7 @@ use crate::field::Field;
 use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
 use crate::monoid::AdditiveMonoid;
 use crate::operation::{Double, Inv, Square};
-use crate::semigroup::AdditiveSemigroup;
+use crate::semigroup::{AdditiveSemigroup, LeftZero, RightZero};
 use crate::semiring::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
@@ -210,20 +210,25 @@ impl<'a, P: TwistedEdwardsGroupParams> Sum<&'a Self> for TwistedEdwardsGroupAffi
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupAffine<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupAffine<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupAffine<P> {
-    const LEFT_IDENTITY: Self = Self {
-        x: P::F::ZERO,
-        y: P::F::ONE,
-    };
-    const RIGHT_IDENTITY: Self = Self {
+impl<P: TwistedEdwardsGroupParams> LeftZero for TwistedEdwardsGroupAffine<P> {
+    const LEFT_ZERO: Self = Self {
         x: P::F::ZERO,
         y: P::F::ONE,
     };
 }
+
+impl<P: TwistedEdwardsGroupParams> RightZero for TwistedEdwardsGroupAffine<P> {
+    const RIGHT_ZERO: Self = Self {
+        x: P::F::ZERO,
+        y: P::F::ONE,
+    };
+}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupAffine<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupAffine<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupAffine<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupAffine<P> {
     const IDENTITY: Self = Self {
@@ -461,24 +466,29 @@ impl<'a, P: TwistedEdwardsGroupParams> Sum<&'a Self> for TwistedEdwardsGroupExte
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupExtended<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupExtended<P> {
-    const LEFT_IDENTITY: Self = Self {
-        x: P::F::ZERO,
-        y: P::F::ONE,
-        z: P::F::ONE,
-        t: P::F::ZERO,
-    };
-    const RIGHT_IDENTITY: Self = Self {
+impl<P: TwistedEdwardsGroupParams> LeftZero for TwistedEdwardsGroupExtended<P> {
+    const LEFT_ZERO: Self = Self {
         x: P::F::ZERO,
         y: P::F::ONE,
         z: P::F::ONE,
         t: P::F::ZERO,
     };
 }
+
+impl<P: TwistedEdwardsGroupParams> RightZero for TwistedEdwardsGroupExtended<P> {
+    const RIGHT_ZERO: Self = Self {
+        x: P::F::ZERO,
+        y: P::F::ONE,
+        z: P::F::ONE,
+        t: P::F::ZERO,
+    };
+}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupExtended<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupExtended<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupExtended<P> {
     const IDENTITY: Self = Self {

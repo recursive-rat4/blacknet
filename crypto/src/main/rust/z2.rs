@@ -24,7 +24,9 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, Ring};
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+};
 use crate::semiring::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -222,14 +224,27 @@ impl<'a> Product<&'a Self> for Z2 {
     }
 }
 
+impl LeftZero for Z2 {
+    const LEFT_ZERO: Self = Self { n: false };
+}
+
+impl RightZero for Z2 {
+    const RIGHT_ZERO: Self = Self { n: false };
+}
+
+impl LeftOne for Z2 {
+    const LEFT_ONE: Self = Self { n: true };
+}
+
+impl RightOne for Z2 {
+    const RIGHT_ONE: Self = Self { n: true };
+}
+
 impl AdditiveMagma for Z2 {}
 
 impl AdditiveCommutativeMagma for Z2 {}
 
-impl AdditiveSemigroup for Z2 {
-    const LEFT_IDENTITY: Self = Self { n: false };
-    const RIGHT_IDENTITY: Self = Self { n: false };
-}
+impl AdditiveSemigroup for Z2 {}
 
 impl AdditiveMonoid for Z2 {
     const IDENTITY: Self = Self { n: false };
@@ -239,10 +254,7 @@ impl MultiplicativeMagma for Z2 {}
 
 impl MultiplicativeCommutativeMagma for Z2 {}
 
-impl MultiplicativeSemigroup for Z2 {
-    const LEFT_IDENTITY: Self = Self { n: true };
-    const RIGHT_IDENTITY: Self = Self { n: true };
-}
+impl MultiplicativeSemigroup for Z2 {}
 
 impl MultiplicativeMonoid for Z2 {
     const IDENTITY: Self = Self { n: true };

@@ -21,7 +21,7 @@ use crate::module::Module;
 use crate::monoid::AdditiveMonoid;
 use crate::operation::Double;
 use crate::ring::Ring;
-use crate::semigroup::AdditiveSemigroup;
+use crate::semigroup::{AdditiveSemigroup, LeftZero, RightZero};
 use core::array;
 use core::borrow::Borrow;
 use core::fmt::{Debug, Formatter, Result};
@@ -243,18 +243,23 @@ impl<'a, R: Ring, const N: usize> Sum<&'a Self> for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> LeftZero for FreeModule<R, N> {
+    const LEFT_ZERO: Self = Self {
+        components: [R::LEFT_ZERO; N],
+    };
+}
+
+impl<R: Ring, const N: usize> RightZero for FreeModule<R, N> {
+    const RIGHT_ZERO: Self = Self {
+        components: [R::RIGHT_ZERO; N],
+    };
+}
+
 impl<R: Ring, const N: usize> AdditiveMagma for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
 
-impl<R: Ring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {
-    const LEFT_IDENTITY: Self = Self {
-        components: [R::ZERO; N],
-    };
-    const RIGHT_IDENTITY: Self = Self {
-        components: [R::ZERO; N],
-    };
-}
+impl<R: Ring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
     const IDENTITY: Self = Self {

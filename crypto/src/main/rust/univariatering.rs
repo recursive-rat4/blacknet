@@ -28,7 +28,9 @@ use crate::operation::{Double, Square};
 use crate::ring::{
     CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, Ring, UnitalRing,
 };
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+};
 use crate::semiring::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -311,6 +313,30 @@ impl<'a, R: UnitalRing, const N: usize, C: Convolution<R, N>> Product<&'a Self>
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> LeftZero for UnivariateRing<R, N, C> {
+    const LEFT_ZERO: Self = Self::new(FreeModule::<R, N>::LEFT_ZERO);
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> RightZero for UnivariateRing<R, N, C> {
+    const RIGHT_ZERO: Self = Self::new(FreeModule::<R, N>::RIGHT_ZERO);
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> LeftOne for UnivariateRing<R, N, C> {
+    const LEFT_ONE: Self = {
+        let mut t = [R::ZERO; N];
+        t[0] = R::ONE;
+        Self::new(FreeModule::<R, N>::new(t))
+    };
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> RightOne for UnivariateRing<R, N, C> {
+    const RIGHT_ONE: Self = {
+        let mut t = [R::ZERO; N];
+        t[0] = R::ONE;
+        Self::new(FreeModule::<R, N>::new(t))
+    };
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMagma
     for UnivariateRing<R, N, C>
 {
@@ -324,8 +350,6 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveCommutativeMag
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveSemigroup
     for UnivariateRing<R, N, C>
 {
-    const LEFT_IDENTITY: Self = Self::new(FreeModule::<R, N>::LEFT_IDENTITY);
-    const RIGHT_IDENTITY: Self = Self::new(FreeModule::<R, N>::RIGHT_IDENTITY);
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMonoid
@@ -347,16 +371,6 @@ impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> MultiplicativeCom
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeSemigroup
     for UnivariateRing<R, N, C>
 {
-    const LEFT_IDENTITY: Self = {
-        let mut t = [R::ZERO; N];
-        t[0] = R::ONE;
-        Self::new(FreeModule::<R, N>::new(t))
-    };
-    const RIGHT_IDENTITY: Self = {
-        let mut t = [R::ZERO; N];
-        t[0] = R::ONE;
-        Self::new(FreeModule::<R, N>::new(t))
-    };
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMonoid

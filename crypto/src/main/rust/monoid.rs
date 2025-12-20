@@ -16,14 +16,19 @@
  */
 
 use crate::semigroup::{
-    AdditiveCommutativeSemigroup, AdditiveSemigroup, MultiplicativeCommutativeSemigroup,
-    MultiplicativeSemigroup,
+    AdditiveCommutativeSemigroup, AdditiveSemigroup, LeftOne, LeftZero,
+    MultiplicativeCommutativeSemigroup, MultiplicativeSemigroup, RightOne, RightZero,
 };
+use core::iter::{Product, Sum};
 
 #[rustfmt::skip]
 pub trait AdditiveMonoid
-    : Default
-    + AdditiveSemigroup
+    : AdditiveSemigroup
+    + LeftZero
+    + RightZero
+    + Default
+    + Sum
+    + for<'a> Sum<&'a Self>
 {
     const IDENTITY: Self;
 }
@@ -40,8 +45,12 @@ impl<G: AdditiveMonoid + AdditiveCommutativeSemigroup> AdditiveCommutativeMonoid
 
 #[rustfmt::skip]
 pub trait MultiplicativeMonoid
-    : Default
-    + MultiplicativeSemigroup
+    : MultiplicativeSemigroup
+    + LeftOne
+    + RightOne
+    + Default
+    + Product
+    + for<'a> Product<&'a Self>
 {
     const IDENTITY: Self;
 }

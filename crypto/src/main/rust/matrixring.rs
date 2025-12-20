@@ -22,7 +22,9 @@ use crate::module::Module;
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Square};
 use crate::ring::{Ring, UnitalRing};
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+};
 use crate::semiring::Presemiring;
 use core::array;
 use core::iter::{Product, Sum};
@@ -348,7 +350,7 @@ impl<R: Ring, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>> for Fre
 
 impl<R: Ring, const N: usize, const NN: usize> Sum for MatrixRing<R, N, NN> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
+        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::LEFT_ZERO)
     }
 }
 
@@ -359,28 +361,42 @@ impl<'a, R: Ring, const N: usize, const NN: usize> Sum<&'a Self> for MatrixRing<
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Product for MatrixRing<R, N, NN> {
+impl<R: UnitalRing, const N: usize, const NN: usize> Product for MatrixRing<R, N, NN> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps * rps)
-            .unwrap_or(<Self as MultiplicativeSemigroup>::LEFT_IDENTITY)
+        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::LEFT_ONE)
     }
 }
 
-impl<'a, R: Ring, const N: usize, const NN: usize> Product<&'a Self> for MatrixRing<R, N, NN> {
+impl<'a, R: UnitalRing, const N: usize, const NN: usize> Product<&'a Self>
+    for MatrixRing<R, N, NN>
+{
     #[inline]
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.copied().product()
     }
 }
 
+impl<R: Ring, const N: usize, const NN: usize> LeftZero for MatrixRing<R, N, NN> {
+    const LEFT_ZERO: Self = Self::const_from(R::LEFT_ZERO);
+}
+
+impl<R: Ring, const N: usize, const NN: usize> RightZero for MatrixRing<R, N, NN> {
+    const RIGHT_ZERO: Self = Self::const_from(R::RIGHT_ZERO);
+}
+
+impl<R: UnitalRing, const N: usize, const NN: usize> LeftOne for MatrixRing<R, N, NN> {
+    const LEFT_ONE: Self = Self::const_from(R::LEFT_ONE);
+}
+
+impl<R: UnitalRing, const N: usize, const NN: usize> RightOne for MatrixRing<R, N, NN> {
+    const RIGHT_ONE: Self = Self::const_from(R::RIGHT_ONE);
+}
+
 impl<R: Ring, const N: usize, const NN: usize> AdditiveMagma for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveCommutativeMagma for MatrixRing<R, N, NN> {}
 
-impl<R: Ring, const N: usize, const NN: usize> AdditiveSemigroup for MatrixRing<R, N, NN> {
-    const LEFT_IDENTITY: Self = Self::const_from(<R as AdditiveSemigroup>::LEFT_IDENTITY);
-    const RIGHT_IDENTITY: Self = Self::const_from(<R as AdditiveSemigroup>::RIGHT_IDENTITY);
-}
+impl<R: Ring, const N: usize, const NN: usize> AdditiveSemigroup for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {
     const IDENTITY: Self = Self::const_from(R::ZERO);
@@ -388,10 +404,7 @@ impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, 
 
 impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMagma for MatrixRing<R, N, NN> {}
 
-impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for MatrixRing<R, N, NN> {
-    const LEFT_IDENTITY: Self = Self::const_from(<R as MultiplicativeSemigroup>::LEFT_IDENTITY);
-    const RIGHT_IDENTITY: Self = Self::const_from(<R as MultiplicativeSemigroup>::RIGHT_IDENTITY);
-}
+impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for MatrixRing<R, N, NN> {}
 
 impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRing<R, N, NN> {
     const IDENTITY: Self = Self::const_from(R::ONE);

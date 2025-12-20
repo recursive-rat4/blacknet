@@ -33,6 +33,7 @@ pub trait Ring
     type Int: Integer;
 }
 
+/// A ring with multiplicative identity.
 #[rustfmt::skip]
 pub trait UnitalRing
     : Ring
@@ -42,6 +43,8 @@ pub trait UnitalRing
 
 impl<R: Ring + Semiring> UnitalRing for R {}
 
+/// A marker for rings with commutative multiplication.
+/// Elements of any ring commute under addition.
 #[rustfmt::skip]
 pub trait CommutativeRing
     : UnitalRing

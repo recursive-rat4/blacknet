@@ -23,7 +23,10 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, Ring};
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+    square_and_multiply,
+};
 use crate::semiring::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -54,8 +57,8 @@ impl Field25519 {
         if ls == Self::ONE {
             let mut m = Self::S;
             let mut c = Self::Z_IN_Q;
-            let mut t = self.square_and_multiply(Self::Q);
-            let mut r = self.square_and_multiply(Self::Q_PLUS_1_HALVED);
+            let mut t = square_and_multiply(self, Self::Q);
+            let mut r = square_and_multiply(self, Self::Q_PLUS_1_HALVED);
             loop {
                 if t == Self::ZERO {
                     return Some(Self::ZERO);
@@ -81,11 +84,11 @@ impl Field25519 {
     }
 
     fn legendre_symbol(self) -> Self {
-        self.square_and_multiply(Self::P_MINUS_1_HALVED_BITS)
+        square_and_multiply(self, Self::P_MINUS_1_HALVED_BITS)
     }
 
     fn power(self, rps: Self) -> Self {
-        self.square_and_multiply(rps.canonical().bits::<{ Self::BITS as usize }>())
+        square_and_multiply(self, rps.canonical().bits::<{ Self::BITS as usize }>())
     }
 
     fn to_form(x: UInt256) -> UInt256 {
@@ -400,14 +403,31 @@ impl<'a> Product<&'a Self> for Field25519 {
     }
 }
 
+impl LeftZero for Field25519 {
+    const LEFT_ZERO: Self = Self { n: UInt256::ZERO };
+}
+
+impl RightZero for Field25519 {
+    const RIGHT_ZERO: Self = Self { n: UInt256::ZERO };
+}
+
+impl LeftOne for Field25519 {
+    const LEFT_ONE: Self = Self {
+        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
+    };
+}
+
+impl RightOne for Field25519 {
+    const RIGHT_ONE: Self = Self {
+        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
+    };
+}
+
 impl AdditiveMagma for Field25519 {}
 
 impl AdditiveCommutativeMagma for Field25519 {}
 
-impl AdditiveSemigroup for Field25519 {
-    const LEFT_IDENTITY: Self = Self { n: UInt256::ZERO };
-    const RIGHT_IDENTITY: Self = Self { n: UInt256::ZERO };
-}
+impl AdditiveSemigroup for Field25519 {}
 
 impl AdditiveMonoid for Field25519 {
     const IDENTITY: Self = Self { n: UInt256::ZERO };
@@ -417,14 +437,7 @@ impl MultiplicativeMagma for Field25519 {}
 
 impl MultiplicativeCommutativeMagma for Field25519 {}
 
-impl MultiplicativeSemigroup for Field25519 {
-    const LEFT_IDENTITY: Self = Self {
-        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
-    };
-    const RIGHT_IDENTITY: Self = Self {
-        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
-    };
-}
+impl MultiplicativeSemigroup for Field25519 {}
 
 impl MultiplicativeMonoid for Field25519 {
     const IDENTITY: Self = Self {

@@ -26,7 +26,10 @@ use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
 use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring};
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+    square_and_multiply,
+};
 use crate::semiring::{Presemiring, Semiring};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -263,7 +266,7 @@ impl Inv for LMField {
     fn inv(self) -> Self::Output {
         if self != Self::ZERO {
             // Fermat little theorem
-            Some(self.square_and_multiply(Self::P_MINUS_2))
+            Some(square_and_multiply(self, Self::P_MINUS_2))
         } else {
             None
         }
@@ -313,14 +316,27 @@ impl<'a> Product<&'a Self> for LMField {
     }
 }
 
+impl LeftZero for LMField {
+    const LEFT_ZERO: Self = Self { n: 0 };
+}
+
+impl RightZero for LMField {
+    const RIGHT_ZERO: Self = Self { n: 0 };
+}
+
+impl LeftOne for LMField {
+    const LEFT_ONE: Self = Self { n: 1 };
+}
+
+impl RightOne for LMField {
+    const RIGHT_ONE: Self = Self { n: 1 };
+}
+
 impl AdditiveMagma for LMField {}
 
 impl AdditiveCommutativeMagma for LMField {}
 
-impl AdditiveSemigroup for LMField {
-    const LEFT_IDENTITY: Self = Self { n: 0 };
-    const RIGHT_IDENTITY: Self = Self { n: 0 };
-}
+impl AdditiveSemigroup for LMField {}
 
 impl AdditiveMonoid for LMField {
     const IDENTITY: Self = Self { n: 0 };
@@ -330,10 +346,7 @@ impl MultiplicativeMagma for LMField {}
 
 impl MultiplicativeCommutativeMagma for LMField {}
 
-impl MultiplicativeSemigroup for LMField {
-    const LEFT_IDENTITY: Self = Self { n: 1 };
-    const RIGHT_IDENTITY: Self = Self { n: 1 };
-}
+impl MultiplicativeSemigroup for LMField {}
 
 impl MultiplicativeMonoid for LMField {
     const IDENTITY: Self = Self { n: 1 };
@@ -447,7 +460,7 @@ impl Inv for LMField2 {
     fn inv(self) -> Self::Output {
         if self != Self::ZERO {
             // Feng and Itoh-Tsujii algorithm
-            let r1 = self.square_and_multiply(Self::R1);
+            let r1 = square_and_multiply(self, Self::R1);
             let r0 = (r1 * self).constant_term();
             Some((r1 / r0).expect("multiplicative group of subfield"))
         } else {

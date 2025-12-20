@@ -18,29 +18,43 @@
 use crate::magma::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
-use core::iter::{Product, Sum};
+
+/// One-sided identity.
+pub trait LeftZero {
+    /// The left additive identity.
+    const LEFT_ZERO: Self;
+}
+
+/// One-sided identity.
+pub trait RightZero {
+    /// The right additive identity.
+    const RIGHT_ZERO: Self;
+}
 
 /// A magma with associative addition.
 #[rustfmt::skip]
 pub trait AdditiveSemigroup
     : AdditiveMagma
-    + Sum
-    + for<'a> Sum<&'a Self>
 {
-    const LEFT_IDENTITY: Self;
-    const RIGHT_IDENTITY: Self;
+}
 
-    fn double_and_add<Scalar: IntoIterator<Item = bool>>(self, scalar: Scalar) -> Self {
-        let mut r = Self::LEFT_IDENTITY;
-        let mut t = self;
-        for bit in scalar {
-            if bit {
-                r += t
-            }
-            t = t.double()
+#[rustfmt::skip]
+pub fn double_and_add<
+    G: AdditiveSemigroup + LeftZero,
+    Scalar: IntoIterator<Item = bool>,
+>(
+    g: G,
+    scalar: Scalar,
+) -> G {
+    let mut r = G::LEFT_ZERO;
+    let mut t = g;
+    for bit in scalar {
+        if bit {
+            r += t
         }
-        r
+        t = t.double()
     }
+    r
 }
 
 /// A marker for semigroups with commutative addition.
@@ -53,27 +67,42 @@ pub trait AdditiveCommutativeSemigroup
 
 impl<G: AdditiveSemigroup + AdditiveCommutativeMagma> AdditiveCommutativeSemigroup for G {}
 
+/// One-sided identity.
+pub trait LeftOne {
+    /// The left multiplicative identity.
+    const LEFT_ONE: Self;
+}
+
+/// One-sided identity.
+pub trait RightOne {
+    /// The right multiplicative identity.
+    const RIGHT_ONE: Self;
+}
+
 /// A magma with associative multiplication.
 #[rustfmt::skip]
 pub trait MultiplicativeSemigroup
     : MultiplicativeMagma
-    + Product
-    + for<'a> Product<&'a Self>
 {
-    const LEFT_IDENTITY: Self;
-    const RIGHT_IDENTITY: Self;
+}
 
-    fn square_and_multiply<Scalar: IntoIterator<Item = bool>>(self, scalar: Scalar) -> Self {
-        let mut r = Self::LEFT_IDENTITY;
-        let mut t = self;
-        for bit in scalar {
-            if bit {
-                r *= t
-            }
-            t = t.square()
+#[rustfmt::skip]
+pub fn square_and_multiply<
+    G: MultiplicativeSemigroup + LeftOne,
+    Scalar: IntoIterator<Item = bool>,
+>(
+    g: G,
+    scalar: Scalar,
+) -> G {
+    let mut r = G::LEFT_ONE;
+    let mut t = g;
+    for bit in scalar {
+        if bit {
+            r *= t
         }
-        r
+        t = t.square()
     }
+    r
 }
 
 /// A marker for semigroups with commutative multiplication.

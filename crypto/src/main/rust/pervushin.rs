@@ -25,7 +25,10 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring};
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+    square_and_multiply,
+};
 use crate::semiring::{Presemiring, Semiring};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -261,7 +264,7 @@ impl Inv for PervushinField {
     fn inv(self) -> Self::Output {
         if self != Self::ZERO {
             // Fermat little theorem
-            Some(self.square_and_multiply(Self::P_MINUS_2))
+            Some(square_and_multiply(self, Self::P_MINUS_2))
         } else {
             None
         }
@@ -311,14 +314,27 @@ impl<'a> Product<&'a Self> for PervushinField {
     }
 }
 
+impl LeftZero for PervushinField {
+    const LEFT_ZERO: Self = Self { n: 0 };
+}
+
+impl RightZero for PervushinField {
+    const RIGHT_ZERO: Self = Self { n: 0 };
+}
+
+impl LeftOne for PervushinField {
+    const LEFT_ONE: Self = Self { n: 1 };
+}
+
+impl RightOne for PervushinField {
+    const RIGHT_ONE: Self = Self { n: 1 };
+}
+
 impl AdditiveMagma for PervushinField {}
 
 impl AdditiveCommutativeMagma for PervushinField {}
 
-impl AdditiveSemigroup for PervushinField {
-    const LEFT_IDENTITY: Self = Self { n: 0 };
-    const RIGHT_IDENTITY: Self = Self { n: 0 };
-}
+impl AdditiveSemigroup for PervushinField {}
 
 impl AdditiveMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 0 };
@@ -328,10 +344,7 @@ impl MultiplicativeMagma for PervushinField {}
 
 impl MultiplicativeCommutativeMagma for PervushinField {}
 
-impl MultiplicativeSemigroup for PervushinField {
-    const LEFT_IDENTITY: Self = Self { n: 1 };
-    const RIGHT_IDENTITY: Self = Self { n: 1 };
-}
+impl MultiplicativeSemigroup for PervushinField {}
 
 impl MultiplicativeMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 1 };
@@ -430,7 +443,7 @@ impl Inv for PervushinField2 {
     fn inv(self) -> Self::Output {
         if self != Self::ZERO {
             // Feng and Itoh-Tsujii algorithm
-            let r1 = self.square_and_multiply(Self::R1);
+            let r1 = square_and_multiply(self, Self::R1);
             let r0 = (r1 * self).constant_term();
             Some((r1 / r0).expect("multiplicative group of subfield"))
         } else {

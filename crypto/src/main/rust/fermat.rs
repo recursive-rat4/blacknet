@@ -24,7 +24,10 @@ use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
 use crate::operation::{Double, Inv, Square};
 use crate::ring::{DivisionRing, IntegerRing, Ring};
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+    square_and_multiply,
+};
 use crate::semiring::{Presemiring, Semiring};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -235,7 +238,7 @@ impl Inv for FermatField {
     fn inv(self) -> Self::Output {
         if self != Self::ZERO {
             // Fermat little theorem
-            Some(self.square_and_multiply(Self::P_MINUS_2))
+            Some(square_and_multiply(self, Self::P_MINUS_2))
         } else {
             None
         }
@@ -285,14 +288,27 @@ impl<'a> Product<&'a Self> for FermatField {
     }
 }
 
+impl LeftZero for FermatField {
+    const LEFT_ZERO: Self = Self { n: 0 };
+}
+
+impl RightZero for FermatField {
+    const RIGHT_ZERO: Self = Self { n: 0 };
+}
+
+impl LeftOne for FermatField {
+    const LEFT_ONE: Self = Self { n: 1 };
+}
+
+impl RightOne for FermatField {
+    const RIGHT_ONE: Self = Self { n: 1 };
+}
+
 impl AdditiveMagma for FermatField {}
 
 impl AdditiveCommutativeMagma for FermatField {}
 
-impl AdditiveSemigroup for FermatField {
-    const LEFT_IDENTITY: Self = Self { n: 0 };
-    const RIGHT_IDENTITY: Self = Self { n: 0 };
-}
+impl AdditiveSemigroup for FermatField {}
 
 impl AdditiveMonoid for FermatField {
     const IDENTITY: Self = Self { n: 0 };
@@ -302,10 +318,7 @@ impl MultiplicativeMagma for FermatField {}
 
 impl MultiplicativeCommutativeMagma for FermatField {}
 
-impl MultiplicativeSemigroup for FermatField {
-    const LEFT_IDENTITY: Self = Self { n: 1 };
-    const RIGHT_IDENTITY: Self = Self { n: 1 };
-}
+impl MultiplicativeSemigroup for FermatField {}
 
 impl MultiplicativeMonoid for FermatField {
     const IDENTITY: Self = Self { n: 1 };

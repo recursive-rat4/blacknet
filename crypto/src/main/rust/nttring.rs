@@ -29,7 +29,9 @@ use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use crate::operation::{Double, Square};
 use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing, Ring};
-use crate::semigroup::{AdditiveSemigroup, MultiplicativeSemigroup};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+};
 use crate::semiring::{Presemiring, Semiring};
 use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
@@ -338,14 +340,27 @@ impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Product<&'a Self> for N
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> LeftZero for NTTRing<Z, M, N> {
+    const LEFT_ZERO: Self = Self::const_from(Z::LEFT_ZERO);
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> RightZero for NTTRing<Z, M, N> {
+    const RIGHT_ZERO: Self = Self::const_from(Z::RIGHT_ZERO);
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> LeftOne for NTTRing<Z, M, N> {
+    const LEFT_ONE: Self = Self::const_from(Z::LEFT_ONE);
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> RightOne for NTTRing<Z, M, N> {
+    const RIGHT_ONE: Self = Self::const_from(Z::RIGHT_ONE);
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMagma for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveCommutativeMagma for NTTRing<Z, M, N> {}
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveSemigroup for NTTRing<Z, M, N> {
-    const LEFT_IDENTITY: Self = Self::const_from(Z::ZERO);
-    const RIGHT_IDENTITY: Self = Self::const_from(Z::ZERO);
-}
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveSemigroup for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMonoid for NTTRing<Z, M, N> {
     const IDENTITY: Self = Self {
@@ -360,10 +375,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMa
 {
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for NTTRing<Z, M, N> {
-    const LEFT_IDENTITY: Self = Self::const_from(Z::ONE);
-    const RIGHT_IDENTITY: Self = Self::const_from(Z::ONE);
-}
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMonoid for NTTRing<Z, M, N> {
     const IDENTITY: Self = Self::const_from(Z::ONE);
