@@ -25,6 +25,13 @@ pub struct BinaryUniformDistribution<G: UniformGenerator<Output: IntegerRing>> {
 }
 
 impl<G: UniformGenerator<Output: IntegerRing>> BinaryUniformDistribution<G> {
+    pub const fn new() -> Self {
+        Self {
+            cache: <G::Output as Ring>::Int::ZERO,
+            have_bits: 0,
+        }
+    }
+
     fn useful_bits() -> u32 {
         if G::Output::MODULUS.count_ones() == 1 {
             G::Output::BITS
@@ -36,10 +43,7 @@ impl<G: UniformGenerator<Output: IntegerRing>> BinaryUniformDistribution<G> {
 
 impl<G: UniformGenerator<Output: IntegerRing>> Default for BinaryUniformDistribution<G> {
     fn default() -> Self {
-        Self {
-            cache: Default::default(),
-            have_bits: 0,
-        }
+        Self::new()
     }
 }
 

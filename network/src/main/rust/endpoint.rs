@@ -287,7 +287,7 @@ fn checksum_torv3(public_key: [u8; 32]) -> [u8; 2] {
     hasher.update(public_key);
     hasher.update([3_u8]);
     let hash: [u8; 32] = hasher.finalize().into();
-    let mut checksum: [u8; 2] = Default::default();
+    let mut checksum = [0_u8; 2];
     checksum.copy_from_slice(&hash[0..2]);
     checksum
 }

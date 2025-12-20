@@ -104,7 +104,7 @@ impl<Z: Twiddles<M> + Eq, const M: usize, const N: usize> Convolution<Z, N>
             4 => {
                 let k = inertia * 2;
                 let l = N / k;
-                let mut c: [LinearCombination<Z>; N] = array::from_fn(|_| Default::default());
+                let mut c: [LinearCombination<Z>; N] = array::from_fn(|_| LinearCombination::new());
                 for i in 0..l {
                     binomial::<Z, 4>(
                         scope,

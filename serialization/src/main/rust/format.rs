@@ -52,7 +52,7 @@ pub fn to_bytes<T: Serialize>(value: &T) -> Result<Vec<u8>> {
 }
 
 pub fn to_size<T: Serialize>(value: &T) -> Result<usize> {
-    let mut serializer = Serializer::new(Sizer::default());
+    let mut serializer = Serializer::new(Sizer::new());
     value.serialize(&mut serializer)?;
     Ok(serializer.encoder().output())
 }

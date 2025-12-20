@@ -65,7 +65,7 @@ impl<
         Self {
             circuit,
             logic_gate: LogicGate::new(circuit),
-            cache: vec![LinearCombination::<Z>::default(); Z::BITS as usize],
+            cache: vec![LinearCombination::new(); Z::BITS as usize],
             have_bits: 0,
         }
     }
@@ -75,7 +75,7 @@ impl<
             let scope = self.circuit.scope("BinaryUniformDistribution::sample");
             let generated = generator.generate();
             let mut p = Z::ONE;
-            let mut composed = LinearCombination::<Z>::default();
+            let mut composed = LinearCombination::new();
             for i in 0..Z::BITS {
                 let digit = scope.auxiliary();
                 self.cache[i as usize] = digit.into();

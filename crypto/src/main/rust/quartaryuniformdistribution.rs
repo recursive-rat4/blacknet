@@ -24,11 +24,17 @@ pub struct QuartaryUniformDistribution<G: UniformGenerator<Output: IntegerRing>>
     bud: BinaryUniformDistribution<G>,
 }
 
+impl<G: UniformGenerator<Output: IntegerRing>> QuartaryUniformDistribution<G> {
+    pub const fn new() -> Self {
+        Self {
+            bud: BinaryUniformDistribution::new(),
+        }
+    }
+}
+
 impl<G: UniformGenerator<Output: IntegerRing>> Default for QuartaryUniformDistribution<G> {
     fn default() -> Self {
-        Self {
-            bud: Default::default(),
-        }
+        Self::new()
     }
 }
 

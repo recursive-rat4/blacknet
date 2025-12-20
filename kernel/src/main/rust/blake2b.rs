@@ -69,7 +69,7 @@ impl TryFrom<&str> for Hash {
 
     fn try_from(hex: &str) -> Result<Self, Self::Error> {
         if hex.len() == 64 {
-            let mut buf: [u8; 32] = Default::default();
+            let mut buf = [0_u8; 32];
             match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {
                 Ok(_) => Ok(Self(buf)),
                 Err(err) => Err(err.error),

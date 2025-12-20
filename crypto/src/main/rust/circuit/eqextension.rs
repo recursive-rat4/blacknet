@@ -68,7 +68,7 @@ impl<'a, 'b, R: UnitalRing + Eq> EqExtension<'a, 'b, R> {
 
     pub fn hypercube(&self) -> Vec<LinearCombination<R>> {
         let scope = self.circuit.scope("EqExtension::hypercube");
-        let mut r = vec![LinearCombination::<R>::default(); 1 << self.coefficients.len()];
+        let mut r = vec![LinearCombination::new(); 1 << self.coefficients.len()];
         r[0] = Constant::ONE.into();
         let mut j = 1;
         for i in (0..self.coefficients.len()).rev() {

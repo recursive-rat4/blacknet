@@ -21,6 +21,7 @@ use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, Scope
 use crate::field::PrimeField;
 use crate::operation::{Double, Square};
 use crate::poseidon2::Poseidon2Params;
+use core::array;
 
 pub trait Poseidon2Circuit<
     F: PrimeField + Eq,
@@ -66,7 +67,7 @@ pub trait Poseidon2Circuit<
             }
             8 | 12 | 16 | 20 | 24 => {
                 Self::m4(x);
-                let mut s: [LinearCombination<F>; 4] = Default::default();
+                let mut s: [LinearCombination<F>; 4] = array::from_fn(|_| LinearCombination::new());
                 for i in 0..4 {
                     s[i] = x[i].clone();
                     for j in 1..WIDTH >> 2 {

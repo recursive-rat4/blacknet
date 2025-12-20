@@ -58,7 +58,7 @@ impl<const N: usize> BigInt<N> {
     #[allow(clippy::should_implement_trait)]
     pub fn mul<const M: usize, const NM: usize>(self, rps: BigInt<M>) -> BigInt<NM> {
         let mut c: u128 = 0;
-        let mut n = BigInt::<NM>::default();
+        let mut n = BigInt::<NM>::ZERO;
         for i in 0..N {
             for j in 0..M {
                 c += self.limbs[i] as u128 * rps.limbs[j] as u128 + n.limbs[i + j] as u128;
@@ -84,7 +84,7 @@ impl<const N: usize> BigInt<N> {
 
     fn square_impl<const NN: usize>(self) -> BigInt<NN> {
         let mut c: u64 = 0;
-        let mut n = BigInt::<NN>::default();
+        let mut n = BigInt::<NN>::ZERO;
         let mut j = N * 2;
         for i in (0..N).rev() {
             let p = self.limbs[i] as u128 * self.limbs[i] as u128;
@@ -401,7 +401,7 @@ impl<const N: usize> Shr<u64> for BigInt<N> {
     type Output = Self;
 
     fn shr(self, rps: u64) -> Self::Output {
-        let mut n = Self::default();
+        let mut n = Self::ZERO;
         let mut c = 0;
         for i in (0..N).rev() {
             n.limbs[i] = (self.limbs[i] >> rps) | (c << (u64::BITS as u64 - rps));

@@ -36,7 +36,7 @@ pub fn binomial<R: UnitalRing + Eq, const N: usize>(
 ) {
     //TODO Karatsuba method
     let mut ab: [[LinearCombination<R>; N]; N] =
-        array::from_fn(|_| array::from_fn(|_| Default::default()));
+        array::from_fn(|_| array::from_fn(|_| LinearCombination::new()));
     for i in 0..N {
         for j in 0..N {
             let t = scope.auxiliary();

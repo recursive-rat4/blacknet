@@ -130,8 +130,20 @@ impl<
     P: Permutation<Domain = [S; WIDTH]>,
 > DuplexImpl<S, RATE, CAPACITY, WIDTH, P>
 {
+    pub const fn new() -> Self {
+        const {
+            assert!(RATE + CAPACITY == WIDTH);
+        }
+        Self {
+            phase: Phase::Absorb,
+            position: 0,
+            state: [S::IDENTITY; WIDTH],
+            phantom: PhantomData,
+        }
+    }
+
     pub fn with_iv(iv: &[S; CAPACITY]) -> Self {
-        let mut duplex = Self::default();
+        let mut duplex = Self::new();
         duplex.state[RATE..WIDTH].copy_from_slice(iv);
         duplex
     }
@@ -169,15 +181,7 @@ impl<
 > Default for DuplexImpl<S, RATE, CAPACITY, WIDTH, P>
 {
     fn default() -> Self {
-        const {
-            assert!(RATE + CAPACITY == WIDTH);
-        }
-        Self {
-            phase: Phase::Absorb,
-            position: 0,
-            state: [S::IDENTITY; WIDTH],
-            phantom: PhantomData,
-        }
+        Self::new()
     }
 }
 
