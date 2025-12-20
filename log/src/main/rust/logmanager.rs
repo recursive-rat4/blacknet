@@ -64,6 +64,8 @@ impl LogManager {
         #[cfg(feature = "log")]
         spdlog::init_log_crate_proxy()?;
         #[cfg(feature = "log")]
+        spdlog::log_crate_proxy().set_filter(None);
+        #[cfg(feature = "log")]
         log::set_max_level(log::LevelFilter::Trace);
 
         let logger = Self::factory("LogManager", filter_level, &sinks)?;
