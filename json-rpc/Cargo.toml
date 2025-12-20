@@ -20,6 +20,7 @@ name = "blacknet-json-rpc"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 description.workspace = true
 documentation.workspace = true
 readme.workspace = true

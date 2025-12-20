@@ -84,6 +84,7 @@ needless_pass_by_value = "warn"
 version = "0.3.0"
 authors = ["Blacknet Team"]
 edition = "2024"
+rust-version = "1.91.0"
 description = "Decentralized peer-to-peer network that secures a public zero-knowledge platform with the proof of stake consensus"
 documentation = "https://blacknet.ninja/documentation.html"
 readme = "README.md"
