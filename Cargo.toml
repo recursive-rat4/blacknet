@@ -45,7 +45,7 @@ blacknet-time = { path = "time" }
 blacknet-vm = { path = "vm" }
 blacknet-wallet = { path = "wallet" }
 atomic = { version = "0.6.1", default-features = false }
-axum = { version = "0.8.7", default-features = false, features = ["form", "http1", "json", "tokio", "ws"] }
+axum = { version = "0.8.8", default-features = false, features = ["form", "http1", "json", "tokio", "ws"] }
 bech32 = { version = "0.11.1", default-features = false, features = ["alloc"] }
 blake2 = { version = "0.10.6", default-features = false }
 bytemuck = { version = "1.24.0", features = ["derive"] }
