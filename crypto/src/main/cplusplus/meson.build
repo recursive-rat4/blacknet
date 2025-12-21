@@ -25,6 +25,5 @@ crypto_main_includes = [
 ]
 crypto_main_dependencies = [
     compat_main_dependencies,
-    oneapi_tbb_dependency,
     fmt_dependency,
 ]

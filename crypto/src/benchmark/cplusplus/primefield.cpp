@@ -19,7 +19,6 @@
 
 #include "edwards25519.h"
 #include "fastrng.h"
-#include "pastacurves.h"
 
 using namespace blacknet::crypto;
 
@@ -38,7 +37,6 @@ static void BM_PrimeFieldAdd(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_PrimeFieldAdd<PallasField>);
 BENCHMARK(BM_PrimeFieldAdd<Field25519>);
 
 template<typename F>
@@ -54,7 +52,6 @@ static void BM_PrimeFieldSub(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_PrimeFieldSub<PallasField>);
 BENCHMARK(BM_PrimeFieldSub<Field25519>);
 
 template<typename F>
@@ -70,7 +67,6 @@ static void BM_PrimeFieldMul(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_PrimeFieldMul<PallasField>);
 BENCHMARK(BM_PrimeFieldMul<Field25519>);
 
 template<typename F>
@@ -86,5 +82,4 @@ static void BM_PrimeFieldDiv(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_PrimeFieldDiv<PallasField>);
 BENCHMARK(BM_PrimeFieldDiv<Field25519>);

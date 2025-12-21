@@ -1,0 +1,365 @@
+/*
+ * Copyright (c) 2024-2025 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use crate::convolution::Negacyclic;
+use crate::integer::Integer;
+use crate::magma::{
+    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+};
+use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::nttring::NTTRing;
+use crate::operation::{Double, Inv, Square};
+use crate::ring::{DivisionRing, IntegerRing, Ring};
+use crate::semigroup::{
+    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+    square_and_multiply,
+};
+use crate::semiring::{Presemiring, Semiring};
+use crate::univariatering::UnivariateRing;
+use core::fmt::{Debug, Formatter, Result};
+use core::iter::{Product, Sum};
+use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+
+/// The prime field of Fermat number `2¹⁶ + 1`.
+#[derive(Clone, Copy, Default, Eq)]
+pub struct FermatField {
+    n: i32,
+}
+
+impl FermatField {
+    /// Construct an element.
+    /// # Safety
+    /// `n` requires spare bits.
+    pub const unsafe fn from_unchecked(n: i32) -> Self {
+        Self { n }
+    }
+
+    /// Lazy reduction
+    pub fn reduce(self) -> Self {
+        Self::new(self.n)
+    }
+
+    const fn reduce_add(x: i32) -> i32 {
+        (x & 0xFFFF) - (x >> 16)
+    }
+
+    const fn reduce_mul(x: i64) -> i32 {
+        ((x & 0xFFFF) - (x >> 16)) as i32
+    }
+
+    pub const fn balanced(self) -> i32 {
+        let x = Self::reduce_add(self.n);
+        if x > Self::MODULUS / 2 {
+            x - Self::MODULUS
+        } else if x < -Self::MODULUS / 2 {
+            x + Self::MODULUS
+        } else {
+            x
+        }
+    }
+
+    const fn bits<const N: usize>(n: u32) -> [bool; N] {
+        let mut bits = [false; N];
+        let mut i = 0;
+        loop {
+            bits[i] = n >> i & 1 == 1;
+            i += 1;
+            if i == N {
+                break;
+            }
+        }
+        bits
+    }
+
+    const P_MINUS_2: [bool; 16] = Self::bits(0xFFFF);
+}
+
+impl Debug for FermatField {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}", self.balanced())
+    }
+}
+
+impl From<i8> for FermatField {
+    fn from(n: i8) -> Self {
+        Self { n: n.into() }
+    }
+}
+
+impl From<u8> for FermatField {
+    fn from(n: u8) -> Self {
+        Self { n: n.into() }
+    }
+}
+
+impl PartialEq for FermatField {
+    fn eq(&self, rps: &Self) -> bool {
+        self.balanced() == rps.balanced()
+    }
+}
+
+impl Add for FermatField {
+    type Output = Self;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self { n: self.n + rps.n }
+    }
+}
+
+impl Add<&Self> for FermatField {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
+impl AddAssign for FermatField {
+    #[inline]
+    fn add_assign(&mut self, rps: Self) {
+        *self = *self + rps
+    }
+}
+
+impl AddAssign<&Self> for FermatField {
+    #[inline]
+    fn add_assign(&mut self, rps: &Self) {
+        *self = *self + *rps
+    }
+}
+
+impl Double for FermatField {
+    type Output = Self;
+
+    fn double(self) -> Self {
+        Self { n: self.n << 1 }
+    }
+}
+
+impl Neg for FermatField {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self { n: -self.n }
+    }
+}
+
+impl Sub for FermatField {
+    type Output = Self;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        Self { n: self.n - rps.n }
+    }
+}
+
+impl Sub<&Self> for FermatField {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
+impl SubAssign for FermatField {
+    #[inline]
+    fn sub_assign(&mut self, rps: Self) {
+        *self = *self - rps
+    }
+}
+
+impl SubAssign<&Self> for FermatField {
+    #[inline]
+    fn sub_assign(&mut self, rps: &Self) {
+        *self = *self - *rps
+    }
+}
+
+impl Mul for FermatField {
+    type Output = Self;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        Self {
+            n: Self::reduce_mul(self.n as i64 * rps.n as i64),
+        }
+    }
+}
+
+impl Mul<&Self> for FermatField {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
+impl MulAssign for FermatField {
+    #[inline]
+    fn mul_assign(&mut self, rps: Self) {
+        *self = *self * rps
+    }
+}
+
+impl MulAssign<&Self> for FermatField {
+    #[inline]
+    fn mul_assign(&mut self, rps: &Self) {
+        *self = *self * *rps
+    }
+}
+
+impl Square for FermatField {
+    type Output = Self;
+
+    #[inline]
+    fn square(self) -> Self {
+        self * self
+    }
+}
+
+impl Inv for FermatField {
+    type Output = Option<Self>;
+
+    fn inv(self) -> Self::Output {
+        if self != Self::ZERO {
+            // Fermat little theorem
+            Some(square_and_multiply(self, Self::P_MINUS_2))
+        } else {
+            None
+        }
+    }
+}
+
+impl Div for FermatField {
+    type Output = Option<Self>;
+
+    fn div(self, rps: Self) -> Self::Output {
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div<&Self> for FermatField {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
+impl Sum for FermatField {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
+    }
+}
+
+impl<'a> Sum<&'a Self> for FermatField {
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
+}
+
+impl Product for FermatField {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
+    }
+}
+
+impl<'a> Product<&'a Self> for FermatField {
+    #[inline]
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
+    }
+}
+
+impl LeftZero for FermatField {
+    const LEFT_ZERO: Self = Self { n: 0 };
+}
+
+impl RightZero for FermatField {
+    const RIGHT_ZERO: Self = Self { n: 0 };
+}
+
+impl LeftOne for FermatField {
+    const LEFT_ONE: Self = Self { n: 1 };
+}
+
+impl RightOne for FermatField {
+    const RIGHT_ONE: Self = Self { n: 1 };
+}
+
+impl AdditiveMagma for FermatField {}
+
+impl AdditiveCommutativeMagma for FermatField {}
+
+impl AdditiveSemigroup for FermatField {}
+
+impl AdditiveMonoid for FermatField {
+    const IDENTITY: Self = Self { n: 0 };
+}
+
+impl MultiplicativeMagma for FermatField {}
+
+impl MultiplicativeCommutativeMagma for FermatField {}
+
+impl MultiplicativeSemigroup for FermatField {}
+
+impl MultiplicativeMonoid for FermatField {
+    const IDENTITY: Self = Self { n: 1 };
+}
+
+impl Ring for FermatField {
+    type Int = i32;
+}
+
+impl DivisionRing for FermatField {}
+
+impl IntegerRing for FermatField {
+    fn new(n: Self::Int) -> Self {
+        Self {
+            n: Self::reduce_add(n),
+        }
+    }
+    fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
+        Self::new(n)
+    }
+
+    fn canonical(self) -> Self::Int {
+        let x = Self::reduce_add(self.n);
+        if x >= Self::MODULUS {
+            x - Self::MODULUS
+        } else if x < 0 {
+            x + Self::MODULUS
+        } else {
+            x
+        }
+    }
+    fn absolute(self) -> Self::Int {
+        self.balanced().abs()
+    }
+
+    const BITS: u32 = 17;
+    const MODULUS: Self::Int = 65537;
+}
+
+// (2¹⁶ + 1) / (x¹⁰²⁴ + 1)
+
+pub type FermatRing1024 = UnivariateRing<FermatField, 1024, Negacyclic>;
+
+pub type FermatNTT1024 = NTTRing<FermatField, 1024, 1024>;

@@ -1,0 +1,203 @@
+#
+# Copyright (c) 2025 Pavel Vasin
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+
+[package]
+name = "blacknet-crypto"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+documentation.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+blacknet-compat = { workspace = true, optional = true }
+orx-tree.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+blacknet-compat.workspace = true
+criterion.workspace = true
+
+[features]
+default = ["std"]
+std = ["dep:blacknet-compat"]
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "ajtaicommitment"
+path = "src/test/rust/ajtaicommitment.rs"
+
+[[test]]
+name = "bigint"
+path = "src/test/rust/bigint.rs"
+
+[[test]]
+name = "binaritypolynomial"
+path = "src/test/rust/binaritypolynomial.rs"
+
+[[test]]
+name = "binaryuniformdistribution"
+path = "src/test/rust/binaryuniformdistribution.rs"
+
+[[test]]
+name = "chacha20"
+path = "src/test/rust/chacha20.rs"
+
+[[test]]
+name = "circuitbuilder"
+path = "src/test/rust/circuitbuilder.rs"
+
+[[test]]
+name = "customizableconstraintsystem"
+path = "src/test/rust/customizableconstraintsystem.rs"
+
+[[test]]
+name = "densematrix"
+path = "src/test/rust/densematrix.rs"
+
+[[test]]
+name = "densevector"
+path = "src/test/rust/densevector.rs"
+
+[[test]]
+name = "duplex"
+path = "src/test/rust/duplex.rs"
+
+[[test]]
+name = "edwards25519"
+path = "src/test/rust/edwards25519.rs"
+
+[[test]]
+name = "eqextension"
+path = "src/test/rust/eqextension.rs"
+
+[[test]]
+name = "fastdrg"
+path = "src/test/rust/fastdrg.rs"
+
+[[test]]
+name = "fermat"
+path = "src/test/rust/fermat.rs"
+
+[[test]]
+name = "field25519"
+path = "src/test/rust/field25519.rs"
+
+[[test]]
+name = "hypercube"
+path = "src/test/rust/hypercube.rs"
+
+[[test]]
+name = "interpolation"
+path = "src/test/rust/interpolation.rs"
+
+[[test]]
+name = "jive"
+path = "src/test/rust/jive.rs"
+
+[[test]]
+name = "latticegadget"
+path = "src/test/rust/latticegadget.rs"
+
+[[test]]
+name = "lm"
+path = "src/test/rust/lm.rs"
+
+[[test]]
+name = "logicgate"
+path = "src/test/rust/logicgate.rs"
+
+[[test]]
+name = "matrixring"
+path = "src/test/rust/matrixring.rs"
+
+[[test]]
+name = "module"
+path = "src/test/rust/module.rs"
+
+[[test]]
+name = "multilinearextension"
+path = "src/test/rust/multilinearextension.rs"
+
+[[test]]
+name = "pervushin"
+path = "src/test/rust/pervushin.rs"
+
+[[test]]
+name = "poseidon2"
+path = "src/test/rust/poseidon2.rs"
+
+[[test]]
+name = "quartaryuniformdistribution"
+path = "src/test/rust/quartaryuniformdistribution.rs"
+
+[[test]]
+name = "r1cs"
+path = "src/test/rust/r1cs.rs"
+
+[[test]]
+name = "sparsematrix"
+path = "src/test/rust/sparsematrix.rs"
+
+[[test]]
+name = "sparsevector"
+path = "src/test/rust/sparsevector.rs"
+
+[[test]]
+name = "sumcheck"
+path = "src/test/rust/sumcheck.rs"
+
+[[test]]
+name = "uniformintdistribution"
+path = "src/test/rust/uniformintdistribution.rs"
+
+[[test]]
+name = "univariatepolynomial"
+path = "src/test/rust/univariatepolynomial.rs"
+
+[[test]]
+name = "z2"
+path = "src/test/rust/z2.rs"
+
+[[bench]]
+name = "field25519"
+path = "src/benchmark/rust/field25519.rs"
+harness = false
+
+[[bench]]
+name = "poseidon2"
+path = "src/benchmark/rust/poseidon2.rs"
+harness = false
+
+[[bench]]
+name = "sumcheck"
+path = "src/benchmark/rust/sumcheck.rs"
+harness = false

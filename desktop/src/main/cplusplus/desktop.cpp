@@ -24,16 +24,13 @@
 #include <QIcon>
 #include <QMessageBox>
 
+#include "logmanager.h"
 #include "mainwindow.h"
-#include "node.h"
 #include "settings.h"
-#include "threadpool.h"
 #include "trayicon.h"
 
 using namespace blacknet::desktop;
 using blacknet::log::LogManager;
-using blacknet::network::Node;
-using blacknet::network::ThreadPool;
 
 class Desktop : public QApplication {
 public:
@@ -52,11 +49,6 @@ public:
 int main(int argc, char* argv[]) {
     Desktop desktop(argc, argv);
     try {
-        Node node(LogManager::Regime::Desktop);
-        ThreadPool thread_pool;
-        node.co_spawn(thread_pool);
-        thread_pool.spawn();
-
         Settings settings;
         MainWindow mainWindow(&desktop, &settings);
         TrayIcon trayIcon(&desktop, &mainWindow);

@@ -1,0 +1,66 @@
+/*
+ * Copyright (c) 2018-2025 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use crate::amount::Amount;
+use crate::blake2b::Hash;
+use crate::ed25519::PublicKey;
+use crate::error::Result;
+use crate::transaction::{CoinTx, Transaction, TxData};
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize)]
+pub struct CancelLease {
+    amount: Amount,
+    to: PublicKey,
+    height: u32,
+}
+
+impl CancelLease {
+    pub const fn new(amount: Amount, to: PublicKey, height: u32) -> Self {
+        Self { amount, to, height }
+    }
+
+    pub const fn amount(&self) -> Amount {
+        self.amount
+    }
+
+    pub const fn to(&self) -> PublicKey {
+        self.to
+    }
+
+    pub const fn height(&self) -> u32 {
+        self.height
+    }
+}
+
+impl TxData for CancelLease {
+    fn process_impl(
+        &self,
+        tx: Transaction,
+        _hash: Hash,
+        _data_index: u32,
+        coin_tx: &mut (impl CoinTx + ?Sized),
+    ) -> Result<()> {
+        let mut to_account = coin_tx.get_account(self.to)?;
+        to_account.remove_lease(tx.from(), self.height, self.amount)?;
+        coin_tx.set_account(self.to, to_account);
+        let mut account = coin_tx.get_account(tx.from())?;
+        account.debit(coin_tx.height(), self.amount);
+        coin_tx.set_account(tx.from(), account);
+        Ok(())
+    }
+}

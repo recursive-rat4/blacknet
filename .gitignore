@@ -1,6 +1,10 @@
 # SageMath
 *.py
 
+# Cargo
+/target
+**/*.rs.bk
+
 # Maven
 target/
 

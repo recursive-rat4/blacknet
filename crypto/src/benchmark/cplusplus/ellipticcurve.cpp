@@ -19,7 +19,6 @@
 
 #include "edwards25519.h"
 #include "fastrng.h"
-#include "pastacurves.h"
 
 using namespace blacknet::crypto;
 
@@ -38,7 +37,6 @@ static void BM_EllipticCurveAdd(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_EllipticCurveAdd<PallasGroupJacobian>);
 BENCHMARK(BM_EllipticCurveAdd<Edwards25519GroupExtended>);
 
 template<typename ECG>
@@ -52,7 +50,6 @@ static void BM_EllipticCurveDbl(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_EllipticCurveDbl<PallasGroupJacobian>);
 BENCHMARK(BM_EllipticCurveDbl<Edwards25519GroupExtended>);
 
 template<typename ECG>
@@ -68,7 +65,6 @@ static void BM_EllipticCurveSub(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_EllipticCurveSub<PallasGroupJacobian>);
 BENCHMARK(BM_EllipticCurveSub<Edwards25519GroupExtended>);
 
 template<typename ECG>
@@ -84,5 +80,4 @@ static void BM_EllipticCurveMul(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
-BENCHMARK(BM_EllipticCurveMul<PallasGroupJacobian>);
 BENCHMARK(BM_EllipticCurveMul<Edwards25519GroupExtended>);

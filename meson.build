@@ -25,22 +25,13 @@ project('blacknet', 'cpp',
     ],
 )
 
-network_feature = get_option('network')
-daemon_feature = get_option('daemon')
 desktop_feature = get_option('desktop')
 
-oneapi_tbb_dependency = dependency('tbb', version : '>=2020.0.0')
 fmt_dependency = dependency('fmt', version : '>=9.1.0')
 spdlog_dependency = dependency('spdlog', version : '>=1.5.0')
-sqlite_dependency = dependency('sqlite3', version : '>=3.37.2')
-boost_dependency = dependency('boost', version : '>=1.83.0', required : network_feature)
-rocksdb_dependency = dependency('rocksdb', version : '>=7.0.0', required : network_feature)
+boost_dependency = dependency('boost', version : '>=1.83.0')
 qt_dependency = dependency('qt6', modules : 'Widgets', version : '>=6.2.5', required : desktop_feature)
 
-network_feature = network_feature.require(boost_dependency.found(), error_message : 'requires Boost Libraries')
-network_feature = network_feature.require(rocksdb_dependency.found(), error_message : 'requires RocksDB Library')
-daemon_feature = daemon_feature.require(network_feature.allowed(), error_message : 'requires network')
-desktop_feature = desktop_feature.require(network_feature.allowed(), error_message : 'requires network')
 desktop_feature = desktop_feature.require(qt_dependency.found(), error_message : 'requires Qt Framework')
 
 if get_option('tests')
@@ -89,19 +80,8 @@ configure_file(
 config_includes = include_directories('.')
 
 subdir('compat')
-subdir('codec')
-subdir('time')
 subdir('crypto')
-subdir('io')
 subdir('log')
-if network_feature.allowed()
-    subdir('network')
-endif
-subdir('vm')
-subdir('wallet')
-if daemon_feature.allowed()
-    subdir('daemon')
-endif
 if desktop_feature.allowed()
     subdir('desktop')
 endif

@@ -20,49 +20,12 @@
 #include "circuitbuilder.h"
 #include "customizableconstraintsystem.h"
 #include "poseidon2lm62.h"
-#include "poseidon2pasta.h"
 #include "poseidon2pervushin.h"
 #include "poseidon2solinas62.h"
 
 using namespace blacknet::crypto;
 
 BOOST_AUTO_TEST_SUITE(Poseidons)
-
-BOOST_AUTO_TEST_CASE(Pallas_3) {
-    using E = PallasField;
-    using Poseidon2 = Poseidon2<Poseidon2PallasSpongeParams>;
-    std::array<E, 3> a{
-        0,
-        1,
-        2,
-    };
-    std::array<E, 3> b(a);
-    std::array<E, 3> c{
-        E("1a9b54c7512a914dd778282c44b3513fea7251420b9d95750baae059b2268d7a"),
-        E("1c48ea0994a7d7984ea338a54dbf0c8681f5af883fe988d59ba3380c9f7901fc"),
-        E("079ddd0a80a3e9414489b526a2770448964766685f4c4842c838f8a23120b401"),
-    };
-    Poseidon2::permute(a);
-    BOOST_TEST(c == a);
-
-    using Builder = CircuitBuilder<E, 2>;
-    Builder circuit;
-    std::array<typename Builder::LinearCombination, Poseidon2::width()> x;
-    std::ranges::generate(x, [&]{ return circuit.input(); });
-    Poseidon2::Circuit<Builder>::permute(&circuit, x);
-    for (std::size_t i = 0; i < Poseidon2::width(); ++i) {
-        auto v = circuit.auxiliary();
-        circuit(v == x[i]);
-    }
-
-    CustomizableConstraintSystem<E> ccs(circuit.ccs());
-    VectorDense<E> z = ccs.assigment();
-    std::ranges::copy(b, std::back_inserter(z.elements));
-
-    Poseidon2::Assigner<Builder::degree()>::permute(b, &z.elements);
-    std::ranges::copy(b, std::back_inserter(z.elements));
-    BOOST_TEST(ccs.isSatisfied(z));
-}
 
 BOOST_AUTO_TEST_CASE(Solinas62_12) {
     using E = Solinas62Ring;

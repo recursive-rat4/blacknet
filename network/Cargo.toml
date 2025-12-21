@@ -1,0 +1,83 @@
+#
+# Copyright (c) 2025 Pavel Vasin
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+
+[package]
+name = "blacknet-network"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+documentation.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+blacknet-compat.workspace = true
+blacknet-crypto.workspace = true
+blacknet-io.workspace = true
+blacknet-kernel.workspace = true
+blacknet-log = { workspace = true, features = ["log"] }
+blacknet-serialization.workspace = true
+blacknet-time.workspace = true
+blacknet-wallet.workspace = true
+atomic.workspace = true
+blake2.workspace = true
+bytemuck.workspace = true
+data-encoding = { workspace = true, features = ["std"] }
+data-encoding-macro.workspace = true
+fjall.workspace = true
+hashlink.workspace = true
+natpmp.workspace = true
+serde = { workspace = true, features = ["std"] }
+serde_json.workspace = true
+sha2.workspace = true
+sha3.workspace = true
+spdlog-rs.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "blockannounce"
+path = "src/test/rust/blockannounce.rs"
+
+[[test]]
+name = "endpoint"
+path = "src/test/rust/endpoint.rs"
+
+[[test]]
+name = "hello"
+path = "src/test/rust/hello.rs"
+
+[[test]]
+name = "i2psam"
+path = "src/test/rust/i2psam.rs"
+
+[[test]]
+name = "rollinghashset"
+path = "src/test/rust/rollinghashset.rs"

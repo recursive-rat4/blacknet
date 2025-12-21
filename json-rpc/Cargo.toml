@@ -1,0 +1,55 @@
+#
+# Copyright (c) 2025 Pavel Vasin
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+
+[package]
+name = "blacknet-json-rpc"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+documentation.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+blacknet-compat.workspace = true
+blacknet-crypto.workspace = true
+blacknet-kernel.workspace = true
+blacknet-log.workspace = true
+blacknet-network.workspace = true
+blacknet-serialization.workspace = true
+blacknet-time.workspace = true
+blacknet-wallet.workspace = true
+axum.workspace = true
+data-encoding.workspace = true
+num-bigint.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+spdlog-rs.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+path = "src/main/rust/lib.rs"

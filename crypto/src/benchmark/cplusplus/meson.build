@@ -25,7 +25,6 @@ crypto_benchmark_sources = [
     'integerring.cpp',
     'johnsonlindenstrauss.cpp',
     'latticefold.cpp',
-    'pedersencommitment.cpp',
     'poseidon2.cpp',
     'primefield.cpp',
 ]
