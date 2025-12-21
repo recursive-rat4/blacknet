@@ -16,8 +16,15 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-.gcc:
-  image: gcc:14.3.0@sha256:bf543463a2a7171654faed7d899d74a286fd3706ffb424f52a2cb4dc3f696039
+.rust-llvm:
+  image: rust:1.91.1@sha256:867f1d1162913c401378a8504fb17fe2032c760dc316448766f150a130204aad
+  variables:
+    CARGO_HOME: ".cargo"
+    CARGO_TERM_COLOR: always
+  cache:
+    paths:
+      - .cargo
+      - target
 
 .openjdk:
   image: maven:3.9.10-eclipse-temurin-21@sha256:615bd38fa00dd2416d90cbbc99895b9955400fa8110e83646e3e04ebcb7c471e
@@ -33,24 +40,20 @@ stages:
   - test
   - build
 
-gcc-test:
-  extends: .gcc
+rust-test:
+  extends: .rust-llvm
   stage: test
-  before_script:
-    - echo "deb http://deb.debian.org/debian bookworm-backports main" >> /etc/apt/sources.list
-    - apt-get update
-    - apt-get -t bookworm-backports -y install meson
-    #XXX re-add librocksdb-dev qt6-base-dev when have libboost-dev
-    - apt-get -y install libbenchmark-dev libboost-dev libboost-test-dev libtbb-dev libfmt-dev libspdlog-dev libsqlite3-dev
   script:
-    - meson setup -Dbuildtype=plain -Dwarning_level=0 -Dtests=true -Dtests_report_junit=true -Dbenchmarks=true build
-    - meson compile -C build
-    - meson test --no-stdsplit --print-errorlogs -C build
+    - cargo build --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
+    - cargo test --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
+    - cargo build
+    - cargo test
   rules:
     - changes:
-      - "**/meson*"
-      - "**/*.h"
-      - "**/*.cpp"
+      - Cargo.lock
+      - Cargo.toml
+      - "**/Cargo.*"
+      - "**/*.rs"
       when: on_success
     - when: never
   artifacts:
@@ -86,10 +89,6 @@ openjdk-test:
       - "**/*.kt"
       when: on_success
     - when: never
-  artifacts:
-    reports:
-      junit:
-        - "**/target/surefire-reports/TEST-*.xml"
 
 openjdk-build:
   extends: .openjdk
