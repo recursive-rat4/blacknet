@@ -40,22 +40,14 @@ impl<'a, 'b, R: Semiring + Eq> UnivariatePolynomial<'a, 'b, R> {
 
     pub fn evaluate(&self, point: &LinearCombination<R>) -> LinearCombination<R> {
         let scope = self.circuit.scope("UnivariatePolynomial::evaluate");
-        let mut sigma = self.coefficients[0].clone();
-        let mut power = point.clone();
-        for i in 1..self.coefficients.len() - 1 {
-            let cp = scope.auxiliary();
-            scope.constrain(&self.coefficients[i] * &power, cp);
-            sigma += cp;
-            let pp = scope.auxiliary();
-            scope.constrain(power * point, pp);
-            power = pp.into();
+        // Horner method
+        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
+        for i in (0..self.coefficients.len() - 1).rev() {
+            let ap = scope.auxiliary();
+            scope.constrain(accum * point, ap);
+            accum = ap + &self.coefficients[i];
         }
-        if self.coefficients.len() > 1 {
-            let cp = scope.auxiliary();
-            scope.constrain(&self.coefficients[self.coefficients.len() - 1] * power, cp);
-            sigma += cp;
-        }
-        sigma
+        accum
     }
 
     pub fn at_0_plus_1(&self) -> LinearCombination<R> {

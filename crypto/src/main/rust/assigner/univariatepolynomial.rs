@@ -37,22 +37,14 @@ impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
     }
 
     pub fn evaluate(&self, point: R) -> R {
-        let mut sigma = self.coefficients[0];
-        let mut power = point;
-        for i in 1..self.coefficients.len() - 1 {
-            let cp = self.coefficients[i] * power;
-            self.assigment.push(cp);
-            sigma += cp;
-            let pp = power * point;
-            self.assigment.push(pp);
-            power = pp;
+        // Horner method
+        let mut accum = self.coefficients[self.coefficients.len() - 1];
+        for i in (0..self.coefficients.len() - 1).rev() {
+            let ap = accum * point;
+            self.assigment.push(ap);
+            accum = ap + self.coefficients[i];
         }
-        if self.coefficients.len() > 1 {
-            let cp = self.coefficients[self.coefficients.len() - 1] * power;
-            self.assigment.push(cp);
-            sigma += cp;
-        }
-        sigma
+        accum
     }
 
     pub fn at_0_plus_1(&self) -> R {
