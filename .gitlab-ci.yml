@@ -56,10 +56,6 @@ rust-test:
       - "**/*.rs"
       when: on_success
     - when: never
-  artifacts:
-    reports:
-      junit:
-        - "build/TEST-*.xml"
 
 openjdk-scan:
   extends: .openjdk
@@ -89,6 +85,10 @@ openjdk-test:
       - "**/*.kt"
       when: on_success
     - when: never
+  artifacts:
+    reports:
+      junit:
+        - "**/target/surefire-reports/TEST-*.xml"
 
 openjdk-build:
   extends: .openjdk
