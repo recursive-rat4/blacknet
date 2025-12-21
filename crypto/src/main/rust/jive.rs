@@ -20,8 +20,7 @@ use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::permutation::Permutation;
 use core::marker::PhantomData;
 
-// https://eprint.iacr.org/2022/840
-
+/// Jive mode <https://eprint.iacr.org/2022/840>
 pub struct Jive<
     G: AdditiveCyclicGroup,
     const RANK: usize,
@@ -36,15 +35,27 @@ impl<
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<Domain = [G; WIDTH]>,
-> Default for Jive<G, RANK, WIDTH, P>
+> Jive<G, RANK, WIDTH, P>
 {
-    fn default() -> Self {
+    pub const fn new() -> Self {
         const {
             assert!(RANK * 2 == WIDTH);
         }
         Self {
             phantom: PhantomData,
         }
+    }
+}
+
+impl<
+    G: AdditiveCyclicGroup,
+    const RANK: usize,
+    const WIDTH: usize,
+    P: Permutation<Domain = [G; WIDTH]>,
+> Default for Jive<G, RANK, WIDTH, P>
+{
+    fn default() -> Self {
+        Self::new()
     }
 }
 

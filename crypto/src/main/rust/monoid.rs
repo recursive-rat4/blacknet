@@ -21,6 +21,7 @@ use crate::semigroup::{
 };
 use core::iter::{Product, Sum};
 
+/// A semigroup with a two-sided additive identity.
 #[rustfmt::skip]
 pub trait AdditiveMonoid
     : AdditiveSemigroup
@@ -43,6 +44,7 @@ pub trait AdditiveCommutativeMonoid
 
 impl<G: AdditiveMonoid + AdditiveCommutativeSemigroup> AdditiveCommutativeMonoid for G {}
 
+/// A semigroup with a two-sided multiplicative identity.
 #[rustfmt::skip]
 pub trait MultiplicativeMonoid
     : MultiplicativeSemigroup

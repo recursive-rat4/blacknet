@@ -22,10 +22,6 @@ use alloc::vec::Vec;
 use core::array;
 use core::marker::PhantomData;
 
-// https://keccak.team/files/CSF-0.1.pdf
-// https://eprint.iacr.org/2008/263
-// http://fuee.u-fukui.ac.jp/~hirose/publication/ask20160930.pdf
-
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub enum Phase {
     Absorb,
@@ -108,6 +104,14 @@ impl<T: Squeeze<T>> SqueezeWithSize<T> for Vec<T> {
     }
 }
 
+/// An implementation of the duplex construction.
+///
+/// Introduction: <https://keccak.team/files/CSF-0.1.pdf>
+///
+/// Overwrite mode: <https://eprint.iacr.org/2008/263>
+///
+/// Non-injective padding: <http://fuee.u-fukui.ac.jp/~hirose/publication/ask20160930.pdf>
+///
 #[derive(Clone, Copy)]
 pub struct DuplexImpl<
     S: AdditiveGroup + From<i8>,

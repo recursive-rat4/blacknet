@@ -24,12 +24,15 @@ use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
+/// A multivariate polynomial that evaluates to `0` over the unit hypercube,
+/// if all coefficients are from subset `{0, 1}`.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct BinarityPolynomial<R: UnitalRing> {
     coefficients: MultilinearExtension<R>,
 }
 
 impl<R: UnitalRing> BinarityPolynomial<R> {
+    /// Construct a new polynomial.
     pub const fn new(coefficients: MultilinearExtension<R>) -> Self {
         Self { coefficients }
     }

@@ -54,6 +54,7 @@ pub trait CommutativeRing
 
 impl<R: UnitalRing + CommutativeSemiring> CommutativeRing for R {}
 
+/// A ring in which nonzero elements are existent and invertible.
 #[rustfmt::skip]
 pub trait DivisionRing
     : Ring

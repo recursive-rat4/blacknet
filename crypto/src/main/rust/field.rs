@@ -18,6 +18,7 @@
 use crate::ring::{CommutativeRing, DivisionRing, IntegerRing};
 use core::ops::Div;
 
+/// A commutative division ring.
 #[rustfmt::skip]
 pub trait Field
     : CommutativeRing
@@ -37,6 +38,7 @@ impl<R
 {
 }
 
+/// A ring `ℤ/q` where `q` is a prime number.
 #[rustfmt::skip]
 pub trait PrimeField
     : Field
