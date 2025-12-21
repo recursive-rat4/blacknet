@@ -42,7 +42,7 @@ impl TxData for RefundHTLC {
         tx: Transaction,
         _hash: Hash,
         _data_index: u32,
-        coin_tx: &(impl CoinTx + ?Sized),
+        coin_tx: &mut (impl CoinTx + ?Sized),
     ) -> Result<()> {
         let htlc = coin_tx.get_htlc(self.id)?;
         if tx.from() != htlc.from {

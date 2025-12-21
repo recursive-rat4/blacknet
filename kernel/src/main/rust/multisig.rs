@@ -40,7 +40,7 @@ impl Deposit {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Multisig {
     n: u8,
     deposits: Box<[Deposit]>,

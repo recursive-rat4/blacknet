@@ -82,7 +82,7 @@ impl TxData for CreateHTLC {
         tx: Transaction,
         hash: Hash,
         data_index: u32,
-        coin_tx: &(impl CoinTx + ?Sized),
+        coin_tx: &mut (impl CoinTx + ?Sized),
     ) -> Result<()> {
         self.time_lock.validate()?;
         self.hash_lock.validate()?;

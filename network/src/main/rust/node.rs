@@ -65,7 +65,7 @@ pub struct Node {
     router: Arc<Router>,
     block_db: BlockDB,
     block_fetcher: BlockFetcher,
-    coin_db: CoinDB,
+    coin_db: Arc<CoinDB>,
     fjall: Keyspace,
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
@@ -104,8 +104,13 @@ impl Node {
 
         let settings = Arc::new(Settings::default(&mode));
         let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
-        let tx_pool = Arc::new(RwLock::new(TxPool::new(log_manager, settings.clone())?));
         let fjall = Fjall::new(dirs, &settings)?;
+        let coin_db = CoinDB::new(&mode, &fjall)?;
+        let tx_pool = Arc::new(RwLock::new(TxPool::new(
+            log_manager,
+            settings.clone(),
+            coin_db.clone(),
+        )?));
         let node = Arc::new(Self {
             logger,
             settings: settings.clone(),
@@ -116,7 +121,7 @@ impl Node {
             router: Router::new(&mode, dirs, log_manager, runtime, &settings, peer_table)?,
             block_db: BlockDB::new(&fjall)?,
             block_fetcher: BlockFetcher::new(),
-            coin_db: CoinDB::new(&mode, &fjall)?,
+            coin_db,
             fjall,
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
@@ -209,7 +214,7 @@ impl Node {
         &self.block_fetcher
     }
 
-    pub const fn coin_db(&self) -> &CoinDB {
+    pub const fn coin_db(&self) -> &Arc<CoinDB> {
         &self.coin_db
     }
 

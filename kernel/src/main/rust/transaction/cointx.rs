@@ -34,17 +34,17 @@ pub trait CoinTx {
     fn block_hash(&self) -> Hash;
     fn block_time(&self) -> Seconds;
     fn height(&self) -> u32;
-    fn get_account(&self, key: PublicKey) -> Result<Account>;
-    fn get_or_create(&self, key: PublicKey) -> Account;
-    fn set_account(&self, key: PublicKey, state: Account);
-    fn add_htlc(&self, id: HashTimeLockContractId, htlc: HTLC);
-    fn get_htlc(&self, id: HashTimeLockContractId) -> Result<HTLC>;
-    fn remove_htlc(&self, id: HashTimeLockContractId);
-    fn add_multisig(&self, id: MultiSignatureLockContractId, multisig: Multisig);
-    fn get_multisig(&self, id: MultiSignatureLockContractId) -> Result<Multisig>;
-    fn remove_multisig(&self, id: MultiSignatureLockContractId);
+    fn get_account(&mut self, key: PublicKey) -> Result<Account>;
+    fn get_or_create(&mut self, key: PublicKey) -> Account;
+    fn set_account(&mut self, key: PublicKey, state: Account);
+    fn add_htlc(&mut self, id: HashTimeLockContractId, htlc: HTLC);
+    fn get_htlc(&mut self, id: HashTimeLockContractId) -> Result<HTLC>;
+    fn remove_htlc(&mut self, id: HashTimeLockContractId);
+    fn add_multisig(&mut self, id: MultiSignatureLockContractId, multisig: Multisig);
+    fn get_multisig(&mut self, id: MultiSignatureLockContractId) -> Result<Multisig>;
+    fn remove_multisig(&mut self, id: MultiSignatureLockContractId);
 
-    fn process_transaction_impl(&self, tx: Transaction, hash: Hash) -> Result<()> {
+    fn process_transaction_impl(&mut self, tx: Transaction, hash: Hash) -> Result<()> {
         tx.verify_signature(hash)?;
         self.check_anchor(tx.anchor())?;
         match tx.kind() {

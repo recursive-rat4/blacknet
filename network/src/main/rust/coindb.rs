@@ -23,13 +23,15 @@ use blacknet_kernel::account::Account;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::PublicKey;
+use blacknet_kernel::error::Error;
 use blacknet_kernel::htlc::HTLC;
 use blacknet_kernel::multisig::Multisig;
 use blacknet_kernel::proofofstake::{DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY};
 use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_time::Seconds;
-use fjall::{Keyspace, Result};
+use fjall::{Error as FjallError, Keyspace};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 pub struct CoinDB {
     state: State,
@@ -39,13 +41,13 @@ pub struct CoinDB {
 }
 
 impl CoinDB {
-    pub fn new(mode: &Mode, fjall: &Keyspace) -> Result<Self> {
-        Ok(Self {
+    pub fn new(mode: &Mode, fjall: &Keyspace) -> Result<Arc<Self>, FjallError> {
+        Ok(Arc::new(Self {
             state: State::genesis(mode), //TODO
             accounts: DBView::new(fjall, "accounts")?,
             htlcs: DBView::new(fjall, "htlcs")?,
             multisigs: DBView::new(fjall, "multisigs")?,
-        })
+        }))
     }
 
     pub const fn state(&self) -> State {
@@ -66,6 +68,14 @@ impl CoinDB {
 
     pub fn check(&self) -> Check {
         todo!();
+    }
+
+    pub fn check_anchor(&self, hash: Hash) -> Result<(), Error> {
+        if hash == genesis::hash() || todo!("blockIndexes.contains(hash.bytes)") {
+            Ok(())
+        } else {
+            Err(Error::NotReachableVertex(hash.to_string()))
+        }
     }
 }
 

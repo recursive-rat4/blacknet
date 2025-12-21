@@ -24,7 +24,7 @@ use alloc::format;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Account {
     seq: u32,
     stake: Amount,
@@ -33,6 +33,15 @@ pub struct Account {
 }
 
 impl Account {
+    pub const fn new() -> Self {
+        Self {
+            seq: 0,
+            stake: Amount::ZERO,
+            immature: Vec::new(),
+            leases: Vec::new(),
+        }
+    }
+
     pub const fn seq(&self) -> u32 {
         self.seq
     }

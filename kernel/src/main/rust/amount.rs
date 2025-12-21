@@ -18,7 +18,7 @@
 use bytemuck::NoUninit;
 use core::fmt::{Debug, Display, Formatter, Result};
 use core::iter::Sum;
-use core::ops::{Add, AddAssign, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -117,6 +117,20 @@ impl Sub for Amount {
 impl SubAssign for Amount {
     fn sub_assign(&mut self, rps: Self) {
         self.value -= rps.value;
+    }
+}
+
+impl Mul<u64> for Amount {
+    type Output = Self;
+
+    fn mul(self, rps: u64) -> Self::Output {
+        Self::from(self.value * rps)
+    }
+}
+
+impl MulAssign<u64> for Amount {
+    fn mul_assign(&mut self, rps: u64) {
+        self.value *= rps;
     }
 }
 

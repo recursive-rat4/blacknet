@@ -98,7 +98,7 @@ impl TxData for SpendMultisig {
         tx: Transaction,
         _hash: Hash,
         _data_index: u32,
-        coin_tx: &(impl CoinTx + ?Sized),
+        coin_tx: &mut (impl CoinTx + ?Sized),
     ) -> Result<()> {
         let multisig = coin_tx.get_multisig(self.id)?;
         if self.amounts.len() != multisig.deposits().len() {

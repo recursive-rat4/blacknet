@@ -53,7 +53,7 @@ impl TxData for CancelLease {
         tx: Transaction,
         _hash: Hash,
         _data_index: u32,
-        coin_tx: &(impl CoinTx + ?Sized),
+        coin_tx: &mut (impl CoinTx + ?Sized),
     ) -> Result<()> {
         let mut to_account = coin_tx.get_account(self.to)?;
         to_account.remove_lease(tx.from(), self.height, self.amount)?;

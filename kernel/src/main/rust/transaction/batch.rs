@@ -65,7 +65,7 @@ impl TxData for Batch {
         _tx: Transaction,
         _hash: Hash,
         _data_index: u32,
-        _coin_tx: &(impl CoinTx + ?Sized),
+        _coin_tx: &mut (impl CoinTx + ?Sized),
     ) -> Result<()> {
         todo!();
     }
