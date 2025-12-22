@@ -20,6 +20,7 @@ use crate::operation::Double;
 use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 
+/// Logic gates over a unital ring.
 pub struct LogicGate<'a, 'b, R: UnitalRing> {
     circuit: &'a CircuitBuilder<'b, R>,
 }
@@ -29,11 +30,13 @@ impl<'a, 'b, R: UnitalRing + Eq> LogicGate<'a, 'b, R> {
         Self { circuit }
     }
 
+    /// Constrain that `a` is a Boolean value.
     pub fn check_range(&self, a: &LinearCombination<R>) {
         let scope = self.circuit.scope("LogicGate::check_range");
         scope.constrain(a * (a - Constant::ONE), Constant::ZERO);
     }
 
+    /// Constrain that `a` is a sequence of Boolean values.
     pub fn check_range_slice(&self, a: &[LinearCombination<R>]) {
         let scope = self.circuit.scope("LogicGate::check_range_slice");
         for a in a {
@@ -41,6 +44,7 @@ impl<'a, 'b, R: UnitalRing + Eq> LogicGate<'a, 'b, R> {
         }
     }
 
+    /// Compute the exclusive disjunction `a ⊻ b`.
     pub fn xor(&self, a: &LinearCombination<R>, b: &LinearCombination<R>) -> LinearCombination<R> {
         let scope = self.circuit.scope("LogicGate::xor");
         let ab = scope.auxiliary();
@@ -48,6 +52,7 @@ impl<'a, 'b, R: UnitalRing + Eq> LogicGate<'a, 'b, R> {
         a + b - ab.double()
     }
 
+    /// Compute the conjunction `a ∧ b`.
     pub fn and(&self, a: &LinearCombination<R>, b: &LinearCombination<R>) -> LinearCombination<R> {
         let scope = self.circuit.scope("LogicGate::and");
         let ab = scope.auxiliary();
@@ -55,6 +60,7 @@ impl<'a, 'b, R: UnitalRing + Eq> LogicGate<'a, 'b, R> {
         ab.into()
     }
 
+    /// Compute the disjunction `a ∨ b`.
     pub fn or(&self, a: &LinearCombination<R>, b: &LinearCombination<R>) -> LinearCombination<R> {
         let scope = self.circuit.scope("LogicGate::or");
         let ab = scope.auxiliary();
@@ -62,10 +68,12 @@ impl<'a, 'b, R: UnitalRing + Eq> LogicGate<'a, 'b, R> {
         a + b - ab
     }
 
+    /// Compute the negation `¬a`.
     pub fn not(&self, a: &LinearCombination<R>) -> LinearCombination<R> {
         Constant::ONE - a
     }
 
+    /// Compute the n-ary conjunction `⋀a`.
     #[allow(clippy::len_zero)]
     pub fn and_slice(&self, a: &[LinearCombination<R>]) -> LinearCombination<R> {
         if a.len() == 0 {
@@ -83,6 +91,7 @@ impl<'a, 'b, R: UnitalRing + Eq> LogicGate<'a, 'b, R> {
         pi
     }
 
+    /// Constrain the inequality `a ≤ b` in the binary numeral system.
     pub fn check_less_or_equal(&self, a: &[LinearCombination<R>], b: &[R]) {
         let scope = self.circuit.scope("LogicGate::check_less_or_equal");
         let mut current_run = Vec::<LinearCombination<R>>::with_capacity(b.len());
