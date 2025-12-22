@@ -142,9 +142,9 @@ impl TxPool {
 }
 
 impl CoinTx for TxPool {
-    fn add_supply(&self, _amount: Amount) {}
+    fn add_supply(&mut self, _amount: Amount) {}
 
-    fn sub_supply(&self, _amount: Amount) {}
+    fn sub_supply(&mut self, _amount: Amount) {}
 
     fn check_anchor(&self, hash: Hash) -> Result<()> {
         self.coin_db.check_anchor(hash)

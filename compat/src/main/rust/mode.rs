@@ -35,7 +35,6 @@ pub struct Mode {
 }
 
 impl Mode {
-    #[allow(clippy::too_many_arguments)]
     fn new(
         ordinal: u8,
         agent_suffix: Option<&'static str>,

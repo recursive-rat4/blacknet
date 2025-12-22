@@ -35,3 +35,4 @@ pub mod socks5;
 pub mod torcontroller;
 pub mod txfetcher;
 pub mod txpool;
+pub mod undoblock;

@@ -28,8 +28,8 @@ use blacknet_serialization::format::from_bytes;
 use blacknet_time::Seconds;
 
 pub trait CoinTx {
-    fn add_supply(&self, amount: Amount);
-    fn sub_supply(&self, amount: Amount);
+    fn add_supply(&mut self, amount: Amount);
+    fn sub_supply(&mut self, amount: Amount);
     fn check_anchor(&self, hash: Hash) -> Result<()>;
     fn block_hash(&self) -> Hash;
     fn block_time(&self) -> Seconds;

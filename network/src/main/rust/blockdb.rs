@@ -74,7 +74,6 @@ impl BlockDB {
         })
     }
 
-    #[allow(clippy::type_complexity)]
     pub const fn cached_block(&self) -> &Arc<Option<(Hash, Box<[u8]>)>> {
         &self.cached_block
     }
