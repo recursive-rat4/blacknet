@@ -18,6 +18,7 @@
 use crate::module::Module;
 use crate::ring::{CommutativeRing, DivisionRing, Ring, UnitalRing};
 
+/// Associative algebra over a ring.
 #[rustfmt::skip]
 pub trait Algebra<R: Ring>
     : Module<R>
@@ -26,8 +27,10 @@ pub trait Algebra<R: Ring>
 {
 }
 
+/// Any ring is an algebra over itself.
 impl<R: Ring> Algebra<R> for R {}
 
+/// An algebra with multiplicative identity.
 #[rustfmt::skip]
 pub trait UnitalAlgebra<R: UnitalRing>
     : Algebra<R>
@@ -35,8 +38,10 @@ pub trait UnitalAlgebra<R: UnitalRing>
 {
 }
 
+/// Any unital ring is a unital algebra over itself.
 impl<R: UnitalRing> UnitalAlgebra<R> for R {}
 
+/// A marker for algebras with commutative multiplication.
 #[rustfmt::skip]
 pub trait CommutativeAlgebra<R: CommutativeRing>
     : UnitalAlgebra<R>

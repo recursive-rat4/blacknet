@@ -38,6 +38,7 @@ pub trait AdditiveSemigroup
 {
 }
 
+/// Multiply `g` by a `scalar`.
 #[rustfmt::skip]
 pub fn double_and_add<
     G: AdditiveSemigroup + LeftZero,
@@ -86,6 +87,7 @@ pub trait MultiplicativeSemigroup
 {
 }
 
+/// Raise `g` to a `scalar` power.
 #[rustfmt::skip]
 pub fn square_and_multiply<
     G: MultiplicativeSemigroup + LeftOne,

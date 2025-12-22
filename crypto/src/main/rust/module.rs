@@ -29,4 +29,5 @@ pub trait Module<R: Ring>
 {
 }
 
+/// Any ring is a module over itself.
 impl<R: Ring> Module<R> for R {}
