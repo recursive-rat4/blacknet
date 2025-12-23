@@ -19,12 +19,14 @@ use crate::densematrix::DenseMatrix;
 use crate::operation::{Double, Square};
 use crate::ring::Ring;
 use crate::semiring::{Presemiring, Semiring};
-use alloc::borrow::Borrow;
+use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{chain, repeat_n, zip};
-use core::ops::{Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{
+    Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 use serde::{Deserialize, Serialize};
 
 /// A row (column) vector is a `1 ⨉ n` (`m ⨉ 1`) matrix.
@@ -140,10 +142,24 @@ impl<R: Presemiring> AsRef<[R]> for DenseVector<R> {
     }
 }
 
+impl<R: Presemiring> AsMut<[R]> for DenseVector<R> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [R] {
+        self
+    }
+}
+
 impl<R: Presemiring> Borrow<[R]> for DenseVector<R> {
     #[inline]
     fn borrow(&self) -> &[R] {
         &self.elements
+    }
+}
+
+impl<R: Presemiring> BorrowMut<[R]> for DenseVector<R> {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut [R] {
+        &mut self.elements
     }
 }
 
@@ -153,6 +169,13 @@ impl<R: Presemiring> Deref for DenseVector<R> {
     #[inline]
     fn deref(&self) -> &[R] {
         &self.elements
+    }
+}
+
+impl<R: Presemiring> DerefMut for DenseVector<R> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.elements
     }
 }
 

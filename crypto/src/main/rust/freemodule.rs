@@ -23,7 +23,7 @@ use crate::operation::Double;
 use crate::ring::Ring;
 use crate::semigroup::{AdditiveSemigroup, LeftZero, RightZero};
 use core::array;
-use core::borrow::Borrow;
+use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -79,10 +79,24 @@ impl<R: Ring, const N: usize> AsRef<[R]> for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> AsMut<[R]> for FreeModule<R, N> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [R] {
+        &mut self.components
+    }
+}
+
 impl<R: Ring, const N: usize> Borrow<[R]> for FreeModule<R, N> {
     #[inline]
     fn borrow(&self) -> &[R] {
         &self.components
+    }
+}
+
+impl<R: Ring, const N: usize> BorrowMut<[R]> for FreeModule<R, N> {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut [R] {
+        &mut self.components
     }
 }
 

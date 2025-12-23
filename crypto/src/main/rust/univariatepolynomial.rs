@@ -19,10 +19,10 @@ use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::operation::{Double, Square};
 use crate::ring::UnitalRing;
 use crate::semiring::Semiring;
-use alloc::borrow::Borrow;
+use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;
-use core::ops::{Add, AddAssign, Deref, Mul, MulAssign, Neg};
+use core::ops::{Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -93,10 +93,24 @@ impl<R: Semiring> AsRef<[R]> for UnivariatePolynomial<R> {
     }
 }
 
+impl<R: Semiring> AsMut<[R]> for UnivariatePolynomial<R> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [R] {
+        self
+    }
+}
+
 impl<R: Semiring> Borrow<[R]> for UnivariatePolynomial<R> {
     #[inline]
     fn borrow(&self) -> &[R] {
         &self.coefficients
+    }
+}
+
+impl<R: Semiring> BorrowMut<[R]> for UnivariatePolynomial<R> {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut [R] {
+        &mut self.coefficients
     }
 }
 
@@ -106,6 +120,29 @@ impl<R: Semiring> Deref for UnivariatePolynomial<R> {
     #[inline]
     fn deref(&self) -> &[R] {
         &self.coefficients
+    }
+}
+
+impl<R: Semiring> DerefMut for UnivariatePolynomial<R> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.coefficients
+    }
+}
+
+impl<R: Semiring> Index<usize> for UnivariatePolynomial<R> {
+    type Output = R;
+
+    #[inline]
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.coefficients[index]
+    }
+}
+
+impl<R: Semiring> IndexMut<usize> for UnivariatePolynomial<R> {
+    #[inline]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.coefficients[index]
     }
 }
 

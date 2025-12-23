@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use alloc::borrow::Borrow;
+use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
-use core::ops::{Deref, Index, IndexMut};
+use core::ops::{Deref, DerefMut, Index, IndexMut};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
@@ -71,10 +71,24 @@ impl<S> AsRef<[S]> for Point<S> {
     }
 }
 
+impl<S> AsMut<[S]> for Point<S> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [S] {
+        self
+    }
+}
+
 impl<S> Borrow<[S]> for Point<S> {
     #[inline]
     fn borrow(&self) -> &[S] {
         &self.coordinates
+    }
+}
+
+impl<S> BorrowMut<[S]> for Point<S> {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut [S] {
+        &mut self.coordinates
     }
 }
 
@@ -84,6 +98,13 @@ impl<S> Deref for Point<S> {
     #[inline]
     fn deref(&self) -> &[S] {
         &self.coordinates
+    }
+}
+
+impl<S> DerefMut for Point<S> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.coordinates
     }
 }
 

@@ -23,11 +23,15 @@ use crate::operation::Double;
 use crate::point::Point;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;
+use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;
-use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{
+    Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 use serde::{Deserialize, Serialize};
 
+/// A multilinear polynomial that evaluates to its coefficients over the unit hypercube.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct MultilinearExtension<R: UnitalRing> {
     coefficients: Vec<R>,
@@ -86,6 +90,66 @@ impl<R: UnitalRing> From<DenseVector<R>> for MultilinearExtension<R> {
         Self {
             coefficients: vector.into(),
         }
+    }
+}
+
+impl<R: UnitalRing> AsRef<[R]> for MultilinearExtension<R> {
+    #[inline]
+    fn as_ref(&self) -> &[R] {
+        &self.coefficients
+    }
+}
+
+impl<R: UnitalRing> AsMut<[R]> for MultilinearExtension<R> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [R] {
+        self
+    }
+}
+
+impl<R: UnitalRing> Borrow<[R]> for MultilinearExtension<R> {
+    #[inline]
+    fn borrow(&self) -> &[R] {
+        &self.coefficients
+    }
+}
+
+impl<R: UnitalRing> BorrowMut<[R]> for MultilinearExtension<R> {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut [R] {
+        &mut self.coefficients
+    }
+}
+
+impl<R: UnitalRing> Deref for MultilinearExtension<R> {
+    type Target = [R];
+
+    #[inline]
+    fn deref(&self) -> &[R] {
+        &self.coefficients
+    }
+}
+
+impl<R: UnitalRing> DerefMut for MultilinearExtension<R> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.coefficients
+    }
+}
+
+impl<R: UnitalRing> Index<usize> for MultilinearExtension<R> {
+    type Output = R;
+
+    #[inline]
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.coefficients[index]
+    }
+}
+
+impl<R: UnitalRing> IndexMut<usize> for MultilinearExtension<R> {
+    #[inline]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.coefficients[index]
     }
 }
 
