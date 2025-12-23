@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blockdb::BlockIndex;
+use crate::blockdb::{BlockDB, BlockIndex};
 use crate::dbview::DBView;
 use crate::genesis;
 use crate::undoblock::UndoBlock;
@@ -28,7 +28,7 @@ use blacknet_kernel::ed25519::PublicKey;
 use blacknet_kernel::error::{Error, Result};
 use blacknet_kernel::htlc::HTLC;
 use blacknet_kernel::multisig::Multisig;
-use blacknet_kernel::proofofstake::{DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY};
+use blacknet_kernel::proofofstake::{DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT};
 use blacknet_kernel::transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
@@ -42,15 +42,21 @@ pub struct CoinDB {
     accounts: DBView<PublicKey, Account>,
     htlcs: DBView<HashTimeLockContractId, HTLC>,
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
+    block_db: Arc<BlockDB>,
 }
 
 impl CoinDB {
-    pub fn new(mode: &Mode, fjall: &Keyspace) -> core::result::Result<Arc<Self>, FjallError> {
+    pub fn new(
+        mode: &Mode,
+        fjall: &Keyspace,
+        block_db: Arc<BlockDB>,
+    ) -> core::result::Result<Arc<Self>, FjallError> {
         Ok(Arc::new(Self {
             state: State::genesis(mode), //TODO
             accounts: DBView::new(fjall, "accounts")?,
             htlcs: DBView::new(fjall, "htlcs")?,
             multisigs: DBView::new(fjall, "multisigs")?,
+            block_db,
         }))
     }
 
@@ -75,10 +81,39 @@ impl CoinDB {
     }
 
     pub fn check_anchor(&self, hash: Hash) -> Result<()> {
-        if hash == genesis::hash() || todo!("blockIndexes.contains(hash.bytes)") {
+        if hash == genesis::hash() || self.block_db.indexes.contains(hash) {
             Ok(())
         } else {
             Err(Error::NotReachableVertex(hash.to_string()))
+        }
+    }
+
+    fn next_rolling_checkpoint(&self) -> Hash {
+        if self.state.rolling_checkpoint != genesis::hash() {
+            let block_index = self
+                .block_db
+                .indexes
+                .get(self.state.rolling_checkpoint)
+                .expect("consistent block index");
+            block_index.next()
+        } else {
+            if self.state.height < ROLLBACK_LIMIT as u32 + 1 {
+                return genesis::hash();
+            }
+            let checkpoint = self.state.height - ROLLBACK_LIMIT as u32;
+            let mut block_index = self
+                .block_db
+                .indexes
+                .get(self.state.block_hash)
+                .expect("consistent block index");
+            while block_index.height() != checkpoint + 1 {
+                block_index = self
+                    .block_db
+                    .indexes
+                    .get(block_index.previous())
+                    .expect("consistent block index");
+            }
+            block_index.previous()
         }
     }
 }
@@ -197,7 +232,7 @@ impl Update {
         block_generator: PublicKey,
     ) -> Self {
         let state = coin_db.state();
-        let rolling_checkpoint = todo!();
+        let rolling_checkpoint = coin_db.next_rolling_checkpoint();
         Self {
             coin_db,
             write_batch,
