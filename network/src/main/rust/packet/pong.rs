@@ -37,7 +37,9 @@ impl Packet for Pong {
     }
 
     fn handle(self, connection: &Arc<Connection>) {
-        if let Some((challenge, request_time)) = connection.ping_request() {
+        let ping_request = connection.ping_request().load();
+        if let Some(ref ping_request) = *ping_request {
+            let (challenge, request_time) = **ping_request;
             let magic = connection.node().mode().network_magic();
             let solution = if connection.version() >= Ping::MIN_VERSION {
                 Ping::solve(magic, challenge)

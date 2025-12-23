@@ -17,6 +17,7 @@
 
 use crate::dbview::DBView;
 use crate::rollinghashset::RollingHashSet;
+use arc_swap::ArcSwapOption;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
@@ -24,7 +25,6 @@ use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
 use fjall::{Keyspace, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Arc;
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct BlockIndex {
@@ -58,7 +58,7 @@ impl BlockIndex {
 }
 
 pub struct BlockDB {
-    cached_block: Arc<Option<(Hash, Box<[u8]>)>>,
+    cached_block: ArcSwapOption<(Hash, Box<[u8]>)>,
     rejects: RollingHashSet<Hash>,
     blocks: DBView<Hash, Block>,
     indexes: DBView<Hash, BlockIndex>,
@@ -67,14 +67,14 @@ pub struct BlockDB {
 impl BlockDB {
     pub fn new(fjall: &Keyspace) -> Result<Self> {
         Ok(Self {
-            cached_block: Arc::new(None),
+            cached_block: ArcSwapOption::empty(),
             rejects: RollingHashSet::new(ROLLBACK_LIMIT),
             blocks: DBView::with_blob(fjall, "blocks")?,
             indexes: DBView::new(fjall, "indexes")?,
         })
     }
 
-    pub const fn cached_block(&self) -> &Arc<Option<(Hash, Box<[u8]>)>> {
+    pub const fn cached_block(&self) -> &ArcSwapOption<(Hash, Box<[u8]>)> {
         &self.cached_block
     }
 

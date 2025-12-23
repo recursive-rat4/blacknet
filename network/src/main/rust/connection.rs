@@ -21,6 +21,7 @@ use crate::packet::{
     BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, PACKET_HEADER_SIZE_BYTES,
     Packet, PacketKind,
 };
+use arc_swap::{ArcSwap, ArcSwapOption};
 use atomic::Atomic;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::amount::Amount;
@@ -59,19 +60,19 @@ pub struct Connection {
     connected_at: Milliseconds,
 
     last_packet_time: Atomic<Milliseconds>,
-    last_block: Mutex<BlockAnnounce>,
+    last_block: ArcSwap<BlockAnnounce>,
     last_block_time: Atomic<Milliseconds>,
     last_tx_time: Atomic<Milliseconds>,
     last_ping_time: Atomic<Milliseconds>,
     last_inv_sent_time: Atomic<Milliseconds>,
     time_offset: Atomic<Seconds>,
     ping: Atomic<Milliseconds>,
-    ping_request: Mutex<Option<(u32, Milliseconds)>>,
+    ping_request: ArcSwapOption<(u32, Milliseconds)>,
     requested_difficulty: UInt256,
 
     id: u64,
     version: AtomicU32,
-    agent: Mutex<String>,
+    agent: ArcSwap<String>,
     fee_filter: Atomic<Amount>,
 }
 
@@ -212,14 +213,12 @@ impl Connection {
         self.dos_score.load(Ordering::Acquire)
     }
 
-    pub fn last_block(&self) -> BlockAnnounce {
-        let x = self.last_block.lock().unwrap();
-        x.clone()
+    pub const fn last_block(&self) -> &ArcSwap<BlockAnnounce> {
+        &self.last_block
     }
 
     pub fn set_last_block(&self, last_block: BlockAnnounce) {
-        let mut x = self.last_block.lock().unwrap();
-        *x = last_block;
+        self.last_block.store(Arc::new(last_block));
     }
 
     pub fn requested_blocks(&self) -> bool {
@@ -276,9 +275,8 @@ impl Connection {
         self.version.store(version, Ordering::Release);
     }
 
-    pub fn agent(&self) -> String {
-        let agent = self.agent.lock().unwrap();
-        agent.clone()
+    pub const fn agent(&self) -> &ArcSwap<String> {
+        &self.agent
     }
 
     pub fn set_agent(&self, string: &str) {
@@ -292,8 +290,7 @@ impl Connection {
                 sanitized.push(ch);
             }
         }
-        let mut agent = self.agent.lock().unwrap();
-        *agent = sanitized;
+        self.agent.store(Arc::new(sanitized));
     }
 
     pub fn fee_filter(&self) -> Amount {
@@ -324,14 +321,12 @@ impl Connection {
         self.ping.store(ping, Ordering::Release);
     }
 
-    pub fn ping_request(&self) -> Option<(u32, Milliseconds)> {
-        let x = self.ping_request.lock().unwrap();
-        *x
+    pub const fn ping_request(&self) -> &ArcSwapOption<(u32, Milliseconds)> {
+        &self.ping_request
     }
 
     pub fn set_ping_request(&self, ping_request: Option<(u32, Milliseconds)>) {
-        let mut x = self.ping_request.lock().unwrap();
-        *x = ping_request;
+        self.ping_request.store(ping_request.map(Arc::new));
     }
 
     pub fn time_offset(&self) -> Seconds {

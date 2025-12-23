@@ -37,11 +37,12 @@ impl Packet for GetBlocks {
     fn handle(self, connection: &Arc<Connection>) {
         let node = connection.node();
         let block_db = node.block_db();
-        if let Some((previous_hash, bytes)) = &**block_db.cached_block()
-            && self.best == *previous_hash
-        {
-            connection.send_packet(&Blocks::with_block(bytes));
-            return;
+        if let Some(cached_block) = block_db.cached_block().load_full() {
+            let (previous_hash, ref bytes) = *cached_block;
+            if self.best == previous_hash {
+                connection.send_packet(&Blocks::with_block(bytes));
+                return;
+            }
         }
 
         if let Some(mut block_index) = block_db.index(self.best) {

@@ -81,7 +81,7 @@ impl Packet for Version {
                 connection.logger(),
                 "Obsolete protocol version {} {}",
                 connection.version(),
-                connection.agent()
+                connection.agent().load(),
             );
             connection.close();
             return;
@@ -96,7 +96,7 @@ impl Packet for Version {
                     info!(
                         connection.logger(),
                         "Accepted connection from {}",
-                        connection.agent()
+                        connection.agent().load(),
                     );
                     connection.set_state(State::IncomingConnected);
                 } else {
@@ -106,13 +106,17 @@ impl Packet for Version {
                 }
             }
             State::OutgoingWaiting => {
-                info!(connection.logger(), "Connected to {}", connection.agent());
+                info!(
+                    connection.logger(),
+                    "Connected to {}",
+                    connection.agent().load()
+                );
                 connection.set_state(State::OutgoingConnected);
                 let peer_table = connection.node().peer_table();
                 peer_table.connected(
                     connection.remote_endpoint(),
                     connection.connected_at(),
-                    connection.agent(),
+                    connection.agent().load().to_string(),
                     false,
                 );
             }
@@ -124,7 +128,7 @@ impl Packet for Version {
                 peer_table.connected(
                     connection.remote_endpoint(),
                     connection.connected_at(),
-                    connection.agent(),
+                    connection.agent().load().to_string(),
                     true,
                 );
                 return;
