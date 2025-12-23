@@ -16,228 +16,17 @@
  */
 
 use crate::abeliangroup::AdditiveAbelianGroup;
-use crate::field::Field;
 use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
 use crate::monoid::AdditiveMonoid;
 use crate::operation::{Double, Inv, Square};
 use crate::semigroup::{AdditiveSemigroup, LeftZero, RightZero};
 use crate::semiring::{Presemiring, Semiring};
+use crate::twistededwardsgroup::TwistedEdwardsGroupParams;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-pub trait TwistedEdwardsGroupParams: Copy + Eq {
-    type F: Field;
-
-    const A: Self::F;
-    const D: Self::F;
-
-    const A_IS_MINUS_ONE: bool;
-}
-
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub struct TwistedEdwardsGroupAffine<P: TwistedEdwardsGroupParams> {
-    x: P::F,
-    y: P::F,
-}
-
-impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
-    pub const fn new(x: P::F, y: P::F) -> Self {
-        Self { x, y }
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupAffine<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "({:?}, {:?})", self.x, self.y)
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> Default for TwistedEdwardsGroupAffine<P> {
-    fn default() -> Self {
-        Self::IDENTITY
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> Add for TwistedEdwardsGroupAffine<P> {
-    type Output = Self;
-
-    fn add(self, rps: Self) -> Self::Output {
-        let x1x2 = self.x * rps.x;
-        let y1y2 = self.y * rps.y;
-        let k = P::D * x1x2 * y1y2;
-        let xr = (self.x * rps.y + self.y * rps.x) / (P::F::ONE + k);
-        let yr = if P::A_IS_MINUS_ONE {
-            (y1y2 + x1x2) / (P::F::ONE - k)
-        } else {
-            (y1y2 - P::A * x1x2) / (P::F::ONE - k)
-        };
-        Self {
-            x: xr.expect("Elliptic curve arithmetic"),
-            y: yr.expect("Elliptic curve arithmetic"),
-        }
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> Add<&Self> for TwistedEdwardsGroupAffine<P> {
-    type Output = Self;
-
-    #[inline]
-    fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupAffine<P> {
-    #[inline]
-    fn add_assign(&mut self, rps: Self) {
-        *self = *self + rps
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> AddAssign<&Self> for TwistedEdwardsGroupAffine<P> {
-    #[inline]
-    fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> Double for TwistedEdwardsGroupAffine<P> {
-    type Output = Self;
-
-    fn double(self) -> Self {
-        let xx = self.x.square();
-        let yy = self.y.square();
-        let k = P::D * xx * yy;
-        let xr = (self.x * self.y).double() / (P::F::ONE + k);
-        let yr = if P::A_IS_MINUS_ONE {
-            (yy + xx) / (P::F::ONE - k)
-        } else {
-            (yy - P::A * xx) / (P::F::ONE - k)
-        };
-        Self {
-            x: xr.expect("Elliptic curve arithmetic"),
-            y: yr.expect("Elliptic curve arithmetic"),
-        }
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> Neg for TwistedEdwardsGroupAffine<P> {
-    type Output = Self;
-
-    fn neg(self) -> Self::Output {
-        Self {
-            x: -self.x,
-            y: self.y,
-        }
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> Sub for TwistedEdwardsGroupAffine<P> {
-    type Output = Self;
-
-    fn sub(self, rps: Self) -> Self::Output {
-        // sub-2025-v
-        let x1x2 = self.x * rps.x;
-        let y1y2 = self.y * rps.y;
-        let k = P::D * x1x2 * y1y2;
-        let xr = (self.x * rps.y - self.y * rps.x) / (P::F::ONE - k);
-        let yr = if P::A_IS_MINUS_ONE {
-            (y1y2 - x1x2) / (P::F::ONE + k)
-        } else {
-            (y1y2 + P::A * x1x2) / (P::F::ONE + k)
-        };
-        Self {
-            x: xr.expect("Elliptic curve arithmetic"),
-            y: yr.expect("Elliptic curve arithmetic"),
-        }
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> Sub<&Self> for TwistedEdwardsGroupAffine<P> {
-    type Output = Self;
-
-    #[inline]
-    fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> SubAssign for TwistedEdwardsGroupAffine<P> {
-    #[inline]
-    fn sub_assign(&mut self, rps: Self) {
-        *self = *self - rps
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> SubAssign<&Self> for TwistedEdwardsGroupAffine<P> {
-    #[inline]
-    fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> Mul<Scalar>
-    for TwistedEdwardsGroupAffine<P>
-{
-    type Output = Self;
-
-    #[inline]
-    fn mul(self, rps: Scalar) -> Self::Output {
-        self.add_sub_chain(rps)
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> MulAssign<Scalar>
-    for TwistedEdwardsGroupAffine<P>
-{
-    #[inline]
-    fn mul_assign(&mut self, rps: Scalar) {
-        *self = *self * rps;
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> Sum for TwistedEdwardsGroupAffine<P> {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::IDENTITY)
-    }
-}
-
-impl<'a, P: TwistedEdwardsGroupParams> Sum<&'a Self> for TwistedEdwardsGroupAffine<P> {
-    #[inline]
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.copied().sum()
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams> LeftZero for TwistedEdwardsGroupAffine<P> {
-    const LEFT_ZERO: Self = Self {
-        x: P::F::ZERO,
-        y: P::F::ONE,
-    };
-}
-
-impl<P: TwistedEdwardsGroupParams> RightZero for TwistedEdwardsGroupAffine<P> {
-    const RIGHT_ZERO: Self = Self {
-        x: P::F::ZERO,
-        y: P::F::ONE,
-    };
-}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupAffine<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupAffine<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupAffine<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupAffine<P> {
-    const IDENTITY: Self = Self {
-        x: P::F::ZERO,
-        y: P::F::ONE,
-    };
-}
-
-#[derive(Clone, Copy, Eq)]
+#[derive(Eq)]
 pub struct TwistedEdwardsGroupExtended<P: TwistedEdwardsGroupParams> {
     x: P::F,
     y: P::F,
@@ -265,6 +54,14 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupExtended<P> {
         }
     }
 }
+
+impl<P: TwistedEdwardsGroupParams<F: Clone>> Clone for TwistedEdwardsGroupExtended<P> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams<F: Copy>> Copy for TwistedEdwardsGroupExtended<P> {}
 
 impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupExtended<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {

@@ -19,6 +19,7 @@ use crate::bigint::UInt256;
 use crate::field25519::Field25519;
 use crate::twistededwardsgroup::{
     TwistedEdwardsGroupAffine, TwistedEdwardsGroupExtended, TwistedEdwardsGroupParams,
+    TwistedEdwardsGroupProjective,
 };
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -43,3 +44,4 @@ impl TwistedEdwardsGroupParams for Edwards25519GroupParams {
 
 pub type Edwards25519GroupAffine = TwistedEdwardsGroupAffine<Edwards25519GroupParams>;
 pub type Edwards25519GroupExtended = TwistedEdwardsGroupExtended<Edwards25519GroupParams>;
+pub type Edwards25519GroupProjective = TwistedEdwardsGroupProjective<Edwards25519GroupParams>;
