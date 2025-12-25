@@ -176,6 +176,10 @@ name = "sumcheck"
 path = "src/test/rust/sumcheck.rs"
 
 [[test]]
+name = "symmetricmatrix"
+path = "src/test/rust/symmetricmatrix.rs"
+
+[[test]]
 name = "uniformintdistribution"
 path = "src/test/rust/uniformintdistribution.rs"
 

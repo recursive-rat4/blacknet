@@ -16,7 +16,7 @@
  */
 
 use crate::matrix::DenseVector;
-use crate::operation::Double;
+use crate::operation::{Double, Square};
 use crate::ring::Ring;
 use crate::semiring::Presemiring;
 use alloc::vec;
@@ -414,5 +414,23 @@ impl<R: Presemiring> Mul<&DenseMatrix<R>> for &DenseVector<R> {
             }
         }
         r
+    }
+}
+
+impl<R: Presemiring> Square for DenseMatrix<R> {
+    type Output = Self;
+
+    #[inline]
+    fn square(self) -> Self::Output {
+        &self * &self
+    }
+}
+
+impl<R: Presemiring> Square for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
+
+    #[inline]
+    fn square(self) -> Self::Output {
+        self * self
     }
 }

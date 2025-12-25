@@ -17,6 +17,7 @@
 
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::operation::{Double, Square};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -44,6 +45,22 @@ fn add() {
 
 #[test]
 #[rustfmt::skip]
+fn dbl() {
+    let a = DenseMatrix::<R>::new(3, 3, [
+        9, 3, 4,
+        2, 7, 0,
+        5, 8, 1,
+    ].map(R::from).into());
+    let b = DenseMatrix::<R>::new(3, 3, [
+        18, 6, 8,
+        4, 14, 0,
+        10, 16, 2,
+    ].map(R::from).into());
+    assert_eq!(a.double(), b);
+}
+
+#[test]
+#[rustfmt::skip]
 fn mul() {
     let a = DenseMatrix::<R>::new(4, 3, [
         1, 0, 1,
@@ -63,6 +80,22 @@ fn mul() {
         11, 9, 6,
     ].map(R::from).into());
     assert_eq!(a * b, c);
+}
+
+#[test]
+#[rustfmt::skip]
+fn sqr() {
+    let a = DenseMatrix::<R>::new(3, 3, [
+        9, 3, 4,
+        2, 7, 0,
+        5, 8, 1,
+    ].map(R::from).into());
+    let b = DenseMatrix::<R>::new(3, 3, [
+        107, 80, 40,
+        32, 55, 8,
+        66, 79, 21,
+    ].map(R::from).into());
+    assert_eq!(a.square(), b);
 }
 
 #[test]
