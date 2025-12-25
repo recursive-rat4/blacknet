@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::densevector::DenseVector;
+use crate::matrix::DenseVector;
 use crate::operation::Double;
 use crate::ring::Ring;
 use crate::semiring::Presemiring;

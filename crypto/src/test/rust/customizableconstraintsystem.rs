@@ -18,9 +18,7 @@
 use blacknet_compat::assert_ok;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
-use blacknet_crypto::densematrix::DenseMatrix;
-use blacknet_crypto::densevector::DenseVector;
-use blacknet_crypto::sparsematrix::SparseMatrix;
+use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 

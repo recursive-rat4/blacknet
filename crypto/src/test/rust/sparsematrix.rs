@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::densematrix::DenseMatrix;
-use blacknet_crypto::densevector::DenseVector;
-use blacknet_crypto::sparsematrix::SparseMatrix;
+use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 

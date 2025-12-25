@@ -17,11 +17,10 @@
 
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
-use crate::densevector::DenseVector;
+use crate::matrix::{DenseVector, SparseMatrix};
 use crate::r1cs::R1CS;
 use crate::ring::UnitalRing;
 use crate::semiring::Semiring;
-use crate::sparsematrix::SparseMatrix;
 use alloc::vec;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};

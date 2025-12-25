@@ -15,10 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::densematrix::DenseMatrix;
-use blacknet_crypto::densevector::DenseVector;
 use blacknet_crypto::freemodule::FreeModule;
 use blacknet_crypto::hypercube::Hypercube;
+use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::multilinearextension::MultilinearExtension;
 use blacknet_crypto::operation::Double;
 use blacknet_crypto::polynomial::Polynomial;

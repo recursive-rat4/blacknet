@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::densevector::DenseVector;
+use crate::matrix::DenseVector;
 use crate::multilinearextension::MultilinearExtension;
 use crate::operation::Square;
 use crate::point::Point;

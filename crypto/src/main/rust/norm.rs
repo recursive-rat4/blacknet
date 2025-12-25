@@ -16,16 +16,14 @@
  */
 
 use crate::convolution::Convolution;
-use crate::densematrix::DenseMatrix;
-use crate::densevector::DenseVector;
 use crate::float::FloatOn;
 use crate::freemodule::FreeModule;
 use crate::integer::Integer;
+use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
 use crate::matrixring::MatrixRing;
 use crate::nttring::NTTRing;
 use crate::numbertheoretictransform::Twiddles;
 use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
-use crate::sparsevector::SparseVector;
 use crate::univariatering::UnivariateRing;
 
 pub trait EuclideanNorm {

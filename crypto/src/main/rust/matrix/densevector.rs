@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::densematrix::DenseMatrix;
+use crate::matrix::DenseMatrix;
 use crate::operation::{Double, Square};
 use crate::ring::Ring;
 use crate::semiring::{Presemiring, Semiring};

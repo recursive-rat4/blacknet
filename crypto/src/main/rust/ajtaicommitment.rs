@@ -15,12 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::densematrix::DenseMatrix;
-use crate::densevector::DenseVector;
 use crate::distribution::UniformGenerator;
+use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
 use crate::norm::{EuclideanNorm, InfinityNorm};
 use crate::ring::CommutativeRing;
-use crate::sparsevector::SparseVector;
 
 // https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
 

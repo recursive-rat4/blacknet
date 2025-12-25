@@ -17,9 +17,8 @@
 
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
-use crate::densevector::DenseVector;
+use crate::matrix::{DenseVector, SparseMatrix};
 use crate::semiring::Semiring;
-use crate::sparsematrix::SparseMatrix;
 use core::iter::zip;
 use serde::{Deserialize, Serialize};
 

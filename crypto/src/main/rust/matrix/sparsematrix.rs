@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::densematrix::DenseMatrix;
-use crate::densevector::DenseVector;
+use crate::matrix::{DenseMatrix, DenseVector};
 use crate::ring::Ring;
 use crate::semiring::Presemiring;
 use alloc::vec::Vec;

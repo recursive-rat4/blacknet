@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::densevector::DenseVector;
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
+use crate::matrix::DenseVector;
 use crate::operation::Double;
 use crate::point::Point;
 use crate::polynomial::Polynomial;
