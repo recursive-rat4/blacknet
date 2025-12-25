@@ -74,7 +74,8 @@ async fn block_db_check(State(node): State<Arc<Node>>) -> Json<BlockDBCheck> {
 
 async fn block_hash(Path(height): Path<u32>, State(node): State<Arc<Node>>) -> Response<String> {
     let block_db = node.block_db();
-    if let Some(hash) = block_db.hash(height) {
+    let coin_db = node.coin_db();
+    if let Some(hash) = block_db.hash(height, coin_db.state()) {
         respond_text(hash.to_string())
     } else {
         respond_error("Block not found".to_owned())

@@ -15,7 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::coindb::State;
 use crate::dbview::DBView;
+use crate::genesis;
 use crate::rollinghashset::RollingHashSet;
 use arc_swap::ArcSwapOption;
 use blacknet_kernel::amount::Amount;
@@ -60,6 +62,7 @@ impl BlockIndex {
 
 pub struct BlockDB {
     cached_block: ArcSwapOption<(Hash, Box<[u8]>)>,
+    cached_index: ArcSwapOption<(Hash, BlockIndex)>,
     rejects: RollingHashSet<Hash>,
     blocks: DBView<Hash, Block>,
     pub(super) indexes: DBView<Hash, BlockIndex>,
@@ -69,6 +72,7 @@ impl BlockDB {
     pub fn new(fjall: &Keyspace) -> Result<Arc<Self>> {
         Ok(Arc::new(Self {
             cached_block: ArcSwapOption::empty(),
+            cached_index: ArcSwapOption::empty(),
             rejects: RollingHashSet::new(ROLLBACK_LIMIT),
             blocks: DBView::with_blob(fjall, "blocks")?,
             indexes: DBView::new(fjall, "indexes")?,
@@ -119,8 +123,52 @@ impl BlockDB {
         Some(result)
     }
 
-    pub fn hash(&self, _height: u32) -> Option<Hash> {
-        todo!();
+    pub fn hash(&self, height: u32, state: State) -> Option<Hash> {
+        if height > state.height() {
+            return None;
+        } else if height == 0 {
+            return Some(genesis::hash());
+        } else if height == state.height() {
+            return Some(state.block_hash());
+        }
+
+        if let Some(cached_index) = self.cached_index.load_full() {
+            let (cached_hash, cached_index) = *cached_index;
+            if cached_index.height() == height {
+                return Some(cached_hash);
+            }
+        }
+
+        let mut hash: Hash;
+        let mut index: BlockIndex;
+        if height < state.height() / 2 {
+            hash = genesis::hash();
+            index = self.indexes.get(hash).expect("consistent block index");
+        } else {
+            hash = state.block_hash();
+            index = self.indexes.get(hash).expect("consistent block index");
+        }
+        if let Some(cached_index) = self.cached_index.load_full() {
+            let (cached_hash, cached_index) = *cached_index;
+            if height.abs_diff(index.height()) > height.abs_diff(cached_index.height()) {
+                hash = cached_hash;
+                index = cached_index;
+            }
+        }
+
+        while index.height() > height {
+            hash = index.previous();
+            index = self.indexes.get(hash).expect("consistent block index");
+        }
+        while index.height() < height {
+            hash = index.next();
+            index = self.indexes.get(hash).expect("consistent block index");
+        }
+        if index.height() < state.height() - ROLLBACK_LIMIT as u32 + 1 {
+            self.cached_index.store(Some(Arc::new((hash, index))));
+        }
+
+        Some(hash)
     }
 
     /**
