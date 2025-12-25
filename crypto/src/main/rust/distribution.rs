@@ -35,11 +35,17 @@ pub struct UniformDistribution<G: UniformGenerator> {
     phantom: PhantomData<G>,
 }
 
-impl<G: UniformGenerator> Default for UniformDistribution<G> {
-    fn default() -> Self {
+impl<G: UniformGenerator> UniformDistribution<G> {
+    pub const fn new() -> Self {
         Self {
             phantom: PhantomData,
         }
+    }
+}
+
+impl<G: UniformGenerator> Default for UniformDistribution<G> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -65,8 +65,8 @@ fn make_mle() -> (MultilinearExtension<Z>, Z) {
 }
 
 fn criterion_benchmark(crit: &mut Criterion) {
-    let mut duplex = D::default();
-    let mut exceptional_set = UniformDistribution::default();
+    let mut duplex = D::new();
+    let mut exceptional_set = E::new();
 
     let (bin, sum) = black_box(make_bin());
     crit.bench_function("SumCheck prove Bin", |bench| {
