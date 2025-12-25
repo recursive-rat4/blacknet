@@ -46,6 +46,18 @@ fn hex() {
 }
 
 #[test]
+fn bytes() {
+    let a = UInt256::from_hex("82040BFACDA49378AA9A7091D231DF1C0000000000000000D30557C9C39DA70C");
+    let b = [
+        0x0C, 0xA7, 0x9D, 0xC3, 0xC9, 0x57, 0x05, 0xD3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x1C, 0xDF, 0x31, 0xD2, 0x91, 0x70, 0x9A, 0xAA, 0x78, 0x93, 0xA4, 0xCD, 0xFA, 0x0B,
+        0x04, 0x82,
+    ];
+    assert_eq!(UInt256::from_le_bytes(b), a);
+    assert_eq!(a.to_le_bytes::<32>(), b);
+}
+
+#[test]
 fn cmp() {
     let a = UInt256::from_hex("C022ACCCD2A8701667BE02D3D240A92ADB463CC5A1804DEE6719F97EB1870985");
     let b = UInt256::from_hex("8DC10CA58FAB02B7640643AAEEE96BCA50980538C74BC5299F1E62EBD5C1D5CC");

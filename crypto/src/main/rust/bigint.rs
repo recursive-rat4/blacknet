@@ -198,6 +198,32 @@ impl<const N: usize> BigInt<N> {
         Self { limbs }
     };
 
+    pub fn from_le_bytes<const M: usize>(bytes: [u8; M]) -> Self {
+        const {
+            assert!(M == N * size_of::<u64>());
+        };
+        let mut limbs = [0_u64; N];
+        for i in 0..N {
+            limbs[i] = u64::from_le_bytes(
+                bytes[i * size_of::<u64>()..(i + 1) * size_of::<u64>()]
+                    .try_into()
+                    .unwrap(),
+            );
+        }
+        limbs.into()
+    }
+    pub fn to_le_bytes<const M: usize>(self) -> [u8; M] {
+        const {
+            assert!(M == N * size_of::<u64>());
+        };
+        let mut bytes = [0_u8; M];
+        for i in 0..N {
+            bytes[i * size_of::<u64>()..(i + 1) * size_of::<u64>()]
+                .copy_from_slice(&self.limbs[i].to_le_bytes());
+        }
+        bytes
+    }
+
     #[doc(hidden)]
     pub unsafe fn from_java(bytes: &[u8]) -> Self {
         let mut num = Self::ZERO;
