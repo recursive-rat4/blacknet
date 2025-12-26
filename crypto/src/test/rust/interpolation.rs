@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::interpolation::*;
-use blacknet_crypto::univariatepolynomial::UnivariatePolynomial;
+use blacknet_crypto::polynomial::{UnivariatePolynomial, interpolation::*};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 

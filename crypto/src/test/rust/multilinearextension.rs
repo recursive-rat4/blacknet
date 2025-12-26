@@ -16,11 +16,9 @@
  */
 
 use blacknet_crypto::freemodule::FreeModule;
-use blacknet_crypto::hypercube::Hypercube;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
-use blacknet_crypto::multilinearextension::MultilinearExtension;
 use blacknet_crypto::operation::Double;
-use blacknet_crypto::polynomial::Polynomial;
+use blacknet_crypto::polynomial::{Hypercube, MultilinearExtension, Polynomial};
 use core::iter::zip;
 
 type R = blacknet_crypto::pervushin::PervushinField;

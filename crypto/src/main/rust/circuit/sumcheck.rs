@@ -17,8 +17,7 @@
 
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::distribution::Distribution;
-use crate::circuit::point::Point;
-use crate::circuit::univariatepolynomial::UnivariatePolynomial;
+use crate::circuit::polynomial::{Point, UnivariatePolynomial};
 use crate::duplex::Duplex;
 use crate::polynomial::Polynomial;
 use crate::ring::UnitalRing;

@@ -16,11 +16,9 @@
  */
 
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
-use crate::eqextension::EqExtension;
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::operation::Double;
-use crate::point::Point;
-use crate::polynomial::Polynomial;
+use crate::polynomial::{EqExtension, Point, Polynomial};
 use crate::ring::UnitalRing;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;

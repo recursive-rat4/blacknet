@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::binaritypolynomial::BinarityPolynomial;
-use blacknet_crypto::hypercube::Hypercube;
-use blacknet_crypto::polynomial::Polynomial;
+use blacknet_crypto::polynomial::{BinarityPolynomial, Hypercube, Polynomial};
 use blacknet_crypto::semiring::Presemiring;
 
 type R = blacknet_crypto::pervushin::PervushinField;

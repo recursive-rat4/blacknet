@@ -17,7 +17,7 @@
 
 use crate::assigner::assigment::Assigment;
 use crate::matrix::DenseVector;
-use crate::point::Point;
+use crate::polynomial::Point;
 use crate::ring::UnitalRing;
 use alloc::vec;
 use alloc::vec::Vec;

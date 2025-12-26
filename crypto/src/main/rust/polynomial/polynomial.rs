@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,19 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-//! Variable assigners for proof systems.
+use crate::matrix::DenseVector;
+use crate::polynomial::Point;
+use crate::semiring::Semiring;
 
-pub mod assigment;
-pub mod binaryuniformdistribution;
-pub mod compressionfunction;
-pub mod distribution;
-pub mod duplex;
-pub mod jive;
-pub mod logicgate;
-pub mod permutation;
-pub mod polynomial;
-pub mod poseidon2;
-pub mod poseidon2lm;
-pub mod poseidon2pervushin;
-pub mod quartaryuniformdistribution;
-pub mod sumcheck;
+#[rustfmt::skip]
+pub trait Polynomial<R: Semiring>
+    : Clone
+{
+    fn bind(&mut self, e: R);
+
+    fn point(&self, point: &Point<R>) -> R;
+    fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R>;
+
+    fn degree(&self) -> usize;
+    fn variables(&self) -> usize;
+}

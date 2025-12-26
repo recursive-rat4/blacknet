@@ -16,15 +16,11 @@
  */
 
 use blacknet_compat::assert_ok;
-use blacknet_crypto::assigner::eqextension::EqExtension as Assigner;
+use blacknet_crypto::assigner::polynomial::EqExtension as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
-use blacknet_crypto::circuit::eqextension::EqExtension as Circuit;
-use blacknet_crypto::circuit::point::Point as PointCircuit;
+use blacknet_crypto::circuit::polynomial::{EqExtension as Circuit, Point as PointCircuit};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::eqextension::EqExtension;
-use blacknet_crypto::hypercube::Hypercube;
-use blacknet_crypto::point::Point;
-use blacknet_crypto::polynomial::Polynomial;
+use blacknet_crypto::polynomial::{EqExtension, Hypercube, Point, Polynomial};
 use blacknet_crypto::semiring::{Presemiring, Semiring};
 
 type R = blacknet_crypto::pervushin::PervushinField;

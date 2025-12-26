@@ -15,21 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+//! Arithmetic circuits for proof systems.
+
 pub mod binaryuniformdistribution;
 pub mod builder;
 pub mod compressionfunction;
 pub mod convolution;
 pub mod distribution;
 pub mod duplex;
-pub mod eqextension;
 pub mod jive;
 pub mod logicgate;
 pub mod numbertheoretictransform;
 pub mod permutation;
-pub mod point;
+pub mod polynomial;
 pub mod poseidon2;
 pub mod poseidon2lm;
 pub mod poseidon2pervushin;
 pub mod quartaryuniformdistribution;
 pub mod sumcheck;
-pub mod univariatepolynomial;

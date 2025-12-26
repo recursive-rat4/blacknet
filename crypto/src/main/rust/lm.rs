@@ -18,13 +18,13 @@
 use crate::algebra::DivisionAlgebra;
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::integer::Integer;
-use crate::interpolation::InterpolationConsts;
 use crate::magma::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
 use crate::operation::{Double, Inv, Square};
+use crate::polynomial::interpolation::InterpolationConsts;
 use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring};
 use crate::semigroup::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,

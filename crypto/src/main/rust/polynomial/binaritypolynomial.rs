@@ -16,10 +16,8 @@
  */
 
 use crate::matrix::DenseVector;
-use crate::multilinearextension::MultilinearExtension;
 use crate::operation::Square;
-use crate::point::Point;
-use crate::polynomial::Polynomial;
+use crate::polynomial::{MultilinearExtension, Point, Polynomial};
 use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};

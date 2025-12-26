@@ -17,11 +17,8 @@
 
 use crate::distribution::Distribution;
 use crate::duplex::Duplex;
-use crate::interpolation::*;
-use crate::point::Point;
-use crate::polynomial::Polynomial;
+use crate::polynomial::{Point, Polynomial, UnivariatePolynomial, interpolation::*};
 use crate::ring::UnitalRing;
-use crate::univariatepolynomial::UnivariatePolynomial;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};

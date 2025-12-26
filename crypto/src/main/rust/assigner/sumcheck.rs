@@ -17,10 +17,9 @@
 
 use crate::assigner::assigment::Assigment;
 use crate::assigner::distribution::Distribution;
-use crate::assigner::univariatepolynomial::UnivariatePolynomial;
+use crate::assigner::polynomial::UnivariatePolynomial;
 use crate::duplex::Duplex;
-use crate::point::Point;
-use crate::polynomial::Polynomial;
+use crate::polynomial::{Point, Polynomial};
 use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 use core::marker::PhantomData;

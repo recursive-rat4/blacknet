@@ -15,13 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::binaritypolynomial::BinarityPolynomial;
 use blacknet_crypto::distribution::{Distribution, UniformDistribution};
 use blacknet_crypto::duplex::Duplex;
-use blacknet_crypto::eqextension::EqExtension;
 use blacknet_crypto::lm::LMField;
-use blacknet_crypto::multilinearextension::MultilinearExtension;
 use blacknet_crypto::operation::Double;
+use blacknet_crypto::polynomial::{BinarityPolynomial, EqExtension, MultilinearExtension};
 use blacknet_crypto::poseidon2lm::DuplexPoseidon2LM;
 use blacknet_crypto::ring::IntegerRing;
 use blacknet_crypto::semiring::{Presemiring, Semiring};

@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::hypercube::Hypercube;
-use blacknet_crypto::point::Point;
+use blacknet_crypto::polynomial::{Hypercube, Point};
 use core::iter::zip;
 
 type R = blacknet_crypto::pervushin::PervushinField;

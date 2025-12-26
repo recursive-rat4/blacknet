@@ -15,19 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-//! Variable assigners for proof systems.
+//! Polynomial is an  expression of indeterminates and coefficients.
 
-pub mod assigment;
-pub mod binaryuniformdistribution;
-pub mod compressionfunction;
-pub mod distribution;
-pub mod duplex;
-pub mod jive;
-pub mod logicgate;
-pub mod permutation;
-pub mod polynomial;
-pub mod poseidon2;
-pub mod poseidon2lm;
-pub mod poseidon2pervushin;
-pub mod quartaryuniformdistribution;
-pub mod sumcheck;
+mod binaritypolynomial;
+mod eqextension;
+mod hypercube;
+pub mod interpolation;
+mod multilinearextension;
+mod point;
+mod polynomial;
+mod univariatepolynomial;
+
+pub use binaritypolynomial::BinarityPolynomial;
+pub use eqextension::EqExtension;
+pub use hypercube::Hypercube;
+pub use multilinearextension::MultilinearExtension;
+pub use point::Point;
+pub use polynomial::Polynomial;
+pub use univariatepolynomial::UnivariatePolynomial;

@@ -18,8 +18,7 @@
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::operation::Double;
-use crate::point::Point;
-use crate::polynomial::Polynomial;
+use crate::polynomial::{Point, Polynomial};
 use crate::ring::UnitalRing;
 use alloc::vec;
 use alloc::vec::Vec;
