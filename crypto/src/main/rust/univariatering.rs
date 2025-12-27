@@ -443,8 +443,8 @@ impl<R: IntegerRing, const N: usize> PowerOfTwoCyclotomicRing<R>
 impl<R: UnitalRing + Absorb<R>, const N: usize, C: Convolution<R, N>> Absorb<R>
     for UnivariateRing<R, N, C>
 {
-    fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb(&self.coefficients)
+    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+        duplex.absorb(self.coefficients)
     }
 }
 

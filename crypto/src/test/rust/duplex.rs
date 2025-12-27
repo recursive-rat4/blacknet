@@ -47,15 +47,15 @@ type DuplexPlain = DuplexImpl<Z, 2, 2, 4, TestPermutation>;
 fn plain_blacknet() {
     let mut duplex1 = DuplexPlain::with_iv(&[10, 0].map(Z::from));
     assert_eq!(duplex1.sneak(), [0, 0, 10, 0].map(Z::from));
-    duplex1.absorb(&Z::from(2));
+    duplex1.absorb(Z::from(2));
     assert_eq!(duplex1.sneak(), [2, 0, 10, 0].map(Z::from));
-    duplex1.absorb(&Z::from(4));
+    duplex1.absorb(Z::from(4));
     assert_eq!(duplex1.sneak(), [2, 4, 10, 0].map(Z::from));
-    duplex1.absorb(&Z::from(6));
+    duplex1.absorb(Z::from(6));
     assert_eq!(duplex1.sneak(), [6, 5, 11, 1].map(Z::from));
 
     let mut duplex2 = duplex1;
-    duplex2.absorb(&Z::from(8));
+    duplex2.absorb(Z::from(8));
     assert_eq!(duplex2.sneak(), [6, 8, 11, 1].map(Z::from));
 
     assert_eq!(duplex1.squeeze::<Z>(), Z::from(7));
@@ -64,12 +64,12 @@ fn plain_blacknet() {
     assert_eq!(duplex1.sneak(), [7, 2, 12, 4].map(Z::from));
     assert_eq!(duplex1.squeeze::<Z>(), Z::from(8));
     assert_eq!(duplex1.sneak(), [8, 3, 13, 5].map(Z::from));
-    duplex1.absorb(&Z::from(9));
+    duplex1.absorb(Z::from(9));
     assert_eq!(duplex1.sneak(), [9, 3, 13, 5].map(Z::from));
 
-    duplex2.absorb(&Z::from(10));
+    duplex2.absorb(Z::from(10));
     assert_eq!(duplex2.sneak(), [10, 9, 12, 2].map(Z::from));
-    duplex2.absorb(&Z::from(12));
+    duplex2.absorb(Z::from(12));
     assert_eq!(duplex2.sneak(), [10, 12, 12, 2].map(Z::from));
     assert_eq!(duplex2.squeeze::<Z>(), Z::from(11));
     assert_eq!(duplex2.sneak(), [11, 13, 13, 4].map(Z::from));
@@ -108,7 +108,7 @@ fn circuit_blacknet() {
     let scope = circuit.scope("test");
     let mut duplex_circuit = DuplexCircuit::new(&circuit);
     let x_circuit: [LinearCombination<Z>; 3] = array::from_fn(|_| scope.public_input().into());
-    duplex_circuit.absorb(&x_circuit);
+    duplex_circuit.absorb(x_circuit);
     let y_circuit: [LinearCombination<Z>; 3] = duplex_circuit.squeeze();
     scope.constrain(y_circuit[0].clone(), Constant::new(y_plain[0]));
     scope.constrain(y_circuit[1].clone(), Constant::new(y_plain[1]));
@@ -120,7 +120,7 @@ fn circuit_blacknet() {
     z.extend(x_plain);
 
     let mut duplex_assigner = DuplexAssigner::new(&z);
-    duplex_assigner.absorb(&x_plain);
+    duplex_assigner.absorb(x_plain);
     let y_assigned: [Z; 3] = duplex_assigner.squeeze();
 
     assert_eq!(y_assigned, y_plain);

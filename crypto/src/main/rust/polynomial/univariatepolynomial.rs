@@ -248,8 +248,14 @@ impl<R: Semiring> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R> {
 }
 
 impl<R: Semiring + Absorb<R>> Absorb<R> for UnivariatePolynomial<R> {
-    fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb(&self.coefficients)
+    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+        duplex.absorb_iter(self.coefficients.into_iter())
+    }
+}
+
+impl<R: Semiring + Absorb<R>> Absorb<R> for &UnivariatePolynomial<R> {
+    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+        duplex.absorb_iter(self.coefficients.iter().copied())
     }
 }
 

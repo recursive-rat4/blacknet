@@ -108,7 +108,7 @@ impl<
         self.state.iter_mut().for_each(LinearCombination::clear);
     }
 
-    fn absorb_native(&mut self, e: &LinearCombination<S>) {
+    fn absorb_native(&mut self, e: LinearCombination<S>) {
         if self.phase == Phase::Squeeze {
             self.phase = Phase::Absorb;
             self.position = 0;
@@ -116,7 +116,7 @@ impl<
             P::permute(self.circuit, &mut self.state);
             self.position = 0;
         }
-        self.state[self.position] = e.clone();
+        self.state[self.position] = e;
         self.position += 1
     }
 

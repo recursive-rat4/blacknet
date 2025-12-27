@@ -158,9 +158,9 @@ impl<R: UnitalRing> MulAssign<R> for EqExtension<R> {
 }
 
 impl<R: UnitalRing + Absorb<R>> Absorb<R> for EqExtension<R> {
-    fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb(&self.coefficients);
-        duplex.absorb(&self.z);
+    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+        duplex.absorb(self.coefficients);
+        duplex.absorb(self.z);
     }
 }
 

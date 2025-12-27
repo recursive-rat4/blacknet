@@ -304,8 +304,8 @@ impl<R: UnitalRing> MulAssign<R> for MultilinearExtension<R> {
 }
 
 impl<R: UnitalRing + Absorb<R>> Absorb<R> for MultilinearExtension<R> {
-    fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb(&self.coefficients)
+    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+        duplex.absorb(self.coefficients)
     }
 }
 

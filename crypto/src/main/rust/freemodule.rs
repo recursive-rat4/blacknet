@@ -284,8 +284,8 @@ impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
 impl<R: Ring, const N: usize> Module<R> for FreeModule<R, N> {}
 
 impl<R: Ring + Absorb<R>, const N: usize> Absorb<R> for FreeModule<R, N> {
-    fn absorb_into(&self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb(&self.components)
+    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+        duplex.absorb(self.components)
     }
 }
 

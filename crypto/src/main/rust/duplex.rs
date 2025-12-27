@@ -31,12 +31,17 @@ pub enum Phase {
 pub trait Duplex<T>: UniformGenerator {
     fn reset(&mut self);
 
-    fn absorb_native(&mut self, e: &T);
+    fn absorb_native(&mut self, e: T);
     fn squeeze_native(&mut self) -> T;
 
     #[inline]
-    fn absorb<S: Absorb<T>>(&mut self, e: &S) {
+    fn absorb<S: Absorb<T>>(&mut self, e: S) {
         e.absorb_into(self)
+    }
+
+    #[inline]
+    fn absorb_iter<S: Absorb<T>, I: Iterator<Item = S>>(&mut self, iter: I) {
+        iter.for_each(|i| i.absorb_into(self));
     }
 
     #[inline]
@@ -51,27 +56,27 @@ pub trait Duplex<T>: UniformGenerator {
 }
 
 pub trait Absorb<T> {
-    fn absorb_into(&self, duplex: &mut (impl Duplex<T> + ?Sized));
+    fn absorb_into(self, duplex: &mut (impl Duplex<T> + ?Sized));
 }
 
 impl<T> Absorb<T> for T {
     #[inline]
-    fn absorb_into(&self, duplex: &mut (impl Duplex<T> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut (impl Duplex<T> + ?Sized)) {
         duplex.absorb_native(self)
     }
 }
 
 impl<T: Absorb<T>, const N: usize> Absorb<T> for [T; N] {
     #[inline]
-    fn absorb_into(&self, duplex: &mut (impl Duplex<T> + ?Sized)) {
-        self.iter().for_each(|i| duplex.absorb(i))
+    fn absorb_into(self, duplex: &mut (impl Duplex<T> + ?Sized)) {
+        self.into_iter().for_each(|i| duplex.absorb(i))
     }
 }
 
 impl<T: Absorb<T>> Absorb<T> for Vec<T> {
     #[inline]
-    fn absorb_into(&self, duplex: &mut (impl Duplex<T> + ?Sized)) {
-        self.iter().for_each(|i| duplex.absorb(i))
+    fn absorb_into(self, duplex: &mut (impl Duplex<T> + ?Sized)) {
+        self.into_iter().for_each(|i| duplex.absorb(i))
     }
 }
 
@@ -203,7 +208,7 @@ impl<
         self.state = [S::IDENTITY; WIDTH];
     }
 
-    fn absorb_native(&mut self, e: &S) {
+    fn absorb_native(&mut self, e: S) {
         if self.phase == Phase::Squeeze {
             self.phase = Phase::Absorb;
             self.position = 0;
@@ -211,7 +216,7 @@ impl<
             P::permute(&mut self.state);
             self.position = 0;
         }
-        self.state[self.position] = *e;
+        self.state[self.position] = e;
         self.position += 1
     }
 

@@ -97,7 +97,7 @@ impl<
         self.state = [S::ZERO; WIDTH];
     }
 
-    fn absorb_native(&mut self, e: &S) {
+    fn absorb_native(&mut self, e: S) {
         if self.phase == Phase::Squeeze {
             self.phase = Phase::Absorb;
             self.position = 0;
@@ -105,7 +105,7 @@ impl<
             P::permute(self.assigment, &mut self.state);
             self.position = 0;
         }
-        self.state[self.position] = *e;
+        self.state[self.position] = e;
         self.position += 1
     }
 

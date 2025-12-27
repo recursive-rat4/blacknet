@@ -426,8 +426,8 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> PowerOfTwoCyclotomicRing<Z>
 }
 
 impl<Z: Twiddles<M> + Absorb<Z>, const M: usize, const N: usize> Absorb<Z> for NTTRing<Z, M, N> {
-    fn absorb_into(&self, duplex: &mut (impl Duplex<Z> + ?Sized)) {
-        duplex.absorb(&self.spectrum)
+    fn absorb_into(self, duplex: &mut (impl Duplex<Z> + ?Sized)) {
+        duplex.absorb(self.spectrum)
     }
 }
 
