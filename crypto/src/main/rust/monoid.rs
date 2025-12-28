@@ -30,7 +30,6 @@ pub trait AdditiveMonoid
     + Default
     + Sum
     + for<'a> Sum<&'a Self>
-    + Copy
 {
     const IDENTITY: Self;
 }
@@ -54,7 +53,6 @@ pub trait MultiplicativeMonoid
     + Default
     + Product
     + for<'a> Product<&'a Self>
-    + Copy
 {
     const IDENTITY: Self;
 }

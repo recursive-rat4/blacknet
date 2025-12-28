@@ -26,12 +26,13 @@ use crate::semigroup::MultiplicativeSemigroup;
 pub trait Presemiring
     : AdditiveCommutativeMonoid
     + MultiplicativeSemigroup
+    + Copy
 {
     /// The additive identity.
     const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
 }
 
-impl<R: AdditiveCommutativeMonoid + MultiplicativeSemigroup> Presemiring for R {}
+impl<R: AdditiveCommutativeMonoid + MultiplicativeSemigroup + Copy> Presemiring for R {}
 
 /// A generalization of [unital ring][`crate::ring::UnitalRing`] that doesn't require subtraction.
 #[rustfmt::skip]
