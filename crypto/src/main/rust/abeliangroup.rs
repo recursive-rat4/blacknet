@@ -49,11 +49,11 @@ pub trait AdditiveAbelianGroup: AdditiveGroup + AdditiveCommutativeMonoid {
                     // Q only needs to be updated in case P gets updated
                     (q, q_is_q_double) = update_q(q, q_is_q_double);
                     if bit {
-                        p -= q;
+                        p -= &q;
                         q_is_q_double += 2;
                         state = 11;
                     } else {
-                        p += q;
+                        p += &q;
                         q_is_q_double += 2;
                         state = 0;
                     }

@@ -70,12 +70,14 @@ impl<
 
     fn compress(a: Self::Hash, b: Self::Hash) -> Self::Hash {
         let mut state = [G::IDENTITY; WIDTH];
-        state[..WIDTH / 2].copy_from_slice(&a);
-        state[WIDTH / 2..].copy_from_slice(&b);
+        state[..WIDTH / 2].clone_from_slice(&a);
+        state[WIDTH / 2..].clone_from_slice(&b);
         P::permute(&mut state);
-        let mut hash = [G::IDENTITY; RANK];
+        let mut hash = a;
         for i in 0..RANK {
-            hash[i] = a[i] + b[i] + state[i] + state[i + RANK];
+            hash[i] += &b[i];
+            hash[i] += &state[i];
+            hash[i] += &state[i + RANK];
         }
         hash
     }

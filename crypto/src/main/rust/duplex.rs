@@ -153,7 +153,7 @@ impl<
 
     pub fn with_iv(iv: &[S; CAPACITY]) -> Self {
         let mut duplex = Self::new();
-        duplex.state[RATE..WIDTH].copy_from_slice(iv);
+        duplex.state[RATE..WIDTH].clone_from_slice(iv);
         duplex
     }
 
@@ -161,7 +161,7 @@ impl<
         self.phase = Phase::Absorb;
         self.position = 0;
         self.state[..RATE].fill(S::IDENTITY);
-        self.state[RATE..WIDTH].copy_from_slice(iv);
+        self.state[RATE..WIDTH].clone_from_slice(iv);
     }
 
     fn pad(&mut self) {
@@ -176,7 +176,7 @@ impl<
         }
     }
 
-    pub const fn sneak(self) -> [S; WIDTH] {
+    pub fn sneak(self) -> [S; WIDTH] {
         self.state
     }
 }
@@ -230,7 +230,7 @@ impl<
             P::permute(&mut self.state);
             self.position = 0;
         }
-        let e = self.state[self.position];
+        let e = self.state[self.position].clone();
         self.position += 1;
         e
     }
