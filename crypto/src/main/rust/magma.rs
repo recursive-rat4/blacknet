@@ -21,7 +21,7 @@ use core::ops::{Add, AddAssign, Mul, MulAssign};
 /// A set that is closed under addition.
 #[rustfmt::skip]
 pub trait AdditiveMagma
-    : Copy
+    : Clone
     + Add<Output = Self>
     + AddAssign
     + Double<Output = Self>
@@ -36,7 +36,7 @@ pub trait AdditiveCommutativeMagma: AdditiveMagma {}
 /// A set that is closed under multiplication.
 #[rustfmt::skip]
 pub trait MultiplicativeMagma
-    : Copy
+    : Clone
     + Mul<Output = Self>
     + MulAssign
     + Square<Output = Self>

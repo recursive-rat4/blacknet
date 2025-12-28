@@ -35,6 +35,7 @@ pub trait RightZero {
 #[rustfmt::skip]
 pub trait AdditiveSemigroup
     : AdditiveMagma
+    + Copy
 {
 }
 
@@ -84,6 +85,7 @@ pub trait RightOne {
 #[rustfmt::skip]
 pub trait MultiplicativeSemigroup
     : MultiplicativeMagma
+    + Copy
 {
 }
 
