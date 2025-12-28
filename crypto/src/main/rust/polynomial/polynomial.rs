@@ -19,10 +19,7 @@ use crate::matrix::DenseVector;
 use crate::polynomial::Point;
 use crate::semiring::Semiring;
 
-#[rustfmt::skip]
-pub trait Polynomial<R: Semiring>
-    : Clone
-{
+pub trait Polynomial<R: Semiring> {
     fn bind(&mut self, e: R);
 
     fn point(&self, point: &Point<R>) -> R;
