@@ -35,7 +35,6 @@ pub trait RightZero {
 #[rustfmt::skip]
 pub trait AdditiveSemigroup
     : AdditiveMagma
-    + Copy
 {
 }
 
@@ -52,7 +51,7 @@ pub fn double_and_add<
     let mut t = g;
     for bit in scalar {
         if bit {
-            r += t
+            r += &t
         }
         t = t.double()
     }
@@ -85,7 +84,6 @@ pub trait RightOne {
 #[rustfmt::skip]
 pub trait MultiplicativeSemigroup
     : MultiplicativeMagma
-    + Copy
 {
 }
 
@@ -102,7 +100,7 @@ pub fn square_and_multiply<
     let mut t = g;
     for bit in scalar {
         if bit {
-            r *= t
+            r *= &t
         }
         t = t.square()
     }
