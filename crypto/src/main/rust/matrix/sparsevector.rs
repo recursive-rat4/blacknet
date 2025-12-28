@@ -102,16 +102,21 @@ impl<R: Presemiring> Mul<&SparseVector<R>> for &DenseMatrix<R> {
 
 impl<R: Presemiring + Eq> From<&DenseVector<R>> for SparseVector<R> {
     fn from(dense: &DenseVector<R>) -> Self {
+        let dimension = dense.dimension();
         let mut index = Vec::<usize>::new();
         let mut elements = Vec::<R>::new();
-        for i in 0..dense.dimension() {
+        for i in 0..dimension {
             let e = dense[i];
             if e != R::ZERO {
                 index.push(i);
                 elements.push(e);
             }
         }
-        SparseVector::new(dense.dimension(), index, elements)
+        Self {
+            dimension,
+            index,
+            elements,
+        }
     }
 }
 

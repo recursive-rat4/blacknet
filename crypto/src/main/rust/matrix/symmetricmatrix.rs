@@ -41,7 +41,10 @@ impl<R: Presemiring> SymmetricMatrix<R> {
     }
 
     pub fn fill(dimension: usize, element: R) -> Self {
-        Self::new(dimension, vec![element; Self::size(dimension)])
+        Self {
+            dimension,
+            elements: vec![element; Self::size(dimension)],
+        }
     }
 
     /// The number of rows.
@@ -111,15 +114,15 @@ impl<R: Presemiring> IndexMut<(usize, usize)> for SymmetricMatrix<R> {
 }
 
 impl<R: Presemiring> Add for SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+    type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            zip(self.elements, rps.elements)
+        Self {
+            dimension: self.dimension,
+            elements: zip(self.elements, rps.elements)
                 .map(|(l, r)| l + r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -133,23 +136,23 @@ impl<R: Presemiring> Double for SymmetricMatrix<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            self.elements.into_iter().map(Double::double).collect(),
-        )
+        Self {
+            dimension: self.dimension,
+            elements: self.elements.into_iter().map(Double::double).collect(),
+        }
     }
 }
 
 impl<R: Presemiring> Add<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+    type Output = Self;
 
     fn add(self, rps: &SymmetricMatrix<R>) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            zip(self.elements, rps.elements.iter())
+        Self {
+            dimension: self.dimension,
+            elements: zip(self.elements, rps.elements.iter())
                 .map(|(l, &r)| l + r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -163,12 +166,12 @@ impl<R: Presemiring> Add<SymmetricMatrix<R>> for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn add(self, rps: SymmetricMatrix<R>) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            zip(self.elements.iter(), rps.elements)
+        Self::Output {
+            dimension: self.dimension,
+            elements: zip(self.elements.iter(), rps.elements)
                 .map(|(&l, r)| l + r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -176,12 +179,12 @@ impl<R: Presemiring> Add for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn add(self, rps: Self) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            zip(self.elements.iter(), rps.elements.iter())
+        Self::Output {
+            dimension: self.dimension,
+            elements: zip(self.elements.iter(), rps.elements.iter())
                 .map(|(&l, &r)| l + r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -189,10 +192,10 @@ impl<R: Ring> Neg for SymmetricMatrix<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            self.elements.into_iter().map(Neg::neg).collect(),
-        )
+        Self {
+            dimension: self.dimension,
+            elements: self.elements.into_iter().map(Neg::neg).collect(),
+        }
     }
 }
 
@@ -200,20 +203,23 @@ impl<R: Ring> Neg for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn neg(self) -> Self::Output {
-        SymmetricMatrix::new(self.dimension, self.elements.iter().map(|&e| -e).collect())
+        Self::Output {
+            dimension: self.dimension,
+            elements: self.elements.iter().map(|&e| -e).collect(),
+        }
     }
 }
 
 impl<R: Ring> Sub for SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+    type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            zip(self.elements, rps.elements)
+        Self {
+            dimension: self.dimension,
+            elements: zip(self.elements, rps.elements)
                 .map(|(l, r)| l - r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -224,15 +230,15 @@ impl<R: Ring> SubAssign for SymmetricMatrix<R> {
 }
 
 impl<R: Ring> Sub<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+    type Output = Self;
 
     fn sub(self, rps: &SymmetricMatrix<R>) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            zip(self.elements, rps.elements.iter())
+        Self {
+            dimension: self.dimension,
+            elements: zip(self.elements, rps.elements.iter())
                 .map(|(l, &r)| l - r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -246,12 +252,12 @@ impl<R: Ring> Sub<SymmetricMatrix<R>> for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn sub(self, rps: SymmetricMatrix<R>) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            zip(self.elements.iter(), rps.elements)
+        Self::Output {
+            dimension: self.dimension,
+            elements: zip(self.elements.iter(), rps.elements)
                 .map(|(&l, r)| l - r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -259,12 +265,12 @@ impl<R: Ring> Sub for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            zip(self.elements.iter(), rps.elements.iter())
+        Self::Output {
+            dimension: self.dimension,
+            elements: zip(self.elements.iter(), rps.elements.iter())
                 .map(|(&l, &r)| l - r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -272,10 +278,10 @@ impl<R: Presemiring> Mul<R> for SymmetricMatrix<R> {
     type Output = Self;
 
     fn mul(self, rps: R) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            self.elements.into_iter().map(|e| e * rps).collect(),
-        )
+        Self {
+            dimension: self.dimension,
+            elements: self.elements.into_iter().map(|e| e * rps).collect(),
+        }
     }
 }
 
@@ -289,10 +295,10 @@ impl<R: Presemiring> Mul<R> for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn mul(self, rps: R) -> Self::Output {
-        SymmetricMatrix::new(
-            self.dimension,
-            self.elements.iter().map(|&e| e * rps).collect(),
-        )
+        Self::Output {
+            dimension: self.dimension,
+            elements: self.elements.iter().map(|&e| e * rps).collect(),
+        }
     }
 }
 

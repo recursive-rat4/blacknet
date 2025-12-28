@@ -167,7 +167,12 @@ impl<R: Presemiring> SparseMatrixBuilder<R> {
     }
 
     pub fn build(self) -> SparseMatrix<R> {
-        unsafe { SparseMatrix::<R>::new(self.columns, self.r_index, self.c_index, self.elements) }
+        SparseMatrix {
+            columns: self.columns,
+            r_index: self.r_index,
+            c_index: self.c_index,
+            elements: self.elements,
+        }
     }
 }
 

@@ -42,7 +42,11 @@ impl<R: Presemiring> DenseMatrix<R> {
     }
 
     pub fn fill(rows: usize, columns: usize, element: R) -> Self {
-        Self::new(rows, columns, vec![element; rows * columns])
+        Self {
+            rows,
+            columns,
+            elements: vec![element; rows * columns],
+        }
     }
 
     pub fn pad_to_power_of_two(&self) -> Self {
@@ -60,7 +64,11 @@ impl<R: Presemiring> DenseMatrix<R> {
         for _ in 0..m * (self.columns + n) {
             elements.push(R::ZERO)
         }
-        Self::new(self.rows + m, self.columns + n, elements)
+        Self {
+            rows: self.rows + m,
+            columns: self.columns + n,
+            elements,
+        }
     }
 
     pub const fn rows(&self) -> usize {
@@ -85,7 +93,11 @@ impl<R: Presemiring> DenseMatrix<R> {
                 elements.push(rps[(i, j)])
             }
         }
-        Self::new(self.rows, self.columns + rps.columns, elements)
+        Self {
+            rows: self.rows,
+            columns: self.columns + rps.columns,
+            elements,
+        }
     }
 
     pub fn trace(&self) -> R {
@@ -103,7 +115,11 @@ impl<R: Presemiring> DenseMatrix<R> {
                 elements.push(self[(i, j)]);
             }
         }
-        Self::new(self.columns, self.rows, elements)
+        Self {
+            rows: self.columns,
+            columns: self.rows,
+            elements,
+        }
     }
 }
 
@@ -130,16 +146,16 @@ impl<R: Presemiring> IndexMut<(usize, usize)> for DenseMatrix<R> {
 }
 
 impl<R: Presemiring> Add for DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+    type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            zip(self.elements, rps.elements)
+        Self {
+            rows: self.rows,
+            columns: self.columns,
+            elements: zip(self.elements, rps.elements)
                 .map(|(l, r)| l + r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -153,25 +169,25 @@ impl<R: Presemiring> Double for DenseMatrix<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            self.elements.into_iter().map(Double::double).collect(),
-        )
+        Self {
+            rows: self.rows,
+            columns: self.columns,
+            elements: self.elements.into_iter().map(Double::double).collect(),
+        }
     }
 }
 
 impl<R: Presemiring> Add<&DenseMatrix<R>> for DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+    type Output = Self;
 
     fn add(self, rps: &DenseMatrix<R>) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            zip(self.elements, rps.elements.iter())
+        Self {
+            rows: self.rows,
+            columns: self.columns,
+            elements: zip(self.elements, rps.elements.iter())
                 .map(|(l, &r)| l + r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -185,13 +201,13 @@ impl<R: Presemiring> Add<DenseMatrix<R>> for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn add(self, rps: DenseMatrix<R>) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            zip(self.elements.iter(), rps.elements)
+        Self::Output {
+            rows: self.rows,
+            columns: self.columns,
+            elements: zip(self.elements.iter(), rps.elements)
                 .map(|(&l, r)| l + r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -199,13 +215,13 @@ impl<R: Presemiring> Add for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn add(self, rps: Self) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            zip(self.elements.iter(), rps.elements.iter())
+        Self::Output {
+            rows: self.rows,
+            columns: self.columns,
+            elements: zip(self.elements.iter(), rps.elements.iter())
                 .map(|(&l, &r)| l + r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -213,11 +229,11 @@ impl<R: Ring> Neg for DenseMatrix<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            self.elements.into_iter().map(Neg::neg).collect(),
-        )
+        Self {
+            rows: self.rows,
+            columns: self.columns,
+            elements: self.elements.into_iter().map(Neg::neg).collect(),
+        }
     }
 }
 
@@ -225,25 +241,25 @@ impl<R: Ring> Neg for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn neg(self) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            self.elements.iter().map(|&e| -e).collect(),
-        )
+        Self::Output {
+            rows: self.rows,
+            columns: self.columns,
+            elements: self.elements.iter().map(|&e| -e).collect(),
+        }
     }
 }
 
 impl<R: Ring> Sub for DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+    type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            zip(self.elements, rps.elements)
+        Self {
+            rows: self.rows,
+            columns: self.columns,
+            elements: zip(self.elements, rps.elements)
                 .map(|(l, r)| l - r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -254,16 +270,16 @@ impl<R: Ring> SubAssign for DenseMatrix<R> {
 }
 
 impl<R: Ring> Sub<&DenseMatrix<R>> for DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+    type Output = Self;
 
     fn sub(self, rps: &DenseMatrix<R>) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            zip(self.elements, rps.elements.iter())
+        Self {
+            rows: self.rows,
+            columns: self.columns,
+            elements: zip(self.elements, rps.elements.iter())
                 .map(|(l, &r)| l - r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -277,13 +293,13 @@ impl<R: Ring> Sub<DenseMatrix<R>> for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn sub(self, rps: DenseMatrix<R>) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            zip(self.elements.iter(), rps.elements)
+        Self::Output {
+            rows: self.rows,
+            columns: self.columns,
+            elements: zip(self.elements.iter(), rps.elements)
                 .map(|(&l, r)| l - r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -291,13 +307,13 @@ impl<R: Ring> Sub for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            zip(self.elements.iter(), rps.elements.iter())
+        Self::Output {
+            rows: self.rows,
+            columns: self.columns,
+            elements: zip(self.elements.iter(), rps.elements.iter())
                 .map(|(&l, &r)| l - r)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -363,11 +379,11 @@ impl<R: Presemiring> Mul<R> for DenseMatrix<R> {
     type Output = Self;
 
     fn mul(self, rps: R) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            self.elements.into_iter().map(|e| e * rps).collect(),
-        )
+        Self {
+            rows: self.rows,
+            columns: self.columns,
+            elements: self.elements.into_iter().map(|e| e * rps).collect(),
+        }
     }
 }
 
@@ -381,11 +397,11 @@ impl<R: Presemiring> Mul<R> for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn mul(self, rps: R) -> Self::Output {
-        DenseMatrix::new(
-            self.rows,
-            self.columns,
-            self.elements.iter().map(|&e| e * rps).collect(),
-        )
+        Self::Output {
+            rows: self.rows,
+            columns: self.columns,
+            elements: self.elements.iter().map(|&e| e * rps).collect(),
+        }
     }
 }
 
