@@ -44,6 +44,11 @@ pub struct DenseVector<R: Presemiring> {
 }
 
 impl<R: Presemiring> DenseVector<R> {
+    /// Construct a new vector.
+    pub const fn new(elements: Vec<R>) -> Self {
+        Self { elements }
+    }
+
     /// Fill a new `n`-dimensional vector with a single `element`.
     pub fn fill(n: usize, element: R) -> Self {
         Self {

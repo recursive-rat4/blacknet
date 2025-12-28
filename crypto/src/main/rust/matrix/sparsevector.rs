@@ -72,15 +72,17 @@ impl<R: Presemiring> Mul<&DenseMatrix<R>> for &SparseVector<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
-        let mut v = DenseVector::<R>::fill(rps.columns(), R::ZERO);
         let lps_nnz = self.index.len();
-        for i in 0..lps_nnz {
-            for j in 0..rps.columns() {
-                let row = self.index[i];
-                v[j] += self.elements[i] * rps[(row, j)];
-            }
-        }
-        v
+        (0..rps.columns())
+            .map(|j| {
+                (0..lps_nnz)
+                    .map(|i| {
+                        let row = self.index[i];
+                        self.elements[i] * rps[(row, j)]
+                    })
+                    .sum()
+            })
+            .collect()
     }
 }
 
@@ -88,15 +90,17 @@ impl<R: Presemiring> Mul<&SparseVector<R>> for &DenseMatrix<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: &SparseVector<R>) -> Self::Output {
-        let mut v = DenseVector::<R>::fill(self.rows(), R::ZERO);
         let rps_nnz = rps.index.len();
-        for i in 0..self.rows() {
-            for j in 0..rps_nnz {
-                let column = rps.index[j];
-                v[i] += self[(i, column)] * rps.elements[j];
-            }
-        }
-        v
+        (0..self.rows())
+            .map(|i| {
+                (0..rps_nnz)
+                    .map(|j| {
+                        let column = rps.index[j];
+                        self[(i, column)] * rps.elements[j]
+                    })
+                    .sum()
+            })
+            .collect()
     }
 }
 

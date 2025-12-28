@@ -306,13 +306,9 @@ impl<R: Presemiring> Mul<&DenseVector<R>> for &SymmetricMatrix<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: &DenseVector<R>) -> Self::Output {
-        let mut r = DenseVector::fill(self.rows(), R::ZERO);
-        for i in 0..self.rows() {
-            for j in 0..self.columns() {
-                r[i] += self[(i, j)] * rps[j]
-            }
-        }
-        r
+        (0..self.rows())
+            .map(|i| (0..self.columns()).map(|j| self[(i, j)] * rps[j]).sum())
+            .collect()
     }
 }
 
@@ -320,12 +316,8 @@ impl<R: Presemiring> Mul<&SymmetricMatrix<R>> for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: &SymmetricMatrix<R>) -> Self::Output {
-        let mut r = DenseVector::fill(rps.columns(), R::ZERO);
-        for i in 0..rps.rows() {
-            for j in 0..rps.columns() {
-                r[j] += self[i] * rps[(i, j)]
-            }
-        }
-        r
+        (0..rps.columns())
+            .map(|j| (0..rps.rows()).map(|i| self[i] * rps[(i, j)]).sum())
+            .collect()
     }
 }
