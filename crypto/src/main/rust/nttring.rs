@@ -37,12 +37,17 @@ use crate::univariatering::UnivariateRing;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use serde::{Deserialize, Serialize};
 
 // Univariate polynomial ring in NTT form
 
 type Iso<Z, const N: usize> = UnivariateRing<Z, N, Negacyclic>;
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(bound(
+    deserialize = "FreeModule<Z, N>: Deserialize<'de>",
+    serialize = "FreeModule<Z, N>: Serialize"
+))]
 pub struct NTTRing<Z: Twiddles<M>, const M: usize, const N: usize> {
     spectrum: FreeModule<Z, N>,
 }

@@ -29,9 +29,14 @@ use crate::semiring::Presemiring;
 use core::array;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use serde::{Deserialize, Serialize};
 
 /// A ring of square matrices.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Deserialize, Debug, Eq, PartialEq, Serialize)]
+#[serde(bound(
+    deserialize = "[R; NN]: Deserialize<'de>",
+    serialize = "[R; NN]: Serialize"
+))]
 pub struct MatrixRing<R: Ring, const N: usize, const NN: usize> {
     elements: [R; NN],
 }

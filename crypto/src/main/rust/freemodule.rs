@@ -27,8 +27,13 @@ use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(bound(
+    deserialize = "[R; N]: Deserialize<'de>",
+    serialize = "[R; N]: Serialize"
+))]
 pub struct FreeModule<R: Ring, const N: usize> {
     components: [R; N],
 }

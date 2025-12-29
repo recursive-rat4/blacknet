@@ -36,12 +36,18 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::marker::PhantomData;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use serde::{Deserialize, Serialize};
 
 // Univariate polynomial ring in monomial basis
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(bound(
+    deserialize = "FreeModule<R, N>: Deserialize<'de>",
+    serialize = "FreeModule<R, N>: Serialize"
+))]
 pub struct UnivariateRing<R: UnitalRing, const N: usize, C: Convolution<R, N>> {
     coefficients: FreeModule<R, N>,
+    #[serde(skip)]
     phantom: PhantomData<C>,
 }
 
