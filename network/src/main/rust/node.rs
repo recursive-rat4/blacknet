@@ -126,7 +126,7 @@ impl Node {
             fjall,
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
-            wallet_db: WalletDB::new(&mode, log_manager)?,
+            wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),
             prober_agent_string: format!("/{agent_name}-prober:{agent_version}/"),
             agent_name: agent_name.to_owned(),

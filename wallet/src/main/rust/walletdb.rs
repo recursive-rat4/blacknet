@@ -17,12 +17,17 @@
 
 use crate::address::AddressCodec;
 use crate::wallet::Wallet;
-use blacknet_compat::Mode;
+use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::PublicKey;
-use blacknet_log::{LogManager, Logger, info};
+use blacknet_log::{LogManager, Logger, error, info};
 use core::error::Error;
 use std::collections::HashMap;
+use std::fs::{DirBuilder, read_dir};
+use std::io::Error as IoError;
+#[cfg(target_family = "unix")]
+use std::os::unix::fs::DirBuilderExt;
+use std::path::PathBuf;
 
 pub struct WalletDB {
     logger: Logger,
@@ -31,14 +36,54 @@ pub struct WalletDB {
 }
 
 impl WalletDB {
-    pub fn new(mode: &Mode, log_manager: &LogManager) -> Result<Self, Box<dyn Error>> {
+    #[expect(unused)]
+    pub fn new(
+        mode: &Mode,
+        dirs: &XDGDirectories,
+        log_manager: &LogManager,
+    ) -> Result<Self, Box<dyn Error>> {
         let logger = log_manager.logger("WalletDB")?;
         info!(logger, "Driving SQLite {}", rusqlite::version());
+
+        let mut wallets = HashMap::new();
+        let dir_path = Self::mkdir(dirs)?;
+        for dir_entry in read_dir(dir_path)? {
+            let dir_entry = dir_entry?;
+            match Wallet::open(&dir_entry.path(), mode) {
+                Ok(wallet) => {
+                    info!(
+                        logger,
+                        "Loaded wallet {}",
+                        dir_entry.file_name().to_string_lossy()
+                    );
+                    wallets.insert(todo!(), wallet);
+                }
+                Err(err) => {
+                    error!(
+                        logger,
+                        "Wallet {} error: {}",
+                        dir_entry.file_name().to_string_lossy(),
+                        err
+                    );
+                }
+            }
+        }
+
         Ok(Self {
             logger,
             address_codec: AddressCodec::new(mode)?,
-            wallets: HashMap::new(), //TODO
+            wallets,
         })
+    }
+
+    fn mkdir(dirs: &XDGDirectories) -> Result<PathBuf, IoError> {
+        let path = dirs.data().join("wallets");
+        let mut builder = DirBuilder::new();
+        builder.recursive(true);
+        #[cfg(target_family = "unix")]
+        builder.mode(0o700);
+        builder.create(&path)?;
+        Ok(path)
     }
 
     pub const fn address_codec(&self) -> &AddressCodec {
