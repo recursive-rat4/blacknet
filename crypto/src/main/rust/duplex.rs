@@ -22,9 +22,13 @@ use alloc::vec::Vec;
 use core::array;
 use core::marker::PhantomData;
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+/// The phase of sponge state
+#[derive(Clone, Copy, Default, Eq, PartialEq)]
 pub enum Phase {
+    /// Absorbing into sponge
+    #[default]
     Absorb,
+    /// Squeezing from sponge
     Squeeze,
 }
 

@@ -25,6 +25,15 @@ use core::iter::zip;
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
+/// A matrix in the row-major order.
+///
+/// # Panics
+///
+/// In debug builds, panic on incompatible dimensions.
+///
+/// # Safety
+///
+/// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DenseMatrix<R: Presemiring> {
     rows: usize,
@@ -33,7 +42,9 @@ pub struct DenseMatrix<R: Presemiring> {
 }
 
 impl<R: Presemiring> DenseMatrix<R> {
+    /// Construct a new matrix.
     pub const fn new(rows: usize, columns: usize, elements: Vec<R>) -> Self {
+        debug_assert!(rows * columns == elements.len());
         Self {
             rows,
             columns,
@@ -41,6 +52,7 @@ impl<R: Presemiring> DenseMatrix<R> {
         }
     }
 
+    /// Fill a new `m ⨉ n` matrix with a single `element`.
     pub fn fill(rows: usize, columns: usize, element: R) -> Self {
         Self {
             rows,
@@ -71,19 +83,24 @@ impl<R: Presemiring> DenseMatrix<R> {
         }
     }
 
+    /// The number of rows.
     pub const fn rows(&self) -> usize {
         self.rows
     }
 
+    /// The number of columns.
     pub const fn columns(&self) -> usize {
         self.columns
     }
 
+    /// The entries in row-major order.
     pub const fn elements(&self) -> &Vec<R> {
         &self.elements
     }
 
+    /// Concatenate horizontally.
     pub fn cat(&self, rps: &Self) -> Self {
+        debug_assert!(self.rows == rps.rows);
         let mut elements = Vec::<R>::with_capacity(self.rows * (self.columns + rps.columns));
         for i in 0..self.rows {
             for j in 0..self.columns {
@@ -101,6 +118,7 @@ impl<R: Presemiring> DenseMatrix<R> {
     }
 
     pub fn trace(&self) -> R {
+        debug_assert!(self.rows == self.columns);
         let mut sigma = R::ZERO;
         for i in 0..self.rows {
             sigma += self[(i, i)]
@@ -149,6 +167,7 @@ impl<R: Presemiring> Add for DenseMatrix<R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self {
             rows: self.rows,
             columns: self.columns,
@@ -161,6 +180,7 @@ impl<R: Presemiring> Add for DenseMatrix<R> {
 
 impl<R: Presemiring> AddAssign for DenseMatrix<R> {
     fn add_assign(&mut self, rps: Self) {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l += r);
     }
 }
@@ -181,6 +201,7 @@ impl<R: Presemiring> Add<&DenseMatrix<R>> for DenseMatrix<R> {
     type Output = Self;
 
     fn add(self, rps: &DenseMatrix<R>) -> Self::Output {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self {
             rows: self.rows,
             columns: self.columns,
@@ -193,6 +214,7 @@ impl<R: Presemiring> Add<&DenseMatrix<R>> for DenseMatrix<R> {
 
 impl<R: Presemiring> AddAssign<&DenseMatrix<R>> for DenseMatrix<R> {
     fn add_assign(&mut self, rps: &DenseMatrix<R>) {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l += r);
     }
 }
@@ -201,6 +223,7 @@ impl<R: Presemiring> Add<DenseMatrix<R>> for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn add(self, rps: DenseMatrix<R>) -> Self::Output {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self::Output {
             rows: self.rows,
             columns: self.columns,
@@ -215,6 +238,7 @@ impl<R: Presemiring> Add for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn add(self, rps: Self) -> Self::Output {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self::Output {
             rows: self.rows,
             columns: self.columns,
@@ -253,6 +277,7 @@ impl<R: Ring> Sub for DenseMatrix<R> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self {
             rows: self.rows,
             columns: self.columns,
@@ -265,6 +290,7 @@ impl<R: Ring> Sub for DenseMatrix<R> {
 
 impl<R: Ring> SubAssign for DenseMatrix<R> {
     fn sub_assign(&mut self, rps: Self) {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l -= r);
     }
 }
@@ -273,6 +299,7 @@ impl<R: Ring> Sub<&DenseMatrix<R>> for DenseMatrix<R> {
     type Output = Self;
 
     fn sub(self, rps: &DenseMatrix<R>) -> Self::Output {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self {
             rows: self.rows,
             columns: self.columns,
@@ -285,6 +312,7 @@ impl<R: Ring> Sub<&DenseMatrix<R>> for DenseMatrix<R> {
 
 impl<R: Ring> SubAssign<&DenseMatrix<R>> for DenseMatrix<R> {
     fn sub_assign(&mut self, rps: &DenseMatrix<R>) {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l -= r);
     }
 }
@@ -293,6 +321,7 @@ impl<R: Ring> Sub<DenseMatrix<R>> for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn sub(self, rps: DenseMatrix<R>) -> Self::Output {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self::Output {
             rows: self.rows,
             columns: self.columns,
@@ -307,6 +336,7 @@ impl<R: Ring> Sub for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
+        debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self::Output {
             rows: self.rows,
             columns: self.columns,
@@ -362,6 +392,7 @@ impl<R: Presemiring> Mul for &DenseMatrix<R> {
     type Output = DenseMatrix<R>;
 
     fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+        debug_assert!(self.columns == rps.rows);
         // Iterative algorithm
         let mut r = DenseMatrix::fill(self.rows, rps.columns, R::ZERO);
         for i in 0..self.rows {
@@ -409,6 +440,7 @@ impl<R: Presemiring> Mul<&DenseVector<R>> for &DenseMatrix<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+        debug_assert!(self.columns == rps.dimension());
         (0..self.rows())
             .map(|i| (0..self.columns()).map(|j| self[(i, j)] * rps[j]).sum())
             .collect()
@@ -419,6 +451,7 @@ impl<R: Presemiring> Mul<&DenseMatrix<R>> for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+        debug_assert!(self.dimension() == rps.rows);
         (0..rps.columns())
             .map(|j| (0..rps.rows()).map(|i| self[i] * rps[(i, j)]).sum())
             .collect()

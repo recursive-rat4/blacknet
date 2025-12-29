@@ -24,6 +24,7 @@ use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
 /// A sparse matrix in CSR format.
+///
 /// <https://arxiv.org/abs/2404.06047>
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SparseMatrix<R: Presemiring> {
