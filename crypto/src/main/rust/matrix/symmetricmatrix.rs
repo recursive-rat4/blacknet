@@ -26,6 +26,14 @@ use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAs
 use serde::{Deserialize, Serialize};
 
 /// A square matrix that is equal to its transpose.
+///
+/// # Panics
+///
+/// In debug builds, panic on incompatible dimensions.
+///
+/// # Safety
+///
+/// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SymmetricMatrix<R: Presemiring> {
     dimension: usize,
@@ -33,13 +41,16 @@ pub struct SymmetricMatrix<R: Presemiring> {
 }
 
 impl<R: Presemiring> SymmetricMatrix<R> {
+    /// Construct a new matrix given the lower triangular entries.
     pub const fn new(dimension: usize, elements: Vec<R>) -> Self {
+        debug_assert!(Self::size(dimension) == elements.len());
         Self {
             dimension,
             elements,
         }
     }
 
+    /// Fill a new `n ⨉ n` matrix with a single `element`.
     pub fn fill(dimension: usize, element: R) -> Self {
         Self {
             dimension,
@@ -117,6 +128,7 @@ impl<R: Presemiring> Add for SymmetricMatrix<R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension);
         Self {
             dimension: self.dimension,
             elements: zip(self.elements, rps.elements)
@@ -128,6 +140,7 @@ impl<R: Presemiring> Add for SymmetricMatrix<R> {
 
 impl<R: Presemiring> AddAssign for SymmetricMatrix<R> {
     fn add_assign(&mut self, rps: Self) {
+        debug_assert!(self.dimension == rps.dimension);
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l += r);
     }
 }
@@ -147,6 +160,7 @@ impl<R: Presemiring> Add<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
     type Output = Self;
 
     fn add(self, rps: &SymmetricMatrix<R>) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension);
         Self {
             dimension: self.dimension,
             elements: zip(self.elements, rps.elements.iter())
@@ -158,6 +172,7 @@ impl<R: Presemiring> Add<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
 
 impl<R: Presemiring> AddAssign<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
     fn add_assign(&mut self, rps: &SymmetricMatrix<R>) {
+        debug_assert!(self.dimension == rps.dimension);
         zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l += r);
     }
 }
@@ -166,6 +181,7 @@ impl<R: Presemiring> Add<SymmetricMatrix<R>> for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn add(self, rps: SymmetricMatrix<R>) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension);
         Self::Output {
             dimension: self.dimension,
             elements: zip(self.elements.iter(), rps.elements)
@@ -179,6 +195,7 @@ impl<R: Presemiring> Add for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn add(self, rps: Self) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension);
         Self::Output {
             dimension: self.dimension,
             elements: zip(self.elements.iter(), rps.elements.iter())
@@ -214,6 +231,7 @@ impl<R: Ring> Sub for SymmetricMatrix<R> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension);
         Self {
             dimension: self.dimension,
             elements: zip(self.elements, rps.elements)
@@ -225,6 +243,7 @@ impl<R: Ring> Sub for SymmetricMatrix<R> {
 
 impl<R: Ring> SubAssign for SymmetricMatrix<R> {
     fn sub_assign(&mut self, rps: Self) {
+        debug_assert!(self.dimension == rps.dimension);
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l -= r);
     }
 }
@@ -233,6 +252,7 @@ impl<R: Ring> Sub<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
     type Output = Self;
 
     fn sub(self, rps: &SymmetricMatrix<R>) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension);
         Self {
             dimension: self.dimension,
             elements: zip(self.elements, rps.elements.iter())
@@ -244,6 +264,7 @@ impl<R: Ring> Sub<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
 
 impl<R: Ring> SubAssign<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
     fn sub_assign(&mut self, rps: &SymmetricMatrix<R>) {
+        debug_assert!(self.dimension == rps.dimension);
         zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l -= r);
     }
 }
@@ -252,6 +273,7 @@ impl<R: Ring> Sub<SymmetricMatrix<R>> for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn sub(self, rps: SymmetricMatrix<R>) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension);
         Self::Output {
             dimension: self.dimension,
             elements: zip(self.elements.iter(), rps.elements)
@@ -265,6 +287,7 @@ impl<R: Ring> Sub for &SymmetricMatrix<R> {
     type Output = SymmetricMatrix<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension);
         Self::Output {
             dimension: self.dimension,
             elements: zip(self.elements.iter(), rps.elements.iter())
@@ -306,6 +329,7 @@ impl<R: Presemiring> Mul<&DenseVector<R>> for &SymmetricMatrix<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+        debug_assert!(self.dimension == rps.dimension());
         (0..self.rows())
             .map(|i| (0..self.columns()).map(|j| self[(i, j)] * rps[j]).sum())
             .collect()
@@ -316,6 +340,7 @@ impl<R: Presemiring> Mul<&SymmetricMatrix<R>> for &DenseVector<R> {
     type Output = DenseVector<R>;
 
     fn mul(self, rps: &SymmetricMatrix<R>) -> Self::Output {
+        debug_assert!(self.dimension() == rps.dimension);
         (0..rps.columns())
             .map(|j| (0..rps.rows()).map(|i| self[i] * rps[(i, j)]).sum())
             .collect()

@@ -50,7 +50,6 @@ impl<'a, R: UnitalRing + Eq> LogicGate<'a, R> {
         R::ONE - a
     }
 
-    #[allow(clippy::len_zero)]
     pub fn and_slice(&self, a: &[R]) -> R {
         if a.len() == 0 {
             return R::ONE;

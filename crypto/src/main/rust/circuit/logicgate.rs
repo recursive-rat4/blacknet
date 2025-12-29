@@ -74,7 +74,6 @@ impl<'a, 'b, R: UnitalRing + Eq> LogicGate<'a, 'b, R> {
     }
 
     /// Compute the n-ary conjunction `⋀a`.
-    #[allow(clippy::len_zero)]
     pub fn and_slice(&self, a: &[LinearCombination<R>]) -> LinearCombination<R> {
         if a.len() == 0 {
             return Constant::ONE.into();

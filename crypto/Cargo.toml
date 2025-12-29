@@ -180,6 +180,10 @@ name = "symmetricmatrix"
 path = "src/test/rust/symmetricmatrix.rs"
 
 [[test]]
+name = "symmetrictridiagonalmatrix"
+path = "src/test/rust/symmetrictridiagonalmatrix.rs"
+
+[[test]]
 name = "uniformintdistribution"
 path = "src/test/rust/uniformintdistribution.rs"
 
