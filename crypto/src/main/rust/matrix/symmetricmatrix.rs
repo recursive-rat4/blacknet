@@ -34,7 +34,7 @@ use serde::{Deserialize, Serialize};
 /// # Safety
 ///
 /// In release builds, undefined behaviour on incompatible dimensions.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SymmetricMatrix<R: Presemiring> {
     dimension: usize,
     elements: Vec<R>,

@@ -38,7 +38,7 @@ use serde::{Deserialize, Serialize};
 /// # Safety
 ///
 /// In release builds, undefined behaviour on incompatible dimensions.
-#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DenseVector<R: Presemiring> {
     elements: Vec<R>,
 }

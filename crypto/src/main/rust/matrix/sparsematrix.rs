@@ -18,6 +18,7 @@
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::ring::Ring;
 use crate::semiring::Presemiring;
+use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::repeat_n;
 use core::ops::{Mul, Neg};
@@ -71,6 +72,17 @@ impl<R: Presemiring> SparseMatrix<R> {
     /// The number of columns.
     pub const fn columns(&self) -> usize {
         self.columns
+    }
+}
+
+impl<R: Presemiring> Default for SparseMatrix<R> {
+    fn default() -> Self {
+        Self {
+            columns: 0,
+            r_index: vec![0],
+            c_index: Vec::new(),
+            elements: Vec::new(),
+        }
     }
 }
 

@@ -23,7 +23,7 @@ use core::iter::zip;
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SparseVector<R: Presemiring> {
     dimension: usize,
     index: Vec<usize>,
