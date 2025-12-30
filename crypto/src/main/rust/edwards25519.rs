@@ -22,7 +22,6 @@ use crate::twistededwardsgroup::{
     TwistedEdwardsGroupProjective,
 };
 
-#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Edwards25519GroupParams;
 
 impl TwistedEdwardsGroupParams for Edwards25519GroupParams {

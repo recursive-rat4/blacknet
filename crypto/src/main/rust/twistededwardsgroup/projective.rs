@@ -26,7 +26,6 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Eq)]
 pub struct TwistedEdwardsGroupProjective<P: TwistedEdwardsGroupParams> {
     x: P::F,
     y: P::F,
@@ -73,6 +72,8 @@ impl<P: TwistedEdwardsGroupParams<F: PartialEq>> PartialEq for TwistedEdwardsGro
         (self.x * rps.z == self.z * rps.x) && (self.y * rps.z == self.z * rps.y)
     }
 }
+
+impl<P: TwistedEdwardsGroupParams<F: Eq>> Eq for TwistedEdwardsGroupProjective<P> {}
 
 impl<P: TwistedEdwardsGroupParams> Add for TwistedEdwardsGroupProjective<P> {
     type Output = Self;

@@ -26,7 +26,6 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Eq, PartialEq)]
 pub struct TwistedEdwardsGroupAffine<P: TwistedEdwardsGroupParams> {
     x: P::F,
     y: P::F,
@@ -57,6 +56,14 @@ impl<P: TwistedEdwardsGroupParams> Default for TwistedEdwardsGroupAffine<P> {
         Self::IDENTITY
     }
 }
+
+impl<P: TwistedEdwardsGroupParams<F: PartialEq>> PartialEq for TwistedEdwardsGroupAffine<P> {
+    fn eq(&self, rps: &Self) -> bool {
+        self.x == rps.x && self.y == rps.y
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams<F: Eq>> Eq for TwistedEdwardsGroupAffine<P> {}
 
 impl<P: TwistedEdwardsGroupParams> Add for TwistedEdwardsGroupAffine<P> {
     type Output = Self;

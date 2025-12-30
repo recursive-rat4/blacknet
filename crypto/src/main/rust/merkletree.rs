@@ -20,7 +20,6 @@ use alloc::fmt::{Debug, Formatter, Result};
 use alloc::vec;
 use alloc::vec::Vec;
 
-#[derive(Clone, Eq)]
 pub struct MerkleTree<F: CompressionFunction> {
     size: usize,
     nodes: Vec<F::Hash>,
@@ -90,6 +89,15 @@ impl<F: CompressionFunction> MerkleTree<F> {
     }
 }
 
+impl<F: CompressionFunction<Hash: Clone>> Clone for MerkleTree<F> {
+    fn clone(&self) -> Self {
+        Self {
+            size: self.size,
+            nodes: self.nodes.clone(),
+        }
+    }
+}
+
 impl<F: CompressionFunction<Hash: Default>> Default for MerkleTree<F> {
     fn default() -> Self {
         Self {
@@ -110,6 +118,8 @@ impl<F: CompressionFunction<Hash: PartialEq>> PartialEq for MerkleTree<F> {
         self.root() == rps.root()
     }
 }
+
+impl<F: CompressionFunction<Hash: Eq>> Eq for MerkleTree<F> {}
 
 //RUST https://github.com/rust-lang/rust/issues/142326
 const fn bit_width(n: usize) -> u32 {
