@@ -26,6 +26,7 @@ use core::iter::zip;
 use core::ops::{Mul, MulAssign, Neg};
 use serde::{Deserialize, Serialize};
 
+/// Multilinear Lagrange basis polynomial.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct EqExtension<R: UnitalRing> {
     coefficients: Vec<R>,
@@ -33,14 +34,17 @@ pub struct EqExtension<R: UnitalRing> {
 }
 
 impl<R: UnitalRing> EqExtension<R> {
+    /// Construct a new polynomial with the coefficients and a scale factor.
     pub const fn new(coefficients: Vec<R>, z: R) -> Self {
         Self { coefficients, z }
     }
 
+    /// Evaluate over the unit hypercube.
     pub fn basis(coefficients: &[R]) -> Vec<R> {
         Self::evaluate(coefficients, R::ONE)
     }
 
+    /// Evaluate over a hypercube.
     pub fn hypercube(&self) -> DenseVector<R> {
         Self::evaluate(&self.coefficients, self.z).into()
     }
