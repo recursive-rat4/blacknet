@@ -140,6 +140,10 @@ name = "matrixring"
 path = "src/test/rust/matrixring.rs"
 
 [[test]]
+name = "merkletree"
+path = "src/test/rust/merkletree.rs"
+
+[[test]]
 name = "module"
 path = "src/test/rust/module.rs"
 

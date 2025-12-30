@@ -15,8 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+/// A one-way compression function.
 pub trait CompressionFunction {
+    /// A fixed-length hash value.
     type Hash;
 
+    /// Perform a one-way compression.
     fn compress(a: Self::Hash, b: Self::Hash) -> Self::Hash;
 }

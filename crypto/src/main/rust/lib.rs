@@ -54,6 +54,7 @@ pub mod lm;
 pub mod magma;
 pub mod matrix;
 pub mod matrixring;
+pub mod merkletree;
 pub mod module;
 pub mod monoid;
 pub mod norm;
