@@ -417,10 +417,6 @@ impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for Ma
 
 impl<R: Ring, const N: usize, const NN: usize> Module<R> for MatrixRing<R, N, NN> {}
 
-impl<R: Ring, const N: usize, const NN: usize> Ring for MatrixRing<R, N, NN> {
-    type Int = R::Int;
-}
-
 impl<R: Ring, const N: usize, const NN: usize> Algebra<R> for MatrixRing<R, N, NN> {}
 
 impl<R: UnitalRing, const N: usize, const NN: usize> UnitalAlgebra<R> for MatrixRing<R, N, NN> {}

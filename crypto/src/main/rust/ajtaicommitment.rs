@@ -16,6 +16,7 @@
  */
 
 use crate::distribution::UniformGenerator;
+use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
 use crate::norm::{EuclideanNorm, InfinityNorm};
 use crate::ring::CommutativeRing;
@@ -65,12 +66,28 @@ impl<R: CommutativeRing + Eq + EuclideanNorm> AjtaiCommitment<R> {
     }
 }
 
-impl<R: CommutativeRing + Eq + InfinityNorm<R::Int>> AjtaiCommitment<R> {
-    pub fn open_dense_linf(&self, c: &DenseVector<R>, m: &DenseVector<R>, bound: R::Int) -> bool {
+impl<R: CommutativeRing + Eq> AjtaiCommitment<R> {
+    pub fn open_dense_linf<Int: Integer>(
+        &self,
+        c: &DenseVector<R>,
+        m: &DenseVector<R>,
+        bound: Int,
+    ) -> bool
+    where
+        R: InfinityNorm<Int>,
+    {
         m.check_infinity_norm(bound) && &self.a * m == *c
     }
 
-    pub fn open_sparse_linf(&self, c: &DenseVector<R>, m: &SparseVector<R>, bound: R::Int) -> bool {
+    pub fn open_sparse_linf<Int: Integer>(
+        &self,
+        c: &DenseVector<R>,
+        m: &SparseVector<R>,
+        bound: Int,
+    ) -> bool
+    where
+        R: InfinityNorm<Int>,
+    {
         m.check_infinity_norm(bound) && &self.a * m == *c
     }
 }

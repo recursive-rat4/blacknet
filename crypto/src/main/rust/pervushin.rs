@@ -24,7 +24,7 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
 use crate::polynomial::interpolation::InterpolationConsts;
-use crate::ring::{DivisionRing, IntegerRing, PolynomialRing, Ring};
+use crate::ring::{DivisionRing, IntegerRing, PolynomialRing};
 use crate::semigroup::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
     square_and_multiply,
@@ -350,13 +350,11 @@ impl MultiplicativeMonoid for PervushinField {
     const IDENTITY: Self = Self { n: 1 };
 }
 
-impl Ring for PervushinField {
-    type Int = i64;
-}
-
 impl DivisionRing for PervushinField {}
 
 impl IntegerRing for PervushinField {
+    type Int = i64;
+
     fn new(n: Self::Int) -> Self {
         Self {
             n: Self::reduce_add(n),

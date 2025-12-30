@@ -22,7 +22,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, Ring};
+use crate::ring::{DivisionRing, IntegerRing};
 use crate::semigroup::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
     square_and_multiply,
@@ -445,13 +445,11 @@ impl MultiplicativeMonoid for Field25519 {
     };
 }
 
-impl Ring for Field25519 {
-    type Int = UInt256;
-}
-
 impl DivisionRing for Field25519 {}
 
 impl IntegerRing for Field25519 {
+    type Int = UInt256;
+
     fn new(n: UInt256) -> Self {
         Self {
             n: Self::to_form(n),

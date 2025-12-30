@@ -23,7 +23,7 @@ use crate::magma::{
 };
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, Ring};
+use crate::ring::{DivisionRing, IntegerRing};
 use crate::semigroup::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
 };
@@ -260,13 +260,11 @@ impl MultiplicativeMonoid for Z2 {
     const IDENTITY: Self = Self { n: true };
 }
 
-impl Ring for Z2 {
-    type Int = i8;
-}
-
 impl DivisionRing for Z2 {}
 
 impl IntegerRing for Z2 {
+    type Int = i8;
+
     fn new(n: Self::Int) -> Self {
         Self { n: (n & 1) == 1 }
     }

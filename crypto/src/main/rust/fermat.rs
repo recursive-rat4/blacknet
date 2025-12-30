@@ -23,7 +23,7 @@ use crate::magma::{
 use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::nttring::NTTRing;
 use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing, Ring};
+use crate::ring::{DivisionRing, IntegerRing};
 use crate::semigroup::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
     square_and_multiply,
@@ -324,13 +324,11 @@ impl MultiplicativeMonoid for FermatField {
     const IDENTITY: Self = Self { n: 1 };
 }
 
-impl Ring for FermatField {
-    type Int = i32;
-}
-
 impl DivisionRing for FermatField {}
 
 impl IntegerRing for FermatField {
+    type Int = i32;
+
     fn new(n: Self::Int) -> Self {
         Self {
             n: Self::reduce_add(n),

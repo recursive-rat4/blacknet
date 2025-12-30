@@ -17,17 +17,17 @@
 
 use crate::distribution::{Distribution, UniformGenerator};
 use crate::integer::Integer;
-use crate::ring::{IntegerRing, Ring};
+use crate::ring::IntegerRing;
 
 pub struct BinaryUniformDistribution<G: UniformGenerator<Output: IntegerRing>> {
-    cache: <G::Output as Ring>::Int,
+    cache: <G::Output as IntegerRing>::Int,
     have_bits: u32,
 }
 
 impl<G: UniformGenerator<Output: IntegerRing>> BinaryUniformDistribution<G> {
     pub const fn new() -> Self {
         Self {
-            cache: <G::Output as Ring>::Int::ZERO,
+            cache: <G::Output as IntegerRing>::Int::ZERO,
             have_bits: 0,
         }
     }
@@ -55,8 +55,8 @@ impl<G: UniformGenerator<Output: IntegerRing>> Distribution<G> for BinaryUniform
             self.cache = generator.generate().canonical();
             self.have_bits = Self::useful_bits();
         }
-        let result = self.cache & <G::Output as Ring>::Int::LIMB_ONE;
-        self.cache >>= <G::Output as Ring>::Int::LIMB_ONE;
+        let result = self.cache & <G::Output as IntegerRing>::Int::LIMB_ONE;
+        self.cache >>= <G::Output as IntegerRing>::Int::LIMB_ONE;
         self.have_bits -= 1;
         G::Output::with_limb(result)
     }

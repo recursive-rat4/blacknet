@@ -91,8 +91,8 @@ impl<R: UnitalRing + EuclideanNorm, const N: usize, C: Convolution<R, N>> Euclid
     }
 }
 
-pub trait InfinityNorm<N: Integer> {
-    fn check_infinity_norm(&self, bound: N) -> bool;
+pub trait InfinityNorm<Int: Integer> {
+    fn check_infinity_norm(&self, bound: Int) -> bool;
 }
 
 impl<Z: IntegerRing> InfinityNorm<Z::Int> for Z {
@@ -101,24 +101,26 @@ impl<Z: IntegerRing> InfinityNorm<Z::Int> for Z {
     }
 }
 
-impl<R: Ring + InfinityNorm<R::Int>, const N: usize> InfinityNorm<R::Int> for FreeModule<R, N> {
-    fn check_infinity_norm(&self, bound: R::Int) -> bool {
+impl<Int: Integer, R: Ring + InfinityNorm<Int>, const N: usize> InfinityNorm<Int>
+    for FreeModule<R, N>
+{
+    fn check_infinity_norm(&self, bound: Int) -> bool {
         self.components()
             .iter()
             .all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for DenseMatrix<R> {
-    fn check_infinity_norm(&self, bound: R::Int) -> bool {
+impl<Int: Integer, R: Ring + InfinityNorm<Int>> InfinityNorm<Int> for DenseMatrix<R> {
+    fn check_infinity_norm(&self, bound: Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<R: Ring + InfinityNorm<R::Int>, const N: usize, const NN: usize> InfinityNorm<R::Int>
+impl<Int: Integer, R: Ring + InfinityNorm<Int>, const N: usize, const NN: usize> InfinityNorm<Int>
     for MatrixRing<R, N, NN>
 {
-    fn check_infinity_norm(&self, bound: R::Int) -> bool {
+    fn check_infinity_norm(&self, bound: Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
@@ -131,22 +133,22 @@ impl<Z: Twiddles<M> + InfinityNorm<Z::Int>, const M: usize, const N: usize> Infi
     }
 }
 
-impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for DenseVector<R> {
-    fn check_infinity_norm(&self, bound: R::Int) -> bool {
+impl<Int: Integer, R: Ring + InfinityNorm<Int>> InfinityNorm<Int> for DenseVector<R> {
+    fn check_infinity_norm(&self, bound: Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<R: Ring + InfinityNorm<R::Int>> InfinityNorm<R::Int> for SparseVector<R> {
-    fn check_infinity_norm(&self, bound: R::Int) -> bool {
+impl<Int: Integer, R: Ring + InfinityNorm<Int>> InfinityNorm<Int> for SparseVector<R> {
+    fn check_infinity_norm(&self, bound: Int) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<R: UnitalRing + InfinityNorm<R::Int>, const N: usize, C: Convolution<R, N>>
-    InfinityNorm<R::Int> for UnivariateRing<R, N, C>
+impl<Int: Integer, R: UnitalRing + InfinityNorm<Int>, const N: usize, C: Convolution<R, N>>
+    InfinityNorm<Int> for UnivariateRing<R, N, C>
 {
-    fn check_infinity_norm(&self, bound: R::Int) -> bool {
+    fn check_infinity_norm(&self, bound: Int) -> bool {
         self.coefficients().check_infinity_norm(bound)
     }
 }

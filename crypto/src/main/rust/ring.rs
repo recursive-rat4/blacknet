@@ -30,8 +30,9 @@ pub trait Ring
     : Presemiring
     + AdditiveAbelianGroup
 {
-    type Int: Integer;
 }
+
+impl<R: Presemiring + AdditiveAbelianGroup> Ring for R {}
 
 /// A ring with multiplicative identity.
 #[rustfmt::skip]
@@ -67,6 +68,8 @@ pub trait IntegerRing
     : CommutativeRing
     + AdditiveCyclicGroup
 {
+    type Int: Integer;
+
     fn new(n: Self::Int) -> Self;
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self;
 
