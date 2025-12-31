@@ -18,11 +18,11 @@
 use blacknet_crypto::algebra::AdditiveMonoid;
 use blacknet_crypto::bigint::UInt256;
 
-type F = blacknet_crypto::field25519::Field25519;
+type F = blacknet_crypto::ed25519::Field25519;
 
 #[test]
 fn group_add_affine() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupAffine;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupAffine;
     let ax = F::from_hex("1E3DBD8EF7121F586A32C8789BE6C1BD516EA0B7B5E00D356527F3B9137C7F13");
     let ay = F::from_hex("10833664A42569382BCDF87CCF2D0423A5CDBF39666777496B1A17D1265138E7");
     let bx = F::from_hex("172C422E616DC9017CB392143DCDB133E1071D8E87806CCD9B222D82665AAC69");
@@ -52,7 +52,7 @@ fn group_add_affine() {
 
 #[test]
 fn group_neg_affine() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupAffine;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupAffine;
     let ax = F::from_hex("2C998F5CD6F89A5323244238DCB0E122F3C48B690D17895D64C622FE7B134873");
     let ay = F::from_hex("3B94477B1521DE0931F76F6CEE88E34BC4E4B581F88D8EAE8616625EC8046C4F");
     let bx = F::from_hex("536670A3290765ACDCDBBDC7234F1EDD0C3B7496F2E876A29B39DD0184ECB77A");
@@ -65,7 +65,7 @@ fn group_neg_affine() {
 
 #[test]
 fn group_sub_affine() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupAffine;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupAffine;
     let ax = F::from_hex("248949BF1E33E577C48DF9037C0FEDCE42EA070F91125CD796F49349A994794D");
     let ay = F::from_hex("1736DB3E2DA93A423B2DC4E1A010CF1BAB40AF86FAE99E7ABAB19262E335E3FC");
     let bx = F::from_hex("342CFACF5781EFBB03D6326015C9078AAC0FBC7E5F17D6AD71C9BD8D5BB0E41D");
@@ -88,7 +88,7 @@ fn group_sub_affine() {
 
 #[test]
 fn group_mul_affine() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupAffine;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupAffine;
     let ax = F::from_hex("3AED134ED42AD34F18DB7529FB0ED4470DBB0A157D676ECA74F7789208B87678");
     let ay = F::from_hex("278B8C16CEFF8BD165602933BC9CA4E4365C38F3CE8D17519172D76B8B046621");
     let cx = F::from_hex("24E994BFDF037A840793AC3321DBC483E081150B4C888FE8E6B77CBCCA117411");
@@ -105,7 +105,7 @@ fn group_mul_affine() {
 
 #[test]
 fn group_add_extended() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupExtended;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupExtended;
     let ax = F::from_hex("1E3DBD8EF7121F586A32C8789BE6C1BD516EA0B7B5E00D356527F3B9137C7F13");
     let ay = F::from_hex("10833664A42569382BCDF87CCF2D0423A5CDBF39666777496B1A17D1265138E7");
     let bx = F::from_hex("172C422E616DC9017CB392143DCDB133E1071D8E87806CCD9B222D82665AAC69");
@@ -135,7 +135,7 @@ fn group_add_extended() {
 
 #[test]
 fn group_neg_extended() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupExtended;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupExtended;
     let ax = F::from_hex("2C998F5CD6F89A5323244238DCB0E122F3C48B690D17895D64C622FE7B134873");
     let ay = F::from_hex("3B94477B1521DE0931F76F6CEE88E34BC4E4B581F88D8EAE8616625EC8046C4F");
     let bx = F::from_hex("536670A3290765ACDCDBBDC7234F1EDD0C3B7496F2E876A29B39DD0184ECB77A");
@@ -148,7 +148,7 @@ fn group_neg_extended() {
 
 #[test]
 fn group_sub_extended() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupExtended;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupExtended;
     let ax = F::from_hex("248949BF1E33E577C48DF9037C0FEDCE42EA070F91125CD796F49349A994794D");
     let ay = F::from_hex("1736DB3E2DA93A423B2DC4E1A010CF1BAB40AF86FAE99E7ABAB19262E335E3FC");
     let bx = F::from_hex("342CFACF5781EFBB03D6326015C9078AAC0FBC7E5F17D6AD71C9BD8D5BB0E41D");
@@ -171,7 +171,7 @@ fn group_sub_extended() {
 
 #[test]
 fn group_mul_extended() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupExtended;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupExtended;
     let ax = F::from_hex("3AED134ED42AD34F18DB7529FB0ED4470DBB0A157D676ECA74F7789208B87678");
     let ay = F::from_hex("278B8C16CEFF8BD165602933BC9CA4E4365C38F3CE8D17519172D76B8B046621");
     let cx = F::from_hex("24E994BFDF037A840793AC3321DBC483E081150B4C888FE8E6B77CBCCA117411");
@@ -188,7 +188,7 @@ fn group_mul_extended() {
 
 #[test]
 fn group_add_projective() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupProjective;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupProjective;
     let ax = F::from_hex("1E3DBD8EF7121F586A32C8789BE6C1BD516EA0B7B5E00D356527F3B9137C7F13");
     let ay = F::from_hex("10833664A42569382BCDF87CCF2D0423A5CDBF39666777496B1A17D1265138E7");
     let bx = F::from_hex("172C422E616DC9017CB392143DCDB133E1071D8E87806CCD9B222D82665AAC69");
@@ -218,7 +218,7 @@ fn group_add_projective() {
 
 #[test]
 fn group_neg_projective() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupProjective;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupProjective;
     let ax = F::from_hex("2C998F5CD6F89A5323244238DCB0E122F3C48B690D17895D64C622FE7B134873");
     let ay = F::from_hex("3B94477B1521DE0931F76F6CEE88E34BC4E4B581F88D8EAE8616625EC8046C4F");
     let bx = F::from_hex("536670A3290765ACDCDBBDC7234F1EDD0C3B7496F2E876A29B39DD0184ECB77A");
@@ -231,7 +231,7 @@ fn group_neg_projective() {
 
 #[test]
 fn group_sub_projective() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupProjective;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupProjective;
     let ax = F::from_hex("248949BF1E33E577C48DF9037C0FEDCE42EA070F91125CD796F49349A994794D");
     let ay = F::from_hex("1736DB3E2DA93A423B2DC4E1A010CF1BAB40AF86FAE99E7ABAB19262E335E3FC");
     let bx = F::from_hex("342CFACF5781EFBB03D6326015C9078AAC0FBC7E5F17D6AD71C9BD8D5BB0E41D");
@@ -254,7 +254,7 @@ fn group_sub_projective() {
 
 #[test]
 fn group_mul_projective() {
-    type G = blacknet_crypto::edwards25519::Edwards25519GroupProjective;
+    type G = blacknet_crypto::ed25519::Edwards25519GroupProjective;
     let ax = F::from_hex("3AED134ED42AD34F18DB7529FB0ED4470DBB0A157D676ECA74F7789208B87678");
     let ay = F::from_hex("278B8C16CEFF8BD165602933BC9CA4E4365C38F3CE8D17519172D76B8B046621");
     let cx = F::from_hex("24E994BFDF037A840793AC3321DBC483E081150B4C888FE8E6B77CBCCA117411");

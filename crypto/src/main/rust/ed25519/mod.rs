@@ -15,38 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-//! Abstract algebra
+mod edwards25519;
+mod field25519;
+mod twistededwardsgroup;
 
-mod abeliangroup;
-mod algebra;
-mod cyclicgroup;
-mod field;
-mod freemodule;
-mod group;
-mod magma;
-mod matrixring;
-mod module;
-mod monoid;
-mod nttring;
-mod operation;
-mod ring;
-mod semigroup;
-mod semiring;
-mod univariatering;
-
-pub use abeliangroup::*;
-pub use algebra::*;
-pub use cyclicgroup::*;
-pub use field::*;
-pub use freemodule::*;
-pub use group::*;
-pub use magma::*;
-pub use matrixring::*;
-pub use module::*;
-pub use monoid::*;
-pub use nttring::*;
-pub use operation::*;
-pub use ring::*;
-pub use semigroup::*;
-pub use semiring::*;
-pub use univariatering::*;
+pub use edwards25519::*;
+pub use field25519::*;
+pub use twistededwardsgroup::*;

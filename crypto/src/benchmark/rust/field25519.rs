@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{Double, Inv, Square};
-use blacknet_crypto::field25519::Field25519;
+use blacknet_crypto::ed25519::Field25519;
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 

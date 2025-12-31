@@ -20,7 +20,7 @@ use blacknet_crypto::algebra::{Inv, Square};
 use blacknet_crypto::algebra::{Presemiring, Semiring};
 use blacknet_crypto::bigint::UInt256;
 
-type F = blacknet_crypto::field25519::Field25519;
+type F = blacknet_crypto::ed25519::Field25519;
 
 #[test]
 fn representative() {

@@ -17,11 +17,11 @@
 
 use crate::algebra::AdditiveAbelianGroup;
 use crate::algebra::AdditiveMonoid;
-use crate::algebra::TwistedEdwardsGroupParams;
 use crate::algebra::{AdditiveCommutativeMagma, AdditiveMagma};
 use crate::algebra::{AdditiveSemigroup, LeftZero, RightZero};
 use crate::algebra::{Double, Inv, Square};
 use crate::algebra::{Presemiring, Semiring};
+use crate::ed25519::TwistedEdwardsGroupParams;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
