@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::ring::Ring;
+use crate::algebra::Ring;
 
 #[rustfmt::skip]
 pub trait Convolution<R: Ring, const N: usize>

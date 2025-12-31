@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::AdditiveGroup;
 use crate::distribution::UniformGenerator;
-use crate::group::AdditiveGroup;
 use crate::permutation::Permutation;
 use alloc::vec::Vec;
 use core::array;

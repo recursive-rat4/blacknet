@@ -16,6 +16,7 @@
  */
 
 use blacknet_compat::assert_ok;
+use blacknet_crypto::algebra::IntegerRing;
 use blacknet_crypto::assigner::distribution::Distribution as DistributionAssigner;
 use blacknet_crypto::assigner::quartaryuniformdistribution::QuartaryUniformDistribution as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
@@ -24,7 +25,6 @@ use blacknet_crypto::circuit::quartaryuniformdistribution::QuartaryUniformDistri
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::distribution::{Distribution, UniformGenerator};
 use blacknet_crypto::quartaryuniformdistribution::QuartaryUniformDistribution;
-use blacknet_crypto::ring::IntegerRing;
 use core::array;
 
 type Z = blacknet_crypto::lm::LMField;

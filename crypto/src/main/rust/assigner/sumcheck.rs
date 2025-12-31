@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::UnitalRing;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::distribution::Distribution;
 use crate::assigner::polynomial::UnivariatePolynomial;
 use crate::duplex::Duplex;
 use crate::polynomial::{Point, Polynomial};
-use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 

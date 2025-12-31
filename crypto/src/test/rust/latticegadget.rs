@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::IntegerRing;
 use blacknet_crypto::latticegadget;
 use blacknet_crypto::matrix::DenseVector;
-use blacknet_crypto::ring::IntegerRing;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type R = blacknet_crypto::pervushin::PervushinField2;

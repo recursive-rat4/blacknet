@@ -17,8 +17,8 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
+use crate::algebra::IntegerRing;
 use crate::convolution::{Convolution, binomial};
-use crate::ring::IntegerRing;
 use core::array;
 
 // https://arxiv.org/abs/2211.13546

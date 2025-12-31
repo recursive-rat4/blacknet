@@ -16,11 +16,11 @@
  */
 
 use blacknet_compat::assert_ok;
+use blacknet_crypto::algebra::{Double, Square};
 use blacknet_crypto::assigner::polynomial::UnivariatePolynomial as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::polynomial::UnivariatePolynomial as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::operation::{Double, Square};
 use blacknet_crypto::polynomial::UnivariatePolynomial;
 
 type R = blacknet_crypto::pervushin::PervushinField;

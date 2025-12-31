@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Presemiring;
 use crate::matrix::DenseVector;
-use crate::semiring::Presemiring;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 

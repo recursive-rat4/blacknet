@@ -15,23 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Algebra, UnitalAlgebra};
-use crate::convolution::{Convolution, Negacyclic};
-use crate::duplex::{Absorb, Duplex, Squeeze};
-use crate::freemodule::FreeModule;
-use crate::magma::{
+use crate::algebra::FreeModule;
+use crate::algebra::Module;
+use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
-use crate::module::Module;
-use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::operation::{Double, Square};
-use crate::ring::{
-    CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, UnitalRing,
-};
-use crate::semigroup::{
+use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::algebra::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
 };
-use crate::semiring::{Presemiring, Semiring};
+use crate::algebra::{Algebra, UnitalAlgebra};
+use crate::algebra::{
+    CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, UnitalRing,
+};
+use crate::algebra::{Double, Square};
+use crate::algebra::{Presemiring, Semiring};
+use crate::convolution::{Convolution, Negacyclic};
+use crate::duplex::{Absorb, Duplex, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::marker::PhantomData;

@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::IntegerRing;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::distribution::Distribution;
 use crate::circuit::logicgate::LogicGate;
 use crate::distribution::UniformGenerator;
 use crate::integer::Integer;
-use crate::ring::IntegerRing;
 use alloc::vec;
 use alloc::vec::Vec;
 

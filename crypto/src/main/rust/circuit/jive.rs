@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::AdditiveCyclicGroup;
+use crate::algebra::Semiring;
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::compressionfunction::CompressionFunction;
 use crate::circuit::permutation::Permutation;
-use crate::cyclicgroup::AdditiveCyclicGroup;
-use crate::semiring::Semiring;
 use core::array;
 use core::marker::PhantomData;
 

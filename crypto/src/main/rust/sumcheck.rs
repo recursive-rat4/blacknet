@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::UnitalRing;
 use crate::distribution::Distribution;
 use crate::duplex::Duplex;
 use crate::polynomial::{Point, Polynomial, UnivariatePolynomial, interpolation::*};
-use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};

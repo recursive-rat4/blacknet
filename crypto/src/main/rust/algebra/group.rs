@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::operation::Inv;
+use crate::algebra::Inv;
+use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
 use core::ops::{Div, DivAssign, Neg, Sub, SubAssign};
 
 #[rustfmt::skip]

@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Presemiring;
 use crate::assigner::assigment::Assigment;
 use crate::distribution::{UniformDistribution, UniformGenerator};
-use crate::semiring::Presemiring;
 
 pub trait Distribution<'a, R: Presemiring, G: UniformGenerator> {
     type Output;

@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Ring;
+use crate::algebra::{Double, Square};
+use crate::algebra::{Presemiring, Semiring};
 use crate::matrix::DenseMatrix;
-use crate::operation::{Double, Square};
-use crate::ring::Ring;
-use crate::semiring::{Presemiring, Semiring};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
 use alloc::vec::Vec;

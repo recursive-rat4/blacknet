@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::IntegerRing;
 use crate::distribution::{Distribution, UniformGenerator};
 use crate::integer::Integer;
-use crate::ring::IntegerRing;
 
 pub struct BinaryUniformDistribution<G: UniformGenerator<Output: IntegerRing>> {
     cache: <G::Output as IntegerRing>::Int,

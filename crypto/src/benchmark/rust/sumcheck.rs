@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::Double;
+use blacknet_crypto::algebra::IntegerRing;
+use blacknet_crypto::algebra::{Presemiring, Semiring};
 use blacknet_crypto::distribution::{Distribution, UniformDistribution};
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::lm::LMField;
-use blacknet_crypto::operation::Double;
 use blacknet_crypto::polynomial::{BinarityPolynomial, EqExtension, MultilinearExtension};
 use blacknet_crypto::poseidon2lm::DuplexPoseidon2LM;
-use blacknet_crypto::ring::IntegerRing;
-use blacknet_crypto::semiring::{Presemiring, Semiring};
 use blacknet_crypto::sumcheck::SumCheck;
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;

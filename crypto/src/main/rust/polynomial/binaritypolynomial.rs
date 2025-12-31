@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Square;
+use crate::algebra::UnitalRing;
 use crate::matrix::DenseVector;
-use crate::operation::Square;
 use crate::polynomial::{MultilinearExtension, Point, Polynomial};
-use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 

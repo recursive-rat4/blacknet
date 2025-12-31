@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::AdditiveMonoid;
 use blacknet_crypto::bigint::UInt256;
-use blacknet_crypto::monoid::AdditiveMonoid;
 
 type F = blacknet_crypto::field25519::Field25519;
 

@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::{Double, Inv, Square};
 use blacknet_crypto::field25519::Field25519;
-use blacknet_crypto::operation::{Double, Inv, Square};
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 

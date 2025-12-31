@@ -15,13 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::AdditiveMonoid;
+use crate::algebra::Double;
+use crate::algebra::Module;
+use crate::algebra::Ring;
+use crate::algebra::{AdditiveCommutativeMagma, AdditiveMagma};
+use crate::algebra::{AdditiveSemigroup, LeftZero, RightZero};
 use crate::duplex::{Absorb, Duplex, Squeeze};
-use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
-use crate::module::Module;
-use crate::monoid::AdditiveMonoid;
-use crate::operation::Double;
-use crate::ring::Ring;
-use crate::semigroup::{AdditiveSemigroup, LeftZero, RightZero};
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};

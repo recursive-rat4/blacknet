@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
+use crate::algebra::UnitalRing;
+use crate::algebra::{Double, Square};
 use crate::circuit::builder::{
     Constant, Expression, LinearCombination, LinearMonoid, LinearSpan, LinearTerm,
 };
-use crate::operation::{Double, Square};
-use crate::ring::UnitalRing;
-use crate::semiring::Semiring;
 use alloc::vec;
 use core::cmp::Ordering;
 use core::fmt::{Debug, Formatter, Result};

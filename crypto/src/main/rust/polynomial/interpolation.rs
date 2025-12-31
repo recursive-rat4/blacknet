@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::UnitalAlgebra;
+use crate::algebra::UnitalRing;
 use crate::polynomial::UnivariatePolynomial;
-use crate::ring::UnitalRing;
 use alloc::vec;
 
 pub trait InterpolationConsts {

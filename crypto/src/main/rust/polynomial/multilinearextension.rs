@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Double;
+use crate::algebra::UnitalRing;
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::{DenseMatrix, DenseVector};
-use crate::operation::Double;
 use crate::polynomial::{EqExtension, Point, Polynomial};
-use crate::ring::UnitalRing;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;

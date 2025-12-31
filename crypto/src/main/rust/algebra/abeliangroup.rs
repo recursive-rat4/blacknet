@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::group::{AdditiveGroup, MultiplicativeGroup};
-use crate::monoid::{AdditiveCommutativeMonoid, MultiplicativeCommutativeMonoid};
+use crate::algebra::{AdditiveCommutativeMonoid, MultiplicativeCommutativeMonoid};
+use crate::algebra::{AdditiveGroup, MultiplicativeGroup};
 
 pub trait AdditiveAbelianGroup: AdditiveGroup + AdditiveCommutativeMonoid {
     // Speeding up the computations on an elliptic curve using addition-subtraction chains

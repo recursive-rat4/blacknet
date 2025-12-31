@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Double;
+use crate::algebra::IntegerRing;
 use crate::circuit::binaryuniformdistribution::BinaryUniformDistribution;
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::distribution::Distribution;
 use crate::distribution::UniformGenerator;
-use crate::operation::Double;
-use crate::ring::IntegerRing;
 
 pub struct QuartaryUniformDistribution<
     'a,

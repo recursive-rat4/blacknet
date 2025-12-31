@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,35 +15,40 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::ring::{CommutativeRing, DivisionRing, IntegerRing};
-use core::ops::Div;
+//! Abstract algebra
 
-/// A commutative division ring.
-#[rustfmt::skip]
-pub trait Field
-    : CommutativeRing
-    + DivisionRing
-    + Div<Output = Option<Self>>
-    + for<'a> Div<&'a Self, Output = Option<Self>>
-{
-}
+mod abeliangroup;
+mod algebra;
+mod cyclicgroup;
+mod field;
+mod freemodule;
+mod group;
+mod magma;
+mod matrixring;
+mod module;
+mod monoid;
+mod nttring;
+mod operation;
+mod ring;
+mod semigroup;
+mod semiring;
+mod twistededwardsgroup;
+mod univariatering;
 
-#[rustfmt::skip]
-impl<R
-    : CommutativeRing
-    + DivisionRing
-    + Div<Output = Option<Self>>
-    + for<'a> Div<&'a Self, Output = Option<Self>>
-> Field for R
-{
-}
-
-/// A ring `ℤ/q` where `q` is a prime number.
-#[rustfmt::skip]
-pub trait PrimeField
-    : Field
-    + IntegerRing
-{
-}
-
-impl<F: Field + IntegerRing> PrimeField for F {}
+pub use abeliangroup::*;
+pub use algebra::*;
+pub use cyclicgroup::*;
+pub use field::*;
+pub use freemodule::*;
+pub use group::*;
+pub use magma::*;
+pub use matrixring::*;
+pub use module::*;
+pub use monoid::*;
+pub use nttring::*;
+pub use operation::*;
+pub use ring::*;
+pub use semigroup::*;
+pub use semiring::*;
+pub use twistededwardsgroup::*;
+pub use univariatering::*;

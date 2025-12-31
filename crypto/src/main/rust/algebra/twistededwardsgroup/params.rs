@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2024-2025 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,19 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::abeliangroup::AdditiveAbelianGroup;
-use crate::ring::Ring;
-use core::ops::{Mul, MulAssign};
+use crate::algebra::Field;
 
-#[rustfmt::skip]
-pub trait Module<R: Ring>
-    : AdditiveAbelianGroup
-    + Mul<R, Output = Self>
-    + MulAssign<R>
-    + for<'a> Mul<&'a R, Output = Self>
-    + for<'a> MulAssign<&'a R>
-{
+pub trait TwistedEdwardsGroupParams {
+    type F: Field;
+
+    const A: Self::F;
+    const D: Self::F;
+
+    const A_IS_MINUS_ONE: bool;
 }
-
-/// Any ring is a module over itself.
-impl<R: Ring> Module<R> for R {}

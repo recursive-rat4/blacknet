@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::{IntegerRing, PowerOfTwoCyclotomicRing};
+use blacknet_crypto::algebra::{Inv, Square};
+use blacknet_crypto::algebra::{Presemiring, Semiring};
 use blacknet_crypto::norm::InfinityNorm;
-use blacknet_crypto::operation::{Inv, Square};
-use blacknet_crypto::ring::{IntegerRing, PowerOfTwoCyclotomicRing};
-use blacknet_crypto::semiring::{Presemiring, Semiring};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type F = blacknet_crypto::pervushin::PervushinField2;

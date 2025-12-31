@@ -15,16 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::FreeModule;
+use crate::algebra::MatrixRing;
+use crate::algebra::NTTRing;
+use crate::algebra::UnivariateRing;
+use crate::algebra::{IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::convolution::Convolution;
 use crate::float::FloatOn;
-use crate::freemodule::FreeModule;
 use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
-use crate::matrixring::MatrixRing;
-use crate::nttring::NTTRing;
 use crate::numbertheoretictransform::Twiddles;
-use crate::ring::{IntegerRing, PolynomialRing, Ring, UnitalRing};
-use crate::univariatering::UnivariateRing;
 
 pub trait EuclideanNorm {
     fn euclidean_norm(&self) -> f64;

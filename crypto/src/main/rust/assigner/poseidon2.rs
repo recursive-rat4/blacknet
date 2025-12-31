@@ -17,8 +17,8 @@
 
 #![allow(clippy::needless_range_loop)]
 
+use crate::algebra::PrimeField;
 use crate::assigner::assigment::Assigment;
-use crate::field::PrimeField;
 use crate::poseidon2::Poseidon2Params;
 
 pub trait Poseidon2Assigner<

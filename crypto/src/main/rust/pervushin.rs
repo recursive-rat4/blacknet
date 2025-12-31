@@ -16,21 +16,21 @@
  */
 
 use crate::algebra::DivisionAlgebra;
-use crate::convolution::Negacyclic;
-use crate::integer::Integer;
-use crate::magma::{
+use crate::algebra::UnivariateRing;
+use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
-use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::operation::{Double, Inv, Square};
-use crate::polynomial::interpolation::InterpolationConsts;
-use crate::ring::{DivisionRing, IntegerRing, PolynomialRing};
-use crate::semigroup::{
+use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::algebra::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
     square_and_multiply,
 };
-use crate::semiring::{Presemiring, Semiring};
-use crate::univariatering::UnivariateRing;
+use crate::algebra::{DivisionRing, IntegerRing, PolynomialRing};
+use crate::algebra::{Double, Inv, Square};
+use crate::algebra::{Presemiring, Semiring};
+use crate::convolution::Negacyclic;
+use crate::integer::Integer;
+use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};

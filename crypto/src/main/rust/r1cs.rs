@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrix::{DenseVector, SparseMatrix};
-use crate::semiring::Semiring;
 use core::iter::zip;
 use serde::{Deserialize, Serialize};
 

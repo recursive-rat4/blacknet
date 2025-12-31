@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Double;
+use crate::algebra::Semiring;
 use crate::assigner::assigment::Assigment;
 use crate::duplex::{Absorb, Duplex};
-use crate::operation::Double;
-use crate::semiring::Semiring;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign};

@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::CommutativeRing;
 use crate::distribution::UniformGenerator;
 use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
 use crate::norm::{EuclideanNorm, InfinityNorm};
-use crate::ring::CommutativeRing;
 
 // https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
 

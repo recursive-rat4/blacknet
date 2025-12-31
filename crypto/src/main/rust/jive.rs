@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::AdditiveCyclicGroup;
 use crate::compressionfunction::CompressionFunction;
-use crate::cyclicgroup::AdditiveCyclicGroup;
 use crate::permutation::Permutation;
 use core::marker::PhantomData;
 

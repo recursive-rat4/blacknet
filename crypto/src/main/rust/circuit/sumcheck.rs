@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::UnitalRing;
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::distribution::Distribution;
 use crate::circuit::polynomial::{Point, UnivariatePolynomial};
 use crate::duplex::Duplex;
 use crate::polynomial::Polynomial;
-use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 

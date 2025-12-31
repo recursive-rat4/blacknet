@@ -17,17 +17,17 @@
 
 #![allow(clippy::suspicious_arithmetic_impl)]
 
-use crate::integer::Integer;
-use crate::magma::{
+use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
-use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::operation::{Double, Inv, Square};
-use crate::ring::{DivisionRing, IntegerRing};
-use crate::semigroup::{
+use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::algebra::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
 };
-use crate::semiring::{Presemiring, Semiring};
+use crate::algebra::{DivisionRing, IntegerRing};
+use crate::algebra::{Double, Inv, Square};
+use crate::algebra::{Presemiring, Semiring};
+use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};

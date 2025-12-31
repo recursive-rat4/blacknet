@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::semigroup::{
+use crate::algebra::{
     AdditiveCommutativeSemigroup, AdditiveSemigroup, LeftOne, LeftZero,
     MultiplicativeCommutativeSemigroup, MultiplicativeSemigroup, RightOne, RightZero,
 };

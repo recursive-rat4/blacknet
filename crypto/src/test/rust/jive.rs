@@ -16,6 +16,7 @@
  */
 
 use blacknet_compat::assert_ok;
+use blacknet_crypto::algebra::Semiring;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::compressionfunction::CompressionFunction as CompressionFunctionAssigner;
 use blacknet_crypto::assigner::jive::Jive as Assigner;
@@ -28,7 +29,6 @@ use blacknet_crypto::compressionfunction::CompressionFunction;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::jive::Jive;
 use blacknet_crypto::permutation::Permutation as PermutationPlain;
-use blacknet_crypto::semiring::Semiring;
 use core::array;
 
 type Z = blacknet_crypto::pervushin::PervushinField;

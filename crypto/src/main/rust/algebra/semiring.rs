@@ -15,13 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::monoid::{
+use crate::algebra::MultiplicativeSemigroup;
+use crate::algebra::{
     AdditiveCommutativeMonoid, AdditiveMonoid, MultiplicativeCommutativeMonoid,
     MultiplicativeMonoid,
 };
-use crate::semigroup::MultiplicativeSemigroup;
 
-/// A generalization of [nonunital ring][`crate::ring::Ring`] that doesn't require subtraction.
+/// A generalization of [nonunital ring][`crate::algebra::Ring`] that doesn't require subtraction.
 #[rustfmt::skip]
 pub trait Presemiring
     : AdditiveCommutativeMonoid
@@ -34,7 +34,7 @@ pub trait Presemiring
 
 impl<R: AdditiveCommutativeMonoid + MultiplicativeSemigroup + Copy> Presemiring for R {}
 
-/// A generalization of [unital ring][`crate::ring::UnitalRing`] that doesn't require subtraction.
+/// A generalization of [unital ring][`crate::algebra::UnitalRing`] that doesn't require subtraction.
 #[rustfmt::skip]
 pub trait Semiring
     : Presemiring

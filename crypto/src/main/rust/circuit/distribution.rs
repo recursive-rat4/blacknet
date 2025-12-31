@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
 use crate::circuit::builder::CircuitBuilder;
 use crate::distribution::{UniformDistribution, UniformGenerator};
-use crate::semiring::Semiring;
 
 pub trait Distribution<'a, 'b, R: Semiring, G: UniformGenerator> {
     type Output;

@@ -17,7 +17,7 @@
 
 #![allow(clippy::needless_range_loop)]
 
-use crate::field::PrimeField;
+use crate::algebra::PrimeField;
 
 // https://eprint.iacr.org/2023/323
 

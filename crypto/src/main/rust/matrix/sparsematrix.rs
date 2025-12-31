@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Presemiring;
+use crate::algebra::Ring;
 use crate::matrix::{DenseMatrix, DenseVector};
-use crate::ring::Ring;
-use crate::semiring::Presemiring;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::repeat_n;

@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
 use crate::circuit::builder::LinearCombination;
-use crate::semiring::Semiring;
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 use core::ops::Index;

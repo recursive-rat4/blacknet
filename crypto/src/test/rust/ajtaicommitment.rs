@@ -16,8 +16,8 @@
  */
 
 use blacknet_crypto::ajtaicommitment::AjtaiCommitment;
+use blacknet_crypto::algebra::IntegerRing;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
-use blacknet_crypto::ring::IntegerRing;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 

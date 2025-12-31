@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
+use crate::algebra::UnitalRing;
 use crate::circuit::builder::{LinearCombination, LinearSpan, Variable, VariableKind};
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
 use crate::matrix::SparseMatrixBuilder;
 use crate::r1cs::R1CS;
-use crate::ring::UnitalRing;
-use crate::semiring::Semiring;
 use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;

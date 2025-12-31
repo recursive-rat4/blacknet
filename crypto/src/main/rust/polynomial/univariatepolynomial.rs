@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
+use crate::algebra::UnitalRing;
+use crate::algebra::{Double, Square};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
-use crate::operation::{Double, Square};
-use crate::ring::UnitalRing;
-use crate::semiring::Semiring;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;

@@ -15,13 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::abeliangroup::AdditiveAbelianGroup;
-use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma};
-use crate::monoid::AdditiveMonoid;
-use crate::operation::{Double, Square};
-use crate::semigroup::{AdditiveSemigroup, LeftZero, RightZero};
-use crate::semiring::{Presemiring, Semiring};
-use crate::twistededwardsgroup::TwistedEdwardsGroupParams;
+use crate::algebra::AdditiveAbelianGroup;
+use crate::algebra::AdditiveMonoid;
+use crate::algebra::TwistedEdwardsGroupParams;
+use crate::algebra::{AdditiveCommutativeMagma, AdditiveMagma};
+use crate::algebra::{AdditiveSemigroup, LeftZero, RightZero};
+use crate::algebra::{Double, Square};
+use crate::algebra::{Presemiring, Semiring};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};

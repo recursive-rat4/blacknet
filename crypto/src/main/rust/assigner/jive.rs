@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::AdditiveCyclicGroup;
+use crate::algebra::Presemiring;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::compressionfunction::CompressionFunction;
 use crate::assigner::permutation::Permutation;
-use crate::cyclicgroup::AdditiveCyclicGroup;
-use crate::semiring::Presemiring;
 use core::marker::PhantomData;
 
 pub struct Jive<

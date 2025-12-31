@@ -15,17 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Algebra, UnitalAlgebra};
-use crate::freemodule::FreeModule;
-use crate::magma::{AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeMagma};
-use crate::module::Module;
-use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::operation::{Double, Square};
-use crate::ring::{Ring, UnitalRing};
-use crate::semigroup::{
+use crate::algebra::FreeModule;
+use crate::algebra::Module;
+use crate::algebra::Presemiring;
+use crate::algebra::{AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeMagma};
+use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::algebra::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
 };
-use crate::semiring::Presemiring;
+use crate::algebra::{Algebra, UnitalAlgebra};
+use crate::algebra::{Double, Square};
+use crate::algebra::{Ring, UnitalRing};
 use core::array;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};

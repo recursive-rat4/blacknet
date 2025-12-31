@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
+use crate::algebra::Square;
 use crate::circuit::builder::{
     Constant, Expression, LinearCombination, LinearSpan, LinearTerm, Variable,
 };
-use crate::operation::Square;
-use crate::semiring::Semiring;
 use alloc::collections::VecDeque;
 use core::ops::{Mul, MulAssign};
 

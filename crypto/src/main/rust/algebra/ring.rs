@@ -15,13 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::abeliangroup::AdditiveAbelianGroup;
+use crate::algebra::AdditiveAbelianGroup;
+use crate::algebra::AdditiveCyclicGroup;
+use crate::algebra::Inv;
+use crate::algebra::Module;
 use crate::algebra::{CommutativeAlgebra, UnitalAlgebra};
-use crate::cyclicgroup::AdditiveCyclicGroup;
+use crate::algebra::{CommutativeSemiring, Presemiring, Semiring};
 use crate::integer::Integer;
-use crate::module::Module;
-use crate::operation::Inv;
-use crate::semiring::{CommutativeSemiring, Presemiring, Semiring};
 use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
 

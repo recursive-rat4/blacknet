@@ -17,23 +17,23 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
-use crate::algebra::{Algebra, UnitalAlgebra};
-use crate::convolution::{Convolution, Negacyclic};
-use crate::duplex::{Absorb, Duplex, Squeeze};
-use crate::freemodule::FreeModule;
-use crate::magma::{
+use crate::algebra::FreeModule;
+use crate::algebra::Module;
+use crate::algebra::UnivariateRing;
+use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
-use crate::module::Module;
-use crate::monoid::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
-use crate::operation::{Double, Square};
-use crate::ring::{PolynomialRing, PowerOfTwoCyclotomicRing};
-use crate::semigroup::{
+use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::algebra::{
     AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
 };
-use crate::semiring::{Presemiring, Semiring};
-use crate::univariatering::UnivariateRing;
+use crate::algebra::{Algebra, UnitalAlgebra};
+use crate::algebra::{Double, Square};
+use crate::algebra::{PolynomialRing, PowerOfTwoCyclotomicRing};
+use crate::algebra::{Presemiring, Semiring};
+use crate::convolution::{Convolution, Negacyclic};
+use crate::duplex::{Absorb, Duplex, Squeeze};
+use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};

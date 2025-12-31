@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::permutation::Permutation;
 use crate::distribution::UniformGenerator;
 use crate::duplex::{Duplex, Phase};
-use crate::semiring::Semiring;
 use core::marker::PhantomData;
 
 pub struct DuplexImpl<

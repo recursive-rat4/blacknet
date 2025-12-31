@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
 use crate::polynomial::{Point, Polynomial};
-use crate::semiring::Semiring;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 

@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::module::Module;
-use crate::ring::{CommutativeRing, DivisionRing, Ring, UnitalRing};
+use crate::algebra::Module;
+use crate::algebra::{CommutativeRing, DivisionRing, Ring, UnitalRing};
 
 /// Associative algebra over a ring.
 #[rustfmt::skip]

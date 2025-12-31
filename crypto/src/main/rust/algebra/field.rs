@@ -15,13 +15,35 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::field::Field;
+use crate::algebra::{CommutativeRing, DivisionRing, IntegerRing};
+use core::ops::Div;
 
-pub trait TwistedEdwardsGroupParams {
-    type F: Field;
-
-    const A: Self::F;
-    const D: Self::F;
-
-    const A_IS_MINUS_ONE: bool;
+/// A commutative division ring.
+#[rustfmt::skip]
+pub trait Field
+    : CommutativeRing
+    + DivisionRing
+    + Div<Output = Option<Self>>
+    + for<'a> Div<&'a Self, Output = Option<Self>>
+{
 }
+
+#[rustfmt::skip]
+impl<R
+    : CommutativeRing
+    + DivisionRing
+    + Div<Output = Option<Self>>
+    + for<'a> Div<&'a Self, Output = Option<Self>>
+> Field for R
+{
+}
+
+/// A ring `ℤ/q` where `q` is a prime number.
+#[rustfmt::skip]
+pub trait PrimeField
+    : Field
+    + IntegerRing
+{
+}
+
+impl<F: Field + IntegerRing> PrimeField for F {}

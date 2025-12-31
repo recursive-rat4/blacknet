@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Double;
+use crate::algebra::UnitalRing;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use crate::operation::Double;
-use crate::ring::UnitalRing;
 use alloc::vec::Vec;
 
 /// Logic gates over a unital ring.

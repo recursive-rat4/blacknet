@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::bigint::UInt256;
-use crate::field25519::Field25519;
-use crate::twistededwardsgroup::{
+use crate::algebra::{
     TwistedEdwardsGroupAffine, TwistedEdwardsGroupExtended, TwistedEdwardsGroupParams,
     TwistedEdwardsGroupProjective,
 };
+use crate::bigint::UInt256;
+use crate::field25519::Field25519;
 
 pub struct Edwards25519GroupParams;
 

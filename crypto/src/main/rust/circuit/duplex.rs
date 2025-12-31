@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::permutation::Permutation;
 use crate::distribution::UniformGenerator;
 use crate::duplex::{Duplex, Phase};
-use crate::semiring::Semiring;
 use core::array;
 use core::marker::PhantomData;
 

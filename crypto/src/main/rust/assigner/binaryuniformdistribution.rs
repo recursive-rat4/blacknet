@@ -15,13 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::IntegerRing;
+use crate::algebra::Semiring;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::distribution::Distribution;
 use crate::assigner::logicgate::LogicGate;
 use crate::distribution::UniformGenerator;
 use crate::integer::Integer;
-use crate::ring::IntegerRing;
-use crate::semiring::Semiring;
 use alloc::vec::Vec;
 
 pub struct BinaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerRing>> {

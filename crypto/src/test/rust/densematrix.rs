@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::{Double, Square};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
-use blacknet_crypto::operation::{Double, Square};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 

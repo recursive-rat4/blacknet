@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Semiring;
 use crate::matrix::DenseVector;
 use crate::polynomial::Point;
-use crate::semiring::Semiring;
 
 pub trait Polynomial<R: Semiring> {
     fn bind(&mut self, e: R);
