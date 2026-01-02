@@ -69,7 +69,7 @@ impl<
     type Hash = [G; RANK];
 
     fn compress(a: Self::Hash, b: Self::Hash) -> Self::Hash {
-        let mut state = [G::IDENTITY; WIDTH];
+        let mut state = [G::ZERO; WIDTH];
         state[..WIDTH / 2].clone_from_slice(&a);
         state[WIDTH / 2..].clone_from_slice(&b);
         P::permute(&mut state);

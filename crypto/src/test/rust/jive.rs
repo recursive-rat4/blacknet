@@ -16,7 +16,7 @@
  */
 
 use blacknet_compat::assert_ok;
-use blacknet_crypto::algebra::Semiring;
+use blacknet_crypto::algebra::MultiplicativeMonoid;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::compressionfunction::CompressionFunction as CompressionFunctionAssigner;
 use blacknet_crypto::assigner::jive::Jive as Assigner;

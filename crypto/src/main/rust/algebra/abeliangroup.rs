@@ -23,7 +23,7 @@ pub trait AdditiveAbelianGroup: AdditiveGroup + AdditiveCommutativeMonoid {
     // ADDSUBCHAIN-D
     // http://www.numdam.org/item/ITA_1990__24_6_531_0/
     fn add_sub_chain<Scalar: IntoIterator<Item = bool>>(self, scalar: Scalar) -> Self {
-        let mut p = Self::IDENTITY;
+        let mut p = Self::ZERO;
         let mut q = self;
 
         let mut q_is_q_double = 0;

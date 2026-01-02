@@ -150,7 +150,7 @@ impl<
         Self {
             phase: Phase::Absorb,
             position: 0,
-            state: [S::IDENTITY; WIDTH],
+            state: [S::ZERO; WIDTH],
             phantom: PhantomData,
         }
     }
@@ -164,7 +164,7 @@ impl<
     pub fn reset_with_iv(&mut self, iv: &[S; CAPACITY]) {
         self.phase = Phase::Absorb;
         self.position = 0;
-        self.state[..RATE].fill(S::IDENTITY);
+        self.state[..RATE].fill(S::ZERO);
         self.state[RATE..WIDTH].clone_from_slice(iv);
     }
 
@@ -172,7 +172,7 @@ impl<
         if self.position != RATE {
             self.state[self.position] = S::from(1);
             self.position += 1;
-            self.state[self.position..RATE].fill(S::IDENTITY);
+            self.state[self.position..RATE].fill(S::ZERO);
             self.position = RATE;
             self.state[WIDTH - 1] += S::from(2);
         } else {
@@ -209,7 +209,7 @@ impl<
     fn reset(&mut self) {
         self.phase = Phase::Absorb;
         self.position = 0;
-        self.state = [S::IDENTITY; WIDTH];
+        self.state = [S::ZERO; WIDTH];
     }
 
     fn absorb_native(&mut self, e: S) {

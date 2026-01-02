@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,8 +17,7 @@
 
 use crate::algebra::MultiplicativeSemigroup;
 use crate::algebra::{
-    AdditiveCommutativeMonoid, AdditiveMonoid, MultiplicativeCommutativeMonoid,
-    MultiplicativeMonoid,
+    AdditiveCommutativeMonoid, MultiplicativeCommutativeMonoid, MultiplicativeMonoid,
 };
 
 /// A generalization of [nonunital ring][`crate::algebra::Ring`] that doesn't require subtraction.
@@ -28,8 +27,6 @@ pub trait Presemiring
     + MultiplicativeSemigroup
     + Copy
 {
-    /// The additive identity.
-    const ZERO: Self = <Self as AdditiveMonoid>::IDENTITY;
 }
 
 impl<R: AdditiveCommutativeMonoid + MultiplicativeSemigroup + Copy> Presemiring for R {}
@@ -40,8 +37,6 @@ pub trait Semiring
     : Presemiring
     + MultiplicativeMonoid
 {
-    /// The multiplicative identity.
-    const ONE: Self = <Self as MultiplicativeMonoid>::IDENTITY;
 }
 
 impl<R: Presemiring + MultiplicativeMonoid> Semiring for R {}

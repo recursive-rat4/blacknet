@@ -15,12 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::AdditiveAbelianGroup;
-use crate::algebra::AdditiveMonoid;
-use crate::algebra::{AdditiveCommutativeMagma, AdditiveMagma};
-use crate::algebra::{AdditiveSemigroup, LeftZero, RightZero};
-use crate::algebra::{Double, Inv, Square};
-use crate::algebra::{Presemiring, Semiring};
+use crate::algebra::{
+    AdditiveAbelianGroup, AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid,
+    AdditiveSemigroup, Double, Inv, LeftZero, MultiplicativeMonoid, RightZero, Square,
+};
 use crate::ed25519::TwistedEdwardsGroupParams;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
@@ -63,7 +61,7 @@ impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupProjec
 
 impl<P: TwistedEdwardsGroupParams> Default for TwistedEdwardsGroupProjective<P> {
     fn default() -> Self {
-        Self::IDENTITY
+        Self::ZERO
     }
 }
 
@@ -234,7 +232,7 @@ impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> MulAssign<
 
 impl<P: TwistedEdwardsGroupParams> Sum for TwistedEdwardsGroupProjective<P> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::IDENTITY)
+        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
@@ -268,7 +266,7 @@ impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGr
 impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupProjective<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupProjective<P> {
-    const IDENTITY: Self = Self {
+    const ZERO: Self = Self {
         x: P::F::ZERO,
         y: P::F::ONE,
         z: P::F::ONE,

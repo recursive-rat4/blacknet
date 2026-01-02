@@ -60,7 +60,7 @@ impl<R: Ring, const N: usize> FreeModule<R, N> {
 impl<R: Ring, const N: usize> Default for FreeModule<R, N> {
     #[inline]
     fn default() -> Self {
-        Self::IDENTITY
+        Self::ZERO
     }
 }
 
@@ -251,7 +251,7 @@ impl<R: Ring, const N: usize> MulAssign<&R> for FreeModule<R, N> {
 
 impl<R: Ring, const N: usize> Sum for FreeModule<R, N> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::IDENTITY)
+        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
@@ -281,7 +281,7 @@ impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
 impl<R: Ring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
-    const IDENTITY: Self = Self {
+    const ZERO: Self = Self {
         components: [R::ZERO; N],
     };
 }

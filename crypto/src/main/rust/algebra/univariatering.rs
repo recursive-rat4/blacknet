@@ -15,21 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::FreeModule;
-use crate::algebra::Module;
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup, Algebra,
+    CommutativeRing, Double, FreeModule, IntegerRing, LeftOne, LeftZero, Module,
+    MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, Square,
+    UnitalAlgebra, UnitalRing,
 };
-use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::algebra::{
-    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
-};
-use crate::algebra::{Algebra, UnitalAlgebra};
-use crate::algebra::{
-    CommutativeRing, IntegerRing, PolynomialRing, PowerOfTwoCyclotomicRing, UnitalRing,
-};
-use crate::algebra::{Double, Square};
-use crate::algebra::{Presemiring, Semiring};
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
@@ -361,7 +353,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveSemigroup
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMonoid
     for UnivariateRing<R, N, C>
 {
-    const IDENTITY: Self = Self::new(FreeModule::<R, N>::IDENTITY);
+    const ZERO: Self = Self::new(FreeModule::<R, N>::ZERO);
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMagma
@@ -382,7 +374,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeSemigrou
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMonoid
     for UnivariateRing<R, N, C>
 {
-    const IDENTITY: Self = {
+    const ONE: Self = {
         let mut t = [R::ZERO; N];
         t[0] = R::ONE;
         Self::new(FreeModule::<R, N>::new(t))

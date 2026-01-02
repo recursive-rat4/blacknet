@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::Double;
-use blacknet_crypto::algebra::IntegerRing;
-use blacknet_crypto::algebra::{Presemiring, Semiring};
+use blacknet_crypto::algebra::{AdditiveMonoid, Double, IntegerRing, MultiplicativeMonoid};
 use blacknet_crypto::distribution::{Distribution, UniformDistribution};
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::lm::LMField;

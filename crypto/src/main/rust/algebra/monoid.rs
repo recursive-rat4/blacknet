@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -31,7 +31,8 @@ pub trait AdditiveMonoid
     + Sum
     + for<'a> Sum<&'a Self>
 {
-    const IDENTITY: Self;
+    /// The additive identity.
+    const ZERO: Self;
 }
 
 /// A marker for monoids with commutative addition.
@@ -54,7 +55,8 @@ pub trait MultiplicativeMonoid
     + Product
     + for<'a> Product<&'a Self>
 {
-    const IDENTITY: Self;
+    /// The multiplicative identity.
+    const ONE: Self;
 }
 
 /// A marker for monoids with commutative multiplication.

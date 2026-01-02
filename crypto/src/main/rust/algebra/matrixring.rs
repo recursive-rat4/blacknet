@@ -15,17 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::FreeModule;
-use crate::algebra::Module;
-use crate::algebra::Presemiring;
-use crate::algebra::{AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeMagma};
-use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
 use crate::algebra::{
-    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
+    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double,
+    FreeModule, LeftOne, LeftZero, Module, MultiplicativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, RightOne, RightZero, Ring, Square, UnitalAlgebra, UnitalRing,
 };
-use crate::algebra::{Algebra, UnitalAlgebra};
-use crate::algebra::{Double, Square};
-use crate::algebra::{Ring, UnitalRing};
 use core::array;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -329,7 +323,7 @@ impl<R: Ring, const N: usize, const NN: usize> Mul<FreeModule<R, N>> for MatrixR
     type Output = FreeModule<R, N>;
 
     fn mul(self, rps: FreeModule<R, N>) -> Self::Output {
-        let mut m = FreeModule::<R, N>::IDENTITY;
+        let mut m = FreeModule::<R, N>::ZERO;
         for i in 0..N {
             for j in 0..N {
                 m[i] += self[(i, j)] * rps[j]
@@ -343,7 +337,7 @@ impl<R: Ring, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>> for Fre
     type Output = FreeModule<R, N>;
 
     fn mul(self, rps: MatrixRing<R, N, NN>) -> Self::Output {
-        let mut m = FreeModule::<R, N>::IDENTITY;
+        let mut m = FreeModule::<R, N>::ZERO;
         for i in 0..N {
             for j in 0..N {
                 m[j] += self[i] * rps[(i, j)]
@@ -404,7 +398,7 @@ impl<R: Ring, const N: usize, const NN: usize> AdditiveCommutativeMagma for Matr
 impl<R: Ring, const N: usize, const NN: usize> AdditiveSemigroup for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {
-    const IDENTITY: Self = Self::const_from(R::ZERO);
+    const ZERO: Self = Self::const_from(R::ZERO);
 }
 
 impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMagma for MatrixRing<R, N, NN> {}
@@ -412,7 +406,7 @@ impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMagma for MatrixRin
 impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for MatrixRing<R, N, NN> {}
 
 impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRing<R, N, NN> {
-    const IDENTITY: Self = Self::const_from(R::ONE);
+    const ONE: Self = Self::const_from(R::ONE);
 }
 
 impl<R: Ring, const N: usize, const NN: usize> Module<R> for MatrixRing<R, N, NN> {}

@@ -16,16 +16,11 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRing,
+    Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    MultiplicativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, RightOne, RightZero,
+    Square, square_and_multiply,
 };
-use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::algebra::{
-    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
-    square_and_multiply,
-};
-use crate::algebra::{DivisionRing, IntegerRing};
-use crate::algebra::{Double, Inv, Square};
-use crate::algebra::{Presemiring, Semiring};
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -430,7 +425,7 @@ impl AdditiveCommutativeMagma for Field25519 {}
 impl AdditiveSemigroup for Field25519 {}
 
 impl AdditiveMonoid for Field25519 {
-    const IDENTITY: Self = Self { n: UInt256::ZERO };
+    const ZERO: Self = Self { n: UInt256::ZERO };
 }
 
 impl MultiplicativeMagma for Field25519 {}
@@ -440,7 +435,7 @@ impl MultiplicativeCommutativeMagma for Field25519 {}
 impl MultiplicativeSemigroup for Field25519 {}
 
 impl MultiplicativeMonoid for Field25519 {
-    const IDENTITY: Self = Self {
+    const ONE: Self = Self {
         n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
     };
 }

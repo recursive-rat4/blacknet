@@ -63,11 +63,11 @@ impl<
     type Hash = [G; RANK];
 
     fn compress(&self, a: Self::Hash, b: Self::Hash) -> Self::Hash {
-        let mut state = [G::IDENTITY; WIDTH];
+        let mut state = [G::ZERO; WIDTH];
         state[..WIDTH / 2].copy_from_slice(&a);
         state[WIDTH / 2..].copy_from_slice(&b);
         P::permute(self.assigment, &mut state);
-        let mut hash = [G::IDENTITY; RANK];
+        let mut hash = [G::ZERO; RANK];
         for i in 0..RANK {
             hash[i] = a[i] + b[i] + state[i] + state[i + RANK];
         }

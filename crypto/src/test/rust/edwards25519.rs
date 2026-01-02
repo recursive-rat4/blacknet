@@ -44,10 +44,10 @@ fn group_add_affine() {
     assert_eq!(a + b, c);
     assert_eq!(b + a, c);
     assert_eq!(d + d, e);
-    assert_eq!(e + f, G::IDENTITY);
-    assert_eq!(G::IDENTITY + c, c);
-    assert_eq!(c + G::IDENTITY, c);
-    assert_eq!(G::IDENTITY + G::IDENTITY, G::IDENTITY);
+    assert_eq!(e + f, G::ZERO);
+    assert_eq!(G::ZERO + c, c);
+    assert_eq!(c + G::ZERO, c);
+    assert_eq!(G::ZERO + G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -60,7 +60,7 @@ fn group_neg_affine() {
     let a = G::new(ax, ay);
     let b = G::new(bx, by);
     assert_eq!(-a, b);
-    assert_eq!(-G::IDENTITY, G::IDENTITY);
+    assert_eq!(-G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -80,10 +80,10 @@ fn group_sub_affine() {
     let d = G::new(dx, dy);
     assert_eq!(a - b, c);
     assert_eq!(-b + a, c);
-    assert_eq!(d - d, G::IDENTITY);
-    assert_eq!(G::IDENTITY - c, -c);
-    assert_eq!(c - G::IDENTITY, c);
-    assert_eq!(G::IDENTITY - G::IDENTITY, G::IDENTITY);
+    assert_eq!(d - d, G::ZERO);
+    assert_eq!(G::ZERO - c, -c);
+    assert_eq!(c - G::ZERO, c);
+    assert_eq!(G::ZERO - G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -99,8 +99,8 @@ fn group_mul_affine() {
     let c = G::new(cx, cy);
     assert_eq!(a * b.bits::<255>(), c);
     assert_eq!(a * UInt256::ONE.bits::<255>(), a);
-    assert_eq!(a * UInt256::ZERO.bits::<255>(), G::IDENTITY);
-    assert_eq!(G::IDENTITY * d.bits::<255>(), G::IDENTITY);
+    assert_eq!(a * UInt256::ZERO.bits::<255>(), G::ZERO);
+    assert_eq!(G::ZERO * d.bits::<255>(), G::ZERO);
 }
 
 #[test]
@@ -127,10 +127,10 @@ fn group_add_extended() {
     assert_eq!(a + b, c);
     assert_eq!(b + a, c);
     assert_eq!(d + d, e);
-    assert_eq!(e + f, G::IDENTITY);
-    assert_eq!(G::IDENTITY + c, c);
-    assert_eq!(c + G::IDENTITY, c);
-    assert_eq!(G::IDENTITY + G::IDENTITY, G::IDENTITY);
+    assert_eq!(e + f, G::ZERO);
+    assert_eq!(G::ZERO + c, c);
+    assert_eq!(c + G::ZERO, c);
+    assert_eq!(G::ZERO + G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -143,7 +143,7 @@ fn group_neg_extended() {
     let a = G::new(ax, ay);
     let b = G::new(bx, by);
     assert_eq!(-a, b);
-    assert_eq!(-G::IDENTITY, G::IDENTITY);
+    assert_eq!(-G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -163,10 +163,10 @@ fn group_sub_extended() {
     let d = G::new(dx, dy);
     assert_eq!(a - b, c);
     assert_eq!(-b + a, c);
-    assert_eq!(d - d, G::IDENTITY);
-    assert_eq!(G::IDENTITY - c, -c);
-    assert_eq!(c - G::IDENTITY, c);
-    assert_eq!(G::IDENTITY - G::IDENTITY, G::IDENTITY);
+    assert_eq!(d - d, G::ZERO);
+    assert_eq!(G::ZERO - c, -c);
+    assert_eq!(c - G::ZERO, c);
+    assert_eq!(G::ZERO - G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -182,8 +182,8 @@ fn group_mul_extended() {
     let c = G::new(cx, cy);
     assert_eq!(a * b.bits::<255>(), c);
     assert_eq!(a * UInt256::ONE.bits::<255>(), a);
-    assert_eq!(a * UInt256::ZERO.bits::<255>(), G::IDENTITY);
-    assert_eq!(G::IDENTITY * d.bits::<255>(), G::IDENTITY);
+    assert_eq!(a * UInt256::ZERO.bits::<255>(), G::ZERO);
+    assert_eq!(G::ZERO * d.bits::<255>(), G::ZERO);
 }
 
 #[test]
@@ -210,10 +210,10 @@ fn group_add_projective() {
     assert_eq!(a + b, c);
     assert_eq!(b + a, c);
     assert_eq!(d + d, e);
-    assert_eq!(e + f, G::IDENTITY);
-    assert_eq!(G::IDENTITY + c, c);
-    assert_eq!(c + G::IDENTITY, c);
-    assert_eq!(G::IDENTITY + G::IDENTITY, G::IDENTITY);
+    assert_eq!(e + f, G::ZERO);
+    assert_eq!(G::ZERO + c, c);
+    assert_eq!(c + G::ZERO, c);
+    assert_eq!(G::ZERO + G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -226,7 +226,7 @@ fn group_neg_projective() {
     let a = G::new(ax, ay);
     let b = G::new(bx, by);
     assert_eq!(-a, b);
-    assert_eq!(-G::IDENTITY, G::IDENTITY);
+    assert_eq!(-G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -246,10 +246,10 @@ fn group_sub_projective() {
     let d = G::new(dx, dy);
     assert_eq!(a - b, c);
     assert_eq!(-b + a, c);
-    assert_eq!(d - d, G::IDENTITY);
-    assert_eq!(G::IDENTITY - c, -c);
-    assert_eq!(c - G::IDENTITY, c);
-    assert_eq!(G::IDENTITY - G::IDENTITY, G::IDENTITY);
+    assert_eq!(d - d, G::ZERO);
+    assert_eq!(G::ZERO - c, -c);
+    assert_eq!(c - G::ZERO, c);
+    assert_eq!(G::ZERO - G::ZERO, G::ZERO);
 }
 
 #[test]
@@ -265,6 +265,6 @@ fn group_mul_projective() {
     let c = G::new(cx, cy);
     assert_eq!(a * b.bits::<255>(), c);
     assert_eq!(a * UInt256::ONE.bits::<255>(), a);
-    assert_eq!(a * UInt256::ZERO.bits::<255>(), G::IDENTITY);
-    assert_eq!(G::IDENTITY * d.bits::<255>(), G::IDENTITY);
+    assert_eq!(a * UInt256::ZERO.bits::<255>(), G::ZERO);
+    assert_eq!(G::ZERO * d.bits::<255>(), G::ZERO);
 }

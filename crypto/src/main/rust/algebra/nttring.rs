@@ -17,20 +17,12 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
-use crate::algebra::FreeModule;
-use crate::algebra::Module;
-use crate::algebra::UnivariateRing;
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double,
+    FreeModule, LeftOne, LeftZero, Module, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+    MultiplicativeMonoid, MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing,
+    RightOne, RightZero, Square, UnitalAlgebra, UnivariateRing,
 };
-use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::algebra::{
-    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
-};
-use crate::algebra::{Algebra, UnitalAlgebra};
-use crate::algebra::{Double, Square};
-use crate::algebra::{PolynomialRing, PowerOfTwoCyclotomicRing};
-use crate::algebra::{Presemiring, Semiring};
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
@@ -368,8 +360,8 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveCommutativeMagma fo
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveSemigroup for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMonoid for NTTRing<Z, M, N> {
-    const IDENTITY: Self = Self {
-        spectrum: FreeModule::<Z, N>::IDENTITY,
+    const ZERO: Self = Self {
+        spectrum: FreeModule::<Z, N>::ZERO,
     };
 }
 
@@ -383,7 +375,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMa
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMonoid for NTTRing<Z, M, N> {
-    const IDENTITY: Self = Self::const_from(Z::ONE);
+    const ONE: Self = Self::const_from(Z::ONE);
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Module<Z> for NTTRing<Z, M, N> {}

@@ -16,7 +16,7 @@
  */
 
 use blacknet_compat::assert_ok;
-use blacknet_crypto::algebra::Semiring;
+use blacknet_crypto::algebra::MultiplicativeMonoid;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::duplex::DuplexImpl as Assigner;
 use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;

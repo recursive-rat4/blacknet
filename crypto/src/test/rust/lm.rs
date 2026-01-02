@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{
-    BalancedRepresentative, Double, IntegerRing, Inv, Presemiring, Semiring, Square,
+    AdditiveMonoid, BalancedRepresentative, Double, IntegerRing, Inv, MultiplicativeMonoid, Square,
 };
 use blacknet_crypto::norm::InfinityNorm;
 

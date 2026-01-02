@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::IntegerRing;
-use crate::algebra::Semiring;
+use crate::algebra::{IntegerRing, MultiplicativeMonoid};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::distribution::Distribution;
 use crate::assigner::logicgate::LogicGate;

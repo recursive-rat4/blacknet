@@ -19,8 +19,8 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup,
     BalancedRepresentative, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, NTTRing, Presemiring, RightOne, RightZero, Semiring, Square,
-    UnivariateRing, square_and_multiply,
+    MultiplicativeSemigroup, NTTRing, RightOne, RightZero, Square, UnivariateRing,
+    square_and_multiply,
 };
 use crate::convolution::Negacyclic;
 use crate::integer::Integer;
@@ -294,7 +294,7 @@ impl AdditiveCommutativeMagma for FermatField {}
 impl AdditiveSemigroup for FermatField {}
 
 impl AdditiveMonoid for FermatField {
-    const IDENTITY: Self = Self { n: 0 };
+    const ZERO: Self = Self { n: 0 };
 }
 
 impl MultiplicativeMagma for FermatField {}
@@ -304,7 +304,7 @@ impl MultiplicativeCommutativeMagma for FermatField {}
 impl MultiplicativeSemigroup for FermatField {}
 
 impl MultiplicativeMonoid for FermatField {
-    const IDENTITY: Self = Self { n: 1 };
+    const ONE: Self = Self { n: 1 };
 }
 
 impl DivisionRing for FermatField {}

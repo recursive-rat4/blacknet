@@ -21,7 +21,7 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup,
     BalancedRepresentative, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, Presemiring, RightOne, RightZero, Semiring, Square,
+    MultiplicativeSemigroup, RightOne, RightZero, Square,
 };
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -243,7 +243,7 @@ impl AdditiveCommutativeMagma for Z2 {}
 impl AdditiveSemigroup for Z2 {}
 
 impl AdditiveMonoid for Z2 {
-    const IDENTITY: Self = Self { n: false };
+    const ZERO: Self = Self { n: false };
 }
 
 impl MultiplicativeMagma for Z2 {}
@@ -253,7 +253,7 @@ impl MultiplicativeCommutativeMagma for Z2 {}
 impl MultiplicativeSemigroup for Z2 {}
 
 impl MultiplicativeMonoid for Z2 {
-    const IDENTITY: Self = Self { n: true };
+    const ONE: Self = Self { n: true };
 }
 
 impl DivisionRing for Z2 {}

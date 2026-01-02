@@ -16,7 +16,7 @@
  */
 
 use blacknet_compat::assert_ok;
-use blacknet_crypto::algebra::{Presemiring, Semiring};
+use blacknet_crypto::algebra::{AdditiveMonoid, MultiplicativeMonoid};
 use blacknet_crypto::assigner::polynomial::EqExtension as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::polynomial::{EqExtension as Circuit, Point as PointCircuit};
