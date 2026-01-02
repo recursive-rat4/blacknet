@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,20 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::DivisionAlgebra;
-use crate::algebra::NTTRing;
-use crate::algebra::UnivariateRing;
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup,
+    BalancedRepresentative, DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne,
+    LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, NTTRing, PolynomialRing, Presemiring, RightOne, RightZero, Semiring,
+    Square, UnivariateRing, square_and_multiply,
 };
-use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::algebra::{
-    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
-    square_and_multiply,
-};
-use crate::algebra::{DivisionRing, IntegerRing, PolynomialRing};
-use crate::algebra::{Double, Inv, Square};
-use crate::algebra::{Presemiring, Semiring};
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::integer::Integer;
 use crate::polynomial::interpolation::InterpolationConsts;
@@ -57,17 +50,6 @@ impl LMField {
     const fn reduce_mul(x: i128) -> i64 {
         let t = (x & 0xFFFFFFFFFFFFFFF) - 33 * (x >> 60);
         ((t & 0xFFFFFFFFFFFFFFF) - 33 * (t >> 60)) as i64
-    }
-
-    pub const fn balanced(self) -> i64 {
-        let x = Self::reduce_add(self.n);
-        if x > Self::MODULUS / 2 {
-            x - Self::MODULUS
-        } else if x < -Self::MODULUS / 2 {
-            x + Self::MODULUS
-        } else {
-            x
-        }
     }
 
     const fn bits<const N: usize>(n: u64) -> [bool; N] {
@@ -427,6 +409,21 @@ impl InterpolationConsts for LMField {
     const INV24_MUL7: Self = Self {
         n: 816652732429849965,
     };
+}
+
+impl BalancedRepresentative for LMField {
+    type Output = i64;
+
+    fn balanced(self) -> Self::Output {
+        let x = Self::reduce_add(self.n);
+        if x > Self::MODULUS / 2 {
+            x - Self::MODULUS
+        } else if x < -Self::MODULUS / 2 {
+            x + Self::MODULUS
+        } else {
+            x
+        }
+    }
 }
 
 // (2⁶⁰ + 2⁵ + 1) / (x² - ³²√1)

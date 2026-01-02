@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,7 +21,7 @@ use crate::algebra::Inv;
 use crate::algebra::Module;
 use crate::algebra::{CommutativeAlgebra, UnitalAlgebra};
 use crate::algebra::{CommutativeSemiring, Presemiring, Semiring};
-use crate::integer::Integer;
+use crate::integer::{Integer, SignedInteger};
 use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
 
@@ -73,7 +73,9 @@ pub trait IntegerRing
     fn new(n: Self::Int) -> Self;
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self;
 
+    /// Canonical representative
     fn canonical(self) -> Self::Int;
+    /// The absolute value of balanced representative
     fn absolute(self) -> Self::Int;
 
     const BITS: u32;
@@ -92,6 +94,13 @@ pub trait IntegerRing
 }
 
 impl<Z: IntegerRing> AdditiveCyclicGroup for Z {}
+
+pub trait BalancedRepresentative {
+    type Output: SignedInteger;
+
+    /// Balanced representative
+    fn balanced(self) -> Self::Output;
+}
 
 #[rustfmt::skip]
 pub trait PolynomialRing<R: UnitalRing>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::IntegerRing;
-use blacknet_crypto::algebra::{Double, Inv, Square};
-use blacknet_crypto::algebra::{Presemiring, Semiring};
+use blacknet_crypto::algebra::{
+    BalancedRepresentative, Double, IntegerRing, Inv, Presemiring, Semiring, Square,
+};
 use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::lm::LMField;

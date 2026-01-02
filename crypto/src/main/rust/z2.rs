@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,15 +18,11 @@
 #![allow(clippy::suspicious_arithmetic_impl)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup,
+    BalancedRepresentative, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
+    MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, Presemiring, RightOne, RightZero, Semiring, Square,
 };
-use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::algebra::{
-    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
-};
-use crate::algebra::{DivisionRing, IntegerRing};
-use crate::algebra::{Double, Inv, Square};
-use crate::algebra::{Presemiring, Semiring};
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -281,4 +277,12 @@ impl IntegerRing for Z2 {
 
     const BITS: u32 = 1;
     const MODULUS: Self::Int = 2;
+}
+
+impl BalancedRepresentative for Z2 {
+    type Output = i8;
+
+    fn balanced(self) -> Self::Output {
+        self.n.into()
+    }
 }

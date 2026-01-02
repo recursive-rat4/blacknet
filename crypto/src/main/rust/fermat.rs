@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,19 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::NTTRing;
-use crate::algebra::UnivariateRing;
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup,
+    BalancedRepresentative, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
+    MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, NTTRing, Presemiring, RightOne, RightZero, Semiring, Square,
+    UnivariateRing, square_and_multiply,
 };
-use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
-use crate::algebra::{
-    AdditiveSemigroup, LeftOne, LeftZero, MultiplicativeSemigroup, RightOne, RightZero,
-    square_and_multiply,
-};
-use crate::algebra::{DivisionRing, IntegerRing};
-use crate::algebra::{Double, Inv, Square};
-use crate::algebra::{Presemiring, Semiring};
 use crate::convolution::Negacyclic;
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -59,17 +53,6 @@ impl FermatField {
 
     const fn reduce_mul(x: i64) -> i32 {
         ((x & 0xFFFF) - (x >> 16)) as i32
-    }
-
-    pub const fn balanced(self) -> i32 {
-        let x = Self::reduce_add(self.n);
-        if x > Self::MODULUS / 2 {
-            x - Self::MODULUS
-        } else if x < -Self::MODULUS / 2 {
-            x + Self::MODULUS
-        } else {
-            x
-        }
     }
 
     const fn bits<const N: usize>(n: u32) -> [bool; N] {
@@ -354,6 +337,21 @@ impl IntegerRing for FermatField {
 
     const BITS: u32 = 17;
     const MODULUS: Self::Int = 65537;
+}
+
+impl BalancedRepresentative for FermatField {
+    type Output = i32;
+
+    fn balanced(self) -> Self::Output {
+        let x = Self::reduce_add(self.n);
+        if x > Self::MODULUS / 2 {
+            x - Self::MODULUS
+        } else if x < -Self::MODULUS / 2 {
+            x + Self::MODULUS
+        } else {
+            x
+        }
+    }
 }
 
 // (2¹⁶ + 1) / (x¹⁰²⁴ + 1)
