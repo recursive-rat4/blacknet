@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -24,7 +24,7 @@ use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
 use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
-use fjall::{Keyspace, Result};
+use fjall::{Database, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -69,7 +69,7 @@ pub struct BlockDB {
 }
 
 impl BlockDB {
-    pub fn new(fjall: &Keyspace) -> Result<Arc<Self>> {
+    pub fn new(fjall: &Database) -> Result<Arc<Self>> {
         Ok(Arc::new(Self {
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),

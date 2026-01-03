@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,7 +32,7 @@ pub struct Settings {
     pub i2p_sam_port: u16,
     pub tor_control_host: String,
     pub tor_control_port: u16,
-    pub db_cache: usize,
+    pub db_cache: u64,
     pub tx_pool_size: usize,
     pub min_relay_fee_rate: Amount,
 }

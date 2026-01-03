@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,15 +17,17 @@
 
 use crate::settings::Settings;
 use blacknet_compat::{XDGDirectories, ulimit};
-use fjall::{Config, Keyspace, Result};
+use fjall::{
+    CompressionType, Database, KeyspaceCreateOptions, KvSeparationOptions, Result,
+    config::CompressionPolicy,
+};
 use std::cmp::max;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 pub struct Fjall;
 
 impl Fjall {
-    fn configure(path: PathBuf, settings: &Arc<Settings>) -> Config {
+    fn max_open_files(settings: &Arc<Settings>) -> usize {
         let max_open_files = max(
             ulimit().unwrap() as isize
                 - settings.incoming_connections as isize
@@ -33,16 +35,28 @@ impl Fjall {
                 - 20_isize,
             64,
         );
-        Config::new(path)
-            .max_open_files(max_open_files as usize)
-            .cache_size((settings.db_cache / 2) as u64)
-            .max_write_buffer_size((settings.db_cache / 4) as u64)
+        max_open_files as usize
     }
 
     #[expect(clippy::new_ret_no_self)]
-    pub fn new(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Keyspace> {
+    pub fn new(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Database> {
         let path = dirs.data().join("fjall");
-        let config = Self::configure(path, settings);
-        config.open()
+        Database::builder(path)
+            .max_cached_files(Some(Self::max_open_files(settings)))
+            .cache_size(settings.db_cache)
+            .journal_compression(CompressionType::None)
+            .open()
+    }
+
+    pub fn kv_options() -> KeyspaceCreateOptions {
+        KeyspaceCreateOptions::default()
+            .data_block_compression_policy(CompressionPolicy::disabled())
+            .index_block_compression_policy(CompressionPolicy::disabled())
+    }
+
+    pub fn blob_options() -> KeyspaceCreateOptions {
+        Self::kv_options().with_kv_separation(Some(
+            KvSeparationOptions::default().compression(CompressionType::None),
+        ))
     }
 }

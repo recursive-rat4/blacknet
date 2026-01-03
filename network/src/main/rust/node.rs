@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -41,7 +41,7 @@ use blacknet_time::{Milliseconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
 use core::error::Error as StdError;
 use core::num::NonZero;
-use fjall::Keyspace;
+use fjall::Database;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -66,7 +66,7 @@ pub struct Node {
     block_db: Arc<BlockDB>,
     block_fetcher: BlockFetcher,
     coin_db: Arc<CoinDB>,
-    fjall: Keyspace,
+    fjall: Database,
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
     wallet_db: WalletDB,

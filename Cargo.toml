@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Pavel Vasin
+# Copyright (c) 2025-2026 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -55,7 +55,7 @@ criterion = { version = "0.8.1", default-features = false, features = ["cargo_be
 data-encoding = { version = "2.9.0", default-features = false, features = ["alloc"] }
 data-encoding-macro = { version = "0.1.18" }
 digest = { version = "0.10.7", default-features = false }
-fjall = { version = "2.11.2", default-features = false }
+fjall = { version = "3.0.0", default-features = false }
 hashlink = { version = "0.11.0" }
 libc = { version = "0.2.178" }
 log = { version = "0.4.29" }

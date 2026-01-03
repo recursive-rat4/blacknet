@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,7 +32,7 @@ use blacknet_kernel::proofofstake::{DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, 
 use blacknet_kernel::transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
-use fjall::{Error as FjallError, Keyspace, WriteBatch};
+use fjall::{Database, Error as FjallError, OwnedWriteBatch as WriteBatch};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, hash_map};
 use std::sync::Arc;
@@ -48,7 +48,7 @@ pub struct CoinDB {
 impl CoinDB {
     pub fn new(
         mode: &Mode,
-        fjall: &Keyspace,
+        fjall: &Database,
         block_db: Arc<BlockDB>,
     ) -> core::result::Result<Arc<Self>, FjallError> {
         Ok(Arc::new(Self {
