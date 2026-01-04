@@ -25,6 +25,10 @@ pub struct Point<S: Semiring> {
 }
 
 impl<S: Semiring> Point<S> {
+    pub const fn new(coordinates: Vec<LinearCombination<S>>) -> Self {
+        Self { coordinates }
+    }
+
     pub fn allocate(circuit: &CircuitBuilder<S>, kind: VariableKind, dimension: usize) -> Self {
         let scope = circuit.scope("Point::allocate");
         Self {

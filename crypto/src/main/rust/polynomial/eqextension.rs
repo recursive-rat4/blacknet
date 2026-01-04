@@ -92,6 +92,7 @@ impl<R: UnitalRing + From<u8>> Polynomial<R> for EqExtension<R> {
     }
 
     fn point(&self, point: &Point<R>) -> R {
+        debug_assert_eq!(self.coefficients.len(), point.dimension());
         self.z
             * zip(self.coefficients.iter(), point.coordinates())
                 .map(|(&c, &p)| (c * p).double() - c - p + R::ONE)

@@ -115,7 +115,7 @@ impl<
             coordinates.push(challenge);
             exceptional_set.reset();
         }
-        let r = Point::from(coordinates);
+        let r = Point::new(coordinates);
         if polynomial.point(&r) != sum {
             return Err(Error::PolynomialIdentity(polynomial.point(&r), sum));
         }
@@ -147,7 +147,7 @@ impl<
             coordinates.push(challenge);
             exceptional_set.reset();
         }
-        let r = Point::from(coordinates);
+        let r = Point::new(coordinates);
         Ok((r, sum))
     }
 

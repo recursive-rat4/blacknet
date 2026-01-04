@@ -159,6 +159,7 @@ impl<R: UnitalRing + From<u8>> Polynomial<R> for MultilinearExtension<R> {
     }
 
     fn point(&self, point: &Point<R>) -> R {
+        debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
         let basis = EqExtension::basis(point.coordinates());
         zip(self.coefficients.iter(), basis)
             .map(|(&c, b)| c * b)

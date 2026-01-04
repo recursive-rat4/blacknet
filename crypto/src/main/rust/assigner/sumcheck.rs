@@ -76,7 +76,7 @@ impl<'a, R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distribution<'a, R, D
             coordinates.push(challenge);
             exceptional_set.reset();
         }
-        let r = Point::from(coordinates);
+        let r = Point::new(coordinates);
         (r, sum)
     }
 }

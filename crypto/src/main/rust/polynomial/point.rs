@@ -21,12 +21,16 @@ use core::fmt::{Debug, Formatter, Result};
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Point<S> {
     coordinates: Vec<S>,
 }
 
 impl<S> Point<S> {
+    pub const fn new(coordinates: Vec<S>) -> Self {
+        Self { coordinates }
+    }
+
     pub const fn dimension(&self) -> usize {
         self.coordinates.len()
     }

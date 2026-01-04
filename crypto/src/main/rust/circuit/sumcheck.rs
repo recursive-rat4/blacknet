@@ -100,7 +100,7 @@ impl<
             coordinates.push(challenge);
             exceptional_set.reset();
         }
-        let r = Point::from(coordinates);
+        let r = Point::new(coordinates);
         (r, sum)
     }
 }
