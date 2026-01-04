@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,27 +15,29 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
-use crate::algebra::IntegerRing;
-use crate::assigner::assigment::Assigment;
-use crate::assigner::binaryuniformdistribution::BinaryUniformDistribution;
-use crate::assigner::distribution::Distribution;
-use crate::distribution::UniformGenerator;
+use crate::algebra::{Double, IntegerRing};
+use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
 
-pub struct QuartaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerRing>> {
-    bud: BinaryUniformDistribution<'a, G>,
+pub struct QuartaryUniformDistribution<G: UniformGenerator<Output: IntegerRing>> {
+    bud: BinaryUniformDistribution<G>,
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerRing + Eq>> Distribution<'a, G::Output, G>
-    for QuartaryUniformDistribution<'a, G>
-{
-    type Output = G::Output;
-
-    fn new(assigment: &'a Assigment<G::Output>) -> Self {
+impl<G: UniformGenerator<Output: IntegerRing>> QuartaryUniformDistribution<G> {
+    pub const fn new() -> Self {
         Self {
-            bud: BinaryUniformDistribution::new(assigment),
+            bud: BinaryUniformDistribution::new(),
         }
     }
+}
+
+impl<G: UniformGenerator<Output: IntegerRing>> Default for QuartaryUniformDistribution<G> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<G: UniformGenerator<Output: IntegerRing>> Distribution<G> for QuartaryUniformDistribution<G> {
+    type Output = G::Output;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output {
         self.bud.sample(generator).double() - self.bud.sample(generator)

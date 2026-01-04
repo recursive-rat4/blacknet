@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,10 +16,10 @@
  */
 
 use crate::algebra::CommutativeRing;
-use crate::distribution::UniformGenerator;
 use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
 use crate::norm::{EuclideanNorm, InfinityNorm};
+use crate::random::UniformGenerator;
 
 // https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
 

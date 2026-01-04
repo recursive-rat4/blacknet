@@ -15,21 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::chacha::{L, Word};
-use blacknet_crypto::random::{FastDRG, UniformGenerator};
-use core::array;
+mod binaryuniformdistribution;
+mod distribution;
+mod quartaryuniformdistribution;
 
-#[test]
-fn discard() {
-    const SIZE: usize = L * 2 + 1;
-    let mut drg = FastDRG::default();
-
-    let _: [Word; SIZE] = array::from_fn(|_| drg.generate());
-    let buf1: [Word; SIZE] = array::from_fn(|_| drg.generate());
-
-    drg.seed(Default::default());
-    drg.discard(SIZE);
-    let buf2: [Word; SIZE] = array::from_fn(|_| drg.generate());
-
-    assert_eq!(buf2, buf1);
-}
+pub use binaryuniformdistribution::BinaryUniformDistribution;
+pub use distribution::Distribution;
+pub use quartaryuniformdistribution::QuartaryUniformDistribution;

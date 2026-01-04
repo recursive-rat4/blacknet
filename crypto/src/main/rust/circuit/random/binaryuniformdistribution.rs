@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,10 +17,10 @@
 
 use crate::algebra::IntegerRing;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use crate::circuit::distribution::Distribution;
 use crate::circuit::logicgate::LogicGate;
-use crate::distribution::UniformGenerator;
+use crate::circuit::random::Distribution;
 use crate::integer::Integer;
+use crate::random::UniformGenerator;
 use alloc::vec;
 use alloc::vec::Vec;
 

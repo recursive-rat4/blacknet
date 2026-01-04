@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,8 +17,8 @@
 
 use crate::algebra::UnitalRing;
 use crate::assigner::assigment::Assigment;
-use crate::assigner::distribution::Distribution;
 use crate::assigner::polynomial::UnivariatePolynomial;
+use crate::assigner::random::Distribution;
 use crate::duplex::Duplex;
 use crate::polynomial::{Point, Polynomial};
 use alloc::vec::Vec;

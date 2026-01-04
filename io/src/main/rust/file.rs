@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,9 +18,8 @@
 #![cfg(feature = "std")]
 
 use alloc::format;
-use blacknet_crypto::distribution::UniformGenerator;
-use blacknet_crypto::fastrng::FAST_RNG;
 use blacknet_crypto::integer::Integer;
+use blacknet_crypto::random::{FAST_RNG, UniformGenerator};
 use core::error::Error;
 use std::fs::{File, remove_file, rename};
 use std::io::{BufWriter, Error as IoError, ErrorKind};

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::distribution::{Distribution, UniformGenerator};
-use blacknet_crypto::uniformintdistribution::UniformIntDistribution;
+use blacknet_crypto::random::{Distribution, UniformGenerator, UniformIntDistribution};
 use core::array;
 
 struct TestGenerator {

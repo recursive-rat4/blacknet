@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,10 +18,9 @@
 use crate::endpoint::Endpoint;
 use crate::settings::Settings;
 use blacknet_compat::{Mode, XDGDirectories};
-use blacknet_crypto::distribution::Distribution;
-use blacknet_crypto::fastrng::{FAST_RNG, FastRNG};
-use blacknet_crypto::float01distribution::Float01Distribution;
-use blacknet_crypto::uniformintdistribution::UniformIntDistribution;
+use blacknet_crypto::random::{
+    Distribution, FAST_RNG, FastRNG, Float01Distribution, UniformIntDistribution,
+};
 use blacknet_io::file::replace;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{LogManager, Logger, debug, error, info, warn};

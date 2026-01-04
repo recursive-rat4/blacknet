@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::AdditiveGroup;
-use crate::distribution::UniformGenerator;
 use crate::permutation::Permutation;
+use crate::random::UniformGenerator;
 use alloc::vec::Vec;
 use core::array;
 use core::marker::PhantomData;

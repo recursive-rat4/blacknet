@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::UnitalRing;
-use crate::distribution::Distribution;
 use crate::duplex::Duplex;
 use crate::polynomial::{Point, Polynomial, UnivariatePolynomial, interpolation::*};
+use crate::random::Distribution;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};

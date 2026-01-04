@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,11 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![cfg(feature = "std")]
-
-use crate::distribution::{Distribution, UniformGenerator};
-use crate::fastdrg::{FastDRG, SEED_SIZE};
-use crate::uniformintdistribution::UniformIntDistribution;
+use crate::random::{
+    Distribution, FastDRG, UniformGenerator, UniformIntDistribution, fastdrg::SEED_SIZE,
+};
 use blacknet_compat::getentropy;
 use core::array;
 use core::cell::RefCell;

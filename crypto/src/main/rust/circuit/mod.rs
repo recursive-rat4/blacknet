@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,11 +17,9 @@
 
 //! Arithmetic circuits for proof systems.
 
-pub mod binaryuniformdistribution;
 pub mod builder;
 pub mod compressionfunction;
 pub mod convolution;
-pub mod distribution;
 pub mod duplex;
 pub mod jive;
 pub mod logicgate;
@@ -31,5 +29,5 @@ pub mod polynomial;
 pub mod poseidon2;
 pub mod poseidon2lm;
 pub mod poseidon2pervushin;
-pub mod quartaryuniformdistribution;
+pub mod random;
 pub mod sumcheck;

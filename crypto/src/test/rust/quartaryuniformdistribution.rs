@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,14 +17,15 @@
 
 use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::IntegerRing;
-use blacknet_crypto::assigner::distribution::Distribution as DistributionAssigner;
-use blacknet_crypto::assigner::quartaryuniformdistribution::QuartaryUniformDistribution as Assigner;
+use blacknet_crypto::assigner::random::{
+    Distribution as DistributionAssigner, QuartaryUniformDistribution as Assigner,
+};
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use blacknet_crypto::circuit::distribution::Distribution as DistributionCircuit;
-use blacknet_crypto::circuit::quartaryuniformdistribution::QuartaryUniformDistribution as Circuit;
+use blacknet_crypto::circuit::random::{
+    Distribution as DistributionCircuit, QuartaryUniformDistribution as Circuit,
+};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::distribution::{Distribution, UniformGenerator};
-use blacknet_crypto::quartaryuniformdistribution::QuartaryUniformDistribution;
+use blacknet_crypto::random::{Distribution, QuartaryUniformDistribution, UniformGenerator};
 use core::array;
 
 type Z = blacknet_crypto::lm::LMField;

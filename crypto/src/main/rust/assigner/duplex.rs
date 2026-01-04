@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,8 +18,8 @@
 use crate::algebra::Semiring;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::permutation::Permutation;
-use crate::distribution::UniformGenerator;
 use crate::duplex::{Duplex, Phase};
+use crate::random::UniformGenerator;
 use core::marker::PhantomData;
 
 pub struct DuplexImpl<

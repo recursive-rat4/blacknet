@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,11 +23,11 @@ use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinCircuit;
 use blacknet_crypto::circuit::sumcheck::{Proof as ProofCircuit, SumCheck as SumCheckCircuit};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::distribution::{Distribution, UniformDistribution};
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{EqExtension, MultilinearExtension, Polynomial};
 use blacknet_crypto::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain;
+use blacknet_crypto::random::{Distribution, UniformDistribution};
 use blacknet_crypto::sumcheck::SumCheck as SumCheckPlain;
 
 type Z = PervushinField;

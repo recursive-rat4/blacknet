@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,21 +26,16 @@ pub mod ajtaicommitment;
 pub mod algebra;
 pub mod assigner;
 pub mod bigint;
-pub mod binaryuniformdistribution;
 pub mod chacha;
 pub mod circuit;
 pub mod compressionfunction;
 pub mod constraintsystem;
 pub mod convolution;
 pub mod customizableconstraintsystem;
-pub mod distribution;
 pub mod duplex;
 pub mod ed25519;
-pub mod fastdrg;
-pub mod fastrng;
 pub mod fermat;
 pub mod float;
-pub mod float01distribution;
 pub mod integer;
 pub mod jive;
 pub mod latticegadget;
@@ -55,9 +50,8 @@ pub mod polynomial;
 pub mod poseidon2;
 pub mod poseidon2lm;
 pub mod poseidon2pervushin;
-pub mod quartaryuniformdistribution;
 pub mod r1cs;
+pub mod random;
 pub mod sumcheck;
 pub mod twiddles;
-pub mod uniformintdistribution;
 pub mod z2;

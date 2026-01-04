@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,10 +17,10 @@
 
 use crate::algebra::{IntegerRing, MultiplicativeMonoid};
 use crate::assigner::assigment::Assigment;
-use crate::assigner::distribution::Distribution;
 use crate::assigner::logicgate::LogicGate;
-use crate::distribution::UniformGenerator;
+use crate::assigner::random::Distribution;
 use crate::integer::Integer;
+use crate::random::UniformGenerator;
 use alloc::vec::Vec;
 
 pub struct BinaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerRing>> {

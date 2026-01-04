@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::distribution::{Distribution, UniformGenerator};
 use crate::integer::Integer;
+use crate::random::{Distribution, UniformGenerator};
 use core::ops::{Bound, RangeBounds};
 
 // In range [0, max]
