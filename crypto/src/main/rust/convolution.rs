@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,17 +17,10 @@
 
 use crate::algebra::Ring;
 
-#[rustfmt::skip]
-pub trait Convolution<R: Ring, const N: usize>
-    : Copy
-    + Eq
-    + Send
-    + Sync
-{
+pub trait Convolution<R: Ring, const N: usize> {
     fn convolute(a: [R; N], b: [R; N]) -> [R; N];
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Negacyclic {}
 
 impl<R: Ring, const N: usize> Convolution<R, N> for Negacyclic {

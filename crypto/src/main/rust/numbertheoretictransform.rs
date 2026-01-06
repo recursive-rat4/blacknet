@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -83,7 +83,6 @@ pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(mut a: [Z
     a.map(|i| i * Z::SCALE)
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct NTTConvolution<const M: usize, const N: usize> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTConvolution<M, N> {

@@ -428,7 +428,6 @@ impl BalancedRepresentative for LMField {
 
 // (2⁶⁰ + 2⁵ + 1) / (x² - ³²√1)
 
-#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct LMField2Convolution {}
 
 impl Convolution<LMField, 2> for LMField2Convolution {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,7 +19,7 @@ use crate::algebra::UnitalRing;
 use crate::circuit::builder::{Constant, LinearCombination, Scope};
 use core::array;
 
-pub trait Convolution<R: UnitalRing, const N: usize>: Copy + Eq + Send + Sync {
+pub trait Convolution<R: UnitalRing, const N: usize> {
     fn convolute(
         scope: &Scope<R>,
         a: [LinearCombination<R>; N],

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 
 // Univariate polynomial ring in monomial basis
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(bound(
     deserialize = "FreeModule<R, N>: Deserialize<'de>",
     serialize = "FreeModule<R, N>: Serialize"
@@ -55,6 +55,14 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> UnivariateRing<R, N, C
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Clone for UnivariateRing<R, N, C> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Copy for UnivariateRing<R, N, C> {}
+
 impl<R: UnitalRing + Debug, const N: usize, C: Convolution<R, N>> Debug
     for UnivariateRing<R, N, C>
 {
@@ -69,6 +77,16 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Default for Univariate
         Self::ZERO
     }
 }
+
+impl<R: UnitalRing + PartialEq, const N: usize, C: Convolution<R, N>> PartialEq
+    for UnivariateRing<R, N, C>
+{
+    fn eq(&self, rps: &Self) -> bool {
+        self.coefficients == rps.coefficients
+    }
+}
+
+impl<R: UnitalRing + Eq, const N: usize, C: Convolution<R, N>> Eq for UnivariateRing<R, N, C> {}
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> From<[R; N]> for UnivariateRing<R, N, C> {
     #[inline]
