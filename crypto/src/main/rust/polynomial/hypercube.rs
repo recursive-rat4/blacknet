@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,6 +20,7 @@ use crate::polynomial::{Point, Polynomial};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
+/// An n-dimensional unit hypercube with a vertex at the origin in the coordinate system.
 pub struct Hypercube<R: Semiring> {
     dimension: usize,
     vertices: usize,
@@ -27,6 +28,7 @@ pub struct Hypercube<R: Semiring> {
 }
 
 impl<R: Semiring> Hypercube<R> {
+    /// Construct a new hypercube.
     pub const fn new(dimension: usize) -> Self {
         Self {
             dimension,
@@ -35,6 +37,7 @@ impl<R: Semiring> Hypercube<R> {
         }
     }
 
+    /// Iterate indices of vertices.
     pub const fn iter_index(&self) -> IndexIterator {
         IndexIterator {
             index: 0,
@@ -42,6 +45,7 @@ impl<R: Semiring> Hypercube<R> {
         }
     }
 
+    /// Iterate vertices.
     pub const fn iter_vertex(&self) -> VertexIterator<R> {
         VertexIterator {
             index: 0,
@@ -60,6 +64,7 @@ impl<R: Semiring> Hypercube<R> {
         }
     }
 
+    /// Sum a polynomial over a unit hypercube.
     pub fn sum<P: Polynomial<R>>(polynomial: &P) -> R {
         Hypercube::new(polynomial.variables())
             .iter_vertex()
@@ -68,6 +73,7 @@ impl<R: Semiring> Hypercube<R> {
     }
 }
 
+/// Iterator of indices of vertices.
 pub struct IndexIterator {
     index: usize,
     last: usize,
@@ -98,6 +104,7 @@ impl ExactSizeIterator for IndexIterator {
     }
 }
 
+/// Iterator of vertices.
 pub struct VertexIterator<R> {
     index: usize,
     last: usize,
