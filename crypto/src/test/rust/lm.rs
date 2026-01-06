@@ -396,10 +396,10 @@ fn r64_infinity_norm() {
     let good = 67133638855483917;
 
     let elt = R64::from(coeffs);
-    assert!(!elt.check_infinity_norm(bad));
-    assert!(elt.check_infinity_norm(good));
+    assert!(!elt.check_infinity_norm(&bad));
+    assert!(elt.check_infinity_norm(&good));
 
     let elt = NTT64::from(coeffs);
-    assert!(!elt.check_infinity_norm(bad));
-    assert!(elt.check_infinity_norm(good));
+    assert!(!elt.check_infinity_norm(&bad));
+    assert!(elt.check_infinity_norm(&good));
 }

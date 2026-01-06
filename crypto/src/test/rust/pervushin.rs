@@ -113,10 +113,10 @@ fn z_infinity_norm() {
     let ag = 677133638855483917;
     let bb = 1140329745848183219;
     let bg = 1140329745848183220;
-    assert!(!a.check_infinity_norm(ab));
-    assert!(a.check_infinity_norm(ag));
-    assert!(!b.check_infinity_norm(bb));
-    assert!(b.check_infinity_norm(bg));
+    assert!(!a.check_infinity_norm(&ab));
+    assert!(a.check_infinity_norm(&ag));
+    assert!(!b.check_infinity_norm(&bb));
+    assert!(b.check_infinity_norm(&bg));
 }
 
 #[test]

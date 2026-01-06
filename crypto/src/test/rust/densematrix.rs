@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -198,6 +198,6 @@ fn infinity_norm() {
     ].map(R::from).into());
     let nb = 3;
     let ng = 4;
-    assert!(!a.check_infinity_norm(nb));
-    assert!(a.check_infinity_norm(ng));
+    assert!(!a.check_infinity_norm(&nb));
+    assert!(a.check_infinity_norm(&ng));
 }

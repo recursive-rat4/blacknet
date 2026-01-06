@@ -109,8 +109,8 @@ fn infinity_norm() {
     let b = Z::new(30000);
     let nb = 30000;
     let ng = 30001;
-    assert!(!a.check_infinity_norm(nb));
-    assert!(a.check_infinity_norm(ng));
-    assert!(!b.check_infinity_norm(nb));
-    assert!(b.check_infinity_norm(ng));
+    assert!(!a.check_infinity_norm(&nb));
+    assert!(a.check_infinity_norm(&ng));
+    assert!(!b.check_infinity_norm(&nb));
+    assert!(b.check_infinity_norm(&ng));
 }

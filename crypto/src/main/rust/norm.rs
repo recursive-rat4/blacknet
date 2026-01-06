@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,7 +22,6 @@ use crate::algebra::UnivariateRing;
 use crate::algebra::{IntegerRing, PolynomialRing, Ring, UnitalRing};
 use crate::convolution::Convolution;
 use crate::float::FloatOn;
-use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
 use crate::numbertheoretictransform::Twiddles;
 
@@ -91,36 +90,36 @@ impl<R: UnitalRing + EuclideanNorm, const N: usize, C: Convolution<R, N>> Euclid
     }
 }
 
-pub trait InfinityNorm<Int: Integer> {
-    fn check_infinity_norm(&self, bound: Int) -> bool;
+pub trait InfinityNorm<Length: Ord> {
+    fn check_infinity_norm(&self, bound: &Length) -> bool;
 }
 
 impl<Z: IntegerRing> InfinityNorm<Z::Int> for Z {
-    fn check_infinity_norm(&self, bound: Z::Int) -> bool {
-        self.absolute() < bound
+    fn check_infinity_norm(&self, bound: &Z::Int) -> bool {
+        &self.absolute() < bound
     }
 }
 
-impl<Int: Integer, R: Ring + InfinityNorm<Int>, const N: usize> InfinityNorm<Int>
+impl<Length: Ord, R: Ring + InfinityNorm<Length>, const N: usize> InfinityNorm<Length>
     for FreeModule<R, N>
 {
-    fn check_infinity_norm(&self, bound: Int) -> bool {
+    fn check_infinity_norm(&self, bound: &Length) -> bool {
         self.components()
             .iter()
             .all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<Int: Integer, R: Ring + InfinityNorm<Int>> InfinityNorm<Int> for DenseMatrix<R> {
-    fn check_infinity_norm(&self, bound: Int) -> bool {
+impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for DenseMatrix<R> {
+    fn check_infinity_norm(&self, bound: &Length) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<Int: Integer, R: Ring + InfinityNorm<Int>, const N: usize, const NN: usize> InfinityNorm<Int>
-    for MatrixRing<R, N, NN>
+impl<Length: Ord, R: Ring + InfinityNorm<Length>, const N: usize, const NN: usize>
+    InfinityNorm<Length> for MatrixRing<R, N, NN>
 {
-    fn check_infinity_norm(&self, bound: Int) -> bool {
+    fn check_infinity_norm(&self, bound: &Length) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
@@ -128,27 +127,27 @@ impl<Int: Integer, R: Ring + InfinityNorm<Int>, const N: usize, const NN: usize>
 impl<Z: Twiddles<M> + InfinityNorm<Z::Int>, const M: usize, const N: usize> InfinityNorm<Z::Int>
     for NTTRing<Z, M, N>
 {
-    fn check_infinity_norm(&self, bound: Z::Int) -> bool {
+    fn check_infinity_norm(&self, bound: &Z::Int) -> bool {
         self.coefficients().check_infinity_norm(bound)
     }
 }
 
-impl<Int: Integer, R: Ring + InfinityNorm<Int>> InfinityNorm<Int> for DenseVector<R> {
-    fn check_infinity_norm(&self, bound: Int) -> bool {
+impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for DenseVector<R> {
+    fn check_infinity_norm(&self, bound: &Length) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<Int: Integer, R: Ring + InfinityNorm<Int>> InfinityNorm<Int> for SparseVector<R> {
-    fn check_infinity_norm(&self, bound: Int) -> bool {
+impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for SparseVector<R> {
+    fn check_infinity_norm(&self, bound: &Length) -> bool {
         self.elements().iter().all(|i| i.check_infinity_norm(bound))
     }
 }
 
-impl<Int: Integer, R: UnitalRing + InfinityNorm<Int>, const N: usize, C: Convolution<R, N>>
-    InfinityNorm<Int> for UnivariateRing<R, N, C>
+impl<Length: Ord, R: UnitalRing + InfinityNorm<Length>, const N: usize, C: Convolution<R, N>>
+    InfinityNorm<Length> for UnivariateRing<R, N, C>
 {
-    fn check_infinity_norm(&self, bound: Int) -> bool {
+    fn check_infinity_norm(&self, bound: &Length) -> bool {
         self.coefficients().check_infinity_norm(bound)
     }
 }

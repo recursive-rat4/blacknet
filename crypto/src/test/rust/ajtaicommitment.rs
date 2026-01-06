@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -50,11 +50,14 @@ fn test() {
     let c12 = cs.commit_dense(&m12);
     let c34 = cs.commit_dense(&m34);
 
-    assert!(cs.open_dense_linf(&c12, &m12, b_inf), "Opening");
-    assert!(!cs.open_dense_linf(&c34, &m12, b_inf), "Binding");
-    assert!(!cs.open_dense_linf(&c12, &m21, b_inf), "Positional binding");
+    assert!(cs.open_dense_linf(&c12, &m12, &b_inf), "Opening");
+    assert!(!cs.open_dense_linf(&c34, &m12, &b_inf), "Binding");
     assert!(
-        cs.open_dense_linf(&(&c12 + &c34), &(&m12 + &m34), b_inf),
+        !cs.open_dense_linf(&c12, &m21, &b_inf),
+        "Positional binding"
+    );
+    assert!(
+        cs.open_dense_linf(&(&c12 + &c34), &(&m12 + &m34), &b_inf),
         "Homomorphism"
     );
 

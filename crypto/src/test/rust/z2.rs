@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -64,8 +64,8 @@ fn inv() {
 
 #[test]
 fn infinity_norm() {
-    assert!(!Z2::new(0).check_infinity_norm(0));
-    assert!(Z2::new(0).check_infinity_norm(1));
-    assert!(!Z2::new(1).check_infinity_norm(0));
-    assert!(!Z2::new(1).check_infinity_norm(1));
+    assert!(!Z2::new(0).check_infinity_norm(&0));
+    assert!(Z2::new(0).check_infinity_norm(&1));
+    assert!(!Z2::new(1).check_infinity_norm(&0));
+    assert!(!Z2::new(1).check_infinity_norm(&1));
 }
