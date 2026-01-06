@@ -38,6 +38,7 @@ pub mod fermat;
 pub mod float;
 pub mod integer;
 pub mod jive;
+pub mod johnsonlindenstrauss;
 pub mod latticegadget;
 pub mod lm;
 pub mod matrix;
