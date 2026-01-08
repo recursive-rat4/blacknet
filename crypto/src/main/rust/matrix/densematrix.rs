@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Presemiring;
-use crate::algebra::Ring;
-use crate::algebra::{Double, Square};
+use crate::algebra::{Double, Presemiring, Ring, Semiring, Square};
 use crate::matrix::DenseVector;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -136,6 +134,21 @@ impl<R: Presemiring> DenseMatrix<R> {
         Self {
             rows: self.columns,
             columns: self.rows,
+            elements,
+        }
+    }
+}
+
+impl<R: Semiring> DenseMatrix<R> {
+    /// The `n ⨉ n` multiplicative identity.
+    pub fn identity(n: usize) -> Self {
+        let mut elements = vec![R::ZERO; n * n];
+        for i in 0..n {
+            elements[i * n + i] = R::ONE;
+        }
+        Self {
+            rows: n,
+            columns: n,
             elements,
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -56,7 +56,7 @@ impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
         let mut elements = [R::ZERO; NN];
         let mut i = 0;
         while i < N {
-            elements[i * N] = scalar;
+            elements[i * N + i] = scalar;
             i += 1;
         }
         Self { elements }
@@ -72,7 +72,7 @@ impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
         N
     }
 
-    /// The entries.
+    /// The entries in row-major order.
     pub const fn elements(self) -> [R; NN] {
         self.elements
     }

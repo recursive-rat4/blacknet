@@ -191,6 +191,18 @@ fn pad() {
 
 #[test]
 #[rustfmt::skip]
+fn identity() {
+    let n = 3;
+    let i = DenseMatrix::<R>::new(3, 3, [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1,
+    ].map(R::from).into());
+    assert_eq!(DenseMatrix::<R>::identity(n), i);
+}
+
+#[test]
+#[rustfmt::skip]
 fn infinity_norm() {
     let a = DenseMatrix::<R>::new(2, 2, [
         0, 1,

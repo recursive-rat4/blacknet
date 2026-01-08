@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::FreeModule;
-use blacknet_crypto::algebra::MatrixRing;
+use blacknet_crypto::algebra::{FreeModule, MatrixRing, MultiplicativeMonoid};
 use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
@@ -128,6 +127,16 @@ fn transpose() {
     ].map(Z::from));
     assert_eq!(a.transpose(), b);
     assert_eq!(b.transpose(), a);
+}
+
+#[test]
+#[rustfmt::skip]
+fn identity() {
+    let i = R::new([
+        1, 0,
+        0, 1,
+    ].map(Z::from));
+    assert_eq!(R::ONE, i);
 }
 
 #[test]
