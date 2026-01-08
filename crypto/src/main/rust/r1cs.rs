@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -53,6 +53,8 @@ impl<R: Semiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, SparseMat
 }
 
 impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for R1CS<R> {
+    type Assigment = DenseVector<R>;
+
     fn degree(&self) -> usize {
         2
     }

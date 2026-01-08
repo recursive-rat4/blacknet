@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -67,6 +67,8 @@ impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
 }
 
 impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for CustomizableConstraintSystem<R> {
+    type Assigment = DenseVector<R>;
+
     fn degree(&self) -> usize {
         self.multisets
             .iter()
