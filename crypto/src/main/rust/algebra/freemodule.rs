@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,12 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::AdditiveMonoid;
-use crate::algebra::Double;
-use crate::algebra::Module;
-use crate::algebra::Ring;
-use crate::algebra::{AdditiveCommutativeMagma, AdditiveMagma};
-use crate::algebra::{AdditiveSemigroup, LeftZero, RightZero};
+use crate::algebra::{
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, LeftZero, Module,
+    RightZero, Ring, Set,
+};
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
@@ -274,7 +272,7 @@ impl<R: Ring, const N: usize> RightZero for FreeModule<R, N> {
     };
 }
 
-impl<R: Ring, const N: usize> AdditiveMagma for FreeModule<R, N> {}
+impl<R: Ring, const N: usize> Set for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
 

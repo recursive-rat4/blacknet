@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,13 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Square};
+use crate::algebra::{Double, Set, Square};
 use core::ops::{Add, AddAssign, Mul, MulAssign};
 
 /// A set that is closed under addition.
 #[rustfmt::skip]
 pub trait AdditiveMagma
-    : Clone
+    : Set
+    + Sized
     + Add<Output = Self>
     + AddAssign
     + Double<Output = Self>
@@ -30,13 +31,25 @@ pub trait AdditiveMagma
 {
 }
 
+#[rustfmt::skip]
+impl<T
+    : Set
+    + Sized
+    + Add<Output = Self>
+    + AddAssign
+    + Double<Output = Self>
+    + for<'a> Add<&'a Self, Output = Self>
+    + for<'a> AddAssign<&'a Self>
+> AdditiveMagma for T {}
+
 /// A marker for magmata with commutative addition.
 pub trait AdditiveCommutativeMagma: AdditiveMagma {}
 
 /// A set that is closed under multiplication.
 #[rustfmt::skip]
 pub trait MultiplicativeMagma
-    : Clone
+    : Set
+    + Sized
     + Mul<Output = Self>
     + MulAssign
     + Square<Output = Self>
@@ -44,6 +57,17 @@ pub trait MultiplicativeMagma
     + for<'a> MulAssign<&'a Self>
 {
 }
+
+#[rustfmt::skip]
+impl<T
+    : Set
+    + Sized
+    + Mul<Output = Self>
+    + MulAssign
+    + Square<Output = Self>
+    + for<'a> Mul<&'a Self, Output = Self>
+    + for<'a> MulAssign<&'a Self>
+> MultiplicativeMagma for T {}
 
 /// A marker for magmata with commutative multiplication.
 pub trait MultiplicativeCommutativeMagma: MultiplicativeMagma {}

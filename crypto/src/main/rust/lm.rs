@@ -16,11 +16,10 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup,
-    BalancedRepresentative, DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne,
-    LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, NTTRing, PolynomialRing, RightOne, RightZero, Square, UnivariateRing,
-    square_and_multiply,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
+    DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
+    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing,
+    PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, square_and_multiply,
 };
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::integer::Integer;
@@ -314,7 +313,7 @@ impl RightOne for LMField {
     const RIGHT_ONE: Self = Self { n: 1 };
 }
 
-impl AdditiveMagma for LMField {}
+impl Set for LMField {}
 
 impl AdditiveCommutativeMagma for LMField {}
 
@@ -323,8 +322,6 @@ impl AdditiveSemigroup for LMField {}
 impl AdditiveMonoid for LMField {
     const ZERO: Self = Self { n: 0 };
 }
-
-impl MultiplicativeMagma for LMField {}
 
 impl MultiplicativeCommutativeMagma for LMField {}
 

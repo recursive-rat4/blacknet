@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,10 +18,10 @@
 #![allow(clippy::manual_is_multiple_of)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double,
-    FreeModule, LeftOne, LeftZero, Module, MultiplicativeCommutativeMagma, MultiplicativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing,
-    RightOne, RightZero, Square, UnitalAlgebra, UnivariateRing,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double, FreeModule,
+    LeftOne, LeftZero, Module, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, Set,
+    Square, UnitalAlgebra, UnivariateRing,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
@@ -353,7 +353,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> RightOne for NTTRing<Z, M, 
     const RIGHT_ONE: Self = Self::const_from(Z::RIGHT_ONE);
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMagma for NTTRing<Z, M, N> {}
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Set for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveCommutativeMagma for NTTRing<Z, M, N> {}
 
@@ -364,8 +364,6 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMonoid for NTTRing<
         spectrum: FreeModule::<Z, N>::ZERO,
     };
 }
-
-impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMagma for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMagma
     for NTTRing<Z, M, N>

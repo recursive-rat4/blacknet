@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double,
-    FreeModule, LeftOne, LeftZero, Module, MultiplicativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, RightOne, RightZero, Ring, Square, UnitalAlgebra, UnitalRing,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double, FreeModule,
+    LeftOne, LeftZero, Module, MultiplicativeMonoid, MultiplicativeSemigroup, RightOne, RightZero,
+    Ring, Set, Square, UnitalAlgebra, UnitalRing,
 };
 use core::array;
 use core::iter::{Product, Sum};
@@ -391,7 +391,7 @@ impl<R: UnitalRing, const N: usize, const NN: usize> RightOne for MatrixRing<R, 
     const RIGHT_ONE: Self = Self::const_from(R::RIGHT_ONE);
 }
 
-impl<R: Ring, const N: usize, const NN: usize> AdditiveMagma for MatrixRing<R, N, NN> {}
+impl<R: Ring, const N: usize, const NN: usize> Set for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveCommutativeMagma for MatrixRing<R, N, NN> {}
 
@@ -400,8 +400,6 @@ impl<R: Ring, const N: usize, const NN: usize> AdditiveSemigroup for MatrixRing<
 impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {
     const ZERO: Self = Self::const_from(R::ZERO);
 }
-
-impl<R: Ring, const N: usize, const NN: usize> MultiplicativeMagma for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for MatrixRing<R, N, NN> {}
 

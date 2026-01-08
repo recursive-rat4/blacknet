@@ -18,10 +18,9 @@
 #![allow(clippy::suspicious_arithmetic_impl)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup,
-    BalancedRepresentative, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
-    MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, RightOne, RightZero, Square,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
+    DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    MultiplicativeMonoid, MultiplicativeSemigroup, RightOne, RightZero, Set, Square,
 };
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -236,7 +235,7 @@ impl RightOne for Z2 {
     const RIGHT_ONE: Self = Self { n: true };
 }
 
-impl AdditiveMagma for Z2 {}
+impl Set for Z2 {}
 
 impl AdditiveCommutativeMagma for Z2 {}
 
@@ -245,8 +244,6 @@ impl AdditiveSemigroup for Z2 {}
 impl AdditiveMonoid for Z2 {
     const ZERO: Self = Self { n: false };
 }
-
-impl MultiplicativeMagma for Z2 {}
 
 impl MultiplicativeCommutativeMagma for Z2 {}
 

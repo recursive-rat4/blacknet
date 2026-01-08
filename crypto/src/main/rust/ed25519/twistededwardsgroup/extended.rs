@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveAbelianGroup, AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid,
-    AdditiveSemigroup, Double, Inv, LeftZero, MultiplicativeMonoid, RightZero, Square,
+    AdditiveAbelianGroup, AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, Inv,
+    LeftZero, MultiplicativeMonoid, RightZero, Set, Square,
 };
 use crate::ed25519::TwistedEdwardsGroupParams;
 use core::fmt::{Debug, Formatter, Result};
@@ -280,7 +280,7 @@ impl<P: TwistedEdwardsGroupParams> RightZero for TwistedEdwardsGroupExtended<P> 
     };
 }
 
-impl<P: TwistedEdwardsGroupParams> AdditiveMagma for TwistedEdwardsGroupExtended<P> {}
+impl<P: TwistedEdwardsGroupParams> Set for TwistedEdwardsGroupExtended<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
 

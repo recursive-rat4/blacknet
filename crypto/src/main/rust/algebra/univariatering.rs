@@ -16,11 +16,10 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup, Algebra,
-    CommutativeRing, Double, FreeModule, IntegerRing, LeftOne, LeftZero, Module,
-    MultiplicativeCommutativeMagma, MultiplicativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, Square,
-    UnitalAlgebra, UnitalRing,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing, Double,
+    FreeModule, IntegerRing, LeftOne, LeftZero, Module, MultiplicativeCommutativeMagma,
+    MultiplicativeMonoid, MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing,
+    RightOne, RightZero, Set, Square, UnitalAlgebra, UnitalRing,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
@@ -353,10 +352,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> RightOne for Univariat
     };
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMagma
-    for UnivariateRing<R, N, C>
-{
-}
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Set for UnivariateRing<R, N, C> {}
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveCommutativeMagma
     for UnivariateRing<R, N, C>
@@ -372,11 +368,6 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMonoid
     for UnivariateRing<R, N, C>
 {
     const ZERO: Self = Self::new(FreeModule::<R, N>::ZERO);
-}
-
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMagma
-    for UnivariateRing<R, N, C>
-{
 }
 
 impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> MultiplicativeCommutativeMagma

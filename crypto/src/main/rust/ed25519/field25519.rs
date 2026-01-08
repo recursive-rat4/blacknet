@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,10 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRing,
-    Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, RightOne, RightZero,
-    Square, square_and_multiply,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRing, Double, IntegerRing,
+    Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, RightOne, RightZero, Set, Square, square_and_multiply,
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
@@ -418,7 +417,7 @@ impl RightOne for Field25519 {
     };
 }
 
-impl AdditiveMagma for Field25519 {}
+impl Set for Field25519 {}
 
 impl AdditiveCommutativeMagma for Field25519 {}
 
@@ -427,8 +426,6 @@ impl AdditiveSemigroup for Field25519 {}
 impl AdditiveMonoid for Field25519 {
     const ZERO: Self = Self { n: UInt256::ZERO };
 }
-
-impl MultiplicativeMagma for Field25519 {}
 
 impl MultiplicativeCommutativeMagma for Field25519 {}
 
