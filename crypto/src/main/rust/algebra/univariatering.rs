@@ -17,9 +17,9 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing, Double,
-    FreeModule, IntegerRing, LeftOne, LeftZero, Module, MultiplicativeCommutativeMagma,
+    FreeModule, IntegerRing, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
     MultiplicativeMonoid, MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing,
-    RightOne, RightZero, Set, Square, UnitalAlgebra, UnitalRing,
+    RightOne, RightZero, Semimodule, Set, Square, UnitalAlgebra, UnitalRing,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
@@ -390,7 +390,10 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MultiplicativeMonoid
     };
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Module<R> for UnivariateRing<R, N, C> {}
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Semimodule<R>
+    for UnivariateRing<R, N, C>
+{
+}
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Algebra<R> for UnivariateRing<R, N, C> {}
 

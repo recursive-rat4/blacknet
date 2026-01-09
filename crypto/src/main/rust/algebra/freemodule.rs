@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, LeftZero, Module,
-    RightZero, Ring, Set,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, LeftZero, RightZero, Ring,
+    Semimodule, Set,
 };
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use core::array;
@@ -284,7 +284,7 @@ impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
     };
 }
 
-impl<R: Ring, const N: usize> Module<R> for FreeModule<R, N> {}
+impl<R: Ring, const N: usize> Semimodule<R> for FreeModule<R, N> {}
 
 impl<R: Ring + Absorb<R>, const N: usize> Absorb<R> for FreeModule<R, N> {
     fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {

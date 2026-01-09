@@ -19,9 +19,9 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double, FreeModule,
-    LeftOne, LeftZero, Module, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, Set,
-    Square, UnitalAlgebra, UnivariateRing,
+    LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
+    Semimodule, Set, Square, UnitalAlgebra, UnivariateRing,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
@@ -376,7 +376,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMonoid for NT
     const ONE: Self = Self::const_from(Z::ONE);
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Module<Z> for NTTRing<Z, M, N> {}
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Semimodule<Z> for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> {}
 

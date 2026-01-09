@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,14 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveAbelianGroup, Ring, Semimodule};
+use crate::algebra::{AdditiveCommutativeMonoid, Presemiring};
+use core::ops::{Mul, MulAssign};
 
+/// A generalization of [module][`crate::algebra::Module`] to semirings.
 #[rustfmt::skip]
-pub trait Module<R: Ring>
-    : Semimodule<R>
-    + AdditiveAbelianGroup
+pub trait Semimodule<R: Presemiring>
+    : AdditiveCommutativeMonoid
+    + Mul<R, Output = Self>
+    + MulAssign<R>
+    + for<'a> Mul<&'a R, Output = Self>
+    + for<'a> MulAssign<&'a R>
 {
 }
 
-/// Any semimodule over a ring is a module.
-impl<R: Ring, M: Semimodule<R> + AdditiveAbelianGroup> Module<R> for M {}
+/// Any semiring is a semimodule over itself.
+impl<R: Presemiring> Semimodule<R> for R {}

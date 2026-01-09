@@ -17,8 +17,8 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double, FreeModule,
-    LeftOne, LeftZero, Module, MultiplicativeMonoid, MultiplicativeSemigroup, RightOne, RightZero,
-    Ring, Set, Square, UnitalAlgebra, UnitalRing,
+    LeftOne, LeftZero, MultiplicativeMonoid, MultiplicativeSemigroup, RightOne, RightZero, Ring,
+    Semimodule, Set, Square, UnitalAlgebra, UnitalRing,
 };
 use core::array;
 use core::iter::{Product, Sum};
@@ -407,7 +407,7 @@ impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for Ma
     const ONE: Self = Self::const_from(R::ONE);
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Module<R> for MatrixRing<R, N, NN> {}
+impl<R: Ring, const N: usize, const NN: usize> Semimodule<R> for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> Algebra<R> for MatrixRing<R, N, NN> {}
 
