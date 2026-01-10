@@ -52,8 +52,8 @@ blake2 = { version = "0.10.6", default-features = false }
 bytemuck = { version = "1.24.0", features = ["derive"] }
 chrono = { version = "0.4.42", default-features = false }
 criterion = { version = "0.8.1", default-features = false, features = ["cargo_bench_support"] }
-data-encoding = { version = "2.9.0", default-features = false, features = ["alloc"] }
-data-encoding-macro = { version = "0.1.18" }
+data-encoding = { version = "2.10.0", default-features = false, features = ["alloc"] }
+data-encoding-macro = { version = "0.1.19" }
 digest = { version = "0.10.7", default-features = false }
 fjall = { version = "3.0.1", default-features = false }
 hashlink = { version = "0.11.0" }
