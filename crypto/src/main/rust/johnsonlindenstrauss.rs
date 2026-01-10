@@ -29,7 +29,7 @@ pub struct JohnsonLindenstrauss<Z: IntegerRing> {
 impl<Z: IntegerRing> JohnsonLindenstrauss<Z> {
     const K: usize = 256;
 
-    pub fn new<G: UniformGenerator<Output = Z>>(generator: &mut G, n: usize) -> Self {
+    pub fn random<G: UniformGenerator<Output = Z>>(generator: &mut G, n: usize) -> Self {
         let mut dst = WeightedDistribution::<G>::new();
         let elements = (0..Self::K * n).map(|_| dst.sample(generator)).collect();
         let map = DenseMatrix::new(Self::K, n, elements);

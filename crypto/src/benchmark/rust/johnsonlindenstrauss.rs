@@ -17,21 +17,26 @@
 
 use blacknet_crypto::johnsonlindenstrauss::JohnsonLindenstrauss;
 use blacknet_crypto::matrix::DenseVector;
-use blacknet_crypto::norm::EuclideanNorm;
+use criterion::{Criterion, criterion_group, criterion_main};
+use std::hint::black_box;
 
-type Z = blacknet_crypto::pervushin::PervushinField;
-type DRG = blacknet_crypto::poseidon2pervushin::DuplexPoseidon2Pervushin;
+type Z = blacknet_crypto::lm::LMField;
+type DRG = blacknet_crypto::poseidon2lm::DuplexPoseidon2LM;
 
-#[test]
-fn test() {
-    let slack_min = 5.0;
-    let slack_max = 19.0;
-    let high: DenseVector<Z> = [100, 200, 300, 400, 500, 600, 700, 800].map(Z::from).into();
+const N: usize = 1024;
 
-    let mut drg = DRG::default();
-    let jl = JohnsonLindenstrauss::<Z>::random(&mut drg, high.dimension());
-    let low = jl.project(&high);
+fn criterion_benchmark(crit: &mut Criterion) {
+    let mut drg = black_box(DRG::default());
+    let jl = black_box(JohnsonLindenstrauss::<Z>::random(&mut drg, N));
+    let v: DenseVector<Z> = black_box((0..N).map(|i| Z::from(i as i32)).collect());
 
-    assert!(low.euclidean_norm() > high.euclidean_norm() * slack_min);
-    assert!(low.euclidean_norm() < high.euclidean_norm() * slack_max);
+    crit.bench_function("JohnsonLindenstrauss sample", |bench| {
+        bench.iter(|| JohnsonLindenstrauss::<Z>::random(&mut drg, N))
+    });
+    crit.bench_function("JohnsonLindenstrauss project", |bench| {
+        bench.iter(|| jl.project(&v))
+    });
 }
+
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);

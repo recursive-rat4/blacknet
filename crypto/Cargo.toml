@@ -209,6 +209,11 @@ path = "src/benchmark/rust/field25519.rs"
 harness = false
 
 [[bench]]
+name = "johnsonlindenstrauss"
+path = "src/benchmark/rust/johnsonlindenstrauss.rs"
+harness = false
+
+[[bench]]
 name = "poseidon2"
 path = "src/benchmark/rust/poseidon2.rs"
 harness = false
