@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Presemiring, Ring, Semiring, Square};
+use crate::algebra::{Double, Presemiring, Ring, Semiring, Square, Tensor};
 use crate::matrix::DenseVector;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -486,5 +486,57 @@ impl<R: Presemiring> Square for &DenseMatrix<R> {
     #[inline]
     fn square(self) -> Self::Output {
         self * self
+    }
+}
+
+impl<R: Presemiring> Tensor for DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
+
+    #[inline]
+    fn tensor(self, rps: Self) -> Self::Output {
+        (&self).tensor(&rps)
+    }
+}
+
+impl<R: Presemiring> Tensor<&Self> for DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
+
+    #[inline]
+    fn tensor(self, rps: &Self) -> Self::Output {
+        (&self).tensor(rps)
+    }
+}
+
+impl<R: Presemiring> Tensor<DenseMatrix<R>> for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
+
+    #[inline]
+    fn tensor(self, rps: DenseMatrix<R>) -> Self::Output {
+        self.tensor(&rps)
+    }
+}
+
+impl<R: Presemiring> Tensor for &DenseMatrix<R> {
+    type Output = DenseMatrix<R>;
+
+    fn tensor(self, rps: Self) -> Self::Output {
+        // Kronecker product
+        let rows = self.rows * rps.rows;
+        let columns = self.columns * rps.columns;
+        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        for i in 0..self.rows {
+            for j in 0..rps.rows {
+                for k in 0..self.columns {
+                    for l in 0..rps.columns {
+                        elements.push(self[(i, k)] * rps[(j, l)])
+                    }
+                }
+            }
+        }
+        Self::Output {
+            rows,
+            columns,
+            elements,
+        }
     }
 }

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Double, Square};
+use blacknet_crypto::algebra::{Double, Square, Tensor};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
 
@@ -121,6 +121,33 @@ fn vector() {
     ].map(R::from));
     assert_eq!(&a * &b, c);
     assert_eq!(&c * &a, d);
+}
+
+#[test]
+#[rustfmt::skip]
+fn tensor() {
+    let a = DenseMatrix::<R>::new(2, 2, [
+        1, 2,
+        3, 4,
+    ].map(R::from).into());
+    let b = DenseMatrix::<R>::new(2, 2, [
+        5, 6,
+        8, 9,
+    ].map(R::from).into());
+    let c = DenseMatrix::<R>::new(4, 4, [
+         5,  6, 10, 12,
+         8,  9, 16, 18,
+        15, 18, 20, 24,
+        24, 27, 32, 36,
+    ].map(R::from).into());
+    let d = DenseMatrix::<R>::new(4, 4, [
+         5, 10,  6, 12,
+        15, 20, 18, 24,
+         8, 16,  9, 18,
+        24, 32, 27, 36,
+    ].map(R::from).into());
+    assert_eq!((&a).tensor(&b), c);
+    assert_eq!(b.tensor(a), d);
 }
 
 #[test]

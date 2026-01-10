@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Ring;
-use crate::algebra::{Double, Square};
-use crate::algebra::{Presemiring, Semiring};
+use crate::algebra::{Double, Presemiring, Ring, Semiring, Square, Tensor};
 use crate::matrix::DenseMatrix;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
@@ -87,19 +85,6 @@ impl<R: Presemiring> DenseVector<R> {
     pub fn dot(&self, rps: &Self) -> R {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).map(|(&l, &r)| l * r).sum()
-    }
-
-    /// Compute the tensor product.
-    pub fn tensor(&self, rps: &Self) -> DenseMatrix<R> {
-        let rows = self.elements.len();
-        let columns = rps.elements.len();
-        let mut elements = Vec::<R>::with_capacity(rows * columns);
-        for i in 0..rows {
-            for j in 0..columns {
-                elements.push(self.elements[i] * rps.elements[j])
-            }
-        }
-        DenseMatrix::new(rows, columns, elements)
     }
 }
 
@@ -456,5 +441,48 @@ impl<R: Presemiring> Square for &DenseVector<R> {
 
     fn square(self) -> Self::Output {
         self.into_iter().copied().map(Square::square).collect()
+    }
+}
+
+impl<R: Presemiring> Tensor for DenseVector<R> {
+    type Output = DenseMatrix<R>;
+
+    #[inline]
+    fn tensor(self, rps: Self) -> Self::Output {
+        (&self).tensor(&rps)
+    }
+}
+
+impl<R: Presemiring> Tensor<&Self> for DenseVector<R> {
+    type Output = DenseMatrix<R>;
+
+    #[inline]
+    fn tensor(self, rps: &Self) -> Self::Output {
+        (&self).tensor(rps)
+    }
+}
+
+impl<R: Presemiring> Tensor<DenseVector<R>> for &DenseVector<R> {
+    type Output = DenseMatrix<R>;
+
+    #[inline]
+    fn tensor(self, rps: DenseVector<R>) -> Self::Output {
+        self.tensor(&rps)
+    }
+}
+
+impl<R: Presemiring> Tensor for &DenseVector<R> {
+    type Output = DenseMatrix<R>;
+
+    fn tensor(self, rps: Self) -> Self::Output {
+        let rows = self.elements.len();
+        let columns = rps.elements.len();
+        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        for i in 0..rows {
+            for j in 0..columns {
+                elements.push(self.elements[i] * rps.elements[j])
+            }
+        }
+        DenseMatrix::new(rows, columns, elements)
     }
 }

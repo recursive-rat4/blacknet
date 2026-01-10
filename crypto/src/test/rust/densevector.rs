@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::Tensor;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
 
@@ -106,8 +107,8 @@ fn tensor() {
         0, 3, 6,
         0, 4, 8,
     ].map(R::from).into());
-    assert_eq!(a.tensor(&b), c);
-    assert_eq!(b.tensor(&a), d);
+    assert_eq!((&a).tensor(&b), c);
+    assert_eq!(b.tensor(a), d);
 }
 
 #[test]
