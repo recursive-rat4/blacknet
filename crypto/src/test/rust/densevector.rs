@@ -88,7 +88,7 @@ fn dot() {
 
 #[test]
 #[rustfmt::skip]
-fn tensor() {
+fn module_tensor() {
     let a = DenseVector::<R>::from([
         0,
         1,
@@ -109,6 +109,16 @@ fn tensor() {
     ].map(R::from).into());
     assert_eq!((&a).tensor(&b), c);
     assert_eq!(b.tensor(a), d);
+}
+
+#[test]
+fn kronecker_product() {
+    let a = DenseVector::<R>::from([0, 1, 2].map(R::from));
+    let b = DenseVector::<R>::from([3, 4].map(R::from));
+    let c = DenseVector::<R>::from([0, 0, 3, 4, 6, 8].map(R::from));
+    let d = DenseVector::<R>::from([0, 3, 6, 0, 4, 8].map(R::from));
+    assert_eq!((&a).tensor(&b).vectorize(), c);
+    assert_eq!(b.tensor(a).vectorize(), d);
 }
 
 #[test]

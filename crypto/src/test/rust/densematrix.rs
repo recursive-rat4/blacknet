@@ -100,7 +100,7 @@ fn sqr() {
 
 #[test]
 #[rustfmt::skip]
-fn vector() {
+fn vector_product() {
     let a = DenseMatrix::<R>::new(3, 2, [
         17, 18,
         33, 34,
@@ -152,6 +152,56 @@ fn tensor() {
 
 #[test]
 #[rustfmt::skip]
+fn row_tensor() {
+    let a = DenseMatrix::<R>::new(2, 2, [
+        1, 2,
+        4, 5,
+    ].map(R::from).into());
+    let b = DenseMatrix::<R>::new(2, 2, [
+        1, 7,
+        3, 8,
+    ].map(R::from).into());
+    let c = DenseMatrix::<R>::new(2, 4, [
+         1,  7,  2, 14,
+        12, 32, 15, 40,
+    ].map(R::from).into());
+    let d = DenseMatrix::<R>::new(2, 4, [
+         1,  2,  7, 14,
+        12, 15, 32, 40,
+    ].map(R::from).into());
+    assert_eq!(a.row_tensor(&b), c);
+    assert_eq!(b.row_tensor(&a), d);
+}
+
+#[test]
+#[rustfmt::skip]
+fn column_tensor() {
+    let a = DenseMatrix::<R>::new(2, 2, [
+        1, 2,
+        4, 5,
+    ].map(R::from).into());
+    let b = DenseMatrix::<R>::new(2, 2, [
+        1, 7,
+        3, 8,
+    ].map(R::from).into());
+    let c = DenseMatrix::<R>::new(4, 2, [
+         1, 14,
+         3, 16,
+         4, 35,
+        12, 40,
+    ].map(R::from).into());
+    let d = DenseMatrix::<R>::new(4, 2, [
+         1, 14,
+         4, 35,
+         3, 16,
+        12, 40,
+    ].map(R::from).into());
+    assert_eq!(a.column_tensor(&b), c);
+    assert_eq!(b.column_tensor(&a), d);
+}
+
+#[test]
+#[rustfmt::skip]
 fn cat() {
     let a = DenseMatrix::<R>::new(3, 2, [
         1, 3,
@@ -169,6 +219,19 @@ fn cat() {
         1, 2, 2, 1,
     ].map(R::from).into());
     assert_eq!(a.cat(&b), c);
+}
+
+#[test]
+#[rustfmt::skip]
+fn vectorize() {
+    let a = DenseMatrix::<R>::new(2, 2, [
+        1, 2,
+        3, 4,
+    ].map(R::from).into());
+    let b = DenseVector::<R>::from([
+        1, 2, 3, 4,
+    ].map(R::from));
+    assert_eq!(a.vectorize(), b);
 }
 
 #[test]

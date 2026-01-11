@@ -115,6 +115,52 @@ impl<R: Presemiring> DenseMatrix<R> {
         }
     }
 
+    /// Convert a `m ⨉ n` matrix into a `1 ⨉ mn` row vector.
+    #[inline]
+    pub fn vectorize(self) -> DenseVector<R> {
+        self.elements.into()
+    }
+
+    /// The face-splitting product
+    pub fn row_tensor(&self, rps: &Self) -> Self {
+        debug_assert!(self.rows == rps.rows);
+        let rows = self.rows;
+        let columns = self.columns * rps.columns;
+        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        for i in 0..rows {
+            for j in 0..self.columns {
+                for k in 0..rps.columns {
+                    elements.push(self[(i, j)] * rps[(i, k)])
+                }
+            }
+        }
+        Self {
+            rows,
+            columns,
+            elements,
+        }
+    }
+
+    /// The Khatri–Rao product
+    pub fn column_tensor(&self, rps: &Self) -> Self {
+        debug_assert!(self.columns == rps.columns);
+        let rows = self.rows * rps.rows;
+        let columns = self.columns;
+        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        for i in 0..self.rows {
+            for j in 0..rps.rows {
+                for k in 0..columns {
+                    elements.push(self[(i, k)] * rps[(j, k)])
+                }
+            }
+        }
+        Self {
+            rows,
+            columns,
+            elements,
+        }
+    }
+
     pub fn trace(&self) -> R {
         debug_assert!(self.rows == self.columns);
         let mut sigma = R::ZERO;

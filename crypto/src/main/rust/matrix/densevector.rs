@@ -29,6 +29,8 @@ use serde::{Deserialize, Serialize};
 
 /// A row (column) vector is a `1 ⨉ n` (`m ⨉ 1`) matrix.
 ///
+/// Multiplication is defined as the Hadamard product.
+///
 /// # Panics
 ///
 /// In debug builds, panic on incompatible dimensions.
@@ -475,6 +477,7 @@ impl<R: Presemiring> Tensor for &DenseVector<R> {
     type Output = DenseMatrix<R>;
 
     fn tensor(self, rps: Self) -> Self::Output {
+        // Module tensor
         let rows = self.elements.len();
         let columns = rps.elements.len();
         let mut elements = Vec::<R>::with_capacity(rows * columns);
