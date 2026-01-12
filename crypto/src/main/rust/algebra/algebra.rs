@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Module;
-use crate::algebra::{CommutativeRing, DivisionRing, Ring, UnitalRing};
+use crate::algebra::{CommutativeRing, DivisionRing, Module, Ring, UnitalRing};
+use alloc::vec::Vec;
 
 /// Associative algebra over a ring.
 #[rustfmt::skip]
@@ -60,4 +60,22 @@ pub trait DivisionAlgebra<R: DivisionRing>
     : Algebra<R>
     + DivisionRing
 {
+}
+
+/// A sequence of powers `[1, b, b², ..., bⁿ⁻¹]` mapped into the center of algebra.
+///
+/// # Safety
+///
+/// Require `n >= 2`.
+pub fn powers<R: CommutativeRing, A: UnitalAlgebra<R>>(base: R, n: usize) -> Vec<A> {
+    debug_assert!(n >= 2);
+    let mut powers = Vec::<A>::with_capacity(n);
+    powers.push(A::ONE);
+    powers.push(base.into());
+    let mut power = base;
+    for _ in 2..n {
+        power *= base;
+        powers.push(power.into());
+    }
+    powers
 }

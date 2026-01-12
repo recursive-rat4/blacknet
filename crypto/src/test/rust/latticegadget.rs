@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,7 +26,7 @@ type R = blacknet_crypto::pervushin::PervushinField2;
 fn matrix() {
     let a = DenseVector::from([3, 2, 1, 0].map(Z::from).map(R::from));
     let b = DenseVector::from([4295098371].map(Z::new).map(R::from));
-    let g = latticegadget::matrix(R::from(Z::from(65536)), 1, 4);
+    let g = latticegadget::matrix(Z::from(65536), 1, 4);
     assert_eq!(&g * &a, b);
     let c = latticegadget::decompose_vector(&b, 65535, 16, 4);
     assert_eq!(c, a);
