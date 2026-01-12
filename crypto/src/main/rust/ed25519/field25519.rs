@@ -22,9 +22,10 @@ use crate::algebra::{
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
-use core::fmt::{Debug, Formatter, Result};
+use core::fmt;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// The prime field `2²⁵⁵ - 19`.
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
@@ -187,8 +188,8 @@ impl From<u32> for Field25519 {
     }
 }
 
-impl Debug for Field25519 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Debug for Field25519 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.canonical())
     }
 }
@@ -468,4 +469,19 @@ impl IntegerRing for Field25519 {
     const BITS: u32 = 255;
     const MODULUS: UInt256 =
         UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED");
+}
+
+impl Serialize for Field25519 {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let bytes: [u8; 32] = self.canonical().to_le_bytes();
+        bytes.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Field25519 {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let bytes = <[u8; 32]>::deserialize(deserializer)?;
+        let n = UInt256::from_le_bytes(bytes);
+        Ok(Self::new(n))
+    }
 }
