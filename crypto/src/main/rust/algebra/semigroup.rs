@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -35,7 +35,6 @@ pub trait RightZero {
 #[rustfmt::skip]
 pub trait AdditiveSemigroup
     : AdditiveMagma
-    + Clone
 {
 }
 
@@ -85,7 +84,6 @@ pub trait RightOne {
 #[rustfmt::skip]
 pub trait MultiplicativeSemigroup
     : MultiplicativeMagma
-    + Clone
 {
 }
 
