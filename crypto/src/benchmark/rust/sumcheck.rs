@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,11 +16,11 @@
  */
 
 use blacknet_crypto::algebra::{AdditiveMonoid, Double, IntegerRing, MultiplicativeMonoid};
-use blacknet_crypto::distribution::{Distribution, UniformDistribution};
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::polynomial::{BinarityPolynomial, EqExtension, MultilinearExtension};
 use blacknet_crypto::poseidon2lm::DuplexPoseidon2LM;
+use blacknet_crypto::random::{Distribution, UniformDistribution};
 use blacknet_crypto::sumcheck::SumCheck;
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
