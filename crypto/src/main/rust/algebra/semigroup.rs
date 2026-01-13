@@ -16,20 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, MultiplicativeCommutativeMagma, MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    MultiplicativeMagma,
 };
-
-/// One-sided identity.
-pub trait LeftZero {
-    /// The left additive identity.
-    const LEFT_ZERO: Self;
-}
-
-/// One-sided identity.
-pub trait RightZero {
-    /// The right additive identity.
-    const RIGHT_ZERO: Self;
-}
 
 /// A magma with associative addition.
 #[rustfmt::skip]
@@ -67,18 +56,6 @@ pub trait AdditiveCommutativeSemigroup
 }
 
 impl<G: AdditiveSemigroup + AdditiveCommutativeMagma> AdditiveCommutativeSemigroup for G {}
-
-/// One-sided identity.
-pub trait LeftOne {
-    /// The left multiplicative identity.
-    const LEFT_ONE: Self;
-}
-
-/// One-sided identity.
-pub trait RightOne {
-    /// The right multiplicative identity.
-    const RIGHT_ONE: Self;
-}
 
 /// A magma with associative multiplication.
 #[rustfmt::skip]

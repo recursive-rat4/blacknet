@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,6 +17,18 @@
 
 use crate::algebra::{Double, Set, Square};
 use core::ops::{Add, AddAssign, Mul, MulAssign};
+
+/// One-sided identity.
+pub trait LeftZero {
+    /// The left additive identity.
+    const LEFT_ZERO: Self;
+}
+
+/// One-sided identity.
+pub trait RightZero {
+    /// The right additive identity.
+    const RIGHT_ZERO: Self;
+}
 
 /// A set that is closed under addition.
 #[rustfmt::skip]
@@ -44,6 +56,18 @@ impl<T
 
 /// A marker for magmata with commutative addition.
 pub trait AdditiveCommutativeMagma: AdditiveMagma {}
+
+/// One-sided identity.
+pub trait LeftOne {
+    /// The left multiplicative identity.
+    const LEFT_ONE: Self;
+}
+
+/// One-sided identity.
+pub trait RightOne {
+    /// The right multiplicative identity.
+    const RIGHT_ONE: Self;
+}
 
 /// A set that is closed under multiplication.
 #[rustfmt::skip]
