@@ -23,7 +23,7 @@ use core::array;
 use core::marker::PhantomData;
 
 /// The phase of sponge state
-#[derive(Clone, Copy, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum Phase {
     /// Absorbing into sponge
     #[default]
