@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,7 +16,7 @@
  */
 
 use blacknet_compat::assert_ok;
-use blacknet_crypto::algebra::MultiplicativeMonoid;
+use blacknet_crypto::algebra::One;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::duplex::DuplexImpl as Assigner;
 use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;

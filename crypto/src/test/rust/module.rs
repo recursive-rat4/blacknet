@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{FreeModule, MultiplicativeMonoid};
+use blacknet_crypto::algebra::{FreeModule, One};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 type M = FreeModule<R, 2>;

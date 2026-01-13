@@ -18,8 +18,8 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
     DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
-    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing,
-    PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, square_and_multiply,
+    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing, One,
+    PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::integer::Integer;
@@ -305,6 +305,10 @@ impl RightZero for LMField {
     const RIGHT_ZERO: Self = Self { n: 0 };
 }
 
+impl Zero for LMField {
+    const ZERO: Self = Self { n: 0 };
+}
+
 impl LeftOne for LMField {
     const LEFT_ONE: Self = Self { n: 1 };
 }
@@ -313,23 +317,23 @@ impl RightOne for LMField {
     const RIGHT_ONE: Self = Self { n: 1 };
 }
 
+impl One for LMField {
+    const ONE: Self = Self { n: 1 };
+}
+
 impl Set for LMField {}
 
 impl AdditiveCommutativeMagma for LMField {}
 
 impl AdditiveSemigroup for LMField {}
 
-impl AdditiveMonoid for LMField {
-    const ZERO: Self = Self { n: 0 };
-}
+impl AdditiveMonoid for LMField {}
 
 impl MultiplicativeCommutativeMagma for LMField {}
 
 impl MultiplicativeSemigroup for LMField {}
 
-impl MultiplicativeMonoid for LMField {
-    const ONE: Self = Self { n: 1 };
-}
+impl MultiplicativeMonoid for LMField {}
 
 impl DivisionRing for LMField {}
 

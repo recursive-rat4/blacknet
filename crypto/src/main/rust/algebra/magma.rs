@@ -30,6 +30,12 @@ pub trait RightZero {
     const RIGHT_ZERO: Self;
 }
 
+/// Two-sided identity.
+pub trait Zero: LeftZero + RightZero {
+    /// The additive identity.
+    const ZERO: Self;
+}
+
 /// A set that is closed under addition.
 #[rustfmt::skip]
 pub trait AdditiveMagma
@@ -67,6 +73,12 @@ pub trait LeftOne {
 pub trait RightOne {
     /// The right multiplicative identity.
     const RIGHT_ONE: Self;
+}
+
+/// Two-sided identity.
+pub trait One: LeftOne + RightOne {
+    /// The multiplicative identity.
+    const ONE: Self;
 }
 
 /// A set that is closed under multiplication.

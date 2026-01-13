@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, MultiplicativeMonoid};
+use crate::algebra::{IntegerRing, One};
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
 

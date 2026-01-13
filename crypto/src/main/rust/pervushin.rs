@@ -18,8 +18,8 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
     DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
-    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, PolynomialRing,
-    RightOne, RightZero, Set, Square, UnivariateRing, square_and_multiply,
+    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
+    PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::Negacyclic;
 use crate::integer::Integer;
@@ -304,6 +304,10 @@ impl RightZero for PervushinField {
     const RIGHT_ZERO: Self = Self { n: 0 };
 }
 
+impl Zero for PervushinField {
+    const ZERO: Self = Self { n: 0 };
+}
+
 impl LeftOne for PervushinField {
     const LEFT_ONE: Self = Self { n: 1 };
 }
@@ -312,23 +316,23 @@ impl RightOne for PervushinField {
     const RIGHT_ONE: Self = Self { n: 1 };
 }
 
+impl One for PervushinField {
+    const ONE: Self = Self { n: 1 };
+}
+
 impl Set for PervushinField {}
 
 impl AdditiveCommutativeMagma for PervushinField {}
 
 impl AdditiveSemigroup for PervushinField {}
 
-impl AdditiveMonoid for PervushinField {
-    const ZERO: Self = Self { n: 0 };
-}
+impl AdditiveMonoid for PervushinField {}
 
 impl MultiplicativeCommutativeMagma for PervushinField {}
 
 impl MultiplicativeSemigroup for PervushinField {}
 
-impl MultiplicativeMonoid for PervushinField {
-    const ONE: Self = Self { n: 1 };
-}
+impl MultiplicativeMonoid for PervushinField {}
 
 impl DivisionRing for PervushinField {}
 

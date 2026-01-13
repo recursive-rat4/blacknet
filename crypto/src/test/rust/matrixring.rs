@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{FreeModule, MatrixRing, MultiplicativeMonoid};
+use blacknet_crypto::algebra::{FreeModule, MatrixRing, One};
 use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::pervushin::PervushinField;

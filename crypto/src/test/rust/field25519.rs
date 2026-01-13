@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{AdditiveMonoid, IntegerRing, Inv, MultiplicativeMonoid, Square};
+use blacknet_crypto::algebra::{IntegerRing, Inv, One, Square, Zero};
 use blacknet_crypto::bigint::UInt256;
 
 type F = blacknet_crypto::ed25519::Field25519;

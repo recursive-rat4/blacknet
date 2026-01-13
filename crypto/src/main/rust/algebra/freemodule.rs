@@ -17,7 +17,7 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, LeftZero, RightZero, Ring,
-    Semimodule, Set,
+    Semimodule, Set, Zero,
 };
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use core::array;
@@ -272,17 +272,19 @@ impl<R: Ring, const N: usize> RightZero for FreeModule<R, N> {
     };
 }
 
+impl<R: Ring, const N: usize> Zero for FreeModule<R, N> {
+    const ZERO: Self = Self {
+        components: [R::ZERO; N],
+    };
+}
+
 impl<R: Ring, const N: usize> Set for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {}
 
-impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {
-    const ZERO: Self = Self {
-        components: [R::ZERO; N],
-    };
-}
+impl<R: Ring, const N: usize> AdditiveMonoid for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> Semimodule<R> for FreeModule<R, N> {}
 

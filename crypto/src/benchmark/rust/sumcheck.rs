@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{AdditiveMonoid, Double, IntegerRing, MultiplicativeMonoid};
+use blacknet_crypto::algebra::{Double, IntegerRing, One, Zero};
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::polynomial::{BinarityPolynomial, EqExtension, MultilinearExtension};

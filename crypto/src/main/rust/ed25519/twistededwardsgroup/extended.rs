@@ -17,7 +17,7 @@
 
 use crate::algebra::{
     AdditiveAbelianGroup, AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, Inv,
-    LeftZero, MultiplicativeMonoid, RightZero, Set, Square,
+    LeftZero, One, RightZero, Set, Square, Zero,
 };
 use crate::ed25519::TwistedEdwardsGroupParams;
 use core::fmt::{Debug, Formatter, Result};
@@ -280,13 +280,7 @@ impl<P: TwistedEdwardsGroupParams> RightZero for TwistedEdwardsGroupExtended<P> 
     };
 }
 
-impl<P: TwistedEdwardsGroupParams> Set for TwistedEdwardsGroupExtended<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupExtended<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupExtended<P> {
+impl<P: TwistedEdwardsGroupParams> Zero for TwistedEdwardsGroupExtended<P> {
     const ZERO: Self = Self {
         x: P::F::ZERO,
         y: P::F::ONE,
@@ -294,3 +288,11 @@ impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupExtende
         t: P::F::ZERO,
     };
 }
+
+impl<P: TwistedEdwardsGroupParams> Set for TwistedEdwardsGroupExtended<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupExtended<P> {}
+
+impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupExtended<P> {}

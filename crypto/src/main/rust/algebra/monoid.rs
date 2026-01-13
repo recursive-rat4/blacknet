@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeSemigroup, AdditiveSemigroup, LeftOne, LeftZero,
-    MultiplicativeCommutativeSemigroup, MultiplicativeSemigroup, RightOne, RightZero,
+    AdditiveCommutativeSemigroup, AdditiveSemigroup, MultiplicativeCommutativeSemigroup,
+    MultiplicativeSemigroup, One, Zero,
 };
 use core::iter::{Product, Sum};
 
@@ -25,15 +25,12 @@ use core::iter::{Product, Sum};
 #[rustfmt::skip]
 pub trait AdditiveMonoid
     : AdditiveSemigroup
-    + LeftZero
-    + RightZero
+    + Zero
     + Default
     + Sum
     + for<'a> Sum<&'a Self>
     + Clone
 {
-    /// The additive identity.
-    const ZERO: Self;
 }
 
 /// A marker for monoids with commutative addition.
@@ -50,15 +47,12 @@ impl<G: AdditiveMonoid + AdditiveCommutativeSemigroup> AdditiveCommutativeMonoid
 #[rustfmt::skip]
 pub trait MultiplicativeMonoid
     : MultiplicativeSemigroup
-    + LeftOne
-    + RightOne
+    + One
     + Default
     + Product
     + for<'a> Product<&'a Self>
     + Clone
 {
-    /// The multiplicative identity.
-    const ONE: Self;
 }
 
 /// A marker for monoids with commutative multiplication.

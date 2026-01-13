@@ -17,8 +17,8 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double, FreeModule,
-    LeftOne, LeftZero, MultiplicativeMonoid, MultiplicativeSemigroup, RightOne, RightZero, Ring,
-    Semimodule, Set, Square, UnitalAlgebra, UnitalRing,
+    LeftOne, LeftZero, MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero,
+    Ring, Semimodule, Set, Square, UnitalAlgebra, UnitalRing, Zero,
 };
 use core::array;
 use core::iter::{Product, Sum};
@@ -383,6 +383,10 @@ impl<R: Ring, const N: usize, const NN: usize> RightZero for MatrixRing<R, N, NN
     const RIGHT_ZERO: Self = Self::const_from(R::RIGHT_ZERO);
 }
 
+impl<R: Ring, const N: usize, const NN: usize> Zero for MatrixRing<R, N, NN> {
+    const ZERO: Self = Self::const_from(R::ZERO);
+}
+
 impl<R: UnitalRing, const N: usize, const NN: usize> LeftOne for MatrixRing<R, N, NN> {
     const LEFT_ONE: Self = Self::const_from(R::LEFT_ONE);
 }
@@ -391,21 +395,21 @@ impl<R: UnitalRing, const N: usize, const NN: usize> RightOne for MatrixRing<R, 
     const RIGHT_ONE: Self = Self::const_from(R::RIGHT_ONE);
 }
 
+impl<R: UnitalRing, const N: usize, const NN: usize> One for MatrixRing<R, N, NN> {
+    const ONE: Self = Self::const_from(R::ONE);
+}
+
 impl<R: Ring, const N: usize, const NN: usize> Set for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveCommutativeMagma for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveSemigroup for MatrixRing<R, N, NN> {}
 
-impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {
-    const ZERO: Self = Self::const_from(R::ZERO);
-}
+impl<R: Ring, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for MatrixRing<R, N, NN> {}
 
-impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRing<R, N, NN> {
-    const ONE: Self = Self::const_from(R::ONE);
-}
+impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRing<R, N, NN> {}
 
 impl<R: Ring, const N: usize, const NN: usize> Semimodule<R> for MatrixRing<R, N, NN> {}
 

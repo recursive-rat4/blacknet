@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRing, Double, IntegerRing,
     Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, RightOne, RightZero, Set, Square, square_and_multiply,
+    MultiplicativeSemigroup, One, RightOne, RightZero, Set, Square, Zero, square_and_multiply,
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
@@ -406,6 +406,10 @@ impl RightZero for Field25519 {
     const RIGHT_ZERO: Self = Self { n: UInt256::ZERO };
 }
 
+impl Zero for Field25519 {
+    const ZERO: Self = Self { n: UInt256::ZERO };
+}
+
 impl LeftOne for Field25519 {
     const LEFT_ONE: Self = Self {
         n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
@@ -418,25 +422,25 @@ impl RightOne for Field25519 {
     };
 }
 
+impl One for Field25519 {
+    const ONE: Self = Self {
+        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
+    };
+}
+
 impl Set for Field25519 {}
 
 impl AdditiveCommutativeMagma for Field25519 {}
 
 impl AdditiveSemigroup for Field25519 {}
 
-impl AdditiveMonoid for Field25519 {
-    const ZERO: Self = Self { n: UInt256::ZERO };
-}
+impl AdditiveMonoid for Field25519 {}
 
 impl MultiplicativeCommutativeMagma for Field25519 {}
 
 impl MultiplicativeSemigroup for Field25519 {}
 
-impl MultiplicativeMonoid for Field25519 {
-    const ONE: Self = Self {
-        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
-    };
-}
+impl MultiplicativeMonoid for Field25519 {}
 
 impl DivisionRing for Field25519 {}
 
