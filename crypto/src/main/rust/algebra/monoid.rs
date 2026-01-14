@@ -26,10 +26,8 @@ use core::iter::{Product, Sum};
 pub trait AdditiveMonoid
     : AdditiveSemigroup
     + Zero
-    + Default
     + Sum
     + for<'a> Sum<&'a Self>
-    + Clone
 {
 }
 
@@ -48,10 +46,8 @@ impl<G: AdditiveMonoid + AdditiveCommutativeSemigroup> AdditiveCommutativeMonoid
 pub trait MultiplicativeMonoid
     : MultiplicativeSemigroup
     + One
-    + Default
     + Product
     + for<'a> Product<&'a Self>
-    + Clone
 {
 }
 

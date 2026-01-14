@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -27,6 +27,8 @@ pub trait AdditiveGroup
     + SubAssign
     + for<'a> Sub<&'a Self, Output = Self>
     + for<'a> SubAssign<&'a Self>
+    + Clone
+    + Default
 {
 }
 
@@ -38,6 +40,8 @@ impl<T
     + SubAssign
     + for<'a> Sub<&'a Self, Output = Self>
     + for<'a> SubAssign<&'a Self>
+    + Clone
+    + Default
 > AdditiveGroup for T {}
 
 #[rustfmt::skip]
@@ -48,6 +52,8 @@ pub trait MultiplicativeGroup
     + DivAssign
     + for<'a> Div<&'a Self, Output = Self>
     + for<'a> DivAssign<&'a Self>
+    + Clone
+    + Default
 {
 }
 
@@ -59,4 +65,6 @@ impl<T
     + DivAssign
     + for<'a> Div<&'a Self, Output = Self>
     + for<'a> DivAssign<&'a Self>
+    + Clone
+    + Default
 > MultiplicativeGroup for T {}
