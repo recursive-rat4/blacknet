@@ -17,9 +17,10 @@
 
 use crate::algebra::{
     AdditiveAbelianGroup, AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double,
-    LeftZero, One, RightZero, Set, Square, Zero,
+    IntegerRing, LeftZero, One, RightZero, Set, Sqrt, Square, Zero,
 };
 use crate::ed25519::TwistedEdwardsGroupParams;
+use crate::ed25519::field25519::Field25519;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -33,6 +34,21 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
     pub const fn new(x: P::F, y: P::F) -> Self {
         Self { x, y }
     }
+
+    pub fn try_from_y(x_is_odd: bool, y: P::F) -> Option<Self>
+    where
+        P: TwistedEdwardsGroupParams<F = Field25519>,
+    {
+        let yy = y.square();
+        let xx = ((yy - P::F::ONE) / (P::D * yy + P::F::ONE)).expect("−d is not a square");
+        let x = xx.sqrt()?;
+        let n_is_odd = x.canonical().is_odd();
+        if x_is_odd == n_is_odd {
+            Some(Self { x, y })
+        } else {
+            Some(Self { x: -x, y })
+        }
+    }
 }
 
 impl<P: TwistedEdwardsGroupParams<F: Clone>> Clone for TwistedEdwardsGroupAffine<P> {
@@ -43,6 +59,12 @@ impl<P: TwistedEdwardsGroupParams<F: Clone>> Clone for TwistedEdwardsGroupAffine
 
 impl<P: TwistedEdwardsGroupParams<F: Copy>> Copy for TwistedEdwardsGroupAffine<P> {}
 
+impl<P: TwistedEdwardsGroupParams> From<TwistedEdwardsGroupAffine<P>> for (P::F, P::F) {
+    fn from(point: TwistedEdwardsGroupAffine<P>) -> Self {
+        (point.x, point.y)
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupAffine<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "({:?}, {:?})", self.x, self.y)
@@ -50,6 +72,7 @@ impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupAffine
 }
 
 impl<P: TwistedEdwardsGroupParams> Default for TwistedEdwardsGroupAffine<P> {
+    #[inline]
     fn default() -> Self {
         Self::ZERO
     }

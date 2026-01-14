@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -147,6 +147,10 @@ impl<const N: usize> BigInt<N> {
 
     pub const fn is_even(self) -> bool {
         self.limbs[0] & 1 == 0
+    }
+
+    pub const fn is_odd(self) -> bool {
+        self.limbs[0] & 1 == 1
     }
 
     pub const fn limbs(self) -> [u64; N] {

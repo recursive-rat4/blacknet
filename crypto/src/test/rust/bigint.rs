@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,15 +19,19 @@ use blacknet_crypto::bigint::{UInt256, UInt512};
 use core::cmp::Ordering;
 
 #[test]
-fn even() {
+fn parity() {
     let a = UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000000");
     let b = UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000001");
     let c = UInt256::from_hex("8000000000000000000000000000000000000000000000000000000000000000");
     let d = UInt256::from_hex("8000000000000000000000000000000000000000000000000000000000000001");
     assert!(a.is_even());
+    assert!(!a.is_odd());
     assert!(!b.is_even());
+    assert!(b.is_odd());
     assert!(c.is_even());
+    assert!(!c.is_odd());
     assert!(!d.is_even());
+    assert!(d.is_odd());
 }
 
 #[test]
