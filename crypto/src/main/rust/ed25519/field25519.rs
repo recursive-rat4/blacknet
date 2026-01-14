@@ -18,7 +18,8 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRing, Double, IntegerRing,
     Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, One, RightOne, RightZero, Set, Square, Zero, square_and_multiply,
+    MultiplicativeSemigroup, One, RightOne, RightZero, Set, Sqrt, Square, Zero,
+    square_and_multiply,
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
@@ -43,39 +44,6 @@ impl Field25519 {
     /// `n` requires spare bit and Montgomery form.
     pub const unsafe fn from_unchecked(n: UInt256) -> Self {
         Self { n }
-    }
-
-    /// Square root.
-    pub fn sqrt(self) -> Option<Self> {
-        // Tonelli–Shanks algorithm
-        let ls = self.legendre_symbol();
-        if ls == Self::ONE {
-            let mut m = Self::S;
-            let mut c = Self::Z_IN_Q;
-            let mut t = square_and_multiply(self, Self::Q);
-            let mut r = square_and_multiply(self, Self::Q_PLUS_1_HALVED);
-            loop {
-                if t == Self::ZERO {
-                    return Some(Self::ZERO);
-                } else if t == Self::ONE {
-                    return Some(r);
-                } else {
-                    let mut i = Self::ONE;
-                    while t.power(Self::TWO.power(i)) != Self::ONE {
-                        i += Self::ONE;
-                    }
-                    let b = c.power(Self::TWO.power(m - i - Self::ONE));
-                    m = i;
-                    c = b.square();
-                    t *= c;
-                    r *= b;
-                }
-            }
-        } else if ls == Self::ZERO {
-            Some(Self::ZERO)
-        } else {
-            None
-        }
     }
 
     fn legendre_symbol(self) -> Self {
@@ -369,6 +337,42 @@ impl Div<&Self> for Field25519 {
     #[inline]
     fn div(self, rps: &Self) -> Self::Output {
         self / *rps
+    }
+}
+
+impl Sqrt for Field25519 {
+    type Output = Option<Self>;
+
+    fn sqrt(self) -> Option<Self> {
+        // Tonelli–Shanks algorithm
+        let ls = self.legendre_symbol();
+        if ls == Self::ONE {
+            let mut m = Self::S;
+            let mut c = Self::Z_IN_Q;
+            let mut t = square_and_multiply(self, Self::Q);
+            let mut r = square_and_multiply(self, Self::Q_PLUS_1_HALVED);
+            loop {
+                if t == Self::ZERO {
+                    return Some(Self::ZERO);
+                } else if t == Self::ONE {
+                    return Some(r);
+                } else {
+                    let mut i = Self::ONE;
+                    while t.power(Self::TWO.power(i)) != Self::ONE {
+                        i += Self::ONE;
+                    }
+                    let b = c.power(Self::TWO.power(m - i - Self::ONE));
+                    m = i;
+                    c = b.square();
+                    t *= c;
+                    r *= b;
+                }
+            }
+        } else if ls == Self::ZERO {
+            Some(Self::ZERO)
+        } else {
+            None
+        }
     }
 }
 

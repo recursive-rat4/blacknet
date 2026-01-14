@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{IntegerRing, Inv, One, Square, Zero};
+use blacknet_crypto::algebra::{IntegerRing, Inv, One, Sqrt, Square, Zero};
 use blacknet_crypto::bigint::UInt256;
 
 type F = blacknet_crypto::ed25519::Field25519;

@@ -42,6 +42,15 @@ pub trait Inv {
     fn inv(self) -> Self::Output;
 }
 
+/// The unary square root operator `√`.
+pub trait Sqrt {
+    /// Result type.
+    type Output;
+
+    /// Perform the unary `√` operation.
+    fn sqrt(self) -> Self::Output;
+}
+
 /// The binary product operator `⊗`.
 pub trait Tensor<Rps = Self> {
     /// Result type.
