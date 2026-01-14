@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,5 +22,5 @@ mod projective;
 
 pub use affine::TwistedEdwardsGroupAffine;
 pub use extended::TwistedEdwardsGroupExtended;
-pub use params::TwistedEdwardsGroupParams;
+pub use params::{TwistedEdwardsGroupParams, is_on_curve};
 pub use projective::TwistedEdwardsGroupProjective;

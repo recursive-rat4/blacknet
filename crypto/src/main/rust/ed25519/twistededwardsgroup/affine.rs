@@ -19,8 +19,8 @@ use crate::algebra::{
     AdditiveAbelianGroup, AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double,
     IntegerRing, LeftZero, One, RightZero, Set, Sqrt, Square, Zero,
 };
-use crate::ed25519::TwistedEdwardsGroupParams;
 use crate::ed25519::field25519::Field25519;
+use crate::ed25519::{TwistedEdwardsGroupParams, is_on_curve};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -31,7 +31,20 @@ pub struct TwistedEdwardsGroupAffine<P: TwistedEdwardsGroupParams> {
 }
 
 impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
-    pub const fn new(x: P::F, y: P::F) -> Self {
+    pub fn new(x: P::F, y: P::F) -> Option<Self>
+    where
+        P: TwistedEdwardsGroupParams<F: Eq>,
+    {
+        if is_on_curve::<P>(x, y) {
+            Some(Self { x, y })
+        } else {
+            None
+        }
+    }
+
+    /// # Safety
+    /// Point `(x, y)` is on the curve.
+    pub const unsafe fn from_unchecked(x: P::F, y: P::F) -> Self {
         Self { x, y }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Field;
+use crate::algebra::{Field, One, Square};
 
 pub trait TwistedEdwardsGroupParams {
     type F: Field;
@@ -24,4 +24,14 @@ pub trait TwistedEdwardsGroupParams {
     const D: Self::F;
 
     const A_IS_MINUS_ONE: bool;
+}
+
+pub fn is_on_curve<P: TwistedEdwardsGroupParams<F: Eq>>(x: P::F, y: P::F) -> bool {
+    let xx = x.square();
+    let yy = y.square();
+    if P::A_IS_MINUS_ONE {
+        yy - xx == P::F::ONE + P::D * xx * yy
+    } else {
+        yy + P::A * xx == P::F::ONE + P::D * xx * yy
+    }
 }
