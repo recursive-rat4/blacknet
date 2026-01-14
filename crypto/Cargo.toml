@@ -112,6 +112,10 @@ name = "field25519"
 path = "src/test/rust/field25519.rs"
 
 [[test]]
+name = "freemodule"
+path = "src/test/rust/freemodule.rs"
+
+[[test]]
 name = "hypercube"
 path = "src/test/rust/hypercube.rs"
 
@@ -146,10 +150,6 @@ path = "src/test/rust/matrixring.rs"
 [[test]]
 name = "merkletree"
 path = "src/test/rust/merkletree.rs"
-
-[[test]]
-name = "module"
-path = "src/test/rust/module.rs"
 
 [[test]]
 name = "multilinearextension"

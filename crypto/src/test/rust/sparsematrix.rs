@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,6 +16,7 @@
  */
 
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
+use blacknet_crypto::norm::InfinityNorm;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -77,4 +78,21 @@ fn pad() {
     };
     assert_eq!(a.pad_to_power_of_two(), b);
     assert_eq!(b.clone().pad_to_power_of_two(), b);
+}
+
+#[test]
+fn infinity_norm() {
+    let a = unsafe {
+        SparseMatrix::<R>::new(
+            8,
+            [0, 1, 2, 3, 4].into(),
+            [0, 3, 4, 7].into(),
+            [1, 2, 3, 4].map(R::from).into(),
+        )
+    };
+    let n = 4;
+    let b = 5;
+    assert!(!a.check_infinity_norm(&n));
+    assert!(a.check_infinity_norm(&b));
+    assert_eq!(a.infinity_norm(), n);
 }

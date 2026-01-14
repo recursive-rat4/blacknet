@@ -146,8 +146,9 @@ fn infinity_norm() {
         0, 1,
         2, 3,
     ].map(Z::from));
-    let nb = 3;
-    let ng = 4;
-    assert!(!a.check_infinity_norm(&nb));
-    assert!(a.check_infinity_norm(&ng));
+    let n = 3;
+    let b = 4;
+    assert!(!a.check_infinity_norm(&n));
+    assert!(a.check_infinity_norm(&b));
+    assert_eq!(a.infinity_norm(), n);
 }

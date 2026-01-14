@@ -16,6 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{FreeModule, One};
+use blacknet_crypto::norm::InfinityNorm;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 type M = FreeModule<R, 2>;
@@ -31,4 +32,15 @@ fn right() {
     assert_eq!(x * r + x * s, x * (r + s));
     assert_eq!((x * s) * r, x * (r * s));
     assert_eq!(x, x * R::ONE);
+}
+
+#[test]
+fn infinity_norm() {
+    let a = M::from([-1, 4].map(R::from));
+    let n = 4;
+    let b = 8;
+
+    assert!(!a.check_infinity_norm(&n));
+    assert!(a.check_infinity_norm(&b));
+    assert_eq!(a.infinity_norm(), n);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -72,6 +72,11 @@ impl<R: Presemiring> SparseMatrix<R> {
     /// The number of columns.
     pub const fn columns(&self) -> usize {
         self.columns
+    }
+
+    /// The nonzero entries.
+    pub const fn elements(&self) -> &Vec<R> {
+        &self.elements
     }
 }
 
