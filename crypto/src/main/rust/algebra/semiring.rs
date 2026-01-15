@@ -26,10 +26,11 @@ pub trait Presemiring
     : AdditiveCommutativeMonoid
     + MultiplicativeSemigroup
     + Copy
+    + Default
 {
 }
 
-impl<R: AdditiveCommutativeMonoid + MultiplicativeSemigroup + Copy> Presemiring for R {}
+impl<R: AdditiveCommutativeMonoid + MultiplicativeSemigroup + Copy + Default> Presemiring for R {}
 
 /// A generalization of [unital ring][`crate::algebra::UnitalRing`] that doesn't require subtraction.
 #[rustfmt::skip]

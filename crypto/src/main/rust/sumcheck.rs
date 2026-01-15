@@ -26,7 +26,7 @@ use thiserror::Error;
 
 // https://users.cs.fiu.edu/~giri/teach/5420/f01/LundIPS.pdf
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Proof<R: UnitalRing> {
     claims: Vec<UnivariatePolynomial<R>>,
 }
