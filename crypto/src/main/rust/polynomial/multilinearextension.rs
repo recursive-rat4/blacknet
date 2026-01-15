@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
-use crate::algebra::UnitalRing;
+use crate::algebra::{Double, Set, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::polynomial::{EqExtension, Point, Polynomial};
@@ -304,14 +303,17 @@ impl<R: UnitalRing> MulAssign<R> for MultilinearExtension<R> {
     }
 }
 
-impl<R: UnitalRing + Absorb<R>> Absorb<R> for MultilinearExtension<R> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb(self.coefficients)
+impl<S: Set, R: UnitalRing + Absorb<S>> Absorb<S> for MultilinearExtension<R> {
+    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
+        duplex.absorb_iter(self.coefficients.into_iter())
     }
 }
 
-impl<R: UnitalRing + Squeeze<R>> SqueezeWithSize<R> for MultilinearExtension<R> {
-    fn squeeze_from(duplex: &mut (impl Duplex<R> + ?Sized), size: usize) -> Self {
-        duplex.squeeze_with_size::<Vec<R>>(size).into()
+impl<S: Set, R: UnitalRing + Squeeze<S>> SqueezeWithSize<S> for MultilinearExtension<R> {
+    fn squeeze_from(duplex: &mut (impl Duplex<S> + ?Sized), size: usize) -> Self {
+        (0..size)
+            .map(|_| duplex.squeeze::<R>())
+            .collect::<Vec<R>>()
+            .into()
     }
 }

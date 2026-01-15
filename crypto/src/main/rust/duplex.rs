@@ -18,7 +18,6 @@
 use crate::algebra::AdditiveGroup;
 use crate::permutation::Permutation;
 use crate::random::UniformGenerator;
-use alloc::vec::Vec;
 use core::array;
 use core::marker::PhantomData;
 
@@ -70,20 +69,6 @@ impl<T> Absorb<T> for T {
     }
 }
 
-impl<T: Absorb<T>, const N: usize> Absorb<T> for [T; N] {
-    #[inline]
-    fn absorb_into(self, duplex: &mut (impl Duplex<T> + ?Sized)) {
-        self.into_iter().for_each(|i| duplex.absorb(i))
-    }
-}
-
-impl<T: Absorb<T>> Absorb<T> for Vec<T> {
-    #[inline]
-    fn absorb_into(self, duplex: &mut (impl Duplex<T> + ?Sized)) {
-        self.into_iter().for_each(|i| duplex.absorb(i))
-    }
-}
-
 pub trait Squeeze<T> {
     fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized)) -> Self;
 }
@@ -104,13 +89,6 @@ impl<T, const N: usize> Squeeze<T> for [T; N] {
 
 pub trait SqueezeWithSize<T> {
     fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized), size: usize) -> Self;
-}
-
-impl<T: Squeeze<T>> SqueezeWithSize<T> for Vec<T> {
-    #[inline]
-    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized), size: usize) -> Self {
-        (0..size).map(|_| duplex.squeeze()).collect::<Vec<T>>()
-    }
 }
 
 /// An implementation of the duplex construction.

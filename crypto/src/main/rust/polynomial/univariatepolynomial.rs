@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
-use crate::algebra::UnitalRing;
-use crate::algebra::{Double, Square};
+use crate::algebra::{Double, Semiring, Set, Square, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
@@ -247,20 +245,23 @@ impl<R: Semiring> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring + Absorb<R>> Absorb<R> for UnivariatePolynomial<R> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+impl<S: Set, R: Semiring + Absorb<S>> Absorb<S> for UnivariatePolynomial<R> {
+    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
         duplex.absorb_iter(self.coefficients.into_iter())
     }
 }
 
-impl<R: Semiring + Absorb<R>> Absorb<R> for &UnivariatePolynomial<R> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+impl<S: Set, R: Semiring + Absorb<S>> Absorb<S> for &UnivariatePolynomial<R> {
+    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
         duplex.absorb_iter(self.coefficients.iter().copied())
     }
 }
 
-impl<R: Semiring + Squeeze<R>> SqueezeWithSize<R> for UnivariatePolynomial<R> {
-    fn squeeze_from(duplex: &mut (impl Duplex<R> + ?Sized), size: usize) -> Self {
-        duplex.squeeze_with_size::<Vec<R>>(size).into()
+impl<S: Set, R: Semiring + Squeeze<S>> SqueezeWithSize<S> for UnivariatePolynomial<R> {
+    fn squeeze_from(duplex: &mut (impl Duplex<S> + ?Sized), size: usize) -> Self {
+        (0..size)
+            .map(|_| duplex.squeeze::<R>())
+            .collect::<Vec<R>>()
+            .into()
     }
 }

@@ -108,7 +108,7 @@ fn circuit_blacknet() {
     let scope = circuit.scope("test");
     let mut duplex_circuit = DuplexCircuit::new(&circuit);
     let x_circuit: [LinearCombination<Z>; 3] = array::from_fn(|_| scope.public_input().into());
-    duplex_circuit.absorb(x_circuit);
+    duplex_circuit.absorb_iter(x_circuit.into_iter());
     let y_circuit: [LinearCombination<Z>; 3] = duplex_circuit.squeeze();
     scope.constrain(y_circuit[0].clone(), Constant::new(y_plain[0]));
     scope.constrain(y_circuit[1].clone(), Constant::new(y_plain[1]));
@@ -120,7 +120,7 @@ fn circuit_blacknet() {
     z.extend(x_plain);
 
     let mut duplex_assigner = DuplexAssigner::new(&z);
-    duplex_assigner.absorb(x_plain);
+    duplex_assigner.absorb_iter(x_plain.into_iter());
     let y_assigned: [Z; 3] = duplex_assigner.squeeze();
 
     assert_eq!(y_assigned, y_plain);

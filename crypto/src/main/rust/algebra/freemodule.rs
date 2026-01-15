@@ -290,7 +290,7 @@ impl<R: Ring, const N: usize> Semimodule<R> for FreeModule<R, N> {}
 
 impl<R: Ring + Absorb<R>, const N: usize> Absorb<R> for FreeModule<R, N> {
     fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb(self.components)
+        duplex.absorb_iter(self.components.into_iter())
     }
 }
 
