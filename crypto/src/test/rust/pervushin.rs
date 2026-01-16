@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{
-    BalancedRepresentative, IntegerRing, Inv, One, PowerOfTwoCyclotomicRing, Square, Zero,
+    BalancedRepresentative, Conjugate, IntegerRing, Inv, One, Square, Zero,
 };
 use blacknet_crypto::norm::InfinityNorm;
 

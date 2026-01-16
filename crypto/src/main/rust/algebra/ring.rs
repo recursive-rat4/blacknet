@@ -15,12 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::AdditiveAbelianGroup;
-use crate::algebra::AdditiveCyclicGroup;
-use crate::algebra::Inv;
-use crate::algebra::Module;
-use crate::algebra::{CommutativeAlgebra, UnitalAlgebra};
-use crate::algebra::{CommutativeSemiring, Presemiring, Semiring};
+use crate::algebra::{
+    AdditiveAbelianGroup, AdditiveCyclicGroup, CommutativeAlgebra, CommutativeSemiring, Conjugate,
+    Inv, Module, Presemiring, Semiring, UnitalAlgebra,
+};
 use crate::integer::{Integer, SignedInteger};
 use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
@@ -118,6 +116,6 @@ pub trait PolynomialRing<R: UnitalRing>
 pub trait PowerOfTwoCyclotomicRing<Z: IntegerRing>
     : PolynomialRing<Z>
     + CommutativeAlgebra<Z>
+    + Conjugate<Output = Self>
 {
-    fn conjugate(self) -> Self;
 }

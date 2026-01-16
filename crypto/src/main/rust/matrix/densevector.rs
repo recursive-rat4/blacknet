@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Presemiring, Ring, Semiring, Square, Tensor};
+use crate::algebra::{Conjugate, Double, Presemiring, Ring, Semiring, Square, Tensor};
 use crate::matrix::DenseMatrix;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
@@ -443,6 +443,25 @@ impl<R: Presemiring> Square for &DenseVector<R> {
 
     fn square(self) -> Self::Output {
         self.into_iter().copied().map(Square::square).collect()
+    }
+}
+
+impl<R: Presemiring + Conjugate<Output = R>> Conjugate for DenseVector<R> {
+    type Output = Self;
+
+    fn conjugate(self) -> Self::Output {
+        self.into_iter().map(Conjugate::conjugate).collect()
+    }
+}
+
+impl<R: Presemiring + Conjugate<Output = R>> Conjugate for &DenseVector<R> {
+    type Output = DenseVector<R>;
+
+    fn conjugate(self) -> Self::Output {
+        self.into_iter()
+            .copied()
+            .map(Conjugate::conjugate)
+            .collect()
     }
 }
 

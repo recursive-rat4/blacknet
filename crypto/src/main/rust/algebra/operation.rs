@@ -51,6 +51,15 @@ pub trait Sqrt {
     fn sqrt(self) -> Self::Output;
 }
 
+/// The complex conjugate operator.
+pub trait Conjugate {
+    /// Result type.
+    type Output;
+
+    /// Perform the unary operation.
+    fn conjugate(self) -> Self::Output;
+}
+
 /// The binary product operator `⊗`.
 pub trait Tensor<Rps = Self> {
     /// Result type.

@@ -18,8 +18,8 @@
 #![allow(clippy::manual_is_multiple_of)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double, FreeModule,
-    LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate, Double,
+    FreeModule, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
     MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
     Semimodule, Set, Square, UnitalAlgebra, UnivariateRing, Zero,
 };
@@ -403,9 +403,9 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> PolynomialRing<Z> for NTTRi
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> PowerOfTwoCyclotomicRing<Z>
-    for NTTRing<Z, M, N>
-{
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Conjugate for NTTRing<Z, M, N> {
+    type Output = Self;
+
     fn conjugate(self) -> Self {
         if Self::INERTIA == 1 {
             let mut spectrum = self.spectrum;
@@ -418,6 +418,11 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> PowerOfTwoCyclotomicRing<Z>
             Self::from(iso.conjugate().coefficients())
         }
     }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> PowerOfTwoCyclotomicRing<Z>
+    for NTTRing<Z, M, N>
+{
 }
 
 impl<Z: Twiddles<M> + Absorb<Z>, const M: usize, const N: usize> Absorb<Z> for NTTRing<Z, M, N> {

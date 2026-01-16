@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing, Double,
-    FreeModule, IntegerRing, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing,
+    Conjugate, Double, FreeModule, IntegerRing, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
     MultiplicativeMonoid, MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing,
     RightOne, RightZero, Semimodule, Set, Square, UnitalAlgebra, UnitalRing, Zero,
 };
@@ -436,9 +436,9 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> PolynomialRing<R>
     }
 }
 
-impl<R: IntegerRing, const N: usize> PowerOfTwoCyclotomicRing<R>
-    for UnivariateRing<R, N, Negacyclic>
-{
+impl<R: IntegerRing, const N: usize> Conjugate for UnivariateRing<R, N, Negacyclic> {
+    type Output = Self;
+
     fn conjugate(self) -> Self {
         let mut coefficients = self.coefficients;
         for i in 1..N / 2 {
@@ -450,6 +450,11 @@ impl<R: IntegerRing, const N: usize> PowerOfTwoCyclotomicRing<R>
         coefficients[N / 2] = -coefficients[N / 2];
         coefficients.into()
     }
+}
+
+impl<R: IntegerRing, const N: usize> PowerOfTwoCyclotomicRing<R>
+    for UnivariateRing<R, N, Negacyclic>
+{
 }
 
 impl<R: UnitalRing + Absorb<R>, const N: usize, C: Convolution<R, N>> Absorb<R>
