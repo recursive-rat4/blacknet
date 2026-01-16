@@ -38,7 +38,25 @@ fn decompose_impl<Z: IntegerRing, R: PolynomialRing<Z>>(
     }
 }
 
-pub fn decompose<Z: IntegerRing, R: PolynomialRing<Z>>(
+fn decompose_slice<Z: IntegerRing, R: PolynomialRing<Z>>(
+    slice: &[R],
+    radix_mask: <Z::Int as Integer>::Limb,
+    radix_shift: <Z::Int as Integer>::Limb,
+    digits: usize,
+) -> Vec<R> {
+    let mut pieces = vec![R::ZERO; slice.len() * digits];
+    for (i, &polynomial) in slice.iter().enumerate() {
+        decompose_impl(
+            polynomial,
+            radix_mask,
+            radix_shift,
+            &mut pieces[i * digits..(i + 1) * digits],
+        );
+    }
+    pieces
+}
+
+pub fn decompose_polynomial<Z: IntegerRing, R: PolynomialRing<Z>>(
     polynomial: R,
     radix_mask: <Z::Int as Integer>::Limb,
     radix_shift: <Z::Int as Integer>::Limb,
@@ -55,16 +73,18 @@ pub fn decompose_vector<Z: IntegerRing, R: PolynomialRing<Z>>(
     radix_shift: <Z::Int as Integer>::Limb,
     digits: usize,
 ) -> DenseVector<R> {
-    let mut pieces = vec![R::ZERO; vector.dimension() * digits];
-    for (i, &polynomial) in vector.iter().enumerate() {
-        decompose_impl(
-            polynomial,
-            radix_mask,
-            radix_shift,
-            &mut pieces[i * digits..(i + 1) * digits],
-        );
-    }
+    let pieces = decompose_slice(vector, radix_mask, radix_shift, digits);
     pieces.into()
+}
+
+pub fn decompose_matrix<Z: IntegerRing, R: PolynomialRing<Z>>(
+    matrix: &DenseMatrix<R>,
+    radix_mask: <Z::Int as Integer>::Limb,
+    radix_shift: <Z::Int as Integer>::Limb,
+    digits: usize,
+) -> DenseMatrix<R> {
+    let pieces = decompose_slice(matrix.elements(), radix_mask, radix_shift, digits);
+    DenseMatrix::new(matrix.rows(), matrix.columns() * digits, pieces)
 }
 
 pub fn matrix<Z: IntegerRing, R: PolynomialRing<Z>>(
@@ -73,8 +93,8 @@ pub fn matrix<Z: IntegerRing, R: PolynomialRing<Z>>(
     n: usize,
 ) -> DenseMatrix<R> {
     let powers = powers::<Z, R>(radix, n);
-    let powers = DenseVector::<R>::new(powers);
-    let identity = DenseVector::<R>::identity(m);
+    let powers = DenseMatrix::<R>::new(1, n, powers);
+    let identity = DenseMatrix::<R>::identity(m);
     identity.tensor(powers)
 }
 
