@@ -18,6 +18,7 @@
 use blacknet_crypto::algebra::{Double, Square, Tensor};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
+use std::iter::zip;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -303,4 +304,18 @@ fn infinity_norm() {
     assert!(!a.check_infinity_norm(&n));
     assert!(a.check_infinity_norm(&b));
     assert_eq!(a.infinity_norm(), n);
+}
+
+#[test]
+#[rustfmt::skip]
+fn iter_row() {
+    let a = DenseMatrix::<R>::new(2, 3, [
+        1, 2, 3,
+        4, 5, 6,
+    ].map(R::from).into());
+    let b: Vec<Vec<R>> = vec![
+        [1, 2, 3].map(R::from).into(),
+        [4, 5, 6].map(R::from).into(),
+    ];
+    zip(a.iter_row(), b).for_each(|(a,b)| assert_eq!(a, b));
 }

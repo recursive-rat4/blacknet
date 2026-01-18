@@ -96,6 +96,11 @@ impl<R: Presemiring> DenseMatrix<R> {
         &self.elements
     }
 
+    /// Iterate rows.
+    pub fn iter_row(&self) -> impl ExactSizeIterator<Item = &[R]> {
+        self.elements.chunks_exact(self.columns)
+    }
+
     /// Concatenate horizontally.
     pub fn cat(&self, rps: &Self) -> Self {
         debug_assert!(self.rows == rps.rows);
