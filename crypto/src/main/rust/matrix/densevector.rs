@@ -15,7 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Conjugate, Double, Presemiring, Ring, Semiring, Square, Tensor};
+use crate::algebra::{Conjugate, Double, Presemiring, Ring, Semiring, Set, Square, Tensor};
+use crate::duplex::{Absorb, Duplex};
 use crate::matrix::DenseMatrix;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
@@ -506,5 +507,17 @@ impl<R: Presemiring> Tensor for &DenseVector<R> {
             }
         }
         DenseMatrix::new(rows, columns, elements)
+    }
+}
+
+impl<S: Set, R: Presemiring + Absorb<S>> Absorb<S> for DenseVector<R> {
+    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
+        duplex.absorb_iter(self.elements.into_iter())
+    }
+}
+
+impl<S: Set, R: Presemiring + Absorb<S>> Absorb<S> for &DenseVector<R> {
+    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
+        duplex.absorb_iter(self.elements.iter().copied())
     }
 }
