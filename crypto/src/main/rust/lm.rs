@@ -446,7 +446,10 @@ impl Binomial<LMField, 2> for LMField2Convolution {
 pub type LMField2 = UnivariateRing<LMField, 2, LMField2Convolution>;
 
 impl LMField2 {
-    const R1: [bool; 61] = LMField::bits(0x1000000000000021);
+    fn frobenius(mut self) -> Self {
+        self[1] = -self[1];
+        self
+    }
 }
 
 impl Inv for LMField2 {
@@ -455,7 +458,7 @@ impl Inv for LMField2 {
     fn inv(self) -> Self::Output {
         if self != Self::ZERO {
             // Feng and Itoh-Tsujii algorithm
-            let r1 = square_and_multiply(self, Self::R1);
+            let r1 = self.frobenius();
             let r0 = (r1 * self).constant_term();
             Some((r1 / r0).expect("multiplicative group of subfield"))
         } else {
