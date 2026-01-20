@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Semiring, Set, Square, UnitalRing};
+use crate::algebra::{DivisionRing, Double, Semiring, Set, Square, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;
-use core::ops::{Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg};
+use core::ops::{Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -242,6 +242,24 @@ impl<R: Semiring> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R> {
             }
         }
         Self::Output { coefficients }
+    }
+}
+
+impl<R: Semiring> Mul<R> for UnivariatePolynomial<R> {
+    type Output = Self;
+
+    fn mul(self, rps: R) -> Self::Output {
+        Self {
+            coefficients: self.coefficients.into_iter().map(|l| l * rps).collect(),
+        }
+    }
+}
+
+impl<R: UnitalRing + DivisionRing> Div<R> for UnivariatePolynomial<R> {
+    type Output = Option<Self>;
+
+    fn div(self, rps: R) -> Self::Output {
+        rps.inv().map(|v| self * v)
     }
 }
 

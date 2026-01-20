@@ -17,16 +17,17 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing,
-    Conjugate, Double, FreeModule, IntegerRing, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing,
-    RightOne, RightZero, Semimodule, Set, Square, UnitalAlgebra, UnitalRing, Zero,
+    Conjugate, DivisionRing, Double, FreeModule, IntegerRing, LeftOne, LeftZero,
+    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
+    PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, Semimodule, Set, Square,
+    UnitalAlgebra, UnitalRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::marker::PhantomData;
-use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
 // Univariate polynomial ring in monomial basis
@@ -295,6 +296,27 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign<&R>
     #[inline]
     fn mul_assign(&mut self, rps: &R) {
         *self = *self * rps
+    }
+}
+
+impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<R>
+    for UnivariateRing<R, N, C>
+{
+    type Output = Option<Self>;
+
+    fn div(self, rps: R) -> Self::Output {
+        (self.coefficients / rps).map(Self::new)
+    }
+}
+
+impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<&R>
+    for UnivariateRing<R, N, C>
+{
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &R) -> Self::Output {
+        self / *rps
     }
 }
 

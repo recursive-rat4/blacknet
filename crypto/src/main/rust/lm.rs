@@ -484,23 +484,6 @@ impl Div<&Self> for LMField2 {
     }
 }
 
-impl Div<LMField> for LMField2 {
-    type Output = Option<Self>;
-
-    fn div(self, rps: LMField) -> Self::Output {
-        rps.inv().map(|v| self * v)
-    }
-}
-
-impl Div<&LMField> for LMField2 {
-    type Output = Option<Self>;
-
-    #[inline]
-    fn div(self, rps: &LMField) -> Self::Output {
-        self / *rps
-    }
-}
-
 impl DivisionRing for LMField2 {}
 
 impl DivisionAlgebra<LMField> for LMField2 {}

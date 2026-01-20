@@ -18,8 +18,8 @@
 #![allow(clippy::manual_is_multiple_of)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate, Double,
-    FreeModule, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate, DivisionRing,
+    Double, FreeModule, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
     MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
     Semimodule, Set, Square, UnitalAlgebra, UnivariateRing, Zero,
 };
@@ -28,7 +28,7 @@ use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
-use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
 // Univariate polynomial ring in NTT form
@@ -308,6 +308,23 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<&Z> for NTTRing<Z
     #[inline]
     fn mul_assign(&mut self, rps: &Z) {
         *self = *self * *rps
+    }
+}
+
+impl<Z: Twiddles<M> + DivisionRing, const M: usize, const N: usize> Div<Z> for NTTRing<Z, M, N> {
+    type Output = Option<Self>;
+
+    fn div(self, rps: Z) -> Self::Output {
+        (self.spectrum / rps).map(|spectrum| Self { spectrum })
+    }
+}
+
+impl<Z: Twiddles<M> + DivisionRing, const M: usize, const N: usize> Div<&Z> for NTTRing<Z, M, N> {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Z) -> Self::Output {
+        self / *rps
     }
 }
 

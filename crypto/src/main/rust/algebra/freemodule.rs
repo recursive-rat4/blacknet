@@ -16,15 +16,15 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, LeftZero, RightZero, Ring,
-    Semimodule, Set, Zero,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRing, Double, LeftZero,
+    RightZero, Ring, Semimodule, Set, Zero,
 };
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
-use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
@@ -244,6 +244,23 @@ impl<R: Ring, const N: usize> MulAssign<&R> for FreeModule<R, N> {
     #[inline]
     fn mul_assign(&mut self, rps: &R) {
         *self = *self * *rps
+    }
+}
+
+impl<R: DivisionRing, const N: usize> Div<R> for FreeModule<R, N> {
+    type Output = Option<Self>;
+
+    fn div(self, rps: R) -> Self::Output {
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl<R: DivisionRing, const N: usize> Div<&R> for FreeModule<R, N> {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &R) -> Self::Output {
+        self / *rps
     }
 }
 

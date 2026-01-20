@@ -469,23 +469,6 @@ impl Div<&Self> for PervushinField2 {
     }
 }
 
-impl Div<PervushinField> for PervushinField2 {
-    type Output = Option<Self>;
-
-    fn div(self, rps: PervushinField) -> Self::Output {
-        rps.inv().map(|v| self * v)
-    }
-}
-
-impl Div<&PervushinField> for PervushinField2 {
-    type Output = Option<Self>;
-
-    #[inline]
-    fn div(self, rps: &PervushinField) -> Self::Output {
-        self / *rps
-    }
-}
-
 impl DivisionRing for PervushinField2 {}
 
 impl DivisionAlgebra<PervushinField> for PervushinField2 {}
