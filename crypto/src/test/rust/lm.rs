@@ -22,6 +22,7 @@ use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::lm::LMField;
 type F2 = blacknet_crypto::lm::LMField2;
+type F4 = blacknet_crypto::lm::LMField4;
 type R64 = blacknet_crypto::lm::LMRing64;
 type NTT64 = blacknet_crypto::lm::LMNTT64;
 
@@ -163,6 +164,131 @@ fn f2_inv() {
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
     assert_eq!(F2::ZERO.inv(), None);
+}
+
+#[test]
+fn f4_add() {
+    let a = F4::from(
+        [
+            0x576410f28fec1e6,
+            0x55d24e120946c95,
+            0xb2b13f109eea9b3,
+            0xeea5c2bac271882,
+        ]
+        .map(Z::new),
+    );
+    let b = F4::from(
+        [
+            0xf3d12a3fc06f8c6,
+            0xdd550aad7f2b9a4,
+            0x1a432d5f36dd2df,
+            0x8c70f7fb5345f65,
+        ]
+        .map(Z::new),
+    );
+    let c = F4::from(
+        [
+            0x4b353b32505ba8b,
+            0x332758bf8872618,
+            0xccf46c6fd5c7c92,
+            0x7b16bab615b77c6,
+        ]
+        .map(Z::new),
+    );
+    assert_eq!(a + b, c);
+    assert_eq!(b + a, c);
+    assert_eq!(F4::ZERO + c, c);
+    assert_eq!(c + F4::ZERO, c);
+    assert_eq!(F4::ONE + F4::ZERO, F4::ONE);
+    assert_eq!(F4::ZERO + F4::ONE, F4::ONE);
+}
+
+#[test]
+fn f4_dbl() {
+    let a = F4::from(
+        [
+            0x4e7cfcd791a8d47,
+            0xc95e6638779487,
+            0x4d819c351f83b60,
+            0xae8cf0ac05d4394,
+        ]
+        .map(Z::new),
+    );
+    let b = F4::from(
+        [
+            0x9cf9f9af2351a8e,
+            0x192bccc70ef290e,
+            0x9b03386a3f076c0,
+            0x5d19e1580ba8707,
+        ]
+        .map(Z::new),
+    );
+    assert_eq!(a.double(), b);
+    assert_eq!(F4::ZERO.double(), F4::ZERO);
+}
+
+#[test]
+fn f4_mul() {
+    let a = F4::from(
+        [
+            0xd0824bf5e005b27,
+            0x53856743ddbcea7,
+            0xa7c21468ea26d5e,
+            0x79f3918c6933897,
+        ]
+        .map(Z::new),
+    );
+    let b = Z::new(0xb0c5efd5c9cc82d);
+    let c = F4::from(
+        [
+            0x33a833080f803c1,
+            0x17fe5884e58b401,
+            0xa3d23b3645469a2,
+            0x2b9d45a23a1ae68,
+        ]
+        .map(Z::new),
+    );
+    let d = F4::from(
+        [
+            0x8e4ea39bdcf7593,
+            0x75b11340abb030b,
+            0xd380ec7b085c16d,
+            0x1dfa742840691c7,
+        ]
+        .map(Z::new),
+    );
+    assert_eq!(a * b, c);
+    assert_eq!(a * c, d);
+    assert_eq!(c * a, d);
+    assert_eq!(F4::ZERO * c, F4::ZERO);
+    assert_eq!(c * F4::ZERO, F4::ZERO);
+    assert_eq!(c * F4::ONE, c);
+    assert_eq!(F4::ONE * c, c);
+}
+
+#[test]
+fn f4_inv() {
+    let a = F4::from(
+        [
+            0xf48a9f8cb604ab,
+            0x90ed49159c69bc4,
+            0xd3639e3675e944e,
+            0xd2916419e9148fd,
+        ]
+        .map(Z::new),
+    );
+    let b = F4::from(
+        [
+            0x36f89ff74eca9ce,
+            0xe8c28e3e4e0eac1,
+            0xb55959fbffd9e21,
+            0x821b2c0fc6ee535,
+        ]
+        .map(Z::new),
+    );
+    assert_eq!(b.inv().unwrap(), a);
+    assert_eq!(a.inv().unwrap(), b);
+    assert_eq!(F4::ZERO.inv(), None);
 }
 
 #[test]

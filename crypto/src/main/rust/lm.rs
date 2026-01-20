@@ -488,6 +488,90 @@ impl DivisionRing for LMField2 {}
 
 impl DivisionAlgebra<LMField> for LMField2 {}
 
+// (2⁶⁰ + 2⁵ + 1) / (x⁴ - ³²√1)
+
+pub struct LMField4Convolution {}
+
+impl Convolution<LMField, 4> for LMField4Convolution {
+    fn convolute(a: [LMField; 4], b: [LMField; 4]) -> [LMField; 4] {
+        <Self as Binomial<LMField, 4>>::convolute(a, b)
+    }
+}
+
+impl Binomial<LMField, 4> for LMField4Convolution {
+    const ZETA: LMField = LMField {
+        n: -14367867355629317,
+    };
+}
+
+pub type LMField4 = UnivariateRing<LMField, 4, LMField4Convolution>;
+
+impl LMField4 {
+    const FR_1: LMField = LMField {
+        n: -164394589713157382,
+    };
+    const FR_3: LMField = LMField {
+        n: 164394589713157382,
+    };
+    const R1_FR: [bool; 121] = Self::bits(0x1000000000000043000000000000463);
+
+    const fn bits<const N: usize>(n: u128) -> [bool; N] {
+        let mut bits = [false; N];
+        let mut i = 0;
+        loop {
+            bits[i] = n >> i & 1 == 1;
+            i += 1;
+            if i == N {
+                break;
+            }
+        }
+        bits
+    }
+
+    fn frobenius(mut self) -> Self {
+        self[1] *= Self::FR_1;
+        self[2] = -self[2];
+        self[3] *= Self::FR_3;
+        self
+    }
+}
+
+impl Inv for LMField4 {
+    type Output = Option<Self>;
+
+    fn inv(self) -> Self::Output {
+        if self != Self::ZERO {
+            // Feng and Itoh-Tsujii algorithm
+            let r1 = square_and_multiply(self.frobenius(), Self::R1_FR);
+            let r0 = (r1 * self).constant_term();
+            Some((r1 / r0).expect("multiplicative group of subfield"))
+        } else {
+            None
+        }
+    }
+}
+
+impl Div for LMField4 {
+    type Output = Option<Self>;
+
+    fn div(self, rps: Self) -> Self::Output {
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div<&Self> for LMField4 {
+    type Output = Option<Self>;
+
+    #[inline]
+    fn div(self, rps: &Self) -> Self::Output {
+        self / *rps
+    }
+}
+
+impl DivisionRing for LMField4 {}
+
+impl DivisionAlgebra<LMField> for LMField4 {}
+
 // (2⁶⁰ + 2⁵ + 1) / (x⁶⁴ + 1)
 
 pub type LMRing64 = UnivariateRing<LMField, 64, Negacyclic>;
