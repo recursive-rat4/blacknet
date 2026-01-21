@@ -22,7 +22,7 @@ use crate::algebra::{
     PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::Negacyclic;
-use crate::integer::Integer;
+use crate::integer::{Integer, bits_u64};
 use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -50,20 +50,7 @@ impl PervushinField {
         Self::reduce_add(((x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)) as i64)
     }
 
-    const fn bits<const N: usize>(n: u64) -> [bool; N] {
-        let mut bits = [false; N];
-        let mut i = 0;
-        loop {
-            bits[i] = n >> i & 1 == 1;
-            i += 1;
-            if i == N {
-                break;
-            }
-        }
-        bits
-    }
-
-    const P_MINUS_2: [bool; 61] = Self::bits(0x1FFFFFFFFFFFFFFD);
+    const P_MINUS_2: [bool; 61] = bits_u64(0x1FFFFFFFFFFFFFFD);
 }
 
 impl Debug for PervushinField {

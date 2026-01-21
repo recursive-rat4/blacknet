@@ -22,7 +22,7 @@ use crate::algebra::{
     PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::{Binomial, Convolution, Negacyclic};
-use crate::integer::Integer;
+use crate::integer::{Integer, bits_u64, bits_u128};
 use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -51,20 +51,7 @@ impl LMField {
         ((t & 0xFFFFFFFFFFFFFFF) - 33 * (t >> 60)) as i64
     }
 
-    const fn bits<const N: usize>(n: u64) -> [bool; N] {
-        let mut bits = [false; N];
-        let mut i = 0;
-        loop {
-            bits[i] = n >> i & 1 == 1;
-            i += 1;
-            if i == N {
-                break;
-            }
-        }
-        bits
-    }
-
-    const P_MINUS_2: [bool; 61] = Self::bits(0x100000000000001F);
+    const P_MINUS_2: [bool; 61] = bits_u64(0x100000000000001F);
 }
 
 impl Debug for LMField {
@@ -513,20 +500,7 @@ impl LMField4 {
     const FR_3: LMField = LMField {
         n: 164394589713157382,
     };
-    const R1_FR: [bool; 121] = Self::bits(0x1000000000000043000000000000463);
-
-    const fn bits<const N: usize>(n: u128) -> [bool; N] {
-        let mut bits = [false; N];
-        let mut i = 0;
-        loop {
-            bits[i] = n >> i & 1 == 1;
-            i += 1;
-            if i == N {
-                break;
-            }
-        }
-        bits
-    }
+    const R1_FR: [bool; 121] = bits_u128(0x1000000000000043000000000000463);
 
     fn frobenius(mut self) -> Self {
         self[1] *= Self::FR_1;

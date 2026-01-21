@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -387,3 +387,23 @@ impl<const N: usize> Integer for BigInt<N> {
 }
 
 impl<const N: usize> UnsignedInteger for BigInt<N> {}
+
+macro_rules! impl_bits {
+    ( $x:ty, $y:ident ) => {
+        pub const fn $y<const N: usize>(n: $x) -> [bool; N] {
+            let mut bits = [false; N];
+            let mut i = 0;
+            while i < N {
+                bits[i] = n >> i & 1 == 1;
+                i += 1;
+            }
+            bits
+        }
+    };
+}
+
+impl_bits!(u8, bits_u8);
+impl_bits!(u16, bits_u16);
+impl_bits!(u32, bits_u32);
+impl_bits!(u64, bits_u64);
+impl_bits!(u128, bits_u128);

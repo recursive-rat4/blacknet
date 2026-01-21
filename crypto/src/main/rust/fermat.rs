@@ -22,7 +22,7 @@ use crate::algebra::{
     UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::Negacyclic;
-use crate::integer::Integer;
+use crate::integer::{Integer, bits_u32};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -54,20 +54,7 @@ impl FermatField {
         ((x & 0xFFFF) - (x >> 16)) as i32
     }
 
-    const fn bits<const N: usize>(n: u32) -> [bool; N] {
-        let mut bits = [false; N];
-        let mut i = 0;
-        loop {
-            bits[i] = n >> i & 1 == 1;
-            i += 1;
-            if i == N {
-                break;
-            }
-        }
-        bits
-    }
-
-    const P_MINUS_2: [bool; 16] = Self::bits(0xFFFF);
+    const P_MINUS_2: [bool; 16] = bits_u32(0xFFFF);
 }
 
 impl Debug for FermatField {
