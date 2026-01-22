@@ -358,7 +358,9 @@ impl Sqrt for Field25519 {
                     return Some(r);
                 } else {
                     let mut i = Self::ONE;
-                    while t.power(Self::TWO.power(i)) != Self::ONE {
+                    let mut t_in_2_in_i = t.square();
+                    while t_in_2_in_i != Self::ONE {
+                        t_in_2_in_i = t_in_2_in_i.square();
                         i += Self::ONE;
                     }
                     let b = c.power(Self::TWO.power(m - i - Self::ONE));
