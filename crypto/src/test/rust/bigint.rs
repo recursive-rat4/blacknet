@@ -148,6 +148,22 @@ fn mul() {
 }
 
 #[test]
+fn div() {
+    let a = UInt256::from_hex("4C52834CB4D297D60C7B25F17668EFFDA3014AD26F915E87B6972ACB24D4FB9B");
+    let b = 0xD6E656EBDCF8B303;
+    let c = UInt256::from_hex("00000000000000005AEB502AE6B58C73FC2B5A37009554DAA36C83B133A798E4");
+    assert_eq!(a / b, c);
+}
+
+#[test]
+fn rem() {
+    let a = UInt256::from_hex("638EC2DB4E4A587CC7A2C140D8BFBE16DC3E2DDEAE37C08B68F918B2752BD9BC");
+    let b = 0xB9F1448812BA25C8;
+    let c = 0x9963480625D9687C;
+    assert_eq!(a % b, c);
+}
+
+#[test]
 fn sqr() {
     let a = UInt256::from_hex("6B3D316D1EEEEB1FF5A4A8F48B87F93B9C0C6CE0DE0AB366CD6901E304C7F7B9");
     let b = UInt512::from_hex(

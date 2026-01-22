@@ -19,8 +19,8 @@ use core::array;
 use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
-    SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, Rem, Shl, ShlAssign, Shr,
+    ShrAssign, Sub, SubAssign,
 };
 use serde::{Deserialize, Serialize};
 
@@ -376,6 +376,34 @@ impl<const N: usize> AddAssign for BigInt<N> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
+    }
+}
+
+impl<const N: usize> Div<u64> for BigInt<N> {
+    type Output = Self;
+
+    fn div(self, rps: u64) -> Self::Output {
+        let mut n = Self::ZERO;
+        let mut c: u64 = 0;
+        for i in (0..N).rev() {
+            let ll = ((c as u128) << u64::BITS) | self.limbs[i] as u128;
+            n.limbs[i] = (ll / rps as u128) as u64;
+            c = (ll % rps as u128) as u64;
+        }
+        n
+    }
+}
+
+impl<const N: usize> Rem<u64> for BigInt<N> {
+    type Output = u64;
+
+    fn rem(self, rps: u64) -> Self::Output {
+        let mut c: u64 = 0;
+        for i in (0..N).rev() {
+            let ll = ((c as u128) << u64::BITS) | self.limbs[i] as u128;
+            c = (ll % rps as u128) as u64;
+        }
+        c
     }
 }
 
