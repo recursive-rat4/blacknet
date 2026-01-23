@@ -232,7 +232,7 @@ impl<R: UnitalRing> Neg for MultilinearExtension<R> {
 
     fn neg(self) -> Self::Output {
         Self {
-            coefficients: self.coefficients.into_iter().map(|e| -e).collect(),
+            coefficients: self.coefficients.into_iter().map(Neg::neg).collect(),
         }
     }
 }

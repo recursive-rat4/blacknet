@@ -53,6 +53,7 @@ fn neg() {
     assert_eq!(-a, b);
     assert_eq!(-b, a);
     assert_eq!(-(-F::ONE), F::ONE);
+    assert_eq!(-F::ZERO, F::ZERO);
 }
 
 #[test]

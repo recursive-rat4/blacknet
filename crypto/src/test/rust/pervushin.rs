@@ -56,6 +56,7 @@ fn z_neg() {
     let b = Z::new(-4);
     assert_eq!(-a, b);
     assert_eq!(-b, a);
+    assert_eq!(-Z::ZERO, Z::ZERO);
 }
 
 #[test]

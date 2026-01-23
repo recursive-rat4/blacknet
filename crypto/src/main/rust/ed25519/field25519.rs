@@ -209,7 +209,13 @@ impl Neg for Field25519 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self::ZERO - self
+        if self.n != UInt256::ZERO {
+            Self {
+                n: Self::MODULUS - self.n,
+            }
+        } else {
+            Self::ZERO
+        }
     }
 }
 

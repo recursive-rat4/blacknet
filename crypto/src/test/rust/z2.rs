@@ -49,6 +49,12 @@ fn sqr() {
 }
 
 #[test]
+fn neg() {
+    assert_eq!(-Z2::new(0), Z2::new(0));
+    assert_eq!(-Z2::new(1), Z2::new(1));
+}
+
+#[test]
 fn sub() {
     assert_eq!(Z2::new(0) - Z2::new(0), Z2::new(0));
     assert_eq!(Z2::new(0) - Z2::new(1), Z2::new(1));
