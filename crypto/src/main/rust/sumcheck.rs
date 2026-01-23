@@ -26,24 +26,22 @@ use thiserror::Error;
 
 // https://users.cs.fiu.edu/~giri/teach/5420/f01/LundIPS.pdf
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Proof<R: UnitalRing> {
     claims: Vec<UnivariatePolynomial<R>>,
 }
 
 impl<R: UnitalRing> Proof<R> {
+    pub const fn new(claims: Vec<UnivariatePolynomial<R>>) -> Self {
+        Self { claims }
+    }
+
     pub fn claim(&self, index: usize) -> &UnivariatePolynomial<R> {
         &self.claims[index]
     }
 
     pub const fn variables(&self) -> usize {
         self.claims.len()
-    }
-}
-
-impl<R: UnitalRing> From<Vec<UnivariatePolynomial<R>>> for Proof<R> {
-    fn from(claims: Vec<UnivariatePolynomial<R>>) -> Self {
-        Self { claims }
     }
 }
 
@@ -87,7 +85,7 @@ impl<
             claims.push(claim);
             exceptional_set.reset();
         }
-        claims.into()
+        Proof::new(claims)
     }
 
     pub fn verify(

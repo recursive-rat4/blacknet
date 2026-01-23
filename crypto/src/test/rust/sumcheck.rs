@@ -28,7 +28,7 @@ use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{EqExtension, MultilinearExtension, Polynomial};
 use blacknet_crypto::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain;
 use blacknet_crypto::random::{Distribution, UniformDistribution};
-use blacknet_crypto::sumcheck::SumCheck as SumCheckPlain;
+use blacknet_crypto::sumcheck::{Proof as ProofPlain, SumCheck as SumCheckPlain};
 
 type Z = PervushinField;
 type D = DuplexPoseidon2PervushinPlain;
@@ -123,6 +123,18 @@ fn mle() {
     ));
     duplex.reset();
     exceptional_set.reset();
+
+    let proof3 = ProofPlain::default();
+
+    assert_err!(SC::verify(
+        &p1,
+        s1,
+        &proof3,
+        &mut duplex,
+        &mut exceptional_set
+    ));
+    duplex.reset();
+    exceptional_set.reset();
 }
 
 #[test]
@@ -203,6 +215,18 @@ fn eq() {
     ));
     duplex.reset();
     exceptional_set.reset();
+
+    let proof3 = ProofPlain::default();
+
+    assert_err!(SC::verify(
+        &p1,
+        s1,
+        &proof3,
+        &mut duplex,
+        &mut exceptional_set
+    ));
+    duplex.reset();
+    exceptional_set.reset();
 }
 
 #[test]
@@ -255,6 +279,18 @@ fn early_stopping() {
         &p1,
         s1,
         &proof2,
+        &mut duplex,
+        &mut exceptional_set
+    ));
+    duplex.reset();
+    exceptional_set.reset();
+
+    let proof3 = ProofPlain::default();
+
+    assert_err!(SC::verify(
+        &p1,
+        s1,
+        &proof3,
         &mut duplex,
         &mut exceptional_set
     ));
