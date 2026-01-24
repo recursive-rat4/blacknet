@@ -426,7 +426,7 @@ impl Convolution<LMField, 2> for LMField2Convolution {
 
 impl Binomial<LMField, 2> for LMField2Convolution {
     const ZETA: LMField = LMField {
-        n: -14367867355629317,
+        n: 14367867355629317,
     };
 }
 
@@ -487,7 +487,7 @@ impl Convolution<LMField, 4> for LMField4Convolution {
 
 impl Binomial<LMField, 4> for LMField4Convolution {
     const ZETA: LMField = LMField {
-        n: -14367867355629317,
+        n: 14367867355629317,
     };
 }
 

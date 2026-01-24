@@ -76,6 +76,10 @@ name = "circuitbuilder"
 path = "src/test/rust/circuitbuilder.rs"
 
 [[test]]
+name = "convolution"
+path = "src/test/rust/convolution.rs"
+
+[[test]]
 name = "customizableconstraintsystem"
 path = "src/test/rust/customizableconstraintsystem.rs"
 

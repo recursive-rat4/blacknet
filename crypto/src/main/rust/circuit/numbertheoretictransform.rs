@@ -111,14 +111,14 @@ impl<Z: Twiddles<M> + Eq, const M: usize, const N: usize> Convolution<Z, N>
                         &mut c[i * k..i * k + 4],
                         &a[i * k..i * k + 4],
                         &b[i * k..i * k + 4],
-                        Constant::new(-Z::TWIDDLES[l + i]),
+                        Constant::new(Z::TWIDDLES[l + i]),
                     );
                     binomial::<Z, 4>(
                         scope,
                         &mut c[i * k + inertia..i * k + inertia + 4],
                         &a[i * k + inertia..i * k + inertia + 4],
                         &b[i * k + inertia..i * k + inertia + 4],
-                        Constant::new(Z::TWIDDLES[l + i]),
+                        Constant::new(-Z::TWIDDLES[l + i]),
                     );
                 }
                 c

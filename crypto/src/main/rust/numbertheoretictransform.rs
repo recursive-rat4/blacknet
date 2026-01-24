@@ -102,13 +102,13 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTCo
                         &mut c[i * k..i * k + 4],
                         &a[i * k..i * k + 4],
                         &b[i * k..i * k + 4],
-                        -Z::TWIDDLES[l + i],
+                        Z::TWIDDLES[l + i],
                     );
                     binomial::<Z, 4>(
                         &mut c[i * k + inertia..i * k + inertia + 4],
                         &a[i * k + inertia..i * k + inertia + 4],
                         &b[i * k + inertia..i * k + inertia + 4],
-                        Z::TWIDDLES[l + i],
+                        -Z::TWIDDLES[l + i],
                     );
                 }
                 c
