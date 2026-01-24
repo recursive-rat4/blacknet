@@ -119,3 +119,15 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTCo
         }
     }
 }
+
+pub const fn bit_reversal(mut number: usize, bits: usize) -> usize {
+    let mut reversed = 0;
+    let mut i = 0;
+    while i < bits {
+        reversed <<= 1;
+        reversed |= number & 1;
+        number >>= 1;
+        i += 1;
+    }
+    reversed
+}
