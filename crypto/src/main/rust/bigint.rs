@@ -19,8 +19,8 @@ use core::array;
 use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, Rem, Shl, ShlAssign, Shr,
-    ShrAssign, Sub, SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Neg, Rem, Shl,
+    ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use serde::{Deserialize, Serialize};
 
@@ -394,6 +394,13 @@ impl<const N: usize> Div<u64> for BigInt<N> {
     }
 }
 
+impl<const N: usize> DivAssign<u64> for BigInt<N> {
+    #[inline]
+    fn div_assign(&mut self, rps: u64) {
+        *self = *self / rps
+    }
+}
+
 impl<const N: usize> Rem<u64> for BigInt<N> {
     type Output = u64;
 
@@ -488,6 +495,22 @@ impl<const N: usize> ShrAssign<u64> for BigInt<N> {
     #[inline]
     fn shr_assign(&mut self, rps: u64) {
         *self = *self >> rps
+    }
+}
+
+impl<const N: usize> Neg for BigInt<N> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        let mut c: i128 = 0;
+        Self {
+            limbs: array::from_fn(|i| {
+                c -= self.limbs[i] as i128;
+                let n = c as u64;
+                c >>= u64::BITS;
+                n
+            }),
+        }
     }
 }
 
