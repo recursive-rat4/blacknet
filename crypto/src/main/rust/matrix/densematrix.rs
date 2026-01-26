@@ -500,6 +500,33 @@ impl<R: Presemiring> Mul<R> for &DenseMatrix<R> {
     }
 }
 
+impl<R: Presemiring> Mul<DenseVector<R>> for DenseMatrix<R> {
+    type Output = DenseVector<R>;
+
+    #[inline]
+    fn mul(self, rps: DenseVector<R>) -> Self::Output {
+        &self * &rps
+    }
+}
+
+impl<R: Presemiring> Mul<&DenseVector<R>> for DenseMatrix<R> {
+    type Output = DenseVector<R>;
+
+    #[inline]
+    fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+        &self * rps
+    }
+}
+
+impl<R: Presemiring> Mul<DenseVector<R>> for &DenseMatrix<R> {
+    type Output = DenseVector<R>;
+
+    #[inline]
+    fn mul(self, rps: DenseVector<R>) -> Self::Output {
+        self * &rps
+    }
+}
+
 impl<R: Presemiring> Mul<&DenseVector<R>> for &DenseMatrix<R> {
     type Output = DenseVector<R>;
 
@@ -508,6 +535,33 @@ impl<R: Presemiring> Mul<&DenseVector<R>> for &DenseMatrix<R> {
         (0..self.rows())
             .map(|i| (0..self.columns()).map(|j| self[(i, j)] * rps[j]).sum())
             .collect()
+    }
+}
+
+impl<R: Presemiring> Mul<DenseMatrix<R>> for DenseVector<R> {
+    type Output = DenseVector<R>;
+
+    #[inline]
+    fn mul(self, rps: DenseMatrix<R>) -> Self::Output {
+        &self * &rps
+    }
+}
+
+impl<R: Presemiring> Mul<&DenseMatrix<R>> for DenseVector<R> {
+    type Output = DenseVector<R>;
+
+    #[inline]
+    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+        &self * rps
+    }
+}
+
+impl<R: Presemiring> Mul<DenseMatrix<R>> for &DenseVector<R> {
+    type Output = DenseVector<R>;
+
+    #[inline]
+    fn mul(self, rps: DenseMatrix<R>) -> Self::Output {
+        self * &rps
     }
 }
 

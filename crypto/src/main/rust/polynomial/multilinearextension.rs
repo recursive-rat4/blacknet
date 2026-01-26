@@ -89,6 +89,13 @@ impl<R: UnitalRing> From<DenseVector<R>> for MultilinearExtension<R> {
     }
 }
 
+impl<R: UnitalRing> From<MultilinearExtension<R>> for Vec<R> {
+    #[inline]
+    fn from(polynomial: MultilinearExtension<R>) -> Self {
+        polynomial.coefficients
+    }
+}
+
 impl<R: UnitalRing> AsRef<[R]> for MultilinearExtension<R> {
     #[inline]
     fn as_ref(&self) -> &[R] {
