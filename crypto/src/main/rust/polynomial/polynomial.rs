@@ -40,3 +40,15 @@ pub trait MultivariatePolynomial<R: Semiring>: Polynomial<Point = Point<R>> {
     /// The number of indeterminates.
     fn variables(&self) -> usize;
 }
+
+/// A polynomial in certain basis.
+pub trait InBasis<R: Semiring>: Polynomial {
+    /// Basis coordinates of a point.
+    fn basis(&self, point: &Self::Point) -> DenseVector<R>;
+}
+
+/// Tensor structured basis.
+pub trait TensorBasis<R: Semiring>: InBasis<R> {
+    /// Tensor basis coordinates of a point.
+    fn tensor_basis(&self, point: &Self::Point) -> (DenseVector<R>, DenseVector<R>);
+}

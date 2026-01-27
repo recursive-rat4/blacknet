@@ -18,7 +18,9 @@
 use crate::algebra::{Double, Set, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::{DenseMatrix, DenseVector};
-use crate::polynomial::{EqExtension, MultivariatePolynomial, Point, Polynomial};
+use crate::polynomial::{
+    EqExtension, InBasis, MultivariatePolynomial, Point, Polynomial, TensorBasis,
+};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -207,6 +209,25 @@ impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for MultilinearExtensio
 
     fn variables(&self) -> usize {
         self.coefficients.len().trailing_zeros() as usize
+    }
+}
+
+/// In Lagrange basis.
+impl<R: UnitalRing> InBasis<R> for MultilinearExtension<R> {
+    fn basis(&self, point: &Point<R>) -> DenseVector<R> {
+        debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
+        EqExtension::basis(point.coordinates()).into()
+    }
+}
+
+impl<R: UnitalRing> TensorBasis<R> for MultilinearExtension<R> {
+    fn tensor_basis(&self, point: &Point<R>) -> (DenseVector<R>, DenseVector<R>) {
+        debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
+        let (left, right) = point.split_at(point.dimension() >> 1);
+        (
+            EqExtension::basis(left).into(),
+            EqExtension::basis(right).into(),
+        )
     }
 }
 

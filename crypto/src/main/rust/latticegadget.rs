@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, PolynomialRing, Tensor, powers};
+use crate::algebra::{IntegerRing, PolynomialRing, Tensor};
 use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec;
@@ -92,7 +92,16 @@ pub fn matrix<Z: IntegerRing, R: PolynomialRing<Z>>(
     m: usize,
     n: usize,
 ) -> DenseMatrix<R> {
-    let powers = powers::<Z, R>(radix, n);
+    debug_assert!(n >= 2);
+    let mut powers = Vec::<R>::with_capacity(n);
+    powers.push(R::ONE);
+    powers.push(radix.into());
+    let mut power = radix;
+    for _ in 2..n {
+        power *= radix;
+        powers.push(power.into());
+    }
+
     let powers = DenseMatrix::<R>::new(1, n, powers);
     let identity = DenseMatrix::<R>::identity(m);
     identity.tensor(powers)

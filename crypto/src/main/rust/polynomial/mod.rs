@@ -31,5 +31,5 @@ pub use eqextension::EqExtension;
 pub use hypercube::Hypercube;
 pub use multilinearextension::MultilinearExtension;
 pub use point::Point;
-pub use polynomial::{MultivariatePolynomial, Polynomial};
+pub use polynomial::{InBasis, MultivariatePolynomial, Polynomial, TensorBasis};
 pub use univariatepolynomial::UnivariatePolynomial;

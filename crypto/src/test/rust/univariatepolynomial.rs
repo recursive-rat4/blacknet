@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,7 +21,8 @@ use blacknet_crypto::assigner::polynomial::UnivariatePolynomial as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::polynomial::UnivariatePolynomial as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::polynomial::UnivariatePolynomial;
+use blacknet_crypto::matrix::DenseVector;
+use blacknet_crypto::polynomial::{InBasis, TensorBasis, UnivariatePolynomial};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -63,7 +64,7 @@ fn sqr() {
 }
 
 #[test]
-fn plain_evaluate() {
+fn evaluate() {
     let a = UnivariatePolynomial::from([2, 3, 4, 5].map(R::from));
     let b = UnivariatePolynomial::from([2, 3, 4].map(R::from));
     let c = UnivariatePolynomial::from([2, 3].map(R::from));
@@ -78,6 +79,36 @@ fn plain_evaluate() {
     assert_eq!(b.at_0_plus_1(), R::from(11));
     assert_eq!(c.at_0_plus_1(), R::from(7));
     assert_eq!(d.at_0_plus_1(), R::from(4));
+}
+
+#[test]
+fn basis() {
+    let point = R::from(4);
+    let p0 = UnivariatePolynomial::<R>::default();
+    let p1 = UnivariatePolynomial::from([2].map(R::from));
+    let p2 = UnivariatePolynomial::from([2, 3].map(R::from));
+    let p3 = UnivariatePolynomial::from([2, 3, 4].map(R::from));
+    let b0 = DenseVector::<R>::default();
+    let b1 = DenseVector::from([1].map(R::from));
+    let b2 = DenseVector::from([1, 4].map(R::from));
+    let b3 = DenseVector::from([1, 4, 16].map(R::from));
+
+    assert_eq!(p0.basis(&point), b0);
+    assert_eq!(p1.basis(&point), b1);
+    assert_eq!(p2.basis(&point), b2);
+    assert_eq!(p3.basis(&point), b3);
+}
+
+#[test]
+fn tensor_basis() {
+    let point = R::from(2);
+    let p = UnivariatePolynomial::from([1, 1, 1, 1].map(R::from));
+    let l = DenseVector::from([1, 4].map(R::from));
+    let r = DenseVector::from([1, 2].map(R::from));
+    let (left, right) = p.tensor_basis(&point);
+
+    assert_eq!(left, l);
+    assert_eq!(right, r);
 }
 
 #[test]

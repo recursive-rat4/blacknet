@@ -17,7 +17,8 @@
 
 use crate::algebra::{DivisionRing, Double, Semiring, Set, Square, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
-use crate::polynomial::Polynomial;
+use crate::matrix::DenseVector;
+use crate::polynomial::{InBasis, Polynomial, TensorBasis};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -25,7 +26,7 @@ use core::ops::{Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulA
 use serde::{Deserialize, Serialize};
 
 /// A polynomial in one indeterminate.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct UnivariatePolynomial<R: Semiring> {
     coefficients: Vec<R>,
 }
@@ -168,6 +169,60 @@ impl<'a, R: Semiring> IntoIterator for &'a UnivariatePolynomial<R> {
 
 impl<R: Semiring> Polynomial for UnivariatePolynomial<R> {
     type Point = R;
+}
+
+/// In monomial basis.
+impl<R: Semiring> InBasis<R> for UnivariatePolynomial<R> {
+    fn basis(&self, point: &R) -> DenseVector<R> {
+        let n = self.coefficients.len();
+        let mut powers = Vec::<R>::with_capacity(n);
+        if n == 0 {
+            return powers.into();
+        }
+        powers.push(R::ONE);
+        if n == 1 {
+            return powers.into();
+        }
+        let point = *point;
+        powers.push(point);
+        let mut power = point;
+        for _ in 2..n {
+            power *= point;
+            powers.push(power);
+        }
+        powers.into()
+    }
+}
+
+impl<R: Semiring> TensorBasis<R> for UnivariatePolynomial<R> {
+    fn tensor_basis(&self, point: &R) -> (DenseVector<R>, DenseVector<R>) {
+        let n = self.coefficients.len().isqrt();
+        debug_assert!(self.coefficients.len() == n * n);
+        debug_assert!(n > 1);
+        let mut point = *point;
+
+        let mut power = point;
+        let mut right = Vec::<R>::with_capacity(n);
+        right.push(R::ONE);
+        right.push(point);
+        for _ in 2..n {
+            power *= point;
+            right.push(power);
+        }
+
+        point *= power;
+        power = point;
+
+        let mut left = Vec::<R>::with_capacity(n);
+        left.push(R::ONE);
+        left.push(point);
+        for _ in 2..n {
+            power *= point;
+            left.push(power);
+        }
+
+        (left.into(), right.into())
+    }
 }
 
 impl<R: Semiring> Add for UnivariatePolynomial<R> {

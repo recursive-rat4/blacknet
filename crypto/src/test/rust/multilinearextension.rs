@@ -18,7 +18,9 @@
 use blacknet_crypto::algebra::Double;
 use blacknet_crypto::algebra::FreeModule;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
-use blacknet_crypto::polynomial::{Hypercube, MultilinearExtension, MultivariatePolynomial};
+use blacknet_crypto::polynomial::{
+    Hypercube, InBasis, MultilinearExtension, MultivariatePolynomial, Point, TensorBasis,
+};
 use core::iter::zip;
 
 type R = blacknet_crypto::pervushin::PervushinField;
@@ -142,4 +144,25 @@ fn module() {
     let mle = MultilinearExtension::from_iter(a);
     zip(hc.iter_index(), hc.iter_vertex())
         .for_each(|(index, b)| assert_eq!(mle.point(&b), a[index]));
+}
+
+#[test]
+fn basis() {
+    let point = Point::from([0, 1].map(R::from));
+    let mle = MultilinearExtension::from([3, 4, 5, 6].map(R::from));
+    let basis = DenseVector::from([0, 1, 0, 0].map(R::from));
+
+    assert_eq!(mle.basis(&point), basis);
+}
+
+#[test]
+fn tensor_basis() {
+    let point = Point::from([1, 0, 0].map(R::from));
+    let mle = MultilinearExtension::from([0, 1, 2, 3, 4, 5, 6, 7].map(R::from));
+    let l = DenseVector::from([0, 1].map(R::from));
+    let r = DenseVector::from([1, 0, 0, 0].map(R::from));
+    let (left, right) = mle.tensor_basis(&point);
+
+    assert_eq!(left, l);
+    assert_eq!(right, r);
 }
