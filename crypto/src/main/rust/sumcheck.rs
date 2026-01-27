@@ -17,7 +17,7 @@
 
 use crate::algebra::UnitalRing;
 use crate::duplex::Duplex;
-use crate::polynomial::{Point, Polynomial, UnivariatePolynomial, interpolation::*};
+use crate::polynomial::{MultivariatePolynomial, Point, UnivariatePolynomial, interpolation::*};
 use crate::random::Distribution;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
@@ -55,7 +55,12 @@ impl<'a, R: UnitalRing> IntoIterator for &'a Proof<R> {
     }
 }
 
-pub struct SumCheck<R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distribution<D, Output = R>> {
+pub struct SumCheck<
+    R: UnitalRing,
+    P: MultivariatePolynomial<R>,
+    D: Duplex<R>,
+    E: Distribution<D, Output = R>,
+> {
     phantom_r: PhantomData<R>,
     phantom_p: PhantomData<P>,
     phantom_d: PhantomData<D>,
@@ -64,7 +69,7 @@ pub struct SumCheck<R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distributi
 
 impl<
     R: UnitalRing + InterpolationConsts + Eq + Send + Sync,
-    P: Polynomial<R> + Send + Sync,
+    P: MultivariatePolynomial<R> + Send + Sync,
     D: Duplex<R>,
     E: Distribution<D, Output = R>,
 > SumCheck<R, P, D, E>

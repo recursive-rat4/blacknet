@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-//! Polynomial is an  expression of indeterminates and coefficients.
+//! Polynomials for proof systems.
 
 mod binaritypolynomial;
 mod eqextension;
@@ -31,5 +31,5 @@ pub use eqextension::EqExtension;
 pub use hypercube::Hypercube;
 pub use multilinearextension::MultilinearExtension;
 pub use point::Point;
-pub use polynomial::Polynomial;
+pub use polynomial::{MultivariatePolynomial, Polynomial};
 pub use univariatepolynomial::UnivariatePolynomial;

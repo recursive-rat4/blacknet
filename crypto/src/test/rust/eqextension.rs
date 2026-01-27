@@ -21,7 +21,7 @@ use blacknet_crypto::assigner::polynomial::EqExtension as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::polynomial::{EqExtension as Circuit, Point as PointCircuit};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::polynomial::{EqExtension, Hypercube, Point, Polynomial};
+use blacknet_crypto::polynomial::{EqExtension, Hypercube, MultivariatePolynomial, Point};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 

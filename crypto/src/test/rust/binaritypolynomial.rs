@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::Zero;
-use blacknet_crypto::polynomial::{BinarityPolynomial, Hypercube, Polynomial};
+use blacknet_crypto::polynomial::{BinarityPolynomial, Hypercube, MultivariatePolynomial};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 

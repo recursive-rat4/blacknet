@@ -18,7 +18,7 @@
 use crate::algebra::{Double, Set, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::{DenseMatrix, DenseVector};
-use crate::polynomial::{EqExtension, Point, Polynomial};
+use crate::polynomial::{EqExtension, MultivariatePolynomial, Point, Polynomial};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -156,7 +156,11 @@ impl<R: UnitalRing> IndexMut<usize> for MultilinearExtension<R> {
     }
 }
 
-impl<R: UnitalRing + From<u8>> Polynomial<R> for MultilinearExtension<R> {
+impl<R: UnitalRing> Polynomial for MultilinearExtension<R> {
+    type Point = Point<R>;
+}
+
+impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for MultilinearExtension<R> {
     fn bind(&mut self, e: R) {
         let new_len = self.coefficients.len() >> 1;
         let (left, right) = self.coefficients.split_at_mut(new_len);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,7 +18,7 @@
 use crate::algebra::Square;
 use crate::algebra::UnitalRing;
 use crate::matrix::DenseVector;
-use crate::polynomial::{MultilinearExtension, Point, Polynomial};
+use crate::polynomial::{MultilinearExtension, MultivariatePolynomial, Point, Polynomial};
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
@@ -60,7 +60,11 @@ impl<R: UnitalRing> From<DenseVector<R>> for BinarityPolynomial<R> {
     }
 }
 
-impl<R: UnitalRing + From<u8>> Polynomial<R> for BinarityPolynomial<R> {
+impl<R: UnitalRing> Polynomial for BinarityPolynomial<R> {
+    type Point = Point<R>;
+}
+
+impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for BinarityPolynomial<R> {
     fn bind(&mut self, e: R) {
         self.coefficients.bind(e);
     }

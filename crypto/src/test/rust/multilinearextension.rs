@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,7 +18,7 @@
 use blacknet_crypto::algebra::Double;
 use blacknet_crypto::algebra::FreeModule;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
-use blacknet_crypto::polynomial::{Hypercube, MultilinearExtension, Polynomial};
+use blacknet_crypto::polynomial::{Hypercube, MultilinearExtension, MultivariatePolynomial};
 use core::iter::zip;
 
 type R = blacknet_crypto::pervushin::PervushinField;

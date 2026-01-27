@@ -20,7 +20,7 @@ use crate::assigner::assigment::Assigment;
 use crate::assigner::polynomial::UnivariatePolynomial;
 use crate::assigner::random::Distribution;
 use crate::duplex::Duplex;
-use crate::polynomial::{Point, Polynomial};
+use crate::polynomial::{MultivariatePolynomial, Point};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
@@ -37,7 +37,7 @@ impl<'a, R: UnitalRing> From<Vec<UnivariatePolynomial<'a, R>>> for Proof<'a, R> 
 pub struct SumCheck<
     'a,
     R: UnitalRing,
-    P: Polynomial<R>,
+    P: MultivariatePolynomial<R>,
     D: Duplex<R>,
     E: Distribution<'a, R, D, Output = R>,
 > {
@@ -47,8 +47,13 @@ pub struct SumCheck<
     phantom_e: PhantomData<E>,
 }
 
-impl<'a, R: UnitalRing, P: Polynomial<R>, D: Duplex<R>, E: Distribution<'a, R, D, Output = R>>
-    SumCheck<'a, R, P, D, E>
+impl<
+    'a,
+    R: UnitalRing,
+    P: MultivariatePolynomial<R>,
+    D: Duplex<R>,
+    E: Distribution<'a, R, D, Output = R>,
+> SumCheck<'a, R, P, D, E>
 {
     pub const fn new(assigment: &'a Assigment<R>) -> Self {
         Self {

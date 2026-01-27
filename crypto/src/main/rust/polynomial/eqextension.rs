@@ -18,7 +18,7 @@
 use crate::algebra::{Double, Set, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
-use crate::polynomial::{Point, Polynomial};
+use crate::polynomial::{MultivariatePolynomial, Point, Polynomial};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -84,7 +84,11 @@ impl<R: UnitalRing> From<Vec<R>> for EqExtension<R> {
     }
 }
 
-impl<R: UnitalRing + From<u8>> Polynomial<R> for EqExtension<R> {
+impl<R: UnitalRing> Polynomial for EqExtension<R> {
+    type Point = Point<R>;
+}
+
+impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for EqExtension<R> {
     fn bind(&mut self, e: R) {
         self.z *= (self.coefficients[0] * e).double() - self.coefficients[0] - e + R::ONE;
         self.coefficients.remove(0);

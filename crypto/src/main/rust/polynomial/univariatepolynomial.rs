@@ -17,12 +17,14 @@
 
 use crate::algebra::{DivisionRing, Double, Semiring, Set, Square, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
+use crate::polynomial::Polynomial;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg};
 use serde::{Deserialize, Serialize};
 
+/// A polynomial in one indeterminate.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct UnivariatePolynomial<R: Semiring> {
     coefficients: Vec<R>,
@@ -162,6 +164,10 @@ impl<'a, R: Semiring> IntoIterator for &'a UnivariatePolynomial<R> {
     fn into_iter(self) -> Self::IntoIter {
         self.coefficients.iter()
     }
+}
+
+impl<R: Semiring> Polynomial for UnivariatePolynomial<R> {
+    type Point = R;
 }
 
 impl<R: Semiring> Add for UnivariatePolynomial<R> {

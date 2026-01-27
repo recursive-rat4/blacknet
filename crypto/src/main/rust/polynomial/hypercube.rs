@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::Semiring;
-use crate::polynomial::{Point, Polynomial};
+use crate::polynomial::{MultivariatePolynomial, Point};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
@@ -65,7 +65,7 @@ impl<R: Semiring> Hypercube<R> {
     }
 
     /// Sum a polynomial over a unit hypercube.
-    pub fn sum<P: Polynomial<R>>(polynomial: &P) -> R {
+    pub fn sum<P: MultivariatePolynomial<R>>(polynomial: &P) -> R {
         Hypercube::new(polynomial.variables())
             .iter_vertex()
             .map(|vertex| polynomial.point(&vertex))

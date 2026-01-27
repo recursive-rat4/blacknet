@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,12 +19,24 @@ use crate::algebra::Semiring;
 use crate::matrix::DenseVector;
 use crate::polynomial::Point;
 
-pub trait Polynomial<R: Semiring> {
-    fn bind(&mut self, e: R);
+/// Polynomial is an expression of indeterminates and coefficients with a finite number of terms.
+pub trait Polynomial {
+    /// Type of points at which the polynomial can be evaluated.
+    type Point;
+}
 
-    fn point(&self, point: &Point<R>) -> R;
+/// A polynomial in many indeterminates.
+pub trait MultivariatePolynomial<R: Semiring>: Polynomial<Point = Point<R>> {
+    /// Substitute an indeterminate for the given value.
+    fn bind(&mut self, value: R);
+
+    /// Evaluate at a point.
+    fn point(&self, point: &Self::Point) -> R;
+    /// Evaluate over the unit hypercube with one indeterminate substituted for a small value.
     fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R>;
 
+    /// The individual degree.
     fn degree(&self) -> usize;
+    /// The number of indeterminates.
     fn variables(&self) -> usize;
 }
