@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
-use crate::algebra::Semiring;
+use crate::algebra::{Double, Semiring};
 use crate::assigner::assigment::Assigment;
 use crate::duplex::{Absorb, Duplex};
 use alloc::vec::Vec;
@@ -38,6 +37,9 @@ impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
 
     pub fn evaluate(&self, point: R) -> R {
         // Horner method
+        if self.coefficients.is_empty() {
+            return R::ZERO;
+        }
         let mut accum = self.coefficients[self.coefficients.len() - 1];
         for i in (0..self.coefficients.len() - 1).rev() {
             let ap = accum * point;
@@ -48,6 +50,9 @@ impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
     }
 
     pub fn at_0_plus_1(&self) -> R {
+        if self.coefficients.is_empty() {
+            return R::ZERO;
+        }
         self.coefficients
             .iter()
             .copied()

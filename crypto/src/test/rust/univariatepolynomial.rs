@@ -16,7 +16,7 @@
  */
 
 use blacknet_compat::assert_ok;
-use blacknet_crypto::algebra::{Double, Square};
+use blacknet_crypto::algebra::{Double, Square, Zero};
 use blacknet_crypto::assigner::polynomial::UnivariatePolynomial as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::polynomial::UnivariatePolynomial as Circuit;
@@ -69,16 +69,19 @@ fn evaluate() {
     let b = UnivariatePolynomial::from([2, 3, 4].map(R::from));
     let c = UnivariatePolynomial::from([2, 3].map(R::from));
     let d = UnivariatePolynomial::from([2].map(R::from));
+    let e = UnivariatePolynomial::<R>::default();
 
     assert_eq!(a.evaluate(R::from(4)), R::from(398));
     assert_eq!(b.evaluate(R::from(4)), R::from(78));
     assert_eq!(c.evaluate(R::from(4)), R::from(14));
     assert_eq!(d.evaluate(R::from(4)), R::from(2));
+    assert_eq!(e.evaluate(R::from(4)), R::ZERO);
 
     assert_eq!(a.at_0_plus_1(), R::from(16));
     assert_eq!(b.at_0_plus_1(), R::from(11));
     assert_eq!(c.at_0_plus_1(), R::from(7));
     assert_eq!(d.at_0_plus_1(), R::from(4));
+    assert_eq!(e.at_0_plus_1(), R::ZERO);
 }
 
 #[test]

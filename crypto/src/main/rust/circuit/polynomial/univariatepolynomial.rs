@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -39,6 +39,9 @@ impl<'a, 'b, R: Semiring + Eq> UnivariatePolynomial<'a, 'b, R> {
     }
 
     pub fn evaluate(&self, point: &LinearCombination<R>) -> LinearCombination<R> {
+        if self.coefficients.is_empty() {
+            return LinearCombination::new();
+        }
         let scope = self.circuit.scope("UnivariatePolynomial::evaluate");
         // Horner method
         let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
@@ -51,6 +54,9 @@ impl<'a, 'b, R: Semiring + Eq> UnivariatePolynomial<'a, 'b, R> {
     }
 
     pub fn at_0_plus_1(&self) -> LinearCombination<R> {
+        if self.coefficients.is_empty() {
+            return LinearCombination::new();
+        }
         self.coefficients
             .iter()
             .fold(self.coefficients[0].clone(), Add::add)

@@ -33,6 +33,9 @@ pub struct UnivariatePolynomial<R: Semiring> {
 
 impl<R: Semiring> UnivariatePolynomial<R> {
     pub fn evaluate(&self, point: R) -> R {
+        if self.coefficients.is_empty() {
+            return R::ZERO;
+        }
         let mut sigma = self.coefficients[0];
         let mut power = point;
         for i in 1..self.coefficients.len() - 1 {
@@ -46,6 +49,9 @@ impl<R: Semiring> UnivariatePolynomial<R> {
     }
 
     pub fn at_0_plus_1(&self) -> R {
+        if self.coefficients.is_empty() {
+            return R::ZERO;
+        }
         self.coefficients
             .iter()
             .copied()
