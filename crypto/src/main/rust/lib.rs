@@ -28,6 +28,7 @@ pub mod assigner;
 pub mod bigint;
 pub mod chacha;
 pub mod circuit;
+pub mod commitmentscheme;
 pub mod compressionfunction;
 pub mod constraintsystem;
 pub mod convolution;

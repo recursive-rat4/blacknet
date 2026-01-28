@@ -17,7 +17,11 @@
 
 use blacknet_crypto::ajtaicommitment::AjtaiCommitment;
 use blacknet_crypto::algebra::IntegerRing;
+use blacknet_crypto::commitmentscheme::CommitmentScheme;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
+#[cfg(feature = "std")]
+use blacknet_crypto::norm::L2;
+use blacknet_crypto::norm::{LInf, NormBound};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 
@@ -35,11 +39,13 @@ fn test() {
         .map(Z::new)
         .into(),
     );
-    let cs = AjtaiCommitment::new(setup);
     //RUST currently requires std for sqrt, https://github.com/rust-lang/rust/issues/137578
     #[cfg(feature = "std")]
-    let b_ecd = 7.22;
-    let b_inf = 8;
+    let b_ecd = NormBound::<L2, f64>::new(7.22);
+    let b_inf = NormBound::<LInf, <Z as IntegerRing>::Int>::new(8);
+    #[cfg(feature = "std")]
+    let cs_ecd = AjtaiCommitment::new(setup.clone(), b_ecd);
+    let cs_inf = AjtaiCommitment::new(setup, b_inf);
     let z1 = Z::new(1);
     let z2 = Z::new(2);
     let z3 = Z::new(3);
@@ -47,29 +53,26 @@ fn test() {
     let m12 = DenseVector::from([z1, z2]);
     let m21 = DenseVector::from([z2, z1]);
     let m34 = DenseVector::from([z3, z4]);
-    let c12 = cs.commit_dense(&m12);
-    let c34 = cs.commit_dense(&m34);
+    let c12 = cs_inf.commit(&m12, &());
+    let c34 = cs_inf.commit(&m34, &());
 
-    assert!(cs.open_dense_linf(&c12, &m12, &b_inf), "Opening");
-    assert!(!cs.open_dense_linf(&c34, &m12, &b_inf), "Binding");
+    assert!(cs_inf.open(&c12, &m12, &()), "Opening");
+    assert!(!cs_inf.open(&c34, &m12, &()), "Binding");
+    assert!(!cs_inf.open(&c12, &m21, &()), "Positional binding");
     assert!(
-        !cs.open_dense_linf(&c12, &m21, &b_inf),
-        "Positional binding"
-    );
-    assert!(
-        cs.open_dense_linf(&(&c12 + &c34), &(&m12 + &m34), &b_inf),
+        cs_inf.open(&(&c12 + &c34), &(&m12 + &m34), &()),
         "Homomorphism"
     );
 
     #[cfg(feature = "std")]
-    assert!(cs.open_dense_l2(&c12, &m12, b_ecd), "Opening");
+    assert!(cs_ecd.open(&c12, &m12, &()), "Opening");
     #[cfg(feature = "std")]
-    assert!(!cs.open_dense_l2(&c34, &m12, b_ecd), "Binding");
+    assert!(!cs_ecd.open(&c34, &m12, &()), "Binding");
     #[cfg(feature = "std")]
-    assert!(!cs.open_dense_l2(&c12, &m21, b_ecd), "Positional binding");
+    assert!(!cs_ecd.open(&c12, &m21, &()), "Positional binding");
     #[cfg(feature = "std")]
     assert!(
-        cs.open_dense_l2(&(&c12 + &c34), &(&m12 + &m34), b_ecd),
+        cs_ecd.open(&(&c12 + &c34), &(&m12 + &m34), &()),
         "Homomorphism"
     );
 }

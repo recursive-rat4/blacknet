@@ -16,21 +16,30 @@
  */
 
 use crate::algebra::{IntegerRing, PolynomialRing, UnitalRing};
+use crate::commitmentscheme::CommitmentScheme;
 use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
-use crate::norm::{EuclideanNorm, InfinityNorm};
+#[cfg(feature = "std")]
+use crate::norm::{EuclideanNorm, L2};
+use crate::norm::{InfinityNorm, LInf, NormBound};
 use crate::random::UniformGenerator;
 
 // https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
 
 /// Ajtai commitment scheme
-pub struct AjtaiCommitment<R: UnitalRing> {
+pub struct AjtaiCommitment<R: UnitalRing, Lp, Length> {
     a: DenseMatrix<R>,
+    norm_bound: NormBound<Lp, Length>,
 }
 
-impl<R: UnitalRing> AjtaiCommitment<R> {
-    /// Construct with given setup.
-    pub const fn new(a: DenseMatrix<R>) -> Self {
-        Self { a }
+impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
+    /// Construct with given setup and norm bound.
+    pub const fn new(a: DenseMatrix<R>, norm_bound: NormBound<Lp, Length>) -> Self {
+        Self { a, norm_bound }
+    }
+
+    /// Set another norm bound.
+    pub fn set_norm_bound(&mut self, norm_bound: NormBound<Lp, Length>) {
+        self.norm_bound = norm_bound;
     }
 
     /// Short Integer Solution
@@ -64,57 +73,67 @@ impl<R: UnitalRing> AjtaiCommitment<R> {
             (0..rows * columns).map(|_| g.generate()).collect(),
         )
     }
-
-    /// Commit a dense message.
-    pub fn commit_dense(&self, m: &DenseVector<R>) -> DenseVector<R> {
-        &self.a * m
-    }
-
-    /// Commit a sparse message.
-    pub fn commit_sparse(&self, m: &SparseVector<R>) -> DenseVector<R> {
-        &self.a * m
-    }
 }
 
 //RUST currently requires std for sqrt, https://github.com/rust-lang/rust/issues/137578
-impl<R: UnitalRing + Eq + EuclideanNorm> AjtaiCommitment<R> {
-    /// Open commitment under Euclidean norm bound.
-    #[cfg(feature = "std")]
-    pub fn open_dense_l2(&self, c: &DenseVector<R>, m: &DenseVector<R>, bound: f64) -> bool {
-        m.euclidean_norm() < bound && &self.a * m == *c
+#[cfg(feature = "std")]
+impl<R: UnitalRing + EuclideanNorm + Eq> CommitmentScheme<DenseVector<R>>
+    for AjtaiCommitment<R, L2, f64>
+{
+    type Commitment = DenseVector<R>;
+    type Randomness = ();
+
+    fn commit(&self, m: &DenseVector<R>, _r: &()) -> DenseVector<R> {
+        &self.a * m
     }
 
-    /// Open commitment under Euclidean norm bound.
-    #[cfg(feature = "std")]
-    pub fn open_sparse_l2(&self, c: &DenseVector<R>, m: &SparseVector<R>, bound: f64) -> bool {
-        m.euclidean_norm() < bound && &self.a * m == *c
+    fn open(&self, c: &DenseVector<R>, m: &DenseVector<R>, _r: &()) -> bool {
+        self.norm_bound.check(m) && &self.a * m == *c
     }
 }
 
-impl<R: UnitalRing + Eq> AjtaiCommitment<R> {
-    /// Open commitment under infinity norm bound.
-    pub fn open_dense_linf<Length: Ord>(
-        &self,
-        c: &DenseVector<R>,
-        m: &DenseVector<R>,
-        bound: &Length,
-    ) -> bool
-    where
-        R: InfinityNorm<Length>,
-    {
-        m.check_infinity_norm(bound) && &self.a * m == *c
+#[cfg(feature = "std")]
+impl<R: UnitalRing + EuclideanNorm + Eq> CommitmentScheme<SparseVector<R>>
+    for AjtaiCommitment<R, L2, f64>
+{
+    type Commitment = DenseVector<R>;
+    type Randomness = ();
+
+    fn commit(&self, m: &SparseVector<R>, _r: &()) -> DenseVector<R> {
+        &self.a * m
     }
 
-    /// Open commitment under infinity norm bound.
-    pub fn open_sparse_linf<Length: Ord>(
-        &self,
-        c: &DenseVector<R>,
-        m: &SparseVector<R>,
-        bound: &Length,
-    ) -> bool
-    where
-        R: InfinityNorm<Length>,
-    {
-        m.check_infinity_norm(bound) && &self.a * m == *c
+    fn open(&self, c: &DenseVector<R>, m: &SparseVector<R>, _r: &()) -> bool {
+        self.norm_bound.check(m) && &self.a * m == *c
+    }
+}
+
+impl<R: UnitalRing + InfinityNorm<Length> + Eq, Length: Ord> CommitmentScheme<DenseVector<R>>
+    for AjtaiCommitment<R, LInf, Length>
+{
+    type Commitment = DenseVector<R>;
+    type Randomness = ();
+
+    fn commit(&self, m: &DenseVector<R>, _r: &()) -> DenseVector<R> {
+        &self.a * m
+    }
+
+    fn open(&self, c: &DenseVector<R>, m: &DenseVector<R>, _r: &()) -> bool {
+        self.norm_bound.check(m) && &self.a * m == *c
+    }
+}
+
+impl<R: UnitalRing + InfinityNorm<Length> + Eq, Length: Ord> CommitmentScheme<SparseVector<R>>
+    for AjtaiCommitment<R, LInf, Length>
+{
+    type Commitment = DenseVector<R>;
+    type Randomness = ();
+
+    fn commit(&self, m: &SparseVector<R>, _r: &()) -> DenseVector<R> {
+        &self.a * m
+    }
+
+    fn open(&self, c: &DenseVector<R>, m: &SparseVector<R>, _r: &()) -> bool {
+        self.norm_bound.check(m) && &self.a * m == *c
     }
 }

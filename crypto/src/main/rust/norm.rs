@@ -22,6 +22,41 @@ use crate::convolution::Convolution;
 use crate::float::FloatOn;
 use crate::matrix::{DenseMatrix, DenseVector, SparseMatrix, SparseVector};
 use crate::numbertheoretictransform::Twiddles;
+use core::marker::PhantomData;
+
+pub enum L2 {}
+pub enum LInf {}
+
+pub struct NormBound<Lp, Length> {
+    bound: Length,
+    phantom: PhantomData<Lp>,
+}
+
+impl NormBound<L2, f64> {
+    pub const fn new(bound: f64) -> Self {
+        Self {
+            bound,
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn check<Object: EuclideanNorm>(&self, object: &Object) -> bool {
+        object.euclidean_norm() < self.bound
+    }
+}
+
+impl<Length: Ord> NormBound<LInf, Length> {
+    pub const fn new(bound: Length) -> Self {
+        Self {
+            bound,
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn check<Object: InfinityNorm<Length>>(&self, object: &Object) -> bool {
+        object.check_infinity_norm(&self.bound)
+    }
+}
 
 pub trait EuclideanNorm {
     fn euclidean_norm(&self) -> f64;
@@ -98,7 +133,7 @@ pub trait InfinityNorm<Length: Ord> {
 
 impl<Z: IntegerRing> InfinityNorm<Z::Int> for Z {
     fn check_infinity_norm(&self, bound: &Z::Int) -> bool {
-        &self.absolute() < bound
+        self.absolute() < *bound
     }
 
     fn infinity_norm(&self) -> Z::Int {
