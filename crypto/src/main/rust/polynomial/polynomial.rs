@@ -32,8 +32,8 @@ pub trait MultivariatePolynomial<R: Semiring>: Polynomial<Point = Point<R>> {
 
     /// Evaluate at a point.
     fn point(&self, point: &Self::Point) -> R;
-    /// Evaluate over the unit hypercube with one indeterminate substituted for a small value.
-    fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R>;
+    /// Sum over the unit hypercube with one indeterminate substituted for a small value.
+    fn sum_with_var<const VAL: i8>(&self) -> R;
 
     /// The individual degree.
     fn degree(&self) -> usize;

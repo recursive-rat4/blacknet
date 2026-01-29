@@ -48,6 +48,31 @@ impl<R: UnitalRing> EqExtension<R> {
         Self::evaluate(&self.coefficients, self.z).into()
     }
 
+    pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R>
+    where
+        R: From<u8>,
+    {
+        let z = self.z_with_var::<VAL>();
+        Self::evaluate(&self.coefficients[1..], z).into()
+    }
+
+    #[rustfmt::skip]
+    fn z_with_var<const VAL: i8>(&self) -> R
+    where
+        R: From<u8>,
+    {
+        match VAL {
+            -2 => self.z * (R::from(3) - self.coefficients[0] - self.coefficients[0].double().double()),
+            -1 => self.z * (R::from(2) - self.coefficients[0] - self.coefficients[0].double()),
+            0 => self.z * (R::ONE - self.coefficients[0]),
+            1 => self.z * self.coefficients[0],
+            2 => self.z * (self.coefficients[0].double() + self.coefficients[0] - R::ONE),
+            3 => self.z * (self.coefficients[0].double().double() + self.coefficients[0] - R::from(2)),
+            4 => self.z * (self.coefficients[0].double().double().double() - self.coefficients[0] - R::from(3)),
+            _ => unimplemented!("z_with_var for val = {VAL}"),
+        }
+    }
+
     fn evaluate(coefficients: &[R], z: R) -> Vec<R> {
         let mut r = vec![R::ZERO; 1 << coefficients.len()];
         r[0] = z;
@@ -102,19 +127,8 @@ impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for EqExtension<R> {
                 .product::<R>()
     }
 
-    #[rustfmt::skip]
-    fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
-        let z = match VAL {
-            -2 => self.z * (R::from(3) - self.coefficients[0] - self.coefficients[0].double().double()),
-            -1 => self.z * (R::from(2) - self.coefficients[0] - self.coefficients[0].double()),
-            0 => self.z * (R::ONE - self.coefficients[0]),
-            1 => self.z * self.coefficients[0],
-            2 => self.z * (self.coefficients[0].double() + self.coefficients[0] - R::ONE),
-            3 => self.z * (self.coefficients[0].double().double() + self.coefficients[0] - R::from(2)),
-            4 => self.z * (self.coefficients[0].double().double().double() - self.coefficients[0] - R::from(3)),
-            _ => unimplemented!("hypercube_with_var for val = {VAL}"),
-        };
-        Self::evaluate(&self.coefficients[1..], z).into()
+    fn sum_with_var<const VAL: i8>(&self) -> R {
+        self.z_with_var::<VAL>()
     }
 
     fn degree(&self) -> usize {

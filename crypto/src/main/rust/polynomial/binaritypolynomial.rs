@@ -34,6 +34,11 @@ impl<R: UnitalRing> BinarityPolynomial<R> {
     pub const fn new(coefficients: MultilinearExtension<R>) -> Self {
         Self { coefficients }
     }
+
+    pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
+        let t = self.coefficients.hypercube_with_var::<VAL>();
+        (&t).square() - t
+    }
 }
 
 impl<R: UnitalRing, const N: usize> From<[R; N]> for BinarityPolynomial<R> {
@@ -64,7 +69,7 @@ impl<R: UnitalRing> Polynomial for BinarityPolynomial<R> {
     type Point = Point<R>;
 }
 
-impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for BinarityPolynomial<R> {
+impl<R: UnitalRing> MultivariatePolynomial<R> for BinarityPolynomial<R> {
     fn bind(&mut self, e: R) {
         self.coefficients.bind(e);
     }
@@ -74,9 +79,9 @@ impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for BinarityPolynomial<
         t.square() - t
     }
 
-    fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
-        let t = self.coefficients.hypercube_with_var::<VAL>();
-        (&t).square() - t
+    fn sum_with_var<const VAL: i8>(&self) -> R {
+        let t = self.hypercube_with_var::<VAL>();
+        t.into_iter().sum()
     }
 
     fn degree(&self) -> usize {

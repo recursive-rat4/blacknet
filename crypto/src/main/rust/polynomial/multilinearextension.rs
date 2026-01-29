@@ -43,6 +43,31 @@ impl<R: UnitalRing> MultilinearExtension<R> {
     pub const fn coefficients(&self) -> &Vec<R> {
         &self.coefficients
     }
+
+    pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
+        let (left, right) = self.coefficients.split_at(self.coefficients.len() >> 1);
+        match VAL {
+            -2 => zip(left, right)
+                .map(|(&l, &r)| l + l.double() - r.double())
+                .collect::<Vec<R>>(),
+            -1 => zip(left, right)
+                .map(|(&l, &r)| l.double() - r)
+                .collect::<Vec<R>>(),
+            0 => left.to_vec(),
+            1 => right.to_vec(),
+            2 => zip(left, right)
+                .map(|(&l, &r)| r.double() - l)
+                .collect::<Vec<R>>(),
+            3 => zip(left, right)
+                .map(|(&l, &r)| r + r.double() - l.double())
+                .collect::<Vec<R>>(),
+            4 => zip(left, right)
+                .map(|(&l, &r)| r.double().double() - l.double() - l)
+                .collect::<Vec<R>>(),
+            _ => unimplemented!("hypercube_with_var for val = {VAL}"),
+        }
+        .into()
+    }
 }
 
 impl<R: UnitalRing, const N: usize> From<[R; N]> for MultilinearExtension<R> {
@@ -162,7 +187,7 @@ impl<R: UnitalRing> Polynomial for MultilinearExtension<R> {
     type Point = Point<R>;
 }
 
-impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for MultilinearExtension<R> {
+impl<R: UnitalRing> MultivariatePolynomial<R> for MultilinearExtension<R> {
     fn bind(&mut self, e: R) {
         let new_len = self.coefficients.len() >> 1;
         let (left, right) = self.coefficients.split_at_mut(new_len);
@@ -178,29 +203,24 @@ impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for MultilinearExtensio
             .sum()
     }
 
-    fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
+    fn sum_with_var<const VAL: i8>(&self) -> R {
         let (left, right) = self.coefficients.split_at(self.coefficients.len() >> 1);
         match VAL {
             -2 => zip(left, right)
                 .map(|(&l, &r)| l + l.double() - r.double())
-                .collect::<Vec<R>>(),
-            -1 => zip(left, right)
-                .map(|(&l, &r)| l.double() - r)
-                .collect::<Vec<R>>(),
-            0 => left.to_vec(),
-            1 => right.to_vec(),
-            2 => zip(left, right)
-                .map(|(&l, &r)| r.double() - l)
-                .collect::<Vec<R>>(),
+                .sum::<R>(),
+            -1 => zip(left, right).map(|(&l, &r)| l.double() - r).sum::<R>(),
+            0 => left.iter().sum::<R>(),
+            1 => right.iter().sum::<R>(),
+            2 => zip(left, right).map(|(&l, &r)| r.double() - l).sum::<R>(),
             3 => zip(left, right)
                 .map(|(&l, &r)| r + r.double() - l.double())
-                .collect::<Vec<R>>(),
+                .sum::<R>(),
             4 => zip(left, right)
                 .map(|(&l, &r)| r.double().double() - l.double() - l)
-                .collect::<Vec<R>>(),
-            _ => unimplemented!("hypercube_with_var for val = {VAL}"),
+                .sum::<R>(),
+            _ => unimplemented!("sum_with_var for val = {VAL}"),
         }
-        .into()
     }
 
     fn degree(&self) -> usize {
