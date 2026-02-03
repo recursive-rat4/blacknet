@@ -19,7 +19,7 @@ use crate::algebra::{
     FreeModule, IntegerRing, MatrixRing, NTTRing, PolynomialRing, Ring, UnitalRing, UnivariateRing,
 };
 use crate::convolution::Convolution;
-use crate::float::FloatOn;
+use crate::float::Cast;
 use crate::matrix::{DenseMatrix, DenseVector, SparseMatrix, SparseVector};
 use crate::numbertheoretictransform::Twiddles;
 use core::marker::PhantomData;
@@ -62,9 +62,9 @@ pub trait EuclideanNorm {
     fn euclidean_norm(&self) -> f64;
 }
 
-impl<Z: IntegerRing<Int: FloatOn<f64>>> EuclideanNorm for Z {
+impl<Z: IntegerRing<Int: Cast<f64>>> EuclideanNorm for Z {
     fn euclidean_norm(&self) -> f64 {
-        self.absolute().float_on()
+        self.absolute().cast()
     }
 }
 

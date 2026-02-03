@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::integer::{Integer, UnsignedInteger};
 use core::ops::{Add, Div, Mul, Sub};
 
 #[rustfmt::skip]
@@ -26,151 +25,75 @@ pub trait Float
     + Mul<Output = Self>
     + Div<Output = Self>
 {
-    type FromBits: UnsignedInteger;
+    type Bits;
 
-    fn from_bits(v: Self::FromBits) -> Self;
+    fn from_bits(v: Self::Bits) -> Self;
+    fn recip(self) -> Self;
+    fn to_bits(self) -> Self::Bits;
 
     const MANTISSA_DIGITS: u32;
-
-    const ONE: Self;
 }
 
 impl Float for f32 {
-    type FromBits = u32;
+    type Bits = u32;
 
-    fn from_bits(v: Self::FromBits) -> Self {
+    #[inline]
+    fn from_bits(v: Self::Bits) -> Self {
         Self::from_bits(v)
+    }
+    #[inline]
+    fn recip(self) -> Self {
+        self.recip()
+    }
+    #[inline]
+    fn to_bits(self) -> Self::Bits {
+        self.to_bits()
     }
 
     const MANTISSA_DIGITS: u32 = Self::MANTISSA_DIGITS;
-
-    const ONE: Self = 1.0;
 }
 
 impl Float for f64 {
-    type FromBits = u64;
+    type Bits = u64;
 
-    fn from_bits(v: Self::FromBits) -> Self {
+    #[inline]
+    fn from_bits(v: Self::Bits) -> Self {
         Self::from_bits(v)
+    }
+    #[inline]
+    fn recip(self) -> Self {
+        self.recip()
+    }
+    #[inline]
+    fn to_bits(self) -> Self::Bits {
+        self.to_bits()
     }
 
     const MANTISSA_DIGITS: u32 = Self::MANTISSA_DIGITS;
-
-    const ONE: Self = 1.0;
 }
 
-pub trait FloatOn<F: Float>: Integer {
-    fn float_on(self) -> F;
+pub trait Cast<T> {
+    fn cast(self) -> T;
 }
 
-impl FloatOn<f32> for i8 {
-    #[inline]
-    fn float_on(self) -> f32 {
-        self as f32
-    }
+macro_rules! impl_cast {
+    ( $x:ty, $($y:ty),+ ) => {
+        $(
+            impl Cast<$x> for $y {
+                #[inline(always)]
+                fn cast(self) -> $x {
+                    self as $x
+                }
+            }
+            impl Cast<$y> for $x {
+                #[inline(always)]
+                fn cast(self) -> $y {
+                    self as $y
+                }
+            }
+        )+
+    };
 }
 
-impl FloatOn<f64> for i8 {
-    #[inline]
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn<f32> for i16 {
-    #[inline]
-    fn float_on(self) -> f32 {
-        self as f32
-    }
-}
-
-impl FloatOn<f64> for i16 {
-    #[inline]
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn<f32> for i32 {
-    #[inline]
-    fn float_on(self) -> f32 {
-        self as f32
-    }
-}
-
-impl FloatOn<f64> for i32 {
-    #[inline]
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn<f32> for i64 {
-    #[inline]
-    fn float_on(self) -> f32 {
-        self as f32
-    }
-}
-
-impl FloatOn<f64> for i64 {
-    #[inline]
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn<f32> for u8 {
-    #[inline]
-    fn float_on(self) -> f32 {
-        self as f32
-    }
-}
-
-impl FloatOn<f64> for u8 {
-    #[inline]
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn<f32> for u16 {
-    #[inline]
-    fn float_on(self) -> f32 {
-        self as f32
-    }
-}
-
-impl FloatOn<f64> for u16 {
-    #[inline]
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn<f32> for u32 {
-    #[inline]
-    fn float_on(self) -> f32 {
-        self as f32
-    }
-}
-
-impl FloatOn<f64> for u32 {
-    #[inline]
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
-
-impl FloatOn<f32> for u64 {
-    #[inline]
-    fn float_on(self) -> f32 {
-        self as f32
-    }
-}
-
-impl FloatOn<f64> for u64 {
-    #[inline]
-    fn float_on(self) -> f64 {
-        self as f64
-    }
-}
+impl_cast!(f32, i8, i16, i32, i64, u8, u16, u32, u64);
+impl_cast!(f64, i8, i16, i32, i64, u8, u16, u32, u64);

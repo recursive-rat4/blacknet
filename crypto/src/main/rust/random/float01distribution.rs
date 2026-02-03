@@ -15,22 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::float::{Float, FloatOn};
+use crate::float::{Cast, Float};
 use crate::integer::Integer;
 use crate::random::{Distribution, UniformGenerator, UniformIntDistribution};
 use core::marker::PhantomData;
 
-// In range [0, 1)
-
+/// Distribution of floats in range `[0, 1)`.
 pub struct Float01Distribution<
     F: Float,
-    G: UniformGenerator<Output: Integer<CastUnsigned: FloatOn<F>>>,
+    G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>,
 > {
     uid: UniformIntDistribution<G>,
     phantom: PhantomData<F>,
 }
 
-impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: FloatOn<F>>>> Default
+impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>> Default
     for Float01Distribution<F, G>
 {
     fn default() -> Self {
@@ -47,15 +46,15 @@ impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: FloatOn<F>>>> D
     }
 }
 
-impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: FloatOn<F>>>> Distribution<G>
+impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>> Distribution<G>
     for Float01Distribution<F, G>
 {
     type Output = F;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output {
         let one = <G::Output as Integer>::CastUnsigned::ONE;
-        let s = F::ONE / (one << F::MANTISSA_DIGITS).float_on();
-        let m = self.uid.sample(generator).float_on();
+        let s: F = (one << F::MANTISSA_DIGITS).cast().recip();
+        let m: F = self.uid.sample(generator).cast();
         s * m
     }
 
