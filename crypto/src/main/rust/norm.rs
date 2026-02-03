@@ -68,20 +68,17 @@ impl<Z: IntegerRing<Int: FloatOn<f64>>> EuclideanNorm for Z {
     }
 }
 
-//RUST currently requires std for sqrt, https://github.com/rust-lang/rust/issues/137578
-
-#[cfg(feature = "std")]
 impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N> {
     fn euclidean_norm(&self) -> f64 {
-        self.into_iter()
-            .map(|i| i.euclidean_norm())
-            .map(|i| i * i)
-            .sum::<f64>()
-            .sqrt()
+        libm::sqrt(
+            self.into_iter()
+                .map(|i| i.euclidean_norm())
+                .map(|i| i * i)
+                .sum::<f64>(),
+        )
     }
 }
 
-#[cfg(feature = "std")]
 impl<Z: Twiddles<M> + EuclideanNorm, const M: usize, const N: usize> EuclideanNorm
     for NTTRing<Z, M, N>
 {
@@ -90,31 +87,30 @@ impl<Z: Twiddles<M> + EuclideanNorm, const M: usize, const N: usize> EuclideanNo
     }
 }
 
-#[cfg(feature = "std")]
 impl<R: Ring + EuclideanNorm> EuclideanNorm for DenseVector<R> {
     fn euclidean_norm(&self) -> f64 {
-        self.elements()
-            .iter()
-            .map(|i| i.euclidean_norm())
-            .map(|i| i * i)
-            .sum::<f64>()
-            .sqrt()
+        libm::sqrt(
+            self.elements()
+                .iter()
+                .map(|i| i.euclidean_norm())
+                .map(|i| i * i)
+                .sum::<f64>(),
+        )
     }
 }
 
-#[cfg(feature = "std")]
 impl<R: Ring + EuclideanNorm> EuclideanNorm for SparseVector<R> {
     fn euclidean_norm(&self) -> f64 {
-        self.elements()
-            .iter()
-            .map(|i| i.euclidean_norm())
-            .map(|i| i * i)
-            .sum::<f64>()
-            .sqrt()
+        libm::sqrt(
+            self.elements()
+                .iter()
+                .map(|i| i.euclidean_norm())
+                .map(|i| i * i)
+                .sum::<f64>(),
+        )
     }
 }
 
-#[cfg(feature = "std")]
 impl<R: UnitalRing + EuclideanNorm, const N: usize, C: Convolution<R, N>> EuclideanNorm
     for UnivariateRing<R, N, C>
 {

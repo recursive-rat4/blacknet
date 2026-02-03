@@ -19,9 +19,7 @@ use blacknet_crypto::ajtaicommitment::AjtaiCommitment;
 use blacknet_crypto::algebra::IntegerRing;
 use blacknet_crypto::commitmentscheme::CommitmentScheme;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
-#[cfg(feature = "std")]
-use blacknet_crypto::norm::L2;
-use blacknet_crypto::norm::{LInf, NormBound};
+use blacknet_crypto::norm::{L2, LInf, NormBound};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 
@@ -39,11 +37,8 @@ fn test() {
         .map(Z::new)
         .into(),
     );
-    //RUST currently requires std for sqrt, https://github.com/rust-lang/rust/issues/137578
-    #[cfg(feature = "std")]
     let b_ecd = NormBound::<L2, f64>::new(7.22);
     let b_inf = NormBound::<LInf, <Z as IntegerRing>::Int>::new(8);
-    #[cfg(feature = "std")]
     let cs_ecd = AjtaiCommitment::new(setup.clone(), b_ecd);
     let cs_inf = AjtaiCommitment::new(setup, b_inf);
     let z1 = Z::new(1);
@@ -64,13 +59,9 @@ fn test() {
         "Homomorphism"
     );
 
-    #[cfg(feature = "std")]
     assert!(cs_ecd.open(&c12, &m12, &()), "Opening");
-    #[cfg(feature = "std")]
     assert!(!cs_ecd.open(&c34, &m12, &()), "Binding");
-    #[cfg(feature = "std")]
     assert!(!cs_ecd.open(&c12, &m21, &()), "Positional binding");
-    #[cfg(feature = "std")]
     assert!(
         cs_ecd.open(&(&c12 + &c34), &(&m12 + &m34), &()),
         "Homomorphism"

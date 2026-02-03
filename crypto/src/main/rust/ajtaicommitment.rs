@@ -18,9 +18,7 @@
 use crate::algebra::{IntegerRing, PolynomialRing, UnitalRing};
 use crate::commitmentscheme::CommitmentScheme;
 use crate::matrix::{DenseMatrix, DenseVector, SparseVector};
-#[cfg(feature = "std")]
-use crate::norm::{EuclideanNorm, L2};
-use crate::norm::{InfinityNorm, LInf, NormBound};
+use crate::norm::{EuclideanNorm, InfinityNorm, L2, LInf, NormBound};
 use crate::random::UniformGenerator;
 
 // https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
@@ -75,8 +73,6 @@ impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
     }
 }
 
-//RUST currently requires std for sqrt, https://github.com/rust-lang/rust/issues/137578
-#[cfg(feature = "std")]
 impl<R: UnitalRing + EuclideanNorm + Eq> CommitmentScheme<DenseVector<R>>
     for AjtaiCommitment<R, L2, f64>
 {
@@ -92,7 +88,6 @@ impl<R: UnitalRing + EuclideanNorm + Eq> CommitmentScheme<DenseVector<R>>
     }
 }
 
-#[cfg(feature = "std")]
 impl<R: UnitalRing + EuclideanNorm + Eq> CommitmentScheme<SparseVector<R>>
     for AjtaiCommitment<R, L2, f64>
 {

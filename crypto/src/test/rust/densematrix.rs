@@ -18,7 +18,7 @@
 use blacknet_crypto::algebra::{Double, Square, Tensor};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
-use std::iter::zip;
+use core::iter::zip;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
