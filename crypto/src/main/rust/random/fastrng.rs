@@ -24,8 +24,6 @@ use core::cell::RefCell;
 use std::sync::{LazyLock, Mutex};
 use std::thread_local;
 
-type Word = <FastDRG as UniformGenerator>::Output;
-
 pub struct FastSeeder {
     drg: FastDRG,
 }
@@ -61,11 +59,16 @@ impl FastRNG {
 }
 
 impl UniformGenerator for FastRNG {
-    type Output = Word;
+    type Output = <FastDRG as UniformGenerator>::Output;
 
     #[inline]
     fn generate(&mut self) -> Self::Output {
         self.drg.generate()
+    }
+
+    #[inline]
+    fn fill(&mut self, sequence: &mut [Self::Output]) {
+        self.drg.fill(sequence)
     }
 }
 

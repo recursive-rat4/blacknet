@@ -260,7 +260,7 @@ impl PeerTable {
             }
         }
         let mut uid = UniformIntDistribution::<FastRNG>::default();
-        let mut f01 = Float01Distribution::<f32, FastRNG>::default();
+        let mut f01 = Float01Distribution::<f32, FastRNG>::new();
         FAST_RNG.with_borrow_mut(|rng| {
             while !candidates.is_empty() {
                 uid.set_range(0..candidates.len() as u32);

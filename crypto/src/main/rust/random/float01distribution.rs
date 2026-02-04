@@ -29,10 +29,11 @@ pub struct Float01Distribution<
     phantom: PhantomData<F>,
 }
 
-impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>> Default
-    for Float01Distribution<F, G>
+impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>>
+    Float01Distribution<F, G>
 {
-    fn default() -> Self {
+    /// Construct the new distribution.
+    pub fn new() -> Self {
         const {
             assert!(size_of::<F>() <= size_of::<G::Output>());
         };
@@ -43,6 +44,14 @@ impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>> Defa
             uid: UniformIntDistribution::new(zero..bound),
             phantom: PhantomData,
         }
+    }
+}
+
+impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>> Default
+    for Float01Distribution<F, G>
+{
+    fn default() -> Self {
+        Self::new()
     }
 }
 
