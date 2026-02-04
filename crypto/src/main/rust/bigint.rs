@@ -194,6 +194,7 @@ impl<const N: usize> BigInt<N> {
     pub const MAX: Self = Self {
         limbs: [u64::MAX; N],
     };
+    pub const MIN: Self = Self { limbs: [0; N] };
 
     pub const ZERO: Self = Self { limbs: [0; N] };
     pub const ONE: Self = {

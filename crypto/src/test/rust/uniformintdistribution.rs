@@ -35,7 +35,7 @@ impl UniformGenerator for TestGenerator {
 
     fn generate(&mut self) -> Self::Output {
         let result = self.i;
-        self.i += 1;
+        self.i = self.i.wrapping_add(1);
         result.into()
     }
 }
@@ -65,6 +65,11 @@ fn byte() {
     let a: [u16; 6] = [0xE4, 0xE2, 0xE5, 0xE2, 0xE6, 0xE2];
     let b: [u16; 6] = array::from_fn(|_| uid.sample(&mut g));
     assert_eq!(b, a);
+
+    uid.set_range(256..512);
+    let c: [u16; 6] = [0x1E7, 0x1E2, 0x1E8, 0x1E2, 0x1E9, 0x1E2];
+    let d: [u16; 6] = array::from_fn(|_| uid.sample(&mut g));
+    assert_eq!(d, c);
 }
 
 #[test]

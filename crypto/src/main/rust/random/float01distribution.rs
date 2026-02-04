@@ -37,11 +37,10 @@ impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>>
         const {
             assert!(size_of::<F>() <= size_of::<G::Output>());
         };
-        let zero = <G::Output as Integer>::CastUnsigned::ZERO;
         let one = <G::Output as Integer>::CastUnsigned::ONE;
         let bound = one << F::MANTISSA_DIGITS;
         Self {
-            uid: UniformIntDistribution::new(zero..bound),
+            uid: UniformIntDistribution::new(..bound),
             phantom: PhantomData,
         }
     }

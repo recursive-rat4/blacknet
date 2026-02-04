@@ -43,9 +43,12 @@ pub trait Integer
     fn cast_unsigned(self) -> Self::CastUnsigned;
     fn count_ones(self) -> u32;
     fn leading_zeros(self) -> u32;
+    fn wrapping_add(self, rps: Self) -> Self;
+    fn wrapping_sub(self, rps: Self) -> Self;
 
     const BITS: u32;
     const MAX: Self;
+    const MIN: Self;
 
     const ZERO: Self;
     const ONE: Self;
@@ -58,305 +61,91 @@ pub trait Integer
 pub trait SignedInteger: Integer {}
 pub trait UnsignedInteger: Integer {}
 
-impl Integer for i8 {
-    type Limb = Self;
-    type CastUnsigned = u8;
+macro_rules! impl_integer {
+    ( $($x:ty, $y:ty),+ ) => {
+        $(
+            impl Integer for $x {
+                type Limb = Self;
+                type CastUnsigned = Self;
 
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self.cast_unsigned()
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
+                #[inline]
+                fn cast_unsigned(self) -> Self::CastUnsigned {
+                    self
+                }
+                #[inline]
+                fn count_ones(self) -> u32 {
+                    self.count_ones()
+                }
+                #[inline]
+                fn leading_zeros(self) -> u32 {
+                    self.leading_zeros()
+                }
+                #[inline]
+                fn wrapping_add(self, rps: Self) -> Self {
+                    self.wrapping_add(rps)
+                }
+                #[inline]
+                fn wrapping_sub(self, rps: Self) -> Self {
+                    self.wrapping_sub(rps)
+                }
 
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
+                const BITS: u32 = Self::BITS;
+                const MAX: Self = Self::MAX;
+                const MIN: Self = Self::MIN;
 
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
+                const ZERO: Self = 0;
+                const ONE: Self = 1;
 
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
+                const LIMB_ONE: Self::Limb = 1;
+                const LIMB_TWO: Self::Limb = 2;
+                const LIMB_THREE: Self::Limb = 3;
+            }
+
+            impl UnsignedInteger for $x {}
+
+            impl Integer for $y {
+                type Limb = Self;
+                type CastUnsigned = $x;
+
+                #[inline]
+                fn cast_unsigned(self) -> Self::CastUnsigned {
+                    self.cast_unsigned()
+                }
+                #[inline]
+                fn count_ones(self) -> u32 {
+                    self.count_ones()
+                }
+                #[inline]
+                fn leading_zeros(self) -> u32 {
+                    self.leading_zeros()
+                }
+                #[inline]
+                fn wrapping_add(self, rps: Self) -> Self {
+                    self.wrapping_add(rps)
+                }
+                #[inline]
+                fn wrapping_sub(self, rps: Self) -> Self {
+                    self.wrapping_sub(rps)
+                }
+
+                const BITS: u32 = Self::BITS;
+                const MAX: Self = Self::MAX;
+                const MIN: Self = Self::MIN;
+
+                const ZERO: Self = 0;
+                const ONE: Self = 1;
+
+                const LIMB_ONE: Self::Limb = 1;
+                const LIMB_TWO: Self::Limb = 2;
+                const LIMB_THREE: Self::Limb = 3;
+            }
+
+            impl SignedInteger for $y {}
+        )+
+    };
 }
 
-impl SignedInteger for i8 {}
-
-impl Integer for i16 {
-    type Limb = Self;
-    type CastUnsigned = u16;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self.cast_unsigned()
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl SignedInteger for i16 {}
-
-impl Integer for i32 {
-    type Limb = Self;
-    type CastUnsigned = u32;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self.cast_unsigned()
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl SignedInteger for i32 {}
-
-impl Integer for i64 {
-    type Limb = Self;
-    type CastUnsigned = u64;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self.cast_unsigned()
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl SignedInteger for i64 {}
-
-impl Integer for isize {
-    type Limb = Self;
-    type CastUnsigned = usize;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self.cast_unsigned()
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl SignedInteger for isize {}
-
-impl Integer for u8 {
-    type Limb = Self;
-    type CastUnsigned = Self;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl UnsignedInteger for u8 {}
-
-impl Integer for u16 {
-    type Limb = Self;
-    type CastUnsigned = Self;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl UnsignedInteger for u16 {}
-
-impl Integer for u32 {
-    type Limb = Self;
-    type CastUnsigned = Self;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl UnsignedInteger for u32 {}
-
-impl Integer for u64 {
-    type Limb = Self;
-    type CastUnsigned = Self;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl UnsignedInteger for u64 {}
-
-impl Integer for usize {
-    type Limb = Self;
-    type CastUnsigned = Self;
-
-    #[inline]
-    fn cast_unsigned(self) -> Self::CastUnsigned {
-        self
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
-    }
-    #[inline]
-    fn leading_zeros(self) -> u32 {
-        self.leading_zeros()
-    }
-
-    const BITS: u32 = Self::BITS;
-    const MAX: Self = Self::MAX;
-
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-
-    const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
-}
-
-impl UnsignedInteger for usize {}
+impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, usize, isize);
 
 impl<const N: usize> Integer for BigInt<N> {
     type Limb = u64;
@@ -374,9 +163,18 @@ impl<const N: usize> Integer for BigInt<N> {
     fn leading_zeros(self) -> u32 {
         self.leading_zeros()
     }
+    #[inline]
+    fn wrapping_add(self, rps: Self) -> Self {
+        self.add(rps)
+    }
+    #[inline]
+    fn wrapping_sub(self, rps: Self) -> Self {
+        self.sub(rps)
+    }
 
     const BITS: u32 = Self::BITS;
     const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
 
     const ZERO: Self = Self::ZERO;
     const ONE: Self = Self::ONE;
