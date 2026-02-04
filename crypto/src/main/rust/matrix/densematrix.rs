@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Presemiring, Ring, Semiring, Square, Tensor};
+use crate::algebra::{Double, Presemiring, Semiring, Square, Tensor};
 use crate::matrix::DenseVector;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -227,7 +227,7 @@ impl<T> IndexMut<(usize, usize)> for DenseMatrix<T> {
     }
 }
 
-impl<R: Presemiring> Add for DenseMatrix<R> {
+impl<T: Add<Output = T>> Add for DenseMatrix<T> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -242,14 +242,14 @@ impl<R: Presemiring> Add for DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> AddAssign for DenseMatrix<R> {
+impl<T: AddAssign> AddAssign for DenseMatrix<T> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Double for DenseMatrix<R> {
+impl<T: Double<Output = T>> Double for DenseMatrix<T> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -261,45 +261,51 @@ impl<R: Presemiring> Double for DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Add<&DenseMatrix<R>> for DenseMatrix<R> {
+impl<T: for<'a> Add<&'a T, Output = T>> Add<&DenseMatrix<T>> for DenseMatrix<T> {
     type Output = Self;
 
-    fn add(self, rps: &DenseMatrix<R>) -> Self::Output {
+    fn add(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self {
             rows: self.rows,
             columns: self.columns,
             elements: zip(self.elements, rps.elements.iter())
-                .map(|(l, &r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<R: Presemiring> AddAssign<&DenseMatrix<R>> for DenseMatrix<R> {
-    fn add_assign(&mut self, rps: &DenseMatrix<R>) {
+impl<T: for<'a> AddAssign<&'a T>> AddAssign<&DenseMatrix<T>> for DenseMatrix<T> {
+    fn add_assign(&mut self, rps: &DenseMatrix<T>) {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l += r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Add<DenseMatrix<R>> for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Add<DenseMatrix<T>> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Add<T, Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
-    fn add(self, rps: DenseMatrix<R>) -> Self::Output {
+    fn add(self, rps: DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self::Output {
             rows: self.rows,
             columns: self.columns,
             elements: zip(self.elements.iter(), rps.elements)
-                .map(|(&l, r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<R: Presemiring> Add for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Add for &DenseMatrix<T>
+where
+    for<'a> &'a T: Add<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     fn add(self, rps: Self) -> Self::Output {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
@@ -307,13 +313,13 @@ impl<R: Presemiring> Add for &DenseMatrix<R> {
             rows: self.rows,
             columns: self.columns,
             elements: zip(self.elements.iter(), rps.elements.iter())
-                .map(|(&l, &r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<R: Ring> Neg for DenseMatrix<R> {
+impl<T: Neg<Output = T>> Neg for DenseMatrix<T> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -325,19 +331,22 @@ impl<R: Ring> Neg for DenseMatrix<R> {
     }
 }
 
-impl<R: Ring> Neg for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Neg for &DenseMatrix<T>
+where
+    for<'a> &'a T: Neg<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     fn neg(self) -> Self::Output {
         Self::Output {
             rows: self.rows,
             columns: self.columns,
-            elements: self.elements.iter().map(|&e| -e).collect(),
+            elements: self.elements.iter().map(Neg::neg).collect(),
         }
     }
 }
 
-impl<R: Ring> Sub for DenseMatrix<R> {
+impl<T: Sub<Output = T>> Sub for DenseMatrix<T> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
@@ -352,52 +361,58 @@ impl<R: Ring> Sub for DenseMatrix<R> {
     }
 }
 
-impl<R: Ring> SubAssign for DenseMatrix<R> {
+impl<T: SubAssign> SubAssign for DenseMatrix<T> {
     fn sub_assign(&mut self, rps: Self) {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<&DenseMatrix<R>> for DenseMatrix<R> {
+impl<T: for<'a> Sub<&'a T, Output = T>> Sub<&DenseMatrix<T>> for DenseMatrix<T> {
     type Output = Self;
 
-    fn sub(self, rps: &DenseMatrix<R>) -> Self::Output {
+    fn sub(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self {
             rows: self.rows,
             columns: self.columns,
             elements: zip(self.elements, rps.elements.iter())
-                .map(|(l, &r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }
 }
 
-impl<R: Ring> SubAssign<&DenseMatrix<R>> for DenseMatrix<R> {
-    fn sub_assign(&mut self, rps: &DenseMatrix<R>) {
+impl<T: for<'a> SubAssign<&'a T>> SubAssign<&DenseMatrix<T>> for DenseMatrix<T> {
+    fn sub_assign(&mut self, rps: &DenseMatrix<T>) {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l -= r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<DenseMatrix<R>> for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Sub<DenseMatrix<T>> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Sub<T, Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
-    fn sub(self, rps: DenseMatrix<R>) -> Self::Output {
+    fn sub(self, rps: DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
         Self::Output {
             rows: self.rows,
             columns: self.columns,
             elements: zip(self.elements.iter(), rps.elements)
-                .map(|(&l, r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }
 }
 
-impl<R: Ring> Sub for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Sub for &DenseMatrix<T>
+where
+    for<'a> &'a T: Sub<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     fn sub(self, rps: Self) -> Self::Output {
         debug_assert!(self.rows == rps.rows && self.columns == rps.columns);
@@ -405,7 +420,7 @@ impl<R: Ring> Sub for &DenseMatrix<R> {
             rows: self.rows,
             columns: self.columns,
             elements: zip(self.elements.iter(), rps.elements.iter())
-                .map(|(&l, &r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }

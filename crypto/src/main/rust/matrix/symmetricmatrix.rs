@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
-use crate::algebra::Presemiring;
-use crate::algebra::Ring;
+use crate::algebra::{Double, Presemiring};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -124,7 +122,7 @@ impl<R: Presemiring> IndexMut<(usize, usize)> for SymmetricMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Add for SymmetricMatrix<R> {
+impl<T: Add<Output = T>> Add for SymmetricMatrix<T> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -138,14 +136,14 @@ impl<R: Presemiring> Add for SymmetricMatrix<R> {
     }
 }
 
-impl<R: Presemiring> AddAssign for SymmetricMatrix<R> {
+impl<T: AddAssign> AddAssign for SymmetricMatrix<T> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert!(self.dimension == rps.dimension);
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Double for SymmetricMatrix<R> {
+impl<T: Double<Output = T>> Double for SymmetricMatrix<T> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -156,56 +154,62 @@ impl<R: Presemiring> Double for SymmetricMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Add<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
+impl<T: for<'a> Add<&'a T, Output = T>> Add<&SymmetricMatrix<T>> for SymmetricMatrix<T> {
     type Output = Self;
 
-    fn add(self, rps: &SymmetricMatrix<R>) -> Self::Output {
+    fn add(self, rps: &SymmetricMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension == rps.dimension);
         Self {
             dimension: self.dimension,
             elements: zip(self.elements, rps.elements.iter())
-                .map(|(l, &r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<R: Presemiring> AddAssign<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
-    fn add_assign(&mut self, rps: &SymmetricMatrix<R>) {
+impl<T: for<'a> AddAssign<&'a T>> AddAssign<&SymmetricMatrix<T>> for SymmetricMatrix<T> {
+    fn add_assign(&mut self, rps: &SymmetricMatrix<T>) {
         debug_assert!(self.dimension == rps.dimension);
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l += r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Add<SymmetricMatrix<R>> for &SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+impl<T> Add<SymmetricMatrix<T>> for &SymmetricMatrix<T>
+where
+    for<'a> &'a T: Add<T, Output = T>,
+{
+    type Output = SymmetricMatrix<T>;
 
-    fn add(self, rps: SymmetricMatrix<R>) -> Self::Output {
+    fn add(self, rps: SymmetricMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension == rps.dimension);
         Self::Output {
             dimension: self.dimension,
             elements: zip(self.elements.iter(), rps.elements)
-                .map(|(&l, r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<R: Presemiring> Add for &SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+impl<T> Add for &SymmetricMatrix<T>
+where
+    for<'a> &'a T: Add<Output = T>,
+{
+    type Output = SymmetricMatrix<T>;
 
     fn add(self, rps: Self) -> Self::Output {
         debug_assert!(self.dimension == rps.dimension);
         Self::Output {
             dimension: self.dimension,
             elements: zip(self.elements.iter(), rps.elements.iter())
-                .map(|(&l, &r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<R: Ring> Neg for SymmetricMatrix<R> {
+impl<T: Neg<Output = T>> Neg for SymmetricMatrix<T> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -216,18 +220,21 @@ impl<R: Ring> Neg for SymmetricMatrix<R> {
     }
 }
 
-impl<R: Ring> Neg for &SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+impl<T> Neg for &SymmetricMatrix<T>
+where
+    for<'a> &'a T: Neg<Output = T>,
+{
+    type Output = SymmetricMatrix<T>;
 
     fn neg(self) -> Self::Output {
         Self::Output {
             dimension: self.dimension,
-            elements: self.elements.iter().map(|&e| -e).collect(),
+            elements: self.elements.iter().map(Neg::neg).collect(),
         }
     }
 }
 
-impl<R: Ring> Sub for SymmetricMatrix<R> {
+impl<T: Sub<Output = T>> Sub for SymmetricMatrix<T> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
@@ -241,57 +248,63 @@ impl<R: Ring> Sub for SymmetricMatrix<R> {
     }
 }
 
-impl<R: Ring> SubAssign for SymmetricMatrix<R> {
+impl<T: SubAssign> SubAssign for SymmetricMatrix<T> {
     fn sub_assign(&mut self, rps: Self) {
         debug_assert!(self.dimension == rps.dimension);
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
+impl<T: for<'a> Sub<&'a T, Output = T>> Sub<&SymmetricMatrix<T>> for SymmetricMatrix<T> {
     type Output = Self;
 
-    fn sub(self, rps: &SymmetricMatrix<R>) -> Self::Output {
+    fn sub(self, rps: &SymmetricMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension == rps.dimension);
         Self {
             dimension: self.dimension,
             elements: zip(self.elements, rps.elements.iter())
-                .map(|(l, &r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }
 }
 
-impl<R: Ring> SubAssign<&SymmetricMatrix<R>> for SymmetricMatrix<R> {
-    fn sub_assign(&mut self, rps: &SymmetricMatrix<R>) {
+impl<T: for<'a> SubAssign<&'a T>> SubAssign<&SymmetricMatrix<T>> for SymmetricMatrix<T> {
+    fn sub_assign(&mut self, rps: &SymmetricMatrix<T>) {
         debug_assert!(self.dimension == rps.dimension);
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l -= r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<SymmetricMatrix<R>> for &SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+impl<T> Sub<SymmetricMatrix<T>> for &SymmetricMatrix<T>
+where
+    for<'a> &'a T: Sub<T, Output = T>,
+{
+    type Output = SymmetricMatrix<T>;
 
-    fn sub(self, rps: SymmetricMatrix<R>) -> Self::Output {
+    fn sub(self, rps: SymmetricMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension == rps.dimension);
         Self::Output {
             dimension: self.dimension,
             elements: zip(self.elements.iter(), rps.elements)
-                .map(|(&l, r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }
 }
 
-impl<R: Ring> Sub for &SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+impl<T> Sub for &SymmetricMatrix<T>
+where
+    for<'a> &'a T: Sub<Output = T>,
+{
+    type Output = SymmetricMatrix<T>;
 
     fn sub(self, rps: Self) -> Self::Output {
         debug_assert!(self.dimension == rps.dimension);
         Self::Output {
             dimension: self.dimension,
             elements: zip(self.elements.iter(), rps.elements.iter())
-                .map(|(&l, &r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }

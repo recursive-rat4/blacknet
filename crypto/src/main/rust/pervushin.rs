@@ -120,6 +120,15 @@ impl Add<&Self> for PervushinField {
     }
 }
 
+impl Add for &PervushinField {
+    type Output = PervushinField;
+
+    #[inline]
+    fn add(self, rps: Self) -> Self::Output {
+        *self + *rps
+    }
+}
+
 impl AddAssign for PervushinField {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
@@ -152,6 +161,15 @@ impl Neg for PervushinField {
     }
 }
 
+impl Neg for &PervushinField {
+    type Output = PervushinField;
+
+    #[inline]
+    fn neg(self) -> Self::Output {
+        -(*self)
+    }
+}
+
 impl Sub for PervushinField {
     type Output = Self;
 
@@ -168,6 +186,15 @@ impl Sub<&Self> for PervushinField {
     #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
         self - *rps
+    }
+}
+
+impl Sub for &PervushinField {
+    type Output = PervushinField;
+
+    #[inline]
+    fn sub(self, rps: Self) -> Self::Output {
+        *self - *rps
     }
 }
 

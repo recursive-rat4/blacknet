@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Conjugate, Double, Presemiring, Ring, Semiring, Set, Square, Tensor};
+use crate::algebra::{Conjugate, Double, Presemiring, Semiring, Set, Square, Tensor};
 use crate::duplex::{Absorb, Duplex};
 use crate::matrix::DenseMatrix;
 use alloc::borrow::{Borrow, BorrowMut};
@@ -227,7 +227,7 @@ impl<'a, T> IntoIterator for &'a mut DenseVector<T> {
     }
 }
 
-impl<R: Presemiring> Add for DenseVector<R> {
+impl<T: Add<Output = T>> Add for DenseVector<T> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -236,14 +236,14 @@ impl<R: Presemiring> Add for DenseVector<R> {
     }
 }
 
-impl<R: Presemiring> AddAssign for DenseVector<R> {
+impl<T: AddAssign> AddAssign for DenseVector<T> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Double for DenseVector<R> {
+impl<T: Double<Output = T>> Double for DenseVector<T> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -251,49 +251,58 @@ impl<R: Presemiring> Double for DenseVector<R> {
     }
 }
 
-impl<R: Presemiring> Double for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Double for &DenseVector<T>
+where
+    for<'a> &'a T: Double<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     fn double(self) -> Self::Output {
-        self.into_iter().copied().map(Double::double).collect()
+        self.into_iter().map(Double::double).collect()
     }
 }
 
-impl<R: Presemiring> Add<&DenseVector<R>> for DenseVector<R> {
+impl<T: for<'a> Add<&'a T, Output = T>> Add<&DenseVector<T>> for DenseVector<T> {
     type Output = Self;
 
-    fn add(self, rps: &DenseVector<R>) -> Self::Output {
+    fn add(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(l, &r)| l + r).collect()
+        zip(self, rps).map(|(l, r)| l + r).collect()
     }
 }
 
-impl<R: Presemiring> AddAssign<&DenseVector<R>> for DenseVector<R> {
-    fn add_assign(&mut self, rps: &DenseVector<R>) {
+impl<T: for<'a> AddAssign<&'a T>> AddAssign<&DenseVector<T>> for DenseVector<T> {
+    fn add_assign(&mut self, rps: &DenseVector<T>) {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).for_each(|(l, &r)| *l += r);
+        zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Add<DenseVector<R>> for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Add<DenseVector<T>> for &DenseVector<T>
+where
+    for<'a> &'a T: Add<T, Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn add(self, rps: DenseVector<R>) -> Self::Output {
+    fn add(self, rps: DenseVector<T>) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(&l, r)| l + r).collect()
+        zip(self, rps).map(|(l, r)| l + r).collect()
     }
 }
 
-impl<R: Presemiring> Add for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Add for &DenseVector<T>
+where
+    for<'a> &'a T: Add<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     fn add(self, rps: Self) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(&l, &r)| l + r).collect()
+        zip(self, rps).map(|(l, r)| l + r).collect()
     }
 }
 
-impl<R: Ring> Neg for DenseVector<R> {
+impl<T: Neg<Output = T>> Neg for DenseVector<T> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -301,15 +310,18 @@ impl<R: Ring> Neg for DenseVector<R> {
     }
 }
 
-impl<R: Ring> Neg for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Neg for &DenseVector<T>
+where
+    for<'a> &'a T: Neg<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     fn neg(self) -> Self::Output {
-        self.into_iter().map(|&e| -e).collect()
+        self.into_iter().map(Neg::neg).collect()
     }
 }
 
-impl<R: Ring> Sub for DenseVector<R> {
+impl<T: Sub<Output = T>> Sub for DenseVector<T> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
@@ -318,44 +330,50 @@ impl<R: Ring> Sub for DenseVector<R> {
     }
 }
 
-impl<R: Ring> SubAssign for DenseVector<R> {
+impl<T: SubAssign> SubAssign for DenseVector<T> {
     fn sub_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<&DenseVector<R>> for DenseVector<R> {
+impl<T: for<'a> Sub<&'a T, Output = T>> Sub<&DenseVector<T>> for DenseVector<T> {
     type Output = Self;
 
-    fn sub(self, rps: &DenseVector<R>) -> Self::Output {
+    fn sub(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(l, &r)| l - r).collect()
+        zip(self, rps).map(|(l, r)| l - r).collect()
     }
 }
 
-impl<R: Ring> SubAssign<&DenseVector<R>> for DenseVector<R> {
-    fn sub_assign(&mut self, rps: &DenseVector<R>) {
+impl<T: for<'a> SubAssign<&'a T>> SubAssign<&DenseVector<T>> for DenseVector<T> {
+    fn sub_assign(&mut self, rps: &DenseVector<T>) {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).for_each(|(l, &r)| *l -= r);
+        zip(self, rps).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<DenseVector<R>> for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Sub<DenseVector<T>> for &DenseVector<T>
+where
+    for<'a> &'a T: Sub<T, Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn sub(self, rps: DenseVector<R>) -> Self::Output {
+    fn sub(self, rps: DenseVector<T>) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(&l, r)| l - r).collect()
+        zip(self, rps).map(|(l, r)| l - r).collect()
     }
 }
 
-impl<R: Ring> Sub for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Sub for &DenseVector<T>
+where
+    for<'a> &'a T: Sub<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     fn sub(self, rps: Self) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(&l, &r)| l - r).collect()
+        zip(self, rps).map(|(l, r)| l - r).collect()
     }
 }
 
@@ -447,7 +465,7 @@ impl<R: Presemiring> Square for &DenseVector<R> {
     }
 }
 
-impl<R: Presemiring + Conjugate<Output = R>> Conjugate for DenseVector<R> {
+impl<T: Conjugate<Output = T>> Conjugate for DenseVector<T> {
     type Output = Self;
 
     fn conjugate(self) -> Self::Output {
@@ -455,14 +473,14 @@ impl<R: Presemiring + Conjugate<Output = R>> Conjugate for DenseVector<R> {
     }
 }
 
-impl<R: Presemiring + Conjugate<Output = R>> Conjugate for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Conjugate for &DenseVector<T>
+where
+    for<'a> &'a T: Conjugate<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     fn conjugate(self) -> Self::Output {
-        self.into_iter()
-            .copied()
-            .map(Conjugate::conjugate)
-            .collect()
+        self.into_iter().map(Conjugate::conjugate).collect()
     }
 }
 

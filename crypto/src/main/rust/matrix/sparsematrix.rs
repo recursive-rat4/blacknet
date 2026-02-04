@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Presemiring, Ring, Zero};
+use crate::algebra::{AdditiveGroup, Presemiring, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -90,7 +90,7 @@ impl<T: Zero> Default for SparseMatrix<T> {
     }
 }
 
-impl<R: Ring> Neg for SparseMatrix<R> {
+impl<G: AdditiveGroup> Neg for SparseMatrix<G> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {

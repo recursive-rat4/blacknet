@@ -15,9 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
-use crate::algebra::Presemiring;
 use crate::algebra::Ring;
+use crate::algebra::{Double, Presemiring};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -108,7 +107,7 @@ impl<R: Presemiring> AddAssign for SymmetricTridiagonalMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Double for SymmetricTridiagonalMatrix<R> {
+impl<T: Double<Output = T>> Double for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -164,7 +163,7 @@ impl<R: Presemiring> Add for &SymmetricTridiagonalMatrix<R> {
     }
 }
 
-impl<R: Ring> Neg for SymmetricTridiagonalMatrix<R> {
+impl<T: Neg<Output = T>> Neg for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -174,12 +173,15 @@ impl<R: Ring> Neg for SymmetricTridiagonalMatrix<R> {
     }
 }
 
-impl<R: Ring> Neg for &SymmetricTridiagonalMatrix<R> {
-    type Output = SymmetricTridiagonalMatrix<R>;
+impl<T> Neg for &SymmetricTridiagonalMatrix<T>
+where
+    for<'a> &'a T: Neg<Output = T>,
+{
+    type Output = SymmetricTridiagonalMatrix<T>;
 
     fn neg(self) -> Self::Output {
         Self::Output {
-            elements: self.elements.iter().map(|&e| -e).collect(),
+            elements: self.elements.iter().map(Neg::neg).collect(),
         }
     }
 }
