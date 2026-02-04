@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Presemiring;
-use crate::algebra::Ring;
+use crate::algebra::{Presemiring, Ring, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -28,14 +27,14 @@ use serde::{Deserialize, Serialize};
 ///
 /// <https://arxiv.org/abs/2404.06047>
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct SparseMatrix<R: Presemiring> {
+pub struct SparseMatrix<T: Zero> {
     columns: usize,
     r_index: Vec<usize>,
     c_index: Vec<usize>,
-    elements: Vec<R>,
+    elements: Vec<T>,
 }
 
-impl<R: Presemiring> SparseMatrix<R> {
+impl<T: Zero> SparseMatrix<T> {
     /// Construct a new matrix.
     /// # Safety
     /// Arguments must be valid, and in particular `elements` doesn't contain zeroes.
@@ -43,7 +42,7 @@ impl<R: Presemiring> SparseMatrix<R> {
         columns: usize,
         r_index: Vec<usize>,
         c_index: Vec<usize>,
-        elements: Vec<R>,
+        elements: Vec<T>,
     ) -> Self {
         Self {
             columns,
@@ -75,12 +74,12 @@ impl<R: Presemiring> SparseMatrix<R> {
     }
 
     /// The nonzero entries.
-    pub const fn elements(&self) -> &Vec<R> {
+    pub const fn elements(&self) -> &Vec<T> {
         &self.elements
     }
 }
 
-impl<R: Presemiring> Default for SparseMatrix<R> {
+impl<T: Zero> Default for SparseMatrix<T> {
     fn default() -> Self {
         Self {
             columns: 0,
@@ -154,14 +153,14 @@ impl<R: Presemiring> From<&SparseMatrix<R>> for DenseMatrix<R> {
     }
 }
 
-pub struct SparseMatrixBuilder<R: Presemiring> {
+pub struct SparseMatrixBuilder<T: Zero> {
     columns: usize,
     r_index: Vec<usize>,
     c_index: Vec<usize>,
-    elements: Vec<R>,
+    elements: Vec<T>,
 }
 
-impl<R: Presemiring> SparseMatrixBuilder<R> {
+impl<T: Zero> SparseMatrixBuilder<T> {
     pub fn new(rows: usize, columns: usize) -> Self {
         let mut r_index = Vec::<usize>::with_capacity(rows + 1);
         r_index.push(0);
@@ -175,7 +174,7 @@ impl<R: Presemiring> SparseMatrixBuilder<R> {
 
     /// # Safety
     /// `element` is not zero.
-    pub unsafe fn column_unchecked(&mut self, column: usize, element: R) {
+    pub unsafe fn column_unchecked(&mut self, column: usize, element: T) {
         self.c_index.push(column);
         self.elements.push(element);
     }
@@ -184,7 +183,7 @@ impl<R: Presemiring> SparseMatrixBuilder<R> {
         self.r_index.push(self.elements.len());
     }
 
-    pub fn build(self) -> SparseMatrix<R> {
+    pub fn build(self) -> SparseMatrix<T> {
         SparseMatrix {
             columns: self.columns,
             r_index: self.r_index,
@@ -194,9 +193,9 @@ impl<R: Presemiring> SparseMatrixBuilder<R> {
     }
 }
 
-impl<R: Presemiring + Eq> SparseMatrixBuilder<R> {
-    pub fn column(&mut self, column: usize, element: R) {
-        if element != R::ZERO {
+impl<T: Zero + Eq> SparseMatrixBuilder<T> {
+    pub fn column(&mut self, column: usize, element: T) {
+        if element != T::ZERO {
             unsafe { self.column_unchecked(column, element) };
         }
     }

@@ -33,10 +33,10 @@ use serde::{Deserialize, Serialize};
 ///
 /// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct DenseMatrix<R: Presemiring> {
+pub struct DenseMatrix<T> {
     rows: usize,
     columns: usize,
-    elements: Vec<R>,
+    elements: Vec<T>,
 }
 
 impl<R: Presemiring> DenseMatrix<R> {
@@ -205,14 +205,14 @@ impl<R: Semiring> DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> From<DenseMatrix<R>> for (usize, usize, Vec<R>) {
-    fn from(matrix: DenseMatrix<R>) -> Self {
+impl<T> From<DenseMatrix<T>> for (usize, usize, Vec<T>) {
+    fn from(matrix: DenseMatrix<T>) -> Self {
         (matrix.rows, matrix.columns, matrix.elements)
     }
 }
 
-impl<R: Presemiring> Index<(usize, usize)> for DenseMatrix<R> {
-    type Output = R;
+impl<T> Index<(usize, usize)> for DenseMatrix<T> {
+    type Output = T;
 
     #[inline]
     fn index(&self, (i, j): (usize, usize)) -> &Self::Output {
@@ -220,7 +220,7 @@ impl<R: Presemiring> Index<(usize, usize)> for DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> IndexMut<(usize, usize)> for DenseMatrix<R> {
+impl<T> IndexMut<(usize, usize)> for DenseMatrix<T> {
     #[inline]
     fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut Self::Output {
         &mut self.elements[i * self.columns + j]

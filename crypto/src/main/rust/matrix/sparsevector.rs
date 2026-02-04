@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Presemiring;
-use crate::algebra::Ring;
+use crate::algebra::{Presemiring, Ring, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -24,14 +23,14 @@ use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct SparseVector<R: Presemiring> {
+pub struct SparseVector<T: Zero> {
     dimension: usize,
     index: Vec<usize>,
-    elements: Vec<R>,
+    elements: Vec<T>,
 }
 
-impl<R: Presemiring> SparseVector<R> {
-    pub const fn new(dimension: usize, index: Vec<usize>, elements: Vec<R>) -> Self {
+impl<T: Zero> SparseVector<T> {
+    pub const fn new(dimension: usize, index: Vec<usize>, elements: Vec<T>) -> Self {
         Self {
             dimension,
             index,
@@ -51,7 +50,7 @@ impl<R: Presemiring> SparseVector<R> {
         self.dimension
     }
 
-    pub const fn elements(&self) -> &Vec<R> {
+    pub const fn elements(&self) -> &Vec<T> {
         &self.elements
     }
 }

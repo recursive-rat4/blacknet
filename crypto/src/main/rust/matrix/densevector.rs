@@ -40,8 +40,8 @@ use serde::{Deserialize, Serialize};
 ///
 /// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct DenseVector<R: Presemiring> {
-    elements: Vec<R>,
+pub struct DenseVector<T> {
+    elements: Vec<T>,
 }
 
 impl<R: Presemiring> DenseVector<R> {
@@ -100,80 +100,80 @@ impl<R: Semiring> DenseVector<R> {
     }
 }
 
-impl<R: Presemiring, const N: usize> From<[R; N]> for DenseVector<R> {
-    fn from(elements: [R; N]) -> Self {
+impl<T, const N: usize> From<[T; N]> for DenseVector<T> {
+    fn from(elements: [T; N]) -> Self {
         Self {
             elements: elements.into(),
         }
     }
 }
 
-impl<R: Presemiring> From<Vec<R>> for DenseVector<R> {
+impl<T> From<Vec<T>> for DenseVector<T> {
     #[inline]
-    fn from(elements: Vec<R>) -> Self {
+    fn from(elements: Vec<T>) -> Self {
         Self { elements }
     }
 }
 
-impl<R: Presemiring> From<DenseVector<R>> for Vec<R> {
+impl<T> From<DenseVector<T>> for Vec<T> {
     #[inline]
-    fn from(vector: DenseVector<R>) -> Self {
+    fn from(vector: DenseVector<T>) -> Self {
         vector.elements
     }
 }
 
-impl<R: Presemiring + Debug> Debug for DenseVector<R> {
+impl<T: Debug> Debug for DenseVector<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.elements)
     }
 }
 
-impl<R: Presemiring> AsRef<[R]> for DenseVector<R> {
+impl<T> AsRef<[T]> for DenseVector<T> {
     #[inline]
-    fn as_ref(&self) -> &[R] {
+    fn as_ref(&self) -> &[T] {
         &self.elements
     }
 }
 
-impl<R: Presemiring> AsMut<[R]> for DenseVector<R> {
+impl<T> AsMut<[T]> for DenseVector<T> {
     #[inline]
-    fn as_mut(&mut self) -> &mut [R] {
+    fn as_mut(&mut self) -> &mut [T] {
         self
     }
 }
 
-impl<R: Presemiring> Borrow<[R]> for DenseVector<R> {
+impl<T> Borrow<[T]> for DenseVector<T> {
     #[inline]
-    fn borrow(&self) -> &[R] {
+    fn borrow(&self) -> &[T] {
         &self.elements
     }
 }
 
-impl<R: Presemiring> BorrowMut<[R]> for DenseVector<R> {
+impl<T> BorrowMut<[T]> for DenseVector<T> {
     #[inline]
-    fn borrow_mut(&mut self) -> &mut [R] {
+    fn borrow_mut(&mut self) -> &mut [T] {
         &mut self.elements
     }
 }
 
-impl<R: Presemiring> Deref for DenseVector<R> {
-    type Target = [R];
+impl<T> Deref for DenseVector<T> {
+    type Target = [T];
 
     #[inline]
-    fn deref(&self) -> &[R] {
+    fn deref(&self) -> &[T] {
         &self.elements
     }
 }
 
-impl<R: Presemiring> DerefMut for DenseVector<R> {
+impl<T> DerefMut for DenseVector<T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.elements
     }
 }
 
-impl<R: Presemiring> Index<usize> for DenseVector<R> {
-    type Output = R;
+impl<T> Index<usize> for DenseVector<T> {
+    type Output = T;
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
@@ -181,25 +181,25 @@ impl<R: Presemiring> Index<usize> for DenseVector<R> {
     }
 }
 
-impl<R: Presemiring> IndexMut<usize> for DenseVector<R> {
+impl<T> IndexMut<usize> for DenseVector<T> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.elements[index]
     }
 }
 
-impl<R: Presemiring> FromIterator<R> for DenseVector<R> {
+impl<T> FromIterator<T> for DenseVector<T> {
     #[inline]
-    fn from_iter<I: IntoIterator<Item = R>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self {
             elements: iter.into_iter().collect(),
         }
     }
 }
 
-impl<R: Presemiring> IntoIterator for DenseVector<R> {
-    type Item = R;
-    type IntoIter = alloc::vec::IntoIter<R>;
+impl<T> IntoIterator for DenseVector<T> {
+    type Item = T;
+    type IntoIter = alloc::vec::IntoIter<T>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
@@ -207,9 +207,9 @@ impl<R: Presemiring> IntoIterator for DenseVector<R> {
     }
 }
 
-impl<'a, R: Presemiring> IntoIterator for &'a DenseVector<R> {
-    type Item = &'a R;
-    type IntoIter = core::slice::Iter<'a, R>;
+impl<'a, T> IntoIterator for &'a DenseVector<T> {
+    type Item = &'a T;
+    type IntoIter = core::slice::Iter<'a, T>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
@@ -217,9 +217,9 @@ impl<'a, R: Presemiring> IntoIterator for &'a DenseVector<R> {
     }
 }
 
-impl<'a, R: Presemiring> IntoIterator for &'a mut DenseVector<R> {
-    type Item = &'a mut R;
-    type IntoIter = core::slice::IterMut<'a, R>;
+impl<'a, T> IntoIterator for &'a mut DenseVector<T> {
+    type Item = &'a mut T;
+    type IntoIter = core::slice::IterMut<'a, T>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {

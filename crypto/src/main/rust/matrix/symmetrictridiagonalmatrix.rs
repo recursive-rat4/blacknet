@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -34,8 +34,8 @@ use serde::{Deserialize, Serialize};
 ///
 /// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct SymmetricTridiagonalMatrix<R: Presemiring> {
-    elements: Vec<R>,
+pub struct SymmetricTridiagonalMatrix<T> {
+    elements: Vec<T>,
 }
 
 impl<R: Presemiring> SymmetricTridiagonalMatrix<R> {
