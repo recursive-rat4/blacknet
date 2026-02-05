@@ -15,23 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::bigint::UInt256;
 use blacknet_crypto::random::{Distribution, UniformGenerator, UniformIntDistribution};
 use core::array;
 
 struct TestGenerator {
-    i: i16,
+    i: u8,
 }
 
 impl TestGenerator {
     fn new() -> Self {
-        Self {
-            i: 0xE2E4u16 as i16,
-        }
+        Self { i: 0xE2 }
     }
 }
 
 impl UniformGenerator for TestGenerator {
-    type Output = i16;
+    type Output = u8;
 
     fn generate(&mut self) -> Self::Output {
         let result = self.i;
@@ -43,40 +42,65 @@ impl UniformGenerator for TestGenerator {
 #[test]
 fn binary() {
     let mut g = TestGenerator::new();
-    let mut bud = UniformIntDistribution::<TestGenerator>::new(0..2);
-    let a: [u16; 16] = [0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1];
+    let mut bud = UniformIntDistribution::<u16, TestGenerator>::new(0..2);
+    let a: [u16; 16] = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
     let b: [u16; 16] = array::from_fn(|_| bud.sample(&mut g));
     assert_eq!(b, a);
+
+    bud.set_range(1..3);
+    let c: [u16; 16] = [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2];
+    let d: [u16; 16] = array::from_fn(|_| bud.sample(&mut g));
+    assert_eq!(d, c);
 }
 
 #[test]
 fn ternary() {
     let mut g = TestGenerator::new();
-    let mut tud = UniformIntDistribution::<TestGenerator>::new(0..3);
-    let a: [u16; 6] = [0, 1, 2, 2, 0, 2];
-    let b: [u16; 6] = array::from_fn(|_| tud.sample(&mut g));
+    let mut tud = UniformIntDistribution::<i8, TestGenerator>::new(0..3);
+    let a: [i8; 6] = [2, 0, 1, 2, 0, 1];
+    let b: [i8; 6] = array::from_fn(|_| tud.sample(&mut g));
     assert_eq!(b, a);
+
+    tud.set_range(-1..=1);
+    let c: [i8; 6] = [1, -1, 0, 1, -1, 0];
+    let d: [i8; 6] = array::from_fn(|_| tud.sample(&mut g));
+    assert_eq!(d, c);
 }
 
 #[test]
-fn byte() {
+fn u8() {
     let mut g = TestGenerator::new();
-    let mut uid = UniformIntDistribution::<TestGenerator>::new(0..256);
-    let a: [u16; 6] = [0xE4, 0xE2, 0xE5, 0xE2, 0xE6, 0xE2];
-    let b: [u16; 6] = array::from_fn(|_| uid.sample(&mut g));
+    let mut uid = UniformIntDistribution::<u8, TestGenerator>::new(0..=u8::MAX);
+    let a: [u8; 6] = [0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7];
+    let b: [u8; 6] = array::from_fn(|_| uid.sample(&mut g));
     assert_eq!(b, a);
 
-    uid.set_range(256..512);
-    let c: [u16; 6] = [0x1E7, 0x1E2, 0x1E8, 0x1E2, 0x1E9, 0x1E2];
+    uid.set_range(0xE0..0xF0);
+    let c: [u8; 6] = [0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED];
+    let d: [u8; 6] = array::from_fn(|_| uid.sample(&mut g));
+    assert_eq!(d, c);
+}
+
+#[test]
+fn u16() {
+    let mut g = TestGenerator::new();
+    let mut uid = UniformIntDistribution::<u16, TestGenerator>::new(0..=u16::MAX);
+    let a: [u16; 3] = [0xE3E2, 0xE5E4, 0xE7E6];
+    let b: [u16; 3] = array::from_fn(|_| uid.sample(&mut g));
+    assert_eq!(b, a);
+
+    uid.set_range(0..256);
+    let c: [u16; 6] = [0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED];
     let d: [u16; 6] = array::from_fn(|_| uid.sample(&mut g));
     assert_eq!(d, c);
 }
 
 #[test]
-fn max() {
+fn uint256() {
     let mut g = TestGenerator::new();
-    let mut uid = UniformIntDistribution::<TestGenerator>::new(0..u16::MAX);
-    let a: [u16; 3] = [0xE2E4, 0xE2E5, 0xE2E6];
-    let b: [u16; 3] = array::from_fn(|_| uid.sample(&mut g));
+    let mut uid =
+        UniformIntDistribution::<UInt256, TestGenerator>::new(UInt256::ZERO..=UInt256::MAX);
+    let a = UInt256::from_hex("0100FFFEFDFCFBFAF9F8F7F6F5F4F3F2F1F0EFEEEDECEBEAE9E8E7E6E5E4E3E2");
+    let b = uid.sample(&mut g);
     assert_eq!(b, a);
 }

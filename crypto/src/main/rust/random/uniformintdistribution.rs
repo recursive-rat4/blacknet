@@ -17,123 +17,101 @@
 
 use crate::integer::Integer;
 use crate::random::{Distribution, UniformGenerator};
+use core::borrow::BorrowMut;
+use core::marker::PhantomData;
 use core::ops::{Bound, RangeBounds};
 
-pub struct UniformIntDistribution<G: UniformGenerator<Output: Integer>> {
-    cache: <G::Output as Integer>::CastUnsigned,
-    have_bits: u32,
-    min: <G::Output as Integer>::CastUnsigned,
-    length: <G::Output as Integer>::CastUnsigned,
-    length_bits: u32,
-    mask: <G::Output as Integer>::CastUnsigned,
+pub struct UniformIntDistribution<I: Integer, G: UniformGenerator<Output = u8>> {
+    min: I,
+    length: I::CastUnsigned,
+    length_bytes: usize,
+    mask: I::CastUnsigned,
+    phantom: PhantomData<G>,
 }
 
-impl<G: UniformGenerator<Output: Integer>> UniformIntDistribution<G> {
-    pub fn new(range: impl RangeBounds<<G::Output as Integer>::CastUnsigned>) -> Self {
+impl<I: Integer, G: UniformGenerator<Output = u8>> UniformIntDistribution<I, G> {
+    pub fn new(range: impl RangeBounds<I>) -> Self {
         let (min, length) = Self::parse(range);
         let length_bits = Self::length_bits(length);
         Self {
-            cache: Default::default(),
-            have_bits: 0,
             min,
             length,
-            length_bits,
+            length_bytes: Self::length_bytes(length_bits),
             mask: Self::mask(length_bits),
+            phantom: PhantomData,
         }
     }
 
-    pub fn set_range(&mut self, range: impl RangeBounds<<G::Output as Integer>::CastUnsigned>) {
+    pub fn set_range(&mut self, range: impl RangeBounds<I>) {
         (self.min, self.length) = Self::parse(range);
-        self.length_bits = Self::length_bits(self.length);
-        self.mask = Self::mask(self.length_bits);
+        let length_bits = Self::length_bits(self.length);
+        self.length_bytes = Self::length_bytes(length_bits);
+        self.mask = Self::mask(length_bits);
     }
 
-    fn parse(
-        range: impl RangeBounds<<G::Output as Integer>::CastUnsigned>,
-    ) -> (
-        <G::Output as Integer>::CastUnsigned,
-        <G::Output as Integer>::CastUnsigned,
-    ) {
+    fn parse(range: impl RangeBounds<I>) -> (I, I::CastUnsigned) {
         let min = match range.start_bound() {
             Bound::Included(&n) => n,
-            Bound::Excluded(&n) => n + <G::Output as Integer>::CastUnsigned::ONE,
-            Bound::Unbounded => <G::Output as Integer>::CastUnsigned::MIN,
+            Bound::Excluded(&n) => n + I::ONE,
+            Bound::Unbounded => I::MIN,
         };
         let max = match range.end_bound() {
             Bound::Included(&n) => n,
-            Bound::Excluded(&n) => n - <G::Output as Integer>::CastUnsigned::ONE,
-            Bound::Unbounded => <G::Output as Integer>::CastUnsigned::MAX,
+            Bound::Excluded(&n) => n - I::ONE,
+            Bound::Unbounded => I::MAX,
         };
         debug_assert!(max >= min);
-        (min, max.wrapping_sub(min))
-    }
-
-    const fn useful_bits() -> u32 {
-        G::Output::BITS
+        (min, max.wrapping_sub(min).cast_unsigned())
     }
 
     #[inline]
-    fn length_bits(length: <G::Output as Integer>::CastUnsigned) -> u32 {
-        G::Output::BITS - length.leading_zeros()
+    fn length_bits(length: I::CastUnsigned) -> u32 {
+        I::CastUnsigned::BITS - length.leading_zeros()
+    }
+
+    const fn length_bytes(length_bits: u32) -> usize {
+        (length_bits.next_multiple_of(8) >> 3) as usize
     }
 
     #[inline]
-    fn mask(bits: u32) -> <G::Output as Integer>::CastUnsigned {
-        if bits < <G::Output as Integer>::CastUnsigned::BITS {
-            let one = <G::Output as Integer>::CastUnsigned::ONE;
+    fn mask(bits: u32) -> I::CastUnsigned {
+        if bits < I::CastUnsigned::BITS {
+            let one = I::CastUnsigned::ONE;
             (one << bits) - one
         } else {
-            <G::Output as Integer>::CastUnsigned::MAX
+            I::CastUnsigned::MAX
         }
     }
 
-    fn next(&mut self, generator: &mut G) -> <G::Output as Integer>::CastUnsigned {
-        if self.have_bits == 0 {
-            self.cache = generator.generate().cast_unsigned();
-            self.have_bits = Self::useful_bits();
-        }
-
-        if self.have_bits == self.length_bits {
-            self.have_bits = 0;
-            self.cache
-        } else if self.have_bits > self.length_bits {
-            let result = self.cache & self.mask;
-            self.cache >>= self.length_bits;
-            self.have_bits -= self.length_bits;
-            result
-        } else {
-            let need_bits = self.length_bits - self.have_bits;
-            let mut result = self.cache << need_bits;
-            self.cache = generator.generate().cast_unsigned();
-            self.have_bits = Self::useful_bits();
-            let mask = Self::mask(need_bits);
-            result |= self.cache & mask;
-            self.cache >>= need_bits;
-            self.have_bits -= need_bits;
-            result
-        }
+    fn next(&mut self, generator: &mut G) -> I::CastUnsigned {
+        let mut bytes = <I::CastUnsigned as Integer>::Bytes::default();
+        generator.fill(&mut bytes.borrow_mut()[..self.length_bytes]);
+        let int = I::CastUnsigned::from_le_bytes(bytes);
+        int & self.mask
     }
 }
 
-impl<G: UniformGenerator<Output: Integer>> Default for UniformIntDistribution<G> {
+impl<I: Integer, G: UniformGenerator<Output = u8>> Default for UniformIntDistribution<I, G> {
     fn default() -> Self {
         Self::new(..)
     }
 }
 
-impl<G: UniformGenerator<Output: Integer>> Distribution<G> for UniformIntDistribution<G> {
-    type Output = <G::Output as Integer>::CastUnsigned;
+impl<I: Integer, G: UniformGenerator<Output = u8>> Distribution<G>
+    for UniformIntDistribution<I, G>
+{
+    type Output = I;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output {
         loop {
             let result = self.next(generator);
             if result <= self.length {
+                let bytes = result.to_le_bytes();
+                let result = I::from_le_bytes(bytes);
                 return self.min.wrapping_add(result);
             }
         }
     }
 
-    fn reset(&mut self) {
-        self.have_bits = 0
-    }
+    fn reset(&mut self) {}
 }

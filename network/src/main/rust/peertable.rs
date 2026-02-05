@@ -259,12 +259,12 @@ impl PeerTable {
                 candidates.push((endpoint, entry, entry.chance(now)));
             }
         }
-        let mut uid = UniformIntDistribution::<FastRNG>::default();
+        let mut uid = UniformIntDistribution::<usize, FastRNG>::default();
         let mut f01 = Float01Distribution::<f32, FastRNG>::new();
         FAST_RNG.with_borrow_mut(|rng| {
             while !candidates.is_empty() {
-                uid.set_range(0..candidates.len() as u32);
-                let random = uid.sample(rng) as usize;
+                uid.set_range(..candidates.len());
+                let random = uid.sample(rng);
                 let (endpoint, entry, chance) = candidates[random];
                 if chance > f01.sample(rng) && entry.contact() {
                     return Some(*endpoint);
@@ -289,11 +289,11 @@ impl PeerTable {
     }
 
     fn shuffle(slice: &mut [Endpoint]) {
-        let mut uid = UniformIntDistribution::<FastRNG>::default();
+        let mut uid = UniformIntDistribution::<usize, FastRNG>::default();
         FAST_RNG.with_borrow_mut(|rng| {
             for i in 1..slice.len() {
-                uid.set_range(0..=i as u32);
-                let j = uid.sample(rng) as usize;
+                uid.set_range(..=i);
+                let j = uid.sample(rng);
                 slice.swap(i, j);
             }
         })

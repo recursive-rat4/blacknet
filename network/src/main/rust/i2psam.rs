@@ -297,10 +297,10 @@ impl SAM {
             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
         ];
         let mut id = String::with_capacity(LEN);
-        let mut dst = UniformIntDistribution::<FastRNG>::new(..ALPHABET.len() as u32);
+        let mut dst = UniformIntDistribution::<usize, FastRNG>::new(..ALPHABET.len());
         FAST_RNG.with_borrow_mut(|rng| {
             for _ in 0..LEN {
-                id.push(ALPHABET[dst.sample(rng) as usize]);
+                id.push(ALPHABET[dst.sample(rng)]);
             }
         });
         id

@@ -15,21 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::chacha::{L, Word};
+use blacknet_crypto::chacha::BLOCK_SIZE;
 use blacknet_crypto::random::{FastDRG, UniformGenerator};
 use core::array;
 
 #[test]
 fn discard() {
-    const SIZE: usize = L * 2 + 1;
+    const SIZE: usize = BLOCK_SIZE * 2 + 1;
     let mut drg = FastDRG::default();
 
-    let _: [Word; SIZE] = array::from_fn(|_| drg.generate());
-    let buf1: [Word; SIZE] = array::from_fn(|_| drg.generate());
+    let _: [u8; SIZE] = array::from_fn(|_| drg.generate());
+    let buf1: [u8; SIZE] = array::from_fn(|_| drg.generate());
 
     drg.seed(Default::default());
     drg.discard(SIZE);
-    let buf2: [Word; SIZE] = array::from_fn(|_| drg.generate());
+    let buf2: [u8; SIZE] = array::from_fn(|_| drg.generate());
 
     assert_eq!(buf2, buf1);
 }

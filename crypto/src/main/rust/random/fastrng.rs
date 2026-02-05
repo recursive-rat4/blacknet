@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::random::{
-    Distribution, FastDRG, UniformGenerator, UniformIntDistribution, fastdrg::SEED_SIZE,
-};
+use crate::random::{FastDRG, UniformGenerator, fastdrg::SEED_SIZE};
 use blacknet_compat::getentropy;
 use core::array;
 use core::cell::RefCell;
@@ -37,8 +35,7 @@ impl FastSeeder {
     }
 
     pub fn generate<const N: usize>(&mut self) -> [u8; N] {
-        let mut dst = UniformIntDistribution::<FastDRG>::new(0..256);
-        array::from_fn(|_| dst.sample(&mut self.drg) as u8)
+        array::from_fn(|_| self.drg.generate())
     }
 }
 

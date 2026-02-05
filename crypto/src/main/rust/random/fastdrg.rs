@@ -15,22 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::chacha::{ChaCha, KEY_SIZE, L, Word};
+use crate::chacha::{BLOCK_SIZE, ChaCha, KEY_SIZE, L, Word};
 use crate::random::UniformGenerator;
+use core::mem::transmute;
 
 pub const SEED_SIZE: usize = KEY_SIZE;
 
 pub struct FastDRG {
     chacha: ChaCha<8>,
-    buffer: [Word; L],
+    buffer: [u8; BLOCK_SIZE],
     position: usize,
 }
 
 impl FastDRG {
     pub fn new(seed: [u8; SEED_SIZE]) -> Self {
         let mut chacha = ChaCha::<8>::new(seed, Default::default());
-        let mut buffer = [0 as Word; L];
-        chacha.keystream(&mut buffer);
+        let mut buffer = [0_u8; BLOCK_SIZE];
+        Self::keystream(&mut chacha, &mut buffer);
         Self {
             chacha,
             buffer,
@@ -40,24 +41,31 @@ impl FastDRG {
 
     pub fn seed(&mut self, seed: [u8; SEED_SIZE]) {
         self.chacha.reset(seed, Default::default());
-        self.chacha.keystream(&mut self.buffer);
+        Self::keystream(&mut self.chacha, &mut self.buffer);
         self.position = 0;
     }
 
     pub fn discard(&mut self, z: usize) {
         let pos_z = self.position + z;
-        if pos_z <= L {
+        if pos_z <= BLOCK_SIZE {
             self.position = pos_z;
             return;
         }
         const {
-            assert!(L == 16);
+            assert!(BLOCK_SIZE == 64);
         };
-        let q = pos_z >> 4;
-        let r = pos_z & 15;
+        let q = pos_z >> 6;
+        let r = pos_z & 63;
         self.chacha.seek(self.chacha.counter() + q as u32 - 1);
         self.position = r;
-        self.chacha.keystream(&mut self.buffer);
+        Self::keystream(&mut self.chacha, &mut self.buffer);
+    }
+
+    fn keystream(chacha: &mut ChaCha<8>, buffer: &mut [u8; BLOCK_SIZE]) {
+        let mut scratch = [0 as Word; L];
+        chacha.keystream(&mut scratch);
+        let scratch: [u8; BLOCK_SIZE] = unsafe { transmute(scratch) };
+        buffer.copy_from_slice(&scratch);
     }
 }
 
@@ -68,16 +76,16 @@ impl Default for FastDRG {
 }
 
 impl UniformGenerator for FastDRG {
-    type Output = Word;
+    type Output = u8;
 
     fn generate(&mut self) -> Self::Output {
-        if self.position != L {
+        if self.position != BLOCK_SIZE {
             let result = self.buffer[self.position];
             self.position += 1;
             result
         } else {
             self.position = 1;
-            self.chacha.keystream(&mut self.buffer);
+            Self::keystream(&mut self.chacha, &mut self.buffer);
             self.buffer[0]
         }
     }

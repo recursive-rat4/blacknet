@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,7 +21,7 @@ use core::mem::transmute;
 pub type Word = u32;
 pub const KEY_SIZE: usize = 32;
 const IV_SIZE: usize = 12;
-const BLOCK_SIZE: usize = 64;
+pub const BLOCK_SIZE: usize = 64;
 pub const L: usize = 16;
 const SIGMA: [Word; 4] = [0x61707865, 0x3320646E, 0x79622D32, 0x6B206574];
 

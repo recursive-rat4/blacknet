@@ -16,37 +16,25 @@
  */
 
 use crate::float::{Cast, Float};
-use crate::integer::Integer;
+use crate::integer::{Integer, UnsignedInteger};
 use crate::random::{Distribution, UniformGenerator, UniformIntDistribution};
-use core::marker::PhantomData;
 
 /// Distribution of floats in range `[0, 1)`.
-pub struct Float01Distribution<
-    F: Float,
-    G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>,
-> {
-    uid: UniformIntDistribution<G>,
-    phantom: PhantomData<F>,
+pub struct Float01Distribution<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> {
+    uid: UniformIntDistribution<F::Bits, G>,
 }
 
-impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>>
-    Float01Distribution<F, G>
-{
+impl<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> Float01Distribution<F, G> {
     /// Construct the new distribution.
     pub fn new() -> Self {
-        const {
-            assert!(size_of::<F>() <= size_of::<G::Output>());
-        };
-        let one = <G::Output as Integer>::CastUnsigned::ONE;
-        let bound = one << F::MANTISSA_DIGITS;
+        let bound = F::Bits::ONE << F::MANTISSA_DIGITS;
         Self {
             uid: UniformIntDistribution::new(..bound),
-            phantom: PhantomData,
         }
     }
 }
 
-impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>> Default
+impl<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> Default
     for Float01Distribution<F, G>
 {
     fn default() -> Self {
@@ -54,14 +42,13 @@ impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>> Defa
     }
 }
 
-impl<F: Float, G: UniformGenerator<Output: Integer<CastUnsigned: Cast<F>>>> Distribution<G>
+impl<F: Float<Bits: UnsignedInteger + Cast<F>>, G: UniformGenerator<Output = u8>> Distribution<G>
     for Float01Distribution<F, G>
 {
     type Output = F;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output {
-        let one = <G::Output as Integer>::CastUnsigned::ONE;
-        let s: F = (one << F::MANTISSA_DIGITS).cast().recip();
+        let s: F = (F::Bits::ONE << F::MANTISSA_DIGITS).cast().recip();
         let m: F = self.uid.sample(generator).cast();
         s * m
     }

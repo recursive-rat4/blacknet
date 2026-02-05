@@ -15,7 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::bigint::BigInt;
+use crate::bigint::UInt256;
+use core::borrow::BorrowMut;
 use core::ops::{Add, BitAnd, BitOrAssign, Shl, ShrAssign, Sub};
 
 #[rustfmt::skip]
@@ -38,15 +39,19 @@ pub trait Integer
         + Ord
         + Sub<Output = Self::Limb>
         ;
-    type CastUnsigned: UnsignedInteger;
+    type Bytes: BorrowMut<[u8]> + Default;
+    type CastUnsigned: UnsignedInteger<Bytes = Self::Bytes>;
 
     fn cast_unsigned(self) -> Self::CastUnsigned;
     fn count_ones(self) -> u32;
+    fn from_le_bytes(bytes: Self::Bytes) -> Self;
     fn leading_zeros(self) -> u32;
+    fn to_le_bytes(self) -> Self::Bytes;
     fn wrapping_add(self, rps: Self) -> Self;
     fn wrapping_sub(self, rps: Self) -> Self;
 
     const BITS: u32;
+    const BYTES: usize;
     const MAX: Self;
     const MIN: Self;
 
@@ -66,6 +71,7 @@ macro_rules! impl_integer {
         $(
             impl Integer for $x {
                 type Limb = Self;
+                type Bytes = [u8; Self::BYTES];
                 type CastUnsigned = Self;
 
                 #[inline]
@@ -77,8 +83,16 @@ macro_rules! impl_integer {
                     self.count_ones()
                 }
                 #[inline]
+                fn from_le_bytes(bytes: Self::Bytes) -> Self {
+                    Self::from_le_bytes(bytes)
+                }
+                #[inline]
                 fn leading_zeros(self) -> u32 {
                     self.leading_zeros()
+                }
+                #[inline]
+                fn to_le_bytes(self) -> Self::Bytes {
+                    self.to_le_bytes()
                 }
                 #[inline]
                 fn wrapping_add(self, rps: Self) -> Self {
@@ -90,6 +104,7 @@ macro_rules! impl_integer {
                 }
 
                 const BITS: u32 = Self::BITS;
+                const BYTES: usize = Self::BITS as usize / 8;
                 const MAX: Self = Self::MAX;
                 const MIN: Self = Self::MIN;
 
@@ -105,6 +120,7 @@ macro_rules! impl_integer {
 
             impl Integer for $y {
                 type Limb = Self;
+                type Bytes = [u8; Self::BYTES];
                 type CastUnsigned = $x;
 
                 #[inline]
@@ -116,8 +132,16 @@ macro_rules! impl_integer {
                     self.count_ones()
                 }
                 #[inline]
+                fn from_le_bytes(bytes: Self::Bytes) -> Self {
+                    Self::from_le_bytes(bytes)
+                }
+                #[inline]
                 fn leading_zeros(self) -> u32 {
                     self.leading_zeros()
+                }
+                #[inline]
+                fn to_le_bytes(self) -> Self::Bytes {
+                    self.to_le_bytes()
                 }
                 #[inline]
                 fn wrapping_add(self, rps: Self) -> Self {
@@ -129,6 +153,7 @@ macro_rules! impl_integer {
                 }
 
                 const BITS: u32 = Self::BITS;
+                const BYTES: usize = Self::BITS as usize / 8;
                 const MAX: Self = Self::MAX;
                 const MIN: Self = Self::MIN;
 
@@ -147,8 +172,9 @@ macro_rules! impl_integer {
 
 impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, usize, isize);
 
-impl<const N: usize> Integer for BigInt<N> {
+impl Integer for UInt256 {
     type Limb = u64;
+    type Bytes = [u8; Self::BYTES];
     type CastUnsigned = Self;
 
     #[inline]
@@ -160,8 +186,16 @@ impl<const N: usize> Integer for BigInt<N> {
         self.count_ones()
     }
     #[inline]
+    fn from_le_bytes(bytes: Self::Bytes) -> Self {
+        Self::from_le_bytes(bytes)
+    }
+    #[inline]
     fn leading_zeros(self) -> u32 {
         self.leading_zeros()
+    }
+    #[inline]
+    fn to_le_bytes(self) -> Self::Bytes {
+        self.to_le_bytes()
     }
     #[inline]
     fn wrapping_add(self, rps: Self) -> Self {
@@ -173,6 +207,7 @@ impl<const N: usize> Integer for BigInt<N> {
     }
 
     const BITS: u32 = Self::BITS;
+    const BYTES: usize = Self::BITS as usize / 8;
     const MAX: Self = Self::MAX;
     const MIN: Self = Self::MIN;
 
@@ -184,7 +219,7 @@ impl<const N: usize> Integer for BigInt<N> {
     const LIMB_THREE: Self::Limb = 3;
 }
 
-impl<const N: usize> UnsignedInteger for BigInt<N> {}
+impl UnsignedInteger for UInt256 {}
 
 macro_rules! impl_bits {
     ( $x:ty, $y:ident ) => {
