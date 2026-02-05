@@ -103,16 +103,16 @@ impl<R: Presemiring> Mul<&SparseVector<R>> for &DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring + Eq> From<&DenseVector<R>> for SparseVector<R> {
-    fn from(dense: &DenseVector<R>) -> Self {
+impl<T: Zero + Clone + Eq> From<&DenseVector<T>> for SparseVector<T> {
+    fn from(dense: &DenseVector<T>) -> Self {
         let dimension = dense.dimension();
         let mut index = Vec::<usize>::new();
-        let mut elements = Vec::<R>::new();
+        let mut elements = Vec::<T>::new();
         for i in 0..dimension {
-            let e = dense[i];
-            if e != R::ZERO {
+            let e = &dense[i];
+            if *e != T::ZERO {
                 index.push(i);
-                elements.push(e);
+                elements.push(e.clone());
             }
         }
         Self {
@@ -123,10 +123,10 @@ impl<R: Presemiring + Eq> From<&DenseVector<R>> for SparseVector<R> {
     }
 }
 
-impl<R: Presemiring> From<&SparseVector<R>> for DenseVector<R> {
-    fn from(sparse: &SparseVector<R>) -> Self {
-        let mut dense = DenseVector::fill(sparse.dimension(), R::ZERO);
-        zip(sparse.index.iter(), sparse.elements.iter()).for_each(|(&i, &e)| dense[i] = e);
+impl<T: Zero + Clone> From<&SparseVector<T>> for DenseVector<T> {
+    fn from(sparse: &SparseVector<T>) -> Self {
+        let mut dense = DenseVector::fill(sparse.dimension(), T::ZERO);
+        zip(sparse.index.iter(), sparse.elements.iter()).for_each(|(&i, e)| dense[i] = e.clone());
         dense
     }
 }

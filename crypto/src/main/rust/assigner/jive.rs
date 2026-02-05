@@ -24,7 +24,7 @@ use core::marker::PhantomData;
 
 pub struct Jive<
     'a,
-    G: Presemiring + AdditiveCyclicGroup,
+    G: AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [G; WIDTH]>,
@@ -35,7 +35,7 @@ pub struct Jive<
 
 impl<
     'a,
-    G: Presemiring + AdditiveCyclicGroup,
+    G: AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [G; WIDTH]>,

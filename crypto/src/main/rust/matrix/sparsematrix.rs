@@ -122,14 +122,14 @@ impl<R: Presemiring> Mul<&DenseVector<R>> for &SparseMatrix<R> {
     }
 }
 
-impl<R: Presemiring + Eq> From<&DenseMatrix<R>> for SparseMatrix<R> {
-    fn from(dense: &DenseMatrix<R>) -> Self {
-        let mut builder = SparseMatrixBuilder::<R>::new(dense.rows(), dense.columns());
+impl<T: Zero + Clone + Eq> From<&DenseMatrix<T>> for SparseMatrix<T> {
+    fn from(dense: &DenseMatrix<T>) -> Self {
+        let mut builder = SparseMatrixBuilder::<T>::new(dense.rows(), dense.columns());
         for i in 0..dense.rows() {
             for j in 0..dense.columns() {
-                let e = dense[(i, j)];
-                if e != R::ZERO {
-                    builder.column(j, e);
+                let e = &dense[(i, j)];
+                if *e != T::ZERO {
+                    builder.column(j, e.clone());
                 }
             }
             builder.row();
@@ -138,15 +138,15 @@ impl<R: Presemiring + Eq> From<&DenseMatrix<R>> for SparseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> From<&SparseMatrix<R>> for DenseMatrix<R> {
-    fn from(sparse: &SparseMatrix<R>) -> Self {
-        let mut dense = DenseMatrix::<R>::fill(sparse.rows(), sparse.columns(), R::ZERO);
+impl<T: Zero + Clone> From<&SparseMatrix<T>> for DenseMatrix<T> {
+    fn from(sparse: &SparseMatrix<T>) -> Self {
+        let mut dense = DenseMatrix::<T>::fill(sparse.rows(), sparse.columns(), T::ZERO);
         for i in 0..sparse.rows() {
             let row_start = sparse.r_index[i];
             let row_end = sparse.r_index[i + 1];
             for j in row_start..row_end {
                 let column = sparse.c_index[j];
-                dense[(i, column)] = sparse.elements[j];
+                dense[(i, column)] = sparse.elements[j].clone();
             }
         }
         dense

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Presemiring, Semiring, Square, Tensor};
+use crate::algebra::{Double, Presemiring, Semiring, Square, Tensor, Zero};
 use crate::matrix::DenseVector;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -39,9 +39,9 @@ pub struct DenseMatrix<T> {
     elements: Vec<T>,
 }
 
-impl<R: Presemiring> DenseMatrix<R> {
+impl<T> DenseMatrix<T> {
     /// Construct a new matrix.
-    pub const fn new(rows: usize, columns: usize, elements: Vec<R>) -> Self {
+    pub const fn new(rows: usize, columns: usize, elements: Vec<T>) -> Self {
         debug_assert!(rows * columns == elements.len());
         Self {
             rows,
@@ -51,7 +51,10 @@ impl<R: Presemiring> DenseMatrix<R> {
     }
 
     /// Fill a new `m ⨉ n` matrix with a single `element`.
-    pub fn fill(rows: usize, columns: usize, element: R) -> Self {
+    pub fn fill(rows: usize, columns: usize, element: T) -> Self
+    where
+        T: Clone,
+    {
         Self {
             rows,
             columns,
@@ -59,20 +62,23 @@ impl<R: Presemiring> DenseMatrix<R> {
         }
     }
 
-    pub fn pad_to_power_of_two(&self) -> Self {
+    pub fn pad_to_power_of_two(&self) -> Self
+    where
+        T: Zero + Clone,
+    {
         let m = self.rows.next_power_of_two() - self.rows;
         let n = self.columns.next_power_of_two() - self.columns;
-        let mut elements = Vec::<R>::with_capacity((self.rows + m) * (self.columns + n));
+        let mut elements = Vec::<T>::with_capacity((self.rows + m) * (self.columns + n));
         for i in 0..self.rows {
             for j in 0..self.columns {
-                elements.push(self[(i, j)])
+                elements.push(self[(i, j)].clone())
             }
             for _j in 0..n {
-                elements.push(R::ZERO)
+                elements.push(T::ZERO)
             }
         }
         for _ in 0..m * (self.columns + n) {
-            elements.push(R::ZERO)
+            elements.push(T::ZERO)
         }
         Self {
             rows: self.rows + m,
@@ -92,25 +98,28 @@ impl<R: Presemiring> DenseMatrix<R> {
     }
 
     /// The entries in row-major order.
-    pub const fn elements(&self) -> &Vec<R> {
+    pub const fn elements(&self) -> &Vec<T> {
         &self.elements
     }
 
     /// Iterate rows.
-    pub fn iter_row(&self) -> impl ExactSizeIterator<Item = &[R]> {
+    pub fn iter_row(&self) -> impl ExactSizeIterator<Item = &[T]> {
         self.elements.chunks_exact(self.columns)
     }
 
     /// Concatenate horizontally.
-    pub fn cat(&self, rps: &Self) -> Self {
+    pub fn cat(&self, rps: &Self) -> Self
+    where
+        T: Clone,
+    {
         debug_assert!(self.rows == rps.rows);
-        let mut elements = Vec::<R>::with_capacity(self.rows * (self.columns + rps.columns));
+        let mut elements = Vec::<T>::with_capacity(self.rows * (self.columns + rps.columns));
         for i in 0..self.rows {
             for j in 0..self.columns {
-                elements.push(self[(i, j)])
+                elements.push(self[(i, j)].clone())
             }
             for j in 0..rps.columns {
-                elements.push(rps[(i, j)])
+                elements.push(rps[(i, j)].clone())
             }
         }
         Self {
@@ -122,10 +131,12 @@ impl<R: Presemiring> DenseMatrix<R> {
 
     /// Convert a `m ⨉ n` matrix into a `1 ⨉ mn` row vector.
     #[inline]
-    pub fn vectorize(self) -> DenseVector<R> {
+    pub fn vectorize(self) -> DenseVector<T> {
         self.elements.into()
     }
+}
 
+impl<R: Presemiring> DenseMatrix<R> {
     /// The face-splitting product
     pub fn row_tensor(&self, rps: &Self) -> Self {
         debug_assert!(self.rows == rps.rows);

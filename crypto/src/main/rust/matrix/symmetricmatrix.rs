@@ -38,9 +38,9 @@ pub struct SymmetricMatrix<T> {
     elements: Vec<T>,
 }
 
-impl<R: Presemiring> SymmetricMatrix<R> {
+impl<T> SymmetricMatrix<T> {
     /// Construct a new matrix given the lower triangular entries.
-    pub const fn new(dimension: usize, elements: Vec<R>) -> Self {
+    pub const fn new(dimension: usize, elements: Vec<T>) -> Self {
         debug_assert!(Self::size(dimension) == elements.len());
         Self {
             dimension,
@@ -49,7 +49,10 @@ impl<R: Presemiring> SymmetricMatrix<R> {
     }
 
     /// Fill a new `n ⨉ n` matrix with a single `element`.
-    pub fn fill(dimension: usize, element: R) -> Self {
+    pub fn fill(dimension: usize, element: T) -> Self
+    where
+        T: Clone,
+    {
         Self {
             dimension,
             elements: vec![element; Self::size(dimension)],
@@ -67,10 +70,16 @@ impl<R: Presemiring> SymmetricMatrix<R> {
     }
 
     /// The lower triangular entries.
-    pub const fn elements(&self) -> &Vec<R> {
+    pub const fn elements(&self) -> &Vec<T> {
         &self.elements
     }
 
+    const fn size(dimension: usize) -> usize {
+        (dimension * (dimension + 1)) >> 1
+    }
+}
+
+impl<R: Presemiring> SymmetricMatrix<R> {
     pub fn trace(&self) -> R {
         let mut sigma = R::ZERO;
         for i in 0..self.dimension {
@@ -82,26 +91,22 @@ impl<R: Presemiring> SymmetricMatrix<R> {
     pub const fn transpose(&self) -> &Self {
         self
     }
-
-    const fn size(dimension: usize) -> usize {
-        (dimension * (dimension + 1)) >> 1
-    }
 }
 
-impl<R: Presemiring> From<&SymmetricMatrix<R>> for DenseMatrix<R> {
-    fn from(symmetric: &SymmetricMatrix<R>) -> Self {
-        let mut elements = Vec::<R>::with_capacity(symmetric.rows() * symmetric.columns());
+impl<T: Clone> From<&SymmetricMatrix<T>> for DenseMatrix<T> {
+    fn from(symmetric: &SymmetricMatrix<T>) -> Self {
+        let mut elements = Vec::<T>::with_capacity(symmetric.rows() * symmetric.columns());
         for i in 0..symmetric.rows() {
             for j in 0..symmetric.columns() {
-                elements.push(symmetric[(i, j)]);
+                elements.push(symmetric[(i, j)].clone());
             }
         }
         DenseMatrix::new(symmetric.rows(), symmetric.columns(), elements)
     }
 }
 
-impl<R: Presemiring> Index<(usize, usize)> for SymmetricMatrix<R> {
-    type Output = R;
+impl<T> Index<(usize, usize)> for SymmetricMatrix<T> {
+    type Output = T;
 
     #[inline]
     fn index(&self, (mut i, mut j): (usize, usize)) -> &Self::Output {
@@ -112,7 +117,7 @@ impl<R: Presemiring> Index<(usize, usize)> for SymmetricMatrix<R> {
     }
 }
 
-impl<R: Presemiring> IndexMut<(usize, usize)> for SymmetricMatrix<R> {
+impl<T> IndexMut<(usize, usize)> for SymmetricMatrix<T> {
     #[inline]
     fn index_mut(&mut self, (mut i, mut j): (usize, usize)) -> &mut Self::Output {
         if j > i {

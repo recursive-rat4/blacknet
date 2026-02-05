@@ -15,24 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Presemiring;
+use crate::algebra::Set;
 use crate::assigner::assigment::Assigment;
 use crate::random::{UniformDistribution, UniformGenerator};
 
-pub trait Distribution<'a, R: Presemiring, G: UniformGenerator> {
+pub trait Distribution<'a, S: Set, G: UniformGenerator> {
     type Output;
 
-    fn new(assigment: &'a Assigment<R>) -> Self;
+    fn new(assigment: &'a Assigment<S>) -> Self;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output;
 
     fn reset(&mut self);
 }
 
-impl<'a, R: Presemiring, G: UniformGenerator> Distribution<'a, R, G> for UniformDistribution<G> {
+impl<'a, S: Set, G: UniformGenerator> Distribution<'a, S, G> for UniformDistribution<G> {
     type Output = G::Output;
 
-    fn new(_: &'a Assigment<R>) -> Self {
+    fn new(_: &'a Assigment<S>) -> Self {
         Self::default()
     }
 

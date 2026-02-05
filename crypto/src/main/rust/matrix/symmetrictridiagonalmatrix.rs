@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Ring;
-use crate::algebra::{Double, Presemiring};
+use crate::algebra::{Double, Presemiring, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -33,13 +32,13 @@ use serde::{Deserialize, Serialize};
 ///
 /// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct SymmetricTridiagonalMatrix<T> {
+pub struct SymmetricTridiagonalMatrix<T: Zero> {
     elements: Vec<T>,
 }
 
-impl<R: Presemiring> SymmetricTridiagonalMatrix<R> {
+impl<T: Zero> SymmetricTridiagonalMatrix<T> {
     /// Construct a new matrix given the concatenation of leading and following diagonals.
-    pub const fn new(elements: Vec<R>) -> Self {
+    pub const fn new(elements: Vec<T>) -> Self {
         debug_assert!(elements.len() & 1 == 1 || elements.len() == 0);
         Self { elements }
     }
@@ -54,6 +53,23 @@ impl<R: Presemiring> SymmetricTridiagonalMatrix<R> {
         (self.elements.len() + 1) >> 1
     }
 
+    fn index(&self, i: usize, j: usize) -> T
+    where
+        T: Clone,
+    {
+        if i == j {
+            self.elements[i].clone()
+        } else if i == j + 1 {
+            self.elements[self.columns() + j].clone()
+        } else if j == i + 1 {
+            self.elements[self.columns() + i].clone()
+        } else {
+            T::ZERO
+        }
+    }
+}
+
+impl<R: Presemiring> SymmetricTridiagonalMatrix<R> {
     pub fn trace(&self) -> R {
         self.elements[0..self.columns()].iter().sum()
     }
@@ -61,23 +77,11 @@ impl<R: Presemiring> SymmetricTridiagonalMatrix<R> {
     pub const fn transpose(&self) -> &Self {
         self
     }
-
-    fn index(&self, i: usize, j: usize) -> R {
-        if i == j {
-            self.elements[i]
-        } else if i == j + 1 {
-            self.elements[self.columns() + j]
-        } else if j == i + 1 {
-            self.elements[self.columns() + i]
-        } else {
-            R::ZERO
-        }
-    }
 }
 
-impl<R: Presemiring> From<&SymmetricTridiagonalMatrix<R>> for DenseMatrix<R> {
-    fn from(stm: &SymmetricTridiagonalMatrix<R>) -> Self {
-        let mut elements = Vec::<R>::with_capacity(stm.rows() * stm.columns());
+impl<T: Zero + Clone> From<&SymmetricTridiagonalMatrix<T>> for DenseMatrix<T> {
+    fn from(stm: &SymmetricTridiagonalMatrix<T>) -> Self {
+        let mut elements = Vec::<T>::with_capacity(stm.rows() * stm.columns());
         for i in 0..stm.rows() {
             for j in 0..stm.columns() {
                 elements.push(stm.index(i, j))
@@ -87,7 +91,7 @@ impl<R: Presemiring> From<&SymmetricTridiagonalMatrix<R>> for DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Add for SymmetricTridiagonalMatrix<R> {
+impl<T: Zero + Add<Output = T>> Add for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -100,14 +104,14 @@ impl<R: Presemiring> Add for SymmetricTridiagonalMatrix<R> {
     }
 }
 
-impl<R: Presemiring> AddAssign for SymmetricTridiagonalMatrix<R> {
+impl<T: Zero + AddAssign> AddAssign for SymmetricTridiagonalMatrix<T> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<T: Double<Output = T>> Double for SymmetricTridiagonalMatrix<T> {
+impl<T: Zero + Double<Output = T>> Double for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -117,53 +121,63 @@ impl<T: Double<Output = T>> Double for SymmetricTridiagonalMatrix<T> {
     }
 }
 
-impl<R: Presemiring> Add<&SymmetricTridiagonalMatrix<R>> for SymmetricTridiagonalMatrix<R> {
+impl<T: Zero + for<'a> Add<&'a T, Output = T>> Add<&SymmetricTridiagonalMatrix<T>>
+    for SymmetricTridiagonalMatrix<T>
+{
     type Output = Self;
 
-    fn add(self, rps: &SymmetricTridiagonalMatrix<R>) -> Self::Output {
+    fn add(self, rps: &SymmetricTridiagonalMatrix<T>) -> Self::Output {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
         Self {
             elements: zip(self.elements, rps.elements.iter())
-                .map(|(l, &r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<R: Presemiring> AddAssign<&SymmetricTridiagonalMatrix<R>> for SymmetricTridiagonalMatrix<R> {
-    fn add_assign(&mut self, rps: &SymmetricTridiagonalMatrix<R>) {
+impl<T: Zero + for<'a> AddAssign<&'a T>> AddAssign<&SymmetricTridiagonalMatrix<T>>
+    for SymmetricTridiagonalMatrix<T>
+{
+    fn add_assign(&mut self, rps: &SymmetricTridiagonalMatrix<T>) {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l += r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Presemiring> Add<SymmetricTridiagonalMatrix<R>> for &SymmetricTridiagonalMatrix<R> {
-    type Output = SymmetricTridiagonalMatrix<R>;
+impl<T: Zero> Add<SymmetricTridiagonalMatrix<T>> for &SymmetricTridiagonalMatrix<T>
+where
+    for<'a> &'a T: Add<T, Output = T>,
+{
+    type Output = SymmetricTridiagonalMatrix<T>;
 
-    fn add(self, rps: SymmetricTridiagonalMatrix<R>) -> Self::Output {
+    fn add(self, rps: SymmetricTridiagonalMatrix<T>) -> Self::Output {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
         Self::Output {
             elements: zip(self.elements.iter(), rps.elements)
-                .map(|(&l, r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<R: Presemiring> Add for &SymmetricTridiagonalMatrix<R> {
-    type Output = SymmetricTridiagonalMatrix<R>;
+impl<T: Zero> Add for &SymmetricTridiagonalMatrix<T>
+where
+    for<'a> &'a T: Add<Output = T>,
+{
+    type Output = SymmetricTridiagonalMatrix<T>;
 
     fn add(self, rps: Self) -> Self::Output {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
         Self::Output {
             elements: zip(self.elements.iter(), rps.elements.iter())
-                .map(|(&l, &r)| l + r)
+                .map(|(l, r)| l + r)
                 .collect(),
         }
     }
 }
 
-impl<T: Neg<Output = T>> Neg for SymmetricTridiagonalMatrix<T> {
+impl<T: Zero + Neg<Output = T>> Neg for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -173,7 +187,7 @@ impl<T: Neg<Output = T>> Neg for SymmetricTridiagonalMatrix<T> {
     }
 }
 
-impl<T> Neg for &SymmetricTridiagonalMatrix<T>
+impl<T: Zero> Neg for &SymmetricTridiagonalMatrix<T>
 where
     for<'a> &'a T: Neg<Output = T>,
 {
@@ -186,7 +200,7 @@ where
     }
 }
 
-impl<R: Ring> Sub for SymmetricTridiagonalMatrix<R> {
+impl<T: Zero + Sub<Output = T>> Sub for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
@@ -199,54 +213,64 @@ impl<R: Ring> Sub for SymmetricTridiagonalMatrix<R> {
     }
 }
 
-impl<R: Ring> SubAssign for SymmetricTridiagonalMatrix<R> {
+impl<T: Zero + SubAssign> SubAssign for SymmetricTridiagonalMatrix<T> {
     fn sub_assign(&mut self, rps: Self) {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
         zip(self.elements.iter_mut(), rps.elements).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<&SymmetricTridiagonalMatrix<R>> for SymmetricTridiagonalMatrix<R> {
+impl<T: Zero + for<'a> Sub<&'a T, Output = T>> Sub<&SymmetricTridiagonalMatrix<T>>
+    for SymmetricTridiagonalMatrix<T>
+{
     type Output = Self;
 
-    fn sub(self, rps: &SymmetricTridiagonalMatrix<R>) -> Self::Output {
+    fn sub(self, rps: &SymmetricTridiagonalMatrix<T>) -> Self::Output {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
         Self {
             elements: zip(self.elements, rps.elements.iter())
-                .map(|(l, &r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }
 }
 
-impl<R: Ring> SubAssign<&SymmetricTridiagonalMatrix<R>> for SymmetricTridiagonalMatrix<R> {
-    fn sub_assign(&mut self, rps: &SymmetricTridiagonalMatrix<R>) {
+impl<T: Zero + for<'a> SubAssign<&'a T>> SubAssign<&SymmetricTridiagonalMatrix<T>>
+    for SymmetricTridiagonalMatrix<T>
+{
+    fn sub_assign(&mut self, rps: &SymmetricTridiagonalMatrix<T>) {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
-        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, &r)| *l -= r);
+        zip(self.elements.iter_mut(), rps.elements.iter()).for_each(|(l, r)| *l -= r);
     }
 }
 
-impl<R: Ring> Sub<SymmetricTridiagonalMatrix<R>> for &SymmetricTridiagonalMatrix<R> {
-    type Output = SymmetricTridiagonalMatrix<R>;
+impl<T: Zero> Sub<SymmetricTridiagonalMatrix<T>> for &SymmetricTridiagonalMatrix<T>
+where
+    for<'a> &'a T: Sub<T, Output = T>,
+{
+    type Output = SymmetricTridiagonalMatrix<T>;
 
-    fn sub(self, rps: SymmetricTridiagonalMatrix<R>) -> Self::Output {
+    fn sub(self, rps: SymmetricTridiagonalMatrix<T>) -> Self::Output {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
         Self::Output {
             elements: zip(self.elements.iter(), rps.elements)
-                .map(|(&l, r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }
 }
 
-impl<R: Ring> Sub for &SymmetricTridiagonalMatrix<R> {
-    type Output = SymmetricTridiagonalMatrix<R>;
+impl<T: Zero> Sub for &SymmetricTridiagonalMatrix<T>
+where
+    for<'a> &'a T: Sub<Output = T>,
+{
+    type Output = SymmetricTridiagonalMatrix<T>;
 
     fn sub(self, rps: Self) -> Self::Output {
         debug_assert!(self.rows() == rps.rows() && self.columns() == rps.columns());
         Self::Output {
             elements: zip(self.elements.iter(), rps.elements.iter())
-                .map(|(&l, &r)| l - r)
+                .map(|(l, r)| l - r)
                 .collect(),
         }
     }

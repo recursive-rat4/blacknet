@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,16 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Presemiring;
+use crate::algebra::Set;
 use crate::matrix::DenseVector;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
-pub struct Assigment<R: Presemiring> {
-    assigment: RefCell<Vec<R>>,
+pub struct Assigment<S: Set> {
+    assigment: RefCell<Vec<S>>,
 }
 
-impl<R: Presemiring> Assigment<R> {
+impl<S: Set> Assigment<S> {
     pub fn new(variables: usize) -> Self {
         Self {
             assigment: RefCell::new(Vec::with_capacity(variables)),
@@ -32,21 +32,24 @@ impl<R: Presemiring> Assigment<R> {
     }
 
     #[inline]
-    pub fn extend<I: IntoIterator<Item = R>>(&self, iter: I) {
+    pub fn extend<I: IntoIterator<Item = S>>(&self, iter: I) {
         self.assigment.borrow_mut().extend(iter)
     }
 
     #[inline]
-    pub fn extend_from_slice(&self, slice: &[R]) {
+    pub fn extend_from_slice(&self, slice: &[S])
+    where
+        S: Clone,
+    {
         self.assigment.borrow_mut().extend_from_slice(slice)
     }
 
     #[inline]
-    pub fn push(&self, value: R) {
+    pub fn push(&self, value: S) {
         self.assigment.borrow_mut().push(value)
     }
 
-    pub fn finish(self) -> DenseVector<R> {
+    pub fn finish(self) -> DenseVector<S> {
         self.assigment.take().into()
     }
 }

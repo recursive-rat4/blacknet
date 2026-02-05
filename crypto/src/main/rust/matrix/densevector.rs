@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Conjugate, Double, Presemiring, Semiring, Set, Square, Tensor};
+use crate::algebra::{Conjugate, Double, Presemiring, Semiring, Set, Square, Tensor, Zero};
 use crate::duplex::{Absorb, Duplex};
 use crate::matrix::DenseMatrix;
 use alloc::borrow::{Borrow, BorrowMut};
@@ -44,27 +44,33 @@ pub struct DenseVector<T> {
     elements: Vec<T>,
 }
 
-impl<R: Presemiring> DenseVector<R> {
+impl<T> DenseVector<T> {
     /// Construct a new vector.
-    pub const fn new(elements: Vec<R>) -> Self {
+    pub const fn new(elements: Vec<T>) -> Self {
         Self { elements }
     }
 
     /// Fill a new `n`-dimensional vector with a single `element`.
-    pub fn fill(n: usize, element: R) -> Self {
+    pub fn fill(n: usize, element: T) -> Self
+    where
+        T: Clone,
+    {
         Self {
             elements: vec![element; n],
         }
     }
 
-    pub fn pad_to_power_of_two(&self) -> Self {
+    pub fn pad_to_power_of_two(&self) -> Self
+    where
+        T: Zero + Clone,
+    {
         let n = self.elements.len().next_power_of_two() - self.elements.len();
         Self {
             elements: self
                 .elements
                 .iter()
-                .copied()
-                .chain(repeat_n(R::ZERO, n))
+                .cloned()
+                .chain(repeat_n(T::ZERO, n))
                 .collect(),
         }
     }
@@ -75,15 +81,20 @@ impl<R: Presemiring> DenseVector<R> {
     }
 
     /// The entries.
-    pub const fn elements(&self) -> &Vec<R> {
+    pub const fn elements(&self) -> &Vec<T> {
         &self.elements
     }
 
     /// Concatenate horizontally.
-    pub fn cat(&self, rps: &Self) -> Self {
-        chain(self, rps).copied().collect()
+    pub fn cat(&self, rps: &Self) -> Self
+    where
+        T: Clone,
+    {
+        chain(self, rps).cloned().collect()
     }
+}
 
+impl<R: Presemiring> DenseVector<R> {
     /// Compute the dot product.
     pub fn dot(&self, rps: &Self) -> R {
         debug_assert_eq!(self.elements.len(), rps.elements.len());

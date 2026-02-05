@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Presemiring;
+use crate::algebra::Set;
 use crate::assigner::assigment::Assigment;
 
-pub trait Permutation<S: Presemiring> {
+pub trait Permutation<S: Set> {
     type Domain;
 
     fn permute(assigment: &Assigment<S>, x: &mut Self::Domain);

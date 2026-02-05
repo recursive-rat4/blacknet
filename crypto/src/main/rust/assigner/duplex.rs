@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
+use crate::algebra::AdditiveGroup;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::permutation::Permutation;
 use crate::duplex::{Duplex, Phase};
@@ -24,7 +24,7 @@ use core::marker::PhantomData;
 
 pub struct DuplexImpl<
     'a,
-    S: Semiring + From<i8>,
+    S: AdditiveGroup + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -39,7 +39,7 @@ pub struct DuplexImpl<
 
 impl<
     'a,
-    S: Semiring + From<i8>,
+    S: AdditiveGroup + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -58,7 +58,7 @@ impl<
 
     pub fn with_iv(assigment: &'a Assigment<S>, iv: &[S; CAPACITY]) -> Self {
         let mut duplex = Self::new(assigment);
-        duplex.state[RATE..WIDTH].copy_from_slice(iv);
+        duplex.state[RATE..WIDTH].clone_from_slice(iv);
         duplex
     }
 
@@ -66,25 +66,25 @@ impl<
         self.phase = Phase::Absorb;
         self.position = 0;
         self.state[..RATE].fill(S::ZERO);
-        self.state[RATE..WIDTH].copy_from_slice(iv);
+        self.state[RATE..WIDTH].clone_from_slice(iv);
     }
 
     fn pad(&mut self) {
         if self.position != RATE {
-            self.state[self.position] = S::ONE;
+            self.state[self.position] = S::from(1);
             self.position += 1;
             self.state[self.position..RATE].fill(S::ZERO);
             self.position = RATE;
             self.state[WIDTH - 1] += S::from(2);
         } else {
-            self.state[WIDTH - 1] += S::ONE;
+            self.state[WIDTH - 1] += S::from(1);
         }
     }
 }
 
 impl<
     'a,
-    S: Semiring + From<i8>,
+    S: AdditiveGroup + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -119,7 +119,7 @@ impl<
             P::permute(self.assigment, &mut self.state);
             self.position = 0;
         }
-        let e = self.state[self.position];
+        let e = self.state[self.position].clone();
         self.position += 1;
         e
     }
@@ -127,7 +127,7 @@ impl<
 
 impl<
     'a,
-    S: Semiring + From<i8>,
+    S: AdditiveGroup + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
