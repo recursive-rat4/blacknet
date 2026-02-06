@@ -45,9 +45,9 @@ fn matrix() {
 
 #[test]
 fn vector() {
-    let a = DenseVector::from([3, 2, 1, 0, 4, 2, 1, 0].map(Z::from).map(R::from));
-    let b = DenseVector::from([4295098371, 4295098372].map(Z::new).map(R::from));
-    let g = latticegadget::matrix(Z::from(65536), 2, 4);
+    let a: DenseVector<R> = DenseVector::from([3, 2, 1, 0, 4, 2, 1, 0].map(Z::from).map(R::from));
+    let b: DenseVector<R> = DenseVector::from([4295098371, 4295098372].map(Z::new).map(R::from));
+    let g: DenseMatrix<R> = latticegadget::matrix(Z::from(65536), 2, 4);
     assert_eq!(&g * &a, b);
     let c = latticegadget::decompose_vector(&b, 65535, 16, 4);
     assert_eq!(c, a);

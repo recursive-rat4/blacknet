@@ -315,30 +315,33 @@ where
     }
 }
 
-impl<R: Presemiring> Mul<R> for SymmetricMatrix<R> {
+impl<T: for<'a> Mul<&'a T, Output = T>> Mul<T> for SymmetricMatrix<T> {
     type Output = Self;
 
-    fn mul(self, rps: R) -> Self::Output {
+    fn mul(self, rps: T) -> Self::Output {
         Self {
             dimension: self.dimension,
-            elements: self.elements.into_iter().map(|e| e * rps).collect(),
+            elements: self.elements.into_iter().map(|e| e * &rps).collect(),
         }
     }
 }
 
-impl<R: Presemiring> MulAssign<R> for SymmetricMatrix<R> {
-    fn mul_assign(&mut self, rps: R) {
-        self.elements.iter_mut().for_each(|e| *e *= rps);
+impl<T: for<'a> MulAssign<&'a T>> MulAssign<T> for SymmetricMatrix<T> {
+    fn mul_assign(&mut self, rps: T) {
+        self.elements.iter_mut().for_each(|e| *e *= &rps);
     }
 }
 
-impl<R: Presemiring> Mul<R> for &SymmetricMatrix<R> {
-    type Output = SymmetricMatrix<R>;
+impl<T> Mul<T> for &SymmetricMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = SymmetricMatrix<T>;
 
-    fn mul(self, rps: R) -> Self::Output {
+    fn mul(self, rps: T) -> Self::Output {
         Self::Output {
             dimension: self.dimension,
-            elements: self.elements.iter().map(|&e| e * rps).collect(),
+            elements: self.elements.iter().map(|e| e * &rps).collect(),
         }
     }
 }

@@ -231,6 +231,15 @@ impl Mul<&Self> for PervushinField {
     }
 }
 
+impl Mul for &PervushinField {
+    type Output = PervushinField;
+
+    #[inline]
+    fn mul(self, rps: Self) -> Self::Output {
+        *self * *rps
+    }
+}
+
 impl MulAssign for PervushinField {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {

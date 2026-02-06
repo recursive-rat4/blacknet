@@ -496,32 +496,35 @@ impl<R: Presemiring> Mul for &DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Mul<R> for DenseMatrix<R> {
+impl<T: for<'a> Mul<&'a T, Output = T>> Mul<T> for DenseMatrix<T> {
     type Output = Self;
 
-    fn mul(self, rps: R) -> Self::Output {
+    fn mul(self, rps: T) -> Self::Output {
         Self {
             rows: self.rows,
             columns: self.columns,
-            elements: self.elements.into_iter().map(|e| e * rps).collect(),
+            elements: self.elements.into_iter().map(|e| e * &rps).collect(),
         }
     }
 }
 
-impl<R: Presemiring> MulAssign<R> for DenseMatrix<R> {
-    fn mul_assign(&mut self, rps: R) {
-        self.elements.iter_mut().for_each(|e| *e *= rps);
+impl<T: for<'a> MulAssign<&'a T>> MulAssign<T> for DenseMatrix<T> {
+    fn mul_assign(&mut self, rps: T) {
+        self.elements.iter_mut().for_each(|e| *e *= &rps);
     }
 }
 
-impl<R: Presemiring> Mul<R> for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Mul<T> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
-    fn mul(self, rps: R) -> Self::Output {
+    fn mul(self, rps: T) -> Self::Output {
         Self::Output {
             rows: self.rows,
             columns: self.columns,
-            elements: self.elements.iter().map(|&e| e * rps).collect(),
+            elements: self.elements.iter().map(|e| e * &rps).collect(),
         }
     }
 }

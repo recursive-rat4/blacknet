@@ -18,7 +18,7 @@
 use crate::algebra::{Double, Presemiring, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
-use core::iter::zip;
+use core::iter::{Sum, zip};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
@@ -67,10 +67,11 @@ impl<T: Zero> SymmetricTridiagonalMatrix<T> {
             T::ZERO
         }
     }
-}
 
-impl<R: Presemiring> SymmetricTridiagonalMatrix<R> {
-    pub fn trace(&self) -> R {
+    pub fn trace(&self) -> T
+    where
+        for<'a> T: Sum<&'a T>,
+    {
         self.elements[0..self.columns()].iter().sum()
     }
 
@@ -276,28 +277,31 @@ where
     }
 }
 
-impl<R: Presemiring> Mul<R> for SymmetricTridiagonalMatrix<R> {
+impl<T: Zero + for<'a> Mul<&'a T, Output = T>> Mul<T> for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 
-    fn mul(self, rps: R) -> Self::Output {
+    fn mul(self, rps: T) -> Self::Output {
         Self {
-            elements: self.elements.into_iter().map(|e| e * rps).collect(),
+            elements: self.elements.into_iter().map(|e| e * &rps).collect(),
         }
     }
 }
 
-impl<R: Presemiring> MulAssign<R> for SymmetricTridiagonalMatrix<R> {
-    fn mul_assign(&mut self, rps: R) {
-        self.elements.iter_mut().for_each(|e| *e *= rps);
+impl<T: Zero + for<'a> MulAssign<&'a T>> MulAssign<T> for SymmetricTridiagonalMatrix<T> {
+    fn mul_assign(&mut self, rps: T) {
+        self.elements.iter_mut().for_each(|e| *e *= &rps);
     }
 }
 
-impl<R: Presemiring> Mul<R> for &SymmetricTridiagonalMatrix<R> {
-    type Output = SymmetricTridiagonalMatrix<R>;
+impl<T: Zero> Mul<T> for &SymmetricTridiagonalMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = SymmetricTridiagonalMatrix<T>;
 
-    fn mul(self, rps: R) -> Self::Output {
+    fn mul(self, rps: T) -> Self::Output {
         Self::Output {
-            elements: self.elements.iter().map(|&e| e * rps).collect(),
+            elements: self.elements.iter().map(|e| e * &rps).collect(),
         }
     }
 }

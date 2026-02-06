@@ -388,7 +388,7 @@ where
     }
 }
 
-impl<R: Presemiring> Mul for DenseVector<R> {
+impl<T: Mul<Output = T>> Mul for DenseVector<T> {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -397,66 +397,75 @@ impl<R: Presemiring> Mul for DenseVector<R> {
     }
 }
 
-impl<R: Presemiring> MulAssign for DenseVector<R> {
+impl<T: MulAssign> MulAssign for DenseVector<T> {
     fn mul_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
         zip(self, rps).for_each(|(l, r)| *l *= r);
     }
 }
 
-impl<R: Presemiring> Mul<&DenseVector<R>> for DenseVector<R> {
+impl<T: for<'a> Mul<&'a T, Output = T>> Mul<&DenseVector<T>> for DenseVector<T> {
     type Output = Self;
 
-    fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+    fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(l, &r)| l * r).collect()
+        zip(self, rps).map(|(l, r)| l * r).collect()
     }
 }
 
-impl<R: Presemiring> MulAssign<&DenseVector<R>> for DenseVector<R> {
-    fn mul_assign(&mut self, rps: &DenseVector<R>) {
+impl<T: for<'a> MulAssign<&'a T>> MulAssign<&DenseVector<T>> for DenseVector<T> {
+    fn mul_assign(&mut self, rps: &DenseVector<T>) {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).for_each(|(l, &r)| *l *= r);
+        zip(self, rps).for_each(|(l, r)| *l *= r);
     }
 }
 
-impl<R: Presemiring> Mul<DenseVector<R>> for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Mul<DenseVector<T>> for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<T, Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: DenseVector<R>) -> Self::Output {
+    fn mul(self, rps: DenseVector<T>) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(&l, r)| l * r).collect()
+        zip(self, rps).map(|(l, r)| l * r).collect()
     }
 }
 
-impl<R: Presemiring> Mul for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Mul for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     fn mul(self, rps: Self) -> Self::Output {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(&l, &r)| l * r).collect()
+        zip(self, rps).map(|(l, r)| l * r).collect()
     }
 }
 
-impl<R: Presemiring> Mul<R> for DenseVector<R> {
+impl<T: for<'a> Mul<&'a T, Output = T>> Mul<T> for DenseVector<T> {
     type Output = Self;
 
-    fn mul(self, rps: R) -> Self::Output {
-        self.into_iter().map(|l| l * rps).collect()
+    fn mul(self, rps: T) -> Self::Output {
+        self.into_iter().map(|l| l * &rps).collect()
     }
 }
 
-impl<R: Presemiring> MulAssign<R> for DenseVector<R> {
-    fn mul_assign(&mut self, rps: R) {
-        self.into_iter().for_each(|l| *l *= rps);
+impl<T: for<'a> MulAssign<&'a T>> MulAssign<T> for DenseVector<T> {
+    fn mul_assign(&mut self, rps: T) {
+        self.into_iter().for_each(|l| *l *= &rps);
     }
 }
 
-impl<R: Presemiring> Mul<R> for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Mul<T> for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: R) -> Self::Output {
-        self.into_iter().map(|&l| l * rps).collect()
+    fn mul(self, rps: T) -> Self::Output {
+        self.into_iter().map(|l| l * &rps).collect()
     }
 }
 
