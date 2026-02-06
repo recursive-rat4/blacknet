@@ -22,6 +22,7 @@ mod fastdrg;
 #[cfg(feature = "std")]
 mod fastrng;
 mod float01distribution;
+pub mod hammingweight;
 mod quartaryuniformdistribution;
 mod uniformintdistribution;
 
@@ -32,5 +33,6 @@ pub use fastdrg::FastDRG;
 #[cfg(feature = "std")]
 pub use fastrng::{FAST_RNG, FastRNG};
 pub use float01distribution::Float01Distribution;
+pub use hammingweight::fill_with_weight;
 pub use quartaryuniformdistribution::QuartaryUniformDistribution;
 pub use uniformintdistribution::UniformIntDistribution;

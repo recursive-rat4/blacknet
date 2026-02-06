@@ -121,6 +121,10 @@ name = "freemodule"
 path = "src/test/rust/freemodule.rs"
 
 [[test]]
+name = "hammingweight"
+path = "src/test/rust/hammingweight.rs"
+
+[[test]]
 name = "hypercube"
 path = "src/test/rust/hypercube.rs"
 

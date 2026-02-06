@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::{LeftZero, RightZero, Zero};
 use crate::bigint::UInt256;
 use core::borrow::BorrowMut;
 use core::ops::{Add, BitAnd, BitOrAssign, Shl, ShrAssign, Sub};
@@ -240,3 +241,21 @@ impl_bits!(u16, bits_u16);
 impl_bits!(u32, bits_u32);
 impl_bits!(u64, bits_u64);
 impl_bits!(u128, bits_u128);
+
+macro_rules! impl_zero {
+    ( $($x:ty),+ ) => {
+        $(
+            impl LeftZero for $x {
+                const LEFT_ZERO: Self = <Self as Integer>::ZERO;
+            }
+            impl RightZero for $x {
+                const RIGHT_ZERO: Self = <Self as Integer>::ZERO;
+            }
+            impl Zero for $x {
+                const ZERO: Self = <Self as Integer>::ZERO;
+            }
+        )+
+    };
+}
+
+impl_zero!(i8, i16, i32, i64, u8, u16, u32, u64, UInt256);
