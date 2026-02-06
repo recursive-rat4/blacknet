@@ -16,6 +16,7 @@
  */
 
 mod binaryuniformdistribution;
+mod discretegaussiandistribution;
 mod distribution;
 mod fastdrg;
 #[cfg(feature = "std")]
@@ -25,6 +26,7 @@ mod quartaryuniformdistribution;
 mod uniformintdistribution;
 
 pub use binaryuniformdistribution::BinaryUniformDistribution;
+pub use discretegaussiandistribution::DiscreteGaussianDistribution;
 pub use distribution::{Distribution, UniformDistribution, UniformGenerator};
 pub use fastdrg::FastDRG;
 #[cfg(feature = "std")]
