@@ -241,6 +241,15 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&Self> for Univari
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul for &UnivariateRing<R, N, C> {
+    type Output = UnivariateRing<R, N, C>;
+
+    #[inline]
+    fn mul(self, rps: Self) -> Self::Output {
+        *self * *rps
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign for UnivariateRing<R, N, C> {
     #[inline]
     fn mul_assign(&mut self, rps: Self) {

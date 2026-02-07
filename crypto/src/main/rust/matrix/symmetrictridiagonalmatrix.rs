@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Presemiring, Zero};
+use crate::algebra::{Double, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
 use core::iter::{Sum, zip};
@@ -53,6 +53,17 @@ impl<T: Zero> SymmetricTridiagonalMatrix<T> {
         (self.elements.len() + 1) >> 1
     }
 
+    pub fn trace(&self) -> T
+    where
+        T: for<'a> Sum<&'a T>,
+    {
+        self.elements[0..self.columns()].iter().sum()
+    }
+
+    pub const fn transpose(&self) -> &Self {
+        self
+    }
+
     fn index(&self, i: usize, j: usize) -> T
     where
         T: Clone,
@@ -66,17 +77,6 @@ impl<T: Zero> SymmetricTridiagonalMatrix<T> {
         } else {
             T::ZERO
         }
-    }
-
-    pub fn trace(&self) -> T
-    where
-        for<'a> T: Sum<&'a T>,
-    {
-        self.elements[0..self.columns()].iter().sum()
-    }
-
-    pub const fn transpose(&self) -> &Self {
-        self
     }
 }
 
@@ -280,16 +280,32 @@ where
 impl<T: Zero + for<'a> Mul<&'a T, Output = T>> Mul<T> for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: T) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<T: Zero + for<'a> Mul<&'a T, Output = T>> Mul<&T> for SymmetricTridiagonalMatrix<T> {
+    type Output = Self;
+
+    fn mul(self, rps: &T) -> Self::Output {
         Self {
-            elements: self.elements.into_iter().map(|e| e * &rps).collect(),
+            elements: self.elements.into_iter().map(|e| e * rps).collect(),
         }
     }
 }
 
 impl<T: Zero + for<'a> MulAssign<&'a T>> MulAssign<T> for SymmetricTridiagonalMatrix<T> {
+    #[inline]
     fn mul_assign(&mut self, rps: T) {
-        self.elements.iter_mut().for_each(|e| *e *= &rps);
+        *self *= &rps
+    }
+}
+
+impl<T: Zero + for<'a> MulAssign<&'a T>> MulAssign<&T> for SymmetricTridiagonalMatrix<T> {
+    fn mul_assign(&mut self, rps: &T) {
+        self.elements.iter_mut().for_each(|e| *e *= rps);
     }
 }
 
@@ -299,31 +315,52 @@ where
 {
     type Output = SymmetricTridiagonalMatrix<T>;
 
+    #[inline]
     fn mul(self, rps: T) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<T: Zero> Mul<&T> for &SymmetricTridiagonalMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = SymmetricTridiagonalMatrix<T>;
+
+    fn mul(self, rps: &T) -> Self::Output {
         Self::Output {
-            elements: self.elements.iter().map(|e| e * &rps).collect(),
+            elements: self.elements.iter().map(|e| e * rps).collect(),
         }
     }
 }
 
-impl<R: Presemiring> Mul<&DenseVector<R>> for &SymmetricTridiagonalMatrix<R> {
-    type Output = DenseVector<R>;
+impl<T: Zero + for<'a> Mul<&'a T, Output = T> + Sum + Clone> Mul<&DenseVector<T>>
+    for &SymmetricTridiagonalMatrix<T>
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+    fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert!(self.columns() == rps.dimension());
         (0..self.rows())
-            .map(|i| (0..self.columns()).map(|j| self.index(i, j) * rps[j]).sum())
+            .map(|i| {
+                (0..self.columns())
+                    .map(|j| self.index(i, j) * &rps[j])
+                    .sum()
+            })
             .collect()
     }
 }
 
-impl<R: Presemiring> Mul<&SymmetricTridiagonalMatrix<R>> for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T: Zero + Sum + Clone> Mul<&SymmetricTridiagonalMatrix<T>> for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<T, Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: &SymmetricTridiagonalMatrix<R>) -> Self::Output {
+    fn mul(self, rps: &SymmetricTridiagonalMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension() == rps.rows());
         (0..rps.columns())
-            .map(|j| (0..rps.rows()).map(|i| self[i] * rps.index(i, j)).sum())
+            .map(|j| (0..rps.rows()).map(|i| &self[i] * rps.index(i, j)).sum())
             .collect()
     }
 }

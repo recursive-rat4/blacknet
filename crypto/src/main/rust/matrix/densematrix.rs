@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Presemiring, Semiring, Square, Tensor, Zero};
+use crate::algebra::{Double, One, Presemiring, Square, Tensor, Zero};
 use crate::matrix::DenseVector;
 use alloc::vec;
 use alloc::vec::Vec;
-use core::iter::zip;
+use core::iter::{Sum, zip};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
@@ -134,6 +134,47 @@ impl<T> DenseMatrix<T> {
     pub fn vectorize(self) -> DenseVector<T> {
         self.elements.into()
     }
+
+    pub fn trace(&self) -> T
+    where
+        T: for<'a> Sum<&'a T>,
+    {
+        debug_assert!(self.rows == self.columns);
+        (0..self.rows).map(|i| &self[(i, i)]).sum()
+    }
+
+    pub fn transpose(&self) -> Self
+    where
+        T: Clone,
+    {
+        let mut elements = Vec::<T>::with_capacity(self.elements.len());
+        for j in 0..self.columns {
+            for i in 0..self.rows {
+                elements.push(self[(i, j)].clone());
+            }
+        }
+        Self {
+            rows: self.columns,
+            columns: self.rows,
+            elements,
+        }
+    }
+
+    /// The `n ⨉ n` multiplicative identity.
+    pub fn identity(n: usize) -> Self
+    where
+        T: One + Zero + Clone,
+    {
+        let mut elements = vec![T::ZERO; n * n];
+        for i in 0..n {
+            elements[i * n + i] = T::ONE;
+        }
+        Self {
+            rows: n,
+            columns: n,
+            elements,
+        }
+    }
 }
 
 impl<R: Presemiring> DenseMatrix<R> {
@@ -173,44 +214,6 @@ impl<R: Presemiring> DenseMatrix<R> {
         Self {
             rows,
             columns,
-            elements,
-        }
-    }
-
-    pub fn trace(&self) -> R {
-        debug_assert!(self.rows == self.columns);
-        let mut sigma = R::ZERO;
-        for i in 0..self.rows {
-            sigma += self[(i, i)]
-        }
-        sigma
-    }
-
-    pub fn transpose(&self) -> Self {
-        let mut elements = Vec::<R>::with_capacity(self.elements.len());
-        for j in 0..self.columns {
-            for i in 0..self.rows {
-                elements.push(self[(i, j)]);
-            }
-        }
-        Self {
-            rows: self.columns,
-            columns: self.rows,
-            elements,
-        }
-    }
-}
-
-impl<R: Semiring> DenseMatrix<R> {
-    /// The `n ⨉ n` multiplicative identity.
-    pub fn identity(n: usize) -> Self {
-        let mut elements = vec![R::ZERO; n * n];
-        for i in 0..n {
-            elements[i * n + i] = R::ONE;
-        }
-        Self {
-            rows: n,
-            columns: n,
             elements,
         }
     }
@@ -499,18 +502,34 @@ impl<R: Presemiring> Mul for &DenseMatrix<R> {
 impl<T: for<'a> Mul<&'a T, Output = T>> Mul<T> for DenseMatrix<T> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: T) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<T: for<'a> Mul<&'a T, Output = T>> Mul<&T> for DenseMatrix<T> {
+    type Output = Self;
+
+    fn mul(self, rps: &T) -> Self::Output {
         Self {
             rows: self.rows,
             columns: self.columns,
-            elements: self.elements.into_iter().map(|e| e * &rps).collect(),
+            elements: self.elements.into_iter().map(|e| e * rps).collect(),
         }
     }
 }
 
 impl<T: for<'a> MulAssign<&'a T>> MulAssign<T> for DenseMatrix<T> {
+    #[inline]
     fn mul_assign(&mut self, rps: T) {
-        self.elements.iter_mut().for_each(|e| *e *= &rps);
+        *self *= &rps
+    }
+}
+
+impl<T: for<'a> MulAssign<&'a T>> MulAssign<&T> for DenseMatrix<T> {
+    fn mul_assign(&mut self, rps: &T) {
+        self.elements.iter_mut().for_each(|e| *e *= rps);
     }
 }
 
@@ -520,11 +539,23 @@ where
 {
     type Output = DenseMatrix<T>;
 
+    #[inline]
     fn mul(self, rps: T) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<T> Mul<&T> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
+
+    fn mul(self, rps: &T) -> Self::Output {
         Self::Output {
             rows: self.rows,
             columns: self.columns,
-            elements: self.elements.iter().map(|e| e * &rps).collect(),
+            elements: self.elements.iter().map(|e| e * rps).collect(),
         }
     }
 }

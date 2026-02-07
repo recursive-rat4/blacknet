@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Conjugate, Double, Presemiring, Semiring, Set, Square, Tensor, Zero};
+use crate::algebra::{Conjugate, Double, One, Presemiring, Set, Square, Tensor, Zero};
 use crate::duplex::{Absorb, Duplex};
 use crate::matrix::DenseMatrix;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
-use core::iter::{chain, repeat_n, zip};
+use core::iter::{Sum, chain, repeat_n, zip};
 use core::ops::{
     Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
@@ -92,21 +92,24 @@ impl<T> DenseVector<T> {
     {
         chain(self, rps).cloned().collect()
     }
-}
 
-impl<R: Presemiring> DenseVector<R> {
     /// Compute the dot product.
-    pub fn dot(&self, rps: &Self) -> R {
+    pub fn dot(&self, rps: &Self) -> T
+    where
+        T: Sum,
+        for<'a> &'a T: Mul<Output = T>,
+    {
         debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(&l, &r)| l * r).sum()
+        zip(self, rps).map(|(l, r)| l * r).sum()
     }
-}
 
-impl<R: Semiring> DenseVector<R> {
     /// The `n`-dimensional multiplicative identity.
-    pub fn identity(n: usize) -> Self {
+    pub fn identity(n: usize) -> Self
+    where
+        T: One + Clone,
+    {
         Self {
-            elements: vec![R::ONE; n],
+            elements: vec![T::ONE; n],
         }
     }
 }
@@ -447,14 +450,30 @@ where
 impl<T: for<'a> Mul<&'a T, Output = T>> Mul<T> for DenseVector<T> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: T) -> Self::Output {
-        self.into_iter().map(|l| l * &rps).collect()
+        self * &rps
+    }
+}
+
+impl<T: for<'a> Mul<&'a T, Output = T>> Mul<&T> for DenseVector<T> {
+    type Output = Self;
+
+    fn mul(self, rps: &T) -> Self::Output {
+        self.into_iter().map(|l| l * rps).collect()
     }
 }
 
 impl<T: for<'a> MulAssign<&'a T>> MulAssign<T> for DenseVector<T> {
+    #[inline]
     fn mul_assign(&mut self, rps: T) {
-        self.into_iter().for_each(|l| *l *= &rps);
+        *self *= &rps
+    }
+}
+
+impl<T: for<'a> MulAssign<&'a T>> MulAssign<&T> for DenseVector<T> {
+    fn mul_assign(&mut self, rps: &T) {
+        self.into_iter().for_each(|l| *l *= rps);
     }
 }
 
@@ -464,8 +483,20 @@ where
 {
     type Output = DenseVector<T>;
 
+    #[inline]
     fn mul(self, rps: T) -> Self::Output {
-        self.into_iter().map(|l| l * &rps).collect()
+        self * &rps
+    }
+}
+
+impl<T> Mul<&T> for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
+
+    fn mul(self, rps: &T) -> Self::Output {
+        self.into_iter().map(|l| l * rps).collect()
     }
 }
 

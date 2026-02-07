@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveGroup, Presemiring, Zero};
+use crate::algebra::{AdditiveGroup, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
-use core::iter::zip;
+use core::iter::{Sum, zip};
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
@@ -67,17 +67,20 @@ impl<G: AdditiveGroup> Neg for SparseVector<G> {
     }
 }
 
-impl<R: Presemiring> Mul<&DenseMatrix<R>> for &SparseVector<R> {
-    type Output = DenseVector<R>;
+impl<T: Zero + Sum> Mul<&DenseMatrix<T>> for &SparseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+    fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         let lps_nnz = self.index.len();
         (0..rps.columns())
             .map(|j| {
                 (0..lps_nnz)
                     .map(|i| {
                         let row = self.index[i];
-                        self.elements[i] * rps[(row, j)]
+                        &self.elements[i] * &rps[(row, j)]
                     })
                     .sum()
             })
@@ -85,17 +88,20 @@ impl<R: Presemiring> Mul<&DenseMatrix<R>> for &SparseVector<R> {
     }
 }
 
-impl<R: Presemiring> Mul<&SparseVector<R>> for &DenseMatrix<R> {
-    type Output = DenseVector<R>;
+impl<T: Zero + Sum> Mul<&SparseVector<T>> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: &SparseVector<R>) -> Self::Output {
+    fn mul(self, rps: &SparseVector<T>) -> Self::Output {
         let rps_nnz = rps.index.len();
         (0..self.rows())
             .map(|i| {
                 (0..rps_nnz)
                     .map(|j| {
                         let column = rps.index[j];
-                        self[(i, column)] * rps.elements[j]
+                        &self[(i, column)] * &rps.elements[j]
                     })
                     .sum()
             })
