@@ -153,6 +153,10 @@ name = "logicgate"
 path = "src/test/rust/logicgate.rs"
 
 [[test]]
+name = "lpr"
+path = "src/test/rust/lpr.rs"
+
+[[test]]
 name = "matrixring"
 path = "src/test/rust/matrixring.rs"
 
@@ -220,6 +224,11 @@ harness = false
 [[bench]]
 name = "johnsonlindenstrauss"
 path = "src/benchmark/rust/johnsonlindenstrauss.rs"
+harness = false
+
+[[bench]]
+name = "lpr"
+path = "src/benchmark/rust/lpr.rs"
 harness = false
 
 [[bench]]

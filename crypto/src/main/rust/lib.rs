@@ -42,6 +42,7 @@ pub mod jive;
 pub mod johnsonlindenstrauss;
 pub mod latticegadget;
 pub mod lm;
+pub mod lpr;
 pub mod matrix;
 pub mod merkletree;
 pub mod norm;
