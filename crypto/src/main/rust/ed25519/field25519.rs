@@ -118,41 +118,53 @@ impl Field25519 {
 
 impl From<i8> for Field25519 {
     fn from(n: i8) -> Self {
-        Self::from(n as i32)
+        Self::from(n as i64)
     }
 }
 
 impl From<i16> for Field25519 {
     fn from(n: i16) -> Self {
-        Self::from(n as i32)
+        Self::from(n as i64)
     }
 }
 
 impl From<i32> for Field25519 {
     fn from(n: i32) -> Self {
+        Self::from(n as i64)
+    }
+}
+
+impl From<i64> for Field25519 {
+    fn from(n: i64) -> Self {
         if n >= 0 {
             Self::new((n as u64).into())
         } else {
-            Self::new(Self::MODULUS - ((-n) as u64).into())
+            Self::new(Self::MODULUS - n.unsigned_abs().into())
         }
     }
 }
 
 impl From<u8> for Field25519 {
     fn from(n: u8) -> Self {
-        Self::from(n as u32)
+        Self::from(n as u64)
     }
 }
 
 impl From<u16> for Field25519 {
     fn from(n: u16) -> Self {
-        Self::from(n as u32)
+        Self::from(n as u64)
     }
 }
 
 impl From<u32> for Field25519 {
     fn from(n: u32) -> Self {
-        Self::new((n as u64).into())
+        Self::from(n as u64)
+    }
+}
+
+impl From<u64> for Field25519 {
+    fn from(n: u64) -> Self {
+        Self::new(n.into())
     }
 }
 
