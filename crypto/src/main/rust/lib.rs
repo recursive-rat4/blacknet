@@ -26,6 +26,7 @@ pub mod ajtaicommitment;
 pub mod algebra;
 pub mod assigner;
 pub mod bigint;
+pub mod blacklemon;
 pub mod chacha;
 pub mod circuit;
 pub mod commitmentscheme;

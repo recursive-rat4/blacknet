@@ -69,6 +69,10 @@ name = "binaryuniformdistribution"
 path = "src/test/rust/binaryuniformdistribution.rs"
 
 [[test]]
+name = "blacklemon"
+path = "src/test/rust/blacklemon.rs"
+
+[[test]]
 name = "chacha20"
 path = "src/test/rust/chacha20.rs"
 

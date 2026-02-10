@@ -28,56 +28,57 @@ use core::array;
 
 // https://eprint.iacr.org/2013/293
 
-type Zt = Z2;
-type Zq = FermatField;
-const D: usize = 1024;
-const H: usize = 64;
-const SIGMA: f64 = 0.5;
-type Rt = UnivariateRing<Zt, D, Negacyclic>;
+pub(crate) type Zt = Z2;
+pub(crate) type Zq = FermatField;
+pub(crate) const D: usize = 1024;
+pub(crate) const H: usize = 64;
+pub(crate) const SIGMA: f64 = 0.5;
+pub(crate) type Rt = UnivariateRing<Zt, D, Negacyclic>;
 #[expect(dead_code)]
-type Rq = FermatRing1024;
-type RqNTT = FermatNTT1024;
-const DELTA: Zq = unsafe { Zq::from_unchecked(Zq::MODULUS >> 1) };
-const HALF_DELTA: <Zq as IntegerRing>::Int = Zq::MODULUS >> 2;
+pub(crate) type Rq = FermatRing1024;
+pub(crate) type RqNTT = FermatNTT1024;
+pub(crate) const DELTA: <Zq as IntegerRing>::Int = Zq::MODULUS >> 1;
+pub(crate) const ZQ_DELTA: Zq = unsafe { Zq::from_unchecked(DELTA) };
+pub(crate) const HALF_DELTA: <Zq as IntegerRing>::Int = Zq::MODULUS >> 2;
 
 pub struct SecretKey {
-    s: RqNTT,
+    pub(crate) s: RqNTT,
 }
 
 pub struct PublicKey {
-    a: RqNTT,
-    b: RqNTT,
+    pub(crate) a: RqNTT,
+    pub(crate) b: RqNTT,
 }
 
 pub struct CipherText {
-    a: RqNTT,
-    b: RqNTT,
+    pub(crate) a: RqNTT,
+    pub(crate) b: RqNTT,
 }
 
 pub struct PlainText {
-    m: Rt,
+    pub(crate) m: Rt,
 }
 
-fn upscale(rt: &Rt) -> RqNTT {
+pub(crate) fn upscale(rt: &Rt) -> RqNTT {
     let coefficients = rt.coefficients();
     array::from_fn(|i| {
         if coefficients[i] == Zt::ZERO {
             Zq::ZERO
         } else {
-            DELTA
+            ZQ_DELTA
         }
     })
     .into()
 }
 
-fn generate_a<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
+pub(crate) fn generate_uniform<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
     let mut uid = UniformIntDistribution::<<Zq as IntegerRing>::Int, RNG>::new(0..Zq::MODULUS);
     let residues: [<Zq as IntegerRing>::Int; D] = array::from_fn(|_| uid.sample(rng));
     let coefficients = residues.map(Zq::new);
     coefficients.into()
 }
 
-fn generate_error<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
+pub(crate) fn generate_error<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
     let mut dgd = DiscreteGaussianDistribution::<i8, RNG>::new(0.0, SIGMA);
     let residues: [i8; D] = array::from_fn(|_| dgd.sample(rng));
     let coefficients = residues.map(Zq::from);
@@ -98,7 +99,7 @@ pub fn generate_public_key<RNG: UniformGenerator<Output = u8>>(
     rng: &mut RNG,
     sk: &SecretKey,
 ) -> PublicKey {
-    let a = generate_a(rng);
+    let a = generate_uniform(rng);
     let e = generate_error(rng);
     PublicKey {
         a: -(a * sk.s + e),
