@@ -134,6 +134,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> IntoIterator for NTTRing<Z,
     type Item = Z;
     type IntoIter = core::array::IntoIter<Z, N>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.spectrum.into_iter()
     }
@@ -152,9 +153,30 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Add for NTTRing<Z, M, N> {
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Add<&Self> for NTTRing<Z, M, N> {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self {
+            spectrum: self.spectrum + rps.spectrum,
+        }
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Add<NTTRing<Z, M, N>> for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn add(self, rps: NTTRing<Z, M, N>) -> Self::Output {
+        Self::Output {
+            spectrum: self.spectrum + rps.spectrum,
+        }
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Add for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self::Output {
+            spectrum: self.spectrum + rps.spectrum,
+        }
     }
 }
 
@@ -182,11 +204,31 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Double for NTTRing<Z, M, N>
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Double for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            spectrum: self.spectrum.double(),
+        }
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Neg for NTTRing<Z, M, N> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self {
+            spectrum: -self.spectrum,
+        }
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Neg for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
             spectrum: -self.spectrum,
         }
     }
@@ -205,9 +247,30 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Sub for NTTRing<Z, M, N> {
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Sub<&Self> for NTTRing<Z, M, N> {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        Self {
+            spectrum: self.spectrum - rps.spectrum,
+        }
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Sub<NTTRing<Z, M, N>> for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn sub(self, rps: NTTRing<Z, M, N>) -> Self::Output {
+        Self::Output {
+            spectrum: self.spectrum - rps.spectrum,
+        }
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Sub for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        Self::Output {
+            spectrum: self.spectrum - rps.spectrum,
+        }
     }
 }
 
@@ -244,6 +307,24 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Self> for NTTRing<Z, M
     #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
         self * *rps
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<NTTRing<Z, M, N>> for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    #[inline]
+    fn mul(self, rps: NTTRing<Z, M, N>) -> Self::Output {
+        *self * rps
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    #[inline]
+    fn mul(self, rps: Self) -> Self::Output {
+        *self * *rps
     }
 }
 
@@ -288,9 +369,30 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<Z> for NTTRing<Z, M, N>
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Z> for NTTRing<Z, M, N> {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &Z) -> Self::Output {
-        self * *rps
+        Self::Output {
+            spectrum: self.spectrum * rps,
+        }
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<Z> for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn mul(self, rps: Z) -> Self::Output {
+        Self::Output {
+            spectrum: self.spectrum * rps,
+        }
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Z> for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn mul(self, rps: &Z) -> Self::Output {
+        Self::Output {
+            spectrum: self.spectrum * rps,
+        }
     }
 }
 
@@ -319,9 +421,8 @@ impl<Z: Twiddles<M> + DivisionRing, const M: usize, const N: usize> Div<Z> for N
 impl<Z: Twiddles<M> + DivisionRing, const M: usize, const N: usize> Div<&Z> for NTTRing<Z, M, N> {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &Z) -> Self::Output {
-        self / *rps
+        (self.spectrum / rps).map(|spectrum| Self { spectrum })
     }
 }
 

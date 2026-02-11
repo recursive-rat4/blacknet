@@ -116,9 +116,10 @@ impl Add for PervushinField {
 impl Add<&Self> for PervushinField {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self {
+            n: Self::reduce_add(self.n + rps.n),
+        }
     }
 }
 
@@ -166,9 +167,8 @@ impl Neg for PervushinField {
 impl Neg for &PervushinField {
     type Output = PervushinField;
 
-    #[inline]
     fn neg(self) -> Self::Output {
-        -(*self)
+        Self::Output { n: -self.n }
     }
 }
 
@@ -185,9 +185,10 @@ impl Sub for PervushinField {
 impl Sub<&Self> for PervushinField {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        Self {
+            n: Self::reduce_add(self.n - rps.n),
+        }
     }
 }
 
@@ -227,9 +228,10 @@ impl Mul for PervushinField {
 impl Mul<&Self> for PervushinField {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
-        self * *rps
+        Self {
+            n: Self::reduce_mul(self.n as i128 * rps.n as i128),
+        }
     }
 }
 
@@ -274,6 +276,15 @@ impl Square for PervushinField {
     }
 }
 
+impl Square for &PervushinField {
+    type Output = PervushinField;
+
+    #[inline]
+    fn square(self) -> Self::Output {
+        self * self
+    }
+}
+
 impl Inv for PervushinField {
     type Output = Option<Self>;
 
@@ -298,9 +309,24 @@ impl Div for PervushinField {
 impl Div<&Self> for PervushinField {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &Self) -> Self::Output {
-        self / *rps
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div<PervushinField> for &PervushinField {
+    type Output = Option<PervushinField>;
+
+    fn div(self, rps: PervushinField) -> Self::Output {
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div for &PervushinField {
+    type Output = Option<PervushinField>;
+
+    fn div(self, rps: Self) -> Self::Output {
+        rps.inv().map(|v| self * v)
     }
 }
 
@@ -507,9 +533,8 @@ impl Div for PervushinField2 {
 impl Div<&Self> for PervushinField2 {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &Self) -> Self::Output {
-        self / *rps
+        rps.inv().map(|v| self * v)
     }
 }
 

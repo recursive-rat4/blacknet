@@ -123,6 +123,7 @@ impl<R: Ring, const N: usize> IntoIterator for FreeModule<R, N> {
     type Item = R;
     type IntoIter = core::array::IntoIter<R, N>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.components.into_iter()
     }
@@ -141,9 +142,30 @@ impl<R: Ring, const N: usize> Add for FreeModule<R, N> {
 impl<R: Ring, const N: usize> Add<&Self> for FreeModule<R, N> {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self {
+            components: array::from_fn(|i| self.components[i] + rps.components[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize> Add<FreeModule<R, N>> for &FreeModule<R, N> {
+    type Output = FreeModule<R, N>;
+
+    fn add(self, rps: FreeModule<R, N>) -> Self::Output {
+        Self::Output {
+            components: array::from_fn(|i| self.components[i] + rps.components[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize> Add for &FreeModule<R, N> {
+    type Output = FreeModule<R, N>;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self::Output {
+            components: array::from_fn(|i| self.components[i] + rps.components[i]),
+        }
     }
 }
 
@@ -171,11 +193,31 @@ impl<R: Ring, const N: usize> Double for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> Double for &FreeModule<R, N> {
+    type Output = FreeModule<R, N>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            components: array::from_fn(|i| self.components[i].double()),
+        }
+    }
+}
+
 impl<R: Ring, const N: usize> Neg for FreeModule<R, N> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self {
+            components: array::from_fn(|i| -self.components[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize> Neg for &FreeModule<R, N> {
+    type Output = FreeModule<R, N>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
             components: array::from_fn(|i| -self.components[i]),
         }
     }
@@ -194,9 +236,30 @@ impl<R: Ring, const N: usize> Sub for FreeModule<R, N> {
 impl<R: Ring, const N: usize> Sub<&Self> for FreeModule<R, N> {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        Self {
+            components: array::from_fn(|i| self.components[i] - rps.components[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize> Sub<FreeModule<R, N>> for &FreeModule<R, N> {
+    type Output = FreeModule<R, N>;
+
+    fn sub(self, rps: FreeModule<R, N>) -> Self::Output {
+        Self::Output {
+            components: array::from_fn(|i| self.components[i] - rps.components[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize> Sub for &FreeModule<R, N> {
+    type Output = FreeModule<R, N>;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        Self::Output {
+            components: array::from_fn(|i| self.components[i] - rps.components[i]),
+        }
     }
 }
 
@@ -227,9 +290,30 @@ impl<R: Ring, const N: usize> Mul<R> for FreeModule<R, N> {
 impl<R: Ring, const N: usize> Mul<&R> for FreeModule<R, N> {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
-        self * *rps
+        Self::Output {
+            components: array::from_fn(|i| self.components[i] * rps),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize> Mul<R> for &FreeModule<R, N> {
+    type Output = FreeModule<R, N>;
+
+    fn mul(self, rps: R) -> Self::Output {
+        Self::Output {
+            components: array::from_fn(|i| self.components[i] * rps),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize> Mul<&R> for &FreeModule<R, N> {
+    type Output = FreeModule<R, N>;
+
+    fn mul(self, rps: &R) -> Self::Output {
+        Self::Output {
+            components: array::from_fn(|i| self.components[i] * rps),
+        }
     }
 }
 
@@ -258,9 +342,24 @@ impl<R: DivisionRing, const N: usize> Div<R> for FreeModule<R, N> {
 impl<R: DivisionRing, const N: usize> Div<&R> for FreeModule<R, N> {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &R) -> Self::Output {
-        self / *rps
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl<R: DivisionRing, const N: usize> Div<R> for &FreeModule<R, N> {
+    type Output = Option<FreeModule<R, N>>;
+
+    fn div(self, rps: R) -> Self::Output {
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl<R: DivisionRing, const N: usize> Div<&R> for &FreeModule<R, N> {
+    type Output = Option<FreeModule<R, N>>;
+
+    fn div(self, rps: &R) -> Self::Output {
+        rps.inv().map(|v| self * v)
     }
 }
 
@@ -271,9 +370,12 @@ impl<R: Ring, const N: usize> Sum for FreeModule<R, N> {
 }
 
 impl<'a, R: Ring, const N: usize> Sum<&'a Self> for FreeModule<R, N> {
-    #[inline]
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.copied().sum()
+    fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
+        let first = match iter.next() {
+            Some(i) => *i,
+            None => return Self::ZERO,
+        };
+        iter.fold(first, |lps, rps| lps + rps)
     }
 }
 

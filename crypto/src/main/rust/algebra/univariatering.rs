@@ -134,6 +134,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> IntoIterator for Univa
     type Item = R;
     type IntoIter = core::array::IntoIter<R, N>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.coefficients.into_iter()
     }
@@ -150,9 +151,8 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Add for UnivariateRing
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Add<&Self> for UnivariateRing<R, N, C> {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self::new(self.coefficients + rps.coefficients)
     }
 }
 
@@ -199,9 +199,8 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub for UnivariateRing
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub<&Self> for UnivariateRing<R, N, C> {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        Self::new(self.coefficients - rps.coefficients)
     }
 }
 
@@ -275,6 +274,15 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Square for UnivariateR
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Square for &UnivariateRing<R, N, C> {
+    type Output = UnivariateRing<R, N, C>;
+
+    #[inline]
+    fn square(self) -> Self::Output {
+        self * self
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<R> for UnivariateRing<R, N, C> {
     type Output = Self;
 
@@ -286,9 +294,8 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<R> for UnivariateR
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&R> for UnivariateRing<R, N, C> {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
-        self * *rps
+        Self::new(self.coefficients * rps)
     }
 }
 
@@ -323,9 +330,8 @@ impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<&R>
 {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &R) -> Self::Output {
-        self / *rps
+        (self.coefficients / rps).map(Self::new)
     }
 }
 

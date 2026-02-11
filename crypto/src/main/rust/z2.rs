@@ -16,6 +16,7 @@
  */
 
 #![allow(clippy::suspicious_arithmetic_impl)]
+#![allow(clippy::suspicious_op_assign_impl)]
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
@@ -58,23 +59,36 @@ impl Add for Z2 {
 impl Add<&Self> for Z2 {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self { n: self.n ^ rps.n }
+    }
+}
+
+impl Add<Z2> for &Z2 {
+    type Output = Z2;
+
+    fn add(self, rps: Z2) -> Self::Output {
+        Self::Output { n: self.n ^ rps.n }
+    }
+}
+
+impl Add for &Z2 {
+    type Output = Z2;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self::Output { n: self.n ^ rps.n }
     }
 }
 
 impl AddAssign for Z2 {
-    #[inline]
     fn add_assign(&mut self, rps: Self) {
-        *self = *self + rps
+        self.n ^= rps.n
     }
 }
 
 impl AddAssign<&Self> for Z2 {
-    #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        self.n ^= rps.n
     }
 }
 
@@ -96,6 +110,15 @@ impl Neg for Z2 {
     }
 }
 
+impl Neg for &Z2 {
+    type Output = Z2;
+
+    #[inline]
+    fn neg(self) -> Self::Output {
+        *self
+    }
+}
+
 impl Sub for Z2 {
     type Output = Self;
 
@@ -107,23 +130,36 @@ impl Sub for Z2 {
 impl Sub<&Self> for Z2 {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        Self { n: self.n ^ rps.n }
+    }
+}
+
+impl Sub<Z2> for &Z2 {
+    type Output = Z2;
+
+    fn sub(self, rps: Z2) -> Self::Output {
+        Self::Output { n: self.n ^ rps.n }
+    }
+}
+
+impl Sub for &Z2 {
+    type Output = Z2;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        Self::Output { n: self.n ^ rps.n }
     }
 }
 
 impl SubAssign for Z2 {
-    #[inline]
     fn sub_assign(&mut self, rps: Self) {
-        *self = *self - rps
+        self.n ^= rps.n
     }
 }
 
 impl SubAssign<&Self> for Z2 {
-    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        self.n ^= rps.n
     }
 }
 
@@ -138,23 +174,36 @@ impl Mul for Z2 {
 impl Mul<&Self> for Z2 {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
-        self * *rps
+        Self { n: self.n & rps.n }
+    }
+}
+
+impl Mul<Z2> for &Z2 {
+    type Output = Z2;
+
+    fn mul(self, rps: Z2) -> Self::Output {
+        Self::Output { n: self.n & rps.n }
+    }
+}
+
+impl Mul for &Z2 {
+    type Output = Z2;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        Self::Output { n: self.n & rps.n }
     }
 }
 
 impl MulAssign for Z2 {
-    #[inline]
     fn mul_assign(&mut self, rps: Self) {
-        *self = *self * rps
+        self.n &= rps.n
     }
 }
 
 impl MulAssign<&Self> for Z2 {
-    #[inline]
     fn mul_assign(&mut self, rps: &Self) {
-        *self = *self * *rps
+        self.n &= rps.n
     }
 }
 
@@ -164,6 +213,15 @@ impl Square for Z2 {
     #[inline]
     fn square(self) -> Self {
         self
+    }
+}
+
+impl Square for &Z2 {
+    type Output = Z2;
+
+    #[inline]
+    fn square(self) -> Self::Output {
+        *self
     }
 }
 
@@ -189,9 +247,24 @@ impl Div for Z2 {
 impl Div<&Self> for Z2 {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &Self) -> Self::Output {
-        self / *rps
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div<Z2> for &Z2 {
+    type Output = Option<Z2>;
+
+    fn div(self, rps: Z2) -> Self::Output {
+        rps.inv().map(|v| self * v)
+    }
+}
+
+impl Div for &Z2 {
+    type Output = Option<Z2>;
+
+    fn div(self, rps: Self) -> Self::Output {
+        rps.inv().map(|v| self * v)
     }
 }
 
@@ -201,6 +274,15 @@ impl Sqrt for Z2 {
     #[inline]
     fn sqrt(self) -> Self {
         self
+    }
+}
+
+impl Sqrt for &Z2 {
+    type Output = Z2;
+
+    #[inline]
+    fn sqrt(self) -> Self::Output {
+        *self
     }
 }
 
