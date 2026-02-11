@@ -40,7 +40,7 @@ impl<const N: usize> BigInt<N> {
     pub const fn from_hex(mut hex: &str) -> Self {
         let mut limbs = [0; N];
         let mut i = 0;
-        loop {
+        while i < N {
             let chunk: &str;
             (hex, chunk) = hex.split_at(hex.len() - 16);
             match u64::from_str_radix(chunk, 16) {
@@ -48,9 +48,6 @@ impl<const N: usize> BigInt<N> {
                 Err(_) => panic!("Can't parse a chunk of hex"),
             }
             i += 1;
-            if i == N {
-                break;
-            }
         }
         Self { limbs }
     }
@@ -130,12 +127,9 @@ impl<const N: usize> BigInt<N> {
         let mut i = 0;
         let mut j = 0;
         let mut k = 0;
-        loop {
+        while i < M {
             bits[i] = self.limbs[j] >> k & 1 == 1;
             i += 1;
-            if i == M {
-                break;
-            }
             k += 1;
             if k == u64::BITS {
                 k = 0;
@@ -160,13 +154,9 @@ impl<const N: usize> BigInt<N> {
     pub const fn count_ones(self) -> u32 {
         let mut ones = 0;
         let mut i = 0;
-        loop {
-            if i != N {
-                ones += self.limbs[i].count_ones();
-                i += 1;
-            } else {
-                break;
-            }
+        while i < N {
+            ones += self.limbs[i].count_ones();
+            i += 1;
         }
         ones
     }
@@ -174,15 +164,11 @@ impl<const N: usize> BigInt<N> {
     pub const fn leading_zeros(self) -> u32 {
         let mut zeros = 0;
         let mut i = N;
-        loop {
-            if i != 0 {
-                let n = self.limbs[i - 1].leading_zeros();
-                zeros += n;
-                if n == u64::BITS {
-                    i -= 1;
-                } else {
-                    break;
-                }
+        while i > 0 {
+            let n = self.limbs[i - 1].leading_zeros();
+            zeros += n;
+            if n == u64::BITS {
+                i -= 1;
             } else {
                 break;
             }

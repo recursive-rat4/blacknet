@@ -53,16 +53,13 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> NTTRing<Z, M, N> {
     pub const fn const_from(scalar: Z) -> Self {
         let mut t = [Z::ZERO; N];
         let mut i = 0;
-        loop {
+        while i < N {
             if i % Self::INERTIA == 0 {
                 t[i] = scalar;
             } else {
                 t[i] = Z::ZERO;
             }
             i += 1;
-            if i == N {
-                break;
-            }
         }
         Self {
             spectrum: FreeModule::<Z, N>::new(t),
