@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{
-    BalancedRepresentative, Conjugate, IntegerRing, Inv, One, Square, Zero,
+    BalancedRepresentative, Conjugate, IntegerRing, Inv, One, Sqrt, Square, Zero,
 };
 use blacknet_crypto::norm::InfinityNorm;
 
@@ -103,6 +103,17 @@ fn z_inv() {
     assert_eq!(c.inv().unwrap(), d);
     assert_eq!(d.inv().unwrap(), c);
     assert_eq!(Z::ZERO.inv(), None);
+}
+
+#[test]
+fn z_sqrt() {
+    let a = Z::new(0xC8F7B5AA744AF1);
+    let b = Z::new(0x121B318906FE12B);
+    let c = Z::new(0x2475A9E305021CF);
+    assert_eq!(a.sqrt().unwrap(), c);
+    assert!(b.sqrt().is_none());
+    assert_eq!(Z::ZERO.sqrt().unwrap(), Z::ZERO);
+    assert_eq!(Z::ONE.sqrt().unwrap(), Z::ONE);
 }
 
 #[test]

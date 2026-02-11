@@ -20,7 +20,8 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
     DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, Set, Square, Zero,
+    MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, Set, Sqrt, Square,
+    Zero,
 };
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -191,6 +192,15 @@ impl Div<&Self> for Z2 {
     #[inline]
     fn div(self, rps: &Self) -> Self::Output {
         self / *rps
+    }
+}
+
+impl Sqrt for Z2 {
+    type Output = Self;
+
+    #[inline]
+    fn sqrt(self) -> Self {
+        self
     }
 }
 

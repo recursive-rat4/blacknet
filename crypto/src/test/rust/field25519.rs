@@ -116,9 +116,9 @@ fn inv() {
 fn sqrt() {
     let a = F::from_hex("35AEB660A5F2E7DF341A8F256036C025E07B8E45002F7D9DA0C8F7B5AA744AEA");
     let b = F::from_hex("39FCE7DBF35569B5DC603860E3254BF9E61E3B57BA958A05A121B318906FE126");
-    let c = F::from_hex("729CF1CEDFC54274C1AF22F2B342AC455B664221EEF9C53D24A2F079F7AB16F5");
+    let c = F::from_hex("0D630E31203ABD8B3E50DD0D4CBD53BAA499BDDE11063AC2DB5D0F860854E8F8");
     assert_eq!(a.sqrt().unwrap(), c);
     assert!(b.sqrt().is_none());
     assert_eq!(F::ZERO.sqrt().unwrap(), F::ZERO);
-    assert_eq!(F::ONE.sqrt().unwrap(), F::ONE);
+    assert_eq!(F::ONE.sqrt().unwrap(), -F::ONE);
 }

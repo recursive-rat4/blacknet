@@ -19,7 +19,8 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
     DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
-    PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero, square_and_multiply,
+    PolynomialRing, RightOne, RightZero, Set, Sqrt, Square, UnivariateRing, Zero,
+    square_and_multiply,
 };
 use crate::convolution::Negacyclic;
 use crate::integer::{Integer, bits_u64};
@@ -51,6 +52,7 @@ impl PervushinField {
     }
 
     const P_MINUS_2: [bool; 61] = bits_u64(0x1FFFFFFFFFFFFFFD);
+    const P_PLUS_1_QUARTER: [bool; 60] = bits_u64(0x800000000000000);
 }
 
 impl Debug for PervushinField {
@@ -299,6 +301,16 @@ impl Div<&Self> for PervushinField {
     #[inline]
     fn div(self, rps: &Self) -> Self::Output {
         self / *rps
+    }
+}
+
+impl Sqrt for PervushinField {
+    type Output = Option<Self>;
+
+    fn sqrt(self) -> Option<Self> {
+        // p = 3 mod 4
+        let a = square_and_multiply(self, Self::P_PLUS_1_QUARTER);
+        if a.square() == self { Some(a) } else { None }
     }
 }
 

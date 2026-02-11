@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::IntegerRing;
-use blacknet_crypto::algebra::{Inv, Square};
+use blacknet_crypto::algebra::{IntegerRing, Inv, Sqrt, Square};
 use blacknet_crypto::norm::InfinityNorm;
 use blacknet_crypto::z2::Z2;
 
@@ -66,6 +65,12 @@ fn sub() {
 fn inv() {
     assert_eq!(Z2::new(1).inv().unwrap(), Z2::new(1));
     assert!(Z2::new(0).inv().is_none());
+}
+
+#[test]
+fn sqrt() {
+    assert_eq!(Z2::new(0).sqrt(), Z2::new(0));
+    assert_eq!(Z2::new(1).sqrt(), Z2::new(1));
 }
 
 #[test]

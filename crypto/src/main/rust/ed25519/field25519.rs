@@ -46,14 +46,6 @@ impl Field25519 {
         Self { n }
     }
 
-    fn legendre_symbol(self) -> Self {
-        square_and_multiply(self, Self::P_MINUS_1_HALVED_BITS)
-    }
-
-    fn power(self, rps: Self) -> Self {
-        square_and_multiply(self, rps.canonical().bits::<{ Self::BITS as usize }>())
-    }
-
     fn to_form(x: UInt256) -> UInt256 {
         Self::reduce_mul(x.mul(Self::R2))
     }
@@ -95,25 +87,14 @@ impl Field25519 {
     const R2: UInt256 =
         UInt256::from_hex("00000000000000000000000000000000000000000000000000000000000005A4");
     const RN: u64 = 0x86BCA1AF286BCA1B;
-    const TWO: Self = Self {
-        n: UInt256::from_hex("000000000000000000000000000000000000000000000000000000000000004C"),
-    };
     const TWO_INVERTED: Self = Self {
         n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000013"),
     };
-    const P_MINUS_1_HALVED_NUM: UInt256 =
+    const P_MINUS_5_EIGHTH: [bool; 252] =
+        UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD")
+            .bits();
+    const P_MINUS_1_HALF: UInt256 =
         UInt256::from_hex("3FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF6");
-    const P_MINUS_1_HALVED_BITS: [bool; 254] = Self::P_MINUS_1_HALVED_NUM.bits();
-    const S: Self = Self::TWO;
-    const Q: [bool; 253] =
-        UInt256::from_hex("1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB")
-            .bits();
-    const Q_PLUS_1_HALVED: [bool; 252] =
-        UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE")
-            .bits();
-    const Z_IN_Q: Self = Self {
-        n: UInt256::from_hex("75776B0BD6C71BA86D6E16BF336202D103F590FDB51BE9ED3B5807D4FE2BDB04"),
-    };
 }
 
 impl From<i8> for Field25519 {
@@ -362,37 +343,12 @@ impl Sqrt for Field25519 {
     type Output = Option<Self>;
 
     fn sqrt(self) -> Option<Self> {
-        // Tonelli–Shanks algorithm
-        let ls = self.legendre_symbol();
-        if ls == Self::ONE {
-            let mut m = Self::S;
-            let mut c = Self::Z_IN_Q;
-            let mut t = square_and_multiply(self, Self::Q);
-            let mut r = square_and_multiply(self, Self::Q_PLUS_1_HALVED);
-            loop {
-                if t == Self::ZERO {
-                    return Some(Self::ZERO);
-                } else if t == Self::ONE {
-                    return Some(r);
-                } else {
-                    let mut i = Self::ONE;
-                    let mut t_in_2_in_i = t.square();
-                    while t_in_2_in_i != Self::ONE {
-                        t_in_2_in_i = t_in_2_in_i.square();
-                        i += Self::ONE;
-                    }
-                    let b = c.power(Self::TWO.power(m - i - Self::ONE));
-                    m = i;
-                    c = b.square();
-                    t *= c;
-                    r *= b;
-                }
-            }
-        } else if ls == Self::ZERO {
-            Some(Self::ZERO)
-        } else {
-            None
-        }
+        // p = 5 mod 8
+        let a = self.double();
+        let b = square_and_multiply(a, Self::P_MINUS_5_EIGHTH);
+        let c = a * b.square();
+        let d = self * b * (c - Self::ONE);
+        if d.square() == self { Some(d) } else { None }
     }
 }
 
@@ -487,7 +443,7 @@ impl IntegerRing for Field25519 {
     }
     fn absolute(self) -> UInt256 {
         let n = self.canonical();
-        if n <= Self::P_MINUS_1_HALVED_NUM {
+        if n <= Self::P_MINUS_1_HALF {
             n
         } else {
             Self::MODULUS - n
