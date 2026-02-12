@@ -101,6 +101,15 @@ impl Double for Z2 {
     }
 }
 
+impl Double for &Z2 {
+    type Output = Z2;
+
+    #[inline]
+    fn double(self) -> Self::Output {
+        Self::Output::ZERO
+    }
+}
+
 impl Neg for Z2 {
     type Output = Self;
 

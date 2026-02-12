@@ -123,12 +123,23 @@ impl Add<&Self> for PervushinField {
     }
 }
 
+impl Add<PervushinField> for &PervushinField {
+    type Output = PervushinField;
+
+    fn add(self, rps: PervushinField) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n + rps.n),
+        }
+    }
+}
+
 impl Add for &PervushinField {
     type Output = PervushinField;
 
-    #[inline]
     fn add(self, rps: Self) -> Self::Output {
-        *self + *rps
+        Self::Output {
+            n: Self::Output::reduce_add(self.n + rps.n),
+        }
     }
 }
 
@@ -152,6 +163,16 @@ impl Double for PervushinField {
     fn double(self) -> Self {
         Self {
             n: Self::reduce_add(self.n << 1),
+        }
+    }
+}
+
+impl Double for &PervushinField {
+    type Output = PervushinField;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n << 1),
         }
     }
 }
@@ -192,12 +213,23 @@ impl Sub<&Self> for PervushinField {
     }
 }
 
+impl Sub<PervushinField> for &PervushinField {
+    type Output = PervushinField;
+
+    fn sub(self, rps: PervushinField) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n - rps.n),
+        }
+    }
+}
+
 impl Sub for &PervushinField {
     type Output = PervushinField;
 
-    #[inline]
     fn sub(self, rps: Self) -> Self::Output {
-        *self - *rps
+        Self::Output {
+            n: Self::Output::reduce_add(self.n - rps.n),
+        }
     }
 }
 
@@ -238,18 +270,20 @@ impl Mul<&Self> for PervushinField {
 impl Mul<PervushinField> for &PervushinField {
     type Output = PervushinField;
 
-    #[inline]
     fn mul(self, rps: PervushinField) -> Self::Output {
-        *self * rps
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n as i128 * rps.n as i128),
+        }
     }
 }
 
 impl Mul for &PervushinField {
     type Output = PervushinField;
 
-    #[inline]
     fn mul(self, rps: Self) -> Self::Output {
-        *self * *rps
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n as i128 * rps.n as i128),
+        }
     }
 }
 

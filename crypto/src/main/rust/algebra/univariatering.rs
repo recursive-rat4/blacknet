@@ -156,19 +156,35 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Add<&Self> for Univari
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Add<UnivariateRing<R, N, C>>
+    for &UnivariateRing<R, N, C>
+{
+    type Output = UnivariateRing<R, N, C>;
+
+    fn add(self, rps: UnivariateRing<R, N, C>) -> Self::Output {
+        Self::Output::new(self.coefficients + rps.coefficients)
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Add for &UnivariateRing<R, N, C> {
+    type Output = UnivariateRing<R, N, C>;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self::Output::new(self.coefficients + rps.coefficients)
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AddAssign for UnivariateRing<R, N, C> {
-    #[inline]
     fn add_assign(&mut self, rps: Self) {
-        *self = *self + rps
+        self.coefficients += rps.coefficients
     }
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AddAssign<&Self>
     for UnivariateRing<R, N, C>
 {
-    #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        self.coefficients += rps.coefficients
     }
 }
 
@@ -180,11 +196,27 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Double for UnivariateR
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Double for &UnivariateRing<R, N, C> {
+    type Output = UnivariateRing<R, N, C>;
+
+    fn double(self) -> Self::Output {
+        Self::Output::new(self.coefficients.double())
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Neg for UnivariateRing<R, N, C> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self::new(-self.coefficients)
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Neg for &UnivariateRing<R, N, C> {
+    type Output = UnivariateRing<R, N, C>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output::new(-self.coefficients)
     }
 }
 
@@ -204,19 +236,35 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub<&Self> for Univari
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub<UnivariateRing<R, N, C>>
+    for &UnivariateRing<R, N, C>
+{
+    type Output = UnivariateRing<R, N, C>;
+
+    fn sub(self, rps: UnivariateRing<R, N, C>) -> Self::Output {
+        Self::Output::new(self.coefficients - rps.coefficients)
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub for &UnivariateRing<R, N, C> {
+    type Output = UnivariateRing<R, N, C>;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        Self::Output::new(self.coefficients - rps.coefficients)
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> SubAssign for UnivariateRing<R, N, C> {
-    #[inline]
     fn sub_assign(&mut self, rps: Self) {
-        *self = *self - rps
+        self.coefficients -= rps.coefficients
     }
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> SubAssign<&Self>
     for UnivariateRing<R, N, C>
 {
-    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        self.coefficients -= rps.coefficients
     }
 }
 
@@ -237,6 +285,17 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&Self> for Univari
     #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
         self * *rps
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<UnivariateRing<R, N, C>>
+    for &UnivariateRing<R, N, C>
+{
+    type Output = UnivariateRing<R, N, C>;
+
+    #[inline]
+    fn mul(self, rps: UnivariateRing<R, N, C>) -> Self::Output {
+        *self * rps
     }
 }
 
@@ -299,19 +358,33 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&R> for Univariate
     }
 }
 
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<R> for &UnivariateRing<R, N, C> {
+    type Output = UnivariateRing<R, N, C>;
+
+    fn mul(self, rps: R) -> Self::Output {
+        Self::Output::new(self.coefficients * rps)
+    }
+}
+
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&R> for &UnivariateRing<R, N, C> {
+    type Output = UnivariateRing<R, N, C>;
+
+    fn mul(self, rps: &R) -> Self::Output {
+        Self::Output::new(self.coefficients * rps)
+    }
+}
+
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign<R> for UnivariateRing<R, N, C> {
-    #[inline]
     fn mul_assign(&mut self, rps: R) {
-        *self = *self * rps
+        self.coefficients *= rps
     }
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign<&R>
     for UnivariateRing<R, N, C>
 {
-    #[inline]
     fn mul_assign(&mut self, rps: &R) {
-        *self = *self * rps
+        self.coefficients *= rps
     }
 }
 

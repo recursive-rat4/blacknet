@@ -168,9 +168,30 @@ impl Add for Field25519 {
 impl Add<&Self> for Field25519 {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self {
+            n: Self::reduce_add(self.n + rps.n),
+        }
+    }
+}
+
+impl Add<Field25519> for &Field25519 {
+    type Output = Field25519;
+
+    fn add(self, rps: Field25519) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n + rps.n),
+        }
+    }
+}
+
+impl Add for &Field25519 {
+    type Output = Field25519;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n + rps.n),
+        }
     }
 }
 
@@ -198,6 +219,16 @@ impl Double for Field25519 {
     }
 }
 
+impl Double for &Field25519 {
+    type Output = Field25519;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n << 1),
+        }
+    }
+}
+
 impl Neg for Field25519 {
     type Output = Self;
 
@@ -208,6 +239,20 @@ impl Neg for Field25519 {
             }
         } else {
             Self::ZERO
+        }
+    }
+}
+
+impl Neg for &Field25519 {
+    type Output = Field25519;
+
+    fn neg(self) -> Self::Output {
+        if self.n != UInt256::ZERO {
+            Self::Output {
+                n: Self::Output::MODULUS - self.n,
+            }
+        } else {
+            Self::Output::ZERO
         }
     }
 }
@@ -227,9 +272,36 @@ impl Sub for Field25519 {
 impl Sub<&Self> for Field25519 {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        let mut n = self.n - rps.n;
+        if n >= Self::MODULUS {
+            n += Self::MODULUS
+        }
+        Self { n }
+    }
+}
+
+impl Sub<Field25519> for &Field25519 {
+    type Output = Field25519;
+
+    fn sub(self, rps: Field25519) -> Self::Output {
+        let mut n = self.n - rps.n;
+        if n >= Self::Output::MODULUS {
+            n += Self::Output::MODULUS
+        }
+        Self::Output { n }
+    }
+}
+
+impl Sub for &Field25519 {
+    type Output = Field25519;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        let mut n = self.n - rps.n;
+        if n >= Self::Output::MODULUS {
+            n += Self::Output::MODULUS
+        }
+        Self::Output { n }
     }
 }
 
@@ -260,9 +332,30 @@ impl Mul for Field25519 {
 impl Mul<&Self> for Field25519 {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
-        self * *rps
+        Self {
+            n: Self::reduce_mul(self.n.mul(rps.n)),
+        }
+    }
+}
+
+impl Mul<Field25519> for &Field25519 {
+    type Output = Field25519;
+
+    fn mul(self, rps: Field25519) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n.mul(rps.n)),
+        }
+    }
+}
+
+impl Mul for &Field25519 {
+    type Output = Field25519;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n.mul(rps.n)),
+        }
     }
 }
 
@@ -286,6 +379,16 @@ impl Square for Field25519 {
     fn square(self) -> Self {
         Self {
             n: Self::reduce_mul(self.n.square()),
+        }
+    }
+}
+
+impl Square for &Field25519 {
+    type Output = Field25519;
+
+    fn square(self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n.square()),
         }
     }
 }

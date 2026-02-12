@@ -92,23 +92,36 @@ impl Add for FermatField {
 impl Add<&Self> for FermatField {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self { n: self.n + rps.n }
+    }
+}
+
+impl Add<FermatField> for &FermatField {
+    type Output = FermatField;
+
+    fn add(self, rps: FermatField) -> Self::Output {
+        Self::Output { n: self.n + rps.n }
+    }
+}
+
+impl Add for &FermatField {
+    type Output = FermatField;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self::Output { n: self.n + rps.n }
     }
 }
 
 impl AddAssign for FermatField {
-    #[inline]
     fn add_assign(&mut self, rps: Self) {
-        *self = *self + rps
+        self.n += rps.n
     }
 }
 
 impl AddAssign<&Self> for FermatField {
-    #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        self.n += rps.n
     }
 }
 
@@ -120,11 +133,27 @@ impl Double for FermatField {
     }
 }
 
+impl Double for &FermatField {
+    type Output = FermatField;
+
+    fn double(self) -> Self::Output {
+        Self::Output { n: self.n << 1 }
+    }
+}
+
 impl Neg for FermatField {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self { n: -self.n }
+    }
+}
+
+impl Neg for &FermatField {
+    type Output = FermatField;
+
+    fn neg(self) -> Self::Output {
+        Self::Output { n: -self.n }
     }
 }
 
@@ -139,23 +168,36 @@ impl Sub for FermatField {
 impl Sub<&Self> for FermatField {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        Self { n: self.n - rps.n }
+    }
+}
+
+impl Sub<FermatField> for &FermatField {
+    type Output = FermatField;
+
+    fn sub(self, rps: FermatField) -> Self::Output {
+        Self::Output { n: self.n - rps.n }
+    }
+}
+
+impl Sub for &FermatField {
+    type Output = FermatField;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        Self::Output { n: self.n - rps.n }
     }
 }
 
 impl SubAssign for FermatField {
-    #[inline]
     fn sub_assign(&mut self, rps: Self) {
-        *self = *self - rps
+        self.n -= rps.n
     }
 }
 
 impl SubAssign<&Self> for FermatField {
-    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        self.n -= rps.n
     }
 }
 
@@ -172,9 +214,30 @@ impl Mul for FermatField {
 impl Mul<&Self> for FermatField {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
-        self * *rps
+        Self {
+            n: Self::reduce_mul(self.n as i64 * rps.n as i64),
+        }
+    }
+}
+
+impl Mul<FermatField> for &FermatField {
+    type Output = FermatField;
+
+    fn mul(self, rps: FermatField) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n as i64 * rps.n as i64),
+        }
+    }
+}
+
+impl Mul for &FermatField {
+    type Output = FermatField;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n as i64 * rps.n as i64),
+        }
     }
 }
 
@@ -198,6 +261,15 @@ impl Square for FermatField {
     #[inline]
     fn square(self) -> Self {
         self * self
+    }
+}
+
+impl Square for &FermatField {
+    type Output = FermatField;
+
+    #[inline]
+    fn square(self) -> Self::Output {
+        *self * *self
     }
 }
 
@@ -225,9 +297,8 @@ impl Div for FermatField {
 impl Div<&Self> for FermatField {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &Self) -> Self::Output {
-        self / *rps
+        rps.inv().map(|v| self * v)
     }
 }
 

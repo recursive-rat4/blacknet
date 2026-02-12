@@ -115,9 +115,30 @@ impl Add for LMField {
 impl Add<&Self> for LMField {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self {
+            n: Self::reduce_add(self.n + rps.n),
+        }
+    }
+}
+
+impl Add<LMField> for &LMField {
+    type Output = LMField;
+
+    fn add(self, rps: LMField) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n + rps.n),
+        }
+    }
+}
+
+impl Add for &LMField {
+    type Output = LMField;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n + rps.n),
+        }
     }
 }
 
@@ -145,11 +166,29 @@ impl Double for LMField {
     }
 }
 
+impl Double for &LMField {
+    type Output = LMField;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n << 1),
+        }
+    }
+}
+
 impl Neg for LMField {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self { n: -self.n }
+    }
+}
+
+impl Neg for &LMField {
+    type Output = LMField;
+
+    fn neg(self) -> Self::Output {
+        Self::Output { n: -self.n }
     }
 }
 
@@ -166,9 +205,30 @@ impl Sub for LMField {
 impl Sub<&Self> for LMField {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        Self {
+            n: Self::reduce_add(self.n - rps.n),
+        }
+    }
+}
+
+impl Sub<LMField> for &LMField {
+    type Output = LMField;
+
+    fn sub(self, rps: LMField) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n - rps.n),
+        }
+    }
+}
+
+impl Sub for &LMField {
+    type Output = LMField;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_add(self.n - rps.n),
+        }
     }
 }
 
@@ -199,9 +259,30 @@ impl Mul for LMField {
 impl Mul<&Self> for LMField {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
-        self * *rps
+        Self {
+            n: Self::reduce_mul(self.n as i128 * rps.n as i128),
+        }
+    }
+}
+
+impl Mul<LMField> for &LMField {
+    type Output = LMField;
+
+    fn mul(self, rps: LMField) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n as i128 * rps.n as i128),
+        }
+    }
+}
+
+impl Mul for &LMField {
+    type Output = LMField;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        Self::Output {
+            n: Self::Output::reduce_mul(self.n as i128 * rps.n as i128),
+        }
     }
 }
 
@@ -224,6 +305,15 @@ impl Square for LMField {
 
     #[inline]
     fn square(self) -> Self {
+        self * self
+    }
+}
+
+impl Square for &LMField {
+    type Output = LMField;
+
+    #[inline]
+    fn square(self) -> Self::Output {
         self * self
     }
 }

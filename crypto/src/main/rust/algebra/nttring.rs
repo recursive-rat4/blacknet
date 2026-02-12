@@ -356,6 +356,20 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Square for NTTRing<Z, M, N>
     }
 }
 
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Square for &NTTRing<Z, M, N> {
+    type Output = NTTRing<Z, M, N>;
+
+    fn square(self) -> Self::Output {
+        if Self::Output::INERTIA == 1 {
+            Self::Output {
+                spectrum: FreeModule::<Z, N>::from_fn(|i| self.spectrum[i].square()),
+            }
+        } else {
+            self * self
+        }
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<Z> for NTTRing<Z, M, N> {
     type Output = Self;
 

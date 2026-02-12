@@ -123,6 +123,26 @@ impl<P: TwistedEdwardsGroupParams> Add<&Self> for TwistedEdwardsGroupProjective<
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Add<TwistedEdwardsGroupProjective<P>>
+    for &TwistedEdwardsGroupProjective<P>
+{
+    type Output = TwistedEdwardsGroupProjective<P>;
+
+    #[inline]
+    fn add(self, rps: TwistedEdwardsGroupProjective<P>) -> Self::Output {
+        *self + rps
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> Add for &TwistedEdwardsGroupProjective<P> {
+    type Output = TwistedEdwardsGroupProjective<P>;
+
+    #[inline]
+    fn add(self, rps: Self) -> Self::Output {
+        *self + *rps
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupProjective<P> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
@@ -157,6 +177,15 @@ impl<P: TwistedEdwardsGroupParams> Double for TwistedEdwardsGroupProjective<P> {
             y: yr,
             z: zr,
         }
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> Double for &TwistedEdwardsGroupProjective<P> {
+    type Output = TwistedEdwardsGroupProjective<P>;
+
+    #[inline]
+    fn double(self) -> Self::Output {
+        (*self).double()
     }
 }
 

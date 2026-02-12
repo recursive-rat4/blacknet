@@ -128,6 +128,26 @@ impl<P: TwistedEdwardsGroupParams> Add<&Self> for TwistedEdwardsGroupAffine<P> {
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Add<TwistedEdwardsGroupAffine<P>>
+    for &TwistedEdwardsGroupAffine<P>
+{
+    type Output = TwistedEdwardsGroupAffine<P>;
+
+    #[inline]
+    fn add(self, rps: TwistedEdwardsGroupAffine<P>) -> Self::Output {
+        *self + rps
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> Add for &TwistedEdwardsGroupAffine<P> {
+    type Output = TwistedEdwardsGroupAffine<P>;
+
+    #[inline]
+    fn add(self, rps: Self) -> Self::Output {
+        *self + *rps
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupAffine<P> {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
@@ -159,6 +179,15 @@ impl<P: TwistedEdwardsGroupParams> Double for TwistedEdwardsGroupAffine<P> {
             x: xr.expect("Elliptic curve arithmetic"),
             y: yr.expect("Elliptic curve arithmetic"),
         }
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> Double for &TwistedEdwardsGroupAffine<P> {
+    type Output = TwistedEdwardsGroupAffine<P>;
+
+    #[inline]
+    fn double(self) -> Self::Output {
+        (*self).double()
     }
 }
 

@@ -146,6 +146,7 @@ impl<R: Ring, const N: usize, const NN: usize> IntoIterator for MatrixRing<R, N,
     type Item = R;
     type IntoIter = core::array::IntoIter<R, NN>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.elements.into_iter()
     }
@@ -164,9 +165,30 @@ impl<R: Ring, const N: usize, const NN: usize> Add for MatrixRing<R, N, NN> {
 impl<R: Ring, const N: usize, const NN: usize> Add<&Self> for MatrixRing<R, N, NN> {
     type Output = Self;
 
-    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        self + *rps
+        Self {
+            elements: array::from_fn(|i| self.elements[i] + rps.elements[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Add<MatrixRing<R, N, NN>> for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    fn add(self, rps: MatrixRing<R, N, NN>) -> Self::Output {
+        Self::Output {
+            elements: array::from_fn(|i| self.elements[i] + rps.elements[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Add for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    fn add(self, rps: Self) -> Self::Output {
+        Self::Output {
+            elements: array::from_fn(|i| self.elements[i] + rps.elements[i]),
+        }
     }
 }
 
@@ -194,11 +216,31 @@ impl<R: Ring, const N: usize, const NN: usize> Double for MatrixRing<R, N, NN> {
     }
 }
 
+impl<R: Ring, const N: usize, const NN: usize> Double for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            elements: array::from_fn(|i| self.elements[i].double()),
+        }
+    }
+}
+
 impl<R: Ring, const N: usize, const NN: usize> Neg for MatrixRing<R, N, NN> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self {
+            elements: array::from_fn(|i| -self.elements[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Neg for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
             elements: array::from_fn(|i| -self.elements[i]),
         }
     }
@@ -217,9 +259,30 @@ impl<R: Ring, const N: usize, const NN: usize> Sub for MatrixRing<R, N, NN> {
 impl<R: Ring, const N: usize, const NN: usize> Sub<&Self> for MatrixRing<R, N, NN> {
     type Output = Self;
 
-    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        self - *rps
+        Self {
+            elements: array::from_fn(|i| self.elements[i] - rps.elements[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Sub<MatrixRing<R, N, NN>> for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    fn sub(self, rps: MatrixRing<R, N, NN>) -> Self::Output {
+        Self::Output {
+            elements: array::from_fn(|i| self.elements[i] - rps.elements[i]),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Sub for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        Self::Output {
+            elements: array::from_fn(|i| self.elements[i] - rps.elements[i]),
+        }
     }
 }
 
@@ -240,9 +303,39 @@ impl<R: Ring, const N: usize, const NN: usize> SubAssign<&Self> for MatrixRing<R
 impl<R: Ring, const N: usize, const NN: usize> Mul for MatrixRing<R, N, NN> {
     type Output = Self;
 
+    #[allow(clippy::op_ref)]
+    #[inline]
+    fn mul(self, rps: Self) -> Self::Output {
+        &self * &rps
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Mul<&Self> for MatrixRing<R, N, NN> {
+    type Output = Self;
+
+    #[allow(clippy::op_ref)]
+    #[inline]
+    fn mul(self, rps: &Self) -> Self::Output {
+        &self * rps
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>> for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    #[allow(clippy::op_ref)]
+    #[inline]
+    fn mul(self, rps: MatrixRing<R, N, NN>) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Mul for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
     fn mul(self, rps: Self) -> Self::Output {
         // Iterative algorithm
-        let mut m = Self::ZERO;
+        let mut m = Self::Output::ZERO;
         for i in 0..N {
             for j in 0..N {
                 for k in 0..N {
@@ -254,34 +347,37 @@ impl<R: Ring, const N: usize, const NN: usize> Mul for MatrixRing<R, N, NN> {
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Mul<&Self> for MatrixRing<R, N, NN> {
-    type Output = Self;
-
-    #[inline]
-    fn mul(self, rps: &Self) -> Self::Output {
-        self * *rps
-    }
-}
-
 impl<R: Ring, const N: usize, const NN: usize> MulAssign for MatrixRing<R, N, NN> {
+    #[allow(clippy::op_ref)]
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
-        *self = *self * rps
+        *self = &*self * &rps
     }
 }
 
 impl<R: Ring, const N: usize, const NN: usize> MulAssign<&Self> for MatrixRing<R, N, NN> {
+    #[allow(clippy::op_ref)]
     #[inline]
     fn mul_assign(&mut self, rps: &Self) {
-        *self = *self * *rps
+        *self = &*self * rps
     }
 }
 
 impl<R: Ring, const N: usize, const NN: usize> Square for MatrixRing<R, N, NN> {
     type Output = Self;
 
+    #[allow(clippy::op_ref)]
     #[inline]
     fn square(self) -> Self {
+        &self * &self
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Square for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    #[inline]
+    fn square(self) -> Self::Output {
         self * self
     }
 }
@@ -299,9 +395,30 @@ impl<R: Ring, const N: usize, const NN: usize> Mul<R> for MatrixRing<R, N, NN> {
 impl<R: Ring, const N: usize, const NN: usize> Mul<&R> for MatrixRing<R, N, NN> {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
-        self * *rps
+        Self {
+            elements: array::from_fn(|i| self.elements[i] * rps),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Mul<R> for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    fn mul(self, rps: R) -> Self::Output {
+        Self::Output {
+            elements: array::from_fn(|i| self.elements[i] * rps),
+        }
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Mul<&R> for &MatrixRing<R, N, NN> {
+    type Output = MatrixRing<R, N, NN>;
+
+    fn mul(self, rps: &R) -> Self::Output {
+        Self::Output {
+            elements: array::from_fn(|i| self.elements[i] * rps),
+        }
     }
 }
 
