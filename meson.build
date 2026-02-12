@@ -38,16 +38,7 @@ if get_option('tests')
     boost_test_dependency = dependency('boost', modules : 'unit_test_framework', version : '>=1.67.0')
 endif
 
-if get_option('benchmarks')
-    google_benchmark_dependency = dependency('benchmark', version : '>=1.1.0')
-endif
-
 compiler = meson.get_compiler('cpp')
-
-# Current implementation of lattice cryptography largely relies on
-# the signed integer overflow, which is undefined behaviour in stantard C++23
-compiler.has_argument('-fwrapv', required : true)
-add_project_arguments('-fwrapv', language : 'cpp')
 
 config_data = configuration_data({
     'BLACKNET_OPTIMIZE' : get_option('optimization') in ['3', 's'],
@@ -80,7 +71,6 @@ configure_file(
 config_includes = include_directories('.')
 
 subdir('compat')
-subdir('crypto')
 subdir('log')
 if desktop_feature.allowed()
     subdir('desktop')

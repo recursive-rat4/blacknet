@@ -18,65 +18,73 @@
 use crate::algebra::{AdditiveCommutativeMonoid, MultiplicativeCommutativeMonoid};
 use crate::algebra::{AdditiveGroup, MultiplicativeGroup};
 
-pub trait AdditiveAbelianGroup: AdditiveGroup + AdditiveCommutativeMonoid {
-    // Speeding up the computations on an elliptic curve using addition-subtraction chains
-    // ADDSUBCHAIN-D
-    // http://www.numdam.org/item/ITA_1990__24_6_531_0/
-    fn add_sub_chain<Scalar: IntoIterator<Item = bool>>(self, scalar: Scalar) -> Self {
-        let mut p = Self::ZERO;
-        let mut q = self;
+#[rustfmt::skip]
+pub trait AdditiveAbelianGroup
+    : AdditiveGroup
+    + AdditiveCommutativeMonoid
+{
+}
 
-        let mut q_is_q_double = 0;
-        let mut state = 0;
+// Speeding up the computations on an elliptic curve using addition-subtraction chains
+// ADDSUBCHAIN-D
+// http://www.numdam.org/item/ITA_1990__24_6_531_0/
+pub fn add_sub_chain<G: AdditiveAbelianGroup, Scalar: IntoIterator<Item = bool>>(
+    g: G,
+    scalar: Scalar,
+) -> G {
+    let mut p = G::ZERO;
+    let mut q = g;
 
-        let update_q = |mut q: Self, q_is_q_double: usize| -> (Self, usize) {
-            for _ in 0..q_is_q_double {
-                q = q.double();
-            }
-            (q, 0)
-        };
+    let mut q_is_q_double = 0;
+    let mut state = 0;
 
-        for bit in scalar {
-            match state {
-                0 => {
-                    if bit {
-                        state = 1;
-                    } else {
-                        q_is_q_double += 1;
-                    }
-                }
-                1 => {
-                    // Q only needs to be updated in case P gets updated
-                    (q, q_is_q_double) = update_q(q, q_is_q_double);
-                    if bit {
-                        p -= &q;
-                        q_is_q_double += 2;
-                        state = 11;
-                    } else {
-                        p += &q;
-                        q_is_q_double += 2;
-                        state = 0;
-                    }
-                }
-                11 => {
-                    if bit {
-                        q_is_q_double += 1;
-                    } else {
-                        state = 1;
-                    }
-                }
-                _ => unreachable!(),
-            }
+    let update_q = |mut q: G, q_is_q_double: usize| -> (G, usize) {
+        for _ in 0..q_is_q_double {
+            q = q.double();
         }
+        (q, 0)
+    };
 
-        if state != 0 {
-            // Q only needs to be updated in case P gets updated
-            (q, _) = update_q(q, q_is_q_double);
-            p += q;
+    for bit in scalar {
+        match state {
+            0 => {
+                if bit {
+                    state = 1;
+                } else {
+                    q_is_q_double += 1;
+                }
+            }
+            1 => {
+                // Q only needs to be updated in case P gets updated
+                (q, q_is_q_double) = update_q(q, q_is_q_double);
+                if bit {
+                    p -= &q;
+                    q_is_q_double += 2;
+                    state = 11;
+                } else {
+                    p += &q;
+                    q_is_q_double += 2;
+                    state = 0;
+                }
+            }
+            11 => {
+                if bit {
+                    q_is_q_double += 1;
+                } else {
+                    state = 1;
+                }
+            }
+            _ => unreachable!(),
         }
-
-        p
     }
+
+    if state != 0 {
+        // Q only needs to be updated in case P gets updated
+        (q, _) = update_q(q, q_is_q_double);
+        p += q;
+    }
+
+    p
 }
 
 impl<G: AdditiveGroup + AdditiveCommutativeMonoid> AdditiveAbelianGroup for G {}

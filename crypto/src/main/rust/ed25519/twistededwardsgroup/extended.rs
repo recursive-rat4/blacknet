@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveAbelianGroup, AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, Inv,
-    LeftZero, One, RightZero, Set, Square, Zero,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, Inv, LeftZero, One,
+    RightZero, Set, Square, Zero, add_sub_chain,
 };
 use crate::ed25519::{TwistedEdwardsGroupParams, is_on_curve};
 use core::fmt::{Debug, Formatter, Result};
@@ -198,7 +198,6 @@ impl<P: TwistedEdwardsGroupParams> Sub for TwistedEdwardsGroupExtended<P> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        // sub-2025-v
         let x1x2 = self.x * rps.x;
         let y1y2 = self.y * rps.y;
         let z1t2 = self.z * rps.t;
@@ -254,7 +253,7 @@ impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> Mul<Scalar
 
     #[inline]
     fn mul(self, rps: Scalar) -> Self::Output {
-        self.add_sub_chain(rps)
+        add_sub_chain(self, rps)
     }
 }
 

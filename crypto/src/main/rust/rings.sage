@@ -41,12 +41,31 @@ class IntegerRingParam(NamedTuple):
 def compute_bits(number):
     return ceil(log(number, 2))
 
+def compute_word_bits(number):
+    bits = compute_bits(number)
+    return 2**(ceil(log(bits, 2)))
+
 def compute_centered_representation(number, modulus):
     if number > modulus / 2:
         return number - modulus
     if number < - modulus / 2:
         return number + modulus
     return number
+
+def compute_square_montgomery_modulus(prime, word_bits):
+    word = 2**word_bits
+    return word**2 % prime
+
+def compute_montgomery_modulus(prime, word_bits):
+    word = 2**word_bits
+    return pow(prime, -1, word)
+
+def compute_montgomery_reduce(number, modulus, montgomery_modulus, word_bits):
+    t = number * montgomery_modulus % 2**word_bits
+    return (number - t * modulus) >> word_bits
+
+def compute_montgomery_form(number, modulus, montgomery_modulus, square_montgomery_modulus, word_bits):
+    return compute_montgomery_reduce(number * square_montgomery_modulus, modulus, montgomery_modulus, word_bits)
 
 def compute_primitive_root_of_unity(prime, degree):
     roots = nthroot_mod(1, degree, prime, True)
