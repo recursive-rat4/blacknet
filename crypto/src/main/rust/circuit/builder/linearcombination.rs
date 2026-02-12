@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -425,7 +425,7 @@ impl<R: Semiring> Mul<Constant<R>> for LinearCombination<R> {
 impl<R: Semiring> MulAssign<Constant<R>> for LinearCombination<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
         for coefficient in self.terms.values_mut() {
-            *coefficient *= rps;
+            *coefficient *= rps
         }
     }
 }

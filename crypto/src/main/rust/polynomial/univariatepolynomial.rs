@@ -281,7 +281,7 @@ impl<R: Semiring> Mul for UnivariatePolynomial<R> {
 
 impl<R: Semiring> MulAssign for UnivariatePolynomial<R> {
     fn mul_assign(&mut self, rps: Self) {
-        *self = &*self * &rps;
+        *self = &*self * &rps
     }
 }
 

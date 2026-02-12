@@ -232,7 +232,7 @@ impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> MulAssign<
 {
     #[inline]
     fn mul_assign(&mut self, rps: Scalar) {
-        *self = *self * rps;
+        *self = *self * rps
     }
 }
 
