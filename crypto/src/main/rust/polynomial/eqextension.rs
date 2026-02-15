@@ -122,7 +122,7 @@ impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for EqExtension<R> {
     fn point(&self, point: &Point<R>) -> R {
         debug_assert_eq!(self.coefficients.len(), point.dimension());
         self.z
-            * zip(self.coefficients.iter(), point.coordinates())
+            * zip(&self.coefficients, point)
                 .map(|(&c, &p)| (c * p).double() - c - p + R::ONE)
                 .product::<R>()
     }

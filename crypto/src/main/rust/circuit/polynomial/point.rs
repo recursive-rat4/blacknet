@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,8 +17,9 @@
 
 use crate::algebra::Semiring;
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
+use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
-use core::ops::{Index, IndexMut};
+use core::ops::{Deref, DerefMut, Index, IndexMut};
 
 pub struct Point<S: Semiring> {
     coordinates: Vec<LinearCombination<S>>,
@@ -69,6 +70,50 @@ impl<S: Semiring> From<Point<S>> for Vec<LinearCombination<S>> {
     }
 }
 
+impl<S: Semiring> AsRef<[LinearCombination<S>]> for Point<S> {
+    #[inline]
+    fn as_ref(&self) -> &[LinearCombination<S>] {
+        &self.coordinates
+    }
+}
+
+impl<S: Semiring> AsMut<[LinearCombination<S>]> for Point<S> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [LinearCombination<S>] {
+        self
+    }
+}
+
+impl<S: Semiring> Borrow<[LinearCombination<S>]> for Point<S> {
+    #[inline]
+    fn borrow(&self) -> &[LinearCombination<S>] {
+        &self.coordinates
+    }
+}
+
+impl<S: Semiring> BorrowMut<[LinearCombination<S>]> for Point<S> {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut [LinearCombination<S>] {
+        &mut self.coordinates
+    }
+}
+
+impl<S: Semiring> Deref for Point<S> {
+    type Target = [LinearCombination<S>];
+
+    #[inline]
+    fn deref(&self) -> &[LinearCombination<S>] {
+        &self.coordinates
+    }
+}
+
+impl<S: Semiring> DerefMut for Point<S> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.coordinates
+    }
+}
+
 impl<S: Semiring> Index<usize> for Point<S> {
     type Output = LinearCombination<S>;
 
@@ -82,5 +127,25 @@ impl<S: Semiring> IndexMut<usize> for Point<S> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.coordinates[index]
+    }
+}
+
+impl<S: Semiring> IntoIterator for Point<S> {
+    type Item = LinearCombination<S>;
+    type IntoIter = alloc::vec::IntoIter<LinearCombination<S>>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coordinates.into_iter()
+    }
+}
+
+impl<'a, S: Semiring> IntoIterator for &'a Point<S> {
+    type Item = &'a LinearCombination<S>;
+    type IntoIter = core::slice::Iter<'a, LinearCombination<S>>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coordinates.iter()
     }
 }

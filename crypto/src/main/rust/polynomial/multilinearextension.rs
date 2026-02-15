@@ -197,10 +197,8 @@ impl<R: UnitalRing> MultivariatePolynomial<R> for MultilinearExtension<R> {
 
     fn point(&self, point: &Point<R>) -> R {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
-        let basis = EqExtension::basis(point.coordinates());
-        zip(self.coefficients.iter(), basis)
-            .map(|(&c, b)| c * b)
-            .sum()
+        let basis = EqExtension::basis(point);
+        zip(&self.coefficients, basis).map(|(&c, b)| c * b).sum()
     }
 
     fn sum_with_var<const VAL: i8>(&self) -> R {
@@ -236,7 +234,7 @@ impl<R: UnitalRing> MultivariatePolynomial<R> for MultilinearExtension<R> {
 impl<R: UnitalRing> InBasis<R> for MultilinearExtension<R> {
     fn basis(&self, point: &Point<R>) -> DenseVector<R> {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
-        EqExtension::basis(point.coordinates()).into()
+        EqExtension::basis(point).into()
     }
 }
 

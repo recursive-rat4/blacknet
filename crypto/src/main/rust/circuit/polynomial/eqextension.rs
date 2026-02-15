@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -56,7 +56,7 @@ impl<'a, 'b, R: UnitalRing + Eq> EqExtension<'a, 'b, R> {
     pub fn point(&self, point: &Point<R>) -> LinearCombination<R> {
         let scope = self.circuit.scope("EqExtension::point");
         let mut pi = LinearCombination::<R>::from(Constant::ONE);
-        zip(self.coefficients.iter(), point.coordinates()).for_each(|(c, p)| {
+        zip(&self.coefficients, point).for_each(|(c, p)| {
             let cp = scope.auxiliary();
             scope.constrain(c * p, cp);
             let t = scope.auxiliary();

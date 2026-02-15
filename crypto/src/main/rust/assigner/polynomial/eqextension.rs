@@ -38,7 +38,7 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
 
     pub fn point(&self, point: &Point<R>) -> R {
         let mut pi = R::ONE;
-        zip(self.coefficients.iter(), point.coordinates()).for_each(|(&c, &p)| {
+        zip(&self.coefficients, point).for_each(|(&c, &p)| {
             let cp = c * p;
             self.assigment.push(cp);
             let t = pi * (cp.double() - c - p + R::ONE);

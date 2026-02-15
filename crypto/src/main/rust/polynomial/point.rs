@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -125,5 +125,25 @@ impl<S> IndexMut<usize> for Point<S> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.coordinates[index]
+    }
+}
+
+impl<S> IntoIterator for Point<S> {
+    type Item = S;
+    type IntoIter = alloc::vec::IntoIter<S>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coordinates.into_iter()
+    }
+}
+
+impl<'a, S> IntoIterator for &'a Point<S> {
+    type Item = &'a S;
+    type IntoIter = core::slice::Iter<'a, S>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coordinates.iter()
     }
 }
