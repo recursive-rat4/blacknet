@@ -18,8 +18,8 @@
 #![allow(clippy::manual_is_multiple_of)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate, DivisionRing,
-    Double, FreeModule, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate, Double,
+    FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
     MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
     Semimodule, Set, Square, UnitalAlgebra, UnivariateRing, Zero,
 };
@@ -183,16 +183,14 @@ impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Add<&'a NTTRing<Z, M, N
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AddAssign for NTTRing<Z, M, N> {
-    #[inline]
     fn add_assign(&mut self, rps: Self) {
-        *self = *self + rps
+        self.spectrum += rps.spectrum
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AddAssign<&Self> for NTTRing<Z, M, N> {
-    #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        self.spectrum += rps.spectrum
     }
 }
 
@@ -279,16 +277,14 @@ impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Sub<&'a NTTRing<Z, M, N
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> SubAssign for NTTRing<Z, M, N> {
-    #[inline]
     fn sub_assign(&mut self, rps: Self) {
-        *self = *self - rps
+        self.spectrum -= rps.spectrum
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> SubAssign<&Self> for NTTRing<Z, M, N> {
-    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        self.spectrum -= rps.spectrum
     }
 }
 
@@ -417,20 +413,37 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Z> for &NTTRing<Z, M, 
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<Z> for NTTRing<Z, M, N> {
-    #[inline]
     fn mul_assign(&mut self, rps: Z) {
-        *self = *self * rps
+        self.spectrum *= rps
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<&Z> for NTTRing<Z, M, N> {
-    #[inline]
     fn mul_assign(&mut self, rps: &Z) {
-        *self = *self * *rps
+        self.spectrum *= rps
     }
 }
 
-impl<Z: Twiddles<M> + DivisionRing, const M: usize, const N: usize> Div<Z> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Inv for NTTRing<Z, M, N> {
+    type Output = Option<NTTRing<Z, M, N>>;
+
+    fn inv(self) -> Self::Output {
+        if Self::INERTIA == 1 {
+            let mut components = [Z::ZERO; N];
+            #[allow(clippy::needless_range_loop)]
+            for i in 0..N {
+                components[i] = self.spectrum[i].inv()?
+            }
+            Some(Self {
+                spectrum: FreeModule::<Z, N>::new(components),
+            })
+        } else {
+            unimplemented!("Inv with inertia = {}", Self::INERTIA);
+        }
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<Z> for NTTRing<Z, M, N> {
     type Output = Option<Self>;
 
     fn div(self, rps: Z) -> Self::Output {
@@ -438,7 +451,7 @@ impl<Z: Twiddles<M> + DivisionRing, const M: usize, const N: usize> Div<Z> for N
     }
 }
 
-impl<Z: Twiddles<M> + DivisionRing, const M: usize, const N: usize> Div<&Z> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<&Z> for NTTRing<Z, M, N> {
     type Output = Option<Self>;
 
     fn div(self, rps: &Z) -> Self::Output {

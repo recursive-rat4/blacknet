@@ -17,13 +17,13 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
-use crate::algebra::IntegerRing;
+use crate::algebra::PrimeField;
 use crate::convolution::{Convolution, binomial};
 use core::array;
 
 // https://arxiv.org/abs/2211.13546
 
-pub trait Twiddles<const N: usize>: IntegerRing {
+pub trait Twiddles<const N: usize>: PrimeField {
     const TWIDDLES: [Self; N];
     const SCALE: Self;
 }
